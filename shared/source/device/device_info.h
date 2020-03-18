@@ -6,12 +6,7 @@
  */
 
 #pragma once
-#include <shared/source/utilities/stackvec.h>
-
-#include "opencl/extensions/public/cl_ext_private.h"
-
-#include "CL/cl.h"
-#include "CL/cl_ext.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include <cstdint>
 
