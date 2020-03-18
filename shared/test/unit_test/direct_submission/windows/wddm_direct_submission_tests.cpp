@@ -7,15 +7,19 @@
 
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/direct_submission/windows/wddm_direct_submission.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/test/unit_test/helpers/ult_hw_config.h"
 
 #include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/helpers/variable_backup.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
 
 struct WddmDirectSubmissionFixture : public WddmFixture {
     void SetUp() override {
+        backupUlt = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
         WddmFixture::SetUp();
 
         wddm->wddmInterface.reset(new WddmMockInterface20(*wddm));
@@ -23,6 +27,7 @@ struct WddmDirectSubmissionFixture : public WddmFixture {
 
         osContext = std::make_unique<OsContextWin>(*wddm, 0u, 0u, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                                    false, false, false);
+        ultHwConfig.forceOsAgnosticMemoryManager = false;
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
         device->setPreemptionMode(PreemptionMode::ThreadGroup);
     }
@@ -30,6 +35,8 @@ struct WddmDirectSubmissionFixture : public WddmFixture {
     WddmMockInterface20 *wddmMockInterface;
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<OsContextWin> osContext;
+
+    std::unique_ptr<VariableBackup<UltHwConfig>> backupUlt;
 };
 
 template <typename GfxFamily>
@@ -289,7 +296,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedThenEx
                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
                                                               *osContext.get());
 
-    wddmDirectSubmission.initialize(true);
+    bool ret = wddmDirectSubmission.initialize(true);
+    EXPECT_TRUE(ret);
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
     uint64_t expectedGpuVa = wddmDirectSubmission.ringBuffer->getGpuAddress() + usedSpace;
 
@@ -305,7 +313,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedThenEx
     hwParse.parseCommands<FamilyType>(tmpCmdBuffer, usedSpace);
     MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>();
     ASSERT_NE(nullptr, bbStart);
-    EXPECT_EQ(wddmDirectSubmission.ringBuffer2->getGpuAddress(), bbStart->getBatchBufferStartAddressGraphicsaddress472());
+    uint64_t actualGpuVa = GmmHelper::canonize(bbStart->getBatchBufferStartAddressGraphicsaddress472());
+    EXPECT_EQ(wddmDirectSubmission.ringBuffer2->getGpuAddress(), actualGpuVa);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferNotStartedThenExpectNoSwitchCommandsLinearStreamUpdated) {
@@ -314,7 +323,9 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferNotStartedThe
                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
                                                               *osContext.get());
 
-    wddmDirectSubmission.initialize(false);
+    bool ret = wddmDirectSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
     EXPECT_EQ(0u, usedSpace);
 
@@ -340,7 +351,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
                                                               *osContext.get());
 
-    wddmDirectSubmission.initialize(true);
+    bool ret = wddmDirectSubmission.initialize(true);
+    EXPECT_TRUE(ret);
     uint64_t expectedWaitFence = 0x10ull;
     wddmDirectSubmission.completionRingBuffers[RingBufferUse::SecondBuffer] = expectedWaitFence;
     size_t usedSpace = wddmDirectSubmission.ringCommandStream.getUsed();
@@ -358,7 +370,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
     hwParse.parseCommands<FamilyType>(tmpCmdBuffer, usedSpace);
     MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>();
     ASSERT_NE(nullptr, bbStart);
-    EXPECT_EQ(wddmDirectSubmission.ringBuffer2->getGpuAddress(), bbStart->getBatchBufferStartAddressGraphicsaddress472());
+    uint64_t actualGpuVa = GmmHelper::canonize(bbStart->getBatchBufferStartAddressGraphicsaddress472());
+    EXPECT_EQ(wddmDirectSubmission.ringBuffer2->getGpuAddress(), actualGpuVa);
 
     EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
     EXPECT_EQ(expectedWaitFence, wddm->waitFromCpuResult.uint64ParamPassed);
