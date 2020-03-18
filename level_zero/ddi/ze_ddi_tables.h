@@ -10,9 +10,7 @@
 #include <level_zero/zet_api.h>
 #include <level_zero/zet_ddi.h>
 
-#if defined(__cplusplus)
 extern "C" {
-#endif
 
 typedef struct _ze_gpu_driver_dditable_t {
     ze_dditable_t ddiTable;
@@ -31,6 +29,4 @@ typedef struct _ze_gpu_driver_dditable_t {
 
 extern ze_gpu_driver_dditable_t driver_ddiTable;
 
-#if defined(__cplusplus)
 } // extern "C"
-#endif
