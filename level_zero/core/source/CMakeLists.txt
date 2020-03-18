@@ -71,6 +71,11 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue_extended${BRANCH_DIR_SUFFIX}/cmdqueue_extended.inl
 )
 
+target_include_directories(${L0_STATIC_LIB_NAME}
+    PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/
+)
+
 target_include_directories(${TARGET_NAME_L0}
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/
@@ -79,19 +84,15 @@ target_include_directories(${TARGET_NAME_L0}
 add_subdirectories()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-append_sources_from_properties(L0_RUNTIME_SOURCES
-  L0_API
-  L0_SRCS_DLL
-  L0_SOURCES_LINUX
-  L0_SOURCES_WINDOWS
-  L0_SRCS_COMPILER_INTERFACE
-  L0_SRCS_DEBUGGER
-  L0_SRCS_OCLOC_SHARED
-  )
+target_sources(${L0_STATIC_LIB_NAME}
+    PRIVATE
+        ${L0_RUNTIME_SOURCES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+)
 
 target_sources(${TARGET_NAME_L0}
     PRIVATE
-        ${L0_RUNTIME_SOURCES}
+        ${L0_SRCS_DLL}
         ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 

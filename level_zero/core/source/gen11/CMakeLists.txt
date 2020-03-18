@@ -12,6 +12,6 @@ if(SUPPORT_GEN11)
     )
     add_subdirectories()
 
-    target_sources(${TARGET_NAME_L0} PRIVATE ${HW_SOURCES_GEN11})
+    target_sources(${L0_STATIC_LIB_NAME} PRIVATE ${HW_SOURCES_GEN11})
     set_property(GLOBAL PROPERTY L0_HW_SOURCES_GEN11 ${HW_SOURCES_GEN11})
 endif()

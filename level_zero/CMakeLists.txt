@@ -274,9 +274,6 @@ target_compile_definitions(${TARGET_NAME_L0}
         ${COMPUTE_RUNTIME_DEFINITIONS}
 )
 
-append_sources_from_properties(L0_SRCS_DLL NEO_CORE_SRCS_LINK)
-target_sources(${TARGET_NAME_L0} PRIVATE ${L0_SRCS_DLL})
-
 if(UNIX)
     target_sources(${TARGET_NAME_L0}
         PRIVATE
@@ -315,21 +312,109 @@ else()
     )
 endif()
 
+add_subdirectory_unique(api)
+add_subdirectory_unique(source)
+add_subdirectory_unique(experimental${BRANCH_DIR_SUFFIX}/source)
+add_subdirectory_unique(tools/source)
+
+if(DONT_CARE_OF_VIRTUALS)
+    set(L0_RELEASE_LIB_NAME "${TARGET_NAME_L0}_lib")
+    set(L0_MOCKABLE_LIB_NAME "${TARGET_NAME_L0}_lib")
+else()
+    set(L0_RELEASE_LIB_NAME "${TARGET_NAME_L0}_lib")
+    if(NOT SKIP_UNIT_TESTS)
+        set(L0_MOCKABLE_LIB_NAME "${TARGET_NAME_L0}_mockable")
+    endif()
+endif()
+
+function(generate_l0_lib LIB_NAME MOCKABLE)
+    set(L0_STATIC_LIB_NAME ${LIB_NAME})
+    add_library(${LIB_NAME} OBJECT
+        ${L0_RUNTIME_SOURCES}
+    )
+
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/core/source "${NEO_BUILD_DIR}/${LIB_NAME}")
+
+    append_sources_from_properties(L0_RUNTIME_SOURCES
+        L0_API
+        L0_SOURCES_LINUX
+        L0_SOURCES_WINDOWS
+        L0_SRCS_COMPILER_INTERFACE
+        L0_SRCS_DEBUGGER
+        L0_SRCS_OCLOC_SHARED
+    )
+
+    target_sources(${LIB_NAME} PRIVATE ${L0_RUNTIME_SOURCES})
+
+    if(${MOCKABLE})
+        get_property(COMPUTE_RUNTIME_DEFINITIONS
+            TARGET ${NEO_MOCKABLE_LIB_NAME}
+            PROPERTY COMPILE_DEFINITIONS
+        )
+        target_compile_definitions(${LIB_NAME}
+            PUBLIC MOCKABLE_VIRTUAL=virtual
+            PRIVATE
+                ${COMPUTE_RUNTIME_DEFINITIONS}
+        )
+    else()
+        get_property(COMPUTE_RUNTIME_DEFINITIONS
+            TARGET ${NEO_RELEASE_LIB_NAME}
+            PROPERTY COMPILE_DEFINITIONS
+        )
+        target_compile_definitions(${LIB_NAME}
+            PUBLIC MOCKABLE_VIRTUAL=
+            PRIVATE
+                ${COMPUTE_RUNTIME_DEFINITIONS}
+        )
+    endif()
+
+    set_property(TARGET ${LIB_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
+    set_target_properties(${LIB_NAME} PROPERTIES FOLDER ${TARGET_NAME_L0})
+
+    target_include_directories(${LIB_NAME} PUBLIC
+            ${ENGINE_NODE_DIR}
+            ${NEO__GMM_INCLUDE_DIR}
+            ${CIF_BASE_DIR}
+            ${IGC_OCL_ADAPTOR_DIR}
+            ${NEO__IGC_INCLUDE_DIR}
+            ${KHRONOS_HEADERS_DIR}
+    )
+
+    if(WIN32)
+        target_include_directories(${LIB_NAME} PUBLIC
+            ${WDK_INCLUDE_PATHS}
+            ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/windows
+        )
+    else()
+        target_include_directories(${LIB_NAME} PUBLIC
+            ${I915_INCLUDES_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/linux
+        )
+    endif()
+
+    create_project_source_tree(${LIB_NAME})
+endfunction()
+
+if(DONT_CARE_OF_VIRTUALS)
+    generate_l0_lib(${L0_RELEASE_LIB_NAME} TRUE)
+else()
+    generate_l0_lib(${L0_RELEASE_LIB_NAME} FALSE)
+    if(NOT SKIP_UNIT_TESTS)
+        generate_l0_lib(${L0_MOCKABLE_LIB_NAME} TRUE)
+    endif()
+endif()
+
+append_sources_from_properties(L0_SRCS_DLL NEO_CORE_SRCS_LINK L0_SRCS_DLL)
+target_sources(${TARGET_NAME_L0} PRIVATE $<TARGET_OBJECTS:${L0_RELEASE_LIB_NAME}> ${L0_SRCS_DLL})
+
 target_link_libraries(${TARGET_NAME_L0}
     ${NEO_STATICALLY_LINKED_LIBRARIES}
     ${OS_SPECIFIC_LIBS}
 )
+
 if(UNIX)
     target_link_libraries(${TARGET_NAME_L0} ${GMM_LINK_NAME})
 endif()
-
-    add_subdirectory_unique(api)
-    add_subdirectory_unique(source)
-    add_subdirectory_unique(core/source)
-    add_subdirectory_unique(experimental${BRANCH_DIR_SUFFIX}/source)
-    add_subdirectory_unique(tools/source)
-
-    create_source_tree(${TARGET_NAME_L0} ${L0_ROOT_DIR}/..)
 
 if(HAVE_INSTRUMENTATION)
     target_link_libraries(${TARGET_NAME_L0}
@@ -339,8 +424,9 @@ if(HAVE_INSTRUMENTATION)
   )
 endif()
 
+create_source_tree(${TARGET_NAME_L0} ${L0_ROOT_DIR}/..)
+
 set_property(TARGET ${TARGET_NAME_L0} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
-set_target_properties(${TARGET_NAME_L0} PROPERTIES FOLDER ${TARGET_NAME_L0})
 
 set_target_properties(${TARGET_NAME_L0} PROPERTIES
     FOLDER ${TARGET_NAME_L0}

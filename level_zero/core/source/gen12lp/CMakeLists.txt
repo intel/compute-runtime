@@ -12,8 +12,8 @@ if(SUPPORT_GEN12LP)
         ${CMAKE_CURRENT_SOURCE_DIR}/enable_family_full_l0_gen12lp.cpp
     )
     add_subdirectories()
-    target_include_directories(${TARGET_NAME_L0} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/)
+    target_include_directories(${L0_STATIC_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/)
 
-    target_sources(${TARGET_NAME_L0} PRIVATE ${HW_SOURCES_GEN12LP})
+    target_sources(${L0_STATIC_LIB_NAME} PRIVATE ${HW_SOURCES_GEN12LP})
     set_property(GLOBAL APPEND PROPERTY L0_HW_SOURCES_GEN12LP ${HW_SOURCES_GEN12LP})
 endif()

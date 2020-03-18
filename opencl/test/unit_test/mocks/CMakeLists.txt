@@ -19,8 +19,6 @@ else()
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_compilers_linux.cpp
   )
 endif()
-message(STATUS "IGDRCL_SRCS_tests_compiler_mocks ${IGDRCL_SRCS_tests_compiler_mocks}")
-
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_tests_compiler_mocks ${IGDRCL_SRCS_tests_compiler_mocks})
 
 set(IGDRCL_SRCS_tests_mocks
