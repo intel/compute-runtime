@@ -1100,7 +1100,7 @@ Image *Image::validateAndCreateImage(Context *context,
                                      const void *hostPtr,
                                      cl_int &errcodeRet) {
 
-    if (!MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, imageDesc->mem_object)) {
+    if (!MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, imageDesc->mem_object, *context)) {
         errcodeRet = CL_INVALID_VALUE;
         return nullptr;
     }

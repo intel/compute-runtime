@@ -9,7 +9,7 @@
 
 namespace NEO {
 
-bool MemObjHelper::validateMemoryPropertiesForBuffer(const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel) {
+bool MemObjHelper::validateMemoryPropertiesForBuffer(const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const Context &context) {
     /* Check all the invalid flags combination. */
     if ((isValueSet(flags, CL_MEM_READ_WRITE | CL_MEM_READ_ONLY)) ||
         (isValueSet(flags, CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY)) ||
@@ -22,10 +22,10 @@ bool MemObjHelper::validateMemoryPropertiesForBuffer(const MemoryPropertiesFlags
         return false;
     }
 
-    return validateExtraMemoryProperties(memoryProperties, flags, flagsIntel);
+    return validateExtraMemoryProperties(memoryProperties, flags, flagsIntel, context);
 }
 
-bool MemObjHelper::validateMemoryPropertiesForImage(const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel, cl_mem parent) {
+bool MemObjHelper::validateMemoryPropertiesForImage(const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel, cl_mem parent, const Context &context) {
     /* Check all the invalid flags combination. */
     if ((!isValueSet(flags, CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)) &&
         (isValueSet(flags, CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY) ||
@@ -64,7 +64,7 @@ bool MemObjHelper::validateMemoryPropertiesForImage(const MemoryPropertiesFlags 
         }
     }
 
-    return validateExtraMemoryProperties(memoryProperties, flags, flagsIntel);
+    return validateExtraMemoryProperties(memoryProperties, flags, flagsIntel, context);
 }
 
 AllocationProperties MemObjHelper::getAllocationPropertiesWithImageInfo(uint32_t rootDeviceIndex, ImageInfo &imgInfo, bool allocateMemory, const MemoryPropertiesFlags &memoryProperties, const HardwareInfo &hwInfo) {

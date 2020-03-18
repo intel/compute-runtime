@@ -15,7 +15,7 @@ bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressed, const M
     return renderCompressed && preferCompression;
 }
 
-bool MemObjHelper::validateExtraMemoryProperties(const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel) {
+bool MemObjHelper::validateExtraMemoryProperties(const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const Context &context) {
     return true;
 }
 
