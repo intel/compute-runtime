@@ -11,14 +11,15 @@ namespace NEO {
 
 template <typename FamilyType>
 void HardwareParse::findHardwareCommands(IndirectHeap *dsh) {
-    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
-    typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
-    typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
-    typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
-    typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
-    typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
-    typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
+    using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     itorWalker = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
     if (itorWalker != cmdList.end()) {
@@ -33,6 +34,14 @@ void HardwareParse::findHardwareCommands(IndirectHeap *dsh) {
         auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
         if (lri) {
             lriList.push_back(*it);
+        }
+    }
+    if (parsePipeControl) {
+        for (auto it = cmdList.begin(); it != cmdList.end(); it++) {
+            auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+            if (pipeControl) {
+                pipeControlList.push_back(*it);
+            }
         }
     }
 

@@ -35,6 +35,7 @@ struct HardwareParse {
     void TearDown() {
         cmdList.clear();
         lriList.clear();
+        pipeControlList.clear();
     }
 
     template <typename CmdType>
@@ -190,6 +191,7 @@ struct HardwareParse {
     size_t sizeUsed = 0u;
     GenCmdList cmdList;
     GenCmdList lriList;
+    GenCmdList pipeControlList;
     GenCmdList::iterator itorMediaInterfaceDescriptorLoad;
     GenCmdList::iterator itorMediaVfeState;
     GenCmdList::iterator itorPipelineSelect;
@@ -206,6 +208,8 @@ struct HardwareParse {
     void *cmdWalker = nullptr;
     void *cmdBBStartAfterWalker = nullptr;
     void *cmdGpgpuCsrBaseAddress = nullptr;
+
+    bool parsePipeControl = false;
 };
 
 } // namespace NEO

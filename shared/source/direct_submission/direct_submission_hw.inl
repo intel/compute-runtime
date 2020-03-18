@@ -146,6 +146,11 @@ template <typename GfxFamily>
 bool DirectSubmissionHw<GfxFamily>::stopRingBuffer() {
     void *flushPtr = ringCommandStream.getSpace(0);
     dispatchFlushSection();
+    if (DebugManager.flags.DirectSubmissionDisableMonitorFence.get()) {
+        TagData currentTagData = {};
+        getTagAddressValue(currentTagData);
+        dispatchTagUpdateSection(currentTagData.tagAddress, currentTagData.tagValue);
+    }
     dispatchEndingSection();
     cpuCachelineFlush(flushPtr, getSizeEnd());
 
@@ -251,17 +256,29 @@ inline size_t DirectSubmissionHw<GfxFamily>::getSizeEndingSection() {
 }
 
 template <typename GfxFamily>
-inline size_t DirectSubmissionHw<GfxFamily>::getSizeDispatch() {
-    return getSizeStartSection() +
-           getSizeFlushSection() +
-           getSizeTagUpdateSection() +
-           getSizeSemaphoreSection();
+inline void DirectSubmissionHw<GfxFamily>::dispatchStoreDataSection(uint64_t gpuVa, uint32_t value) {
+    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
+    auto storeDataImmediate = ringCommandStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
+    *storeDataImmediate = GfxFamily::cmdInitStoreDataImm;
+
+    storeDataImmediate->setAddress(gpuVa);
+    storeDataImmediate->setDataDword0(value);
+}
+
+template <typename GfxFamily>
+inline size_t DirectSubmissionHw<GfxFamily>::getSizeStoraDataSection() {
+    using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
+    return sizeof(MI_STORE_DATA_IMM);
 }
 
 template <typename GfxFamily>
 inline size_t DirectSubmissionHw<GfxFamily>::getSizeEnd() {
-    return getSizeEndingSection() +
-           getSizeFlushSection();
+    size_t size = getSizeEndingSection() +
+                  getSizeFlushSection();
+    if (DebugManager.flags.DirectSubmissionDisableMonitorFence.get()) {
+        size += getSizeTagUpdateSection();
+    }
+    return size;
 }
 
 template <typename GfxFamily>
@@ -273,12 +290,65 @@ inline uint64_t DirectSubmissionHw<GfxFamily>::getCommandBufferPositionGpuAddres
 }
 
 template <typename GfxFamily>
+inline size_t DirectSubmissionHw<GfxFamily>::getSizeDispatch() {
+    size_t size = getSizeSemaphoreSection();
+    int32_t dispatchMode = DebugManager.flags.DirectSubmissionEnableDebugBuffer.get();
+    if (dispatchMode == 0) {
+        size += getSizeStartSection();
+    } else if (dispatchMode == 1) {
+        size += getSizeStoraDataSection();
+    }
+    //mode 2 does not dispatch any commands
+
+    if (!DebugManager.flags.DirectSubmissionDisableCacheFlush.get()) {
+        size += getSizeFlushSection();
+    }
+    if (!DebugManager.flags.DirectSubmissionDisableMonitorFence.get()) {
+        size += getSizeTagUpdateSection();
+    }
+
+    return size;
+}
+
+template <typename GfxFamily>
+void *DirectSubmissionHw<GfxFamily>::dispatchWorkloadSection(BatchBuffer &batchBuffer) {
+    void *currentPosition = ringCommandStream.getSpace(0);
+    int32_t dispatchMode = DebugManager.flags.DirectSubmissionEnableDebugBuffer.get();
+    if (dispatchMode == 0) {
+        auto commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
+        void *returnCmd = batchBuffer.endCmdPtr;
+
+        dispatchStartSection(commandStreamAddress);
+        void *returnPosition = ringCommandStream.getSpace(0);
+
+        setReturnAddress(returnCmd, getCommandBufferPositionGpuAddress(returnPosition));
+    } else if (dispatchMode == 1) {
+        uint64_t storeAddress = semaphoreGpuVa;
+        storeAddress += ptrDiff(&static_cast<RingSemaphoreData *>(semaphorePtr)->Reserved1Uint32, semaphorePtr);
+        dispatchStoreDataSection(storeAddress, currentQueueWorkCount);
+    }
+    //mode 2 does not dispatch any commands
+
+    if (!DebugManager.flags.DirectSubmissionDisableCacheFlush.get()) {
+        dispatchFlushSection();
+    }
+
+    if (!DebugManager.flags.DirectSubmissionDisableMonitorFence.get()) {
+        TagData currentTagData = {};
+        getTagAddressValue(currentTagData);
+        dispatchTagUpdateSection(currentTagData.tagAddress, currentTagData.tagValue);
+    }
+
+    dispatchSemaphoreSection(currentQueueWorkCount + 1);
+    return currentPosition;
+}
+
+template <typename GfxFamily>
 bool DirectSubmissionHw<GfxFamily>::dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) {
     size_t dispatchSize = getSizeDispatch();
     size_t cycleSize = getSizeSwitchRingBufferSection();
     size_t requiredMinimalSize = dispatchSize + cycleSize + getSizeEnd();
 
-    TagData currentTagData;
     bool buffersSwitched = false;
     uint64_t startGpuVa = getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));
 
@@ -287,17 +357,7 @@ bool DirectSubmissionHw<GfxFamily>::dispatchCommandBuffer(BatchBuffer &batchBuff
         buffersSwitched = true;
     }
 
-    auto commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
-    void *returnCmd = batchBuffer.endCmdPtr;
-
-    void *currentPosition = ringCommandStream.getSpace(0);
-    dispatchStartSection(commandStreamAddress);
-    void *returnPosition = dispatchFlushSection();
-    setReturnAddress(returnCmd, getCommandBufferPositionGpuAddress(returnPosition));
-
-    getTagAddressValue(currentTagData);
-    dispatchTagUpdateSection(currentTagData.tagAddress, currentTagData.tagValue);
-    dispatchSemaphoreSection(currentQueueWorkCount + 1);
+    void *currentPosition = dispatchWorkloadSection(batchBuffer);
 
     if (ringStart) {
         cpuCachelineFlush(currentPosition, dispatchSize);

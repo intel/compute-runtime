@@ -29,6 +29,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily> {
     using BaseClass::dispatchStartSection;
     using BaseClass::dispatchSwitchRingBufferSection;
     using BaseClass::dispatchTagUpdateSection;
+    using BaseClass::dispatchWorkloadSection;
     using BaseClass::getCommandBufferPositionGpuAddress;
     using BaseClass::getSizeDispatch;
     using BaseClass::getSizeEnd;
@@ -36,8 +37,10 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily> {
     using BaseClass::getSizeFlushSection;
     using BaseClass::getSizeSemaphoreSection;
     using BaseClass::getSizeStartSection;
+    using BaseClass::getSizeStoraDataSection;
     using BaseClass::getSizeSwitchRingBufferSection;
     using BaseClass::getSizeTagUpdateSection;
+    using BaseClass::hwInfo;
     using BaseClass::osContext;
     using BaseClass::ringBuffer;
     using BaseClass::ringBuffer2;

@@ -18,6 +18,13 @@ namespace NEO {
 #pragma pack(1)
 struct RingSemaphoreData {
     uint32_t QueueWorkCount;
+    uint8_t ReservedCacheline[60];
+    uint32_t Reserved1Uint32;
+    uint32_t Reserved2Uint32;
+    uint32_t Reserved3Uint32;
+    uint32_t Reserved4Uint32;
+    uint64_t Reserved1Uint64;
+    uint64_t Reserved2Uint64;
 };
 #pragma pack()
 
@@ -87,7 +94,11 @@ class DirectSubmissionHw {
 
     void setReturnAddress(void *returnCmd, uint64_t returnAddress);
 
+    void *dispatchWorkloadSection(BatchBuffer &batchBuffer);
     size_t getSizeDispatch();
+
+    void dispatchStoreDataSection(uint64_t gpuVa, uint32_t value);
+    size_t getSizeStoraDataSection();
 
     size_t getSizeEnd();
 
