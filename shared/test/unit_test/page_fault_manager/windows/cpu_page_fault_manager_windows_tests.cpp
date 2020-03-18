@@ -6,12 +6,15 @@
  */
 
 #include "shared/source/page_fault_manager/windows/cpu_page_fault_manager_windows.h"
+#include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "gtest/gtest.h"
 #include <Windows.h>
 
 using namespace NEO;
+
+using PageFaultManagerWindowsTest = PageFaultManagerConfigFixture;
 using MockPageFaultManagerWindows = MockPageFaultManagerHandlerInvoke<PageFaultManagerWindows>;
 
 bool raiseException(NTSTATUS type) {
@@ -23,14 +26,14 @@ bool raiseException(NTSTATUS type) {
     return false;
 }
 
-TEST(PageFaultManagerWindowsTest, whenPageFaultIsRaisedThenHandlerIsInvoked) {
+TEST_F(PageFaultManagerWindowsTest, whenPageFaultIsRaisedThenHandlerIsInvoked) {
     auto pageFaultManager = std::make_unique<MockPageFaultManagerWindows>();
     EXPECT_FALSE(pageFaultManager->handlerInvoked);
     EXPECT_FALSE(raiseException(EXCEPTION_ACCESS_VIOLATION));
     EXPECT_TRUE(pageFaultManager->handlerInvoked);
 }
 
-TEST(PageFaultManagerWindowsTest, whenExceptionAccessViolationIsRaisedButPointerIsNotKnownThenExceptionIsRethrown) {
+TEST_F(PageFaultManagerWindowsTest, whenExceptionAccessViolationIsRaisedButPointerIsNotKnownThenExceptionIsRethrown) {
     auto pageFaultManager = std::make_unique<MockPageFaultManagerWindows>();
     EXPECT_FALSE(pageFaultManager->handlerInvoked);
     pageFaultManager->returnStatus = false;
@@ -38,14 +41,14 @@ TEST(PageFaultManagerWindowsTest, whenExceptionAccessViolationIsRaisedButPointer
     EXPECT_TRUE(pageFaultManager->handlerInvoked);
 }
 
-TEST(PageFaultManagerWindowsTest, whenExceptionOtherThanAccessViolationIsRaisedThenExceptionIsRethrownAndHandlerIsNotInvoked) {
+TEST_F(PageFaultManagerWindowsTest, whenExceptionOtherThanAccessViolationIsRaisedThenExceptionIsRethrownAndHandlerIsNotInvoked) {
     auto pageFaultManager = std::make_unique<MockPageFaultManagerWindows>();
     EXPECT_FALSE(pageFaultManager->handlerInvoked);
     EXPECT_TRUE(raiseException(EXCEPTION_DATATYPE_MISALIGNMENT));
     EXPECT_FALSE(pageFaultManager->handlerInvoked);
 }
 
-TEST(PageFaultManagerWindowsTest, givenProtectedMemoryWhenTryingToAccessThenPageFaultIsRaisedAndMemoryIsAccessibleAfterHandling) {
+TEST_F(PageFaultManagerWindowsTest, givenProtectedMemoryWhenTryingToAccessThenPageFaultIsRaisedAndMemoryIsAccessibleAfterHandling) {
     auto pageFaultManager = std::make_unique<MockPageFaultManagerWindows>();
     pageFaultManager->allowCPUMemoryAccessOnPageFault = true;
     auto ptr = static_cast<int *>(VirtualAlloc(nullptr, pageFaultManager->size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
@@ -84,7 +87,7 @@ class MockFailPageFaultManager : public PageFaultManagerWindows {
 };
 bool MockFailPageFaultManager::mockCalled = false;
 
-TEST(PageFaultManagerWindowsTest, givenPageFaultThatNEOShouldNotHandleThenDefaultHandlerIsCalled) {
+TEST_F(PageFaultManagerWindowsTest, givenPageFaultThatNEOShouldNotHandleThenDefaultHandlerIsCalled) {
     auto previousHandler = AddVectoredExceptionHandler(1, MockFailPageFaultManager::mockPageFaultHandler);
 
     MockFailPageFaultManager mockPageFaultManager;

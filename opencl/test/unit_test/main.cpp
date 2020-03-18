@@ -56,6 +56,10 @@ std::thread::id tempThreadID;
 namespace MockSipData {
 extern std::unique_ptr<MockSipKernel> mockSipKernel;
 }
+
+namespace PagaFaultManagerTestConfig {
+bool disabled = false;
+}
 } // namespace NEO
 
 using namespace NEO;
@@ -212,6 +216,8 @@ int main(int argc, char **argv) {
             useDefaultListener = true;
         } else if (!strcmp("--disable_alarm", argv[i])) {
             enable_alarm = false;
+        } else if (!strcmp("--disable_pagefaulting_tests", argv[i])) { //disable tests which raise page fault signal during execution
+            NEO::PagaFaultManagerTestConfig::disabled = true;
         } else if (!strcmp("--tbx", argv[i])) {
             if (testMode == TestMode::AubTests) {
                 testMode = TestMode::AubTestsWithTbx;

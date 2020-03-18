@@ -11,7 +11,20 @@
 
 #include "gtest/gtest.h"
 
-using namespace NEO;
+namespace NEO {
+
+namespace PagaFaultManagerTestConfig {
+extern bool disabled;
+}
+
+class PageFaultManagerConfigFixture : public ::testing::Test {
+  public:
+    void SetUp() {
+        if (PagaFaultManagerTestConfig::disabled) {
+            GTEST_SKIP();
+        }
+    }
+};
 
 class PageFaultManagerTest : public ::testing::Test {
   public:
@@ -21,3 +34,4 @@ class PageFaultManagerTest : public ::testing::Test {
     void *unifiedMemoryManager = nullptr;
     std::unique_ptr<MockPageFaultManager> pageFaultManager;
 };
+} // namespace NEO

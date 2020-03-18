@@ -32,6 +32,7 @@ set_target_properties(igdrcl_aub_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_
 if(WIN32)
   set_target_properties(igdrcl_aub_tests PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY ${TargetDir}
+    VS_DEBUGGER_COMMAND_ARGUMENTS " --disable_pagefaulting_tests"
   )
 endif()
 

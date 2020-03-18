@@ -13,6 +13,10 @@
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 
 namespace NEO {
+namespace PagaFaultManagerTestConfig {
+extern bool disabled;
+}
+
 class UnifiedMemoryAubFixture : public AUBFixture {
   public:
     using AUBFixture::TearDown;
@@ -22,6 +26,10 @@ class UnifiedMemoryAubFixture : public AUBFixture {
     bool skipped = false;
 
     void SetUp() override {
+        if (PagaFaultManagerTestConfig::disabled) {
+            skipped = true;
+            GTEST_SKIP();
+        }
         AUBFixture::SetUp(nullptr);
         if (!platform()->peekExecutionEnvironment()->memoryManager->getPageFaultManager()) {
             skipped = true;

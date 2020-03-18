@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/page_fault_manager/linux/cpu_page_fault_manager_linux.h"
+#include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
 #include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "gtest/gtest.h"
@@ -14,16 +15,18 @@
 #include <sys/mman.h>
 
 using namespace NEO;
+
+using PageFaultManagerLinuxTest = PageFaultManagerConfigFixture;
 using MockPageFaultManagerLinux = MockPageFaultManagerHandlerInvoke<PageFaultManagerLinux>;
 
-TEST(PageFaultManagerLinuxTest, whenPageFaultIsRaisedThenHandlerIsInvoked) {
+TEST_F(PageFaultManagerLinuxTest, whenPageFaultIsRaisedThenHandlerIsInvoked) {
     auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
     EXPECT_FALSE(pageFaultManager->handlerInvoked);
     std::raise(SIGSEGV);
     EXPECT_TRUE(pageFaultManager->handlerInvoked);
 }
 
-TEST(PageFaultManagerLinuxTest, givenProtectedMemoryWhenTryingToAccessThenPageFaultIsRaisedAndMemoryIsAccessibleAfterHandling) {
+TEST_F(PageFaultManagerLinuxTest, givenProtectedMemoryWhenTryingToAccessThenPageFaultIsRaisedAndMemoryIsAccessibleAfterHandling) {
     auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
     pageFaultManager->allowCPUMemoryAccessOnPageFault = true;
     auto ptr = static_cast<int *>(mmap(nullptr, pageFaultManager->size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0));
@@ -72,7 +75,7 @@ class MockFailPageFaultManager : public PageFaultManagerLinux {
 bool MockFailPageFaultManager::mockCalled = false;
 bool MockFailPageFaultManager::simpleMockCalled = false;
 
-TEST(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleAndSigInfoFlagSetThenSaSigactionIsCalled) {
+TEST_F(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleAndSigInfoFlagSetThenSaSigactionIsCalled) {
     struct sigaction previousHandler = {};
     struct sigaction mockHandler = {};
     mockHandler.sa_flags = SA_SIGINFO;
@@ -93,7 +96,7 @@ TEST(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleAndSigInfoFl
     sigaction(SIGSEGV, &previousHandler, nullptr);
 }
 
-TEST(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleThenSaHandlerIsCalled) {
+TEST_F(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleThenSaHandlerIsCalled) {
     struct sigaction previousHandler = {};
     struct sigaction mockHandler = {};
     mockHandler.sa_handler = MockFailPageFaultManager::mockPageFaultSimpleHandler;
@@ -113,7 +116,7 @@ TEST(PageFaultManagerLinuxTest, givenPageFaultThatNEOShouldNotHandleThenSaHandle
     sigaction(SIGSEGV, &previousHandler, nullptr);
 }
 
-TEST(PageFaultManagerLinuxTest, givenDefaultSaHandlerWhenInvokeCallPreviousSaHandlerThenPreviousHandlerIsRestored) {
+TEST_F(PageFaultManagerLinuxTest, givenDefaultSaHandlerWhenInvokeCallPreviousSaHandlerThenPreviousHandlerIsRestored) {
     struct sigaction originalHandler = {};
     struct sigaction mockDefaultHandler = {};
     mockDefaultHandler.sa_handler = SIG_DFL;
@@ -129,7 +132,7 @@ TEST(PageFaultManagerLinuxTest, givenDefaultSaHandlerWhenInvokeCallPreviousSaHan
     sigaction(SIGSEGV, &originalHandler, nullptr);
 }
 
-TEST(PageFaultManagerLinuxTest, givenIgnoringSaHandlerWhenInvokeCallPreviousSaHandlerThenNothingHappend) {
+TEST_F(PageFaultManagerLinuxTest, givenIgnoringSaHandlerWhenInvokeCallPreviousSaHandlerThenNothingHappend) {
     struct sigaction originalHandler = {};
     struct sigaction mockDefaultHandler = {};
     mockDefaultHandler.sa_handler = SIG_IGN;
