@@ -5,7 +5,8 @@
  *
  */
 
-#include "opencl/source/device/device_info.h"
+#include "shared/source/device/device_info.h"
+
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
 #include "opencl/test/unit_test/gen_common/matchers.h"

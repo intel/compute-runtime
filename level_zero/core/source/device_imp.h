@@ -73,7 +73,7 @@ struct DeviceImp : public Device {
     DriverHandle *getDriverHandle() override;
     void setDriverHandle(DriverHandle *driverHandle) override;
     NEO::PreemptionMode getDevicePreemptionMode() const override;
-    const DeviceInfo &getDeviceInfo() const override;
+    const NEO::DeviceInfo &getDeviceInfo() const override;
     NEO::Device *getNEODevice() override;
     void activateMetricGroups() override;
     void processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_kernel_properties_t *pKernelProperties);

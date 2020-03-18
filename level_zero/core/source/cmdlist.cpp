@@ -8,9 +8,8 @@
 #include "level_zero/core/source/cmdlist.h"
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/device/device_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
-
-#include "opencl/source/device/device_info.h"
 
 namespace L0 {
 CommandList::~CommandList() {

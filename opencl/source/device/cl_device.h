@@ -10,7 +10,7 @@
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include "opencl/source/api/cl_types.h"
-#include "opencl/source/device/device_info.h"
+#include "opencl/source/device/cl_device_info.h"
 #include "opencl/source/helpers/base_object.h"
 
 #include "engine_node.h"
@@ -30,6 +30,7 @@ class PerformanceCounters;
 class Platform;
 class SourceLevelDebugger;
 class SyncBufferHandler;
+struct DeviceInfo;
 struct EngineControl;
 struct HardwareCapabilities;
 struct HardwareInfo;

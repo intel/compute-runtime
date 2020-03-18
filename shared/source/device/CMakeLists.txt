@@ -9,6 +9,7 @@ set(NEO_CORE_DEVICE
   ${CMAKE_CURRENT_SOURCE_DIR}/device.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/device_get_engine.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/device_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/root_device.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/root_device.h
   ${CMAKE_CURRENT_SOURCE_DIR}/sub_device.cpp

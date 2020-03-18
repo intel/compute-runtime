@@ -20,7 +20,6 @@
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/local_id_gen.h"
-#include "opencl/source/device/device_info.h"
 #include "opencl/source/event/perf_counter.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"

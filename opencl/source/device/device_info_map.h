@@ -6,13 +6,17 @@
  */
 
 #pragma once
+#include "shared/source/device/device_info.h"
+
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/device/cl_device.h"
-#include "opencl/source/device/device_info.h"
+#include "opencl/source/device/cl_device_info.h"
 
 #include "CL/cl_ext_intel.h"
 #include <CL/cl.h>
 #include <CL/cl_ext.h>
+
+namespace NEO {
 
 namespace DeviceInfoTable {
 
@@ -158,4 +162,7 @@ template<> struct Map<CL_DEVICE_VENDOR                                      > : 
 template<> struct Map<CL_DEVICE_VERSION                                     > : public ClMapBase<CL_DEVICE_VERSION,                                     const char *,                    &ClDeviceInfo::clVersion> {};
 template<> struct Map<CL_DRIVER_VERSION                                     > : public ClMapBase<CL_DRIVER_VERSION,                                     const char *,                    &ClDeviceInfo::driverVersion> {};
 // clang-format on
+
 } // namespace DeviceInfoTable
+
+} // namespace NEO

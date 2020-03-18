@@ -9,6 +9,7 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device_info.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -23,7 +24,6 @@
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
-#include "opencl/source/device/device_info.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/program/program.h"
 
@@ -620,7 +620,7 @@ NEO::PreemptionMode DeviceImp::getDevicePreemptionMode() const {
     return neoDevice->getPreemptionMode();
 }
 
-const DeviceInfo &DeviceImp::getDeviceInfo() const {
+const NEO::DeviceInfo &DeviceImp::getDeviceInfo() const {
     return neoDevice->getDeviceInfo();
 }
 

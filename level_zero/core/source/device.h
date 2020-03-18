@@ -19,11 +19,11 @@
 #include <level_zero/zet_api.h>
 
 struct _ze_device_handle_t {};
-struct DeviceInfo;
 namespace NEO {
 class Device;
 class MemoryManager;
 class SourceLevelDebugger;
+struct DeviceInfo;
 } // namespace NEO
 
 namespace L0 {
@@ -109,7 +109,7 @@ struct Device : _ze_device_handle_t {
     static Device *create(DriverHandle *driverHandle, NEO::Device *neoDevice);
 
     virtual NEO::PreemptionMode getDevicePreemptionMode() const = 0;
-    virtual const DeviceInfo &getDeviceInfo() const = 0;
+    virtual const NEO::DeviceInfo &getDeviceInfo() const = 0;
     virtual NEO::Device *getNEODevice() = 0;
 
     NEO::SourceLevelDebugger *getSourceLevelDebugger() {
