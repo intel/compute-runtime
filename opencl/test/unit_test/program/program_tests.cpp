@@ -651,7 +651,7 @@ HWTEST_P(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDele
     EXPECT_TRUE(csr1.requiresInstructionCacheFlush);
 }
 
-TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
+TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
     KernelBinaryHelper kbHelper(BinaryFileName, true);
     auto device = pPlatform->getClDevice(0);
 
@@ -725,8 +725,6 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
 
     // build successfully without notifyFunc - build kernel and write it to Kernel Cache
     pMockProgram->ClearOptions();
-    //    retVal = p->ClearKernelCache();
-    //    EXPECT_EQ(0, retVal);
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(CompilerOptions::contains(pProgram->getInternalOptions(), pPlatform->getClDevice(0)->peekCompilerExtensions())) << pProgram->getInternalOptions();
@@ -820,8 +818,10 @@ class Callback {
     }
     static std::map<const void *, uint32_t> watchList;
 };
+
 std::map<const void *, uint32_t> Callback::watchList;
-TEST_P(ProgramFromSourceTest, CreateWithSource_BuildFromCache) {
+
+TEST_P(ProgramFromSourceTest, GivenDifferenCommpilerOptionsWhenBuildingProgramThenKernelHashesAreDifferent) {
     KernelBinaryHelper kbHelper(BinaryFileName, true);
 
     cl_device_id usedDevice = pPlatform->getClDevice(0);
@@ -867,14 +867,14 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_BuildFromCache) {
     Callback::unwatch(kernel3);
 }
 
-TEST_P(ProgramFromSourceTest, CreateWithNoStrings) {
+TEST_P(ProgramFromSourceTest, GivenEmptyProgramWhenCreatingProgramThenInvalidValueErrorIsReturned) {
     auto p = Program::create(pContext, 0, nullptr, nullptr, retVal);
-    EXPECT_NE(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
     EXPECT_EQ(nullptr, p);
     delete p;
 }
 
-TEST_P(ProgramFromSourceTest, CreateWithSource_Compile) {
+TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
 
     cl_device_id usedDevice = pPlatform->getClDevice(0);
     CreateProgramWithSource(
@@ -1009,7 +1009,7 @@ struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
     std::string buildInternalOptions;
 };
 
-TEST_P(ProgramFromSourceTest, CompileProgramWithInternalFlags) {
+TEST_P(ProgramFromSourceTest, GivenFlagsWhenCompilingProgramThenBuildOptionsHaveBeenApplied) {
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pDevice = pContext->getDevice(0);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -1043,7 +1043,7 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithInternalFlags) {
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, pPlatform->getClDevice(0)->peekCompilerExtensions())) << cip->buildInternalOptions;
 }
 
-TEST_P(ProgramFromSourceTest, CreateWithSourceAdvanced) {
+TEST_P(ProgramFromSourceTest, GivenAdvancedOptionsWhenCreatingProgramThenSuccessIsReturned) {
     std::string testFile;
     size_t sourceSize = 0;
 
@@ -1054,17 +1054,13 @@ TEST_P(ProgramFromSourceTest, CreateWithSourceAdvanced) {
     const char *sources[1] = {pSourceBuffer.get()};
     EXPECT_NE(nullptr, pSourceBuffer);
 
-    /*
-     According to spec: If lengths is NULL, all strings in the strings argument are considered null-terminated.
-    */
+    //According to spec: If lengths is NULL, all strings in the strings argument are considered null-terminated.
     p = Program::create(pContext, 1, sources, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, p);
     delete p;
 
-    /*
-     According to spec: If an element in lengths is zero, its accompanying string is null-terminated.
-    */
+    //According to spec: If an element in lengths is zero, its accompanying string is null-terminated.
     p = Program::create(pContext, 1, sources, &sourceSize, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, p);
@@ -1078,6 +1074,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSourceAdvanced) {
         strcpy_s(ptr, line.length() + 1, line.c_str());
         lines.push_back(ptr);
     }
+
     // Work on array of strings
     p = Program::create(pContext, 1, &lines[0], nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1098,7 +1095,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSourceAdvanced) {
         delete[] ptr;
 }
 
-TEST_P(ProgramFromSourceTest, CreateWithSource_Link) {
+TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSuccessOrCorrectErrorCodeIsReturned) {
     cl_device_id usedDevice = pPlatform->getClDevice(0);
     CreateProgramWithSource(
         pContext,
@@ -1193,7 +1190,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Link) {
     EXPECT_EQ('a', data[0]);
 }
 
-TEST_P(ProgramFromSourceTest, CreateWithSource_CreateLibrary) {
+TEST_P(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectErrorIsReturned) {
     cl_program program = pProgram;
 
     // Order of following microtests is important - do not change.
@@ -1217,6 +1214,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_CreateLibrary) {
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
     auto failingProgram = std::make_unique<MockProgram>(*executionEnvironment);
     failingProgram->setDevice(&device->getDevice());
+
     // fail library creation - CompilerInterface cannot be obtained
     retVal = failingProgram->link(0, nullptr, CompilerOptions::createLibrary, 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
