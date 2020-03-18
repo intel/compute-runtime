@@ -16,6 +16,7 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"

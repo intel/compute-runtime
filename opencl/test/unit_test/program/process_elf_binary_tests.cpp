@@ -14,6 +14,7 @@
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
 #include "opencl/test/unit_test/helpers/test_files.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 

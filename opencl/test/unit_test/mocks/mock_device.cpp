@@ -19,17 +19,9 @@
 using namespace NEO;
 
 bool MockDevice::createSingleDevice = true;
-bool &MockClDevice::createSingleDevice = MockDevice::createSingleDevice;
 
 decltype(&createCommandStream) MockSubDevice::createCommandStreamReceiverFunc = createCommandStream;
 decltype(&createCommandStream) MockDevice::createCommandStreamReceiverFunc = createCommandStream;
-decltype(&createCommandStream) &MockClDevice::createCommandStreamReceiverFunc = MockDevice::createCommandStreamReceiverFunc;
-
-MockClDevice::MockClDevice(MockDevice *pMockDevice)
-    : ClDevice(*pMockDevice, platform()), device(*pMockDevice), sharedDeviceInfo(device.deviceInfo),
-      executionEnvironment(pMockDevice->executionEnvironment), subdevices(pMockDevice->subdevices),
-      mockMemoryManager(pMockDevice->mockMemoryManager), engines(pMockDevice->engines) {
-}
 
 MockDevice::MockDevice()
     : MockDevice(new MockExecutionEnvironment(), 0u) {

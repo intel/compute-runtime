@@ -12,6 +12,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/fixtures/device_instrumentation_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"

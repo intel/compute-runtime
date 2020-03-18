@@ -15,6 +15,7 @@
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_arb_sync_event_windows.h"
 #include "opencl/test/unit_test/mocks/gl/windows/mock_gl_sharing_windows.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"

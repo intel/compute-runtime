@@ -11,6 +11,7 @@
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 

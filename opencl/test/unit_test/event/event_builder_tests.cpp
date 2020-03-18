@@ -11,6 +11,7 @@
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/task_information.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"

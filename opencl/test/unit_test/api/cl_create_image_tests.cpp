@@ -9,6 +9,7 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 
 #include "cl_api_tests.h"

@@ -15,6 +15,7 @@
 
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"

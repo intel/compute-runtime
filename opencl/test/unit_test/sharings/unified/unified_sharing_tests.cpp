@@ -9,6 +9,7 @@
 #include "opencl/source/sharings/unified/unified_buffer.h"
 #include "opencl/source/sharings/unified/unified_sharing.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"

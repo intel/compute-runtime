@@ -14,6 +14,7 @@
 #include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"

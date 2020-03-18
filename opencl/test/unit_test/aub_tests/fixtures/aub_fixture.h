@@ -16,6 +16,7 @@
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/tests_configuration.h"
 

@@ -8,6 +8,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
