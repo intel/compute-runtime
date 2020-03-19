@@ -844,6 +844,5 @@ HWTEST_F(PipeControlHelperTests, WhenProgrammingCacheFlushThenExpectBasicFieldsS
     EXPECT_TRUE(pipeControl->getInstructionCacheInvalidateEnable());
     EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
     EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
-    EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
 }

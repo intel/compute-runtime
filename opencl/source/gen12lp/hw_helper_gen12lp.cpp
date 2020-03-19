@@ -138,6 +138,7 @@ std::string HwHelperHw<Family>::getExtensions() const {
 template <>
 void MemorySynchronizationCommands<Family>::setExtraCacheFlushFields(Family::PIPE_CONTROL *pipeControl) {
     pipeControl->setHdcPipelineFlush(true);
+    pipeControl->setConstantCacheInvalidationEnable(false);
 }
 
 template class AubHelperHw<Family>;

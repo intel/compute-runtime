@@ -116,7 +116,6 @@ HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingCacheFlushCmdThenExpectPipeCo
                 pipeControl->getInstructionCacheInvalidateEnable() &&
                 pipeControl->getTextureCacheInvalidationEnable() &&
                 pipeControl->getPipeControlFlushEnable() &&
-                pipeControl->getConstantCacheInvalidationEnable() &&
                 pipeControl->getStateCacheInvalidationEnable();
             if (foundCacheFlush) {
                 break;

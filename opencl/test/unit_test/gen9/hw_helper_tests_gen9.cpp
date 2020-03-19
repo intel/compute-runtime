@@ -53,3 +53,13 @@ GEN9TEST_F(HwHelperTestGen9, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
     EXPECT_EQ(3u, pDevice->engines.size());
 }
+
+using MemorySynchronizatiopCommandsTestsGen9 = ::testing::Test;
+GEN9TEST_F(MemorySynchronizatiopCommandsTestsGen9, WhenProgrammingCacheFlushThenExpectConstantCacheFieldSet) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+    PIPE_CONTROL *pipeControl = MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream);
+    EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
+}

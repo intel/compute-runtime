@@ -232,7 +232,8 @@ using MemorySynchronizatiopCommandsTests = ::testing::Test;
 GEN12LPTEST_F(MemorySynchronizatiopCommandsTests, whenSettingCacheFlushExtraFieldsThenExpectHdcFlushSet) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     PIPE_CONTROL pipeControl = FamilyType::cmdInitPipeControl;
-
+    pipeControl.setConstantCacheInvalidationEnable(true);
     MemorySynchronizationCommands<FamilyType>::setExtraCacheFlushFields(&pipeControl);
     EXPECT_TRUE(pipeControl.getHdcPipelineFlush());
+    EXPECT_FALSE(pipeControl.getConstantCacheInvalidationEnable());
 }
