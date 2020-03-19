@@ -140,6 +140,15 @@ TEST_F(GmmTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleaseParentGmm
     delete gmmRes2;
 }
 
+TEST_F(GmmTests, GivenInvalidImageSizeWhenQueryingImgParamsThenImageInfoReturnsSizeZero) {
+    cl_image_desc imgDesc = {CL_MEM_OBJECT_IMAGE2D};
+
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+    auto queryGmm = MockGmm::queryImgParams(rootDeviceEnvironment->getGmmClientContext(), imgInfo);
+
+    EXPECT_EQ(imgInfo.size, 0u);
+}
+
 TEST_F(GmmTests, GivenInvalidImageTypeWhenQueryingImgParamsThenExceptionIsThrown) {
     cl_image_desc imgDesc{};
     imgDesc.image_width = 10;

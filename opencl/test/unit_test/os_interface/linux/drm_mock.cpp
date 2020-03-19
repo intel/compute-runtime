@@ -126,6 +126,9 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         auto createParams = static_cast<drm_i915_gem_create *>(arg);
         this->createParamsSize = createParams->size;
         this->createParamsHandle = createParams->handle = 1u;
+        if (0 == this->createParamsSize) {
+            return EINVAL;
+        }
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_SET_TILING) {
