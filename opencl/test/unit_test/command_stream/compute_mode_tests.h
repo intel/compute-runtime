@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_helper.h"
 
 #include "opencl/test/unit_test/helpers/hw_parse.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
 

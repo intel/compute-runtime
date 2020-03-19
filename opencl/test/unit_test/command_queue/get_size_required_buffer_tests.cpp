@@ -20,6 +20,7 @@
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "test.h"
 
 using namespace NEO;

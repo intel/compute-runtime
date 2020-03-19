@@ -7,6 +7,7 @@
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/fixtures/two_walker_fixture.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "test.h"
 
 using namespace NEO;

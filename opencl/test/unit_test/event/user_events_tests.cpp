@@ -11,9 +11,13 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 
 #include "event_fixture.h"
+
+using namespace NEO;
 
 TEST(UserEvent, GivenUserEventWhenGettingEventCommandTypeThenClCommandUserIsReturned) {
     UserEvent uEvent;
@@ -168,10 +172,10 @@ TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithoutReturnEv
     auto taskCountAfter = csr.peekTaskCount();
 
     //queue should be in blocked state at this moment, task level should be inherited from user event
-    EXPECT_EQ(NEO::CompletionStamp::levelNotReady, pCmdQ->taskLevel);
+    EXPECT_EQ(CompletionStamp::levelNotReady, pCmdQ->taskLevel);
 
     //queue should be in blocked state at this moment, task count should be inherited from user event
-    EXPECT_EQ(NEO::CompletionStamp::levelNotReady, pCmdQ->taskCount);
+    EXPECT_EQ(CompletionStamp::levelNotReady, pCmdQ->taskCount);
 
     //queue should be in blocked state
     EXPECT_EQ(pCmdQ->isQueueBlocked(), true);
@@ -201,10 +205,10 @@ TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithReturnEvent
     auto taskCountAfter = csr.peekTaskCount();
 
     //queue should be in blocked state at this moment, task level should be inherited from user event
-    EXPECT_EQ(NEO::CompletionStamp::levelNotReady, pCmdQ->taskLevel);
+    EXPECT_EQ(CompletionStamp::levelNotReady, pCmdQ->taskLevel);
 
     //queue should be in blocked state at this moment, task count should be inherited from user event
-    EXPECT_EQ(NEO::CompletionStamp::levelNotReady, pCmdQ->taskCount);
+    EXPECT_EQ(CompletionStamp::levelNotReady, pCmdQ->taskCount);
 
     //queue should be in blocked state
     EXPECT_EQ(pCmdQ->isQueueBlocked(), true);
@@ -220,7 +224,7 @@ TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithReturnEvent
 
     //and if normal event inherited status from user event
     Event *returnEvent = castToObject<Event>(retEvent);
-    EXPECT_EQ(returnEvent->taskLevel, NEO::CompletionStamp::levelNotReady);
+    EXPECT_EQ(returnEvent->taskLevel, CompletionStamp::levelNotReady);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 

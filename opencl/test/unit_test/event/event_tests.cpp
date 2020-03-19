@@ -17,6 +17,7 @@
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/source/memory_manager/mem_obj_surface.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
@@ -33,6 +34,8 @@
 
 #include <memory>
 #include <type_traits>
+
+using namespace NEO;
 
 TEST(Event, GivenEventWhenCheckingTraitThenEventIsNotCopyable) {
     EXPECT_FALSE(std::is_move_constructible<Event>::value);

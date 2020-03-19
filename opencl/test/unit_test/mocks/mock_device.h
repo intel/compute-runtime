@@ -6,20 +6,22 @@
  */
 
 #pragma once
+
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/device/sub_device.h"
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/test/unit_test/helpers/default_hw_info.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
-#include "opencl/source/device/cl_device.h"
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 
 namespace NEO {
+class CommandStreamReceiver;
+class DriverInfo;
 class OSTime;
-class FailMemoryManager;
+
+template <typename GfxFamily>
+class UltCommandStreamReceiver;
 
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 

@@ -14,6 +14,8 @@
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_fixtures.h"
 #include "opencl/test/unit_test/sharings/unified/unified_sharing_mocks.h"
 
+using namespace NEO;
+
 using UnifiedSharingImageTestsWithMemoryManager = UnifiedSharingFixture<true, true>;
 using UnifiedSharingImageTestsWithInvalidMemoryManager = UnifiedSharingFixture<true, false>;
 

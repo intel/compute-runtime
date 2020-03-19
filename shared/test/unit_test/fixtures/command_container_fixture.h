@@ -11,6 +11,8 @@
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "test.h"
 
+namespace NEO {
+
 class CommandEncodeStatesFixture : public DeviceFixture {
   public:
     class MyMockCommandContainer : public CommandContainer {
@@ -29,3 +31,5 @@ class CommandEncodeStatesFixture : public DeviceFixture {
     }
     std::unique_ptr<MyMockCommandContainer> cmdContainer;
 };
+
+} // namespace NEO

@@ -25,6 +25,8 @@
 
 #include <memory>
 
+namespace NEO {
+
 class ImageSurfaceStateTests : public DeviceFixture,
                                public testing::Test {
   public:
@@ -42,3 +44,5 @@ class ImageSurfaceStateTests : public DeviceFixture,
     GmmHelper *gmmHelper = nullptr;
     NEO::ImageInfo imageInfo;
 };
+
+} // namespace NEO

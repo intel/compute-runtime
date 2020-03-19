@@ -7,8 +7,8 @@
 
 #include "opencl/test/unit_test/mocks/mock_device.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
-#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"

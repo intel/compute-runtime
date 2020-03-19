@@ -18,6 +18,8 @@
 
 #include <cstdint>
 
+using namespace NEO;
+
 TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedThenMemoryIsAllocatedAsNonSvmAllocation) {
     auto &device = *(new MockDevice);
     MockClDevice clDevice{&device};

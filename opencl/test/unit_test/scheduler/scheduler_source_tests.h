@@ -11,17 +11,19 @@
 
 #include "gtest/gtest.h"
 
+namespace NEO {
+
 class SchedulerSourceTest : public testing::Test {
   public:
     void SetUp() override {
-        pDevice = new MockClDevice{NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(nullptr)};
+        pDevice = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     }
     void TearDown() override {
         delete pDevice;
     }
 
-    NEO::MockClDevice *pDevice;
-    NEO::MockContext context;
+    MockClDevice *pDevice;
+    MockContext context;
 
     template <typename GfxFamily>
     void givenDeviceQueueThenNumberOfEnqueuesEqualsNumberOfEnqueuesInSchedulerKernelCodeTest();
@@ -30,3 +32,5 @@ class SchedulerSourceTest : public testing::Test {
     template <typename GfxFamily>
     void givenDeviceQueueWhenSlbDummyCommandsAreBuildThenSizeUsedIsCorrectTest();
 };
+
+} // namespace NEO

@@ -10,9 +10,9 @@
 
 #include "test.h"
 
-using BlitterDispatcheTest = Test<DispatcherFixture>;
-
 using namespace NEO;
+
+using BlitterDispatcheTest = Test<DispatcherFixture>;
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenAskingForPreemptionCmdSizeThenReturnZero) {
     BlitterDispatcher<FamilyType> blitterDispatcher;

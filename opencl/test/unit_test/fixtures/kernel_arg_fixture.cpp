@@ -14,10 +14,12 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
+using namespace NEO;
+
 KernelImageArgTest::~KernelImageArgTest() = default;
 
 void KernelImageArgTest::SetUp() {
-    pKernelInfo = std::make_unique<NEO::KernelInfo>();
+    pKernelInfo = std::make_unique<KernelInfo>();
     KernelArgPatchInfo kernelArgPatchInfo;
     kernelHeader.reset(new iOpenCL::SKernelBinaryHeaderCommon{});
 
@@ -55,21 +57,21 @@ void KernelImageArgTest::SetUp() {
     pKernelInfo->kernelArgInfo[0].isImage = true;
 
     DeviceFixture::SetUp();
-    program = std::make_unique<NEO::MockProgram>(*pDevice->getExecutionEnvironment());
-    pKernel.reset(new NEO::MockKernel(program.get(), *pKernelInfo, *pClDevice));
+    program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+    pKernel.reset(new MockKernel(program.get(), *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
-    pKernel->setKernelArgHandler(0, &NEO::Kernel::setArgImage);
-    pKernel->setKernelArgHandler(1, &NEO::Kernel::setArgImage);
-    pKernel->setKernelArgHandler(2, &NEO::Kernel::setArgImmediate);
-    pKernel->setKernelArgHandler(3, &NEO::Kernel::setArgImage);
-    pKernel->setKernelArgHandler(4, &NEO::Kernel::setArgImage);
+    pKernel->setKernelArgHandler(0, &Kernel::setArgImage);
+    pKernel->setKernelArgHandler(1, &Kernel::setArgImage);
+    pKernel->setKernelArgHandler(2, &Kernel::setArgImmediate);
+    pKernel->setKernelArgHandler(3, &Kernel::setArgImage);
+    pKernel->setKernelArgHandler(4, &Kernel::setArgImage);
 
     uint32_t crossThreadData[0x44] = {};
     crossThreadData[0x20 / sizeof(uint32_t)] = 0x12344321;
     pKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
 
-    context.reset(new NEO::MockContext(pClDevice));
+    context.reset(new MockContext(pClDevice));
     image.reset(Image2dHelper<>::create(context.get()));
     pKernel->setContext(context.get());
     ASSERT_NE(nullptr, image);

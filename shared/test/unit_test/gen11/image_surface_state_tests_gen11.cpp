@@ -7,6 +7,8 @@
 
 #include "shared/test/unit_test/image/image_surface_state_fixture.h"
 
+using namespace NEO;
+
 using ImageSurfaceStateTestsGen11 = ImageSurfaceStateTests;
 
 GEN11TEST_F(ImageSurfaceStateTestsGen11, givenGmmWithMediaCompressedWhenSetFlagsForMediaCompressionThenAuxiliarySurfaceNoneIsSet) {

@@ -9,6 +9,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_environment.h"
 
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"

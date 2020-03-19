@@ -10,6 +10,8 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/memory_constants.h"
 
+using namespace NEO;
+
 void DispatcherFixture::SetUp() {
     DeviceFixture::SetUp();
 

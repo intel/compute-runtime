@@ -7,6 +7,8 @@
 
 #include "shared/test/unit_test/image/image_surface_state_fixture.h"
 
+using namespace NEO;
+
 HWTEST_F(ImageSurfaceStateTests, givenImageInfoWhenSetImageSurfaceStateThenProperFieldsAreSet) {
     auto size = sizeof(typename FamilyType::RENDER_SURFACE_STATE);
     auto surfaceState = std::make_unique<char[]>(size);

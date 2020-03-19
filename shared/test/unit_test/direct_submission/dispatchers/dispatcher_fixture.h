@@ -9,6 +9,8 @@
 
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 
+namespace NEO {
+
 class DispatcherFixture : public DeviceFixture {
   public:
     void SetUp();
@@ -17,3 +19,5 @@ class DispatcherFixture : public DeviceFixture {
     NEO::LinearStream cmdBuffer;
     void *bufferAllocation;
 };
+
+} // namespace NEO

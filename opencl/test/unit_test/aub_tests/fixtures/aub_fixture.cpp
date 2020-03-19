@@ -11,6 +11,8 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
+
 namespace NEO {
 
 GraphicsAllocation *AUBFixture::createHostPtrAllocationFromSvmPtr(void *svmPtr, size_t size) {

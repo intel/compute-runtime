@@ -11,6 +11,8 @@
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
 
+using namespace NEO;
+
 using InterfaceDescriptorDataTests = ::testing::Test;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, InterfaceDescriptorDataTests, givenVariousValuesWhenCallingSetBarrierEnableThenCorrectValueIsSet) {

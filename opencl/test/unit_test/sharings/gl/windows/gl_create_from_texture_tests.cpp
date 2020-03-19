@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/get_info.h"
 
+#include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sharings/gl/gl_texture.h"

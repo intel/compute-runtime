@@ -8,6 +8,7 @@
 #include "shared/source/helpers/preamble.h"
 
 #include "opencl/test/unit_test/fixtures/media_kernel_fixture.h"
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "test.h"
 
 using namespace NEO;

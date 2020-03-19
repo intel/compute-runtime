@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
