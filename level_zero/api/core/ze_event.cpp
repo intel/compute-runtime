@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/event.h"
+#include "level_zero/core/source/event/event.h"
 #include <level_zero/ze_api.h>
 
 extern "C" {

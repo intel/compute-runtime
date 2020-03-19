@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "level_zero/core/source/driver_imp.h"
+#include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/cmdlist_hw.h"
+#include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 
 namespace L0 {
 

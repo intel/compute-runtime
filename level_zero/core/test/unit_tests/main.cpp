@@ -18,7 +18,7 @@
 #include "opencl/test/unit_test/mocks/mock_gmm_client_context.h"
 #include "opencl/test/unit_test/mocks/mock_sip.h"
 
-#include "level_zero/core/source/cmdlist.h"
+#include "level_zero/core/source/cmdlist/cmdlist.h"
 
 #include "gmock/gmock.h"
 #include "igfxfmid.h"

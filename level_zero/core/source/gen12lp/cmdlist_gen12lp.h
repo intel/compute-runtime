@@ -7,8 +7,8 @@
 
 #pragma once
 
-#include "level_zero/core/source/cmdlist_hw.h"
-#include "level_zero/core/source/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/cmdlist/cmdlist_hw.h"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 
 namespace L0 {
 

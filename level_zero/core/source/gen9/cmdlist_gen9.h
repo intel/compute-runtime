@@ -11,8 +11,8 @@
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/gen9/hw_info.h"
 
-#include "level_zero/core/source/cmdlist_hw.h"
-#include "level_zero/core/source/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/cmdlist/cmdlist_hw.h"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 
 #include "igfxfmid.h"
 

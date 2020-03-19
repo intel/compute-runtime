@@ -7,7 +7,7 @@
 
 #include "pin.h"
 
-#include "level_zero/core/source/module.h"
+#include "level_zero/core/source/module/module.h"
 #include "level_zero/source/inc/ze_intel_gpu.h"
 
 namespace L0 {

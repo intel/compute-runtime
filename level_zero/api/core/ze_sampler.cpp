@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/sampler.h"
+#include "level_zero/core/source/sampler/sampler.h"
 #include <level_zero/ze_api.h>
 
 extern "C" {

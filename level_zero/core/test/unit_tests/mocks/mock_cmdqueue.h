@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "level_zero/core/source/cmdqueue_hw.h"
-#include "level_zero/core/source/cmdqueue_imp.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 

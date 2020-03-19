@@ -7,8 +7,8 @@
 
 #include "level_zero/tools/source/sysman/sysman.h"
 
-#include "level_zero/core/source/driver.h"
-#include "level_zero/core/source/driver_handle_imp.h"
+#include "level_zero/core/source/driver/driver.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <vector>

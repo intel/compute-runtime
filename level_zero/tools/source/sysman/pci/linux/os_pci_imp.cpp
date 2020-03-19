@@ -8,7 +8,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 
-#include "level_zero/core/source/device.h"
+#include "level_zero/core/source/device/device.h"
 
 #include "sysman/linux/os_sysman_imp.h"
 #include "sysman/pci/os_pci.h"

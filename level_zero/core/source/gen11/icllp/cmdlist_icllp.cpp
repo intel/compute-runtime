@@ -8,9 +8,9 @@
 #include "shared/source/gen11/hw_cmds.h"
 #include "shared/source/gen11/hw_info.h"
 
-#include "level_zero/core/source/cmdlist_hw.inl"
-#include "level_zero/core/source/cmdlist_hw_base.inl"
-#include "level_zero/core/source/cmdlist_hw_immediate.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_base.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.inl"
 #include "level_zero/core/source/gen11/cmdlist_gen11.inl"
 
 #include "cmdlist_extended.inl"

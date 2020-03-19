@@ -8,8 +8,8 @@
 #include "shared/source/gen11/hw_cmds.h"
 #include "shared/source/gen11/hw_info.h"
 
-#include "level_zero/core/source/cmdqueue_hw.inl"
-#include "level_zero/core/source/cmdqueue_hw_base.inl"
+#include "level_zero/core/source/cmdqueue/cmdqueue_hw.inl"
+#include "level_zero/core/source/cmdqueue/cmdqueue_hw_base.inl"
 
 #include "cmdqueue_extended.inl"
 #include "igfxfmid.h"

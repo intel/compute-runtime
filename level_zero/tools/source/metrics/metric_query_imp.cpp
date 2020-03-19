@@ -15,9 +15,9 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_library.h"
 
-#include "level_zero/core/source/cmdlist.h"
-#include "level_zero/core/source/device.h"
-#include "level_zero/core/source/device_imp.h"
+#include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
 
 using namespace MetricsLibraryApi;

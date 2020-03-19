@@ -8,9 +8,9 @@
 #include "shared/source/gen12lp/hw_cmds.h"
 #include "shared/source/gen12lp/hw_info.h"
 
-#include "level_zero/core/source/cmdlist_hw.inl"
-#include "level_zero/core/source/cmdlist_hw_base.inl"
-#include "level_zero/core/source/cmdlist_hw_immediate.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_base.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.inl"
 #include "level_zero/core/source/gen12lp/cmdlist_gen12lp.h"
 
 #include "cache_flush_gen12lp.inl"

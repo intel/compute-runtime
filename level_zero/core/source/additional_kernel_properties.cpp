@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/device_imp.h"
+#include "level_zero/core/source/device/device_imp.h"
 
 namespace L0 {
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/image.h"
+#include "level_zero/core/source/image/image.h"
 #include <level_zero/ze_api.h>
 
 extern "C" {

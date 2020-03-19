@@ -9,9 +9,9 @@
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/gen9/hw_info.h"
 
-#include "level_zero/core/source/cmdlist_hw.inl"
-#include "level_zero/core/source/cmdlist_hw_base.inl"
-#include "level_zero/core/source/cmdlist_hw_immediate.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_base.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.inl"
 #include "level_zero/core/source/gen9/cmdlist_gen9.h"
 #include "level_zero/core/source/gen9/cmdlist_gen9.inl"
 

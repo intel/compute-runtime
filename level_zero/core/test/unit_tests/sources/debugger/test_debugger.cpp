@@ -15,8 +15,8 @@
 #include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 #include "test.h"
 
-#include "level_zero/core/source/cmdqueue_hw.h"
-#include "level_zero/core/source/fence.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
+#include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"

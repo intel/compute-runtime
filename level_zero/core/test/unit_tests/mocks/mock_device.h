@@ -11,8 +11,8 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
 
-#include "level_zero/core/source/device.h"
-#include "level_zero/core/source/driver_handle.h"
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 #include "level_zero/tools/source/metrics/metric.h"

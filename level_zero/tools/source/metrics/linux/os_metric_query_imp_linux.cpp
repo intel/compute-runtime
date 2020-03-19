@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/device.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/metrics/metric_query_imp.h"
 
 using namespace MetricsLibraryApi;

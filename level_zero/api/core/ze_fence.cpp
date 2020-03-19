@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/fence.h"
+#include "level_zero/core/source/fence/fence.h"
 #include <level_zero/ze_api.h>
 
 extern "C" {

@@ -5,8 +5,8 @@
  *
  */
 
-#include "level_zero/core/source/driver.h"
-#include "level_zero/core/source/driver_handle.h"
+#include "level_zero/core/source/driver/driver.h"
+#include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>
 
 extern "C" {

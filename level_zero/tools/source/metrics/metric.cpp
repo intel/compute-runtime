@@ -9,9 +9,9 @@
 
 #include "shared/source/os_interface/os_library.h"
 
-#include "level_zero/core/source/device.h"
-#include "level_zero/core/source/driver.h"
-#include "level_zero/core/source/driver_handle_imp.h"
+#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/driver/driver.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/source/inc/ze_intel_gpu.h"
 #include "level_zero/tools/source/metrics/metric_enumeration_imp.h"
 #include "level_zero/tools/source/metrics/metric_query_imp.h"

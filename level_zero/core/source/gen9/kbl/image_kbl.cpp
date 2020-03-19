@@ -8,7 +8,7 @@
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/gen9/hw_info.h"
 
-#include "level_zero/core/source/image_hw.inl"
+#include "level_zero/core/source/image/image_hw.inl"
 
 namespace L0 {
 

@@ -9,7 +9,7 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
-#include "level_zero/core/source/device.h"
+#include "level_zero/core/source/device/device.h"
 
 namespace L0 {
 

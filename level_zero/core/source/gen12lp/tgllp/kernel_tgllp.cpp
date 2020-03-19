@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/core/source/kernel_hw.h"
+#include "level_zero/core/source/kernel/kernel_hw.h"
 
 namespace L0 {
 

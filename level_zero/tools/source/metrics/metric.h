@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "level_zero/core/source/event.h"
+#include "level_zero/core/source/event/event.h"
 #include <level_zero/zet_api.h>
 
 #include <vector>
