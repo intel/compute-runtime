@@ -9,5 +9,5 @@
 
 namespace NEO {
 template <>
-bool StateComputeModeHelper<TGLLPFamily>::isStateComputeModeRequired(CsrSizeRequestFlags &csrSizeRequestFlags, bool isThreadArbitionPolicyProgrammed) { return false; }
+bool StateComputeModeHelper<TGLLPFamily>::isStateComputeModeRequired(const CsrSizeRequestFlags &csrSizeRequestFlags, bool isThreadArbitionPolicyProgrammed) { return false; }
 } // namespace NEO

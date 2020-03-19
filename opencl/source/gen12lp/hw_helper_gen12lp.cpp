@@ -36,6 +36,11 @@ bool HwHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &h
 }
 
 template <>
+bool HwHelperHw<Family>::is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const {
+    return Gen12LPHelpers::is3DPipelineSelectWARequired(hwInfo);
+}
+
+template <>
 bool HwHelperHw<Family>::isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo) {
     return Gen12LPHelpers::isForceDefaultRCSEngineWARequired(hwInfo);
 }

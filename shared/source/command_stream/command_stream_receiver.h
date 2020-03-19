@@ -202,6 +202,8 @@ class CommandStreamReceiver {
         return false;
     }
 
+    bool isRcs() const;
+
   protected:
     void cleanupResources();
 

@@ -282,7 +282,12 @@ uint32_t HwHelperHw<GfxFamily>::getBarriersCountFromHasBarriers(uint32_t hasBarr
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const {
+inline bool HwHelperHw<GfxFamily>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }
 

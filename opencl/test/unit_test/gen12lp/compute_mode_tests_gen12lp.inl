@@ -11,8 +11,9 @@ TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenCo
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
 
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
+    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + 3 * sizeof(PIPE_CONTROL) + 2 * sizeof(PIPELINE_SELECT);
     char buff[1024];
     LinearStream stream(buff, 1024);
 
@@ -59,8 +60,10 @@ TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenCo
 TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestFlagsWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
 
-    auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
+    auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(PIPELINE_SELECT);
     char buff[1024];
     LinearStream stream(buff, 1024);
 

@@ -57,6 +57,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForMediaSampler(bool mediaSamplerRequired) const;
     size_t getCmdSizeForEngineMode(const DispatchFlags &dispatchFlags) const;
 
+    bool isComputeModeNeeded() const;
+    bool isPipelineSelectAlreadyProgrammed() const;
     void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags);
     void adjustComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags, void *const stateComputeMode);
 
@@ -90,6 +92,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
     void programPreamble(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
     void programPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs);
+    void programAdditionalPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs, bool is3DPipeline);
     void programEpilogue(LinearStream &csr, void **batchBufferEndLocation, DispatchFlags &dispatchFlags);
     void programEpliogueCommands(LinearStream &csr, const DispatchFlags &dispatchFlags);
     void programMediaSampler(LinearStream &csr, DispatchFlags &dispatchFlags);

@@ -12,6 +12,6 @@
 namespace NEO {
 template <typename GfxFamily>
 struct StateComputeModeHelper {
-    static bool isStateComputeModeRequired(CsrSizeRequestFlags &csrSizeRequestFlags, bool isThreadArbitionPolicyProgrammed);
+    static bool isStateComputeModeRequired(const CsrSizeRequestFlags &csrSizeRequestFlags, bool isThreadArbitionPolicyProgrammed);
 };
 } // namespace NEO

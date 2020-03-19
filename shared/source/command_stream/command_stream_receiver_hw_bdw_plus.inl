@@ -32,7 +32,15 @@ inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, Dis
 
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize() const {
-    return sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
+    using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
+
+    size_t size = 0;
+    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+    if (hwHelper.is3DPipelineSelectWARequired(peekHwInfo())) {
+        size += (2 * PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekHwInfo()));
+    }
+    size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
+    return size;
 }
 
 template <typename GfxFamily>
@@ -48,7 +56,9 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &commandStream, PipelineSelectArgs &pipelineSelectArgs) {
     if (csrSizeRequestFlags.mediaSamplerConfigChanged || !isPreambleSent) {
-        PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, peekHwInfo());
+        if (!isPipelineSelectAlreadyProgrammed()) {
+            PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, peekHwInfo());
+        }
         this->lastMediaSamplerConfig = pipelineSelectArgs.mediaSamplerRequired;
     }
 }

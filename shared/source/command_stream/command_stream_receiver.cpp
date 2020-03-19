@@ -166,6 +166,10 @@ OSInterface *CommandStreamReceiver::getOSInterface() const {
     return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.get();
 }
 
+bool CommandStreamReceiver::isRcs() const {
+    return this->osContext->getEngineType() == aub_stream::ENGINE_RCS;
+}
+
 void CommandStreamReceiver::cleanupResources() {
     waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, TEMPORARY_ALLOCATION);
     waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, REUSABLE_ALLOCATION);

@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/kernel/kernel.h"
@@ -148,17 +149,32 @@ struct HardwareParse {
     template <typename FamilyType>
     int getNumberOfPipelineSelectsThatEnablePipelineSelect() {
         typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
-        int numCommands = 0;
+        int numberOfGpgpuSelects = 0;
+        int numberOf3dSelects = 0;
         auto itorCmd = find<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
         while (itorCmd != cmdList.end()) {
             auto cmd = getCommand<PIPELINE_SELECT>(itorCmd, cmdList.end());
             if (cmd->getPipelineSelection() == PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU &&
                 pipelineSelectEnablePipelineSelectMaskBits == (pipelineSelectEnablePipelineSelectMaskBits & cmd->getMaskBits())) {
-                numCommands++;
+                numberOfGpgpuSelects++;
+            }
+            if (cmd->getPipelineSelection() == PIPELINE_SELECT::PIPELINE_SELECTION_3D &&
+                pipelineSelectEnablePipelineSelectMaskBits == (pipelineSelectEnablePipelineSelectMaskBits & cmd->getMaskBits())) {
+                numberOf3dSelects++;
             }
             itorCmd = find<PIPELINE_SELECT *>(++itorCmd, cmdList.end());
         }
-        return numCommands;
+        auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
+        if (hwHelper.is3DPipelineSelectWARequired(*platformDevices[0])) {
+            auto maximalNumberOf3dSelectsRequired = 2;
+            EXPECT_LE(numberOf3dSelects, maximalNumberOf3dSelectsRequired);
+            EXPECT_EQ(numberOf3dSelects, numberOfGpgpuSelects);
+            auto numberOfGpgpuSelectsAddedByWa = numberOf3dSelects - 1;
+            numberOfGpgpuSelects -= numberOfGpgpuSelectsAddedByWa;
+        } else {
+            EXPECT_EQ(0, numberOf3dSelects);
+        }
+        return numberOfGpgpuSelects;
     }
 
     template <typename CmdType>

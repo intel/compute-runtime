@@ -15,8 +15,8 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
-    if (csrSizeRequestFlags.coherencyRequestChanged || csrSizeRequestFlags.hasSharedHandles || csrSizeRequestFlags.numGrfRequiredChanged ||
-        StateComputeModeHelper<GfxFamily>::isStateComputeModeRequired(csrSizeRequestFlags, this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy)) {
+    if (isComputeModeNeeded()) {
+        programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, true);
         auto stateComputeMode = stream.getSpaceForCmd<STATE_COMPUTE_MODE>();
         *stateComputeMode = GfxFamily::cmdInitStateComputeMode;
 
@@ -31,7 +31,14 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
             *pc = GfxFamily::cmdInitPipeControl;
         }
         adjustComputeMode(stream, dispatchFlags, stateComputeMode);
+        programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, false);
     }
+}
+
+template <>
+inline bool CommandStreamReceiverHw<Family>::isComputeModeNeeded() const {
+    return csrSizeRequestFlags.coherencyRequestChanged || csrSizeRequestFlags.hasSharedHandles || csrSizeRequestFlags.numGrfRequiredChanged ||
+           StateComputeModeHelper<Family>::isStateComputeModeRequired(csrSizeRequestFlags, this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy);
 }
 
 template <>

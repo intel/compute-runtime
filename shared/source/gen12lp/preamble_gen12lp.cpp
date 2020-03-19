@@ -46,9 +46,10 @@ void PreambleHelper<TGLLPFamily>::programPipelineSelect(LinearStream *pCommandSt
     *pCmd = TGLLPFamily::cmdInitPipelineSelect;
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
+    auto pipeline = pipelineSelectArgs.is3DPipelineRequired ? PIPELINE_SELECT::PIPELINE_SELECTION_3D : PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
 
     pCmd->setMaskBits(mask);
-    pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
+    pCmd->setPipelineSelection(pipeline);
     pCmd->setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
 
     Gen12LPHelpers::setAdditionalPipelineSelectFields(pCmd, pipelineSelectArgs, hwInfo);

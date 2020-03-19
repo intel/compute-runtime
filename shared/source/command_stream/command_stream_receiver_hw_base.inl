@@ -276,8 +276,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
     programEnginePrologue(commandStreamCSR);
     programComputeMode(commandStreamCSR, dispatchFlags);
-    programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
+    programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPreamble(commandStreamCSR, device, dispatchFlags, newL3Config);
     programMediaSampler(commandStreamCSR, dispatchFlags);
 
@@ -311,6 +311,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     //Reprogram state base address if required
     if (isStateBaseAddressDirty || device.isDebuggerActive()) {
         addPipeControlBeforeStateBaseAddress(commandStreamCSR);
+        programAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true);
 
         uint64_t newGSHbase = 0;
         GSBAFor32BitProgrammed = false;
@@ -345,6 +346,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             bindingTableBaseAddressRequired = false;
         }
 
+        programAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false);
         programStateSip(commandStreamCSR, device);
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
@@ -691,9 +693,10 @@ template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() const {
 
     size_t size = 0;
-    if (csrSizeRequestFlags.mediaSamplerConfigChanged ||
-        csrSizeRequestFlags.specialPipelineSelectModeChanged ||
-        !isPreambleSent) {
+    if ((csrSizeRequestFlags.mediaSamplerConfigChanged ||
+         csrSizeRequestFlags.specialPipelineSelectModeChanged ||
+         !isPreambleSent) &&
+        !isPipelineSelectAlreadyProgrammed()) {
         size += PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekHwInfo());
     }
     return size;
@@ -889,6 +892,27 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     }
 
     return newTaskCount;
+}
+
+template <typename GfxFamily>
+inline void CommandStreamReceiverHw<GfxFamily>::programAdditionalPipelineSelect(LinearStream &csr, PipelineSelectArgs &pipelineSelectArgs, bool is3DPipeline) {
+    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+    if (hwHelper.is3DPipelineSelectWARequired(peekHwInfo()) && isRcs()) {
+        auto localPipelineSelectArgs = pipelineSelectArgs;
+        localPipelineSelectArgs.is3DPipelineRequired = is3DPipeline;
+        PreambleHelper<GfxFamily>::programPipelineSelect(&csr, localPipelineSelectArgs, peekHwInfo());
+    }
+}
+
+template <typename GfxFamily>
+inline bool CommandStreamReceiverHw<GfxFamily>::isComputeModeNeeded() const {
+    return false;
+}
+
+template <typename GfxFamily>
+inline bool CommandStreamReceiverHw<GfxFamily>::isPipelineSelectAlreadyProgrammed() const {
+    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+    return isComputeModeNeeded() && hwHelper.is3DPipelineSelectWARequired(peekHwInfo()) && isRcs();
 }
 
 template <typename GfxFamily>

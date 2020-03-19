@@ -11,5 +11,6 @@ namespace NEO {
 struct PipelineSelectArgs {
     bool specialPipelineSelectMode = false;
     bool mediaSamplerRequired = false;
+    bool is3DPipelineRequired = false;
 };
 } // namespace NEO

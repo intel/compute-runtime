@@ -52,5 +52,9 @@ bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
     return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & (hwInfo.platform.usRevId == REVISION_A0));
 }
 
+bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) {
+    return hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP;
+}
+
 } // namespace Gen12LPHelpers
 } // namespace NEO

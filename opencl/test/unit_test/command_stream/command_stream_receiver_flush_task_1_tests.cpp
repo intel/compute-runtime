@@ -522,7 +522,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, pipelineSelectShouldNotBeSentIfSen
     commandStreamReceiver.lastMediaSamplerConfig = 0;
     flushTask(commandStreamReceiver);
     parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-    EXPECT_EQ(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
+
+    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (hwHelper.is3DPipelineSelectWARequired(pDevice->getHardwareInfo())) {
+        EXPECT_NE(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
+    } else {
+        EXPECT_EQ(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
+    }
 }
 HWTEST_F(CommandStreamReceiverFlushTaskTests, pipelineSelectShouldBeSentIfSentPreambleAndMediaSamplerRequirementDoesntChanged) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
