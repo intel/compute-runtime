@@ -22,8 +22,7 @@ struct clEnqueueVerifyMemoryINTELSettings {
     const cl_uint comparisonMode = CL_MEM_COMPARE_EQUAL;
     const size_t bufferSize = 1;
     static constexpr size_t expectedSize = 1;
-    int expected[expectedSize];
-    // Use any valid pointer as gpu address because non aub tests will not actually validate the memory
+    int expected[expectedSize]{};
     void *gpuAddress = expected;
 };
 
@@ -51,7 +50,13 @@ TEST_F(clEnqueueVerifyMemoryINTELTests, givenInvalidCommandQueueWhenCallingVerif
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retval);
 }
 
-TEST_F(clEnqueueVerifyMemoryINTELTests, givenCommandQueueWithoutAubCsrWhenCallingVerifyMemoryThenSuccessIsReturned) {
+TEST_F(clEnqueueVerifyMemoryINTELTests, givenEqualMemoryWhenCallingVerifyMemoryThenSuccessIsReturned) {
     cl_int retval = clEnqueueVerifyMemoryINTEL(pCommandQueue, gpuAddress, expected, expectedSize, comparisonMode);
     EXPECT_EQ(CL_SUCCESS, retval);
+}
+
+TEST_F(clEnqueueVerifyMemoryINTELTests, givenNotEqualMemoryWhenCallingVerifyMemoryThenInvalidValueErrorIsReturned) {
+    int differentMemory = expected[0] + 1;
+    cl_int retval = clEnqueueVerifyMemoryINTEL(pCommandQueue, gpuAddress, &differentMemory, sizeof(differentMemory), comparisonMode);
+    EXPECT_EQ(CL_INVALID_VALUE, retval);
 }

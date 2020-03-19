@@ -675,8 +675,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::expectMMIO(uint32_t mmioRegister, ui
 }
 
 template <typename GfxFamily>
-int32_t AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress, const void *srcAddress,
-                                                            size_t length, uint32_t compareOperation) {
+bool AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress, const void *srcAddress,
+                                                         size_t length, uint32_t compareOperation) {
     pollForCompletion();
 
     auto streamLocked = getAubStream()->lockStream();
@@ -696,8 +696,7 @@ int32_t AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddre
     };
 
     this->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);
-
-    return CL_SUCCESS;
+    return true;
 }
 
 template <typename GfxFamily>

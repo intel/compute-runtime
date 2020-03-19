@@ -5183,8 +5183,8 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemoryINTEL(cl_command_queue comm
     }
 
     auto &csr = pCommandQueue->getGpgpuCommandStreamReceiver();
-    retVal = csr.expectMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode);
-    return retVal;
+    auto status = csr.expectMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode);
+    return status ? CL_SUCCESS : CL_INVALID_VALUE;
 }
 
 cl_int CL_API_CALL clAddCommentINTEL(cl_device_id device, const char *comment) {

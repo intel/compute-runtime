@@ -171,7 +171,7 @@ class CommandStreamReceiver {
     TagAllocator<HwPerfCounter> *getEventPerfCountAllocator(const uint32_t tagSize);
     TagAllocator<TimestampPacketStorage> *getTimestampPacketAllocator();
 
-    virtual int32_t expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
+    virtual bool expectMemory(const void *gfxAddress, const void *srcAddress, size_t length, uint32_t compareOperation);
 
     virtual bool isMultiOsContextCapable() const = 0;
 

@@ -476,12 +476,12 @@ size_t CommandStreamReceiver::getPreferredTagPoolSize() const {
     return 512;
 }
 
-int32_t CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
-                                            size_t length, uint32_t compareOperation) {
+bool CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
+                                         size_t length, uint32_t compareOperation) {
     auto isMemoryEqual = (memcmp(gfxAddress, srcAddress, length) == 0);
     auto isEqualMemoryExpected = (compareOperation == AubMemDump::CmdServicesMemTraceMemoryCompare::CompareOperationValues::CompareEqual);
 
-    return (isMemoryEqual == isEqualMemoryExpected) ? CL_SUCCESS : CL_INVALID_VALUE;
+    return (isMemoryEqual == isEqualMemoryExpected);
 }
 
 bool CommandStreamReceiver::needsPageTableManager(aub_stream::EngineType engineType) const {
