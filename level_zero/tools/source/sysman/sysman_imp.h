@@ -30,7 +30,7 @@ struct SysmanImp : Sysman {
 
     OsSysman *pOsSysman;
     Pci *pPci;
-    sysmanDevice *pSysmanDevice;
+    SysmanDevice *pSysmanDevice;
     FrequencyHandleContext *pFrequencyHandleContext;
     StandbyHandleContext *pStandbyHandleContext;
 

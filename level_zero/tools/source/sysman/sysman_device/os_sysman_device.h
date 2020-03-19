@@ -22,6 +22,7 @@ class OsSysmanDevice {
     virtual void getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_SIZE]) = 0;
     virtual void getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]) = 0;
     virtual void getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) = 0;
+    virtual ze_result_t reset() = 0;
     static OsSysmanDevice *create(OsSysman *pOsSysman);
     virtual ~OsSysmanDevice() {}
 };

@@ -11,7 +11,6 @@
 #include "level_zero/core/source/device.h"
 
 #include "sysman/linux/os_sysman_imp.h"
-#include "sysman/linux/sysfs_access.h"
 #include "sysman/pci/os_pci.h"
 #include "sysman/pci/pci_imp.h"
 

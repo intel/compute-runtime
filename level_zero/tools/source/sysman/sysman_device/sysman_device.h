@@ -10,10 +10,11 @@
 
 namespace L0 {
 
-class sysmanDevice {
+class SysmanDevice {
   public:
-    virtual ~sysmanDevice(){};
+    virtual ~SysmanDevice(){};
     virtual ze_result_t deviceGetProperties(zet_sysman_properties_t *pProperties) = 0;
+    virtual ze_result_t reset() = 0;
 
     virtual void init() = 0;
 };

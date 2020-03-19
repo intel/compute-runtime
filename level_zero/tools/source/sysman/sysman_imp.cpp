@@ -29,8 +29,8 @@ SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
 SysmanImp::~SysmanImp() {
     delete pStandbyHandleContext;
     delete pFrequencyHandleContext;
-    delete pPci;
     delete pSysmanDevice;
+    delete pPci;
     delete pOsSysman;
 }
 
@@ -79,7 +79,7 @@ ze_result_t SysmanImp::processesGetState(uint32_t *pCount, zet_process_state_t *
 }
 
 ze_result_t SysmanImp::deviceReset() {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pSysmanDevice->reset();
 }
 
 ze_result_t SysmanImp::deviceGetRepairStatus(zet_repair_status_t *pRepairStatus) {

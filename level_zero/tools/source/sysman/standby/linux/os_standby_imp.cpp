@@ -11,7 +11,6 @@
 #include "level_zero/core/source/device.h"
 
 #include "sysman/linux/os_sysman_imp.h"
-#include "sysman/linux/sysfs_access.h"
 #include "sysman/standby/os_standby.h"
 #include "sysman/standby/standby_imp.h"
 

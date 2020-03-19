@@ -9,14 +9,14 @@
 #include "shared/source/os_interface/linux/os_interface.h"
 
 #include "level_zero/core/source/device.h"
-#include "level_zero/tools/source/sysman/linux/sysfs_access.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
 
 class LinuxSysmanImp : public OsSysman {
   public:
-    LinuxSysmanImp(SysmanImp *pParentSysmanImp) : pParentSysmanImp(pParentSysmanImp), pSysfsAccess(nullptr){};
+    LinuxSysmanImp(SysmanImp *pParentSysmanImp);
     ~LinuxSysmanImp() override;
 
     // Don't allow copies of the LinuxSysmanImp object
@@ -25,11 +25,16 @@ class LinuxSysmanImp : public OsSysman {
 
     ze_result_t init() override;
 
+    FsAccess &getFsAccess();
+    ProcfsAccess &getProcfsAccess();
     SysfsAccess &getSysfsAccess();
 
   private:
-    SysmanImp *pParentSysmanImp;
-    SysfsAccess *pSysfsAccess;
+    LinuxSysmanImp() = delete;
+    SysmanImp *pParentSysmanImp = nullptr;
+    FsAccess *pFsAccess = nullptr;
+    ProcfsAccess *pProcfsAccess = nullptr;
+    SysfsAccess *pSysfsAccess = nullptr;
 };
 
 } // namespace L0

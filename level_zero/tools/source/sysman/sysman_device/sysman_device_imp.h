@@ -15,10 +15,11 @@
 
 namespace L0 {
 
-class SysmanDeviceImp : public sysmanDevice {
+class SysmanDeviceImp : public SysmanDevice {
   public:
     void init() override;
     ze_result_t deviceGetProperties(zet_sysman_properties_t *pProperties) override;
+    ze_result_t reset() override;
 
     SysmanDeviceImp(OsSysman *pOsSysman, ze_device_handle_t hCoreDevice) : pOsSysman(pOsSysman),
                                                                            hCoreDevice(hCoreDevice) { pOsSysmanDevice = nullptr; };
@@ -27,7 +28,7 @@ class SysmanDeviceImp : public sysmanDevice {
     SysmanDeviceImp(OsSysmanDevice *pOsSysmanDevice, ze_device_handle_t hCoreDevice) : pOsSysmanDevice(pOsSysmanDevice),
                                                                                        hCoreDevice(hCoreDevice) { init(); };
 
-    // Don't allow copies of the sysmanDeviceImp object
+    // Don't allow copies of the SysmanDeviceImp object
     SysmanDeviceImp(const SysmanDeviceImp &obj) = delete;
     SysmanDeviceImp &operator=(const SysmanDeviceImp &obj) = delete;
 

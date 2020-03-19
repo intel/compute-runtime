@@ -21,6 +21,7 @@ class WddmSysmanImp : public OsSysman {
     ze_result_t init() override;
 
   private:
+    WddmSysmanImp() = delete;
     SysmanImp *pParentSysmanImp;
 };
 

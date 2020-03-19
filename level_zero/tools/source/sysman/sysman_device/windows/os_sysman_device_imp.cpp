@@ -18,6 +18,14 @@ class WddmSysmanDeviceImp : public OsSysmanDevice {
     void getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_SIZE]) override;
     void getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]) override;
     void getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) override;
+    ze_result_t reset() override;
+
+    WddmSysmanDeviceImp(OsSysman *pOsSysman);
+    ~WddmSysmanDeviceImp() = default;
+
+    // Don't allow copies of the WddmSysmanDeviceImp object
+    WddmSysmanDeviceImp(const WddmSysmanDeviceImp &obj) = delete;
+    WddmSysmanDeviceImp &operator=(const WddmSysmanDeviceImp &obj) = delete;
 };
 
 void WddmSysmanDeviceImp::getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) {
@@ -38,8 +46,15 @@ void WddmSysmanDeviceImp::getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY
 void WddmSysmanDeviceImp::getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) {
 }
 
+ze_result_t WddmSysmanDeviceImp::reset() {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+WddmSysmanDeviceImp::WddmSysmanDeviceImp(OsSysman *pOsSysman) {
+}
+
 OsSysmanDevice *OsSysmanDevice::create(OsSysman *pOsSysman) {
-    WddmSysmanDeviceImp *pWddmSysmanDeviceImp = new WddmSysmanDeviceImp();
+    WddmSysmanDeviceImp *pWddmSysmanDeviceImp = new WddmSysmanDeviceImp(pOsSysman);
     return static_cast<OsSysmanDevice *>(pWddmSysmanDeviceImp);
 }
 

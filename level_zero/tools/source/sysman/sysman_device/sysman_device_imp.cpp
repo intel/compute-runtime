@@ -27,6 +27,10 @@ ze_result_t SysmanDeviceImp::deviceGetProperties(zet_sysman_properties_t *pPrope
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t SysmanDeviceImp::reset() {
+    return pOsSysmanDevice->reset();
+}
+
 void SysmanDeviceImp::init() {
     if (pOsSysmanDevice == nullptr) {
         pOsSysmanDevice = OsSysmanDevice::create(pOsSysman);
