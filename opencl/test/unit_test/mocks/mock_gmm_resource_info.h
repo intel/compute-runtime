@@ -74,7 +74,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     MOCK_METHOD1(cpuBlt, uint8_t(GMM_RES_COPY_BLT *resCopyBlt));
 
-    void *getSystemMemPointer(uint8_t isD3DDdiAllocation) override { return (void *)mockResourceCreateParams.pExistingSysMem; }
+    void *getSystemMemPointer() override { return (void *)mockResourceCreateParams.pExistingSysMem; }
 
     MOCK_METHOD1(getUnifiedAuxSurfaceOffset, uint64_t(GMM_UNIFIED_AUX_TYPE auxType));
 

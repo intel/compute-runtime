@@ -71,7 +71,7 @@ TEST_F(GmmTests, WhenGmmIsCreatedThenAllResourceAreCreated) {
 
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
-    void *pGmmSysMem = gmm->gmmResourceInfo->getSystemMemPointer(1);
+    void *pGmmSysMem = gmm->gmmResourceInfo->getSystemMemPointer();
     EXPECT_EQ(gmm->resourceParams.Flags.Gpu.NoRestriction, 0u);
     EXPECT_TRUE(pSysMem == pGmmSysMem);
 
@@ -86,7 +86,7 @@ TEST_F(GmmTests, GivenUncacheableWhenGmmIsCreatedThenAllResourceAreCreated) {
 
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
-    void *pGmmSysMem = gmm->gmmResourceInfo->getSystemMemPointer(1);
+    void *pGmmSysMem = gmm->gmmResourceInfo->getSystemMemPointer();
     EXPECT_EQ(gmm->resourceParams.Flags.Gpu.NoRestriction, 0u);
     EXPECT_TRUE(pSysMem == pGmmSysMem);
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC, gmm->resourceParams.Usage);

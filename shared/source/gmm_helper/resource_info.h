@@ -61,7 +61,7 @@ class GmmResourceInfo {
 
     MOCKABLE_VIRTUAL uint8_t cpuBlt(GMM_RES_COPY_BLT *resCopyBlt) { return resourceInfo->CpuBlt(resCopyBlt); }
 
-    MOCKABLE_VIRTUAL void *getSystemMemPointer(uint8_t isD3DDdiAllocation) { return resourceInfo->GetSystemMemPointer(isD3DDdiAllocation); }
+    MOCKABLE_VIRTUAL void *getSystemMemPointer() { return resourceInfo->GetSystemMemPointer(true); }
 
     MOCKABLE_VIRTUAL uint32_t getRenderAuxPitchTiles() { return resourceInfo->GetRenderAuxPitchTiles(); }
 
