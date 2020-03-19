@@ -8,30 +8,23 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_base.inl"
+#include "shared/source/command_container/encode_compute_mode_tgllp_plus.inl"
 #include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/gen12lp/reg_configs.h"
 
 namespace NEO {
 
 using Family = TGLLPFamily;
-
-template <>
-void EncodeStates<Family>::adjustStateComputeMode(CommandContainer &container) {
-    auto stateComputeModeCmd = Family::cmdInitStateComputeMode;
-    using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
-    using FORCE_NON_COHERENT = typename Family::STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
-
-    stateComputeModeCmd.setForceNonCoherent(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT);
-
-    stateComputeModeCmd.setMaskBits(Family::stateComputeModeForceNonCoherentMask);
-
-    // Commit our commands to the commandStream
-    auto buffer = container.getCommandStream()->getSpace(sizeof(stateComputeModeCmd));
-    *(decltype(stateComputeModeCmd) *)buffer = stateComputeModeCmd;
-}
 template <>
 size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
     return sizeof(typename Family::STATE_COMPUTE_MODE);
+}
+
+template <>
+void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr, bool isMultiOsContextCapable) {
+    STATE_COMPUTE_MODE *stateComputeMode = static_cast<STATE_COMPUTE_MODE *>(stateComputeModePtr);
+    auto buffer = csr.getSpace(sizeof(STATE_COMPUTE_MODE));
+    *reinterpret_cast<STATE_COMPUTE_MODE *>(buffer) = *stateComputeMode;
 }
 
 template struct EncodeDispatchKernel<Family>;

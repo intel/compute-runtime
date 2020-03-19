@@ -45,7 +45,7 @@ struct EncodeStates {
                                      uint32_t borderColorOffset,
                                      const void *fnDynamicStateHeap);
 
-    static void adjustStateComputeMode(CommandContainer &container);
+    static void adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr, bool isMultiOsContextCapable, bool requiresCoherency);
 
     static size_t getAdjustStateComputeModeSize();
 };
@@ -167,7 +167,10 @@ struct EncodeSurfaceState {
 
 template <typename GfxFamily>
 struct EncodeComputeMode {
-    static void adjustComputeMode(CommandContainer &container, uint32_t numGrfRequired);
+    using STATE_COMPUTE_MODE = typename GfxFamily::STATE_COMPUTE_MODE;
+    static void adjustComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr, bool isMultiOsContextCapable);
+
+    static void adjustPipelineSelect(CommandContainer &container, uint32_t numGrfRequired);
 };
 
 template <typename GfxFamily>

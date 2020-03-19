@@ -17,15 +17,15 @@ class InternalAllocationStorage;
 
 class HeapHelper {
   public:
-    HeapHelper(MemoryManager *memManager, InternalAllocationStorage *storageForReuse, bool isMultiOsContextCapable) : storageForReuse(storageForReuse),
-                                                                                                                      memManager(memManager),
-                                                                                                                      isMultiOsContextCapable(isMultiOsContextCapable) {}
+    HeapHelper(MemoryManager *memManager, InternalAllocationStorage *storageForReuse, bool isMultiOsContextCapable) : isMultiOsContextCapable(isMultiOsContextCapable),
+                                                                                                                      storageForReuse(storageForReuse),
+                                                                                                                      memManager(memManager) {}
     GraphicsAllocation *getHeapAllocation(uint32_t heapType, size_t heapSize, size_t alignment, uint32_t rootDeviceIndex);
     void storeHeapAllocation(GraphicsAllocation *heapAllocation);
+    bool isMultiOsContextCapable = false;
 
   protected:
     InternalAllocationStorage *storageForReuse = nullptr;
     MemoryManager *memManager = nullptr;
-    bool isMultiOsContextCapable = false;
 };
 } // namespace NEO

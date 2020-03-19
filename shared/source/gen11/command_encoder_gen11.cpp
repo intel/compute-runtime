@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_base.inl"
+#include "shared/source/command_container/encode_compute_mode_bdw_plus.inl"
 #include "shared/source/gen11/hw_cmds_base.h"
 #include "shared/source/gen11/reg_configs.h"
 

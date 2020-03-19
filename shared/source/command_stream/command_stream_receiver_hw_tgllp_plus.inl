@@ -5,32 +5,25 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/helpers/state_compute_mode_helper.h"
 
 namespace NEO {
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags) {
-    using STATE_COMPUTE_MODE = typename GfxFamily::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
-
     if (isComputeModeNeeded()) {
         programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, true);
-        auto stateComputeMode = stream.getSpaceForCmd<STATE_COMPUTE_MODE>();
-        *stateComputeMode = GfxFamily::cmdInitStateComputeMode;
-
-        FORCE_NON_COHERENT coherencyValue = !dispatchFlags.requiresCoherency ? FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT : FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED;
-        stateComputeMode->setForceNonCoherent(coherencyValue);
         this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
-
-        stateComputeMode->setMaskBits(GfxFamily::stateComputeModeForceNonCoherentMask);
+        auto stateComputeMode = GfxFamily::cmdInitStateComputeMode;
+        adjustThreadArbitionPolicy(&stateComputeMode);
+        EncodeStates<GfxFamily>::adjustStateComputeMode(stream, dispatchFlags.numGrfRequired, &stateComputeMode, isMultiOsContextCapable(), dispatchFlags.requiresCoherency);
 
         if (csrSizeRequestFlags.hasSharedHandles) {
             auto pc = stream.getSpaceForCmd<PIPE_CONTROL>();
             *pc = GfxFamily::cmdInitPipeControl;
         }
-        adjustComputeMode(stream, dispatchFlags, stateComputeMode);
         programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, false);
     }
 }

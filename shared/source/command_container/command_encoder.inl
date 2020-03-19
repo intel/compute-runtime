@@ -279,10 +279,6 @@ void EncodeSurfaceState<Family>::encodeBuffer(void *dst, void *address, size_t s
 }
 
 template <typename Family>
-void EncodeStates<Family>::adjustStateComputeMode(CommandContainer &container) {
-}
-
-template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset) {
 
     if (container.nextIddInBlock == container.getNumIddPerBlock()) {

@@ -53,8 +53,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         idd.setKernelStartPointer(offset);
         idd.setKernelStartPointerHigh(0u);
     }
-
-    EncodeStates<Family>::adjustStateComputeMode(container);
+    EncodeStates<Family>::adjustStateComputeMode(*container.getCommandStream(), container.lastSentNumGrfRequired, nullptr, false, false);
 
     auto threadsPerThreadGroup = dispatchInterface->getThreadsPerThreadGroupCount();
     idd.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
@@ -276,5 +275,4 @@ template <typename GfxFamily>
 size_t EncodeMiFlushDW<GfxFamily>::getMiFlushDwWaSize() {
     return 0;
 }
-
 } // namespace NEO
