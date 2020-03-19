@@ -822,7 +822,7 @@ class Callback {
 
 std::map<const void *, uint32_t> Callback::watchList;
 
-TEST_P(ProgramFromSourceTest, GivenDifferenCommpilerOptionsWhenBuildingProgramThenKernelHashesAreDifferent) {
+TEST_P(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramThenKernelHashesAreDifferent) {
     KernelBinaryHelper kbHelper(BinaryFileName, true);
 
     cl_device_id usedDevice = pPlatform->getClDevice(0);
@@ -1321,7 +1321,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
     }
 }
 
-TEST_F(PatchTokenTests, DataParamGWS) {
+TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
     cl_device_id device = pClDevice;
 
     CreateProgramFromBinary(pContext, &device, "kernel_data_param");
@@ -1345,7 +1345,7 @@ TEST_F(PatchTokenTests, DataParamGWS) {
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->workloadInfo.globalWorkSizeOffsets[2]);
 }
 
-TEST_F(PatchTokenTests, DataParamLWS) {
+TEST_F(PatchTokenTests, WhenBuildingProgramThenLwsIsSet) {
     cl_device_id device = pClDevice;
 
     CreateProgramFromBinary(pContext, &device, "kernel_data_param");
@@ -1379,7 +1379,7 @@ TEST_F(PatchTokenTests, DataParamLWS) {
     ASSERT_NE(static_cast<uint32_t>(-1), pKernelInfo->workloadInfo.localWorkSizeOffsets2[2]);
 }
 
-TEST_F(PatchTokenTests, ConstantMemoryObjectKernelArg) {
+TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
     // PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT
     cl_device_id device = pClDevice;
 
@@ -1419,7 +1419,7 @@ TEST_F(PatchTokenTests, ConstantMemoryObjectKernelArg) {
     delete pKernel;
 }
 
-TEST_F(PatchTokenTests, VmeKernelArg) {
+TEST_F(PatchTokenTests, GivenVmeKernelWhenBuildingKernelThenArgAvailable) {
     if (!pDevice->getHardwareInfo().capabilityTable.supportsVme) {
         GTEST_SKIP();
     }
