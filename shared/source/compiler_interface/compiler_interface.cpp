@@ -80,6 +80,13 @@ TranslationOutput::ErrorCode CompilerInterface::build(
     auto fclOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), input.apiOptions.begin(), input.apiOptions.size());
     auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), input.internalOptions.begin(), input.internalOptions.size());
 
+    auto idsBuffer = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
+    auto valuesBuffer = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
+    for (const auto &specConst : input.specConstants.specializedValues) {
+        idsBuffer->PushBackRawCopy(specConst.first);
+        valuesBuffer->PushBackRawCopy(specConst.second);
+    }
+
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> intermediateRepresentation;
 
     if (srcCodeType == IGC::CodeType::oclC) {
@@ -124,7 +131,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
 
     auto igcTranslationCtx = createIgcTranslationCtx(device, intermediateCodeType, IGC::CodeType::oclGenBin);
 
-    auto igcOutput = translate(igcTranslationCtx.get(), intermediateRepresentation.get(), input.specConstants.idsBuffer, input.specConstants.valuesBuffer,
+    auto igcOutput = translate(igcTranslationCtx.get(), intermediateRepresentation.get(), idsBuffer.get(), valuesBuffer.get(),
                                fclOptions.get(), fclInternalOptions.get(), input.GTPinInput);
 
     if (igcOutput == nullptr) {
@@ -250,17 +257,11 @@ TranslationOutput::ErrorCode CompilerInterface::getSpecConstantsInfo(const NEO::
     auto inSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), srcSpirV.begin(), srcSpirV.size());
     output.idsBuffer = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
     output.sizesBuffer = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
-    output.valuesBuffer = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
 
-    auto retVal = getSpecConstantsInfoImpl(igcTranslationCtx.get(), inSrc.get(), output.idsBuffer.get(), output.sizesBuffer.get(), output.valuesBuffer.get());
+    auto retVal = getSpecConstantsInfoImpl(igcTranslationCtx.get(), inSrc.get(), output.idsBuffer.get(), output.sizesBuffer.get());
 
     if (!retVal) {
         return TranslationOutput::ErrorCode::UnknownError;
-    }
-
-    output.valuesBuffer->Resize(output.idsBuffer->GetSizeRaw() * 2);
-    for (uint32_t i = 0; i < output.valuesBuffer->GetSize<uint64_t>(); i++) {
-        output.valuesBuffer->GetMemoryWriteable<uint64_t>()[i] = 0u;
     }
 
     return TranslationOutput::ErrorCode::Success;

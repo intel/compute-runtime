@@ -238,7 +238,6 @@ cl_int Program::setProgramSpecializationConstant(cl_uint specId, size_t specSize
 
         this->specConstantsIds.reset(specConstInfo.idsBuffer.release());
         this->specConstantsSizes.reset(specConstInfo.sizesBuffer.release());
-        this->specConstantsValues.reset(specConstInfo.valuesBuffer.release());
 
         areSpecializationConstantsInitialized = true;
     }
@@ -252,7 +251,7 @@ cl_int Program::updateSpecializationConstant(cl_uint specId, size_t specSize, co
             if (specConstantsSizes->GetMemory<uint32_t>()[i] == static_cast<uint32_t>(specSize)) {
                 uint64_t specConstValue = 0u;
                 memcpy_s(&specConstValue, sizeof(uint64_t), specValue, specSize);
-                specConstantsValues->GetMemoryWriteable<uint64_t>()[i] = specConstValue;
+                specConstantsValues[specId] = specConstValue;
                 return CL_SUCCESS;
             } else {
                 return CL_INVALID_VALUE;

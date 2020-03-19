@@ -59,9 +59,8 @@ template <typename TranslationCtx>
 inline bool getSpecConstantsInfoImpl(TranslationCtx *tCtx,
                                      CIFBuffer *src,
                                      CIFBuffer *outSpecConstantsIds,
-                                     CIFBuffer *outSpecConstantsSizes,
-                                     CIFBuffer *outSpecConstantsValues) {
-    if (!NEO::areNotNullptr(tCtx, src, outSpecConstantsIds, outSpecConstantsSizes, outSpecConstantsValues)) {
+                                     CIFBuffer *outSpecConstantsSizes) {
+    if (!NEO::areNotNullptr(tCtx, src, outSpecConstantsIds, outSpecConstantsSizes)) {
         return false;
     }
     return tCtx->GetSpecConstantsInfoImpl(src, outSpecConstantsIds, outSpecConstantsSizes);

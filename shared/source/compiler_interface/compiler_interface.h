@@ -41,9 +41,7 @@ struct TranslationInput {
     void *GTPinInput = nullptr;
 
     struct SpecConstants {
-        CIF::Builtins::BufferLatest *idsBuffer = nullptr;
-        CIF::Builtins::BufferLatest *sizesBuffer = nullptr;
-        CIF::Builtins::BufferLatest *valuesBuffer = nullptr;
+        std::map<uint32_t, uint64_t> specializedValues;
     } specConstants;
 };
 
@@ -94,7 +92,6 @@ struct TranslationOutput {
 struct SpecConstantInfo {
     CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> idsBuffer;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> sizesBuffer;
-    CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> valuesBuffer;
 };
 
 class CompilerInterface {

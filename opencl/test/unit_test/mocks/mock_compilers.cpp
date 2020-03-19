@@ -504,9 +504,6 @@ bool MockIgcOclTranslationCtx::GetSpecConstantsInfoImpl(
     CIF::Builtins::BufferSimple *src,
     CIF::Builtins::BufferSimple *outSpecConstantsIds,
     CIF::Builtins::BufferSimple *outSpecConstantsSizes) {
-    uint32_t id = 1u;
-    outSpecConstantsIds->PushBackRawCopy(id);
-    outSpecConstantsSizes->PushBackRawCopy(sizeof(uint32_t));
     return true;
 }
 

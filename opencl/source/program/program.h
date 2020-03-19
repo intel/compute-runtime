@@ -330,7 +330,7 @@ class Program : public BaseObject<_cl_program> {
     bool areSpecializationConstantsInitialized = false;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsIds;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsSizes;
-    CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsValues;
+    std::map<uint32_t, uint64_t> specConstantsValues;
 
     BlockKernelManager *blockKernelManager = nullptr;
     ExecutionEnvironment &executionEnvironment;
