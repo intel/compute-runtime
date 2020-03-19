@@ -28,6 +28,7 @@
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_residency_logger.h"
+#include "opencl/test/unit_test/mocks/mock_wddm_residency_logger_functions.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 #include "opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.h"
 #include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
@@ -1280,14 +1281,6 @@ TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenAdapterIsClosed) {
     EXPECT_EQ(1u, GdiWithMockedCloseFunc::closeAdapterCalled);
     EXPECT_EQ(adapter, GdiWithMockedCloseFunc::closeAdapterCalledArgPassed);
 }
-
-namespace NEO {
-namespace ResLog {
-extern uint32_t mockFopenCalled;
-extern uint32_t mockVfptrinfCalled;
-extern uint32_t mockFcloseCalled;
-} // namespace ResLog
-} // namespace NEO
 
 TEST_F(WddmTest, WhenResidencyLoggingEnabledThenExpectLoggerCreated) {
     NEO::ResLog::mockFopenCalled = 0;

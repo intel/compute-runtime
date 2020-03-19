@@ -17,9 +17,6 @@ struct MockWddmResidencyLogger : public WddmResidencyLogger {
     using WddmResidencyLogger::pendingMakeResident;
     using WddmResidencyLogger::pendingTime;
     using WddmResidencyLogger::waitStartTime;
-
-    MockWddmResidencyLogger(D3DKMT_HANDLE device, VOID *fenceValueCpuVirtualAddress)
-        : WddmResidencyLogger(device, fenceValueCpuVirtualAddress) {
-    }
+    using WddmResidencyLogger::WddmResidencyLogger;
 };
 } // namespace NEO
