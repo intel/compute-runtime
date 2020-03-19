@@ -159,7 +159,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
 
 TEST(DrmBufferObjectSimpleTest, givenBufferObjectWhenConstructedWithASizeThenTheSizeIsInitialized) {
     std::unique_ptr<DrmMockCustom> drmMock(new DrmMockCustom);
-    std::unique_ptr<BufferObject> bo(new BufferObject(drmMock.get(), 1, 0x1000, 0));
+    std::unique_ptr<BufferObject> bo(new BufferObject(drmMock.get(), 1, 0x1000));
 
     EXPECT_EQ(0x1000u, bo->peekSize());
 }

@@ -13,12 +13,14 @@
 
 #include "drm_gem_close_worker.h"
 
+#include <limits>
 #include <map>
 #include <sys/mman.h>
 
 namespace NEO {
 class BufferObject;
 class Drm;
+constexpr uint32_t invalidRootDeviceIndex = std::numeric_limits<uint32_t>::max();
 
 class DrmMemoryManager : public MemoryManager {
   public:
@@ -84,6 +86,7 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
 
     Drm &getDrm(uint32_t rootDeviceIndex) const;
+    uint32_t getRootDeviceIndex(const Drm *drm);
 
     std::vector<BufferObject *> pinBBs;
     std::vector<void *> memoryForPinBBs;

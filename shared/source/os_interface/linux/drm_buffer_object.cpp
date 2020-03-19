@@ -29,12 +29,10 @@
 
 namespace NEO {
 
-BufferObject::BufferObject(Drm *drm, int handle, size_t size, uint32_t rootDeviceIndex) : drm(drm), refCount(1), handle(handle), size(size), rootDeviceIndex(rootDeviceIndex), isReused(false) {
+BufferObject::BufferObject(Drm *drm, int handle, size_t size) : drm(drm), refCount(1), handle(handle), size(size), isReused(false) {
     this->tiling_mode = I915_TILING_NONE;
     this->lockedAddress = nullptr;
 }
-
-BufferObject::BufferObject(Drm *drm, int handle, uint32_t rootDeviceIndex) : BufferObject(drm, handle, 0, rootDeviceIndex) {}
 
 uint32_t BufferObject::getRefCount() const {
     return this->refCount.load();

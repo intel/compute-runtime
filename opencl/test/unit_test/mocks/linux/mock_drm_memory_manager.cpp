@@ -46,10 +46,10 @@ TestedDrmMemoryManager::TestedDrmMemoryManager(bool enableLocalMemory,
 }
 
 void TestedDrmMemoryManager::injectPinBB(BufferObject *newPinBB) {
-    BufferObject *currentPinBB = pinBBs[newPinBB->peekRootDeviceIndex()];
-    pinBBs[newPinBB->peekRootDeviceIndex()] = nullptr;
+    BufferObject *currentPinBB = pinBBs[0u];
+    pinBBs[0u] = nullptr;
     DrmMemoryManager::unreference(currentPinBB, true);
-    pinBBs[newPinBB->peekRootDeviceIndex()] = newPinBB;
+    pinBBs[0u] = newPinBB;
 }
 
 DrmGemCloseWorker *TestedDrmMemoryManager::getgemCloseWorker() { return this->gemCloseWorker.get(); }

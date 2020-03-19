@@ -84,7 +84,7 @@ void DrmMemoryManager::commonCleanup() {
 void DrmMemoryManager::eraseSharedBufferObject(NEO::BufferObject *bo) {
     auto it = std::find(sharingBufferObjects.begin(), sharingBufferObjects.end(), bo);
     DEBUG_BREAK_IF(it == sharingBufferObjects.end());
-    releaseGpuRange(reinterpret_cast<void *>((*it)->gpuAddress), (*it)->peekUnmapSize(), (*it)->peekRootDeviceIndex());
+    releaseGpuRange(reinterpret_cast<void *>((*it)->gpuAddress), (*it)->peekUnmapSize(), this->getRootDeviceIndex(bo->drm));
     sharingBufferObjects.erase(it);
 }
 
@@ -734,6 +734,17 @@ uint32_t DrmMemoryManager::getDefaultDrmContextId() const {
 
 Drm &DrmMemoryManager::getDrm(uint32_t rootDeviceIndex) const {
     return *this->executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm();
+}
+
+uint32_t DrmMemoryManager::getRootDeviceIndex(const Drm *drm) {
+    auto rootDeviceCount = this->executionEnvironment.rootDeviceEnvironments.size();
+
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceCount; rootDeviceIndex++) {
+        if (&getDrm(rootDeviceIndex) == drm) {
+            return rootDeviceIndex;
+        }
+    }
+    return std::numeric_limits<uint32_t>::max();
 }
 
 } // namespace NEO

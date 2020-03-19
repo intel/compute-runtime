@@ -3437,6 +3437,8 @@ TEST(DrmMemoryMangerTest, givenMultipleRootDeviceWhenMemoryManagerGetsDrmThenDrm
     for (auto i = 0u; i < platform()->peekExecutionEnvironment()->rootDeviceEnvironments.size(); i++) {
         auto drmFromRootDevice = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[i]->osInterface->get()->getDrm();
         EXPECT_EQ(drmFromRootDevice, &drmMemoryManager.getDrm(i));
+        EXPECT_EQ(i, drmMemoryManager.getRootDeviceIndex(drmFromRootDevice));
     }
+    EXPECT_EQ(invalidRootDeviceIndex, drmMemoryManager.getRootDeviceIndex(nullptr));
 }
 } // namespace NEO
