@@ -20,7 +20,7 @@ SettingsReader *SettingsReader::createOsReader(bool userScope, const std::string
 }
 
 RegistryReader::RegistryReader(bool userScope, const std::string &regKey) : registryReadRootKey(regKey) {
-    igdrclHkeyType = userScope ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
+    hkeyType = userScope ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
     setUpProcessName();
 }
 
@@ -47,7 +47,7 @@ int32_t RegistryReader::getSetting(const char *settingName, int32_t defaultValue
     DWORD value = defaultValue;
     DWORD success = ERROR_SUCCESS;
 
-    success = RegOpenKeyExA(igdrclHkeyType,
+    success = RegOpenKeyExA(hkeyType,
                             registryReadRootKey.c_str(),
                             0,
                             KEY_READ,
@@ -80,7 +80,7 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     DWORD success = ERROR_SUCCESS;
     std::string keyValue = value;
 
-    success = RegOpenKeyExA(igdrclHkeyType,
+    success = RegOpenKeyExA(hkeyType,
                             registryReadRootKey.c_str(),
                             0,
                             KEY_READ,

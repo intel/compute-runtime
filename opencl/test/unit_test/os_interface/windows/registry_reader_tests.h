@@ -15,7 +15,7 @@ class TestedRegistryReader : public RegistryReader {
     TestedRegistryReader(bool userScope) : RegistryReader(userScope, oclRegPath){};
     TestedRegistryReader(std::string regKey) : RegistryReader(false, regKey){};
     HKEY getHkeyType() const {
-        return igdrclHkeyType;
+        return hkeyType;
     }
     using RegistryReader::getSetting;
 

@@ -25,7 +25,7 @@ class RegistryReader : public SettingsReader {
     const char *appSpecificLocation(const std::string &name) override;
 
   protected:
-    HKEY igdrclHkeyType;
+    HKEY hkeyType;
     std::string registryReadRootKey;
     void setUpProcessName();
     std::string processName;
