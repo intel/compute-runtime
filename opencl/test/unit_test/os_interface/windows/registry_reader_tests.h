@@ -24,6 +24,10 @@ class TestedRegistryReader : public RegistryReader {
             return "TestedEnvironmentVariableValue";
         } else if (strcmp(envVar, "TestedEnvironmentIntVariable") == 0) {
             return "1234";
+        } else if (strcmp(envVar, "settingSourceString") == 0) {
+            return "environment";
+        } else if (strcmp(envVar, "settingSourceInt") == 0) {
+            return "2";
         } else {
             return nullptr;
         }

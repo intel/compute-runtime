@@ -7,11 +7,15 @@
 
 #include "opencl/test/unit_test/os_interface/windows/registry_reader_tests.h"
 
+#include "opencl/test/unit_test/helpers/variable_backup.h"
 #include "test.h"
 
 using namespace NEO;
 
 using RegistryReaderTest = ::testing::Test;
+
+extern uint32_t regOpenKeySuccessCount;
+extern uint32_t regQueryValueSuccessCount;
 
 TEST_F(RegistryReaderTest, givenRegistryReaderWhenItIsCreatedWithUserScopeSetToFalseThenItsHkeyTypeIsInitializedToHkeyLocalMachine) {
     bool userScope = false;
@@ -60,4 +64,60 @@ TEST_F(RegistryReaderTest, givenRegistryReaderWhenEnvironmentIntVariableExistsTh
     int32_t value = -1;
     TestedRegistryReader registryReader("");
     EXPECT_EQ(1234, registryReader.getSetting(envVar, value));
+}
+
+struct DebugReaderWithRegistryAndEnvTest : ::testing::Test {
+    VariableBackup<uint32_t> openRegCountBackup{&regOpenKeySuccessCount};
+    VariableBackup<uint32_t> queryRegCountBackup{&regQueryValueSuccessCount};
+    TestedRegistryReader registryReader{""};
+};
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValue) {
+    regOpenKeySuccessCount = 1u;
+    regQueryValueSuccessCount = 1u;
+
+    EXPECT_EQ(1, registryReader.getSetting("settingSourceInt", 0));
+}
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenQueryValueFailsThenObtainValueFromEnv) {
+    regOpenKeySuccessCount = 1u;
+    regQueryValueSuccessCount = 0u;
+
+    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0));
+}
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenOpenKeyFailsThenObtainValueFromEnv) {
+    regOpenKeySuccessCount = 0u;
+    regQueryValueSuccessCount = 0u;
+
+    EXPECT_EQ(2, registryReader.getSetting("settingSourceInt", 0));
+}
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenStringDebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValue) {
+    std::string defaultValue("default");
+    regOpenKeySuccessCount = 1u;
+    regQueryValueSuccessCount = 2u;
+
+    EXPECT_STREQ("registry", registryReader.getSetting("settingSourceString", defaultValue).c_str());
+}
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenStringDebugKeyWhenQueryValueFailsThenObtainValueFromEnv) {
+    std::string defaultValue("default");
+    regOpenKeySuccessCount = 1u;
+    regQueryValueSuccessCount = 0u;
+
+    EXPECT_STREQ("environment", registryReader.getSetting("settingSourceString", defaultValue).c_str());
+
+    regOpenKeySuccessCount = 1u;
+    regQueryValueSuccessCount = 1u;
+
+    EXPECT_STREQ("environment", registryReader.getSetting("settingSourceString", defaultValue).c_str());
+}
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenStringDebugKeyWhenOpenKeyFailsThenObtainValueFromEnv) {
+    std::string defaultValue("default");
+    regOpenKeySuccessCount = 0u;
+    regQueryValueSuccessCount = 0u;
+
+    EXPECT_STREQ("environment", registryReader.getSetting("settingSourceString", defaultValue).c_str());
 }

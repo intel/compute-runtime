@@ -43,9 +43,10 @@ bool RegistryReader::getSetting(const char *settingName, bool defaultValue) {
 }
 
 int32_t RegistryReader::getSetting(const char *settingName, int32_t defaultValue) {
-    HKEY Key;
+    HKEY Key{};
     DWORD value = defaultValue;
     DWORD success = ERROR_SUCCESS;
+    bool readSettingFromEnv = true;
 
     success = RegOpenKeyExA(hkeyType,
                             registryReadRootKey.c_str(),
@@ -55,17 +56,22 @@ int32_t RegistryReader::getSetting(const char *settingName, int32_t defaultValue
 
     if (ERROR_SUCCESS == success) {
         DWORD regType;
-        DWORD size = sizeof(ULONG);
+        DWORD size = sizeof(DWORD);
+        DWORD regData;
 
         success = RegQueryValueExA(Key,
                                    settingName,
                                    NULL,
                                    &regType,
-                                   (LPBYTE)&value,
+                                   reinterpret_cast<LPBYTE>(&regData),
                                    &size);
+        if (ERROR_SUCCESS == success) {
+            value = regData;
+            readSettingFromEnv = false;
+        }
         RegCloseKey(Key);
-        value = ERROR_SUCCESS == success ? value : defaultValue;
-    } else { // Check environment variables
+    }
+    if (readSettingFromEnv) {
         const char *envValue = getenv(settingName);
         if (envValue) {
             value = atoi(envValue);
@@ -76,9 +82,10 @@ int32_t RegistryReader::getSetting(const char *settingName, int32_t defaultValue
 }
 
 std::string RegistryReader::getSetting(const char *settingName, const std::string &value) {
-    HKEY Key;
+    HKEY Key{};
     DWORD success = ERROR_SUCCESS;
     std::string keyValue = value;
+    bool readSettingFromEnv = true;
 
     success = RegOpenKeyExA(hkeyType,
                             registryReadRootKey.c_str(),
@@ -95,35 +102,43 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
                                    &regType,
                                    NULL,
                                    &regSize);
-        if (success == ERROR_SUCCESS && regType == REG_SZ) {
-            char *regData = new char[regSize];
-            success = RegQueryValueExA(Key,
-                                       settingName,
-                                       NULL,
-                                       &regType,
-                                       (LPBYTE)regData,
-                                       &regSize);
-            keyValue.assign(regData);
-            delete[] regData;
-        } else if (success == ERROR_SUCCESS && regType == REG_BINARY) {
-            std::unique_ptr<wchar_t[]> regData(new wchar_t[regSize]);
-            success = RegQueryValueExA(Key,
-                                       settingName,
-                                       NULL,
-                                       &regType,
-                                       (LPBYTE)regData.get(),
-                                       &regSize);
+        if (ERROR_SUCCESS == success) {
+            if (regType == REG_SZ) {
+                auto regData = std::make_unique<char[]>(regSize);
+                success = RegQueryValueExA(Key,
+                                           settingName,
+                                           NULL,
+                                           &regType,
+                                           reinterpret_cast<LPBYTE>(regData.get()),
+                                           &regSize);
+                if (success == ERROR_SUCCESS) {
+                    keyValue.assign(regData.get());
+                    readSettingFromEnv = false;
+                }
+            } else if (regType == REG_BINARY) {
+                auto regData = std::make_unique<wchar_t[]>(regSize);
+                success = RegQueryValueExA(Key,
+                                           settingName,
+                                           NULL,
+                                           &regType,
+                                           reinterpret_cast<LPBYTE>(regData.get()),
+                                           &regSize);
 
-            size_t charsConverted = 0;
-            std::unique_ptr<char[]> convertedData(new char[regSize]);
+                if (ERROR_SUCCESS == success) {
+                    size_t charsConverted = 0;
+                    auto convertedData = std::make_unique<char[]>(regSize);
 
-            wcstombs_s(&charsConverted, convertedData.get(), regSize, regData.get(), regSize);
+                    wcstombs_s(&charsConverted, convertedData.get(), regSize, regData.get(), regSize);
 
-            keyValue.assign(convertedData.get());
+                    keyValue.assign(convertedData.get());
+                    readSettingFromEnv = false;
+                }
+            }
         }
-
         RegCloseKey(Key);
-    } else { // Check environment variables
+    }
+
+    if (readSettingFromEnv) {
         const char *envValue = getenv(settingName);
         if (envValue) {
             keyValue.assign(envValue);
