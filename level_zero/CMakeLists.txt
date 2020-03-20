@@ -404,8 +404,8 @@ else()
     endif()
 endif()
 
-append_sources_from_properties(L0_SRCS_DLL NEO_CORE_SRCS_LINK L0_SRCS_DLL)
-target_sources(${TARGET_NAME_L0} PRIVATE $<TARGET_OBJECTS:${L0_RELEASE_LIB_NAME}> ${L0_SRCS_DLL})
+append_sources_from_properties(L0_SHARED_LIB_SRCS L0_SRCS_DLL NEO_CORE_SRCS_LINK)
+target_sources(${TARGET_NAME_L0} PRIVATE $<TARGET_OBJECTS:${L0_RELEASE_LIB_NAME}> ${L0_SHARED_LIB_SRCS})
 
 target_link_libraries(${TARGET_NAME_L0}
     ${NEO_STATICALLY_LINKED_LIBRARIES}
