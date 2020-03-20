@@ -82,7 +82,7 @@ TranslationOutput::ErrorCode CompilerInterface::build(
 
     auto idsBuffer = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
     auto valuesBuffer = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
-    for (const auto &specConst : input.specConstants.specializedValues) {
+    for (const auto &specConst : input.specializedValues) {
         idsBuffer->PushBackRawCopy(specConst.first);
         valuesBuffer->PushBackRawCopy(specConst.second);
     }

@@ -59,7 +59,7 @@ struct UpdateSpecConstantsTest : public ::testing::Test {
     char val1 = 5;
     uint16_t val2 = 50;
     int val3 = 500;
-    std::map<uint32_t, uint64_t> *values;
+    specConstValuesMap *values;
 };
 
 TEST_F(UpdateSpecConstantsTest, givenNewSpecConstValueWhenUpdateSpecializationConstantThenProperValueIsCopiedAndUpdated) {

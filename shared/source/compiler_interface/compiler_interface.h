@@ -19,9 +19,12 @@
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
 #include <map>
+#include <unordered_map>
 
 namespace NEO {
 class Device;
+
+using specConstValuesMap = std::unordered_map<uint32_t, uint64_t>;
 
 struct TranslationInput {
     TranslationInput(IGC::CodeType::CodeType_t srcType, IGC::CodeType::CodeType_t outType, IGC::CodeType::CodeType_t preferredIntermediateType = IGC::CodeType::undefined)
@@ -40,9 +43,7 @@ struct TranslationInput {
     IGC::CodeType::CodeType_t outType = IGC::CodeType::invalid;
     void *GTPinInput = nullptr;
 
-    struct SpecConstants {
-        std::map<uint32_t, uint64_t> specializedValues;
-    } specConstants;
+    specConstValuesMap specializedValues;
 };
 
 struct TranslationOutput {

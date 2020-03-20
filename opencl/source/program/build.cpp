@@ -109,7 +109,7 @@ cl_int Program::build(
             inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
             inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
             inputArgs.GTPinInput = gtpinGetIgcInit();
-            inputArgs.specConstants.specializedValues = this->specConstantsValues;
+            inputArgs.specializedValues = this->specConstantsValues;
             DBG_LOG(LogApiCalls,
                     "Build Options", inputArgs.apiOptions.begin(),
                     "\nBuild Internal Options", inputArgs.internalOptions.begin());

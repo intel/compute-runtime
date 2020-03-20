@@ -746,8 +746,8 @@ TEST_F(CompilerInterfaceTest, givenUpdatedSpecConstValuesWhenBuildProgramThenPro
     auto specConstCtx = CIF::RAII::UPtr(new MockCompilerDeviceCtx<MockIgcOclDeviceCtx, MockTranslationContextSpecConst>());
     pCompilerInterface->setDeviceCtx(*pDevice, specConstCtx.get());
 
-    std::map<uint32_t, uint64_t> specConst{{10, 100}};
-    inputArgs.specConstants.specializedValues = specConst;
+    specConstValuesMap specConst{{10, 100}};
+    inputArgs.specializedValues = specConst;
 
     TranslationOutput translationOutput;
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);
