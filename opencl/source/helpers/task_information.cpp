@@ -18,9 +18,9 @@
 #include "shared/source/memory_manager/surface.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_queue/enqueue_common.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/enqueue_properties.h"

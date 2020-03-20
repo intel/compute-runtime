@@ -13,7 +13,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
-#include "opencl/source/device/cl_device.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/platform/platform.h"
 

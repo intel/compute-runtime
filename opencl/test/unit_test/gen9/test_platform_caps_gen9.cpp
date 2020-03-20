@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/device/cl_device.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "test.h"
 

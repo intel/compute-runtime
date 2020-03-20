@@ -9,8 +9,8 @@
 #include "shared/source/device/device_info.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/device/cl_device.h"
-#include "opencl/source/device/cl_device_info.h"
+#include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/cl_device/cl_device_info.h"
 
 #include "CL/cl_ext_intel.h"
 #include <CL/cl.h>

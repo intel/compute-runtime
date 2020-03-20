@@ -15,8 +15,8 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/mem_obj/image.h"
 
 namespace NEO {

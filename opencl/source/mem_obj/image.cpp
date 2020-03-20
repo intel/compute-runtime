@@ -20,10 +20,10 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/compiler_support.h"
 
+#include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/cl_device/cl_device_get_cap.inl"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device/cl_device.h"
-#include "opencl/source/device/cl_device_get_cap.inl"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"

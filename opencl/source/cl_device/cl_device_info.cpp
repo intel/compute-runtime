@@ -5,17 +5,17 @@
  *
  */
 
-#include "opencl/source/device/cl_device_info.h"
+#include "opencl/source/cl_device/cl_device_info.h"
 
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/os_interface/os_time.h"
 
-#include "opencl/source/device/cl_device.h"
-#include "opencl/source/device/cl_device_get_cap.inl"
-#include "opencl/source/device/cl_device_info_map.h"
-#include "opencl/source/device/cl_device_vector.h"
+#include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/cl_device/cl_device_get_cap.inl"
+#include "opencl/source/cl_device/cl_device_info_map.h"
+#include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/helpers/cl_device_helpers.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/platform/platform.h"

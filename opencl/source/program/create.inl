@@ -9,8 +9,8 @@
 #include "shared/source/device/device.h"
 #include "shared/source/memory_manager/memory_constants.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/string_helpers.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"

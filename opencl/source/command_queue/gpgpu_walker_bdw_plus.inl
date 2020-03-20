@@ -9,8 +9,8 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/simd_helper.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/gpgpu_walker_base.inl"
-#include "opencl/source/device/cl_device.h"
 
 namespace NEO {
 

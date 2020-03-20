@@ -9,8 +9,8 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/get_info.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 

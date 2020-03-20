@@ -9,7 +9,7 @@
 
 #include "shared/source/memory_manager/memory_manager.h"
 
-#include "opencl/source/device/cl_device.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

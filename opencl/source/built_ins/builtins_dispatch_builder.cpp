@@ -16,7 +16,7 @@
 #include "opencl/source/built_ins/aux_translation_builtin.h"
 #include "opencl/source/built_ins/built_ins.inl"
 #include "opencl/source/built_ins/vme_dispatch_builder.h"
-#include "opencl/source/device/cl_device.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/built_ins_helper.h"
 #include "opencl/source/helpers/convert_color.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"

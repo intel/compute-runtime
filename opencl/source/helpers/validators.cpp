@@ -7,9 +7,9 @@
 
 #include "opencl/source/helpers/validators.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/kernel/kernel.h"

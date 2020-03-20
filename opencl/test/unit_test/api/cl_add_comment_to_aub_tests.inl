@@ -8,8 +8,8 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/mocks/mock_aub_center.h"

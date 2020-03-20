@@ -16,9 +16,9 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/local_id_gen.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/block_kernel_manager.h"

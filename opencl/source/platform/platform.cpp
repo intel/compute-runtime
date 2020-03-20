@@ -23,7 +23,7 @@
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/api/api.h"
-#include "opencl/source/device/cl_device.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/built_ins_helper.h"

@@ -19,7 +19,7 @@
 #include "shared/test/unit_test/utilities/destructor_counted.h"
 
 #include "opencl/source/aub/aub_center.h"
-#include "opencl/source/device/cl_device.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"

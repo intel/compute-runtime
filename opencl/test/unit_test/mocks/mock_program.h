@@ -10,7 +10,7 @@
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/string.h"
 
-#include "opencl/source/device/cl_device.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
 

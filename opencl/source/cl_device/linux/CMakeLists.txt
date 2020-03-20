@@ -1,0 +1,15 @@
+#
+# Copyright (C) 2020 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+set(RUNTIME_SRCS_CL_DEVICE_LINUX
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/fp64_override.cpp
+)
+if(UNIX)
+  target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_CL_DEVICE_LINUX})
+endif()
+
+set_property(GLOBAL PROPERTY RUNTIME_SRCS_CL_DEVICE_LINUX ${RUNTIME_SRCS_CL_DEVICE_LINUX})

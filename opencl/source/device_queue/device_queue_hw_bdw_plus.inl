@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/device/cl_device.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/device_queue/device_queue_hw_base.inl"
 #include "opencl/source/program/block_kernel_manager.h"
 

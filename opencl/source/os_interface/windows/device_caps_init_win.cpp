@@ -9,7 +9,7 @@
 
 #include "shared/source/device/device.h"
 
-#include "opencl/source/device/cl_device.h"
+#include "opencl/source/cl_device/cl_device.h"
 
 namespace NEO {
 

@@ -15,8 +15,8 @@
 #include "shared/source/program/program_info.h"
 #include "shared/source/program/program_initialization.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"

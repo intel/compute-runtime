@@ -9,7 +9,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
-#include "opencl/source/device/cl_device_get_cap.inl"
+#include "opencl/source/cl_device/cl_device_get_cap.inl"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"

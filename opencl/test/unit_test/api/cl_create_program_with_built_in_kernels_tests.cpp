@@ -11,8 +11,8 @@
 
 #include "opencl/source/built_ins/built_in_ops_vme.h"
 #include "opencl/source/built_ins/vme_builtin.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/program.h"

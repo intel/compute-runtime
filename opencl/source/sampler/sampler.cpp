@@ -10,8 +10,8 @@
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 
 #include "patch_list.h"

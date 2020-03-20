@@ -12,7 +12,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/print_formatter.h"
 
-#include "opencl/source/device/cl_device.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"

@@ -23,9 +23,9 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"

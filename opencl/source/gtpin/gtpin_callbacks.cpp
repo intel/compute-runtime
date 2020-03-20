@@ -9,9 +9,9 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/utilities/spinlock.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/gtpin/gtpin_defs.h"
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/gtpin/gtpin_notify.h"

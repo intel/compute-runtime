@@ -9,9 +9,9 @@
 #include "shared/source/utilities/api_intercept.h"
 
 #include "opencl/source/api/api.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/device/cl_device.h"
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/validators.h"

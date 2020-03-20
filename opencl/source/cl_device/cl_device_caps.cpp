@@ -11,7 +11,7 @@
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
-#include "opencl/source/device/cl_device.h"
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/extensions.h"
 #include "opencl/source/sharings/sharing_factory.h"
 

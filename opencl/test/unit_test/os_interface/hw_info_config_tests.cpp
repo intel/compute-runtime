@@ -9,7 +9,7 @@
 
 #include "shared/source/helpers/hw_helper.h"
 
-#include "opencl/source/device/cl_device.h"
+#include "opencl/source/cl_device/cl_device.h"
 
 using namespace NEO;
 using namespace std;
