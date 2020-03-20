@@ -161,7 +161,7 @@ void Device::initializeCaps() {
     deviceInfo.image3DMaxDepth = 2048;
     deviceInfo.imageMaxArraySize = 2048;
 
-    deviceInfo.printfBufferSize = 4 * 1024 * 1024;
+    deviceInfo.printfBufferSize = 4 * MB;
     deviceInfo.maxClockFrequency = hwInfo.capabilityTable.maxRenderFrequency;
 
     deviceInfo.maxSubGroups = hwHelper.getDeviceSubGroupSizes();
@@ -416,7 +416,7 @@ void ClDevice::initializeCaps() {
     }
 
     deviceInfo.preemptionSupported = false;
-    deviceInfo.maxGlobalVariableSize = 64 * 1024;
+    deviceInfo.maxGlobalVariableSize = 64 * KB;
     deviceInfo.globalVariablePreferredTotalSize = static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize);
 
     deviceInfo.planarYuvMaxWidth = 16384;
