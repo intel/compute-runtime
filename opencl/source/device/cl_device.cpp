@@ -77,7 +77,9 @@ void ClDevice::allocateSyncBufferHandler() {
     }
 }
 
-unsigned int ClDevice::getSupportedClVersion() const { return device.getSupportedClVersion(); }
+unsigned int ClDevice::getSupportedClVersion() const {
+    return device.getHardwareInfo().capabilityTable.clVersionSupport;
+}
 
 void ClDevice::retainApi() {
     auto parentDeviceId = deviceInfo.parentDevice;

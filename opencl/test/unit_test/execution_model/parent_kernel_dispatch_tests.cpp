@@ -261,7 +261,7 @@ class MockParentKernelDispatch : public ExecutionModelSchedulerTest,
 
 HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenBlockedQueueWhenParentKernelIsDispatchedThenDshHeapForIndirectObjectHeapIsUsed) {
 
-    if (pDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->getSupportedClVersion() >= 20) {
         MockParentKernel *mockParentKernel = MockParentKernel::create(*context);
 
         auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
@@ -293,7 +293,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenParentKernelWhenDispa
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
-    if (pDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->getSupportedClVersion() >= 20) {
         MockParentKernel *mockParentKernel = MockParentKernel::create(*context);
 
         KernelOperation *blockedCommandsData = nullptr;
@@ -338,7 +338,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenParentKernelWhenDispa
 
 HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenUsedSSHHeapWhenParentKernelIsDispatchedThenNewSSHIsAllocated) {
 
-    if (pDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->getSupportedClVersion() >= 20) {
         MockParentKernel *mockParentKernel = MockParentKernel::create(*context);
 
         KernelOperation *blockedCommandsData = nullptr;
@@ -379,7 +379,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenUsedSSHHeapWhenParent
 
 HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenNotUsedSSHHeapWhenParentKernelIsDispatchedThenExistingSSHIsUsed) {
 
-    if (pDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->getSupportedClVersion() >= 20) {
         MockParentKernel *mockParentKernel = MockParentKernel::create(*context);
 
         KernelOperation *blockedCommandsData = nullptr;

@@ -27,7 +27,7 @@ BDWTEST_F(BdwSchedulerTest, givenCallToDispatchSchedulerWhenPipeControlWithCSSta
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    if (pDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->getSupportedClVersion() >= 20) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
         SchedulerKernel &scheduler = context->getSchedulerKernel();
 

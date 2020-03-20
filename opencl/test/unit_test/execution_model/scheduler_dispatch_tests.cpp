@@ -43,7 +43,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchScheduler) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    if (pDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->getSupportedClVersion() >= 20) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
         SchedulerKernel &scheduler = context->getSchedulerKernel();
 
@@ -172,7 +172,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchSchedulerDoe
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    if (pDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->getSupportedClVersion() >= 20) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
         SchedulerKernel &scheduler = context->getSchedulerKernel();
 
@@ -241,7 +241,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWi
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, ForceDispatchSchedulerEnqueuesSchedulerKernel) {
 
-    if (pDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->getSupportedClVersion() >= 20) {
         DebugManagerStateRestore dbgRestorer;
 
         DebugManager.flags.ForceDispatchScheduler.set(true);

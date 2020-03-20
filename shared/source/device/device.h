@@ -24,8 +24,6 @@ class Device : public ReferenceTrackedObject<Device> {
     Device(const Device &) = delete;
     ~Device() override;
 
-    unsigned int getSupportedClVersion() const;
-
     template <typename DeviceT, typename... ArgsT>
     static DeviceT *create(ArgsT &&... args) {
         DeviceT *device = new DeviceT(std::forward<ArgsT>(args)...);

@@ -167,10 +167,6 @@ double Device::getProfilingTimerResolution() {
     return osTime->getDynamicDeviceTimerResolution(getHardwareInfo());
 }
 
-unsigned int Device::getSupportedClVersion() const {
-    return getHardwareInfo().capabilityTable.clVersionSupport;
-}
-
 bool Device::isSimulation() const {
     auto &hwInfo = getHardwareInfo();
 

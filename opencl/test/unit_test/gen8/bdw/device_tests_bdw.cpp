@@ -23,6 +23,6 @@ struct BdwDeviceTest : public DeviceFixture,
 };
 
 BDWTEST_F(BdwDeviceTest, givenBdwDeviceWhenAskedForClVersionThenReport21) {
-    auto version = pDevice->getSupportedClVersion();
+    auto version = pClDevice->getSupportedClVersion();
     EXPECT_EQ(21u, version);
 }
