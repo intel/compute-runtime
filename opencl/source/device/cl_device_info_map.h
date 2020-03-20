@@ -18,7 +18,7 @@
 
 namespace NEO {
 
-namespace DeviceInfoTable {
+namespace ClDeviceInfoTable {
 
 template <cl_device_info Param, typename _Type, _Type ClDeviceInfo::*val>
 struct ClMapBase {
@@ -163,6 +163,6 @@ template<> struct Map<CL_DEVICE_VERSION                                     > : 
 template<> struct Map<CL_DRIVER_VERSION                                     > : public ClMapBase<CL_DRIVER_VERSION,                                     const char *,                    &ClDeviceInfo::driverVersion> {};
 // clang-format on
 
-} // namespace DeviceInfoTable
+} // namespace ClDeviceInfoTable
 
 } // namespace NEO

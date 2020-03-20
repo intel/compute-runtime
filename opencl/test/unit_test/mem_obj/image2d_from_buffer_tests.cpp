@@ -8,7 +8,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_helper.h"
 
-#include "opencl/source/device/device_info_map.h"
+#include "opencl/source/device/cl_device_info_map.h"
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
@@ -207,7 +207,7 @@ TEST_F(Image2dFromBufferTest, givenFourChannel8BitColorsAndNotTooLargeRowPitchSp
 }
 
 TEST_F(Image2dFromBufferTest, givenFourChannel8BitColorsAndTooLargeRowPitchSpecifiedWhenValidatingSurfaceFormatThenReturnError) {
-    const auto pitchAlignment = &DeviceInfoTable::Map<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>::getValue(*context.getDevice(0u));
+    const auto pitchAlignment = &ClDeviceInfoTable::Map<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>::getValue(*context.getDevice(0u));
     imageDesc.image_height = castToObject<Buffer>(imageDesc.mem_object)->getSize() / imageDesc.image_width;
     imageDesc.image_row_pitch = imageDesc.image_width + *pitchAlignment;
     cl_mem_flags flags = CL_MEM_READ_ONLY;

@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/device/device_info_map.h"
+#include "opencl/source/device/cl_device_info_map.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 #include "test.h"
