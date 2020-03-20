@@ -37,4 +37,8 @@ constexpr uint64_t setBits(uint64_t field, bool newValue, uint64_t bitsToModify)
     return (field & (~bitsToModify));
 }
 
+constexpr uint64_t shiftLeftBy(uint64_t bitPosition) {
+    return (1ull << bitPosition);
+}
+
 } // namespace NEO

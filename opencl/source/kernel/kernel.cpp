@@ -1861,7 +1861,7 @@ void Kernel::ReflectionSurfaceHelper::getCurbeParams(std::vector<IGIL_KernelCurb
             curbeParam.m_sourceOffset = argNumber;
 
             curbeParamsOut.push_back(curbeParam);
-            tokenMask |= ((uint64_t)1 << 63);
+            tokenMask |= shiftLeftBy(63);
         } else if (kernelInfo.kernelArgInfo[argNumber].isImage) {
             if (isValidOffset(kernelInfo.kernelArgInfo[argNumber].offsetImgWidth)) {
                 curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_IMAGE_WIDTH + 50, sizeof(uint32_t), kernelInfo.kernelArgInfo[argNumber].offsetImgWidth, argNumber});
@@ -1890,7 +1890,7 @@ void Kernel::ReflectionSurfaceHelper::getCurbeParams(std::vector<IGIL_KernelCurb
             if (isValidOffset(kernelInfo.kernelArgInfo[argNumber].offsetObjectId)) {
                 curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_OBJECT_ID + 50, sizeof(uint32_t), kernelInfo.kernelArgInfo[argNumber].offsetObjectId, argNumber});
             }
-            tokenMask |= ((uint64_t)1 << 50);
+            tokenMask |= shiftLeftBy(50);
 
             if (kernelInfo.patchInfo.bindingTableState) {
                 auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
@@ -1923,7 +1923,7 @@ void Kernel::ReflectionSurfaceHelper::getCurbeParams(std::vector<IGIL_KernelCurb
             if (isValidOffset(kernelInfo.kernelArgInfo[argNumber].offsetObjectId)) {
                 curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_OBJECT_ID + 100, sizeof(uint32_t), kernelInfo.kernelArgInfo[argNumber].offsetObjectId, argNumber});
             }
-            tokenMask |= ((uint64_t)1 << 51);
+            tokenMask |= shiftLeftBy(51);
         } else {
             bindingTableIndex = 0;
             sizeOfkernelArgForSSH = 0;
@@ -1936,50 +1936,50 @@ void Kernel::ReflectionSurfaceHelper::getCurbeParams(std::vector<IGIL_KernelCurb
             uint32_t offset = kernelInfo.kernelArgInfo[argNumber].kernelArgPatchInfoVector[0].crossthreadOffset;
             uint32_t srcOffset = kernelInfo.kernelArgInfo[argNumber].slmAlignment;
             curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES, 0, offset, srcOffset});
-            tokenMask |= ((uint64_t)1 << DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES);
+            tokenMask |= shiftLeftBy(DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES);
         }
     }
 
     for (auto param : kernelInfo.patchInfo.dataParameterBuffersKernelArgs) {
         curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_KERNEL_ARGUMENT, param->DataSize, param->Offset, param->ArgumentNumber});
-        tokenMask |= ((uint64_t)1 << DATA_PARAMETER_KERNEL_ARGUMENT);
+        tokenMask |= shiftLeftBy(DATA_PARAMETER_KERNEL_ARGUMENT);
     }
 
     for (uint32_t i = 0; i < 3; i++) {
         const uint32_t sizeOfParam = 4;
         if (kernelInfo.workloadInfo.enqueuedLocalWorkSizeOffsets[i] != WorkloadInfo::undefinedOffset) {
             curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_ENQUEUED_LOCAL_WORK_SIZE, sizeOfParam, kernelInfo.workloadInfo.enqueuedLocalWorkSizeOffsets[i], i * sizeOfParam});
-            tokenMask |= ((uint64_t)1 << DATA_PARAMETER_ENQUEUED_LOCAL_WORK_SIZE);
+            tokenMask |= shiftLeftBy(DATA_PARAMETER_ENQUEUED_LOCAL_WORK_SIZE);
         }
         if (kernelInfo.workloadInfo.globalWorkOffsetOffsets[i] != WorkloadInfo::undefinedOffset) {
             curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_GLOBAL_WORK_OFFSET, sizeOfParam, kernelInfo.workloadInfo.globalWorkOffsetOffsets[i], i * sizeOfParam});
-            tokenMask |= ((uint64_t)1 << DATA_PARAMETER_GLOBAL_WORK_OFFSET);
+            tokenMask |= shiftLeftBy(DATA_PARAMETER_GLOBAL_WORK_OFFSET);
         }
         if (kernelInfo.workloadInfo.globalWorkSizeOffsets[i] != WorkloadInfo::undefinedOffset) {
             curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_GLOBAL_WORK_SIZE, sizeOfParam, kernelInfo.workloadInfo.globalWorkSizeOffsets[i], i * sizeOfParam});
-            tokenMask |= ((uint64_t)1 << DATA_PARAMETER_GLOBAL_WORK_SIZE);
+            tokenMask |= shiftLeftBy(DATA_PARAMETER_GLOBAL_WORK_SIZE);
         }
         if (kernelInfo.workloadInfo.localWorkSizeOffsets[i] != WorkloadInfo::undefinedOffset) {
             curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_LOCAL_WORK_SIZE, sizeOfParam, kernelInfo.workloadInfo.localWorkSizeOffsets[i], i * sizeOfParam});
-            tokenMask |= ((uint64_t)1 << DATA_PARAMETER_LOCAL_WORK_SIZE);
+            tokenMask |= shiftLeftBy(DATA_PARAMETER_LOCAL_WORK_SIZE);
         }
         if (kernelInfo.workloadInfo.localWorkSizeOffsets2[i] != WorkloadInfo::undefinedOffset) {
             curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_LOCAL_WORK_SIZE, sizeOfParam, kernelInfo.workloadInfo.localWorkSizeOffsets2[i], i * sizeOfParam});
-            tokenMask |= ((uint64_t)1 << DATA_PARAMETER_LOCAL_WORK_SIZE);
+            tokenMask |= shiftLeftBy(DATA_PARAMETER_LOCAL_WORK_SIZE);
         }
         if (kernelInfo.workloadInfo.numWorkGroupsOffset[i] != WorkloadInfo::undefinedOffset) {
             curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_NUM_WORK_GROUPS, sizeOfParam, kernelInfo.workloadInfo.numWorkGroupsOffset[i], i * sizeOfParam});
-            tokenMask |= ((uint64_t)1 << DATA_PARAMETER_NUM_WORK_GROUPS);
+            tokenMask |= shiftLeftBy(DATA_PARAMETER_NUM_WORK_GROUPS);
         }
     }
 
     if (kernelInfo.workloadInfo.parentEventOffset != WorkloadInfo::undefinedOffset) {
         curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_PARENT_EVENT, sizeof(uint32_t), kernelInfo.workloadInfo.parentEventOffset, 0});
-        tokenMask |= ((uint64_t)1 << DATA_PARAMETER_PARENT_EVENT);
+        tokenMask |= shiftLeftBy(DATA_PARAMETER_PARENT_EVENT);
     }
     if (kernelInfo.workloadInfo.workDimOffset != WorkloadInfo::undefinedOffset) {
         curbeParamsOut.emplace_back(IGIL_KernelCurbeParams{DATA_PARAMETER_WORK_DIMENSIONS, sizeof(uint32_t), kernelInfo.workloadInfo.workDimOffset, 0});
-        tokenMask |= ((uint64_t)1 << DATA_PARAMETER_WORK_DIMENSIONS);
+        tokenMask |= shiftLeftBy(DATA_PARAMETER_WORK_DIMENSIONS);
     }
 
     std::sort(curbeParamsOut.begin(), curbeParamsOut.end(), compareFunction);
