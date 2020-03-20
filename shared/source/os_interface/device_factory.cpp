@@ -22,7 +22,7 @@
 
 namespace NEO {
 
-bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
+bool DeviceFactory::getDevicesForProductFamilyOverride(ExecutionEnvironment &executionEnvironment) {
     auto numRootDevices = 1u;
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
         numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
@@ -32,7 +32,6 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
     const HardwareInfo *hwInfoConst = &DEFAULT_PLATFORM::hwInfo;
     getHwInfoForPlatformString(productFamily, hwInfoConst);
-    numDevices = 0;
     std::string hwInfoConfigStr;
     uint64_t hwInfoConfig = 0x0;
     DebugManager.getHardwareInfoOverride(hwInfoConfigStr);
@@ -68,8 +67,6 @@ bool DeviceFactory::getDevicesForProductFamilyOverride(size_t &numDevices, Execu
     }
 
     executionEnvironment.calculateMaxOsContextCount();
-    numDevices = numRootDevices;
-
     return true;
 }
 
@@ -85,16 +82,15 @@ bool DeviceFactory::isHwModeSelected() {
     }
 }
 
-bool DeviceFactory::getDevices(size_t &totalNumRootDevices, ExecutionEnvironment &executionEnvironment) {
+bool DeviceFactory::getDevices(ExecutionEnvironment &executionEnvironment) {
     using HwDeviceIds = std::vector<std::unique_ptr<HwDeviceId>>;
 
     HwDeviceIds hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    totalNumRootDevices = hwDeviceIds.size();
-    if (totalNumRootDevices == 0) {
+    if (hwDeviceIds.empty()) {
         return false;
     }
 
-    executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(totalNumRootDevices));
+    executionEnvironment.prepareRootDeviceEnvironments(static_cast<uint32_t>(hwDeviceIds.size()));
 
     uint32_t rootDeviceIndex = 0u;
 
@@ -118,8 +114,7 @@ bool DeviceFactory::getDevices(size_t &totalNumRootDevices, ExecutionEnvironment
 
 std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvironment &executionEnvironment) {
     std::vector<std::unique_ptr<Device>> devices;
-    size_t numDevices;
-    auto status = NEO::getDevices(numDevices, executionEnvironment);
+    auto status = NEO::getDevices(executionEnvironment);
     if (!status) {
         return devices;
     }

@@ -42,40 +42,19 @@ struct DeviceFactoryTest : public ::testing::Test {
     ExecutionEnvironment *executionEnvironment;
 };
 
-TEST_F(DeviceFactoryTest, GetDevices_Expect_True_If_Returned) {
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
-
-    EXPECT_TRUE((numDevices > 0) ? success : !success);
-}
-
-TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Null) {
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
-    EXPECT_TRUE((numDevices > 0) ? success : !success);
-}
-
 TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Platform) {
     const HardwareInfo *refHwinfo = *platformDevices;
-    size_t numDevices = 0;
 
-    bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
+    bool success = DeviceFactory::getDevices(*executionEnvironment);
+    EXPECT_TRUE(success);
     const HardwareInfo *hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-
-    EXPECT_TRUE((numDevices > 0) ? success : !success);
-
-    if (numDevices > 0) {
-
         EXPECT_EQ(refHwinfo->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
-    }
 }
 
 TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
     DebugManagerStateRestore stateRestore;
 
-    size_t numDevices = 0;
-
-    bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
+    bool success = DeviceFactory::getDevices(*executionEnvironment);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     ASSERT_TRUE(success);
     auto refEnableKmdNotify = hwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify;
@@ -96,7 +75,7 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
 
     platformsImpl.clear();
     executionEnvironment = constructPlatform()->peekExecutionEnvironment();
-    success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
+    success = DeviceFactory::getDevices(*executionEnvironment);
     ASSERT_TRUE(success);
     hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
@@ -117,9 +96,7 @@ TEST_F(DeviceFactoryTest, getEngineTypeDebugOverride) {
     int32_t debugEngineType = 2;
     DebugManager.flags.NodeOrdinal.set(debugEngineType);
 
-    size_t numDevices = 0;
-
-    bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
+    bool success = DeviceFactory::getDevices(*executionEnvironment);
     ASSERT_TRUE(success);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
@@ -128,8 +105,7 @@ TEST_F(DeviceFactoryTest, getEngineTypeDebugOverride) {
 }
 
 TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSurfaceSizeIsSettedProperly) {
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
+    bool success = DeviceFactory::getDevices(*executionEnvironment);
     ASSERT_TRUE(success);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
@@ -141,32 +117,17 @@ TEST_F(DeviceFactoryTest, givenCreateMultipleRootDevicesDebugFlagWhenGetDevicesI
     auto requiredDeviceCount = 2u;
     DebugManager.flags.CreateMultipleRootDevices.set(requiredDeviceCount);
 
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
+    bool success = DeviceFactory::getDevices(*executionEnvironment);
 
     ASSERT_TRUE(success);
-    EXPECT_EQ(requiredDeviceCount, numDevices);
     EXPECT_EQ(requiredDeviceCount, executionEnvironment->rootDeviceEnvironments.size());
-}
-
-TEST_F(DeviceFactoryTest, givenCreateMultipleRootDevicesDebugFlagWhenGetDevicesForProductFamilyOverrideIsCalledThenNumberOfReturnedDevicesIsEqualToDebugVariable) {
-    DebugManagerStateRestore stateRestore;
-    auto requiredDeviceCount = 2u;
-    DebugManager.flags.CreateMultipleRootDevices.set(requiredDeviceCount);
-
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, *executionEnvironment);
-
-    ASSERT_TRUE(success);
-    EXPECT_EQ(requiredDeviceCount, numDevices);
 }
 
 TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenGetDevicesIsCalledThenOverrideGpuAddressSpace) {
     DebugManagerStateRestore restore;
     DebugManager.flags.OverrideGpuAddressSpace.set(12);
 
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
+    bool success = DeviceFactory::getDevices(*executionEnvironment);
 
     EXPECT_TRUE(success);
     EXPECT_EQ(maxNBitValue(12), executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
@@ -176,8 +137,7 @@ TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenGetDevicesForProductFamilyOverrid
     DebugManagerStateRestore restore;
     DebugManager.flags.OverrideGpuAddressSpace.set(12);
 
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, *executionEnvironment);
+    bool success = DeviceFactory::getDevicesForProductFamilyOverride(*executionEnvironment);
 
     EXPECT_TRUE(success);
     EXPECT_EQ(maxNBitValue(12), executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
@@ -190,10 +150,8 @@ TEST_F(DeviceFactoryTest, whenGetDevicesIsCalledThenAllRootDeviceEnvironmentMemb
 
     MockExecutionEnvironment executionEnvironment(*platformDevices, true, requiredDeviceCount);
 
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevices(numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevices(executionEnvironment);
     ASSERT_TRUE(success);
-    EXPECT_EQ(requiredDeviceCount, numDevices);
 
     std::set<MemoryOperationsHandler *> memoryOperationHandlers;
     std::set<OSInterface *> osInterfaces;
@@ -218,8 +176,7 @@ TEST_F(DeviceFactoryTest, givenInvalidHwConfigStringGetDevicesForProductFamilyOv
 
     MockExecutionEnvironment executionEnvironment(*platformDevices);
 
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevicesForProductFamilyOverride(executionEnvironment);
     EXPECT_FALSE(success);
 }
 
@@ -229,13 +186,11 @@ TEST_F(DeviceFactoryTest, givenValidHwConfigStringGetDevicesForProductFamilyOver
 
     MockExecutionEnvironment executionEnvironment(*platformDevices);
 
-    size_t numDevices = 0;
-    EXPECT_ANY_THROW(DeviceFactory::getDevicesForProductFamilyOverride(numDevices, executionEnvironment));
+    EXPECT_ANY_THROW(DeviceFactory::getDevicesForProductFamilyOverride(executionEnvironment));
 }
 
 TEST_F(DeviceFactoryTest, givenGetDevicesCallWhenItIsDoneThenOsInterfaceIsAllocated) {
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevices(numDevices, *executionEnvironment);
+    bool success = DeviceFactory::getDevices(*executionEnvironment);
     EXPECT_TRUE(success);
     EXPECT_NE(nullptr, executionEnvironment->rootDeviceEnvironments[0]->osInterface);
 }
@@ -269,9 +224,8 @@ TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExist
 TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExistingDeviceThenGetDevicesReturnsFalse) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("invalid");
-    size_t numDevices = 0u;
     ExecutionEnvironment executionEnviornment;
 
-    auto result = DeviceFactory::getDevices(numDevices, executionEnviornment);
+    auto result = DeviceFactory::getDevices(executionEnviornment);
     EXPECT_FALSE(result);
 }

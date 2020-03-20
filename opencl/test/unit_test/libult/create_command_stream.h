@@ -14,5 +14,5 @@ class CommandStreamReceiver;
 class ExecutionEnvironment;
 
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
-extern bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
+extern bool getDevices(ExecutionEnvironment &executionEnvironment);
 } // namespace NEO

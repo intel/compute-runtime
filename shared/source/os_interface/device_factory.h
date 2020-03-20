@@ -14,11 +14,11 @@ namespace NEO {
 
 class ExecutionEnvironment;
 class Device;
-bool getDevices(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
+bool getDevices(ExecutionEnvironment &executionEnvironment);
 class DeviceFactory {
   public:
-    static bool getDevices(size_t &numDevices, ExecutionEnvironment &executionEnvironment);
-    static bool getDevicesForProductFamilyOverride(size_t &numDevices, ExecutionEnvironment &executionEnvironment);
+    static bool getDevices(ExecutionEnvironment &executionEnvironment);
+    static bool getDevicesForProductFamilyOverride(ExecutionEnvironment &executionEnvironment);
     static std::vector<std::unique_ptr<Device>> createDevices(ExecutionEnvironment &executionEnvironment);
     static bool isHwModeSelected();
 

@@ -792,8 +792,7 @@ TEST(GmmHelperTest, givenPlatformAlreadyDestroyedWhenResourceIsBeingDestroyedThe
 TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithInitializedOsInterfaceThenProperParametersArePassed) {
     std::unique_ptr<GmmHelper> gmmHelper;
     auto executionEnvironment = platform()->peekExecutionEnvironment();
-    size_t numDevices;
-    DeviceFactory::getDevices(numDevices, *executionEnvironment);
+    DeviceFactory::getDevices(*executionEnvironment);
     VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
     VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);
     VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);

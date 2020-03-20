@@ -18,10 +18,9 @@ using namespace NEO;
 using GetDevicesTests = ::testing::Test;
 
 HWTEST_F(GetDevicesTests, WhenGetDevicesIsCalledThenSuccessIsReturned) {
-    size_t numDevicesReturned = 0;
     ExecutionEnvironment executionEnvironment;
 
-    auto returnValue = DeviceFactory::getDevices(numDevicesReturned, executionEnvironment);
+    auto returnValue = DeviceFactory::getDevices(executionEnvironment);
     EXPECT_EQ(true, returnValue);
 }
 
@@ -29,12 +28,11 @@ HWTEST_F(GetDevicesTests, whenGetDevicesIsCalledThenGmmIsBeingInitializedAfterFi
     platformsImpl.clear();
     auto executionEnvironment = new ExecutionEnvironment();
     platformsImpl.push_back(std::make_unique<Platform>(*executionEnvironment));
-    size_t numDevicesReturned = 0;
     executionEnvironment->prepareRootDeviceEnvironments(1u);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = PRODUCT_FAMILY::IGFX_UNKNOWN;
     hwInfo->platform.ePCHProductFamily = PCH_PRODUCT_FAMILY::PCH_UNKNOWN;
 
-    auto returnValue = DeviceFactory::getDevices(numDevicesReturned, *executionEnvironment);
+    auto returnValue = DeviceFactory::getDevices(*executionEnvironment);
     EXPECT_TRUE(returnValue);
 }

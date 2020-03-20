@@ -34,7 +34,6 @@ struct GetDevicesTest : ::testing::Test {
     void TearDown() override {
     }
     int i = 0;
-    size_t numDevices = 0;
     const HardwareInfo *hwInfo = nullptr;
 
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
@@ -65,7 +64,8 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
             platformsImpl.clear();
             ExecutionEnvironment *exeEnv = constructPlatform()->peekExecutionEnvironment();
 
-            const auto ret = getDevices(numDevices, *exeEnv);
+            const auto ret = getDevices(*exeEnv);
+            EXPECT_EQ(expectedDevices, exeEnv->rootDeviceEnvironments.size());
             for (auto i = 0u; i < expectedDevices; i++) {
                 hwInfo = exeEnv->rootDeviceEnvironments[i]->getHardwareInfo();
 
@@ -74,14 +74,12 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
                 case CSR_HW_WITH_AUB:
                     EXPECT_TRUE(ret);
                     EXPECT_NE(nullptr, hwInfo);
-                    EXPECT_EQ(expectedDevices, numDevices);
                     break;
                 case CSR_AUB:
                 case CSR_TBX:
                 case CSR_TBX_WITH_AUB: {
                     EXPECT_TRUE(ret);
                     EXPECT_NE(nullptr, hwInfo);
-                    EXPECT_EQ(expectedDevices, numDevices);
                     for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
                         auto hardwareInfo = hardwareInfoTable[i];
                         if (hardwareInfo == nullptr)
@@ -135,7 +133,7 @@ HWTEST_F(GetDevicesTest, givenUpperCaseProductFamilyOverrideFlagSetWhenCreatingD
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
 
     ExecutionEnvironment *exeEnv = platform()->peekExecutionEnvironment();
-    bool ret = getDevices(numDevices, *exeEnv);
+    bool ret = getDevices(*exeEnv);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(productFamily, exeEnv->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
@@ -153,7 +151,8 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
         platformsImpl.clear();
         ExecutionEnvironment *exeEnv = constructPlatform()->peekExecutionEnvironment();
 
-        auto ret = getDevices(numDevices, *exeEnv);
+        auto ret = getDevices(*exeEnv);
+        EXPECT_EQ(expectedDevices, exeEnv->rootDeviceEnvironments.size());
         for (auto i = 0u; i < expectedDevices; i++) {
             hwInfo = exeEnv->rootDeviceEnvironments[i]->getHardwareInfo();
 
@@ -161,14 +160,12 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
             case CSR_HW:
             case CSR_HW_WITH_AUB:
                 EXPECT_TRUE(ret);
-                EXPECT_EQ(expectedDevices, numDevices);
                 break;
             case CSR_AUB:
             case CSR_TBX:
             case CSR_TBX_WITH_AUB: {
                 EXPECT_TRUE(ret);
                 EXPECT_NE(nullptr, hwInfo);
-                EXPECT_EQ(expectedDevices, numDevices);
                 for (i = 0; i < IGFX_MAX_PRODUCT; i++) {
                     auto hardwareInfo = hardwareInfoTable[i];
                     if (hardwareInfo == nullptr)

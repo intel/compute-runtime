@@ -113,8 +113,7 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeForTgllpProductFa
 
     MockExecutionEnvironment executionEnvironment(*platformDevices);
 
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevicesForProductFamilyOverride(executionEnvironment);
     ASSERT_TRUE(success);
 
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
@@ -132,10 +131,8 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWhenGetDevicesFor
 
     MockExecutionEnvironment executionEnvironment(*platformDevices, true, requiredDeviceCount);
 
-    size_t numDevices = 0;
-    bool success = DeviceFactory::getDevicesForProductFamilyOverride(numDevices, executionEnvironment);
+    bool success = DeviceFactory::getDevicesForProductFamilyOverride(executionEnvironment);
     ASSERT_TRUE(success);
-    EXPECT_EQ(requiredDeviceCount, numDevices);
 
     std::set<MemoryOperationsHandler *> memoryOperationHandlers;
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < requiredDeviceCount; rootDeviceIndex++) {

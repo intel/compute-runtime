@@ -20,9 +20,8 @@ ExecutionEnvironment *getExecutionEnvironmentImpl(HardwareInfo *&hwInfo, uint32_
     executionEnvironment->prepareRootDeviceEnvironments(rootDeviceEnvironments);
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(rootDeviceEnvironments);
-    size_t numDevicesReturned = 0;
     hwInfo = nullptr;
-    DeviceFactory::getDevices(numDevicesReturned, *executionEnvironment);
+    DeviceFactory::getDevices(*executionEnvironment);
     hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     executionEnvironment->initializeMemoryManager();
 

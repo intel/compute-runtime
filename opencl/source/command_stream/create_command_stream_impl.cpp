@@ -49,11 +49,11 @@ CommandStreamReceiver *createCommandStreamImpl(ExecutionEnvironment &executionEn
     return commandStreamReceiver;
 }
 
-bool getDevicesImpl(size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
+bool getDevicesImpl(ExecutionEnvironment &executionEnvironment) {
     if (DeviceFactory::isHwModeSelected()) {
-        return DeviceFactory::getDevices(numDevicesReturned, executionEnvironment);
+        return DeviceFactory::getDevices(executionEnvironment);
     }
-    return DeviceFactory::getDevicesForProductFamilyOverride(numDevicesReturned, executionEnvironment);
+    return DeviceFactory::getDevicesForProductFamilyOverride(executionEnvironment);
 }
 
 } // namespace NEO
