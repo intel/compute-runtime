@@ -46,26 +46,7 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
 
     add_definitions( -DZE_ENABLE_OCL_INTEROP=1)
 
-    # Generate VERSION and VERSION_SUFFIX (if building in tree) files to
-    # facilitate artifact publishing.
     file(WRITE "${CMAKE_BINARY_DIR}/VERSION" "${PROJECT_VERSION}")
-    find_program(GIT_EXE NAMES "git")
-    if(GIT_EXE AND EXISTS "${NEO_SOURCE_DIR}/.git")
-        if(MSVC)
-            execute_process(
-                COMMAND CMD /c git rev-list --count HEAD
-                OUTPUT_VARIABLE VERSION_SUFFIX
-            )
-        else()
-            execute_process(
-                COMMAND git rev-list --count HEAD
-                OUTPUT_VARIABLE VERSION_SUFFIX
-            )
-        endif()
-        # ensure no trailing newlines are written to the file
-        string(STRIP "${VERSION_SUFFIX}" VERSION_SUFFIX)
-        file(WRITE "${CMAKE_BINARY_DIR}/VERSION_SUFFIX" "${VERSION_SUFFIX}")
-    endif()
 
     #Define a path for custom commands to work around MSVC
     set(CUSTOM_COMMAND_BINARY_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
@@ -473,23 +454,6 @@ endif()
 
         set(L0_PACKAGE_VERSION_DEB "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
         set(L0_PACKAGE_VERSION_RPM "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
-
-
-        find_program(GIT_EXE NAMES "git")
-        if(GIT_EXE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
-            if(MSVC)
-                execute_process(
-                    COMMAND CMD /c git rev-list v${L0_PACKAGE_VERSION_DEB}..HEAD --count
-                    OUTPUT_VARIABLE VERSION_SUFFIX
-                )
-            else()
-                execute_process(
-                    COMMAND git rev-list v${L0_PACKAGE_VERSION_DEB}..HEAD --count
-                    OUTPUT_VARIABLE VERSION_SUFFIX
-                )
-            endif()
-        endif()
-        string(STRIP "${VERSION_SUFFIX}" VERSION_SUFFIX)
 
         if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/cpack.cmake)
             include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/cpack.cmake)
