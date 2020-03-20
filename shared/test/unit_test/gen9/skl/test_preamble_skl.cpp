@@ -108,7 +108,7 @@ GEN9TEST_F(PreambleVfeState, WaOff) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0, 168u, aub_stream::EngineType::ENGINE_RCS);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0, 0, 168u, aub_stream::EngineType::ENGINE_RCS);
 
     parseCommands<FamilyType>(cs);
 
@@ -126,7 +126,7 @@ GEN9TEST_F(PreambleVfeState, WaOn) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getDevice(0)->getHardwareInfo(), 0, 0, 168u, aub_stream::EngineType::ENGINE_RCS);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0, 0, 168u, aub_stream::EngineType::ENGINE_RCS);
 
     parseCommands<FamilyType>(cs);
 

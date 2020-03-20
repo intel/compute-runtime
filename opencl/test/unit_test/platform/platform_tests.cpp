@@ -75,16 +75,13 @@ TEST_F(PlatformTest, WhenGetNumDevicesIsCalledThenExpectedValuesAreReturned) {
 }
 
 TEST_F(PlatformTest, WhenGetDeviceIsCalledThenExpectedValuesAreReturned) {
-    EXPECT_EQ(nullptr, pPlatform->getDevice(0));
     EXPECT_EQ(nullptr, pPlatform->getClDevice(0));
 
     pPlatform->initializeWithNewDevices();
 
-    EXPECT_NE(nullptr, pPlatform->getDevice(0));
     EXPECT_NE(nullptr, pPlatform->getClDevice(0));
 
     auto numDevices = pPlatform->getNumDevices();
-    EXPECT_EQ(nullptr, pPlatform->getDevice(numDevices));
     EXPECT_EQ(nullptr, pPlatform->getClDevice(numDevices));
 }
 

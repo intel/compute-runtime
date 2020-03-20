@@ -108,8 +108,8 @@ TEST(SubDevicesTest, givenCreateMultipleRootDevicesFlagsEnabledWhenDevicesAreCre
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     ultHwConfig.useMockedGetDevicesFunc = false;
     initPlatform();
-    EXPECT_EQ(0u, platform()->getDevice(0)->getRootDeviceIndex());
-    EXPECT_EQ(1u, platform()->getDevice(1)->getRootDeviceIndex());
+    EXPECT_EQ(0u, platform()->getClDevice(0)->getRootDeviceIndex());
+    EXPECT_EQ(1u, platform()->getClDevice(1)->getRootDeviceIndex());
 }
 
 TEST(SubDevicesTest, givenRootDeviceWithSubDevicesWhenOsContextIsCreatedThenItsBitfieldBasesOnSubDevicesCount) {

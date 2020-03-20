@@ -9,13 +9,15 @@
 
 #include "shared/source/helpers/hw_helper.h"
 
+#include "opencl/source/device/cl_device.h"
+
 using namespace NEO;
 using namespace std;
 
 void HwInfoConfigTest::SetUp() {
     PlatformFixture::SetUp();
 
-    pInHwInfo = pPlatform->getDevice(0)->getHardwareInfo();
+    pInHwInfo = pPlatform->getClDevice(0)->getHardwareInfo();
 
     testPlatform = &pInHwInfo.platform;
     testSkuTable = &pInHwInfo.featureTable;

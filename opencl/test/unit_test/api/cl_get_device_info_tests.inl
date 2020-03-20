@@ -95,7 +95,7 @@ TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeCorrec
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    const HardwareInfo &hwInfo = pPlatform->getDevice(testedRootDeviceIndex)->getHardwareInfo();
+    const HardwareInfo &hwInfo = pPlatform->getClDevice(testedRootDeviceIndex)->getHardwareInfo();
 
     cl_device_svm_capabilities expectedCaps = 0;
     if (hwInfo.capabilityTable.ftrSvm != 0) {

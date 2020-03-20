@@ -305,7 +305,7 @@ TEST_F(ProgramDataTest, givenConstantAllocationThatIsInUseByGpuWhenProgramIsBein
 
     buildAndDecodeProgramPatchList();
 
-    auto &csr = *pPlatform->getDevice(0)->getDefaultEngine().commandStreamReceiver;
+    auto &csr = *pPlatform->getClDevice(0)->getDefaultEngine().commandStreamReceiver;
     auto tagAddress = csr.getTagAddress();
     auto constantSurface = pProgram->getConstantSurface();
     constantSurface->updateTaskCount(*tagAddress + 1, csr.getOsContext().getContextId());
@@ -322,7 +322,7 @@ TEST_F(ProgramDataTest, givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingD
 
     buildAndDecodeProgramPatchList();
 
-    auto &csr = *pPlatform->getDevice(0)->getDefaultEngine().commandStreamReceiver;
+    auto &csr = *pPlatform->getClDevice(0)->getDefaultEngine().commandStreamReceiver;
     auto tagAddress = csr.getTagAddress();
     auto globalSurface = pProgram->getGlobalSurface();
     globalSurface->updateTaskCount(*tagAddress + 1, csr.getOsContext().getContextId());

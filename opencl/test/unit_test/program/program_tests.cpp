@@ -709,7 +709,7 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
 
     // fail build - linked code is corrupted and cannot be postprocessed
-    auto p3 = std::make_unique<FailingGenBinaryProgram>(*pPlatform->getDevice(0)->getExecutionEnvironment());
+    auto p3 = std::make_unique<FailingGenBinaryProgram>(*executionEnvironment);
     p3->setDevice(&device->getDevice());
     std::string testFile;
     size_t sourceSize;
@@ -1173,8 +1173,8 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
     // fail linking - linked code is corrupted and cannot be postprocessed
-    auto p2 = std::make_unique<FailingGenBinaryProgram>(*pPlatform->getDevice(0)->getExecutionEnvironment());
-    ClDevice *device = pPlatform->getClDevice(0);
+    auto device = static_cast<ClDevice *>(usedDevice);
+    auto p2 = std::make_unique<FailingGenBinaryProgram>(*device->getExecutionEnvironment());
     p2->setDevice(&device->getDevice());
     retVal = p2->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);

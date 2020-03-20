@@ -82,7 +82,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
         imgDesc.image_depth = 1;
         imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        gmm = MockGmm::queryImgParams(pPlatform->getDevice(0)->getGmmClientContext(), imgInfo).release();
+        gmm = MockGmm::queryImgParams(pPlatform->getClDevice(0)->getGmmClientContext(), imgInfo).release();
         mockGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
 
         memoryManager->forceGmm = gmm;

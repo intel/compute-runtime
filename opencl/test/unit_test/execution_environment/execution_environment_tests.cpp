@@ -54,17 +54,16 @@ TEST(ExecutionEnvironment, givenPlatformAndExecutionEnvironmentWithRefCountsWhen
     executionEnvironment->decRefInternal();
 }
 
-TEST(ExecutionEnvironment, givenPlatformWhenItIsInitializedAndCreatesDevicesThenThoseDevicesAddRefcountsToExecutionEnvironment) {
+TEST(ExecutionEnvironment, WhenCreatingDevicesThenThoseDevicesAddRefcountsToExecutionEnvironment) {
     auto executionEnvironment = new ExecutionEnvironment();
-    std::unique_ptr<Platform> platform(new Platform(*executionEnvironment));
 
     auto expectedRefCounts = executionEnvironment->getRefInternalCount();
-    platform->initialize(DeviceFactory::createDevices(*executionEnvironment));
-    EXPECT_LT(0u, platform->getDevice(0)->getNumAvailableDevices());
-    if (platform->getDevice(0)->getNumAvailableDevices() > 1) {
+    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+    EXPECT_LT(0u, devices[0]->getNumAvailableDevices());
+    if (devices[0]->getNumAvailableDevices() > 1) {
         expectedRefCounts++;
     }
-    expectedRefCounts += platform->getDevice(0)->getNumAvailableDevices();
+    expectedRefCounts += devices[0]->getNumAvailableDevices();
     EXPECT_EQ(expectedRefCounts, executionEnvironment->getRefInternalCount());
 }
 

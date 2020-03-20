@@ -99,7 +99,7 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLink
         const char *buildOptions = "-cl-std=CL2.0";
 
         overwriteBuiltInBinaryName(
-            pPlatform->getDevice(0),
+            &pPlatform->getClDevice(0)->getDevice(),
             "simple_block_kernel", true);
 
         ASSERT_NE(nullptr, pProgram);

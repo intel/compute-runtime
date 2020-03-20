@@ -5,8 +5,7 @@
  *
  */
 
-#include "shared/source/device/device.h"
-
+#include "opencl/source/device/cl_device.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "test.h"
 
@@ -24,7 +23,7 @@ struct Gen9PlatformCaps : public PlatformFixture, public ::testing::Test {
 
 GEN9TEST_F(Gen9PlatformCaps, allSkusSupportFP64) {
     const auto &caps = pPlatform->getPlatformInfo();
-    if (pPlatform->getDevice(0)->getHardwareInfo().capabilityTable.ftrSupportsFP64) {
+    if (pPlatform->getClDevice(0)->getHardwareInfo().capabilityTable.ftrSupportsFP64) {
         EXPECT_NE(std::string::npos, caps.extensions.find(std::string("cl_khr_fp64")));
     } else {
         EXPECT_EQ(std::string::npos, caps.extensions.find(std::string("cl_khr_fp64")));
@@ -34,7 +33,7 @@ GEN9TEST_F(Gen9PlatformCaps, allSkusSupportFP64) {
 GEN9TEST_F(Gen9PlatformCaps, SKLVersion) {
     char *paramValue = new char[12];
     cl_int retVal = clGetPlatformInfo(pPlatform, CL_PLATFORM_VERSION, 12, paramValue, nullptr);
-    if (pPlatform->getDevice(0)->getHardwareInfo().platform.eProductFamily == IGFX_SKYLAKE) {
+    if (pPlatform->getClDevice(0)->getHardwareInfo().platform.eProductFamily == IGFX_SKYLAKE) {
         EXPECT_STREQ(paramValue, "OpenCL 2.1 ");
     }
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -44,7 +43,7 @@ GEN9TEST_F(Gen9PlatformCaps, SKLVersion) {
 GEN9TEST_F(Gen9PlatformCaps, BXTVersion) {
     char *paramValue = new char[12];
     cl_int retVal = clGetPlatformInfo(pPlatform, CL_PLATFORM_VERSION, 12, paramValue, nullptr);
-    if (pPlatform->getDevice(0)->getHardwareInfo().platform.eProductFamily == IGFX_BROXTON) {
+    if (pPlatform->getClDevice(0)->getHardwareInfo().platform.eProductFamily == IGFX_BROXTON) {
         EXPECT_STREQ(paramValue, "OpenCL 1.2 ");
     }
     EXPECT_EQ(retVal, CL_SUCCESS);

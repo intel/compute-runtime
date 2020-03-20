@@ -188,19 +188,6 @@ bool Platform::isInitialized() {
     return ret;
 }
 
-Device *Platform::getDevice(size_t deviceOrdinal) {
-    TakeOwnershipWrapper<Platform> platformOwnership(*this);
-
-    if (this->state != StateInited || deviceOrdinal >= clDevices.size()) {
-        return nullptr;
-    }
-
-    auto pDevice = &clDevices[deviceOrdinal]->getDevice();
-    DEBUG_BREAK_IF(pDevice == nullptr);
-
-    return pDevice;
-}
-
 ClDevice *Platform::getClDevice(size_t deviceOrdinal) {
     TakeOwnershipWrapper<Platform> platformOwnership(*this);
 

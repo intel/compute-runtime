@@ -116,7 +116,7 @@ TEST_F(clGetPlatformInfoTests, GivenClPlatformHostTimerResolutionWhenGettingPlat
     retVal = clGetPlatformInfo(pPlatform, CL_PLATFORM_HOST_TIMER_RESOLUTION, retSize, &value, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto device = pPlatform->getDevice(0);
+    auto device = pPlatform->getClDevice(0);
     cl_ulong resolution = static_cast<cl_ulong>(device->getPlatformHostTimerResolution());
     EXPECT_EQ(resolution, value);
 }

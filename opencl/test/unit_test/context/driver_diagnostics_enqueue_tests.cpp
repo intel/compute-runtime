@@ -662,7 +662,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCalling
 }
 
 TEST_F(PerformanceHintEnqueueTest, GivenSVMPointerWhenEnqueueSVMMapIsCallingThenContextProvidesProperHint) {
-    if (!pPlatform->getDevice(0)->getHardwareInfo().capabilityTable.ftrSvm) {
+    if (!pPlatform->getClDevice(0)->getHardwareInfo().capabilityTable.ftrSvm) {
         GTEST_SKIP();
     }
     void *svmPtr = context->getSVMAllocsManager()->createSVMAlloc(0, 256, {});
@@ -778,7 +778,7 @@ TEST_P(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEn
 
 TEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueKernelIsCalledWithWorkDim3ThenContextProvidesProperHint) {
     size_t preferredWorkGroupSize[3];
-    auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getDevice(0)->getDeviceInfo().maxWorkGroupSize);
+    auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getClDevice(0)->getSharedDeviceInfo().maxWorkGroupSize);
     if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
         WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, 32u, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
         computeWorkgroupSizeND(wsInfo, preferredWorkGroupSize, globalWorkGroupSize, 2);
@@ -794,7 +794,7 @@ TEST_F(PerformanceHintEnqueueKernelPrintfTest, GivenKernelWithPrintfWhenEnqueueK
 TEST_F(PerformanceHintEnqueueTest, GivenKernelWithCoherentPtrWhenEnqueueKernelIsCalledWithWorkDim2ThenContextProvidesProperHint) {
     size_t preferredWorkGroupSize[3];
     size_t globalWorkGroupSize[3] = {1, 1, 1};
-    auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getDevice(0)->getDeviceInfo().maxWorkGroupSize);
+    auto maxWorkGroupSize = static_cast<uint32_t>(pPlatform->getClDevice(0)->getSharedDeviceInfo().maxWorkGroupSize);
     MockKernelWithInternals mockKernel(*pPlatform->getClDevice(0), context);
     Kernel::SimpleKernelArgInfo kernelArgInfo;
 
