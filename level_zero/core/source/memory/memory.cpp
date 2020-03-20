@@ -126,6 +126,7 @@ ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, ze_devic
     }
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY);
     unifiedMemoryProperties.allocationFlags.flags.shareable = 1u;
+    unifiedMemoryProperties.device = Device::fromHandle(hDevice)->getNEODevice();
     void *usmPtr =
         svmAllocsManager->createUnifiedMemoryAllocation(Device::fromHandle(hDevice)->getRootDeviceIndex(),
                                                         size, unifiedMemoryProperties);
@@ -145,6 +146,7 @@ ze_result_t DriverHandleImp::allocSharedMem(ze_device_handle_t hDevice, ze_devic
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY);
+    unifiedMemoryProperties.device = Device::fromHandle(hDevice)->getNEODevice();
 
     auto usmPtr =
         svmAllocsManager->createSharedUnifiedMemoryAllocation(Device::fromHandle(hDevice)->getRootDeviceIndex(),

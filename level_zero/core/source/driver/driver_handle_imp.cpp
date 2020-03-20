@@ -84,6 +84,16 @@ ze_result_t DriverHandleImp::getMemAllocProperties(const void *ptr,
     if (alloc) {
         pMemAllocProperties->type = parseUSMType(alloc->memoryType);
         pMemAllocProperties->id = alloc->gpuAllocation->getGpuAddress();
+
+        if (phDevice != nullptr) {
+            if (alloc->device == nullptr) {
+                *phDevice = nullptr;
+            } else {
+                auto device = static_cast<NEO::Device *>(alloc->device)->getSpecializedDevice<DeviceImp>();
+                DEBUG_BREAK_IF(device == nullptr);
+                *phDevice = device->toHandle();
+            }
+        }
         return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
