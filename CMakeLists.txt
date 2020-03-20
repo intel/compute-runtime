@@ -57,6 +57,7 @@ if(TR_DEPRECATED)
 endif(TR_DEPRECATED)
 
 if(RELEASE_WITH_REGKEYS)
+    message(STATUS "Enabling RegKey reading in release build")
     add_definitions(-D_RELEASE_BUILD_WITH_REGKEYS)
 endif(RELEASE_WITH_REGKEYS)
 
