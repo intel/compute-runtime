@@ -952,6 +952,10 @@ cl_int clMemFreeINTEL(
     cl_context context,
     const void *ptr);
 
+cl_int clMemBlockingFreeINTEL(
+    cl_context context,
+    void *ptr);
+
 cl_int clGetMemAllocInfoINTEL(
     cl_context context,
     const void *ptr,

@@ -3576,10 +3576,9 @@ void *clSharedMemAllocINTEL(
     return neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(neoContext->getDevice(0)->getRootDeviceIndex(), size, unifiedMemoryProperties, neoContext->getSpecialQueue());
 }
 
-cl_int clMemFreeINTEL(
-    cl_context context,
-    const void *ptr) {
-
+cl_int clMemFreeCommon(cl_context context,
+                       const void *ptr,
+                       bool blocking) {
     Context *neoContext = nullptr;
     auto retVal = validateObjects(WithCastToInternal(context, &neoContext));
 
@@ -3587,7 +3586,7 @@ cl_int clMemFreeINTEL(
         return retVal;
     }
 
-    if (ptr && !neoContext->getSVMAllocsManager()->freeSVMAlloc(const_cast<void *>(ptr))) {
+    if (ptr && !neoContext->getSVMAllocsManager()->freeSVMAlloc(const_cast<void *>(ptr), blocking)) {
         return CL_INVALID_VALUE;
     }
 
@@ -3596,6 +3595,18 @@ cl_int clMemFreeINTEL(
     }
 
     return CL_SUCCESS;
+}
+
+cl_int clMemFreeINTEL(
+    cl_context context,
+    const void *ptr) {
+    return clMemFreeCommon(context, ptr, false);
+}
+
+cl_int clMemBlockingFreeINTEL(
+    cl_context context,
+    void *ptr) {
+    return clMemFreeCommon(context, ptr, true);
 }
 
 cl_int clGetMemAllocInfoINTEL(
@@ -4003,6 +4014,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *funcName) {
     RETURN_FUNC_PTR_IF_EXIST(clDeviceMemAllocINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clSharedMemAllocINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clMemFreeINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clMemBlockingFreeINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clGetMemAllocInfoINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clSetKernelArgMemPointerINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueMemsetINTEL);

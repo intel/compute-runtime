@@ -118,6 +118,11 @@ TEST_F(clGetExtensionFunctionAddressTests, GivenClMemFreeINTELWhenGettingExtensi
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clMemFreeINTEL));
 }
 
+TEST_F(clGetExtensionFunctionAddressTests, GivenClMemBlockingFreeINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
+    auto retVal = clGetExtensionFunctionAddress("clMemBlockingFreeINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clMemBlockingFreeINTEL));
+}
+
 TEST_F(clGetExtensionFunctionAddressTests, GivenClGetMemAllocInfoINTELWhenGettingExtensionFunctionThenCorrectAddressIsReturned) {
     auto retVal = clGetExtensionFunctionAddress("clGetMemAllocInfoINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetMemAllocInfoINTEL));
