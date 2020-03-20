@@ -358,7 +358,7 @@ HWTEST_F(UsmDestructionTests, givenSharedUsmAllocationWhenBlockingFreeIsCalledTh
     EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, 6u))
         .Times(2);
 
-    svmAllocationsManager->freeSVMAlloc(sharedMemory, true);
+    clMemBlockingFreeINTEL(&mockContext, sharedMemory);
 }
 
 HWTEST_F(UsmDestructionTests, givenUsmAllocationWhenBlockingFreeIsCalledThenWaitForCompletionIsCalled) {
@@ -396,5 +396,5 @@ HWTEST_F(UsmDestructionTests, givenUsmAllocationWhenBlockingFreeIsCalledThenWait
     EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, 6u))
         .Times(1);
 
-    svmAllocationsManager->freeSVMAlloc(hostMemory, true);
+    clMemBlockingFreeINTEL(&mockContext, hostMemory);
 }
