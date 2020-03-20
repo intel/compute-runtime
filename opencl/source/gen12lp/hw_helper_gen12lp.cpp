@@ -21,6 +21,16 @@ using Family = NEO::TGLLPFamily;
 namespace NEO {
 
 template <>
+void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) {
+    caps->image3DMaxHeight = 2048;
+    caps->image3DMaxWidth = 2048;
+    //With statefull messages we have an allocation cap of 4GB
+    //Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching..
+    caps->maxMemAllocSize = (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
+    caps->isStatelesToStatefullWithOffsetSupported = true;
+}
+
+template <>
 bool HwHelperHw<Family>::isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const {
     return Gen12LPHelpers::isOffsetToSkipSetFFIDGPWARequired(hwInfo);
 }

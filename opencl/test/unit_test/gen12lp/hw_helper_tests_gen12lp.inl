@@ -66,11 +66,15 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, adjustDefaultEngineTypeNoCcs) {
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpPlatformWhenSetupHardwareCapabilitiesIsCalledThenDefaultImplementationIsUsed) {
-    if (SpecialUltHelperGen12lp::shouldTestDefaultImplementationOfSetupHardwareCapabilities(hardwareInfo.platform.eProductFamily)) {
-        auto &helper = HwHelper::get(renderCoreFamily);
-        testDefaultImplementationOfSetupHardwareCapabilities(helper, hardwareInfo);
-    }
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpPlatformWhenSetupHardwareCapabilitiesIsCalledThenShouldSetCorrectValues) {
+    HardwareCapabilities hwCaps = {0};
+
+    auto &hwHelper = HwHelper::get(renderCoreFamily);
+    hwHelper.setupHardwareCapabilities(&hwCaps, hardwareInfo);
+
+    EXPECT_EQ(2048u, hwCaps.image3DMaxHeight);
+    EXPECT_EQ(2048u, hwCaps.image3DMaxWidth);
+    EXPECT_TRUE(hwCaps.isStatelesToStatefullWithOffsetSupported);
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenCompressionFtrEnabledWhenAskingForPageTableManagerThenReturnCorrectValue) {
