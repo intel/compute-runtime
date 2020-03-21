@@ -414,6 +414,10 @@ target_link_libraries(${TARGET_NAME_L0}
 
 if(UNIX)
     target_link_libraries(${TARGET_NAME_L0} ${GMM_LINK_NAME})
+
+    set_property(TARGET ${TARGET_NAME_L0}
+        APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/core/source/dll/linux/ze.exports"
+    )
 endif()
 
 if(HAVE_INSTRUMENTATION)
