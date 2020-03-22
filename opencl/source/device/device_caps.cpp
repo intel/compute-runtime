@@ -33,7 +33,7 @@ static std::string spirVersions = "1.2 ";
 static const char *spirvVersion = "SPIR-V_1.2 ";
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
-static std::string driverVersion = TOSTR(NEO_DRIVER_VERSION);
+static std::string driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
 
 const char *builtInKernels = ""; // the "always available" (extension-independent) builtin kernels
 
@@ -186,7 +186,7 @@ void ClDevice::initializeCaps() {
     deviceExtensions.clear();
     deviceExtensions.append(deviceExtensionsList);
 
-    driverVersion = TOSTR(NEO_DRIVER_VERSION);
+    driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
 
     // Add our graphics family name to the device name
     name += "Intel(R) ";

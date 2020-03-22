@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Intel Corporation
+ * Copyright (C) 2018-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,6 @@
 #ifndef DRIVER_VERSION_H
 #define DRIVER_VERSION_H
 
-#cmakedefine NEO_DRIVER_VERSION ${NEO_DRIVER_VERSION}
+#cmakedefine NEO_OCL_DRIVER_VERSION ${NEO_OCL_DRIVER_VERSION}
 
 #endif /* DRIVER_VERSION_H */

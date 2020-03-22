@@ -1019,7 +1019,7 @@ TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionTh
 
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
-    const std::string expectedVersion = TOSTR(NEO_DRIVER_VERSION);
+    const std::string expectedVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
 #undef QTR
 #undef TOSTR
 

@@ -20,7 +20,7 @@
 #define TOSTR(b) QTR(b)
 
 namespace NEO {
-constexpr const char *driverVersion = TOSTR(NEO_DRIVER_VERSION);
+constexpr const char *driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
 }
 
 #undef QTR
