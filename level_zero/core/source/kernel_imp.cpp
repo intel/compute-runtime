@@ -236,7 +236,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
 
     if (itemsInGroup > module->getMaxGroupSize()) {
         DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION;
     }
     auto grfSize = kernelImmData->getDescriptor().kernelAttributes.grfSize;
     uint32_t perThreadDataSizeForWholeThreadGroupNeeded =
