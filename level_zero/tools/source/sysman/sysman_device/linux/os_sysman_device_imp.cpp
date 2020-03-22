@@ -5,14 +5,14 @@
  *
  */
 
-#include "level_zero/core/source/device.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/os_interface.h"
 
-#include "drm_neo.h"
-#include "os_interface.h"
-#include "sysman/linux/os_sysman_imp.h"
-#include "sysman/linux/sysfs_access.h"
-#include "sysman/sysman_device/os_sysman_device.h"
-#include "sysman/sysman_device/sysman_device_imp.h"
+#include "level_zero/core/source/device.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/sysfs_access.h"
+#include "level_zero/tools/source/sysman/sysman_device/os_sysman_device.h"
+#include "level_zero/tools/source/sysman/sysman_device/sysman_device_imp.h"
 
 #include <unistd.h>
 

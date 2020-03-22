@@ -5,7 +5,7 @@
  *
  */
 
-#include "sysman/sysman_imp.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
 

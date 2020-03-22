@@ -9,8 +9,6 @@ set(L0_SRCS_TOOLS_METRICS
 
 if(HAVE_INSTRUMENTATION)
     list(APPEND L0_SRCS_TOOLS_METRICS
-        ${L0_SRCS_TOOLS_LINUX}
-        ${L0_SRCS_TOOLS_WINDOWS}
         ${CMAKE_CURRENT_SOURCE_DIR}/metric.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/metric_enumeration_imp.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/metric_tracer_imp.cpp
@@ -26,12 +24,7 @@ else()
     add_subdirectory(windows)
 endif()
 
-target_include_directories(${TARGET_NAME_L0}
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/
-)
-
-target_sources(${TARGET_NAME_L0}
+target_sources(${L0_STATIC_LIB_NAME}
     PRIVATE
         ${L0_SRCS_TOOLS_METRICS}
         ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt

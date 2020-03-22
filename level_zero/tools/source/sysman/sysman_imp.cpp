@@ -9,10 +9,9 @@
 
 #include "level_zero/core/source/driver.h"
 #include "level_zero/core/source/driver_handle_imp.h"
+#include "level_zero/tools/source/sysman/pci/pci_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
-
-#include "pci/pci_imp.h"
-#include "sysman_device/sysman_device_imp.h"
+#include "level_zero/tools/source/sysman/sysman_device/sysman_device_imp.h"
 
 #include <vector>
 

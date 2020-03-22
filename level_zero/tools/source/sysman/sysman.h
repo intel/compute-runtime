@@ -6,13 +6,12 @@
  */
 
 #pragma once
+#include "level_zero/tools/source/sysman/frequency/frequency.h"
+#include "level_zero/tools/source/sysman/pci/pci.h"
+#include "level_zero/tools/source/sysman/standby/standby.h"
+#include "level_zero/tools/source/sysman/sysman_device/sysman_device.h"
 #include <level_zero/zet_api.h>
 #include <level_zero/zet_sysman.h>
-
-#include "frequency/frequency.h"
-#include "pci/pci.h"
-#include "standby/standby.h"
-#include "sysman_device/sysman_device.h"
 
 #include <unordered_map>
 

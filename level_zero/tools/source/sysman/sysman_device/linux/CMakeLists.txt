@@ -5,11 +5,12 @@
 #
 
 set(L0_SRCS_TOOLS_SYSMAN_DEVICE_LINUX
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/os_sysman_device_imp.cpp
 )
 
 if(UNIX)
-target_sources(${TARGET_NAME_L0}
+target_sources(${L0_STATIC_LIB_NAME}
     PRIVATE
     ${L0_SRCS_TOOLS_SYSMAN_DEVICE_LINUX}
 )

@@ -5,12 +5,12 @@
  *
  */
 
-#include "level_zero/core/source/device.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/os_interface.h"
 
-#include "drm_neo.h"
-#include "os_interface.h"
-#include "sysman/linux/sysfs_access.h"
-#include "sysman/sysman_imp.h"
+#include "level_zero/core/source/device.h"
+#include "level_zero/tools/source/sysman/linux/sysfs_access.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
 

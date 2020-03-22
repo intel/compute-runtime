@@ -5,7 +5,7 @@
  *
  */
 
-#include "../os_standby.h"
+#include "level_zero/tools/source/sysman/standby/os_standby.h"
 
 namespace L0 {
 

@@ -8,11 +8,11 @@ set(L0_EXPERIMENTAL_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/experimental.cpp
 )
 
-target_include_directories(${TARGET_NAME_L0}
+target_include_directories(${L0_STATIC_LIB_NAME}
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/
 )
-target_sources(${TARGET_NAME_L0}
+target_sources(${L0_STATIC_LIB_NAME}
     PRIVATE
         ${L0_EXPERIMENTAL_SOURCES}
         ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt

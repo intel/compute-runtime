@@ -297,8 +297,6 @@ endif()
 
 add_subdirectory_unique(api)
 add_subdirectory_unique(source)
-add_subdirectory_unique(experimental${BRANCH_DIR_SUFFIX}/source)
-add_subdirectory_unique(tools/source)
 
 if(DONT_CARE_OF_VIRTUALS)
     set(L0_RELEASE_LIB_NAME "${TARGET_NAME_L0}_lib")
@@ -316,7 +314,9 @@ function(generate_l0_lib LIB_NAME MOCKABLE)
         ${L0_RUNTIME_SOURCES}
     )
 
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/core/source "${NEO_BUILD_DIR}/${LIB_NAME}")
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/core/source "${NEO_BUILD_DIR}/${LIB_NAME}/core/source")
+    add_subdirectory(experimental${BRANCH_DIR_SUFFIX}/source "${NEO_BUILD_DIR}/${LIB_NAME}/experimental${BRANCH_DIR_SUFFIX}/source")
+    add_subdirectory(tools/source "${NEO_BUILD_DIR}/${LIB_NAME}tools/source")
 
     append_sources_from_properties(L0_RUNTIME_SOURCES
         L0_API

@@ -5,7 +5,7 @@
  *
  */
 
-#include "../os_frequency.h"
+#include "level_zero/tools/source/sysman/frequency/os_frequency.h"
 
 namespace L0 {
 

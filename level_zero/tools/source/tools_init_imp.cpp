@@ -8,12 +8,11 @@
 #include "level_zero/tools/source/tools_init_imp.h"
 
 #include "level_zero/tools/source/metrics/metric.h"
+#include "level_zero/tools/source/pin/pin.h"
+#include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/source/tools_init.h"
 #include "level_zero/tools/source/tracing/tracing.h"
 #include "level_zero/tools/source/tracing/tracing_imp.h"
-
-#include "pin/pin.h"
-#include "sysman/sysman.h"
 
 #include <mutex>
 #include <thread>

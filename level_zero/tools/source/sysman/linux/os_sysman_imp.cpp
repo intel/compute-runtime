@@ -5,9 +5,9 @@
  *
  */
 
-#include "sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
-#include "sysman/linux/sysfs_access.h"
+#include "level_zero/tools/source/sysman/linux/sysfs_access.h"
 
 namespace L0 {
 

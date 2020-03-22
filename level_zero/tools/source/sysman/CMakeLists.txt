@@ -11,21 +11,16 @@ set(L0_SRCS_TOOLS_SYSMAN
     ${CMAKE_CURRENT_SOURCE_DIR}/sysman_imp.h
 )
 
-target_include_directories(${TARGET_NAME_L0}
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/
-)
-
-target_sources(${TARGET_NAME_L0}
+target_sources(${L0_STATIC_LIB_NAME}
     PRIVATE
         ${L0_SRCS_TOOLS_SYSMAN}
         ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 
-    add_subdirectory(sysman_device)
-    add_subdirectory(pci)
-    add_subdirectory(frequency)
-    add_subdirectory(standby)
+add_subdirectory(sysman_device)
+add_subdirectory(pci)
+add_subdirectory(frequency)
+add_subdirectory(standby)
 
 if(UNIX)
     add_subdirectory(linux)

@@ -7,9 +7,8 @@
 
 #pragma once
 
+#include "level_zero/tools/source/sysman/os_sysman.h"
 #include <level_zero/zet_api.h>
-
-#include "sysman/os_sysman.h"
 
 #include <string>
 

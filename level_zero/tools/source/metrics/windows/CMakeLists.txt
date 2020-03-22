@@ -11,7 +11,7 @@ if(HAVE_INSTRUMENTATION)
         ${CMAKE_CURRENT_SOURCE_DIR}/os_metric_enumeration_imp_windows.cpp)
 
     if(WIN32)
-    target_sources(${TARGET_NAME_L0}
+    target_sources(${L0_STATIC_LIB_NAME}
         PRIVATE
             ${L0_SRCS_TOOLS_WINDOWS}
     )

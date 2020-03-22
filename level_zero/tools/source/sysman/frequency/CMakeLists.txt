@@ -12,12 +12,7 @@ set(L0_SRCS_TOOLS_SYSMAN_FREQUENCY
     ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency.h
 )
 
-target_include_directories(${TARGET_NAME_L0}
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/
-)
-
-target_sources(${TARGET_NAME_L0}
+target_sources(${L0_STATIC_LIB_NAME}
     PRIVATE
     ${L0_SRCS_TOOLS_SYSMAN_FREQUENCY}
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt

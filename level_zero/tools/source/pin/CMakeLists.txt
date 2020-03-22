@@ -5,16 +5,12 @@
 #
 
 set(L0_SRCS_TOOLS_PIN
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/pin.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pin.h
 )
 
-target_include_directories(${TARGET_NAME_L0}
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/
-)
-
-target_sources(${TARGET_NAME_L0} PRIVATE
+target_sources(${L0_STATIC_LIB_NAME} PRIVATE
     ${L0_SRCS_TOOLS_PIN}
 )
 
