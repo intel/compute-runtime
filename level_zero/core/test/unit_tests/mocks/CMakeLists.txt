@@ -23,6 +23,7 @@ set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_sampler.h
 )
 
 add_library(${TARGET_NAME} OBJECT ${L0_MOCKS_SOURCES})

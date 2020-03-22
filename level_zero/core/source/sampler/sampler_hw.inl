@@ -17,11 +17,10 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_sampler_desc_t *desc) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
-    ze_result_t ret;
-
-    ret = BaseClass::initialize(device, desc);
-    if (ret != ZE_RESULT_SUCCESS)
+    ze_result_t ret = BaseClass::initialize(device, desc);
+    if (ret != ZE_RESULT_SUCCESS) {
         return ret;
+    }
 
     auto addressControlModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
     auto addressControlModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
@@ -30,6 +29,11 @@ ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const z
     switch (desc->addressMode) {
     case ZE_SAMPLER_ADDRESS_MODE_NONE:
     case ZE_SAMPLER_ADDRESS_MODE_CLAMP:
+        break;
+    case ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER:
+        addressControlModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
+        addressControlModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
+        addressControlModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP;
         break;
     case ZE_SAMPLER_ADDRESS_MODE_MIRROR:
         addressControlModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR;

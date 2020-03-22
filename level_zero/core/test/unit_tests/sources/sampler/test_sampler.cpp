@@ -1,0 +1,141 @@
+/*
+ * Copyright (C) 2020 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/source/utilities/numeric.h"
+
+#include "test.h"
+
+#include "level_zero/core/source/sampler/sampler_hw.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_sampler.h"
+
+namespace L0 {
+namespace ult {
+
+const auto samplerAddressMode = ::testing::Values(
+    ZE_SAMPLER_ADDRESS_MODE_NONE,
+    ZE_SAMPLER_ADDRESS_MODE_REPEAT,
+    ZE_SAMPLER_ADDRESS_MODE_CLAMP,
+    ZE_SAMPLER_ADDRESS_MODE_MIRROR,
+    ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER);
+
+const auto samplerFilterMode = ::testing::Values(
+    ZE_SAMPLER_FILTER_MODE_NEAREST,
+    ZE_SAMPLER_FILTER_MODE_LINEAR);
+
+const auto samplerIsNormalized = ::testing::Values(
+    true,
+    false);
+
+using SamplerCreateSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+
+class SamplerCreateTest
+    : public Test<DeviceFixture>,
+      public ::testing::WithParamInterface<std::tuple<ze_sampler_address_mode_t,
+                                                      ze_sampler_filter_mode_t,
+                                                      ze_bool_t>> {};
+
+HWTEST2_P(SamplerCreateTest, givenDifferentDescriptorValuesThenSamplerIsCorrectlyCreated, SamplerCreateSupport) {
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+
+    ze_sampler_address_mode_t addressMode = std::get<0>(GetParam());
+    ze_sampler_filter_mode_t filterMode = std::get<1>(GetParam());
+    ze_bool_t isNormalized = std::get<2>(GetParam());
+
+    ze_sampler_desc_t desc = {};
+    desc.version = ZE_SAMPLER_DESC_VERSION_CURRENT;
+    desc.addressMode = addressMode;
+    desc.filterMode = filterMode;
+    desc.isNormalized = isNormalized;
+
+    auto sampler = new MockSamplerHw<gfxCoreFamily>();
+    EXPECT_NE(nullptr, sampler);
+
+    sampler->initialize(device, &desc);
+
+    if (addressMode == ZE_SAMPLER_ADDRESS_MODE_NONE) {
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
+                  sampler->samplerState.getTcxAddressControlMode());
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
+                  sampler->samplerState.getTcyAddressControlMode());
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
+                  sampler->samplerState.getTczAddressControlMode());
+    } else if (addressMode == ZE_SAMPLER_ADDRESS_MODE_REPEAT) {
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP,
+                  sampler->samplerState.getTcxAddressControlMode());
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP,
+                  sampler->samplerState.getTcyAddressControlMode());
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_WRAP,
+                  sampler->samplerState.getTczAddressControlMode());
+    } else if (addressMode == ZE_SAMPLER_ADDRESS_MODE_CLAMP) {
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
+                  sampler->samplerState.getTcxAddressControlMode());
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
+                  sampler->samplerState.getTcyAddressControlMode());
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
+                  sampler->samplerState.getTczAddressControlMode());
+    } else if (addressMode == ZE_SAMPLER_ADDRESS_MODE_MIRROR) {
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR,
+                  sampler->samplerState.getTcxAddressControlMode());
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR,
+                  sampler->samplerState.getTcyAddressControlMode());
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR,
+                  sampler->samplerState.getTczAddressControlMode());
+    } else if (addressMode == ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER) {
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
+                  sampler->samplerState.getTcxAddressControlMode());
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
+                  sampler->samplerState.getTcyAddressControlMode());
+        EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP,
+                  sampler->samplerState.getTczAddressControlMode());
+    }
+
+    if (filterMode == ZE_SAMPLER_FILTER_MODE_NEAREST) {
+        EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_NEAREST,
+                  sampler->samplerState.getMinModeFilter());
+        EXPECT_EQ(SAMPLER_STATE::MAG_MODE_FILTER_NEAREST,
+                  sampler->samplerState.getMagModeFilter());
+        EXPECT_EQ(SAMPLER_STATE::MIP_MODE_FILTER_NEAREST,
+                  sampler->samplerState.getMipModeFilter());
+        EXPECT_FALSE(sampler->samplerState.getRAddressMinFilterRoundingEnable());
+        EXPECT_FALSE(sampler->samplerState.getRAddressMagFilterRoundingEnable());
+        EXPECT_FALSE(sampler->samplerState.getVAddressMinFilterRoundingEnable());
+        EXPECT_FALSE(sampler->samplerState.getVAddressMagFilterRoundingEnable());
+        EXPECT_FALSE(sampler->samplerState.getUAddressMinFilterRoundingEnable());
+        EXPECT_FALSE(sampler->samplerState.getUAddressMagFilterRoundingEnable());
+    } else if (filterMode == ZE_SAMPLER_FILTER_MODE_LINEAR) {
+        EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_LINEAR,
+                  sampler->samplerState.getMinModeFilter());
+        EXPECT_EQ(SAMPLER_STATE::MAG_MODE_FILTER_LINEAR,
+                  sampler->samplerState.getMagModeFilter());
+        EXPECT_EQ(SAMPLER_STATE::MIP_MODE_FILTER_NEAREST,
+                  sampler->samplerState.getMipModeFilter());
+        EXPECT_TRUE(sampler->samplerState.getRAddressMinFilterRoundingEnable());
+        EXPECT_TRUE(sampler->samplerState.getRAddressMagFilterRoundingEnable());
+        EXPECT_TRUE(sampler->samplerState.getVAddressMinFilterRoundingEnable());
+        EXPECT_TRUE(sampler->samplerState.getVAddressMagFilterRoundingEnable());
+        EXPECT_TRUE(sampler->samplerState.getUAddressMinFilterRoundingEnable());
+        EXPECT_TRUE(sampler->samplerState.getUAddressMagFilterRoundingEnable());
+    }
+
+    NEO::FixedU4D8 minLodValue =
+        NEO::FixedU4D8(std::min(sampler->getGenSamplerMaxLod(), sampler->lodMin));
+    NEO::FixedU4D8 maxLodValue =
+        NEO::FixedU4D8(std::min(sampler->getGenSamplerMaxLod(), sampler->lodMax));
+    EXPECT_EQ(minLodValue.getRawAccess(), sampler->samplerState.getMinLod());
+    EXPECT_EQ(maxLodValue.getRawAccess(), sampler->samplerState.getMaxLod());
+
+    sampler->destroy();
+}
+
+INSTANTIATE_TEST_CASE_P(SamplerDescCombinations, SamplerCreateTest,
+                        ::testing::Combine(samplerAddressMode,
+                                           samplerFilterMode,
+                                           samplerIsNormalized));
+
+} // namespace ult
+} // namespace L0
