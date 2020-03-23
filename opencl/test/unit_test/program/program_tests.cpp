@@ -1537,7 +1537,7 @@ INSTANTIATE_TEST_CASE_P(ProgramFromSourceTests,
                             ::testing::ValuesIn(BinaryForSourceFileNames),
                             ::testing::ValuesIn(KernelNames)));
 
-TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptions) {
+TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclVersionIsInOptions) {
     auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
@@ -1556,7 +1556,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptions) {
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(defaultSetting);
 }
 
-TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsForced20) {
+TEST_F(ProgramTests, GivenForced20WhenProgramIsCreatedThenOcl20IsInOptions) {
     auto defaultVersion = pClDevice->deviceInfo.clVersion;
 
     pClDevice->deviceInfo.clVersion = "OpenCL 2.0";
@@ -1568,7 +1568,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsForced20) {
     pClDevice->deviceInfo.clVersion = defaultVersion;
 }
 
-TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenStatelessToStatefulIsDisabled) {
+TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredOptionIsSet) {
     DebugManagerStateRestore restorer;
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
@@ -1633,7 +1633,7 @@ TEST_F(ProgramTests, givenDeviceThatSupportsSharedSystemMemoryAllocationWhenProg
     EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions().c_str(), CompilerOptions::greaterThan4gbBuffersRequired)) << program.getInternalOptions();
 }
 
-TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenForcing32BitAddressess) {
+TEST_F(ProgramTests, GivenForce32BitAddressessWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
     cl_int retVal = CL_DEVICE_NOT_FOUND;
     auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
@@ -1663,7 +1663,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenForcing32BitAddress
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(defaultSetting);
 }
 
-TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptions) {
+TEST_F(ProgramTests, Given32bitSupportWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
     auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
@@ -1676,7 +1676,7 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptions) {
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(defaultSetting);
 }
 
-TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsWhenStatelessToStatefulIsDisabled) {
+TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
     auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
@@ -1690,7 +1690,7 @@ TEST_F(ProgramTests, givenProgramWhenItIsCompiledThenItAlwaysHavePreserveVec3Typ
     EXPECT_TRUE(CompilerOptions::contains(program->getInternalOptions(), CompilerOptions::preserveVec3Type)) << program->getInternalOptions();
 }
 
-TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsWhenForcing32BitAddressess) {
+TEST_F(ProgramTests, Force32BitAddressessWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredIsCorrectlySet) {
     auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
@@ -1708,7 +1708,7 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsWhenForcing32B
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(defaultSetting);
 }
 
-TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsEnablingStatelessToStatefulBufferOffsetOptimization) {
+TEST_F(ProgramTests, GivenStatelessToStatefulBufferOffsetOptimizationWhenProgramIsCreatedThenBufferOffsetArgIsSet) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
     cl_int errorCode = CL_SUCCESS;
@@ -1784,7 +1784,7 @@ TEST_F(ProgramTests, GivenContextWhenCreateBuiltInProgramFromSourceThenDontIncre
     EXPECT_EQ(pContext->getRefInternalCount(), initialInternalRefCount);
 }
 
-TEST_F(ProgramTests, ProgramCreateT3Success) {
+TEST_F(ProgramTests, WhenBuildingProgramThenPointerToProgramIsReturned) {
     cl_int retVal = CL_DEVICE_NOT_FOUND;
     Program *pProgram = Program::create("", pContext, *pClDevice, false, &retVal);
     EXPECT_NE(nullptr, pProgram);
@@ -1796,14 +1796,14 @@ TEST_F(ProgramTests, ProgramCreateT3Success) {
     delete pProgram;
 }
 
-TEST_F(ProgramTests, ProgramFromGenBinaryWithNullBinary) {
+TEST_F(ProgramTests, GivenNullBinaryWhenCreatingProgramFromGenBinaryThenInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     Program *pProgram = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, nullptr, 0, false, &retVal, pDevice);
     EXPECT_EQ(nullptr, pProgram);
     EXPECT_NE(CL_SUCCESS, retVal);
 }
 
-TEST_F(ProgramTests, ProgramFromGenBinary) {
+TEST_F(ProgramTests, WhenCreatingProgramFromGenBinaryThenSuccessIsReturned) {
     cl_int retVal = CL_INVALID_BINARY;
     char binary[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t size = 10;
@@ -1824,7 +1824,7 @@ TEST_F(ProgramTests, ProgramFromGenBinary) {
     delete pProgram;
 }
 
-TEST_F(ProgramTests, ProgramFromGenBinaryWithBuiltInFlagSet) {
+TEST_F(ProgramTests, GivenBuiltInFlagSetWhenCreatingProgramFromGenBinaryThenBuiltInIsCreated) {
     cl_int retVal = CL_INVALID_BINARY;
     char binary[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t size = 10;
@@ -1838,7 +1838,7 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithBuiltInFlagSet) {
     delete pProgram;
 }
 
-TEST_F(ProgramTests, ProgramFromGenBinaryWithoutRetVal) {
+TEST_F(ProgramTests, GivenRetValNullPointerWhenCreatingProgramFromGenBinaryThenSuccessIsReturned) {
     char binary[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t size = 10;
 
@@ -1855,7 +1855,7 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithoutRetVal) {
     delete pProgram;
 }
 
-TEST_F(ProgramTests, ProgramFromGenBinaryWithNullcontext) {
+TEST_F(ProgramTests, GivenNullContextWhenCreatingProgramFromGenBinaryThenSuccessIsReturned) {
     cl_int retVal = CL_INVALID_BINARY;
     char binary[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t size = 10;
@@ -1886,7 +1886,7 @@ TEST_F(ProgramTests, givenProgramFromGenBinaryWhenSLMSizeIsBiggerThenDeviceLimit
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 }
 
-TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
+TEST_F(ProgramTests, GivenNoCompilerInterfaceRootDeviceEnvironmentWhenRebuildingBinaryThenOutOfHostMemoryErrorIsReturned) {
     auto pDevice = pContext->getDevice(0);
     auto executionEnvironment = pDevice->getExecutionEnvironment();
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
@@ -1909,11 +1909,11 @@ TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
 
     // Ask to rebuild program from its IR binary - it should fail (no Compiler Interface)
     retVal = program->rebuildProgramFromIr();
-    EXPECT_NE(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
 }
 
-TEST_F(ProgramTests, BuildProgramWithReraFlag) {
+TEST_F(ProgramTests, GivenGtpinReraFlagWhenBuildingProgramThenCorrectOptionsAreSet) {
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();
     auto pDevice = pContext->getDevice(0);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
@@ -1942,7 +1942,7 @@ TEST_F(ProgramTests, BuildProgramWithReraFlag) {
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::gtpinRera)) << cip->buildInternalOptions;
 }
 
-TEST_F(ProgramTests, RebuildBinaryWithProcessGenBinaryError) {
+TEST_F(ProgramTests, GivenFailingGenBinaryProgramWhenRebuildingBinaryThenInvalidBinaryErrorIsReturned) {
 
     cl_int retVal;
 
@@ -2142,22 +2142,20 @@ struct CreateProgramFromBinaryMock : public MockProgram {
     }
 };
 
-TEST_F(ProgramTests, createFromILWhenCreateProgramFromBinaryFailedThenReturnsNullptr) {
+TEST_F(ProgramTests, GivenFailedBinaryWhenCreatingFromIlThenInvalidBinaryErrorIsReturned) {
     const uint32_t notSpirv[16] = {0xDEADBEEF};
-    cl_int errCode = CL_SUCCESS;
-    constexpr cl_int expectedErrCode = CL_INVALID_BINARY;
-    auto prog = Program::createFromIL<CreateProgramFromBinaryMock<expectedErrCode>>(pContext, reinterpret_cast<const void *>(notSpirv), sizeof(notSpirv), errCode);
+    cl_int retVal = CL_SUCCESS;
+    auto prog = Program::createFromIL<CreateProgramFromBinaryMock<CL_INVALID_BINARY>>(pContext, reinterpret_cast<const void *>(notSpirv), sizeof(notSpirv), retVal);
     EXPECT_EQ(nullptr, prog);
-    EXPECT_EQ(expectedErrCode, errCode);
+    EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
-TEST_F(ProgramTests, createFromILWhenCreateProgramFromBinaryIsSuccessfulThenReturnsValidProgram) {
+TEST_F(ProgramTests, GivenSuccessfullyBuiltBinaryWhenCreatingFromIlThenValidProgramIsReturned) {
     const uint32_t spirv[16] = {0x03022307};
-    cl_int errCode = CL_SUCCESS;
-    constexpr cl_int expectedErrCode = CL_SUCCESS;
-    auto prog = Program::createFromIL<CreateProgramFromBinaryMock<expectedErrCode>>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), errCode);
+    cl_int retVal = CL_SUCCESS;
+    auto prog = Program::createFromIL<CreateProgramFromBinaryMock<CL_SUCCESS>>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), retVal);
     ASSERT_NE(nullptr, prog);
-    EXPECT_EQ(expectedErrCode, errCode);
+    EXPECT_EQ(CL_SUCCESS, retVal);
     prog->release();
 }
 
@@ -2194,36 +2192,34 @@ TEST_F(ProgramTests, givenProgramCreatedFromIntermediateBinaryRepresentationWhen
     prog->release();
 }
 
-TEST_F(ProgramTests, createFromILWhenIlIsNullptrThenReturnsInvalidBinaryError) {
-    cl_int errCode = CL_SUCCESS;
-    constexpr cl_int expectedErrCode = CL_INVALID_BINARY;
-    auto prog = Program::createFromIL<CreateProgramFromBinaryMock<expectedErrCode>>(pContext, nullptr, 16, errCode);
+TEST_F(ProgramTests, GivenIlIsNullptrWhenCreatingFromIlThenInvalidBinaryErrorIsReturned) {
+    cl_int retVal = CL_SUCCESS;
+    auto prog = Program::createFromIL<CreateProgramFromBinaryMock<CL_INVALID_BINARY>>(pContext, nullptr, 16, retVal);
     EXPECT_EQ(nullptr, prog);
-    EXPECT_EQ(expectedErrCode, errCode);
+    EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
-TEST_F(ProgramTests, createFromILWhenIlIsSizeIs0ThenReturnsInvalidBinaryError) {
+TEST_F(ProgramTests, GivenIlSizeZeroWhenCreatingFromIlThenInvalidBinaryErrorIsReturned) {
     const uint32_t spirv[16] = {0x03022307};
-    cl_int errCode = CL_SUCCESS;
-    constexpr cl_int expectedErrCode = CL_INVALID_BINARY;
-    auto prog = Program::createFromIL<CreateProgramFromBinaryMock<expectedErrCode>>(pContext, reinterpret_cast<const void *>(spirv), 0, errCode);
+    cl_int retVal = CL_SUCCESS;
+    auto prog = Program::createFromIL<CreateProgramFromBinaryMock<CL_INVALID_BINARY>>(pContext, reinterpret_cast<const void *>(spirv), 0, retVal);
     EXPECT_EQ(nullptr, prog);
-    EXPECT_EQ(expectedErrCode, errCode);
+    EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
-TEST_F(ProgramTests, createFromILWhenCreatingProgramFromBinaryThenProperFlagIsSignalled) {
+TEST_F(ProgramTests, WhenCreatingFromIlThenIsSpirvIsSetCorrectly) {
     const uint32_t spirv[16] = {0x03022307};
-    cl_int errCode = CL_SUCCESS;
-    auto prog = Program::createFromIL<Program>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), errCode);
+    cl_int retVal = CL_SUCCESS;
+    auto prog = Program::createFromIL<Program>(pContext, reinterpret_cast<const void *>(spirv), sizeof(spirv), retVal);
     EXPECT_NE(nullptr, prog);
-    EXPECT_EQ(CL_SUCCESS, errCode);
+    EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(prog->getIsSpirV());
     prog->release();
 
     const char llvmBc[16] = {'B', 'C', '\xc0', '\xde'};
-    prog = Program::createFromIL<Program>(pContext, reinterpret_cast<const void *>(llvmBc), sizeof(llvmBc), errCode);
+    prog = Program::createFromIL<Program>(pContext, reinterpret_cast<const void *>(llvmBc), sizeof(llvmBc), retVal);
     EXPECT_NE(nullptr, prog);
-    EXPECT_EQ(CL_SUCCESS, errCode);
+    EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_FALSE(prog->getIsSpirV());
     prog->release();
 }
