@@ -28,7 +28,7 @@ struct clCreateSubDevicesTests : ::testing::Test {
     void setup(int numberOfDevices) {
         DebugManager.flags.CreateMultipleSubDevices.set(numberOfDevices);
         mockDeviceCreateSingleDeviceBackup = (numberOfDevices == 1);
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         outDevicesCount = numberOfDevices;
     }
 };

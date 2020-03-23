@@ -48,8 +48,8 @@ namespace ult {
 
 using namespace L0::ult;
 
-PRODUCT_FAMILY productFamily = IGFX_SKYLAKE;
-GFXCORE_FAMILY renderCoreFamily = IGFX_GEN9_CORE;
+PRODUCT_FAMILY productFamily = NEO::DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;
+GFXCORE_FAMILY renderCoreFamily = NEO::DEFAULT_TEST_PLATFORM::hwInfo.platform.eRenderCoreFamily;
 
 namespace NEO {
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
@@ -126,6 +126,8 @@ int main(int argc, char **argv) {
 
     testing::InitGoogleMock(&argc, argv);
 
+    NEO::HardwareInfo hwInfoForTests = NEO::DEFAULT_TEST_PLATFORM::hwInfo;
+
     for (int i = 1; i < argc; ++i) {
         if (!strcmp("--product", argv[i])) {
             ++i;
@@ -134,29 +136,30 @@ int main(int argc, char **argv) {
                     int productValue = atoi(argv[i]);
                     if (productValue > 0 && productValue < IGFX_MAX_PRODUCT &&
                         NEO::hardwarePrefix[productValue] != nullptr) {
-                        ::productFamily = static_cast<PRODUCT_FAMILY>(productValue);
+                        productFamily = static_cast<PRODUCT_FAMILY>(productValue);
                     } else {
-                        ::productFamily = IGFX_UNKNOWN;
+                        productFamily = IGFX_UNKNOWN;
                     }
                 } else {
-                    ::productFamily = IGFX_UNKNOWN;
+                    productFamily = IGFX_UNKNOWN;
                     for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
                         if (NEO::hardwarePrefix[j] == nullptr)
                             continue;
                         if (strcmp(NEO::hardwarePrefix[j], argv[i]) == 0) {
-                            ::productFamily = static_cast<PRODUCT_FAMILY>(j);
+                            productFamily = static_cast<PRODUCT_FAMILY>(j);
                             break;
                         }
                     }
                 }
-                if (::productFamily == IGFX_UNKNOWN) {
+                if (productFamily == IGFX_UNKNOWN) {
                     std::cout << "unknown or unsupported product family has been set: " << argv[i]
                               << std::endl;
                     return -1;
                 } else {
-                    std::cout << "product family: " << NEO::hardwarePrefix[::productFamily] << " ("
-                              << ::productFamily << ")" << std::endl;
+                    std::cout << "product family: " << NEO::hardwarePrefix[productFamily] << " ("
+                              << productFamily << ")" << std::endl;
                 }
+                hwInfoForTests = *NEO::hardwareInfoTable[productFamily];
             }
         }
         if (!strcmp("--disable_default_listener", argv[i])) {
@@ -165,11 +168,15 @@ int main(int argc, char **argv) {
             useDefaultListener = true;
         }
     }
+
+    productFamily = hwInfoForTests.platform.eProductFamily;
+    renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
+
     auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
     if (useDefaultListener == false) {
         auto defaultListener = listeners.default_result_printer();
 
-        auto customEventListener = new CCustomEventListener(defaultListener, NEO::hardwarePrefix[::productFamily]);
+        auto customEventListener = new CCustomEventListener(defaultListener, NEO::hardwarePrefix[productFamily]);
 
         listeners.Release(defaultListener);
         listeners.Append(customEventListener);
@@ -184,12 +191,12 @@ int main(int argc, char **argv) {
         ::testing::AddGlobalTestEnvironment(environment);
     }
 
-    PLATFORM platform;
-    auto hardwareInfo = NEO::hardwareInfoTable[productFamily];
-    if (!hardwareInfo) {
-        return -1;
-    }
-    platform = hardwareInfo->platform;
+    auto hwInfoConfig = NEO::defaultHardwareInfoConfigTable[productFamily];
+    NEO::setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
+    NEO::hardwareInfoSetup[productFamily](&hwInfoForTests, true, hwInfoConfig);
+
+    NEO::defaultHwInfo = std::make_unique<NEO::HardwareInfo>();
+    *NEO::defaultHwInfo = hwInfoForTests;
 
     NEO::useKernelDescriptor = true;
     NEO::MockSipData::mockSipKernel.reset(new NEO::MockSipKernel());

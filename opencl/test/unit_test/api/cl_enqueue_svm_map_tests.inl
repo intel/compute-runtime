@@ -126,7 +126,7 @@ TEST_F(clEnqueueSVMMapTests, GivenValidParametersWhenMappingSVMThenSuccessIsRetu
 }
 
 TEST_F(clEnqueueSVMMapTests, GivenDeviceNotSupportingSvmWhenEnqueuingSVMMapThenInvalidOperationErrorIsReturned) {
-    auto hwInfo = *platformDevices[0];
+    auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrSvm = false;
 
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));

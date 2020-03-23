@@ -68,7 +68,7 @@ TEST_F(clCreateImageTest, GivenNullHostPtrWhenCreatingImageThenImageIsCreatedAnd
 }
 
 HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingTiledImageThenInvalidOperationErrorIsReturned) {
-    MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0], 0)};
+    MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0)};
     MockContext mockContext{&mockClDevice};
 
     mockClDevice.sharedDeviceInfo.imageSupport = CL_FALSE;
@@ -97,7 +97,7 @@ HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingTiledI
 }
 
 HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingNonTiledImageThenCreate) {
-    MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0], 0)};
+    MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0)};
     MockContext mockContext{&mockClDevice};
 
     mockClDevice.sharedDeviceInfo.imageSupport = CL_FALSE;
@@ -312,7 +312,7 @@ TEST_F(clCreateImageTest, GivenNonZeroPitchWhenCreatingImageFromBufferThenImageI
 
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 4096 * 9, nullptr, nullptr);
     auto &helper = HwHelper::get(renderCoreFamily);
-    HardwareInfo hardwareInfo = *platformDevices[0];
+    HardwareInfo hardwareInfo = *defaultHwInfo;
 
     imageDesc.mem_object = buffer;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;

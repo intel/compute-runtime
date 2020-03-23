@@ -45,7 +45,7 @@ TEST_F(clGetDeviceInfoTests, givenNeoDeviceWhenAskedForSliceCountThenNumberOfSli
         paramValue,
         &paramRetSize);
 
-    EXPECT_EQ(platformDevices[0]->gtSystemInfo.SliceCount, numSlices);
+    EXPECT_EQ(defaultHwInfo->gtSystemInfo.SliceCount, numSlices);
 }
 
 TEST_F(clGetDeviceInfoTests, GivenGpuDeviceWhenGettingDeviceInfoThenDeviceTypeGpuIsReturned) {
@@ -113,7 +113,7 @@ TEST(clGetDeviceFineGrainedTests, givenDebugFlagForFineGrainedOverrideWhenItIsUs
     DebugManager.flags.ForceFineGrainedSVMSupport.set(0);
     cl_device_svm_capabilities svmCaps;
 
-    auto hwInfo = *platformDevices[0];
+    auto hwInfo = *defaultHwInfo;
 
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
@@ -138,7 +138,7 @@ TEST(clGetDeviceFineGrainedTests, givenDebugFlagForFineGrainedOverrideWhenItIsUs
     DebugManager.flags.ForceFineGrainedSVMSupport.set(1);
     cl_device_svm_capabilities svmCaps;
 
-    auto hwInfo = *platformDevices[0];
+    auto hwInfo = *defaultHwInfo;
 
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 

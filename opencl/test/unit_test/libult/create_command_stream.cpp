@@ -43,7 +43,7 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
     }
     auto currentHwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     if (currentHwInfo->platform.eProductFamily == IGFX_UNKNOWN && currentHwInfo->platform.eRenderCoreFamily == IGFX_UNKNOWN_CORE) {
-        executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(platformDevices[0]);
+        executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     }
     if (ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc) {
         uint32_t numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() != 0 ? DebugManager.flags.CreateMultipleRootDevices.get() : 1u;

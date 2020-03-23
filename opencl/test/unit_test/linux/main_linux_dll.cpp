@@ -47,7 +47,7 @@ typedef Test<DrmTestsFixture> DrmTests;
 
 void initializeTestedDevice() {
     for (uint32_t i = 0; deviceDescriptorTable[i].eGtType != GTTYPE::GTTYPE_UNDEFINED; i++) {
-        if (platformDevices[0]->platform.eProductFamily == deviceDescriptorTable[i].pHwInfo->platform.eProductFamily) {
+        if (defaultHwInfo->platform.eProductFamily == deviceDescriptorTable[i].pHwInfo->platform.eProductFamily) {
             deviceId = deviceDescriptorTable[i].deviceId;
             break;
         }
@@ -303,7 +303,7 @@ TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenEx
 }
 
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto drm = new DrmMockSuccess(*executionEnvironment.rootDeviceEnvironments[0]);
 
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
@@ -339,6 +339,9 @@ int main(int argc, char **argv) {
         listeners.Release(defaultListener);
         listeners.Append(customEventListener);
     }
+
+    defaultHwInfo = std::make_unique<HardwareInfo>();
+    *defaultHwInfo = DEFAULT_TEST_PLATFORM::hwInfo;
 
     initializeTestedDevice();
 

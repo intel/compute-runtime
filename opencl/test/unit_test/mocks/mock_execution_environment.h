@@ -38,7 +38,7 @@ struct MockRootDeviceEnvironment : public RootDeviceEnvironment {
 
 struct MockExecutionEnvironment : ExecutionEnvironment {
     ~MockExecutionEnvironment() override = default;
-    MockExecutionEnvironment() : MockExecutionEnvironment(platformDevices[0]) {}
+    MockExecutionEnvironment() : MockExecutionEnvironment(defaultHwInfo.get()) {}
     MockExecutionEnvironment(const HardwareInfo *hwInfo) : MockExecutionEnvironment(hwInfo, true, 1u) {
     }
     MockExecutionEnvironment(const HardwareInfo *hwInfo, bool useMockAubCenter, uint32_t numRootDevices) {
@@ -51,7 +51,7 @@ struct MockExecutionEnvironment : ExecutionEnvironment {
             if (hwInfo) {
                 rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(hwInfo);
             } else {
-                rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(platformDevices[0]);
+                rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
             }
         }
 

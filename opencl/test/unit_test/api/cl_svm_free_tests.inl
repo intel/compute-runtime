@@ -21,7 +21,7 @@ TEST_F(clSVMFreeTests, GivenNullPtrWhenFreeingSvmThenNoAction) {
 }
 
 TEST_F(clSVMFreeTests, GivenContextWithDeviceNotSupportingSvmWhenFreeingSvmThenNoAction) {
-    HardwareInfo hwInfo = *platformDevices[0];
+    HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.ftrSvm = false;
     auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 

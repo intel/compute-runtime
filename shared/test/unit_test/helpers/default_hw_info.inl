@@ -5,13 +5,10 @@
  *
  */
 
-#include "shared/source/helpers/array_count.h"
-#include "shared/source/helpers/hw_cmds.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
 
 namespace NEO {
-static const HardwareInfo *DefaultPlatformDevices[] = {
-    &DEFAULT_TEST_PLATFORM::hwInfo,
-};
 
-const HardwareInfo **platformDevices = DefaultPlatformDevices;
+std::unique_ptr<HardwareInfo> defaultHwInfo;
+HardwareInfo **platformDevices = nullptr;
 } // namespace NEO

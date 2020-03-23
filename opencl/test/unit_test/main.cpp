@@ -65,8 +65,8 @@ bool disabled = false;
 using namespace NEO;
 TestEnvironment *gEnvironment;
 
-PRODUCT_FAMILY productFamily = IGFX_SKYLAKE;
-GFXCORE_FAMILY renderCoreFamily = IGFX_GEN9_CORE;
+PRODUCT_FAMILY productFamily = DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;
+GFXCORE_FAMILY renderCoreFamily = DEFAULT_TEST_PLATFORM::hwInfo.platform.eRenderCoreFamily;
 
 extern std::string lastTest;
 bool generateRandomInput = false;
@@ -155,7 +155,7 @@ void cleanTestHelpers() {
 }
 
 std::string getHardwarePrefix() {
-    std::string s = hardwarePrefix[platformDevices[0]->platform.eProductFamily];
+    std::string s = hardwarePrefix[defaultHwInfo->platform.eProductFamily];
     return s;
 }
 
@@ -200,8 +200,7 @@ int main(int argc, char **argv) {
 #endif
 
     ::testing::InitGoogleMock(&argc, argv);
-    HardwareInfo device = DEFAULT_TEST_PLATFORM::hwInfo;
-    ::productFamily = device.platform.eProductFamily;
+    HardwareInfo hwInfoForTests = DEFAULT_TEST_PLATFORM::hwInfo;
 
     uint32_t euPerSubSlice = 0;
     uint32_t sliceCount = 0;
@@ -234,27 +233,28 @@ int main(int argc, char **argv) {
                 if (::isdigit(argv[i][0])) {
                     int productValue = atoi(argv[i]);
                     if (productValue > 0 && productValue < IGFX_MAX_PRODUCT && hardwarePrefix[productValue] != nullptr) {
-                        ::productFamily = static_cast<PRODUCT_FAMILY>(productValue);
+                        productFamily = static_cast<PRODUCT_FAMILY>(productValue);
                     } else {
-                        ::productFamily = IGFX_UNKNOWN;
+                        productFamily = IGFX_UNKNOWN;
                     }
                 } else {
-                    ::productFamily = IGFX_UNKNOWN;
+                    productFamily = IGFX_UNKNOWN;
                     for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
                         if (hardwarePrefix[j] == nullptr)
                             continue;
                         if (strcmp(hardwarePrefix[j], argv[i]) == 0) {
-                            ::productFamily = static_cast<PRODUCT_FAMILY>(j);
+                            productFamily = static_cast<PRODUCT_FAMILY>(j);
                             break;
                         }
                     }
                 }
-                if (::productFamily == IGFX_UNKNOWN) {
+                if (productFamily == IGFX_UNKNOWN) {
                     std::cout << "unknown or unsupported product family has been set: " << argv[i] << std::endl;
                     return -1;
                 } else {
-                    std::cout << "product family: " << hardwarePrefix[::productFamily] << " (" << ::productFamily << ")" << std::endl;
+                    std::cout << "product family: " << hardwarePrefix[productFamily] << " (" << productFamily << ")" << std::endl;
                 }
+                hwInfoForTests = *hardwareInfoTable[productFamily];
             }
         } else if (!strcmp("--slices", argv[i])) {
             ++i;
@@ -296,28 +296,21 @@ int main(int argc, char **argv) {
         }
     }
 
+    productFamily = hwInfoForTests.platform.eProductFamily;
+    renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
     uint32_t threadsPerEu = hwInfoConfigFactory[productFamily]->threadsPerEu;
-    PLATFORM platform;
-    auto hardwareInfo = hardwareInfoTable[productFamily];
-    if (!hardwareInfo) {
-        return -1;
-    }
-    platform = hardwareInfo->platform;
+    PLATFORM &platform = hwInfoForTests.platform;
 
     if (revId != -1) {
         platform.usRevId = revId;
     }
 
-    HardwareInfo hwInfo = *hardwareInfo;
-
     uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
-    setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
+    setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
 
     // set Gt and FeatureTable to initial state
-    hardwareInfoSetup[productFamily](&hwInfo, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
-    FeatureTable featureTable = hwInfo.featureTable;
-    GT_SYSTEM_INFO gtSystemInfo = hwInfo.gtSystemInfo;
-    WorkaroundTable workaroundTable = hwInfo.workaroundTable;
+    hardwareInfoSetup[productFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfoForTests.gtSystemInfo;
 
     // and adjust dynamic values if not secified
     sliceCount = sliceCount > 0 ? sliceCount : gtSystemInfo.SliceCount;
@@ -334,17 +327,8 @@ int main(int argc, char **argv) {
     gtSystemInfo.IsDynamicallyPopulated = false;
     // clang-format on
 
-    ::productFamily = platform.eProductFamily;
-    ::renderCoreFamily = platform.eRenderCoreFamily;
-
-    device.platform = platform;
-    device.gtSystemInfo = gtSystemInfo;
-    device.featureTable = featureTable;
-    device.workaroundTable = workaroundTable;
-    device.capabilityTable = hardwareInfo->capabilityTable;
-
-    binaryNameSuffix.append(familyName[device.platform.eRenderCoreFamily]);
-    binaryNameSuffix.append(device.capabilityTable.platformType);
+    binaryNameSuffix.append(familyName[hwInfoForTests.platform.eRenderCoreFamily]);
+    binaryNameSuffix.append(hwInfoForTests.capabilityTable.platformType);
 
     std::string nBinaryKernelFiles = getRunPath(argv[0]);
     nBinaryKernelFiles.append("/");
@@ -375,8 +359,11 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    platformDevices = new const HardwareInfo *[1];
-    platformDevices[0] = &device;
+    defaultHwInfo = std::make_unique<HardwareInfo>();
+    *defaultHwInfo = hwInfoForTests;
+
+    platformDevices = new HardwareInfo *[1];
+    *platformDevices = defaultHwInfo.get();
 
     auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
     if (useDefaultListener == false) {
@@ -400,7 +387,7 @@ int main(int argc, char **argv) {
     retrieveBinaryKernelFilename(igcDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".gen");
 
     gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
-    gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, device);
+    gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
 
 #if defined(__linux__)
     //ULTs timeout
@@ -453,8 +440,6 @@ int main(int argc, char **argv) {
     retVal = RUN_ALL_TESTS();
 
     cleanTestHelpers();
-
     delete[] platformDevices;
-
     return retVal;
 }

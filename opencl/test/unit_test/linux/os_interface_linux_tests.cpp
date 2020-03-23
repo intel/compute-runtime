@@ -43,7 +43,7 @@ TEST(GmmHelperTest, whenCreateGmmHelperWithoutOsInterfaceThenPassedFileDescripto
 
     uint32_t expectedFileDescriptor = 0u;
 
-    gmmHelper.reset(new GmmHelper(nullptr, platformDevices[0]));
+    gmmHelper.reset(new GmmHelper(nullptr, defaultHwInfo.get()));
     EXPECT_EQ(expectedFileDescriptor, passedInputArgs.FileDescriptor);
 }
 } // namespace NEO
