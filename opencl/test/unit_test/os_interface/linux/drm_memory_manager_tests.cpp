@@ -2192,6 +2192,38 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledButFails
     mock->ioctl_res_ext = &mock->NONE;
 }
 
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenUnlockResourceIsCalledOnAllocationInLocalMemoryThenRedirectToUnlockResourceInLocalMemory) {
+    struct DrmMemoryManagerToTestUnlockResource : public DrmMemoryManager {
+        using DrmMemoryManager::unlockResourceImpl;
+        DrmMemoryManagerToTestUnlockResource(ExecutionEnvironment &executionEnvironment, bool localMemoryEnabled, size_t lockableLocalMemorySize)
+            : DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
+        }
+        void unlockResourceInLocalMemoryImpl(BufferObject *bo) override {
+            unlockResourceInLocalMemoryImplParam.bo = bo;
+            unlockResourceInLocalMemoryImplParam.called = true;
+        }
+        struct unlockResourceInLocalMemoryImplParamType {
+            BufferObject *bo = nullptr;
+            bool called = false;
+        } unlockResourceInLocalMemoryImplParam;
+    };
+
+    DrmMemoryManagerToTestUnlockResource drmMemoryManager(*executionEnvironment, true, MemoryConstants::pageSize);
+
+    DrmMockCustom drmMock;
+    struct BufferObjectMock : public BufferObject {
+        BufferObjectMock(Drm *drm) : BufferObject(drm, 1, 0) {}
+    };
+    auto bo = new BufferObjectMock(&drmMock);
+    auto drmAllocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, bo, nullptr, 0u, (osHandle)0u, MemoryPool::LocalMemory);
+
+    drmMemoryManager.unlockResourceImpl(*drmAllocation);
+    EXPECT_TRUE(drmMemoryManager.unlockResourceInLocalMemoryImplParam.called);
+    EXPECT_EQ(bo, drmMemoryManager.unlockResourceInLocalMemoryImplParam.bo);
+
+    drmMemoryManager.freeGraphicsMemory(drmAllocation);
+}
+
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllocationWithoutBufferObjectThenReturnFalse) {
     DrmAllocation drmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, nullptr, 0, (osHandle)0u, MemoryPool::MemoryNull);
     EXPECT_EQ(nullptr, drmAllocation.getBO());

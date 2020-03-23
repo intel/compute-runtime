@@ -702,6 +702,10 @@ void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation)
 }
 
 void DrmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation) {
+    if (MemoryPool::LocalMemory == graphicsAllocation.getMemoryPool()) {
+        return unlockResourceInLocalMemoryImpl(static_cast<DrmAllocation &>(graphicsAllocation).getBO());
+    }
+
     auto cpuPtr = graphicsAllocation.getUnderlyingBuffer();
     if (cpuPtr != nullptr) {
         return;
