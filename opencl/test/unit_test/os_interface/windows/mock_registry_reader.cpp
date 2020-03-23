@@ -54,6 +54,17 @@ LSTATUS APIENTRY RegQueryValueExA(
                 } else {
                     *lpcbData = sizeof(DWORD);
                 }
+            } else if (strcmp(lpValueName, "settingSourceBinary") == 0) {
+                const auto settingSource = L"registry";
+                auto size = wcslen(settingSource) * sizeof(wchar_t);
+                if (lpData) {
+                    memcpy(reinterpret_cast<wchar_t *>(lpData), settingSource, size);
+                } else {
+                    *lpcbData = static_cast<DWORD>(size);
+                    if (lpType) {
+                        *lpType = REG_BINARY;
+                    }
+                }
             }
         }
 

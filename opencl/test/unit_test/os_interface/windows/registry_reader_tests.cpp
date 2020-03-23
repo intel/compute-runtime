@@ -121,3 +121,28 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenStringDebugKeyWhenOpenKeyFailsThe
 
     EXPECT_STREQ("environment", registryReader.getSetting("settingSourceString", defaultValue).c_str());
 }
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenBinaryDebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValue) {
+    std::string defaultValue("default");
+    regOpenKeySuccessCount = 1u;
+    regQueryValueSuccessCount = 2u;
+
+    EXPECT_STREQ("registry", registryReader.getSetting("settingSourceBinary", defaultValue).c_str());
+}
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenBinaryDebugKeyOnlyInRegistryWhenReadFromRegistryFailsThenReturnDefaultValue) {
+    std::string defaultValue("default");
+    regOpenKeySuccessCount = 1u;
+    regQueryValueSuccessCount = 1u;
+
+    EXPECT_STREQ("default", registryReader.getSetting("settingSourceBinary", defaultValue).c_str());
+
+    regOpenKeySuccessCount = 1u;
+    regQueryValueSuccessCount = 0u;
+
+    EXPECT_STREQ("default", registryReader.getSetting("settingSourceBinary", defaultValue).c_str());
+
+    regOpenKeySuccessCount = 0u;
+    regQueryValueSuccessCount = 0u;
+
+    EXPECT_STREQ("default", registryReader.getSetting("settingSourceBinary", defaultValue).c_str());
+}

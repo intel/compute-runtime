@@ -116,7 +116,8 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
                     readSettingFromEnv = false;
                 }
             } else if (regType == REG_BINARY) {
-                auto regData = std::make_unique<wchar_t[]>(regSize);
+                size_t charCount = regSize / sizeof(wchar_t);
+                auto regData = std::make_unique<wchar_t[]>(charCount);
                 success = RegQueryValueExA(Key,
                                            settingName,
                                            NULL,
@@ -125,10 +126,10 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
                                            &regSize);
 
                 if (ERROR_SUCCESS == success) {
-                    size_t charsConverted = 0;
-                    auto convertedData = std::make_unique<char[]>(regSize);
 
-                    wcstombs_s(&charsConverted, convertedData.get(), regSize, regData.get(), regSize);
+                    std::unique_ptr<char[]> convertedData(new char[charCount + 1]);
+                    std::wcstombs(convertedData.get(), regData.get(), charCount);
+                    convertedData.get()[charCount] = 0;
 
                     keyValue.assign(convertedData.get());
                     readSettingFromEnv = false;
