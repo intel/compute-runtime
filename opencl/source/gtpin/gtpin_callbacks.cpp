@@ -231,4 +231,8 @@ void gtpinNotifyPlatformShutdown() {
 void *gtpinGetIgcInit() {
     return pIgcInit;
 }
+void gtpinSetIgcInit(void *pIgcInitPtr) {
+    pIgcInit = static_cast<igc_init_t *>(pIgcInitPtr);
+}
+
 } // namespace NEO

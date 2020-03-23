@@ -26,4 +26,5 @@ void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResidencyVector);
 void gtpinNotifyPlatformShutdown();
 inline bool gtpinIsGTPinInitialized() { return isGTPinInitialized; }
 void *gtpinGetIgcInit();
+void gtpinSetIgcInit(void *pIgcInitPtr);
 } // namespace NEO

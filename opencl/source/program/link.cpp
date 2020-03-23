@@ -15,6 +15,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include "opencl/source/device/cl_device.h"
+#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/kernel_info.h"
@@ -117,6 +118,7 @@ cl_int Program::link(
         inputArgs.src = ArrayRef<const char>(reinterpret_cast<const char *>(clLinkInput.data()), clLinkInput.size());
         inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
         inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
+        inputArgs.GTPinInput = gtpinGetIgcInit();
 
         if (!isCreateLibrary) {
             inputArgs.outType = IGC::CodeType::oclGenBin;

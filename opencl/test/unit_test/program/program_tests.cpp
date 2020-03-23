@@ -26,6 +26,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
+#include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/create.inl"
@@ -2920,4 +2921,40 @@ TEST_F(ProgramMultiRootDeviceTests, privateSurfaceHasCorrectRootDeviceIndex) {
     auto privateSurface = program->getBlockKernelManager()->getPrivateSurface(0);
     EXPECT_NE(nullptr, privateSurface);
     EXPECT_EQ(expectedRootDeviceIndex, privateSurface->getRootDeviceIndex());
+}
+
+class MockCompilerInterfaceWithGtpinParam : public CompilerInterface {
+  public:
+    TranslationOutput::ErrorCode link(
+        const NEO::Device &device,
+        const TranslationInput &input,
+        TranslationOutput &output) override {
+        gtpinInfoPassed = input.GTPinInput;
+        return CompilerInterface::link(device, input, output);
+    }
+    void *gtpinInfoPassed;
+};
+
+TEST_F(ProgramBinTest, GivenSourceKernelWhenLinkingProgramThengtpinInitInfoIsPassed) {
+    cl_device_id device = pClDevice;
+    void *pIgcInitPtr = reinterpret_cast<void *>(0x1234);
+    gtpinSetIgcInit(pIgcInitPtr);
+    const char *sourceCode = "__kernel void\nCB(\n__global unsigned int* src, __global unsigned int* dst)\n{\nint id = (int)get_global_id(0);\ndst[id] = src[id];\n}\n";
+    pProgram = Program::create<MockProgram>(
+        pContext,
+        1,
+        &sourceCode,
+        &knownSourceSize,
+        retVal);
+    std::unique_ptr<MockCompilerInterfaceWithGtpinParam> mockCompilerInterface(new MockCompilerInterfaceWithGtpinParam);
+
+    retVal = pProgram->compile(1, &device, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompilerInterface.get());
+
+    cl_program programToLink = pProgram;
+    retVal = pProgram->link(1, &device, nullptr, 1, &programToLink, nullptr, nullptr);
+
+    EXPECT_EQ(pIgcInitPtr, mockCompilerInterface->gtpinInfoPassed);
+    mockCompilerInterface.release();
 }

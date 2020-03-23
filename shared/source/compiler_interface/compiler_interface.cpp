@@ -225,7 +225,7 @@ TranslationOutput::ErrorCode CompilerInterface::link(
 
         auto igcTranslationCtx = createIgcTranslationCtx(device, inType, outType);
         currOut = translate(igcTranslationCtx.get(), currSrc.get(),
-                            igcOptions.get(), igcInternalOptions.get());
+                            igcOptions.get(), igcInternalOptions.get(), input.GTPinInput);
 
         if (currOut == nullptr) {
             return TranslationOutput::ErrorCode::UnknownError;
