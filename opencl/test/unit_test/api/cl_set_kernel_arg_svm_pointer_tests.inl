@@ -25,6 +25,9 @@ class KernelArgSvmFixture : public ApiFixture<>, public DeviceFixture {
     void SetUp() override {
         ApiFixture::SetUp();
         DeviceFixture::SetUp();
+        if (platformDevices[0]->capabilityTable.ftrSvm == false) {
+            GTEST_SKIP();
+        }
 
         // define kernel info
         pKernelInfo = std::make_unique<KernelInfo>();
@@ -51,7 +54,9 @@ class KernelArgSvmFixture : public ApiFixture<>, public DeviceFixture {
     }
 
     void TearDown() override {
-        delete pMockKernel;
+        if (pMockKernel) {
+            delete pMockKernel;
+        }
 
         DeviceFixture::TearDown();
         ApiFixture::TearDown();
@@ -85,6 +90,20 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenInvalidArgIndexWhenSettingKernelArgTh
         nullptr      // const void *arg_value
     );
     EXPECT_EQ(CL_INVALID_ARG_INDEX, retVal);
+}
+
+TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKernelArgSVMPointerThenInvalidOperationErrorIsReturned) {
+    auto hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.ftrSvm = false;
+    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    auto pMockKernel = std::make_unique<MockKernel>(pProgram, *pKernelInfo, *pDevice);
+    auto retVal = clSetKernelArgSVMPointer(
+        pMockKernel.get(), // cl_kernel kernel
+        (cl_uint)-1,       // cl_uint arg_index
+        nullptr            // const void *arg_value
+    );
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
 TEST_F(clSetKernelArgSVMPointerTests, GivenLocalAddressAndNullArgValueWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {

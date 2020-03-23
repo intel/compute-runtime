@@ -586,7 +586,11 @@ TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithIn
 TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSystemPointerIsPassedItIsProperlySetInKernel) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableSharedSystemUsmSupport.set(1u);
+
     auto mockContext = std::make_unique<MockContext>();
+    if (mockContext->getDevice(0u)->getHardwareInfo().capabilityTable.ftrSvm == false) {
+        GTEST_SKIP();
+    }
 
     MockKernelWithInternals mockKernel(*mockContext->getDevice(0u), mockContext.get(), true);
 
@@ -604,6 +608,10 @@ TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSyst
 
 TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithValidUnifiedMemoryAllocationThenProperFieldsAreSet) {
     auto mockContext = std::make_unique<MockContext>();
+    if (mockContext->getDevice(0u)->getHardwareInfo().capabilityTable.ftrSvm == false) {
+        GTEST_SKIP();
+    }
+
     cl_int retVal = CL_SUCCESS;
     auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 4, 0, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);

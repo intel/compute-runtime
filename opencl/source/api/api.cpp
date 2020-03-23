@@ -4452,15 +4452,16 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         return retVal;
     }
 
-    if (argIndex >= pKernel->getKernelArgsNumber()) {
-        retVal = CL_INVALID_ARG_INDEX;
+    const HardwareInfo &hwInfo = pKernel->getDevice().getHardwareInfo();
+    if (!hwInfo.capabilityTable.ftrSvm) {
+        retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
         return retVal;
     }
 
-    auto svmManager = pKernel->getContext().getSVMAllocsManager();
-    if (!svmManager) {
-        retVal = CL_INVALID_ARG_VALUE;
+    if (argIndex >= pKernel->getKernelArgsNumber()) {
+        retVal = CL_INVALID_ARG_INDEX;
+        TRACING_EXIT(clSetKernelArgSVMPointer, &retVal);
         return retVal;
     }
 
@@ -4474,6 +4475,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
 
     GraphicsAllocation *pSvmAlloc = nullptr;
     if (argValue != nullptr) {
+        auto svmManager = pKernel->getContext().getSVMAllocsManager();
         auto svmData = svmManager->getSVMAlloc(argValue);
         if (svmData == nullptr) {
             if (!pKernel->getDevice().areSharedSystemAllocationsAllowed()) {
@@ -4509,6 +4511,13 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         return retVal;
     }
 
+    const HardwareInfo &hwInfo = pKernel->getDevice().getHardwareInfo();
+    if (!hwInfo.capabilityTable.ftrSvm) {
+        retVal = CL_INVALID_OPERATION;
+        TRACING_EXIT(clSetKernelExecInfo, &retVal);
+        return retVal;
+    }
+
     switch (paramName) {
     case CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL:
     case CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL:
@@ -4528,10 +4537,6 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         }
         size_t numPointers = paramValueSize / sizeof(void *);
         size_t *pSvmPtrList = (size_t *)paramValue;
-
-        if (pKernel->getContext().getSVMAllocsManager() == nullptr) {
-            return CL_INVALID_VALUE;
-        }
 
         if (paramName == CL_KERNEL_EXEC_INFO_SVM_PTRS) {
             pKernel->clearSvmKernelExecInfo();

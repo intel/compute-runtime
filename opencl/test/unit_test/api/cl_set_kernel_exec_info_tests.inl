@@ -17,6 +17,9 @@ class KernelExecInfoFixture : public ApiFixture<> {
   protected:
     void SetUp() override {
         ApiFixture::SetUp();
+        if (platformDevices[0]->capabilityTable.ftrSvm == false) {
+            GTEST_SKIP();
+        }
 
         pKernelInfo = std::make_unique<KernelInfo>();
 
@@ -34,7 +37,9 @@ class KernelExecInfoFixture : public ApiFixture<> {
             clSVMFree(pContext, ptrSvm);
         }
 
-        delete pMockKernel;
+        if (pMockKernel) {
+            delete pMockKernel;
+        }
 
         ApiFixture::TearDown();
     }
@@ -58,6 +63,21 @@ TEST_F(clSetKernelExecInfoTests, GivenNullKernelWhenSettingAdditionalKernelInfoT
         nullptr                       // const void *param_value
     );
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+}
+
+TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKernelExecInfoThenInvalidOperationErrorIsReturned) {
+    auto hwInfo = *platformDevices[0];
+    hwInfo.capabilityTable.ftrSvm = false;
+    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    auto pMockKernel = std::make_unique<MockKernel>(pProgram, *pKernelInfo, *pDevice);
+    auto retVal = clSetKernelExecInfo(
+        pMockKernel.get(),            // cl_kernel kernel
+        CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
+        0,                            // size_t param_value_size
+        nullptr                       // const void *param_value
+    );
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenNullParamValueWhenSettingAdditionalKernelInfoThenInvalidValueErrorIsReturned) {

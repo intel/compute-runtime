@@ -494,6 +494,9 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSu
 }
 
 HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadysetKernelThreadArbitrationPolicyThenRequiredThreadArbitrationPolicyIsSetProperly) {
+    if (pClDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
+        GTEST_SKIP();
+    }
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
 
