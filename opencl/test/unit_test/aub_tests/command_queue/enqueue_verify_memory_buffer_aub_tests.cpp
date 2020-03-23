@@ -38,7 +38,7 @@ cl_mem_flags testFlagsTable[] = {
     0,
     CL_MEM_COPY_HOST_PTR};
 
-HWTEST_P(VerifyMemoryBufferHw, givenDifferentBuffersWhenValidatingMemoryThenSuccessIsReturned) {
+HWTEST_P(VerifyMemoryBufferHw, DISABLED_givenDifferentBuffersWhenValidatingMemoryThenSuccessIsReturned) {
     cl_uint testItem = 5;
     cl_uint testItemWrong1 = 4;
     cl_uint testItemWrong2 = 6;

@@ -119,7 +119,7 @@ HWTEST_F(AUBcommandstreamTests, expectMemorySingle) {
     AUBCommandStreamFixture::expectMemory<FamilyType>(&buffer, &buffer, size);
 }
 
-HWTEST_F(AUBcommandstreamTests, expectMemoryLarge) {
+HWTEST_F(AUBcommandstreamTests, DISABLED_expectMemoryLarge) {
     size_t sizeBuffer = 0x100001;
     auto buffer = new uint8_t[sizeBuffer];
 

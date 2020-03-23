@@ -39,7 +39,7 @@ class UnifiedMemoryCopyAubTest : public UnifiedMemoryAubFixture,
     }
 };
 
-HWTEST_P(UnifiedMemoryCopyAubTest, givenTwoUnifiedMemoryAllocsWhenCopyingOneToAnotherThenValuesMatch) {
+HWTEST_P(UnifiedMemoryCopyAubTest, DISABLED_givenTwoUnifiedMemoryAllocsWhenCopyingOneToAnotherThenValuesMatch) {
     clEnqueueMemcpyINTEL(this->pCmdQ, true, dstPtr, srcPtr, dataSize, 0, nullptr, nullptr);
     expectMemory<FamilyType>(dstPtr, srcValues.data(), dataSize);
 }
