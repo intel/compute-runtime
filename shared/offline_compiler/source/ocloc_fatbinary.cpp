@@ -250,6 +250,10 @@ int buildFatbinary(int argc, const char *argv[], OclocArgHelper *helper) {
         int retVal = 0;
         argsCopy[deviceArgIndex] = targetPlatform.str();
         std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argc, argsCopy, false, retVal, helper)};
+        if (ErrorCode::SUCCESS != retVal) {
+            printf("Error! Couldn't create OfflineCompiler. Exiting.\n");
+            return retVal;
+        }
         auto stepping = pCompiler->getHardwareInfo().platform.usRevId;
         if (retVal == 0) {
             retVal = buildWithSafetyGuard(pCompiler.get());
