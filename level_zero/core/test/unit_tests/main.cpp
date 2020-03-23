@@ -18,6 +18,8 @@
 #include "opencl/test/unit_test/mocks/mock_gmm_client_context.h"
 #include "opencl/test/unit_test/mocks/mock_sip.h"
 
+#include "level_zero/core/source/cmdlist.h"
+
 #include "gmock/gmock.h"
 #include "igfxfmid.h"
 
@@ -118,6 +120,11 @@ void applyWorkarounds() {
     });
     tempThreadID = t.get_id();
     t.join();
+
+    //Create FileLogger to prevent false memory leaks
+    {
+        NEO::FileLoggerInstance();
+    }
 }
 
 int main(int argc, char **argv) {
@@ -168,9 +175,12 @@ int main(int argc, char **argv) {
             useDefaultListener = true;
         }
     }
-
-    productFamily = hwInfoForTests.platform.eProductFamily;
-    renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
+    // Platforms with uninitialized factory are not supported
+    if (L0::commandListFactory[productFamily] == nullptr) {
+        std::cout << "unsupported product family has been set: " << NEO::hardwarePrefix[::productFamily] << std::endl;
+        std::cout << "skipping tests" << std::endl;
+        return 0;
+    }
 
     auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
     if (useDefaultListener == false) {
@@ -191,17 +201,28 @@ int main(int argc, char **argv) {
         ::testing::AddGlobalTestEnvironment(environment);
     }
 
-    auto hwInfoConfig = NEO::defaultHardwareInfoConfigTable[productFamily];
-    NEO::setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
-    NEO::hardwareInfoSetup[productFamily](&hwInfoForTests, true, hwInfoConfig);
+    NEO::HardwareInfo hwInfo = hwInfoForTests;
+    uint64_t hwInfoConfig = NEO::defaultHardwareInfoConfigTable[productFamily];
+    NEO::setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
 
+    // set Gt and FeatureTable to initial state
+    NEO::hardwareInfoSetup[productFamily](&hwInfo, false, hwInfoConfig);
+
+    ::productFamily = hwInfo.platform.eProductFamily;
+    ::renderCoreFamily = hwInfo.platform.eRenderCoreFamily;
+
+    NEO::platformDevices = new NEO::HardwareInfo *[1];
+    NEO::platformDevices[0] = &hwInfo;
     NEO::defaultHwInfo = std::make_unique<NEO::HardwareInfo>();
-    *NEO::defaultHwInfo = hwInfoForTests;
+    *NEO::defaultHwInfo = hwInfo;
 
     NEO::useKernelDescriptor = true;
     NEO::MockSipData::mockSipKernel.reset(new NEO::MockSipKernel());
 
-    return RUN_ALL_TESTS();
+    auto retVal = RUN_ALL_TESTS();
+    delete[] NEO::platformDevices;
+
+    return retVal;
 }
 
 #if defined(__clang__)

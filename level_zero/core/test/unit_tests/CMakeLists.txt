@@ -10,13 +10,16 @@ set(TARGET_NAME ${TARGET_NAME_L0}_core_tests)
 
 append_sources_from_properties(L0_CORE_ENABLERS NEO_CORE_SRCS_LINK)
 
+function(ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION)
+    set(L0_TESTED_PRODUCT_FAMILIES ${ALL_TESTED_PRODUCT_FAMILY})
+    string(REPLACE ";" "," L0_TESTED_PRODUCT_FAMILIES "${L0_TESTED_PRODUCT_FAMILIES}")
+    add_definitions(-DSUPPORTED_TEST_PRODUCT_FAMILIES=${L0_TESTED_PRODUCT_FAMILIES})
+endfunction()
+
+ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
+
 add_executable(${TARGET_NAME}
     ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
-    ${NEO_SOURCE_DIR}/level_zero/core/source/debug_manager.cpp
-    ${NEO_SOURCE_DIR}/level_zero/core/source/debugger.cpp
-    ${NEO_SOURCE_DIR}/level_zero/core/source/debugger/debugger_l0.cpp
-    ${NEO_SOURCE_DIR}/level_zero/core/source/compiler_interface/default_l0_cache_config.cpp
-    ${NEO_SOURCE_DIR}/level_zero/core/source/compiler_interface/default_cache_config.cpp
     ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.h
     ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.cpp
     ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_leak_listener.h
@@ -27,10 +30,13 @@ add_executable(${TARGET_NAME}
 target_sources(${TARGET_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/white_box.h
 )
 
 target_sources(${TARGET_NAME} PRIVATE
     ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
+    $<TARGET_OBJECTS:${L0_MOCKABLE_LIB_NAME}>
 )
 
 if (UNIX)
@@ -39,8 +45,7 @@ if (UNIX)
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
-        ${COMPUTE_RUNTIME_DIR}/level_zero/core/source/linux/registry_path.cpp
-)
+    )
 else()
     target_sources(${TARGET_NAME} PRIVATE
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp
@@ -49,18 +54,15 @@ else()
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/wddm_calls.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
-        ${COMPUTE_RUNTIME_DIR}/level_zero/core/source/windows/registry_path.cpp
-)
+    )
 endif()
 
 set_property(TARGET ${TARGET_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER ${TARGET_NAME_L0})
 
-target_compile_definitions(${TARGET_NAME}
-    PUBLIC
-        DEFAULT_PRODUCT_FAMILY=${DEFAULT_PRODUCT_FAMILY}
-        ZE_MAKEDLL
-)
+add_subdirectoriesL0(${CMAKE_CURRENT_SOURCE_DIR} "*")
+
+target_compile_definitions(${TARGET_NAME} PRIVATE $<TARGET_PROPERTY:${L0_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 
 target_include_directories(${TARGET_NAME}
     BEFORE
@@ -80,9 +82,6 @@ if (UNIX)
             $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/tools/linux
             ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/linux
     )
-    target_link_libraries(${TARGET_NAME}
-        pthread
-    )
 else()
     target_include_directories(${TARGET_NAME}
         BEFORE
@@ -94,20 +93,13 @@ else()
 endif()
 
 if (UNIX)
-    target_link_libraries(${TARGET_NAME}
-    rt
-    )
+    target_link_libraries(${TARGET_NAME} pthread rt)
 else()
-    target_link_libraries(${TARGET_NAME}
-    dbghelp
-    )
+    target_link_libraries(${TARGET_NAME} dbghelp)
 endif()
 
 target_link_libraries(${TARGET_NAME}
-    ${NEO_MOCKABLE_LIB_NAME}
-    ${NEO_SHARED_MOCKABLE_LIB_NAME}
-    ${NEO_MOCKABLE_LIB_NAME}
-    ${NEO_SHARED_MOCKABLE_LIB_NAME}
+    ${NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE}
     compute_runtime_mockable_extra
     ${HW_LIBS_ULT}
     gmock-gtest
@@ -117,7 +109,10 @@ if(SKIP_NEO_UNIT_TESTS)
     add_subdirectory(${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mock_gmm ${CMAKE_BINARY_DIR}/mock_gmm)
 endif()
 
-target_sources(${TARGET_NAME} PRIVATE $<TARGET_OBJECTS:mock_gmm>)
+target_sources(${TARGET_NAME} PRIVATE
+    $<TARGET_OBJECTS:mock_gmm>
+    $<TARGET_OBJECTS:${TARGET_NAME_L0}_mocks>
+)
 
 option(L0_ULT_VERBOSE "Use the default/verbose test output" OFF)
 if(NOT L0_ULT_VERBOSE)
@@ -152,7 +147,5 @@ if(NOT GTEST_SHUFFLE)
   set(GTEST_SHUFFLE --gtest_shuffle --gtest_random_seed=0)
 endif()
 message(STATUS "GTest shuffle set to ${GTEST_SHUFFLE}")
-
-add_subdirectoriesL0(${CMAKE_CURRENT_SOURCE_DIR} "*")
 
 create_source_tree(${TARGET_NAME} ${L0_ROOT_DIR}/..)

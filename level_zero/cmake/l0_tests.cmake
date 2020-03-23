@@ -89,11 +89,13 @@ add_library(compute_runtime_mockable_extra
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/source_level_debugger_library.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_cif.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_csr.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_compilers.cpp
+        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_device.cpp
+        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks${BRANCH_SUFIX_DIR}/mock_gmm_client_context.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_gmm_resource_info.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_gmm_client_context_base.cpp
+        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_memory_manager.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_program.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_sip.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
