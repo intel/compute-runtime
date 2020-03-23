@@ -1874,9 +1874,9 @@ TEST(WddmMemoryManager, givenMultipleRootDeviceWhenMemoryManagerGetsWddmThenWddm
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(4);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
-    ultHwConfig.useMockedGetDevicesFunc = false;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     auto executionEnvironment = platform()->peekExecutionEnvironment();
-    getDevices(*executionEnvironment);
+    prepareDeviceEnvironments(*executionEnvironment);
 
     MockWddmMemoryManager wddmMemoryManager(*executionEnvironment);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
@@ -1890,9 +1890,9 @@ TEST(WddmMemoryManager, givenMultipleRootDeviceWhenCreateMemoryManagerThenTakeMa
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
-    ultHwConfig.useMockedGetDevicesFunc = false;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     auto executionEnvironment = platform()->peekExecutionEnvironment();
-    getDevices(*executionEnvironment);
+    prepareDeviceEnvironments(*executionEnvironment);
     for (auto i = 0u; i < numRootDevices; i++) {
         auto wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[i]->osInterface->get()->getWddm());
         wddm->minAddress = i * (numRootDevices - i);
@@ -1907,9 +1907,9 @@ TEST(WddmMemoryManager, givenNoLocalMemoryOnAnyDeviceWhenIsCpuCopyRequiredIsCall
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(false);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
-    ultHwConfig.useMockedGetDevicesFunc = false;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     auto executionEnvironment = platform()->peekExecutionEnvironment();
-    getDevices(*executionEnvironment);
+    prepareDeviceEnvironments(*executionEnvironment);
     MockWddmMemoryManager wddmMemoryManager(*executionEnvironment);
     EXPECT_FALSE(wddmMemoryManager.isCpuCopyRequired(&restorer));
 }
@@ -1917,8 +1917,8 @@ TEST(WddmMemoryManager, givenNoLocalMemoryOnAnyDeviceWhenIsCpuCopyRequiredIsCall
 TEST(WddmMemoryManager, givenLocalPointerPassedToIsCpuCopyRequiredThenFalseIsReturned) {
     auto executionEnvironment = platform()->peekExecutionEnvironment();
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
-    ultHwConfig.useMockedGetDevicesFunc = false;
-    getDevices(*executionEnvironment);
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+    prepareDeviceEnvironments(*executionEnvironment);
     MockWddmMemoryManager wddmMemoryManager(*executionEnvironment);
     EXPECT_FALSE(wddmMemoryManager.isCpuCopyRequired(&backup));
     //call multiple times to make sure that result is constant

@@ -34,7 +34,7 @@ class MemoryAllocatorMultiDeviceFixture : public MemoryManagementFixture, public
         isOsAgnosticMemoryManager = GetParam();
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
         VariableBackup<UltHwConfig> backup(&ultHwConfig);
-        ultHwConfig.useMockedGetDevicesFunc = false;
+        ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
         ultHwConfig.forceOsAgnosticMemoryManager = isOsAgnosticMemoryManager;
 
         initPlatform();

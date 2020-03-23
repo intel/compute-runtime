@@ -3431,7 +3431,7 @@ TEST(DrmMemoryMangerTest, givenMultipleRootDeviceWhenMemoryManagerGetsDrmThenDrm
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(4);
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
-    ultHwConfig.useMockedGetDevicesFunc = false;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     initPlatform();
 
     TestedDrmMemoryManager drmMemoryManager(*platform()->peekExecutionEnvironment());

@@ -106,7 +106,7 @@ TEST(SubDevicesTest, givenCreateMultipleRootDevicesFlagsEnabledWhenDevicesAreCre
     DebugManager.flags.CreateMultipleRootDevices.set(2);
 
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
-    ultHwConfig.useMockedGetDevicesFunc = false;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     initPlatform();
     EXPECT_EQ(0u, platform()->getClDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(1u, platform()->getClDevice(1)->getRootDeviceIndex());

@@ -51,7 +51,7 @@ TEST_F(clGetPlatformIDsTests, GivenNumEntriesZeroAndPlatformNotNullWhenGettingPl
 TEST(clGetPlatformIDsNegativeTests, GivenFailedInitializationWhenGettingPlatformIdsThenClOutOfHostMemoryErrorIsReturned) {
     platformsImpl.clear();
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
-    ultHwConfig.mockedGetDevicesFuncResult = false;
+    ultHwConfig.mockedPrepareDeviceEnvironmentsFuncResult = false;
 
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platformRet = nullptr;

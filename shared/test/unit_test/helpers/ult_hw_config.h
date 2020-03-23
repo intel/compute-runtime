@@ -8,9 +8,9 @@
 #pragma once
 namespace NEO {
 struct UltHwConfig {
-    bool mockedGetDevicesFuncResult = true;
+    bool mockedPrepareDeviceEnvironmentsFuncResult = true;
     bool useHwCsr = false;
-    bool useMockedGetDevicesFunc = true;
+    bool useMockedPrepareDeviceEnvironmentsFunc = true;
     bool forceOsAgnosticMemoryManager = true;
 
     bool csrFailInitDirectSubmission = false;

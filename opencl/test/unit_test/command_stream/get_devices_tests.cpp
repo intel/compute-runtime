@@ -27,9 +27,9 @@ bool operator==(const HardwareInfo &hwInfoIn, const HardwareInfo &hwInfoOut) {
     return result;
 }
 
-struct GetDevicesTest : ::testing::Test {
+struct PrepareDeviceEnvironmentsTest : ::testing::Test {
     void SetUp() override {
-        ultHwConfig.useMockedGetDevicesFunc = false;
+        ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     }
     void TearDown() override {
     }
@@ -40,7 +40,7 @@ struct GetDevicesTest : ::testing::Test {
     DebugManagerStateRestore stateRestorer;
 };
 
-HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
+HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsSetToVariousTypesThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
     uint32_t expectedDevices = 1;
     DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
     for (int productFamilyIndex = 0; productFamilyIndex < IGFX_MAX_PRODUCT; productFamilyIndex++) {
@@ -64,7 +64,7 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
             platformsImpl.clear();
             ExecutionEnvironment *exeEnv = constructPlatform()->peekExecutionEnvironment();
 
-            const auto ret = getDevices(*exeEnv);
+            const auto ret = prepareDeviceEnvironments(*exeEnv);
             EXPECT_EQ(expectedDevices, exeEnv->rootDeviceEnvironments.size());
             for (auto i = 0u; i < expectedDevices; i++) {
                 hwInfo = exeEnv->rootDeviceEnvironments[i]->getHardwareInfo();
@@ -111,7 +111,7 @@ HWTEST_F(GetDevicesTest, givenGetDevicesWhenCsrIsSetToVariousTypesThenTheFunctio
     }
 }
 
-HWTEST_F(GetDevicesTest, givenUpperCaseProductFamilyOverrideFlagSetWhenCreatingDevicesThenFindExpectedPlatform) {
+HWTEST_F(PrepareDeviceEnvironmentsTest, givenUpperCaseProductFamilyOverrideFlagSetWhenCreatingDevicesThenFindExpectedPlatform) {
     std::string hwPrefix;
     std::string hwPrefixUpperCase;
     PRODUCT_FAMILY productFamily;
@@ -133,13 +133,13 @@ HWTEST_F(GetDevicesTest, givenUpperCaseProductFamilyOverrideFlagSetWhenCreatingD
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
 
     ExecutionEnvironment *exeEnv = platform()->peekExecutionEnvironment();
-    bool ret = getDevices(*exeEnv);
+    bool ret = prepareDeviceEnvironments(*exeEnv);
 
     EXPECT_TRUE(ret);
     EXPECT_EQ(productFamily, exeEnv->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
 }
 
-HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
+HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknownProductFamilyWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
     uint32_t expectedDevices = 1;
     DebugManager.flags.CreateMultipleRootDevices.set(expectedDevices);
     for (int csrTypes = 0; csrTypes <= CSR_TYPES_NUM; csrTypes++) {
@@ -151,7 +151,7 @@ HWTEST_F(GetDevicesTest, givenGetDevicesAndUnknownProductFamilyWhenCsrIsSetToVal
         platformsImpl.clear();
         ExecutionEnvironment *exeEnv = constructPlatform()->peekExecutionEnvironment();
 
-        auto ret = getDevices(*exeEnv);
+        auto ret = prepareDeviceEnvironments(*exeEnv);
         EXPECT_EQ(expectedDevices, exeEnv->rootDeviceEnvironments.size());
         for (auto i = 0u; i < expectedDevices; i++) {
             hwInfo = exeEnv->rootDeviceEnvironments[i]->getHardwareInfo();

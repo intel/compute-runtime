@@ -37,7 +37,7 @@ CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnviro
     return nullptr;
 }
 
-bool getDevices(ExecutionEnvironment &executionEnvironment) {
+bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
     if (executionEnvironment.rootDeviceEnvironments.size() == 0) {
         executionEnvironment.prepareRootDeviceEnvironments(1u);
     }
@@ -45,7 +45,7 @@ bool getDevices(ExecutionEnvironment &executionEnvironment) {
     if (currentHwInfo->platform.eProductFamily == IGFX_UNKNOWN && currentHwInfo->platform.eRenderCoreFamily == IGFX_UNKNOWN_CORE) {
         executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(platformDevices[0]);
     }
-    if (ultHwConfig.useMockedGetDevicesFunc) {
+    if (ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc) {
         uint32_t numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() != 0 ? DebugManager.flags.CreateMultipleRootDevices.get() : 1u;
         executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
         for (auto i = 0u; i < numRootDevices; i++) {
@@ -57,9 +57,9 @@ bool getDevices(ExecutionEnvironment &executionEnvironment) {
         }
         executionEnvironment.calculateMaxOsContextCount();
         executionEnvironment.initializeMemoryManager();
-        return ultHwConfig.mockedGetDevicesFuncResult;
+        return ultHwConfig.mockedPrepareDeviceEnvironmentsFuncResult;
     }
 
-    return getDevicesImpl(executionEnvironment);
+    return prepareDeviceEnvironmentsImpl(executionEnvironment);
 }
 } // namespace NEO

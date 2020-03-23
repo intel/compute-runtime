@@ -12,8 +12,8 @@
 
 namespace NEO {
 
-bool getDevices(ExecutionEnvironment &executionEnvironment) {
-    return getDevicesImpl(executionEnvironment);
+bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
+    return prepareDeviceEnvironmentsImpl(executionEnvironment);
 }
 
 } // namespace NEO

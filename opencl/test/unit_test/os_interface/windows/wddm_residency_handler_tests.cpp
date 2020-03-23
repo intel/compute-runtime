@@ -94,7 +94,7 @@ TEST_F(WddmMemoryOperationsHandlerTest, givenVariousAllocationsWhenEvictingResid
 
 TEST(WddmResidentBufferTests, whenBuffersIsCreatedWithMakeResidentFlagSetThenItIsMadeResidentUponCreation) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useMockedGetDevicesFunc = false;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
     DebugManager.flags.MakeAllBuffersResident.set(true);
 

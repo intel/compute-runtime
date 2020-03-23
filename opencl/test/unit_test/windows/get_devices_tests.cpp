@@ -10,29 +10,28 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 
-#include "opencl/source/platform/platform.h"
 #include "test.h"
 
 using namespace NEO;
 
-using GetDevicesTests = ::testing::Test;
+using PrepareDeviceEnvironmentsTests = ::testing::Test;
 
-HWTEST_F(GetDevicesTests, WhenGetDevicesIsCalledThenSuccessIsReturned) {
+HWTEST_F(PrepareDeviceEnvironmentsTests, WhenPrepareDeviceEnvironmentsIsCalledThenSuccessIsReturned) {
     ExecutionEnvironment executionEnvironment;
 
-    auto returnValue = DeviceFactory::getDevices(executionEnvironment);
+    auto returnValue = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
     EXPECT_EQ(true, returnValue);
 }
 
-HWTEST_F(GetDevicesTests, whenGetDevicesIsCalledThenGmmIsBeingInitializedAfterFillingHwInfo) {
-    platformsImpl.clear();
-    auto executionEnvironment = new ExecutionEnvironment();
-    platformsImpl.push_back(std::make_unique<Platform>(*executionEnvironment));
-    executionEnvironment->prepareRootDeviceEnvironments(1u);
-    auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+HWTEST_F(PrepareDeviceEnvironmentsTests, whenPrepareDeviceEnvironmentsIsCalledThenGmmIsBeingInitializedAfterFillingHwInfo) {
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1u);
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = PRODUCT_FAMILY::IGFX_UNKNOWN;
     hwInfo->platform.ePCHProductFamily = PCH_PRODUCT_FAMILY::PCH_UNKNOWN;
+    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
 
-    auto returnValue = DeviceFactory::getDevices(*executionEnvironment);
+    auto returnValue = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
     EXPECT_TRUE(returnValue);
+    EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper());
 }

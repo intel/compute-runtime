@@ -103,7 +103,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsThenAllRootDevi
     platformsImpl.clear();
     constexpr auto numRootDevices = 3u;
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useMockedGetDevicesFunc = false;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     cl_uint numDevices = 0;
@@ -120,7 +120,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesWhenGetDeviceIdsButNumEntriesIs
     platformsImpl.clear();
     constexpr auto numRootDevices = 3u;
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useMockedGetDevicesFunc = false;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     cl_uint maxNumDevices;
@@ -151,7 +151,7 @@ TEST(clGetDeviceIDsTest, givenMultipleRootDevicesAndLimitedNumberOfReturnedDevic
     platformsImpl.clear();
     constexpr auto numRootDevices = 3u;
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useMockedGetDevicesFunc = false;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     DebugManager.flags.LimitAmountOfReturnedDevices.set(numRootDevices - 1);

@@ -22,7 +22,7 @@
 
 namespace NEO {
 
-bool DeviceFactory::getDevicesForProductFamilyOverride(ExecutionEnvironment &executionEnvironment) {
+bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionEnvironment &executionEnvironment) {
     auto numRootDevices = 1u;
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
         numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
@@ -82,7 +82,7 @@ bool DeviceFactory::isHwModeSelected() {
     }
 }
 
-bool DeviceFactory::getDevices(ExecutionEnvironment &executionEnvironment) {
+bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
     using HwDeviceIds = std::vector<std::unique_ptr<HwDeviceId>>;
 
     HwDeviceIds hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
@@ -114,7 +114,7 @@ bool DeviceFactory::getDevices(ExecutionEnvironment &executionEnvironment) {
 
 std::vector<std::unique_ptr<Device>> DeviceFactory::createDevices(ExecutionEnvironment &executionEnvironment) {
     std::vector<std::unique_ptr<Device>> devices;
-    auto status = NEO::getDevices(executionEnvironment);
+    auto status = NEO::prepareDeviceEnvironments(executionEnvironment);
     if (!status) {
         return devices;
     }

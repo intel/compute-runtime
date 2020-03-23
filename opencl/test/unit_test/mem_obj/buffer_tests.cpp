@@ -1945,7 +1945,7 @@ TEST(SharedBuffersTest, whenBuffersIsCreatedWithSharingHandlerThenItIsSharedBuff
 
 TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCreates) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useMockedGetDevicesFunc = false;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
     DebugManagerStateRestore restorer;
     DebugManager.flags.MakeAllBuffersResident.set(true);
 

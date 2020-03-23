@@ -86,7 +86,7 @@ TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroye
 TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManagerInExecutionEnvironment) {
     auto executionEnvironment = new ExecutionEnvironment();
     Platform platform(*executionEnvironment);
-    getDevices(*executionEnvironment);
+    prepareDeviceEnvironments(*executionEnvironment);
     platform.initialize(DeviceFactory::createDevices(*executionEnvironment));
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
