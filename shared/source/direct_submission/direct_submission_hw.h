@@ -104,30 +104,34 @@ class DirectSubmissionHw {
 
     uint64_t getCommandBufferPositionGpuAddress(void *position);
 
-    Device &device;
-    OsContext &osContext;
-    std::unique_ptr<Dispatcher> cmdDispatcher;
-    const HardwareInfo *hwInfo = nullptr;
-
     enum RingBufferUse : uint32_t {
         FirstBuffer,
         SecondBuffer,
         MaxBuffers
     };
+
+    LinearStream ringCommandStream;
+    std::unique_ptr<Dispatcher> cmdDispatcher;
+    FlushStamp completionRingBuffers[RingBufferUse::MaxBuffers] = {0ull, 0ull};
+
+    uint64_t semaphoreGpuVa = 0u;
+
+    Device &device;
+    OsContext &osContext;
+    const HardwareInfo *hwInfo = nullptr;
     GraphicsAllocation *ringBuffer = nullptr;
     GraphicsAllocation *ringBuffer2 = nullptr;
-    FlushStamp completionRingBuffers[RingBufferUse::MaxBuffers] = {0ull, 0ull};
-    RingBufferUse currentRingBuffer = RingBufferUse::FirstBuffer;
-    LinearStream ringCommandStream;
-
     GraphicsAllocation *semaphores = nullptr;
     void *semaphorePtr = nullptr;
-    uint64_t semaphoreGpuVa = 0u;
     volatile RingSemaphoreData *semaphoreData = nullptr;
+
     uint32_t currentQueueWorkCount = 1u;
+    RingBufferUse currentRingBuffer = RingBufferUse::FirstBuffer;
+    uint32_t workloadMode = 0;
 
     bool ringStart = false;
-
     bool disableCpuCacheFlush = false;
+    bool disableCacheFlush = false;
+    bool disableMonitorFence = false;
 };
 } // namespace NEO

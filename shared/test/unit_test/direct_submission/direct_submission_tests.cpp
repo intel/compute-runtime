@@ -287,6 +287,14 @@ HWTEST_F(DirectSubmissionTest,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
+    MockDirectSubmissionHw<FamilyType> regularDirectSubmission(*pDevice,
+                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
+                                                               *osContext.get());
+    size_t regularSizeEnd = regularDirectSubmission.getSizeEnd();
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+
     MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
                                                         std::make_unique<RenderDispatcher<FamilyType>>(),
                                                         *osContext.get());
@@ -296,11 +304,7 @@ HWTEST_F(DirectSubmissionTest,
     size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
     uint32_t oldQueueCount = directSubmission.semaphoreData->QueueWorkCount;
 
-    size_t regularSizeEnd = directSubmission.getSizeEnd();
     size_t tagUpdateSize = directSubmission.getSizeTagUpdateSection();
-
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
 
     size_t disabledSizeEnd = directSubmission.getSizeEnd();
     EXPECT_EQ(disabledSizeEnd, regularSizeEnd + tagUpdateSize);
@@ -326,7 +330,7 @@ HWTEST_F(DirectSubmissionTest,
         uint32_t address = pipeControl->getAddress();
         uint64_t actualAddress = (static_cast<uint64_t>(addressHigh) << 32ull) | address;
         uint64_t data = pipeControl->getImmediateData();
-        if ((directSubmission.tagAddressSetValue == actualAddress) ||
+        if ((directSubmission.tagAddressSetValue == actualAddress) &&
             (directSubmission.tagValueSetValue == data)) {
             foundFenceUpdate = true;
             break;
@@ -340,6 +344,14 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
+    MockDirectSubmissionHw<FamilyType> regularDirectSubmission(*pDevice,
+                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
+                                                               *osContext.get());
+    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+
     MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
                                                         std::make_unique<RenderDispatcher<FamilyType>>(),
                                                         *osContext.get());
@@ -348,11 +360,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_TRUE(ret);
     size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
 
-    size_t regularSizeDispatch = directSubmission.getSizeDispatch();
     size_t tagUpdateSize = directSubmission.getSizeTagUpdateSection();
-
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
 
     size_t disabledSizeDispatch = directSubmission.getSizeDispatch();
     EXPECT_EQ(disabledSizeDispatch, (regularSizeDispatch - tagUpdateSize));
@@ -377,7 +385,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
         uint32_t address = pipeControl->getAddress();
         uint64_t actualAddress = (static_cast<uint64_t>(addressHigh) << 32ull) | address;
         uint64_t data = pipeControl->getImmediateData();
-        if ((directSubmission.tagAddressSetValue == actualAddress) ||
+        if ((directSubmission.tagAddressSetValue == actualAddress) &&
             (directSubmission.tagValueSetValue == data)) {
             foundFenceUpdate = true;
             break;
@@ -391,6 +399,14 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
+    MockDirectSubmissionHw<FamilyType> regularDirectSubmission(*pDevice,
+                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
+                                                               *osContext.get());
+    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+
     MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
                                                         std::make_unique<RenderDispatcher<FamilyType>>(),
                                                         *osContext.get());
@@ -399,11 +415,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_TRUE(ret);
     size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
 
-    size_t regularSizeDispatch = directSubmission.getSizeDispatch();
     size_t flushSize = directSubmission.getSizeFlushSection();
-
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
 
     size_t disabledSizeDispatch = directSubmission.getSizeDispatch();
     EXPECT_EQ(disabledSizeDispatch, (regularSizeDispatch - flushSize));
@@ -440,6 +452,15 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
+    MockDirectSubmissionHw<FamilyType> regularDirectSubmission(*pDevice,
+                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
+                                                               *osContext.get());
+
+    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
+
     MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
                                                         std::make_unique<RenderDispatcher<FamilyType>>(),
                                                         *osContext.get());
@@ -448,12 +469,8 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_TRUE(ret);
     size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
 
-    size_t regularSizeDispatch = directSubmission.getSizeDispatch();
     size_t startSize = directSubmission.getSizeStartSection();
     size_t loadDataSize = directSubmission.getSizeStoraDataSection();
-
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
 
     size_t debugSizeDispatch = directSubmission.getSizeDispatch();
     EXPECT_EQ(debugSizeDispatch, (regularSizeDispatch - startSize + loadDataSize));
@@ -483,6 +500,14 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
+    MockDirectSubmissionHw<FamilyType> regularDirectSubmission(*pDevice,
+                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
+                                                               *osContext.get());
+    size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(2);
+
     MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
                                                         std::make_unique<RenderDispatcher<FamilyType>>(),
                                                         *osContext.get());
@@ -491,11 +516,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_TRUE(ret);
     size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
 
-    size_t regularSizeDispatch = directSubmission.getSizeDispatch();
     size_t startSize = directSubmission.getSizeStartSection();
-
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(2);
 
     size_t debugSizeDispatch = directSubmission.getSizeDispatch();
     EXPECT_EQ(debugSizeDispatch, (regularSizeDispatch - startSize));
@@ -603,12 +624,12 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetDispatchSizeThenExpec
 
 HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionEnableDebugBufferModeOneWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
 
+    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
+                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
+                                                        *osContext.get());
     size_t expectedSize = directSubmission.getSizeStoraDataSection() +
                           directSubmission.getSizeFlushSection() +
                           directSubmission.getSizeTagUpdateSection() +
@@ -619,12 +640,12 @@ HWTEST_F(DirectSubmissionTest,
 
 HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionEnableDebugBufferModeTwoWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(2);
 
+    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
+                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
+                                                        *osContext.get());
     size_t expectedSize = directSubmission.getSizeFlushSection() +
                           directSubmission.getSizeTagUpdateSection() +
                           directSubmission.getSizeSemaphoreSection();
@@ -634,12 +655,12 @@ HWTEST_F(DirectSubmissionTest,
 
 HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionDisableCacheFlushWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
 
+    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
+                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
+                                                        *osContext.get());
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           directSubmission.getSizeTagUpdateSection() +
                           directSubmission.getSizeSemaphoreSection();
@@ -649,11 +670,12 @@ HWTEST_F(DirectSubmissionTest,
 
 HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionDisableMonitorFenceWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+
     MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
                                                         std::make_unique<RenderDispatcher<FamilyType>>(),
                                                         *osContext.get());
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
 
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           directSubmission.getSizeFlushSection() +

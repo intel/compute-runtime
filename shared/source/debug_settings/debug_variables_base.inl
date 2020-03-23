@@ -43,10 +43,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, CFEFusedEUDispatch, -1, "Set Fused EU dispatch i
 DECLARE_DEBUG_VARIABLE(int32_t, ForceAuxTranslationMode, -1, "-1: Default, 0: Builtin, 1: Blit")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideGpuAddressSpace, -1, "-1: Default, !=-1: GPU address space range in bits")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxWorkgroupSize, -1, "-1: Default, !=-1: Overrides max worgkroup size to this value")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionBufferPlacement, -1, "-1: do not override, 0: non-system, 1: system")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSemaphorePlacement, -1, "-1: do not override, 0: non-system, 1: system")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisableCpuCacheFlush, -1, "-1: do not override, 0: disable, 1: enable")
-DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionEnableDebugBuffer, 0, "0: diagnostic feature disabled, 1: dispatch simple self-buffer mode 1, 2: dispatch simple self-buffer mode 2")
 DECLARE_DEBUG_VARIABLE(int32_t, DoCpuCopyOnReadBuffer, -1, "-1: default 0: do not use CPU copy, 1: triggers CPU copy path for Read Buffer calls, only supported for some basic use cases (no blocked user events in dependencies tree)")
 DECLARE_DEBUG_VARIABLE(int32_t, DoCpuCopyOnWriteBuffer, -1, "-1: default 0: do not use CPU copy, 1: triggers CPU copy path for Write Buffer calls, only supported for some basic use cases (no blocked user events in dependencies tree)")
 DECLARE_DEBUG_VARIABLE(bool, EnableDebugBreak, true, "Enable DEBUG_BREAKs")
@@ -61,8 +57,6 @@ DECLARE_DEBUG_VARIABLE(bool, DoNotRegisterTrimCallback, false, "When set to true
 DECLARE_DEBUG_VARIABLE(bool, OverrideInvalidEngineWithDefault, false, "When set to true driver chooses engine 0 if no engine is found.")
 DECLARE_DEBUG_VARIABLE(bool, DisableAuxTranslation, false, "Disable aux translation when required by Kernel.")
 DECLARE_DEBUG_VARIABLE(bool, DisableTimestampPacketOptimizations, false, "Allocate new allocation per node + dont reuse old nodes")
-DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionDisableCacheFlush, false, "Disable dispatching cache flush commands")
-DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionDisableMonitorFence, false, "Disable dispatching monitor fence commands")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, PrintDebugSettings, false, "Dump all debug variables settings to text file. Print to stdout if value is different than default.")
@@ -84,6 +78,16 @@ DECLARE_DEBUG_VARIABLE(bool, PrintDispatchParameters, false, "prints dispatch pa
 DECLARE_DEBUG_VARIABLE(bool, PrintProgramBinaryProcessingTime, false, "prints execution time of Program::processGenBinary() method during program building")
 DECLARE_DEBUG_VARIABLE(bool, WddmResidencyLogger, false, "gather Wddm residency statistics to file")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
+
+/*DIRECT SUBMISSION FLAGS*/
+DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionBufferPlacement, -1, "-1: do not override, 0: non-system, 1: system")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSemaphorePlacement, -1, "-1: do not override, 0: non-system, 1: system")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisableCpuCacheFlush, -1, "-1: do not override, 0: disable, 1: enable")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionEnableDebugBuffer, 0, "0: diagnostic feature disabled - dispatch regular workload, 1: dispatch diagnostic buffer - mode 1 - single SDI command, 2: dispatch diagnostic buffer - mode 2 - no command")
+DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionDisableCacheFlush, false, "Disable dispatching cache flush commands")
+DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionDisableMonitorFence, false, "Disable dispatching monitor fence commands")
+
 /*PERFORMANCE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableNullHardware, false, "works on Windows only, sets the Null Hardware flag that makes all Command buffers completed while GPU does nothing")
 DECLARE_DEBUG_VARIABLE(bool, ForceLinearImages, false, "Force linear images. Default is Y-tiled.")
@@ -151,7 +155,6 @@ DECLARE_DEBUG_VARIABLE(int32_t, NodeOrdinal, -1, "-1: default do not override, 0
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideThreadArbitrationPolicy, -1, "-1 (dont override) or any valid config (0: Age Based, 1: Round Robin)")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideAubDeviceId, -1, "-1 dont override, any other: use this value for AUB generation device id")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableTimestampPacket, -1, "-1: default, 0: disable, 1:enable. Write Timestamp Packet for each set of gpu walkers")
-DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")
 DECLARE_DEBUG_VARIABLE(int32_t, AllocateSharedAllocationsWithCpuAndGpuStorage, -1, "When enabled driver creates cpu & gpu storage for shared unified memory allocations. (-1 - devices default mode, 0 - disable, 1 - enable)")
 DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "With this flag on, max workgroup size is deduced using SIMD32 instead of SIMD8, this causes the max wkg size to be 4 times bigger")
 DECLARE_DEBUG_VARIABLE(bool, ReturnRawGpuTimestamps, false, "Driver returns raw GPU tiemstamps instead of calculated ones.")
