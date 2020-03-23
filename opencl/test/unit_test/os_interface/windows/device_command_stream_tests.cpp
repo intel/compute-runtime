@@ -316,6 +316,27 @@ TEST(WddmPreemptionHeaderTests, givenDevicenotSupportingPreemptionWhenCommandStr
     EXPECT_FALSE(header->NeedsMidBatchPreEmptionSupport);
 }
 
+TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledWhenEUCountWouldBeOddThenRequestEvenEuCount) {
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    wddm->getGtSysInfo()->EUCount = 9;
+    wddm->getGtSysInfo()->SubSliceCount = 3;
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::LOW, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr};
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+    auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
+
+    COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
+
+    EXPECT_EQ(0, pHeader->UmdRequestedSliceState);
+    EXPECT_EQ(0, pHeader->UmdRequestedSubsliceCount);
+    EXPECT_EQ((wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount) & (~1u), pHeader->UmdRequestedEUCount);
+
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
 TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToLowThenSetHeaderFieldsProperly) {
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
@@ -329,7 +350,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToLowThenS
 
     EXPECT_EQ(0, pHeader->UmdRequestedSliceState);
     EXPECT_EQ(0, pHeader->UmdRequestedSubsliceCount);
-    EXPECT_EQ(wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount, pHeader->UmdRequestedEUCount);
+    EXPECT_EQ((wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount) & (~1u), pHeader->UmdRequestedEUCount);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -347,7 +368,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToMediumTh
 
     EXPECT_EQ(0, pHeader->UmdRequestedSliceState);
     EXPECT_EQ(0, pHeader->UmdRequestedSubsliceCount);
-    EXPECT_EQ(wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount, pHeader->UmdRequestedEUCount);
+    EXPECT_EQ((wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount) & (~1u), pHeader->UmdRequestedEUCount);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -365,7 +386,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToHighThen
     const uint32_t maxRequestedSubsliceCount = 7;
     EXPECT_EQ(0, pHeader->UmdRequestedSliceState);
     EXPECT_EQ((wddm->getGtSysInfo()->SubSliceCount <= maxRequestedSubsliceCount) ? wddm->getGtSysInfo()->SubSliceCount : 0, pHeader->UmdRequestedSubsliceCount);
-    EXPECT_EQ(wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount, pHeader->UmdRequestedEUCount);
+    EXPECT_EQ((wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount) & (~1u), pHeader->UmdRequestedEUCount);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }

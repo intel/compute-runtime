@@ -149,6 +149,8 @@ class Wddm {
     WddmVersion getWddmVersion();
     static CreateDXGIFactoryFcn createDxgiFactory;
 
+    uint32_t getRequestedEUCount() const;
+
   protected:
     std::unique_ptr<HwDeviceId> hwDeviceId;
     D3DKMT_HANDLE device = 0;

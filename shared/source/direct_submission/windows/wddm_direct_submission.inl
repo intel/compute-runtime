@@ -67,7 +67,7 @@ bool WddmDirectSubmission<GfxFamily>::submit(uint64_t gpuAddress, size_t size) {
     pHeader->RequiresCoherency = false;
 
     pHeader->UmdRequestedSliceState = 0;
-    pHeader->UmdRequestedEUCount = wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount;
+    pHeader->UmdRequestedEUCount = wddm->getRequestedEUCount();
 
     pHeader->UmdRequestedSubsliceCount = 0;
     pHeader->NeedsMidBatchPreEmptionSupport = true;

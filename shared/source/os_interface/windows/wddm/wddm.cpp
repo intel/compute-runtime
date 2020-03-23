@@ -1023,6 +1023,12 @@ WddmVersion Wddm::getWddmVersion() {
     }
 }
 
+uint32_t Wddm::getRequestedEUCount() const {
+    DEBUG_BREAK_IF(!gtSystemInfo);
+    // Always request even number od EUs
+    return (gtSystemInfo.get()->EUCount / gtSystemInfo.get()->SubSliceCount) & (~1u);
+};
+
 void Wddm::createPagingFenceLogger() {
     if (DebugManager.flags.WddmResidencyLogger.get()) {
         residencyLogger = std::make_unique<WddmResidencyLogger>(device, pagingFenceAddress);

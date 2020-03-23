@@ -79,7 +79,7 @@ bool WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Resid
     pHeader->RequiresCoherency = batchBuffer.requiresCoherency;
 
     pHeader->UmdRequestedSliceState = 0;
-    pHeader->UmdRequestedEUCount = wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount;
+    pHeader->UmdRequestedEUCount = wddm->getRequestedEUCount();
 
     const uint32_t maxRequestedSubsliceCount = 7;
     switch (batchBuffer.throttle) {
