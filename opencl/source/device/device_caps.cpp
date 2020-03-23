@@ -404,9 +404,16 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.linkerAvailable = true;
     deviceInfo.svmCapabilities = hwInfo.capabilityTable.ftrSvm * CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
-    deviceInfo.svmCapabilities |= static_cast<cl_device_svm_capabilities>(
-        hwInfo.capabilityTable.ftrSvm * hwInfo.capabilityTable.ftrSupportsCoherency *
-        (CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS));
+    if (hwInfo.capabilityTable.ftrSvm) {
+        auto reportFineGrained = hwInfo.capabilityTable.ftrSvm * hwInfo.capabilityTable.ftrSupportsCoherency;
+        if (DebugManager.flags.ForceFineGrainedSVMSupport.get() != -1) {
+            reportFineGrained = !!DebugManager.flags.ForceFineGrainedSVMSupport.get();
+        }
+        if (reportFineGrained) {
+            deviceInfo.svmCapabilities |= static_cast<cl_device_svm_capabilities>(CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS);
+        }
+    }
+
     deviceInfo.preemptionSupported = false;
     deviceInfo.maxGlobalVariableSize = 64 * 1024;
     deviceInfo.globalVariablePreferredTotalSize = static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize);

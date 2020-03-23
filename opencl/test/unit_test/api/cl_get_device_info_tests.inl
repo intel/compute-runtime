@@ -108,6 +108,56 @@ TEST_F(clGetDeviceInfoTests, givenOpenCLDeviceWhenAskedForSupportedSvmTypeCorrec
     EXPECT_EQ(svmCaps, expectedCaps);
 }
 
+TEST(clGetDeviceFineGrainedTests, givenDebugFlagForFineGrainedOverrideWhenItIsUsedWithZeroThenNoFineGrainSupport) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceFineGrainedSVMSupport.set(0);
+    cl_device_svm_capabilities svmCaps;
+
+    auto hwInfo = *platformDevices[0];
+
+    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    auto retVal = clGetDeviceInfo(
+        pDevice.get(),
+        CL_DEVICE_SVM_CAPABILITIES,
+        sizeof(cl_device_svm_capabilities),
+        &svmCaps,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_device_svm_capabilities expectedCaps = 0;
+    if (hwInfo.capabilityTable.ftrSvm != 0) {
+        expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
+    }
+    EXPECT_EQ(svmCaps, expectedCaps);
+}
+
+TEST(clGetDeviceFineGrainedTests, givenDebugFlagForFineGrainedOverrideWhenItIsUsedWithOneThenThereIsFineGrainSupport) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceFineGrainedSVMSupport.set(1);
+    cl_device_svm_capabilities svmCaps;
+
+    auto hwInfo = *platformDevices[0];
+
+    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+
+    auto retVal = clGetDeviceInfo(
+        pDevice.get(),
+        CL_DEVICE_SVM_CAPABILITIES,
+        sizeof(cl_device_svm_capabilities),
+        &svmCaps,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_device_svm_capabilities expectedCaps = 0;
+    if (hwInfo.capabilityTable.ftrSvm != 0) {
+        expectedCaps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER | CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS;
+    }
+    EXPECT_EQ(svmCaps, expectedCaps);
+}
+
 TEST_F(clGetDeviceInfoTests, givenNeoDeviceWhenAskedForDriverVersionThenNeoIsReturned) {
     cl_device_info paramName = 0;
     size_t paramSize = 0;

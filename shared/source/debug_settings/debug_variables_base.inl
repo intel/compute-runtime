@@ -142,6 +142,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, RenderCompressedImagesEnabled, -1, "-1: default,
 DECLARE_DEBUG_VARIABLE(int32_t, RenderCompressedBuffersEnabled, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableSharedSystemUsmSupport, -1, "-1: default, 0: shared system memory disabled, 1: shared system memory enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePassInlineData, -1, "-1: default, 0: Do not allow to pass inline data 1: Enable passing of inline data")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceFineGrainedSVMSupport, -1, "-1: default, 0: Do not report Fine Grained SVM capabilties 1: Report SVM Fine Grained capabilities if device supports SVM")
 
 /*DRIVER TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCLVersion, 0, "Force specific OpenCL API version")
