@@ -371,7 +371,7 @@ bool DirectSubmissionHw<GfxFamily>::dispatchCommandBuffer(BatchBuffer &batchBuff
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
     currentQueueWorkCount++;
 
-    //whem ring buffer is not started at init or not restarted periodically
+    //when ring buffer is not started at init or being restarted
     if (!ringStart) {
         size_t submitSize = dispatchSize;
         if (buffersSwitched) {

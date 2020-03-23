@@ -278,7 +278,9 @@ D3DGPU_VIRTUAL_ADDRESS WddmMock::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS
 }
 
 uint64_t *WddmMock::getPagingFenceAddress() {
-    getPagingFenceAddressResult.called++;
+    if (NEO::residencyLoggingAvailable) {
+        getPagingFenceAddressResult.called++;
+    }
     mockPagingFence++;
     return &mockPagingFence;
 }

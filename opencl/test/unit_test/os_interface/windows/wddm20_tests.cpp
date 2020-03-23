@@ -880,11 +880,11 @@ TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeReside
 }
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeResidentThenWaitForCurrentPagingFenceValue) {
     wddm->mockPagingFence = 0u;
-    wddm->currentPagingFenceValue = 3u;
     wddm->temporaryResources->makeResidentResource(ALLOCATION_HANDLE, 0x1000);
+    UINT64 expectedCallNumber = NEO::residencyLoggingAvailable ? MockGdi::pagingFenceReturnValue + 1 : 0ull;
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
-    EXPECT_EQ(3u, wddm->mockPagingFence);
-    EXPECT_EQ(3u, wddm->getPagingFenceAddressResult.called);
+    EXPECT_EQ(MockGdi::pagingFenceReturnValue + 1, wddm->mockPagingFence);
+    EXPECT_EQ(expectedCallNumber, wddm->getPagingFenceAddressResult.called);
 }
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeResidentAndMakeResidentCallFailsThenEvictTemporaryResourcesAndRetry) {
     MockWddmAllocation allocation;
@@ -1272,13 +1272,14 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentSuccessThenExpectSi
     EXPECT_NE(nullptr, wddm->residencyLogger.get());
     auto logger = static_cast<MockWddmResidencyLogger *>(wddm->residencyLogger.get());
 
-    D3DKMT_HANDLE handle = 0x10;
+    D3DKMT_HANDLE handle = ALLOCATION_HANDLE;
     uint64_t bytesToTrim = 0;
     wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
 
     //2 - one for open log, second for allocation size
     EXPECT_EQ(2u, NEO::ResLog::mockVfptrinfCalled);
     EXPECT_TRUE(logger->makeResidentCall);
+    EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->makeResidentPagingFence);
 }
 
 TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentFailThenExpectTrimReport) {
@@ -1297,7 +1298,7 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentFailThenExpectTrimR
     EXPECT_NE(nullptr, wddm->residencyLogger.get());
     auto logger = static_cast<MockWddmResidencyLogger *>(wddm->residencyLogger.get());
 
-    D3DKMT_HANDLE handle = static_cast<D3DKMT_HANDLE>(-1);
+    D3DKMT_HANDLE handle = INVALID_HANDLE;
     uint64_t bytesToTrim = 0;
 
     wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
@@ -1342,19 +1343,21 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingThenEx
     EXPECT_NE(nullptr, wddm->residencyLogger.get());
     auto logger = static_cast<MockWddmResidencyLogger *>(wddm->residencyLogger.get());
 
-    D3DKMT_HANDLE handle = 0x10;
+    D3DKMT_HANDLE handle = ALLOCATION_HANDLE;
     uint64_t bytesToTrim = 0;
     wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
 
     //2 - one for open log, second for allocation size
     EXPECT_EQ(2u, NEO::ResLog::mockVfptrinfCalled);
     EXPECT_TRUE(logger->makeResidentCall);
+    EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->makeResidentPagingFence);
 
     logger->enterWait = true;
     wddm->waitOnPagingFenceFromCpu();
-    EXPECT_EQ(4u, NEO::ResLog::mockVfptrinfCalled);
+    EXPECT_EQ(5u, NEO::ResLog::mockVfptrinfCalled);
     EXPECT_FALSE(logger->makeResidentCall);
     EXPECT_FALSE(logger->enterWait);
+    EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->startWaitPagingFenceSave);
 }
 
 TEST(DiscoverDevices, whenDriverInfoHasIncompatibleDriverStoreThenHwDeviceIdIsNotCreated) {

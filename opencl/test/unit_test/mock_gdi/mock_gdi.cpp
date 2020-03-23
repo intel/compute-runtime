@@ -5,7 +5,7 @@
  *
  */
 
-#include "mock_gdi.h"
+#include "opencl/test/unit_test/mock_gdi/mock_gdi.h"
 
 #include "shared/source/memory_manager/memory_constants.h"
 

@@ -8,6 +8,8 @@
 #pragma once
 #include "shared/source/os_interface/windows/gdi_interface.h"
 
+#include "opencl/test/unit_test/mock_gdi/mock_gdi.h"
+
 namespace NEO {
 
 class MockGdi : public Gdi {
@@ -17,6 +19,7 @@ class MockGdi : public Gdi {
     }
     ~MockGdi(){};
 
+    static UINT64 pagingFenceReturnValue;
     bool nonZeroNumBytesToTrim = false;
 
     void setNonZeroNumBytesToTrimInEvict() {
@@ -25,11 +28,12 @@ class MockGdi : public Gdi {
     }
 
     static NTSTATUS __stdcall makeResidentMock(IN OUT D3DDDI_MAKERESIDENT *arg) {
-        if (arg->AllocationList[0] == static_cast<D3DKMT_HANDLE>(-1)) {
+        if (arg->AllocationList[0] == INVALID_HANDLE) {
             return STATUS_SEVERITY_ERROR;
         }
         getMakeResidentArg() = *arg;
-        return 0;
+        arg->PagingFenceValue = pagingFenceReturnValue;
+        return STATUS_PENDING;
     }
 
     static NTSTATUS __stdcall evictMock(IN D3DKMT_EVICT *arg) {

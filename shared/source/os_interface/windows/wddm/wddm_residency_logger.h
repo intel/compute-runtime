@@ -37,24 +37,30 @@ class WddmResidencyLogger {
         fPagingLog("residency for: handles %u size %zu\n", count, size);
     }
 
-    void makeResidentLog(bool pendingMakeResident) {
+    void makeResidentLog(bool pendingMakeResident, UINT64 makeResidentPagingFence) {
         this->pendingMakeResident = pendingMakeResident;
+        this->makeResidentPagingFence = makeResidentPagingFence;
         makeResidentCall = true;
         pendingTime = std::chrono::high_resolution_clock::now();
     }
 
-    void startWaitTime() {
+    MOCKABLE_VIRTUAL void startWaitTime(UINT64 startWaitPagingFence) {
         waitStartTime = std::chrono::high_resolution_clock::now();
+        this->startWaitPagingFence = startWaitPagingFence;
     }
 
     void enteredWait() {
         enterWait = true;
     }
 
-    void waitPagingeFenceLog() {
+    void waitPagingeFenceLog(UINT64 stopWaitPagingFence) {
         endTime = std::chrono::high_resolution_clock::now();
 
         int64_t timeDiff = 0;
+        fPagingLog("makeResidentPagingFence: %x startWaitPagingFence: %x stopWaitPagingFence: %lld\n",
+                   makeResidentPagingFence,
+                   startWaitPagingFence,
+                   stopWaitPagingFence);
 
         timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(endTime - pendingTime).count();
         fPagingLog("makeResidentCall: %x pending return: %x delta time makeResident: %lld\n",
@@ -67,6 +73,8 @@ class WddmResidencyLogger {
 
         makeResidentCall = false;
         enterWait = false;
+        makeResidentPagingFence = 0;
+        startWaitPagingFence = 0;
     }
 
     void trimRequired(UINT64 numBytesToTrim) {
@@ -81,19 +89,24 @@ class WddmResidencyLogger {
         va_end(args);
     }
 
-    bool pendingMakeResident = false;
-    bool enterWait = false;
-    bool makeResidentCall = false;
-    FILE *pagingLog = nullptr;
     std::chrono::high_resolution_clock::time_point pendingTime;
     std::chrono::high_resolution_clock::time_point waitStartTime;
     std::chrono::high_resolution_clock::time_point endTime;
+
+    UINT64 makeResidentPagingFence = 0ull;
+    UINT64 startWaitPagingFence = 0ull;
+
+    FILE *pagingLog = nullptr;
+
+    bool pendingMakeResident = false;
+    bool enterWait = false;
+    bool makeResidentCall = false;
 };
 
-inline void perfLogResidencyMakeResident(WddmResidencyLogger *log, bool pendingMakeResident) {
+inline void perfLogResidencyMakeResident(WddmResidencyLogger *log, bool pendingMakeResident, UINT64 makeResidentPagingFence) {
     if (residencyLoggingAvailable) {
         if (log) {
-            log->makeResidentLog(pendingMakeResident);
+            log->makeResidentLog(pendingMakeResident, makeResidentPagingFence);
         }
     }
 }
@@ -106,10 +119,10 @@ inline void perfLogResidencyReportAllocations(WddmResidencyLogger *log, uint32_t
     }
 }
 
-inline void perfLogStartWaitTime(WddmResidencyLogger *log) {
+inline void perfLogStartWaitTime(WddmResidencyLogger *log, UINT64 startWaitPagingFence) {
     if (residencyLoggingAvailable) {
         if (log) {
-            log->startWaitTime();
+            log->startWaitTime(startWaitPagingFence);
         }
     }
 }
@@ -122,10 +135,10 @@ inline void perfLogResidencyEnteredWait(WddmResidencyLogger *log) {
     }
 }
 
-inline void perfLogResidencyWaitPagingeFenceLog(WddmResidencyLogger *log) {
+inline void perfLogResidencyWaitPagingeFenceLog(WddmResidencyLogger *log, UINT64 stopWaitPagingFence) {
     if (residencyLoggingAvailable) {
         if (log) {
-            log->waitPagingeFenceLog();
+            log->waitPagingeFenceLog(stopWaitPagingFence);
         }
     }
 }

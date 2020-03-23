@@ -347,11 +347,11 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
 
     status = getGdi()->makeResident(&makeResident);
     if (status == STATUS_PENDING) {
-        perfLogResidencyMakeResident(residencyLogger.get(), true);
+        perfLogResidencyMakeResident(residencyLogger.get(), true, makeResident.PagingFenceValue);
         updatePagingFenceValue(makeResident.PagingFenceValue);
         success = true;
     } else if (status == STATUS_SUCCESS) {
-        perfLogResidencyMakeResident(residencyLogger.get(), false);
+        perfLogResidencyMakeResident(residencyLogger.get(), false, makeResident.PagingFenceValue);
         success = true;
     } else {
         DEBUG_BREAK_IF(true);
@@ -1000,11 +1000,11 @@ bool Wddm::configureDeviceAddressSpace() {
 }
 
 void Wddm::waitOnPagingFenceFromCpu() {
-    perfLogStartWaitTime(residencyLogger.get());
+    perfLogStartWaitTime(residencyLogger.get(), currentPagingFenceValue);
     while (currentPagingFenceValue > *getPagingFenceAddress())
         perfLogResidencyEnteredWait(residencyLogger.get());
 
-    perfLogResidencyWaitPagingeFenceLog(residencyLogger.get());
+    perfLogResidencyWaitPagingeFenceLog(residencyLogger.get(), *getPagingFenceAddress());
 }
 
 void Wddm::setGmmInputArg(void *args) {
