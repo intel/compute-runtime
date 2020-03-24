@@ -774,6 +774,7 @@ TEST_P(MemoryManagerGetAlloctionDataHaveNotToBeForcedTo48BitTest, givenAllocatio
 }
 
 static const GraphicsAllocation::AllocationType allocationHaveToBeForcedTo48Bit[] = {
+    GraphicsAllocation::AllocationType::COMMAND_BUFFER,
     GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER,
     GraphicsAllocation::AllocationType::IMAGE,
     GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP,
@@ -794,7 +795,6 @@ static const GraphicsAllocation::AllocationType allocationHaveNotToBeForcedTo48B
     GraphicsAllocation::AllocationType::BUFFER,
     GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
     GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
-    GraphicsAllocation::AllocationType::COMMAND_BUFFER,
     GraphicsAllocation::AllocationType::CONSTANT_SURFACE,
     GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR,
     GraphicsAllocation::AllocationType::FILL_PATTERN,

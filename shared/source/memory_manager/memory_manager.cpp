@@ -300,6 +300,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     switch (properties.allocationType) {
+    case GraphicsAllocation::AllocationType::COMMAND_BUFFER:
     case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
     case GraphicsAllocation::AllocationType::IMAGE:
     case GraphicsAllocation::AllocationType::INDIRECT_OBJECT_HEAP:
