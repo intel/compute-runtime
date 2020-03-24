@@ -13,7 +13,7 @@
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 
 TEST_F(DeviceFactoryLinuxTest, PrepareDeviceEnvironmentsCheckEUCntSSCnt) {
-    const HardwareInfo *refHwinfo = *platformDevices;
+    const HardwareInfo *refHwinfo = defaultHwInfo.get();
 
     pDrm->StoredEUVal = 11;
     pDrm->StoredSSVal = 8;

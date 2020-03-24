@@ -24,7 +24,7 @@ using AllocationData = TestedDrmMemoryManager::AllocationData;
 
 class DrmMemoryManagerBasic : public ::testing::Test {
   public:
-    DrmMemoryManagerBasic() : executionEnvironment(*platformDevices){};
+    DrmMemoryManagerBasic() : executionEnvironment(defaultHwInfo.get()){};
     void SetUp() override {
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[0]));
@@ -47,7 +47,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
 
     void SetUp(DrmMockCustom *mock, bool localMemoryEnabled) {
         this->mock = mock;
-        executionEnvironment = new MockExecutionEnvironment(*platformDevices);
+        executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get());
         executionEnvironment->incRefInternal();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
@@ -59,7 +59,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         if (memoryManager->getgemCloseWorker()) {
             memoryManager->getgemCloseWorker()->close(true);
         }
-        device = new MockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(*platformDevices, executionEnvironment, 0)};
+        device = new MockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0)};
     }
 
     void TearDown() override {
@@ -97,7 +97,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
     void SetUp() {
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(*platformDevices);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
         mock = new DrmMockCustom();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
@@ -107,7 +107,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
         if (memoryManager->getgemCloseWorker()) {
             memoryManager->getgemCloseWorker()->close(true);
         }
-        device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(*platformDevices, executionEnvironment, 0));
+        device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
     }
 
     void TearDown() {

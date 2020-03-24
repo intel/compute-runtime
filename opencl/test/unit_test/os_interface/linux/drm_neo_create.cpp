@@ -31,7 +31,7 @@ class DrmMockDefault : public DrmMock {
 Drm **pDrmToReturnFromCreateFunc = nullptr;
 
 Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) {
-    rootDeviceEnvironment.setHwInfo(platformDevices[0]);
+    rootDeviceEnvironment.setHwInfo(defaultHwInfo.get());
     if (pDrmToReturnFromCreateFunc) {
         return *pDrmToReturnFromCreateFunc;
     }

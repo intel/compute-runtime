@@ -29,7 +29,7 @@ OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSyst
 struct DeviceFactoryTest : public ::testing::Test {
   public:
     void SetUp() override {
-        const HardwareInfo *hwInfo = platformDevices[0];
+        const HardwareInfo *hwInfo = defaultHwInfo.get();
         executionEnvironment = platform()->peekExecutionEnvironment();
         mockGdiDll = setAdapterInfo(&hwInfo->platform, &hwInfo->gtSystemInfo, hwInfo->capabilityTable.gpuAddressSpace);
     }
@@ -44,7 +44,7 @@ struct DeviceFactoryTest : public ::testing::Test {
 };
 
 TEST_F(DeviceFactoryTest, PrepareDeviceEnvironments_Check_HwInfo_Platform) {
-    const HardwareInfo *refHwinfo = *platformDevices;
+    const HardwareInfo *refHwinfo = defaultHwInfo.get();
 
     bool success = DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
     EXPECT_TRUE(success);
@@ -149,7 +149,7 @@ TEST_F(DeviceFactoryTest, whenPrepareDeviceEnvironmentsIsCalledThenAllRootDevice
     auto requiredDeviceCount = 2u;
     DebugManager.flags.CreateMultipleRootDevices.set(requiredDeviceCount);
 
-    MockExecutionEnvironment executionEnvironment(*platformDevices, true, requiredDeviceCount);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, requiredDeviceCount);
 
     bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
     ASSERT_TRUE(success);
@@ -175,7 +175,7 @@ TEST_F(DeviceFactoryTest, givenInvalidHwConfigStringPrepareDeviceEnvironmentsFor
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.HardwareInfoOverride.set("1x3");
 
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     EXPECT_FALSE(success);
@@ -185,7 +185,7 @@ TEST_F(DeviceFactoryTest, givenValidHwConfigStringPrepareDeviceEnvironmentsForPr
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.HardwareInfoOverride.set("1x1x1");
 
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
 
     EXPECT_ANY_THROW(DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment));
 }

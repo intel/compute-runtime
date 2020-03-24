@@ -106,7 +106,7 @@ TEST(KernelInfo, decodeImageKernelArgument) {
 
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKernelHeapToKernelAllocation) {
     KernelInfo kernelInfo;
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
     SKernelBinaryHeaderCommon kernelHeader;
     const size_t heapSize = 0x40;
@@ -135,7 +135,7 @@ class MyMemoryManager : public OsAgnosticMemoryManager {
 
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateMemoryThenReturnsFalse) {
     KernelInfo kernelInfo;
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MyMemoryManager memoryManager(executionEnvironment);
     SKernelBinaryHeaderCommon kernelHeader;
     kernelInfo.heapInfo.pKernelHeader = &kernelHeader;

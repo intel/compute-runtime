@@ -2757,7 +2757,7 @@ TEST_F(setProgramSpecializationConstantTests, givenInvalidGetSpecConstantsInfoRe
 TEST(setProgramSpecializationConstantTest, givenUninitializedCompilerinterfaceWhenSetProgramSpecializationConstantThenErrorIsReturned) {
     auto executionEnvironment = new MockExecutionEnvironment();
     executionEnvironment->rootDeviceEnvironments[0] = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(*platformDevices);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     MockDevice mockDevice(executionEnvironment, 0);
     SpecializationConstantProgramMock mockProgram(*executionEnvironment);
     mockProgram.setDevice(&mockDevice);

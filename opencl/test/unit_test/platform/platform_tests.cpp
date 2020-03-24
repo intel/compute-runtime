@@ -227,7 +227,7 @@ class PlatformFailingTest : public PlatformTest {
     }
     void SetUp() override {
         PlatformTest::SetUp();
-        hwInfo = platformDevices[0];
+        hwInfo = defaultHwInfo.get();
         commandStreamReceiverCreateFunc = commandStreamReceiverFactory[hwInfo->platform.eRenderCoreFamily];
         commandStreamReceiverFactory[hwInfo->platform.eRenderCoreFamily] = createMockCommandStreamReceiver;
     }
@@ -252,7 +252,7 @@ TEST_F(PlatformFailingTest, givenPlatformInitializationWhenIncorrectHwInfoThenIn
 
 TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatchingSubstringsAndMandatoryTrailingSpace) {
     const HardwareInfo *hwInfo;
-    hwInfo = platformDevices[0];
+    hwInfo = defaultHwInfo.get();
     std::string extensionsList = getExtensionsList(*hwInfo);
 
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
@@ -307,7 +307,7 @@ TEST_F(PlatformTest, givenNotSupportingCl21WhenPlatformNotSupportFp64ThenNotFill
 
 TEST_F(PlatformTest, givenFtrSupportAtomicsWhenCreateExtentionsListThenGetMatchingSubstrings) {
     const HardwareInfo *hwInfo;
-    hwInfo = platformDevices[0];
+    hwInfo = defaultHwInfo.get();
     std::string extensionsList = getExtensionsList(*hwInfo);
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
 
@@ -395,7 +395,7 @@ TEST(PlatformInitTest, givenInitializedPlatformWhenInitializeIsCalledOneMoreTime
 
 TEST(PlatformInitTest, givenSingleDeviceWithNonZeroRootDeviceIndexInPassedDeviceVectorWhenInitializePlatformThenCreateOnlyOneClDevice) {
     std::vector<std::unique_ptr<Device>> devices;
-    auto executionEnvironment = new MockExecutionEnvironment(*platformDevices, false, 3);
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 3);
     devices.push_back(std::make_unique<MockDevice>(executionEnvironment, 2));
     auto status = platform()->initialize(std::move(devices));
     EXPECT_TRUE(status);

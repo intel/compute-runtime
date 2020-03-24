@@ -25,7 +25,7 @@ using namespace ::testing;
 namespace NEO {
 
 TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenCorrectExtensionsAreSet) {
-    auto hwInfo = *platformDevices;
+    auto hwInfo = defaultHwInfo.get();
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfo);
     auto pClDevice = new ClDevice{*pDevice, platform()};
 
@@ -42,7 +42,7 @@ TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenCo
 }
 
 TEST(DeviceOsTest, supportedSimultaneousInterops) {
-    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+    auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
     std::vector<unsigned int> expected = {0};
 
@@ -50,7 +50,7 @@ TEST(DeviceOsTest, supportedSimultaneousInterops) {
 }
 
 TEST(DeviceOsTest, DeviceCreationFail) {
-    auto hwInfo = *platformDevices;
+    auto hwInfo = defaultHwInfo.get();
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDevice>(hwInfo);
 
     EXPECT_THAT(pDevice, nullptr);
@@ -101,7 +101,7 @@ TEST(ApiOsTest, notSupportedApiList) {
 TEST(DeviceOsTest, DeviceCreationFailMidThreadPreemption) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
-    auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDeviceAfterOne>(*platformDevices);
+    auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDeviceAfterOne>(defaultHwInfo.get());
 
     EXPECT_THAT(pDevice, nullptr);
 }

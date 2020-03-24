@@ -128,7 +128,7 @@ TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsVirtualRenderThenAdapter
 
 TEST(Wddm20EnumAdaptersTest, expectTrue) {
 
-    const HardwareInfo *hwInfo = platformDevices[0];
+    const HardwareInfo *hwInfo = defaultHwInfo.get();
     std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->platform,
                                                          &hwInfo->gtSystemInfo,
                                                          hwInfo->capabilityTable.gpuAddressSpace));
@@ -144,7 +144,7 @@ TEST(Wddm20EnumAdaptersTest, expectTrue) {
 }
 
 TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCapabilityTableIsSet) {
-    const HardwareInfo *hwInfo = platformDevices[0];
+    const HardwareInfo *hwInfo = defaultHwInfo.get();
     std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(&hwInfo->platform,
                                                          &hwInfo->gtSystemInfo,
                                                          hwInfo->capabilityTable.gpuAddressSpace));

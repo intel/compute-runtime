@@ -474,7 +474,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
         DebuggerLibrary::setDebuggerActive(true);
         DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
-        unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         unique_ptr<MockClDevice> pClDevice(new MockClDevice{device.get()});
         EXPECT_TRUE(interceptor.newDeviceCalled);
         uint32_t deviceHandleExpected = device->getGpgpuCommandStreamReceiver().getOSInterface() != nullptr ? device->getGpgpuCommandStreamReceiver().getOSInterface()->getDeviceHandle() : 0;
@@ -539,7 +539,7 @@ TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenCreatingNewS
         ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(2);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
         }
         auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
         EXPECT_NE(nullptr, executionEnvironment->memoryManager);
@@ -562,7 +562,7 @@ TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenTheyAreCreatedTheyUseDedic
         ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(2);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
         }
         auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
         auto sourceLevelDebugger = device1->getDebugger();

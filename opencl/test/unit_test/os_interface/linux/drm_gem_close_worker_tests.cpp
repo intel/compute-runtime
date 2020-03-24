@@ -56,7 +56,7 @@ class DrmMockForWorker : public Drm {
 
 class DrmGemCloseWorkerFixture {
   public:
-    DrmGemCloseWorkerFixture() : executionEnvironment(*platformDevices){};
+    DrmGemCloseWorkerFixture() : executionEnvironment(defaultHwInfo.get()){};
     //max loop count for while
     static const uint32_t deadCntInit = 10 * 1000 * 1000;
 
