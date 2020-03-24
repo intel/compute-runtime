@@ -111,7 +111,7 @@ TEST_P(PerformanceHintCommandQueueTest, GivenProfilingFlagAndPreemptionFlagWhenC
     if (profilingEnabled) {
         properties = CL_QUEUE_PROFILING_ENABLE;
     }
-    cmdQ = clCreateCommandQueue(context, clDevice, properties, &retVal);
+    cmdQ = clCreateCommandQueue(context, context->getDevice(0), properties, &retVal);
 
     ASSERT_NE(nullptr, cmdQ);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -123,7 +123,7 @@ TEST_P(PerformanceHintCommandQueueTest, GivenProfilingFlagAndPreemptionFlagWhenC
     EXPECT_EQ(profilingEnabled, containsHint(expectedHint, userData));
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PROFILING_ENABLED_WITH_DISABLED_PREEMPTION], 0);
-    if (device->getHardwareInfo().platform.eProductFamily < IGFX_SKYLAKE && preemptionSupported && profilingEnabled) {
+    if (context->getDevice(0)->getHardwareInfo().platform.eProductFamily < IGFX_SKYLAKE && preemptionSupported && profilingEnabled) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
     } else {
         EXPECT_FALSE(containsHint(expectedHint, userData));
@@ -136,7 +136,7 @@ TEST_P(PerformanceHintCommandQueueTest, GivenEnabledProfilingFlagAndSupportedPre
         properties[0] = CL_QUEUE_PROPERTIES;
         properties[1] = CL_QUEUE_PROFILING_ENABLE;
     }
-    cmdQ = clCreateCommandQueueWithProperties(context, clDevice, properties, &retVal);
+    cmdQ = clCreateCommandQueueWithProperties(context, context->getDevice(0), properties, &retVal);
 
     ASSERT_NE(nullptr, cmdQ);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -148,7 +148,7 @@ TEST_P(PerformanceHintCommandQueueTest, GivenEnabledProfilingFlagAndSupportedPre
     EXPECT_EQ(profilingEnabled, containsHint(expectedHint, userData));
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PROFILING_ENABLED_WITH_DISABLED_PREEMPTION], 0);
-    if (device->getHardwareInfo().platform.eProductFamily < IGFX_SKYLAKE && preemptionSupported && profilingEnabled) {
+    if (context->getDevice(0)->getHardwareInfo().platform.eProductFamily < IGFX_SKYLAKE && preemptionSupported && profilingEnabled) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
     } else {
         EXPECT_FALSE(containsHint(expectedHint, userData));

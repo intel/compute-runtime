@@ -141,6 +141,8 @@ class Context : public BaseObject<_cl_context> {
 
     SchedulerKernel &getSchedulerKernel();
 
+    bool isDeviceAssociated(const ClDevice &clDevice) const;
+
   protected:
     Context(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *) = nullptr,
             void *userData = nullptr);

@@ -376,4 +376,13 @@ SchedulerKernel &Context::getSchedulerKernel() {
     return *static_cast<SchedulerKernel *>(schedulerBuiltIn->pKernel);
 }
 
+bool Context::isDeviceAssociated(const ClDevice &clDevice) const {
+    for (const auto &device : devices) {
+        if (device == &clDevice) {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace NEO

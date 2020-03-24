@@ -110,18 +110,13 @@ struct PerformanceHintCommandQueueTest : public PerformanceHintTest,
     void SetUp() override {
         PerformanceHintTest::SetUp();
         std::tie(profilingEnabled, preemptionSupported) = GetParam();
-        device = new MockDevice;
-        clDevice = new MockClDevice{device};
-        clDevice->deviceInfo.preemptionSupported = preemptionSupported;
+        static_cast<MockClDevice *>(context->getDevice(0))->deviceInfo.preemptionSupported = preemptionSupported;
     }
 
     void TearDown() override {
         clReleaseCommandQueue(cmdQ);
-        delete clDevice;
         PerformanceHintTest::TearDown();
     }
-    MockDevice *device = nullptr;
-    MockClDevice *clDevice = nullptr;
     cl_command_queue cmdQ = nullptr;
     bool profilingEnabled = false;
     bool preemptionSupported = false;

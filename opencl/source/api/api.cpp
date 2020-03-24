@@ -527,6 +527,10 @@ cl_command_queue CL_API_CALL clCreateCommandQueue(cl_context context,
         if (retVal != CL_SUCCESS) {
             break;
         }
+        if (!pContext->isDeviceAssociated(*pDevice)) {
+            retVal = CL_INVALID_DEVICE;
+            break;
+        }
 
         cl_queue_properties props[] = {
             CL_QUEUE_PROPERTIES, properties,
@@ -4715,6 +4719,12 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
 
     if (CL_SUCCESS != retVal) {
         err.set(retVal);
+        TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
+        return commandQueue;
+    }
+
+    if (!pContext->isDeviceAssociated(*pDevice)) {
+        err.set(CL_INVALID_DEVICE);
         TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
         return commandQueue;
     }

@@ -36,12 +36,18 @@ TEST_F(clCreateCommandQueueTest, GivenCorrectParametersWhenCreatingCommandQueueT
 
 TEST_F(clCreateCommandQueueTest, GivenNullContextWhenCreatingCommandQueueThenInvalidContextErrorIsReturned) {
     clCreateCommandQueue(nullptr, devices[testedRootDeviceIndex], 0, &retVal);
-    ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
+    EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
 TEST_F(clCreateCommandQueueTest, GivenNullDeviceWhenCreatingCommandQueueThenInvalidDeviceErrorIsReturned) {
     clCreateCommandQueue(pContext, nullptr, 0, &retVal);
-    ASSERT_EQ(CL_INVALID_DEVICE, retVal);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(clCreateCommandQueueTest, GivenDeviceNotAssociatedWithContextWhenCreatingCommandQueueThenInvalidDeviceErrorIsReturned) {
+    EXPECT_NE(devices[0], devices[testedRootDeviceIndex]);
+    clCreateCommandQueue(pContext, devices[0], 0, &retVal);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
 TEST_F(clCreateCommandQueueTest, GivenInvalidPropertiesWhenCreatingCommandQueueThenInvalidValueErrorIsReturned) {

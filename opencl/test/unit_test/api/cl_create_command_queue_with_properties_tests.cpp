@@ -239,6 +239,14 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNullDeviceWhenCreatingCommand
     EXPECT_EQ(retVal, CL_INVALID_DEVICE);
 }
 
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDeviceNotAssociatedWithContextWhenCreatingCommandQueueWithPropertiesThenInvalidDeviceErrorIsReturned) {
+    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
+    EXPECT_NE(devices[0], devices[testedRootDeviceIndex]);
+    auto cmdq = clCreateCommandQueueWithProperties(pContext, devices[0], nullptr, &retVal);
+    EXPECT_EQ(nullptr, cmdq);
+    EXPECT_EQ(retVal, CL_INVALID_DEVICE);
+}
+
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenSizeWhichExceedsMaxDeviceQueueSizeWhenCreatingCommandQueueWithPropertiesThenInvalidQueuePropertiesErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, CL_QUEUE_SIZE, (cl_uint)0xffffffff, 0, 0};

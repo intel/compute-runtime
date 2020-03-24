@@ -411,3 +411,15 @@ TEST(Context, givenContextWhenCheckIfAllocationsAreMultiStorageThenReturnProperV
     context.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     EXPECT_TRUE(context.areMultiStorageAllocationsPreferred());
 }
+
+TEST(Context, givenContextWhenIsDeviceAssociatedIsCalledWithItsDeviceThenTrueIsReturned) {
+    MockContext context;
+    EXPECT_TRUE(context.isDeviceAssociated(*context.getDevice(0)));
+}
+
+TEST(Context, givenContextWhenIsDeviceAssociatedIsCalledWithNotAssociatedDeviceThenFalseIsReturned) {
+    MockContext context0;
+    MockContext context1;
+    EXPECT_FALSE(context0.isDeviceAssociated(*context1.getDevice(0)));
+    EXPECT_FALSE(context1.isDeviceAssociated(*context0.getDevice(0)));
+}
