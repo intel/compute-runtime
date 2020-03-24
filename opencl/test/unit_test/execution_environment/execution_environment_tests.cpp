@@ -102,7 +102,7 @@ TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillA
 
 TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsReceivesCorrectInputParams) {
     MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(*platformDevices);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
     rootDeviceEnvironment->initAubCenter(true, "test.aub", CommandStreamReceiverType::CSR_AUB);
     EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
@@ -138,7 +138,7 @@ TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCa
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenLocalMemorySupportedInMemoryManagerHasCorrectValue) {
-    const HardwareInfo *hwInfo = platformDevices[0];
+    const HardwareInfo *hwInfo = defaultHwInfo.get();
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
     auto executionEnvironment = device->getExecutionEnvironment();
     auto enableLocalMemory = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
@@ -173,7 +173,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         MemoryOperationsHandlerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct AubCenterMock : public DestructorCounted<AubCenter, 3> {
-        AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB) {}
+        AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId, defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_AUB) {}
     };
     struct CompilerInterfaceMock : public DestructorCounted<CompilerInterface, 2> {
         CompilerInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
@@ -187,8 +187,8 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(*platformDevices);
-    executionEnvironment->rootDeviceEnvironments[0]->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, platformDevices[0]);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MemoryOperationsHandlerMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId, *executionEnvironment);
@@ -205,7 +205,7 @@ TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedTheyAllReus
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(2);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
     }
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0u));
     auto &commandStreamReceiver = device->getGpgpuCommandStreamReceiver();
@@ -220,7 +220,7 @@ TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryMan
     DebugManagerStateRestore restorer;
     DebugManager.flags.SetCommandStreamReceiver.set(10);
 
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>(*platformDevices);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>(defaultHwInfo.get());
     executionEnvironment->initializeMemoryManager();
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }

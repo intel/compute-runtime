@@ -538,7 +538,7 @@ struct EnqueueFillBufferHw : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context.reset(new MockContext(device.get()));
     }
 

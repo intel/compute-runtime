@@ -708,7 +708,7 @@ HWTEST_F(AubCommandStreamReceiverTests, whenAubCommandStreamReceiverIsCreatedThe
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineIsInitializedThenDumpHandleIsGenerated) {
-    MockExecutionEnvironment executionEnvironment(platformDevices[0]);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     auto engineInstance = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
     MockOsContext osContext(0, 1, engineInstance, PreemptionMode::Disabled,
@@ -925,7 +925,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenCompressedGraphicsAllocationWritabl
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AUBDumpBufferFormat.set("TRE");
 
-    MockAubCenter *mockAubCenter = new MockAubCenter(platformDevices[0], false, "aubfile", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter *mockAubCenter = new MockAubCenter(defaultHwInfo.get(), false, "aubfile", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter->aubManager = std::make_unique<MockAubManager>();
 
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(mockAubCenter);
@@ -1080,7 +1080,7 @@ HWTEST_F(SimulatedCsrTest, givenAubCsrTypeWhenCreateCommandStreamReceiverThenPro
 
     auto rootDeviceEnvironment = new MockRootDeviceEnvironment(executionEnvironment);
     executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex].reset(rootDeviceEnvironment);
-    rootDeviceEnvironment->setHwInfo(*platformDevices);
+    rootDeviceEnvironment->setHwInfo(defaultHwInfo.get());
 
     EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[expectedRootDeviceIndex]->aubCenter.get());
     EXPECT_FALSE(rootDeviceEnvironment->initAubCenterCalled);

@@ -875,7 +875,7 @@ TEST(CreateSvmAllocTests, givenVariousSvmAllocationPropertiesWhenAllocatingSvmTh
 
     for (auto isLocalMemorySupported : ::testing::Bool()) {
         DebugManager.flags.EnableLocalMemory.set(isLocalMemorySupported);
-        auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         auto mockContext = std::make_unique<MockContext>(mockDevice.get());
 
         for (auto isReadOnly : ::testing::Bool()) {

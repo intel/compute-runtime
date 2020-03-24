@@ -78,7 +78,7 @@ TEST(EventBuilder, givenVirtualEventWithCommandThenFinalizeAddChild) {
             : CommandComputeKernel(commandQueue, kernelOperation, surfaces, false, false, false, nullptr, PreemptionMode::Disabled, kernel, 0) {}
     };
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockCommandQueue cmdQ(nullptr, device.get(), nullptr);
     MockKernelWithInternals kernel(*device);
 
@@ -127,7 +127,7 @@ TEST(EventBuilder, givenVirtualEventWithSubmittedCommandAsParentThenFinalizeNotA
             : CommandComputeKernel(commandQueue, kernelOperation, surfaces, false, false, false, nullptr, PreemptionMode::Disabled, kernel, 0) {}
     };
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockCommandQueue cmdQ(nullptr, device.get(), nullptr);
     MockKernelWithInternals kernel(*device);
 

@@ -489,7 +489,7 @@ class DeviceQueueHwWithKernel : public ExecutionModelKernelFixture {
             0, 0, 0};
         cl_int errcodeRet = 0;
 
-        clDevice = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0])};
+        clDevice = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
         device = &clDevice->getDevice();
         context = new MockContext();
         ASSERT_NE(nullptr, context);
@@ -657,7 +657,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenResettingDeviceQu
 
     DebugManager.flags.SchedulerSimulationReturnInstance.set(3);
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context;
     std::unique_ptr<MockDeviceQueueHw<FamilyType>> mockDeviceQueueHw(new MockDeviceQueueHw<FamilyType>(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
 
@@ -671,7 +671,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenAddihMediaStateCl
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context;
     std::unique_ptr<MockDeviceQueueHw<FamilyType>> mockDeviceQueueHw(new MockDeviceQueueHw<FamilyType>(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
 
@@ -715,7 +715,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenAddingExecutionMo
             addMediaStateClearCmdsCalled = true;
         }
     };
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context(device.get());
     std::unique_ptr<MockDeviceQueueWithMediaStateClearRegistering> mockDeviceQueueHw(new MockDeviceQueueWithMediaStateClearRegistering(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
 
@@ -732,7 +732,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenSettingMediaState
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context;
     std::unique_ptr<MockDeviceQueueHw<FamilyType>> mockDeviceQueueHw(new MockDeviceQueueHw<FamilyType>(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
 
@@ -748,7 +748,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenSettingExecutionM
     using MI_MATH = typename FamilyType::MI_MATH;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context;
     std::unique_ptr<MockDeviceQueueHw<FamilyType>> mockDeviceQueueHw(new MockDeviceQueueHw<FamilyType>(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
 
@@ -773,7 +773,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenSettingProfilingE
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockContext context;
     std::unique_ptr<MockDeviceQueueHw<FamilyType>> mockDeviceQueueHw(new MockDeviceQueueHw<FamilyType>(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
 

@@ -525,7 +525,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenEnqueueReadBufferCalledWhenLockedPtrInT
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);
 
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(false, true, executionEnvironment);
     MockContext ctx;
     cl_int retVal;
@@ -553,7 +553,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenForcedCpuCopyWhenEnqueueReadCompressedB
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);
 
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(false, true, executionEnvironment);
     MockContext ctx;
     cl_int retVal;
@@ -599,7 +599,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, gicenEnqueueReadBufferCalledWhenLockedPtrInT
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(1);
 
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(false, true, executionEnvironment);
     MockContext ctx;
     cl_int retVal;
@@ -690,7 +690,7 @@ struct EnqueueReadBufferHw : public ::testing::Test {
         if (is32bit) {
             GTEST_SKIP();
         }
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context.reset(new MockContext(device.get()));
     }
 

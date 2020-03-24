@@ -306,7 +306,7 @@ struct EnqueueSvmMemCopyHw : public ::testing::Test {
 
     void SetUp() override {
 
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         if (is32bit || !device->isFullRangeSvm()) {
             GTEST_SKIP();
         }

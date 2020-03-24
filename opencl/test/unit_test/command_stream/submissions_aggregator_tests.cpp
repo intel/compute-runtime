@@ -576,7 +576,7 @@ TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentSliceCountSetti
 
 struct SubmissionsAggregatorTests : public ::testing::Test {
     void SetUp() override {
-        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         context.reset(new MockContext(device.get()));
     }
 

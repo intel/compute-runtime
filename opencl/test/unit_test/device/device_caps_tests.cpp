@@ -44,7 +44,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
 };
 
 TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     const auto &sharedCaps = device->getSharedDeviceInfo();
     const auto &sysInfo = defaultHwInfo->gtSystemInfo;
@@ -169,7 +169,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
 }
 
 HWTEST_F(DeviceGetCapsTest, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
 
     auto deviceSubgroups = hwHelper.getDeviceSubGroupSizes();
@@ -181,7 +181,7 @@ HWTEST_F(DeviceGetCapsTest, givenDeviceWhenAskingForSubGroupSizesThenReturnCorre
 }
 
 TEST_F(DeviceGetCapsTest, GivenPlatformWhenGettingHwInfoThenImage3dDimensionsAreCorrect) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     const auto &sharedCaps = device->getSharedDeviceInfo();
 
@@ -200,7 +200,7 @@ TEST_F(DeviceGetCapsTest, givenDontForcePreemptionModeDebugVariableWhenCreateDev
     DebugManagerStateRestore dbgRestorer;
     {
         DebugManager.flags.ForcePreemptionMode.set(-1);
-        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         EXPECT_TRUE(device->getHardwareInfo().capabilityTable.defaultPreemptionMode ==
                     device->getPreemptionMode());
     }
@@ -215,7 +215,7 @@ TEST_F(DeviceGetCapsTest, givenForcePreemptionModeDebugVariableWhenCreateDeviceT
             forceMode = PreemptionMode::ThreadGroup;
         }
         DebugManager.flags.ForcePreemptionMode.set((int32_t)forceMode);
-        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
         EXPECT_TRUE(forceMode == device->getPreemptionMode());
     }
@@ -232,7 +232,7 @@ TEST_F(DeviceGetCapsTest, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedT
         auto executionEnvironment = new ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0u]->builtins.reset(builtIns);
-        auto device = std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(platformDevices[0], executionEnvironment, 0u));
+        auto device = std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0u));
         ASSERT_EQ(builtIns, device->getBuiltIns());
         EXPECT_FALSE(MockSipData::called);
     }
@@ -242,7 +242,7 @@ TEST_F(DeviceGetCapsTest, givenForceOclVersion21WhenCapsAreCreatedThenDeviceRepo
     DebugManagerStateRestore dbgRestorer;
     {
         DebugManager.flags.ForceOCLVersion.set(21);
-        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
         EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
         EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
@@ -254,7 +254,7 @@ TEST_F(DeviceGetCapsTest, givenForceOclVersion20WhenCapsAreCreatedThenDeviceRepo
     DebugManagerStateRestore dbgRestorer;
     {
         DebugManager.flags.ForceOCLVersion.set(20);
-        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
         EXPECT_STREQ("OpenCL 2.0 NEO ", caps.clVersion);
         EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
@@ -266,7 +266,7 @@ TEST_F(DeviceGetCapsTest, givenForceOclVersion12WhenCapsAreCreatedThenDeviceRepo
     DebugManagerStateRestore dbgRestorer;
     {
         DebugManager.flags.ForceOCLVersion.set(12);
-        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
         EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
         EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
@@ -278,7 +278,7 @@ TEST_F(DeviceGetCapsTest, givenForceInvalidOclVersionWhenCapsAreCreatedThenDevic
     DebugManagerStateRestore dbgRestorer;
     {
         DebugManager.flags.ForceOCLVersion.set(1);
-        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
         EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
         EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
@@ -290,7 +290,7 @@ TEST_F(DeviceGetCapsTest, givenForce32bitAddressingWhenCapsAreCreatedThenDeviceR
     DebugManagerStateRestore dbgRestorer;
     {
         DebugManager.flags.Force32bitAddressing.set(true);
-        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
         const auto &sharedCaps = device->getSharedDeviceInfo();
         if (is64bit) {
@@ -307,7 +307,7 @@ TEST_F(DeviceGetCapsTest, givenForce32bitAddressingWhenCapsAreCreatedThenDeviceR
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenGlobalMemSizeIsAlignedDownToPageSize) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &sharedCaps = device->getSharedDeviceInfo();
 
     auto expectedSize = alignDown(sharedCaps.globalMemSize, MemoryConstants::pageSize);
@@ -316,7 +316,7 @@ TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenGlobalMemSizeIsAlignedDownToPag
 }
 
 TEST_F(DeviceGetCapsTest, Given32bitAddressingWhenDeviceIsCreatedThenGlobalMemSizeIsAlignedDownToPageSize) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &sharedCaps = device->getSharedDeviceInfo();
     auto pMemManager = device->getMemoryManager();
     unsigned int enabledCLVer = device->getEnabledClVersion();
@@ -338,7 +338,7 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableLocalMemory.set(true);
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &sharedCaps = device->getSharedDeviceInfo();
     auto pMemManager = device->getMemoryManager();
     auto enabledCLVer = device->getEnabledClVersion();
@@ -357,7 +357,7 @@ TEST_F(DeviceGetCapsTest, givenDeviceCapsWhenLocalMemoryIsEnabledThenCalculateGl
 }
 
 TEST_F(DeviceGetCapsTest, givenGlobalMemSizeWhenCalculatingMaxAllocSizeThenAdjustToHWCap) {
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     HardwareCapabilities hwCaps = {0};
@@ -371,7 +371,7 @@ TEST_F(DeviceGetCapsTest, givenGlobalMemSizeWhenCalculatingMaxAllocSizeThenAdjus
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenExtensionsStringEndsWithSpace) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     auto len = strlen(caps.deviceExtensions);
     ASSERT_LT(0U, len);
@@ -382,7 +382,7 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndDisabledMultipl
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableFormatQuery.set(true);
     DebugManager.flags.CreateMultipleSubDevices.set(0);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_sharing_format_query ")));
 }
@@ -391,7 +391,7 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndEnabledMultiple
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableFormatQuery.set(true);
     DebugManager.flags.CreateMultipleSubDevices.set(2);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     EXPECT_THAT(caps.deviceExtensions, ::testing::Not(::testing::HasSubstr(std::string("cl_intel_sharing_format_query "))));
 }
@@ -399,7 +399,7 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndEnabledMultiple
 TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReportsClKhrSubgroupsExtension) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(21);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_subgroups")));
@@ -408,7 +408,7 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReport
 TEST_F(DeviceGetCapsTest, givenOpenCLVersion20WhenCapsAreCreatedThenDeviceDoesntReportClKhrSubgroupsExtension) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(20);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_subgroups"))));
@@ -417,7 +417,7 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion20WhenCapsAreCreatedThenDeviceDoesnt
 TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReportsClKhrIlProgramExtension) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(21);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_il_program")));
@@ -426,7 +426,7 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReport
 TEST_F(DeviceGetCapsTest, givenOpenCLVersion20WhenCapsAreCreatedThenDeviceDoesntReportClKhrIlProgramExtension) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(20);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_il_program"))));
@@ -435,9 +435,9 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion20WhenCapsAreCreatedThenDeviceDoesnt
 TEST_F(DeviceGetCapsTest, givenOpenCLVersion21WhenCapsAreCreatedThenDeviceReportsClIntelSpirvExtensions) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(21);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
-    const HardwareInfo *hwInfo = platformDevices[0];
+    const HardwareInfo *hwInfo = defaultHwInfo.get();
 
     if (hwInfo->capabilityTable.supportsVme) {
         EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_spirv_device_side_avc_motion_estimation")));
@@ -495,7 +495,7 @@ TEST_F(DeviceGetCapsTest, givenNotSupportImagesWhenCapsAreCreatedThenDeviceNotRe
 TEST_F(DeviceGetCapsTest, givenOpenCLVersion12WhenCapsAreCreatedThenDeviceDoesntReportClIntelSpirvExtensions) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(12);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_spirv_device_side_avc_motion_estimation"))));
@@ -506,7 +506,7 @@ TEST_F(DeviceGetCapsTest, givenOpenCLVersion12WhenCapsAreCreatedThenDeviceDoesnt
 TEST_F(DeviceGetCapsTest, givenEnableNV12setToTrueAndSupportImagesWhenCapsAreCreatedThenDeviceReportsNV12Extension) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableNV12.set(true);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     if (device->getHardwareInfo().capabilityTable.supportsImages) {
         EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_planar_yuv")));
@@ -519,7 +519,7 @@ TEST_F(DeviceGetCapsTest, givenEnableNV12setToTrueAndSupportImagesWhenCapsAreCre
 TEST_F(DeviceGetCapsTest, givenEnablePackedYuvsetToTrueAndSupportImagesWhenCapsAreCreatedThenDeviceReportsPackedYuvExtension) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnablePackedYuv.set(true);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     if (device->getHardwareInfo().capabilityTable.supportsImages) {
         EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_packed_yuv")));
@@ -556,7 +556,7 @@ TEST_F(DeviceGetCapsTest, givenNotSupportImagesWhenCapsAreCreatedThenDeviceNotRe
 TEST_F(DeviceGetCapsTest, givenEnableNV12setToFalseWhenCapsAreCreatedThenDeviceDoesNotReportNV12Extension) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableNV12.set(false);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_planar_yuv"))));
@@ -566,7 +566,7 @@ TEST_F(DeviceGetCapsTest, givenEnableNV12setToFalseWhenCapsAreCreatedThenDeviceD
 TEST_F(DeviceGetCapsTest, givenEnablePackedYuvsetToFalseWhenCapsAreCreatedThenDeviceDoesNotReportPackedYuvExtension) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnablePackedYuv.set(false);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_packed_yuv"))));
@@ -709,35 +709,35 @@ TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenVmeIsEnabled) {
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenPriorityHintsExtensionIsReported) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_priority_hints")));
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenCreateCommandQueueExtensionIsReported) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_create_command_queue")));
 }
 
 TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenThrottleHintsExtensionIsReported) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_throttle_hints")));
 }
 
 TEST_F(DeviceGetCapsTest, GivenAnyDeviceWhenCheckingExtensionsThenSupportSubgroupsChar) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_subgroups_char")));
 }
 
 TEST_F(DeviceGetCapsTest, GivenAnyDeviceWhenCheckingExtensionsThenSupportSubgroupsLong) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_subgroups_long")));
@@ -747,7 +747,7 @@ TEST_F(DeviceGetCapsTest, givenAtleastOCL2DeviceThenExposesMipMapAndUnifiedMemor
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(20);
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;
     if (device->getHardwareInfo().capabilityTable.supportsImages) {
@@ -786,7 +786,7 @@ TEST_F(DeviceGetCapsTest, givenOCL12DeviceThenDoesNotExposesMipMapAndUnifiedMemo
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(12);
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     EXPECT_THAT(caps.deviceExtensions, testing::Not(testing::HasSubstr(std::string("cl_khr_mipmap_image"))));
@@ -832,7 +832,7 @@ TEST_F(DeviceGetCapsTest, givenDeviceThatDoesntHaveFp64ThenExtensionIsNotReporte
 }
 
 TEST_F(DeviceGetCapsTest, givenDeviceWhenGettingHostUnifiedMemoryCapThenItDependsOnLocalMemory) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
 
     auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
@@ -879,7 +879,7 @@ TEST(DeviceGetCaps, givenOclVersionLessThan21WhenCapsAreCreatedThenDeviceReports
     DebugManagerStateRestore dbgRestorer;
     {
         DebugManager.flags.ForceOCLVersion.set(12);
-        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
         EXPECT_STREQ("", caps.ilVersion);
         DebugManager.flags.ForceOCLVersion.set(0);
@@ -890,7 +890,7 @@ TEST(DeviceGetCaps, givenOclVersion21WhenCapsAreCreatedThenDeviceReportsSpirvAsS
     DebugManagerStateRestore dbgRestorer;
     {
         DebugManager.flags.ForceOCLVersion.set(21);
-        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
         EXPECT_STREQ("SPIR-V_1.2 ", caps.ilVersion);
         DebugManager.flags.ForceOCLVersion.set(0);
@@ -992,7 +992,7 @@ const std::string DriverInfoMock::testDeviceName = "testDeviceName";
 const std::string DriverInfoMock::testVersion = "testVersion";
 
 TEST_F(DeviceGetCapsTest, givenSystemWithDriverInfoWhenGettingNameAndVersionThenReturnValuesFromDriverInfo) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
     DriverInfoMock *driverInfoMock = new DriverInfoMock();
     device->driverInfo.reset(driverInfoMock);
@@ -1005,7 +1005,7 @@ TEST_F(DeviceGetCapsTest, givenSystemWithDriverInfoWhenGettingNameAndVersionThen
 }
 
 TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenReturnDefaultValues) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
     device->driverInfo.reset();
     device->name.clear();
@@ -1071,19 +1071,19 @@ TEST_F(DeviceGetCapsTest, givenUnifiedMemoryShardeSystemFlagWhenDeviceIsCreatedI
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableSharedSystemUsmSupport.set(0u);
 
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     EXPECT_EQ(0u, device->getDeviceInfo().sharedSystemMemCapabilities);
     EXPECT_FALSE(device->areSharedSystemAllocationsAllowed());
 
     DebugManager.flags.EnableSharedSystemUsmSupport.set(1u);
-    device.reset(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0])});
+    device.reset(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())});
     cl_unified_shared_memory_capabilities_intel expectedProperties = CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_CONCURRENT_ATOMIC_ACCESS_INTEL;
     EXPECT_EQ(expectedProperties, device->getDeviceInfo().sharedSystemMemCapabilities);
     EXPECT_TRUE(device->areSharedSystemAllocationsAllowed());
 }
 
 TEST_F(DeviceGetCapsTest, givenDeviceWithNullSourceLevelDebuggerWhenCapsAreInitializedThenSourceLevelDebuggerActiveIsSetToFalse) {
-    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
     const auto &caps = device->getDeviceInfo();
     EXPECT_EQ(nullptr, device->getDebugger());

@@ -369,7 +369,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
 
     auto mockGraphicsAllocation = new MockGraphicsAllocationWithDestructorTracing(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0llu, 0llu, 1u, MemoryPool::MemoryNull);
     mockGraphicsAllocation->destructorCalled = &destructorCalled;
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     csr->setTagAllocation(mockGraphicsAllocation);
@@ -379,7 +379,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocated) {
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());
@@ -406,7 +406,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenFenceAllocatio
 TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocatedAndinitialValueIsMinusOne) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableNullHardware.set(true);
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto csr = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0);
     executionEnvironment.memoryManager.reset(new OsAgnosticMemoryManager(executionEnvironment));
     EXPECT_EQ(nullptr, csr->getTagAllocation());

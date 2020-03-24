@@ -193,7 +193,7 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
     const size_t numDevices = 2;
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
     for (auto i = 0u; i < numDevices; i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
     }
     auto hwInfo = *defaultHwInfo;
     const auto &numGpgpuEngines = static_cast<uint32_t>(HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo).size());
@@ -223,7 +223,7 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepe
     const size_t numDevices = 2;
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
     }
     auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
@@ -237,7 +237,7 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepe
     const size_t numDevices = 2;
     executionEnvironment->prepareRootDeviceEnvironments(numDevices);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(*platformDevices);
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
     }
     auto hwInfo = *defaultHwInfo;
     const auto &numGpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo).size();
