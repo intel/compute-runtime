@@ -18,7 +18,7 @@ typedef PreambleFixture IclSlm;
 GEN11TEST_F(IclSlm, shouldBeEnabledOnGen11) {
     typedef ICLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
-    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(**platformDevices, true);
+    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
     PreambleHelper<FamilyType>::programL3(&cs, l3Config);
 
     parseCommands<ICLFamily>(cs);
@@ -33,7 +33,7 @@ GEN11TEST_F(IclSlm, shouldBeEnabledOnGen11) {
 }
 
 GEN11TEST_F(IclSlm, givenGen11WhenProgramingL3ThenErrorDetectionBehaviorControlBitSet) {
-    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(**platformDevices, true);
+    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
 
     uint32_t errorDetectionBehaviorControlBit = 1 << 9;
 
@@ -42,7 +42,7 @@ GEN11TEST_F(IclSlm, givenGen11WhenProgramingL3ThenErrorDetectionBehaviorControlB
 
 GEN11TEST_F(IclSlm, givenGen11IsL3Programing) {
     bool isL3Programmable =
-        PreambleHelper<FamilyType>::isL3Configurable(**platformDevices);
+        PreambleHelper<FamilyType>::isL3Configurable(*defaultHwInfo);
 
     EXPECT_FALSE(isL3Programmable);
 }
@@ -92,7 +92,7 @@ GEN11TEST_F(Gen11PreambleVfeState, WaOn) {
 
 typedef PreambleFixture PreemptionWatermarkGen11;
 GEN11TEST_F(PreemptionWatermarkGen11, givenPreambleThenPreambleWorkAroundsIsNotProgrammed) {
-    PreambleHelper<FamilyType>::programGenSpecificPreambleWorkArounds(&linearStream, **platformDevices);
+    PreambleHelper<FamilyType>::programGenSpecificPreambleWorkArounds(&linearStream, *defaultHwInfo);
 
     parseCommands<FamilyType>(linearStream);
 
@@ -116,7 +116,7 @@ GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArb
     typedef ICLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef ICLFamily::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;
-    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(**platformDevices, true);
+    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
     MockDevice mockDevice;
     PreambleHelper<FamilyType>::programPreamble(&linearStream, mockDevice, l3Config,
                                                 ThreadArbitrationPolicy::RoundRobin,

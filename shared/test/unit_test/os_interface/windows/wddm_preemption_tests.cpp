@@ -19,7 +19,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
   public:
     void SetUp() override {
         WddmFixtureWithMockGdiDll::SetUp();
-        const HardwareInfo hwInfo = *platformDevices[0];
+        const HardwareInfo hwInfo = *defaultHwInfo;
         memcpy(&hwInfoTest, &hwInfo, sizeof(hwInfoTest));
         dbgRestorer = new DebugManagerStateRestore();
         wddm->featureTable->ftrGpGpuMidThreadLevelPreempt = true;

@@ -114,7 +114,7 @@ struct UltCommandStreamReceiverTest
             slmUsed = true;
         }
 
-        uint32_t L3Config = PreambleHelper<GfxFamily>::getL3Config(*platformDevices[0], slmUsed);
+        uint32_t L3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, slmUsed);
 
         auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<GfxFamily>();
         commandStreamReceiver.isPreambleSent = true;

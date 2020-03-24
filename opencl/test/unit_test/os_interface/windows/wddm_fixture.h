@@ -43,7 +43,7 @@ struct WddmFixture : ::testing::Test {
         rootDeviceEnvironemnt->osInterface->get()->setWddm(wddm);
         rootDeviceEnvironemnt->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = rootDeviceEnvironemnt->osInterface.get();
-        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
+        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddm->init();
         auto hwInfo = rootDeviceEnvironemnt->getHardwareInfo();
         auto engine = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
@@ -77,7 +77,7 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
     }
 
     void init() {
-        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
+        auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddmMockInterface = static_cast<WddmMockInterface20 *>(wddm->wddmInterface.release());
         wddm->init();
         wddm->wddmInterface.reset(wddmMockInterface);

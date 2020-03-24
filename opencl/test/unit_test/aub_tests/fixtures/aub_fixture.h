@@ -28,7 +28,7 @@ namespace NEO {
 class AUBFixture : public CommandQueueHwFixture {
   public:
     void SetUp(const HardwareInfo *hardwareInfo) {
-        const HardwareInfo &hwInfo = hardwareInfo ? *hardwareInfo : *platformDevices[0];
+        const HardwareInfo &hwInfo = hardwareInfo ? *hardwareInfo : *defaultHwInfo;
         uint32_t deviceIndex = 0;
 
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);

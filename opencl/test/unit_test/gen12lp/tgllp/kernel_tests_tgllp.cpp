@@ -20,7 +20,7 @@ TGLLPTEST_F(KernelTgllpTests, GivenUseOffsetToSkipSetFFIDGPWorkaroundActiveWhenS
     const uint64_t additionalOffsetDueToFfid = 0x1234;
     SPatchThreadPayload threadPayload{};
     threadPayload.OffsetToSkipSetFFIDGP = additionalOffsetDueToFfid;
-    auto hwInfo = *platformDevices[0];
+    auto hwInfo = *defaultHwInfo;
 
     unsigned short steppings[] = {REVISION_A0, REVISION_A0 + 1};
     for (auto stepping : steppings) {

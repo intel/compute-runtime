@@ -489,7 +489,7 @@ struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
         commandStreamReceiver = &device->getGpgpuCommandStreamReceiver();
     }
-    HardwareInfo hwInfo = *platformDevices[0];
+    HardwareInfo hwInfo = *defaultHwInfo;
     ExecutionEnvironment *executionEnvironment = nullptr;
     GMockMemoryManager *gmockMemoryManager = nullptr;
     std::unique_ptr<MockDevice> device;

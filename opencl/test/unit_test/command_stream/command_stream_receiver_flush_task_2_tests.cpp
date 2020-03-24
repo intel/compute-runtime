@@ -374,7 +374,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousSLML
 
     auto &commandStreamCSR = commandStreamReceiver->getCS();
 
-    uint32_t L3Config = PreambleHelper<FamilyType>::getL3Config(*platformDevices[0], true);
+    uint32_t L3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
 
     // Mark Pramble as sent, override L3Config to SLM config
     commandStreamReceiver->isPreambleSent = true;

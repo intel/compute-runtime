@@ -32,7 +32,7 @@ TGLLPTEST_F(TglLpSlm, givenTglLpWhenPreambleIsBeingProgrammedThenThreadArbitrati
 
 TGLLPTEST_F(TglLpSlm, givenTglLpIsL3Programing) {
     bool isL3Programmable =
-        PreambleHelper<TGLLPFamily>::isL3Configurable(**platformDevices);
+        PreambleHelper<TGLLPFamily>::isL3Configurable(*defaultHwInfo);
 
     EXPECT_FALSE(isL3Programmable);
 }

@@ -331,7 +331,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     auto *cmd = (MEDIA_VFE_STATE *)*itorCmd;
     auto *sba = (STATE_BASE_ADDRESS *)*itorCmdForStateBase;
 
-    const HardwareInfo &hwInfo = **platformDevices;
+    const HardwareInfo &hwInfo = *defaultHwInfo;
     uint32_t threadPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     uint32_t maxNumberOfThreads = hwInfo.gtSystemInfo.EUCount * threadPerEU;
 

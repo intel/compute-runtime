@@ -2639,7 +2639,7 @@ TEST(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedThenMa
     DebugManagerStateRestore dbgStateRestore;
     DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.set(true);
 
-    HardwareInfo myHwInfo = *platformDevices[0];
+    HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
 
     mySysInfo.EUCount = 24;
@@ -2726,7 +2726,7 @@ TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkK
     DebugManagerStateRestore restore;
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
-    HardwareInfo localHwInfo = *platformDevices[0];
+    HardwareInfo localHwInfo = *defaultHwInfo;
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
     auto context = clUniquePtr(new MockContext(device.get()));
@@ -2749,7 +2749,7 @@ TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkK
 }
 
 TEST(KernelTest, givenKernelWithPairArgumentWhenItIsInitializedThenPatchImmediateIsUsedAsArgHandler) {
-    HardwareInfo localHwInfo = *platformDevices[0];
+    HardwareInfo localHwInfo = *defaultHwInfo;
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
     auto context = clUniquePtr(new MockContext(device.get()));

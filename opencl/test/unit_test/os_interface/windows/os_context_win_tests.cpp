@@ -15,8 +15,8 @@ using namespace NEO;
 struct OsContextWinTest : public WddmTestWithMockGdiDll {
     void SetUp() override {
         WddmTestWithMockGdiDll::SetUp();
-        preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
-        engineType = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0];
+        preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
+        engineType = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0];
 
         init();
     }

@@ -34,7 +34,7 @@ using namespace NEO;
 
 TEST(HwHelperSimpleTest, givenDebugVariableWhenAskingForRenderCompressionThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
-    HardwareInfo localHwInfo = **platformDevices;
+    HardwareInfo localHwInfo = *defaultHwInfo;
 
     // debug variable not set
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
@@ -201,7 +201,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     expectedPipeControl.setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP);
     expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
     expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
-    HardwareInfo hardwareInfo = *platformDevices[0];
+    HardwareInfo hardwareInfo = *defaultHwInfo;
 
     auto pipeControl = MemorySynchronizationCommands<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(
         stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, false, hardwareInfo);
@@ -227,7 +227,7 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     expectedPipeControl.setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
     expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
     expectedPipeControl.setImmediateData(immediateData);
-    HardwareInfo hardwareInfo = *platformDevices[0];
+    HardwareInfo hardwareInfo = *defaultHwInfo;
 
     auto pipeControl = MemorySynchronizationCommands<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(
         stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, false, hardwareInfo);
@@ -584,10 +584,10 @@ HWTEST_F(HwHelperTest, DISABLED_profilingCreationOfRenderSurfaceStateVsMemcpyOfC
 HWTEST_F(HwHelperTest, testIfL3ConfigProgrammable) {
     bool PreambleHelperL3Config;
     bool isL3Programmable;
-    const HardwareInfo &hwInfo = **platformDevices;
+    const HardwareInfo &hwInfo = *defaultHwInfo;
 
     PreambleHelperL3Config =
-        PreambleHelper<FamilyType>::isL3Configurable(**platformDevices);
+        PreambleHelper<FamilyType>::isL3Configurable(*defaultHwInfo);
     isL3Programmable =
         HwHelperHw<FamilyType>::get().isL3Configurable(hwInfo);
 
@@ -598,7 +598,7 @@ TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsEnableWhenPlatformDoesNo
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
 
-    HardwareInfo localHwInfo = *platformDevices[0];
+    HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.capabilityTable.supportCacheFlushAfterWalker = false;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
@@ -609,7 +609,7 @@ TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsDisableWhenPlatformSuppo
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(0);
 
-    HardwareInfo localHwInfo = *platformDevices[0];
+    HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.capabilityTable.supportCacheFlushAfterWalker = true;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
@@ -620,7 +620,7 @@ TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsReadPlatformSettingWhenP
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(-1);
 
-    HardwareInfo localHwInfo = *platformDevices[0];
+    HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.capabilityTable.supportCacheFlushAfterWalker = false;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
@@ -631,7 +631,7 @@ TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsReadPlatformSettingWhenP
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableCacheFlushAfterWalker.set(-1);
 
-    HardwareInfo localHwInfo = *platformDevices[0];
+    HardwareInfo localHwInfo = *defaultHwInfo;
     localHwInfo.capabilityTable.supportCacheFlushAfterWalker = true;
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
@@ -693,7 +693,7 @@ HWTEST_F(HwHelperTest, givenMultiDispatchInfoWhenAskingForAuxTranslationThenChec
     MockBuffer buffer;
     MemObjsForAuxTranslation memObjects;
     MultiDispatchInfo multiDispatchInfo;
-    HardwareInfo hwInfo = **platformDevices;
+    HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
     DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));

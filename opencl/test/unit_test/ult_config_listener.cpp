@@ -16,7 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
-    referencedHwInfo = *platformDevices[0];
+    referencedHwInfo = *defaultHwInfo;
     auto executionEnvironment = constructPlatform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(*platformDevices);

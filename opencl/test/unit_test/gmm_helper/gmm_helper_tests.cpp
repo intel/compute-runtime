@@ -346,7 +346,7 @@ TEST_F(GmmTests, givenNonZeroRowPitchWhenQueryImgFromBufferParamsThenUseUserValu
 }
 
 TEST_F(GmmTests, WhenCanonizingThenCorrectAddressIsReturned) {
-    auto hwInfo = *platformDevices[0];
+    auto hwInfo = *defaultHwInfo;
 
     // 48 bit - canonize to 48 bit
     hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48); // 0x0000FFFFFFFFFFFF;
@@ -369,7 +369,7 @@ TEST_F(GmmTests, WhenCanonizingThenCorrectAddressIsReturned) {
 }
 
 TEST_F(GmmTests, WhenDecanonizingThenCorrectAddressIsReturned) {
-    auto hwInfo = *platformDevices[0];
+    auto hwInfo = *defaultHwInfo;
 
     // 48 bit - decanonize to 48 bit
     hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48); //0x0000FFFFFFFFFFFF;

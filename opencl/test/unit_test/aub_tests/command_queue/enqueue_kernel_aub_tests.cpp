@@ -23,7 +23,7 @@
 
 using namespace NEO;
 
-extern const HardwareInfo **platformDevices;
+extern const HardwareInfo *defaultHwInfo;
 
 struct TestParam {
     cl_uint globalWorkSizeX;

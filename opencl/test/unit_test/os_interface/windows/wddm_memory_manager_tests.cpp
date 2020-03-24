@@ -79,7 +79,7 @@ TEST(WddmMemoryManager, NonAssignable) {
 TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGettingTrimCandidatePositionThenReturnItsPositionAndUnusedPositionInOtherContexts) {
     MockWddmAllocation allocation;
     MockOsContext osContext(1u, 1, aub_stream::ENGINE_RCS,
-                            PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]),
+                            PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                             false, false, false);
     allocation.setTrimCandidateListPosition(osContext.getContextId(), 700u);
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(0u));
@@ -1464,11 +1464,11 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWhenC
     std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(*executionEnvironment, 1u));
     std::unique_ptr<CommandStreamReceiver> csr2(createCommandStream(*executionEnvironment, 2u));
     memoryManager->createAndRegisterOsContext(csr.get(), aub_stream::ENGINE_RCS, 1,
-                                              PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false, false, false);
+                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false, false, false);
     memoryManager->createAndRegisterOsContext(csr1.get(), aub_stream::ENGINE_RCS, 2,
-                                              PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false, false, false);
+                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false, false, false);
     memoryManager->createAndRegisterOsContext(csr2.get(), aub_stream::ENGINE_RCS, 3,
-                                              PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false, false, false);
+                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false, false, false);
     EXPECT_FALSE(memoryManager->isMemoryBudgetExhausted());
 }
 
@@ -1489,11 +1489,11 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWithRegisteredOsContextWithE
     std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(*executionEnvironment, 1u));
     std::unique_ptr<CommandStreamReceiver> csr2(createCommandStream(*executionEnvironment, 2u));
     memoryManager->createAndRegisterOsContext(csr.get(), aub_stream::ENGINE_RCS, 1,
-                                              PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false, false, false);
+                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false, false, false);
     memoryManager->createAndRegisterOsContext(csr1.get(), aub_stream::ENGINE_RCS, 2,
-                                              PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false, false, false);
+                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false, false, false);
     memoryManager->createAndRegisterOsContext(csr2.get(), aub_stream::ENGINE_RCS, 3,
-                                              PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]), false, false, false);
+                                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false, false, false);
     auto osContext = static_cast<OsContextWin *>(memoryManager->getRegisteredEngines()[1].osContext);
     osContext->getResidencyController().setMemoryBudgetExhausted();
     EXPECT_TRUE(memoryManager->isMemoryBudgetExhausted());
@@ -1734,7 +1734,7 @@ TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhen
     ExecutionEnvironment &executionEnvironment = *platform()->peekExecutionEnvironment();
     auto csr = std::unique_ptr<CommandStreamReceiver>(createCommandStream(executionEnvironment, 0));
     auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0].get());
-    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
+    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
     wddm->init();
 
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();

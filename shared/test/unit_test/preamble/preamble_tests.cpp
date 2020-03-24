@@ -183,7 +183,7 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveAndMidThreadPreemptionWhenGetAd
 }
 
 HWTEST_F(PreambleTest, givenDefaultPreambleWhenGetThreadsMaxNumberIsCalledThenMaximumNumberOfThreadsIsReturned) {
-    const HardwareInfo &hwInfo = **platformDevices;
+    const HardwareInfo &hwInfo = *defaultHwInfo;
     uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
     uint32_t value = HwHelper::getMaxThreadsForVfe(hwInfo);
 

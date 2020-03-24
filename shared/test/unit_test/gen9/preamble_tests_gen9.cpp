@@ -54,10 +54,10 @@ GEN9TEST_F(PreambleTestGen9, givenGen9IsL3Programing) {
     bool isL3Programmable;
 
     l3ConfigDifference =
-        PreambleHelper<FamilyType>::getL3Config(**platformDevices, true) !=
-        PreambleHelper<FamilyType>::getL3Config(**platformDevices, false);
+        PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true) !=
+        PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, false);
     isL3Programmable =
-        PreambleHelper<FamilyType>::isL3Configurable(**platformDevices);
+        PreambleHelper<FamilyType>::isL3Configurable(*defaultHwInfo);
 
     EXPECT_EQ(l3ConfigDifference, isL3Programmable);
 }

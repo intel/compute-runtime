@@ -191,7 +191,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultRes
     drm->getParamRetValue = 0;
     drm->ioctl_res = -1;
 
-    auto result = osTime->getDynamicDeviceTimerResolution(*platformDevices[0]);
+    auto result = osTime->getDynamicDeviceTimerResolution(*defaultHwInfo);
     EXPECT_DOUBLE_EQ(result, defaultResolution);
 }
 
@@ -200,7 +200,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenNoDrmThenDefaultResoluti
 
     auto defaultResolution = platformDevices[0]->capabilityTable.defaultProfilingTimerResolution;
 
-    auto result = osTime->getDynamicDeviceTimerResolution(*platformDevices[0]);
+    auto result = osTime->getDynamicDeviceTimerResolution(*defaultHwInfo);
     EXPECT_DOUBLE_EQ(result, defaultResolution);
 }
 
@@ -212,7 +212,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlSuccedsThenCorrectR
     drm->getParamRetValue = 19200000;
     drm->ioctl_res = 0;
 
-    auto result = osTime->getDynamicDeviceTimerResolution(*platformDevices[0]);
+    auto result = osTime->getDynamicDeviceTimerResolution(*defaultHwInfo);
     EXPECT_DOUBLE_EQ(result, 52.08333333333333);
 }
 

@@ -527,7 +527,7 @@ struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::tes
         PerformanceCountersFixture::SetUp();
         createPerfCounters();
 
-        HardwareInfo hwInfo = *platformDevices[0];
+        HardwareInfo hwInfo = *defaultHwInfo;
         if (hwInfo.capabilityTable.defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {
             hwInfo.featureTable.ftrCCSNode = true;
         }

@@ -49,7 +49,7 @@ TEST(MemoryManagerTest, givenAllowed32BitAndFroce32BitWhenGraphicsAllocationInDe
 }
 
 TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledThenAllocateFlagIsCorrectlySet) {
-    HardwareInfo hwInfo(*platformDevices[0]);
+    HardwareInfo hwInfo(*defaultHwInfo);
     auto allocationProperties = MemoryPropertiesParser::getAllocationProperties(0, {}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo);
     EXPECT_TRUE(allocationProperties.flags.allocateMemory);
 
@@ -59,7 +59,7 @@ TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledT
 
 TEST(UncacheableFlagsTest, givenUncachedResourceFlagWhenGetAllocationFlagsIsCalledThenUncacheableFlagIsCorrectlySet) {
     cl_mem_flags_intel flagsIntel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
-    HardwareInfo hwInfo(*platformDevices[0]);
+    HardwareInfo hwInfo(*defaultHwInfo);
     MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, flagsIntel, 0);
     auto allocationFlags = MemoryPropertiesParser::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo);
     EXPECT_TRUE(allocationFlags.flags.uncacheable);
@@ -73,7 +73,7 @@ TEST(UncacheableFlagsTest, givenUncachedResourceFlagWhenGetAllocationFlagsIsCall
 TEST(AllocationFlagsTest, givenReadOnlyResourceFlagWhenGetAllocationFlagsIsCalledThenFlushL3FlagsAreCorrectlySet) {
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0);
-    HardwareInfo hwInfo(*platformDevices[0]);
+    HardwareInfo hwInfo(*defaultHwInfo);
 
     auto allocationFlags =
         MemoryPropertiesParser::getAllocationProperties(0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo);

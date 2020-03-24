@@ -519,7 +519,7 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values(PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup));
 
 HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceNoWa) {
-    HardwareInfo hwInfo = *platformDevices[0];
+    HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.workaroundTable.waCSRUncachable = false;
 
     std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
@@ -558,7 +558,7 @@ HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfa
 }
 
 HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceWa) {
-    HardwareInfo hwInfo = *platformDevices[0];
+    HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.workaroundTable.waCSRUncachable = true;
 
     std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));

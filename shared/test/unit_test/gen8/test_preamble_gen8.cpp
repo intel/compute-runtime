@@ -19,7 +19,7 @@ typedef PreambleFixture BdwSlm;
 BDWTEST_F(BdwSlm, shouldBeEnabledOnGen8) {
     typedef BDWFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
-    uint32_t l3Config = PreambleHelper<BDWFamily>::getL3Config(**platformDevices, true);
+    uint32_t l3Config = PreambleHelper<BDWFamily>::getL3Config(*defaultHwInfo, true);
     PreambleHelper<BDWFamily>::programL3(&cs, l3Config);
 
     parseCommands<BDWFamily>(cs);
@@ -62,10 +62,10 @@ BDWTEST_F(Gen8L3Config, givenGen8IsL3Programing) {
     bool isL3Programmable;
 
     l3ConfigDifference =
-        PreambleHelper<BDWFamily>::getL3Config(**platformDevices, true) !=
-        PreambleHelper<BDWFamily>::getL3Config(**platformDevices, false);
+        PreambleHelper<BDWFamily>::getL3Config(*defaultHwInfo, true) !=
+        PreambleHelper<BDWFamily>::getL3Config(*defaultHwInfo, false);
     isL3Programmable =
-        PreambleHelper<BDWFamily>::isL3Configurable(**platformDevices);
+        PreambleHelper<BDWFamily>::isL3Configurable(*defaultHwInfo);
 
     EXPECT_EQ(l3ConfigDifference, isL3Programmable);
 }
@@ -95,7 +95,7 @@ BDWTEST_F(PreambleVfeState, basic) {
     typedef BDWFamily::PIPE_CONTROL PIPE_CONTROL;
 
     LinearStream &cs = linearStream;
-    PreambleHelper<BDWFamily>::programVFEState(&linearStream, **platformDevices, 0, 0, 168u, aub_stream::EngineType::ENGINE_RCS);
+    PreambleHelper<BDWFamily>::programVFEState(&linearStream, *defaultHwInfo, 0, 0, 168u, aub_stream::EngineType::ENGINE_RCS);
 
     parseCommands<BDWFamily>(cs);
 

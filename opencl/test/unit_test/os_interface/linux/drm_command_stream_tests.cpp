@@ -213,8 +213,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdT
         .RetiresOnSaturation();
 
     osContext = std::make_unique<OsContextLinux>(*mock, 1, 1,
-                                                 HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0],
-                                                 PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]),
+                                                 HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                                 PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                                                  false, false, false);
     csr->setupContext(*osContext);
 
@@ -644,7 +644,7 @@ class DrmCommandStreamBatchingTests : public DrmCommandStreamEnhancedTest {
     template <typename GfxFamily>
     void SetUpT() {
         DrmCommandStreamEnhancedTest::SetUpT<GfxFamily>();
-        if (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) {
+        if (PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo) == PreemptionMode::MidThread) {
             tmpAllocation = GlobalMockSipProgram::sipProgram->getAllocation();
             GlobalMockSipProgram::sipProgram->resetAllocation(device->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize}));
         }
@@ -654,7 +654,7 @@ class DrmCommandStreamBatchingTests : public DrmCommandStreamEnhancedTest {
 
     template <typename GfxFamily>
     void TearDownT() {
-        if (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) {
+        if (PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo) == PreemptionMode::MidThread) {
             device->getMemoryManager()->freeGraphicsMemory((GlobalMockSipProgram::sipProgram)->getAllocation());
             GlobalMockSipProgram::sipProgram->resetAllocation(tmpAllocation);
         }

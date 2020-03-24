@@ -63,7 +63,7 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenKernelWithSlmWhenPreviousNOSLM
     auto cmdPC = genCmdCast<PIPE_CONTROL *>(*itorCmd);
     ASSERT_NE(nullptr, cmdPC);
 
-    uint32_t L3Config = PreambleHelper<GfxFamily>::getL3Config(*platformDevices[0], true);
+    uint32_t L3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, true);
     EXPECT_EQ(L3Config, static_cast<uint32_t>(cmdMILoad->getDataDword()));
 }
 
@@ -83,7 +83,7 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenBlockedKernelWithSlmWhenPrevio
 
     auto &commandStreamCSR = commandStreamReceiver->getCS();
 
-    uint32_t L3Config = PreambleHelper<GfxFamily>::getL3Config(*platformDevices[0], false);
+    uint32_t L3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, false);
 
     // Mark Pramble as sent, override L3Config to SLM config
     commandStreamReceiver->isPreambleSent = true;
@@ -110,6 +110,6 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenBlockedKernelWithSlmWhenPrevio
     auto cmdMILoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorCmd);
     ASSERT_NE(nullptr, cmdMILoad);
 
-    L3Config = PreambleHelper<GfxFamily>::getL3Config(*platformDevices[0], true);
+    L3Config = PreambleHelper<GfxFamily>::getL3Config(*defaultHwInfo, true);
     EXPECT_EQ(L3Config, static_cast<uint32_t>(cmdMILoad->getDataDword()));
 }

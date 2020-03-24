@@ -21,7 +21,7 @@ typedef PreambleFixture SklSlm;
 SKLTEST_F(SklSlm, shouldBeEnabledOnGen9) {
     typedef SKLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
-    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(**platformDevices, true);
+    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
 
     PreambleHelper<SKLFamily>::programL3(&cs, l3Config);
 
@@ -77,7 +77,7 @@ SKLTEST_F(ThreadArbitration, givenPreambleWhenItIsProgrammedThenThreadArbitratio
     typedef SKLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef SKLFamily::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;
-    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(**platformDevices, true);
+    uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
     MockDevice mockDevice;
     PreambleHelper<SKLFamily>::programPreamble(&linearStream, mockDevice, l3Config,
                                                ThreadArbitrationPolicy::RoundRobin,

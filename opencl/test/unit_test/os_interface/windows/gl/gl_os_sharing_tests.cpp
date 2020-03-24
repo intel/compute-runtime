@@ -334,10 +334,10 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
         }
     };
     FailSignalSyncObjectMock::reset();
-    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
+    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
     wddm->init();
     OsContextWin osContext(*osInterface.get()->getWddm(), 0u, 1,
-                           HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0],
+                           HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                            preemptionMode, false, false, false);
 
     CL_GL_SYNC_INFO syncInfo = {};
@@ -395,10 +395,10 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
         }
     };
     FailSignalSyncObjectMock::reset();
-    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]);
+    auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
     wddm->init();
     OsContextWin osContext(*osInterface.get()->getWddm(), 0u, 1,
-                           HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*platformDevices[0])[0],
+                           HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                            preemptionMode, false, false, false);
 
     CL_GL_SYNC_INFO syncInfo = {};

@@ -11,7 +11,7 @@
 
 namespace NEO {
 void DeviceFixture::SetUp() {
-    hardwareInfo = *platformDevices[0];
+    hardwareInfo = *defaultHwInfo;
     SetUpImpl(&hardwareInfo);
 }
 
@@ -33,7 +33,7 @@ void DeviceFixture::TearDown() {
 }
 
 MockDevice *DeviceFixture::createWithUsDeviceId(unsigned short usDeviceId) {
-    hardwareInfo = *platformDevices[0];
+    hardwareInfo = *defaultHwInfo;
     hardwareInfo.platform.usDeviceID = usDeviceId;
     return MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo);
 }
