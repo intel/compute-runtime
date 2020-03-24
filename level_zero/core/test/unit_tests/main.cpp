@@ -201,20 +201,19 @@ int main(int argc, char **argv) {
         ::testing::AddGlobalTestEnvironment(environment);
     }
 
-    NEO::HardwareInfo hwInfo = hwInfoForTests;
     uint64_t hwInfoConfig = NEO::defaultHardwareInfoConfigTable[productFamily];
-    NEO::setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
+    NEO::setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
 
     // set Gt and FeatureTable to initial state
-    NEO::hardwareInfoSetup[productFamily](&hwInfo, false, hwInfoConfig);
+    NEO::hardwareInfoSetup[productFamily](&hwInfoForTests, false, hwInfoConfig);
 
-    ::productFamily = hwInfo.platform.eProductFamily;
-    ::renderCoreFamily = hwInfo.platform.eRenderCoreFamily;
+    productFamily = hwInfoForTests.platform.eProductFamily;
+    renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
 
     NEO::platformDevices = new NEO::HardwareInfo *[1];
-    NEO::platformDevices[0] = &hwInfo;
+    NEO::platformDevices[0] = &hwInfoForTests;
     NEO::defaultHwInfo = std::make_unique<NEO::HardwareInfo>();
-    *NEO::defaultHwInfo = hwInfo;
+    *NEO::defaultHwInfo = hwInfoForTests;
 
     NEO::useKernelDescriptor = true;
     NEO::MockSipData::mockSipKernel.reset(new NEO::MockSipKernel());
