@@ -21,7 +21,7 @@ struct AUBImageUnaligned
       public ::testing::Test {
 
     void SetUp() override {
-        if (!(platformDevices[0]->capabilityTable.supportsImages)) {
+        if (!(defaultHwInfo->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
         CommandEnqueueAUBFixture::SetUp();

@@ -164,7 +164,7 @@ struct HardwareParse {
             }
             itorCmd = find<PIPELINE_SELECT *>(++itorCmd, cmdList.end());
         }
-        auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
+        auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
         if (hwHelper.is3DPipelineSelectWARequired(*platformDevices[0])) {
             auto maximalNumberOf3dSelectsRequired = 2;
             EXPECT_LE(numberOf3dSelects, maximalNumberOf3dSelectsRequired);

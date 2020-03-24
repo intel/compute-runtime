@@ -17,7 +17,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
   protected:
     void SetUp() override {
         ApiFixture::SetUp();
-        if (platformDevices[0]->capabilityTable.ftrSvm == false) {
+        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
             GTEST_SKIP();
         }
 

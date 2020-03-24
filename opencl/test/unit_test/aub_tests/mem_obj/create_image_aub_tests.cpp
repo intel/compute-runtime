@@ -36,7 +36,7 @@ struct AUBCreateImage
     using AUBCommandStreamFixture::SetUp;
 
     void SetUp() override {
-        if (!(platformDevices[0]->capabilityTable.supportsImages)) {
+        if (!(defaultHwInfo->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
         CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
@@ -73,7 +73,7 @@ struct AUBCreateImage
 struct AUBCreateImageArray : public AUBCreateImage,
                              public ::testing::WithParamInterface<uint32_t /*cl_mem_object_type*/> {
     void SetUp() override {
-        if (!(platformDevices[0]->capabilityTable.supportsImages)) {
+        if (!(defaultHwInfo->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
         AUBCreateImage::SetUp();
@@ -176,7 +176,7 @@ HWTEST_P(AUBCreateImageArray, CheckArrayImages) {
 struct AUBCreateImageHostPtr : public AUBCreateImage,
                                public ::testing::WithParamInterface<uint64_t /*cl_mem_object_type*/> {
     void SetUp() override {
-        if (!(platformDevices[0]->capabilityTable.supportsImages)) {
+        if (!(defaultHwInfo->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
         flags = GetParam();

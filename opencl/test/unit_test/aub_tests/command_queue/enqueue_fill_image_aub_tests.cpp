@@ -86,7 +86,7 @@ struct AubFillImage
     typedef AUBCommandStreamFixture CommandStreamFixture;
 
     void SetUp() override {
-        if (!(platformDevices[0]->capabilityTable.supportsImages)) {
+        if (!(defaultHwInfo->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
         auto dataType = std::get<0>(GetParam()).type;

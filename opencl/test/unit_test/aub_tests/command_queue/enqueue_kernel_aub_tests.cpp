@@ -123,7 +123,7 @@ struct AUBHelloWorldIntegrateTest : public HelloWorldFixture<AUBHelloWorldFixtur
 
     void SetUp() override {
         std::tie(KernelFixture::simd, param) = GetParam();
-        if (KernelFixture::simd < HwHelper::get(NEO::platformDevices[0]->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
+        if (KernelFixture::simd < HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
             GTEST_SKIP();
         }
         ParentClass::SetUp();
@@ -310,7 +310,7 @@ struct AUBSimpleArgIntegrateTest : public SimpleArgFixture<AUBSimpleArgFixtureFa
 
     void SetUp() override {
         std::tie(simd, param) = GetParam();
-        if (simd < HwHelper::get(NEO::platformDevices[0]->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
+        if (simd < HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getMinimalSIMDSize()) {
             GTEST_SKIP();
         }
         ParentClass::SetUp();
@@ -370,7 +370,7 @@ INSTANTIATE_TEST_CASE_P(
 
 struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUniformKernelFixture> {
     void SetUp() override {
-        if (NEO::platformDevices[0]->capabilityTable.clVersionSupport < 20) {
+        if (NEO::defaultHwInfo->capabilityTable.clVersionSupport < 20) {
             GTEST_SKIP();
         }
         KernelAUBFixture<SimpleArgNonUniformKernelFixture>::SetUp();
@@ -430,7 +430,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
     }
 
     void TearDown() override {
-        if (NEO::platformDevices[0]->capabilityTable.clVersionSupport < 20) {
+        if (NEO::defaultHwInfo->capabilityTable.clVersionSupport < 20) {
             return;
         }
         if (destMemory) {

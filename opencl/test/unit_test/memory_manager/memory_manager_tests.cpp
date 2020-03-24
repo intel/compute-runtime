@@ -201,7 +201,7 @@ TEST_F(MemoryAllocatorTest, allocateGraphics) {
     unsigned int alignment = 4096;
 
     memoryManager->createAndRegisterOsContext(csr,
-                                              HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                              HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                               1, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                                               false, false, false);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -214,7 +214,7 @@ TEST_F(MemoryAllocatorTest, allocateGraphics) {
     EXPECT_EQ(Sharing::nonSharedResource, allocation->peekSharedHandle());
 
     // Gpu address equal to cpu address
-    if (platformDevices[0]->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
+    if (defaultHwInfo->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
         EXPECT_EQ(reinterpret_cast<uint64_t>(allocation->getUnderlyingBuffer()), allocation->getGpuAddress());
     }
 
@@ -706,7 +706,7 @@ TEST(OsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphi
     imageFormat.image_channel_order = CL_RGBA;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.clVersionSupport);
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
     imgInfo.rowPitch = imgDesc.image_width * 4;
@@ -746,7 +746,7 @@ TEST(OsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsM
     imageFormat.image_channel_order = CL_RGBA;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.clVersionSupport);
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
     imgInfo.rowPitch = imgDesc.image_width * 4;
@@ -1189,7 +1189,7 @@ TEST_P(OsAgnosticMemoryManagerWithParams, givenFullGpuAddressSpaceWhenAllocateGr
     bool requiresL3Flush = GetParam();
     MockExecutionEnvironment executionEnvironment(*platformDevices);
     executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(platformDevices[0]);
-    if ((!executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm() && !is32bit) || !platformDevices[0]->capabilityTable.hostPtrTrackingEnabled) {
+    if ((!executionEnvironment.rootDeviceEnvironments[0]->isFullRangeSvm() && !is32bit) || !defaultHwInfo->capabilityTable.hostPtrTrackingEnabled) {
         GTEST_SKIP();
     }
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
@@ -1412,7 +1412,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsCompletedWhenche
 
 TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsAddedToTemporaryAllocationList) {
     memoryManager->createAndRegisterOsContext(csr.get(),
-                                              HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                              HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                               1, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                                               false, false, false);
     auto usedAllocationAndNotGpuCompleted = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
@@ -1664,7 +1664,7 @@ TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCo
     executionEnvironment.memoryManager.reset(memoryManager);
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u));
     memoryManager->createAndRegisterOsContext(csr.get(),
-                                              HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                              HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                               1, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                                               false, false, false);
     EXPECT_EQ(1u, memoryManager->getRegisteredEnginesCount());
@@ -1693,7 +1693,7 @@ TEST(ResidencyDataTest, givenDeviceBitfieldWhenCreatingOsContextThenSetValidValu
     DeviceBitfield deviceBitfield = 0b11;
     PreemptionMode preemptionMode = PreemptionMode::MidThread;
     memoryManager->createAndRegisterOsContext(csr.get(),
-                                              HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                              HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                               deviceBitfield, preemptionMode,
                                               false, false, false);
     EXPECT_EQ(2u, memoryManager->registeredEngines[0].osContext->getNumSupportedDevices());
@@ -1708,11 +1708,11 @@ TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLower
     std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u));
     std::unique_ptr<CommandStreamReceiver> csr1(createCommandStream(executionEnvironment, 1u));
     memoryManager->createAndRegisterOsContext(csr.get(),
-                                              HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                              HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                                               1, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                                               false, false, false);
     memoryManager->createAndRegisterOsContext(csr1.get(),
-                                              HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[1],
+                                              HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[1],
                                               1, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                                               false, false, false);
     EXPECT_EQ(2u, memoryManager->getRegisteredEnginesCount());
@@ -1721,7 +1721,7 @@ TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegisteredFromHigherToLower
 }
 
 TEST(ResidencyDataTest, givenGpgpuEnginesWhenAskedForMaxOsContextCountThenValueIsGreaterOrEqual) {
-    auto &engines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo);
+    auto &engines = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo);
     EXPECT_TRUE(MemoryManager::maxOsContextCount >= engines.size());
 }
 
@@ -1733,10 +1733,10 @@ TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenIt
     MockResidencyData residency;
 
     MockOsContext osContext(0u, 1,
-                            HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                            HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                             PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false, false, false);
     MockOsContext osContext2(1u, 1,
-                             HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[1],
+                             HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[1],
                              PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), false, false, false);
 
     auto lastFenceValue = 45llu;
@@ -1857,7 +1857,7 @@ TEST(MemoryManagerTest, givenAllowedTilingWhenIsCopyRequiredIsCalledThenTrueIsRe
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.clVersionSupport);
 
     imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
@@ -1883,7 +1883,7 @@ TEST(MemoryManagerTest, givenDifferentRowPitchWhenIsCopyRequiredIsCalledThenTrue
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.clVersionSupport);
 
     imgInfo.imgDesc = Image::convertDescriptor(imageDesc);
     imgInfo.surfaceFormat = &surfaceFormat->surfaceFormat;
@@ -1904,7 +1904,7 @@ TEST(MemoryManagerTest, givenDifferentSlicePitchAndTilingNotAllowedWhenIsCopyReq
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.clVersionSupport);
 
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
@@ -1930,7 +1930,7 @@ TEST(MemoryManagerTest, givenNotCachelinAlignedPointerWhenIsCopyRequiredIsCalled
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.clVersionSupport);
 
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
@@ -1955,7 +1955,7 @@ TEST(MemoryManagerTest, givenCachelineAlignedPointerAndProperDescriptorValuesWhe
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.clVersionSupport);
 
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
@@ -1978,7 +1978,7 @@ TEST(MemoryManagerTest, givenCachelineAlignedPointerAndProperDescriptorValuesWhe
 TEST(MemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValuesWhenIsCopyRequiredIsCalledThenFalseIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceLinearImages.set(true);
-    auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
 
     ImageInfo imgInfo{};
 
@@ -1987,7 +1987,7 @@ TEST(MemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValuesW
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.clVersionSupport);
 
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;

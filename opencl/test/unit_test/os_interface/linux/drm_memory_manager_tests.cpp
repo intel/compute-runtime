@@ -3243,7 +3243,7 @@ TEST_F(DrmMemoryManagerBasic, ifLimitedRangeAllocatorAvailableWhenAskedForAlloca
     auto ptr = memoryManager->getGfxPartition(0)->heapAllocate(HeapIndex::HEAP_STANDARD, size);
     auto address64bit = ptrDiff(ptr, memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD));
 
-    EXPECT_LT(address64bit, platformDevices[0]->capabilityTable.gpuAddressSpace);
+    EXPECT_LT(address64bit, defaultHwInfo->capabilityTable.gpuAddressSpace);
 
     EXPECT_LT(0u, address64bit);
 

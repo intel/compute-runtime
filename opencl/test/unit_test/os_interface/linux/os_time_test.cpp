@@ -183,7 +183,7 @@ TEST_F(DrmTimeTest, detect) {
 }
 
 TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultResolutionIsReturned) {
-    auto defaultResolution = platformDevices[0]->capabilityTable.defaultProfilingTimerResolution;
+    auto defaultResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
 
     auto drm = new DrmMockCustom();
     osTime->updateDrm(drm);
@@ -198,7 +198,7 @@ TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenIoctlFailsThenDefaultRes
 TEST_F(DrmTimeTest, givenGpuTimestampResolutionQueryWhenNoDrmThenDefaultResolutionIsReturned) {
     osTime->updateDrm(nullptr);
 
-    auto defaultResolution = platformDevices[0]->capabilityTable.defaultProfilingTimerResolution;
+    auto defaultResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
 
     auto result = osTime->getDynamicDeviceTimerResolution(*defaultHwInfo);
     EXPECT_DOUBLE_EQ(result, defaultResolution);

@@ -39,7 +39,7 @@ struct EnqueueSvmTest : public DeviceFixture,
     }
 
     void SetUp() override {
-        if (platformDevices[0]->capabilityTable.ftrSvm == false) {
+        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
             GTEST_SKIP();
         }
         DeviceFixture::SetUp();
@@ -48,7 +48,7 @@ struct EnqueueSvmTest : public DeviceFixture,
     }
 
     void TearDown() override {
-        if (platformDevices[0]->capabilityTable.ftrSvm == false) {
+        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
             return;
         }
         context->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
@@ -866,7 +866,7 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenMigratingMemoryThenSuccessIsReturned)
 }
 
 TEST(CreateSvmAllocTests, givenVariousSvmAllocationPropertiesWhenAllocatingSvmThenSvmIsCorrectlyAllocated) {
-    if (!platformDevices[0]->capabilityTable.ftrSvm) {
+    if (!defaultHwInfo->capabilityTable.ftrSvm) {
         return;
     }
 
@@ -894,7 +894,7 @@ TEST(CreateSvmAllocTests, givenVariousSvmAllocationPropertiesWhenAllocatingSvmTh
 struct EnqueueSvmTestLocalMemory : public DeviceFixture,
                                    public ::testing::Test {
     void SetUp() override {
-        if (platformDevices[0]->capabilityTable.ftrSvm == false) {
+        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
             GTEST_SKIP();
         }
         dbgRestore = std::make_unique<DebugManagerStateRestore>();
@@ -909,7 +909,7 @@ struct EnqueueSvmTestLocalMemory : public DeviceFixture,
     }
 
     void TearDown() override {
-        if (platformDevices[0]->capabilityTable.ftrSvm == false) {
+        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
             return;
         }
         context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);

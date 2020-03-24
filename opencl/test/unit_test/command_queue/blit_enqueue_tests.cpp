@@ -52,7 +52,7 @@ struct BlitAuxTranslationTests : public ::testing::Test {
 
     template <typename FamilyType>
     void SetUpT() {
-        auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
+        auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
         if (is32bit || !hwHelper.requiresAuxResolves()) {
             GTEST_SKIP();
         }

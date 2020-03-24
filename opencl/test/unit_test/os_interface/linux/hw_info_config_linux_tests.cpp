@@ -124,7 +124,7 @@ struct HwInfoConfigTestLinuxDummy : HwInfoConfigTestLinux {
 
         drm->StoredDeviceID = 1;
         drm->setGtType(GTTYPE_GT0);
-        testPlatform->eRenderCoreFamily = platformDevices[0]->platform.eRenderCoreFamily;
+        testPlatform->eRenderCoreFamily = defaultHwInfo->platform.eRenderCoreFamily;
     }
 
     void TearDown() override {

@@ -209,7 +209,7 @@ TEST_F(GlSharingTextureTests, givenDifferentHwFormatWhenSurfaceFormatInfoIsSetTh
     cl_int retVal = CL_INVALID_VALUE;
     cl_image_format imageFormat = {};
     GlTexture::setClImageFormat(GL_DEPTH32F_STENCIL8, imageFormat);
-    auto format = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imageFormat, platformDevices[0]->capabilityTable.clVersionSupport);
+    auto format = Image::getSurfaceFormatFromTable(CL_MEM_READ_ONLY, &imageFormat, defaultHwInfo->capabilityTable.clVersionSupport);
     ASSERT_NE(format, nullptr);
     auto newHwFormat = 217u;
 

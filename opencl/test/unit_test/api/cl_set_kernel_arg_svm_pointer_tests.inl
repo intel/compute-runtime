@@ -25,7 +25,7 @@ class KernelArgSvmFixture : public ApiFixture<>, public DeviceFixture {
     void SetUp() override {
         ApiFixture::SetUp();
         DeviceFixture::SetUp();
-        if (platformDevices[0]->capabilityTable.ftrSvm == false) {
+        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
             GTEST_SKIP();
         }
 

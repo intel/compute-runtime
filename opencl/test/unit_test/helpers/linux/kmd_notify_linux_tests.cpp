@@ -20,7 +20,7 @@ class MockKmdNotifyHelper : public KmdNotifyHelper {
 };
 
 TEST(KmdNotifyLinuxTests, givenTaskCountDiffGreaterThanOneWhenBaseTimeoutRequestedThenMultiply) {
-    auto localProperties = (platformDevices[0]->capabilityTable.kmdNotifyProperties);
+    auto localProperties = (defaultHwInfo->capabilityTable.kmdNotifyProperties);
     localProperties.delayKmdNotifyMicroseconds = 10;
     const int64_t multiplier = 10;
 

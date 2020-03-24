@@ -77,7 +77,7 @@ TEST(SchedulerKernelTest, getGws) {
     const size_t hwThreads = 3;
     const size_t simdSize = 8;
 
-    size_t maxGws = platformDevices[0]->gtSystemInfo.EUCount * hwThreads * simdSize;
+    size_t maxGws = defaultHwInfo->gtSystemInfo.EUCount * hwThreads * simdSize;
 
     size_t gws = kernel.getGws();
     EXPECT_GE(maxGws, gws);

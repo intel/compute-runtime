@@ -55,7 +55,7 @@ TEST_F(DeviceTest, givenDeviceWhenEngineIsCreatedThenSetInitialValueForTag) {
 }
 
 TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenRetrunIt) {
-    auto &engines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo);
+    auto &engines = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo);
     for (uint32_t i = 0; i < engines.size(); i++) {
         bool lowPriority = (HwHelper::lowPriorityGpgpuEngineIndex == i);
         auto &deviceEngine = pDevice->getEngine(engines[i], lowPriority);
@@ -69,7 +69,7 @@ TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenRetrunIt) {
 TEST_F(DeviceTest, givenDebugVariableToAlwaysChooseEngineZeroWhenNotExistingEngineSelectedThenIndexZeroEngineIsReturned) {
     DebugManagerStateRestore restore;
     DebugManager.flags.OverrideInvalidEngineWithDefault.set(true);
-    auto &engines = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo);
+    auto &engines = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo);
     auto &deviceEngine = pDevice->getEngine(engines[0], false);
     auto &notExistingEngine = pDevice->getEngine(aub_stream::ENGINE_VCS, false);
     EXPECT_EQ(&notExistingEngine, &deviceEngine);

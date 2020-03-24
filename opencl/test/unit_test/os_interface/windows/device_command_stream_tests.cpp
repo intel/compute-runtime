@@ -870,7 +870,7 @@ HWTEST_F(WddmDefaultTest, givenFtrWddmHwQueuesFlagWhenCreatingCsrThenPickWddmVer
 
 struct WddmCsrCompressionTests : ::testing::Test {
     void setCompressionEnabled(bool enableForBuffer, bool enableForImages) {
-        RuntimeCapabilityTable capabilityTable = platformDevices[0]->capabilityTable;
+        RuntimeCapabilityTable capabilityTable = defaultHwInfo->capabilityTable;
         capabilityTable.ftrRenderCompressedBuffers = enableForBuffer;
         capabilityTable.ftrRenderCompressedImages = enableForImages;
         hwInfo->capabilityTable = capabilityTable;

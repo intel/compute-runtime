@@ -18,7 +18,7 @@ using namespace NEO;
 
 TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {
     //wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, coreFamily, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface
-    WorkSizeInfo wsInfo(256, 0u, 8, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 8, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 1;
     size_t workGroup[3] = {6144, 1, 1};
     size_t workGroupSize[3];
@@ -48,7 +48,7 @@ TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
 }
 
 TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual32WhenComputeCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 1;
     size_t workGroup[3] = {6144, 1, 1};
     size_t workGroupSize[3];
@@ -72,7 +72,7 @@ TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual32WhenComputeCalledThenLoc
 }
 
 TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 8, 0u, platformDevices[0]->platform.eRenderCoreFamily, 56u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 8, 0u, defaultHwInfo->platform.eRenderCoreFamily, 56u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {384, 96, 1};
     size_t workGroupSize[3];
@@ -100,7 +100,7 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
 TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual32WhenComputeCalledThenLocalGroupComputed) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {384, 96, 1};
     size_t workGroupSize[3];
@@ -132,7 +132,7 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual32WhenComputeCalledThenLoc
 }
 
 TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 8, 0u, platformDevices[0]->platform.eRenderCoreFamily, 56u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 8, 0u, defaultHwInfo->platform.eRenderCoreFamily, 56u, 0u, false, false);
     uint32_t workDim = 3;
     size_t workGroup[3] = {384, 384, 384};
     size_t workGroupSize[3];
@@ -168,7 +168,7 @@ TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
 }
 
 TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual32WhenComputeCalledThenLocalGroupComputed) {
-    NEO::WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, false, false);
+    NEO::WorkSizeInfo wsInfo(256, 0u, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 3;
     size_t workGroup[3] = {384, 384, 384};
     size_t workGroupSize[3];
@@ -214,7 +214,7 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSquaredAlgorithmWhenComputeCalledTh
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
 
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {384, 96, 1};
     size_t workGroupSize[3];
@@ -229,7 +229,7 @@ TEST(localWorkSizeTest, given1DimWorkGroupAndSquaredAlgorithmOnWhenComputeCalled
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
 
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 1;
     size_t workGroup[3] = {1024, 1, 1};
     size_t workGroupSize[3];
@@ -244,7 +244,7 @@ TEST(localWorkSizeTest, given2DdispatchWithImagesAndSquaredAlgorithmOnWhenLwsIsC
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
 
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, true, false);
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, true, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {256, 96, 1};
     size_t workGroupSize[3];
@@ -256,7 +256,7 @@ TEST(localWorkSizeTest, given2DdispatchWithImagesAndSquaredAlgorithmOnWhenLwsIsC
 }
 
 TEST(localWorkSizeTest, givenKernelWithTileYImagesAndBarrierWhenWorkgroupSizeIsComputedThenItMimicsTilingPattern) {
-    WorkSizeInfo wsInfo(256, true, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, true, true);
+    WorkSizeInfo wsInfo(256, true, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -277,7 +277,7 @@ TEST(localWorkSizeTest, givenKernelWithTileYImagesAndBarrierWhenWorkgroupSizeIsC
 }
 
 TEST(localWorkSizeTest, givenKernelWithTileYImagesAndNoBarriersWhenWorkgroupSizeIsComputedThenItMimicsTilingPattern) {
-    WorkSizeInfo wsInfo(256, false, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, true, true);
+    WorkSizeInfo wsInfo(256, false, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -298,7 +298,7 @@ TEST(localWorkSizeTest, givenKernelWithTileYImagesAndNoBarriersWhenWorkgroupSize
 }
 
 TEST(localWorkSizeTest, givenSimd16KernelWithTileYImagesAndNoBarriersWhenWorkgroupSizeIsComputedThenItMimicsTilingPattern) {
-    WorkSizeInfo wsInfo(256, false, 16, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, true, true);
+    WorkSizeInfo wsInfo(256, false, 16, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -319,7 +319,7 @@ TEST(localWorkSizeTest, givenSimd16KernelWithTileYImagesAndNoBarriersWhenWorkgro
 }
 
 TEST(localWorkSizeTest, givenKernelWithTwoDimensionalGlobalSizesWhenLwsIsComputedThenItHasMaxWorkgroupSize) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -333,7 +333,7 @@ TEST(localWorkSizeTest, givenKernelWithTwoDimensionalGlobalSizesWhenLwsIsCompute
 }
 
 TEST(localWorkSizeTest, givenKernelWithBarriersAndTiledImagesWithYdimensionHigherThenXDimensionWhenLwsIsComputedThenItMimicsTiling) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, true, true);
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -368,7 +368,7 @@ TEST(localWorkSizeTest, givenKernelWithBarriersAndTiledImagesWithYdimensionHighe
 }
 
 TEST(localWorkSizeTest, givenHighOneDimensionalGwsWhenLwsIsComputedThenMaxWorkgoupSizeIsUsed) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -389,7 +389,7 @@ TEST(localWorkSizeTest, givenHighOneDimensionalGwsWhenLwsIsComputedThenMaxWorkgo
 }
 
 TEST(localWorkSizeTest, givenVeriousGwsSizesWithImagesWhenLwsIsComputedThenProperSizesAreReturned) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, true, true);
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -433,7 +433,7 @@ TEST(localWorkSizeTest, givenVeriousGwsSizesWithImagesWhenLwsIsComputedThenPrope
 }
 
 TEST(localWorkSizeTest, givenHigh1DGwsAndSimdSize16WhenLwsIsComputedThenMaxWorkgroupSizeIsChoosen) {
-    WorkSizeInfo wsInfo(256u, 0u, 16, 0u, platformDevices[0]->platform.eRenderCoreFamily, 56u, 0, false, false);
+    WorkSizeInfo wsInfo(256u, 0u, 16, 0u, defaultHwInfo->platform.eRenderCoreFamily, 56u, 0, false, false);
 
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -446,7 +446,7 @@ TEST(localWorkSizeTest, givenHigh1DGwsAndSimdSize16WhenLwsIsComputedThenMaxWorkg
 }
 
 TEST(localWorkSizeTest, givenHigh1DGwsAndSimdSize8WhenLwsIsComputedThenMaxWorkgroupSizeIsChoosen) {
-    WorkSizeInfo wsInfo(256u, 0u, 8, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0, false, false);
+    WorkSizeInfo wsInfo(256u, 0u, 8, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0, false, false);
 
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -459,7 +459,7 @@ TEST(localWorkSizeTest, givenHigh1DGwsAndSimdSize8WhenLwsIsComputedThenMaxWorkgr
 }
 
 TEST(localWorkSizeTest, givenKernelUtilizingImagesAndSlmWhenLwsIsBeingComputedThenItMimicsGlobalWorkgroupSizes) {
-    WorkSizeInfo wsInfo(256u, 1u, 32, 4096u, platformDevices[0]->platform.eRenderCoreFamily, 56u, 65536u, true, true);
+    WorkSizeInfo wsInfo(256u, 1u, 32, 4096u, defaultHwInfo->platform.eRenderCoreFamily, 56u, 65536u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -480,7 +480,7 @@ TEST(localWorkSizeTest, givenKernelUtilizingImagesAndSlmWhenLwsIsBeingComputedTh
 }
 
 TEST(localWorkSizeTest, GivenUseStrictRatioWhenLwsIsBeingComputedThenWgsIsCalculatedCorrectly) {
-    WorkSizeInfo wsInfo(256u, 0u, 32u, 0u, platformDevices[0]->platform.eRenderCoreFamily, 0u, 0u, true, true);
+    WorkSizeInfo wsInfo(256u, 0u, 32u, 0u, defaultHwInfo->platform.eRenderCoreFamily, 0u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {194, 234, 1};
     size_t workGroupSize[3];
@@ -508,7 +508,7 @@ TEST(localWorkSizeTest, GivenUseStrictRatioWhenLwsIsBeingComputedThenWgsIsCalcul
 }
 
 TEST(localWorkSizeTest, GivenUseBarriersWhenLwsIsBeingComputedThenWgsIsCalculatedCorrectly) {
-    WorkSizeInfo wsInfo(256u, 1u, 32u, 0u, platformDevices[0]->platform.eRenderCoreFamily, 56u, 0u, true, true);
+    WorkSizeInfo wsInfo(256u, 1u, 32u, 0u, defaultHwInfo->platform.eRenderCoreFamily, 56u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {194, 234, 1};
     size_t workGroupSize[3];
@@ -534,7 +534,7 @@ TEST(localWorkSizeTest, GivenUseBarriersWhenLwsIsBeingComputedThenWgsIsCalculate
 }
 
 TEST(localWorkSizeTest, given2DimWorkWhenComputeSquaredCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 16, 0u, platformDevices[0]->platform.eRenderCoreFamily, 6u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 16, 0u, defaultHwInfo->platform.eRenderCoreFamily, 6u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {2048, 272, 1};
     size_t workGroupSize[3];
@@ -583,7 +583,7 @@ TEST(localWorkSizeTest, given2DimWorkWhenComputeSquaredCalledThenLocalGroupCompu
 TEST(localWorkSizeTest, givenDeviceSupportingLws1024AndKernelCompiledInSimd8WhenGwsIs1024ThenLwsIsComputedAsMaxOptimalMultipliedBySimd) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
-    WorkSizeInfo wsInfo(1024, 0u, 8, 0u, platformDevices[0]->platform.eRenderCoreFamily, 56u, 0u, false, false);
+    WorkSizeInfo wsInfo(1024, 0u, 8, 0u, defaultHwInfo->platform.eRenderCoreFamily, 56u, 0u, false, false);
 
     uint32_t workDim = 2;
     size_t workGroup[3] = {32, 32, 1};
@@ -598,7 +598,7 @@ TEST(localWorkSizeTest, givenDeviceSupportingLws1024AndKernelCompiledInSimd8When
 TEST(localWorkSizeTest, givenDeviceWith36ThreadsPerSubsliceWhenSimd16KernelIsBeingSubmittedThenWorkgroupContainsOf8HwThreads) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
-    WorkSizeInfo wsInfo(256, 0u, 16, 0u, platformDevices[0]->platform.eRenderCoreFamily, 36u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 16, 0u, defaultHwInfo->platform.eRenderCoreFamily, 36u, 0u, false, false);
 
     uint32_t workDim = 2;
     size_t workGroup[3] = {1024, 1024, 1};
@@ -613,7 +613,7 @@ TEST(localWorkSizeTest, givenDeviceWith36ThreadsPerSubsliceWhenSimd16KernelIsBei
 TEST(localWorkSizeTest, givenDeviceWith56ThreadsPerSubsliceWhenSimd16KernelIsBeingSubmittedThenWorkgroupContainsOf16HwThreads) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
-    WorkSizeInfo wsInfo(256, 0u, 16, 0u, platformDevices[0]->platform.eRenderCoreFamily, 56u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 16, 0u, defaultHwInfo->platform.eRenderCoreFamily, 56u, 0u, false, false);
 
     uint32_t workDim = 2;
     size_t workGroup[3] = {1024, 1024, 1};
@@ -631,8 +631,8 @@ TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenItHasCorre
     DispatchInfo dispatchInfo;
     dispatchInfo.setKernel(kernel.mockKernel);
 
-    auto threadsPerEu = platformDevices[0]->gtSystemInfo.ThreadCount / platformDevices[0]->gtSystemInfo.EUCount;
-    auto euPerSubSlice = platformDevices[0]->gtSystemInfo.ThreadCount / platformDevices[0]->gtSystemInfo.MaxEuPerSubSlice;
+    auto threadsPerEu = defaultHwInfo->gtSystemInfo.ThreadCount / defaultHwInfo->gtSystemInfo.EUCount;
+    auto euPerSubSlice = defaultHwInfo->gtSystemInfo.ThreadCount / defaultHwInfo->gtSystemInfo.MaxEuPerSubSlice;
 
     auto &deviceInfo = device.sharedDeviceInfo;
     deviceInfo.maxNumEUsPerSubSlice = euPerSubSlice;
@@ -660,7 +660,7 @@ TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenHasBarrier
 }
 
 TEST(localWorkSizeTest, givenMaxWorkgroupSizeEqualToSimdSizeWhenLwsIsCalculatedThenItIsDownsizedToMaxWorkgroupSize) {
-    WorkSizeInfo wsInfo(32, 0u, 32, 0u, platformDevices[0]->platform.eRenderCoreFamily, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(32, 0u, 32, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {32, 32, 1};
     size_t workGroupSize[3];

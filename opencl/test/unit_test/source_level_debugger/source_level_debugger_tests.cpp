@@ -46,7 +46,7 @@ class DebuggerLibraryRestorer {
 TEST(SourceLevelDebugger, givenPlatformWhenItIsCreatedThenSourceLevelDebuggerIsCreatedInExecutionEnvironment) {
     DebuggerLibraryRestorer restorer;
 
-    if (platformDevices[0]->capabilityTable.debuggerSupported) {
+    if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibrary::setLibraryAvailable(true);
         DebuggerLibrary::setDebuggerActive(true);
         auto executionEnvironment = new ExecutionEnvironment();
@@ -454,7 +454,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenInitializeIsCal
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceIsConstructedThenDebuggerIsInitialized) {
     DebuggerLibraryRestorer restorer;
 
-    if (platformDevices[0]->capabilityTable.debuggerSupported) {
+    if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibraryInterceptor interceptor;
         DebuggerLibrary::setLibraryAvailable(true);
         DebuggerLibrary::setDebuggerActive(true);
@@ -468,7 +468,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceIsConstructe
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreatedThenDebuggerIsNotified) {
     DebuggerLibraryRestorer restorer;
 
-    if (platformDevices[0]->capabilityTable.debuggerSupported) {
+    if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibraryInterceptor interceptor;
         DebuggerLibrary::setLibraryAvailable(true);
         DebuggerLibrary::setDebuggerActive(true);
@@ -487,7 +487,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreatedWithOsCsrThenDebuggerIsNotifiedWithCorrectDeviceHandle) {
     DebuggerLibraryRestorer restorer;
 
-    if (platformDevices[0]->capabilityTable.debuggerSupported) {
+    if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibraryInterceptor interceptor;
         DebuggerLibrary::setLibraryAvailable(true);
         DebuggerLibrary::setDebuggerActive(true);
@@ -530,7 +530,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenDeviceIsCreated
 TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenCreatingNewSourceLevelDebugger) {
     DebuggerLibraryRestorer restorer;
 
-    if (platformDevices[0]->capabilityTable.debuggerSupported) {
+    if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibraryInterceptor interceptor;
         DebuggerLibrary::setLibraryAvailable(true);
         DebuggerLibrary::setDebuggerActive(true);
@@ -555,7 +555,7 @@ TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenCreatingNewS
 TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenTheyAreCreatedTheyUseDedicatedSourceLevelDebugger) {
     DebuggerLibraryRestorer restorer;
 
-    if (platformDevices[0]->capabilityTable.debuggerSupported) {
+    if (defaultHwInfo->capabilityTable.debuggerSupported) {
         DebuggerLibrary::setLibraryAvailable(true);
         DebuggerLibrary::setDebuggerActive(true);
 

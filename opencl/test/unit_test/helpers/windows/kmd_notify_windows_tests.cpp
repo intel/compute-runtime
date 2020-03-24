@@ -29,7 +29,7 @@ class MockKmdNotifyHelper : public KmdNotifyHelper {
 };
 
 TEST(KmdNotifyWindowsTests, whenGetSystemPowerStatusReturnSuccessThenUpdateAcLineStatus) {
-    auto properties = &(platformDevices[0]->capabilityTable.kmdNotifyProperties);
+    auto properties = &(defaultHwInfo->capabilityTable.kmdNotifyProperties);
     MockKmdNotifyHelper helper(properties);
     EXPECT_TRUE(helper.acLineConnected);
 
@@ -48,7 +48,7 @@ TEST(KmdNotifyWindowsTests, whenGetSystemPowerStatusReturnSuccessThenUpdateAcLin
 }
 
 TEST(KmdNotifyWindowsTests, whenGetSystemPowerStatusReturnErrorThenDontUpdateAcLineStatus) {
-    auto properties = &(platformDevices[0]->capabilityTable.kmdNotifyProperties);
+    auto properties = &(defaultHwInfo->capabilityTable.kmdNotifyProperties);
     MockKmdNotifyHelper helper(properties);
     EXPECT_TRUE(helper.acLineConnected);
 
@@ -62,7 +62,7 @@ TEST(KmdNotifyWindowsTests, whenGetSystemPowerStatusReturnErrorThenDontUpdateAcL
 }
 
 TEST(KmdNotifyWindowsTests, givenTaskCountDiffGreaterThanOneWhenBaseTimeoutRequestedThenDontMultiply) {
-    auto localProperties = (platformDevices[0]->capabilityTable.kmdNotifyProperties);
+    auto localProperties = (defaultHwInfo->capabilityTable.kmdNotifyProperties);
     localProperties.delayKmdNotifyMicroseconds = 10;
     const int64_t multiplier = 10;
 

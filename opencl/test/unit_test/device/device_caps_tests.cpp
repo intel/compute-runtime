@@ -47,8 +47,8 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
     const auto &sharedCaps = device->getSharedDeviceInfo();
-    const auto &sysInfo = platformDevices[0]->gtSystemInfo;
-    auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
+    const auto &sysInfo = defaultHwInfo->gtSystemInfo;
+    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
 
     EXPECT_NE(nullptr, caps.builtInKernels);
 
@@ -210,7 +210,7 @@ TEST_F(DeviceGetCapsTest, givenForcePreemptionModeDebugVariableWhenCreateDeviceT
     DebugManagerStateRestore dbgRestorer;
     {
         PreemptionMode forceMode = PreemptionMode::MidThread;
-        if (platformDevices[0]->capabilityTable.defaultPreemptionMode == forceMode) {
+        if (defaultHwInfo->capabilityTable.defaultPreemptionMode == forceMode) {
             // force non-default mode
             forceMode = PreemptionMode::ThreadGroup;
         }
@@ -361,7 +361,7 @@ TEST_F(DeviceGetCapsTest, givenGlobalMemSizeWhenCalculatingMaxAllocSizeThenAdjus
     const auto &caps = device->getDeviceInfo();
 
     HardwareCapabilities hwCaps = {0};
-    auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     hwHelper.setupHardwareCapabilities(&hwCaps, *defaultHwInfo);
 
     uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
@@ -835,7 +835,7 @@ TEST_F(DeviceGetCapsTest, givenDeviceWhenGettingHostUnifiedMemoryCapThenItDepend
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
-    auto &hwHelper = HwHelper::get(platformDevices[0]->platform.eRenderCoreFamily);
+    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
     auto localMemoryEnabled = hwHelper.isLocalMemoryEnabled(*defaultHwInfo);
 
     EXPECT_EQ((localMemoryEnabled == false), caps.hostUnifiedMemory);
@@ -1014,7 +1014,7 @@ TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionTh
     const auto &caps = device->getDeviceInfo();
 
     std::string tempName = "Intel(R) ";
-    tempName += familyName[platformDevices[0]->platform.eRenderCoreFamily];
+    tempName += familyName[defaultHwInfo->platform.eRenderCoreFamily];
     tempName += " HD Graphics NEO";
 
 #define QTR(a) #a

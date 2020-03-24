@@ -39,7 +39,7 @@ struct AUBMapImage
     using AUBCommandStreamFixture::SetUp;
 
     void SetUp() override {
-        if (!(platformDevices[0]->capabilityTable.supportsImages)) {
+        if (!(defaultHwInfo->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
         CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
