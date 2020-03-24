@@ -11,6 +11,7 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/context/driver_diagnostics_tests.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 
 using namespace NEO;
 
@@ -662,9 +663,7 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCalling
 }
 
 TEST_F(PerformanceHintEnqueueTest, GivenSVMPointerWhenEnqueueSVMMapIsCallingThenContextProvidesProperHint) {
-    if (!pPlatform->getClDevice(0)->getHardwareInfo().capabilityTable.ftrSvm) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(pPlatform->getClDevice(0));
     void *svmPtr = context->getSVMAllocsManager()->createSVMAlloc(0, 256, {});
 
     pCmdQ->enqueueSVMMap(CL_FALSE, 0, svmPtr, 256, 0, nullptr, nullptr, false);

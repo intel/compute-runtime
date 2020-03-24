@@ -9,6 +9,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
+#include "shared/test/unit_test/test_macros/test_checks.h"
 
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 
@@ -203,9 +204,7 @@ TEST_F(PageFaultManagerTest, givenTrackedPageFaultAddressWhenVerifyingThenProper
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSetAubWritableIsCalledThenAllocIsAubWritable) {
     MockExecutionEnvironment executionEnvironment;
-    if (!executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo());
 
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);

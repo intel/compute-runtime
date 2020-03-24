@@ -9,6 +9,7 @@
 
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 #include "test.h"
 
 #include "cl_api_tests.h"
@@ -25,9 +26,7 @@ class KernelArgSvmFixture : public ApiFixture<>, public DeviceFixture {
     void SetUp() override {
         ApiFixture::SetUp();
         DeviceFixture::SetUp();
-        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
-            GTEST_SKIP();
-        }
+        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
 
         // define kernel info
         pKernelInfo = std::make_unique<KernelInfo>();

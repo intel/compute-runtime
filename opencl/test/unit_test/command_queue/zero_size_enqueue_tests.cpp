@@ -14,6 +14,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 #include "test.h"
 
 using namespace NEO;
@@ -778,9 +779,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingIm
 }
 
 HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSvmMemThenCommandMarkerShouldBeEnqueued) {
-    if (pDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(pDevice);
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     void *pSrcSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
@@ -794,9 +793,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSv
 }
 
 HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSvmMemThenEventCommandTypeShouldBeUnchanged) {
-    if (pDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(pDevice);
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;
@@ -820,9 +817,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSv
 }
 
 HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingSvmMemThenCommandMarkerShouldBeEnqueued) {
-    if (pDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(pDevice);
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     void *pSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
@@ -835,9 +830,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingSv
 }
 
 HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingSvmMemThenEventCommandTypeShouldBeUnchanged) {
-    if (pDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(pDevice);
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;

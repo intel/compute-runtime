@@ -21,6 +21,7 @@
 #include "opencl/test/unit_test/mocks/mock_pipe.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_sampler.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 #include "test.h"
 
 #include "CL/cl.h"
@@ -510,9 +511,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgImmediate) {
 }
 
 TEST_F(CloneKernelTest, cloneKernelWithExecInfo) {
-    if (!pDevice->getHardwareInfo().capabilityTable.ftrSvm) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(pDevice);
     void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
     ASSERT_NE(nullptr, ptrSVM);
 

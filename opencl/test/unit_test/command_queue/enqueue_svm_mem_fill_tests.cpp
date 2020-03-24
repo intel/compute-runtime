@@ -13,6 +13,7 @@
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 #include "test.h"
 
 using namespace NEO;
@@ -28,10 +29,7 @@ struct EnqueueSvmMemFillTest : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::SetUp();
         CommandQueueFixture::SetUp(pClDevice, 0);
-        const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
-        if (!hwInfo.capabilityTable.ftrSvm) {
-            GTEST_SKIP();
-        }
+        REQUIRE_SVM_OR_SKIP(pDevice);
         patternSize = (size_t)GetParam();
         ASSERT_TRUE((0 < patternSize) && (patternSize <= 128));
         SVMAllocsManager::SvmAllocationProperties svmProperties;

@@ -17,9 +17,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
   protected:
     void SetUp() override {
         ApiFixture::SetUp();
-        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
-            GTEST_SKIP();
-        }
+        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
 
         pKernelInfo = std::make_unique<KernelInfo>();
 

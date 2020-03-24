@@ -39,6 +39,7 @@
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
 #include "opencl/test/unit_test/program/program_tests.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 #include "test.h"
 
 #include <memory>
@@ -1962,9 +1963,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenSetKernelExecInfoWithUnifiedMemoryI
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemoryIsCalledThenAllocationIsStoredWithinKernel) {
-    if (pClDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
 
     auto svmAllocationsManager = mockKernel.mockContext->getSVMAllocsManager();
@@ -1988,9 +1987,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemoryDevicePropertyIsCalledThenKernelControlIsChanged) {
-    if (pClDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
     cl_bool enableIndirectDeviceAccess = CL_TRUE;
     auto status = clSetKernelExecInfo(mockKernel.mockKernel, CL_KERNEL_EXEC_INFO_INDIRECT_DEVICE_ACCESS_INTEL, sizeof(cl_bool), &enableIndirectDeviceAccess);
@@ -2003,9 +2000,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemoryHostPropertyIsCalledThenKernelControlIsChanged) {
-    if (pClDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
     cl_bool enableIndirectHostAccess = CL_TRUE;
     auto status = clSetKernelExecInfo(mockKernel.mockKernel, CL_KERNEL_EXEC_INFO_INDIRECT_HOST_ACCESS_INTEL, sizeof(cl_bool), &enableIndirectHostAccess);
@@ -2018,9 +2013,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
 }
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemorySharedPropertyIsCalledThenKernelControlIsChanged) {
-    if (pClDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(pClDevice);
     MockKernelWithInternals mockKernel(*this->pClDevice);
     cl_bool enableIndirectSharedAccess = CL_TRUE;
     auto status = clSetKernelExecInfo(mockKernel.mockKernel, CL_KERNEL_EXEC_INFO_INDIRECT_SHARED_ACCESS_INTEL, sizeof(cl_bool), &enableIndirectSharedAccess);

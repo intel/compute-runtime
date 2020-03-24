@@ -12,6 +12,7 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 
 using namespace NEO;
 
@@ -588,9 +589,7 @@ TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSyst
     DebugManager.flags.EnableSharedSystemUsmSupport.set(1u);
 
     auto mockContext = std::make_unique<MockContext>();
-    if (mockContext->getDevice(0u)->getHardwareInfo().capabilityTable.ftrSvm == false) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(mockContext->getDevice(0u));
 
     MockKernelWithInternals mockKernel(*mockContext->getDevice(0u), mockContext.get(), true);
 
@@ -608,9 +607,7 @@ TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSyst
 
 TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithValidUnifiedMemoryAllocationThenProperFieldsAreSet) {
     auto mockContext = std::make_unique<MockContext>();
-    if (mockContext->getDevice(0u)->getHardwareInfo().capabilityTable.ftrSvm == false) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(mockContext->getDevice(0u));
 
     cl_int retVal = CL_SUCCESS;
     auto unfiedMemoryDeviceAllocation = clDeviceMemAllocINTEL(mockContext.get(), mockContext->getDevice(0u), nullptr, 4, 0, &retVal);

@@ -22,6 +22,7 @@
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 #include "test.h"
 
 using namespace NEO;
@@ -494,9 +495,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSu
 }
 
 HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadysetKernelThreadArbitrationPolicyThenRequiredThreadArbitrationPolicyIsSetProperly) {
-    if (pClDevice->getHardwareInfo().capabilityTable.ftrSvm == false) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(pClDevice);
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
 

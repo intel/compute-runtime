@@ -26,6 +26,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_svm_manager.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 #include "test.h"
 
 using namespace NEO;
@@ -39,9 +40,7 @@ struct EnqueueSvmTest : public DeviceFixture,
     }
 
     void SetUp() override {
-        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
-            GTEST_SKIP();
-        }
+        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         DeviceFixture::SetUp();
         CommandQueueFixture::SetUp(pClDevice, 0);
         ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
@@ -894,9 +893,7 @@ TEST(CreateSvmAllocTests, givenVariousSvmAllocationPropertiesWhenAllocatingSvmTh
 struct EnqueueSvmTestLocalMemory : public DeviceFixture,
                                    public ::testing::Test {
     void SetUp() override {
-        if (defaultHwInfo->capabilityTable.ftrSvm == false) {
-            GTEST_SKIP();
-        }
+        REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         dbgRestore = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnableLocalMemory.set(1);
 

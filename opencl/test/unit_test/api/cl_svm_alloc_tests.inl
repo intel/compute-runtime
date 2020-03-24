@@ -10,6 +10,7 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 
 #include "cl_api_tests.h"
 
@@ -24,9 +25,7 @@ class clSVMAllocTemplateTests : public ApiFixture<>,
   public:
     void SetUp() override {
         ApiFixture::SetUp();
-        if (!pPlatform->getClDevice(testedRootDeviceIndex)->getHardwareInfo().capabilityTable.ftrSvm) {
-            GTEST_SKIP();
-        }
+        REQUIRE_SVM_OR_SKIP(pPlatform->getClDevice(testedRootDeviceIndex));
     }
 
     void TearDown() override {

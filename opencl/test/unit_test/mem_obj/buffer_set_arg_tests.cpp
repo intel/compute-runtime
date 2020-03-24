@@ -18,6 +18,7 @@
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -289,9 +290,7 @@ TEST_F(BufferSetArgTest, clSetKernelArgBuffer) {
 }
 
 TEST_F(BufferSetArgTest, clSetKernelArgSVMPointer) {
-    if (!pDevice->getHardwareInfo().capabilityTable.ftrSvm) {
-        GTEST_SKIP();
-    }
+    REQUIRE_SVM_OR_SKIP(pDevice);
     void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
     EXPECT_NE(nullptr, ptrSVM);
 
