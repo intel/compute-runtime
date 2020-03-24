@@ -50,7 +50,7 @@ bool CommandContainer::initialize(Device *device) {
     heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumAvailableDevices() > 1u));
 
     size_t alignedSize = alignUp<size_t>(totalCmdBufferSize, MemoryConstants::pageSize64k);
-    AllocationProperties properties{0u,
+    AllocationProperties properties{device->getRootDeviceIndex(),
                                     true /* allocateMemory*/,
                                     alignedSize,
                                     GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
@@ -71,7 +71,10 @@ bool CommandContainer::initialize(Device *device) {
     constexpr size_t heapSize = 65536u;
 
     for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
-        allocationIndirectHeaps[i] = heapHelper->getHeapAllocation(i, heapSize, alignedSize, 0u);
+        allocationIndirectHeaps[i] = heapHelper->getHeapAllocation(i,
+                                                                   heapSize,
+                                                                   alignedSize,
+                                                                   device->getRootDeviceIndex());
         UNRECOVERABLE_IF(!allocationIndirectHeaps[i]);
         residencyContainer.push_back(allocationIndirectHeaps[i]);
 
@@ -79,7 +82,7 @@ bool CommandContainer::initialize(Device *device) {
         indirectHeaps[i] = std::make_unique<IndirectHeap>(allocationIndirectHeaps[i], requireInternalHeap);
     }
 
-    instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(0);
+    instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex());
 
     iddBlock = nullptr;
     nextIddInBlock = this->getNumIddPerBlock();

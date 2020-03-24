@@ -387,6 +387,73 @@ TEST_P(CommandContainerHeaps, givenCommandContainerWhenGetingMoreThanAvailableSi
     EXPECT_GT(usedSpaceAfter + availableSizeAfter, usedSpaceBefore + availableSizeBefore);
 }
 
+TEST_P(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenHeapsAreCreatedWithCorrectRootDeviceIndex) {
+    HeapType heap = GetParam();
+
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    const size_t numDevices = 2;
+    executionEnvironment->prepareRootDeviceEnvironments(numDevices);
+    for (auto i = 0u; i < numDevices; i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+    }
+    auto device0 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+    auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+
+    CommandContainer cmdContainer0;
+    cmdContainer0.initialize(device0.get());
+    uint32_t heapRootDeviceIndex0 = cmdContainer0.getIndirectHeap(heap)->getGraphicsAllocation()->getRootDeviceIndex();
+    EXPECT_EQ(device0->getRootDeviceIndex(), heapRootDeviceIndex0);
+
+    CommandContainer cmdContainer1;
+    cmdContainer1.initialize(device1.get());
+    uint32_t heapRootDeviceIndex1 = cmdContainer1.getIndirectHeap(heap)->getGraphicsAllocation()->getRootDeviceIndex();
+    EXPECT_EQ(device1->getRootDeviceIndex(), heapRootDeviceIndex1);
+}
+
+TEST_F(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenCmdBufferAllocationIsCreatedWithCorrectRootDeviceIndex) {
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    const size_t numDevices = 2;
+    executionEnvironment->prepareRootDeviceEnvironments(numDevices);
+    for (auto i = 0u; i < numDevices; i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+    }
+    auto device0 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+    auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+
+    CommandContainer cmdContainer0;
+    cmdContainer0.initialize(device0.get());
+    EXPECT_EQ(1u, cmdContainer0.getCmdBufferAllocations().size());
+    uint32_t cmdBufferAllocationIndex0 = cmdContainer0.getCmdBufferAllocations().front()->getRootDeviceIndex();
+    EXPECT_EQ(device0->getRootDeviceIndex(), cmdBufferAllocationIndex0);
+
+    CommandContainer cmdContainer1;
+    cmdContainer1.initialize(device1.get());
+    EXPECT_EQ(1u, cmdContainer1.getCmdBufferAllocations().size());
+    uint32_t cmdBufferAllocationIndex1 = cmdContainer1.getCmdBufferAllocations().front()->getRootDeviceIndex();
+    EXPECT_EQ(device1->getRootDeviceIndex(), cmdBufferAllocationIndex1);
+}
+
+TEST_F(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenInternalHeapIsCreatedWithCorrectRootDeviceIndex) {
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    const size_t numDevices = 2;
+    executionEnvironment->prepareRootDeviceEnvironments(numDevices);
+    for (auto i = 0u; i < numDevices; i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+    }
+    auto device0 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+    auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+
+    CommandContainer cmdContainer0;
+    cmdContainer0.initialize(device0.get());
+    uint64_t baseAddressHeapDevice0 = device0.get()->getMemoryManager()->getInternalHeapBaseAddress(device0->getRootDeviceIndex());
+    EXPECT_EQ(cmdContainer0.getInstructionHeapBaseAddress(), baseAddressHeapDevice0);
+
+    CommandContainer cmdContainer1;
+    cmdContainer1.initialize(device1.get());
+    uint64_t baseAddressHeapDevice1 = device1.get()->getMemoryManager()->getInternalHeapBaseAddress(device1->getRootDeviceIndex());
+    EXPECT_EQ(cmdContainer1.getInstructionHeapBaseAddress(), baseAddressHeapDevice1);
+}
+
 TEST_F(CommandContainerTest, givenCommandContainerWhenDestructionThenNonHeapAllocationAreNotDestroyed) {
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer());
     MockGraphicsAllocation alloc;
