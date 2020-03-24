@@ -33,7 +33,7 @@ struct MockAubCenterFixture {
     }
     static void setMockAubCenter(RootDeviceEnvironment &rootDeviceEnvironment, CommandStreamReceiverType commandStreamReceiverType) {
         if (testMode != TestMode::AubTests && testMode != TestMode::AubTestsWithTbx) {
-            auto mockAubCenter = std::make_unique<MockAubCenter>(platformDevices[0], false, "", commandStreamReceiverType);
+            auto mockAubCenter = std::make_unique<MockAubCenter>(defaultHwInfo.get(), false, "", commandStreamReceiverType);
             mockAubCenter->aubManager = std::make_unique<MockAubManager>();
             rootDeviceEnvironment.aubCenter.reset(mockAubCenter.release());
         }

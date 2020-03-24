@@ -59,10 +59,10 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
         hostPtrManager.reset(new MockHostPtrManager);
     };
 
-    MockMemoryManager() : MockMemoryManager(*(new MockExecutionEnvironment(*platformDevices))) {
+    MockMemoryManager() : MockMemoryManager(*(new MockExecutionEnvironment(defaultHwInfo.get()))) {
         mockExecutionEnvironment.reset(static_cast<MockExecutionEnvironment *>(&executionEnvironment));
     };
-    MockMemoryManager(bool enable64pages, bool enableLocalMemory) : MemoryManagerCreate(enable64pages, enableLocalMemory, *(new MockExecutionEnvironment(*platformDevices))) {
+    MockMemoryManager(bool enable64pages, bool enableLocalMemory) : MemoryManagerCreate(enable64pages, enableLocalMemory, *(new MockExecutionEnvironment(defaultHwInfo.get()))) {
         mockExecutionEnvironment.reset(static_cast<MockExecutionEnvironment *>(&executionEnvironment));
     }
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;

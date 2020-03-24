@@ -133,7 +133,7 @@ struct ImageClearColorFixture : ::testing::Test {
         return surfaceState;
     }
 
-    NEO::HardwareInfo hardwareInfo = **NEO::platformDevices;
+    NEO::HardwareInfo hardwareInfo = *NEO::defaultHwInfo;
     MockContext context;
     std::unique_ptr<Image> image;
 };

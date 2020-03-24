@@ -24,7 +24,7 @@ TEST(GmmHelperTest, whenCreateGmmHelperWithoutOsInterfaceThenPassedAdapterBDFIsZ
 
     ADAPTER_BDF expectedAdapterBDF{};
 
-    gmmHelper.reset(new GmmHelper(nullptr, platformDevices[0]));
+    gmmHelper.reset(new GmmHelper(nullptr, defaultHwInfo.get()));
     EXPECT_EQ(0, memcmp(&expectedAdapterBDF, &passedInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
 }
 
