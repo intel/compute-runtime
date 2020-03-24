@@ -274,7 +274,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     auto remainderSimdLanes = itemsInGroup & (simdSize - 1u);
     threadExecutionMask = static_cast<uint32_t>(maxNBitValue(remainderSimdLanes));
     if (!threadExecutionMask) {
-        threadExecutionMask = static_cast<uint32_t>(maxNBitValue(simdSize));
+        threadExecutionMask = static_cast<uint32_t>(maxNBitValue((simdSize == 1) ? 32 : simdSize));
     }
 
     return ZE_RESULT_SUCCESS;
