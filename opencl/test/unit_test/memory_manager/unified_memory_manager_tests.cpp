@@ -26,7 +26,7 @@ using namespace NEO;
 
 template <bool enableLocalMemory>
 struct SVMMemoryAllocatorFixture {
-    SVMMemoryAllocatorFixture() : executionEnvironment(*platformDevices) {}
+    SVMMemoryAllocatorFixture() : executionEnvironment(defaultHwInfo.get()) {}
 
     virtual void SetUp() {
         bool svmSupported = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm;
