@@ -2264,7 +2264,7 @@ TEST(isValidSpirvBinary, whenBinaryDoesNotContainLllvMagicThenBinaryIsNotValidLL
     EXPECT_FALSE(NEO::isSpirVBitcode(notSpirvBinary));
 }
 
-TEST_F(ProgramTests, linkingTwoValidSpirvProgramsReturnsValidProgram) {
+TEST_F(ProgramTests, WhenLinkingTwoValidSpirvProgramsThenValidProgramIsReturned) {
     const uint32_t spirv[16] = {0x03022307};
     cl_int errCode = CL_SUCCESS;
 
@@ -2897,7 +2897,7 @@ TEST_F(ProgramBinTest, GivenDebugDataAvailableWhenLinkingProgramThenDebugDataIsS
 
 using ProgramMultiRootDeviceTests = MultiRootDeviceFixture;
 
-TEST_F(ProgramMultiRootDeviceTests, privateSurfaceHasCorrectRootDeviceIndex) {
+TEST_F(ProgramMultiRootDeviceTests, WhenPrivateSurfaceIsCreatedThenItHasCorrectRootDeviceIndex) {
     auto program = std::make_unique<MockProgram>(*device->getExecutionEnvironment(), context.get(), false, &device->getDevice());
 
     auto privateSurfaceBlock = std::make_unique<SPatchAllocateStatelessPrivateSurface>();
@@ -2931,7 +2931,7 @@ class MockCompilerInterfaceWithGtpinParam : public CompilerInterface {
     void *gtpinInfoPassed;
 };
 
-TEST_F(ProgramBinTest, GivenSourceKernelWhenLinkingProgramThengtpinInitInfoIsPassed) {
+TEST_F(ProgramBinTest, GivenSourceKernelWhenLinkingProgramThenGtpinInitInfoIsPassed) {
     cl_device_id device = pClDevice;
     void *pIgcInitPtr = reinterpret_cast<void *>(0x1234);
     gtpinSetIgcInit(pIgcInitPtr);
