@@ -111,7 +111,7 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeForTgllpProductFa
     DebugManager.flags.SetCommandStreamReceiver.set(1);
     DebugManager.flags.ProductFamilyOverride.set("tgllp");
 
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     ASSERT_TRUE(success);
@@ -129,7 +129,7 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWhenPrepareDevice
     DebugManager.flags.SetCommandStreamReceiver.set(1);
     DebugManager.flags.ProductFamilyOverride.set("tgllp");
 
-    MockExecutionEnvironment executionEnvironment(*platformDevices, true, requiredDeviceCount);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), true, requiredDeviceCount);
 
     bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
     ASSERT_TRUE(success);

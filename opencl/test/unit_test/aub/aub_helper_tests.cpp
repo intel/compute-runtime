@@ -8,5 +8,5 @@
 #include "opencl/test/unit_test/aub/aub_helper_tests.inl"
 
 TEST(AubHelper, GivenHwInfoWhenGetMemBankSizeIsCalledThenItReturnsCorrectValue) {
-    EXPECT_EQ(2 * MemoryConstants::gigaByte, AubHelper::getMemBankSize(platformDevices[0]));
+    EXPECT_EQ(2 * MemoryConstants::gigaByte, AubHelper::getMemBankSize(defaultHwInfo.get()));
 }

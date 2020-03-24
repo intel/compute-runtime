@@ -49,7 +49,7 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
 };
 
 TEST(BufferTests, doPinIsSet) {
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     std::unique_ptr<TestedMemoryManager> mm(new MemoryManagerCreate<TestedMemoryManager>(false, false, executionEnvironment));
     {
         MockContext context;
@@ -72,7 +72,7 @@ TEST(BufferTests, doPinIsSet) {
     }
 }
 TEST(BufferTests, doPinIsSetForHostPtr) {
-    MockExecutionEnvironment executionEnvironment(*platformDevices);
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(executionEnvironment));
     {
         MockContext context;

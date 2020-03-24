@@ -160,7 +160,7 @@ TEST_F(GmmTests, GivenInvalidImageTypeWhenQueryingImgParamsThenExceptionIsThrown
 }
 
 TEST_F(GmmTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
-    const HardwareInfo *hwinfo = *platformDevices;
+    const HardwareInfo *hwinfo = defaultHwInfo.get();
     cl_image_desc imgDesc{};
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
     imgDesc.image_width = 17;
@@ -799,7 +799,7 @@ TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithInitializedOsIn
     VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
     VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
 
-    auto hwInfo = platformDevices[0];
+    auto hwInfo = defaultHwInfo.get();
     SKU_FEATURE_TABLE expectedFtrTable = {};
     WA_TABLE expectedWaTable = {};
     SkuInfoTransfer::transferFtrTableForGmm(&expectedFtrTable, &hwInfo->featureTable);
@@ -820,7 +820,7 @@ TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithoutOsInterfaceT
     VariableBackup<decltype(passedWaTable)> passedWaTableBackup(&passedWaTable);
     VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
 
-    auto hwInfo = platformDevices[0];
+    auto hwInfo = defaultHwInfo.get();
     SKU_FEATURE_TABLE expectedFtrTable = {};
     WA_TABLE expectedWaTable = {};
     SkuInfoTransfer::transferFtrTableForGmm(&expectedFtrTable, &hwInfo->featureTable);

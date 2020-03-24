@@ -52,7 +52,7 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
             if (executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo() == nullptr ||
                 (executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->platform.eProductFamily == IGFX_UNKNOWN &&
                  executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_UNKNOWN_CORE)) {
-                executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(platformDevices[0]);
+                executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
             }
         }
         executionEnvironment.calculateMaxOsContextCount();

@@ -31,7 +31,7 @@ class ImageCompressionTests : public ::testing::Test {
     };
 
     void SetUp() override {
-        mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         myMemoryManager = new MyMemoryManager(*mockDevice->getExecutionEnvironment());
         mockDevice->injectMemoryManager(myMemoryManager);
         mockContext = make_releaseable<MockContext>(mockDevice.get());

@@ -19,7 +19,7 @@ void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
     referencedHwInfo = *defaultHwInfo;
     auto executionEnvironment = constructPlatform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(*platformDevices);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 }
@@ -32,5 +32,5 @@ void NEO::UltConfigListener::OnTestEnd(const ::testing::TestInfo &testInfo) {
     UltHwConfig expectedState{};
     static_assert(sizeof(UltHwConfig) == 7 * sizeof(bool), ""); // Ensure that there is no internal padding
     EXPECT_EQ(0, memcmp(&expectedState, &ultHwConfig, sizeof(UltHwConfig)));
-    EXPECT_EQ(0, memcmp(&referencedHwInfo, platformDevices[0], sizeof(HardwareInfo)));
+    EXPECT_EQ(0, memcmp(&referencedHwInfo, defaultHwInfo.get(), sizeof(HardwareInfo)));
 }

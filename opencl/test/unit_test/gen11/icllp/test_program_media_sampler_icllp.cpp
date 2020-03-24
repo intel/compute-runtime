@@ -36,7 +36,7 @@ struct Gen11MediaSamplerProgramingTest : public ::testing::Test {
     }
 
     void SetUp() override {
-        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         csr = new myCsr(*device->executionEnvironment);
         device->resetCommandStreamReceiver(csr);
 

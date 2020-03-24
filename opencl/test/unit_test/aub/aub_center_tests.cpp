@@ -23,7 +23,7 @@ TEST(AubCenter, GivenUseAubStreamDebugVariableNotSetWhenAubCenterIsCreatedThenAu
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(false);
 
-    MockAubCenter aubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_AUB);
     EXPECT_EQ(nullptr, aubCenter.aubManager.get());
 }
 
@@ -32,7 +32,7 @@ TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenCreat
     DebugManager.flags.UseAubStream.set(false);
 
     MockAubManager *mockAubManager = new MockAubManager(defaultHwInfo->platform.eProductFamily, 4, 8 * MB, true, aub_stream::mode::aubFile, defaultHwInfo->capabilityTable.gpuAddressSpace);
-    MockAubCenter mockAubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter mockAubCenter(defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter.aubManager = std::unique_ptr<MockAubManager>(mockAubManager);
 
     EXPECT_EQ(defaultHwInfo->platform.eProductFamily, mockAubManager->mockAubManagerParams.productFamily);
@@ -98,14 +98,14 @@ TEST(AubCenter, GivenSetCommandStreamReceiverFlagEqualDefaultHwWhenAubManagerIsC
                                                        CommandStreamReceiverType::CSR_AUB};
 
     for (auto type : aubTypes) {
-        MockAubCenter aubCenter(platformDevices[0], true, "test", type);
+        MockAubCenter aubCenter(defaultHwInfo.get(), true, "test", type);
         EXPECT_EQ(aub_stream::mode::aubFile, aubCenter.aubStreamMode);
     }
 
-    MockAubCenter aubCenter2(platformDevices[0], true, "", CommandStreamReceiverType::CSR_TBX);
+    MockAubCenter aubCenter2(defaultHwInfo.get(), true, "", CommandStreamReceiverType::CSR_TBX);
     EXPECT_EQ(aub_stream::mode::tbx, aubCenter2.aubStreamMode);
 
-    MockAubCenter aubCenter3(platformDevices[0], true, "", CommandStreamReceiverType::CSR_TBX_WITH_AUB);
+    MockAubCenter aubCenter3(defaultHwInfo.get(), true, "", CommandStreamReceiverType::CSR_TBX_WITH_AUB);
     EXPECT_EQ(aub_stream::mode::aubFileAndTbx, aubCenter3.aubStreamMode);
 }
 
@@ -115,12 +115,12 @@ TEST(AubCenter, GivenSetCommandStreamReceiverFlagSetWhenAubManagerIsCreatedThenD
 
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX);
 
-    MockAubCenter aubCenter(platformDevices[0], true, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(defaultHwInfo.get(), true, "", CommandStreamReceiverType::CSR_AUB);
     EXPECT_EQ(aub_stream::mode::tbx, aubCenter.aubStreamMode);
 
     DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX_WITH_AUB);
 
-    MockAubCenter aubCenter2(platformDevices[0], true, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter2(defaultHwInfo.get(), true, "", CommandStreamReceiverType::CSR_AUB);
     EXPECT_EQ(aub_stream::mode::aubFileAndTbx, aubCenter2.aubStreamMode);
 }
 
@@ -128,7 +128,7 @@ TEST(AubCenter, GivenAubCenterInSubCaptureModeWhenItIsCreatedWithoutDebugFilterS
     DebugManagerStateRestore restorer;
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
 
-    MockAubCenter aubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_AUB);
     auto subCaptureCommon = aubCenter.getSubCaptureCommon();
     EXPECT_NE(nullptr, subCaptureCommon);
 
@@ -144,7 +144,7 @@ TEST(AubCenter, GivenAubCenterInSubCaptureModeWhenItIsCreatedWithDebugFilterSett
     DebugManager.flags.AUBDumpFilterKernelEndIdx.set(100);
     DebugManager.flags.AUBDumpFilterKernelName.set("kernel_name");
 
-    MockAubCenter aubCenter(platformDevices[0], false, "", CommandStreamReceiverType::CSR_AUB);
+    MockAubCenter aubCenter(defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_AUB);
     auto subCaptureCommon = aubCenter.getSubCaptureCommon();
     EXPECT_NE(nullptr, subCaptureCommon);
 

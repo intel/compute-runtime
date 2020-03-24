@@ -233,7 +233,7 @@ TEST_F(Image2dFromBufferTest, givenUnalignedImageWidthAndNoSpaceInBufferForAlign
 }
 
 TEST_F(Image2dFromBufferTest, ExtensionString) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto hwInfo = device->getHardwareInfo();
     const auto &caps = device->getDeviceInfo();
     std::string extensions = caps.deviceExtensions;

@@ -319,7 +319,7 @@ TEST(Context, givenFtrSvmFalseWhenContextIsCreatedThenSVMAllocsManagerIsNotCreat
 }
 
 TEST(Context, whenCreateContextThenSpecialQueueUsesInternalEngine) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     cl_device_id clDevice = device.get();
     cl_int retVal = CL_SUCCESS;
 
@@ -358,7 +358,7 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
   public:
     void SetUp() override {
         memoryManager = new MockMemoryManager();
-        device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices)};
+        device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
         deleter = new MockDeferredDeleter();
         device->injectMemoryManager(memoryManager);
         memoryManager->setDeferredDeleter(deleter);
