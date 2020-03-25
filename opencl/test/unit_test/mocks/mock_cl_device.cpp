@@ -18,6 +18,6 @@ decltype(&createCommandStream) &MockClDevice::createCommandStreamReceiverFunc = 
 
 MockClDevice::MockClDevice(MockDevice *pMockDevice)
     : ClDevice(*pMockDevice, platform()), device(*pMockDevice), sharedDeviceInfo(device.deviceInfo),
-      executionEnvironment(pMockDevice->executionEnvironment), subdevices(pMockDevice->subdevices),
-      mockMemoryManager(pMockDevice->mockMemoryManager), engines(pMockDevice->engines) {
+      executionEnvironment(pMockDevice->executionEnvironment), mockMemoryManager(pMockDevice->mockMemoryManager),
+      engines(pMockDevice->engines) {
 }

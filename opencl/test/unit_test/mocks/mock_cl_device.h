@@ -30,6 +30,7 @@ class MockClDevice : public ClDevice {
     using ClDevice::initializeCaps;
     using ClDevice::name;
     using ClDevice::simultaneousInterops;
+    using ClDevice::subDevices;
 
     explicit MockClDevice(MockDevice *pMockDevice);
 
@@ -69,7 +70,6 @@ class MockClDevice : public ClDevice {
     ExecutionEnvironment *&executionEnvironment;
     static bool &createSingleDevice;
     static decltype(&createCommandStream) &createCommandStreamReceiverFunc;
-    std::vector<SubDevice *> &subdevices;
     std::unique_ptr<MemoryManager> &mockMemoryManager;
     std::vector<EngineControl> &engines;
 };
