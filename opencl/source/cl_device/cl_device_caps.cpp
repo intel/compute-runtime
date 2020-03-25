@@ -116,9 +116,14 @@ void ClDevice::initializeCaps() {
     auto supportsVme = hwInfo.capabilityTable.supportsVme;
     auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
 
+    deviceInfo.independentForwardProgress = false;
+
     if (enabledClVersion >= 21) {
-        deviceInfo.independentForwardProgress = true;
-        deviceExtensions += "cl_khr_subgroups ";
+        if (hwHelper.isIndependentForwardProgressSupported()) {
+            deviceInfo.independentForwardProgress = true;
+            deviceExtensions += "cl_khr_subgroups ";
+        }
+
         deviceExtensions += "cl_khr_il_program ";
         if (supportsVme) {
             deviceExtensions += "cl_intel_spirv_device_side_avc_motion_estimation ";
@@ -128,8 +133,6 @@ void ClDevice::initializeCaps() {
         }
         deviceExtensions += "cl_intel_spirv_subgroups ";
         deviceExtensions += "cl_khr_spirv_no_integer_wrap_decoration ";
-    } else {
-        deviceInfo.independentForwardProgress = false;
     }
 
     if (enabledClVersion >= 20) {
