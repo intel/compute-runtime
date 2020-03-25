@@ -594,19 +594,23 @@ TEST_F(DrmMemoryManagerTest, BoWaitFailure) {
 }
 
 TEST_F(DrmMemoryManagerTest, NullOsHandleStorageAskedForPopulationReturnsFilledPointer) {
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemUserptr = 0;
+    mock->ioctl_expected.gemWait = 0;
+    mock->ioctl_expected.gemClose = 0;
+
+    nonDefaultDrm->ioctl_expected.gemUserptr = 1;
+    nonDefaultDrm->ioctl_expected.gemWait = 1;
+    nonDefaultDrm->ioctl_expected.gemClose = 1;
 
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     storage.fragmentStorageData[0].fragmentSize = 1;
-    memoryManager->populateOsHandles(storage, 0u);
+    memoryManager->populateOsHandles(storage, nonDefaultRootDeviceIndex);
     EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage);
     EXPECT_EQ(nullptr, storage.fragmentStorageData[1].osHandleStorage);
     EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
     storage.fragmentStorageData[0].freeTheFragment = true;
-    memoryManager->cleanOsHandles(storage, 0);
+    memoryManager->cleanOsHandles(storage, nonDefaultRootDeviceIndex);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenReadOnlyPointerCausesPinningFailWithEfaultThenPopulateOsHandlesReturnsInvalidHostPointerError) {

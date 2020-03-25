@@ -37,6 +37,8 @@ class DrmMemoryManagerBasic : public ::testing::Test {
 class DrmMemoryManagerFixture : public MemoryManagementFixture {
   public:
     DrmMockCustom *mock;
+    DrmMockCustom *nonDefaultDrm = nullptr;
+    const uint32_t nonDefaultRootDeviceIndex = 1u;
     TestedDrmMemoryManager *memoryManager = nullptr;
     MockClDevice *device = nullptr;
 
@@ -47,11 +49,16 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
 
     void SetUp(DrmMockCustom *mock, bool localMemoryEnabled) {
         this->mock = mock;
-        executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get());
+        executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, nonDefaultRootDeviceIndex + 1);
         executionEnvironment->incRefInternal();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
         rootDeviceEnvironment->osInterface->get()->setDrm(mock);
+
+        nonDefaultDrm = new DrmMockCustom();
+        auto nonDefaultRootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[nonDefaultRootDeviceIndex].get();
+        nonDefaultRootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+        nonDefaultRootDeviceEnvironment->osInterface->get()->setDrm(nonDefaultDrm);
 
         memoryManager = new (std::nothrow) TestedDrmMemoryManager(localMemoryEnabled, false, false, *executionEnvironment);
         //assert we have memory manager
