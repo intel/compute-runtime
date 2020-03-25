@@ -53,7 +53,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         idd.setKernelStartPointer(offset);
         idd.setKernelStartPointerHigh(0u);
     }
+
+    EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), true);
     EncodeStates<Family>::adjustStateComputeMode(*container.getCommandStream(), container.lastSentNumGrfRequired, nullptr, false, false);
+    EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), false);
 
     auto threadsPerThreadGroup = dispatchInterface->getThreadsPerThreadGroupCount();
     idd.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
@@ -224,6 +227,8 @@ void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &contai
 
 template <typename Family>
 void EncodeStateBaseAddress<Family>::encode(CommandContainer &container) {
+    EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), true);
+
     auto gmmHelper = container.getDevice()->getGmmHelper();
 
     StateBaseAddressHelper<Family>::programStateBaseAddress(
@@ -238,6 +243,8 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container) {
         false,
         gmmHelper,
         false);
+
+    EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), false);
 }
 
 template <typename Family>
@@ -259,6 +266,7 @@ size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device
     totalSize += sizeof(MEDIA_STATE_FLUSH);
     totalSize += issueMediaInterfaceDescriptorLoad;
     totalSize += EncodeStates<Family>::getAdjustStateComputeModeSize();
+    totalSize += EncodeWA<Family>::getAdditionalPipelineSelectSize(*device);
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForIndirectParams();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupCountIndirect();
     totalSize += EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect();
@@ -278,4 +286,13 @@ template <typename GfxFamily>
 size_t EncodeMiFlushDW<GfxFamily>::getMiFlushDwWaSize() {
     return 0;
 }
+
+template <typename GfxFamily>
+inline void EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(Device &device, LinearStream &stream, bool is3DPipeline) {}
+
+template <typename GfxFamily>
+inline size_t EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(Device &device) {
+    return 0;
+}
+
 } // namespace NEO

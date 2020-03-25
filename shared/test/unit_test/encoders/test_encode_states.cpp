@@ -107,7 +107,6 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherency
 HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetStateBaseAddressCalledThenStateBaseAddressAreNotSet) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     cmdContainer->dirtyHeaps = 0;
-    auto baseAddres = cmdContainer->getCommandStream()->getCpuBase();
 
     cmdContainer->setHeapDirty(NEO::HeapType::DYNAMIC_STATE);
     cmdContainer->setHeapDirty(NEO::HeapType::INDIRECT_OBJECT);
@@ -119,7 +118,11 @@ HWTEST_F(CommandEncodeStatesTest, givenCommandContainerWithDirtyHeapsWhenSetStat
     auto ioh = cmdContainer->getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
     auto ssh = cmdContainer->getIndirectHeap(NEO::HeapType::SURFACE_STATE);
 
-    auto pCmd = static_cast<STATE_BASE_ADDRESS *>(baseAddres);
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
+
+    auto itorCmd = find<STATE_BASE_ADDRESS *>(commands.begin(), commands.end());
+    auto pCmd = genCmdCast<STATE_BASE_ADDRESS *>(*itorCmd);
 
     EXPECT_EQ(dsh->getHeapGpuBase(), pCmd->getDynamicStateBaseAddress());
     EXPECT_EQ(ioh->getHeapGpuBase(), pCmd->getIndirectObjectBaseAddress());

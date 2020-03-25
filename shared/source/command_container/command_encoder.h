@@ -174,6 +174,12 @@ struct EncodeComputeMode {
 };
 
 template <typename GfxFamily>
+struct EncodeWA {
+    static void encodeAdditionalPipelineSelect(Device &device, LinearStream &stream, bool is3DPipeline);
+    static size_t getAdditionalPipelineSelectSize(Device &device);
+};
+
+template <typename GfxFamily>
 struct EncodeSempahore {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;

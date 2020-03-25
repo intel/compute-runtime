@@ -260,8 +260,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotCha
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 
-    auto itorPC = find<PIPE_CONTROL *>(commands.begin(), commands.end());
-    ASSERT_EQ(itorPC, commands.end());
+    if (HardwareCommandsHelper<TGLLPFamily>::isPipeControlPriorToPipelineSelectWArequired(pDevice->getHardwareInfo())) {
+        auto itorPC = findAll<PIPE_CONTROL *>(commands.begin(), commands.end());
+        EXPECT_EQ(2u, itorPC.size());
+    } else {
+        auto itorPC = find<PIPE_CONTROL *>(commands.begin(), commands.end());
+        ASSERT_EQ(itorPC, commands.end());
+    }
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenDirtyHeapsAndSlmNotChangedWhenDispatchKernelThenHeapsAreCleanAndFlushAdded) {

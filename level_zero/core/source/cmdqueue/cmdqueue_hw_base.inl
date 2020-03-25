@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/command_encoder_base.inl"
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device.h"
@@ -40,6 +42,7 @@ void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba
     pcCmd->setCommandStreamerStallEnable(true);
 
     auto gmmHelper = device->getNEODevice()->getGmmHelper();
+    NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(*device->getNEODevice(), commandStream, true);
 
     NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(commandStream,
                                                                     nullptr,
@@ -54,6 +57,8 @@ void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba
                                                                     false);
 
     gsbaInit = true;
+
+    NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(*device->getNEODevice(), commandStream, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -62,7 +67,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    constexpr size_t size = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
+    size_t size = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + NEO::EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(*device->getNEODevice());
     return size;
 }
 
