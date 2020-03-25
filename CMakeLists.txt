@@ -168,6 +168,18 @@ else()
   set(NEO_ARCH "x86")
 endif()
 
+if(NOT SKIP_UNIT_TESTS)
+  if(NOT DEFINED GTEST_REPEAT)
+    set(GTEST_REPEAT 1)
+  endif()
+  message(STATUS "GTest repeat count set to ${GTEST_REPEAT}")
+
+  if(NOT DEFINED GTEST_SHUFFLE)
+    set(GTEST_SHUFFLE --gtest_shuffle --gtest_random_seed=0)
+  endif()
+  message(STATUS "GTest shuffle set to ${GTEST_SHUFFLE}")
+endif()
+
 if(NOT KMDAF_HEADERS_DIR)
     if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../kmdaf/inc/common/kmDaf.h")
         get_filename_component(KMDAF_HEADERS_DIR "../kmdaf/inc/common/" ABSOLUTE)

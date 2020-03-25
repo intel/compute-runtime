@@ -141,14 +141,4 @@ else()
     set(RUN_ULT_CMD LD_LIBRARY_PATH=$<TARGET_FILE_DIR:${TARGET_NAME}> $<TARGET_FILE:${TARGET_NAME}>)
 endif()
 
-if(NOT GTEST_REPEAT)
-  set(GTEST_REPEAT 1 CACHE STRING "Google test iterations")
-endif()
-message(STATUS "GTest repeat count set to ${GTEST_REPEAT}")
-
-if(NOT GTEST_SHUFFLE)
-  set(GTEST_SHUFFLE --gtest_shuffle --gtest_random_seed=0)
-endif()
-message(STATUS "GTest shuffle set to ${GTEST_SHUFFLE}")
-
 create_source_tree(${TARGET_NAME} ${L0_ROOT_DIR}/..)
