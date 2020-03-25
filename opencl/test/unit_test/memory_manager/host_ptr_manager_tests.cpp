@@ -788,10 +788,10 @@ TEST_F(HostPtrAllocationTest, givenTwoAllocationsThatSharesOneFragmentWhenOneIsD
     void *cpuPtr2 = ptrOffset(cpuPtr1, MemoryConstants::pageSize);
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
-    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, 2 * MemoryConstants::pageSize - 1}, cpuPtr1);
+    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, 2 * MemoryConstants::pageSize - 1}, cpuPtr1);
     EXPECT_EQ(2u, hostPtrManager->getFragmentCount());
 
-    auto graphicsAllocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, cpuPtr2);
+    auto graphicsAllocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize}, cpuPtr2);
     EXPECT_EQ(3u, hostPtrManager->getFragmentCount());
     memoryManager->freeGraphicsMemory(graphicsAllocation1);
     EXPECT_EQ(2u, hostPtrManager->getFragmentCount());
@@ -820,7 +820,7 @@ TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredF
     void *cpuPtr1 = (void *)0x100004;
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
-    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, cpuPtr1);
+    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize}, cpuPtr1);
     EXPECT_EQ(2u, hostPtrManager->getFragmentCount());
 
     EXPECT_NE(nullptr, graphicsAllocation1);
@@ -874,8 +874,8 @@ HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWa
     void *cpuPtr = reinterpret_cast<void *>(0x100004);
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
-    auto graphicsAllocation0 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, cpuPtr);
-    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, cpuPtr);
+    auto graphicsAllocation0 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize}, cpuPtr);
+    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize}, cpuPtr);
 
     auto storage0 = new MockInternalAllocationStorage(*csr0);
     auto storage1 = new MockInternalAllocationStorage(*csr1);
@@ -913,7 +913,7 @@ TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredF
     void *cpuPtr1 = (void *)0x100004;
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
-    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, cpuPtr1);
+    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize}, cpuPtr1);
     EXPECT_EQ(2u, hostPtrManager->getFragmentCount());
 
     EXPECT_NE(nullptr, graphicsAllocation1);
@@ -951,10 +951,10 @@ TEST_F(HostPtrAllocationTest, checkAllocationsForOverlappingWithoutBiggerOverlap
     void *cpuPtr2 = (void *)0x101008;
 
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
-    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, cpuPtr1);
+    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize}, cpuPtr1);
     EXPECT_EQ(2u, hostPtrManager->getFragmentCount());
 
-    auto graphicsAllocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize * 3}, cpuPtr2);
+    auto graphicsAllocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize * 3}, cpuPtr2);
     EXPECT_EQ(4u, hostPtrManager->getFragmentCount());
 
     EXPECT_NE(nullptr, graphicsAllocation1);
@@ -994,7 +994,7 @@ TEST_F(HostPtrAllocationTest, checkAllocationsForOverlappingWithBiggerOverlapUnt
 
     void *cpuPtr1 = (void *)0x100004;
 
-    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, MemoryConstants::pageSize}, cpuPtr1);
+    auto graphicsAllocation1 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, MemoryConstants::pageSize}, cpuPtr1);
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
     EXPECT_EQ(2u, hostPtrManager->getFragmentCount());
 

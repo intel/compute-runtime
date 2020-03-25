@@ -12,7 +12,7 @@ namespace NEO {
 struct MockAllocationProperties : public AllocationProperties {
     MockAllocationProperties(size_t size, GraphicsAllocation::AllocationType allocationType) : AllocationProperties(0, size, allocationType) {}
     MockAllocationProperties(size_t size) : AllocationProperties(0, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY) {}
-    MockAllocationProperties(bool allocateMemory, size_t size) : AllocationProperties(0, allocateMemory, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false) {}
-    MockAllocationProperties(bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType) : AllocationProperties(0, allocateMemory, size, allocationType, false) {}
+    MockAllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory, size_t size) : AllocationProperties(rootDeviceIndex, allocateMemory, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, false) {}
+    MockAllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory, size_t size, GraphicsAllocation::AllocationType allocationType) : AllocationProperties(rootDeviceIndex, allocateMemory, size, allocationType, false) {}
 };
 } // namespace NEO

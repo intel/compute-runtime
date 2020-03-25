@@ -41,7 +41,8 @@ class WddmMemoryManagerFixture : public GdiDllFixture {
     ExecutionEnvironment *executionEnvironment;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
-    WddmMock *wddm;
+    WddmMock *wddm = nullptr;
+    const uint32_t rootDeviceIndex = 0u;
 };
 
 typedef ::Test<WddmMemoryManagerFixture> WddmMemoryManagerTest;
@@ -180,13 +181,14 @@ class MockWddmMemoryManagerTest : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 2);
         wddm = new WddmMock(*executionEnvironment->rootDeviceEnvironments[1].get());
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
-        executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setWddm(wddm);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     }
 
-    HardwareInfo *hwInfo;
-    WddmMock *wddm;
-    ExecutionEnvironment *executionEnvironment;
+    HardwareInfo *hwInfo = nullptr;
+    WddmMock *wddm = nullptr;
+    ExecutionEnvironment *executionEnvironment = nullptr;
+    const uint32_t rootDeviceIndex = 0u;
 };
 
 using OsAgnosticMemoryManagerUsingWddmTest = MockWddmMemoryManagerTest;

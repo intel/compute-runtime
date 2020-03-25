@@ -30,7 +30,7 @@ class DrmMemoryManagerBasic : public ::testing::Test {
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[0]));
         executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
     }
-
+    const uint32_t rootDeviceIndex = 0u;
     MockExecutionEnvironment executionEnvironment;
 };
 
@@ -39,6 +39,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     DrmMockCustom *mock;
     DrmMockCustom *nonDefaultDrm = nullptr;
     const uint32_t nonDefaultRootDeviceIndex = 1u;
+    const uint32_t rootDeviceIndex = 0u;
     TestedDrmMemoryManager *memoryManager = nullptr;
     MockClDevice *device = nullptr;
 

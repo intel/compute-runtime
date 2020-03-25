@@ -43,10 +43,10 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     bool validateAllocationMock(WddmAllocation *graphicsAllocation) {
         return this->validateAllocation(graphicsAllocation);
     }
-    GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType) {
+    GraphicsAllocation *allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType) {
         bool allocateMemory = ptr == nullptr;
         AllocationData allocationData;
-        MockAllocationProperties properties(allocateMemory, size, allocationType);
+        MockAllocationProperties properties(rootDeviceIndex, allocateMemory, size, allocationType);
         getAllocationData(allocationData, properties, ptr, createStorageInfoFromProperties(properties));
         return allocate32BitGraphicsMemoryImpl(allocationData);
     }

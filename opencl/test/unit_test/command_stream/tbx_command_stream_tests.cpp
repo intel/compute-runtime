@@ -91,7 +91,7 @@ TEST_F(TbxCommandStreamTests, DISABLED_makeResident) {
     uint8_t buffer[0x10000];
     size_t size = sizeof(buffer);
 
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, buffer);
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pCommandStreamReceiver->getRootDeviceIndex(), false, size}, buffer);
     pCommandStreamReceiver->makeResident(*graphicsAllocation);
     pCommandStreamReceiver->makeNonResident(*graphicsAllocation);
     memoryManager->freeGraphicsMemory(graphicsAllocation);
@@ -409,7 +409,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForTaskCountWithKm
     MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
     uint32_t tag = 0u;
     tbxCsr.setupContext(osContext);
-    tbxCsr.setTagAllocation(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, sizeof(tag)}, &tag));
+    tbxCsr.setTagAllocation(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), false, sizeof(tag)}, &tag));
     tbxCsr.latestFlushedTaskCount = 1u;
 
     MockGraphicsAllocation allocation1, allocation2, allocation3;

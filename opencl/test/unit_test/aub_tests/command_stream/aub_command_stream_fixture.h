@@ -95,7 +95,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
     }
 
     GraphicsAllocation *createResidentAllocationAndStoreItInCsr(const void *address, size_t size) {
-        GraphicsAllocation *graphicsAllocation = pCommandStreamReceiver->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, address);
+        GraphicsAllocation *graphicsAllocation = pCommandStreamReceiver->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pCommandStreamReceiver->getRootDeviceIndex(), false, size}, address);
         pCommandStreamReceiver->makeResidentHostPtrAllocation(graphicsAllocation);
         pCommandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation), TEMPORARY_ALLOCATION);
         return graphicsAllocation;

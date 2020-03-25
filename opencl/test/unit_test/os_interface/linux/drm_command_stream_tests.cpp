@@ -904,7 +904,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, makeResidentTwiceWhenFragmentSt
     auto ptr = (void *)0x1001;
     auto size = MemoryConstants::pageSize * 10;
     auto reqs = MockHostPtrManager::getAllocationRequirements(ptr, size);
-    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr);
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr);
 
     ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
 
@@ -934,12 +934,12 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenFragmentedAllocationsWithR
     //3 fragments
     auto ptr = (void *)0x1001;
     auto size = MemoryConstants::pageSize * 10;
-    auto graphicsAllocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr);
+    auto graphicsAllocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr);
 
     auto offsetedPtr = (void *)((uintptr_t)ptr + size);
     auto size2 = MemoryConstants::pageSize - 1;
 
-    auto graphicsAllocation2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size2}, offsetedPtr);
+    auto graphicsAllocation2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size2}, offsetedPtr);
 
     //graphicsAllocation2 reuses one fragment from graphicsAllocation
     EXPECT_EQ(graphicsAllocation->fragmentsStorage.fragmentStorageData[2].residency, graphicsAllocation2->fragmentsStorage.fragmentStorageData[0].residency);
@@ -1001,7 +1001,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenAllocationCreatedFromThree
 
     auto reqs = MockHostPtrManager::getAllocationRequirements(ptr, size);
 
-    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr);
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr);
 
     ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
 
@@ -1031,7 +1031,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenAllocationsContainingDiffe
 
     auto reqs = MockHostPtrManager::getAllocationRequirements(ptr, size);
 
-    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr);
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr);
 
     ASSERT_EQ(2u, allocation->fragmentsStorage.fragmentCount);
     ASSERT_EQ(2u, reqs.requiredFragmentsCount);
@@ -1055,7 +1055,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenAllocationsContainingDiffe
     mm->freeGraphicsMemory(allocation);
     csr->getResidencyAllocations().clear();
 
-    auto allocation2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size2}, ptr);
+    auto allocation2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size2}, ptr);
     reqs = MockHostPtrManager::getAllocationRequirements(ptr, size2);
 
     ASSERT_EQ(1u, allocation2->fragmentsStorage.fragmentCount);
@@ -1085,8 +1085,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenTwoAllocationsWhenBackingS
     auto size = MemoryConstants::pageSize;
     auto ptr2 = (void *)0x1000;
 
-    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr);
-    auto allocation2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, size}, ptr2);
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr);
+    auto allocation2 = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, size}, ptr2);
 
     csr->makeResident(*allocation);
     csr->makeResident(*allocation2);

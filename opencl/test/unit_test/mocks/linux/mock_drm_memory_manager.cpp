@@ -56,10 +56,10 @@ DrmGemCloseWorker *TestedDrmMemoryManager::getgemCloseWorker() { return this->ge
 void TestedDrmMemoryManager::forceLimitedRangeAllocator(uint64_t range) { getGfxPartition(0)->init(range, getSizeToReserve(), 0, 1); }
 void TestedDrmMemoryManager::overrideGfxPartition(GfxPartition *newGfxPartition) { gfxPartitions[0].reset(newGfxPartition); }
 
-DrmAllocation *TestedDrmMemoryManager::allocate32BitGraphicsMemory(size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType) {
+DrmAllocation *TestedDrmMemoryManager::allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType) {
     bool allocateMemory = ptr == nullptr;
     AllocationData allocationData;
-    MockAllocationProperties properties(allocateMemory, size, allocationType);
+    MockAllocationProperties properties(rootDeviceIndex, allocateMemory, size, allocationType);
     getAllocationData(allocationData, properties, ptr, createStorageInfoFromProperties(properties));
     return allocate32BitGraphicsMemoryImpl(allocationData);
 }
