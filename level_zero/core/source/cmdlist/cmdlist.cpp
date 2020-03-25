@@ -30,7 +30,7 @@ void CommandList::storePrintfFunction(Kernel *function) {
 }
 
 void CommandList::removeHostPtrAllocations() {
-    auto memoryManager = device ? device->getDriverHandle()->getMemoryManager() : nullptr;
+    auto memoryManager = device ? device->getNEODevice()->getMemoryManager() : nullptr;
     for (auto &allocation : hostPtrMap) {
         UNRECOVERABLE_IF(memoryManager == nullptr);
         memoryManager->freeGraphicsMemory(allocation.second);
@@ -39,7 +39,7 @@ void CommandList::removeHostPtrAllocations() {
 }
 
 void CommandList::removeDeallocationContainerData() {
-    auto memoryManager = device ? device->getDriverHandle()->getMemoryManager() : nullptr;
+    auto memoryManager = device ? device->getNEODevice()->getMemoryManager() : nullptr;
 
     auto container = commandContainer.getDeallocationContainer();
     for (auto deallocation : container) {

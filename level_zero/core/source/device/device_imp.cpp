@@ -575,11 +575,6 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice) {
 
     if (neoDevice->getDeviceInfo().debuggerActive) {
         auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
-        device->getSourceLevelDebugger()->notifyNewDevice(osInterface ? osInterface->getDeviceHandle() : 0);
-    }
-
-    if (neoDevice->getDeviceInfo().debuggerActive) {
-        auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
 
         auto debugSurface = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(
             {device->getRootDeviceIndex(),

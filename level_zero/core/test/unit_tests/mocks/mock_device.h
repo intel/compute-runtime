@@ -12,6 +12,7 @@
 #include "shared/source/device/device_info.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
@@ -108,6 +109,17 @@ struct Mock<Device> : public Device {
     MOCK_METHOD0(getNEODevice, NEO::Device *());
     MOCK_METHOD0(activateMetricGroups, void());
     MOCK_CONST_METHOD0(getDebugSurface, NEO::GraphicsAllocation *());
+};
+
+template <>
+struct Mock<L0::DeviceImp> : public L0::DeviceImp {
+    using Base = L0::DeviceImp;
+
+    explicit Mock(NEO::Device *device, NEO::ExecutionEnvironment *execEnv) {
+        device->incRefInternal();
+        Base::execEnvironment = execEnv;
+        Base::neoDevice = device;
+    }
 };
 
 } // namespace ult
