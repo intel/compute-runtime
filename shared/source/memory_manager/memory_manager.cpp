@@ -588,26 +588,45 @@ bool MemoryManager::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
 
 void MemoryManager::overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties) {
     int32_t directRingPlacement = DebugManager.flags.DirectSubmissionBufferPlacement.get();
-    if (properties.allocationType == GraphicsAllocation::AllocationType::RING_BUFFER &&
-        directRingPlacement != -1) {
-        if (directRingPlacement == 0) {
-            allocationData.flags.requiresCpuAccess = true;
-            allocationData.flags.useSystemMemory = false;
-        } else {
-            allocationData.flags.requiresCpuAccess = false;
-            allocationData.flags.useSystemMemory = true;
+    int32_t directRingAddressing = DebugManager.flags.DirectSubmissionBufferAddressing.get();
+    if (properties.allocationType == GraphicsAllocation::AllocationType::RING_BUFFER) {
+        if (directRingPlacement != -1) {
+            if (directRingPlacement == 0) {
+                allocationData.flags.requiresCpuAccess = true;
+                allocationData.flags.useSystemMemory = false;
+            } else {
+                allocationData.flags.requiresCpuAccess = false;
+                allocationData.flags.useSystemMemory = true;
+            }
+        }
+
+        if (directRingAddressing != -1) {
+            if (directRingAddressing == 0) {
+                allocationData.flags.resource48Bit = false;
+            } else {
+                allocationData.flags.resource48Bit = true;
+            }
         }
     }
     int32_t directSemaphorePlacement = DebugManager.flags.DirectSubmissionSemaphorePlacement.get();
-    if (properties.allocationType == GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER &&
-        directSemaphorePlacement != -1) {
-        if (directSemaphorePlacement == 0) {
-            allocationData.flags.requiresCpuAccess = true;
-            allocationData.flags.useSystemMemory = false;
-        } else {
-            allocationData.flags.requiresCpuAccess = false;
-            allocationData.flags.useSystemMemory = true;
+    int32_t directSemaphoreAddressing = DebugManager.flags.DirectSubmissionSemaphoreAddressing.get();
+    if (properties.allocationType == GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER) {
+        if (directSemaphorePlacement != -1) {
+            if (directSemaphorePlacement == 0) {
+                allocationData.flags.requiresCpuAccess = true;
+                allocationData.flags.useSystemMemory = false;
+            } else {
+                allocationData.flags.requiresCpuAccess = false;
+                allocationData.flags.useSystemMemory = true;
+            }
+        }
+        if (directSemaphoreAddressing != -1) {
+            if (directSemaphoreAddressing == 0) {
+                allocationData.flags.resource48Bit = false;
+            } else {
+                allocationData.flags.resource48Bit = true;
+            }
         }
     }
-}
+} // namespace NEO
 } // namespace NEO

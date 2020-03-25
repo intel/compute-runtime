@@ -739,6 +739,78 @@ TEST(MemoryManagerTest, givenDirectSemaphorePlacementSetWhenOverrideToSystemThen
     EXPECT_EQ(1u, allocationData.flags.useSystemMemory);
 }
 
+TEST(MemoryManagerTest, givenDirectBufferAddressingWhenOverrideToNo48BitThenExpect48BitFlagFalse) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionBufferAddressing.set(0);
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::RING_BUFFER);
+    allocationData.flags.resource48Bit = 1;
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(0u, allocationData.flags.resource48Bit);
+}
+
+TEST(MemoryManagerTest, givenDirectBufferAddressingWhenOverrideTo48BitThenExpect48BitFlagTrue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionBufferAddressing.set(1);
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::RING_BUFFER);
+    allocationData.flags.resource48Bit = 0;
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(1u, allocationData.flags.resource48Bit);
+}
+
+TEST(MemoryManagerTest, givenDirectBufferAddressingDefaultWhenNoOverrideThenExpect48BitFlagSame) {
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::RING_BUFFER);
+    allocationData.flags.resource48Bit = 0;
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(0u, allocationData.flags.resource48Bit);
+
+    allocationData.flags.resource48Bit = 1;
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(1u, allocationData.flags.resource48Bit);
+}
+
+TEST(MemoryManagerTest, givenDirectSemaphoreAddressingWhenOverrideToNo48BitThenExpect48BitFlagFalse) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionSemaphoreAddressing.set(0);
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER);
+    allocationData.flags.resource48Bit = 1;
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(0u, allocationData.flags.resource48Bit);
+}
+
+TEST(MemoryManagerTest, givenDirectSemaphoreAddressingWhenOverrideTo48BitThenExpect48BitFlagTrue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionSemaphoreAddressing.set(1);
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER);
+    allocationData.flags.resource48Bit = 0;
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(1u, allocationData.flags.resource48Bit);
+}
+
+TEST(MemoryManagerTest, givenDirectSemaphoreAddressingDefaultWhenNoOverrideThenExpect48BitFlagSame) {
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER);
+    allocationData.flags.resource48Bit = 0;
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(0u, allocationData.flags.resource48Bit);
+
+    allocationData.flags.resource48Bit = 1;
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+
+    EXPECT_EQ(1u, allocationData.flags.resource48Bit);
+}
+
 using MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest = testing::TestWithParam<std::tuple<GraphicsAllocation::AllocationType, bool>>;
 
 TEST_P(MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest, givenAllocationTypesHaveToBeForcedTo48BitThenAllocationDataResource48BitIsSet) {
