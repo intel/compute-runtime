@@ -12,5 +12,4 @@
 namespace NEO {
 struct HardwareInfo;
 extern std::unique_ptr<HardwareInfo> defaultHwInfo;
-extern HardwareInfo **platformDevices;
 } // namespace NEO

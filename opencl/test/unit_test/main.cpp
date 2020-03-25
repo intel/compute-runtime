@@ -362,9 +362,6 @@ int main(int argc, char **argv) {
     defaultHwInfo = std::make_unique<HardwareInfo>();
     *defaultHwInfo = hwInfoForTests;
 
-    platformDevices = new HardwareInfo *[1];
-    *platformDevices = defaultHwInfo.get();
-
     auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
     if (useDefaultListener == false) {
         auto defaultListener = listeners.default_result_printer();
@@ -440,6 +437,5 @@ int main(int argc, char **argv) {
     retVal = RUN_ALL_TESTS();
 
     cleanTestHelpers();
-    delete[] platformDevices;
     return retVal;
 }

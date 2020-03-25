@@ -35,7 +35,7 @@ struct ActiveDebuggerFixture {
         auto mockBuiltIns = new MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(*platformDevices);
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
 
         debugger = new MockActiveSourceLevelDebugger(new MockOsLibrary);
         executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(debugger);

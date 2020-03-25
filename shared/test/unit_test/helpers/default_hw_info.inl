@@ -10,5 +10,4 @@
 namespace NEO {
 
 std::unique_ptr<HardwareInfo> defaultHwInfo;
-HardwareInfo **platformDevices = nullptr;
 } // namespace NEO

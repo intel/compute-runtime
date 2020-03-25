@@ -210,8 +210,6 @@ int main(int argc, char **argv) {
     productFamily = hwInfoForTests.platform.eProductFamily;
     renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
 
-    NEO::platformDevices = new NEO::HardwareInfo *[1];
-    NEO::platformDevices[0] = &hwInfoForTests;
     NEO::defaultHwInfo = std::make_unique<NEO::HardwareInfo>();
     *NEO::defaultHwInfo = hwInfoForTests;
 
@@ -219,7 +217,6 @@ int main(int argc, char **argv) {
     NEO::MockSipData::mockSipKernel.reset(new NEO::MockSipKernel());
 
     auto retVal = RUN_ALL_TESTS();
-    delete[] NEO::platformDevices;
 
     return retVal;
 }
