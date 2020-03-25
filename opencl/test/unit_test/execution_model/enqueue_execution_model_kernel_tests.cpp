@@ -144,7 +144,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenBlockKernelWithPrivate
         GraphicsAllocation *privateSurface = pKernel->getProgram()->getBlockKernelManager()->getPrivateSurface(kernelRequiringPrivateSurface);
 
         if (privateSurface == nullptr) {
-            privateSurface = mockCSR->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+            privateSurface = mockCSR->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
             pKernel->getProgram()->getBlockKernelManager()->pushPrivateSurface(privateSurface, kernelRequiringPrivateSurface);
         }
 
@@ -176,7 +176,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, GivenBlocksWithPrivateMemor
         auto privateAllocation = pKernel->getProgram()->getBlockKernelManager()->getPrivateSurface(kernelRequiringPrivateSurface);
 
         if (privateAllocation == nullptr) {
-            privateAllocation = csr.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+            privateAllocation = csr.getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr.getRootDeviceIndex(), MemoryConstants::pageSize});
             blockKernelManager->pushPrivateSurface(privateAllocation, kernelRequiringPrivateSurface);
         }
 

@@ -96,7 +96,7 @@ struct Gen11CoherencyProgramingTest : public Gen11CoherencyRequirements {
     void flushTask(bool coherencyRequired) {
         flags.requiresCoherency = coherencyRequired;
 
-        auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+        auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
         IndirectHeap stream(graphicAlloc);
 
         startOffset = csr->commandStream.getUsed();

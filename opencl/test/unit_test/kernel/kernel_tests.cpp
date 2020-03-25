@@ -1630,7 +1630,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIs
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
     auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     // setup kernel arg offsets
     KernelArgPatchInfo kernelArgPatchInfo;
@@ -1665,7 +1665,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenExportedFun
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
     auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     MockProgram program(*pDevice->getExecutionEnvironment());
     auto exportedFunctionsSurface = std::make_unique<MockGraphicsAllocation>();
@@ -1703,7 +1703,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenGlobalBuffe
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
     auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     MockProgram program(*pDevice->getExecutionEnvironment());
     MockContext ctx;
@@ -2865,7 +2865,7 @@ TEST(KernelTest, givenKernelUsesPrivateMemoryWhenDeviceReleasedBeforeKernelThenK
     auto executionEnvironment = device->getExecutionEnvironment();
 
     auto mockKernel = std::make_unique<MockKernelWithInternals>(*device);
-    GraphicsAllocation *privateSurface = device->getExecutionEnvironment()->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    GraphicsAllocation *privateSurface = device->getExecutionEnvironment()->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     mockKernel->mockKernel->setPrivateSurface(privateSurface, 10);
 
     executionEnvironment->incRefInternal();

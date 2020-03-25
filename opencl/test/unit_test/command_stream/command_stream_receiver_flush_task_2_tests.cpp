@@ -479,11 +479,11 @@ struct MockScratchController : public ScratchSpaceController {
                                  bool &vfeStateDirty) override {
         if (requiredPerThreadScratchSize > scratchSizeBytes) {
             scratchSizeBytes = requiredPerThreadScratchSize;
-            scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{requiredPerThreadScratchSize});
+            scratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, requiredPerThreadScratchSize});
         }
         if (requiredPerThreadPrivateScratchSize > privateScratchSizeBytes) {
             privateScratchSizeBytes = requiredPerThreadPrivateScratchSize;
-            privateScratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{requiredPerThreadPrivateScratchSize});
+            privateScratchAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, requiredPerThreadPrivateScratchSize});
         }
     }
     uint64_t calculateNewGSH() override { return 0u; };

@@ -1975,12 +1975,12 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryWh
     MockParentKernel *parentKernel = MockParentKernel::create(context, false, true, false);
 
     // graphicsMemory is released by Program
-    GraphicsAllocation *globalMemory = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    GraphicsAllocation *globalMemory = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     parentKernel->mockProgram->setGlobalSurface(globalMemory);
 
     // Allocte reflectionSurface, 2 * 4096 should be enough
-    GraphicsAllocation *reflectionSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{2 * MemoryConstants::pageSize});
+    GraphicsAllocation *reflectionSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), 2 * MemoryConstants::pageSize});
     parentKernel->setReflectionSurface(reflectionSurface);
 
     memset(reflectionSurface->getUnderlyingBuffer(), 0, reflectionSurface->getUnderlyingBufferSize());
@@ -2014,7 +2014,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryAn
     }
 
     // Allocte reflectionSurface, 2 * 4096 should be enough
-    GraphicsAllocation *reflectionSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{2 * MemoryConstants::pageSize});
+    GraphicsAllocation *reflectionSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), 2 * MemoryConstants::pageSize});
     parentKernel->setReflectionSurface(reflectionSurface);
 
     memset(reflectionSurface->getUnderlyingBuffer(), 0, reflectionSurface->getUnderlyingBufferSize());
@@ -2042,12 +2042,12 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
     MockParentKernel *parentKernel = MockParentKernel::create(context, false, false, true);
 
     // graphicsMemory is released by Program
-    GraphicsAllocation *constantMemory = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    GraphicsAllocation *constantMemory = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     parentKernel->mockProgram->setConstantSurface(constantMemory);
 
     // Allocte reflectionSurface, 2 * 4096 should be enough
-    GraphicsAllocation *reflectionSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{2 * MemoryConstants::pageSize});
+    GraphicsAllocation *reflectionSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), 2 * MemoryConstants::pageSize});
     parentKernel->setReflectionSurface(reflectionSurface);
 
     memset(reflectionSurface->getUnderlyingBuffer(), 0, reflectionSurface->getUnderlyingBufferSize());
@@ -2090,7 +2090,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
     }
 
     // Allocte reflectionSurface, 2 * 4096 should be enough
-    GraphicsAllocation *reflectionSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{2 * MemoryConstants::pageSize});
+    GraphicsAllocation *reflectionSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), 2 * MemoryConstants::pageSize});
     parentKernel->setReflectionSurface(reflectionSurface);
 
     memset(reflectionSurface->getUnderlyingBuffer(), 0, reflectionSurface->getUnderlyingBufferSize());

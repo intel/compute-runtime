@@ -574,7 +574,7 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandStreamReceiverWithReusableAlloc
     if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT) {
         allocationType = GraphicsAllocation::AllocationType::INTERNAL_HEAP;
     }
-    allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{allocationSize, allocationType});
+    allocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), allocationSize, allocationType});
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
         allocation->setSize(commandStreamReceiver.defaultSshSize * 2);
     }

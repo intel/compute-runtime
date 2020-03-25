@@ -205,7 +205,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, coherencyCmdValuesWithSharedHandles)
 GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutSharedHandlesWhenFlushTaskCalledThenProgramCmdOnlyIfChanged) {
     auto startOffset = csr->commandStream.getUsed();
 
-    auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap stream(graphicAlloc);
 
     auto flushTask = [&](bool coherencyRequired) {
@@ -268,7 +268,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
 
 GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithSharedHandlesWhenFlushTaskCalledThenAlwaysProgramCmds) {
     auto startOffset = csr->commandStream.getUsed();
-    auto graphicsAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto graphicsAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap stream(graphicsAlloc);
 
     auto flushTask = [&](bool coherencyRequired) {
@@ -313,7 +313,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithSharedH
 }
 
 GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenFlushWithoutSharedHandlesWhenPreviouslyUsedThenProgramPcAndSCM) {
-    auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto graphicAlloc = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap stream(graphicAlloc);
 
     makeResidentSharedAlloc();

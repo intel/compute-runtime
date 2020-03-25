@@ -87,7 +87,7 @@ GEN12LPTEST_F(ImageClearColorFixture, givenMcsAllocationWhenSetArgIsCalledWithUn
     using SURFACE_TYPE = typename RENDER_SURFACE_STATE::SURFACE_TYPE;
     std::unique_ptr<MockContext> context(new MockContext());
     McsSurfaceInfo msi = {10, 20, 3};
-    auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context->getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;

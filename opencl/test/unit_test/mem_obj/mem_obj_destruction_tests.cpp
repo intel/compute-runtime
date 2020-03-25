@@ -43,7 +43,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
         context.reset(new MockContext(device.get()));
 
-        allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{size});
+        allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), size});
         memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
                             MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_READ_WRITE, 0, 0), CL_MEM_READ_WRITE, 0,
                             size,
@@ -219,7 +219,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
 
     if (!hasAllocatedMappedPtr) {
         delete memObj;
-        allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{size});
+        allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context->getDevice(0)->getRootDeviceIndex(), size});
         MemObjOffsetArray origin = {{0, 0, 0}};
         MemObjSizeArray region = {{1, 1, 1}};
         cl_map_flags mapFlags = CL_MAP_READ;

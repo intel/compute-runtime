@@ -182,11 +182,12 @@ template <typename CsrType>
 std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation, bool allocateCommandBuffer, bool standalone) {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-    executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(new AubCenter());
+    uint32_t rootDeviceIndex = 0u;
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->aubCenter.reset(new AubCenter());
 
     executionEnvironment->initializeMemoryManager();
-    auto commandStreamReceiver = std::make_unique<CsrType>("", standalone, *executionEnvironment, 0);
+    auto commandStreamReceiver = std::make_unique<CsrType>("", standalone, *executionEnvironment, rootDeviceIndex);
     if (createTagAllocation) {
         commandStreamReceiver->initializeTagAllocation();
     }
@@ -199,7 +200,7 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
 
     std::unique_ptr<AubExecutionEnvironment> aubExecutionEnvironment(new AubExecutionEnvironment);
     if (allocateCommandBuffer) {
-        aubExecutionEnvironment->commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+        aubExecutionEnvironment->commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize});
     }
     aubExecutionEnvironment->executionEnvironment = std::move(executionEnvironment);
     aubExecutionEnvironment->commandStreamReceiver = std::move(commandStreamReceiver);

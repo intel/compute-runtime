@@ -2015,7 +2015,7 @@ TEST(SharedBuffersTest, whenBuffersIsCreatedWithSharingHandlerThenItIsSharedBuff
     MockContext context;
     auto memoryManager = context.getDevice(0)->getMemoryManager();
     auto handler = new SharingHandler();
-    auto graphicsAlloaction = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto graphicsAlloaction = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto buffer = Buffer::createSharedBuffer(&context, CL_MEM_READ_ONLY, handler, graphicsAlloaction);
     ASSERT_NE(nullptr, buffer);
     EXPECT_EQ(handler, buffer->peekSharingHandler());

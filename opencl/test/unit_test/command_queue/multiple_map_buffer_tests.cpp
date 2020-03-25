@@ -91,7 +91,7 @@ struct MultipleMapBufferTest : public DeviceFixture, public ::testing::Test {
     template <typename FamilyType>
     std::unique_ptr<MockBuffer<FamilyType>> createMockBuffer(bool mapOnGpu) {
         MemoryPropertiesFlags memoryProperties;
-        auto mockAlloc = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+        auto mockAlloc = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
         auto buffer = new MockBuffer<FamilyType>(context, memoryProperties, 0, 0, 1024, mockAlloc->getUnderlyingBuffer(), mockAlloc->getUnderlyingBuffer(),
                                                  mockAlloc, false, false, false);
         if (mapOnGpu) {

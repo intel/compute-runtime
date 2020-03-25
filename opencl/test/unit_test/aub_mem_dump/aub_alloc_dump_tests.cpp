@@ -39,7 +39,7 @@ struct AubFileStreamMock : public AubMemDump::AubFileStream {
 
 HWTEST_F(AubAllocDumpTests, givenBufferOrImageWhenGraphicsAllocationIsKnownThenItsTypeCanBeCheckedIfItIsWritable) {
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     gfxAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_FALSE(gfxAllocation->isMemObjectsAllocationWithWritableFlags());
@@ -103,7 +103,7 @@ HWTEST_F(AubAllocDumpTests, givenImageResourceWhenGmmResourceInfoIsAvailableThen
 
 HWTEST_F(AubAllocDumpTests, givenGraphicsAllocationWhenDumpAllocationIsCalledInDefaultModeThenGraphicsAllocationShouldNotBeDumped) {
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
@@ -116,7 +116,7 @@ HWTEST_F(AubAllocDumpTests, givenGraphicsAllocationWhenDumpAllocationIsCalledInD
 
 HWTEST_F(AubAllocDumpTests, givenGraphicsAllocationWhenDumpAllocationIsCalledButDumpFormatIsUnspecifiedThenGraphicsAllocationShouldNotBeDumped) {
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
@@ -132,7 +132,7 @@ HWTEST_F(AubAllocDumpTests, givenNonWritableBufferWhenDumpAllocationIsCalledAndD
     DebugManager.flags.AUBDumpBufferFormat.set("BIN");
 
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
@@ -418,7 +418,7 @@ HWTEST_P(AubSurfaceDumpTests, givenGraphicsAllocationWhenGetDumpSurfaceIsCalledA
     MockMemoryManager memoryManager(*executionEnvironment);
 
     if (AubAllocDump::isBufferDumpFormat(dumpFormat)) {
-        auto bufferAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+        auto bufferAllocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
         ASSERT_NE(nullptr, bufferAllocation);
 
         bufferAllocation->setAllocationType(isCompressed ? GraphicsAllocation::AllocationType::BUFFER_COMPRESSED : GraphicsAllocation::AllocationType::BUFFER);

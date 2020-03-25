@@ -110,7 +110,7 @@ TEST_F(CommandStreamReceiverTest, WhenMakingResidentThenBufferResidencyFlagIsSet
 TEST_F(CommandStreamReceiverTest, givenBaseDownloadAllocationCalledThenDoesNotChangeAnything) {
     auto *memoryManager = commandStreamReceiver->getMemoryManager();
 
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{commandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     ASSERT_NE(nullptr, graphicsAllocation);
     auto numEvictionAllocsBefore = commandStreamReceiver->getEvictionAllocations().size();
@@ -171,7 +171,7 @@ TEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenGetCSIsCalledThe
 HWTEST_F(CommandStreamReceiverTest, whenStoreAllocationThenStoredAllocationHasTaskCountFromCsr) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto *memoryManager = csr.getMemoryManager();
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     EXPECT_FALSE(allocation->isUsed());
 
@@ -190,7 +190,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCheckedForInit
 TEST_F(CommandStreamReceiverTest, WhenMakingResidentThenAllocationIsPushedToMemoryManagerResidencyList) {
     auto *memoryManager = commandStreamReceiver->getMemoryManager();
 
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{commandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     ASSERT_NE(nullptr, graphicsAllocation);
 
@@ -262,7 +262,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCsrWhenSubmitiingBatchBufferThenTaskC
     executionEnvironment.initializeMemoryManager();
     MockCommandStreamReceiver csr(executionEnvironment, 0);
 
-    GraphicsAllocation *commandBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    GraphicsAllocation *commandBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr.getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -350,7 +350,7 @@ HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenDownloadAll
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto *memoryManager = commandStreamReceiver->getMemoryManager();
 
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{MemoryConstants::pageSize});
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     ASSERT_NE(nullptr, graphicsAllocation);
     csr.downloadAllocation(*graphicsAllocation);
