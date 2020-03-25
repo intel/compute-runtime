@@ -18,6 +18,25 @@ GEN8TEST_F(Gen8DeviceCaps, defaultPreemptionMode) {
     EXPECT_TRUE(PreemptionMode::Disabled == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
+GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckExtensionsThenDeviceProperlyReportsClKhrSubgroupsExtension) {
+    const auto &caps = pClDevice->getDeviceInfo();
+    if (pClDevice->getEnabledClVersion() >= 21) {
+        EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_subgroups")));
+    } else {
+        EXPECT_THAT(caps.deviceExtensions, ::testing::Not(testing::HasSubstr(std::string("cl_khr_subgroups"))));
+    }
+}
+
+GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckingCapsThenDeviceDoesProperlyReportsIndependentForwardProgress) {
+    const auto &caps = pClDevice->getDeviceInfo();
+
+    if (pClDevice->getEnabledClVersion() >= 21) {
+        EXPECT_TRUE(caps.independentForwardProgress != 0);
+    } else {
+        EXPECT_FALSE(caps.independentForwardProgress != 0);
+    }
+}
+
 GEN8TEST_F(Gen8DeviceCaps, kmdNotifyMechanism) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(50000, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
