@@ -63,20 +63,32 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         nonDefaultRootDeviceEnvironment->osInterface->get()->setDrm(nonDefaultDrm);
 
         memoryManager = new (std::nothrow) TestedDrmMemoryManager(localMemoryEnabled, false, false, *executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
         if (memoryManager->getgemCloseWorker()) {
             memoryManager->getgemCloseWorker()->close(true);
         }
-        device = new MockClDevice{MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0)};
+        device = new MockClDevice{MockDevice::create<MockDevice>(executionEnvironment, 0)};
+        mock->reset();
     }
 
     void TearDown() override {
-        delete device;
-        delete memoryManager;
-        this->mock->testIoctls();
-        executionEnvironment->decRefInternal();
+        mock->testIoctls();
+        mock->reset();
+        mock->ioctl_expected.contextDestroy = static_cast<int>(device->engines.size());
+        mock->ioctl_expected.gemClose = static_cast<int>(device->engines.size());
+        mock->ioctl_expected.gemWait = static_cast<int>(device->engines.size());
 
+        if (device->getDefaultEngine().commandStreamReceiver->getPreemptionAllocation()) {
+            mock->ioctl_expected.gemClose += static_cast<int>(device->engines.size());
+            mock->ioctl_expected.gemWait += static_cast<int>(device->engines.size());
+        }
+        mock->ioctl_expected.gemWait += additionalDestroyDeviceIoctls.gemWait.load();
+        mock->ioctl_expected.gemClose += additionalDestroyDeviceIoctls.gemClose.load();
+        delete device;
+        mock->testIoctls();
+        executionEnvironment->decRefInternal();
         MemoryManagementFixture::TearDown();
     }
 
@@ -84,7 +96,8 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     ExecutionEnvironment *executionEnvironment;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};
-    AllocationData allocationData;
+    AllocationData allocationData{};
+    DrmMockCustom::Ioctls additionalDestroyDeviceIoctls{};
 };
 
 class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {

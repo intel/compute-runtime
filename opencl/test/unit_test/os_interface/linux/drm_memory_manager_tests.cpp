@@ -505,7 +505,6 @@ TEST_F(DrmMemoryManagerTest, givenDrmAllocationWhenHandleFenceCompletionThenCall
 
     mock->ioctl_expected.gemClose = 1;
     mock->ioctl_expected.gemWait = 2;
-    mock->ioctl_expected.contextDestroy = static_cast<int>(device->engines.size());
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -949,9 +948,7 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationThen
     mock->ioctl_expected.gemClose = 1;
 
     DebugManager.flags.Force32bitAddressing.set(true);
-    MockContext context;
-    memoryManager->setForce32BitAllocations(true);
-    context.memoryManager = memoryManager;
+    MockContext context(device);
     memoryManager->setForce32BitAllocations(true);
 
     auto size = MemoryConstants::pageSize;
@@ -981,9 +978,8 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHos
     mock->ioctl_expected.gemClose = 1;
 
     DebugManager.flags.Force32bitAddressing.set(true);
-    MockContext context;
+    MockContext context(device);
     memoryManager->setForce32BitAllocations(true);
-    context.memoryManager = memoryManager;
 
     auto size = MemoryConstants::pageSize;
     void *ptr = reinterpret_cast<void *>(0x1000);
@@ -1042,9 +1038,8 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom64B
             mock->ioctl_expected.gemClose = 1;
 
             DebugManager.flags.Force32bitAddressing.set(true);
-            MockContext context;
+            MockContext context(device);
             memoryManager->setForce32BitAllocations(true);
-            context.memoryManager = memoryManager;
 
             auto size = MemoryConstants::pageSize;
             void *ptr = reinterpret_cast<void *>(0x100000000000);
@@ -1163,9 +1158,8 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCr
     DebugManagerStateRestore dbgRestorer;
     mock->ioctl_expected.total = -1;
     DebugManager.flags.Force32bitAddressing.set(true);
-    MockContext context;
+    MockContext context(device);
     memoryManager->setForce32BitAllocations(true);
-    context.memoryManager = memoryManager;
 
     size_t size = 2 * GB;
     void *ptr = reinterpret_cast<void *>(0x100000000000);
@@ -1205,9 +1199,8 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCr
     DebugManagerStateRestore dbgRestorer;
     mock->ioctl_expected.total = -1;
     DebugManager.flags.Force32bitAddressing.set(true);
-    MockContext context;
+    MockContext context(device);
     memoryManager->setForce32BitAllocations(true);
-    context.memoryManager = memoryManager;
 
     size_t size = 2 * GB;
     void *ptr = reinterpret_cast<void *>(0x100000000000);
@@ -1246,8 +1239,7 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCr
 TEST_F(DrmMemoryManagerTest, givenDrmBufferWhenItIsQueriedForInternalAllocationThenBoIsReturned) {
     mock->ioctl_expected.total = -1;
     mock->outputFd = 1337;
-    MockContext context;
-    context.memoryManager = memoryManager;
+    MockContext context(device);
 
     size_t size = 1u;
     auto retVal = CL_SUCCESS;
@@ -1332,8 +1324,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountZe
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    MockContext context;
-    context.memoryManager = memoryManager;
+    MockContext context(device);
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1379,8 +1370,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountNo
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    MockContext context;
-    context.memoryManager = memoryManager;
+    MockContext context(device);
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1420,8 +1410,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountNo
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedAndAllocationFailsThenReturnNullptr) {
-    MockContext context;
-    context.memoryManager = memoryManager;
+    MockContext context(device);
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1449,21 +1438,38 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedAn
 
     injectFailures(method);
     mock->reset();
-    mock->ioctl_expected.contextDestroy = static_cast<int>(device->engines.size());
 }
 
-HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
+HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenAllocateGraphicsMemoryForImageIsUsed) {
     if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
         GTEST_SKIP();
     }
     mock->ioctl_expected.gemCreate = 1;
     mock->ioctl_expected.gemSetTiling = 1;
-    mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemWait = 2;
     mock->ioctl_expected.gemClose = 2;
+    mock->ioctl_expected.gemUserptr = 1;
+
+    // builtins kernels
+    mock->ioctl_expected.gemUserptr += 5;
+
+    // command buffers
+    mock->ioctl_expected.gemUserptr += 2;
+    additionalDestroyDeviceIoctls.gemClose += 2;
+    additionalDestroyDeviceIoctls.gemWait += 2;
+
+    // indirect heaps
+    mock->ioctl_expected.gemUserptr += 3;
+    additionalDestroyDeviceIoctls.gemClose += 3;
+    additionalDestroyDeviceIoctls.gemWait += 3;
+
+    if (device->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
+        mock->ioctl_expected.gemUserptr++;
+        additionalDestroyDeviceIoctls.gemClose++;
+        additionalDestroyDeviceIoctls.gemWait++;
+    }
 
     MockContext context(device);
-    context.memoryManager = memoryManager;
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1509,8 +1515,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAllocatedForImageThe
     mock->ioctl_expected.gemWait = 2;
     mock->ioctl_expected.gemClose = 2;
 
-    MockContext context;
-    context.memoryManager = memoryManager;
+    MockContext context(device);
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1542,8 +1547,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZer
     mock->ioctl_expected.gemWait = 2;
     mock->ioctl_expected.gemClose = 2;
 
-    MockContext context;
-    context.memoryManager = memoryManager;
+    MockContext context(device);
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1586,8 +1590,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountNon
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    MockContext context;
-    context.memoryManager = memoryManager;
+    MockContext context(device);
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1632,8 +1635,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreated
     mock->ioctl_expected.gemWait = 2;
     mock->ioctl_expected.gemClose = 2;
 
-    MockContext context;
-    context.memoryManager = memoryManager;
+    MockContext context(device);
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1682,7 +1684,7 @@ TEST_F(DrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenAllocateGraphic
     imageFormat.image_channel_order = CL_R;
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    MockContext context;
+    MockContext context(device);
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
@@ -1791,7 +1793,7 @@ TEST_F(DrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromShared
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
 
     imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
-    MockContext context;
+    MockContext context(device);
     gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
@@ -1833,7 +1835,7 @@ TEST_F(DrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedHan
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
 
     imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
-    MockContext context;
+    MockContext context(device);
     gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
@@ -1875,7 +1877,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCreateFromSharedHandleFail
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
 
     imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
-    MockContext context;
+    MockContext context(device);
     gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
@@ -1911,7 +1913,6 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenAllocationFails
 
     injectFailures(method);
     mock->reset();
-    mock->ioctl_expected.contextDestroy = static_cast<int>(device->engines.size());
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndThreeOsHandlesWhenReuseCreatesAreCalledThenGraphicsAllocationsAreReturned) {
@@ -2055,6 +2056,7 @@ TEST_F(DrmMemoryManagerTest, givenSharedHandleWhenAllocationIsCreatedAndIoctlPri
 TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatShareTheSameBufferObjectWhenTheyAreMadeResidentThenOnlyOneBoIsPassedToExec) {
     auto testedCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
     device->resetCommandStreamReceiver(testedCsr);
+    mock->reset();
 
     mock->ioctl_expected.primeFdToHandle = 2;
     mock->ioctl_expected.gemClose = 1;
@@ -2079,8 +2081,6 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatShareTheSameBufferOb
 
 TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBufferObjectWhenTheyAreMadeResidentThenTwoBoIsPassedToExec) {
     mock->ioctl_expected.primeFdToHandle = 2;
-    mock->ioctl_expected.gemClose = 2;
-    mock->ioctl_expected.gemWait = 2;
 
     osHandle sharedHandle = 1u;
     AllocationProperties properties(rootDeviceIndex, false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false);
@@ -2088,8 +2088,14 @@ TEST_F(DrmMemoryManagerTest, givenTwoGraphicsAllocationsThatDoesnShareTheSameBuf
     mock->outputHandle++;
     auto graphicsAllocation2 = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false);
 
+    mock->testIoctls();
+
     auto testedCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
     device->resetCommandStreamReceiver(testedCsr);
+
+    mock->reset();
+    mock->ioctl_expected.gemClose = 2;
+    mock->ioctl_expected.gemWait = 2;
 
     testedCsr->makeResident(*graphicsAllocation);
     testedCsr->makeResident(*graphicsAllocation2);
