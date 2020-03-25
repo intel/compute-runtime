@@ -77,6 +77,7 @@ get_property(COMPUTE_RUNTIME_MOCKABLE_INCLUDES
 add_library(compute_runtime_mockable_extra
     STATIC
     EXCLUDE_FROM_ALL
+        ${CMAKE_CURRENT_LIST_DIR}/l0_tests.cmake
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/source/aub/aub_stream_interface.cpp
         ${COMPUTE_RUNTIME_DIR}/shared/source/debug_settings/debug_settings_manager.cpp
@@ -101,7 +102,6 @@ add_library(compute_runtime_mockable_extra
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/create_tbx_sockets.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_deferred_deleter.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/ult_configuration.cpp
 )
 
 set_property(TARGET compute_runtime_mockable_extra APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})

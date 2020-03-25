@@ -31,7 +31,10 @@ target_sources(${TARGET_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/ult_configuration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/white_box.h
+    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
 )
 
 target_sources(${TARGET_NAME} PRIVATE

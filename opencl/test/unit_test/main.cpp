@@ -14,6 +14,7 @@
 #include "shared/test/unit_test/helpers/default_hw_info.inl"
 #include "shared/test/unit_test/helpers/memory_leak_listener.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.inl"
+#include "shared/test/unit_test/tests_configuration.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 #include "opencl/test/unit_test/custom_event_listener.h"
@@ -23,7 +24,6 @@
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_sip.h"
-#include "opencl/test/unit_test/tests_configuration.h"
 #include "opencl/test/unit_test/ult_config_listener.h"
 
 #include "gmock/gmock.h"

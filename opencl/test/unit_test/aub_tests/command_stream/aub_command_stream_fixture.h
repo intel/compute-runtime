@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/unit_test/tests_configuration.h"
 
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"
 #include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
@@ -17,7 +18,6 @@
 #include "opencl/source/memory_manager/memory_banks.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
-#include "opencl/test/unit_test/tests_configuration.h"
 
 #include <cstdint>
 

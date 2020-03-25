@@ -10,11 +10,11 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/unit_test/tests_configuration.h"
 
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_ostime.h"
-#include "opencl/test/unit_test/tests_configuration.h"
 
 using namespace NEO;
 

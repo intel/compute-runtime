@@ -46,8 +46,8 @@ add_custom_target(run_unit_tests ALL)
 set(IGDRCL_SRCS_tests_local
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/libult/os_interface.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ult_configuration.cpp
+  ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
 )
 
 if(WIN32)
