@@ -11,12 +11,12 @@
 
 namespace NEO {
 
-TEST(ArrayCountTests, arrayCount) {
+TEST(ArrayCountTests, WhenGettingArrayCountThenCorrectCountIsReturned) {
     int a[10];
     EXPECT_EQ(10u, arrayCount(a));
 }
 
-TEST(ArrayCountTests, isInRange) {
+TEST(ArrayCountTests, WhenGettingInRangeThenOnlyIndexInRangeReturnsTrue) {
     int a[10];
     EXPECT_TRUE(isInRange(1, a));
     EXPECT_FALSE(isInRange(10, a));
