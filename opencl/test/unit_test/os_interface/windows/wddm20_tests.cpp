@@ -1164,10 +1164,24 @@ TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoSucceedsThenDeviceCallbacksAr
     expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnFreeGPUVA = gdi->freeGpuVirtualAddress;
     expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = notifyAubCapture;
 
-    EXPECT_TRUE(memcmp(&expectedDeviceCb, &gmmMemory->deviceCallbacks, sizeof(GMM_DEVICE_CALLBACKS_INT)) == 0);
-    EXPECT_TRUE(memcmp(&expectedDeviceCb.Adapter, &gmmMemory->deviceCallbacks.Adapter, sizeof(GMM_HANDLE_EXT)) == 0);
-    EXPECT_TRUE(memcmp(&expectedDeviceCb.hDevice, &gmmMemory->deviceCallbacks.hDevice, sizeof(GMM_HANDLE_EXT)) == 0);
-    EXPECT_TRUE(memcmp(&expectedDeviceCb.DevCbPtrs.KmtCbPtrs, &gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs, sizeof(GMM_DEVICE_CB_PTRS::KmtCbPtrs)) == 0);
+    EXPECT_EQ(expectedDeviceCb.Adapter.KmtHandle, gmmMemory->deviceCallbacks.Adapter.KmtHandle);
+    EXPECT_EQ(expectedDeviceCb.hDevice.KmtHandle, gmmMemory->deviceCallbacks.hDevice.KmtHandle);
+    EXPECT_EQ(expectedDeviceCb.hCsr, gmmMemory->deviceCallbacks.hCsr);
+    EXPECT_EQ(expectedDeviceCb.PagingQueue, gmmMemory->deviceCallbacks.PagingQueue);
+    EXPECT_EQ(expectedDeviceCb.PagingFence, gmmMemory->deviceCallbacks.PagingFence);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnAllocate, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnAllocate);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnDeallocate, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnDeallocate);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnMapGPUVA, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnMapGPUVA);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnMakeResident, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnMakeResident);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnEvict, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnEvict);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnReserveGPUVA, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnReserveGPUVA);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnUpdateGPUVA, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnUpdateGPUVA);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnWaitFromCpu, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnWaitFromCpu);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnLock, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnLock);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnUnLock, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnUnLock);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnEscape, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnEscape);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnFreeGPUVA, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnFreeGPUVA);
+    EXPECT_EQ(expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture, gmmMemory->deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture);
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, whenSetDeviceInfoFailsThenDeviceIsNotConfigured) {
