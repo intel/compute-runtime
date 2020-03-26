@@ -151,11 +151,6 @@ std::string HwHelperHw<Family>::getExtensions() const {
 }
 
 template <>
-bool HwHelperHw<Family>::isIndependentForwardProgressSupported() {
-    return false;
-}
-
-template <>
 void MemorySynchronizationCommands<Family>::setExtraCacheFlushFields(Family::PIPE_CONTROL *pipeControl) {
     pipeControl->setHdcPipelineFlush(true);
     pipeControl->setConstantCacheInvalidationEnable(false);

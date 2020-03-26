@@ -67,11 +67,6 @@ uint32_t HwHelperHw<GfxFamily>::calculateAvailableThreadCount(PRODUCT_FAMILY fam
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isIndependentForwardProgressSupported() {
-    return true;
-}
-
-template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
 }
 

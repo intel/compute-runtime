@@ -83,7 +83,6 @@ class HwHelper {
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isIndependentForwardProgressSupported() = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -214,8 +213,6 @@ class HwHelperHw : public HwHelper {
     bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) override;
 
     uint32_t getMinimalSIMDSize() override;
-
-    bool isIndependentForwardProgressSupported() override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

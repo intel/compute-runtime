@@ -70,23 +70,3 @@ GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckExtensionsThenSubgroupLocalBlock
 
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_subgroup_local_block_io")));
 }
-
-GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckExtensionsThenDeviceProperlyReportsClKhrSubgroupsExtension) {
-    const auto &caps = pClDevice->getDeviceInfo();
-
-    if (pClDevice->getEnabledClVersion() >= 21) {
-        EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_subgroups")));
-    } else {
-        EXPECT_THAT(caps.deviceExtensions, ::testing::Not(testing::HasSubstr(std::string("cl_khr_subgroups"))));
-    }
-}
-
-GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingCapsThenDeviceDoesProperlyReportsIndependentForwardProgress) {
-    const auto &caps = pClDevice->getDeviceInfo();
-
-    if (pClDevice->getEnabledClVersion() >= 21) {
-        EXPECT_TRUE(caps.independentForwardProgress != 0);
-    } else {
-        EXPECT_FALSE(caps.independentForwardProgress != 0);
-    }
-}

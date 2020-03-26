@@ -34,18 +34,6 @@ TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckExtensionsThenSubgroupLocalB
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_subgroup_local_block_io")));
 }
 
-TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckExtensionsThenDeviceDoesNotReportClKhrSubgroupsExtension) {
-    const auto &caps = pClDevice->getDeviceInfo();
-
-    EXPECT_THAT(caps.deviceExtensions, ::testing::Not(testing::HasSubstr(std::string("cl_khr_subgroups"))));
-}
-
-TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckingCapsThenDeviceDoesNotSupportIndependentForwardProgress) {
-    const auto &caps = pClDevice->getDeviceInfo();
-
-    EXPECT_FALSE(caps.independentForwardProgress);
-}
-
 TGLLPTEST_F(Gen12LpDeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt) {
     const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
