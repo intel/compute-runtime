@@ -32,11 +32,9 @@ struct Image : _ze_image_handle_t {
     static Image *create(uint32_t productFamily, Device *device, const ze_image_desc_t *desc);
 
     virtual NEO::GraphicsAllocation *getAllocation() = 0;
-    virtual void decoupleAllocation(NEO::CommandContainer &commandContainer) = 0;
     virtual void copySurfaceStateToSSH(void *surfaceStateHeap,
                                        const uint32_t surfaceStateOffset) = 0;
     virtual void copyRedescribedSurfaceStateToSSH(void *surfaceStateHeap, const uint32_t surfaceStateOffset) = 0;
-    virtual size_t getSizeInBytes() = 0;
     virtual NEO::ImageInfo getImageInfo() = 0;
     virtual ze_image_desc_t getImageDesc() = 0;
 

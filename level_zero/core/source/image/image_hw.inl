@@ -18,41 +18,6 @@
 
 #include "level_zero/core/source/image/image_hw.h"
 
-inline NEO::ImageType convertType(const ze_image_type_t type) {
-    switch (type) {
-    case ZE_IMAGE_TYPE_2D:
-        return NEO::ImageType::Image2D;
-    case ZE_IMAGE_TYPE_3D:
-        return NEO::ImageType::Image3D;
-    case ZE_IMAGE_TYPE_2DARRAY:
-        return NEO::ImageType::Image2DArray;
-    case ZE_IMAGE_TYPE_1D:
-        return NEO::ImageType::Image1D;
-    case ZE_IMAGE_TYPE_1DARRAY:
-        return NEO::ImageType::Image1DArray;
-    case ZE_IMAGE_TYPE_BUFFER:
-        return NEO::ImageType::Image1DBuffer;
-    default:
-        break;
-    }
-    return NEO::ImageType::Invalid;
-}
-
-inline NEO::ImageDescriptor convertDescriptor(const ze_image_desc_t &imageDesc) {
-    NEO::ImageDescriptor desc = {};
-    desc.fromParent = false;
-    desc.imageArraySize = imageDesc.arraylevels;
-    desc.imageDepth = imageDesc.depth;
-    desc.imageHeight = imageDesc.height;
-    desc.imageRowPitch = 0u;
-    desc.imageSlicePitch = 0u;
-    desc.imageType = convertType(imageDesc.type);
-    desc.imageWidth = imageDesc.width;
-    desc.numMipLevels = imageDesc.miplevels;
-    desc.numSamples = 0u;
-    return desc;
-}
-
 namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_desc_t *desc) {
@@ -61,22 +26,22 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
         return false;
     }
 
-    if (desc->format.layout > ZE_IMAGE_FORMAT_LAYOUT_MAX) {
+    if (static_cast<uint32_t>(desc->format.layout) > ZE_IMAGE_FORMAT_LAYOUT_MAX) {
         return false;
     }
 
-    if (desc->format.type > ZE_IMAGE_FORMAT_TYPE_MAX) {
+    if (static_cast<uint32_t>(desc->format.type) > ZE_IMAGE_FORMAT_TYPE_MAX) {
         return false;
     }
 
-    if (desc->format.x > ZE_IMAGE_FORMAT_SWIZZLE_MAX ||
-        desc->format.y > ZE_IMAGE_FORMAT_SWIZZLE_MAX ||
-        desc->format.z > ZE_IMAGE_FORMAT_SWIZZLE_MAX ||
-        desc->format.w > ZE_IMAGE_FORMAT_SWIZZLE_MAX) {
+    if (static_cast<uint32_t>(desc->format.x) > ZE_IMAGE_FORMAT_SWIZZLE_MAX ||
+        static_cast<uint32_t>(desc->format.y) > ZE_IMAGE_FORMAT_SWIZZLE_MAX ||
+        static_cast<uint32_t>(desc->format.z) > ZE_IMAGE_FORMAT_SWIZZLE_MAX ||
+        static_cast<uint32_t>(desc->format.w) > ZE_IMAGE_FORMAT_SWIZZLE_MAX) {
         return false;
     }
 
-    if (desc->format.type > ZE_IMAGE_FORMAT_TYPE_MAX) {
+    if (static_cast<uint32_t>(desc->format.type) > ZE_IMAGE_FORMAT_TYPE_MAX) {
         return false;
     }
 
@@ -116,7 +81,7 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
     imgInfo.preferRenderCompression = false;
 
     NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::GraphicsAllocation::AllocationType::IMAGE);
-    allocation = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     UNRECOVERABLE_IF(allocation == nullptr);
 
     auto gmm = this->allocation->getDefaultGmm();

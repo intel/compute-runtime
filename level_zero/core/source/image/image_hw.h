@@ -24,10 +24,8 @@ struct ImageCoreFamily : public ImageImp {
     using RSS = typename GfxFamily::RENDER_SURFACE_STATE;
     using RENDER_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using SHADER_CHANNEL_SELECT = typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT;
-    using ImageImp::ImageImp;
 
     static const RENDER_FORMAT surfaceFormatUndefined = static_cast<RENDER_FORMAT>(-1);
-
     static const GMM_RESOURCE_FORMAT gmmResourceFormatUndefined = static_cast<GMM_RESOURCE_FORMAT>(-1);
 
     NEO::SurfaceFormatInfo surfaceFormatsForRedescribe[5] = {
@@ -94,34 +92,34 @@ struct ImageCoreFamily : public ImageImp {
                                                   {GMM_FORMAT_R32G32B32A32_SNORM_TYPE, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_R32G32B32A32_SNORM), 0, 4, 4, 16},
                                                   {GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_R32G32B32A32_FLOAT), 0, 4, 4, 16}},
                                                  // ZE_IMAGE_FORMAT_LAYOUT_10_10_10_2
-                                                 {{GMM_FORMAT_R10G10B10A2_UINT_TYPE, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_R10G10B10A2_UINT), 0, 1, 1, 1},
-                                                  {GMM_FORMAT_R10G10B10A2_SINT_TYPE, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_R10G10B10A2_SINT), 0, 1, 1, 1},
-                                                  {GMM_FORMAT_R10G10B10A2_UNORM_TYPE, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_R10G10B10A2_UNORM), 0, 1, 1, 1},
-                                                  {GMM_FORMAT_R10G10B10A2_SNORM_TYPE, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_R10G10B10A2_SNORM), 0, 1, 1, 1},
+                                                 {{GMM_FORMAT_R10G10B10A2_UINT_TYPE, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_R10G10B10A2_UINT), 0, 4, 1, 4},
+                                                  {GMM_FORMAT_R10G10B10A2_SINT_TYPE, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_R10G10B10A2_SINT), 0, 4, 1, 4},
+                                                  {GMM_FORMAT_R10G10B10A2_UNORM_TYPE, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_R10G10B10A2_UNORM), 0, 4, 1, 4},
+                                                  {GMM_FORMAT_R10G10B10A2_SNORM_TYPE, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_R10G10B10A2_SNORM), 0, 4, 1, 4},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 1, 1, 1}},
                                                  // ZE_IMAGE_FORMAT_LAYOUT_11_11_10
                                                  {{gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
-                                                  {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0}},
+                                                  {GMM_FORMAT_R11G11B10_FLOAT, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_R11G11B10_FLOAT), 0, 3, 0, 4}},
                                                  // ZE_IMAGE_FORMAT_LAYOUT_5_6_5
                                                  {{gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
-                                                  {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
+                                                  {GMM_FORMAT_B5G6R5_UNORM, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_B5G6R5_UNORM), 0, 3, 0, 2},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0}},
                                                  // ZE_IMAGE_FORMAT_LAYOUT_5_5_5_1
                                                  {{gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
-                                                  {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
+                                                  {GMM_FORMAT_B5G5R5A1_UNORM, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_B5G5R5A1_UNORM), 0, 4, 0, 2},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0}},
                                                  // ZE_IMAGE_FORMAT_LAYOUT_4_4_4_4
                                                  {{gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
-                                                  {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0},
+                                                  {GMM_FORMAT_B4G4R4A4_UNORM, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(RSS::SURFACE_FORMAT_B4G4R4A4_UNORM), 0, 4, 1, 2},
                                                   {gmmResourceFormatUndefined, static_cast<NEO::GFX3DSTATE_SURFACEFORMAT>(surfaceFormatUndefined), 0, 0, 0, 0}}};
 
     const SHADER_CHANNEL_SELECT shaderChannelSelect[ZE_IMAGE_FORMAT_SWIZZLE_MAX + 1] = {
