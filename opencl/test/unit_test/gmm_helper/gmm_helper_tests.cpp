@@ -757,8 +757,8 @@ TEST(GmmTest, givenGmmWithSetMCSInResourceInfoGpuFlagsWhenCallhasMultisampleCont
 }
 
 TEST(GmmHelperTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
-    ASSERT_NE(nullptr, platform()->peekGmmClientContext());
-    EXPECT_NE(nullptr, platform()->peekGmmClientContext()->getHandle());
+    ASSERT_NE(nullptr, platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmHelper());
+    EXPECT_NE(nullptr, platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext()->getHandle());
 }
 
 TEST(GmmHelperTest, givenPlatformAlreadyDestroyedWhenResourceIsBeingDestroyedThenObserveNoExceptions) {

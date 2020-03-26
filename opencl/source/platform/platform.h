@@ -58,8 +58,6 @@ class Platform : public BaseObject<_cl_platform_id> {
     AsyncEventsHandler *getAsyncEventsHandler();
     std::unique_ptr<AsyncEventsHandler> setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler> handler);
     ExecutionEnvironment *peekExecutionEnvironment() const { return &executionEnvironment; }
-    GmmHelper *peekGmmHelper() const;
-    GmmClientContext *peekGmmClientContext() const;
 
     static std::unique_ptr<Platform> (*createFunc)(ExecutionEnvironment &executionEnvironment);
     static std::vector<DeviceVector> groupDevices(DeviceVector devices);

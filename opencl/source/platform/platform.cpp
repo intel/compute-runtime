@@ -219,14 +219,6 @@ std::unique_ptr<AsyncEventsHandler> Platform::setAsyncEventsHandler(std::unique_
     return handler;
 }
 
-GmmHelper *Platform::peekGmmHelper() const {
-    return executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
-}
-
-GmmClientContext *Platform::peekGmmClientContext() const {
-    return peekGmmHelper()->getClientContext();
-}
-
 std::unique_ptr<Platform> (*Platform::createFunc)(ExecutionEnvironment &) = [](ExecutionEnvironment &executionEnvironment) -> std::unique_ptr<Platform> {
     return std::make_unique<Platform>(executionEnvironment);
 };
