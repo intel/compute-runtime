@@ -53,7 +53,11 @@ void TestedDrmMemoryManager::injectPinBB(BufferObject *newPinBB) {
 }
 
 DrmGemCloseWorker *TestedDrmMemoryManager::getgemCloseWorker() { return this->gemCloseWorker.get(); }
-void TestedDrmMemoryManager::forceLimitedRangeAllocator(uint64_t range) { getGfxPartition(0)->init(range, getSizeToReserve(), 0, 1); }
+void TestedDrmMemoryManager::forceLimitedRangeAllocator(uint64_t range) {
+    for (auto &gfxPartition : gfxPartitions) {
+        gfxPartition->init(range, getSizeToReserve(), 0, 1);
+    }
+}
 void TestedDrmMemoryManager::overrideGfxPartition(GfxPartition *newGfxPartition) { gfxPartitions[0].reset(newGfxPartition); }
 
 DrmAllocation *TestedDrmMemoryManager::allocate32BitGraphicsMemory(uint32_t rootDeviceIndex, size_t size, const void *ptr, GraphicsAllocation::AllocationType allocationType) {

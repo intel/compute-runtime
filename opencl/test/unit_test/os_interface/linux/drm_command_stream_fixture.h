@@ -85,6 +85,7 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
     MockExecutionEnvironment *executionEnvironment;
     DrmMockCustom *mock;
     CommandStreamReceiver *csr = nullptr;
+    const uint32_t rootDeviceIndex = 0u;
 
     DrmMemoryManager *mm = nullptr;
     std::unique_ptr<MockDevice> device;
@@ -99,10 +100,10 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
         DebugManager.flags.EnableForcePin.set(false);
 
         mock = new DrmMockCustom();
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(mock);
 
-        csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment);
+        csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment, rootDeviceIndex);
         ASSERT_NE(nullptr, csr);
         mm = new DrmMemoryManager(gemCloseWorkerMode::gemCloseWorkerInactive,
                                   DebugManager.flags.EnableForcePin.get(),
@@ -110,7 +111,7 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
                                   *executionEnvironment);
         ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
-        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+        device.reset(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
         device->resetCommandStreamReceiver(csr);
         ASSERT_NE(nullptr, device);
     }
