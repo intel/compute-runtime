@@ -199,9 +199,9 @@ ze_result_t Event::destroy() {
 void EventImp::makeAllocationResident() {
     auto deviceImp = static_cast<DeviceImp *>(this->device);
     NEO::MemoryOperationsHandler *memoryOperationsIface = deviceImp->neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto alloc = &(this->eventPool->getAllocation());
 
     if (memoryOperationsIface) {
+        auto alloc = &(this->eventPool->getAllocation());
         memoryOperationsIface->makeResident(ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1));
     }
 }
