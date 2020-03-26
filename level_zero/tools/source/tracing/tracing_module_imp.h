@@ -42,7 +42,7 @@ zeKernelCreate_Tracing(ze_module_handle_t hModule,
                        ze_kernel_handle_t *phFunction);
 
 __zedllexport ze_result_t __zecall
-zeKernelDestroy_Tracing(ze_kernel_handle_t hFunction);
+zeKernelDestroy_Tracing(ze_kernel_handle_t hKernel);
 
 __zedllexport ze_result_t __zecall
 zeModuleGetFunctionPointer_Tracing(ze_module_handle_t hModule,
@@ -50,13 +50,13 @@ zeModuleGetFunctionPointer_Tracing(ze_module_handle_t hModule,
                                    void **pfnFunction);
 
 __zedllexport ze_result_t __zecall
-zeKernelSetGroupSize_Tracing(ze_kernel_handle_t hFunction,
+zeKernelSetGroupSize_Tracing(ze_kernel_handle_t hKernel,
                              uint32_t groupSizeX,
                              uint32_t groupSizeY,
                              uint32_t groupSizeZ);
 
 __zedllexport ze_result_t __zecall
-zeKernelSuggestGroupSize_Tracing(ze_kernel_handle_t hFunction,
+zeKernelSuggestGroupSize_Tracing(ze_kernel_handle_t hKernel,
                                  uint32_t globalSizeX,
                                  uint32_t globalSizeY,
                                  uint32_t globalSizeZ,
@@ -65,7 +65,7 @@ zeKernelSuggestGroupSize_Tracing(ze_kernel_handle_t hFunction,
                                  uint32_t *groupSizeZ);
 
 __zedllexport ze_result_t __zecall
-zeKernelSetArgumentValue_Tracing(ze_kernel_handle_t hFunction,
+zeKernelSetArgumentValue_Tracing(ze_kernel_handle_t hKernel,
                                  uint32_t argIndex,
                                  size_t argSize,
                                  const void *pArgValue);
@@ -82,7 +82,7 @@ zeKernelGetProperties_Tracing(ze_kernel_handle_t hKernel,
 
 __zedllexport ze_result_t __zecall
 zeCommandListAppendLaunchKernel_Tracing(ze_command_list_handle_t hCommandList,
-                                        ze_kernel_handle_t hFunction,
+                                        ze_kernel_handle_t hKernel,
                                         const ze_group_count_t *pLaunchFuncArgs,
                                         ze_event_handle_t hSignalEvent,
                                         uint32_t numWaitEvents,
@@ -90,7 +90,7 @@ zeCommandListAppendLaunchKernel_Tracing(ze_command_list_handle_t hCommandList,
 
 __zedllexport ze_result_t __zecall
 zeCommandListAppendLaunchKernelIndirect_Tracing(ze_command_list_handle_t hCommandList,
-                                                ze_kernel_handle_t hFunction,
+                                                ze_kernel_handle_t hKernel,
                                                 const ze_group_count_t *pLaunchArgumentsBuffer,
                                                 ze_event_handle_t hSignalEvent,
                                                 uint32_t numWaitEvents,
@@ -98,8 +98,8 @@ zeCommandListAppendLaunchKernelIndirect_Tracing(ze_command_list_handle_t hComman
 
 __zedllexport ze_result_t __zecall
 zeCommandListAppendLaunchMultipleKernelsIndirect_Tracing(ze_command_list_handle_t hCommandList,
-                                                         uint32_t numFunctions,
-                                                         ze_kernel_handle_t *phFunctions,
+                                                         uint32_t numKernels,
+                                                         ze_kernel_handle_t *phKernels,
                                                          const uint32_t *pCountBuffer,
                                                          const ze_group_count_t *pLaunchArgumentsBuffer,
                                                          ze_event_handle_t hSignalEvent,

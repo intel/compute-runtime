@@ -143,15 +143,15 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
 
     module.reset(Module::fromHandle(moduleHandle));
 
-    std::unique_ptr<Kernel> function;
-    ze_kernel_handle_t functionHandle;
-    ze_kernel_desc_t functionDesc = {ZE_KERNEL_DESC_VERSION_CURRENT};
-    functionDesc.pKernelName = builtInName;
-    res = module->createKernel(&functionDesc, &functionHandle);
+    std::unique_ptr<Kernel> kernel;
+    ze_kernel_handle_t kernelHandle;
+    ze_kernel_desc_t kernelDesc = {ZE_KERNEL_DESC_VERSION_CURRENT};
+    kernelDesc.pKernelName = builtInName;
+    res = module->createKernel(&kernelDesc, &kernelHandle);
     DEBUG_BREAK_IF(res != ZE_RESULT_SUCCESS);
     UNUSED_VARIABLE(res);
-    function.reset(Kernel::fromHandle(functionHandle));
-    return std::unique_ptr<BuiltinData>(new BuiltinData{std::move(module), std::move(function)});
+    kernel.reset(Kernel::fromHandle(kernelHandle));
+    return std::unique_ptr<BuiltinData>(new BuiltinData{std::move(module), std::move(kernel)});
 }
 
 } // namespace L0

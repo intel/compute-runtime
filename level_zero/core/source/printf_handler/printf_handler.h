@@ -23,7 +23,7 @@ struct Device;
 
 struct PrintfHandler {
     static NEO::GraphicsAllocation *createPrintfBuffer(Device *device);
-    static void printOutput(const KernelImmutableData *function,
+    static void printOutput(const KernelImmutableData *kernelData,
                             NEO::GraphicsAllocation *printfBuffer, Device *device);
     static size_t getPrintBufferSize();
 

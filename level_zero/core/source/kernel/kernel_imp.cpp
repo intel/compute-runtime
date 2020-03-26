@@ -657,13 +657,13 @@ Kernel *Kernel::create(uint32_t productFamily, Module *module,
                        const ze_kernel_desc_t *desc, ze_result_t *res) {
     UNRECOVERABLE_IF(productFamily >= IGFX_MAX_PRODUCT);
     KernelAllocatorFn allocator = kernelFactory[productFamily];
-    auto function = static_cast<KernelImp *>(allocator(module));
-    *res = function->initialize(desc);
+    auto kernel = static_cast<KernelImp *>(allocator(module));
+    *res = kernel->initialize(desc);
     if (*res) {
-        function->destroy();
+        kernel->destroy();
         return nullptr;
     }
-    return function;
+    return kernel;
 }
 
 bool KernelImp::hasIndirectAllocationsAllowed() const {

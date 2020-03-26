@@ -30,7 +30,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     : public ::L0::CommandListCoreFamily<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = ::L0::CommandListCoreFamily<gfxCoreFamily>;
-    using BaseClass::appendLaunchFunctionWithParams;
+    using BaseClass::appendLaunchKernelWithParams;
     using BaseClass::commandListPreemptionMode;
 
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>() {}
@@ -62,7 +62,7 @@ struct Mock<CommandList> : public CommandList {
     MOCK_METHOD0(destroy, ze_result_t());
     MOCK_METHOD2(appendCommandLists,
                  ze_result_t(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists));
-    MOCK_METHOD5(appendLaunchFunction,
+    MOCK_METHOD5(appendLaunchKernel,
                  ze_result_t(ze_kernel_handle_t hFunction,
                              const ze_group_count_t *pThreadGroupDimensions,
                              ze_event_handle_t hEvent, uint32_t numWaitEvents,
@@ -73,12 +73,12 @@ struct Mock<CommandList> : public CommandList {
                              ze_event_handle_t hSignalEvent,
                              uint32_t numWaitEvents,
                              ze_event_handle_t *phWaitEvents));
-    MOCK_METHOD5(appendLaunchFunctionIndirect,
+    MOCK_METHOD5(appendLaunchKernelIndirect,
                  ze_result_t(ze_kernel_handle_t hFunction,
                              const ze_group_count_t *pDispatchArgumentsBuffer,
                              ze_event_handle_t hEvent, uint32_t numWaitEvents,
                              ze_event_handle_t *phWaitEvents));
-    MOCK_METHOD7(appendLaunchMultipleFunctionsIndirect,
+    MOCK_METHOD7(appendLaunchMultipleKernelsIndirect,
                  ze_result_t(uint32_t numFunctions, const ze_kernel_handle_t *phFunctions,
                              const uint32_t *pNumLaunchArguments,
                              const ze_group_count_t *pLaunchArgumentsBuffer,

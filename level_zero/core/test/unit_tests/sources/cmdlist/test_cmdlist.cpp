@@ -155,7 +155,7 @@ HWTEST_F(CommandListCreate, givenNotEnoughSpaceInCommandStreamWhenAppendingFunct
     auto bbEndPosition = stream->getSpace(0);
 
     ze_group_count_t dispatchFunctionArguments{1, 1, 1};
-    commandList->appendLaunchFunction(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr);
+    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr);
 
     auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, 0u);

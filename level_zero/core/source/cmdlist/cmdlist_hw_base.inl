@@ -22,30 +22,30 @@ namespace L0 {
 struct DeviceImp;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunctionWithParams(ze_kernel_handle_t hFunction,
-                                                                                 const ze_group_count_t *pThreadGroupDimensions,
-                                                                                 ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                                                                                 ze_event_handle_t *phWaitEvents, bool isIndirect, bool isPredicate) {
-    const auto function = Kernel::fromHandle(hFunction);
-    UNRECOVERABLE_IF(function == nullptr);
-    const auto functionImmutableData = function->getImmutableData();
-    commandListPerThreadScratchSize = std::max(commandListPerThreadScratchSize, function->getPerThreadScratchSize());
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
+                                                                               const ze_group_count_t *pThreadGroupDimensions,
+                                                                               ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                                                               ze_event_handle_t *phWaitEvents, bool isIndirect, bool isPredicate) {
+    const auto kernel = Kernel::fromHandle(hKernel);
+    UNRECOVERABLE_IF(kernel == nullptr);
+    const auto functionImmutableData = kernel->getImmutableData();
+    commandListPerThreadScratchSize = std::max(commandListPerThreadScratchSize, kernel->getPerThreadScratchSize());
 
-    auto functionPreemptionMode = obtainFunctionPreemptionMode(function);
+    auto functionPreemptionMode = obtainFunctionPreemptionMode(kernel);
     commandListPreemptionMode = std::min(commandListPreemptionMode, functionPreemptionMode);
 
     if (!isIndirect) {
-        function->setGroupCount(pThreadGroupDimensions->groupCountX,
-                                pThreadGroupDimensions->groupCountY,
-                                pThreadGroupDimensions->groupCountZ);
+        kernel->setGroupCount(pThreadGroupDimensions->groupCountX,
+                              pThreadGroupDimensions->groupCountY,
+                              pThreadGroupDimensions->groupCountZ);
     }
 
     if (isIndirect && pThreadGroupDimensions) {
         prepareIndirectParams(pThreadGroupDimensions);
     }
 
-    if (function->hasIndirectAllocationsAllowed()) {
-        UnifiedMemoryControls unifiedMemoryControls = function->getUnifiedMemoryControls();
+    if (kernel->hasIndirectAllocationsAllowed()) {
+        UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
         auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
         auto &residencyContainer = commandContainer.getResidencyContainer();
 
@@ -53,7 +53,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunctionWithParams
     }
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer,
-                                                 reinterpret_cast<const void *>(pThreadGroupDimensions), isIndirect, isPredicate, function,
+                                                 reinterpret_cast<const void *>(pThreadGroupDimensions), isIndirect, isPredicate, kernel,
                                                  0, device->getNEODevice(), commandListPreemptionMode);
 
     if (hEvent) {
@@ -61,13 +61,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunctionWithParams
     }
 
     commandContainer.addToResidencyContainer(functionImmutableData->getIsaGraphicsAllocation());
-    auto &residencyContainer = function->getResidencyContainer();
+    auto &residencyContainer = kernel->getResidencyContainer();
     for (auto resource : residencyContainer) {
         commandContainer.addToResidencyContainer(resource);
     }
 
     if (functionImmutableData->getDescriptor().kernelAttributes.flags.usesPrintf) {
-        storePrintfFunction(function);
+        storePrintfFunction(kernel);
     }
 
     return ZE_RESULT_SUCCESS;

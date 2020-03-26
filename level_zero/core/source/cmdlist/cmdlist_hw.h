@@ -66,26 +66,26 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t appendImageCopy(ze_image_handle_t hDstImage, ze_image_handle_t hSrcImage,
                                 ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                 ze_event_handle_t *phWaitEvents) override;
-    ze_result_t appendLaunchFunction(ze_kernel_handle_t hFunction,
-                                     const ze_group_count_t *pThreadGroupDimensions,
-                                     ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                                     ze_event_handle_t *phWaitEvents) override;
+    ze_result_t appendLaunchKernel(ze_kernel_handle_t hKernel,
+                                   const ze_group_count_t *pThreadGroupDimensions,
+                                   ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                   ze_event_handle_t *phWaitEvents) override;
     ze_result_t appendLaunchCooperativeKernel(ze_kernel_handle_t hKernel,
                                               const ze_group_count_t *pLaunchFuncArgs,
                                               ze_event_handle_t hSignalEvent,
                                               uint32_t numWaitEvents,
                                               ze_event_handle_t *phWaitEvents) override;
-    ze_result_t appendLaunchFunctionIndirect(ze_kernel_handle_t hFunction,
-                                             const ze_group_count_t *pDispatchArgumentsBuffer,
-                                             ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                                             ze_event_handle_t *phWaitEvents) override;
-    ze_result_t appendLaunchMultipleFunctionsIndirect(uint32_t numFunctions,
-                                                      const ze_kernel_handle_t *phFunctions,
-                                                      const uint32_t *pNumLaunchArguments,
-                                                      const ze_group_count_t *pLaunchArgumentsBuffer,
-                                                      ze_event_handle_t hEvent,
-                                                      uint32_t numWaitEvents,
-                                                      ze_event_handle_t *phWaitEvents) override;
+    ze_result_t appendLaunchKernelIndirect(ze_kernel_handle_t hKernel,
+                                           const ze_group_count_t *pDispatchArgumentsBuffer,
+                                           ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                           ze_event_handle_t *phWaitEvents) override;
+    ze_result_t appendLaunchMultipleKernelsIndirect(uint32_t numKernels,
+                                                    const ze_kernel_handle_t *phKernels,
+                                                    const uint32_t *pNumLaunchArguments,
+                                                    const ze_group_count_t *pLaunchArgumentsBuffer,
+                                                    ze_event_handle_t hEvent,
+                                                    uint32_t numWaitEvents,
+                                                    ze_event_handle_t *phWaitEvents) override;
     ze_result_t appendMemAdvise(ze_device_handle_t hDevice,
                                 const void *ptr, size_t size,
                                 ze_memory_advice_t advice) override;
@@ -147,10 +147,10 @@ struct CommandListCoreFamily : CommandListImp {
                                          ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                          ze_event_handle_t *phWaitEvents);
 
-    ze_result_t appendLaunchFunctionWithParams(ze_kernel_handle_t hFunction,
-                                               const ze_group_count_t *pThreadGroupDimensions,
-                                               ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                                               ze_event_handle_t *phWaitEvents, bool isIndirect, bool isPredicate);
+    ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
+                                             const ze_group_count_t *pThreadGroupDimensions,
+                                             ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                             ze_event_handle_t *phWaitEvents, bool isIndirect, bool isPredicate);
 
     ze_result_t prepareIndirectParams(const ze_group_count_t *pThreadGroupDimensions);
 

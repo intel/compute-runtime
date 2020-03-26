@@ -63,21 +63,21 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendImageCopy(ze_image_handle_t hDstImage, ze_image_handle_t hSrcImage,
                                         ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                         ze_event_handle_t *phWaitEvents) = 0;
-    virtual ze_result_t appendLaunchFunction(ze_kernel_handle_t hFunction, const ze_group_count_t *pThreadGroupDimensions,
-                                             ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
+    virtual ze_result_t appendLaunchKernel(ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions,
+                                           ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t appendLaunchCooperativeKernel(ze_kernel_handle_t hKernel,
                                                       const ze_group_count_t *pLaunchFuncArgs,
                                                       ze_event_handle_t hSignalEvent,
                                                       uint32_t numWaitEvents,
                                                       ze_event_handle_t *phWaitEvents) = 0;
-    virtual ze_result_t appendLaunchFunctionIndirect(ze_kernel_handle_t hFunction,
-                                                     const ze_group_count_t *pDispatchArgumentsBuffer,
-                                                     ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                                                     ze_event_handle_t *phWaitEvents) = 0;
-    virtual ze_result_t appendLaunchMultipleFunctionsIndirect(uint32_t numFunctions, const ze_kernel_handle_t *phFunctions,
-                                                              const uint32_t *pNumLaunchArguments,
-                                                              const ze_group_count_t *pLaunchArgumentsBuffer, ze_event_handle_t hEvent,
-                                                              uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
+    virtual ze_result_t appendLaunchKernelIndirect(ze_kernel_handle_t hKernel,
+                                                   const ze_group_count_t *pDispatchArgumentsBuffer,
+                                                   ze_event_handle_t hEvent, uint32_t numWaitEvents,
+                                                   ze_event_handle_t *phWaitEvents) = 0;
+    virtual ze_result_t appendLaunchMultipleKernelsIndirect(uint32_t numKernels, const ze_kernel_handle_t *phKernels,
+                                                            const uint32_t *pNumLaunchArguments,
+                                                            const ze_group_count_t *pLaunchArgumentsBuffer, ze_event_handle_t hEvent,
+                                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
     virtual ze_result_t appendMemAdvise(ze_device_handle_t hDevice, const void *ptr, size_t size,
                                         ze_memory_advice_t advice) = 0;
     virtual ze_result_t appendMemoryCopy(void *dstptr, const void *srcptr, size_t size,
@@ -136,13 +136,13 @@ struct CommandList : _ze_command_list_handle_t {
         return commandListPreemptionMode;
     }
 
-    NEO::PreemptionMode obtainFunctionPreemptionMode(Kernel *function);
+    NEO::PreemptionMode obtainFunctionPreemptionMode(Kernel *kernel);
 
     std::vector<Kernel *> &getPrintfFunctionContainer() {
         return this->printfFunctionContainer;
     }
 
-    void storePrintfFunction(Kernel *function);
+    void storePrintfFunction(Kernel *kernel);
     void removeDeallocationContainerData();
     void removeHostPtrAllocations();
     void eraseDeallocationContainerEntry(NEO::GraphicsAllocation *allocation);

@@ -26,13 +26,13 @@ NEO::GraphicsAllocation *PrintfHandler::createPrintfBuffer(Device *device) {
     return allocation;
 }
 
-void PrintfHandler::printOutput(const KernelImmutableData *function,
+void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
                                 NEO::GraphicsAllocation *printfBuffer, Device *device) {
-    bool using32BitGpuPointers = function->getDescriptor().kernelAttributes.gpuPointerSize == 4u;
+    bool using32BitGpuPointers = kernelData->getDescriptor().kernelAttributes.gpuPointerSize == 4u;
     NEO::PrintFormatter printfFormatter{static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer()),
                                         static_cast<uint32_t>(printfBuffer->getUnderlyingBufferSize()),
                                         using32BitGpuPointers,
-                                        function->getDescriptor().kernelMetadata.printfStringsMap};
+                                        kernelData->getDescriptor().kernelMetadata.printfStringsMap};
     printfFormatter.printKernelOutput();
 
     *reinterpret_cast<uint32_t *>(printfBuffer->getUnderlyingBuffer()) =

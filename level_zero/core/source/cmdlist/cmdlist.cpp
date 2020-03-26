@@ -20,12 +20,12 @@ CommandList::~CommandList() {
     removeHostPtrAllocations();
     printfFunctionContainer.clear();
 }
-void CommandList::storePrintfFunction(Kernel *function) {
+void CommandList::storePrintfFunction(Kernel *kernel) {
     auto it = std::find(this->printfFunctionContainer.begin(), this->printfFunctionContainer.end(),
-                        function);
+                        kernel);
 
     if (it == this->printfFunctionContainer.end()) {
-        this->printfFunctionContainer.push_back(function);
+        this->printfFunctionContainer.push_back(kernel);
     }
 }
 
@@ -77,8 +77,8 @@ void CommandList::eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocati
     }
 }
 
-NEO::PreemptionMode CommandList::obtainFunctionPreemptionMode(Kernel *function) {
-    auto functionAttributes = function->getImmutableData()->getDescriptor().kernelAttributes;
+NEO::PreemptionMode CommandList::obtainFunctionPreemptionMode(Kernel *kernel) {
+    auto functionAttributes = kernel->getImmutableData()->getDescriptor().kernelAttributes;
 
     NEO::PreemptionFlags flags = {};
     flags.flags.disabledMidThreadPreemptionKernel = functionAttributes.flags.requiresDisabledMidThreadPreemption;

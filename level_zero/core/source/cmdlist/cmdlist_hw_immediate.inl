@@ -11,24 +11,24 @@
 
 namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchFunction(
-    ze_kernel_handle_t hFunction, const ze_group_count_t *pThreadGroupDimensions,
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernel(
+    ze_kernel_handle_t hKernel, const ze_group_count_t *pThreadGroupDimensions,
     ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunction(hFunction, pThreadGroupDimensions,
-                                                                          hEvent, numWaitEvents, phWaitEvents);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(hKernel, pThreadGroupDimensions,
+                                                                        hEvent, numWaitEvents, phWaitEvents);
     if (ret == ZE_RESULT_SUCCESS) {
         executeCommandListImmediate(true);
     }
     return ret;
 }
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchFunctionIndirect(
-    ze_kernel_handle_t hFunction, const ze_group_count_t *pDispatchArgumentsBuffer,
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendLaunchKernelIndirect(
+    ze_kernel_handle_t hKernel, const ze_group_count_t *pDispatchArgumentsBuffer,
     ze_event_handle_t hEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
-    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchFunctionIndirect(hFunction, pDispatchArgumentsBuffer,
-                                                                                  hEvent, numWaitEvents, phWaitEvents);
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(hKernel, pDispatchArgumentsBuffer,
+                                                                                hEvent, numWaitEvents, phWaitEvents);
     if (ret == ZE_RESULT_SUCCESS) {
         executeCommandListImmediate(true);
     }

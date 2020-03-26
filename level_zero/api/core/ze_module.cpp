@@ -87,23 +87,23 @@ zeModuleGetFunctionPointer(
 
 __zedllexport ze_result_t __zecall
 zeKernelSetGroupSize(
-    ze_kernel_handle_t hFunction,
+    ze_kernel_handle_t hKernel,
     uint32_t groupSizeX,
     uint32_t groupSizeY,
     uint32_t groupSizeZ) {
-    return L0::Kernel::fromHandle(hFunction)->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
+    return L0::Kernel::fromHandle(hKernel)->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
 }
 
 __zedllexport ze_result_t __zecall
 zeKernelSuggestGroupSize(
-    ze_kernel_handle_t hFunction,
+    ze_kernel_handle_t hKernel,
     uint32_t globalSizeX,
     uint32_t globalSizeY,
     uint32_t globalSizeZ,
     uint32_t *groupSizeX,
     uint32_t *groupSizeY,
     uint32_t *groupSizeZ) {
-    return L0::Kernel::fromHandle(hFunction)->suggestGroupSize(globalSizeX, globalSizeY, globalSizeZ, groupSizeX, groupSizeY, groupSizeZ);
+    return L0::Kernel::fromHandle(hKernel)->suggestGroupSize(globalSizeX, globalSizeY, globalSizeZ, groupSizeX, groupSizeY, groupSizeZ);
 }
 
 __zedllexport ze_result_t __zecall
@@ -115,11 +115,11 @@ zeKernelSuggestMaxCooperativeGroupCount(
 
 __zedllexport ze_result_t __zecall
 zeKernelSetArgumentValue(
-    ze_kernel_handle_t hFunction,
+    ze_kernel_handle_t hKernel,
     uint32_t argIndex,
     size_t argSize,
     const void *pArgValue) {
-    return L0::Kernel::fromHandle(hFunction)->setArgumentValue(argIndex, argSize, pArgValue);
+    return L0::Kernel::fromHandle(hKernel)->setArgumentValue(argIndex, argSize, pArgValue);
 }
 
 __zedllexport ze_result_t __zecall
@@ -157,12 +157,12 @@ zeKernelGetProperties(
 __zedllexport ze_result_t __zecall
 zeCommandListAppendLaunchKernel(
     ze_command_list_handle_t hCommandList,
-    ze_kernel_handle_t hFunction,
+    ze_kernel_handle_t hKernel,
     const ze_group_count_t *pLaunchFuncArgs,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchFunction(hFunction, pLaunchFuncArgs, hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernel(hKernel, pLaunchFuncArgs, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 __zedllexport ze_result_t __zecall
@@ -179,25 +179,25 @@ zeCommandListAppendLaunchCooperativeKernel(
 __zedllexport ze_result_t __zecall
 zeCommandListAppendLaunchKernelIndirect(
     ze_command_list_handle_t hCommandList,
-    ze_kernel_handle_t hFunction,
+    ze_kernel_handle_t hKernel,
     const ze_group_count_t *pLaunchArgumentsBuffer,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchFunctionIndirect(hFunction, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernelIndirect(hKernel, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 __zedllexport ze_result_t __zecall
 zeCommandListAppendLaunchMultipleKernelsIndirect(
     ze_command_list_handle_t hCommandList,
-    uint32_t numFunctions,
-    ze_kernel_handle_t *phFunctions,
+    uint32_t numKernels,
+    ze_kernel_handle_t *phKernels,
     const uint32_t *pCountBuffer,
     const ze_group_count_t *pLaunchArgumentsBuffer,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchMultipleFunctionsIndirect(numFunctions, phFunctions, pCountBuffer, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchMultipleKernelsIndirect(numKernels, phKernels, pCountBuffer, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 } // extern "C"
