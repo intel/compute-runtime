@@ -74,9 +74,8 @@ HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledSetThenExpectNoCpuCach
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionDisableCpuCacheFlush.set(1);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
     EXPECT_TRUE(directSubmission.disableCpuCacheFlush);
 
     uintptr_t expectedPtrVal = 0;
@@ -91,9 +90,8 @@ HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledNotSetThenExpectCpuCac
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionDisableCpuCacheFlush.set(0);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
     EXPECT_FALSE(directSubmission.disableCpuCacheFlush);
 
     uintptr_t expectedPtrVal = 0xABCD00u;
@@ -105,9 +103,8 @@ HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledNotSetThenExpectCpuCac
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsStartedThenExpectAllocationsCreatedAndCommandsDispatched) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
     EXPECT_FALSE(directSubmission.disableCpuCacheFlush);
 
     bool ret = directSubmission.initialize(true);
@@ -122,9 +119,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsStarted
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsNotStartedThenExpectAllocationsCreatedAndCommandsNotDispatched) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -138,10 +134,9 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsNotStar
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsPrimaryThenExpectNextSecondary) {
-    using RingBufferUse = typename MockDirectSubmissionHw<FamilyType>::RingBufferUse;
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    using RingBufferUse = typename MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>::RingBufferUse;
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -153,10 +148,9 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsPr
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsSecondaryThenExpectNextPrimary) {
-    using RingBufferUse = typename MockDirectSubmissionHw<FamilyType>::RingBufferUse;
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    using RingBufferUse = typename MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>::RingBufferUse;
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -171,9 +165,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsSe
     EXPECT_EQ(RingBufferUse::FirstBuffer, directSubmission.currentRingBuffer);
 }
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAllocateFailWhenRingIsStartedThenExpectRingNotStarted) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
     EXPECT_FALSE(directSubmission.disableCpuCacheFlush);
 
     directSubmission.allocateOsResourcesReturn = false;
@@ -185,9 +178,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAllocateFailWhenRingIsStarte
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSubmitFailWhenRingIsStartedThenExpectRingNotStartedCommandsDispatched) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     directSubmission.submitReturn = false;
     bool ret = directSubmission.initialize(true);
@@ -198,9 +190,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSubmitFailWhenRingIsStartedT
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsStartedThenExpectNoStartCommandsDispatched) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -212,9 +203,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsStartedThenEx
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsNotStartedThenExpectStartCommandsDispatched) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -227,9 +217,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsNotStartedThe
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsNotStartedSubmitFailThenExpectStartCommandsDispatchedRingNotStarted) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -243,9 +232,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsNotStartedSub
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsNotStartedAndSwitchBufferIsNeededThenExpectRingAllocationChangedStartCommandsDispatched) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -266,9 +254,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStartWhenRingIsNotStartedAnd
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionStopWhenStopRingIsCalledThenExpectStopCommandDispatched) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -287,17 +274,15 @@ HWTEST_F(DirectSubmissionTest,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
-    MockDirectSubmissionHw<FamilyType> regularDirectSubmission(*pDevice,
-                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                               *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> regularDirectSubmission(*pDevice,
+                                                                                             *osContext.get());
     size_t regularSizeEnd = regularDirectSubmission.getSizeEnd();
 
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -344,17 +329,15 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    MockDirectSubmissionHw<FamilyType> regularDirectSubmission(*pDevice,
-                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                               *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> regularDirectSubmission(*pDevice,
+                                                                                             *osContext.get());
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
 
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -399,17 +382,15 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    MockDirectSubmissionHw<FamilyType> regularDirectSubmission(*pDevice,
-                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                               *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> regularDirectSubmission(*pDevice,
+                                                                                             *osContext.get());
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
 
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -435,7 +416,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     LinearStream parseDispatch;
     uint8_t buffer[256];
     parseDispatch.replaceBuffer(buffer, 256);
-    directSubmission.cmdDispatcher->dispatchCacheFlush(parseDispatch, *directSubmission.hwInfo);
+    RenderDispatcher<FamilyType>::dispatchCacheFlush(parseDispatch, *directSubmission.hwInfo);
     auto expectedPipeControl = static_cast<PIPE_CONTROL *>(parseDispatch.getCpuBase());
     for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
@@ -452,18 +433,16 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockDirectSubmissionHw<FamilyType> regularDirectSubmission(*pDevice,
-                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                               *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> regularDirectSubmission(*pDevice,
+                                                                                             *osContext.get());
 
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
 
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -500,17 +479,15 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    MockDirectSubmissionHw<FamilyType> regularDirectSubmission(*pDevice,
-                                                               std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                               *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> regularDirectSubmission(*pDevice,
+                                                                                             *osContext.get());
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
 
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(2);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -536,9 +513,8 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchSemaphoreThenExpectCorrectSizeUsed) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -548,9 +524,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchSemaphoreThenExp
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchStartSectionThenExpectCorrectSizeUsed) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -560,9 +535,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchStartSectionThen
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchSwitchRingBufferSectionThenExpectCorrectSizeUsed) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice, *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -572,9 +545,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchSwitchRingBuffer
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchFlushSectionThenExpectCorrectSizeUsed) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -584,9 +556,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchFlushSectionThen
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchTagUpdateSectionThenExpectCorrectSizeUsed) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>
+        directSubmission(*pDevice, *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -597,9 +568,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchTagUpdateSection
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchEndingSectionThenExpectCorrectSizeUsed) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -610,9 +580,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchEndingSectionThe
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           directSubmission.getSizeFlushSection() +
@@ -627,9 +596,8 @@ HWTEST_F(DirectSubmissionTest,
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
     size_t expectedSize = directSubmission.getSizeStoraDataSection() +
                           directSubmission.getSizeFlushSection() +
                           directSubmission.getSizeTagUpdateSection() +
@@ -643,9 +611,8 @@ HWTEST_F(DirectSubmissionTest,
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(2);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
     size_t expectedSize = directSubmission.getSizeFlushSection() +
                           directSubmission.getSizeTagUpdateSection() +
                           directSubmission.getSizeSemaphoreSection();
@@ -658,9 +625,8 @@ HWTEST_F(DirectSubmissionTest,
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           directSubmission.getSizeTagUpdateSection() +
                           directSubmission.getSizeSemaphoreSection();
@@ -673,9 +639,8 @@ HWTEST_F(DirectSubmissionTest,
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           directSubmission.getSizeFlushSection() +
@@ -685,9 +650,8 @@ HWTEST_F(DirectSubmissionTest,
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetEndSizeThenExpectCorrectSizeReturned) {
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     size_t expectedSize = directSubmission.getSizeEndingSection() +
                           directSubmission.getSizeFlushSection();
@@ -698,9 +662,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetEndSizeThenExpectCorr
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenSettingAddressInReturnCommandThenVerifyCorrectlySet) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -715,10 +678,9 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenSettingAddressInReturnCo
 HWTEST_F(DirectSubmissionTest, whenDirectSubmissionInitializedThenExpectCreatedAllocationsFreed) {
     MemoryManager *memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
 
-    std::unique_ptr<MockDirectSubmissionHw<FamilyType>> directSubmission =
-        std::make_unique<MockDirectSubmissionHw<FamilyType>>(*pDevice,
-                                                             std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                             *osContext.get());
+    std::unique_ptr<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>> directSubmission =
+        std::make_unique<MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*pDevice,
+                                                                                           *osContext.get());
     bool ret = directSubmission->initialize(false);
     EXPECT_TRUE(ret);
 
@@ -727,10 +689,9 @@ HWTEST_F(DirectSubmissionTest, whenDirectSubmissionInitializedThenExpectCreatedA
     directSubmission.reset(nullptr);
     memoryManager->freeGraphicsMemory(nulledAllocation);
 
-    directSubmission =
-        std::make_unique<MockDirectSubmissionHw<FamilyType>>(*pDevice,
-                                                             std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                             *osContext.get());
+    directSubmission = std::make_unique<
+        MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*pDevice,
+                                                                          *osContext.get());
     ret = directSubmission->initialize(false);
     EXPECT_TRUE(ret);
 
@@ -739,10 +700,9 @@ HWTEST_F(DirectSubmissionTest, whenDirectSubmissionInitializedThenExpectCreatedA
     directSubmission.reset(nullptr);
     memoryManager->freeGraphicsMemory(nulledAllocation);
 
-    directSubmission =
-        std::make_unique<MockDirectSubmissionHw<FamilyType>>(*pDevice,
-                                                             std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                             *osContext.get());
+    directSubmission = std::make_unique<
+        MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>>(*pDevice,
+                                                                          *osContext.get());
     ret = directSubmission->initialize(false);
     EXPECT_TRUE(ret);
     nulledAllocation = directSubmission->semaphores;
@@ -757,9 +717,8 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     FlushStampTracker flushStamp(true);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -769,7 +728,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(0u, directSubmission.semaphoreData->QueueWorkCount);
     EXPECT_EQ(1u, directSubmission.currentQueueWorkCount);
     EXPECT_EQ(1u, directSubmission.submitCount);
-    size_t submitSize = directSubmission.cmdDispatcher->getSizePreemption() +
+    size_t submitSize = RenderDispatcher<FamilyType>::getSizePreemption() +
                         directSubmission.getSizeSemaphoreSection();
     EXPECT_EQ(submitSize, directSubmission.submitSize);
     EXPECT_EQ(oldRingAllocation->getGpuAddress(), directSubmission.submitGpuAddress);
@@ -797,9 +756,8 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
          givenDirectSubmissionRingNotStartAndSwitchBuffersWhenDispatchingCommandBufferThenExpectDispatchInCommandBufferQueueCountIncreaseAndSubmitToGpu) {
     FlushStampTracker flushStamp(true);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -830,9 +788,8 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
          givenDirectSubmissionRingStartWhenDispatchingCommandBufferThenExpectDispatchInCommandBufferAndQueueCountIncrease) {
     FlushStampTracker flushStamp(true);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -842,7 +799,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(0u, directSubmission.semaphoreData->QueueWorkCount);
     EXPECT_EQ(1u, directSubmission.currentQueueWorkCount);
     EXPECT_EQ(1u, directSubmission.submitCount);
-    size_t submitSize = directSubmission.cmdDispatcher->getSizePreemption() +
+    size_t submitSize = RenderDispatcher<FamilyType>::getSizePreemption() +
                         directSubmission.getSizeSemaphoreSection();
     EXPECT_EQ(submitSize, directSubmission.submitSize);
     EXPECT_EQ(oldRingAllocation->getGpuAddress(), directSubmission.submitGpuAddress);
@@ -867,9 +824,8 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
          givenDirectSubmissionRingNotStartWhenDispatchingCommandBufferThenExpectDispatchInCommandBufferQueueCountIncreaseAndSubmitToGpu) {
     FlushStampTracker flushStamp(true);
 
-    MockDirectSubmissionHw<FamilyType> directSubmission(*pDevice,
-                                                        std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                        *osContext.get());
+    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
+                                                                                      *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
@@ -901,6 +857,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 HWTEST_F(DirectSubmissionTest, givenSuperBaseCsrWhenCheckingDirectSubmissionAvailableThenReturnFalse) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.csrSuperBaseCallDirectSubmissionAvailable = true;
+    ultHwConfig.csrSuperBaseCallBlitterDirectSubmissionAvailable = true;
 
     int32_t executionStamp = 0;
     std::unique_ptr<MockCsr<FamilyType>> mockCsr =
@@ -908,17 +865,22 @@ HWTEST_F(DirectSubmissionTest, givenSuperBaseCsrWhenCheckingDirectSubmissionAvai
 
     bool ret = mockCsr->isDirectSubmissionEnabled();
     EXPECT_FALSE(ret);
+    ret = mockCsr->isBlitterDirectSubmissionEnabled();
+    EXPECT_FALSE(ret);
 }
 
 HWTEST_F(DirectSubmissionTest, givenBaseCsrWhenCheckingDirectSubmissionAvailableThenReturnFalse) {
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
+    ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = true;
 
     int32_t executionStamp = 0;
     std::unique_ptr<MockCsr<FamilyType>> mockCsr =
         std::make_unique<MockCsr<FamilyType>>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
 
     bool ret = mockCsr->isDirectSubmissionEnabled();
+    EXPECT_FALSE(ret);
+    ret = mockCsr->isBlitterDirectSubmissionEnabled();
     EXPECT_FALSE(ret);
 }
 

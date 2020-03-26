@@ -9,6 +9,7 @@ set(NEO_CORE_DIRECT_SUBMISSION_DISPATCHERS
   ${CMAKE_CURRENT_SOURCE_DIR}/blitter_dispatcher.h
   ${CMAKE_CURRENT_SOURCE_DIR}/blitter_dispatcher.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatcher.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/dispatcher.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/render_dispatcher.h
   ${CMAKE_CURRENT_SOURCE_DIR}/render_dispatcher.inl
 )

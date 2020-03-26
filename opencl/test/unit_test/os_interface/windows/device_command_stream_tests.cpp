@@ -87,6 +87,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::getCS;
+    using CommandStreamReceiverHw<GfxFamily>::blitterDirectSubmission;
     using CommandStreamReceiverHw<GfxFamily>::directSubmission;
     using WddmCommandStreamReceiver<GfxFamily>::commandBufferHeader;
     using WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver;
@@ -962,6 +963,7 @@ TEST_F(WddmCommandStreamTest, whenDirectSubmissionDisabledThenExpectNoFeatureAva
     bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
     EXPECT_TRUE(ret);
     EXPECT_FALSE(csr->isDirectSubmissionEnabled());
+    EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
 }
 
 TEST_F(WddmCommandStreamTest, whenDirectSubmissionEnabledOnRcsThenExpectFeatureAvailable) {
@@ -973,6 +975,7 @@ TEST_F(WddmCommandStreamTest, whenDirectSubmissionEnabledOnRcsThenExpectFeatureA
     bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
     EXPECT_TRUE(ret);
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
+    EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
 }
 
 TEST_F(WddmCommandStreamTest, givenDirectSubmissionEnabledWhenPlatformNotSupportsRcsThenExpectFeatureNotAvailable) {
@@ -999,7 +1002,8 @@ TEST_F(WddmCommandStreamTest, whenDirectSubmissionEnabledOnBcsThenExpectFeatureA
 
     bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
     EXPECT_TRUE(ret);
-    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
+    EXPECT_FALSE(csr->isDirectSubmissionEnabled());
+    EXPECT_TRUE(csr->isBlitterDirectSubmissionEnabled());
 }
 
 TEST_F(WddmCommandStreamTest, givenDirectSubmissionEnabledWhenPlatformNotSupportsBcsThenExpectFeatureNotAvailable) {
@@ -1016,6 +1020,7 @@ TEST_F(WddmCommandStreamTest, givenDirectSubmissionEnabledWhenPlatformNotSupport
     bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
     EXPECT_TRUE(ret);
     EXPECT_FALSE(csr->isDirectSubmissionEnabled());
+    EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
 }
 
 TEST_F(WddmCommandStreamTest, givenLowPriorityContextWhenDirectSubmissionDisabledOnLowPriorityThenExpectFeatureNotAvailable) {

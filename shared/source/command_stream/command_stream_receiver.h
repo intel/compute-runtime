@@ -202,6 +202,10 @@ class CommandStreamReceiver {
         return false;
     }
 
+    virtual bool isBlitterDirectSubmissionEnabled() const {
+        return false;
+    }
+
     bool isRcs() const;
 
   protected:

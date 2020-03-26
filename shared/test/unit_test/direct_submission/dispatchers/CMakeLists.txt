@@ -9,6 +9,7 @@ set(NEO_CORE_DIRECT_SUBMISSION_DISPATCHERS_TESTS
   ${CMAKE_CURRENT_SOURCE_DIR}/blitter_dispatcher_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatcher_fixture.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatcher_fixture.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/dispatcher_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/render_dispatcher_tests.cpp
 )
 

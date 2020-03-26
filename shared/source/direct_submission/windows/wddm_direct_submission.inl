@@ -20,11 +20,10 @@ namespace NEO {
 // Initialize COMMAND_BUFFER_HEADER         Type PatchList  Streamer Perf Tag
 DECLARE_COMMAND_BUFFER(CommandBufferHeader, UMD_OCL, FALSE, FALSE, PERFTAG_OCL);
 
-template <typename GfxFamily>
-WddmDirectSubmission<GfxFamily>::WddmDirectSubmission(Device &device,
-                                                      std::unique_ptr<Dispatcher> cmdDispatcher,
-                                                      OsContext &osContext)
-    : DirectSubmissionHw<GfxFamily>(device, std::move(cmdDispatcher), osContext) {
+template <typename GfxFamily, typename Dispatcher>
+WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(Device &device,
+                                                                  OsContext &osContext)
+    : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext) {
     osContextWin = reinterpret_cast<OsContextWin *>(&osContext);
     wddm = osContextWin->getWddm();
     commandBufferHeader = std::make_unique<COMMAND_BUFFER_HEADER_REC>();
@@ -34,18 +33,18 @@ WddmDirectSubmission<GfxFamily>::WddmDirectSubmission(Device &device,
     }
 }
 
-template <typename GfxFamily>
-WddmDirectSubmission<GfxFamily>::~WddmDirectSubmission() {
+template <typename GfxFamily, typename Dispatcher>
+WddmDirectSubmission<GfxFamily, Dispatcher>::~WddmDirectSubmission() {
     if (ringStart) {
         stopRingBuffer();
-        WddmDirectSubmission<GfxFamily>::handleCompletionRingBuffer(ringFence.lastSubmittedFence, ringFence);
+        WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionRingBuffer(ringFence.lastSubmittedFence, ringFence);
     }
     deallocateResources();
     wddm->getWddmInterface()->destroyMonitorFence(ringFence);
 }
 
-template <typename GfxFamily>
-bool WddmDirectSubmission<GfxFamily>::allocateOsResources(DirectSubmissionAllocations &allocations) {
+template <typename GfxFamily, typename Dispatcher>
+bool WddmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources(DirectSubmissionAllocations &allocations) {
     //for now only WDDM2.0
     UNRECOVERABLE_IF(wddm->getWddmVersion() != WddmVersion::WDDM_2_0);
 
@@ -61,8 +60,8 @@ bool WddmDirectSubmission<GfxFamily>::allocateOsResources(DirectSubmissionAlloca
     return ret;
 }
 
-template <typename GfxFamily>
-bool WddmDirectSubmission<GfxFamily>::submit(uint64_t gpuAddress, size_t size) {
+template <typename GfxFamily, typename Dispatcher>
+bool WddmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, size_t size) {
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader.get());
     pHeader->RequiresCoherency = false;
 
@@ -80,14 +79,14 @@ bool WddmDirectSubmission<GfxFamily>::submit(uint64_t gpuAddress, size_t size) {
     return wddm->submit(gpuAddress, size, pHeader, submitArgs);
 }
 
-template <typename GfxFamily>
-bool WddmDirectSubmission<GfxFamily>::handleResidency() {
+template <typename GfxFamily, typename Dispatcher>
+bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
     wddm->waitOnPagingFenceFromCpu();
     return true;
 }
 
-template <typename GfxFamily>
-uint64_t WddmDirectSubmission<GfxFamily>::switchRingBuffers() {
+template <typename GfxFamily, typename Dispatcher>
+uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::switchRingBuffers() {
     GraphicsAllocation *nextRingBuffer = switchRingBuffersAllocations();
     void *flushPtr = ringCommandStream.getSpace(0);
     uint64_t currentBufferGpuVa = getCommandBufferPositionGpuAddress(flushPtr);
@@ -110,8 +109,8 @@ uint64_t WddmDirectSubmission<GfxFamily>::switchRingBuffers() {
     return currentBufferGpuVa;
 }
 
-template <typename GfxFamily>
-uint64_t WddmDirectSubmission<GfxFamily>::updateTagValue() {
+template <typename GfxFamily, typename Dispatcher>
+uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue() {
     MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
 
     currentFence.lastSubmittedFence = currentFence.currentFenceValue;
@@ -121,13 +120,13 @@ uint64_t WddmDirectSubmission<GfxFamily>::updateTagValue() {
     return currentFence.lastSubmittedFence;
 }
 
-template <typename GfxFamily>
-void WddmDirectSubmission<GfxFamily>::handleCompletionRingBuffer(uint64_t completionValue, MonitoredFence &fence) {
+template <typename GfxFamily, typename Dispatcher>
+void WddmDirectSubmission<GfxFamily, Dispatcher>::handleCompletionRingBuffer(uint64_t completionValue, MonitoredFence &fence) {
     wddm->waitFromCpu(completionValue, fence);
 }
 
-template <typename GfxFamily>
-void WddmDirectSubmission<GfxFamily>::getTagAddressValue(TagData &tagData) {
+template <typename GfxFamily, typename Dispatcher>
+void WddmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &tagData) {
     MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
 
     tagData.tagAddress = GmmHelper::canonize(currentFence.gpuAddress);

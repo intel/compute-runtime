@@ -11,40 +11,39 @@
 
 namespace NEO {
 
-template <typename GfxFamily>
-DrmDirectSubmission<GfxFamily>::DrmDirectSubmission(Device &device,
-                                                    std::unique_ptr<Dispatcher> cmdDispatcher,
-                                                    OsContext &osContext)
-    : DirectSubmissionHw<GfxFamily>(device, std::move(cmdDispatcher), osContext) {
+template <typename GfxFamily, typename Dispatcher>
+DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device,
+                                                                OsContext &osContext)
+    : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext) {
 }
 
-template <typename GfxFamily>
-bool DrmDirectSubmission<GfxFamily>::allocateOsResources(DirectSubmissionAllocations &allocations) {
+template <typename GfxFamily, typename Dispatcher>
+bool DrmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources(DirectSubmissionAllocations &allocations) {
     return false;
 }
 
-template <typename GfxFamily>
-bool DrmDirectSubmission<GfxFamily>::submit(uint64_t gpuAddress, size_t size) {
+template <typename GfxFamily, typename Dispatcher>
+bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, size_t size) {
     return false;
 }
 
-template <typename GfxFamily>
-bool DrmDirectSubmission<GfxFamily>::handleResidency() {
+template <typename GfxFamily, typename Dispatcher>
+bool DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
     return false;
 }
 
-template <typename GfxFamily>
-uint64_t DrmDirectSubmission<GfxFamily>::switchRingBuffers() {
+template <typename GfxFamily, typename Dispatcher>
+uint64_t DrmDirectSubmission<GfxFamily, Dispatcher>::switchRingBuffers() {
     return 0ull;
 }
 
-template <typename GfxFamily>
-uint64_t DrmDirectSubmission<GfxFamily>::updateTagValue() {
+template <typename GfxFamily, typename Dispatcher>
+uint64_t DrmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue() {
     return 0ull;
 }
 
-template <typename GfxFamily>
-void DrmDirectSubmission<GfxFamily>::getTagAddressValue(TagData &tagData) {
+template <typename GfxFamily, typename Dispatcher>
+void DrmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &tagData) {
     tagData.tagAddress = 0ull;
     tagData.tagValue = 0ull;
 }

@@ -40,14 +40,12 @@ class FlushStampTracker;
 class GraphicsAllocation;
 struct HardwareInfo;
 class Device;
-class Dispatcher;
 class OsContext;
 
-template <typename GfxFamily>
+template <typename GfxFamily, typename Dispatcher>
 class DirectSubmissionHw {
   public:
     DirectSubmissionHw(Device &device,
-                       std::unique_ptr<Dispatcher> cmdDispatcher,
                        OsContext &osContext);
 
     virtual ~DirectSubmissionHw();
@@ -111,7 +109,6 @@ class DirectSubmissionHw {
     };
 
     LinearStream ringCommandStream;
-    std::unique_ptr<Dispatcher> cmdDispatcher;
     FlushStamp completionRingBuffers[RingBufferUse::MaxBuffers] = {0ull, 0ull};
 
     uint64_t semaphoreGpuVa = 0u;

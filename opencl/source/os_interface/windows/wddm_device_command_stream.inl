@@ -177,17 +177,16 @@ bool WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission(Device &device, 
         }
 
         if (directSubmissionProperty.engineSupported && startDirect) {
-            if (contextEngineType == ENGINE_TYPE_BCS) {
-                directSubmission = std::make_unique<WddmDirectSubmission<GfxFamily>>(device,
-                                                                                     std::make_unique<BlitterDispatcher<GfxFamily>>(),
-                                                                                     osContext);
+            if (contextEngineType == aub_stream::ENGINE_BCS) {
+                blitterDirectSubmission = std::make_unique<
+                    WddmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>>(device, osContext);
+                ret = blitterDirectSubmission->initialize(directSubmissionProperty.submitOnInit);
             } else {
-                directSubmission = std::make_unique<WddmDirectSubmission<GfxFamily>>(device,
-                                                                                     std::make_unique<RenderDispatcher<GfxFamily>>(),
-                                                                                     osContext);
+                directSubmission = std::make_unique<
+                    WddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(device, osContext);
+                ret = directSubmission->initialize(directSubmissionProperty.submitOnInit);
+                this->dispatchMode = DispatchMode::ImmediateDispatch;
             }
-            ret = directSubmission->initialize(directSubmissionProperty.submitOnInit);
-            this->dispatchMode = DispatchMode::ImmediateDispatch;
         }
     }
     return ret;

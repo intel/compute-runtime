@@ -11,20 +11,18 @@
 namespace NEO {
 
 template <typename GfxFamily>
-class RenderDispatcher : public Dispatcher {
+class RenderDispatcher : public Dispatcher<GfxFamily> {
   public:
-    RenderDispatcher() = default;
+    static void dispatchPreemption(LinearStream &cmdBuffer);
+    static size_t getSizePreemption();
 
-    void dispatchPreemption(LinearStream &cmdBuffer) override;
-    size_t getSizePreemption() override;
+    static void dispatchMonitorFence(LinearStream &cmdBuffer,
+                                     uint64_t gpuAddress,
+                                     uint64_t immediateData,
+                                     const HardwareInfo &hwInfo);
+    static size_t getSizeMonitorFence(const HardwareInfo &hwInfo);
 
-    void dispatchMonitorFence(LinearStream &cmdBuffer,
-                              uint64_t gpuAddress,
-                              uint64_t immediateData,
-                              const HardwareInfo &hwInfo) override;
-    size_t getSizeMonitorFence(const HardwareInfo &hwInfo) override;
-
-    void dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo) override;
-    size_t getSizeCacheFlush(const HardwareInfo &hwInfo) override;
+    static void dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo);
+    static size_t getSizeCacheFlush(const HardwareInfo &hwInfo);
 };
 } // namespace NEO

@@ -31,15 +31,11 @@ struct DrmDirectSubmissionFixture : public DeviceFixture {
     DrmMock drmMock;
 };
 
-template <typename GfxFamily>
-struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily> {
-    MockDrmDirectSubmission(Device &device,
-                            std::unique_ptr<Dispatcher> cmdDispatcher,
-                            OsContext &osContext)
-        : DrmDirectSubmission<GfxFamily>(device, std::move(cmdDispatcher), osContext) {
-    }
-    using BaseClass = DrmDirectSubmission<GfxFamily>;
+template <typename GfxFamily, typename Dispatcher>
+struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatcher> {
+    using BaseClass = DrmDirectSubmission<GfxFamily, Dispatcher>;
     using BaseClass::allocateOsResources;
+    using BaseClass::DrmDirectSubmission;
     using BaseClass::getTagAddressValue;
     using BaseClass::handleResidency;
     using BaseClass::submit;
@@ -52,9 +48,8 @@ using DrmDirectSubmissionTest = Test<DrmDirectSubmissionFixture>;
 using namespace NEO;
 
 HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplementationThenExpectAllFailAsNotImplemented) {
-    MockDrmDirectSubmission<FamilyType> drmDirectSubmission(*pDevice,
-                                                            std::make_unique<RenderDispatcher<FamilyType>>(),
-                                                            *osContext.get());
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(*pDevice,
+                                                                                          *osContext.get());
 
     DirectSubmissionAllocations allocations;
     EXPECT_FALSE(drmDirectSubmission.allocateOsResources(allocations));

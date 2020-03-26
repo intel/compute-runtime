@@ -35,6 +35,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::getScratchSpaceController;
     using BaseClass::indirectHeap;
     using BaseClass::iohState;
+    using BaseClass::isBlitterDirectSubmissionEnabled;
     using BaseClass::isDirectSubmissionEnabled;
     using BaseClass::perDssBackedBuffer;
     using BaseClass::programEnginePrologue;
@@ -54,6 +55,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::GSBAFor32BitProgrammed;
     using BaseClass::CommandStreamReceiver::initDirectSubmission;
     using BaseClass::CommandStreamReceiver::internalAllocationStorage;
+    using BaseClass::CommandStreamReceiver::isBlitterDirectSubmissionEnabled;
     using BaseClass::CommandStreamReceiver::isDirectSubmissionEnabled;
     using BaseClass::CommandStreamReceiver::isEnginePrologueSent;
     using BaseClass::CommandStreamReceiver::isPreambleSent;
@@ -221,6 +223,17 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         }
         return directSubmissionAvailable;
     }
+
+    bool isBlitterDirectSubmissionEnabled() const override {
+        if (ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable) {
+            return BaseClass::isBlitterDirectSubmissionEnabled();
+        }
+        if (ultHwConfig.csrSuperBaseCallBlitterDirectSubmissionAvailable) {
+            return BaseClass::CommandStreamReceiver::isBlitterDirectSubmissionEnabled();
+        }
+        return blitterDirectSubmissionAvailable;
+    }
+
     std::atomic<uint32_t> recursiveLockCounter;
     bool createPageTableManagerCalled = false;
     bool recordFlusheBatchBuffer = false;
@@ -240,5 +253,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     DispatchFlags recordedDispatchFlags;
     bool multiOsContextCapable = false;
     bool directSubmissionAvailable = false;
+    bool blitterDirectSubmissionAvailable = false;
 };
 } // namespace NEO

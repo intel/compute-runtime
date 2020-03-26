@@ -16,6 +16,9 @@ struct UltHwConfig {
     bool csrFailInitDirectSubmission = false;
     bool csrBaseCallDirectSubmissionAvailable = false;
     bool csrSuperBaseCallDirectSubmissionAvailable = false;
+
+    bool csrBaseCallBlitterDirectSubmissionAvailable = false;
+    bool csrSuperBaseCallBlitterDirectSubmissionAvailable = false;
 };
 
 extern UltHwConfig ultHwConfig;

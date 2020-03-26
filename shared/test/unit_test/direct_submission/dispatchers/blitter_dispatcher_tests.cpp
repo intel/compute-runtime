@@ -15,36 +15,30 @@ using namespace NEO;
 using BlitterDispatcheTest = Test<DispatcherFixture>;
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenAskingForPreemptionCmdSizeThenReturnZero) {
-    BlitterDispatcher<FamilyType> blitterDispatcher;
-    EXPECT_EQ(0u, blitterDispatcher.getSizePreemption());
+    EXPECT_EQ(0u, BlitterDispatcher<FamilyType>::getSizePreemption());
 }
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingPreemptionCmdThenDispatchNothing) {
-    BlitterDispatcher<FamilyType> blitterDispatcher;
-    blitterDispatcher.dispatchPreemption(cmdBuffer);
+    BlitterDispatcher<FamilyType>::dispatchPreemption(cmdBuffer);
 
     EXPECT_EQ(0u, cmdBuffer.getUsed());
 }
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenAskingForMonitorFenceCmdSizeThenReturnZero) {
-    BlitterDispatcher<FamilyType> blitterDispatcher;
-    EXPECT_EQ(0u, blitterDispatcher.getSizeMonitorFence(pDevice->getHardwareInfo()));
+    EXPECT_EQ(0u, BlitterDispatcher<FamilyType>::getSizeMonitorFence(pDevice->getHardwareInfo()));
 }
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingMonitorFenceCmdThenDispatchNothing) {
-    BlitterDispatcher<FamilyType> blitterDispatcher;
-    blitterDispatcher.dispatchMonitorFence(cmdBuffer, MemoryConstants::pageSize64k, 1ull, pDevice->getHardwareInfo());
+    BlitterDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, MemoryConstants::pageSize64k, 1ull, pDevice->getHardwareInfo());
 
     EXPECT_EQ(0u, cmdBuffer.getUsed());
 }
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenAskingForCacheFlushCmdSizeThenReturnZero) {
-    BlitterDispatcher<FamilyType> blitterDispatcher;
-    EXPECT_EQ(0u, blitterDispatcher.getSizeCacheFlush(pDevice->getHardwareInfo()));
+    EXPECT_EQ(0u, BlitterDispatcher<FamilyType>::getSizeCacheFlush(pDevice->getHardwareInfo()));
 }
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingCacheFlushCmdThenDispatchNothing) {
-    BlitterDispatcher<FamilyType> blitterDispatcher;
-    blitterDispatcher.dispatchCacheFlush(cmdBuffer, pDevice->getHardwareInfo());
+    BlitterDispatcher<FamilyType>::dispatchCacheFlush(cmdBuffer, pDevice->getHardwareInfo());
 
     EXPECT_EQ(0u, cmdBuffer.getUsed());
 }

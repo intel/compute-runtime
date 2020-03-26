@@ -10,17 +10,13 @@
 
 namespace NEO {
 
-class OsContextWin;
-class Wddm;
-
-template <typename GfxFamily>
-class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily> {
+template <typename GfxFamily, typename Dispatcher>
+class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
   public:
-    using DirectSubmissionHw<GfxFamily>::ringCommandStream;
-    using DirectSubmissionHw<GfxFamily>::switchRingBuffersAllocations;
+    using DirectSubmissionHw<GfxFamily, Dispatcher>::ringCommandStream;
+    using DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffersAllocations;
 
     DrmDirectSubmission(Device &device,
-                        std::unique_ptr<Dispatcher> cmdDispatcher,
                         OsContext &osContext);
 
   protected:

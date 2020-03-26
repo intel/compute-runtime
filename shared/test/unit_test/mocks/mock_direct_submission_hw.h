@@ -11,17 +11,17 @@
 
 namespace NEO {
 
-template <typename GfxFamily>
-struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily> {
-    using BaseClass = DirectSubmissionHw<GfxFamily>;
+template <typename GfxFamily, typename Dispatcher>
+struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher> {
+    using BaseClass = DirectSubmissionHw<GfxFamily, Dispatcher>;
     using BaseClass::allocateResources;
-    using BaseClass::cmdDispatcher;
     using BaseClass::completionRingBuffers;
     using BaseClass::cpuCachelineFlush;
     using BaseClass::currentQueueWorkCount;
     using BaseClass::currentRingBuffer;
     using BaseClass::deallocateResources;
     using BaseClass::device;
+    using BaseClass::DirectSubmissionHw;
     using BaseClass::disableCpuCacheFlush;
     using BaseClass::dispatchEndingSection;
     using BaseClass::dispatchFlushSection;
@@ -54,12 +54,6 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily> {
     using BaseClass::stopRingBuffer;
     using BaseClass::switchRingBuffersAllocations;
     using typename BaseClass::RingBufferUse;
-
-    MockDirectSubmissionHw(Device &device,
-                           std::unique_ptr<Dispatcher> cmdDispatcher,
-                           OsContext &osContext)
-        : DirectSubmissionHw<GfxFamily>(device, std::move(cmdDispatcher), osContext) {
-    }
 
     ~MockDirectSubmissionHw() override {
         if (ringStart) {

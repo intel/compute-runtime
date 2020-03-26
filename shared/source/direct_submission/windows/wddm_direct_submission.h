@@ -16,11 +16,10 @@ namespace NEO {
 class OsContextWin;
 class Wddm;
 
-template <typename GfxFamily>
-class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily> {
+template <typename GfxFamily, typename Dispatcher>
+class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
   public:
     WddmDirectSubmission(Device &device,
-                         std::unique_ptr<Dispatcher> cmdDispatcher,
                          OsContext &osContext);
 
     ~WddmDirectSubmission();

@@ -6,7 +6,6 @@
  */
 
 #pragma once
-
 #include <cstddef>
 #include <cstdint>
 
@@ -15,21 +14,16 @@ namespace NEO {
 struct HardwareInfo;
 class LinearStream;
 
+template <typename GfxFamily>
 class Dispatcher {
   public:
-    Dispatcher() = default;
-    virtual ~Dispatcher() = default;
+    static void dispatchStartCommandBuffer(LinearStream &cmdBuffer, uint64_t gpuStartAddress);
+    static size_t getSizeStartCommandBuffer();
 
-    virtual void dispatchPreemption(LinearStream &cmdBuffer) = 0;
-    virtual size_t getSizePreemption() = 0;
+    static void dispatchStopCommandBuffer(LinearStream &cmdBuffer);
+    static size_t getSizeStopCommandBuffer();
 
-    virtual void dispatchMonitorFence(LinearStream &cmdBuffer,
-                                      uint64_t gpuAddress,
-                                      uint64_t immediateData,
-                                      const HardwareInfo &hwInfo) = 0;
-    virtual size_t getSizeMonitorFence(const HardwareInfo &hwInfo) = 0;
-
-    virtual void dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo) = 0;
-    virtual size_t getSizeCacheFlush(const HardwareInfo &hwInfo) = 0;
+    static void dispatchStoreDwordCommand(LinearStream &cmdBuffer, uint64_t gpuVa, uint32_t value);
+    static size_t getSizeStoreDwordCommand();
 };
 } // namespace NEO

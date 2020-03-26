@@ -23,8 +23,7 @@ HWTEST_F(RenderDispatcheTest, givenRenderWhenAskingForPreemptionCmdSizeThenRetur
     if (GetPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
         expectedCmdSize = sizeof(MI_LOAD_REGISTER_IMM);
     }
-    RenderDispatcher<FamilyType> renderDispatcher;
-    EXPECT_EQ(expectedCmdSize, renderDispatcher.getSizePreemption());
+    EXPECT_EQ(expectedCmdSize, RenderDispatcher<FamilyType>::getSizePreemption());
 }
 
 HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingPreemptionCmdThenExpectProperMmioAddress) {
@@ -32,8 +31,7 @@ HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingPreemptionCmdThenExpectProper
 
     auto preemptionDetails = GetPreemptionTestHwDetails<FamilyType>();
 
-    RenderDispatcher<FamilyType> renderDispatcher;
-    renderDispatcher.dispatchPreemption(cmdBuffer);
+    RenderDispatcher<FamilyType>::dispatchPreemption(cmdBuffer);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdBuffer);
@@ -54,8 +52,7 @@ HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingPreemptionCmdThenExpectProper
 HWTEST_F(RenderDispatcheTest, givenRenderWhenAskingForMonitorFenceCmdSizeThenReturnRequiredPipeControlCmdSize) {
     size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo);
 
-    RenderDispatcher<FamilyType> renderDispatcher;
-    EXPECT_EQ(expectedSize, renderDispatcher.getSizeMonitorFence(hardwareInfo));
+    EXPECT_EQ(expectedSize, RenderDispatcher<FamilyType>::getSizeMonitorFence(hardwareInfo));
 }
 
 HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPipeControlWithProperAddressAndValue) {
@@ -67,8 +64,7 @@ HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPipe
     uint32_t gpuVaLow = static_cast<uint32_t>(gpuVa & 0x0000FFFFFFFFull);
     uint32_t gpuVaHigh = static_cast<uint32_t>(gpuVa >> 32);
 
-    RenderDispatcher<FamilyType> renderDispatcher;
-    renderDispatcher.dispatchMonitorFence(cmdBuffer, gpuVa, value, hardwareInfo);
+    RenderDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, gpuVa, value, hardwareInfo);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdBuffer);
@@ -93,16 +89,14 @@ HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPipe
 HWTEST_F(RenderDispatcheTest, givenRenderWhenAskingForCacheFlushCmdSizeThenReturnSetRequiredPipeControls) {
     size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForFullCacheFlush();
 
-    RenderDispatcher<FamilyType> renderDispatcher;
-    size_t actualSize = renderDispatcher.getSizeCacheFlush(hardwareInfo);
+    size_t actualSize = RenderDispatcher<FamilyType>::getSizeCacheFlush(hardwareInfo);
     EXPECT_EQ(expectedSize, actualSize);
 }
 
 HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingCacheFlushCmdThenExpectPipeControlWithProperFields) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    RenderDispatcher<FamilyType> renderDispatcher;
-    renderDispatcher.dispatchCacheFlush(cmdBuffer, hardwareInfo);
+    RenderDispatcher<FamilyType>::dispatchCacheFlush(cmdBuffer, hardwareInfo);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cmdBuffer);
