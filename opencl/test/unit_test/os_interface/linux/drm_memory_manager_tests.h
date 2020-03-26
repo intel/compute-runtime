@@ -49,6 +49,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     }
 
     void SetUp(DrmMockCustom *mock, bool localMemoryEnabled) {
+        allocationData.rootDeviceIndex = rootDeviceIndex;
         this->mock = mock;
         executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, nonDefaultRootDeviceIndex + 1);
         executionEnvironment->incRefInternal();
