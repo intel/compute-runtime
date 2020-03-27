@@ -177,7 +177,7 @@ void ClDevice::initializeCaps() {
 
     auto sharingAllowed = (HwHelper::getSubDevicesCount(&hwInfo) == 1u);
     if (sharingAllowed) {
-        deviceExtensions += sharingFactory.getExtensions();
+        deviceExtensions += sharingFactory.getExtensions(driverInfo.get());
     }
 
     deviceExtensions += hwHelper.getExtensions();

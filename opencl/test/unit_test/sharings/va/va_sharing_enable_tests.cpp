@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/driver_info.h"
+
 #include "opencl/source/sharings/va/enable_va.h"
 #include "opencl/source/sharings/va/va_sharing_functions.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
@@ -19,6 +22,13 @@ static int vaDisplayIsValidRet = 1;
 extern "C" int vaDisplayIsValid(VADisplay vaDisplay) {
     return vaDisplayIsValidRet;
 }
+
+class MockDriverInfo : public DriverInfo {
+  public:
+    MockDriverInfo(bool imageSupport) : imageSupport(imageSupport) {}
+    bool getImageSupport() override { return imageSupport; };
+    bool imageSupport = true;
+};
 
 class VaSharingEnablerTests : public MemoryManagementFixture,
                               public ::testing::Test {
@@ -36,19 +46,22 @@ class VaSharingEnablerTests : public MemoryManagementFixture,
     std::unique_ptr<VaSharingBuilderFactory> factory;
 };
 
-TEST_F(VaSharingEnablerTests, givenVaFactoryWhenNoLibVaThenNoExtensionIsReturned) {
+TEST_F(VaSharingEnablerTests, givenVaFactoryWhenImagesUnsupportedOrLibVaUnavailableThenNoExtensionIsReturned) {
     // hijack dlopen function
     VariableBackup<std::function<void *(const char *, int)>> bkp(&VASharingFunctions::fdlopen);
     bkp = [&](const char *filename, int flag) -> void * {
         // no libva in system
         return nullptr;
     };
-    auto ext = factory->getExtensions();
-    EXPECT_EQ(0u, ext.length());
-    EXPECT_STREQ("", ext.c_str());
+    for (bool imagesSupported : {false, true}) {
+        MockDriverInfo driverInfo(imagesSupported);
+        auto ext = factory->getExtensions(&driverInfo);
+        EXPECT_EQ(0u, ext.length());
+        EXPECT_STREQ("", ext.c_str());
+    }
 }
 
-TEST_F(VaSharingEnablerTests, givenVaFactoryWhenLibVaAvailableThenExtensionIsReturned) {
+TEST_F(VaSharingEnablerTests, givenVaFactoryWhenImagesSupportedAndLibVaAvailableThenExtensionStringIsReturned) {
     VariableBackup<std::function<void *(const char *, int)>> bkpOpen(&VASharingFunctions::fdlopen);
     bkpOpen = [&](const char *filename, int flag) -> void * {
         return this;
@@ -61,8 +74,11 @@ TEST_F(VaSharingEnablerTests, givenVaFactoryWhenLibVaAvailableThenExtensionIsRet
     bkpSym = [&](void *handle, const char *symbol) -> void * {
         return nullptr;
     };
-    auto ext = factory->getExtensions();
-    EXPECT_STREQ("cl_intel_va_api_media_sharing ", ext.c_str());
+    for (bool imagesSupported : {false, true}) {
+        MockDriverInfo driverInfo(imagesSupported);
+        auto ext = factory->getExtensions(&driverInfo);
+        EXPECT_STREQ(imagesSupported ? "cl_intel_va_api_media_sharing " : "", ext.c_str());
+    }
 }
 
 TEST_F(VaSharingEnablerTests, givenVaFactoryWhenAskedThenGlobalIcdIsConfigured) {

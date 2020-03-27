@@ -32,7 +32,7 @@ class GlSharingContextBuilder : public SharingContextBuilder {
 class GlSharingBuilderFactory : public SharingBuilderFactory {
   public:
     std::unique_ptr<SharingContextBuilder> createContextBuilder() override;
-    std::string getExtensions() override;
+    std::string getExtensions(DriverInfo *driverInfo) override;
     void fillGlobalDispatchTable() override;
     void *getExtensionFunctionAddress(const std::string &functionName) override;
 };

@@ -35,7 +35,7 @@ template <typename D3D>
 class D3DSharingBuilderFactory : public SharingBuilderFactory {
   public:
     std::unique_ptr<SharingContextBuilder> createContextBuilder() override;
-    std::string getExtensions() override;
+    std::string getExtensions(DriverInfo *driverInfo) override;
     void fillGlobalDispatchTable() override;
     void *getExtensionFunctionAddress(const std::string &functionName) override;
     void setExtensionEnabled(DriverInfo *driverInfo) override;

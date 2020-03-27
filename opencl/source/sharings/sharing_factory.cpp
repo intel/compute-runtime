@@ -25,14 +25,14 @@ std::unique_ptr<SharingFactory> SharingFactory::build() {
     return res;
 }
 
-std::string SharingFactory::getExtensions() {
+std::string SharingFactory::getExtensions(DriverInfo *driverInfo) {
     std::string res;
     bool sharingAvailable = false;
 
     for (auto &builder : sharingContextBuilder) {
         if (builder == nullptr)
             continue;
-        res += builder->getExtensions();
+        res += builder->getExtensions(driverInfo);
         sharingAvailable = true;
     }
 

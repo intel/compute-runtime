@@ -26,7 +26,7 @@ ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platfor
     deviceExtensions.reserve(1000);
     name.reserve(100);
     auto osInterface = getRootDeviceEnvironment().osInterface.get();
-    driverInfo.reset(DriverInfo::create(osInterface));
+    driverInfo.reset(DriverInfo::create(&device.getHardwareInfo(), osInterface));
     initializeCaps();
     compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions);
 

@@ -722,26 +722,26 @@ TEST(D3DSurfaceTest, givenD3DSurfaceWhenInvalidMemObjectIsPassedToValidateUpdate
 TEST(D3D9, givenD3D9BuilderAndExtensionEnableTrueWhenGettingExtensionsThenCorrectExtensionsListIsReturned) {
     auto builderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D9>>();
     builderFactory.get()->extensionEnabled = true;
-    EXPECT_THAT(builderFactory->getExtensions(), testing::HasSubstr(std::string("cl_intel_dx9_media_sharing")));
-    EXPECT_THAT(builderFactory->getExtensions(), testing::HasSubstr(std::string("cl_khr_dx9_media_sharing")));
+    EXPECT_THAT(builderFactory->getExtensions(nullptr), testing::HasSubstr(std::string("cl_intel_dx9_media_sharing")));
+    EXPECT_THAT(builderFactory->getExtensions(nullptr), testing::HasSubstr(std::string("cl_khr_dx9_media_sharing")));
 }
 
 TEST(D3D9, givenD3D9BuilderAndExtensionEnableFalseWhenGettingExtensionsThenDx9MediaSheringExtensionsAreNotReturned) {
     auto builderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D9>>();
     builderFactory.get()->extensionEnabled = false;
-    EXPECT_THAT(builderFactory->getExtensions(), testing::Not(testing::HasSubstr(std::string("cl_intel_dx9_media_sharing"))));
-    EXPECT_THAT(builderFactory->getExtensions(), testing::Not(testing::HasSubstr(std::string("cl_khr_dx9_media_sharing"))));
+    EXPECT_THAT(builderFactory->getExtensions(nullptr), testing::Not(testing::HasSubstr(std::string("cl_intel_dx9_media_sharing"))));
+    EXPECT_THAT(builderFactory->getExtensions(nullptr), testing::Not(testing::HasSubstr(std::string("cl_khr_dx9_media_sharing"))));
 }
 
 TEST(D3D10, givenD3D10BuilderWhenGettingExtensionsThenCorrectExtensionsListIsReturned) {
     auto builderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D10>>();
-    EXPECT_THAT(builderFactory->getExtensions(), testing::HasSubstr(std::string("cl_khr_d3d10_sharing")));
+    EXPECT_THAT(builderFactory->getExtensions(nullptr), testing::HasSubstr(std::string("cl_khr_d3d10_sharing")));
 }
 
 TEST(D3D11, givenD3D11BuilderWhenGettingExtensionsThenCorrectExtensionsListIsReturned) {
     auto builderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D11>>();
-    EXPECT_THAT(builderFactory->getExtensions(), testing::HasSubstr(std::string("cl_khr_d3d11_sharing")));
-    EXPECT_THAT(builderFactory->getExtensions(), testing::HasSubstr(std::string("cl_intel_d3d11_nv12_media_sharing")));
+    EXPECT_THAT(builderFactory->getExtensions(nullptr), testing::HasSubstr(std::string("cl_khr_d3d11_sharing")));
+    EXPECT_THAT(builderFactory->getExtensions(nullptr), testing::HasSubstr(std::string("cl_intel_d3d11_nv12_media_sharing")));
 }
 
 TEST(D3DSharingFactory, givenEnabledFormatQueryAndFactoryWithD3DSharingsWhenGettingExtensionFunctionAddressThenFormatQueryFunctionsAreReturned) {

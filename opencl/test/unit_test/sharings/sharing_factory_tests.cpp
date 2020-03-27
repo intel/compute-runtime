@@ -61,7 +61,7 @@ class TestedSharingBuilderFactory : public SharingBuilderFactory {
     std::unique_ptr<SharingContextBuilder> createContextBuilder() override {
         return nullptr;
     }
-    std::string getExtensions() override {
+    std::string getExtensions(DriverInfo *driverInfo) override {
         return extension;
     };
     void fillGlobalDispatchTable() override {
@@ -157,7 +157,7 @@ TEST(SharingFactoryTests, givenFactoryWithEmptyTableWhenAskedForExtensionThenEmp
     SharingFactoryStateRestore stateRestore;
 
     stateRestore.clearCurrentState();
-    auto ext = stateRestore.getExtensions();
+    auto ext = stateRestore.getExtensions(nullptr);
     EXPECT_EQ(0u, ext.length());
     EXPECT_STREQ("", ext.c_str());
 }
@@ -168,7 +168,7 @@ TEST(SharingFactoryTests, givenFactoryWithSharingWhenAskedForExtensionThenString
     stateRestore.clearCurrentState();
     stateRestore.registerSharing<TestedSharingBuilderFactory>(SharingType::CLGL_SHARING);
 
-    auto ext = stateRestore.getExtensions();
+    auto ext = stateRestore.getExtensions(nullptr);
     EXPECT_EQ(TestedSharingBuilderFactory::extension.length(), ext.length());
     EXPECT_STREQ(TestedSharingBuilderFactory::extension.c_str(), ext.c_str());
 }
@@ -251,7 +251,7 @@ TEST(SharingFactoryTests, givenDisabledFormatQueryAndFactoryWithSharingWhenAsked
     stateRestore.clearCurrentState();
     stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
 
-    auto extensionsList = sharingFactory.getExtensions();
+    auto extensionsList = sharingFactory.getExtensions(nullptr);
     EXPECT_THAT(extensionsList, ::testing::Not(::testing::HasSubstr(Extensions::sharingFormatQuery)));
 }
 
@@ -263,7 +263,7 @@ TEST(SharingFactoryTests, givenEnabledFormatQueryAndFactoryWithSharingWhenAskedF
     stateRestore.clearCurrentState();
     stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
 
-    auto extensionsList = sharingFactory.getExtensions();
+    auto extensionsList = sharingFactory.getExtensions(nullptr);
     EXPECT_THAT(extensionsList, ::testing::HasSubstr(Extensions::sharingFormatQuery));
 }
 
@@ -275,6 +275,6 @@ TEST(SharingFactoryTests, givenEnabledFormatQueryAndFactoryWithNoSharingsWhenAsk
 
     sharingFactory.clearCurrentState();
 
-    auto extensionsList = sharingFactory.getExtensions();
+    auto extensionsList = sharingFactory.getExtensions(nullptr);
     EXPECT_THAT(extensionsList, ::testing::Not(::testing::HasSubstr(Extensions::sharingFormatQuery)));
 }

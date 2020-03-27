@@ -24,7 +24,7 @@ class GlSharingEnablerTests : public ::testing::Test {
 };
 
 TEST_F(GlSharingEnablerTests, givenGlFactoryWhenAskedThenExtensionsAreReturned) {
-    auto ext = factory->getExtensions();
+    auto ext = factory->getExtensions(nullptr);
     EXPECT_GT(ext.length(), 0u);
     EXPECT_STRNE("", ext.c_str());
 }

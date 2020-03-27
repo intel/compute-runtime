@@ -86,7 +86,7 @@ void GlSharingBuilderFactory::fillGlobalDispatchTable() {
     icdGlobalDispatchTable.clGetGLContextInfoKHR = clGetGLContextInfoKHR;
 }
 
-std::string GlSharingBuilderFactory::getExtensions() {
+std::string GlSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
     if (DebugManager.flags.AddClGlSharing.get()) {
         return "cl_khr_gl_sharing "
                "cl_khr_gl_depth_images "

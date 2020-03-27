@@ -104,15 +104,15 @@ std::unique_ptr<SharingContextBuilder> D3DSharingBuilderFactory<D3D>::createCont
     return std::make_unique<D3DSharingContextBuilder<D3D>>();
 };
 
-std::string D3DSharingBuilderFactory<D3DTypesHelper::D3D9>::getExtensions() {
+std::string D3DSharingBuilderFactory<D3DTypesHelper::D3D9>::getExtensions(DriverInfo *driverInfo) {
     return extensionEnabled ? "cl_intel_dx9_media_sharing cl_khr_dx9_media_sharing " : "";
 }
 
-std::string D3DSharingBuilderFactory<D3DTypesHelper::D3D10>::getExtensions() {
+std::string D3DSharingBuilderFactory<D3DTypesHelper::D3D10>::getExtensions(DriverInfo *driverInfo) {
     return "cl_khr_d3d10_sharing ";
 }
 
-std::string D3DSharingBuilderFactory<D3DTypesHelper::D3D11>::getExtensions() {
+std::string D3DSharingBuilderFactory<D3DTypesHelper::D3D11>::getExtensions(DriverInfo *driverInfo) {
     return "cl_khr_d3d11_sharing cl_intel_d3d11_nv12_media_sharing ";
 }
 

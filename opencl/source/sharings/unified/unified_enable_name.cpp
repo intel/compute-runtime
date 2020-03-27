@@ -8,7 +8,7 @@
 #include "opencl/source/sharings/unified/enable_unified.h"
 
 namespace NEO {
-std::string UnifiedSharingBuilderFactory::getExtensions() {
+std::string UnifiedSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
     return "";
 }
 } // namespace NEO

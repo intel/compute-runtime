@@ -34,7 +34,7 @@ std::string getCurrentLibraryPath() {
 
 namespace NEO {
 
-DriverInfo *DriverInfo::create(OSInterface *osInterface) {
+DriverInfo *DriverInfo::create(const HardwareInfo *hwInfo, OSInterface *osInterface) {
     if (osInterface) {
         auto wddm = osInterface->get()->getWddm();
         DEBUG_BREAK_IF(wddm == nullptr);

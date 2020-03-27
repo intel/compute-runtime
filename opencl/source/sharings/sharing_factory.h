@@ -37,7 +37,7 @@ class SharingBuilderFactory {
   public:
     virtual ~SharingBuilderFactory() = default;
     virtual std::unique_ptr<SharingContextBuilder> createContextBuilder() = 0;
-    virtual std::string getExtensions() = 0;
+    virtual std::string getExtensions(DriverInfo *driverInfo) = 0;
     virtual void fillGlobalDispatchTable() {}
     virtual void *getExtensionFunctionAddress(const std::string &functionName) = 0;
     virtual void setExtensionEnabled(DriverInfo *driverInfo);
@@ -58,7 +58,7 @@ class SharingFactory {
     static std::unique_ptr<SharingFactory> build();
     bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet);
     bool finalizeProperties(Context &context, int32_t &errcodeRet);
-    std::string getExtensions();
+    std::string getExtensions(DriverInfo *driverInfo);
     void fillGlobalDispatchTable();
     void *getExtensionFunctionAddress(const std::string &functionName);
     void verifyExtensionSupport(DriverInfo *driverInfo);

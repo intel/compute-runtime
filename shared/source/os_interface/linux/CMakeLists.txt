@@ -10,6 +10,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.h
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_linux.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_linux.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.cpp

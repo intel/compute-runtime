@@ -51,7 +51,7 @@ class PlatformTestedSharingBuilderFactory : public SharingBuilderFactory {
     std::unique_ptr<SharingContextBuilder> createContextBuilder() override {
         return nullptr;
     }
-    std::string getExtensions() override {
+    std::string getExtensions(DriverInfo *driverInfo) override {
         return "--extension--";
     };
     void fillGlobalDispatchTable() override {

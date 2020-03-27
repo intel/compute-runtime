@@ -9,6 +9,8 @@
 
 #include "opencl/source/sharings/va/enable_va.h"
 
+#include "shared/source/os_interface/driver_info.h"
+
 #include "opencl/source/api/api.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/context/context.inl"
@@ -56,8 +58,9 @@ std::unique_ptr<SharingContextBuilder> VaSharingBuilderFactory::createContextBui
     return std::make_unique<VaSharingContextBuilder>();
 };
 
-std::string VaSharingBuilderFactory::getExtensions() {
-    if (VASharingFunctions::isVaLibraryAvailable()) {
+std::string VaSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
+    auto imageSupport = driverInfo ? driverInfo->getImageSupport() : false;
+    if (imageSupport && VASharingFunctions::isVaLibraryAvailable()) {
         return "cl_intel_va_api_media_sharing ";
     }
     return "";

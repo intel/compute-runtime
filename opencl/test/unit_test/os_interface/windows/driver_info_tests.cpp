@@ -212,7 +212,7 @@ TEST(DriverInfo, givenInitializedOsInterfaceWhenCreateDriverInfoThenReturnDriver
     osInterface->get()->setWddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
     EXPECT_NE(nullptr, osInterface->get()->getWddm());
 
-    std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(osInterface.get()));
+    std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(nullptr, osInterface.get()));
 
     EXPECT_NE(nullptr, driverInfo);
 };
@@ -221,7 +221,7 @@ TEST(DriverInfo, givenNotInitializedOsInterfaceWhenCreateDriverInfoThenReturnDri
 
     std::unique_ptr<OSInterface> osInterface;
 
-    std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(osInterface.get()));
+    std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(nullptr, osInterface.get()));
 
     EXPECT_EQ(nullptr, driverInfo);
 };
@@ -244,6 +244,18 @@ TEST_F(DriverInfoWindowsTest, whenCurrentLibraryIsLoadedFromDifferentDriverStore
     currentLibraryPathBackup = L"driverStore\\different_driverStore\\myLib.dll";
 
     EXPECT_FALSE(driverInfo->isCompatibleDriverStore());
+}
+
+TEST_F(DriverInfoWindowsTest, givenDriverInfoWindowsWhenGetImageSupportIsCalledThenReturnTrue) {
+    MockExecutionEnvironment executionEnvironment;
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+    std::unique_ptr<OSInterface> osInterface(new OSInterface());
+    osInterface->get()->setWddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
+    EXPECT_NE(nullptr, osInterface->get()->getWddm());
+
+    std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(nullptr, osInterface.get()));
+
+    EXPECT_TRUE(driverInfo->getImageSupport());
 }
 
 } // namespace NEO
