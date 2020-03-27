@@ -54,6 +54,12 @@ LSTATUS APIENTRY RegQueryValueExA(
                 } else {
                     *lpcbData = sizeof(DWORD);
                 }
+            } else if (strcmp(lpValueName, "settingSourceInt64") == 0) {
+                if (lpData) {
+                    *reinterpret_cast<INT64 *>(lpData) = 0xffffffffeeeeeeee;
+                } else {
+                    *lpcbData = sizeof(INT64);
+                }
             } else if (strcmp(lpValueName, "settingSourceBinary") == 0) {
                 const auto settingSource = L"registry";
                 auto size = wcslen(settingSource) * sizeof(wchar_t);

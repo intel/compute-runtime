@@ -14,6 +14,7 @@
 #include "shared/source/utilities/debug_settings_reader_creator.h"
 
 #include <cstdio>
+#include <iostream>
 #include <sstream>
 
 namespace std {
@@ -59,6 +60,10 @@ void DebugSettingsManager<DebugLevel>::dumpNonDefaultFlag(const char *variableNa
 
 template <DebugFunctionalityLevel DebugLevel>
 void DebugSettingsManager<DebugLevel>::dumpFlags() const {
+    if (flags.Report64BitIdentifier.get()) {
+        std::cout << "Report64BitIdentifier flag value = " << flags.Report64BitIdentifier.get() << std::endl;
+    }
+
     if (flags.PrintDebugSettings.get() == false) {
         return;
     }
@@ -68,7 +73,7 @@ void DebugSettingsManager<DebugLevel>::dumpFlags() const {
 
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)   \
     settingsDumpFile << #variableName << " = " << flags.variableName.get() << '\n'; \
-    dumpNonDefaultFlag(#variableName, flags.variableName.get(), defaultValue);
+    dumpNonDefaultFlag<dataType>(#variableName, flags.variableName.get(), defaultValue);
 #include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 }

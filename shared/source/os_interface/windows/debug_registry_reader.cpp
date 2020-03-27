@@ -39,12 +39,16 @@ const char *RegistryReader::appSpecificLocation(const std::string &name) {
 }
 
 bool RegistryReader::getSetting(const char *settingName, bool defaultValue) {
-    return getSetting(settingName, static_cast<int32_t>(defaultValue)) ? true : false;
+    return getSetting(settingName, static_cast<int64_t>(defaultValue)) ? true : false;
 }
 
 int32_t RegistryReader::getSetting(const char *settingName, int32_t defaultValue) {
+    return static_cast<int32_t>(getSetting(settingName, static_cast<int64_t>(defaultValue)));
+}
+
+int64_t RegistryReader::getSetting(const char *settingName, int64_t defaultValue) {
     HKEY Key{};
-    DWORD value = defaultValue;
+    int64_t value = defaultValue;
     DWORD success = ERROR_SUCCESS;
     bool readSettingFromEnv = true;
 
@@ -55,14 +59,13 @@ int32_t RegistryReader::getSetting(const char *settingName, int32_t defaultValue
                             &Key);
 
     if (ERROR_SUCCESS == success) {
-        DWORD regType;
-        DWORD size = sizeof(DWORD);
-        DWORD regData;
+        DWORD size = sizeof(int64_t);
+        int64_t regData;
 
         success = RegQueryValueExA(Key,
                                    settingName,
                                    NULL,
-                                   &regType,
+                                   NULL,
                                    reinterpret_cast<LPBYTE>(&regData),
                                    &size);
         if (ERROR_SUCCESS == success) {

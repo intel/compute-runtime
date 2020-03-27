@@ -128,6 +128,7 @@ class MockRegistryReader : public SettingsReader {
     }
 
     bool getSetting(const char *settingName, bool defaultValue) override { return defaultValue; };
+    int64_t getSetting(const char *settingName, int64_t defaultValue) override { return defaultValue; };
     int32_t getSetting(const char *settingName, int32_t defaultValue) override { return defaultValue; };
     const char *appSpecificLocation(const std::string &name) override { return name.c_str(); };
 

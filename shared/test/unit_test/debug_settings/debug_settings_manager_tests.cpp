@@ -42,10 +42,10 @@ TEST(DebugSettingsManager, WithoutDebugFunctionality) {
     EXPECT_EQ(nullptr, debugManager.getSettingsReader());
 
 // debug variables / flags set to default
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                           \
-    {                                                                                                       \
-        bool isEqual = TestDebugFlagsChecker::isEqual(debugManager.flags.variableName.get(), defaultValue); \
-        EXPECT_TRUE(isEqual);                                                                               \
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                                  \
+    {                                                                                                                              \
+        bool isEqual = TestDebugFlagsChecker::isEqual(debugManager.flags.variableName.get(), static_cast<dataType>(defaultValue)); \
+        EXPECT_TRUE(isEqual);                                                                                                      \
     }
 #include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
@@ -110,6 +110,17 @@ TEST(DebugSettingsManager, givenReaderImplInDebugManagerWhenSettingDifferentRead
     auto readerImpl2 = SettingsReader::create("");
     debugManager.setReaderImpl(readerImpl2);
     EXPECT_EQ(readerImpl2, debugManager.getReaderImpl());
+}
+
+TEST(DebugSettingsManager, givenReport64BitIdetntifierFlagWhenDumpFlagsThen64BitValueIsPrinted) {
+    testing::internal::CaptureStdout();
+    FullyEnabledTestDebugManager debugManager;
+    debugManager.flags.Report64BitIdentifier.set(0xffffffffeeeeeeee);
+
+    debugManager.dumpFlags();
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_FALSE(output.compare("Report64BitIdentifier flag value = -286331154\n"));
 }
 
 TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {

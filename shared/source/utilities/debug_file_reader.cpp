@@ -29,7 +29,11 @@ SettingsFileReader::~SettingsFileReader() {
 }
 
 int32_t SettingsFileReader::getSetting(const char *settingName, int32_t defaultValue) {
-    int32_t value = defaultValue;
+    return static_cast<int32_t>(getSetting(settingName, static_cast<int64_t>(defaultValue)));
+}
+
+int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultValue) {
+    int64_t value = defaultValue;
 
     std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(settingName));
     if (it != settingStringMap.end()) {
@@ -40,7 +44,7 @@ int32_t SettingsFileReader::getSetting(const char *settingName, int32_t defaultV
 }
 
 bool SettingsFileReader::getSetting(const char *settingName, bool defaultValue) {
-    return getSetting(settingName, static_cast<int32_t>(defaultValue)) ? true : false;
+    return getSetting(settingName, static_cast<int64_t>(defaultValue)) ? true : false;
 }
 
 std::string SettingsFileReader::getSetting(const char *settingName, const std::string &value) {

@@ -79,6 +79,13 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenReadFromRegistrySu
     EXPECT_EQ(1, registryReader.getSetting("settingSourceInt", 0));
 }
 
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenInt64DebugKeyWhenReadFromRegistrySucceedsThenReturnObtainedValue) {
+    regOpenKeySuccessCount = 1u;
+    regQueryValueSuccessCount = 1u;
+
+    EXPECT_EQ(0xffffffffeeeeeeee, registryReader.getSetting("settingSourceInt64", 0));
+}
+
 TEST_F(DebugReaderWithRegistryAndEnvTest, givenIntDebugKeyWhenQueryValueFailsThenObtainValueFromEnv) {
     regOpenKeySuccessCount = 1u;
     regQueryValueSuccessCount = 0u;

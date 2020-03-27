@@ -18,11 +18,15 @@ const char *EnvironmentVariableReader::appSpecificLocation(const std::string &na
 }
 
 bool EnvironmentVariableReader::getSetting(const char *settingName, bool defaultValue) {
-    return getSetting(settingName, static_cast<int32_t>(defaultValue)) ? true : false;
+    return getSetting(settingName, static_cast<int64_t>(defaultValue)) ? true : false;
 }
 
 int32_t EnvironmentVariableReader::getSetting(const char *settingName, int32_t defaultValue) {
-    int32_t value = defaultValue;
+    return static_cast<int32_t>(getSetting(settingName, static_cast<int64_t>(defaultValue)));
+}
+
+int64_t EnvironmentVariableReader::getSetting(const char *settingName, int64_t defaultValue) {
+    int64_t value = defaultValue;
     char *envValue;
 
     envValue = getenv(settingName);

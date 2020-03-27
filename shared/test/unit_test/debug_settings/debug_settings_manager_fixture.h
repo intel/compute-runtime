@@ -31,6 +31,10 @@ class TestDebugFlagsChecker {
         return returnedValue == defaultValue;
     }
 
+    static bool isEqual(int64_t returnedValue, int64_t defaultValue) {
+        return returnedValue == defaultValue;
+    }
+
     static bool isEqual(std::string returnedValue, std::string defaultValue) {
         return returnedValue == defaultValue;
     }
