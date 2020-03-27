@@ -141,7 +141,7 @@ target_include_directories(igdrcl_tests PRIVATE
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks${BRANCH_DIR_SUFFIX}
   ${ENGINE_NODE_DIR}
   ${KHRONOS_GL_HEADERS_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/config
 )
 
 target_link_libraries(igdrcl_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
