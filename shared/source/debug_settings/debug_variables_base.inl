@@ -87,6 +87,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionBufferAddressing, -1, "-1: do no
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionSemaphoreAddressing, -1, "-1: do not override, 0: not use 48bit, 1: use 48bit")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisableCpuCacheFlush, -1, "-1: do not override, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionEnableDebugBuffer, 0, "0: diagnostic feature disabled - dispatch regular workload, 1: dispatch diagnostic buffer - mode 1 - single SDI command, 2: dispatch diagnostic buffer - mode 2 - no command")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDiagnosticExecutionCount, 30, "Number of executions of EnableDebugBuffer modes within diagnostic run")
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionDisableCacheFlush, false, "Disable dispatching cache flush commands")
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionDisableMonitorFence, false, "Disable dispatching monitor fence commands")
 

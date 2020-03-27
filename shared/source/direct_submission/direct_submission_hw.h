@@ -36,6 +36,7 @@ struct TagData {
 };
 
 struct BatchBuffer;
+class DirectSubmissionDiagnosticsCollector;
 class FlushStampTracker;
 class GraphicsAllocation;
 struct HardwareInfo;
@@ -60,6 +61,7 @@ class DirectSubmissionHw {
 
   protected:
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;
+    static constexpr size_t prefetchNoops = prefetchSize / sizeof(uint32_t);
     bool allocateResources();
     void deallocateResources();
     virtual bool allocateOsResources(DirectSubmissionAllocations &allocations) = 0;
@@ -72,7 +74,7 @@ class DirectSubmissionHw {
 
     void cpuCachelineFlush(void *ptr, size_t size);
 
-    void *dispatchSemaphoreSection(uint32_t value);
+    void dispatchSemaphoreSection(uint32_t value);
     size_t getSizeSemaphoreSection();
 
     void dispatchStartSection(uint64_t gpuStartAddress);
@@ -81,26 +83,18 @@ class DirectSubmissionHw {
     void dispatchSwitchRingBufferSection(uint64_t nextBufferGpuAddress);
     size_t getSizeSwitchRingBufferSection();
 
-    void *dispatchFlushSection();
-    size_t getSizeFlushSection();
-
-    void *dispatchTagUpdateSection(uint64_t address, uint64_t value);
-    size_t getSizeTagUpdateSection();
-
-    void dispatchEndingSection();
-    size_t getSizeEndingSection();
-
     void setReturnAddress(void *returnCmd, uint64_t returnAddress);
 
     void *dispatchWorkloadSection(BatchBuffer &batchBuffer);
     size_t getSizeDispatch();
 
-    void dispatchStoreDataSection(uint64_t gpuVa, uint32_t value);
-    size_t getSizeStoraDataSection();
-
     size_t getSizeEnd();
 
     uint64_t getCommandBufferPositionGpuAddress(void *position);
+
+    void createDiagnostic();
+    void initDiagnostic(bool &submitOnInit);
+    MOCKABLE_VIRTUAL void performDiagnosticMode();
 
     enum RingBufferUse : uint32_t {
         FirstBuffer,
@@ -110,6 +104,7 @@ class DirectSubmissionHw {
 
     LinearStream ringCommandStream;
     FlushStamp completionRingBuffers[RingBufferUse::MaxBuffers] = {0ull, 0ull};
+    std::unique_ptr<DirectSubmissionDiagnosticsCollector> diagnostic;
 
     uint64_t semaphoreGpuVa = 0u;
 
@@ -121,10 +116,15 @@ class DirectSubmissionHw {
     GraphicsAllocation *semaphores = nullptr;
     void *semaphorePtr = nullptr;
     volatile RingSemaphoreData *semaphoreData = nullptr;
+    volatile void *workloadModeOneStoreAddress = nullptr;
 
     uint32_t currentQueueWorkCount = 1u;
     RingBufferUse currentRingBuffer = RingBufferUse::FirstBuffer;
     uint32_t workloadMode = 0;
+    uint32_t workloadModeOneExpectedValue = 0u;
+
+    static constexpr bool defaultDisableCacheFlush = false;
+    static constexpr bool defaultDisableMonitorFence = false;
 
     bool ringStart = false;
     bool disableCpuCacheFlush = false;

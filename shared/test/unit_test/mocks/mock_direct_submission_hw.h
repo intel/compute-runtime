@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/direct_submission/direct_submission_hw.h"
+#include "shared/source/direct_submission/direct_submission_hw_diagnostic_mode.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
@@ -20,28 +21,27 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::currentQueueWorkCount;
     using BaseClass::currentRingBuffer;
     using BaseClass::deallocateResources;
+    using BaseClass::defaultDisableCacheFlush;
+    using BaseClass::defaultDisableMonitorFence;
     using BaseClass::device;
+    using BaseClass::diagnostic;
     using BaseClass::DirectSubmissionHw;
+    using BaseClass::disableCacheFlush;
     using BaseClass::disableCpuCacheFlush;
-    using BaseClass::dispatchEndingSection;
-    using BaseClass::dispatchFlushSection;
+    using BaseClass::disableMonitorFence;
     using BaseClass::dispatchSemaphoreSection;
     using BaseClass::dispatchStartSection;
     using BaseClass::dispatchSwitchRingBufferSection;
-    using BaseClass::dispatchTagUpdateSection;
     using BaseClass::dispatchWorkloadSection;
     using BaseClass::getCommandBufferPositionGpuAddress;
     using BaseClass::getSizeDispatch;
     using BaseClass::getSizeEnd;
-    using BaseClass::getSizeEndingSection;
-    using BaseClass::getSizeFlushSection;
     using BaseClass::getSizeSemaphoreSection;
     using BaseClass::getSizeStartSection;
-    using BaseClass::getSizeStoraDataSection;
     using BaseClass::getSizeSwitchRingBufferSection;
-    using BaseClass::getSizeTagUpdateSection;
     using BaseClass::hwInfo;
     using BaseClass::osContext;
+    using BaseClass::performDiagnosticMode;
     using BaseClass::ringBuffer;
     using BaseClass::ringBuffer2;
     using BaseClass::ringCommandStream;
@@ -53,6 +53,9 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::setReturnAddress;
     using BaseClass::stopRingBuffer;
     using BaseClass::switchRingBuffersAllocations;
+    using BaseClass::workloadMode;
+    using BaseClass::workloadModeOneExpectedValue;
+    using BaseClass::workloadModeOneStoreAddress;
     using typename BaseClass::RingBufferUse;
 
     ~MockDirectSubmissionHw() override {
@@ -97,15 +100,28 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
         tagData.tagValue = tagValueSetValue;
     }
 
-    bool allocateOsResourcesReturn = true;
-    bool submitReturn = true;
-    bool handleResidencyReturn = true;
-    uint32_t submitCount = 0u;
-    uint32_t handleResidencyCount = 0u;
-    size_t submitSize = 0u;
+    void performDiagnosticMode() override {
+        if (!NEO::directSubmissionDiagnosticAvailable) {
+            disabledDiagnosticCalled++;
+        }
+        uint32_t add = 1;
+        if (diagnostic.get()) {
+            add += diagnostic->getExecutionsCount();
+        }
+        *static_cast<volatile uint32_t *>(workloadModeOneStoreAddress) = workloadModeOneExpectedValue + add;
+        BaseClass::performDiagnosticMode();
+    }
+
     uint64_t updateTagValueReturn = 1ull;
     uint64_t tagAddressSetValue = MemoryConstants::pageSize;
     uint64_t tagValueSetValue = 1ull;
     uint64_t submitGpuAddress = 0ull;
+    size_t submitSize = 0u;
+    uint32_t submitCount = 0u;
+    uint32_t handleResidencyCount = 0u;
+    uint32_t disabledDiagnosticCalled = 0u;
+    bool allocateOsResourcesReturn = true;
+    bool submitReturn = true;
+    bool handleResidencyReturn = true;
 };
 } // namespace NEO

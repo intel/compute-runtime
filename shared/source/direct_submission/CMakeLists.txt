@@ -8,6 +8,8 @@ set(NEO_CORE_DIRECT_SUBMISSION
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_hw.h
   ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_hw.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_hw_diagnostic_mode.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_hw_diagnostic_mode.h
   ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_properties.h
 )
 

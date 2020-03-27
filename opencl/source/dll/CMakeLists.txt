@@ -27,6 +27,7 @@ set(RUNTIME_SRCS_DLL_BASE
   ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
   ${NEO_SHARED_DIRECTORY}/utilities/cpuintrinsics.cpp
   ${NEO_SHARED_DIRECTORY}/utilities/debug_settings_reader_creator.cpp
+  ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
   ${NEO_SOURCE_DIR}/opencl/source/api/api.cpp
   ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
   ${NEO_SOURCE_DIR}/opencl/source/helpers/built_ins_helper.cpp

@@ -36,6 +36,7 @@ set(IGDRCL_SRCS_LIB_ULT
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/test_files.h
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_tbx_sockets.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/debug_manager.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/io_functions.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/source_level_debugger_ult.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/source_level_debugger_library.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/source_level_debugger_library.h

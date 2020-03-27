@@ -22,6 +22,7 @@ set(NEO_CORE_UTILITIES
   ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/iflist.h
   ${CMAKE_CURRENT_SOURCE_DIR}/idlist.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/io_functions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/numeric.h
   ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.h

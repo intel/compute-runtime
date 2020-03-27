@@ -69,6 +69,7 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_host_ptr_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_internal_allocation_storage.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_image.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_io_functions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_lrca_helper.h
@@ -110,7 +111,6 @@ if(WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_allocations_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_logger.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_residency_logger_functions.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mock_helpers.h
     ${IGDRCL_SRC_tests_mock_wddm}
   )

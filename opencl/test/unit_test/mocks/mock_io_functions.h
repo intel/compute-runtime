@@ -6,10 +6,12 @@
  */
 
 #pragma once
-#include "shared/source/os_interface/windows/wddm/wddm_residency_logger_defs.h"
+#include "shared/source/utilities/io_functions.h"
+
+#include <cstdint>
 
 namespace NEO {
-namespace ResLog {
+namespace IoFunctions {
 extern uint32_t mockFopenCalled;
 extern uint32_t mockVfptrinfCalled;
 extern uint32_t mockFcloseCalled;
@@ -28,5 +30,5 @@ inline int mockFclose(FILE *stream) {
     mockFcloseCalled++;
     return 0;
 }
-} // namespace ResLog
+} // namespace IoFunctions
 } // namespace NEO

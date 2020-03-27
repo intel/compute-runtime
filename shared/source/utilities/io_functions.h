@@ -10,7 +10,7 @@
 #include <cstdio>
 
 namespace NEO {
-namespace ResLog {
+namespace IoFunctions {
 using fopenFuncPtr = FILE *(*)(const char *, const char *);
 using vfprintfFuncPtr = int (*)(FILE *, char const *const formatStr, va_list arg);
 using fcloseFuncPtr = int (*)(FILE *);
@@ -18,11 +18,14 @@ using fcloseFuncPtr = int (*)(FILE *);
 extern fopenFuncPtr fopenPtr;
 extern vfprintfFuncPtr vfprintfPtr;
 extern fcloseFuncPtr fclosePtr;
-} // namespace ResLog
 
-#if defined(_RELEASE_INTERNAL) || (_DEBUG)
-constexpr bool residencyLoggingAvailable = true;
-#else
-constexpr bool residencyLoggingAvailable = false;
-#endif
+inline int fprintf(FILE *fileDesc, char const *const formatStr, ...) {
+    va_list args;
+    va_start(args, formatStr);
+    int ret = IoFunctions::vfprintfPtr(fileDesc, formatStr, args);
+    va_end(args);
+    return ret;
+}
+} // namespace IoFunctions
+
 } // namespace NEO

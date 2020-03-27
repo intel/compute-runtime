@@ -15,6 +15,7 @@ set(NEO_CORE_UTILITIES_TESTS
   ${CMAKE_CURRENT_SOURCE_DIR}/destructor_counted.h
   ${CMAKE_CURRENT_SOURCE_DIR}/directory_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/io_functions_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/numeric_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object_tests.cpp

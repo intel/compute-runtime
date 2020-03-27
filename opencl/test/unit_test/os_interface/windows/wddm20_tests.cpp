@@ -28,10 +28,10 @@
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
+#include "opencl/test/unit_test/mocks/mock_io_functions.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_residency_logger.h"
-#include "opencl/test/unit_test/mocks/mock_wddm_residency_logger_functions.h"
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 #include "opencl/test/unit_test/os_interface/windows/ult_dxgi_factory.h"
 #include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
@@ -881,7 +881,7 @@ TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeReside
 TEST_F(WddmLockWithMakeResidentTests, givenAllocationWhenApplyBlockingMakeResidentThenWaitForCurrentPagingFenceValue) {
     wddm->mockPagingFence = 0u;
     wddm->temporaryResources->makeResidentResource(ALLOCATION_HANDLE, 0x1000);
-    UINT64 expectedCallNumber = NEO::residencyLoggingAvailable ? MockGdi::pagingFenceReturnValue + 1 : 0ull;
+    UINT64 expectedCallNumber = NEO::wddmResidencyLoggingAvailable ? MockGdi::pagingFenceReturnValue + 1 : 0ull;
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
     EXPECT_EQ(MockGdi::pagingFenceReturnValue + 1, wddm->mockPagingFence);
     EXPECT_EQ(expectedCallNumber, wddm->getPagingFenceAddressResult.called);
@@ -1254,29 +1254,29 @@ TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenAdapterIsClosed) {
 }
 
 TEST_F(WddmTest, WhenResidencyLoggingEnabledThenExpectLoggerCreated) {
-    NEO::ResLog::mockFopenCalled = 0;
-    NEO::ResLog::mockVfptrinfCalled = 0;
-    NEO::ResLog::mockFcloseCalled = 0;
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockVfptrinfCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.WddmResidencyLogger.set(true);
 
     wddm->createPagingFenceLogger();
     EXPECT_NE(nullptr, wddm->residencyLogger.get());
     wddm->residencyLogger.reset();
-    if (NEO::residencyLoggingAvailable) {
-        EXPECT_EQ(1u, NEO::ResLog::mockFopenCalled);
-        EXPECT_EQ(1u, NEO::ResLog::mockVfptrinfCalled);
-        EXPECT_EQ(1u, NEO::ResLog::mockFcloseCalled);
+    if (NEO::wddmResidencyLoggingAvailable) {
+        EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+        EXPECT_EQ(1u, NEO::IoFunctions::mockVfptrinfCalled);
+        EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
     }
 }
 
 TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentSuccessThenExpectSizeRapport) {
-    if (!NEO::residencyLoggingAvailable) {
+    if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
     }
-    NEO::ResLog::mockFopenCalled = 0;
-    NEO::ResLog::mockVfptrinfCalled = 0;
-    NEO::ResLog::mockFcloseCalled = 0;
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockVfptrinfCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.WddmResidencyLogger.set(true);
@@ -1291,18 +1291,18 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentSuccessThenExpectSi
     wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
 
     //2 - one for open log, second for allocation size
-    EXPECT_EQ(2u, NEO::ResLog::mockVfptrinfCalled);
+    EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_TRUE(logger->makeResidentCall);
     EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->makeResidentPagingFence);
 }
 
 TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentFailThenExpectTrimReport) {
-    if (!NEO::residencyLoggingAvailable) {
+    if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
     }
-    NEO::ResLog::mockFopenCalled = 0;
-    NEO::ResLog::mockVfptrinfCalled = 0;
-    NEO::ResLog::mockFcloseCalled = 0;
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockVfptrinfCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.WddmResidencyLogger.set(true);
@@ -1318,17 +1318,17 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentFailThenExpectTrimR
     wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
 
     //3 - one for open log, second for report allocations, 3rd for trim size
-    EXPECT_EQ(3u, NEO::ResLog::mockVfptrinfCalled);
+    EXPECT_EQ(3u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_FALSE(logger->makeResidentCall);
 }
 
 TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenEnterWaitCalledThenExpectInternalFlagOn) {
-    if (!NEO::residencyLoggingAvailable) {
+    if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
     }
-    NEO::ResLog::mockFopenCalled = 0;
-    NEO::ResLog::mockVfptrinfCalled = 0;
-    NEO::ResLog::mockFcloseCalled = 0;
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockVfptrinfCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.WddmResidencyLogger.set(true);
@@ -1342,12 +1342,12 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenEnterWaitCalledThenExpectIntern
 }
 
 TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingThenExpectFlagsOff) {
-    if (!NEO::residencyLoggingAvailable) {
+    if (!NEO::wddmResidencyLoggingAvailable) {
         GTEST_SKIP();
     }
-    NEO::ResLog::mockFopenCalled = 0;
-    NEO::ResLog::mockVfptrinfCalled = 0;
-    NEO::ResLog::mockFcloseCalled = 0;
+    NEO::IoFunctions::mockFopenCalled = 0;
+    NEO::IoFunctions::mockVfptrinfCalled = 0;
+    NEO::IoFunctions::mockFcloseCalled = 0;
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.WddmResidencyLogger.set(true);
@@ -1362,13 +1362,13 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingThenEx
     wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
 
     //2 - one for open log, second for allocation size
-    EXPECT_EQ(2u, NEO::ResLog::mockVfptrinfCalled);
+    EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_TRUE(logger->makeResidentCall);
     EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->makeResidentPagingFence);
 
     logger->enterWait = true;
     wddm->waitOnPagingFenceFromCpu();
-    EXPECT_EQ(5u, NEO::ResLog::mockVfptrinfCalled);
+    EXPECT_EQ(5u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_FALSE(logger->makeResidentCall);
     EXPECT_FALSE(logger->enterWait);
     EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->startWaitPagingFenceSave);

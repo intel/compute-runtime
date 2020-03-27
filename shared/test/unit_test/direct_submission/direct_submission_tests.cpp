@@ -19,6 +19,7 @@
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_io_functions.h"
 #include "test.h"
 
 #include <atomic>
@@ -273,23 +274,20 @@ HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionDisableMonitorFenceWhenStopRingIsCalledThenExpectStopCommandAndMonitorFenceDispatched) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+    using Dispatcher = RenderDispatcher<FamilyType>;
 
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> regularDirectSubmission(*pDevice,
-                                                                                             *osContext.get());
+    MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice,
+                                                                           *osContext.get());
     size_t regularSizeEnd = regularDirectSubmission.getSizeEnd();
 
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
 
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext.get());
-
-    bool ret = directSubmission.initialize(true);
+    bool ret = directSubmission.allocateResources();
+    directSubmission.disableMonitorFence = true;
     EXPECT_TRUE(ret);
-    size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
-    uint32_t oldQueueCount = directSubmission.semaphoreData->QueueWorkCount;
 
-    size_t tagUpdateSize = directSubmission.getSizeTagUpdateSection();
+    size_t tagUpdateSize = Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo);
 
     size_t disabledSizeEnd = directSubmission.getSizeEnd();
     EXPECT_EQ(disabledSizeEnd, regularSizeEnd + tagUpdateSize);
@@ -297,13 +295,12 @@ HWTEST_F(DirectSubmissionTest,
     directSubmission.tagValueSetValue = 0x4343123ull;
     directSubmission.tagAddressSetValue = 0xBEEF00000ull;
     directSubmission.stopRingBuffer();
-    size_t expectedDispatchSize = alreadyDispatchedSize + disabledSizeEnd;
+    size_t expectedDispatchSize = disabledSizeEnd;
     EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
-    EXPECT_EQ(oldQueueCount + 1, directSubmission.semaphoreData->QueueWorkCount);
 
     HardwareParse hwParse;
     hwParse.parsePipeControl = true;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, alreadyDispatchedSize);
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
     hwParse.findHardwareCommands<FamilyType>();
     MI_BATCH_BUFFER_END *bbEnd = hwParse.getCommand<MI_BATCH_BUFFER_END>();
     EXPECT_NE(nullptr, bbEnd);
@@ -328,22 +325,19 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
          givenDirectSubmissionDisableMonitorFenceWhenDispatchWorkloadCalledThenExpectStartWithoutMonitorFence) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using Dispatcher = RenderDispatcher<FamilyType>;
 
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> regularDirectSubmission(*pDevice,
-                                                                                             *osContext.get());
+    MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice,
+                                                                           *osContext.get());
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
 
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
-
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext.get());
-
-    bool ret = directSubmission.initialize(true);
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    directSubmission.disableMonitorFence = true;
+    bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
-    size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
 
-    size_t tagUpdateSize = directSubmission.getSizeTagUpdateSection();
+    size_t tagUpdateSize = Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo);
 
     size_t disabledSizeDispatch = directSubmission.getSizeDispatch();
     EXPECT_EQ(disabledSizeDispatch, (regularSizeDispatch - tagUpdateSize));
@@ -351,12 +345,12 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     directSubmission.tagValueSetValue = 0x4343123ull;
     directSubmission.tagAddressSetValue = 0xBEEF00000ull;
     directSubmission.dispatchWorkloadSection(batchBuffer);
-    size_t expectedDispatchSize = alreadyDispatchedSize + disabledSizeDispatch;
+    size_t expectedDispatchSize = disabledSizeDispatch;
     EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
 
     HardwareParse hwParse;
     hwParse.parsePipeControl = true;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, alreadyDispatchedSize);
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
     hwParse.findHardwareCommands<FamilyType>();
     MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>();
     ASSERT_NE(nullptr, bbStart);
@@ -381,33 +375,31 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
          givenDirectSubmissionDisableCacheFlushWhenDispatchWorkloadCalledThenExpectStartWithoutCacheFlush) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using Dispatcher = RenderDispatcher<FamilyType>;
 
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> regularDirectSubmission(*pDevice,
-                                                                                             *osContext.get());
+    MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice,
+                                                                           *osContext.get());
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
 
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
 
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext.get());
-
-    bool ret = directSubmission.initialize(true);
+    directSubmission.disableCacheFlush = true;
+    bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
-    size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
 
-    size_t flushSize = directSubmission.getSizeFlushSection();
+    size_t flushSize = Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo);
 
     size_t disabledSizeDispatch = directSubmission.getSizeDispatch();
     EXPECT_EQ(disabledSizeDispatch, (regularSizeDispatch - flushSize));
 
     directSubmission.dispatchWorkloadSection(batchBuffer);
-    size_t expectedDispatchSize = alreadyDispatchedSize + disabledSizeDispatch;
+    size_t expectedDispatchSize = disabledSizeDispatch;
     EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
 
     HardwareParse hwParse;
     hwParse.parsePipeControl = true;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, alreadyDispatchedSize);
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
     hwParse.findHardwareCommands<FamilyType>();
     MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>();
     ASSERT_NE(nullptr, bbStart);
@@ -432,46 +424,44 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
          givenDirectSubmissionDebugBufferModeOneWhenDispatchWorkloadCalledThenExpectNoStartAndLoadDataImm) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using Dispatcher = RenderDispatcher<FamilyType>;
 
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> regularDirectSubmission(*pDevice,
-                                                                                             *osContext.get());
+    MockDirectSubmissionHw<FamilyType, Dispatcher> regularDirectSubmission(*pDevice,
+                                                                           *osContext.get());
 
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
 
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
 
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext.get());
-
-    bool ret = directSubmission.initialize(true);
+    directSubmission.workloadMode = 1;
+    bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
-    size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
 
     size_t startSize = directSubmission.getSizeStartSection();
-    size_t loadDataSize = directSubmission.getSizeStoraDataSection();
+    size_t storeDataSize = Dispatcher::getSizeStoreDwordCommand();
 
     size_t debugSizeDispatch = directSubmission.getSizeDispatch();
-    EXPECT_EQ(debugSizeDispatch, (regularSizeDispatch - startSize + loadDataSize));
+    EXPECT_EQ(debugSizeDispatch, (regularSizeDispatch - startSize + storeDataSize));
 
-    directSubmission.currentQueueWorkCount = 0x40u;
+    directSubmission.workloadModeOneExpectedValue = 0x40u;
     directSubmission.semaphoreGpuVa = 0xAFF0000;
     directSubmission.dispatchWorkloadSection(batchBuffer);
-    size_t expectedDispatchSize = alreadyDispatchedSize + debugSizeDispatch;
+    size_t expectedDispatchSize = debugSizeDispatch;
     EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
 
     HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, alreadyDispatchedSize);
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
     MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>();
     EXPECT_EQ(nullptr, bbStart);
 
-    MI_STORE_DATA_IMM *loadData = hwParse.getCommand<MI_STORE_DATA_IMM>();
-    ASSERT_NE(nullptr, loadData);
-    EXPECT_EQ(0x40u, loadData->getDataDword0());
+    MI_STORE_DATA_IMM *storeData = hwParse.getCommand<MI_STORE_DATA_IMM>();
+    ASSERT_NE(nullptr, storeData);
+    EXPECT_EQ(0x40u + 1u, storeData->getDataDword0());
     uint64_t expectedGpuVa = directSubmission.semaphoreGpuVa;
     auto semaphore = static_cast<RingSemaphoreData *>(directSubmission.semaphorePtr);
     expectedGpuVa += ptrDiff(&semaphore->Reserved1Uint32, directSubmission.semaphorePtr);
-    EXPECT_EQ(expectedGpuVa, loadData->getAddress());
+    EXPECT_EQ(expectedGpuVa, storeData->getAddress());
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest,
@@ -483,15 +473,12 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
                                                                                              *osContext.get());
     size_t regularSizeDispatch = regularDirectSubmission.getSizeDispatch();
 
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(2);
-
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
 
-    bool ret = directSubmission.initialize(true);
+    directSubmission.workloadMode = 2;
+    bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
-    size_t alreadyDispatchedSize = directSubmission.ringCommandStream.getUsed();
 
     size_t startSize = directSubmission.getSizeStartSection();
 
@@ -500,16 +487,16 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     directSubmission.currentQueueWorkCount = 0x40u;
     directSubmission.dispatchWorkloadSection(batchBuffer);
-    size_t expectedDispatchSize = alreadyDispatchedSize + debugSizeDispatch;
+    size_t expectedDispatchSize = debugSizeDispatch;
     EXPECT_EQ(expectedDispatchSize, directSubmission.ringCommandStream.getUsed());
 
     HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, alreadyDispatchedSize);
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
     MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>();
     EXPECT_EQ(nullptr, bbStart);
 
-    MI_STORE_DATA_IMM *loadData = hwParse.getCommand<MI_STORE_DATA_IMM>();
-    EXPECT_EQ(nullptr, loadData);
+    MI_STORE_DATA_IMM *storeData = hwParse.getCommand<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(nullptr, storeData);
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchSemaphoreThenExpectCorrectSizeUsed) {
@@ -545,47 +532,50 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchSwitchRingBuffer
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchFlushSectionThenExpectCorrectSizeUsed) {
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext.get());
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
 
-    directSubmission.dispatchFlushSection();
-    EXPECT_EQ(directSubmission.getSizeFlushSection(), directSubmission.ringCommandStream.getUsed());
+    Dispatcher::dispatchCacheFlush(directSubmission.ringCommandStream, *directSubmission.hwInfo);
+    EXPECT_EQ(Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo), directSubmission.ringCommandStream.getUsed());
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchTagUpdateSectionThenExpectCorrectSizeUsed) {
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    MockDirectSubmissionHw<FamilyType, Dispatcher>
         directSubmission(*pDevice, *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
-
-    directSubmission.dispatchTagUpdateSection(0ull, 0ull);
+    Dispatcher::dispatchMonitorFence(directSubmission.ringCommandStream, 0ull, 0ull, *directSubmission.hwInfo);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
-    EXPECT_EQ(directSubmission.getSizeTagUpdateSection(), directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo), directSubmission.ringCommandStream.getUsed());
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchEndingSectionThenExpectCorrectSizeUsed) {
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext.get());
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
 
     bool ret = directSubmission.initialize(false);
     EXPECT_TRUE(ret);
 
-    directSubmission.dispatchEndingSection();
+    Dispatcher::dispatchStopCommandBuffer(directSubmission.ringCommandStream);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
-    EXPECT_EQ(directSubmission.getSizeEndingSection(), directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(Dispatcher::getSizeStopCommandBuffer(), directSubmission.ringCommandStream.getUsed());
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext.get());
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
 
     size_t expectedSize = directSubmission.getSizeStartSection() +
-                          directSubmission.getSizeFlushSection() +
-                          directSubmission.getSizeTagUpdateSection() +
+                          Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
+                          Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
                           directSubmission.getSizeSemaphoreSection();
     size_t actualSize = directSubmission.getSizeDispatch();
     EXPECT_EQ(expectedSize, actualSize);
@@ -593,14 +583,15 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetDispatchSizeThenExpec
 
 HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionEnableDebugBufferModeOneWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
+    using Dispatcher = RenderDispatcher<FamilyType>;
 
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext.get());
-    size_t expectedSize = directSubmission.getSizeStoraDataSection() +
-                          directSubmission.getSizeFlushSection() +
-                          directSubmission.getSizeTagUpdateSection() +
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    directSubmission.workloadMode = 1;
+
+    size_t expectedSize = Dispatcher::getSizeStoreDwordCommand() +
+                          Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
+                          Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
                           directSubmission.getSizeSemaphoreSection();
     size_t actualSize = directSubmission.getSizeDispatch();
     EXPECT_EQ(expectedSize, actualSize);
@@ -608,13 +599,13 @@ HWTEST_F(DirectSubmissionTest,
 
 HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionEnableDebugBufferModeTwoWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(2);
+    using Dispatcher = RenderDispatcher<FamilyType>;
 
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext.get());
-    size_t expectedSize = directSubmission.getSizeFlushSection() +
-                          directSubmission.getSizeTagUpdateSection() +
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    directSubmission.workloadMode = 2;
+    size_t expectedSize = Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
+                          Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
                           directSubmission.getSizeSemaphoreSection();
     size_t actualSize = directSubmission.getSizeDispatch();
     EXPECT_EQ(expectedSize, actualSize);
@@ -622,13 +613,13 @@ HWTEST_F(DirectSubmissionTest,
 
 HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionDisableCacheFlushWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+    using Dispatcher = RenderDispatcher<FamilyType>;
 
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext.get());
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    directSubmission.disableCacheFlush = true;
     size_t expectedSize = directSubmission.getSizeStartSection() +
-                          directSubmission.getSizeTagUpdateSection() +
+                          Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
                           directSubmission.getSizeSemaphoreSection();
     size_t actualSize = directSubmission.getSizeDispatch();
     EXPECT_EQ(expectedSize, actualSize);
@@ -636,25 +627,26 @@ HWTEST_F(DirectSubmissionTest,
 
 HWTEST_F(DirectSubmissionTest,
          givenDirectSubmissionDisableMonitorFenceWhenGetDispatchSizeThenExpectCorrectSizeReturned) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+    using Dispatcher = RenderDispatcher<FamilyType>;
 
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext.get());
-
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    directSubmission.disableMonitorFence = true;
     size_t expectedSize = directSubmission.getSizeStartSection() +
-                          directSubmission.getSizeFlushSection() +
+                          Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
                           directSubmission.getSizeSemaphoreSection();
     size_t actualSize = directSubmission.getSizeDispatch();
     EXPECT_EQ(expectedSize, actualSize);
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetEndSizeThenExpectCorrectSizeReturned) {
-    MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
-                                                                                      *osContext.get());
+    using Dispatcher = RenderDispatcher<FamilyType>;
 
-    size_t expectedSize = directSubmission.getSizeEndingSection() +
-                          directSubmission.getSizeFlushSection();
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+
+    size_t expectedSize = Dispatcher::getSizeStopCommandBuffer() +
+                          Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo);
     size_t actualSize = directSubmission.getSizeEnd();
     EXPECT_EQ(expectedSize, actualSize);
 }
@@ -912,4 +904,233 @@ HWTEST_F(DirectSubmissionTest, whenInitDirectSubmissionFailThenEngineIsNotCreate
     ultHwConfig.csrFailInitDirectSubmission = true;
     auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo);
     EXPECT_EQ(nullptr, device);
+}
+
+HWTEST_F(DirectSubmissionTest,
+         givenDirectSubmissionDiagnosticNotAvailableWhenDiagnosticRegistryIsUsedThenDoNotEnableDiagnostic) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    if (NEO::directSubmissionDiagnosticAvailable) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
+    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+
+    NEO::IoFunctions::mockFopenCalled = 0u;
+    NEO::IoFunctions::mockVfptrinfCalled = 0u;
+    NEO::IoFunctions::mockFcloseCalled = 0u;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    EXPECT_FALSE(directSubmission.defaultDisableCacheFlush);
+    EXPECT_FALSE(directSubmission.defaultDisableMonitorFence);
+    EXPECT_FALSE(directSubmission.disableCacheFlush);
+    EXPECT_FALSE(directSubmission.disableMonitorFence);
+    EXPECT_EQ(0u, directSubmission.workloadMode);
+    EXPECT_EQ(nullptr, directSubmission.diagnostic.get());
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(directSubmission.ringStart);
+    EXPECT_EQ(0u, directSubmission.disabledDiagnosticCalled);
+    EXPECT_EQ(0u, directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+}
+
+HWTEST_F(DirectSubmissionTest,
+         givenDirectSubmissionDiagnosticNotAvailableWhenDiagnosticRegistryIsUsedThenDoNotEnableDiagnosticStartOnlyWithSemaphore) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    if (NEO::directSubmissionDiagnosticAvailable) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
+    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+
+    NEO::IoFunctions::mockFopenCalled = 0u;
+    NEO::IoFunctions::mockVfptrinfCalled = 0u;
+    NEO::IoFunctions::mockFcloseCalled = 0u;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    EXPECT_FALSE(directSubmission.defaultDisableCacheFlush);
+    EXPECT_FALSE(directSubmission.defaultDisableMonitorFence);
+    EXPECT_FALSE(directSubmission.disableCacheFlush);
+    EXPECT_FALSE(directSubmission.disableMonitorFence);
+    EXPECT_EQ(0u, directSubmission.workloadMode);
+    EXPECT_EQ(nullptr, directSubmission.diagnostic.get());
+    bool ret = directSubmission.initialize(true);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(directSubmission.ringStart);
+    EXPECT_EQ(1u, directSubmission.disabledDiagnosticCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+    size_t expectedSize = Dispatcher::getSizePreemption() +
+                          directSubmission.getSizeSemaphoreSection();
+    EXPECT_EQ(expectedSize, directSubmission.ringCommandStream.getUsed());
+}
+
+HWTEST_F(DirectSubmissionTest,
+         givenDirectSubmissionDiagnosticAvailableWhenDiagnosticRegistryIsNotUsedThenDoNotEnableDiagnostic) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    if (!NEO::directSubmissionDiagnosticAvailable) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+
+    NEO::IoFunctions::mockFopenCalled = 0u;
+    NEO::IoFunctions::mockVfptrinfCalled = 0u;
+    NEO::IoFunctions::mockFcloseCalled = 0u;
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    EXPECT_FALSE(directSubmission.defaultDisableCacheFlush);
+    EXPECT_FALSE(directSubmission.defaultDisableMonitorFence);
+    EXPECT_FALSE(directSubmission.disableCacheFlush);
+    EXPECT_FALSE(directSubmission.disableMonitorFence);
+    EXPECT_EQ(0u, directSubmission.workloadMode);
+    EXPECT_EQ(nullptr, directSubmission.diagnostic.get());
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(directSubmission.ringStart);
+    EXPECT_EQ(0u, directSubmission.disabledDiagnosticCalled);
+    EXPECT_EQ(0u, directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+}
+
+HWTEST_F(DirectSubmissionTest,
+         givenDirectSubmissionDiagnosticAvailableWhenDiagnosticRegistryUsedThenDoPerformDiagnosticRun) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    if (!NEO::directSubmissionDiagnosticAvailable) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
+    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+    DebugManager.flags.DirectSubmissionDiagnosticExecutionCount.set(5);
+
+    NEO::IoFunctions::mockFopenCalled = 0u;
+    NEO::IoFunctions::mockVfptrinfCalled = 0u;
+    NEO::IoFunctions::mockFcloseCalled = 0u;
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    uint32_t expectedSemaphoreValue = directSubmission.currentQueueWorkCount;
+    EXPECT_FALSE(directSubmission.defaultDisableCacheFlush);
+    EXPECT_FALSE(directSubmission.defaultDisableMonitorFence);
+    EXPECT_TRUE(directSubmission.disableCacheFlush);
+    EXPECT_TRUE(directSubmission.disableMonitorFence);
+    EXPECT_EQ(1u, directSubmission.workloadMode);
+    ASSERT_NE(nullptr, directSubmission.diagnostic.get());
+    uint32_t expectedExecCount = 5u;
+    expectedSemaphoreValue += expectedExecCount;
+    EXPECT_EQ(expectedExecCount, directSubmission.diagnostic->getExecutionsCount());
+    size_t expectedSize = Dispatcher::getSizePreemption() +
+                          directSubmission.getSizeSemaphoreSection();
+    expectedSize += expectedExecCount * directSubmission.getSizeDispatch();
+
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(directSubmission.ringStart);
+    EXPECT_EQ(0u, directSubmission.disabledDiagnosticCalled);
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    //1 - preamble, 1 - init time, 5 - exec logs
+    EXPECT_EQ(7u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
+    EXPECT_EQ(expectedSize, directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(expectedSemaphoreValue, directSubmission.currentQueueWorkCount);
+
+    EXPECT_FALSE(directSubmission.disableCacheFlush);
+    EXPECT_FALSE(directSubmission.disableMonitorFence);
+    EXPECT_EQ(0u, directSubmission.workloadMode);
+    EXPECT_EQ(nullptr, directSubmission.diagnostic.get());
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
+
+    GenCmdList storeDataCmdList = hwParse.getCommandsList<MI_STORE_DATA_IMM>();
+    ASSERT_EQ(5u, storeDataCmdList.size());
+    uint32_t expectedData = 1u;
+    for (auto &storeCmdData : storeDataCmdList) {
+        MI_STORE_DATA_IMM *storeCmd = static_cast<MI_STORE_DATA_IMM *>(storeCmdData);
+
+        auto storeData = storeCmd->getDataDword0();
+        EXPECT_EQ(expectedData, storeData);
+        expectedData++;
+    }
+}
+
+HWTEST_F(DirectSubmissionTest,
+         givenDirectSubmissionDiagnosticAvailableWhenDiagnosticRegistryModeTwoUsedThenDoPerformDiagnosticRunWithoutRoundtripMeasures) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    if (!NEO::directSubmissionDiagnosticAvailable) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(2);
+    DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
+    DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
+    DebugManager.flags.DirectSubmissionDiagnosticExecutionCount.set(5);
+
+    NEO::IoFunctions::mockFopenCalled = 0u;
+    NEO::IoFunctions::mockVfptrinfCalled = 0u;
+    NEO::IoFunctions::mockFcloseCalled = 0u;
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    uint32_t expectedSemaphoreValue = directSubmission.currentQueueWorkCount;
+    EXPECT_FALSE(directSubmission.defaultDisableCacheFlush);
+    EXPECT_FALSE(directSubmission.defaultDisableMonitorFence);
+    EXPECT_TRUE(directSubmission.disableCacheFlush);
+    EXPECT_TRUE(directSubmission.disableMonitorFence);
+    EXPECT_EQ(2u, directSubmission.workloadMode);
+    ASSERT_NE(nullptr, directSubmission.diagnostic.get());
+    uint32_t expectedExecCount = 5u;
+    expectedSemaphoreValue += expectedExecCount;
+    EXPECT_EQ(expectedExecCount, directSubmission.diagnostic->getExecutionsCount());
+    size_t expectedSize = Dispatcher::getSizePreemption() +
+                          directSubmission.getSizeSemaphoreSection();
+    size_t expectedDispatch = directSubmission.getSizeSemaphoreSection();
+    EXPECT_EQ(expectedDispatch, directSubmission.getSizeDispatch());
+    expectedSize += expectedExecCount * expectedDispatch;
+
+    bool ret = directSubmission.initialize(false);
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(directSubmission.ringStart);
+    EXPECT_EQ(0u, directSubmission.disabledDiagnosticCalled);
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    //1 - preamble, 1 - init time, 0 exec logs in mode 2
+    EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
+    EXPECT_EQ(expectedSize, directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(expectedSemaphoreValue, directSubmission.currentQueueWorkCount);
+
+    EXPECT_FALSE(directSubmission.disableCacheFlush);
+    EXPECT_FALSE(directSubmission.disableMonitorFence);
+    EXPECT_EQ(0u, directSubmission.workloadMode);
+    EXPECT_EQ(nullptr, directSubmission.diagnostic.get());
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
+
+    GenCmdList storeDataCmdList = hwParse.getCommandsList<MI_STORE_DATA_IMM>();
+    EXPECT_EQ(0u, storeDataCmdList.size());
 }
