@@ -118,12 +118,12 @@ void CommandQueueImp::CommandBufferManager::initialize(Device *device, size_t si
                                          false,
                                          NEO::SubDevice::unspecifiedSubDeviceIndex};
 
-    buffers[BUFFER_ALLOCATION::FIRST] = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    buffers[BUFFER_ALLOCATION::FIRST] = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
     UNRECOVERABLE_IF(nullptr == buffers[BUFFER_ALLOCATION::FIRST]);
     memset(buffers[BUFFER_ALLOCATION::FIRST]->getUnderlyingBuffer(), 0, buffers[BUFFER_ALLOCATION::FIRST]->getUnderlyingBufferSize());
 
-    buffers[BUFFER_ALLOCATION::SECOND] = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    buffers[BUFFER_ALLOCATION::SECOND] = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
     UNRECOVERABLE_IF(nullptr == buffers[BUFFER_ALLOCATION::SECOND]);
     memset(buffers[BUFFER_ALLOCATION::SECOND]->getUnderlyingBuffer(), 0, buffers[BUFFER_ALLOCATION::SECOND]->getUnderlyingBufferSize());
