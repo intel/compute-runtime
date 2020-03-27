@@ -5,30 +5,14 @@
  *
  */
 
-#include "shared/test/unit_test/helpers/default_hw_info.h"
-
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
 
-#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 namespace L0 {
 namespace ult {
 
-struct L0DeviceFixture {
-    void SetUp() {
-        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-        device = std::make_unique<Mock<L0::DeviceImp>>(neoDevice, neoDevice->getExecutionEnvironment());
-    }
-
-    void TearDown() {
-    }
-
-    NEO::MockDevice *neoDevice = nullptr;
-    std::unique_ptr<Mock<L0::DeviceImp>> device = nullptr;
-};
-
-using CommandListCreate = Test<L0DeviceFixture>;
+using CommandListCreate = Test<DeviceFixture>;
 
 TEST_F(CommandListCreate, whenCommandListIsCreatedThenItIsInitialized) {
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device.get()));
