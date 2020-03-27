@@ -108,7 +108,7 @@ class Drm {
     std::unique_ptr<MemoryInfo> memoryInfo;
 
     std::string getSysFsPciPath(int deviceID);
-    void *query(uint32_t queryId);
+    std::unique_ptr<uint8_t[]> query(uint32_t queryId);
 
 #pragma pack(1)
     struct PCIConfig {

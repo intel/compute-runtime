@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-void *Drm::query(uint32_t queryId) {
+std::unique_ptr<uint8_t[]> Drm::query(uint32_t queryId) {
     return nullptr;
 }
 
