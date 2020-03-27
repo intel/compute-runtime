@@ -55,7 +55,7 @@ function(compile_kernel target gen_type platform_type kernel)
   set(SCHEDULER_CPP ${SCHEDULER_CPP} PARENT_SCOPE)
 
   add_custom_target(${target} DEPENDS ${OUTPUTPATH})
-  set_target_properties(${target} PROPERTIES FOLDER "opencl/source/scheduler/${gen_type_lower}")
+  set_target_properties(${target} PROPERTIES FOLDER "${OPENCL_RUNTIME_PROJECTS_FOLDER}/scheduler/${gen_type_lower}")
 endfunction()
 
 macro(macro_for_each_gen)

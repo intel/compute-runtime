@@ -200,7 +200,7 @@ set_target_properties(ocloc_lib PROPERTIES FOLDER "offline_compiler")
 
 
 add_custom_target(copy_compiler_files DEPENDS ${NEO__IGC_TARGETS})
-set_target_properties(copy_compiler_files PROPERTIES FOLDER "opencl runtime")
+set_target_properties(copy_compiler_files PROPERTIES FOLDER "offline_compiler")
 
 if(WIN32)
   foreach(TARGET_tmp ${NEO__IGC_TARGETS})

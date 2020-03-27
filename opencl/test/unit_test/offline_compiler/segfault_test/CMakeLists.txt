@@ -54,7 +54,7 @@ get_property(CLOC_FOLDER TARGET ocloc PROPERTY FOLDER)
 set_property(TARGET ocloc_segfault_test PROPERTY FOLDER ${CLOC_FOLDER})
 
 target_include_directories(ocloc_segfault_test BEFORE PRIVATE ${CLOC_SEGFAULT_TEST_INCLUDES})
-create_project_source_tree(ocloc_segfault_test ${NEO_SOURCE_DIR}/offline_compiler ${NEO_SOURCE_DIR}/runtime ${NEO_SOURCE_DIR}/unit_tests)
+create_project_source_tree(ocloc_segfault_test)
 
 add_custom_target(run_ocloc_segfault_test ALL
   DEPENDS ocloc_segfault_test

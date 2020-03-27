@@ -35,7 +35,7 @@ target_include_directories(igdrcl_windows_dll_tests PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-create_project_source_tree(igdrcl_windows_dll_tests ${NEO_SOURCE_DIR}/runtime ${NEO_SOURCE_DIR}/unit_tests)
+create_project_source_tree(igdrcl_windows_dll_tests)
 
 add_custom_target(run_windows_dll_tests ALL DEPENDS unit_tests igdrcl_windows_dll_tests)
 add_custom_command(

@@ -463,7 +463,7 @@ macro(macro_for_each_gen)
 endmacro()
 apply_macro_for_each_gen("TESTED")
 add_subdirectories()
-create_project_source_tree(igdrcl_tests ${NEO_SOURCE_DIR}/runtime)
+create_project_source_tree(igdrcl_tests)
 
 set(UltPchHeader "${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_tests_pch.h")
 set(UltPchSource "${CMAKE_CURRENT_SOURCE_DIR}/igdrcl_tests_pch.cpp")
