@@ -121,7 +121,7 @@ template <typename T>
 using BaseObjectWithDefaultCtorTests = BaseObjectTests<T>;
 TYPED_TEST_CASE(BaseObjectWithDefaultCtorTests, BaseObjectTypesForCastInvalidMagicTest);
 
-TYPED_TEST(BaseObjectWithDefaultCtorTests, castToObjectWithInvalidMagicReturnsNullptr) {
+TYPED_TEST(BaseObjectWithDefaultCtorTests, GivenInvalidMagicWhenCastingToObjectThenNullptrIsReturned) {
     MockObject<TypeParam> *object = new MockObject<TypeParam>;
     EXPECT_TRUE(object->isObjectValid());
     object->setInvalidMagic();
@@ -142,7 +142,7 @@ TYPED_TEST(BaseObjectWithDefaultCtorTests, whenCastToObjectWithInvalidIcdDispatc
     EXPECT_EQ(nullptr, objectCasted);
 }
 
-TYPED_TEST(BaseObjectTests, retain) {
+TYPED_TEST(BaseObjectTests, WhenRetainingAndReleasingThenObjectReferenceIsUpdated) {
     TypeParam *object = new TypeParam;
     object->retain();
     EXPECT_EQ(2, object->getReference());
@@ -156,13 +156,13 @@ TYPED_TEST(BaseObjectTests, retain) {
     // if release doesn't delete memory.
 }
 
-TYPED_TEST(BaseObjectTests, castToObjectFromNullptr) {
+TYPED_TEST(BaseObjectTests, GivenNullWhenCastingToObjectThenNullptrIsReturned) {
     typename TypeParam::BaseType *handle = nullptr;
     auto object = castToObject<TypeParam>(handle);
     EXPECT_EQ(nullptr, object);
 }
 
-TYPED_TEST(BaseObjectTests, castToFromBaseTypeYieldsDerivedType) {
+TYPED_TEST(BaseObjectTests, WhenCastingToFromBaseTypeThenCorrectTypeIsDerived) {
     TypeParam object;
     typename TypeParam::BaseType *baseObject = &object;
 
@@ -170,14 +170,14 @@ TYPED_TEST(BaseObjectTests, castToFromBaseTypeYieldsDerivedType) {
     EXPECT_EQ(&object, objectNew);
 }
 
-TYPED_TEST(BaseObjectTests, castToSameTypeReturnsSameObject) {
+TYPED_TEST(BaseObjectTests, WhenCastingToSameTypeThenSameObjectIsReturned) {
     TypeParam object;
 
     auto objectNew = castToObject<TypeParam>(&object);
     EXPECT_EQ(&object, objectNew);
 }
 
-TYPED_TEST(BaseObjectTests, castToDifferentTypeReturnsNullPtr) {
+TYPED_TEST(BaseObjectTests, WhenCastingToDifferentTypeThenNullptrIsReturned) {
     TypeParam object;
     typename TypeParam::BaseType *baseObject = &object;
 
@@ -186,7 +186,7 @@ TYPED_TEST(BaseObjectTests, castToDifferentTypeReturnsNullPtr) {
     EXPECT_EQ(nullptr, invalidObject);
 }
 
-TYPED_TEST(BaseObjectTests, commonRuntimeExpectsDispatchTableAtFirstPointerInObject) {
+TYPED_TEST(BaseObjectTests, WhenCastingToDispatchTableThenEntriesAreCorrect) {
     TypeParam objectDrv;
 
     // Automatic downcasting to _cl_type *.
@@ -224,7 +224,7 @@ TYPED_TEST(BaseObjectTests, commonRuntimeExpectsDispatchTableAtFirstPointerInObj
     EXPECT_EQ(nullptr, genericObject->dispatch.crtDispatch->placeholder21);
 }
 
-TEST(BaseObjectTests, commonRuntimeSetsSharedContextFlag) {
+TEST(BaseObjectTests, WhenSettingSharedContextFlagThenItIsSetCorrectly) {
     MockContext newContext;
 
     //cast to cl_context
@@ -236,7 +236,7 @@ TEST(BaseObjectTests, commonRuntimeSetsSharedContextFlag) {
     EXPECT_TRUE(newContext.isSharedContext);
 }
 
-TYPED_TEST(BaseObjectTests, WhenAlreadyOwnedByThreadOnTakeOrReleaseOwnershipUsesRecursiveOwnageCounter) {
+TYPED_TEST(BaseObjectTests, WhenTakingAndReleasingOwnershipThenOwnershipCountIsUpdated) {
     TypeParam obj;
     EXPECT_FALSE(obj.hasOwnership());
 
@@ -259,7 +259,7 @@ TYPED_TEST(BaseObjectTests, WhenAlreadyOwnedByThreadOnTakeOrReleaseOwnershipUses
     EXPECT_FALSE(obj.hasOwnership());
 }
 
-TEST(CastToBuffer, fromMemObj) {
+TEST(CastToBuffer, WhenCastingFromMemObjThenBehavesAsExpected) {
     MockContext context;
     auto buffer = BufferHelper<>::create(&context);
     MemObj *memObj = buffer;
@@ -272,7 +272,7 @@ TEST(CastToBuffer, fromMemObj) {
     buffer->release();
 }
 
-TEST(CastToImage, fromMemObj) {
+TEST(CastToImage, WhenCastingFromMemObjThenBehavesAsExpected) {
     MockContext context;
     auto image = Image2dHelper<>::create(&context);
     MemObj *memObj = image;
@@ -295,7 +295,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     }
 };
 
-TEST(BaseObjectTest, takeOwnershipWrapper) {
+TEST(BaseObjectTest, WhenUsingOwnershipWrapperThenOwnershipIsSetCorrectly) {
     MockBuffer buffer;
     {
         TakeOwnershipWrapper<Buffer> bufferOwnership(buffer, false);
@@ -309,14 +309,14 @@ TEST(BaseObjectTest, takeOwnershipWrapper) {
     }
 }
 
-TYPED_TEST(BaseObjectTests, getCond) {
+TYPED_TEST(BaseObjectTests, WhenObjectIsCreatedThenNumWaitersIsZero) {
     TypeParam *object = new TypeParam;
 
     EXPECT_EQ(0U, object->getCond().peekNumWaiters());
     object->release();
 }
 
-TYPED_TEST(BaseObjectTests, convertToInternalObject) {
+TYPED_TEST(BaseObjectTests, WhenConvertingToInternalObjectThnRefApiCountIsSetToZero) {
     class ObjectForTest : public NEO::MemObj {
       public:
         ObjectForTest() : MemObj(nullptr, 0, {}, 0, 0, 0u, nullptr, nullptr, nullptr, false, false, false) {
@@ -335,11 +335,11 @@ TYPED_TEST(BaseObjectTests, convertToInternalObject) {
     object->decRefInternal();
 }
 
-TYPED_TEST(BaseObjectTests, castToObjectOrAbortFromNullptrAbort) {
+TYPED_TEST(BaseObjectTests, GivenNullptrWhenCastingToObjectOrAbortThenExceptionIsThrown) {
     EXPECT_ANY_THROW(castToObjectOrAbort<TypeParam>(nullptr));
 }
 
-TYPED_TEST(BaseObjectTests, castToObjectOrAbortFromBaseTypeYieldsDerivedType) {
+TYPED_TEST(BaseObjectTests, WhenCastingToObjectOrAbortThenCorrectTypeIsDerived) {
     TypeParam object;
     typename TypeParam::BaseType *baseObject = &object;
 
@@ -347,7 +347,7 @@ TYPED_TEST(BaseObjectTests, castToObjectOrAbortFromBaseTypeYieldsDerivedType) {
     EXPECT_EQ(&object, objectNew);
 }
 
-TYPED_TEST(BaseObjectTests, castToOrAbortDifferentTypeAborts) {
+TYPED_TEST(BaseObjectTests, WhenCastToOrAbortWithDifferentTypeThenExceptionIsThrown) {
     TypeParam object;
     typename TypeParam::BaseType *baseObject = &object;
 
