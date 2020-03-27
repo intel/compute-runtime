@@ -19,7 +19,7 @@ extern bool disabled;
 
 class PageFaultManagerConfigFixture : public ::testing::Test {
   public:
-    void SetUp() {
+    void SetUp() override {
         if (PagaFaultManagerTestConfig::disabled) {
             GTEST_SKIP();
         }
