@@ -120,18 +120,20 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
 
     void SetUp() {
         executionEnvironment = new ExecutionEnvironment;
-        executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-        mock = new DrmMockCustom();
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        for (auto &rootDeviceEnvironment : executionEnvironment->rootDeviceEnvironments) {
+            rootDeviceEnvironment->setHwInfo(defaultHwInfo.get());
+            rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+            rootDeviceEnvironment->osInterface->get()->setDrm(new DrmMockCustom);
+        }
+        mock = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm());
         memoryManager.reset(new TestedDrmMemoryManager(*executionEnvironment));
 
         ASSERT_NE(nullptr, memoryManager);
         if (memoryManager->getgemCloseWorker()) {
             memoryManager->getgemCloseWorker()->close(true);
         }
-        device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
+        device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, rootDeviceIndex));
     }
 
     void TearDown() {
@@ -141,5 +143,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
     ExecutionEnvironment *executionEnvironment = nullptr;
     std::unique_ptr<MockDevice> device;
     DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};
+    const uint32_t rootDeviceIndex = 1u;
+    const uint32_t numRootDevices = 2u;
 };
 } // namespace NEO

@@ -65,7 +65,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
                            bool allowForcePin,
                            bool validateHostPtrMemory,
                            ExecutionEnvironment &executionEnvironment);
-    void injectPinBB(BufferObject *newPinBB);
+    void injectPinBB(BufferObject *newPinBB, uint32_t rootDeviceIndex);
 
     DrmGemCloseWorker *getgemCloseWorker();
     void forceLimitedRangeAllocator(uint64_t range);
