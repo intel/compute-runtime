@@ -9,7 +9,6 @@
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
-using namespace std;
 
 namespace NEO {
 DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager(oclRegPath);

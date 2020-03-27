@@ -11,7 +11,6 @@
 
 #include <thread>
 
-using namespace std;
 using namespace NEO;
 
 namespace BuiltinKernelsSimulation {

@@ -16,7 +16,6 @@
 #include <string>
 
 using namespace NEO;
-using namespace std;
 
 class TestSettingsFileReader : public SettingsFileReader {
   public:
@@ -48,7 +47,7 @@ TEST(SettingsFileReader, CreateFileReaderWithoutFile) {
     }
 
     // Use current location for file read
-    std::unique_ptr<TestSettingsFileReader> reader = unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader());
+    auto reader = std::make_unique<TestSettingsFileReader>();
     ASSERT_NE(nullptr, reader);
 
     EXPECT_EQ(0u, reader->getStringSettingsCount());
@@ -56,12 +55,12 @@ TEST(SettingsFileReader, CreateFileReaderWithoutFile) {
 
 TEST(SettingsFileReader, GetStringSettingFromFile) {
     // Use test settings file
-    std::unique_ptr<TestSettingsFileReader> reader = unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::stringTestPath));
+    auto reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::stringTestPath);
     ASSERT_NE(nullptr, reader);
 
-    string retValue;
+    std::string retValue;
     // StringTestKey is defined in file: unit_tests\helpers\test_debug_variables.inl
-    string returnedStringValue = reader->getSetting("StringTestKey", retValue);
+    std::string returnedStringValue = reader->getSetting("StringTestKey", retValue);
 
     // "Test Value" is a value that should be read from file defined in stringTestPath member
     EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
@@ -79,7 +78,7 @@ TEST(SettingsFileReader, GetStringSettingFromFile) {
 }
 
 TEST(SettingsFileReader, givenDebugFileSettingInWhichStringIsFollowedByIntegerWhenItIsParsedThenProperValuesAreObtained) {
-    std::unique_ptr<TestSettingsFileReader> reader(new TestSettingsFileReader(TestSettingsFileReader::stringTestPath));
+    auto reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::stringTestPath);
     ASSERT_NE(nullptr, reader.get());
 
     int32_t retValue = 0;
@@ -87,8 +86,8 @@ TEST(SettingsFileReader, givenDebugFileSettingInWhichStringIsFollowedByIntegerWh
 
     EXPECT_EQ(1, returnedIntValue);
 
-    string retValueString;
-    string returnedStringValue = reader->getSetting("StringTestKey", retValueString);
+    std::string retValueString;
+    std::string returnedStringValue = reader->getSetting("StringTestKey", retValueString);
 
     EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
 }
@@ -96,7 +95,7 @@ TEST(SettingsFileReader, givenDebugFileSettingInWhichStringIsFollowedByIntegerWh
 TEST(SettingsFileReader, GetSettingWhenNotInFile) {
 
     // Use test settings file
-    std::unique_ptr<TestSettingsFileReader> reader = unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::testPath));
+    auto reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::testPath);
     ASSERT_NE(nullptr, reader);
 
     bool defaultBoolValue = false;
@@ -109,8 +108,8 @@ TEST(SettingsFileReader, GetSettingWhenNotInFile) {
 
     EXPECT_EQ(defaultIntValue, returnedIntValue);
 
-    string defaultStringValue = "ABCD";
-    string returnedStringValue = reader->getSetting("StringSettingNotExistingInFile", defaultStringValue);
+    std::string defaultStringValue = "ABCD";
+    std::string returnedStringValue = reader->getSetting("StringSettingNotExistingInFile", defaultStringValue);
 
     EXPECT_EQ(defaultStringValue, returnedStringValue);
 }
@@ -122,18 +121,18 @@ TEST(SettingsFileReader, appSpecificLocation) {
 }
 
 TEST(SettingsFileReader, givenHexNumbersSemiColonSeparatedListInInputStreamWhenParsingThenCorrectStringValueIsStored) {
-    std::unique_ptr<TestSettingsFileReader> reader = unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader());
+    auto reader = std::make_unique<TestSettingsFileReader>();
     ASSERT_NE(nullptr, reader);
 
     //No settings should be parsed initially
     EXPECT_EQ(0u, reader->getStringSettingsCount());
 
-    stringstream inputLineWithSemiColonList("KeyName = 0x1234;0x5555");
+    std::stringstream inputLineWithSemiColonList("KeyName = 0x1234;0x5555");
 
     reader->parseStream(inputLineWithSemiColonList);
 
-    string defaultStringValue = "FailedToParse";
-    string returnedStringValue = reader->getSetting("KeyName", defaultStringValue);
+    std::string defaultStringValue = "FailedToParse";
+    std::string returnedStringValue = reader->getSetting("KeyName", defaultStringValue);
 
     EXPECT_STREQ("0x1234;0x5555", returnedStringValue.c_str());
 }

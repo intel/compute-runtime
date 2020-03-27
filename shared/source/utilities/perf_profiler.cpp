@@ -16,7 +16,6 @@
 #include <sstream>
 #include <thread>
 
-using namespace std;
 
 namespace NEO {
 
@@ -63,12 +62,12 @@ PerfProfiler::PerfProfiler(int id, std::unique_ptr<std::ostream> logOut, std::un
     if (logOut != nullptr) {
         this->logFile = std::move(logOut);
     } else {
-        stringstream filename;
+        std::stringstream filename;
         filename << "PerfReport_Thread_" << id << ".xml";
 
         std::unique_ptr<std::ofstream> logToFile = std::unique_ptr<std::ofstream>(new std::ofstream());
         logToFile->exceptions(std::ios::failbit | std::ios::badbit);
-        logToFile->open(filename.str().c_str(), ios::trunc);
+        logToFile->open(filename.str().c_str(), std::ios::trunc);
         this->logFile = std::move(logToFile);
     }
 
@@ -77,12 +76,12 @@ PerfProfiler::PerfProfiler(int id, std::unique_ptr<std::ostream> logOut, std::un
     if (sysLogOut != nullptr) {
         this->sysLogFile = std::move(sysLogOut);
     } else {
-        stringstream filename;
+        std::stringstream filename;
         filename << "SysPerfReport_Thread_" << id << ".xml";
 
         std::unique_ptr<std::ofstream> sysLogToFile = std::unique_ptr<std::ofstream>(new std::ofstream());
         sysLogToFile->exceptions(std::ios::failbit | std::ios::badbit);
-        sysLogToFile->open(filename.str().c_str(), ios::trunc);
+        sysLogToFile->open(filename.str().c_str(), std::ios::trunc);
         this->sysLogFile = std::move(sysLogToFile);
     }
 
@@ -160,7 +159,7 @@ void PerfProfiler::SysLogBuilder::read(std::istream &str, long long &start, unsi
 }
 
 void PerfProfiler::logTimes(long long start, long long end, long long span, unsigned long long totalSystem, const char *function) {
-    stringstream str;
+    std::stringstream str;
     LogBuilder::write(str, start, end, span, totalSystem, function);
     *logFile << str.str();
     logFile->flush();

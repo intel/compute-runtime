@@ -20,7 +20,6 @@
 #include <thread>
 
 using namespace NEO;
-using namespace std;
 
 TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFromMultipleThreadsThenSingleBoIsReused) {
     class MockDrm : public Drm {
@@ -39,14 +38,14 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto mock = new MockDrm(0, *executionEnvironment.rootDeviceEnvironments[0]);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
-    auto memoryManager = make_unique<TestedDrmMemoryManager>(executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(executionEnvironment);
 
     osHandle handle = 3;
     constexpr size_t maxThreads = 10;
 
     GraphicsAllocation *createdAllocations[maxThreads];
-    thread threads[maxThreads];
-    atomic<size_t> index(0);
+    std::thread threads[maxThreads];
+    std::atomic<size_t> index(0);
 
     auto createFunction = [&]() {
         size_t indexFree = index++;
@@ -76,8 +75,8 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
             primeFdHandle = 1;
             closeHandle = 1;
         }
-        atomic<int> primeFdHandle;
-        atomic<int> closeHandle;
+        std::atomic<int> primeFdHandle;
+        std::atomic<int> closeHandle;
 
         int ioctl(unsigned long request, void *arg) override {
             if (request == DRM_IOCTL_PRIME_FD_TO_HANDLE) {
@@ -91,7 +90,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
 
             else if (request == DRM_IOCTL_GEM_CLOSE) {
                 closeHandle++;
-                this_thread::yield();
+                std::this_thread::yield();
 
                 primeFdHandle.store(closeHandle.load());
             }
@@ -104,14 +103,14 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     auto mock = new MockDrm(0, *executionEnvironment.rootDeviceEnvironments[0]);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
-    auto memoryManager = make_unique<TestedDrmMemoryManager>(executionEnvironment);
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(executionEnvironment);
 
     osHandle handle = 3;
     constexpr size_t maxThreads = 10;
 
     GraphicsAllocation *createdAllocations[maxThreads];
-    thread threads[maxThreads];
-    atomic<size_t> index(0);
+    std::thread threads[maxThreads];
+    std::atomic<size_t> index(0);
 
     auto createFunction = [&]() {
         size_t indexFree = index++;
@@ -119,7 +118,7 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
         createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false);
         EXPECT_NE(nullptr, createdAllocations[indexFree]);
 
-        this_thread::yield();
+        std::this_thread::yield();
 
         memoryManager->freeGraphicsMemory(createdAllocations[indexFree]);
     };

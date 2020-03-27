@@ -16,7 +16,6 @@
 
 using namespace NEO;
 
-using namespace std;
 
 TEST(PerfProfiler, create) {
     PerfProfiler *ptr = PerfProfiler::create();

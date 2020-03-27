@@ -19,7 +19,6 @@
 #include <memory>
 
 using namespace NEO;
-using namespace std;
 
 TEST(DrmTest, GetDeviceID) {
     DrmMock *pDrm = new DrmMock;
@@ -71,8 +70,8 @@ TEST(DrmTest, GivenValidConfigFileWhenFrequencyIsQueriedThenValidValueIsReturned
 
     pDrm->StoredDeviceID = 0x1234;
 
-    string gpuFile = "test_files/devices/config";
-    string gtMaxFreqFile = "test_files/devices/drm/card0/gt_max_freq_mhz";
+    std::string gpuFile = "test_files/devices/config";
+    std::string gtMaxFreqFile = "test_files/devices/drm/card0/gt_max_freq_mhz";
 
     EXPECT_TRUE(fileExists(gpuFile));
     EXPECT_TRUE(fileExists(gtMaxFreqFile));
@@ -120,7 +119,7 @@ TEST(DrmTest, GetRevisionID) {
 }
 
 TEST(DrmTest, GivenDrmWhenAskedForGttSizeThenReturnCorrectValue) {
-    auto drm = make_unique<DrmMock>();
+    auto drm = std::make_unique<DrmMock>();
     uint64_t queryGttSize = 0;
 
     drm->StoredRetValForGetGttSize = 0;

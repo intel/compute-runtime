@@ -22,9 +22,7 @@
 #include <excpt.h>
 #include <psapi.h>
 
-using namespace std;
-
-string SehException::getExceptionDescription(unsigned int code) {
+std::string SehException::getExceptionDescription(unsigned int code) {
     switch (code) {
     case EXCEPTION_ACCESS_VIOLATION:
         return "Access violation";
@@ -47,7 +45,7 @@ int SehException::filter(unsigned int code, struct _EXCEPTION_POINTERS *ep) {
     printf("EXCEPTION: %s\n", SehException::getExceptionDescription(code).c_str());
 
     if (code != EXCEPTION_STACK_OVERFLOW) {
-        string callstack;
+        std::string callstack;
 
         SehException::getCallStack(code, ep, callstack);
         printf("Callstack:\n\n%s", callstack.c_str());
@@ -55,7 +53,7 @@ int SehException::filter(unsigned int code, struct _EXCEPTION_POINTERS *ep) {
     return EXCEPTION_EXECUTE_HANDLER;
 }
 
-void SehException::getCallStack(unsigned int code, struct _EXCEPTION_POINTERS *ep, string &stack) {
+void SehException::getCallStack(unsigned int code, struct _EXCEPTION_POINTERS *ep, std::string &stack) {
     DWORD machine = 0;
     HANDLE hProcess = GetCurrentProcess();
     HANDLE hThread = GetCurrentThread();
@@ -89,7 +87,7 @@ void SehException::getCallStack(unsigned int code, struct _EXCEPTION_POINTERS *e
     DWORD displacement = 0;
     DWORD64 displacement64 = 0;
 
-    unique_ptr<NEO::OsLibrary> psApiLib(NEO::OsLibrary::load("psapi.dll"));
+    std::unique_ptr<NEO::OsLibrary> psApiLib(NEO::OsLibrary::load("psapi.dll"));
     auto getMappedFileName = reinterpret_cast<getMappedFileNameFunction>(psApiLib->getProcAddress("GetMappedFileNameA"));
 
     size_t callstackCounter = 0;
@@ -123,9 +121,9 @@ void SehException::getCallStack(unsigned int code, struct _EXCEPTION_POINTERS *e
             break;
         }
 
-        string lineInCode;
-        string module;
-        string symbolName;
+        std::string lineInCode;
+        std::string module;
+        std::string symbolName;
 
         DWORD64 address = stackFrame.AddrPC.Offset;
         IMAGEHLP_LINE64 imageLine;
@@ -152,7 +150,7 @@ void SehException::getCallStack(unsigned int code, struct _EXCEPTION_POINTERS *e
 
 void SehException::addLineToCallstack(std::string &callstack, size_t counter, std::string &module, std::string &line, std::string &symbol) {
     callstack += "[";
-    callstack += to_string(counter);
+    callstack += std::to_string(counter);
     callstack += "]: ";
 
     if (module.size()) {

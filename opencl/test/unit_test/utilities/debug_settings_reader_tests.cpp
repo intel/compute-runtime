@@ -18,7 +18,6 @@
 #include <string>
 
 using namespace NEO;
-using namespace std;
 
 TEST(SettingsReader, Create) {
     SettingsReader *reader = SettingsReader::create(oclRegPath);
@@ -43,10 +42,10 @@ TEST(SettingsReader, GivenSettingsFileExistsWhenCreatingSettingsReaderThenFileRe
     }
     auto reader = std::unique_ptr<SettingsReader>(SettingsReader::create(oclRegPath));
     EXPECT_NE(nullptr, reader.get());
-    string defaultValue("unk");
+    std::string defaultValue("unk");
     EXPECT_STREQ("test", reader->getSetting("ProductFamilyOverride", defaultValue).c_str());
 
-    remove(SettingsReader::settingsFileName);
+    std::remove(SettingsReader::settingsFileName);
 }
 
 TEST(SettingsReader, CreateFileReader) {
@@ -72,7 +71,7 @@ TEST(SettingsReader, CreateOsReader) {
 
 TEST(SettingsReader, CreateOsReaderWithRegKey) {
     std::string regKey = oclRegPath;
-    unique_ptr<SettingsReader> reader(SettingsReader::createOsReader(false, regKey));
+    std::unique_ptr<SettingsReader> reader(SettingsReader::createOsReader(false, regKey));
     EXPECT_NE(nullptr, reader);
 }
 

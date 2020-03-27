@@ -14,7 +14,6 @@
 #include <map>
 
 using namespace NEO;
-using namespace std;
 
 #undef DECLARE_DEBUG_VARIABLE
 
@@ -32,7 +31,7 @@ class TestDebugFlagsChecker {
         return returnedValue == defaultValue;
     }
 
-    static bool isEqual(string returnedValue, string defaultValue) {
+    static bool isEqual(std::string returnedValue, std::string defaultValue) {
         return returnedValue == defaultValue;
     }
 };

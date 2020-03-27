@@ -24,7 +24,6 @@
 #include <memory>
 
 using namespace NEO;
-using namespace std;
 
 class CompilerCacheMock : public CompilerCache {
   public:
@@ -202,7 +201,7 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
                             strcpy_s(buf3.get(), bufSize, internalOptionsArray[i3].c_str());
                             internalOptions = ArrayRef<char>(buf3.get(), strlen(buf3.get()));
 
-                            string hash = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+                            std::string hash = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
 
                             if (hashes.find(hash) != hashes.end()) {
                                 FAIL() << "failed: " << i1 << ":" << i2 << ":" << i3;
@@ -215,8 +214,8 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
         }
     }
 
-    string hash = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
-    string hash2 = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+    std::string hash = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
+    std::string hash2 = CompilerCache::getCachedFileName(hwInfo, src, apiOptions, internalOptions);
     EXPECT_STREQ(hash.c_str(), hash2.c_str());
 }
 

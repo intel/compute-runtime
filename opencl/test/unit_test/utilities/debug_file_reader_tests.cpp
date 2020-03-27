@@ -8,13 +8,12 @@
 #include "opencl/test/unit_test/utilities/debug_file_reader_tests.inl"
 
 using namespace NEO;
-using namespace std;
 
 TEST(SettingsFileReader, givenTestFileWithDefaultValuesWhenTheyAreQueriedThenDefaultValuesMatch) {
 
     // Use test settings file
     std::unique_ptr<TestSettingsFileReader> reader =
-        unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::testPath));
+        std::unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::testPath));
 
     ASSERT_NE(nullptr, reader);
 
@@ -35,7 +34,7 @@ TEST(SettingsFileReader, GetSetting) {
 
     // Use test settings file
     std::unique_ptr<TestSettingsFileReader> reader =
-        unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::testPath));
+        std::unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::testPath));
     ASSERT_NE(nullptr, reader);
 
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \

@@ -7,7 +7,6 @@
 
 #include "shared/source/utilities/debug_file_reader.h"
 
-using namespace std;
 
 namespace NEO {
 
@@ -32,7 +31,7 @@ SettingsFileReader::~SettingsFileReader() {
 int32_t SettingsFileReader::getSetting(const char *settingName, int32_t defaultValue) {
     int32_t value = defaultValue;
 
-    map<string, string>::iterator it = settingStringMap.find(string(settingName));
+    std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(settingName));
     if (it != settingStringMap.end()) {
         value = atoi(it->second.c_str());
     }
@@ -46,7 +45,7 @@ bool SettingsFileReader::getSetting(const char *settingName, bool defaultValue) 
 
 std::string SettingsFileReader::getSetting(const char *settingName, const std::string &value) {
     std::string returnValue = value;
-    map<string, string>::iterator it = settingStringMap.find(string(settingName));
+    std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(settingName));
     if (it != settingStringMap.end())
         returnValue = it->second;
 
@@ -58,14 +57,14 @@ const char *SettingsFileReader::appSpecificLocation(const std::string &name) {
 }
 
 void SettingsFileReader::parseStream(std::istream &inputStream) {
-    stringstream ss;
-    string key;
-    string value;
+    std::stringstream ss;
+    std::string key;
+    std::string value;
     char temp = 0;
 
     while (!inputStream.eof()) {
-        string tempString;
-        string tempStringValue;
+        std::string tempString;
+        std::string tempStringValue;
         getline(inputStream, tempString);
 
         ss << tempString;
@@ -74,10 +73,10 @@ void SettingsFileReader::parseStream(std::istream &inputStream) {
         ss >> value;
 
         if (!ss.fail()) {
-            settingStringMap.insert(pair<string, string>(key, value));
+            settingStringMap.insert(std::pair<std::string, std::string>(key, value));
         }
 
-        ss.str(string()); // for reset string inside stringstream
+        ss.str(std::string()); // for reset string inside stringstream
         ss.clear();
         key.clear();
     }

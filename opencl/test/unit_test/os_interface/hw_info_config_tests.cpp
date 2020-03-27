@@ -12,7 +12,6 @@
 #include "opencl/source/cl_device/cl_device.h"
 
 using namespace NEO;
-using namespace std;
 
 void HwInfoConfigTest::SetUp() {
     PlatformFixture::SetUp();

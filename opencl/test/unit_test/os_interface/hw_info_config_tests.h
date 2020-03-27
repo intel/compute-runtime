@@ -15,7 +15,6 @@
 #include "gtest/gtest.h"
 
 using namespace NEO;
-using namespace std;
 
 struct HwInfoConfigTest : public ::testing::Test,
                           public PlatformFixture {

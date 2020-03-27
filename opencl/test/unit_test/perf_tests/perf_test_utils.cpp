@@ -15,7 +15,6 @@
 #include <string>
 
 using namespace NEO;
-using namespace std;
 
 const char *perfLogPath = "perf_logs/";
 

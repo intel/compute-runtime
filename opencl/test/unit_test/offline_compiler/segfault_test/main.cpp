@@ -11,7 +11,6 @@
 
 #include <string>
 
-using namespace std;
 
 extern void generateSegfaultWithSafetyGuard(SegfaultHelper *segfaultHelper);
 
@@ -25,11 +24,11 @@ int main(int argc, char **argv) {
 }
 
 void captureAndCheckStdOut() {
-    string callstack = ::testing::internal::GetCapturedStdout();
+    std::string callstack = ::testing::internal::GetCapturedStdout();
 
-    EXPECT_THAT(callstack, ::testing::HasSubstr(string("Callstack")));
-    EXPECT_THAT(callstack, ::testing::HasSubstr(string("cloc_segfault_test")));
-    EXPECT_THAT(callstack, ::testing::HasSubstr(string("generateSegfaultWithSafetyGuard")));
+    EXPECT_THAT(callstack, ::testing::HasSubstr(std::string("Callstack")));
+    EXPECT_THAT(callstack, ::testing::HasSubstr(std::string("cloc_segfault_test")));
+    EXPECT_THAT(callstack, ::testing::HasSubstr(std::string("generateSegfaultWithSafetyGuard")));
 }
 
 TEST(SegFault, givenCallWithSafetyGuardWhenSegfaultHappensThenCallstackIsPrintedToStdOut) {

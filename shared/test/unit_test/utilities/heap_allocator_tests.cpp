@@ -15,7 +15,6 @@
 #include <random>
 
 using namespace NEO;
-using namespace std;
 
 const size_t sizeThreshold = 16 * 4096;
 
@@ -652,14 +651,14 @@ TEST(HeapAllocatorTest, AllocationsDoNotOverlap) {
 
     const uint32_t maxIndex = 2000;
 
-    unique_ptr<uint64_t[]> ptrs(new uint64_t[maxIndex]);
-    unique_ptr<size_t[]> sizes(new size_t[maxIndex]);
+    std::unique_ptr<uint64_t[]> ptrs(new uint64_t[maxIndex]);
+    std::unique_ptr<size_t[]> sizes(new size_t[maxIndex]);
 
     memset(ptrs.get(), 0, sizeof(uint64_t) * maxIndex);
     memset(sizes.get(), 0, sizeof(size_t) * maxIndex);
 
     uint16_t *freeIndexes = new uint16_t[maxIndex];
-    unique_ptr<uint16_t[]> indexes(new uint16_t[maxIndex]);
+    std::unique_ptr<uint16_t[]> indexes(new uint16_t[maxIndex]);
     memset(freeIndexes, 0, sizeof(uint16_t) * maxIndex);
     memset(indexes.get(), 0, sizeof(uint16_t) * maxIndex);
 
@@ -714,7 +713,7 @@ TEST(HeapAllocatorTest, AllocationsDoNotOverlap) {
 
     for (uint32_t i = 0; i < allocatorSize / reqAlignment; i++) {
         if (*pTemp > 1) {
-            EXPECT_TRUE(false) << "Heap from Allocator corrupted at page offset " << i << endl;
+            EXPECT_TRUE(false) << "Heap from Allocator corrupted at page offset " << i << std::endl;
         }
     }
 

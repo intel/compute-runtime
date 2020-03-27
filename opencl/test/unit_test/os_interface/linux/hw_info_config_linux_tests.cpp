@@ -78,7 +78,6 @@ struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
 };
 
 using namespace NEO;
-using namespace std;
 
 void mockCpuidex(int *cpuInfo, int functionId, int subfunctionId);
 

@@ -9,7 +9,6 @@
 #include "opencl/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
 using namespace NEO;
-using namespace std;
 
 struct HwInfoConfigTestLinuxKbl : HwInfoConfigTestLinux {
     void SetUp() override {

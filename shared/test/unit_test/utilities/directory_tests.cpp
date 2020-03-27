@@ -15,17 +15,16 @@
 #include <fstream>
 
 using namespace NEO;
-using namespace std;
 
 TEST(Directory, GetFiles) {
-    ofstream tempfile("temp_file_that_does_not_exist.tmp");
+    std::ofstream tempfile("temp_file_that_does_not_exist.tmp");
     tempfile << " ";
     tempfile.flush();
     tempfile.close();
 
-    string path = ".";
-    vector<string> files = Directory::getFiles(path);
+    std::string path = ".";
+    std::vector<std::string> files = Directory::getFiles(path);
 
     EXPECT_LT(0u, files.size());
-    remove("temp_file_that_does_not_exist.tmp");
+    std::remove("temp_file_that_does_not_exist.tmp");
 }
