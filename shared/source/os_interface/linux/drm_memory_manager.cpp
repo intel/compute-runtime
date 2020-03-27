@@ -744,7 +744,7 @@ uint32_t DrmMemoryManager::getRootDeviceIndex(const Drm *drm) {
             return rootDeviceIndex;
         }
     }
-    return std::numeric_limits<uint32_t>::max();
+    return CommonConstants::unspecifiedDeviceIndex;
 }
 
 } // namespace NEO

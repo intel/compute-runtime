@@ -116,7 +116,7 @@ void CommandQueueImp::CommandBufferManager::initialize(Device *device, size_t si
                                          NEO::GraphicsAllocation::AllocationType::COMMAND_BUFFER,
                                          device->isMultiDeviceCapable(),
                                          false,
-                                         NEO::SubDevice::unspecifiedSubDeviceIndex};
+                                         CommonConstants::allDevicesBitfield};
 
     buffers[BUFFER_ALLOCATION::FIRST] = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 

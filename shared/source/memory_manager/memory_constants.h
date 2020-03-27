@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/common_types.h"
+
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -58,3 +60,8 @@ enum class BlitDirection : uint32_t {
     BufferToBuffer
 };
 } // namespace BlitterConstants
+
+namespace CommonConstants {
+constexpr uint32_t unspecifiedDeviceIndex = std::numeric_limits<uint32_t>::max();
+constexpr NEO::DeviceBitfield allDevicesBitfield = maxNBitValue(32);
+} // namespace CommonConstants

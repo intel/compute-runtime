@@ -20,7 +20,6 @@
 namespace NEO {
 class BufferObject;
 class Drm;
-constexpr uint32_t invalidRootDeviceIndex = std::numeric_limits<uint32_t>::max();
 
 class DrmMemoryManager : public MemoryManager {
   public:

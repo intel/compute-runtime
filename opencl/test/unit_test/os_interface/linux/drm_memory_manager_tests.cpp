@@ -3521,6 +3521,6 @@ TEST(DrmMemoryMangerTest, givenMultipleRootDeviceWhenMemoryManagerGetsDrmThenDrm
         EXPECT_EQ(drmFromRootDevice, &drmMemoryManager.getDrm(i));
         EXPECT_EQ(i, drmMemoryManager.getRootDeviceIndex(drmFromRootDevice));
     }
-    EXPECT_EQ(invalidRootDeviceIndex, drmMemoryManager.getRootDeviceIndex(nullptr));
+    EXPECT_EQ(CommonConstants::unspecifiedDeviceIndex, drmMemoryManager.getRootDeviceIndex(nullptr));
 }
 } // namespace NEO
