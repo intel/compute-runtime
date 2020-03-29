@@ -24,11 +24,11 @@ class MockGfxPartition : public GfxPartition {
     }
 
     void *getReservedCpuAddressRange() {
-        return reservedCpuAddressRange;
+        return reservedCpuAddressRange.alignedPtr;
     }
 
     size_t getReservedCpuAddressRangeSize() {
-        return reservedCpuAddressRangeSize;
+        return reservedCpuAddressRange.actualReservedSize - GfxPartition::heapGranularity;
     }
 
     MOCK_METHOD2(freeGpuAddressRange, void(uint64_t gpuAddress, size_t size));

@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/os_interface/os_memory.h"
 
 #include "gtest/gtest.h"
@@ -14,7 +16,8 @@ using namespace NEO;
 TEST(OSMemory, reserveCpuAddressRange) {
     auto osMemory = OSMemory::create();
     size_t reservedCpuAddressRangeSize = 1024;
-    auto reservedCpuAddressRange = osMemory->reserveCpuAddressRange(reservedCpuAddressRangeSize);
-    EXPECT_NE(reservedCpuAddressRange, nullptr);
-    osMemory->releaseCpuAddressRange(reservedCpuAddressRange, reservedCpuAddressRangeSize);
+    auto reservedCpuAddressRange = osMemory->reserveCpuAddressRange(reservedCpuAddressRangeSize, MemoryConstants::pageSize64k);
+    EXPECT_NE(reservedCpuAddressRange.originalPtr, nullptr);
+    EXPECT_TRUE(isAligned<MemoryConstants::pageSize64k>(reservedCpuAddressRange.alignedPtr));
+    osMemory->releaseCpuAddressRange(reservedCpuAddressRange);
 }

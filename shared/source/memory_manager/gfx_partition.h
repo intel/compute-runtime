@@ -92,8 +92,7 @@ class GfxPartition {
 
     std::array<Heap, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)> heaps;
 
-    void *reservedCpuAddressRange = nullptr;
-    size_t reservedCpuAddressRangeSize = 0;
+    OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     std::unique_ptr<OSMemory> osMemory;
 };
 

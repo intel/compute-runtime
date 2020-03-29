@@ -27,9 +27,7 @@ const std::array<HeapIndex, 7> GfxPartition::heapNonSvmNames{{HeapIndex::HEAP_IN
 GfxPartition::GfxPartition() : osMemory(OSMemory::create()) {}
 
 GfxPartition::~GfxPartition() {
-    if (reservedCpuAddressRange) {
-        osMemory->releaseCpuAddressRange(reservedCpuAddressRange, reservedCpuAddressRangeSize);
-    }
+    osMemory->releaseCpuAddressRange(reservedCpuAddressRange);
 }
 
 void GfxPartition::Heap::init(uint64_t base, uint64_t size) {
@@ -114,13 +112,12 @@ void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             gfxBase = maxNBitValue(48 - 1) + 1;
             heapInit(HeapIndex::HEAP_SVM, 0ull, gfxBase);
         } else if (gpuAddressSpace == maxNBitValue(47)) {
-            reservedCpuAddressRangeSize = cpuAddressRangeSizeToReserve;
-            UNRECOVERABLE_IF(reservedCpuAddressRangeSize == 0);
-            reservedCpuAddressRange = osMemory->reserveCpuAddressRange(reservedCpuAddressRangeSize);
-            UNRECOVERABLE_IF(reservedCpuAddressRange == nullptr);
-            UNRECOVERABLE_IF(!isAligned<GfxPartition::heapGranularity>(reservedCpuAddressRange));
-            gfxBase = reinterpret_cast<uint64_t>(reservedCpuAddressRange);
-            gfxTop = gfxBase + reservedCpuAddressRangeSize;
+            UNRECOVERABLE_IF(cpuAddressRangeSizeToReserve == 0);
+            reservedCpuAddressRange = osMemory->reserveCpuAddressRange(cpuAddressRangeSizeToReserve, GfxPartition::heapGranularity);
+            UNRECOVERABLE_IF(reservedCpuAddressRange.originalPtr == nullptr);
+            UNRECOVERABLE_IF(!isAligned<GfxPartition::heapGranularity>(reservedCpuAddressRange.alignedPtr));
+            gfxBase = reinterpret_cast<uint64_t>(reservedCpuAddressRange.alignedPtr);
+            gfxTop = gfxBase + cpuAddressRangeSizeToReserve;
             heapInit(HeapIndex::HEAP_SVM, 0ull, gpuAddressSpace + 1);
         } else if (gpuAddressSpace < maxNBitValue(47)) {
             gfxBase = 0ull;

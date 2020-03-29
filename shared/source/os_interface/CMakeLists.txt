@@ -18,6 +18,7 @@ set(NEO_CORE_OS_INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/os_environment.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_memory.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_memory.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_thread.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time.cpp
