@@ -17,18 +17,20 @@
 
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
-#include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "test.h"
 
 #include "GL/gl.h"
 #include "GL/glext.h"
 #include "gmm_client_context.h"
 #include "gtest/gtest.h"
 #include "igfxfmid.h"
+
+using MockExecutionEnvironmentGmmFixtureTest = Test<NEO::MockExecutionEnvironmentGmmFixture>;
 
 using namespace ::testing;
 
@@ -39,12 +41,11 @@ extern SKU_FEATURE_TABLE passedFtrTable;
 extern WA_TABLE passedWaTable;
 extern bool copyInputArgs;
 
-struct GmmTests : public ::testing::Test {
+struct GmmTests : public MockExecutionEnvironmentGmmFixtureTest {
     void SetUp() override {
-        executionEnvironment = platform()->peekExecutionEnvironment();
+        MockExecutionEnvironmentGmmFixture::SetUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
     }
-    ExecutionEnvironment *executionEnvironment = nullptr;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
@@ -68,7 +69,7 @@ TEST(GmmGlTests, givenGmmWhenAskedforCubeFaceIndexThenProperValueIsReturned) {
 TEST_F(GmmTests, WhenGmmIsCreatedThenAllResourceAreCreated) {
     std::unique_ptr<MemoryManager> mm(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment));
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, false));
 
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
@@ -83,7 +84,7 @@ TEST_F(GmmTests, GivenUncacheableWhenGmmIsCreatedThenAllResourceAreCreated) {
     std::unique_ptr<MemoryManager> mm(new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment));
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, true));
 
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
@@ -100,7 +101,7 @@ TEST_F(GmmTests, givenHostPointerWithHighestBitSetWhenGmmIsCreatedItHasTheSameAd
     auto address = reinterpret_cast<void *>(addressWithHighestBitSet);
     auto expectedAddress = castToUint64(address);
 
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), address, 4096, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), address, 4096, false));
     EXPECT_EQ(gmm->resourceParams.pExistingSysMem, expectedAddress);
 }
 
@@ -110,7 +111,7 @@ TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGmm
     MemoryManager *mm = new MemoryManagerCreate<OsAgnosticMemoryManager>(false, false, *executionEnvironment);
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
-    auto gmmRes = new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, maxSize, false);
+    auto gmmRes = new Gmm(getGmmClientContext(), pSysMem, maxSize, false);
 
     ASSERT_TRUE(gmmRes->gmmResourceInfo.get() != nullptr);
 
@@ -124,8 +125,8 @@ TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGmm
 TEST_F(GmmTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleaseParentGmm) {
     auto size = 4096u;
     void *incomingPtr = (void *)0x1000;
-    auto gmmRes = new Gmm(rootDeviceEnvironment->getGmmClientContext(), incomingPtr, size, false);
-    auto gmmRes2 = new Gmm(rootDeviceEnvironment->getGmmClientContext(), gmmRes->gmmResourceInfo->peekHandle());
+    auto gmmRes = new Gmm(getGmmClientContext(), incomingPtr, size, false);
+    auto gmmRes2 = new Gmm(getGmmClientContext(), gmmRes->gmmResourceInfo->peekHandle());
 
     //copy is being made
     EXPECT_NE(gmmRes2->gmmResourceInfo->peekHandle(), gmmRes->gmmResourceInfo->peekHandle());
@@ -145,7 +146,7 @@ TEST_F(GmmTests, GivenInvalidImageSizeWhenQueryingImgParamsThenImageInfoReturnsS
     cl_image_desc imgDesc = {CL_MEM_OBJECT_IMAGE2D};
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    auto queryGmm = MockGmm::queryImgParams(rootDeviceEnvironment->getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
 
     EXPECT_EQ(imgInfo.size, 0u);
 }
@@ -156,7 +157,7 @@ TEST_F(GmmTests, GivenInvalidImageTypeWhenQueryingImgParamsThenExceptionIsThrown
     imgDesc.image_type = 0; // invalid
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    EXPECT_THROW(MockGmm::queryImgParams(rootDeviceEnvironment->getGmmClientContext(), imgInfo), std::exception);
+    EXPECT_THROW(MockGmm::queryImgParams(getGmmClientContext(), imgInfo), std::exception);
 }
 
 TEST_F(GmmTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
@@ -171,7 +172,7 @@ TEST_F(GmmTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    auto queryGmm = MockGmm::queryImgParams(rootDeviceEnvironment->getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
 
     EXPECT_GT(imgInfo.size, minSize);
     EXPECT_GT(imgInfo.rowPitch, 0u);
@@ -201,20 +202,20 @@ TEST_F(GmmTests, WhenQueryingImgParamsThenCorrectValuesAreReturned) {
 TEST_F(GmmTests, givenWidthWhenCreatingResourceThenSetWidth64Field) {
     const void *dummyPtr = reinterpret_cast<void *>(0x123);
     size_t allocationSize = std::numeric_limits<size_t>::max();
-    Gmm gmm(rootDeviceEnvironment->getGmmClientContext(), dummyPtr, allocationSize, false);
+    Gmm gmm(getGmmClientContext(), dummyPtr, allocationSize, false);
     EXPECT_EQ(static_cast<uint64_t>(allocationSize), gmm.resourceParams.BaseWidth64);
 }
 
 TEST_F(GmmTests, givenNullptrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProperlySet) {
     void *pSysMem = nullptr;
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, false));
 
     EXPECT_EQ(gmm->resourceParams.NoGfxMemory, 1u);
 }
 
 TEST_F(GmmTests, givenPtrWhenGmmConstructorIsCalledThenNoGfxMemoryIsProperlySet) {
     void *pSysMem = reinterpret_cast<void *>(0x1111);
-    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(getGmmClientContext(), pSysMem, 4096, false));
 
     EXPECT_EQ(gmm->resourceParams.NoGfxMemory, 0u);
 }
@@ -231,7 +232,7 @@ TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedThenItH
     ClSurfaceFormatInfo surfaceFormat = {{CL_RGBA, CL_FLOAT}, {GMM_FORMAT_R32G32B32A32_FLOAT_TYPE, (GFX3DSTATE_SURFACEFORMAT)0, 0, 4, 4, 16}};
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
-    auto queryGmm = MockGmm::queryImgParams(rootDeviceEnvironment->getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
     auto renderSize = queryGmm->gmmResourceInfo->getSizeAllocation();
 
     size_t expectedSize = imgDesc.image_row_pitch * imgDesc.image_height;
@@ -252,7 +253,7 @@ TEST_F(GmmTests, given2DimageFromBufferParametersWhenGmmResourceIsCreatedAndPitc
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat);
     EXPECT_EQ(imgInfo.imgDesc.imageRowPitch, imgDesc.image_row_pitch);
-    auto queryGmm = MockGmm::queryImgParams(rootDeviceEnvironment->getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
     auto renderSize = queryGmm->gmmResourceInfo->getSizeAllocation();
 
     size_t expectedSize = imgDesc.image_row_pitch * imgDesc.image_height;
@@ -272,14 +273,14 @@ TEST_F(GmmTests, givenPlanarFormatsWhenQueryingImageParamsThenUvOffsetIsQueried)
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormatNV12);
     imgInfo.yOffsetForUVPlane = 0;
-    MockGmm::queryImgParams(rootDeviceEnvironment->getGmmClientContext(), imgInfo);
+    MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
 
     EXPECT_NE(0u, imgInfo.yOffsetForUVPlane);
 
     imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormatP010);
     imgInfo.yOffsetForUVPlane = 0;
 
-    MockGmm::queryImgParams(rootDeviceEnvironment->getGmmClientContext(), imgInfo);
+    MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
     EXPECT_NE(0u, imgInfo.yOffsetForUVPlane);
 }
 
@@ -292,7 +293,7 @@ TEST_F(GmmTests, givenTilingModeSetToTileYWhenHwSupportsTilingThenTileYFlagIsSet
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     imgInfo.linearStorage = false;
-    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), imgInfo, StorageInfo{});
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
 
     EXPECT_EQ(gmm->resourceParams.Flags.Info.Linear, 0u);
     EXPECT_EQ(gmm->resourceParams.Flags.Info.TiledY, 0u);
@@ -307,7 +308,7 @@ TEST_F(GmmTests, givenTilingModeSetToNonTiledWhenCreatingGmmThenLinearFlagIsSet)
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     imgInfo.linearStorage = true;
-    auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), imgInfo, StorageInfo{});
+    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), imgInfo, StorageInfo{});
 
     EXPECT_EQ(gmm->resourceParams.Flags.Info.Linear, 1u);
     EXPECT_EQ(gmm->resourceParams.Flags.Info.TiledY, 0u);
@@ -401,7 +402,7 @@ TEST_F(GmmTests, givenMipmapedInputWhenAskedForHalingThenNonDefaultValueIsReturn
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, mipLevel, nullptr);
 
-    auto queryGmm = MockGmm::queryImgParams(rootDeviceEnvironment->getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
 
     EXPECT_EQ(static_cast<int>(queryGmm->resourceParams.MaxLod), mipLevel);
 }
@@ -418,7 +419,7 @@ struct GmmMediaCompressedTests : public GmmTests {
     void SetUp() override {
         GmmTests::SetUp();
         StorageInfo info;
-        gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmClientContext(), nullptr, 4, false, true, true, info);
+        gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 4, false, true, true, info);
         flags = gmm->gmmResourceInfo->getResourceFlags();
         flags->Gpu.CCS = true;
         flags->Gpu.UnifiedAuxSurface = true;
@@ -534,7 +535,7 @@ TEST_P(GmmImgTest, updateImgInfoAndDesc) {
     }
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    auto queryGmm = MockGmm::queryImgParams(rootDeviceEnvironment->getGmmClientContext(), imgInfo);
+    auto queryGmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
 
     auto mockResInfo = new NiceMock<MyMockGmmResourceInfo>(&queryGmm->resourceParams);
     queryGmm->gmmResourceInfo.reset(mockResInfo);
@@ -559,7 +560,7 @@ TEST_P(GmmImgTest, updateImgInfoAndDesc) {
     }
 }
 
-TEST(GmmImgTest, givenImgInfoWhenUpdatingOffsetsCallGmmToGetOffsets) {
+TEST_F(GmmImgTest, givenImgInfoWhenUpdatingOffsetsCallGmmToGetOffsets) {
     struct GmmGetOffsetOutput {
         uint32_t Offset;
         uint32_t XOffset;
@@ -598,7 +599,7 @@ TEST(GmmImgTest, givenImgInfoWhenUpdatingOffsetsCallGmmToGetOffsets) {
     imgDesc.image_array_size = 10;
 
     ImageInfo imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    std::unique_ptr<Gmm> gmm = MockGmm::queryImgParams(platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext(), imgInfo);
+    std::unique_ptr<Gmm> gmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
     MyMockGmmResourceInfo *mockGmmResourceInfo = new MyMockGmmResourceInfo(&gmm->resourceParams);
     gmm->gmmResourceInfo.reset(mockGmmResourceInfo);
 
@@ -622,7 +623,7 @@ TEST_F(GmmTests, copyResourceBlt) {
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    auto gmm = MockGmm::queryImgParams(rootDeviceEnvironment->getGmmClientContext(), imgInfo);
+    auto gmm = MockGmm::queryImgParams(getGmmClientContext(), imgInfo);
     auto mockResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
 
     GMM_RES_COPY_BLT requestedCpuBlt = {};
@@ -681,8 +682,8 @@ TEST_F(GmmTests, copyResourceBlt) {
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
 }
 
-TEST(GmmTest, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabilityThenReturnTrue) {
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 1, false));
+TEST_F(GmmTests, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabilityThenReturnTrue) {
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(getGmmClientContext(), nullptr, 1, false));
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
     mockResource->setUnifiedAuxTranslationCapable();
@@ -693,8 +694,8 @@ TEST(GmmTest, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabilityThenR
     EXPECT_TRUE(gmm->unifiedAuxTranslationCapable());
 }
 
-TEST(GmmTest, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThenReturnFalse) {
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 1, false));
+TEST_F(GmmTests, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThenReturnFalse) {
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(getGmmClientContext(), nullptr, 1, false));
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
     mockResource->mockResourceCreateParams.Flags.Gpu.CCS = 0;
@@ -716,12 +717,12 @@ TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedTheSetThisHwInfoToGmmHelper) {
     EXPECT_EQ(&device->getHardwareInfo(), device->getGmmHelper()->getHardwareInfo());
 }
 
-TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {
+TEST_F(GmmTests, whenResourceIsCreatedThenHandleItsOwnership) {
     struct MyMockResourecInfo : public GmmResourceInfo {
         using GmmResourceInfo::resourceInfo;
 
-        MyMockResourecInfo(GMM_RESCREATE_PARAMS *inputParams) : GmmResourceInfo(platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext(), inputParams){};
-        MyMockResourecInfo(GMM_RESOURCE_INFO *inputGmmResourceInfo) : GmmResourceInfo(platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext(), inputGmmResourceInfo){};
+        MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *inputParams) : GmmResourceInfo(clientContext, inputParams){};
+        MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) : GmmResourceInfo(clientContext, inputGmmResourceInfo){};
     };
 
     GMM_RESCREATE_PARAMS gmmParams = {};
@@ -735,64 +736,40 @@ TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {
     gmmParams.Flags.Gpu.Texture = 1;
     gmmParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
 
-    MyMockResourecInfo myMockResourceInfo1(&gmmParams);
+    MyMockResourecInfo myMockResourceInfo1(getGmmClientContext(), &gmmParams);
     EXPECT_NE(nullptr, myMockResourceInfo1.resourceInfo.get());
 
-    MyMockResourecInfo myMockResourceInfo2(myMockResourceInfo1.resourceInfo.get());
+    MyMockResourecInfo myMockResourceInfo2(getGmmClientContext(), myMockResourceInfo1.resourceInfo.get());
     EXPECT_NE(nullptr, myMockResourceInfo2.resourceInfo.get());
 
     EXPECT_NE(myMockResourceInfo1.resourceInfo.get(), myMockResourceInfo2.resourceInfo.get());
 }
 
-TEST(GmmTest, givenGmmWithNotSetMCSInResourceInfoGpuFlagsWhenCallHasMultisampleControlSurfaceThenReturnFalse) {
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 1, false));
+using GmmEnvironmentTest = MockExecutionEnvironmentGmmFixtureTest;
+
+TEST_F(GmmEnvironmentTest, givenGmmWithNotSetMCSInResourceInfoGpuFlagsWhenCallHasMultisampleControlSurfaceThenReturnFalse) {
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(getGmmClientContext(), nullptr, 1, false));
     EXPECT_FALSE(gmm->hasMultisampleControlSurface());
 }
 
-TEST(GmmTest, givenGmmWithSetMCSInResourceInfoGpuFlagsWhenCallhasMultisampleControlSurfaceThenReturnTrue) {
-    auto gmm = std::unique_ptr<Gmm>(new Gmm(platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext(), nullptr, 1, false));
+TEST_F(GmmEnvironmentTest, givenGmmWithSetMCSInResourceInfoGpuFlagsWhenCallhasMultisampleControlSurfaceThenReturnTrue) {
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(getGmmClientContext(), nullptr, 1, false));
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     mockResource->setMultisampleControlSurface();
     EXPECT_TRUE(gmm->hasMultisampleControlSurface());
 }
 
-TEST(GmmHelperTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
-    ASSERT_NE(nullptr, platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmHelper());
-    EXPECT_NE(nullptr, platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext()->getHandle());
+TEST_F(GmmEnvironmentTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
+    ASSERT_NE(nullptr, getGmmHelper());
+    EXPECT_NE(nullptr, getGmmClientContext()->getHandle());
 }
 
-TEST(GmmHelperTest, givenPlatformAlreadyDestroyedWhenResourceIsBeingDestroyedThenObserveNoExceptions) {
-    struct MockGmmResourecInfo : public GmmResourceInfo {
-        using GmmResourceInfo::resourceInfo;
-        MockGmmResourecInfo(GMM_RESCREATE_PARAMS *inputParams) : GmmResourceInfo(platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getGmmClientContext(), inputParams){};
-    };
+struct GmmHelperTests : MockExecutionEnvironmentGmmFixtureTest {
+    using MockExecutionEnvironmentGmmFixture::executionEnvironment;
+};
 
-    GMM_RESCREATE_PARAMS gmmParams = {};
-    gmmParams.Type = RESOURCE_BUFFER;
-    gmmParams.Format = GMM_FORMAT_GENERIC_8BIT;
-    gmmParams.BaseWidth64 = 1;
-    gmmParams.BaseHeight = 1;
-    gmmParams.Depth = 1;
-    gmmParams.Flags.Info.Linear = 1;
-    gmmParams.Flags.Info.Cacheable = 1;
-    gmmParams.Flags.Gpu.Texture = 1;
-    gmmParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
-
-    auto gmmResourceInfo = new MockGmmResourecInfo(&gmmParams);
-
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->incRefInternal();
-    platformsImpl.clear();
-    EXPECT_EQ(nullptr, platform());
-
-    EXPECT_NO_THROW(delete gmmResourceInfo);
-
-    executionEnvironment->decRefInternal();
-}
-
-TEST(GmmHelperTest, givenValidGmmFunctionsWhenCreateGmmHelperWithInitializedOsInterfaceThenProperParametersArePassed) {
+TEST_F(GmmHelperTests, givenValidGmmFunctionsWhenCreateGmmHelperWithInitializedOsInterfaceThenProperParametersArePassed) {
     std::unique_ptr<GmmHelper> gmmHelper;
-    auto executionEnvironment = platform()->peekExecutionEnvironment();
     DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
     VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
     VariableBackup<decltype(passedFtrTable)> passedFtrTableBackup(&passedFtrTable);

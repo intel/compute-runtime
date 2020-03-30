@@ -19,8 +19,8 @@
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
 
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/fixtures/mock_execution_environment_gmm_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_wddm.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_interface20.h"
 #include "opencl/test/unit_test/mocks/mock_wddm_residency_allocations_container.h"
@@ -30,9 +30,9 @@
 #include "mock_gmm_memory.h"
 
 namespace NEO {
-struct WddmFixture : ::testing::Test {
+struct WddmFixture : public Test<MockExecutionEnvironmentGmmFixture> {
     void SetUp() override {
-        executionEnvironment = platform()->peekExecutionEnvironment();
+        MockExecutionEnvironmentGmmFixture::SetUp();
         rootDeviceEnvironemnt = executionEnvironment->rootDeviceEnvironments[0].get();
         auto osEnvironment = new OsEnvironmentWin();
         gdi = new MockGdi();
@@ -54,7 +54,6 @@ struct WddmFixture : ::testing::Test {
 
     WddmMock *wddm = nullptr;
     OSInterface *osInterface;
-    ExecutionEnvironment *executionEnvironment;
     RootDeviceEnvironment *rootDeviceEnvironemnt = nullptr;
     std::unique_ptr<OsContextWin> osContext;
 
@@ -62,11 +61,11 @@ struct WddmFixture : ::testing::Test {
     MockWddmResidentAllocationsContainer *mockTemporaryResources;
 };
 
-struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
+struct WddmFixtureWithMockGdiDll : public GdiDllFixture, public MockExecutionEnvironmentGmmFixture {
     void SetUp() override {
-        executionEnvironment = platform()->peekExecutionEnvironment();
-        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+        MockExecutionEnvironmentGmmFixture::SetUp();
         GdiDllFixture::SetUp();
+        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
         wddmMockInterface = new WddmMockInterface20(*wddm);
         wddm->wddmInterface.reset(wddmMockInterface);
@@ -95,7 +94,6 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
     WddmMock *wddm = nullptr;
     OSInterface *osInterface;
     std::unique_ptr<OsContextWin> osContext;
-    ExecutionEnvironment *executionEnvironment;
     WddmMockInterface20 *wddmMockInterface = nullptr;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };

@@ -9,8 +9,6 @@
 
 #include "shared/test/unit_test/mocks/mock_device.h"
 
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-
 using namespace NEO;
 
 bool &MockClDevice::createSingleDevice = MockDevice::createSingleDevice;
