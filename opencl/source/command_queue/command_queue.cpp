@@ -617,7 +617,8 @@ bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
     }
 
     bool commandAllowed = (CL_COMMAND_READ_BUFFER == cmdType) || (CL_COMMAND_WRITE_BUFFER == cmdType) ||
-                          (CL_COMMAND_COPY_BUFFER == cmdType) || (CL_COMMAND_READ_BUFFER_RECT == cmdType);
+                          (CL_COMMAND_COPY_BUFFER == cmdType) || (CL_COMMAND_READ_BUFFER_RECT == cmdType) ||
+                          (CL_COMMAND_WRITE_BUFFER_RECT == cmdType);
 
     return commandAllowed && blitAllowed;
 }

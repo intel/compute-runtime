@@ -48,7 +48,12 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
             hostAllocGpuVa,                // srcGpuAddress
             copySize,                      // copySize
             copyOffset,                    // dstOffset
-            hostPtrOffset};                // srcOffset
+            hostPtrOffset,                 // srcOffset
+            gpuRowPitch,                   //dstRowPitch
+            gpuSlicePitch,                 //dstSlicePitch
+            hostRowPitch,                  //srcRowPitch
+            hostSlicePitch};               //srcSlicePitch
+
     } else {
         return {
             nullptr,                       // outputTimestampPacket

@@ -533,6 +533,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrAndNon
 }
 
 HWTEST_F(EnqueueReadWriteBufferRectDispatch, givenOffsetResultingInMisalignedPtrWhenEnqueueWriteBufferRectForNon3DCaseIsCalledThenAddressInStateBaseAddressIsAlignedAndMatchesKernelDispatchInfoParams) {
+    hwInfo->capabilityTable.blitterOperationsSupported = false;
     initializeFixture<FamilyType>();
 
     if (device->areSharedSystemAllocationsAllowed()) {

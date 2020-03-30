@@ -411,7 +411,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeThenCa
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
 
-HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeForReadBufferRectThenCalculateForAllAttachedProperites) {
+HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeForWriteReadBufferRectThenCalculateForAllAttachedProperites) {
     const auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
     const Vec3<size_t> bltSize = {(3 * max2DBlitSize), 4, 2};
     const size_t numberOfBlts = 3 * bltSize.y * bltSize.z;
@@ -620,14 +620,14 @@ struct BcsDetaliedTests : public BcsTests,
     }
 };
 
-using BcsDetaliedTestsWithParams = BcsDetaliedTests<BcsTestParam>;
+using BcsDetaliedTestsWithParams = BcsDetaliedTests<std::tuple<BcsTestParam, BlitterConstants::BlitDirection>>;
 
-HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenProgramAddresseForReadBufferRect) {
+HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenProgramAddresseForWriteReadBufferRect) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
 
     uint32_t bltLeftover = 17;
-    Vec3<size_t> bltSize = GetParam().copySize;
+    Vec3<size_t> bltSize = std::get<0>(GetParam()).copySize;
 
     size_t numberOfBltsForSingleBltSizeProgramm = 3;
     size_t totalNumberOfBits = numberOfBltsForSingleBltSizeProgramm * bltSize.y * bltSize.z;
@@ -636,15 +636,15 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, static_cast<size_t>(8 * BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight), nullptr, retVal));
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
-    Vec3<size_t> hostPtrOffset = GetParam().hostPtrOffset;
-    Vec3<size_t> copyOffset = GetParam().copyOffset;
+    Vec3<size_t> hostPtrOffset = std::get<0>(GetParam()).hostPtrOffset;
+    Vec3<size_t> copyOffset = std::get<0>(GetParam()).copyOffset;
 
-    size_t dstRowPitch = GetParam().dstRowPitch;
-    size_t dstSlicePitch = GetParam().dstSlicePitch;
-    size_t srcRowPitch = GetParam().srcRowPitch;
-    size_t srcSlicePitch = GetParam().srcSlicePitch;
+    size_t dstRowPitch = std::get<0>(GetParam()).dstRowPitch;
+    size_t dstSlicePitch = std::get<0>(GetParam()).dstSlicePitch;
+    size_t srcRowPitch = std::get<0>(GetParam()).srcRowPitch;
+    size_t srcSlicePitch = std::get<0>(GetParam()).srcSlicePitch;
 
-    auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::BufferToHostPtr, //blitDirection
+    auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(std::get<1>(GetParam()),                          //blitDirection
                                                                                 csr, buffer->getGraphicsAllocation(),             //commandStreamReceiver
                                                                                 nullptr,                                          //memObjAllocation
                                                                                 hostPtr,                                          //preallocatedHostAllocation
@@ -706,12 +706,12 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     }
 }
 
-HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommandsForReadBufferRect) {
+HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommandsForWriteReadBufferRect) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
 
     uint32_t bltLeftover = 17;
-    Vec3<size_t> bltSize = GetParam().copySize;
+    Vec3<size_t> bltSize = std::get<0>(GetParam()).copySize;
 
     size_t numberOfBltsForSingleBltSizeProgramm = 3;
     size_t totalNumberOfBits = numberOfBltsForSingleBltSizeProgramm * bltSize.y * bltSize.z;
@@ -720,15 +720,15 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, static_cast<size_t>(8 * BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight), nullptr, retVal));
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
-    Vec3<size_t> hostPtrOffset = GetParam().hostPtrOffset;
-    Vec3<size_t> copyOffset = GetParam().copyOffset;
+    Vec3<size_t> hostPtrOffset = std::get<0>(GetParam()).hostPtrOffset;
+    Vec3<size_t> copyOffset = std::get<0>(GetParam()).copyOffset;
 
-    size_t dstRowPitch = GetParam().dstRowPitch;
-    size_t dstSlicePitch = GetParam().dstSlicePitch;
-    size_t srcRowPitch = GetParam().srcRowPitch;
-    size_t srcSlicePitch = GetParam().srcSlicePitch;
+    size_t dstRowPitch = std::get<0>(GetParam()).dstRowPitch;
+    size_t dstSlicePitch = std::get<0>(GetParam()).dstSlicePitch;
+    size_t srcRowPitch = std::get<0>(GetParam()).srcRowPitch;
+    size_t srcSlicePitch = std::get<0>(GetParam()).srcSlicePitch;
 
-    auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::BufferToHostPtr, //blitDirection
+    auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(std::get<1>(GetParam()),                          //blitDirection
                                                                                 csr, buffer->getGraphicsAllocation(),             //commandStreamReceiver
                                                                                 nullptr,                                          //memObjAllocation
                                                                                 hostPtr,                                          //preallocatedHostAllocation
@@ -786,7 +786,9 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
 
 INSTANTIATE_TEST_CASE_P(BcsDetaliedTest,
                         BcsDetaliedTestsWithParams,
-                        ::testing::ValuesIn(BlitterProperties));
+                        ::testing::Combine(
+                            ::testing::ValuesIn(BlitterProperties),
+                            ::testing::Values(BlitterConstants::BlitDirection::HostPtrToBuffer, BlitterConstants::BlitDirection::BufferToHostPtr)));
 
 HWTEST_F(BcsTests, givenCsrDependenciesWhenProgrammingCommandStreamThenAddSemaphoreAndAtomic) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -1269,6 +1271,26 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
             EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getDestinationBaseAddress());
         }
         EXPECT_EQ(buffer->getGraphicsAllocation()->getGpuAddress(), bltCmd->getSourceBaseAddress());
+    }
+    {
+        // bufferWrite from hostPtr
+        HardwareParse hwParser;
+        auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                                    csr, buffer->getGraphicsAllocation(),
+                                                                                    mapAllocation, mapPtr,
+                                                                                    buffer->getGraphicsAllocation()->getGpuAddress(),
+                                                                                    castToUint64(mapPtr),
+                                                                                    {hostPtrOffset, 0, 0}, 0, {4, 2, 1}, 0, 0, 0, 0);
+        blitBuffer(&csr, blitProperties, true);
+
+        hwParser.parseCommands<FamilyType>(csr.commandStream);
+
+        auto bltCmd = genCmdCast<typename FamilyType::XY_COPY_BLT *>(*hwParser.cmdList.begin());
+        EXPECT_NE(nullptr, bltCmd);
+        if (pDevice->isFullRangeSvm()) {
+            EXPECT_EQ(reinterpret_cast<uint64_t>(ptrOffset(mapPtr, hostPtrOffset)), bltCmd->getSourceBaseAddress());
+        }
+        EXPECT_EQ(buffer->getGraphicsAllocation()->getGpuAddress(), bltCmd->getDestinationBaseAddress());
     }
 
     memoryManager->freeGraphicsMemory(mapAllocation);

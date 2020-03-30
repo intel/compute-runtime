@@ -61,7 +61,12 @@ struct ClBlitProperties {
                 gpuAllocation = builtinOpParams.dstMemObj->getGraphicsAllocation();
                 memObjGpuVa = (gpuAllocation->getGpuAddress() + builtinOpParams.dstMemObj->getOffset());
             }
-            copySize.x = builtinOpParams.size.x;
+
+            hostRowPitch = builtinOpParams.srcRowPitch;
+            hostSlicePitch = builtinOpParams.srcSlicePitch;
+            gpuRowPitch = builtinOpParams.dstRowPitch;
+            gpuSlicePitch = builtinOpParams.dstSlicePitch;
+            copySize = builtinOpParams.size;
         }
 
         if (BlitterConstants::BlitDirection::BufferToHostPtr == blitDirection) {
@@ -100,7 +105,7 @@ struct ClBlitProperties {
     }
 
     static BlitterConstants::BlitDirection obtainBlitDirection(uint32_t commandType) {
-        if (CL_COMMAND_WRITE_BUFFER == commandType) {
+        if (CL_COMMAND_WRITE_BUFFER == commandType || CL_COMMAND_WRITE_BUFFER_RECT == commandType) {
             return BlitterConstants::BlitDirection::HostPtrToBuffer;
         } else if (CL_COMMAND_READ_BUFFER == commandType || CL_COMMAND_READ_BUFFER_RECT == commandType) {
             return BlitterConstants::BlitDirection::BufferToHostPtr;

@@ -34,15 +34,16 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     const cl_event *eventWaitList,
     cl_event *event) {
 
+    const cl_command_type cmdType = CL_COMMAND_WRITE_BUFFER_RECT;
     auto isMemTransferNeeded = true;
     if (buffer->isMemObjZeroCopy()) {
         size_t bufferOffset;
         size_t hostOffset;
         computeOffsetsValueForRectCommands(&bufferOffset, &hostOffset, bufferOrigin, hostOrigin, region, bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch);
-        isMemTransferNeeded = buffer->checkIfMemoryTransferIsRequired(bufferOffset, hostOffset, ptr, CL_COMMAND_WRITE_BUFFER_RECT);
+        isMemTransferNeeded = buffer->checkIfMemoryTransferIsRequired(bufferOffset, hostOffset, ptr, cmdType);
     }
     if (!isMemTransferNeeded) {
-        return enqueueMarkerForReadWriteOperation(buffer, const_cast<void *>(ptr), CL_COMMAND_WRITE_BUFFER_RECT, blockingWrite,
+        return enqueueMarkerForReadWriteOperation(buffer, const_cast<void *>(ptr), cmdType, blockingWrite,
                                                   numEventsInWaitList, eventWaitList, event);
     }
 
@@ -64,7 +65,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     if (region[0] != 0 &&
         region[1] != 0 &&
         region[2] != 0) {
-        bool status = getGpgpuCommandStreamReceiver().createAllocationForHostSurface(hostPtrSurf, false);
+        auto &csr = blitEnqueueAllowed(cmdType) ? *getBcsCommandStreamReceiver() : getGpgpuCommandStreamReceiver();
+        bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
         if (!status) {
             return CL_OUT_OF_RESOURCES;
         }
@@ -80,6 +82,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     dc.srcOffset = hostOrigin;
     dc.srcOffset.x += srcPtrOffset;
     dc.dstOffset = bufferOrigin;
+    dc.transferAllocation = hostPtrSurf.getAllocation();
     dc.size = region;
     dc.srcRowPitch = hostRowPitch;
     dc.srcSlicePitch = hostSlicePitch;
