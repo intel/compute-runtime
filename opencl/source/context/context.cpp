@@ -378,12 +378,28 @@ SchedulerKernel &Context::getSchedulerKernel() {
 }
 
 bool Context::isDeviceAssociated(const ClDevice &clDevice) const {
-    for (const auto &device : devices) {
-        if (device == &clDevice) {
+    for (const auto &pDevice : devices) {
+        if (pDevice == &clDevice) {
             return true;
         }
     }
     return false;
+}
+
+ClDevice *Context::getSubDeviceByIndex(uint32_t subDeviceIndex) const {
+
+    auto isExpectedSubDevice = [subDeviceIndex](ClDevice *pClDevice) -> bool {
+        bool isSubDevice = (pClDevice->getDeviceInfo().parentDevice != nullptr);
+        if (isSubDevice == false) {
+            return false;
+        }
+
+        auto &subDevice = static_cast<SubDevice &>(pClDevice->getDevice());
+        return (subDevice.getSubDeviceIndex() == subDeviceIndex);
+    };
+
+    auto foundDeviceIterator = std::find_if(devices.begin(), devices.end(), isExpectedSubDevice);
+    return (foundDeviceIterator != devices.end() ? *foundDeviceIterator : nullptr);
 }
 
 AsyncEventsHandler &Context::getAsyncEventsHandler() {

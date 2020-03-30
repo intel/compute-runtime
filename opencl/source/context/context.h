@@ -143,6 +143,7 @@ class Context : public BaseObject<_cl_context> {
     SchedulerKernel &getSchedulerKernel();
 
     bool isDeviceAssociated(const ClDevice &clDevice) const;
+    ClDevice *getSubDeviceByIndex(uint32_t subDeviceIndex) const;
 
     AsyncEventsHandler &getAsyncEventsHandler();
 
