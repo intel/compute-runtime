@@ -79,7 +79,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
         idd.setBindingTablePointer(bindingTablePointer);
 
-        auto bindingTableStatePrefetchCount = std::min(31u, bindingTableStateCount);
+        uint32_t bindingTableStatePrefetchCount = 0;
+        if (HardwareCommandsHelper<Family>::doBindingTablePrefetch()) {
+            bindingTableStatePrefetchCount = std::min(31u, bindingTableStateCount);
+        }
         idd.setBindingTableEntryCount(bindingTableStatePrefetchCount);
     }
     PreemptionHelper::programInterfaceDescriptorDataPreemption<Family>(&idd, preemptionMode);
