@@ -157,7 +157,7 @@ struct EnvironmentWithCsrWrapper {
 
     template <typename CsrType>
     static CommandStreamReceiver *createCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
-        return new CsrType(executionEnvironment, 0);
+        return new CsrType(executionEnvironment, rootDeviceIndex);
     }
 
     VariableBackup<decltype(MockSubDevice::createCommandStreamReceiverFunc)> createSubDeviceCsrFuncBackup{&MockSubDevice::createCommandStreamReceiverFunc};

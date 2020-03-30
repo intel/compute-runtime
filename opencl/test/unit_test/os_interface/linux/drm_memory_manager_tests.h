@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/linux/os_interface.h"
 
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
+#include "opencl/test/unit_test/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/linux/mock_drm_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
@@ -51,6 +52,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     }
 
     void SetUp(DrmMockCustom *mock, bool localMemoryEnabled) {
+        environmentWrapper.setCsrType<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>>();
         allocationData.rootDeviceIndex = rootDeviceIndex;
         this->mock = mock;
         executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, numRootDevices);
@@ -100,6 +102,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};
     AllocationData allocationData{};
     DrmMockCustom::Ioctls additionalDestroyDeviceIoctls{};
+    EnvironmentWithCsrWrapper environmentWrapper;
 };
 
 class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
