@@ -22,7 +22,6 @@ class BufferObject {
     friend DrmMemoryManager;
 
   public:
-    BufferObject(Drm *drm, int handle);
     BufferObject(Drm *drm, int handle, size_t size);
     MOCKABLE_VIRTUAL ~BufferObject(){};
 

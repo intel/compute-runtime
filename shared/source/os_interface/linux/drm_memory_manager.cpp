@@ -153,12 +153,11 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
         return nullptr;
     }
 
-    auto res = new (std::nothrow) BufferObject(&getDrm(rootDeviceIndex), userptr.handle, rootDeviceIndex);
+    auto res = new (std::nothrow) BufferObject(&getDrm(rootDeviceIndex), userptr.handle, size);
     if (!res) {
         DEBUG_BREAK_IF(true);
         return nullptr;
     }
-    res->size = size;
     res->gpuAddress = address;
 
     return res;
@@ -296,8 +295,7 @@ GraphicsAllocation *DrmMemoryManager::allocateShareableMemory(const AllocationDa
     DEBUG_BREAK_IF(ret != 0);
     ((void)(ret));
 
-    auto bo = new BufferObject(&getDrm(allocationData.rootDeviceIndex), create.handle, allocationData.rootDeviceIndex);
-    bo->size = bufferSize;
+    auto bo = new BufferObject(&getDrm(allocationData.rootDeviceIndex), create.handle, bufferSize);
     bo->gpuAddress = gpuRange;
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo, nullptr, gpuRange, bufferSize, MemoryPool::SystemCpuInaccessible);
@@ -326,11 +324,10 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     DEBUG_BREAK_IF(ret != 0);
     UNUSED_VARIABLE(ret);
 
-    auto bo = new (std::nothrow) BufferObject(&getDrm(allocationData.rootDeviceIndex), create.handle, allocationData.rootDeviceIndex);
+    auto bo = new (std::nothrow) BufferObject(&getDrm(allocationData.rootDeviceIndex), create.handle, allocationData.imgInfo->size);
     if (!bo) {
         return nullptr;
     }
-    bo->size = allocationData.imgInfo->size;
     bo->gpuAddress = gpuRange;
 
     auto ret2 = bo->setTiling(I915_TILING_Y, static_cast<uint32_t>(allocationData.imgInfo->rowPitch));
@@ -431,12 +428,11 @@ BufferObject *DrmMemoryManager::createSharedBufferObject(int boHandle, size_t si
 
     gpuRange = acquireGpuRange(size, requireSpecificBitness, rootDeviceIndex, false);
 
-    auto bo = new (std::nothrow) BufferObject(&getDrm(rootDeviceIndex), boHandle, rootDeviceIndex);
+    auto bo = new (std::nothrow) BufferObject(&getDrm(rootDeviceIndex), boHandle, size);
     if (!bo) {
         return nullptr;
     }
 
-    bo->size = size;
     bo->gpuAddress = gpuRange;
     bo->setUnmapSize(size);
     return bo;
