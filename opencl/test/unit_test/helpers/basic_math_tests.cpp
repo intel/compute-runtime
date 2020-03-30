@@ -11,7 +11,7 @@
 
 using namespace Math;
 
-TEST(NextPowerOfTwo, aFewCases) {
+TEST(NextPowerOfTwo, WhenGettingNextPowerOfTwoThenCorrectValueIsReturned) {
     EXPECT_EQ(1u, nextPowerOfTwo(1U));
     EXPECT_EQ(2u, nextPowerOfTwo(2U));
     EXPECT_EQ(4u, nextPowerOfTwo(3U));
@@ -25,7 +25,7 @@ TEST(NextPowerOfTwo, aFewCases) {
     EXPECT_EQ(1ULL << 32, nextPowerOfTwo(static_cast<uint64_t>(1ULL << 32ULL)));
 }
 
-TEST(PrevPowerOfTwo, aroundPowers) {
+TEST(PrevPowerOfTwo, WhenGettingPreviousPowerOfTwoThenCorrectValueIsReturned) {
     EXPECT_EQ(0u, prevPowerOfTwo(0U));
     EXPECT_EQ(1u, prevPowerOfTwo(1U));
     for (uint32_t i = 1; i < 32; i++) {
@@ -40,7 +40,7 @@ TEST(PrevPowerOfTwo, aroundPowers) {
     EXPECT_EQ(1ULL << 32, prevPowerOfTwo(static_cast<uint64_t>((1ULL << 32ULL) + 7)));
 }
 
-TEST(getMinLsbSet, basicValues) {
+TEST(getMinLsbSet, WhenGettingMinLsbSetThenCorrectValueIsReturned) {
     // clang-format off
     EXPECT_EQ(0u,  getMinLsbSet(0x00000001u));
     EXPECT_EQ(1u,  getMinLsbSet(0x00000002u));
@@ -50,14 +50,14 @@ TEST(getMinLsbSet, basicValues) {
     // clang-format on
 }
 
-TEST(getExponentWithLog2, zeroReturns32) {
+TEST(getExponentWithLog2, GivenZeroWhenGettingLog2ThenSizeInBitsIsReturned) {
     // clang-format off
     EXPECT_EQ(32u,  log2((uint32_t)0u));
     EXPECT_EQ(64u,  log2((uint64_t)0u));
     // clang-format on
 }
 
-TEST(getExponentWithLog2, basicValues32) {
+TEST(getExponentWithLog2, Given32BitIntegersWhenGettingLog2ThenLog2IsReturned) {
     // clang-format off
     EXPECT_EQ(0u,  log2((uint32_t)1u));
     EXPECT_EQ(1u,  log2((uint32_t)2u));
@@ -69,7 +69,7 @@ TEST(getExponentWithLog2, basicValues32) {
     // clang-format on
 }
 
-TEST(getExponentWithLog2, basicValues64) {
+TEST(getExponentWithLog2, Given64BitIntegersWhenGettingLog2ThenLog2IsReturned) {
     // clang-format off
     EXPECT_EQ(0u,  log2((uint64_t)1u));
     EXPECT_EQ(1u,  log2((uint64_t)2u));
@@ -83,7 +83,7 @@ TEST(getExponentWithLog2, basicValues64) {
     // clang-format on
 }
 
-TEST(getExponentWithLog2, nonPowerOfToValues) {
+TEST(getExponentWithLog2, GivenNonZeroWhenGettingLog2ThenLog2IsReturned) {
     // clang-format off
     EXPECT_EQ(1u,  log2(3u));
     EXPECT_EQ(2u,  log2(5u));
@@ -112,7 +112,7 @@ Float2HalfParams float2HalfParams[] = {
 
 typedef ::testing::TestWithParam<Float2HalfParams> Float2HalfTest;
 
-TEST_P(Float2HalfTest, variousCases) {
+TEST_P(Float2HalfTest, WhenConvertingFloatToHalfThenValueIsPreserved) {
     float floatValue = GetParam().floatInput;
     uint16_t uint16ofHalf = float2Half(floatValue);
     uint16_t uintOutput = GetParam().uintOutput;
@@ -200,11 +200,11 @@ TEST(isPow2Test, WhenArgPow2ThenReturnTrue) {
     EXPECT_TRUE(isPow2(4096u));
 }
 
-TEST(ffs, givenZeroReturnMaxRange) {
+TEST(ffs, givenZeroThenReturnMaxRange) {
     EXPECT_EQ(std::numeric_limits<uint32_t>::max(), ffs(0U));
 }
 
-TEST(ffs, givenNonZeroReturnFirstSetBitIndex) {
+TEST(ffs, givenNonZeroThenReturnFirstSetBitIndex) {
     EXPECT_EQ(0U, ffs(0b1U));
     EXPECT_EQ(0U, ffs(0b11U));
     EXPECT_EQ(1U, ffs(0b10U));
