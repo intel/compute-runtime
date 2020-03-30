@@ -18,7 +18,7 @@
 namespace NEO {
 
 bool requiresLocalMemoryWindowVA(const PatchTokenBinary::ProgramFromPatchtokens &src) {
-    for (const auto kernel : src.kernels) {
+    for (const auto &kernel : src.kernels) {
         if (kernel.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress) {
             return true;
         }
