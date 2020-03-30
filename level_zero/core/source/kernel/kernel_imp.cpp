@@ -40,7 +40,7 @@ KernelImmutableData::~KernelImmutableData() {
     crossThreadDataTemplate.reset();
     if (nullptr != privateMemoryGraphicsAllocation) {
         this->getDevice()->getDriverHandle()->getMemoryManager()->freeGraphicsMemory(&*privateMemoryGraphicsAllocation);
-        crossThreadDataTemplate.release();
+        privateMemoryGraphicsAllocation.release();
     }
     surfaceStateHeapTemplate.reset();
     dynamicStateHeapTemplate.reset();
@@ -121,7 +121,7 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
         privateSurfaceSize *= computeUnitsUsedForSratch * kernelDescriptor->kernelAttributes.simdSize;
         UNRECOVERABLE_IF(privateSurfaceSize == 0);
         this->privateMemoryGraphicsAllocation.reset(memoryManager.allocateGraphicsMemoryWithProperties(
-            {0, privateSurfaceSize, NEO::GraphicsAllocation::AllocationType::PRIVATE_SURFACE}));
+            {device->getRootDeviceIndex(), privateSurfaceSize, NEO::GraphicsAllocation::AllocationType::PRIVATE_SURFACE}));
 
         UNRECOVERABLE_IF(this->privateMemoryGraphicsAllocation == nullptr);
         patchWithImplicitSurface(crossThredDataArrayRef, surfaceStateHeapArrayRef,
