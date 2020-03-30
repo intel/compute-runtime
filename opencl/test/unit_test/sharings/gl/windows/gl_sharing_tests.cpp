@@ -36,7 +36,7 @@
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
-#include "gl/gl_sharing_os.h"
+#include "gl_types.h"
 
 using namespace NEO;
 bool MockGLSharingFunctions::SharingEnabled = false;
@@ -769,7 +769,7 @@ TEST(glSharingBasicTest, givenNumEntriesLowerThanSupportedFormatsWhenGettingSupp
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(static_cast<uint32_t>(GlSharing::gLToCLFormats.size()), numImageFormats);
+    EXPECT_EQ(static_cast<uint32_t>(GlSharing::glToCLFormats.size()), numImageFormats);
     EXPECT_NE(0u, glFormats[0]);
     EXPECT_EQ(0u, glFormats[1]);
     EXPECT_EQ(0u, glFormats[2]);
@@ -787,10 +787,10 @@ TEST(glSharingBasicTest, givenCorrectFlagsWhenGettingSupportedFormatsThenCorrect
         auto result = glSharingFunctions.getSupportedFormats(flag, image_type, arrayCount(glFormats), glFormats, &numImageFormats);
 
         EXPECT_EQ(CL_SUCCESS, result);
-        EXPECT_EQ(static_cast<uint32_t>(GlSharing::gLToCLFormats.size()), numImageFormats);
+        EXPECT_EQ(static_cast<uint32_t>(GlSharing::glToCLFormats.size()), numImageFormats);
 
         for (uint32_t formatIndex = 0; formatIndex < arrayCount(glFormats); formatIndex++) {
-            EXPECT_NE(GlSharing::gLToCLFormats.end(), GlSharing::gLToCLFormats.find(glFormats[formatIndex]));
+            EXPECT_NE(GlSharing::glToCLFormats.end(), GlSharing::glToCLFormats.find(glFormats[formatIndex]));
         }
     }
 }
@@ -807,10 +807,10 @@ TEST(glSharingBasicTest, givenSupportedImageTypesWhenGettingSupportedFormatsThen
         auto result = glSharingFunctions.getSupportedFormats(flags, image_type, arrayCount(glFormats), glFormats, &numImageFormats);
 
         EXPECT_EQ(CL_SUCCESS, result);
-        EXPECT_EQ(static_cast<uint32_t>(GlSharing::gLToCLFormats.size()), numImageFormats);
+        EXPECT_EQ(static_cast<uint32_t>(GlSharing::glToCLFormats.size()), numImageFormats);
 
         for (auto glFormat : glFormats) {
-            EXPECT_NE(GlSharing::gLToCLFormats.end(), GlSharing::gLToCLFormats.find(glFormat));
+            EXPECT_NE(GlSharing::glToCLFormats.end(), GlSharing::glToCLFormats.find(glFormat));
         }
     }
 }
@@ -824,7 +824,7 @@ TEST(glSharingBasicTest, givenZeroNumEntriesWhenGettingSupportedFormatsThenNumFo
     auto result = glSharingFunctions.getSupportedFormats(flags, image_type, 0, nullptr, &numImageFormats);
 
     EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(static_cast<uint32_t>(GlSharing::gLToCLFormats.size()), numImageFormats);
+    EXPECT_EQ(static_cast<uint32_t>(GlSharing::glToCLFormats.size()), numImageFormats);
 }
 
 TEST(glSharingBasicTest, givenNullNumImageFormatsWhenGettingSupportedFormatsThenNumFormatsIsNotDereferenced) {
@@ -1304,6 +1304,6 @@ TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenValidInputsWhenGettingForm
     EXPECT_NE(0u, numFormats);
 
     for (uint32_t i = 0; i < glFormatsCount; i++) {
-        EXPECT_NE(GlSharing::gLToCLFormats.end(), GlSharing::gLToCLFormats.find(glFormats[i]));
+        EXPECT_NE(GlSharing::glToCLFormats.end(), GlSharing::glToCLFormats.find(glFormats[i]));
     }
 }

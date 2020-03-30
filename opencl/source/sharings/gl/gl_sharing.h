@@ -68,7 +68,7 @@ class GlSharing : public SharingHandler {
             *pClGlObjectId = clGlObjectId;
         }
     }
-    static const std::unordered_map<GLenum, const cl_image_format> gLToCLFormats;
+    static const std::unordered_map<GLenum, const cl_image_format> glToCLFormats;
 
   protected:
     int synchronizeHandler(UpdateData &updateData) override;

@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "opencl/source/os_interface/windows/gl/gl_sharing_os.h"
 #include "opencl/source/sharings/gl/gl_sharing.h"
 
+#include "gl_types.h"
 #include <GL/gl.h>
 
 namespace NEO {

@@ -818,7 +818,9 @@ include_directories(${NEO_SOURCE_DIR}/opencl/source/command_queue/definitions${B
 include_directories(${NEO_SOURCE_DIR}/opencl/source/command_stream/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/opencl/source/mem_obj/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SOURCE_DIR}/opencl/source/memory_manager/definitions${BRANCH_DIR_SUFFIX})
-
+if (MSVC)
+    include_directories(${NEO_SOURCE_DIR}/opencl/source/sharings/gl/windows/include)
+endif()
 
 if(HAVE_INSTRUMENTATION)
   set(NEO__INSTRUMENTATION_DIR_SUFFIX ${BRANCH_DIR_SUFFIX})

@@ -19,7 +19,7 @@
 namespace NEO {
 const uint32_t GLSharingFunctions::sharingId = SharingType::CLGL_SHARING;
 
-const std::unordered_map<GLenum, const cl_image_format> GlSharing::gLToCLFormats = {
+const std::unordered_map<GLenum, const cl_image_format> GlSharing::glToCLFormats = {
     {GL_RGBA8, {CL_RGBA, CL_UNORM_INT8}},
     {GL_RGBA8I, {CL_RGBA, CL_SIGNED_INT8}},
     {GL_RGBA16, {CL_RGBA, CL_UNORM_INT16}},
@@ -64,6 +64,40 @@ const std::unordered_map<GLenum, const cl_image_format> GlSharing::gLToCLFormats
     {GL_RG16UI, {CL_RG, CL_UNSIGNED_INT16}},
     {GL_RG32UI, {CL_RG, CL_UNSIGNED_INT32}},
     {GL_RGB10, {CL_RGBA, CL_UNORM_INT16}}};
+
+cl_int GLSharingFunctions::getSupportedFormats(cl_mem_flags flags,
+                                               cl_mem_object_type imageType,
+                                               size_t numEntries,
+                                               cl_GLenum *formats,
+                                               uint32_t *numImageFormats) {
+    if (flags != CL_MEM_READ_ONLY && flags != CL_MEM_WRITE_ONLY && flags != CL_MEM_READ_WRITE && flags != CL_MEM_KERNEL_READ_AND_WRITE) {
+        return CL_INVALID_VALUE;
+    }
+
+    if (imageType != CL_MEM_OBJECT_IMAGE1D && imageType != CL_MEM_OBJECT_IMAGE2D &&
+        imageType != CL_MEM_OBJECT_IMAGE3D && imageType != CL_MEM_OBJECT_IMAGE1D_ARRAY &&
+        imageType != CL_MEM_OBJECT_IMAGE1D_BUFFER) {
+        return CL_INVALID_VALUE;
+    }
+
+    const auto formatsCount = GlSharing::glToCLFormats.size();
+    if (numImageFormats != nullptr) {
+        *numImageFormats = static_cast<cl_uint>(formatsCount);
+    }
+
+    if (formats != nullptr && formatsCount > 0) {
+        const auto elementsToCopy = std::min(numEntries, formatsCount);
+        uint32_t outputFormatsIndex = 0;
+        for (const auto &formatMapping : GlSharing::glToCLFormats) {
+            formats[outputFormatsIndex++] = formatMapping.first;
+            if (outputFormatsIndex == elementsToCopy) {
+                break;
+            }
+        }
+    }
+
+    return CL_SUCCESS;
+}
 
 int GlSharing::synchronizeHandler(UpdateData &updateData) {
     GLContextGuard guard(*sharingFunctions);

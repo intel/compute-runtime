@@ -9,6 +9,9 @@ if(WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/gl_arb_sync_event_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gl_create_from_texture_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gl_dll_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gl_library_name.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gl_os_sharing_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gl_reused_buffers_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gl_sharing_enable_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gl_sharing_tests.cpp

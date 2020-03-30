@@ -12,7 +12,7 @@
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/os_interface/windows/gl/gl_dll_helper.h"
+#include "opencl/test/unit_test/sharings/gl/windows/gl_dll_helper.h"
 
 using namespace NEO;
 
