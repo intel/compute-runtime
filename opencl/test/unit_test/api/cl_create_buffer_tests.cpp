@@ -62,7 +62,7 @@ static cl_mem_flags validFlags[] = {
     CL_MEM_HOST_READ_ONLY,
     CL_MEM_HOST_WRITE_ONLY,
     CL_MEM_HOST_NO_ACCESS,
-};
+    CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL};
 
 INSTANTIATE_TEST_CASE_P(
     CreateBufferCheckFlags,
