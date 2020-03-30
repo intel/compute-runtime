@@ -85,7 +85,7 @@ bool Buffer::isValidSubBufferOffset(size_t offset) {
     return false;
 }
 
-void Buffer::validateInputAndCreateBuffer(cl_context &context,
+void Buffer::validateInputAndCreateBuffer(Context &context,
                                           MemoryPropertiesFlags memoryProperties,
                                           cl_mem_flags flags,
                                           cl_mem_flags_intel flagsIntel,
@@ -93,18 +93,13 @@ void Buffer::validateInputAndCreateBuffer(cl_context &context,
                                           void *hostPtr,
                                           cl_int &retVal,
                                           cl_mem &buffer) {
-    Context *pContext = nullptr;
-    retVal = validateObjects(WithCastToInternal(context, &pContext));
-    if (retVal != CL_SUCCESS) {
-        return;
-    }
 
-    if (!MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, *pContext)) {
+    if (!MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context)) {
         retVal = CL_INVALID_VALUE;
         return;
     }
 
-    auto pDevice = pContext->getDevice(0);
+    auto pDevice = context.getDevice(0);
     bool allowCreateBuffersWithUnrestrictedSize = isValueSet(flags, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) ||
                                                   isValueSet(flagsIntel, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL);
 
@@ -121,7 +116,7 @@ void Buffer::validateInputAndCreateBuffer(cl_context &context,
     }
 
     // create the buffer
-    buffer = create(pContext, memoryProperties, flags, flagsIntel, size, hostPtr, retVal);
+    buffer = create(&context, memoryProperties, flags, flagsIntel, size, hostPtr, retVal);
 }
 
 Buffer *Buffer::create(Context *context,

@@ -15,6 +15,8 @@
 
 namespace NEO {
 
+class Context;
+
 class MemoryPropertiesParser {
   public:
     enum class ObjType {
@@ -24,7 +26,8 @@ class MemoryPropertiesParser {
     };
 
     static bool parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryPropertiesFlags &memoryProperties,
-                                      cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel, cl_mem_alloc_flags_intel &allocflags, ObjType objectType);
+                                      cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel, cl_mem_alloc_flags_intel &allocflags,
+                                      ObjType objectType, Context &context);
 
     static AllocationProperties getAllocationProperties(uint32_t rootDeviceIndex, MemoryPropertiesFlags memoryProperties, bool allocateMemory,
                                                         size_t size, GraphicsAllocation::AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo) {

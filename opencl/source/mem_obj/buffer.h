@@ -49,7 +49,7 @@ class Buffer : public MemObj {
 
     ~Buffer() override;
 
-    static void validateInputAndCreateBuffer(cl_context &context,
+    static void validateInputAndCreateBuffer(Context &context,
                                              MemoryPropertiesFlags memoryProperties,
                                              cl_mem_flags flags,
                                              cl_mem_flags_intel flagsIntel,

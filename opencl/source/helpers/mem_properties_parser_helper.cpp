@@ -12,8 +12,9 @@
 
 namespace NEO {
 
-bool NEO::MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryPropertiesFlags &memoryProperties,
-                                                        cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel, cl_mem_alloc_flags_intel &allocflags, ObjType objectType) {
+bool MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryPropertiesFlags &memoryProperties,
+                                                   cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
+                                                   cl_mem_alloc_flags_intel &allocflags, ObjType objectType, Context &context) {
     if (properties == nullptr) {
         return true;
     }

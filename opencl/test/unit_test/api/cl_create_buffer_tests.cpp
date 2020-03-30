@@ -177,6 +177,9 @@ TEST_F(clCreateBufferTests, GivenNullContextWhenCreatingBufferThenInvalidContext
 
     clCreateBuffer(nullptr, flags, bufferSize, pHostMem, &retVal);
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
+
+    clCreateBufferWithPropertiesINTEL(nullptr, nullptr, bufferSize, pHostMem, &retVal);
+    ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
 TEST_F(clCreateBufferTests, GivenBufferSizeZeroWhenCreatingBufferThenInvalidBufferSizeErrorIsReturned) {
