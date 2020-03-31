@@ -43,7 +43,7 @@ struct HeapDirtyStateTests : ::testing::Test {
     MockHeapDirtyState mockHeapDirtyState;
 };
 
-TEST_F(HeapDirtyStateTests, initialValues) {
+TEST_F(HeapDirtyStateTests, WhenHeapIsCreatedThenInitialValuesAreSet) {
     EXPECT_EQ(0u, mockHeapDirtyState.sizeInPages);
     EXPECT_EQ(0llu, mockHeapDirtyState.gpuBaseAddress);
 }
