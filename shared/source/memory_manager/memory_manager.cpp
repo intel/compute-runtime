@@ -299,6 +299,12 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
+    if (DebugManager.flags.ForceBuffersToSystemMemory.get()) {
+        if (properties.allocationType == GraphicsAllocation::AllocationType::BUFFER) {
+            allocationData.flags.useSystemMemory = true;
+        }
+    }
+
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::COMMAND_BUFFER:
     case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
