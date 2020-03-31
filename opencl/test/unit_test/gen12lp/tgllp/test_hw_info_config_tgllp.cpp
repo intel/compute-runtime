@@ -122,6 +122,23 @@ TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeForTgllpProductFa
     EXPECT_FALSE(rootDeviceEnvironment->localMemoryEnabledReceived);
 }
 
+TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWithOverrideGpuAddressSpaceWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenAubManagerIsInitializedWithCorrectGpuAddressSpace) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.SetCommandStreamReceiver.set(1);
+    DebugManager.flags.ProductFamilyOverride.set("tgllp");
+    DebugManager.flags.OverrideGpuAddressSpace.set(48);
+
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment);
+    ASSERT_TRUE(success);
+
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+
+    auto mockAubManager = static_cast<MockAubManager *>(rootDeviceEnvironment->aubCenter->getAubManager());
+    EXPECT_EQ(MemoryConstants::max48BitAddress, mockAubManager->mockAubManagerParams.gpuAddressSpace);
+}
+
 TGLLPTEST_F(TgllpHwInfo, givenSetCommandStreamReceiverInAubModeWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenAllRootDeviceEnvironmentMembersAreInitialized) {
     DebugManagerStateRestore stateRestore;
     auto requiredDeviceCount = 2u;
