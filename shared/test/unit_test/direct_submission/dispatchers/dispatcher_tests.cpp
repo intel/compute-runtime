@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/direct_submission/dispatchers/dispatcher.h"
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/direct_submission/dispatchers/dispatcher_fixture.h"
 
-#include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "test.h"
 
 using namespace NEO;

@@ -10,11 +10,11 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 
 #include "gtest/gtest.h"
 

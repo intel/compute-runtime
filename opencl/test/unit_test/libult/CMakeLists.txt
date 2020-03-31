@@ -48,6 +48,12 @@ set(IGDRCL_SRCS_LIB_ULT
   ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_management.h
 )
 
+get_property(NEO_SHARED_TESTS_CMD_PARSE GLOBAL PROPERTY NEO_SHARED_TESTS_CMD_PARSE)
+
+list(APPEND IGDRCL_SRCS_LIB_ULT
+   ${NEO_SHARED_TESTS_CMD_PARSE}
+)
+
 set(IGDRCL_SRCS_LIB_ULT_WINDOWS
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/mock_environment_variables.cpp
 )
@@ -97,6 +103,7 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_config_listener.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_config_listener.h
 )
+
 add_library (igdrcl_libult_env OBJECT EXCLUDE_FROM_ALL
   ${IGDRCL_SRCS_LIB_ULT_ENV}
 )
@@ -148,3 +155,5 @@ foreach(target_name igdrcl_libult igdrcl_libult_cs igdrcl_libult_env)
   target_compile_definitions(${target_name} PRIVATE $<TARGET_PROPERTY:${NEO_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
   create_project_source_tree(${target_name})
 endforeach()
+
+add_subdirectories()

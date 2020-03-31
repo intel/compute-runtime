@@ -5,10 +5,11 @@
  *
  */
 
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
+
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
-#include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
 
 using namespace NEO;

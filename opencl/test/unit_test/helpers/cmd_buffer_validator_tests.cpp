@@ -5,10 +5,10 @@
  *
  */
 
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
+
 #include "opencl/test/unit_test/helpers/cmd_buffer_validator.h"
 #include "test.h"
-
-#include "hw_parse.h"
 
 using HwParseTest = ::testing::Test;
 

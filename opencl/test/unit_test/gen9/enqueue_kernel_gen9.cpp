@@ -6,11 +6,11 @@
  */
 
 #include "shared/source/gen9/reg_configs.h"
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
-#include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/helpers/static_size3.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"

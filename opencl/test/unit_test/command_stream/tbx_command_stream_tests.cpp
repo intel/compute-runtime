@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
@@ -22,7 +23,6 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
-#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 #include "opencl/test/unit_test/helpers/variable_backup.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_aub_center.h"

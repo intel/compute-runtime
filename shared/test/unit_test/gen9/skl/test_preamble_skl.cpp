@@ -9,10 +9,9 @@
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/gen9/reg_configs.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/preamble/preamble_fixture.h"
-
-#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 
 using namespace NEO;
 

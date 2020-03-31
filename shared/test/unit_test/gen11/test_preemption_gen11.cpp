@@ -7,9 +7,9 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
-#include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"

@@ -6,12 +6,12 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
 
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
-#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
-#include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "test.h"
 

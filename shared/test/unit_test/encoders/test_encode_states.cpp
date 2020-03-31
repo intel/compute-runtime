@@ -7,9 +7,8 @@
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
-
-#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 
 using namespace NEO;
 

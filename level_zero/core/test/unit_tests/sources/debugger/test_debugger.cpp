@@ -8,9 +8,9 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gen_common/reg_configs/reg_configs_common.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/mocks/mock_os_library.h"
 
-#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 #include "test.h"

@@ -7,11 +7,11 @@
 
 #pragma once
 #include "shared/source/helpers/preamble.h"
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
 
 #include "opencl/test/unit_test/command_stream/linear_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
-#include "opencl/test/unit_test/helpers/hw_parse.h"
 
 using namespace NEO;
 

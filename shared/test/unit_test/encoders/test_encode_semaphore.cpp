@@ -7,9 +7,8 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
-
-#include "opencl/test/unit_test/helpers/hw_parse.h"
 
 using namespace NEO;
 

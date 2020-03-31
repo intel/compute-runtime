@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -16,7 +17,6 @@
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_fixture.h"
 #include "opencl/test/unit_test/fixtures/two_walker_fixture.h"
-#include "opencl/test/unit_test/gen_common/gen_cmd_parse.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "test.h"

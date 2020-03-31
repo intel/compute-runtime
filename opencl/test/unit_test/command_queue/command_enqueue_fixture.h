@@ -6,13 +6,14 @@
  */
 
 #pragma once
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
+
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
-#include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 

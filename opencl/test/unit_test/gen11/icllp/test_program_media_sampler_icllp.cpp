@@ -8,10 +8,10 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/gen11/reg_configs.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
-#include "opencl/test/unit_test/helpers/hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
 
