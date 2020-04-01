@@ -61,7 +61,7 @@ class DispatchInfoFixture : public ContextFixture, public DeviceFixture {
 
 typedef Test<DispatchInfoFixture> DispatchInfoTest;
 
-TEST_F(DispatchInfoTest, DispatchInfoWithNoGeometry) {
+TEST_F(DispatchInfoTest, GivenNoGeometryWhenDispatchInfoIsCreatedThenValuesAreSetCorrectly) {
     std::unique_ptr<DispatchInfo> dispatchInfo(new DispatchInfo);
 
     EXPECT_EQ(nullptr, dispatchInfo->getKernel());
@@ -82,7 +82,7 @@ TEST_F(DispatchInfoTest, DispatchInfoWithNoGeometry) {
     EXPECT_EQ(vecZero, dispatchInfo->getStartOfWorkgroups());
 }
 
-TEST_F(DispatchInfoTest, DispatchInfoWithUserGeometry) {
+TEST_F(DispatchInfoTest, GivenUserGeometryWhenDispatchInfoIsCreatedThenValuesAreSetCorrectly) {
     Vec3<size_t> gws({256, 256, 256});
     Vec3<size_t> elws({16, 16, 16});
     Vec3<size_t> offset({1, 2, 3});
@@ -110,7 +110,7 @@ TEST_F(DispatchInfoTest, DispatchInfoWithUserGeometry) {
     EXPECT_EQ(nullptr, dispatchInfo->getKernel());
 }
 
-TEST_F(DispatchInfoTest, DispatchInfoWithFullGeometry) {
+TEST_F(DispatchInfoTest, GivenFullGeometryWhenDispatchInfoIsCreatedThenValuesAreSetCorrectly) {
     Vec3<size_t> gws({256, 256, 256});
     Vec3<size_t> elws({32, 32, 32});
     Vec3<size_t> offset({1, 2, 3});
@@ -140,17 +140,17 @@ TEST_F(DispatchInfoTest, DispatchInfoWithFullGeometry) {
     EXPECT_EQ(nullptr, dispatchInfo->getKernel());
 }
 
-TEST_F(DispatchInfoTest, MultiDispatchInfoNonCopyable) {
+TEST_F(DispatchInfoTest, WhenMultiDispatchInfoIsCreatedTheItIsNonCopyable) {
     EXPECT_FALSE(std::is_move_constructible<MultiDispatchInfo>::value);
     EXPECT_FALSE(std::is_copy_constructible<MultiDispatchInfo>::value);
 }
 
-TEST_F(DispatchInfoTest, MultiDispatchInfoNonAssignable) {
+TEST_F(DispatchInfoTest, WhenMultiDispatchInfoIsCreatedTheItIsNonAssignable) {
     EXPECT_FALSE(std::is_move_assignable<MultiDispatchInfo>::value);
     EXPECT_FALSE(std::is_copy_assignable<MultiDispatchInfo>::value);
 }
 
-TEST_F(DispatchInfoTest, MultiDispatchInfoEmpty) {
+TEST_F(DispatchInfoTest, WhenMultiDispatchInfoIsCreatedTheItIsEmpty) {
     MultiDispatchInfo multiDispatchInfo;
     EXPECT_TRUE(multiDispatchInfo.empty());
     EXPECT_EQ(0u, multiDispatchInfo.getRequiredScratchSize());
@@ -159,7 +159,7 @@ TEST_F(DispatchInfoTest, MultiDispatchInfoEmpty) {
     EXPECT_EQ(0u, multiDispatchInfo.getRedescribedSurfaces().size());
 }
 
-TEST_F(DispatchInfoTest, MultiDispatchInfoWithRedescribedSurfaces) {
+TEST_F(DispatchInfoTest, GivenRedescribedSurfacesWhenCreatingMultiDispatchInfoThenRedescribedSurfacesSizeisOne) {
     MultiDispatchInfo multiDispatchInfo;
 
     auto image = std::unique_ptr<Image>(Image2dHelper<>::create(pContext));
@@ -171,7 +171,7 @@ TEST_F(DispatchInfoTest, MultiDispatchInfoWithRedescribedSurfaces) {
     EXPECT_EQ(1u, multiDispatchInfo.getRedescribedSurfaces().size());
 }
 
-TEST_F(DispatchInfoTest, MultiDispatchInfoWithNoGeometry) {
+TEST_F(DispatchInfoTest, GivenNoGeometryWhenMultiDispatchInfoIsCreatedThenValuesAreSetCorrectly) {
     DispatchInfo dispatchInfo;
 
     MultiDispatchInfo multiDispatchInfo;
@@ -182,7 +182,7 @@ TEST_F(DispatchInfoTest, MultiDispatchInfoWithNoGeometry) {
     EXPECT_FALSE(multiDispatchInfo.usesStatelessPrintfSurface());
 }
 
-TEST_F(DispatchInfoTest, MultiDispatchInfoWithUserGeometry) {
+TEST_F(DispatchInfoTest, GivenUserGeometryWhenMultiDispatchInfoIsCreatedThenValuesAreSetCorrectly) {
     Vec3<size_t> gws({256, 256, 256});
     Vec3<size_t> elws({16, 16, 16});
     Vec3<size_t> offset({1, 2, 3});
@@ -210,7 +210,7 @@ TEST_F(DispatchInfoTest, MultiDispatchInfoWithUserGeometry) {
     EXPECT_EQ(vecZero, multiDispatchInfo.begin()->getStartOfWorkgroups());
 }
 
-TEST_F(DispatchInfoTest, MultiDispatchInfoWithFullGeometry) {
+TEST_F(DispatchInfoTest, GivenFullGeometryWhenMultiDispatchInfoIsCreatedThenValuesAreSetCorrectly) {
     Vec3<size_t> gws({256, 256, 256});
     Vec3<size_t> elws({32, 32, 32});
     Vec3<size_t> offset({1, 2, 3});
@@ -241,7 +241,7 @@ TEST_F(DispatchInfoTest, MultiDispatchInfoWithFullGeometry) {
     EXPECT_EQ(swgs, multiDispatchInfo.begin()->getStartOfWorkgroups());
 }
 
-TEST_F(DispatchInfoTest, WorkGroupSetGet) {
+TEST_F(DispatchInfoTest, WhenSettingValuesInDispatchInfoThenThoseValuesAreSet) {
     DispatchInfo dispatchInfo;
 
     Vec3<size_t> gws({256, 256, 256});
