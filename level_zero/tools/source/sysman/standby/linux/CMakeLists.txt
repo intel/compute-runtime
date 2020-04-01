@@ -6,7 +6,7 @@
 
 set(L0_SRCS_TOOLS_SYSMAN_STANDBY_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_standby_imp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/os_standby_imp.cpp
 )
 
 if(UNIX)
