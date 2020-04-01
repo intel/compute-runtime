@@ -7,6 +7,8 @@
 set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/additional_kernel_properties.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/get_extension_function_lookup_map.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_extension_function_lookup_map.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/builtin/builtin_functions_lib.h
     ${CMAKE_CURRENT_SOURCE_DIR}/builtin/builtin_functions_lib_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/builtin/builtin_functions_lib_impl.h

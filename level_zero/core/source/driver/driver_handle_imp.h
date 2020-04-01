@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/get_extension_function_lookup_map.h"
 #include "level_zero/tools/source/tracing/tracing.h"
 
 namespace L0 {
@@ -58,10 +59,10 @@ struct DriverHandleImp : public DriverHandle {
                                                                      bool *allocationRangeCovered) override;
 
     uint32_t numDevices = 0;
+    std::unordered_map<std::string, void *> extensionFunctionsLookupMap;
     std::vector<Device *> devices;
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
-    NEO::OsLibrary *osLibrary = nullptr;
 };
 
 } // namespace L0

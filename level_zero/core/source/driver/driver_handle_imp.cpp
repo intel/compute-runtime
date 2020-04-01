@@ -69,12 +69,12 @@ inline ze_memory_type_t parseUSMType(InternalMemoryType memoryType) {
 }
 
 ze_result_t DriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, void **pfunc) {
-    *pfunc = this->osLibrary->getProcAddress(std::string(pFuncName));
-    if (*pfunc == nullptr) {
-        DEBUG_BREAK_IF(true);
-        return ZE_RESULT_ERROR_UNKNOWN;
+    auto funcAddr = extensionFunctionsLookupMap.find(std::string(pFuncName));
+    if (funcAddr != extensionFunctionsLookupMap.end()) {
+        *pfunc = funcAddr->second;
+        return ZE_RESULT_SUCCESS;
     }
-    return ZE_RESULT_SUCCESS;
+    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
 ze_result_t DriverHandleImp::getMemAllocProperties(const void *ptr,
@@ -97,7 +97,6 @@ DriverHandleImp::~DriverHandleImp() {
         delete this->svmAllocsManager;
         this->svmAllocsManager = nullptr;
     }
-    delete this->osLibrary;
 }
 
 ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> devices) {
@@ -118,10 +117,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
         this->devices.push_back(device);
     }
 
-    this->osLibrary = NEO::OsLibrary::load("");
-    if (this->osLibrary->isLoaded() == false) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
+    extensionFunctionsLookupMap = getExtensionFunctionsLookupMap();
 
     return ZE_RESULT_SUCCESS;
 }
