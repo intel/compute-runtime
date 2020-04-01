@@ -21,6 +21,8 @@
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
+#include "gtest/gtest.h"
+
 #include <sstream>
 
 namespace NEO {
@@ -69,7 +71,7 @@ class AUBFixture : public CommandQueueHwFixture {
 
         if (testMode == TestMode::AubTestsWithTbx) {
             auto tbxCsr = csrSimulated;
-            tbxCsr->expectMemoryEqual(gfxAddress, srcAddress, length);
+            EXPECT_TRUE(tbxCsr->expectMemoryEqual(gfxAddress, srcAddress, length));
             csrSimulated = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(
                 static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR.get());
         }
@@ -85,7 +87,7 @@ class AUBFixture : public CommandQueueHwFixture {
 
         if (testMode == TestMode::AubTestsWithTbx) {
             auto tbxCsr = csrSimulated;
-            tbxCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length);
+            EXPECT_TRUE(tbxCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length));
             csrSimulated = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(
                 static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(csr)->aubCSR.get());
         }

@@ -19,6 +19,8 @@
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 
+#include "gtest/gtest.h"
+
 #include <cstdint>
 
 namespace NEO {
@@ -57,7 +59,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
         CommandStreamReceiver *csr = pCommandStreamReceiver;
         if (testMode == TestMode::AubTestsWithTbx) {
             auto tbxCsr = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(pCommandStreamReceiver);
-            tbxCsr->expectMemoryEqual(gfxAddress, srcAddress, length);
+            EXPECT_TRUE(tbxCsr->expectMemoryEqual(gfxAddress, srcAddress, length));
 
             csr = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR.get();
         }
@@ -73,7 +75,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
         CommandStreamReceiver *csr = pCommandStreamReceiver;
         if (testMode == TestMode::AubTestsWithTbx) {
             auto tbxCsr = static_cast<CommandStreamReceiverSimulatedCommonHw<FamilyType> *>(pCommandStreamReceiver);
-            tbxCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length);
+            EXPECT_TRUE(tbxCsr->expectMemoryNotEqual(gfxAddress, srcAddress, length));
 
             csr = static_cast<CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<FamilyType>> *>(pCommandStreamReceiver)->aubCSR.get();
         }

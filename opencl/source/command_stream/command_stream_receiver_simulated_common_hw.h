@@ -48,8 +48,8 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     void initEngineMMIO();
     void submitLRCA(const MiContextDescriptorReg &contextDescriptor);
     void setupContext(OsContext &osContext) override;
-    virtual void expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length);
-    virtual void expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length);
+    virtual bool expectMemoryEqual(void *gfxAddress, const void *srcAddress, size_t length);
+    virtual bool expectMemoryNotEqual(void *gfxAddress, const void *srcAddress, size_t length);
     virtual void pollForCompletion() = 0;
     virtual void pollForCompletionImpl(){};
     virtual bool writeMemory(GraphicsAllocation &gfxAllocation) = 0;

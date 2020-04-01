@@ -278,7 +278,7 @@ int main(int argc, char **argv) {
             }
         } else if (!strcmp("--generate_random_inputs", argv[i])) {
             generateRandomInput = true;
-        } else if (!strcmp("--read-config", argv[i]) && testMode == TestMode::AubTests) {
+        } else if (!strcmp("--read-config", argv[i]) && (testMode == TestMode::AubTests || testMode == TestMode::AubTestsWithTbx)) {
             if (DebugManager.registryReadAvailable()) {
                 DebugManager.setReaderImpl(SettingsReader::create(oclRegPath));
                 DebugManager.injectSettingsFromReader();
