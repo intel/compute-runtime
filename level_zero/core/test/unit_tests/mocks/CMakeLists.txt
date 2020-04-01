@@ -10,6 +10,8 @@ set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_built_ins.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_built_ins.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdlist.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdlist.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdqueue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdqueue.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.h
