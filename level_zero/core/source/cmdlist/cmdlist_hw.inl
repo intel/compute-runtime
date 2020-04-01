@@ -720,7 +720,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     bool hostPointerNeedsFlush = false;
     bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(alignedDstPtr, dstSize, &allocData);
     if (dstAllocFound == false) {
-        auto dstAlloc = device->getDriverHandle()->allocateManagedMemoryFromHostPtr(device, alignedDstPtr, dstSize, this);
+        auto dstAlloc = device->allocateManagedMemoryFromHostPtr(alignedDstPtr, dstSize, this);
         commandContainer.getDeallocationContainer().push_back(dstAlloc);
         hostPointerNeedsFlush = true;
     } else {
@@ -733,7 +733,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     bool srcAllocFound = device->getDriverHandle()->findAllocationDataForRange(alignedSrcPtr,
                                                                                srcSize, nullptr);
     if (srcAllocFound == false) {
-        auto srcAlloc = device->getDriverHandle()->allocateManagedMemoryFromHostPtr(device, alignedSrcPtr, dstSize, this);
+        auto srcAlloc = device->allocateManagedMemoryFromHostPtr(alignedSrcPtr, dstSize, this);
         commandContainer.getDeallocationContainer().push_back(srcAlloc);
     }
 
@@ -937,9 +937,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     } else {
         builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferSSHOffset);
 
-        auto patternAlloc = device->getDriverHandle()->allocateManagedMemoryFromHostPtr(device,
-                                                                                        reinterpret_cast<void *>(srcPtr),
-                                                                                        srcOffset + patternSize, this);
+        auto patternAlloc = device->allocateManagedMemoryFromHostPtr(reinterpret_cast<void *>(srcPtr),
+                                                                     srcOffset + patternSize, this);
         if (patternAlloc == nullptr) {
             DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
@@ -1047,7 +1046,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
     bool hostPointerNeedsFlush = false;
 
     if (srcAllocFound == false) {
-        alloc = device->getDriverHandle()->allocateMemoryFromHostPtr(device, buffer, bufferSize);
+        alloc = device->allocateMemoryFromHostPtr(buffer, bufferSize);
         hostPtrMap.insert(std::make_pair(buffer, alloc));
 
         alignedPtr = static_cast<uintptr_t>(alloc->getGpuAddress() - offset);

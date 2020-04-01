@@ -462,8 +462,8 @@ ze_result_t DeviceImp::registerCLMemory(cl_context context, cl_mem mem, void **p
     NEO::GraphicsAllocation *graphicsAllocation = memObj->getGraphicsAllocation();
     DEBUG_BREAK_IF(graphicsAllocation == nullptr);
 
-    auto allocation = getDriverHandle()->allocateManagedMemoryFromHostPtr(
-        this, graphicsAllocation->getUnderlyingBuffer(),
+    auto allocation = allocateManagedMemoryFromHostPtr(
+        graphicsAllocation->getUnderlyingBuffer(),
         graphicsAllocation->getUnderlyingBufferSize(), nullptr);
 
     *ptr = allocation->getUnderlyingBuffer();
@@ -622,4 +622,74 @@ const NEO::DeviceInfo &DeviceImp::getDeviceInfo() const {
 NEO::Device *DeviceImp::getNEODevice() {
     return neoDevice;
 }
+
+NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffer, size_t size, struct CommandList *commandList) {
+    char *baseAddress = reinterpret_cast<char *>(buffer);
+    NEO::GraphicsAllocation *allocation = nullptr;
+    bool allocFound = false;
+    std::vector<NEO::SvmAllocationData *> allocDataArray = driverHandle->findAllocationsWithinRange(buffer, size, &allocFound);
+    if (allocFound) {
+        return allocDataArray[0]->gpuAllocation;
+    }
+
+    if (!allocDataArray.empty()) {
+        UNRECOVERABLE_IF(commandList == nullptr);
+        for (auto allocData : allocDataArray) {
+            allocation = allocData->gpuAllocation;
+            char *allocAddress = reinterpret_cast<char *>(allocation->getGpuAddress());
+            size_t allocSize = allocData->size;
+
+            driverHandle->getSvmAllocsManager()->getSVMAllocs()->remove(*allocData);
+            neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
+            commandList->eraseDeallocationContainerEntry(allocation);
+            commandList->eraseResidencyContainerEntry(allocation);
+
+            if (allocAddress < baseAddress) {
+                buffer = reinterpret_cast<void *>(allocAddress);
+                baseAddress += size;
+                size = ptrDiff(baseAddress, allocAddress);
+                baseAddress = reinterpret_cast<char *>(buffer);
+            } else {
+                allocAddress += allocSize;
+                baseAddress += size;
+                if (allocAddress > baseAddress) {
+                    baseAddress = reinterpret_cast<char *>(buffer);
+                    size = ptrDiff(allocAddress, baseAddress);
+                } else {
+                    baseAddress = reinterpret_cast<char *>(buffer);
+                }
+            }
+        }
+    }
+
+    allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {getRootDeviceIndex(), false, size, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false},
+        buffer);
+
+    if (allocation == nullptr) {
+        return allocation;
+    }
+
+    NEO::SvmAllocationData allocData;
+    allocData.gpuAllocation = allocation;
+    allocData.cpuAllocation = nullptr;
+    allocData.size = size;
+    allocData.memoryType = InternalMemoryType::NOT_SPECIFIED;
+    allocData.device = nullptr;
+    driverHandle->getSvmAllocsManager()->getSVMAllocs()->insert(allocData);
+
+    return allocation;
+}
+
+NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer, size_t size) {
+    NEO::AllocationProperties properties = {getRootDeviceIndex(), false, size, NEO::GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false};
+    properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
+    auto allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties,
+                                                                                          buffer);
+
+    UNRECOVERABLE_IF(allocation == nullptr);
+
+    return allocation;
+}
+
 } // namespace L0

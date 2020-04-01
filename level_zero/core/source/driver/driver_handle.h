@@ -51,9 +51,6 @@ struct DriverHandle : _ze_driver_handle_t {
                                         ze_event_pool_handle_t *phEventPool) = 0;
     virtual ze_result_t openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc, ze_event_pool_handle_t *phEventPool) = 0;
     virtual ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) = 0;
-    virtual NEO::GraphicsAllocation *allocateManagedMemoryFromHostPtr(Device *device, void *buffer,
-                                                                      size_t size, struct CommandList *commandList) = 0;
-    virtual NEO::GraphicsAllocation *allocateMemoryFromHostPtr(Device *device, const void *buffer, size_t size) = 0;
     virtual bool findAllocationDataForRange(const void *buffer,
                                             size_t size,
                                             NEO::SvmAllocationData **allocData) = 0;

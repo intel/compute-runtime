@@ -80,6 +80,8 @@ struct DeviceImp : public Device {
     NEO::GraphicsAllocation *getDebugSurface() const override { return debugSurface; }
     void setDebugSurface(NEO::GraphicsAllocation *debugSurface) { this->debugSurface = debugSurface; };
     ~DeviceImp() override;
+    NEO::GraphicsAllocation *allocateManagedMemoryFromHostPtr(void *buffer, size_t size, struct CommandList *commandList) override;
+    NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size) override;
 
     NEO::Device *neoDevice = nullptr;
     bool isSubdevice = false;

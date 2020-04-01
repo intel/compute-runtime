@@ -116,6 +116,11 @@ struct Device : _ze_device_handle_t {
         return getNEODevice() ? reinterpret_cast<NEO::SourceLevelDebugger *>(getNEODevice()->getDebugger()) : nullptr;
     }
     virtual NEO::GraphicsAllocation *getDebugSurface() const = 0;
+
+    virtual NEO::GraphicsAllocation *allocateManagedMemoryFromHostPtr(void *buffer,
+                                                                      size_t size, struct CommandList *commandList) = 0;
+
+    virtual NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size) = 0;
 };
 
 } // namespace L0

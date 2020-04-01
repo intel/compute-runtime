@@ -50,9 +50,6 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) override;
     NEO::SVMAllocsManager *getSvmAllocsManager() override;
     ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> devices);
-    NEO::GraphicsAllocation *allocateManagedMemoryFromHostPtr(Device *device, void *buffer,
-                                                              size_t size, struct CommandList *commandList) override;
-    NEO::GraphicsAllocation *allocateMemoryFromHostPtr(Device *device, const void *buffer, size_t size) override;
     bool findAllocationDataForRange(const void *buffer,
                                     size_t size,
                                     NEO::SvmAllocationData **allocData) override;
