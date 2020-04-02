@@ -75,7 +75,11 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
 }
 
 BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
-                                                                size_t dstOffset, size_t srcOffset, size_t copySize) {
+                                                                Vec3<size_t> dstOffset, Vec3<size_t> srcOffset, Vec3<size_t> copySize,
+                                                                size_t srcRowPitch, size_t srcSlicePitch,
+                                                                size_t dstRowPitch, size_t dstSlicePitch) {
+    copySize.y = copySize.y ? copySize.y : 1;
+    copySize.z = copySize.z ? copySize.z : 1;
 
     return {
         nullptr,                                         // outputTimestampPacket
@@ -86,9 +90,13 @@ BlitProperties BlitProperties::constructPropertiesForCopyBuffer(GraphicsAllocati
         srcAllocation,                                   // srcAllocation
         dstAllocation->getGpuAddress(),                  // dstGpuAddress
         srcAllocation->getGpuAddress(),                  // srcGpuAddress
-        {copySize, 1, 1},                                // copySize
-        {dstOffset, 0, 0},                               // dstOffset
-        {srcOffset, 0, 0}};                              // srcOffset
+        copySize,                                        // copySize
+        dstOffset,                                       // dstOffset
+        srcOffset,                                       // srcOffset
+        dstRowPitch,                                     // dstRowPitch
+        dstSlicePitch,                                   // dstSlicePitch
+        srcRowPitch,                                     // srcRowPitch
+        srcSlicePitch};                                  // srcSlicePitch
 }
 
 BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,

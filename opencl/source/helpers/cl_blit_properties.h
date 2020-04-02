@@ -25,7 +25,11 @@ struct ClBlitProperties {
 
             return BlitProperties::constructPropertiesForCopyBuffer(builtinOpParams.dstMemObj->getGraphicsAllocation(),
                                                                     builtinOpParams.srcMemObj->getGraphicsAllocation(),
-                                                                    dstOffset, srcOffset, builtinOpParams.size.x);
+                                                                    {dstOffset, builtinOpParams.dstOffset.y, builtinOpParams.dstOffset.z},
+                                                                    {srcOffset, builtinOpParams.srcOffset.y, builtinOpParams.srcOffset.z},
+                                                                    builtinOpParams.size,
+                                                                    builtinOpParams.srcRowPitch, builtinOpParams.srcSlicePitch,
+                                                                    builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch);
         }
 
         GraphicsAllocation *gpuAllocation = nullptr;
@@ -109,6 +113,8 @@ struct ClBlitProperties {
             return BlitterConstants::BlitDirection::HostPtrToBuffer;
         } else if (CL_COMMAND_READ_BUFFER == commandType || CL_COMMAND_READ_BUFFER_RECT == commandType) {
             return BlitterConstants::BlitDirection::BufferToHostPtr;
+        } else if (CL_COMMAND_COPY_BUFFER_RECT == commandType) {
+            return BlitterConstants::BlitDirection::BufferToBuffer;
         } else {
             UNRECOVERABLE_IF(CL_COMMAND_COPY_BUFFER != commandType);
             return BlitterConstants::BlitDirection::BufferToBuffer;

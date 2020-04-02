@@ -41,7 +41,9 @@ struct BlitProperties {
                                                                 size_t gpuRowPitch, size_t gpuSlicePitch);
 
     static BlitProperties constructPropertiesForCopyBuffer(GraphicsAllocation *dstAllocation, GraphicsAllocation *srcAllocation,
-                                                           size_t dstOffset, size_t srcOffset, size_t copySize);
+                                                           Vec3<size_t> dstOffset, Vec3<size_t> srcOffset, Vec3<size_t> copySize,
+                                                           size_t srcRowPitch, size_t srcSlicePitch,
+                                                           size_t dstRowPitch, size_t dstSlicePitch);
 
     static BlitProperties constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
                                                                GraphicsAllocation *allocation);

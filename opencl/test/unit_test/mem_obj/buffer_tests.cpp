@@ -794,6 +794,9 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
     commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
                                          MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                          MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
+    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
+                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
+                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
 
     DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
     hwInfo->capabilityTable.blitterOperationsSupported = false;
@@ -806,6 +809,9 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
     commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
                                          MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                          MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
+    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
+                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
+                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
 
     DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -818,6 +824,9 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
     commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
                                          MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                          MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
+    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
+                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
+                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
 
     DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(-1);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -830,25 +839,32 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
     commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
                                          MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                          MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
+    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
+                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
+                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
 
-    EXPECT_EQ(5u, bcsCsr->blitBufferCalled);
+    EXPECT_EQ(6u, bcsCsr->blitBufferCalled);
 
     DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(6u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(7u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
+    commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(8u, bcsCsr->blitBufferCalled);
+    commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
+    EXPECT_EQ(9u, bcsCsr->blitBufferCalled);
     commandQueue->enqueueReadBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                         MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(9u, bcsCsr->blitBufferCalled);
+    EXPECT_EQ(10u, bcsCsr->blitBufferCalled);
     commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_TRUE, bufferOrigin, hostOrigin, region,
                                          MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                          MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(10u, bcsCsr->blitBufferCalled);
+    EXPECT_EQ(11u, bcsCsr->blitBufferCalled);
+    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
+                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
+                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
+    EXPECT_EQ(12u, bcsCsr->blitBufferCalled);
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDispatchBlitWhenUnblocked) {
@@ -874,26 +890,33 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDispat
     commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_FALSE, bufferOrigin, hostOrigin, region,
                                          MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                          MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
+    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
+                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
+                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
 
     EXPECT_EQ(0u, bcsCsr->blitBufferCalled);
 
     userEvent.setStatus(CL_COMPLETE);
 
-    EXPECT_EQ(5u, bcsCsr->blitBufferCalled);
+    EXPECT_EQ(6u, bcsCsr->blitBufferCalled);
 
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(6u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(7u, bcsCsr->blitBufferCalled);
-    commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
+    commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_FALSE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(8u, bcsCsr->blitBufferCalled);
+    commandQueue->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 1, 1, 0, nullptr, nullptr);
+    EXPECT_EQ(9u, bcsCsr->blitBufferCalled);
     commandQueue->enqueueReadBufferRect(bufferForBlt0.get(), CL_FALSE, bufferOrigin, hostOrigin, region,
                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                         MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
-    EXPECT_EQ(9u, bcsCsr->blitBufferCalled);
+    EXPECT_EQ(10u, bcsCsr->blitBufferCalled);
     commandQueue->enqueueWriteBufferRect(bufferForBlt0.get(), CL_FALSE, bufferOrigin, hostOrigin, region,
                                          MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                          MemoryConstants::cacheLineSize, &hostPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(11u, bcsCsr->blitBufferCalled);
+    commandQueue->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
+                                        MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
+                                        MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBuffersWhenCopyBufferCalledThenUseBcs) {
@@ -907,6 +930,31 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBuffersWhenCopyBufferCalledThenUseBcs) {
 
     cmdQ->enqueueCopyBuffer(bufferForBlt0.get(), bufferForBlt1.get(), 0, 0, 1, 0, nullptr, nullptr);
 
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandQueue->getBcsCommandStreamReceiver()->getCS(0));
+    auto commandItor = find<XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_NE(hwParser.cmdList.end(), commandItor);
+    auto copyBltCmd = genCmdCast<XY_COPY_BLT *>(*commandItor);
+
+    EXPECT_EQ(bufferForBlt0->getGraphicsAllocation()->getGpuAddress(), copyBltCmd->getSourceBaseAddress());
+    EXPECT_EQ(bufferForBlt1->getGraphicsAllocation()->getGpuAddress(), copyBltCmd->getDestinationBaseAddress());
+}
+
+HWTEST_TEMPLATED_F(BcsBufferTests, givenBuffersWhenCopyBufferRectCalledThenUseBcs) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
+
+    auto bufferForBlt0 = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    auto bufferForBlt1 = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    bufferForBlt0->forceDisallowCPUCopy = true;
+    bufferForBlt1->forceDisallowCPUCopy = true;
+
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {1, 2, 1};
+
+    cmdQ->enqueueCopyBufferRect(bufferForBlt0.get(), bufferForBlt1.get(), bufferOrigin, hostOrigin, region,
+                                0, 0, 0, 0, 0, nullptr, nullptr);
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(commandQueue->getBcsCommandStreamReceiver()->getCS(0));
     auto commandItor = find<XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
