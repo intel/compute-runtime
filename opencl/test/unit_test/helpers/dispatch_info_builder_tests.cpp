@@ -106,7 +106,7 @@ class DispatchInfoBuilderMock : DispatchInfoBuilder<Dim, Mode> {
     }
 };
 
-TEST_F(DispatchInfoBuilderTest, setDispatchInfoNoDim) {
+TEST_F(DispatchInfoBuilderTest, Given1dWhenSplittingMultiDispatchInfoThenMultiDispatchInfo) {
     MultiDispatchInfo multiDispatchInfo;
 
     DispatchInfoBuilderMock<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilderMock<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit>();
@@ -119,7 +119,7 @@ TEST_F(DispatchInfoBuilderTest, setDispatchInfoNoDim) {
     delete diBuilder;
 }
 
-TEST_F(DispatchInfoBuilderTest, setDispatchInfoDim) {
+TEST_F(DispatchInfoBuilderTest, WhenGettingDimensionThenCorrectDimensionIsReturned) {
     MultiDispatchInfo mdi1D, mdi2D, mdi3D;
 
     DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::NoSplit>();
@@ -154,7 +154,7 @@ TEST_F(DispatchInfoBuilderTest, setDispatchInfoDim) {
     delete diBuilder1D;
 }
 
-TEST_F(DispatchInfoBuilderTest, setDispatchInfoGWS) {
+TEST_F(DispatchInfoBuilderTest, WhenGettingGwsThenCorrectValuesAreReturned) {
     DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>();
     ASSERT_NE(nullptr, diBuilder);
 
@@ -200,7 +200,7 @@ TEST_F(DispatchInfoBuilderTest, setDispatchInfoGWS) {
     delete diBuilder;
 }
 
-TEST_F(DispatchInfoBuilderTest, setDispatchInfoELWS) {
+TEST_F(DispatchInfoBuilderTest, WhenGettingElwsThenCorrectValuesAreReturned) {
     DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>();
     ASSERT_NE(nullptr, diBuilder);
 
@@ -246,7 +246,7 @@ TEST_F(DispatchInfoBuilderTest, setDispatchInfoELWS) {
     delete diBuilder;
 }
 
-TEST_F(DispatchInfoBuilderTest, setDispatchInfoLWS) {
+TEST_F(DispatchInfoBuilderTest, WhenGettingLwsThenCorrectValuesAreReturned) {
     DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>();
     ASSERT_NE(nullptr, diBuilder);
 
@@ -287,7 +287,7 @@ TEST_F(DispatchInfoBuilderTest, setDispatchInfoLWS) {
     delete diBuilder;
 }
 
-TEST_F(DispatchInfoBuilderTest, setKernelNoSplit) {
+TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenCheckingIfBuiltinThenReturnTrue) {
     DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::NoSplit>();
     ASSERT_NE(nullptr, diBuilder);
 
@@ -304,7 +304,7 @@ TEST_F(DispatchInfoBuilderTest, setKernelNoSplit) {
     delete diBuilder;
 }
 
-TEST_F(DispatchInfoBuilderTest, setKernelSplit) {
+TEST_F(DispatchInfoBuilderTest, GivenSplitWhenCheckingIfBuiltinThenReturnTrue) {
     DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit>();
     ASSERT_NE(nullptr, diBuilder1D);
 
@@ -351,7 +351,7 @@ TEST_F(DispatchInfoBuilderTest, setKernelSplit) {
     delete diBuilder1D;
 }
 
-TEST_F(DispatchInfoBuilderTest, setWalkerNoSplit) {
+TEST_F(DispatchInfoBuilderTest, GivenNoSplitWhenGettingWalkerInfoThenCorrectValuesAreReturned) {
     DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::WalkerSplit>();
     ASSERT_NE(nullptr, diBuilder1D);
 
@@ -462,7 +462,7 @@ TEST_F(DispatchInfoBuilderTest, setWalkerNoSplit) {
     delete diBuilder1D;
 }
 
-TEST_F(DispatchInfoBuilderTest, setWalkerSplit) {
+TEST_F(DispatchInfoBuilderTest, GivenSplitWhenGettingWalkerInfoThenCorrectValuesAreReturned) {
     DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder1D = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::WalkerSplit>();
     ASSERT_NE(nullptr, diBuilder1D);
 
@@ -753,7 +753,7 @@ TEST_F(DispatchInfoBuilderTest, setWalkerSplit) {
     delete diBuilder1D;
 }
 
-TEST_F(DispatchInfoBuilderTest, mdiSizesForWalkerSplit1D) {
+TEST_F(DispatchInfoBuilderTest, GivenSplit1dWhenSettingDispatchGeometryThenMdiSizeIsCorrect) {
     DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::WalkerSplit>();
     ASSERT_NE(nullptr, diBuilder);
 
@@ -775,7 +775,7 @@ TEST_F(DispatchInfoBuilderTest, mdiSizesForWalkerSplit1D) {
     delete diBuilder;
 }
 
-TEST_F(DispatchInfoBuilderTest, mdiSizesForWalkerSplit2D) {
+TEST_F(DispatchInfoBuilderTest, GivenSplit2dWhenSettingDispatchGeometryThenMdiSizeIsCorrect) {
     DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::WalkerSplit>();
     ASSERT_NE(nullptr, diBuilder);
 
@@ -807,7 +807,7 @@ TEST_F(DispatchInfoBuilderTest, mdiSizesForWalkerSplit2D) {
     delete diBuilder;
 }
 
-TEST_F(DispatchInfoBuilderTest, mdiSizesForWalkerSplit3D) {
+TEST_F(DispatchInfoBuilderTest, GivenSplit3dWhenSettingDispatchGeometryThenMdiSizeIsCorrect) {
     DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit> *diBuilder = new DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit>();
     ASSERT_NE(nullptr, diBuilder);
 
@@ -859,7 +859,7 @@ TEST_F(DispatchInfoBuilderTest, mdiSizesForWalkerSplit3D) {
     delete diBuilder;
 }
 
-TEST_F(DispatchInfoBuilderTest, setKernelArg) {
+TEST_F(DispatchInfoBuilderTest, WhenSettingKernelArgThenAddressesAreCorrect) {
 
     Buffer *buffer = new MockBuffer();
     auto val = (cl_mem)buffer;
@@ -895,7 +895,7 @@ TEST_F(DispatchInfoBuilderTest, setKernelArg) {
     delete diBuilder;
 }
 
-TEST_F(DispatchInfoBuilderTest, SetArgSplit) {
+TEST_F(DispatchInfoBuilderTest, GivenSplitWhenSettingKernelArgThenAddressesAreCorrect) {
     DispatchInfoBuilder<SplitDispatch::Dim::d1D, SplitDispatch::SplitMode::KernelSplit> builder1D;
     DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::KernelSplit> builder2D;
     DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::KernelSplit> builder3D;
@@ -963,7 +963,7 @@ TEST_F(DispatchInfoBuilderTest, SetArgSplit) {
     delete buffer;
 }
 
-TEST_F(DispatchInfoBuilderTest, setKernelArgNegative) {
+TEST_F(DispatchInfoBuilderTest, GivenInvalidInputWhenSettingKernelArgThenInvalidMemObjectErrorIsReturned) {
 
     char *buffer = new char[sizeof(Buffer)];
     auto val = (cl_mem)buffer;
@@ -977,14 +977,14 @@ TEST_F(DispatchInfoBuilderTest, setKernelArgNegative) {
     MultiDispatchInfo multiDispatchInfo;
 
     diBuilder->bake(multiDispatchInfo);
-    EXPECT_NE(CL_SUCCESS, diBuilder->setArg(0, sizeof(cl_mem *), pVal));
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, diBuilder->setArg(0, sizeof(cl_mem *), pVal));
     EXPECT_EQ(CL_SUCCESS, diBuilder->setArgSvm(1, sizeof(void *), nullptr, nullptr, 0u));
 
     delete diBuilder;
     delete[] buffer;
 }
 
-TEST_F(DispatchInfoBuilderTest, setKernelArgNullKernel) {
+TEST_F(DispatchInfoBuilderTest, GivenNullKernelWhenSettingKernelArgThenSuccessIsReturned) {
     Buffer *buffer = new MockBuffer();
     auto val = (cl_mem)buffer;
     auto pVal = &val;
