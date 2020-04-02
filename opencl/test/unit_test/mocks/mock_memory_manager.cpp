@@ -58,7 +58,7 @@ GraphicsAllocation *MockMemoryManager::allocateShareableMemory(const AllocationD
 
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
     allocation64kbPageCreated = true;
-    preferRenderCompressedFlagPassed = allocationData.flags.preferRenderCompressed;
+    preferRenderCompressedFlagPassed = forceRenderCompressed ? true : allocationData.flags.preferRenderCompressed;
 
     auto allocation = OsAgnosticMemoryManager::allocateGraphicsMemory64kb(allocationData);
     if (allocation) {

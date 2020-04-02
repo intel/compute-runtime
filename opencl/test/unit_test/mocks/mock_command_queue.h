@@ -56,6 +56,7 @@ class MockCommandQueue : public CommandQueue {
         writeBufferOffset = offset;
         writeBufferSize = size;
         writeBufferPtr = const_cast<void *>(ptr);
+        writeMapAllocation = mapAllocation;
         return writeBufferRetValue;
     }
 
@@ -178,6 +179,7 @@ class MockCommandQueue : public CommandQueue {
     size_t writeBufferSize = 0;
     void *writeBufferPtr = nullptr;
     size_t requestedCmdStreamSize = 0;
+    GraphicsAllocation *writeMapAllocation = nullptr;
     std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
 };
 

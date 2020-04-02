@@ -655,6 +655,16 @@ TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenRenderCompressedBufferWh
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenBufferCreateWhenMemoryTransferWithEnqueueWriteBufferThenMapAllocationIsReused) {
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto &capabilityTable = device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
+    capabilityTable.blitterOperationsSupported = false;
+    static_cast<MockMemoryManager *>(context->memoryManager)->forceRenderCompressed = true;
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, bufferSize, hostPtr, retVal));
+    EXPECT_NE(nullptr, mockCmdQ->writeMapAllocation);
+    EXPECT_EQ(buffer->getMapAllocation(), mockCmdQ->writeMapAllocation);
+}
+
 struct BcsBufferTests : public ::testing::Test {
     class BcsMockContext : public MockContext {
       public:
