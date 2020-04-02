@@ -12,7 +12,7 @@
 
 #include <cstdio>
 
-TEST(FileIO, existsHasSize) {
+TEST(FileIO, GivenNonEmptyFileWhenCheckingIfHasSizeThenReturnTrue) {
     std::string fileName("fileIO.bin");
     std::remove(fileName.c_str());
     ASSERT_FALSE(fileExists(fileName.c_str()));
@@ -27,7 +27,7 @@ TEST(FileIO, existsHasSize) {
     EXPECT_TRUE(fileExistsHasSize(fileName.c_str()));
 }
 
-TEST(FileIO, existsSizeZero) {
+TEST(FileIO, GivenEmptyFileWhenCheckingIfHasSizeThenReturnFalse) {
     std::string fileName("fileIO.bin");
     std::remove(fileName.c_str());
     ASSERT_FALSE(fileExists(fileName.c_str()));
