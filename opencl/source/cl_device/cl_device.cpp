@@ -69,6 +69,23 @@ ClDevice::~ClDevice() {
     device.decRefInternal();
 }
 
+void ClDevice::incRefInternal() {
+    if (deviceInfo.parentDevice == nullptr) {
+        BaseObject<_cl_device_id>::incRefInternal();
+        return;
+    }
+    auto pParentDevice = static_cast<ClDevice *>(deviceInfo.parentDevice);
+    pParentDevice->incRefInternal();
+}
+
+unique_ptr_if_unused<ClDevice> ClDevice::decRefInternal() {
+    if (deviceInfo.parentDevice == nullptr) {
+        return BaseObject<_cl_device_id>::decRefInternal();
+    }
+    auto pParentDevice = static_cast<ClDevice *>(deviceInfo.parentDevice);
+    return pParentDevice->decRefInternal();
+}
+
 void ClDevice::allocateSyncBufferHandler() {
     TakeOwnershipWrapper<ClDevice> lock(*this);
     if (syncBufferHandler.get() == nullptr) {

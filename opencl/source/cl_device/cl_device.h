@@ -51,6 +51,9 @@ class ClDevice : public BaseObject<_cl_device_id> {
     explicit ClDevice(Device &device, Platform *platformId);
     ~ClDevice() override;
 
+    void incRefInternal();
+    unique_ptr_if_unused<ClDevice> decRefInternal();
+
     unsigned int getEnabledClVersion() const { return enabledClVersion; };
     unsigned int getSupportedClVersion() const;
 

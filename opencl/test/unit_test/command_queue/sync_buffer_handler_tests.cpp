@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/program/sync_buffer_handler.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
@@ -171,17 +172,20 @@ TEST(SyncBufferHandlerDeviceTest, GivenRootDeviceWhenAllocateSyncBufferIsCalledT
 }
 
 TEST(SyncBufferHandlerDeviceTest, GivenSubDeviceWhenAllocateSyncBufferIsCalledTwiceThenTheObjectIsCreatedOnlyOnce) {
-    const size_t testUsedBufferSize = 100;
-    MockClDevice rootDevice{new MockDevice};
-    ClDevice subDevice{*rootDevice.createSubDevice(0), platform()};
-    subDevice.allocateSyncBufferHandler();
-    auto syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(subDevice.syncBufferHandler.get());
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    auto rootDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    auto &subDevice = rootDevice->subDevices[0];
+    subDevice->allocateSyncBufferHandler();
+    auto syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(subDevice->syncBufferHandler.get());
 
+    const size_t testUsedBufferSize = 100;
     ASSERT_NE(syncBufferHandler->usedBufferSize, testUsedBufferSize);
     syncBufferHandler->usedBufferSize = testUsedBufferSize;
 
-    subDevice.allocateSyncBufferHandler();
-    syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(subDevice.syncBufferHandler.get());
+    subDevice->allocateSyncBufferHandler();
+    syncBufferHandler = reinterpret_cast<MockSyncBufferHandler *>(subDevice->syncBufferHandler.get());
 
     EXPECT_EQ(testUsedBufferSize, syncBufferHandler->usedBufferSize);
 }

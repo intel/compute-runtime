@@ -15,6 +15,13 @@ SubDevice::SubDevice(ExecutionEnvironment *executionEnvironment, uint32_t subDev
     : Device(executionEnvironment), subDeviceIndex(subDeviceIndex), rootDevice(rootDevice) {
 }
 
+void SubDevice::incRefInternal() {
+    rootDevice.incRefInternal();
+}
+unique_ptr_if_unused<Device> SubDevice::decRefInternal() {
+    return rootDevice.decRefInternal();
+}
+
 DeviceBitfield SubDevice::getDeviceBitfield() const {
     DeviceBitfield deviceBitfield;
     deviceBitfield.set(subDeviceIndex);

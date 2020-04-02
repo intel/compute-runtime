@@ -22,7 +22,7 @@ RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
 RootDevice::~RootDevice() {
     for (auto subdevice : subdevices) {
         if (subdevice) {
-            subdevice->decRefInternal();
+            delete subdevice;
         }
     }
 }
@@ -67,7 +67,6 @@ bool RootDevice::createDeviceImpl() {
         if (!subDevice) {
             return false;
         }
-        subDevice->incRefInternal();
         subdevices[i] = subDevice;
     }
     auto status = Device::createDeviceImpl();

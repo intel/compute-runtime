@@ -10,9 +10,9 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
-#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
@@ -54,7 +54,7 @@ TEST(SubDevicesTest, givenCreateMultipleSubDevicesFlagSetWhenCreateRootDeviceThe
     EXPECT_EQ(1u, device->subdevices.at(1)->getNumAvailableDevices());
 }
 
-TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceRefcountsAreChangedThenChangeIsPropagatedToRootDevice) {
+TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceApiRefCountsAreChangedThenChangeIsPropagatedToRootDevice) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
@@ -87,6 +87,62 @@ TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceRefcountsAreChangedTh
     EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
     EXPECT_EQ(baseDefaultDeviceApiRefCount, defaultDevice->getRefApiCount());
     EXPECT_EQ(baseDefaultDeviceInternalRefCount, defaultDevice->getRefInternalCount());
+}
+
+TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceInternalRefCountsAreChangedThenChangeIsPropagatedToRootDevice) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    device->incRefInternal();
+    auto subDevice = device->getDeviceById(0);
+
+    auto baseDeviceInternalRefCount = device->getRefInternalCount();
+    auto baseSubDeviceInternalRefCount = subDevice->getRefInternalCount();
+
+    subDevice->incRefInternal();
+    EXPECT_EQ(baseDeviceInternalRefCount + 1, device->getRefInternalCount());
+    EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
+
+    device->incRefInternal();
+    EXPECT_EQ(baseDeviceInternalRefCount + 2, device->getRefInternalCount());
+    EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
+
+    subDevice->decRefInternal();
+    EXPECT_EQ(baseDeviceInternalRefCount + 1, device->getRefInternalCount());
+    EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
+
+    device->decRefInternal();
+    EXPECT_EQ(baseDeviceInternalRefCount, device->getRefInternalCount());
+    EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
+}
+
+TEST(SubDevicesTest, givenClDeviceWithSubDevicesWhenSubDeviceInternalRefCountsAreChangedThenChangeIsPropagatedToRootDevice) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    device->incRefInternal();
+    auto &subDevice = device->subDevices[0];
+
+    auto baseDeviceInternalRefCount = device->getRefInternalCount();
+    auto baseSubDeviceInternalRefCount = subDevice->getRefInternalCount();
+
+    subDevice->incRefInternal();
+    EXPECT_EQ(baseDeviceInternalRefCount + 1, device->getRefInternalCount());
+    EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
+
+    device->incRefInternal();
+    EXPECT_EQ(baseDeviceInternalRefCount + 2, device->getRefInternalCount());
+    EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
+
+    subDevice->decRefInternal();
+    EXPECT_EQ(baseDeviceInternalRefCount + 1, device->getRefInternalCount());
+    EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
+
+    device->decRefInternal();
+    EXPECT_EQ(baseDeviceInternalRefCount, device->getRefInternalCount());
+    EXPECT_EQ(baseSubDeviceInternalRefCount, subDevice->getRefInternalCount());
 }
 
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceCreationFailThenWholeDeviceIsDestroyed) {
