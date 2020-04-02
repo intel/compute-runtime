@@ -8,6 +8,7 @@
 #pragma once
 #include "opencl/source/context/context.h"
 #include "opencl/source/sharings/sharing_factory.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 
 #include <memory>
 
@@ -23,7 +24,7 @@ class MockContext : public Context {
     using Context::preferD3dSharedResources;
     using Context::sharingFunctions;
     using Context::svmAllocsManager;
-    MockContext(ClDevice *device, bool noSpecialQueue = false);
+    MockContext(ClDevice *pDevice, bool noSpecialQueue = false);
     MockContext(
         void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
         void *data);
@@ -37,7 +38,37 @@ class MockContext : public Context {
     void registerSharingWithId(SharingFunctions *sharing, SharingType sharingId);
     std::unique_ptr<AsyncEventsHandler> &getAsyncEventsHandlerUniquePtr();
 
+  protected:
+    void initializeWithDevices(const ClDeviceVector &devices, bool noSpecialQueue);
+
   private:
-    ClDevice *device = nullptr;
+    ClDevice *pDevice = nullptr;
 };
+
+struct MockDefaultContext : MockContext {
+    MockDefaultContext();
+
+    UltClDeviceFactory ultClDeviceFactory{2, 0};
+    MockClDevice *pRootDevice0;
+    MockClDevice *pRootDevice1;
+};
+
+struct MockSpecializedContext : MockContext {
+    MockSpecializedContext();
+
+    UltClDeviceFactory ultClDeviceFactory{1, 2};
+    MockClDevice *pRootDevice;
+    ClDevice *pSubDevice0 = nullptr;
+    ClDevice *pSubDevice1 = nullptr;
+};
+
+struct MockUnrestrictiveContext : MockContext {
+    MockUnrestrictiveContext();
+
+    UltClDeviceFactory ultClDeviceFactory{1, 2};
+    MockClDevice *pRootDevice;
+    ClDevice *pSubDevice0 = nullptr;
+    ClDevice *pSubDevice1 = nullptr;
+};
+
 } // namespace NEO

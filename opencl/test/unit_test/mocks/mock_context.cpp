@@ -22,23 +22,15 @@
 
 namespace NEO {
 
-MockContext::MockContext(ClDevice *device, bool noSpecialQueue) {
-    memoryManager = device->getMemoryManager();
-    devices.push_back(device);
-    svmAllocsManager = new SVMAllocsManager(memoryManager);
-    cl_int retVal;
-    if (!specialQueue && !noSpecialQueue) {
-        auto commandQueue = CommandQueue::create(this, device, nullptr, false, retVal);
-        assert(retVal == CL_SUCCESS);
-        overrideSpecialQueueAndDecrementRefCount(commandQueue);
-    }
-    device->incRefInternal();
+MockContext::MockContext(ClDevice *pDevice, bool noSpecialQueue) {
+    cl_device_id deviceId = pDevice;
+    initializeWithDevices(ClDeviceVector{&deviceId, 1}, noSpecialQueue);
 }
 
 MockContext::MockContext(
     void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
     void *data) {
-    device = nullptr;
+    pDevice = nullptr;
     properties = nullptr;
     numProperties = 0;
     contextCallback = funcNotify;
@@ -54,23 +46,17 @@ MockContext::~MockContext() {
         specialQueue->release();
         specialQueue = nullptr;
     }
-    if (memoryManager->isAsyncDeleterEnabled()) {
+    if (memoryManager && memoryManager->isAsyncDeleterEnabled()) {
         memoryManager->getDeferredDeleter()->removeClient();
     }
     memoryManager = nullptr;
 }
 
 MockContext::MockContext() {
-    device = new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
-    devices.push_back(device);
-    memoryManager = device->getMemoryManager();
-    svmAllocsManager = new SVMAllocsManager(memoryManager);
-    cl_int retVal;
-    if (!specialQueue) {
-        auto commandQueue = CommandQueue::create(this, device, nullptr, false, retVal);
-        assert(retVal == CL_SUCCESS);
-        overrideSpecialQueueAndDecrementRefCount(commandQueue);
-    }
+    pDevice = new MockClDevice{MockClDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
+    cl_device_id deviceId = pDevice;
+    initializeWithDevices(ClDeviceVector{&deviceId, 1}, false);
+    pDevice->decRefInternal();
 }
 
 void MockContext::setSharingFunctions(SharingFunctions *sharingFunctions) {
@@ -96,6 +82,44 @@ void MockContext::clearSharingFunctions() {
 
 std::unique_ptr<AsyncEventsHandler> &MockContext::getAsyncEventsHandlerUniquePtr() {
     return static_cast<MockClExecutionEnvironment *>(devices[0]->getExecutionEnvironment())->asyncEventsHandler;
+}
+
+void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSpecialQueue) {
+    for (auto &pClDevice : devices) {
+        pClDevice->incRefInternal();
+    }
+    this->devices = devices;
+    memoryManager = devices[0]->getMemoryManager();
+    svmAllocsManager = new SVMAllocsManager(memoryManager);
+    cl_int retVal;
+    if (!noSpecialQueue) {
+        auto commandQueue = CommandQueue::create(this, devices[0], nullptr, false, retVal);
+        assert(retVal == CL_SUCCESS);
+        overrideSpecialQueueAndDecrementRefCount(commandQueue);
+    }
+}
+
+MockDefaultContext::MockDefaultContext() : MockContext(nullptr, nullptr) {
+    pRootDevice0 = ultClDeviceFactory.rootDevices[0];
+    pRootDevice1 = ultClDeviceFactory.rootDevices[1];
+    cl_device_id deviceIds[] = {pRootDevice0, pRootDevice1};
+    initializeWithDevices(ClDeviceVector{deviceIds, 2}, true);
+}
+
+MockSpecializedContext::MockSpecializedContext() : MockContext(nullptr, nullptr) {
+    pRootDevice = ultClDeviceFactory.rootDevices[0];
+    pSubDevice0 = ultClDeviceFactory.subDevices[0];
+    pSubDevice1 = ultClDeviceFactory.subDevices[1];
+    cl_device_id deviceIds[] = {pSubDevice0, pSubDevice1};
+    initializeWithDevices(ClDeviceVector{deviceIds, 2}, true);
+}
+
+MockUnrestrictiveContext::MockUnrestrictiveContext() : MockContext(nullptr, nullptr) {
+    auto pRootDevice = ultClDeviceFactory.rootDevices[0];
+    auto pSubDevice0 = ultClDeviceFactory.subDevices[0];
+    auto pSubDevice1 = ultClDeviceFactory.subDevices[1];
+    cl_device_id deviceIds[] = {pRootDevice, pSubDevice0, pSubDevice1};
+    initializeWithDevices(ClDeviceVector{deviceIds, 3}, true);
 }
 
 } // namespace NEO
