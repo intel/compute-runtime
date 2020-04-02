@@ -12,6 +12,8 @@ set(NEO_CORE_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_library.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ult_device_factory.h
 )
 
 if(WIN32)

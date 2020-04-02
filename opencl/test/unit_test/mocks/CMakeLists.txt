@@ -91,6 +91,8 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_csr.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_tbx_stream.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_timestamp_container.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ult_cl_device_factory.h
   ${NEO_SHARED_DIRECTORY}/gmm_helper/page_table_mngr_impl.cpp
   ${IGDRCL_SRCS_tests_compiler_mocks}
 )
