@@ -76,7 +76,7 @@ enum SECTION_HEADER_TYPE : uint32_t {
     SHT_NUM = 19,                           // number of defined types
     SHT_LOOS = 0x60000000,                  // start of os-specifc
     SHT_OPENCL_RESERVED_START = 0xff000000, // start of Intel OCL SHT_TYPES
-    SHT_OPENCL_RESERVED_END = 0xff00000a    // end of Intel OCL SHT_TYPES
+    SHT_OPENCL_RESERVED_END = 0xff00000c    // end of Intel OCL SHT_TYPES
 };
 
 enum SPECIAL_SECTION_HEADER_NUMBER : uint16_t {

@@ -80,6 +80,8 @@ cl_int Program::link(
         elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_OBJECTS;
 
         StackVec<const Program *, 16> inputProgramsInternal;
+        StackVec<uint32_t, 64> specConstIds;
+        StackVec<uint64_t, 64> specConstValues;
         for (cl_uint i = 0; i < numInputPrograms; i++) {
             auto program = inputPrograms[i];
             if (program == nullptr) {
@@ -95,6 +97,21 @@ cl_int Program::link(
             if ((pInputProgObj->irBinary == nullptr) || (pInputProgObj->irBinarySize == 0)) {
                 retVal = CL_INVALID_PROGRAM;
                 break;
+            }
+
+            if (pInputProgObj->areSpecializationConstantsInitialized) {
+                specConstIds.clear();
+                specConstValues.clear();
+                specConstIds.reserve(pInputProgObj->specConstantsValues.size());
+                specConstValues.reserve(pInputProgObj->specConstantsValues.size());
+                for (const auto &specConst : pInputProgObj->specConstantsValues) {
+                    specConstIds.push_back(specConst.first);
+                    specConstValues.push_back(specConst.second);
+                }
+                elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SPIRV_SC_IDS, NEO::Elf::SectionNamesOpenCl::spirvSpecConstIds,
+                                         ArrayRef<const uint8_t>::fromAny(specConstIds.begin(), specConstIds.size()));
+                elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_SPIRV_SC_VALUES, NEO::Elf::SectionNamesOpenCl::spirvSpecConstValues,
+                                         ArrayRef<const uint8_t>::fromAny(specConstValues.begin(), specConstValues.size()));
             }
 
             auto sectionType = pInputProgObj->getIsSpirV() ? NEO::Elf::SHT_OPENCL_SPIRV : NEO::Elf::SHT_OPENCL_LLVM_BINARY;
