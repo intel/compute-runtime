@@ -70,7 +70,7 @@ zypper install intel-opencl
 ipoldek install intel-gmmlib intel-graphics-compiler intel-compute-runtime
 ```
 
-## Ubuntu* ppa for 16.04, 18.04, 19.04, 19.10, 20.04
+## Ubuntu* ppa for 16.04, 18.04, 19.10, 20.04
 
 ```
 add-apt-repository ppa:intel-opencl/intel-opencl
@@ -78,7 +78,7 @@ apt-get update
 apt-get install intel-opencl-icd
 ```
 
-## Ubuntu* 19.04, 19.10, 20.04
+## Ubuntu* 19.10, 20.04
 
 ```
 apt-get install intel-opencl-icd
