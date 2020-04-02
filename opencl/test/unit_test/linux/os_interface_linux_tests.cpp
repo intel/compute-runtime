@@ -8,8 +8,8 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
+#include "shared/test/unit_test/helpers/variable_backup.h"
 
-#include "opencl/test/unit_test/helpers/variable_backup.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"

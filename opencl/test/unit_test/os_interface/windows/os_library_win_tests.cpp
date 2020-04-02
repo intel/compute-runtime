@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/os_interface/windows/os_library_win.h"
+#include "shared/test/unit_test/helpers/variable_backup.h"
 
-#include "opencl/test/unit_test/helpers/variable_backup.h"
 #include "test.h"
 
 #include "gtest/gtest.h"

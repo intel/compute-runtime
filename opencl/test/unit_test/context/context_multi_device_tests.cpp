@@ -8,10 +8,10 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/variable_backup.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
-#include "opencl/test/unit_test/helpers/variable_backup.h"
 #include "test.h"
 
 #include "gtest/gtest.h"

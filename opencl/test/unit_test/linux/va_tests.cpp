@@ -5,8 +5,9 @@
  *
  */
 
+#include "shared/test/unit_test/helpers/variable_backup.h"
+
 #include "opencl/source/sharings/va/va_sharing_functions.h"
-#include "opencl/test/unit_test/helpers/variable_backup.h"
 #include "test.h"
 
 using namespace NEO;

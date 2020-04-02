@@ -7,7 +7,8 @@
 
 #include "opencl/test/unit_test/os_interface/windows/registry_reader_tests.h"
 
-#include "opencl/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/unit_test/helpers/variable_backup.h"
+
 #include "test.h"
 
 using namespace NEO;

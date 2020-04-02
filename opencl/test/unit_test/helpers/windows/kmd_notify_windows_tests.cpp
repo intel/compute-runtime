@@ -8,8 +8,8 @@
 #include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
+#include "shared/test/unit_test/helpers/variable_backup.h"
 
-#include "opencl/test/unit_test/helpers/variable_backup.h"
 #include "test.h"
 
 namespace NEO {

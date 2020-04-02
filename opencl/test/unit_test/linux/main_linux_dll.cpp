@@ -14,9 +14,9 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/default_hw_info.inl"
 #include "shared/test/unit_test/helpers/ult_hw_config.inl"
+#include "shared/test/unit_test/helpers/variable_backup.h"
 
 #include "opencl/test/unit_test/custom_event_listener.h"
-#include "opencl/test/unit_test/helpers/variable_backup.h"
 #include "opencl/test/unit_test/linux/drm_wrap.h"
 #include "opencl/test/unit_test/linux/mock_os_layer.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
