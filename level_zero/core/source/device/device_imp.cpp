@@ -235,6 +235,7 @@ static constexpr ze_fp_capabilities_t defaultFpFlags = static_cast<ze_fp_capabil
                                                                                          ZE_FP_CAPS_FMA);
 
 ze_result_t DeviceImp::getKernelProperties(ze_device_kernel_properties_t *pKernelProperties) {
+    memset(pKernelProperties, 0, sizeof(ze_device_kernel_properties_t));
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
     auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);

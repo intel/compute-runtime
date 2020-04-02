@@ -68,5 +68,20 @@ TEST_F(DeviceTest, givenEmptySVmAllocStorageWhenAllocateMemoryFromHostPtrThenVal
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DeviceTest, givenKernelPropertiesStructureWhenKernelPropertiesCalledThenAllPropertiesAreAssigned) {
+    ze_device_kernel_properties_t kernelProperties, kernelPropertiesBefore;
+    memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_kernel_properties_t));
+    kernelPropertiesBefore = kernelProperties;
+    device->getKernelProperties(&kernelProperties);
+
+    EXPECT_NE(kernelPropertiesBefore.spirvVersionSupported, kernelProperties.spirvVersionSupported);
+    EXPECT_NE(kernelPropertiesBefore.nativeKernelSupported.id, kernelProperties.nativeKernelSupported.id);
+    EXPECT_NE(kernelPropertiesBefore.fp16Supported, kernelProperties.fp16Supported);
+    EXPECT_NE(kernelPropertiesBefore.fp64Supported, kernelProperties.fp64Supported);
+    EXPECT_NE(kernelPropertiesBefore.int64AtomicsSupported, kernelProperties.int64AtomicsSupported);
+    EXPECT_NE(kernelPropertiesBefore.maxArgumentsSize, kernelProperties.maxArgumentsSize);
+    EXPECT_NE(kernelPropertiesBefore.printfBufferSize, kernelProperties.printfBufferSize);
+}
+
 } // namespace ult
 } // namespace L0
