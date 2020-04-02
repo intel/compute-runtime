@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/memory_manager/memory_constants.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/linux/os_memory_linux.h"
 
 #include "gmock/gmock.h"

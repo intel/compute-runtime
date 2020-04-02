@@ -9,7 +9,7 @@
 
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
-#include "shared/source/memory_manager/memory_constants.h"
+#include "shared/source/helpers/constants.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 

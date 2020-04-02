@@ -7,7 +7,7 @@
 
 #include "opencl/source/helpers/hardware_context_controller.h"
 
-#include "shared/source/memory_manager/memory_constants.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"

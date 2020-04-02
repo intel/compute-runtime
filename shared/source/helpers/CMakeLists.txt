@@ -22,6 +22,7 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/common_types.h
   ${CMAKE_CURRENT_SOURCE_DIR}/completion_stamp.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/completion_stamp.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/constants.h
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.cpp

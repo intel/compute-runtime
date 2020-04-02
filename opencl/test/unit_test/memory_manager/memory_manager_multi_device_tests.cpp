@@ -5,8 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "opencl/test/unit_test/fixtures/memory_allocator_multi_device_fixture.h"

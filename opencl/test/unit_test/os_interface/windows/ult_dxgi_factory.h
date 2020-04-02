@@ -8,7 +8,7 @@
 #pragma once
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/memory_manager/memory_constants.h"
+#include "shared/source/helpers/constants.h"
 
 #include <cwchar>
 #include <dxgi.h>

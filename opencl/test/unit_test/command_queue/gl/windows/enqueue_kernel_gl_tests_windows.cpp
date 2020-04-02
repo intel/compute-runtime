@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/memory_constants.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 
 #include "opencl/source/sharings/gl/gl_buffer.h"

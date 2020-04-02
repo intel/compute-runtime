@@ -5,9 +5,9 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/hw_helper_bdw_plus.inl"
-#include "shared/source/memory_manager/memory_constants.h"
 
 #include "opencl/source/aub/aub_helper_bdw_plus.inl"
 

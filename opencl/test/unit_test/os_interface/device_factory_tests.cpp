@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
@@ -49,7 +49,7 @@ TEST_F(DeviceFactoryTest, PrepareDeviceEnvironments_Check_HwInfo_Platform) {
     bool success = DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
     EXPECT_TRUE(success);
     const HardwareInfo *hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-        EXPECT_EQ(refHwinfo->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
+    EXPECT_EQ(refHwinfo->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
 }
 
 TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {

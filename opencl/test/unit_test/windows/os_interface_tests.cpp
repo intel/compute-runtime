@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/memory_manager/memory_constants.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/windows/os_interface.h"
 
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"

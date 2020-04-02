@@ -5,8 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 

@@ -7,8 +7,8 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/memory_manager/memory_constants.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
 

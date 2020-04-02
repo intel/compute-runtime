@@ -8,12 +8,12 @@
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/abort.h"
 #include "shared/source/helpers/completion_stamp.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/sku_info/sku_info_base.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 

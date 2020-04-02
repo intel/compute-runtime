@@ -9,8 +9,8 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/source/memory_manager/memory_constants.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include <cstring>

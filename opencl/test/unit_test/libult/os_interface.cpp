@@ -7,7 +7,7 @@
 
 #include "shared/source/os_interface/os_interface.h"
 
-#include "shared/source/memory_manager/memory_constants.h"
+#include "shared/source/helpers/constants.h"
 
 namespace NEO {
 

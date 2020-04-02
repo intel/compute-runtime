@@ -7,7 +7,7 @@
 
 #include "opencl/test/unit_test/mock_gdi/mock_gdi.h"
 
-#include "shared/source/memory_manager/memory_constants.h"
+#include "shared/source/helpers/constants.h"
 
 ADAPTER_INFO gAdapterInfo = {0};
 D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg = {0};

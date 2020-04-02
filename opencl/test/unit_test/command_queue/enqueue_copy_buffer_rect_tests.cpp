@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
-#include "shared/source/memory_manager/memory_constants.h"
+#include "shared/source/helpers/constants.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info.h"
