@@ -36,7 +36,7 @@ bool HardwareCommandsHelper<TGLLPFamily>::isPipeControlWArequired(const Hardware
 
 template <>
 bool HardwareCommandsHelper<TGLLPFamily>::isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo) {
-    return (Gen12LPHelpers::pipeControlWaRequired(hwInfo.platform.eProductFamily)) && (hwInfo.platform.usRevId == REVISION_A0);
+    return HardwareCommandsHelper<TGLLPFamily>::isPipeControlWArequired(hwInfo);
 }
 
 template struct HardwareCommandsHelper<TGLLPFamily>;
