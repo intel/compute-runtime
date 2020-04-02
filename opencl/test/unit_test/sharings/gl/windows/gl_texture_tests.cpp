@@ -135,7 +135,7 @@ TEST_F(GlSharingTextureTests, givenMockGlWhenGlTextureIsCreatedFromWrongHandleTh
 
 GLboolean OSAPI mockGLAcquireSharedTexture(GLDisplay, GLContext, GLContext, GLvoid *pResourceInfo) {
     auto pTextureInfo = (CL_GL_RESOURCE_INFO *)pResourceInfo;
-    glDllHelper dllParam;
+    GlDllHelper dllParam;
     pTextureInfo->globalShareHandle = dllParam.getTextureInfo().globalShareHandle;
     pTextureInfo->globalShareHandleMCS = dllParam.getTextureInfo().globalShareHandleMCS;
 

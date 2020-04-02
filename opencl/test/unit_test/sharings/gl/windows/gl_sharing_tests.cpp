@@ -637,7 +637,7 @@ TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenOglContextF
     GLType GLHDCType = 0;
     GLContext GLHGLRCHandle = 0;
     GLDisplay GLHDCHandle = 0;
-    glDllHelper getDllParam;
+    GlDllHelper getDllParam;
 
     GlSharingFunctionsMock glSharingFunctions(GLHDCType, GLHGLRCHandle, GLHGLRCHandle, GLHDCHandle);
     EXPECT_EQ(1, getDllParam.getGLSetSharedOCLContextStateReturnedValue());
@@ -1080,7 +1080,7 @@ TEST(glSharingContextSwitch, givenZeroCurrentContextWhenSwitchAttemptedThenMakeS
 
 TEST(glSharingContextSwitch, givenSharingFunctionsWhenGlDeleteContextIsNotPresentThenItIsNotCalled) {
     auto glSharingFunctions = new GLSharingFunctionsWindows();
-    glDllHelper dllParam;
+    GlDllHelper dllParam;
     auto currentGlDeleteContextCalledCount = dllParam.getParam("GLDeleteContextCalled");
     delete glSharingFunctions;
     EXPECT_EQ(currentGlDeleteContextCalledCount, dllParam.getParam("GLDeleteContextCalled"));

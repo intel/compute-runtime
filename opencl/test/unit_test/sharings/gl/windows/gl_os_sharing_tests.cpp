@@ -57,7 +57,7 @@ TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenBackupConte
     GLContext GLHGLRCHandle = 0;
     GLDisplay GLHDCHandle = 0;
     int32_t expectedContextAttrs[3] = {0};
-    glDllHelper dllHelper;
+    GlDllHelper dllHelper;
 
     auto glSharingFunctions = new GlSharingFunctionsMock(GLHDCType, GLHGLRCHandle, GLHGLRCHandle, GLHDCHandle);
 

@@ -12,17 +12,16 @@
 
 #include "opencl/extensions/public/cl_gl_private_intel.h"
 
-#include "Gl/gl.h"
+#include "GL/gl.h"
 
 #include <memory>
 
-using namespace NEO;
 namespace Os {
 extern const char *openglDllName;
 }
+
 namespace NEO {
 struct GLMockReturnedValues;
-}
 
 using GLString = void (*)(const char *, unsigned int);
 using GLSharedOCLContext = void (*)(GLboolean);
@@ -36,9 +35,9 @@ using TextureInfo = CL_GL_RESOURCE_INFO (*)();
 using GLMockValue = GLMockReturnedValues (*)();
 using setGLMockValue = void (*)(GLMockReturnedValues);
 
-struct glDllHelper {
+struct GlDllHelper {
   public:
-    glDllHelper() {
+    GlDllHelper() {
         glDllLoad.reset(OsLibrary::load(Os::openglDllName));
         if (glDllLoad) {
             glSetString = (*glDllLoad)["glSetString"];
@@ -69,7 +68,7 @@ struct glDllHelper {
             UNRECOVERABLE_IF(setGlMockReturnedValues == nullptr);
         }
     }
-    ~glDllHelper() {
+    ~GlDllHelper() {
         if (glDllLoad) {
             glSetString("Intel", GL_VENDOR);
             glSetString("4.0", GL_VERSION);
@@ -83,14 +82,14 @@ struct glDllHelper {
     glBoolean getGLSetSharedOCLContextStateReturnedValue;
     Void resetParam;
     Int getParam;
-
     BufferParam loadBuffer;
-    TextureParam loadTexture;
     BuffInfo getBufferInfo;
     TextureInfo getTextureInfo;
+    TextureParam loadTexture;
     GLMockValue getGlMockReturnedValues;
     setGLMockValue setGlMockReturnedValues;
 
   private:
     std::unique_ptr<OsLibrary> glDllLoad;
 };
+} // namespace NEO

@@ -8,7 +8,7 @@
 #pragma once
 #include "opencl/extensions/public/cl_gl_private_intel.h"
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
-#include "opencl/test/unit_test/sharings/gl/windows/gl_dll_helper.h"
+#include "opencl/test/unit_test/sharings/gl/gl_dll_helper.h"
 
 #include "config.h"
 
@@ -170,7 +170,7 @@ class MockGlSharing {
     }
 
     std::unique_ptr<GlSharingFunctionsMock> sharingFunctions = std::make_unique<GlSharingFunctionsMock>();
-    std::unique_ptr<glDllHelper> dllParam = std::make_unique<glDllHelper>();
+    std::unique_ptr<GlDllHelper> dllParam = std::make_unique<GlDllHelper>();
     CL_GL_RESOURCE_INFO m_clGlResourceInfo = {0};
     GL_CL_RESOURCE_INFO m_glClResourceInfo = {0};
     CL_GL_BUFFER_INFO m_bufferInfoOutput = {0};
@@ -191,7 +191,7 @@ class MockGLSharingFunctions : public GLSharingFunctionsWindows {
     };
     using GLSharingFunctionsWindows::glGetIntegerv;
     using GLSharingFunctionsWindows::glGetString;
-    std::unique_ptr<glDllHelper> dllParam = std::make_unique<glDllHelper>();
+    std::unique_ptr<GlDllHelper> dllParam = std::make_unique<GlDllHelper>();
     MockGLSharingFunctions() {
         GLSharingFunctionsWindows::initGLFunctions();
         MockGLSharingFunctions::SharingEnabled = 1;

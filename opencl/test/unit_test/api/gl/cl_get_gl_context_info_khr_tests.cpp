@@ -12,7 +12,7 @@
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/sharings/gl/windows/gl_dll_helper.h"
+#include "opencl/test/unit_test/sharings/gl/gl_dll_helper.h"
 
 using namespace NEO;
 
@@ -83,7 +83,7 @@ TEST_F(clGetGLContextInfoKHR_, givenContextFromNoIntelOpenGlDriverWhenCallClGetG
     cl_device_id retDevice = 0;
     size_t retSize = 0;
     const cl_context_properties properties[] = {CL_GL_CONTEXT_KHR, 1, CL_WGL_HDC_KHR, 2, 0};
-    glDllHelper setDllParam;
+    GlDllHelper setDllParam;
     setDllParam.glSetString("NoIntel", GL_VENDOR);
     retVal = clGetGLContextInfoKHR(properties, 0, sizeof(cl_device_id), &retDevice, &retSize);
 
@@ -96,7 +96,7 @@ TEST_F(clGetGLContextInfoKHR_, givenNullVersionFromIntelOpenGlDriverWhenCallClGe
     cl_device_id retDevice = 0;
     size_t retSize = 0;
     const cl_context_properties properties[] = {CL_GL_CONTEXT_KHR, 1, CL_WGL_HDC_KHR, 2, 0};
-    glDllHelper setDllParam;
+    GlDllHelper setDllParam;
     setDllParam.glSetString("", GL_VERSION);
     retVal = clGetGLContextInfoKHR(properties, 0, sizeof(cl_device_id), &retDevice, &retSize);
 

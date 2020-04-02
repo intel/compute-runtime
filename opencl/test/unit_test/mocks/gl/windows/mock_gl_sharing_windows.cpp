@@ -23,7 +23,7 @@ GLXBkpContextParams glxBkpContextParams = {0};
 
 void GlSharingFunctionsMock::initMembers() {
     GLSharingFunctionsWindows::initGLFunctions();
-    glDllHelper dllParam;
+    GlDllHelper dllParam;
     dllParam.setGLSetSharedOCLContextStateReturnedValue(1u);
     dllParam.resetParam("");
     dllParam.loadTexture({0});
