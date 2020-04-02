@@ -86,7 +86,7 @@ add_library(compute_runtime_mockable_extra
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/helpers/debug_helpers.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/helpers/test_files.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/os_interface.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/source_level_debugger.cpp
+        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/source_level_debugger_ult.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/source_level_debugger_library.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_cif.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_csr.cpp

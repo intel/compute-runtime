@@ -7,7 +7,6 @@
 
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
-
 namespace NEO {
 
 OsLibrary *SourceLevelDebugger::loadDebugger() {
