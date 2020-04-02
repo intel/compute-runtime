@@ -6,8 +6,7 @@
  */
 
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
-
-#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 

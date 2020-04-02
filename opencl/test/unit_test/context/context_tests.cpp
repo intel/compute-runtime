@@ -8,6 +8,7 @@
 #include "shared/source/device/device.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.inl"
@@ -18,7 +19,6 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 

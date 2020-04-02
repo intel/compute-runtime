@@ -7,10 +7,10 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/helpers/test_files.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
 
 #include "gtest/gtest.h"

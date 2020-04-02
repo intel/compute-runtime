@@ -7,11 +7,11 @@
 
 #pragma once
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 using namespace NEO;

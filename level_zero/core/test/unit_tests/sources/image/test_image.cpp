@@ -6,8 +6,8 @@
  */
 
 #include "shared/test/unit_test/helpers/default_hw_info.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
 
 #include "level_zero/core/source/image/image_hw.h"

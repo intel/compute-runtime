@@ -5,8 +5,9 @@
  *
  */
 
+#include "shared/test/unit_test/mocks/mock_device.h"
+
 #include "opencl/test/unit_test/fixtures/execution_model_kernel_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"

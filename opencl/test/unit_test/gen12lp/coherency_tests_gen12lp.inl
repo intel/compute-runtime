@@ -9,10 +9,10 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/gen12lp/helpers_gen12lp.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
 
 using namespace NEO;

@@ -8,6 +8,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/platform/platform.h"
@@ -15,7 +16,6 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

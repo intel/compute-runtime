@@ -18,6 +18,7 @@
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/helpers/memory_properties_flags_helpers.h"
@@ -29,7 +30,6 @@
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"

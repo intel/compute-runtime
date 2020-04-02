@@ -9,9 +9,9 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
 
 using namespace NEO;

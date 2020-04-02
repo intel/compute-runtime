@@ -8,8 +8,7 @@
 #pragma once
 
 #include "shared/test/unit_test/helpers/default_hw_info.h"
-
-#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 

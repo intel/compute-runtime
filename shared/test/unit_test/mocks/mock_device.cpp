@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"

@@ -18,6 +18,7 @@
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/dispatch_info.h"
@@ -37,7 +38,6 @@
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_deferrable_deletion.h"
 #include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"

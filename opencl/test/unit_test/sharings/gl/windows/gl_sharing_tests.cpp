@@ -10,6 +10,7 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
@@ -30,7 +31,6 @@
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"

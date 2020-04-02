@@ -13,8 +13,8 @@
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
 
 struct WddmDirectSubmissionFixture : public WddmFixture {

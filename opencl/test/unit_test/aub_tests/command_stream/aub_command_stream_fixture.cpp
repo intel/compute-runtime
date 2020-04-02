@@ -13,11 +13,11 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/helpers/memory_management.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 #include "shared/test/unit_test/tests_configuration.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 
 #include "gtest/gtest.h"
 

@@ -7,12 +7,12 @@
 
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 #include "shared/test/unit_test/mocks/mock_os_library.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 #include "test.h"

@@ -7,6 +7,7 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/user_event.h"
@@ -19,7 +20,6 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"

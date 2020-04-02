@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/event.h"
@@ -19,7 +20,6 @@
 #include "opencl/test/unit_test/aub_tests/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
 
 using Gen12LPAubBatchBufferTests = Test<NEO::DeviceFixture>;

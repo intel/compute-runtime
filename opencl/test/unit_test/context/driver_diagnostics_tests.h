@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/context/context.h"
@@ -17,7 +18,6 @@
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "gtest/gtest.h"

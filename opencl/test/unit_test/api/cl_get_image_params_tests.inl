@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 
 #include "cl_api_tests.h"
 

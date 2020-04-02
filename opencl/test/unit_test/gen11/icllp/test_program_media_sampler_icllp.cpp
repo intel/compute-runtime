@@ -10,9 +10,9 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
 
 using namespace NEO;

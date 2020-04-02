@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/helpers/hw_cmds.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "test.h"
 
 using namespace NEO;

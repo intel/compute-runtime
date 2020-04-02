@@ -10,8 +10,8 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 

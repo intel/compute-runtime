@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/enqueue_common.h"
 #include "opencl/source/command_queue/enqueue_kernel.h"
@@ -19,7 +20,6 @@
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
