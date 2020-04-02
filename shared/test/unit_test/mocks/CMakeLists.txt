@@ -14,4 +14,10 @@ set(NEO_CORE_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_library.h
 )
 
+if(WIN32)
+  list(APPEND NEO_CORE_tests_mocks
+    ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_direct_submission.h
+  )
+endif()
+
 set_property(GLOBAL PROPERTY NEO_CORE_tests_mocks ${NEO_CORE_tests_mocks})

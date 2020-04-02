@@ -9,6 +9,8 @@
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
+#include "shared/source/direct_submission/windows/wddm_direct_submission.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
@@ -21,6 +23,7 @@
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/windows/mock_wddm_direct_submission.h"
 #include "shared/test/unit_test/os_interface/windows/mock_gdi_interface.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
@@ -38,6 +41,7 @@
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_io_functions.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
@@ -90,6 +94,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::blitterDirectSubmission;
     using CommandStreamReceiverHw<GfxFamily>::directSubmission;
     using WddmCommandStreamReceiver<GfxFamily>::commandBufferHeader;
+    using WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission;
     using WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver;
 
     void overrideDispatchPolicy(DispatchMode overrideValue) {
@@ -108,8 +113,24 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
         recordedCommandBuffer = std::unique_ptr<CommandBuffer>(new CommandBuffer(device));
     }
 
+    bool initDirectSubmission(Device &device, OsContext &osContext) override {
+        if (callParentInitDirectSubmission) {
+            return WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission(device, osContext);
+        }
+        bool ret = true;
+        if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
+            directSubmission = std::make_unique<
+                MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(device, osContext);
+            ret = directSubmission->initialize(true);
+            this->dispatchMode = DispatchMode::ImmediateDispatch;
+        }
+        return ret;
+    }
+
     int flushCalledCount = 0;
     std::unique_ptr<CommandBuffer> recordedCommandBuffer = nullptr;
+
+    bool callParentInitDirectSubmission = true;
 };
 
 class WddmCommandStreamWithMockGdiFixture {
@@ -1153,4 +1174,75 @@ TEST_F(WddmCommandStreamTest, givenNonDefaultContextContextWhenDirectSubmissionE
     bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
     EXPECT_TRUE(ret);
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
+}
+
+TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsed) {
+    using Dispatcher = RenderDispatcher<DEFAULT_TEST_FAMILY_NAME>;
+    using MockSubmission =
+        MockWddmDirectSubmission<DEFAULT_TEST_FAMILY_NAME, Dispatcher>;
+
+    DebugManager.flags.EnableDirectSubmission.set(1);
+
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
+
+    std::unique_ptr<OsContext> osContext;
+    osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
+                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      false, false, false));
+    osContext->setDefaultContext(true);
+    csr->callParentInitDirectSubmission = false;
+    bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
+    EXPECT_TRUE(ret);
+    EXPECT_TRUE(csr->isDirectSubmissionEnabled());
+    EXPECT_FALSE(csr->isBlitterDirectSubmissionEnabled());
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0,
+                            nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(),
+                            &cs, commandBuffer->getUnderlyingBuffer()};
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+    auto directSubmission = reinterpret_cast<MockSubmission *>(csr->directSubmission.get());
+    EXPECT_TRUE(directSubmission->ringStart);
+    size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
+    size_t expectedSize = directSubmission->getSizeSemaphoreSection() +
+                          Dispatcher::getSizePreemption() +
+                          directSubmission->getSizeDispatch();
+    EXPECT_EQ(expectedSize, actualDispatchSize);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+TEST_F(WddmCommandStreamTest, givenResidencyLoggingAvailableWhenFlushingCommandBufferThenNotifiesResidencyLogger) {
+    if (!NEO::wddmResidencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0,
+                            nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(),
+                            &cs, nullptr};
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.WddmResidencyLogger.set(1);
+
+    NEO::IoFunctions::mockFopenCalled = 0u;
+    NEO::IoFunctions::mockVfptrinfCalled = 0u;
+    NEO::IoFunctions::mockFcloseCalled = 0u;
+
+    wddm->createPagingFenceLogger();
+
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(1u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(3u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }

@@ -20,6 +20,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 
 #include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
 #pragma warning(pop)
@@ -69,7 +70,7 @@ bool WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Resid
 
     allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
     batchBuffer.commandBufferAllocation->updateResidencyTaskCount(this->taskCount, this->osContext->getContextId());
-
+    perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Wddm CSR processing residency set: %zu\n", allocationsForResidency.size());
     this->processResidency(allocationsForResidency, 0u);
     if (directSubmission.get()) {
         return directSubmission->dispatchCommandBuffer(batchBuffer, *(flushStamp.get()));

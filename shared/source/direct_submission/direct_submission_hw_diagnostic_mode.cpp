@@ -9,22 +9,15 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
-#include <ctime>
-#include <iomanip>
-
 namespace NEO {
+
 DirectSubmissionDiagnosticsCollector::DirectSubmissionDiagnosticsCollector(uint32_t executions, bool storeExecutions)
     : storeExecutions(storeExecutions) {
     UNRECOVERABLE_IF(executions == 0);
     executionList.resize(executions);
     executionsCount = executions;
-
-    std::chrono::system_clock::time_point timeStamp = std::chrono::system_clock::now();
-    std::time_t dateTime = std::chrono::system_clock::to_time_t(timeStamp);
-
     std::stringstream value;
     value << std::dec << "executions-" << executions;
-    value << "_time-" << std::put_time(std::localtime(&dateTime), "%F-%T");
     std::stringstream filename;
     filename << "ulls_diagnostic_" << value.str() << ".log";
     logFile = IoFunctions::fopenPtr(filename.str().c_str(), "at");

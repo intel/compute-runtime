@@ -87,6 +87,10 @@ class WddmResidencyLogger {
         IoFunctions::fprintf(pagingLog, "trimming required: bytes to trim: %llu\n", numBytesToTrim);
     }
 
+    void variadicLog(char const *const formatStr, va_list arg) {
+        IoFunctions::vfprintfPtr(pagingLog, formatStr, arg);
+    }
+
   protected:
     std::chrono::high_resolution_clock::time_point pendingTime;
     std::chrono::high_resolution_clock::time_point waitStartTime;
@@ -146,6 +150,17 @@ inline void perfLogResidencyTrimRequired(WddmResidencyLogger *log, UINT64 numByt
     if (wddmResidencyLoggingAvailable) {
         if (log) {
             log->trimRequired(numBytesToTrim);
+        }
+    }
+}
+
+inline void perfLogResidencyVariadicLog(WddmResidencyLogger *log, char const *const format, ...) {
+    if (wddmResidencyLoggingAvailable) {
+        if (log) {
+            va_list args;
+            va_start(args, format);
+            log->variadicLog(format, args);
+            va_end(args);
         }
     }
 }

@@ -151,6 +151,10 @@ class Wddm {
 
     uint32_t getRequestedEUCount() const;
 
+    WddmResidencyLogger *getResidencyLogger() {
+        return residencyLogger.get();
+    }
+
   protected:
     std::unique_ptr<HwDeviceId> hwDeviceId;
     D3DKMT_HANDLE device = 0;

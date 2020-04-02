@@ -11,10 +11,13 @@
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/windows/mock_wddm_direct_submission.h"
 
+#include "opencl/test/unit_test/mocks/mock_io_functions.h"
 #include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
 
 struct WddmDirectSubmissionFixture : public WddmFixture {
@@ -37,32 +40,6 @@ struct WddmDirectSubmissionFixture : public WddmFixture {
     std::unique_ptr<OsContextWin> osContext;
 
     std::unique_ptr<VariableBackup<UltHwConfig>> backupUlt;
-};
-
-template <typename GfxFamily, typename Dispatcher>
-struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatcher> {
-    using BaseClass = WddmDirectSubmission<GfxFamily, Dispatcher>;
-    using BaseClass::allocateOsResources;
-    using BaseClass::commandBufferHeader;
-    using BaseClass::completionRingBuffers;
-    using BaseClass::currentRingBuffer;
-    using BaseClass::getSizeSwitchRingBufferSection;
-    using BaseClass::getTagAddressValue;
-    using BaseClass::handleCompletionRingBuffer;
-    using BaseClass::handleResidency;
-    using BaseClass::osContextWin;
-    using BaseClass::ringBuffer;
-    using BaseClass::ringBuffer2;
-    using BaseClass::ringCommandStream;
-    using BaseClass::ringFence;
-    using BaseClass::ringStart;
-    using BaseClass::semaphores;
-    using BaseClass::submit;
-    using BaseClass::switchRingBuffers;
-    using BaseClass::updateTagValue;
-    using BaseClass::wddm;
-    using BaseClass::WddmDirectSubmission;
-    using typename BaseClass::RingBufferUse;
 };
 
 using WddmDirectSubmissionTest = WddmDirectSubmissionFixture;
@@ -375,4 +352,142 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectComple
     EXPECT_EQ(value, actualTagValue);
     EXPECT_EQ(value + 1, contextFence.currentFenceValue);
     EXPECT_EQ(value, wddmDirectSubmission.completionRingBuffers[wddmDirectSubmission.currentRingBuffer]);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenCreatingDestroyingSubmitterNotifiesResidencyLogger) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    if (!NEO::wddmResidencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.WddmResidencyLogger.set(1);
+
+    NEO::IoFunctions::mockFopenCalled = 0u;
+    NEO::IoFunctions::mockVfptrinfCalled = 0u;
+    NEO::IoFunctions::mockFcloseCalled = 0u;
+
+    wddm->createPagingFenceLogger();
+
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(1u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+
+    std::unique_ptr<MockWddmDirectSubmission<FamilyType, Dispatcher>> wddmSubmission =
+        std::make_unique<MockWddmDirectSubmission<FamilyType, Dispatcher>>(*device.get(),
+                                                                           *osContext.get());
+
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+
+    wddmSubmission.reset(nullptr);
+
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(3u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenAllocatingResourcesThenSubmitterNotifiesResidencyLogger) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    if (!NEO::wddmResidencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.WddmResidencyLogger.set(1);
+
+    NEO::IoFunctions::mockFopenCalled = 0u;
+    NEO::IoFunctions::mockVfptrinfCalled = 0u;
+    NEO::IoFunctions::mockFcloseCalled = 0u;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device.get(),
+                                                                          *osContext.get());
+
+    wddm->createPagingFenceLogger();
+
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(1u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+
+    MemoryManager *memoryManager = device->getExecutionEnvironment()->memoryManager.get();
+    const auto allocationSize = MemoryConstants::pageSize;
+    const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(),
+                                                                 true, allocationSize,
+                                                                 GraphicsAllocation::AllocationType::RING_BUFFER,
+                                                                 false};
+    GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
+    ASSERT_NE(nullptr, ringBuffer);
+
+    DirectSubmissionAllocations allocations;
+    allocations.push_back(ringBuffer);
+
+    bool ret = wddmDirectSubmission.allocateOsResources(allocations);
+    EXPECT_TRUE(ret);
+
+    memoryManager->freeGraphicsMemory(ringBuffer);
+
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(6u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenHandleResidencySubmitterNotifiesResidencyLogger) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    if (!NEO::wddmResidencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.WddmResidencyLogger.set(1);
+
+    NEO::IoFunctions::mockFopenCalled = 0u;
+    NEO::IoFunctions::mockVfptrinfCalled = 0u;
+    NEO::IoFunctions::mockFcloseCalled = 0u;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device.get(),
+                                                                          *osContext.get());
+    wddm->createPagingFenceLogger();
+
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(1u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+
+    bool ret = wddmDirectSubmission.handleResidency();
+    EXPECT_TRUE(ret);
+
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(5u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+}
+
+HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenSubmitToGpuSubmitterNotifiesResidencyLogger) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    if (!NEO::wddmResidencyLoggingAvailable) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.WddmResidencyLogger.set(1);
+
+    NEO::IoFunctions::mockFopenCalled = 0u;
+    NEO::IoFunctions::mockVfptrinfCalled = 0u;
+    NEO::IoFunctions::mockFcloseCalled = 0u;
+
+    MockWddmDirectSubmission<FamilyType, Dispatcher> wddmDirectSubmission(*device.get(),
+                                                                          *osContext.get());
+    wddm->createPagingFenceLogger();
+
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(1u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+
+    uint64_t gpuAddress = 0xF000;
+    size_t size = 0xFF000;
+    bool ret = wddmDirectSubmission.submit(gpuAddress, size);
+    EXPECT_TRUE(ret);
+
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
 }
