@@ -11,7 +11,9 @@ namespace L0 {
 namespace ult {
 
 template <typename Type>
-struct WhiteBox : public Type {};
+struct WhiteBox : public Type {
+    using Type::Type;
+};
 
 template <typename Type>
 WhiteBox<Type> *whitebox_cast(Type *obj) {

@@ -20,8 +20,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     using BaseClass::executeCommandListImmediate;
 
     using BaseClass::BaseClass;
-    CommandListCoreFamilyImmediate() {}
-    CommandListCoreFamilyImmediate(uint32_t numIddsPerBlock) : CommandListCoreFamily<gfxCoreFamily>(numIddsPerBlock) {}
 
     ze_result_t appendLaunchKernel(ze_kernel_handle_t hKernel,
                                    const ze_group_count_t *pThreadGroupDimensions,

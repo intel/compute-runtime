@@ -30,7 +30,7 @@ struct CommandList : _ze_command_list_handle_t {
     static constexpr uint32_t defaultNumIddsPerBlock = maxNumInterfaceDescriptorsPerMediaInterfaceDescriptorLoad;
     static constexpr uint32_t commandListimmediateIddsPerBlock = 1u;
 
-    CommandList() {}
+    CommandList() = delete;
     CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {}
 
     template <typename Type>

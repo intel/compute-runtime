@@ -34,8 +34,6 @@ struct CommandListCoreFamily : CommandListImp {
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
 
     using CommandListImp::CommandListImp;
-    CommandListCoreFamily() {}
-    CommandListCoreFamily(uint32_t numIddsPerBlock) : CommandListImp(numIddsPerBlock) {}
 
     bool initialize(Device *device) override;
     virtual void programL3(bool isSLMused);

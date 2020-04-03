@@ -13,8 +13,8 @@
 namespace L0 {
 
 struct CommandListImp : CommandList {
-    CommandListImp() {}
-    CommandListImp(uint32_t numIddsPerBlock) : CommandList(numIddsPerBlock) {}
+    using CommandList::CommandList;
+
     ze_result_t destroy() override;
 
     ze_result_t appendMetricMemoryBarrier() override;

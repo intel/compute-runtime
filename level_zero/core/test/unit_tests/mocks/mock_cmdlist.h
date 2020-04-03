@@ -33,7 +33,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendLaunchKernelWithParams;
     using BaseClass::commandListPreemptionMode;
 
-    WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>() {}
+    WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
     virtual ~WhiteBox() {}
 };
 
@@ -43,6 +43,7 @@ using CommandListCoreFamily = WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily
 template <>
 struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass = ::L0::CommandListImp;
+    using BaseClass::BaseClass;
     using BaseClass::commandContainer;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::initialize;
