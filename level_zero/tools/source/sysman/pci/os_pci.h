@@ -23,7 +23,7 @@ class OsPci {
     virtual ze_result_t getLinkGen(uint32_t &linkGen) = 0;
     virtual ze_result_t initializeBarProperties(std::vector<zet_pci_bar_properties_t *> &pBarProperties) = 0;
     static OsPci *create(OsSysman *pOsSysman);
-    virtual ~OsPci() {}
+    virtual ~OsPci() = default;
 };
 
 } // namespace L0

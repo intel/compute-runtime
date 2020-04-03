@@ -17,6 +17,7 @@ class WddmPciImp : public OsPci {
     ze_result_t getMaxLinkWidth(uint32_t &maxLinkwidth) override;
     ze_result_t getLinkGen(uint32_t &linkGen) override;
     ze_result_t initializeBarProperties(std::vector<zet_pci_bar_properties_t *> &pBarProperties) override;
+    ~WddmPciImp() override = default;
 };
 
 ze_result_t WddmPciImp::getPciBdf(std::string &bdf) {
