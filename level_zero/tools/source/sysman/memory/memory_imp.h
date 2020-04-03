@@ -27,7 +27,7 @@ class MemoryImp : public Memory {
 
   private:
     OsMemory *pOsMemory;
-    zet_mem_properties_t memoryProperties;
+    zet_mem_properties_t memoryProperties = {};
     void init();
     ze_device_handle_t hCoreDevice;
 };
