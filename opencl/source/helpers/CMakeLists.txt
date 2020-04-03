@@ -24,8 +24,8 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_types_converter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_types_converter.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_base.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_bdw_plus.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.h
   ${CMAKE_CURRENT_SOURCE_DIR}/helper_options.cpp
