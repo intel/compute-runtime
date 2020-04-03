@@ -11,13 +11,21 @@
 
 namespace NEO {
 
-DirectSubmissionDiagnosticsCollector::DirectSubmissionDiagnosticsCollector(uint32_t executions, bool storeExecutions)
+DirectSubmissionDiagnosticsCollector::DirectSubmissionDiagnosticsCollector(uint32_t executions,
+                                                                           bool storeExecutions,
+                                                                           int32_t ringBufferLogData,
+                                                                           int32_t semaphoreLogData,
+                                                                           int32_t workloadMode,
+                                                                           bool cacheFlushLog,
+                                                                           bool monitorFenceLog)
     : storeExecutions(storeExecutions) {
     UNRECOVERABLE_IF(executions == 0);
     executionList.resize(executions);
     executionsCount = executions;
     std::stringstream value;
-    value << std::dec << "executions-" << executions;
+    value << std::dec << "mode-" << workloadMode << "_executions-" << executions;
+    value << "_ring_" << ringBufferLogData << "_semaphore_" << semaphoreLogData;
+    value << "_cacheflush-" << cacheFlushLog << "_monitorfence-" << monitorFenceLog;
     std::stringstream filename;
     filename << "ulls_diagnostic_" << value.str() << ".log";
     logFile = IoFunctions::fopenPtr(filename.str().c_str(), "at");

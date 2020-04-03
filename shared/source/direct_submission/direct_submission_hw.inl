@@ -372,7 +372,14 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::createDiagnostic() {
             disableCacheFlush = DebugManager.flags.DirectSubmissionDisableCacheFlush.get();
             disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
             uint32_t executions = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionDiagnosticExecutionCount.get());
-            diagnostic = std::make_unique<DirectSubmissionDiagnosticsCollector>(executions, workloadMode == 1);
+            diagnostic = std::make_unique<DirectSubmissionDiagnosticsCollector>(
+                executions,
+                workloadMode == 1,
+                DebugManager.flags.DirectSubmissionBufferPlacement.get(),
+                DebugManager.flags.DirectSubmissionSemaphorePlacement.get(),
+                workloadMode,
+                disableCacheFlush,
+                disableMonitorFence);
         }
     }
 }

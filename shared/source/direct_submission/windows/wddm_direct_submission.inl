@@ -32,7 +32,9 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(Device &device
     if (device.getPreemptionMode() != PreemptionMode::Disabled) {
         commandBufferHeader->NeedsMidBatchPreEmptionSupport = true;
     }
-    perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Starting Wddm ULLS\n");
+    perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Starting Wddm ULLS. Placement ring buffer: %d semaphore %d\n",
+                                DebugManager.flags.DirectSubmissionBufferPlacement.get(),
+                                DebugManager.flags.DirectSubmissionSemaphorePlacement.get());
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -85,8 +87,8 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, si
 
 template <typename GfxFamily, typename Dispatcher>
 bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
-    perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "ULLS residency wait\n");
     wddm->waitOnPagingFenceFromCpu();
+    perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "ULLS residency wait exit\n");
     return true;
 }
 

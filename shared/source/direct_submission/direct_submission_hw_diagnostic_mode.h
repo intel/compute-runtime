@@ -29,7 +29,13 @@ using DirectSubmissionExecution = std::vector<DirectSubmissionSingleDelta>;
 
 class DirectSubmissionDiagnosticsCollector {
   public:
-    DirectSubmissionDiagnosticsCollector(uint32_t executions, bool storeExecutions);
+    DirectSubmissionDiagnosticsCollector(uint32_t executions,
+                                         bool storeExecutions,
+                                         int32_t ringBufferLogData,
+                                         int32_t semaphoreLogData,
+                                         int32_t workloadMode,
+                                         bool cacheFlushLog,
+                                         bool monitorFenceLog);
 
     ~DirectSubmissionDiagnosticsCollector() {
         storeData();
