@@ -25,12 +25,8 @@ typename HardwareCommandsHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *HardwareC
 }
 
 template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::setAdditionalInfo(
-    INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
-    const Kernel &kernel,
-    const size_t &sizeCrossThreadData,
-    const size_t &sizePerThreadData,
-    const uint32_t threadsPerThreadGroup) {
+void HardwareCommandsHelper<GfxFamily>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const Kernel &kernel,
+                                                   const size_t &sizeCrossThreadData, const size_t &sizePerThreadData) {
     auto grfSize = sizeof(typename GfxFamily::GRF);
     DEBUG_BREAK_IF((sizeCrossThreadData % grfSize) != 0);
     auto numGrfCrossThreadData = static_cast<uint32_t>(sizeCrossThreadData / grfSize);
@@ -44,6 +40,9 @@ void HardwareCommandsHelper<GfxFamily>::setAdditionalInfo(
     numGrfPerThreadData = std::max(numGrfPerThreadData, 1u);
     pInterfaceDescriptor->setConstantIndirectUrbEntryReadLength(numGrfPerThreadData);
 }
+
+template <typename GfxFamily>
+void HardwareCommandsHelper<GfxFamily>::setAdditionalInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const Kernel &kernel, const uint32_t threadsPerThreadGroup) {}
 
 template <typename GfxFamily>
 uint32_t HardwareCommandsHelper<GfxFamily>::additionalSizeRequiredDsh() {

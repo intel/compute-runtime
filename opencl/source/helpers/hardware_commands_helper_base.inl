@@ -194,7 +194,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     pInterfaceDescriptor->setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
 
-    setAdditionalInfo(pInterfaceDescriptor, kernel, sizeCrossThreadData, sizePerThreadData, threadsPerThreadGroup);
+    setGrfInfo(pInterfaceDescriptor, kernel, sizeCrossThreadData, sizePerThreadData);
+    setAdditionalInfo(pInterfaceDescriptor, kernel, threadsPerThreadGroup);
 
     pInterfaceDescriptor->setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
 
