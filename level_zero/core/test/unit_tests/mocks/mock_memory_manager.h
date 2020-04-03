@@ -26,6 +26,7 @@ namespace ult {
 template <>
 struct WhiteBox<::NEO::OsAgnosticMemoryManager> : public ::NEO::OsAgnosticMemoryManager {
     using BaseClass = ::NEO::OsAgnosticMemoryManager;
+    using BaseClass::localMemorySupported;
     WhiteBox(NEO::ExecutionEnvironment &executionEnvironment) : NEO::OsAgnosticMemoryManager(executionEnvironment) {}
 };
 

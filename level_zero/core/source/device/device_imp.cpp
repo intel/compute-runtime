@@ -56,13 +56,21 @@ void DeviceImp::setDriverHandle(DriverHandle *driverHandle) {
 }
 
 ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) {
-    *value = false;
-    if (NEO::DebugManager.flags.CreateMultipleRootDevices.get() > 0) {
-        *value = true;
+    *value = true;
+
+    DeviceImp *pPeerDevice = reinterpret_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
+
+    NEO::MemoryManager *memoryManager = this->getDriverHandle()->getMemoryManager();
+    bool isLocalMemorySupportedinDevice =
+        memoryManager->isLocalMemorySupported(this->getNEODevice()->getRootDeviceIndex());
+    bool isLocalMemorySupportedinPeer =
+        memoryManager->isLocalMemorySupported(pPeerDevice->getNEODevice()->getRootDeviceIndex());
+    if (isLocalMemorySupportedinDevice && isLocalMemorySupportedinPeer &&
+        (this->getNEODevice()->getHardwareInfo().platform.eProductFamily !=
+         pPeerDevice->getNEODevice()->getHardwareInfo().platform.eProductFamily)) {
+        *value = false;
     }
-    if (NEO::DebugManager.flags.CreateMultipleSubDevices.get() > 0) {
-        *value = true;
-    }
+
     return ZE_RESULT_SUCCESS;
 }
 
