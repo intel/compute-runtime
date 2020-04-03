@@ -7,8 +7,7 @@
 
 #include "shared/offline_compiler/source/decoder/binary_decoder.h"
 #include "shared/source/helpers/array_count.h"
-
-#include "opencl/test/unit_test/helpers/test_files.h"
+#include "shared/test/unit_test/helpers/test_files.h"
 
 #include "gmock/gmock.h"
 #include "mock/mock_encoder.h"

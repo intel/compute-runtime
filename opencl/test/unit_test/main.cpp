@@ -13,6 +13,7 @@
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/unit_test/helpers/default_hw_info.inl"
 #include "shared/test/unit_test/helpers/memory_leak_listener.h"
+#include "shared/test/unit_test/helpers/test_files.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.inl"
 #include "shared/test/unit_test/tests_configuration.h"
 
@@ -20,7 +21,6 @@
 #include "opencl/test/unit_test/custom_event_listener.h"
 #include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
-#include "opencl/test/unit_test/helpers/test_files.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_sip.h"

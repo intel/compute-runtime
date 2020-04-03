@@ -8,10 +8,10 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/test/unit_test/helpers/test_files.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/global_environment.h"
-#include "opencl/test/unit_test/helpers/test_files.h"
 
 #include "cl_api_tests.h"
 #include "compiler_options.h"

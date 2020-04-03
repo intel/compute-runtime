@@ -32,6 +32,29 @@ struct WhiteBox<::L0::KernelImmutableData> : public ::L0::KernelImmutableData {
 };
 
 template <>
+struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
+    using BaseClass = ::L0::KernelImp;
+    using ::L0::KernelImp::createPrintfBuffer;
+    using ::L0::KernelImp::crossThreadData;
+    using ::L0::KernelImp::crossThreadDataSize;
+    using ::L0::KernelImp::groupSize;
+    using ::L0::KernelImp::kernelImmData;
+    using ::L0::KernelImp::module;
+    using ::L0::KernelImp::perThreadDataForWholeThreadGroup;
+    using ::L0::KernelImp::perThreadDataSize;
+    using ::L0::KernelImp::printfBuffer;
+    using ::L0::KernelImp::residencyContainer;
+    using ::L0::KernelImp::unifiedMemoryControls;
+
+    void setBufferSurfaceState(uint32_t argIndex, void *address,
+                               NEO::GraphicsAllocation *alloc) override {}
+
+    std::unique_ptr<Kernel> clone() const override { return nullptr; }
+
+    WhiteBox() : ::L0::KernelImp(nullptr) {}
+};
+
+template <>
 struct Mock<::L0::Kernel> : public ::L0::KernelImp {
     using BaseClass = ::L0::KernelImp;
 

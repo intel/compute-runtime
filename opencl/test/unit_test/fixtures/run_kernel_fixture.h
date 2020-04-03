@@ -7,8 +7,9 @@
 
 #pragma once
 
+#include "shared/test/unit_test/helpers/test_files.h"
+
 #include "opencl/test/unit_test/global_environment.h"
-#include "opencl/test/unit_test/helpers/test_files.h"
 
 namespace NEO {
 struct CommandQueueHwFixture;

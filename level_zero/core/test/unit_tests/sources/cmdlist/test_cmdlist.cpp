@@ -32,10 +32,10 @@ TEST(zeCommandListCreateImmediate, redirectsToObject) {
 }
 
 TEST_F(CommandListCreate, whenCommandListIsCreatedThenItIsInitialized) {
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device.get()));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device));
     ASSERT_NE(nullptr, commandList);
 
-    EXPECT_EQ(device.get(), commandList->device);
+    EXPECT_EQ(device, commandList->device);
     ASSERT_GT(commandList->commandContainer.getCmdBufferAllocations().size(), 0u);
 
     auto numAllocations = 0u;
@@ -57,7 +57,7 @@ TEST_F(CommandListCreate, whenCommandListIsCreatedThenItIsInitialized) {
 }
 
 TEST_F(CommandListCreate, givenRegularCommandListThenDefaultNumIddPerBlockIsUsed) {
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device.get()));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device));
     ASSERT_NE(nullptr, commandList);
 
     const uint32_t defaultNumIdds = CommandList::defaultNumIddsPerBlock;
@@ -71,7 +71,7 @@ TEST_F(CommandListCreate, givenImmediateCommandListThenCustomNumIddPerBlockUsed)
         ZE_COMMAND_QUEUE_MODE_DEFAULT,
         ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
         0};
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device.get(), &desc, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false));
     ASSERT_NE(nullptr, commandList);
 
     const uint32_t cmdListImmediateIdds = CommandList::commandListimmediateIddsPerBlock;
@@ -85,23 +85,23 @@ TEST_F(CommandListCreate, whenCreatingImmediateCommandListThenItHasImmediateComm
         ZE_COMMAND_QUEUE_MODE_DEFAULT,
         ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
         0};
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device.get(), &desc, false));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false));
     ASSERT_NE(nullptr, commandList);
 
-    EXPECT_EQ(device.get(), commandList->device);
+    EXPECT_EQ(device, commandList->device);
     EXPECT_EQ(1u, commandList->cmdListType);
     EXPECT_NE(nullptr, commandList->cmdQImmediate);
 }
 
 TEST_F(CommandListCreate, givenInvalidProductFamilyThenReturnsNullPointer) {
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(IGFX_UNKNOWN, device.get()));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(IGFX_UNKNOWN, device));
     EXPECT_EQ(nullptr, commandList);
 }
 
 HWTEST_F(CommandListCreate, whenCommandListIsCreatedThenStateBaseAddressCmdIsAddedAndCorrectlyProgrammed) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device.get()));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device));
     auto &commandContainer = commandList->commandContainer;
     auto gmmHelper = commandContainer.getDevice()->getGmmHelper();
 
@@ -139,38 +139,6 @@ HWTEST_F(CommandListCreate, whenCommandListIsCreatedThenStateBaseAddressCmdIsAdd
     EXPECT_EQ(ssh->getHeapGpuBase(), cmdSba->getSurfaceStateBaseAddress());
 
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), cmdSba->getStatelessDataPortAccessMemoryObjectControlState());
-}
-
-HWTEST_F(CommandListCreate, givenNotEnoughSpaceInCommandStreamWhenAppendingFunctionThenBbEndIsAddedAndNewCmdBufferAllocated) {
-    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
-    Mock<Kernel> kernel;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device.get()));
-
-    auto &commandContainer = commandList->commandContainer;
-    const auto stream = commandContainer.getCommandStream();
-    const auto streamCpu = stream->getCpuBase();
-
-    auto available = stream->getAvailableSpace();
-    stream->getSpace(available - sizeof(MI_BATCH_BUFFER_END) - 16);
-    auto bbEndPosition = stream->getSpace(0);
-
-    ze_group_count_t dispatchFunctionArguments{1, 1, 1};
-    commandList->appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments, nullptr, 0, nullptr);
-
-    auto usedSpaceAfter = commandContainer.getCommandStream()->getUsed();
-    ASSERT_GT(usedSpaceAfter, 0u);
-
-    const auto streamCpu2 = stream->getCpuBase();
-
-    EXPECT_NE(nullptr, streamCpu2);
-    EXPECT_NE(streamCpu, streamCpu2);
-
-    EXPECT_EQ(2u, commandContainer.getCmdBufferAllocations().size());
-
-    GenCmdList cmdList;
-    FamilyType::PARSE::parseCommandBuffer(cmdList, bbEndPosition, 2 * sizeof(MI_BATCH_BUFFER_END));
-    auto itor = find<MI_BATCH_BUFFER_END *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
 }
 
 } // namespace ult

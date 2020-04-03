@@ -32,8 +32,6 @@ set(IGDRCL_SRCS_LIB_ULT
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/debug_helpers.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/execution_environment_helper.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/execution_environment_helper.h
-  ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/test_files.cpp
-  ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/test_files.h
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_tbx_sockets.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/debug_manager.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/io_functions.cpp
@@ -47,6 +45,8 @@ set(IGDRCL_SRCS_LIB_ULT
   ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_leak_listener.h
   ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_management.cpp
   ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/memory_management.h
+  ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/test_files.cpp
+  ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/test_files.h
 )
 
 get_property(NEO_SHARED_TESTS_CMD_PARSE GLOBAL PROPERTY NEO_SHARED_TESTS_CMD_PARSE)

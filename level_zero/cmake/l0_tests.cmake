@@ -79,11 +79,11 @@ add_library(compute_runtime_mockable_extra
     EXCLUDE_FROM_ALL
         ${CMAKE_CURRENT_LIST_DIR}/l0_tests.cmake
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
+        ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/test_files.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/source/aub/aub_stream_interface.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/abort.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/helpers/built_ins_helper.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/helpers/debug_helpers.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/helpers/test_files.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/os_interface.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/source_level_debugger_ult.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/source_level_debugger_library.cpp

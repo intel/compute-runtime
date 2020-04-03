@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/test/unit_test/helpers/test_files.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/test/unit_test/helpers/test_files.h"
 
 #include "cl_api_tests.h"
 

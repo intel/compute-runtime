@@ -11,6 +11,7 @@
 #include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
 namespace L0 {
 namespace ult {
@@ -18,14 +19,18 @@ namespace ult {
 struct DeviceFixture {
     void SetUp() {
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
-        device = std::make_unique<Mock<L0::DeviceImp>>(neoDevice, neoDevice->getExecutionEnvironment());
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+        device = driverHandle->devices[0];
     }
 
     void TearDown() {
     }
-
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
-    std::unique_ptr<Mock<L0::DeviceImp>> device = nullptr;
+    L0::Device *device = nullptr;
 };
 
 } // namespace ult

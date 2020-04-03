@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/unit_test/helpers/default_hw_info.inl"
 #include "shared/test/unit_test/helpers/memory_leak_listener.h"
+#include "shared/test/unit_test/helpers/test_files.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.inl"
 
 #include "opencl/source/program/kernel_info.h"
@@ -191,6 +192,16 @@ int main(int argc, char **argv) {
         listeners.Release(defaultListener);
         listeners.Append(customEventListener);
     }
+
+    binaryNameSuffix.append(NEO::familyName[hwInfoForTests.platform.eRenderCoreFamily]);
+    binaryNameSuffix.append(hwInfoForTests.capabilityTable.platformType);
+
+    std::string testBinaryFiles = getRunPath(argv[0]);
+    testBinaryFiles.append("/level_zero/");
+    testBinaryFiles.append(binaryNameSuffix);
+    testBinaryFiles.append("/");
+    testBinaryFiles.append(testFiles);
+    testFiles = testBinaryFiles;
 
     listeners.Append(new NEO::MemoryLeakListener);
 

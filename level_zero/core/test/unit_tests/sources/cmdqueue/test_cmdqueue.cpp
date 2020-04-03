@@ -26,7 +26,7 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
 
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
-                                                          device.get(),
+                                                          device,
                                                           csr.get(),
                                                           &desc);
     ASSERT_NE(nullptr, commandQueue);
@@ -34,7 +34,7 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
     L0::CommandQueueImp *commandQueueImp = reinterpret_cast<L0::CommandQueueImp *>(commandQueue);
 
     EXPECT_EQ(csr.get(), commandQueueImp->getCsr());
-    EXPECT_EQ(device.get(), commandQueueImp->getDevice());
+    EXPECT_EQ(device, commandQueueImp->getDevice());
     EXPECT_EQ(0u, commandQueueImp->getTaskCount());
 
     commandQueue->destroy();
