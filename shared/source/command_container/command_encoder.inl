@@ -405,4 +405,10 @@ size_t EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() {
     return sizeof(typename GfxFamily::MI_FLUSH_DW) + EncodeMiFlushDW<GfxFamily>::getMiFlushDwWaSize();
 }
 
+template <typename GfxFamily>
+void EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(LinearStream &commandStream, uint64_t gpuVa, uint32_t size) {}
+
+template <typename GfxFamily>
+size_t EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch() { return 0; }
+
 } // namespace NEO

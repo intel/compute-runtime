@@ -230,4 +230,10 @@ struct EncodeMiFlushDW {
     static size_t getMiFlushDwCmdSizeForDataWrite();
     static size_t getMiFlushDwWaSize();
 };
+
+template <typename GfxFamily>
+struct EncodeMemoryPrefetch {
+    static void programMemoryPrefetch(LinearStream &commandStream, uint64_t gpuVa, uint32_t size);
+    static size_t getSizeForMemoryPrefetch();
+};
 } // namespace NEO

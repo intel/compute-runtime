@@ -55,3 +55,13 @@ HWTEST_F(CommandEncoderTests, givenImmDataWriteWhenProgrammingMiFlushDwThenSetAl
     EXPECT_EQ(gpuAddress, miFlushDwCmd->getDestinationAddress());
     EXPECT_EQ(immData, miFlushDwCmd->getImmediateData());
 }
+
+HWTEST_F(CommandEncoderTests, whenEncodeMemoryPrefetchCalledThenDoNothing) {
+    uint8_t buffer[MemoryConstants::pageSize] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+
+    EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, 1, 2);
+
+    EXPECT_EQ(0u, linearStream.getUsed());
+    EXPECT_EQ(0u, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch());
+}
