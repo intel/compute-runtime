@@ -6,8 +6,7 @@
  */
 
 #include "opencl/source/context/context.h"
-
-#include "cl_api_tests.h"
+#include "opencl/test/unit_test/api/cl_api_tests.h"
 
 using namespace NEO;
 

@@ -77,7 +77,6 @@ set(IGDRCL_SRCS_tests_command_queue
   ${CMAKE_CURRENT_SOURCE_DIR}/get_size_required_image_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/get_size_required_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ioq_task_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/ioq_task_tests_mt.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/local_id_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/local_work_size_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/multi_dispatch_info_tests.cpp
@@ -87,7 +86,6 @@ set(IGDRCL_SRCS_tests_command_queue
   ${CMAKE_CURRENT_SOURCE_DIR}/oom_image_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/oom_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ooq_task_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/ooq_task_tests_mt.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/read_write_buffer_cpu_copy.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/sync_buffer_handler_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/work_group_size_tests.cpp

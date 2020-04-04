@@ -33,7 +33,6 @@ set(IGDRCL_SRCS_tests_api
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_sub_buffer_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_sub_devices_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_user_event_tests.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/cl_create_user_event_tests_mt.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_barrier_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_barrier_with_wait_list_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_copy_buffer_rect_tests.inl
@@ -88,7 +87,6 @@ set(IGDRCL_SRCS_tests_api
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_mem_object_info_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_pipe_info_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_platform_ids_tests.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_platform_ids_tests_mt.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_platform_info_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_program_build_info_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_program_info_tests.inl
@@ -115,7 +113,6 @@ set(IGDRCL_SRCS_tests_api
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_kernel_arg_svm_pointer_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_kernel_exec_info_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_mem_object_destructor_callback_tests.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_mem_object_destructor_callback_tests_mt.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_performance_configuration_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_program_specialization_constant_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_svm_alloc_tests.inl

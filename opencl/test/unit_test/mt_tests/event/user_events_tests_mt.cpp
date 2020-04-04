@@ -7,10 +7,9 @@
 
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include "opencl/test/unit_test/event/event_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
-
-#include "event_fixture.h"
 
 #include <memory>
 
