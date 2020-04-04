@@ -35,9 +35,6 @@ struct MetricContext;
 struct Device : _ze_device_handle_t {
     virtual uint32_t getRootDeviceIndex() = 0;
     virtual ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) = 0;
-    virtual ze_result_t copyCommandList(ze_command_list_handle_t hCommandList,
-                                        ze_command_list_handle_t *phCommandList) = 0;
-
     virtual ze_result_t createCommandList(const ze_command_list_desc_t *desc,
                                           ze_command_list_handle_t *commandList) = 0;
 

@@ -66,11 +66,6 @@ ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DeviceImp::copyCommandList(ze_command_list_handle_t hCommandList,
-                                       ze_command_list_handle_t *phCommandList) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
                                          ze_command_list_handle_t *commandList) {
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;

@@ -38,8 +38,6 @@ struct Mock<Device> : public Device {
 
     MOCK_METHOD0(getRootDeviceIndex, uint32_t());
     MOCK_METHOD2(canAccessPeer, ze_result_t(ze_device_handle_t hPeerDevice, ze_bool_t *value));
-    MOCK_METHOD2(copyCommandList, ze_result_t(ze_command_list_handle_t hCommandList,
-                                              ze_command_list_handle_t *phCommandList));
     MOCK_METHOD2(createCommandList, ze_result_t(const ze_command_list_desc_t *desc,
                                                 ze_command_list_handle_t *commandList));
 

@@ -19,8 +19,6 @@ namespace L0 {
 struct DeviceImp : public Device {
     uint32_t getRootDeviceIndex() override;
     ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) override;
-    ze_result_t copyCommandList(ze_command_list_handle_t hCommandList,
-                                ze_command_list_handle_t *phCommandList) override;
     ze_result_t createCommandList(const ze_command_list_desc_t *desc,
                                   ze_command_list_handle_t *commandList) override;
     ze_result_t createCommandListImmediate(const ze_command_queue_desc_t *desc,
