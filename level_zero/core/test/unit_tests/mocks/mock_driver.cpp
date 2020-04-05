@@ -21,9 +21,7 @@ Mock<Driver>::Mock() {
 }
 
 Mock<Driver>::~Mock() {
-    if (driver == this) {
-        driver = previousDriver;
-    }
+    driver = previousDriver;
 }
 
 } // namespace ult

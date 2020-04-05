@@ -54,7 +54,7 @@ struct Mock<::L0::Kernel> : public ::L0::KernelImp {
         NEO::populateKernelDescriptor(descriptor, kernelTokens, 8);
         immutableData.kernelDescriptor = &descriptor;
     }
-    ~Mock() {
+    ~Mock() override {
         delete immutableData.isaGraphicsAllocation.release();
     }
 

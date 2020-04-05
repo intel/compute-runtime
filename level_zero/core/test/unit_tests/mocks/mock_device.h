@@ -82,7 +82,7 @@ struct Mock<Device> : public Device {
     MOCK_METHOD3(registerCLProgram,
                  ze_result_t(cl_context context, cl_program program, ze_module_handle_t *phModule));
     MOCK_METHOD3(registerCLCommandQueue,
-                 ze_result_t(cl_context context, cl_command_queue command_queue,
+                 ze_result_t(cl_context context, cl_command_queue commandQueue,
                              ze_command_queue_handle_t *phCommandQueue));
     // Runtime internal methods
     MOCK_METHOD0(getMemoryManager, NEO::MemoryManager *());
