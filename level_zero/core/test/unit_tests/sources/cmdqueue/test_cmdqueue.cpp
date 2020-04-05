@@ -5,10 +5,16 @@
  *
  */
 
+#include "shared/source/helpers/state_base_address.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
+
 #include "test.h"
 
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 
 namespace L0 {
 namespace ult {
@@ -36,6 +42,63 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
     EXPECT_EQ(csr.get(), commandQueueImp->getCsr());
     EXPECT_EQ(device, commandQueueImp->getDevice());
     EXPECT_EQ(0u, commandQueueImp->getTaskCount());
+
+    commandQueue->destroy();
+}
+
+using CommandQueueSBASupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+
+struct MockMemoryManagerCommandQueueSBA : public MemoryManagerMock {
+    MockMemoryManagerCommandQueueSBA(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
+    MOCK_METHOD1(getInternalHeapBaseAddress, uint64_t(uint32_t rootDeviceIndex));
+};
+
+struct CommandQueueProgramSBATest : public ::testing::Test {
+    void SetUp() override {
+        executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        for (uint32_t i = 0; i < numRootDevices; i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+        }
+
+        memoryManager = new ::testing::NiceMock<MockMemoryManagerCommandQueueSBA>(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+
+        neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, rootDeviceIndex);
+        std::vector<std::unique_ptr<NEO::Device>> devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+
+        device = driverHandle->devices[0];
+    }
+    void TearDown() override {
+    }
+
+    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    MockMemoryManagerCommandQueueSBA *memoryManager = nullptr;
+    const uint32_t rootDeviceIndex = 1u;
+    const uint32_t numRootDevices = 2u;
+};
+
+HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialized, CommandQueueSBASupport) {
+    ze_command_queue_desc_t desc = {};
+    desc.version = ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT;
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
+    commandQueue->initialize();
+
+    uint32_t alignedSize = 4096u;
+    NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
+
+    EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex))
+        .Times(1);
+
+    commandQueue->programGeneralStateBaseAddress(0u, child);
 
     commandQueue->destroy();
 }
