@@ -17,7 +17,7 @@ namespace L0 {
 namespace ult {
 
 struct DeviceFixture {
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
@@ -26,7 +26,7 @@ struct DeviceFixture {
         device = driverHandle->devices[0];
     }
 
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
     }
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
