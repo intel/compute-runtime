@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(getInfo, valid_params_returnsSuccess) {
+TEST(getInfo, GivenSrcSizeLessThanOrEqualDstSizeWhenGettingInfoThenSrcCopiedToDst) {
     float dest = 0.0f;
     float src = 1.0f;
 
@@ -18,7 +18,7 @@ TEST(getInfo, valid_params_returnsSuccess) {
     EXPECT_EQ(src, dest);
 }
 
-TEST(getInfo, null_param_and_param_size_too_small_returnsSuccess) {
+TEST(getInfo, GivenSrcSizeGreaterThanEqualDstSizeAndDstNullPtrWhenGettingInfoThenSrcNotCopiedToDstAndSuccessReturned) {
     float dest = 0.0f;
     float src = 1.0f;
 
@@ -27,7 +27,7 @@ TEST(getInfo, null_param_and_param_size_too_small_returnsSuccess) {
     EXPECT_NE(src, dest);
 }
 
-TEST(getInfo, GivenNullPtrAsValueAndNonZeroSizeWhenAskedForGetInfoThenSuccessIsReturned) {
+TEST(getInfo, GivenSrcSizeLessThanOrEqualDstSizeAndDstIsNullPtrWhenGettingInfoThenSuccessIsReturned) {
     float dest = 0.0f;
     float src = 1.0f;
 
@@ -36,7 +36,7 @@ TEST(getInfo, GivenNullPtrAsValueAndNonZeroSizeWhenAskedForGetInfoThenSuccessIsR
     EXPECT_NE(src, dest);
 }
 
-TEST(getInfo, param_size_too_small_returnsError) {
+TEST(getInfo, GivenSrcSizeLessThanOrEqualDstSizeAndDstIsNotNullPtrWhenGettingInfoThenInvalidValueIsReturned) {
     float dest = 0.0f;
     float src = 1.0f;
 
@@ -45,7 +45,7 @@ TEST(getInfo, param_size_too_small_returnsError) {
     EXPECT_NE(src, dest);
 }
 
-TEST(getInfo, null_src_param_returnsError) {
+TEST(getInfo, GivenNullSrcPtrWhenGettingInfoThenInvalidValueErrorIsReturned) {
     float dest = 0.0f;
     float src = 1.0f;
 
@@ -54,7 +54,7 @@ TEST(getInfo, null_src_param_returnsError) {
     EXPECT_NE(src, dest);
 }
 
-TEST(getInfo, zero_src_param_size_returnsError) {
+TEST(getInfo, GivenZeroSrcSizeWhenGettingInfoThenInvalidValueErrorIsReturned) {
     float dest = 0.0f;
     float src = 1.0f;
 
@@ -71,7 +71,7 @@ TEST(getInfoHelper, GivenInstanceOfGetInfoHelperAndNullPtrParamsSuccessIsReturne
     EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
 }
 
-TEST(getInfoHelper, staticSetter) {
+TEST(getInfoHelper, GivenPointerWhenSettingValueThenValueIsSetCorrectly) {
     uint32_t *getValue = nullptr;
     uint32_t expectedValue = 1;
 
@@ -86,7 +86,7 @@ TEST(getInfoHelper, staticSetter) {
     delete getValue;
 }
 
-TEST(errorCodeHelper, localVariable) {
+TEST(errorCodeHelper, GivenLocalVariableWhenSettingValueThenValueIsSetCorrectly) {
     int errCode = 0;
     ErrorCodeHelper err(&errCode, 1);
     EXPECT_EQ(1, errCode);
