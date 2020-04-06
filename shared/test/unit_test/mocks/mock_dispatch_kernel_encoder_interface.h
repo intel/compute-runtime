@@ -47,6 +47,7 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
     MOCK_METHOD0(getCrossThread, const void *());
     MOCK_METHOD0(getPerThread, const void *());
     MOCK_METHOD0(isInlineDataRequired, bool());
+    MOCK_METHOD0(getNumLocalIdChannels, uint8_t());
 
     void expectAnyMockFunctionCall();
 

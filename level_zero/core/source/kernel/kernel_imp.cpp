@@ -757,4 +757,7 @@ bool KernelImp::isInlineDataRequired() {
     return getImmutableData()->getDescriptor().kernelAttributes.flags.passInlineData;
 }
 
+uint8_t KernelImp::getNumLocalIdChannels() {
+    return getImmutableData()->getDescriptor().kernelAttributes.numLocalIdChannels;
+}
 } // namespace L0

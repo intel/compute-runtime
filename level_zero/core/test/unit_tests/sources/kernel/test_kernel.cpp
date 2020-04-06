@@ -26,5 +26,12 @@ TEST(Kernel, givenPassInlineDataFalseWhenCallingIsInlineDataRequiredThenFalseIsR
     EXPECT_FALSE(kernel.isInlineDataRequired());
 }
 
+TEST(Kernel, whenGettingLocalIdsChannelNumberThenCorrectValueIsReturned) {
+    Mock<Kernel> kernel;
+
+    kernel.descriptor.kernelAttributes.numLocalIdChannels = 3;
+    EXPECT_EQ(3u, kernel.getNumLocalIdChannels());
+}
+
 } // namespace ult
 } // namespace L0

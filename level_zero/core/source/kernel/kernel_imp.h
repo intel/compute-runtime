@@ -133,6 +133,7 @@ struct KernelImp : Kernel {
     const void *getCrossThread() override;
     const void *getPerThread() override;
     bool isInlineDataRequired() override;
+    uint8_t getNumLocalIdChannels() override;
 
   protected:
     KernelImp() = default;

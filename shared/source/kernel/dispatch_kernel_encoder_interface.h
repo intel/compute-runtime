@@ -40,6 +40,7 @@ struct DispatchKernelEncoderI {
     virtual const void *getCrossThread() = 0;
     virtual const void *getPerThread() = 0;
     virtual bool isInlineDataRequired() = 0;
+    virtual uint8_t getNumLocalIdChannels() = 0;
     virtual ~DispatchKernelEncoderI() = default;
 
   protected:
