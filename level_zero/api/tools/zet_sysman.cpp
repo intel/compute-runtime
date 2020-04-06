@@ -581,21 +581,21 @@ __zedllexport ze_result_t __zecall
 zetSysmanRasGetProperties(
     zet_sysman_ras_handle_t hRas,
     zet_ras_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Ras::fromHandle(hRas)->rasGetProperties(pProperties);
 }
 
 __zedllexport ze_result_t __zecall
 zetSysmanRasGetConfig(
     zet_sysman_ras_handle_t hRas,
     zet_ras_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Ras::fromHandle(hRas)->rasGetConfig(pConfig);
 }
 
 __zedllexport ze_result_t __zecall
 zetSysmanRasSetConfig(
     zet_sysman_ras_handle_t hRas,
     const zet_ras_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Ras::fromHandle(hRas)->rasSetConfig(pConfig);
 }
 
 __zedllexport ze_result_t __zecall
@@ -604,7 +604,7 @@ zetSysmanRasGetState(
     ze_bool_t clear,
     uint64_t *pTotalErrors,
     zet_ras_details_t *pDetails) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Ras::fromHandle(hRas)->rasGetState(clear, pTotalErrors, pDetails);
 }
 
 __zedllexport ze_result_t __zecall

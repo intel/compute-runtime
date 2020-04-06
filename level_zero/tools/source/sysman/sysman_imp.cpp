@@ -29,9 +29,13 @@ SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
     pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
     pMemoryHandleContext = new MemoryHandleContext(pOsSysman, hCoreDevice);
     pEngineHandleContext = new EngineHandleContext(pOsSysman);
+    pRasHandleContext = new RasHandleContext(pOsSysman);
 }
 
 SysmanImp::~SysmanImp() {
+    if (pRasHandleContext) {
+        delete pRasHandleContext;
+    }
     if (pEngineHandleContext) {
         delete pEngineHandleContext;
     }
@@ -69,6 +73,9 @@ void SysmanImp::init() {
     }
     if (pEngineHandleContext) {
         pEngineHandleContext->init();
+    }
+    if (pRasHandleContext) {
+        pRasHandleContext->init();
     }
     if (pPci) {
         pPci->init();
@@ -186,7 +193,7 @@ ze_result_t SysmanImp::ledGet(uint32_t *pCount, zet_sysman_led_handle_t *phLed) 
 }
 
 ze_result_t SysmanImp::rasGet(uint32_t *pCount, zet_sysman_ras_handle_t *phRas) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pRasHandleContext->rasGet(pCount, phRas);
 }
 
 ze_result_t SysmanImp::eventGet(zet_sysman_event_handle_t *phEvent) {
