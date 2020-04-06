@@ -58,6 +58,7 @@ struct CommandQueueImp : public CommandQueue {
         MemoryConstants::cacheLineSize +
         NEO::CSRequirements::csOverfetchSize;
 
+    CommandQueueImp() = delete;
     CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc)
         : device(device), csr(csr), desc(*desc) {
         std::atomic_init(&commandQueuePerThreadScratchSize, 0u);

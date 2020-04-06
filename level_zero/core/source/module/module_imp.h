@@ -23,6 +23,8 @@ namespace L0 {
 struct ModuleTranslationUnit;
 
 struct ModuleImp : public Module {
+    ModuleImp() = delete;
+
     ModuleImp(Device *device, NEO::Device *neoDevice, ModuleBuildLog *moduleBuildLog);
 
     ~ModuleImp() override;
@@ -64,8 +66,6 @@ struct ModuleImp : public Module {
     bool isDebugEnabled() const override;
 
   protected:
-    ModuleImp() = default;
-
     Device *device = nullptr;
     PRODUCT_FAMILY productFamily{};
     ModuleTranslationUnit *translationUnit = nullptr;
