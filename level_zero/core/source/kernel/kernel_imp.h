@@ -132,6 +132,7 @@ struct KernelImp : Kernel {
     const void *getDynamicStateHeap() override;
     const void *getCrossThread() override;
     const void *getPerThread() override;
+    bool isInlineDataRequired() override;
 
   protected:
     KernelImp() = default;

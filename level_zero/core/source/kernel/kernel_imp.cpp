@@ -753,5 +753,8 @@ const void *KernelImp::getCrossThread() {
 const void *KernelImp::getPerThread() {
     return getPerThreadData();
 }
+bool KernelImp::isInlineDataRequired() {
+    return getImmutableData()->getDescriptor().kernelAttributes.flags.passInlineData;
+}
 
 } // namespace L0
