@@ -11,7 +11,7 @@
 
 using namespace NEO;
 
-TEST(FlushStampTest, referenceTrackedFlushStamp) {
+TEST(FlushStampTest, WhenAddingRemovingReferencesThenRefCountIsUpdated) {
     FlushStampTracker *flushStampTracker = new FlushStampTracker(true);
     auto flushStampSharedHandle = flushStampTracker->getStampReference();
     ASSERT_NE(nullptr, flushStampSharedHandle);
@@ -28,12 +28,12 @@ TEST(FlushStampTest, referenceTrackedFlushStamp) {
     flushStampSharedHandle->decRefInternal();
 }
 
-TEST(FlushStampTest, dontAllocateStamp) {
+TEST(FlushStampTest, GivenFalseWhenCreatingTrackerThenStampIsNotAllocated) {
     FlushStampTracker flushStampTracker(false);
     EXPECT_EQ(nullptr, flushStampTracker.getStampReference());
 }
 
-TEST(FlushStampTest, updateStampValue) {
+TEST(FlushStampTest, WhenSettingStampValueThenItIsSet) {
     FlushStampTracker flushStampTracker(true);
 
     FlushStamp flushStamp = 0;
@@ -44,7 +44,7 @@ TEST(FlushStampTest, updateStampValue) {
     EXPECT_EQ(flushStamp, flushStampTracker.peekStamp());
 }
 
-TEST(FlushStampTest, handleStampObjReplacing) {
+TEST(FlushStampTest, WhenReplacingStampObjectThenRefCountIsUpdated) {
     FlushStampTracker flushStampTracker(true);
     EXPECT_EQ(1, flushStampTracker.getStampReference()->getRefInternalCount()); //obj to release
 
@@ -56,7 +56,7 @@ TEST(FlushStampTest, handleStampObjReplacing) {
     EXPECT_EQ(1, stampObj->getRefInternalCount());
 }
 
-TEST(FlushStampTest, ignoreNullptrReplace) {
+TEST(FlushStampTest, GivenNullWhenReplacingStampThenNoReplacement) {
     FlushStampTracker flushStampTracker(true);
     auto currentObj = flushStampTracker.getStampReference();
 
@@ -64,7 +64,7 @@ TEST(FlushStampTest, ignoreNullptrReplace) {
     EXPECT_EQ(currentObj, flushStampTracker.getStampReference());
 }
 
-TEST(FlushStampUpdateHelperTest, manageRefCounts) {
+TEST(FlushStampUpdateHelperTest, WhenInsertingObjectThenRefCountIsCorrect) {
     FlushStampTrackingObj obj1, obj2;
     {
         FlushStampUpdateHelper updater;
@@ -86,7 +86,7 @@ TEST(FlushStampUpdateHelperTest, manageRefCounts) {
     EXPECT_EQ(1, obj2.getRefInternalCount());
 }
 
-TEST(FlushStampUpdateHelperTest, multipleInserts) {
+TEST(FlushStampUpdateHelperTest, GivenMultipleInsertsWhenInsertingThenRefCountIsUpdated) {
     FlushStampTrackingObj obj1;
     {
         FlushStampUpdateHelper updater;
@@ -110,7 +110,7 @@ TEST(FlushStampUpdateHelperTest, multipleInserts) {
     obj1.decRefInternal();
 }
 
-TEST(FlushStampUpdateHelperTest, ignoreNullptr) {
+TEST(FlushStampUpdateHelperTest, GivenNullWhenInsertingThenIsNotInserted) {
     FlushStampUpdateHelper updater;
     updater.insert(nullptr);
     EXPECT_EQ(0u, updater.size());
