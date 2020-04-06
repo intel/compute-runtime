@@ -127,6 +127,39 @@ TEST(MemoryManagerGetAlloctionDataTest, givenDebugModeToForceBuffersToSystemMemo
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
+TEST(MemoryManagerGetAlloctionDataTest, givenDebugModeWhenCertainAllocationTypesAreSelectedThenSystemPlacementIsChoosen) {
+    DebugManagerStateRestore restorer;
+    auto allocationType = GraphicsAllocation::AllocationType::BUFFER;
+    auto mask = 1llu << (static_cast<int64_t>(allocationType) - 1);
+
+    DebugManager.flags.ForceSystemMemoryPlacement.set(mask);
+
+    AllocationData allocData;
+    AllocationProperties properties(0, true, 0, allocationType, false);
+    MockMemoryManager mockMemoryManager;
+    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+    allocData.flags.useSystemMemory = false;
+    allocationType = GraphicsAllocation::AllocationType::WRITE_COMBINED;
+    mask |= 1llu << (static_cast<int64_t>(allocationType) - 1);
+    DebugManager.flags.ForceSystemMemoryPlacement.set(mask);
+
+    AllocationProperties properties2(0, true, 0, allocationType, false);
+    MockMemoryManager::getAllocationData(allocData, properties2, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties2));
+
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+    allocData.flags.useSystemMemory = false;
+
+    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+
+    allocData.flags.useSystemMemory = false;
+    DebugManager.flags.ForceSystemMemoryPlacement.set(8llu);
+    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_FALSE(allocData.flags.useSystemMemory);
+}
+
 typedef MemoryManagerGetAlloctionDataTest MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest;
 
 TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, givenAllocationTypesWith32BitAnd64kbPagesAllowedWhenAllocationDataIsQueriedThenProperFlagsAreSet) {

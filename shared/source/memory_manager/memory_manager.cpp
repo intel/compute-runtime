@@ -305,6 +305,12 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         }
     }
 
+    if (DebugManager.flags.ForceSystemMemoryPlacement.get()) {
+        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceSystemMemoryPlacement.get()) {
+            allocationData.flags.useSystemMemory = true;
+        }
+    }
+
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::COMMAND_BUFFER:
     case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:

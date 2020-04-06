@@ -112,17 +112,6 @@ TEST(DebugSettingsManager, givenReaderImplInDebugManagerWhenSettingDifferentRead
     EXPECT_EQ(readerImpl2, debugManager.getReaderImpl());
 }
 
-TEST(DebugSettingsManager, givenReport64BitIdetntifierFlagWhenDumpFlagsThen64BitValueIsPrinted) {
-    testing::internal::CaptureStdout();
-    FullyEnabledTestDebugManager debugManager;
-    debugManager.flags.Report64BitIdentifier.set(0xffffffffeeeeeeee);
-
-    debugManager.dumpFlags();
-
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_FALSE(output.compare("Report64BitIdentifier flag value = -286331154\n"));
-}
-
 TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWhenCallingDumpFlagsThenFlagsAreWrittenToDumpFile) {
     testing::internal::CaptureStdout();
     FullyEnabledTestDebugManager debugManager;

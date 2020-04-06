@@ -60,10 +60,6 @@ void DebugSettingsManager<DebugLevel>::dumpNonDefaultFlag(const char *variableNa
 
 template <DebugFunctionalityLevel DebugLevel>
 void DebugSettingsManager<DebugLevel>::dumpFlags() const {
-    if (flags.Report64BitIdentifier.get()) {
-        std::cout << "Report64BitIdentifier flag value = " << flags.Report64BitIdentifier.get() << std::endl;
-    }
-
     if (flags.PrintDebugSettings.get() == false) {
         return;
     }
