@@ -95,6 +95,57 @@ TEST_F(DeviceTest, givenDeviceWithCopyEngineThenNumAsyncCopyEnginesDevicePropert
     EXPECT_EQ(expecteNumOfCopyEngines, deviceProperties.numAsyncCopyEngines);
 }
 
+TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenAllPropertiesAreAssigned) {
+    ze_device_properties_t deviceProperties, devicePropertiesBefore;
+
+    deviceProperties.type = ZE_DEVICE_TYPE_FPGA;
+    memset(&deviceProperties.vendorId, std::numeric_limits<int>::max(), sizeof(deviceProperties.vendorId));
+    memset(&deviceProperties.deviceId, std::numeric_limits<int>::max(), sizeof(deviceProperties.deviceId));
+    memset(&deviceProperties.uuid, std::numeric_limits<int>::max(), sizeof(deviceProperties.uuid));
+    memset(&deviceProperties.isSubdevice, std::numeric_limits<int>::max(), sizeof(deviceProperties.isSubdevice));
+    memset(&deviceProperties.subdeviceId, std::numeric_limits<int>::max(), sizeof(deviceProperties.subdeviceId));
+    memset(&deviceProperties.coreClockRate, std::numeric_limits<int>::max(), sizeof(deviceProperties.coreClockRate));
+    memset(&deviceProperties.unifiedMemorySupported, std::numeric_limits<int>::max(), sizeof(deviceProperties.unifiedMemorySupported));
+    memset(&deviceProperties.eccMemorySupported, std::numeric_limits<int>::max(), sizeof(deviceProperties.eccMemorySupported));
+    memset(&deviceProperties.onDemandPageFaultsSupported, std::numeric_limits<int>::max(), sizeof(deviceProperties.onDemandPageFaultsSupported));
+    memset(&deviceProperties.maxCommandQueues, std::numeric_limits<int>::max(), sizeof(deviceProperties.maxCommandQueues));
+    memset(&deviceProperties.numAsyncComputeEngines, std::numeric_limits<int>::max(), sizeof(deviceProperties.numAsyncComputeEngines));
+    memset(&deviceProperties.numAsyncCopyEngines, std::numeric_limits<int>::max(), sizeof(deviceProperties.numAsyncCopyEngines));
+    memset(&deviceProperties.maxCommandQueuePriority, std::numeric_limits<int>::max(), sizeof(deviceProperties.maxCommandQueuePriority));
+    memset(&deviceProperties.numThreadsPerEU, std::numeric_limits<int>::max(), sizeof(deviceProperties.numThreadsPerEU));
+    memset(&deviceProperties.physicalEUSimdWidth, std::numeric_limits<int>::max(), sizeof(deviceProperties.physicalEUSimdWidth));
+    memset(&deviceProperties.numEUsPerSubslice, std::numeric_limits<int>::max(), sizeof(deviceProperties.numEUsPerSubslice));
+    memset(&deviceProperties.numSubslicesPerSlice, std::numeric_limits<int>::max(), sizeof(deviceProperties.numSubslicesPerSlice));
+    memset(&deviceProperties.numSlices, std::numeric_limits<int>::max(), sizeof(deviceProperties.numSlices));
+    memset(&deviceProperties.timerResolution, std::numeric_limits<int>::max(), sizeof(deviceProperties.timerResolution));
+    memset(&deviceProperties.name, std::numeric_limits<int>::max(), sizeof(deviceProperties.name));
+
+    devicePropertiesBefore = deviceProperties;
+    device->getProperties(&deviceProperties);
+
+    EXPECT_NE(deviceProperties.type, devicePropertiesBefore.type);
+    EXPECT_NE(deviceProperties.vendorId, devicePropertiesBefore.vendorId);
+    EXPECT_NE(deviceProperties.deviceId, devicePropertiesBefore.deviceId);
+    EXPECT_NE(0, memcmp(&deviceProperties.uuid, &devicePropertiesBefore.uuid, sizeof(devicePropertiesBefore.uuid)));
+    EXPECT_NE(deviceProperties.isSubdevice, devicePropertiesBefore.isSubdevice);
+    EXPECT_NE(deviceProperties.subdeviceId, devicePropertiesBefore.subdeviceId);
+    EXPECT_NE(deviceProperties.coreClockRate, devicePropertiesBefore.coreClockRate);
+    EXPECT_NE(deviceProperties.unifiedMemorySupported, devicePropertiesBefore.unifiedMemorySupported);
+    EXPECT_NE(deviceProperties.eccMemorySupported, devicePropertiesBefore.eccMemorySupported);
+    EXPECT_NE(deviceProperties.onDemandPageFaultsSupported, devicePropertiesBefore.onDemandPageFaultsSupported);
+    EXPECT_NE(deviceProperties.maxCommandQueues, devicePropertiesBefore.maxCommandQueues);
+    EXPECT_NE(deviceProperties.numAsyncComputeEngines, devicePropertiesBefore.numAsyncComputeEngines);
+    EXPECT_NE(deviceProperties.numAsyncCopyEngines, devicePropertiesBefore.numAsyncCopyEngines);
+    EXPECT_NE(deviceProperties.maxCommandQueuePriority, devicePropertiesBefore.maxCommandQueuePriority);
+    EXPECT_NE(deviceProperties.numThreadsPerEU, devicePropertiesBefore.numThreadsPerEU);
+    EXPECT_NE(deviceProperties.physicalEUSimdWidth, devicePropertiesBefore.physicalEUSimdWidth);
+    EXPECT_NE(deviceProperties.numEUsPerSubslice, devicePropertiesBefore.numEUsPerSubslice);
+    EXPECT_NE(deviceProperties.numSubslicesPerSlice, devicePropertiesBefore.numSubslicesPerSlice);
+    EXPECT_NE(deviceProperties.numSlices, devicePropertiesBefore.numSlices);
+    EXPECT_NE(deviceProperties.timerResolution, devicePropertiesBefore.timerResolution);
+    EXPECT_NE(0, memcmp(&deviceProperties.name, &devicePropertiesBefore.name, sizeof(devicePropertiesBefore.name)));
+}
+
 struct MockMemoryManagerMultiDevice : public MemoryManagerMock {
     MockMemoryManagerMultiDevice(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
