@@ -72,6 +72,5 @@ struct ImageImp : public Image {
     NEO::ImageInfo imgInfo = {};
     NEO::GraphicsAllocation *allocation = nullptr;
     ze_image_desc_t imageFormatDesc = {};
-}; // namespace L0
-
+};
 } // namespace L0
