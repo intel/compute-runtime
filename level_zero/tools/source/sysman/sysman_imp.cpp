@@ -28,9 +28,13 @@ SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
     pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
     pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
     pMemoryHandleContext = new MemoryHandleContext(pOsSysman, hCoreDevice);
+    pEngineHandleContext = new EngineHandleContext(pOsSysman);
 }
 
 SysmanImp::~SysmanImp() {
+    if (pEngineHandleContext) {
+        delete pEngineHandleContext;
+    }
     if (pMemoryHandleContext) {
         delete pMemoryHandleContext;
     }
@@ -62,6 +66,9 @@ void SysmanImp::init() {
     }
     if (pMemoryHandleContext) {
         pMemoryHandleContext->init();
+    }
+    if (pEngineHandleContext) {
+        pEngineHandleContext->init();
     }
     if (pPci) {
         pPci->init();

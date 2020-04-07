@@ -296,14 +296,14 @@ __zedllexport ze_result_t __zecall
 zetSysmanEngineGetProperties(
     zet_sysman_engine_handle_t hEngine,
     zet_engine_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Engine::fromHandle(hEngine)->engineGetProperties(pProperties);
 }
 
 __zedllexport ze_result_t __zecall
 zetSysmanEngineGetActivity(
     zet_sysman_engine_handle_t hEngine,
     zet_engine_stats_t *pStats) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Engine::fromHandle(hEngine)->engineGetActivity(pStats);
 }
 
 __zedllexport ze_result_t __zecall

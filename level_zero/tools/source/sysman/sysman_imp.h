@@ -35,6 +35,7 @@ struct SysmanImp : Sysman {
     FrequencyHandleContext *pFrequencyHandleContext = nullptr;
     StandbyHandleContext *pStandbyHandleContext = nullptr;
     MemoryHandleContext *pMemoryHandleContext = nullptr;
+    EngineHandleContext *pEngineHandleContext = nullptr;
 
     ze_result_t deviceGetProperties(zet_sysman_properties_t *pProperties) override;
     ze_result_t schedulerGetCurrentMode(zet_sched_mode_t *pMode) override;
