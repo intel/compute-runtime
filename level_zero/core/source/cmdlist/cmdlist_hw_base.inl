@@ -50,10 +50,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
     if (kernel->hasIndirectAllocationsAllowed()) {
         UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
-        auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
-        auto &residencyContainer = commandContainer.getResidencyContainer();
 
-        svmAllocsManager->addInternalAllocationsToResidencyContainer(residencyContainer, unifiedMemoryControls.generateMask());
+        if (unifiedMemoryControls.indirectDeviceAllocationsAllowed) {
+            this->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+        }
+        if (unifiedMemoryControls.indirectHostAllocationsAllowed) {
+            this->unifiedMemoryControls.indirectHostAllocationsAllowed = true;
+        }
+        if (unifiedMemoryControls.indirectSharedAllocationsAllowed) {
+            this->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
+        }
+
+        this->indirectAllocationsAllowed = true;
     }
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer,

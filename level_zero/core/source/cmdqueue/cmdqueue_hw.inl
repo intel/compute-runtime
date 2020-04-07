@@ -20,8 +20,10 @@
 #include "shared/source/helpers/interlocked_max.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
+#include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
@@ -113,6 +115,15 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     size_t totalCmdBuffers = 0;
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
+
+        bool indirectAllocationsAllowed = commandList->hasIndirectAllocationsAllowed();
+        if (indirectAllocationsAllowed) {
+            UnifiedMemoryControls unifiedMemoryControls = commandList->getUnifiedMemoryControls();
+
+            auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
+            svmAllocsManager->addInternalAllocationsToResidencyContainer(commandList->commandContainer.getResidencyContainer(),
+                                                                         unifiedMemoryControls.generateMask());
+        }
 
         totalCmdBuffers += commandList->commandContainer.getCmdBufferAllocations().size();
         spaceForResidency += commandList->commandContainer.getResidencyContainer().size();

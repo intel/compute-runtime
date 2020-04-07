@@ -136,6 +136,14 @@ struct CommandList : _ze_command_list_handle_t {
         return commandListPreemptionMode;
     }
 
+    UnifiedMemoryControls getUnifiedMemoryControls() const {
+        return unifiedMemoryControls;
+    }
+
+    bool hasIndirectAllocationsAllowed() const {
+        return indirectAllocationsAllowed;
+    }
+
     NEO::PreemptionMode obtainFunctionPreemptionMode(Kernel *kernel);
 
     std::vector<Kernel *> &getPrintfFunctionContainer() {
@@ -171,6 +179,8 @@ struct CommandList : _ze_command_list_handle_t {
     uint32_t commandListPerThreadScratchSize = 0u;
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
     bool isCopyOnlyCmdList = false;
+    UnifiedMemoryControls unifiedMemoryControls;
+    bool indirectAllocationsAllowed = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

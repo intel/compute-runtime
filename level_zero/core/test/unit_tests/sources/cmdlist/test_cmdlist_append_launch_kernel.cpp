@@ -22,6 +22,36 @@ namespace ult {
 
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsAllowedThenCommandListReturnsExpectedIndirectAllocationsAllowed) {
+    createKernel();
+    kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
+    kernel->unifiedMemoryControls.indirectHostAllocationsAllowed = true;
+    EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
+    EXPECT_TRUE(kernel->hasIndirectAllocationsAllowed());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_TRUE(commandList->hasIndirectAllocationsAllowed());
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsNotAllowedThenCommandListReturnsExpectedIndirectAllocationsAllowed) {
+    createKernel();
+    kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
+    kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
+    kernel->unifiedMemoryControls.indirectHostAllocationsAllowed = false;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_FALSE(commandList->hasIndirectAllocationsAllowed());
+}
+
 HWTEST_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAppendingKernelThenBbEndIsAddedAndNewCmdBufferAllocated) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     createKernel();

@@ -14,6 +14,8 @@
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
@@ -281,6 +283,65 @@ HWTEST_F(CommandQueueCommands, givenCommandQueueWhenExecutingCommandListsThenHar
     }
     EXPECT_EQ(status, ZE_RESULT_SUCCESS);
     EXPECT_TRUE(csr.programHardwareContextCalled);
+    commandQueue->destroy();
+}
+
+using CommandQueueIndirectAllocations = Test<ModuleFixture>;
+HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandListsThenExpectedIndirectAllocationsAddedToResidencyContainer) {
+    const ze_command_queue_desc_t desc = {
+        ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT,
+        ZE_COMMAND_QUEUE_FLAG_NONE,
+        ZE_COMMAND_QUEUE_MODE_DEFAULT,
+        ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
+        0};
+
+    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0);
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          &csr,
+                                                          &desc,
+                                                          true);
+    ASSERT_NE(nullptr, commandQueue);
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, true));
+
+    void *deviceAlloc = nullptr;
+    auto result = device->getDriverHandle()->allocDeviceMem(device->toHandle(), ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT, 16384u, 4096u, &deviceAlloc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(deviceAlloc)->gpuAllocation;
+    ASSERT_NE(nullptr, gpuAlloc);
+
+    createKernel();
+    kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    result = commandList->appendLaunchKernel(kernel->toHandle(),
+                                             &groupCount,
+                                             nullptr,
+                                             0,
+                                             nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),
+                               std::end(commandList->commandContainer.getResidencyContainer()),
+                               gpuAlloc);
+    EXPECT_EQ(itorEvent, std::end(commandList->commandContainer.getResidencyContainer()));
+
+    auto commandListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),
+                          std::end(commandList->commandContainer.getResidencyContainer()),
+                          gpuAlloc);
+    EXPECT_NE(itorEvent, std::end(commandList->commandContainer.getResidencyContainer()));
+
+    device->getDriverHandle()->getSvmAllocsManager()->freeSVMAlloc(deviceAlloc);
     commandQueue->destroy();
 }
 
