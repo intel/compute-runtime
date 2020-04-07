@@ -8,8 +8,6 @@
 ## L0 tests settings
 ##
 
-
-if(NOT SKIP_L0_UNIT_TESTS)
 # These need to be added to a project to enable platform support in ULTs
 if(TESTS_GEN8)
     set(COMPUTE_RUNTIME_ULT_GEN8
@@ -43,12 +41,10 @@ endif()
 ## ULT related settings
 
 #Extract compute runtime COMPILE_DEFINITIONS
-if(NOT SKIP_L0_UNIT_TESTS)
-    get_property(COMPUTE_RUNTIME_MOCKABLE_DEFINITIONS
-    TARGET ${NEO_MOCKABLE_LIB_NAME}
+get_property(COMPUTE_RUNTIME_MOCKABLE_DEFINITIONS
+TARGET ${NEO_MOCKABLE_LIB_NAME}
     PROPERTY COMPILE_DEFINITIONS
 )
-endif()
 
 #Append additional definitions
 set(COMPUTE_RUNTIME_MOCKABLE_DEFINITIONS
@@ -82,39 +78,38 @@ add_library(compute_runtime_mockable_extra
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/test_files.cpp
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_compiler_interface.cpp
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_compiler_interface.h
-        ${COMPUTE_RUNTIME_DIR}/opencl/source/aub/aub_stream_interface.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/abort.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/helpers/built_ins_helper.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/helpers/debug_helpers.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/os_interface.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/source_level_debugger_ult.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/source_level_debugger_library.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_cif.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_compilers.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_csr.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/create_tbx_sockets.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_deferred_deleter.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks${BRANCH_SUFIX_DIR}/mock_gmm_client_context.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_gmm_client_context_base.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_memory_manager.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_program.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_sip.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
-        ${COMPUTE_RUNTIME_DIR}/shared/source/debug_settings/debug_settings_manager.cpp
-        ${COMPUTE_RUNTIME_DIR}/shared/test/unit_test/mocks/mock_device.cpp
+        ${NEO_SOURCE_DIR}/opencl/source/aub/aub_stream_interface.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/built_ins_helper.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/debug_helpers.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/os_interface.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/source_level_debugger_ult.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/source_level_debugger_library.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_cif.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_compilers.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_csr.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_tbx_sockets.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_deferred_deleter.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks${BRANCH_SUFIX_DIR}/mock_gmm_client_context.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_client_context_base.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_resource_info.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_memory_manager.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_program.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_sip.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
+        ${NEO_SOURCE_DIR}/shared/source/debug_settings/debug_settings_manager.cpp
+        ${NEO_SOURCE_DIR}/shared/test/unit_test/mocks/mock_device.cpp
 )
 
 set_property(TARGET compute_runtime_mockable_extra APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
-set_target_properties(compute_runtime_mockable_extra PROPERTIES FOLDER ${TARGET_NAME_L0})
 
 # These need to be added to a project to enable platform support in ULTs
-
 #Additional includes for ULT builds
 target_include_directories(compute_runtime_mockable_extra
     PUBLIC
         ${COMPUTE_RUNTIME_MOCKABLE_INCLUDES}
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/gmm_memory
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/gmm_memory
         ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
 )
 
@@ -131,10 +126,10 @@ target_link_libraries(compute_runtime_mockable_extra
 if(WIN32)
     target_sources(compute_runtime_mockable_extra
         PRIVATE
-            ${COMPUTE_RUNTIME_DIR}/shared/source/dll/windows/environment_variables.cpp
-            ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_gmm_memory_base.cpp
-            ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_wddm.cpp
-            ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_compilers_windows.cpp
+            ${NEO_SOURCE_DIR}/shared/source/dll/windows/environment_variables.cpp
+            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_memory_base.cpp
+            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_wddm.cpp
+            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_compilers_windows.cpp
     )
 
     target_link_libraries(compute_runtime_mockable_extra
@@ -145,14 +140,12 @@ endif()
 if(UNIX)
     target_sources(compute_runtime_mockable_extra
         PRIVATE
-            ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/linux/allocator_helper.cpp
-            ${COMPUTE_RUNTIME_DIR}/opencl/source/tbx/tbx_sockets_imp.cpp
-            ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/drm_mock.cpp
+            ${NEO_SOURCE_DIR}/opencl/source/dll/linux/allocator_helper.cpp
+            ${NEO_SOURCE_DIR}/opencl/source/tbx/tbx_sockets_imp.cpp
+            ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_mock.cpp
 )
     target_link_libraries(compute_runtime_mockable_extra
         dl
     )
 endif()
 set_target_properties(compute_runtime_mockable_extra PROPERTIES POSITION_INDEPENDENT_CODE ON)
-endif()
-

@@ -854,7 +854,6 @@ set(BUILTINS_VME_LIB_NAME "builtins_vme")
 set(SCHEDULER_BINARY_LIB_NAME "scheduler_binary")
 
 add_subdirectory_unique(shared/source)
-add_subdirectory_unique(shared/test/unit_test)
 
 macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
     set(NEO_STATIC_LIB_NAME ${LIB_NAME})
@@ -907,6 +906,12 @@ endif()
 
 set(NEO_STATICALLY_LINKED_LIBRARIES ${NEO_RELEASE_LIB_NAME} ${NEO_SHARED_RELEASE_LIB_NAME} ${NEO_RELEASE_LIB_NAME} ${NEO_SHARED_RELEASE_LIB_NAME})
 set(NEO_STATICALLY_LINKED_LIBRARIES_MOCKABLE ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME} ${NEO_MOCKABLE_LIB_NAME} ${NEO_SHARED_MOCKABLE_LIB_NAME})
+
+if(NOT SKIP_UNIT_TESTS)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/level_zero/cmake/${BRANCH_TYPE}/l0_tests.cmake)
+endif()
+
+add_subdirectory_unique(shared/test/unit_test)
 
 if(DEFAULT_TESTED_PLATFORM AND NOT SKIP_NEO_UNIT_TESTS)
   add_subdirectory_unique(${NEO_RUNTIME_TESTS_SUB_DIR} ${NEO_BUILD_DIR}/${NEO_RUNTIME_TESTS_SUB_DIR})

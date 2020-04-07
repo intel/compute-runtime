@@ -9,5 +9,6 @@ set(NEO_CORE_COMMAND_CONTAINER_TESTS
   ${CMAKE_CURRENT_SOURCE_DIR}/command_container_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests.cpp
 )
+
 set_property(GLOBAL PROPERTY NEO_CORE_COMMAND_CONTAINER_TESTS ${NEO_CORE_COMMAND_CONTAINER_TESTS})
 add_subdirectories()

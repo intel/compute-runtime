@@ -113,7 +113,7 @@ target_link_libraries(${TARGET_NAME}
 )
 
 if(SKIP_NEO_UNIT_TESTS)
-    add_subdirectory(${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mock_gmm ${CMAKE_BINARY_DIR}/mock_gmm)
+    add_subdirectory(${NEO_SOURCE_DIR}/opencl/test/unit_test/mock_gmm ${CMAKE_BINARY_DIR}/mock_gmm)
 endif()
 
 target_sources(${TARGET_NAME} PRIVATE

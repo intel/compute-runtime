@@ -77,10 +77,6 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
         set(SKIP_L0_UNIT_TESTS TRUE)
     endif()
 
-    if(NOT SKIP_L0_UNIT_TESTS)
-        include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/${BRANCH_TYPE}/l0_tests.cmake)
-    endif()
-
     # Copy third_party_binaries to output BIN folder
     add_custom_target(copy_third_party_files)
     set_target_properties(copy_third_party_files PROPERTIES FOLDER ${TARGET_NAME_L0})
