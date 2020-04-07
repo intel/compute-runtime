@@ -41,4 +41,5 @@ void MockDispatchKernelEncoder::expectAnyMockFunctionCall() {
     EXPECT_CALL(*this, hasGroupCounts()).Times(::testing::AnyNumber());
     EXPECT_CALL(*this, getSurfaceStateHeap()).Times(::testing::AnyNumber());
     EXPECT_CALL(*this, getDynamicStateHeap()).Times(::testing::AnyNumber());
+    EXPECT_CALL(*this, isInlineDataRequired()).Times(::testing::AnyNumber());
 }

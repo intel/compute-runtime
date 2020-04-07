@@ -17,9 +17,9 @@ namespace L0 {
 
 NEO::GraphicsAllocation *PrintfHandler::createPrintfBuffer(Device *device) {
     NEO::AllocationProperties properties(
-        device->getRootDeviceIndex(), PrintfHandler::printfBufferSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+        device->getRootDeviceIndex(), PrintfHandler::printfBufferSize, NEO::GraphicsAllocation::AllocationType::PRINTF_SURFACE);
     properties.alignment = MemoryConstants::pageSize64k;
-    auto allocation = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+    auto allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
     *reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer()) =
         PrintfHandler::printfSurfaceInitialDataSize;
