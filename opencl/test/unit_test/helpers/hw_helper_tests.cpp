@@ -63,12 +63,12 @@ TEST(HwHelperSimpleTest, givenDebugVariableWhenAskingForRenderCompressionThenRet
     EXPECT_FALSE(HwHelper::renderCompressedImagesSupported(localHwInfo));
 }
 
-TEST_F(HwHelperTest, getReturnsValidHwHelperHw) {
+TEST_F(HwHelperTest, WhenGettingHelperThenValidHelperReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_NE(nullptr, &helper);
 }
 
-HWTEST_F(HwHelperTest, getBindingTableStateSurfaceStatePointerReturnsCorrectPointer) {
+HWTEST_F(HwHelperTest, WhenGettingBindingTableStateSurfaceStatePointerThenCorrectPointerIsReturned) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     BINDING_TABLE_STATE bindingTableState[4];
 
@@ -80,7 +80,7 @@ HWTEST_F(HwHelperTest, getBindingTableStateSurfaceStatePointerReturnsCorrectPoin
     EXPECT_EQ(0x00123456u, pointer);
 }
 
-HWTEST_F(HwHelperTest, getBindingTableStateSizeReturnsCorrectSize) {
+HWTEST_F(HwHelperTest, WhenGettingBindingTableStateSizeThenCorrectSizeIsReturned) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
 
     auto &helper = HwHelper::get(renderCoreFamily);
@@ -89,12 +89,12 @@ HWTEST_F(HwHelperTest, getBindingTableStateSizeReturnsCorrectSize) {
     EXPECT_EQ(sizeof(BINDING_TABLE_STATE), pointer);
 }
 
-TEST_F(HwHelperTest, getBindingTableStateAlignementReturnsCorrectSize) {
+TEST_F(HwHelperTest, WhenGettingBindingTableStateAlignementThenCorrectSizeIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_NE(0u, helper.getBindingTableStateAlignement());
 }
 
-HWTEST_F(HwHelperTest, getInterfaceDescriptorDataSizeReturnsCorrectSize) {
+HWTEST_F(HwHelperTest, WhenGettingInterfaceDescriptorDataSizeThenCorrectSizeIsReturned) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     auto &helper = HwHelper::get(renderCoreFamily);
 
@@ -122,7 +122,7 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskedForPageTableManagerSupportThenRetur
     EXPECT_EQ(helper.isPageTableManagerSupported(hardwareInfo), UnitTestHelper<FamilyType>::isPageTableManagerSupported(hardwareInfo));
 }
 
-TEST(DwordBuilderTest, setNonMaskedBits) {
+TEST(DwordBuilderTest, WhenSettingNonMaskedBitsThenOnlySelectedBitAreSet) {
     uint32_t dword = 0;
 
     // expect non-masked bit 2
@@ -136,7 +136,7 @@ TEST(DwordBuilderTest, setNonMaskedBits) {
     EXPECT_EQ(expectedDword, dword);
 }
 
-TEST(DwordBuilderTest, setMaskedBits) {
+TEST(DwordBuilderTest, WhenSettingMaskedBitsThenOnlySelectedBitAreSet) {
     uint32_t dword = 0;
 
     // expect masked bit 2
@@ -152,7 +152,7 @@ TEST(DwordBuilderTest, setMaskedBits) {
     EXPECT_EQ(expectedDword, dword);
 }
 
-TEST(DwordBuilderTest, setMaskedBitsWithDifferentBitValue) {
+TEST(DwordBuilderTest, GivenDifferentBitValuesWhenSettingMaskedBitsThenOnlySelectedBitAreSet) {
     // expect only mask bit
     uint32_t expectedDword = 1 << (2 + 16);
     auto dword = DwordBuilder::build(2, true, false, 0);
@@ -581,7 +581,7 @@ HWTEST_F(HwHelperTest, DISABLED_profilingCreationOfRenderSurfaceStateVsMemcpyOfC
     }
 }
 
-HWTEST_F(HwHelperTest, testIfL3ConfigProgrammable) {
+HWTEST_F(HwHelperTest, WhenTestingIfL3ConfigProgrammableThenCorrectValueIsReturned) {
     bool PreambleHelperL3Config;
     bool isL3Programmable;
     const HardwareInfo &hwInfo = *defaultHwInfo;
