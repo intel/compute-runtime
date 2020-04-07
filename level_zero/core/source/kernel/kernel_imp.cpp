@@ -185,43 +185,14 @@ ze_result_t KernelImp::setArgumentValue(uint32_t argIndex, size_t argSize,
 }
 
 void KernelImp::setGroupCount(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) {
-    uint32_t groupSizeX;
-    uint32_t groupSizeY;
-    uint32_t groupSizeZ;
-    getGroupSize(groupSizeX, groupSizeY, groupSizeZ);
-
     const NEO::KernelDescriptor &desc = kernelImmData->getDescriptor();
-    uint32_t globalWorkSize[3] = {groupCountX * groupSizeX, groupCountY * groupSizeY,
-                                  groupCountZ * groupSizeZ};
+    uint32_t globalWorkSize[3] = {groupCountX * groupSize[0], groupCountY * groupSize[1],
+                                  groupCountZ * groupSize[2]};
     auto dst = ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize);
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.globalWorkSize, globalWorkSize);
 
     uint32_t groupCount[3] = {groupCountX, groupCountY, groupCountZ};
     NEO::patchVecNonPointer(dst, desc.payloadMappings.dispatchTraits.numWorkGroups, groupCount);
-}
-
-bool KernelImp::getGroupCountOffsets(uint32_t *locations) {
-    const NEO::KernelDescriptor &desc = kernelImmData->getDescriptor();
-    for (int i = 0; i < 3; i++) {
-        if (NEO::isValidOffset(desc.payloadMappings.dispatchTraits.numWorkGroups[i])) {
-            locations[i] = desc.payloadMappings.dispatchTraits.numWorkGroups[i];
-        } else {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool KernelImp::getGroupSizeOffsets(uint32_t *locations) {
-    const NEO::KernelDescriptor &desc = kernelImmData->getDescriptor();
-    for (int i = 0; i < 3; i++) {
-        if (NEO::isValidOffset(desc.payloadMappings.dispatchTraits.globalWorkSize[i])) {
-            locations[i] = desc.payloadMappings.dispatchTraits.globalWorkSize[i];
-        } else {
-            return false;
-        }
-    }
-    return true;
 }
 
 ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
@@ -267,8 +238,8 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     this->groupSize[2] = groupSizeZ;
 
     auto simdSize = kernelImmData->getDescriptor().kernelAttributes.simdSize;
-    this->threadsPerThreadGroup = static_cast<uint32_t>((itemsInGroup + simdSize - 1u) / simdSize);
-    this->perThreadDataSize = perThreadDataSizeForWholeThreadGroup / threadsPerThreadGroup;
+    this->numThreadsPerThreadGroup = static_cast<uint32_t>((itemsInGroup + simdSize - 1u) / simdSize);
+    this->perThreadDataSize = perThreadDataSizeForWholeThreadGroup / numThreadsPerThreadGroup;
     patchWorkgroupSizeInCrossThreadData(groupSizeX, groupSizeY, groupSizeZ);
 
     auto remainderSimdLanes = itemsInGroup & (simdSize - 1u);
@@ -297,7 +268,7 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
         uint32_t numThreadsPerSubSlice = (uint32_t)deviceInfo.maxNumEUsPerSubSlice * deviceInfo.numThreadsPerEU;
         uint32_t localMemSize = (uint32_t)deviceInfo.localMemSize;
 
-        NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, this->hasBarriers(), simd, this->getSlmTotalSize(),
+        NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelImmData->getDescriptor().kernelAttributes.flags.usesBarriers, simd, this->getSlmTotalSize(),
                                  coreFamily, numThreadsPerSubSlice, localMemSize,
                                  usesImages, false);
         NEO::computeWorkgroupSizeND(wsInfo, retGroupSize, workItems, dim);
@@ -672,92 +643,12 @@ bool KernelImp::hasIndirectAllocationsAllowed() const {
             unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
-bool KernelImp::hasBarriers() {
-    return getImmutableData()->getDescriptor().kernelAttributes.flags.usesBarriers;
-}
-uint32_t KernelImp::getSlmTotalSize() {
+uint32_t KernelImp::getSlmTotalSize() const {
     return slmArgsTotalSize + getImmutableData()->getDescriptor().kernelAttributes.slmInlineSize;
 }
-uint32_t KernelImp::getBindingTableOffset() {
-    return getImmutableData()->getDescriptor().payloadMappings.bindingTable.tableOffset;
-}
-uint32_t KernelImp::getBorderColor() {
-    return getImmutableData()->getDescriptor().payloadMappings.samplerTable.borderColor;
-}
-uint32_t KernelImp::getSamplerTableOffset() {
-    return getImmutableData()->getDescriptor().payloadMappings.samplerTable.tableOffset;
-}
-uint32_t KernelImp::getNumSurfaceStates() {
-    return getImmutableData()->getDescriptor().payloadMappings.bindingTable.numEntries;
-}
-uint32_t KernelImp::getNumSamplers() {
-    return getImmutableData()->getDescriptor().payloadMappings.samplerTable.numSamplers;
-}
-uint32_t KernelImp::getSimdSize() {
-    return getImmutableData()->getDescriptor().kernelAttributes.simdSize;
-}
-uint32_t KernelImp::getSizeCrossThreadData() {
-    return getCrossThreadDataSize();
-}
-uint32_t KernelImp::getPerThreadScratchSize() {
-    return getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0];
-}
-uint32_t KernelImp::getThreadsPerThreadGroupCount() {
-    return getThreadsPerThreadGroup();
-}
-uint32_t KernelImp::getSizePerThreadData() {
-    return getPerThreadDataSize();
-}
-uint32_t KernelImp::getSizePerThreadDataForWholeGroup() {
-    return getPerThreadDataSizeForWholeThreadGroup();
-}
-uint32_t KernelImp::getSizeSurfaceStateHeapData() {
-    return getSurfaceStateHeapDataSize();
-}
-uint32_t KernelImp::getPerThreadExecutionMask() {
-    return getThreadExecutionMask();
-}
-uint32_t *KernelImp::getCountOffsets() {
-    return groupCountOffsets;
-}
-uint32_t *KernelImp::getSizeOffsets() {
-    return groupSizeOffsets;
-}
-uint32_t *KernelImp::getLocalWorkSize() {
-    if (hasGroupSize()) {
-        getGroupSize(localWorkSize[0], localWorkSize[1], localWorkSize[2]);
-    }
-    return localWorkSize;
-}
-uint32_t KernelImp::getNumGrfRequired() {
-    return getImmutableData()->getDescriptor().kernelAttributes.numGrfRequired;
-}
-NEO::GraphicsAllocation *KernelImp::getIsaAllocation() {
+
+NEO::GraphicsAllocation *KernelImp::getIsaAllocation() const {
     return getImmutableData()->getIsaGraphicsAllocation();
 }
-bool KernelImp::hasGroupCounts() {
-    return getGroupCountOffsets(groupCountOffsets);
-}
-bool KernelImp::hasGroupSize() {
-    return getGroupSizeOffsets(groupSizeOffsets);
-}
-const void *KernelImp::getSurfaceStateHeap() {
-    return getSurfaceStateHeapData();
-}
-const void *KernelImp::getDynamicStateHeap() {
-    return getDynamicStateHeapData();
-}
-const void *KernelImp::getCrossThread() {
-    return getCrossThreadData();
-}
-const void *KernelImp::getPerThread() {
-    return getPerThreadData();
-}
-bool KernelImp::isInlineDataRequired() {
-    return getImmutableData()->getDescriptor().kernelAttributes.flags.passInlineData;
-}
 
-uint8_t KernelImp::getNumLocalIdChannels() {
-    return getImmutableData()->getDescriptor().kernelAttributes.numLocalIdChannels;
-}
 } // namespace L0

@@ -25,8 +25,8 @@ uint32_t KernelHelper::getMaxWorkGroupCount(uint32_t simd, uint32_t availableThr
         workGroupSize *= localWorkSize[i];
     }
 
-    auto threadsPerThreadGroup = static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, simd));
-    auto maxWorkGroupsCount = availableThreadCount / threadsPerThreadGroup;
+    auto numThreadsPerThreadGroup = static_cast<uint32_t>(Math::divideAndRoundUp(workGroupSize, simd));
+    auto maxWorkGroupsCount = availableThreadCount / numThreadsPerThreadGroup;
 
     if (numberOfBarriers > 0) {
         auto maxWorkGroupsCountDueToBarrierUsage = dssCount * (maxBarrierCount / numberOfBarriers);

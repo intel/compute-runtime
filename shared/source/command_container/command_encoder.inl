@@ -199,17 +199,23 @@ void EncodeMathMMIO<Family>::encodeAluAdd(MI_MATH_ALU_INST_INLINE *pAluParam,
 }
 
 template <typename Family>
-void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &container, uint32_t offsets[3], void *crossThreadAddress) {
-    EncodeStoreMMIO<Family>::encode(container, GPUGPU_DISPATCHDIMX, ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[0]));
-    EncodeStoreMMIO<Family>::encode(container, GPUGPU_DISPATCHDIMY, ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[1]));
-    EncodeStoreMMIO<Family>::encode(container, GPUGPU_DISPATCHDIMZ, ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[2]));
+void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress) {
+    for (int i = 0; i < 3; ++i) {
+        if (NEO::isUndefinedOffset(offsets[i])) {
+            continue;
+        }
+        EncodeStoreMMIO<Family>::encode(container, GPUGPU_DISPATCHDIM[i], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[i]));
+    }
 }
 
 template <typename Family>
-void EncodeIndirectParams<Family>::setGroupSizeIndirect(CommandContainer &container, uint32_t offsets[3], void *crossThreadAddress, uint32_t lws[3]) {
-    EncodeMathMMIO<Family>::encodeMulRegVal(container, GPUGPU_DISPATCHDIMX, lws[0], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[0]));
-    EncodeMathMMIO<Family>::encodeMulRegVal(container, GPUGPU_DISPATCHDIMY, lws[1], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[1]));
-    EncodeMathMMIO<Family>::encodeMulRegVal(container, GPUGPU_DISPATCHDIMZ, lws[2], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[2]));
+void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, const uint32_t *lws) {
+    for (int i = 0; i < 3; ++i) {
+        if (NEO::isUndefinedOffset(offsets[i])) {
+            continue;
+        }
+        EncodeMathMMIO<Family>::encodeMulRegVal(container, GPUGPU_DISPATCHDIM[i], lws[i], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[i]));
+    }
 }
 
 template <typename Family>

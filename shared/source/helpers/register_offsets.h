@@ -19,6 +19,8 @@ constexpr uint32_t GPUGPU_DISPATCHDIMX = 0x2500;
 constexpr uint32_t GPUGPU_DISPATCHDIMY = 0x2504;
 constexpr uint32_t GPUGPU_DISPATCHDIMZ = 0x2508;
 
+constexpr uint32_t GPUGPU_DISPATCHDIM[3] = {GPUGPU_DISPATCHDIMX, GPUGPU_DISPATCHDIMY, GPUGPU_DISPATCHDIMZ};
+
 constexpr uint32_t CS_GPR_R0 = 0x2600;
 constexpr uint32_t CS_GPR_R1 = 0x2608;
 constexpr uint32_t CS_GPR_R2 = 0x2610;

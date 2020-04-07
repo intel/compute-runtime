@@ -12,6 +12,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
+#include "shared/source/kernel/kernel_arg_descriptor.h"
 
 #include <algorithm>
 
@@ -96,9 +97,8 @@ struct EncodeIndirectParams {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_MATH = typename GfxFamily::MI_MATH;
     using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
-    static void setGroupCountIndirect(CommandContainer &container, uint32_t offsets[3], void *crossThreadAddress);
-
-    static void setGroupSizeIndirect(CommandContainer &container, uint32_t offsets[3], void *crossThreadAddress, uint32_t lws[3]);
+    static void setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress);
+    static void setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, const uint32_t *lws);
 
     static size_t getCmdsSizeForIndirectParams();
     static size_t getCmdsSizeForSetGroupSizeIndirect();

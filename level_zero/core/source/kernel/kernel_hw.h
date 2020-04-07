@@ -77,7 +77,7 @@ struct KernelHw : public KernelImp {
         }
 
         std::copy(this->groupSize, this->groupSize + 3, cloned->groupSize);
-        cloned->threadsPerThreadGroup = this->threadsPerThreadGroup;
+        cloned->numThreadsPerThreadGroup = this->numThreadsPerThreadGroup;
         cloned->threadExecutionMask = this->threadExecutionMask;
 
         if (this->surfaceStateHeapDataSize > 0) {

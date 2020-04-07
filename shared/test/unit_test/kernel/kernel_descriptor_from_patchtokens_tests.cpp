@@ -129,6 +129,9 @@ TEST(KernelDescriptorFromPatchtokens, GivenExecutionEnvironmentThenSetsProperPar
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics);
 
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites);
+    execEnv.StatelessWritesCount = 1U;
+    NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesStatelessWrites);
 }
 
 TEST(KernelDescriptorFromPatchtokens, GivenThreadPayloadThenSetsProperPartsOfDescriptor) {

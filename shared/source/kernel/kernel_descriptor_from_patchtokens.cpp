@@ -55,7 +55,7 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchExecutionEnviro
     dst.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress = (0 != execEnv.SubgroupIndependentForwardProgressRequired);
     dst.kernelAttributes.numGrfRequired = execEnv.NumGRFRequired;
     dst.kernelAttributes.flags.useGlobalAtomics = execEnv.HasGlobalAtomics;
-    dst.kernelAttributes.flags.usesStatelessWrites = 0U;
+    dst.kernelAttributes.flags.usesStatelessWrites = (execEnv.StatelessWritesCount > 0U);
 }
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchSamplerStateArray &token) {
@@ -85,7 +85,6 @@ void populateKernelDescriptor(KernelDescriptor &dst, const SPatchInterfaceDescri
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchThreadPayload &token) {
     dst.kernelAttributes.flags.perThreadDataHeaderIsPresent = (0U != token.HeaderPresent);
     dst.kernelAttributes.numLocalIdChannels = token.LocalIDXPresent + token.LocalIDYPresent + token.LocalIDZPresent;
-    ;
     dst.kernelAttributes.flags.usesFlattenedLocalIds = (0U != token.LocalIDFlattenedPresent);
     dst.kernelAttributes.flags.perThreadDataUnusedGrfIsPresent = (0U != token.UnusedPerThreadConstantPresent);
     dst.kernelAttributes.flags.passInlineData = (0 != token.PassInlineData);

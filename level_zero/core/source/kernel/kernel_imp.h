@@ -42,10 +42,6 @@ struct KernelImp : Kernel {
 
     void setGroupCount(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) override;
 
-    bool getGroupCountOffsets(uint32_t *locations) override;
-
-    bool getGroupSizeOffsets(uint32_t *locations) override;
-
     ze_result_t setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                              uint32_t groupSizeZ) override;
 
@@ -60,13 +56,6 @@ struct KernelImp : Kernel {
 
     const std::vector<NEO::GraphicsAllocation *> &getResidencyContainer() const override {
         return residencyContainer;
-    }
-
-    void getGroupSize(uint32_t &outGroupSizeX, uint32_t &outGroupSizeY,
-                      uint32_t &outGroupSizeZ) const override {
-        outGroupSizeX = this->groupSize[0];
-        outGroupSizeY = this->groupSize[1];
-        outGroupSizeZ = this->groupSize[2];
     }
 
     ze_result_t setArgImmediate(uint32_t argIndex, size_t argSize, const void *argVal);
@@ -89,7 +78,7 @@ struct KernelImp : Kernel {
     uint32_t getPerThreadDataSizeForWholeThreadGroup() const override { return perThreadDataSizeForWholeThreadGroup; }
 
     uint32_t getPerThreadDataSize() const override { return perThreadDataSize; }
-    uint32_t getThreadsPerThreadGroup() const override { return threadsPerThreadGroup; }
+    uint32_t getNumThreadsPerThreadGroup() const override { return numThreadsPerThreadGroup; }
     uint32_t getThreadExecutionMask() const override { return threadExecutionMask; }
 
     NEO::GraphicsAllocation *getPrintfBufferAllocation() override { return this->printfBuffer; }
@@ -99,41 +88,20 @@ struct KernelImp : Kernel {
     uint32_t getSurfaceStateHeapDataSize() const override { return surfaceStateHeapDataSize; }
 
     const uint8_t *getDynamicStateHeapData() const override { return dynamicStateHeapData.get(); }
-    size_t getDynamicStateHeapDataSize() const override { return dynamicStateHeapDataSize; }
 
     const KernelImmutableData *getImmutableData() const override { return kernelImmData; }
 
     UnifiedMemoryControls getUnifiedMemoryControls() const override { return unifiedMemoryControls; }
     bool hasIndirectAllocationsAllowed() const override;
 
-    bool hasBarriers() override;
-    uint32_t getSlmTotalSize() override;
-    uint32_t getBindingTableOffset() override;
-    uint32_t getBorderColor() override;
-    uint32_t getSamplerTableOffset() override;
-    uint32_t getNumSurfaceStates() override;
-    uint32_t getNumSamplers() override;
-    uint32_t getSimdSize() override;
-    uint32_t getSizeCrossThreadData() override;
-    uint32_t getPerThreadScratchSize() override;
-    uint32_t getThreadsPerThreadGroupCount() override;
-    uint32_t getSizePerThreadData() override;
-    uint32_t getSizePerThreadDataForWholeGroup() override;
-    uint32_t getSizeSurfaceStateHeapData() override;
-    uint32_t getPerThreadExecutionMask() override;
-    uint32_t *getCountOffsets() override;
-    uint32_t *getSizeOffsets() override;
-    uint32_t *getLocalWorkSize() override;
-    uint32_t getNumGrfRequired() override;
-    NEO::GraphicsAllocation *getIsaAllocation() override;
-    bool hasGroupCounts() override;
-    bool hasGroupSize() override;
-    const void *getSurfaceStateHeap() override;
-    const void *getDynamicStateHeap() override;
-    const void *getCrossThread() override;
-    const void *getPerThread() override;
-    bool isInlineDataRequired() override;
-    uint8_t getNumLocalIdChannels() override;
+    const NEO::KernelDescriptor &getKernelDescriptor() const override {
+        return kernelImmData->getDescriptor();
+    }
+    const uint32_t *getGroupSize() const override {
+        return groupSize;
+    }
+    uint32_t getSlmTotalSize() const override;
+    NEO::GraphicsAllocation *getIsaAllocation() const override;
 
   protected:
     KernelImp() = default;
@@ -153,7 +121,7 @@ struct KernelImp : Kernel {
     NEO::GraphicsAllocation *printfBuffer = nullptr;
 
     uint32_t groupSize[3] = {0u, 0u, 0u};
-    uint32_t threadsPerThreadGroup = 0u;
+    uint32_t numThreadsPerThreadGroup = 0u;
     uint32_t threadExecutionMask = 0u;
 
     std::unique_ptr<uint8_t[]> crossThreadData = 0;

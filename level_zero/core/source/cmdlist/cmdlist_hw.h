@@ -155,7 +155,7 @@ struct CommandListCoreFamily : CommandListImp {
     void applyMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                   const void **pRanges);
 
-    ze_result_t setGroupSizeIndirect(uint32_t offsets[3], void *crossThreadAddress, uint32_t lws[3]);
+    ze_result_t setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, uint32_t lws[3]);
     void appendEventForProfiling(ze_event_handle_t hEvent, bool beforeWalker);
     void appendSignalEventPostWalker(ze_event_handle_t hEvent);
 

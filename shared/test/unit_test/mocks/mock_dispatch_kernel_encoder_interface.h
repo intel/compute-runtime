@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
@@ -20,34 +21,24 @@ class GraphicsAllocation;
 struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
   public:
     MockDispatchKernelEncoder();
-    MOCK_METHOD0(hasBarriers, bool());
-    MOCK_METHOD0(getSlmTotalSize, uint32_t());
-    MOCK_METHOD0(getBindingTableOffset, uint32_t());
-    MOCK_METHOD0(getBorderColor, uint32_t());
-    MOCK_METHOD0(getSamplerTableOffset, uint32_t());
-    MOCK_METHOD0(getNumSurfaceStates, uint32_t());
-    MOCK_METHOD0(getNumSamplers, uint32_t());
-    MOCK_METHOD0(getSimdSize, uint32_t());
-    MOCK_METHOD0(getSizeCrossThreadData, uint32_t());
-    MOCK_METHOD0(getPerThreadScratchSize, uint32_t());
-    MOCK_METHOD0(getPerThreadExecutionMask, uint32_t());
-    MOCK_METHOD0(getSizePerThreadData, uint32_t());
-    MOCK_METHOD0(getSizePerThreadDataForWholeGroup, uint32_t());
-    MOCK_METHOD0(getSizeSurfaceStateHeapData, uint32_t());
-    MOCK_METHOD0(getCountOffsets, uint32_t *());
-    MOCK_METHOD0(getSizeOffsets, uint32_t *());
-    MOCK_METHOD0(getLocalWorkSize, uint32_t *());
-    MOCK_METHOD0(getNumGrfRequired, uint32_t());
-    MOCK_METHOD0(getThreadsPerThreadGroupCount, uint32_t());
-    MOCK_METHOD0(getIsaAllocation, GraphicsAllocation *());
-    MOCK_METHOD0(hasGroupCounts, bool());
-    MOCK_METHOD0(hasGroupSize, bool());
-    MOCK_METHOD0(getSurfaceStateHeap, const void *());
-    MOCK_METHOD0(getDynamicStateHeap, const void *());
-    MOCK_METHOD0(getCrossThread, const void *());
-    MOCK_METHOD0(getPerThread, const void *());
-    MOCK_METHOD0(isInlineDataRequired, bool());
-    MOCK_METHOD0(getNumLocalIdChannels, uint8_t());
+    MOCK_CONST_METHOD0(getKernelDescriptor, const KernelDescriptor &());
+    MOCK_CONST_METHOD0(getGroupSize, const uint32_t *());
+    MOCK_CONST_METHOD0(getSlmTotalSize, uint32_t());
+
+    MOCK_CONST_METHOD0(getCrossThreadData, const uint8_t *());
+    MOCK_CONST_METHOD0(getCrossThreadDataSize, uint32_t());
+
+    MOCK_CONST_METHOD0(getThreadExecutionMask, uint32_t());
+    MOCK_CONST_METHOD0(getNumThreadsPerThreadGroup, uint32_t());
+    MOCK_CONST_METHOD0(getPerThreadData, const uint8_t *());
+    MOCK_CONST_METHOD0(getPerThreadDataSize, uint32_t());
+    MOCK_CONST_METHOD0(getPerThreadDataSizeForWholeThreadGroup, uint32_t());
+
+    MOCK_CONST_METHOD0(getSurfaceStateHeapData, const uint8_t *());
+    MOCK_CONST_METHOD0(getSurfaceStateHeapDataSize, uint32_t());
+
+    MOCK_CONST_METHOD0(getIsaAllocation, GraphicsAllocation *());
+    MOCK_CONST_METHOD0(getDynamicStateHeapData, const uint8_t *());
 
     void expectAnyMockFunctionCall();
 
@@ -56,5 +47,6 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
     static constexpr uint32_t perThreadSize = 0x20;
     uint8_t dataCrossThread[crossThreadSize];
     uint8_t dataPerThread[perThreadSize];
+    KernelDescriptor kernelDescriptor;
 };
 } // namespace NEO

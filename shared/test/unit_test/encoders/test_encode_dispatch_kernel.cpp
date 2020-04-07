@@ -92,7 +92,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenSlmTotalSizeEqualZeroW
     EXPECT_EQ(expectedValue, interfaceDescriptorData->getSharedLocalMemorySize());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhenDispatchingKernelThenBindingTableOffsetIsCorrect) {
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenOneBindingTableEntryWhenDispatchingKernelThenBindingTableOffsetIsCorrect) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     uint32_t numBindingTable = 1;
@@ -107,10 +107,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givennumBindingTableOneWhen
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
-    EXPECT_CALL(*dispatchInterface.get(), getNumSurfaceStates()).WillRepeatedly(::testing::Return(numBindingTable));
-    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeap()).WillRepeatedly(::testing::Return(&bindingTableState));
-    EXPECT_CALL(*dispatchInterface.get(), getSizeSurfaceStateHeapData()).WillRepeatedly(::testing::Return(static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE))));
-    EXPECT_CALL(*dispatchInterface.get(), getBindingTableOffset()).WillRepeatedly(::testing::Return(0));
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
+    const uint8_t *sshData = reinterpret_cast<uint8_t *>(&bindingTableState);
+    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapData()).WillRepeatedly(::testing::Return(sshData));
+    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapDataSize()).WillRepeatedly(::testing::Return(static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE))));
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled);
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
@@ -132,10 +133,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhen
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
-    EXPECT_CALL(*dispatchInterface.get(), getNumSurfaceStates()).WillRepeatedly(::testing::Return(numBindingTable));
-    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeap()).WillRepeatedly(::testing::Return(&bindingTableState));
-    EXPECT_CALL(*dispatchInterface.get(), getSizeSurfaceStateHeapData()).WillRepeatedly(::testing::Return(static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE))));
-    EXPECT_CALL(*dispatchInterface.get(), getBindingTableOffset()).WillRepeatedly(::testing::Return(0));
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.numEntries = numBindingTable;
+    dispatchInterface->kernelDescriptor.payloadMappings.bindingTable.tableOffset = 0U;
+    const uint8_t *sshData = reinterpret_cast<uint8_t *>(&bindingTableState);
+    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapData()).WillRepeatedly(::testing::Return(sshData));
+    EXPECT_CALL(*dispatchInterface.get(), getSurfaceStateHeapDataSize()).WillRepeatedly(::testing::Return(static_cast<uint32_t>(sizeof(BINDING_TABLE_STATE))));
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled);
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
@@ -156,10 +158,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenDispa
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
-    EXPECT_CALL(*dispatchInterface.get(), getNumSamplers()).WillRepeatedly(::testing::Return(numSamplers));
-    EXPECT_CALL(*dispatchInterface.get(), getSamplerTableOffset()).WillRepeatedly(::testing::Return(0));
-    EXPECT_CALL(*dispatchInterface.get(), getBorderColor()).WillRepeatedly(::testing::Return(0));
-    EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeap()).WillRepeatedly(::testing::Return(&samplerState));
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0U;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0U;
+    const uint8_t *dshData = reinterpret_cast<uint8_t *>(&samplerState);
+    EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeapData()).WillRepeatedly(::testing::Return(dshData));
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled);
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
@@ -186,10 +189,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersZeroWhenDisp
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
-    EXPECT_CALL(*dispatchInterface.get(), getNumSamplers()).WillRepeatedly(::testing::Return(numSamplers));
-    EXPECT_CALL(*dispatchInterface.get(), getSamplerTableOffset()).WillRepeatedly(::testing::Return(0));
-    EXPECT_CALL(*dispatchInterface.get(), getBorderColor()).WillRepeatedly(::testing::Return(0));
-    EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeap()).WillRepeatedly(::testing::Return(&samplerState));
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.tableOffset = 0U;
+    dispatchInterface->kernelDescriptor.payloadMappings.samplerTable.borderColor = 0U;
+    const uint8_t *dshData = reinterpret_cast<uint8_t *>(&samplerState);
+    EXPECT_CALL(*dispatchInterface.get(), getDynamicStateHeapData()).WillRepeatedly(::testing::Return(dshData));
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled);
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdContainer->getIddBlock());
@@ -203,16 +207,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersZeroWhenDisp
     EXPECT_NE(memcmp(pSmplr, &samplerState, sizeof(SAMPLER_STATE)), 0);
 }
 
-HWTEST_F(CommandEncodeStatesTest, givenIndarectOffsetsCountsWhenDispatchingKernelThenCorrestMIStoreOffsetsSet) {
+HWTEST_F(CommandEncodeStatesTest, givenIndirectOffsetsCountsWhenDispatchingKernelThenCorrestMIStoreOffsetsSet) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     uint32_t dims[] = {2, 1, 1};
     uint32_t offsets[] = {0x10, 0x20, 0x30};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-
-    EXPECT_CALL(*dispatchInterface.get(), hasGroupCounts()).WillRepeatedly(::testing::Return(true));
-    EXPECT_CALL(*dispatchInterface.get(), getCountOffsets()).WillRepeatedly(::testing::Return(offsets));
-    EXPECT_CALL(*dispatchInterface.get(), hasGroupSize()).WillRepeatedly(::testing::Return(false));
-
+    dispatchInterface->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = offsets[0];
+    dispatchInterface->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[1] = offsets[1];
+    dispatchInterface->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[2] = offsets[2];
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, true, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled);
 
     GenCmdList commands;
@@ -233,11 +235,10 @@ HWTEST_F(CommandEncodeStatesTest, givenIndarectOffsetsSizeWhenDispatchingKernelT
     uint32_t lws[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
-    EXPECT_CALL(*dispatchInterface.get(), hasGroupCounts()).WillRepeatedly(::testing::Return(false));
-    EXPECT_CALL(*dispatchInterface.get(), getSizeOffsets()).WillRepeatedly(::testing::Return(offsets));
-    EXPECT_CALL(*dispatchInterface.get(), hasGroupSize()).WillRepeatedly(::testing::Return(true));
-    EXPECT_CALL(*dispatchInterface.get(), getLocalWorkSize()).WillRepeatedly(::testing::Return(lws));
-
+    EXPECT_CALL(*dispatchInterface.get(), getGroupSize()).WillRepeatedly(::testing::Return(lws));
+    dispatchInterface->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = offsets[0];
+    dispatchInterface->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[1] = offsets[1];
+    dispatchInterface->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[2] = offsets[2];
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, true, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled);
 
     GenCmdList commands;

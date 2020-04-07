@@ -155,8 +155,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, WhenWritingImageThenInterface
     // EnqueueWriteImage uses a byte copy.  Need to convert to bytes.
     auto localWorkSize = 2 * 2 * sizeof(float);
     auto simd = 32;
-    auto threadsPerThreadGroup = Math::divideAndRoundUp(localWorkSize, simd);
-    EXPECT_EQ(threadsPerThreadGroup, interfaceDescriptorData.getNumberOfThreadsInGpgpuThreadGroup());
+    auto numThreadsPerThreadGroup = Math::divideAndRoundUp(localWorkSize, simd);
+    EXPECT_EQ(numThreadsPerThreadGroup, interfaceDescriptorData.getNumberOfThreadsInGpgpuThreadGroup());
     EXPECT_NE(0u, interfaceDescriptorData.getCrossThreadConstantDataReadLength());
     EXPECT_NE(0u, interfaceDescriptorData.getConstantIndirectUrbEntryReadLength());
 

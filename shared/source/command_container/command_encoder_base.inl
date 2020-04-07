@@ -29,9 +29,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using MI_BATCH_BUFFER_END = typename Family::MI_BATCH_BUFFER_END;
 
-    auto sizeCrossThreadData = dispatchInterface->getSizeCrossThreadData();
-    auto sizePerThreadData = dispatchInterface->getSizePerThreadData();
-    auto sizePerThreadDataForWholeGroup = dispatchInterface->getSizePerThreadDataForWholeGroup();
+    auto &kernelDescriptor = dispatchInterface->getKernelDescriptor();
+    auto sizeCrossThreadData = dispatchInterface->getCrossThreadDataSize();
+    auto sizePerThreadData = dispatchInterface->getPerThreadDataSize();
+    auto sizePerThreadDataForWholeGroup = dispatchInterface->getPerThreadDataSizeForWholeThreadGroup();
 
     LinearStream *listCmdBufferStream = container.getCommandStream();
 
@@ -58,26 +59,26 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     EncodeStates<Family>::adjustStateComputeMode(*container.getCommandStream(), container.lastSentNumGrfRequired, nullptr, false, false);
     EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), false);
 
-    auto threadsPerThreadGroup = dispatchInterface->getThreadsPerThreadGroupCount();
-    idd.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
+    auto numThreadsPerThreadGroup = dispatchInterface->getNumThreadsPerThreadGroup();
+    idd.setNumberOfThreadsInGpgpuThreadGroup(numThreadsPerThreadGroup);
 
-    idd.setBarrierEnable(dispatchInterface->hasBarriers());
+    idd.setBarrierEnable(kernelDescriptor.kernelAttributes.flags.usesBarriers);
     idd.setSharedLocalMemorySize(
         dispatchInterface->getSlmTotalSize() > 0
             ? static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(HardwareCommandsHelper<Family>::computeSlmValues(dispatchInterface->getSlmTotalSize()))
             : INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K);
 
     {
-        auto bindingTableStateCount = dispatchInterface->getNumSurfaceStates();
+        uint32_t bindingTableStateCount = kernelDescriptor.payloadMappings.bindingTable.numEntries;
         uint32_t bindingTablePointer = 0u;
 
         if (bindingTableStateCount > 0u) {
-            auto ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, dispatchInterface->getSizeSurfaceStateHeapData(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+            auto ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
             bindingTablePointer = static_cast<uint32_t>(HardwareCommandsHelper<Family>::pushBindingTableAndSurfaceStates(
                 *ssh, bindingTableStateCount,
-                dispatchInterface->getSurfaceStateHeap(),
-                dispatchInterface->getSizeSurfaceStateHeapData(), bindingTableStateCount,
-                dispatchInterface->getBindingTableOffset()));
+                dispatchInterface->getSurfaceStateHeapData(),
+                dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
+                kernelDescriptor.payloadMappings.bindingTable.tableOffset));
         }
 
         idd.setBindingTablePointer(bindingTablePointer);
@@ -96,12 +97,12 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     uint32_t samplerStateOffset = 0;
     uint32_t samplerCount = 0;
 
-    if (dispatchInterface->getNumSamplers() > 0) {
-        samplerCount = dispatchInterface->getNumSamplers();
-        samplerStateOffset = EncodeStates<Family>::copySamplerState(heap, dispatchInterface->getSamplerTableOffset(),
-                                                                    dispatchInterface->getNumSamplers(),
-                                                                    dispatchInterface->getBorderColor(),
-                                                                    dispatchInterface->getDynamicStateHeap());
+    if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
+        samplerCount = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
+        samplerStateOffset = EncodeStates<Family>::copySamplerState(heap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
+                                                                    kernelDescriptor.payloadMappings.samplerTable.numSamplers,
+                                                                    kernelDescriptor.payloadMappings.samplerTable.borderColor,
+                                                                    dispatchInterface->getDynamicStateHeapData());
     }
 
     idd.setSamplerStatePointer(samplerStateOffset);
@@ -129,21 +130,17 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         offsetThreadData = heapIndirect->getHeapGpuStartOffset() + static_cast<uint64_t>(heapIndirect->getUsed() - sizeThreadData);
 
         memcpy_s(ptr, sizeCrossThreadData,
-                 dispatchInterface->getCrossThread(), sizeCrossThreadData);
+                 dispatchInterface->getCrossThreadData(), sizeCrossThreadData);
 
         if (isIndirect) {
             void *gpuPtr = reinterpret_cast<void *>(heapIndirect->getHeapGpuBase() + heapIndirect->getUsed() - sizeThreadData);
-            if (dispatchInterface->hasGroupCounts()) {
-                EncodeIndirectParams<Family>::setGroupCountIndirect(container, dispatchInterface->getCountOffsets(), gpuPtr);
-            }
-            if (dispatchInterface->hasGroupSize()) {
-                EncodeIndirectParams<Family>::setGroupSizeIndirect(container, dispatchInterface->getSizeOffsets(), gpuPtr, dispatchInterface->getLocalWorkSize());
-            }
+            EncodeIndirectParams<Family>::setGroupCountIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups, gpuPtr);
+            EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize, gpuPtr, dispatchInterface->getGroupSize());
         }
 
         ptr = ptrOffset(ptr, sizeCrossThreadData);
         memcpy_s(ptr, sizePerThreadDataForWholeGroup,
-                 dispatchInterface->getPerThread(), sizePerThreadDataForWholeGroup);
+                 dispatchInterface->getPerThreadData(), sizePerThreadDataForWholeGroup);
     }
 
     auto slmSizeNew = dispatchInterface->getSlmTotalSize();
@@ -185,14 +182,14 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         cmd.setThreadGroupIdZDimension(threadDims[2]);
     }
 
-    auto simdSize = dispatchInterface->getSimdSize();
+    auto simdSize = kernelDescriptor.kernelAttributes.simdSize;
     auto simdSizeOp = getSimdConfig<WALKER_TYPE>(simdSize);
 
     cmd.setSimdSize(simdSizeOp);
 
-    cmd.setRightExecutionMask(dispatchInterface->getPerThreadExecutionMask());
+    cmd.setRightExecutionMask(dispatchInterface->getThreadExecutionMask());
     cmd.setBottomExecutionMask(0xffffffff);
-    cmd.setThreadWidthCounterMaximum(threadsPerThreadGroup);
+    cmd.setThreadWidthCounterMaximum(numThreadsPerThreadGroup);
 
     cmd.setPredicateEnable(isPredicate);
 

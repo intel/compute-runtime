@@ -51,7 +51,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
     static void setAdditionalInfo(
         INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
         const Kernel &kernel,
-        const uint32_t threadsPerThreadGroup);
+        const uint32_t numThreadsPerThreadGroup);
 
     inline static uint32_t additionalSizeRequiredDsh();
 
@@ -64,7 +64,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         size_t bindingTablePointer,
         size_t offsetSamplerState,
         uint32_t numSamplers,
-        uint32_t threadsPerThreadGroup,
+        uint32_t numThreadsPerThreadGroup,
         const Kernel &kernel,
         uint32_t bindingTablePrefetchSize,
         PreemptionMode preemptionMode,

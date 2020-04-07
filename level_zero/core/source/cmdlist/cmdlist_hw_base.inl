@@ -29,10 +29,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     const auto kernel = Kernel::fromHandle(hKernel);
     UNRECOVERABLE_IF(kernel == nullptr);
     const auto functionImmutableData = kernel->getImmutableData();
-    commandListPerThreadScratchSize = std::max(commandListPerThreadScratchSize, kernel->getPerThreadScratchSize());
+    commandListPerThreadScratchSize = std::max<std::uint32_t>(commandListPerThreadScratchSize, kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);
 
-    auto functionPreemptionMode = obtainFunctionPreemptionMode(kernel);
-    commandListPreemptionMode = std::min(commandListPreemptionMode, functionPreemptionMode);
+    auto kernelPreemptionMode = obtainFunctionPreemptionMode(kernel);
+    commandListPreemptionMode = std::min(commandListPreemptionMode, kernelPreemptionMode);
 
     if (!isIndirect) {
         kernel->setGroupCount(pThreadGroupDimensions->groupCountX,

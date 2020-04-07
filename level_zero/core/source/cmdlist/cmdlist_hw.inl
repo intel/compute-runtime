@@ -1176,13 +1176,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::setGroupSizeIndirect(uint32_t offsets[3],
-                                                                       void *crossThreadAddress,
-                                                                       uint32_t lws[3]) {
-
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, uint32_t lws[3]) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
-    NEO::EncodeIndirectParams<GfxFamily>::setGroupSizeIndirect(commandContainer, offsets, crossThreadAddress, lws);
+    NEO::EncodeIndirectParams<GfxFamily>::setGlobalWorkSizeIndirect(commandContainer, offsets, crossThreadAddress, lws);
 
     return ZE_RESULT_SUCCESS;
 }

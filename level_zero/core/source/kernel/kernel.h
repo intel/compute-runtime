@@ -98,8 +98,6 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
 
     virtual ze_result_t setArgBufferWithAlloc(uint32_t argIndex, const void *argVal, NEO::GraphicsAllocation *allocation) = 0;
     virtual ze_result_t setArgRedescribedImage(uint32_t argIndex, ze_image_handle_t argVal) = 0;
-    virtual bool getGroupCountOffsets(uint32_t *locations) = 0;
-    virtual bool getGroupSizeOffsets(uint32_t *locations) = 0;
     virtual ze_result_t setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
                                      uint32_t groupSizeZ) = 0;
     virtual ze_result_t suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
@@ -112,22 +110,6 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     virtual std::unique_ptr<Kernel> clone() const = 0;
 
     virtual const std::vector<NEO::GraphicsAllocation *> &getResidencyContainer() const = 0;
-
-    virtual void getGroupSize(uint32_t &outGroupSizeX, uint32_t &outGroupSizeY, uint32_t &outGroupSizeZ) const = 0;
-    virtual uint32_t getThreadsPerThreadGroup() const = 0;
-    virtual uint32_t getThreadExecutionMask() const = 0;
-
-    virtual const uint8_t *getCrossThreadData() const = 0;
-    virtual uint32_t getCrossThreadDataSize() const = 0;
-
-    virtual const uint8_t *getPerThreadData() const = 0;
-    virtual uint32_t getPerThreadDataSizeForWholeThreadGroup() const = 0;
-    virtual uint32_t getPerThreadDataSize() const = 0;
-    virtual const uint8_t *getSurfaceStateHeapData() const = 0;
-    virtual uint32_t getSurfaceStateHeapDataSize() const = 0;
-
-    virtual const uint8_t *getDynamicStateHeapData() const = 0;
-    virtual size_t getDynamicStateHeapDataSize() const = 0;
 
     virtual UnifiedMemoryControls getUnifiedMemoryControls() const = 0;
     virtual bool hasIndirectAllocationsAllowed() const = 0;
