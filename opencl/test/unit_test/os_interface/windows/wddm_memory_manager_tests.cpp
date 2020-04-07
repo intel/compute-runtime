@@ -1420,7 +1420,8 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLoc
     GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemory64kb(allocationData);
     EXPECT_EQ(lockCount + 1, wddm->lockResult.called);
     EXPECT_EQ(mapGpuVirtualAddressResult + 1, wddm->mapGpuVirtualAddressResult.called);
-    if (executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm()) {
+
+    if (is32bit || executionEnvironment->rootDeviceEnvironments[0]->isFullRangeSvm()) {
         EXPECT_NE(nullptr, wddm->mapGpuVirtualAddressResult.cpuPtrPassed);
     } else {
         EXPECT_EQ(nullptr, wddm->mapGpuVirtualAddressResult.cpuPtrPassed);

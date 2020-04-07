@@ -494,7 +494,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
     ASSERT_NE(nullptr, wddmAllocation);
 
-    if (is32bit && executionEnvironment->rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()]->isFullRangeSvm()) {
+    if (is32bit) {
         EXPECT_NE(wddm->mapGpuVirtualAddressResult.cpuPtrPassed, nullptr);
     } else {
         EXPECT_EQ(wddm->mapGpuVirtualAddressResult.cpuPtrPassed, nullptr);
