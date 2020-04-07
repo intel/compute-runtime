@@ -1402,3 +1402,12 @@ TEST(DiscoverDevices, whenDriverInfoHasIncompatibleDriverStoreThenHwDeviceIdIsNo
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }
+
+TEST(InitOsInterfaceTest, givenRootDeviceEnvironmentWhenIntializingWddmDuringInitOsInterfaceMethodThenOsInterfaceIsAvailable) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_EQ(1u, hwDeviceIds.size());
+    executionEnvironment.rootDeviceEnvironments[0]->initOsInterface(std::move(hwDeviceIds[0]));
+    auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getWddm());
+    EXPECT_TRUE(wddm->osInterfaceAvailable);
+}

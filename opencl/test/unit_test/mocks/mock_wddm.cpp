@@ -300,6 +300,11 @@ void WddmMock::createPagingFenceLogger() {
     }
 }
 
+bool WddmMock::init() {
+    osInterfaceAvailable = rootDeviceEnvironment.osInterface != nullptr;
+    return Wddm::init();
+}
+
 void *GmockWddm::virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
     void *tmp = reinterpret_cast<void *>(virtualAllocAddress);
     size += MemoryConstants::pageSize;

@@ -70,13 +70,13 @@ BOOL OSInterface::OSInterfaceImpl::closeHandle(HANDLE hObject) {
     return SysCalls::closeHandle(hObject);
 }
 bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId) {
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(std::move(hwDeviceId), *this));
+    auto wddm(Wddm::createWddm(std::move(hwDeviceId), *this));
+    osInterface = std::make_unique<OSInterface>();
+    osInterface->get()->setWddm(wddm);
     if (!wddm->init()) {
         return false;
     }
-    memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm.get());
-    osInterface = std::make_unique<OSInterface>();
-    osInterface->get()->setWddm(wddm.release());
+    memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
     return true;
 }
 } // namespace NEO
