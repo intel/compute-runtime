@@ -77,9 +77,12 @@ void CommandList::eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocati
     }
 }
 
+bool CommandList::isCopyOnly() const {
+    return isCopyOnlyCmdList;
+}
+
 NEO::PreemptionMode CommandList::obtainFunctionPreemptionMode(Kernel *kernel) {
     auto functionAttributes = kernel->getImmutableData()->getDescriptor().kernelAttributes;
-
     NEO::PreemptionFlags flags = {};
     flags.flags.disabledMidThreadPreemptionKernel = functionAttributes.flags.requiresDisabledMidThreadPreemption;
     flags.flags.usesFencesForReadWriteImages = functionAttributes.flags.usesFencesForReadWriteImages;

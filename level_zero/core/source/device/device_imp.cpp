@@ -15,6 +15,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/grf_config.h"
@@ -77,7 +78,12 @@ ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *
 ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
                                          ze_command_list_handle_t *commandList) {
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
-    *commandList = CommandList::create(productFamily, this);
+    bool useBliter = false;
+    auto ret = isCreatedCommandListCopyOnly(desc, &useBliter, ZE_COMMAND_LIST_FLAG_COPY_ONLY);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+    *commandList = CommandList::create(productFamily, this, useBliter);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -85,7 +91,14 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
 ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t *desc,
                                                   ze_command_list_handle_t *phCommandList) {
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
-    *phCommandList = CommandList::createImmediate(productFamily, this, desc, false);
+
+    bool useBliter = false;
+    auto ret = isCreatedCommandListCopyOnly(desc, &useBliter, ZE_COMMAND_QUEUE_FLAG_COPY_ONLY);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
+    *phCommandList = CommandList::createImmediate(productFamily, this, desc, false, useBliter);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -94,9 +107,19 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
                                           ze_command_queue_handle_t *commandQueue) {
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
 
-    auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
-
-    *commandQueue = CommandQueue::create(productFamily, this, csr, desc);
+    NEO::CommandStreamReceiver *csr = nullptr;
+    bool useBliter = false;
+    auto ret = isCreatedCommandListCopyOnly(desc, &useBliter, ZE_COMMAND_QUEUE_FLAG_COPY_ONLY);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+    if (useBliter) {
+        auto &selectorCopyEngine = this->neoDevice->getDeviceById(0)->getSelectorCopyEngine();
+        csr = this->neoDevice->getDeviceById(0)->getEngine(NEO::EngineHelpers::getBcsEngineType(neoDevice->getHardwareInfo(), selectorCopyEngine), false).commandStreamReceiver;
+    } else {
+        csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    }
+    *commandQueue = CommandQueue::create(productFamily, this, csr, desc, useBliter);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -515,7 +538,7 @@ ze_result_t DeviceImp::registerCLCommandQueue(cl_context context, cl_command_que
 
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
-    *phCommandQueue = CommandQueue::create(productFamily, this, csr, &desc);
+    *phCommandQueue = CommandQueue::create(productFamily, this, csr, &desc, false);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -574,7 +597,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice) {
         cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
         device->pageFaultCommandList =
             CommandList::createImmediate(
-                device->neoDevice->getHardwareInfo().platform.eProductFamily, device, &cmdQueueDesc, true);
+                device->neoDevice->getHardwareInfo().platform.eProductFamily, device, &cmdQueueDesc, true, false);
     }
 
     if (neoDevice->getDeviceInfo().debuggerActive) {
@@ -694,6 +717,19 @@ NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer
     UNRECOVERABLE_IF(allocation == nullptr);
 
     return allocation;
+}
+
+template <typename DescriptionType, typename ExpectedFlagType>
+ze_result_t DeviceImp::isCreatedCommandListCopyOnly(const DescriptionType *desc, bool *useBliter, ExpectedFlagType flag) {
+    if (desc->flags & flag) {
+        auto hwInfo = neoDevice->getHardwareInfo();
+        if (hwInfo.capabilityTable.blitterOperationsSupported) {
+            *useBliter = true;
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

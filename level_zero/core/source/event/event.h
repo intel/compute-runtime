@@ -50,7 +50,7 @@ struct Event : _ze_event_handle_t {
 
     inline ze_event_handle_t toHandle() { return this; }
 
-    NEO::GraphicsAllocation &getAllocation();
+    virtual NEO::GraphicsAllocation &getAllocation();
 
     uint64_t getGpuAddress() { return gpuAddress; }
     uint64_t getOffsetOfEventTimestampRegister(uint32_t eventTimestampReg);
@@ -97,7 +97,7 @@ struct EventPool : _ze_event_pool_handle_t {
 
     inline ze_event_pool_handle_t toHandle() { return this; }
 
-    NEO::GraphicsAllocation &getAllocation() { return *eventPoolAllocation; }
+    virtual NEO::GraphicsAllocation &getAllocation() { return *eventPoolAllocation; }
 
     virtual uint32_t getEventSize() = 0;
     virtual uint32_t getNumEventTimestampsToRead() = 0;

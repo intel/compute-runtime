@@ -68,7 +68,7 @@ struct CommandQueueImp : public CommandQueue {
 
     ze_result_t synchronize(uint32_t timeout) override;
 
-    void initialize();
+    void initialize(bool copyOnly);
 
     Device *getDevice() { return device; }
 

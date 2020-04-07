@@ -23,7 +23,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenAp
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     createKernel();
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
 
     auto &commandContainer = commandList->commandContainer;
     const auto stream = commandContainer.getCommandStream();
@@ -59,7 +59,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBind
     createKernel();
 
     ze_group_count_t groupCount{1, 1, 1};
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
     commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
 
     auto commandStream = commandList->commandContainer.getCommandStream();
@@ -86,7 +86,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBind
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToCommandListThenKernelIsStored) {
     createKernel();
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
     ze_group_count_t groupCount{1, 1, 1};
 
     EXPECT_TRUE(kernel->kernelImmData->getDescriptor().kernelAttributes.flags.usesPrintf);
@@ -100,7 +100,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToCommandListMultipleTimesThenKernelIsStoredOnce) {
     createKernel();
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
     ze_group_count_t groupCount{1, 1, 1};
 
     EXPECT_TRUE(kernel->kernelImmData->getDescriptor().kernelAttributes.flags.usesPrintf);
@@ -118,7 +118,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
 
 HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDepletedButReallocated) {
     createKernel();
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
     ze_group_count_t groupCount{1, 1, 1};
 
     auto kernelSshSize = kernel->getSurfaceStateHeapDataSize();
@@ -143,7 +143,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferS
     ze_group_count_t groupCount{1, 1, 1};
 
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    bool ret = commandList->initialize(device);
+    bool ret = commandList->initialize(device, false);
     ASSERT_TRUE(ret);
 
     auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();

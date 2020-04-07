@@ -117,10 +117,10 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendMIBBEnd() = 0;
     virtual ze_result_t appendMINoop() = 0;
 
-    static CommandList *create(uint32_t productFamily, Device *device);
+    static CommandList *create(uint32_t productFamily, Device *device, bool isCopyOnly);
     static CommandList *createImmediate(uint32_t productFamily, Device *device,
                                         const ze_command_queue_desc_t *desc,
-                                        bool internalUsage);
+                                        bool internalUsage, bool isCopyOnly);
 
     static CommandList *fromHandle(ze_command_list_handle_t handle) {
         return static_cast<CommandList *>(handle);
@@ -147,6 +147,7 @@ struct CommandList : _ze_command_list_handle_t {
     void removeHostPtrAllocations();
     void eraseDeallocationContainerEntry(NEO::GraphicsAllocation *allocation);
     void eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocation);
+    bool isCopyOnly() const;
 
     enum CommandListType : uint32_t {
         TYPE_REGULAR = 0u,
@@ -161,7 +162,7 @@ struct CommandList : _ze_command_list_handle_t {
     std::vector<Kernel *> printfFunctionContainer;
 
     virtual ze_result_t executeCommandListImmediate(bool performMigration) = 0;
-    virtual bool initialize(Device *device) = 0;
+    virtual bool initialize(Device *device, bool isCopyOnly) = 0;
     virtual ~CommandList();
     NEO::CommandContainer commandContainer;
 
@@ -169,6 +170,7 @@ struct CommandList : _ze_command_list_handle_t {
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     uint32_t commandListPerThreadScratchSize = 0u;
     NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
+    bool isCopyOnlyCmdList = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

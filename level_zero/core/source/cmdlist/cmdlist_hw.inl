@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/heap_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -35,17 +36,19 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 struct EncodeStateBaseAddress;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device) {
+bool CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, bool isCopyOnly) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     if (!commandContainer.initialize(static_cast<DeviceImp *>(device)->neoDevice)) {
         return false;
     }
-    NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer);
-    commandContainer.setDirtyStateForAllHeaps(false);
-
+    if (!isCopyOnly) {
+        NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer);
+        commandContainer.setDirtyStateForAllHeaps(false);
+    }
     this->device = device;
     this->commandListPreemptionMode = device->getDevicePreemptionMode();
+    this->isCopyOnlyCmdList = isCopyOnly;
 
     return true;
 }
@@ -182,7 +185,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), false);
+    if (isCopyOnlyCmdList) {
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
+    } else {
+        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), false);
+    }
 
     if (hSignalEvent) {
         this->appendSignalEventPostWalker(hSignalEvent);
@@ -566,6 +573,48 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(NEO::GraphicsAllocation *dstPtrAlloc,
+                                                                       uint64_t dstOffset,
+                                                                       NEO::GraphicsAllocation *srcPtrAlloc,
+                                                                       uint64_t srcOffset,
+                                                                       uint32_t size) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dstPtrAlloc, srcPtrAlloc, {dstOffset, 0, 0}, {srcOffset, 0, 0}, {size, 0, 0}, 0, 0, 0, 0);
+    commandContainer.addToResidencyContainer(dstPtrAlloc);
+    commandContainer.addToResidencyContainer(srcPtrAlloc);
+    NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(const void *srcptr,
+                                                                             const void *dstptr,
+                                                                             ze_copy_region_t srcRegion,
+                                                                             ze_copy_region_t dstRegion, Vec3<size_t> copySize,
+                                                                             size_t srcRowPitch, size_t srcSlicePitch,
+                                                                             size_t dstRowPitch, size_t dstSlicePitch,
+                                                                             size_t srcSize, size_t dstSize) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+
+    auto dstAllocationStruct = getAlignedAllocation(this->device, dstptr, dstSize);
+    auto srcAllocationStruct = getAlignedAllocation(this->device, srcptr, srcSize);
+
+    auto srcPtrAlloc = srcAllocationStruct.alloc;
+    auto dstPtrAlloc = dstAllocationStruct.alloc;
+
+    Vec3<size_t> srcPtrOffset = {srcRegion.originX, srcRegion.originY, srcRegion.originZ};
+    Vec3<size_t> dstPtrOffset = {dstRegion.originX, dstRegion.originY, dstRegion.originZ};
+
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dstPtrAlloc, srcPtrAlloc,
+                                                                                dstPtrOffset, srcPtrOffset, copySize, srcRowPitch, srcSlicePitch,
+                                                                                dstRowPitch, dstSlicePitch);
+    commandContainer.addToResidencyContainer(dstPtrAlloc);
+    commandContainer.addToResidencyContainer(srcPtrAlloc);
+    NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::GraphicsAllocation *dstptr,
                                                                       NEO::GraphicsAllocation *srcptr,
                                                                       size_t size, bool flushHost) {
@@ -644,31 +693,37 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
     appendEventForProfiling(hSignalEvent, true);
 
     if (ret == ZE_RESULT_SUCCESS && leftSize) {
-        ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
-                                           dstAllocationStruct.alloc, dstAllocationStruct.offset,
-                                           reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
-                                           srcAllocationStruct.alloc, srcAllocationStruct.offset,
-                                           static_cast<uint32_t>(leftSize), 1,
-                                           Builtin::CopyBufferToBufferSide);
+        ret = isCopyOnlyCmdList ? appendMemoryCopyBlit(dstAllocationStruct.alloc, dstAllocationStruct.offset,
+                                                       srcAllocationStruct.alloc, srcAllocationStruct.offset, static_cast<uint32_t>(leftSize))
+                                : appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
+                                                               dstAllocationStruct.alloc, dstAllocationStruct.offset,
+                                                               reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
+                                                               srcAllocationStruct.alloc, srcAllocationStruct.offset,
+                                                               static_cast<uint32_t>(leftSize), 1,
+                                                               Builtin::CopyBufferToBufferSide);
     }
 
     if (ret == ZE_RESULT_SUCCESS && middleSizeBytes) {
-        ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
-                                           dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
-                                           reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
-                                           srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset,
-                                           static_cast<uint32_t>(middleSizeBytes),
-                                           static_cast<uint32_t>(middleElSize),
-                                           Builtin::CopyBufferToBufferMiddle);
+        ret = isCopyOnlyCmdList ? appendMemoryCopyBlit(dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
+                                                       srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset, static_cast<uint32_t>(middleSizeBytes))
+                                : appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
+                                                               dstAllocationStruct.alloc, leftSize + dstAllocationStruct.offset,
+                                                               reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
+                                                               srcAllocationStruct.alloc, leftSize + srcAllocationStruct.offset,
+                                                               static_cast<uint32_t>(middleSizeBytes),
+                                                               static_cast<uint32_t>(middleElSize),
+                                                               Builtin::CopyBufferToBufferMiddle);
     }
 
     if (ret == ZE_RESULT_SUCCESS && rightSize) {
-        ret = appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
-                                           dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
-                                           reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
-                                           srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset,
-                                           static_cast<uint32_t>(rightSize), 1u,
-                                           Builtin::CopyBufferToBufferSide);
+        ret = isCopyOnlyCmdList ? appendMemoryCopyBlit(dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
+                                                       srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset, static_cast<uint32_t>(rightSize))
+                                : appendMemoryCopyKernelWithGA(reinterpret_cast<void *>(&dstAllocationStruct.alignedAllocationPtr),
+                                                               dstAllocationStruct.alloc, leftSize + middleSizeBytes + dstAllocationStruct.offset,
+                                                               reinterpret_cast<void *>(&srcAllocationStruct.alignedAllocationPtr),
+                                                               srcAllocationStruct.alloc, leftSize + middleSizeBytes + srcAllocationStruct.offset,
+                                                               static_cast<uint32_t>(rightSize), 1u,
+                                                               Builtin::CopyBufferToBufferSide);
     }
 
     if (hSignalEvent) {
@@ -743,13 +798,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     if (srcRegion->depth > 1) {
-        result = this->appendMemoryCopyKernel3d(alignedDstPtr, alignedSrcPtr,
-                                                Builtin::CopyBufferRectBytes3d, dstRegion, dstPitch, dstSlicePitch, dstOffset,
-                                                srcRegion, srcPitch, srcSlicePitch, srcOffset, hSignalEvent, 0, nullptr);
+        result = isCopyOnlyCmdList ? appendMemoryCopyBlitRegion(alignedSrcPtr, alignedDstPtr, *srcRegion, *dstRegion, {srcRegion->width, srcRegion->height, srcRegion->depth}, srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize, dstSize)
+                                   : this->appendMemoryCopyKernel3d(alignedDstPtr, alignedSrcPtr,
+                                                                    Builtin::CopyBufferRectBytes3d, dstRegion, dstPitch, dstSlicePitch, dstOffset,
+                                                                    srcRegion, srcPitch, srcSlicePitch, srcOffset, hSignalEvent, 0, nullptr);
     } else {
-        result = this->appendMemoryCopyKernel2d(alignedDstPtr, alignedSrcPtr,
-                                                Builtin::CopyBufferRectBytes2d, dstRegion, dstPitch, dstOffset,
-                                                srcRegion, srcPitch, srcOffset, hSignalEvent, 0, nullptr);
+        result = isCopyOnlyCmdList ? appendMemoryCopyBlitRegion(alignedSrcPtr, alignedDstPtr, *srcRegion, *dstRegion, {srcRegion->width, srcRegion->height, srcRegion->depth}, srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize, dstSize)
+                                   : this->appendMemoryCopyKernel2d(alignedDstPtr, alignedSrcPtr,
+                                                                    Builtin::CopyBufferRectBytes2d, dstRegion, dstPitch, dstOffset,
+                                                                    srcRegion, srcPitch, srcOffset, hSignalEvent, 0, nullptr);
     }
 
     if (result) {
@@ -757,7 +814,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     }
 
     if (hostPointerNeedsFlush) {
-        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), true);
+        if (isCopyOnlyCmdList) {
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
+        } else {
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), true);
+        }
     }
 
     return ZE_RESULT_SUCCESS;
@@ -1091,12 +1152,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     auto event = Event::fromHandle(hEvent);
 
     commandContainer.addToResidencyContainer(&event->getAllocation());
-
-    bool dcFlushEnable = (event->signalScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
-    NEO::MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
-        *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-        event->getGpuAddress(), Event::STATE_SIGNALED, dcFlushEnable, commandContainer.getDevice()->getHardwareInfo());
-
+    if (isCopyOnlyCmdList) {
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), event->getGpuAddress(), Event::STATE_SIGNALED, false, true);
+    } else {
+        bool dcFlushEnable = (event->signalScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
+        NEO::MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+            *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            event->getGpuAddress(), Event::STATE_SIGNALED, dcFlushEnable, commandContainer.getDevice()->getHardwareInfo());
+    }
     return ZE_RESULT_SUCCESS;
 }
 
@@ -1127,7 +1190,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
         bool dcFlushEnable = (event->waitScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
         if (dcFlushEnable) {
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), true);
+            if (isCopyOnlyCmdList) {
+                NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
+            } else {
+                NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), true);
+            }
         }
     }
 

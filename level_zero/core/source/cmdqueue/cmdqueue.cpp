@@ -28,13 +28,14 @@ ze_result_t CommandQueueImp::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-void CommandQueueImp::initialize() {
+void CommandQueueImp::initialize(bool copyOnly) {
     buffers.initialize(device, totalCmdBufferSize);
     NEO::GraphicsAllocation *bufferAllocation = buffers.getCurrentBufferAllocation();
     commandStream = new NEO::LinearStream(bufferAllocation->getUnderlyingBuffer(),
                                           defaultQueueCmdBufferSize);
     UNRECOVERABLE_IF(commandStream == nullptr);
     commandStream->replaceGraphicsAllocation(bufferAllocation);
+    isCopyOnlyCommandQueue = copyOnly;
 }
 
 void CommandQueueImp::reserveLinearStreamSize(size_t size) {
@@ -91,7 +92,7 @@ void CommandQueueImp::printFunctionsPrintfOutput() {
 }
 
 CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::CommandStreamReceiver *csr,
-                                   const ze_command_queue_desc_t *desc) {
+                                   const ze_command_queue_desc_t *desc, bool isCopyOnly) {
     CommandQueueAllocatorFn allocator = nullptr;
     if (productFamily < IGFX_MAX_PRODUCT) {
         allocator = commandQueueFactory[productFamily];
@@ -101,7 +102,7 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
     if (allocator) {
         commandQueue = static_cast<CommandQueueImp *>((*allocator)(device, csr, desc));
 
-        commandQueue->initialize();
+        commandQueue->initialize(isCopyOnly);
     }
     return commandQueue;
 }

@@ -35,7 +35,7 @@ HWTEST_F(CommandEncoderTests, givenImmDataWriteWhenProgrammingMiFlushDwThenSetAl
     uint64_t gpuAddress = 0x1230000;
     uint64_t immData = 456;
 
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, gpuAddress, immData);
+    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, gpuAddress, immData, false, true);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
 
     unsigned int sizeMultiplier = 1;

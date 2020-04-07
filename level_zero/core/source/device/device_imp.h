@@ -93,6 +93,8 @@ struct DeviceImp : public Device {
     CommandList *pageFaultCommandList = nullptr;
 
   protected:
+    template <typename DescriptionType, typename ExpectedFlagType>
+    ze_result_t isCreatedCommandListCopyOnly(const DescriptionType *desc, bool *useBliter, ExpectedFlagType flag);
     NEO::GraphicsAllocation *debugSurface = nullptr;
 };
 

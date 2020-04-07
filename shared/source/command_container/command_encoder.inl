@@ -395,14 +395,17 @@ void EncodeSurfaceState<Family>::getSshAlignedPointer(uintptr_t &ptr, size_t &of
 }
 
 template <typename GfxFamily>
-void EncodeMiFlushDW<GfxFamily>::programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData) {
+void EncodeMiFlushDW<GfxFamily>::programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData, bool timeStampOperation, bool commandWithPostSync) {
     programMiFlushDwWA(commandStream);
 
     auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
     *miFlushDwCmd = GfxFamily::cmdInitMiFlushDw;
-    miFlushDwCmd->setPostSyncOperation(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD);
-    miFlushDwCmd->setDestinationAddress(immediateDataGpuAddress);
-    miFlushDwCmd->setImmediateData(immediateData);
+    if (commandWithPostSync) {
+        auto postSyncType = timeStampOperation ? MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_TIMESTAMP_REGISTER : MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD;
+        miFlushDwCmd->setPostSyncOperation(postSyncType);
+        miFlushDwCmd->setDestinationAddress(immediateDataGpuAddress);
+        miFlushDwCmd->setImmediateData(immediateData);
+    }
     appendMiFlushDw(miFlushDwCmd);
 }
 

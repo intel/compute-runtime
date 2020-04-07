@@ -62,6 +62,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
+    for (auto i = 0u; i < numCommandLists; i++) {
+        auto commandList = CommandList::fromHandle(phCommandLists[i]);
+        if (isCopyOnlyCommandQueue != commandList->isCopyOnly()) {
+            return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
+        }
+    }
+
     size_t spaceForResidency = 0;
     size_t preemptionSize = 0u;
     size_t debuggerCmdsSize = 0;
@@ -122,7 +129,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (hFence) {
         fence = Fence::fromHandle(hFence);
         spaceForResidency += residencyContainerSpaceForFence;
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(device->getHwInfo());
+        linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(device->getHwInfo());
     }
 
     spaceForResidency += residencyContainerSpaceForTagWrite;
@@ -138,70 +145,72 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     gsbaStateDirty |= !gsbaInit;
     frontEndStateDirty |= !frontEndInit;
+    if (!isCopyOnlyCommandQueue) {
 
-    if (!gpgpuEnabled) {
-        linearStreamSizeEstimate += estimatePipelineSelect();
+        if (!gpgpuEnabled) {
+            linearStreamSizeEstimate += estimatePipelineSelect();
+        }
+
+        if (frontEndStateDirty) {
+            linearStreamSizeEstimate += estimateFrontEndCmdSize();
+        }
+
+        if (gsbaStateDirty) {
+            linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();
+        }
+
+        linearStreamSizeEstimate += preemptionSize + debuggerCmdsSize;
     }
 
-    if (frontEndStateDirty) {
-        linearStreamSizeEstimate += estimateFrontEndCmdSize();
-    }
-
-    if (gsbaStateDirty) {
-        linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();
-    }
-
-    linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(device->getHwInfo());
-
-    linearStreamSizeEstimate += preemptionSize + debuggerCmdsSize;
-
+    linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(device->getHwInfo());
     size_t alignedSize = alignUp<size_t>(linearStreamSizeEstimate, minCmdBufferPtrAlign);
     size_t padding = alignedSize - linearStreamSizeEstimate;
     reserveLinearStreamSize(alignedSize);
     NEO::LinearStream child(commandStream->getSpace(alignedSize), alignedSize);
 
-    if (!gpgpuEnabled) {
-        programPipelineSelect(child);
-    }
+    if (!isCopyOnlyCommandQueue) {
+        if (!gpgpuEnabled) {
+            programPipelineSelect(child);
+        }
 
-    if (!commandQueueDebugCmdsProgrammed && neoDevice->isDebuggerActive()) {
-        NEO::PreambleHelper<GfxFamily>::programKernelDebugging(&child);
-        commandQueueDebugCmdsProgrammed = true;
-    }
+        if (!commandQueueDebugCmdsProgrammed && neoDevice->isDebuggerActive()) {
+            NEO::PreambleHelper<GfxFamily>::programKernelDebugging(&child);
+            commandQueueDebugCmdsProgrammed = true;
+        }
 
-    if (frontEndStateDirty) {
-        programFrontEnd(scratchSpaceController->getScratchPatchAddress(), child);
-    }
-    if (gsbaStateDirty) {
-        programGeneralStateBaseAddress(scratchSpaceController->calculateNewGSH(), child);
-    }
+        if (frontEndStateDirty) {
+            programFrontEnd(scratchSpaceController->getScratchPatchAddress(), child);
+        }
+        if (gsbaStateDirty) {
+            programGeneralStateBaseAddress(scratchSpaceController->calculateNewGSH(), child);
+        }
 
-    if (commandQueuePreemptionMode == NEO::PreemptionMode::Initial) {
-        NEO::PreemptionHelper::programCsrBaseAddress<GfxFamily>(child, *neoDevice, csr->getPreemptionAllocation());
-        NEO::PreemptionHelper::programStateSip<GfxFamily>(child, *neoDevice);
-        NEO::PreemptionHelper::programCmdStream<GfxFamily>(child,
-                                                           devicePreemption,
-                                                           commandQueuePreemptionMode,
-                                                           csr->getPreemptionAllocation());
-        commandQueuePreemptionMode = devicePreemption;
-        statePreemption = commandQueuePreemptionMode;
-    }
+        if (commandQueuePreemptionMode == NEO::PreemptionMode::Initial) {
+            NEO::PreemptionHelper::programCsrBaseAddress<GfxFamily>(child, *neoDevice, csr->getPreemptionAllocation());
+            NEO::PreemptionHelper::programStateSip<GfxFamily>(child, *neoDevice);
+            NEO::PreemptionHelper::programCmdStream<GfxFamily>(child,
+                                                               devicePreemption,
+                                                               commandQueuePreemptionMode,
+                                                               csr->getPreemptionAllocation());
+            commandQueuePreemptionMode = devicePreemption;
+            statePreemption = commandQueuePreemptionMode;
+        }
 
-    const bool sipKernelUsed = devicePreemption == NEO::PreemptionMode::MidThread ||
-                               neoDevice->isDebuggerActive();
-    if (devicePreemption == NEO::PreemptionMode::MidThread) {
-        residencyContainer.push_back(csr->getPreemptionAllocation());
-    }
+        const bool sipKernelUsed = devicePreemption == NEO::PreemptionMode::MidThread ||
+                                   neoDevice->isDebuggerActive();
+        if (devicePreemption == NEO::PreemptionMode::MidThread) {
+            residencyContainer.push_back(csr->getPreemptionAllocation());
+        }
 
-    if (sipKernelUsed) {
-        auto sipIsa = NEO::SipKernel::getSipKernelAllocation(*neoDevice);
-        residencyContainer.push_back(sipIsa);
-    }
+        if (sipKernelUsed) {
+            auto sipIsa = NEO::SipKernel::getSipKernelAllocation(*neoDevice);
+            residencyContainer.push_back(sipIsa);
+        }
 
-    if (neoDevice->isDebuggerActive()) {
-        residencyContainer.push_back(device->getDebugSurface());
+        if (neoDevice->isDebuggerActive()) {
+            residencyContainer.push_back(device->getDebugSurface());
+        }
     }
-
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         auto cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
@@ -254,12 +263,17 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     if (hFence) {
         residencyContainer.push_back(&fence->getAllocation());
-        NEO::MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
-            child, POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-            fence->getGpuAddress(), Fence::STATE_SIGNALED, true, device->getHwInfo());
+        if (isCopyOnlyCommandQueue) {
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(child, fence->getGpuAddress(), Fence::STATE_SIGNALED, false, true);
+        } else {
+            NEO::MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+                child, POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                fence->getGpuAddress(), Fence::STATE_SIGNALED, true, device->getHwInfo());
+        }
     }
 
     dispatchTaskCountWrite(child, true);
+
     residencyContainer.push_back(csr->getTagAllocation());
     void *endingCmd = nullptr;
     if (directSubmissionEnabled) {
@@ -334,8 +348,12 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountWrite(NEO::LinearStream &co
     auto taskCountToWrite = csr->peekTaskCount() + 1;
     auto gpuAddress = static_cast<uint64_t>(csr->getTagAllocation()->getGpuAddress());
 
-    NEO::MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
-        commandStream, POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-        gpuAddress, taskCountToWrite, true, device->getHwInfo());
+    if (isCopyOnlyCommandQueue) {
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, gpuAddress, taskCountToWrite, false, true);
+    } else {
+        NEO::MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+            commandStream, POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            gpuAddress, taskCountToWrite, true, device->getHwInfo());
+    }
 }
 } // namespace L0

@@ -32,6 +32,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass = ::L0::CommandListCoreFamily<gfxCoreFamily>;
     using BaseClass::appendLaunchKernelWithParams;
     using BaseClass::commandListPreemptionMode;
+    using BaseClass::getAlignedAllocation;
 
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
     virtual ~WhiteBox() {}
@@ -149,7 +150,7 @@ struct Mock<CommandList> : public CommandList {
     MOCK_METHOD0(appendMIBBEnd, ze_result_t());
     MOCK_METHOD0(appendMINoop, ze_result_t());
     MOCK_METHOD1(executeCommandListImmediate, ze_result_t(bool perforMigration));
-    MOCK_METHOD1(initialize, bool(L0::Device *device));
+    MOCK_METHOD2(initialize, bool(L0::Device *device, bool onlyCopyBlit));
 
     uint8_t *batchBuffer = nullptr;
     NEO::GraphicsAllocation *mockAllocation = nullptr;

@@ -9,6 +9,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -34,7 +35,8 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
     L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
                                                           device,
                                                           csr.get(),
-                                                          &desc);
+                                                          &desc,
+                                                          false);
     ASSERT_NE(nullptr, commandQueue);
 
     L0::CommandQueueImp *commandQueueImp = reinterpret_cast<L0::CommandQueueImp *>(commandQueue);
@@ -90,7 +92,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
     desc.version = ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT;
     auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
     auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
-    commandQueue->initialize();
+    commandQueue->initialize(false);
 
     uint32_t alignedSize = 4096u;
     NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
@@ -99,6 +101,57 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
         .Times(1);
 
     commandQueue->programGeneralStateBaseAddress(0u, child);
+
+    commandQueue->destroy();
+}
+
+TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingNonCopyBlitCommandListThenWrongCommandListStatusReturned) {
+    const ze_command_queue_desc_t desc = {
+        ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT,
+        ZE_COMMAND_QUEUE_FLAG_COPY_ONLY,
+        ZE_COMMAND_QUEUE_MODE_DEFAULT,
+        ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
+        0};
+
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          csr.get(),
+                                                          &desc,
+                                                          true);
+    ASSERT_NE(nullptr, commandQueue);
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    auto commandListHandle = commandList->toHandle();
+    auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+
+    EXPECT_EQ(status, ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE);
+
+    commandQueue->destroy();
+}
+
+TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommandListThenSuccessReturned) {
+    const ze_command_queue_desc_t desc = {
+        ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT,
+        ZE_COMMAND_QUEUE_FLAG_COPY_ONLY,
+        ZE_COMMAND_QUEUE_MODE_DEFAULT,
+        ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
+        0};
+
+    auto defaultCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          defaultCsr,
+                                                          &desc,
+                                                          true);
+    ASSERT_NE(nullptr, commandQueue);
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, true));
+    auto commandListHandle = commandList->toHandle();
+    auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+
+    EXPECT_EQ(status, ZE_RESULT_SUCCESS);
 
     commandQueue->destroy();
 }
