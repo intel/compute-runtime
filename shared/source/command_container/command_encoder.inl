@@ -412,7 +412,7 @@ size_t EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() {
 }
 
 template <typename GfxFamily>
-void EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(LinearStream &commandStream, uint64_t gpuVa, uint32_t size) {}
+void EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size) {}
 
 template <typename GfxFamily>
 size_t EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch() { return 0; }

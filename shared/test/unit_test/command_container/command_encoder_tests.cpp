@@ -60,7 +60,9 @@ HWTEST_F(CommandEncoderTests, whenEncodeMemoryPrefetchCalledThenDoNothing) {
     uint8_t buffer[MemoryConstants::pageSize] = {};
     LinearStream linearStream(buffer, sizeof(buffer));
 
-    EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, 1, 2);
+    GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 123, 456, 789, MemoryPool::LocalMemory);
+
+    EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 2);
 
     EXPECT_EQ(0u, linearStream.getUsed());
     EXPECT_EQ(0u, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch());
