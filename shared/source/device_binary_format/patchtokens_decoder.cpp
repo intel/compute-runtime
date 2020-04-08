@@ -487,7 +487,7 @@ inline bool decodePatchList(PatchTokensStreamReader patchListStream, OutT &out) 
     auto decodeEnd = patchListStream.data.end();
 
     bool decodeSuccess = true;
-    while ((decodePos + sizeof(SPatchItemHeader) <= decodeEnd) && decodeSuccess) {
+    while ((ptrDiff(decodeEnd, decodePos) > sizeof(SPatchItemHeader)) && decodeSuccess) {
         auto token = reinterpret_cast<const SPatchItemHeader *>(decodePos);
         size_t tokenTotalSize = getPatchTokenTotalSize<OutT>(patchListStream, token);
         decodeSuccess = patchListStream.enoughDataLeft(decodePos, tokenTotalSize);

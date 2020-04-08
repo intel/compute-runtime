@@ -138,13 +138,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
+    const bool haveLaunchArguments = pLaunchArgumentsBuffer != nullptr;
+
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     for (uint32_t i = 0; i < numKernels; i++) {
         NEO::EncodeMathMMIO<GfxFamily>::encodeGreaterThanPredicate(commandContainer,
                                                                    reinterpret_cast<uint64_t>(pNumLaunchArguments), i);
 
         auto ret = appendLaunchKernelWithParams(phKernels[i],
-                                                &pLaunchArgumentsBuffer[i],
+                                                haveLaunchArguments ? &pLaunchArgumentsBuffer[i] : nullptr,
                                                 nullptr, 0, nullptr, true, true);
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
