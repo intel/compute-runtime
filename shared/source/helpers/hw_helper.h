@@ -240,10 +240,12 @@ struct LriHelper {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
     static MI_LOAD_REGISTER_IMM *program(LinearStream *cmdStream, uint32_t address, uint32_t value) {
-        auto lri = (MI_LOAD_REGISTER_IMM *)cmdStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM));
-        *lri = GfxFamily::cmdInitLoadRegisterImm;
-        lri->setRegisterOffset(address);
-        lri->setDataDword(value);
+        MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
+        cmd.setRegisterOffset(address);
+        cmd.setDataDword(value);
+
+        auto lri = cmdStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
+        *lri = cmd;
         return lri;
     }
 };
@@ -268,10 +270,10 @@ struct MemorySynchronizationCommands {
 
     static PIPE_CONTROL *addFullCacheFlush(LinearStream &commandStream);
     static size_t getSizeForFullCacheFlush();
-    static void setExtraCacheFlushFields(PIPE_CONTROL *pipeControl);
+    static void setExtraCacheFlushFields(PIPE_CONTROL &pipeControl);
 
   protected:
-    static PIPE_CONTROL *obtainPipeControl(LinearStream &commandStream, bool dcFlush);
+    static void setPipeControl(PIPE_CONTROL &pipeControl, bool dcFlush);
 };
 
 union SURFACE_STATE_BUFFER_LENGTH {

@@ -223,8 +223,8 @@ void EncodeSetMMIO<Family>::encodeIMM(CommandContainer &container, uint32_t offs
     MI_LOAD_REGISTER_IMM cmd = Family::cmdInitLoadRegisterImm;
     cmd.setRegisterOffset(offset);
     cmd.setDataDword(data);
-    auto buffer = container.getCommandStream()->getSpace(sizeof(cmd));
-    *(MI_LOAD_REGISTER_IMM *)buffer = cmd;
+    auto buffer = container.getCommandStream()->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
+    *buffer = cmd;
 }
 
 template <typename Family>
@@ -232,8 +232,8 @@ void EncodeSetMMIO<Family>::encodeMEM(CommandContainer &container, uint32_t offs
     MI_LOAD_REGISTER_MEM cmd = Family::cmdInitLoadRegisterMem;
     cmd.setRegisterAddress(offset);
     cmd.setMemoryAddress(address);
-    auto buffer = container.getCommandStream()->getSpace(sizeof(cmd));
-    *(MI_LOAD_REGISTER_MEM *)buffer = cmd;
+    auto buffer = container.getCommandStream()->getSpaceForCmd<MI_LOAD_REGISTER_MEM>();
+    *buffer = cmd;
 }
 
 template <typename Family>
@@ -241,8 +241,8 @@ void EncodeSetMMIO<Family>::encodeREG(CommandContainer &container, uint32_t dstO
     MI_LOAD_REGISTER_REG cmd = Family::cmdInitLoadRegisterReg;
     cmd.setSourceRegisterAddress(srcOffset);
     cmd.setDestinationRegisterAddress(dstOffset);
-    auto buffer = container.getCommandStream()->getSpace(sizeof(cmd));
-    *(MI_LOAD_REGISTER_REG *)buffer = cmd;
+    auto buffer = container.getCommandStream()->getSpaceForCmd<MI_LOAD_REGISTER_REG>();
+    *buffer = cmd;
 }
 
 template <typename Family>
@@ -250,8 +250,8 @@ void EncodeStoreMMIO<Family>::encode(CommandContainer &container, uint32_t offse
     MI_STORE_REGISTER_MEM cmd = Family::cmdInitStoreRegisterMem;
     cmd.setRegisterAddress(offset);
     cmd.setMemoryAddress(address);
-    auto buffer = container.getCommandStream()->getSpace(sizeof(cmd));
-    *(MI_STORE_REGISTER_MEM *)buffer = cmd;
+    auto buffer = container.getCommandStream()->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
+    *buffer = cmd;
 }
 
 template <typename Family>
@@ -325,11 +325,13 @@ void EncodeSempahore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      uint64_t compareAddress,
                                                      uint32_t compareData,
                                                      COMPARE_OPERATION compareMode) {
-    *cmd = Family::cmdInitMiSemaphoreWait;
-    cmd->setCompareOperation(compareMode);
-    cmd->setSemaphoreDataDword(compareData);
-    cmd->setSemaphoreGraphicsAddress(compareAddress);
-    cmd->setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    MI_SEMAPHORE_WAIT localCmd = Family::cmdInitMiSemaphoreWait;
+    localCmd.setCompareOperation(compareMode);
+    localCmd.setSemaphoreDataDword(compareData);
+    localCmd.setSemaphoreGraphicsAddress(compareAddress);
+    localCmd.setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+
+    *cmd = localCmd;
 }
 
 template <typename Family>
@@ -353,11 +355,13 @@ template <typename Family>
 void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic, uint64_t writeAddress,
                                            ATOMIC_OPCODES opcode,
                                            DATA_SIZE dataSize) {
-    *atomic = Family::cmdInitAtomic;
-    atomic->setAtomicOpcode(opcode);
-    atomic->setDataSize(dataSize);
-    atomic->setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
-    atomic->setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
+    MI_ATOMIC cmd = Family::cmdInitAtomic;
+    cmd.setAtomicOpcode(opcode);
+    cmd.setDataSize(dataSize);
+    cmd.setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
+    cmd.setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
+
+    *atomic = cmd;
 }
 
 template <typename Family>
@@ -371,14 +375,14 @@ void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(LinearStream *
     cmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
     cmd.setBatchBufferStartAddressGraphicsaddress472(address);
     auto buffer = commandStream->getSpaceForCmd<MI_BATCH_BUFFER_START>();
-    *reinterpret_cast<MI_BATCH_BUFFER_START *>(buffer) = cmd;
+    *buffer = cmd;
 }
 
 template <typename Family>
 void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(CommandContainer &container) {
     MI_BATCH_BUFFER_END cmd = Family::cmdInitBatchBufferEnd;
-    auto buffer = container.getCommandStream()->getSpace(sizeof(cmd));
-    *reinterpret_cast<MI_BATCH_BUFFER_END *>(buffer) = cmd;
+    auto buffer = container.getCommandStream()->getSpaceForCmd<MI_BATCH_BUFFER_END>();
+    *buffer = cmd;
 }
 
 template <typename Family>
@@ -399,14 +403,15 @@ void EncodeMiFlushDW<GfxFamily>::programMiFlushDw(LinearStream &commandStream, u
     programMiFlushDwWA(commandStream);
 
     auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
-    *miFlushDwCmd = GfxFamily::cmdInitMiFlushDw;
+    MI_FLUSH_DW miFlush = GfxFamily::cmdInitMiFlushDw;
     if (commandWithPostSync) {
         auto postSyncType = timeStampOperation ? MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_TIMESTAMP_REGISTER : MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD;
-        miFlushDwCmd->setPostSyncOperation(postSyncType);
-        miFlushDwCmd->setDestinationAddress(immediateDataGpuAddress);
-        miFlushDwCmd->setImmediateData(immediateData);
+        miFlush.setPostSyncOperation(postSyncType);
+        miFlush.setDestinationAddress(immediateDataGpuAddress);
+        miFlush.setImmediateData(immediateData);
     }
-    appendMiFlushDw(miFlushDwCmd);
+    appendMiFlushDw(&miFlush);
+    *miFlushDwCmd = miFlush;
 }
 
 template <typename GfxFamily>

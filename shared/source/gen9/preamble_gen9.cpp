@@ -39,25 +39,28 @@ void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStre
 
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
 
-    auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));
-    *pCmd = SKLFamily::cmdInitPipelineSelect;
+    auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
+    PIPELINE_SELECT cmd = SKLFamily::cmdInitPipelineSelect;
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
-    pCmd->setMaskBits(mask);
-    pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
-    pCmd->setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
+    cmd.setMaskBits(mask);
+    cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
+    cmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
+
+    *pCmd = cmd;
 }
 
 template <>
 void PreambleHelper<SKLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, aub_stream::EngineType engineType) {
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl = SKLFamily::cmdInitPipeControl;
-    pipeControl->setCommandStreamerStallEnable(true);
+    PIPE_CONTROL cmd = SKLFamily::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
     if (hwInfo->workaroundTable.waSendMIFLUSHBeforeVFE) {
-        pipeControl->setRenderTargetCacheFlushEnable(true);
-        pipeControl->setDepthCacheFlushEnable(true);
-        pipeControl->setDcFlushEnable(true);
+        cmd.setRenderTargetCacheFlushEnable(true);
+        cmd.setDepthCacheFlushEnable(true);
+        cmd.setDcFlushEnable(true);
     }
+    *pipeControl = cmd;
 }
 
 template <>
@@ -70,14 +73,15 @@ void PreambleHelper<SKLFamily>::programThreadArbitration(LinearStream *pCommandS
     UNRECOVERABLE_IF(requiredThreadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent);
 
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl = SKLFamily::cmdInitPipeControl;
-    pipeControl->setCommandStreamerStallEnable(true);
+    PIPE_CONTROL cmd = SKLFamily::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
+    *pipeControl = cmd;
 
     auto pCmd = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    *pCmd = SKLFamily::cmdInitLoadRegisterImm;
-
-    pCmd->setRegisterOffset(DebugControlReg2::address);
-    pCmd->setDataDword(DebugControlReg2::getRegData(requiredThreadArbitrationPolicy));
+    MI_LOAD_REGISTER_IMM lriCmd = SKLFamily::cmdInitLoadRegisterImm;
+    lriCmd.setRegisterOffset(DebugControlReg2::address);
+    lriCmd.setDataDword(DebugControlReg2::getRegData(requiredThreadArbitrationPolicy));
+    *pCmd = lriCmd;
 }
 
 template <>

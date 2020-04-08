@@ -80,7 +80,7 @@ void MemorySynchronizationCommands<GfxFamily>::setExtraPipeControlProperties(PIP
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::setExtraCacheFlushFields(PIPE_CONTROL *pipeControl) {
+void MemorySynchronizationCommands<GfxFamily>::setExtraCacheFlushFields(PIPE_CONTROL &pipeControl) {
 }
 
 } // namespace NEO

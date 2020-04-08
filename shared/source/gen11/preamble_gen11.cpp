@@ -32,31 +32,35 @@ void PreambleHelper<ICLFamily>::programPipelineSelect(LinearStream *pCommandStre
                                                       const PipelineSelectArgs &pipelineSelectArgs,
                                                       const HardwareInfo &hwInfo) {
 
-    typedef typename ICLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    using PIPELINE_SELECT = typename ICLFamily::PIPELINE_SELECT;
 
-    auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));
-    *pCmd = ICLFamily::cmdInitPipelineSelect;
+    auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
+    PIPELINE_SELECT cmd = ICLFamily::cmdInitPipelineSelect;
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits |
                 pipelineSelectMediaSamplerDopClockGateMaskBits |
                 pipelineSelectMediaSamplerPowerClockGateMaskBits;
 
-    pCmd->setMaskBits(mask);
-    pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
-    pCmd->setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
-    pCmd->setMediaSamplerPowerClockGateDisable(pipelineSelectArgs.mediaSamplerRequired);
+    cmd.setMaskBits(mask);
+    cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
+    cmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
+    cmd.setMediaSamplerPowerClockGateDisable(pipelineSelectArgs.mediaSamplerRequired);
+
+    *pCmd = cmd;
 }
 
 template <>
 void PreambleHelper<ICLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, aub_stream::EngineType engineType) {
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl = ICLFamily::cmdInitPipeControl;
-    pipeControl->setCommandStreamerStallEnable(true);
+    PIPE_CONTROL cmd = ICLFamily::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
+
     if (hwInfo->workaroundTable.waSendMIFLUSHBeforeVFE) {
-        pipeControl->setRenderTargetCacheFlushEnable(true);
-        pipeControl->setDepthCacheFlushEnable(true);
-        pipeControl->setDcFlushEnable(true);
+        cmd.setRenderTargetCacheFlushEnable(true);
+        cmd.setDepthCacheFlushEnable(true);
+        cmd.setDcFlushEnable(true);
     }
+    *pipeControl = cmd;
 }
 
 template <>
@@ -69,14 +73,17 @@ void PreambleHelper<ICLFamily>::programThreadArbitration(LinearStream *pCommandS
     UNRECOVERABLE_IF(requiredThreadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent);
 
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl = ICLFamily::cmdInitPipeControl;
-    pipeControl->setCommandStreamerStallEnable(true);
+    PIPE_CONTROL cmd = ICLFamily::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
+    *pipeControl = cmd;
 
     auto pCmd = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    *pCmd = ICLFamily::cmdInitLoadRegisterImm;
+    MI_LOAD_REGISTER_IMM lriCmd = ICLFamily::cmdInitLoadRegisterImm;
 
-    pCmd->setRegisterOffset(RowChickenReg4::address);
-    pCmd->setDataDword(RowChickenReg4::regDataForArbitrationPolicy[requiredThreadArbitrationPolicy]);
+    lriCmd.setRegisterOffset(RowChickenReg4::address);
+    lriCmd.setDataDword(RowChickenReg4::regDataForArbitrationPolicy[requiredThreadArbitrationPolicy]);
+
+    *pCmd = lriCmd;
 }
 
 template <>

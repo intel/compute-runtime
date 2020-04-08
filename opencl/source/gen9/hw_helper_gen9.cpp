@@ -23,9 +23,12 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
 
 template <>
 void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
-    auto pCmd = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(Family::PIPE_CONTROL)));
-    *pCmd = Family::cmdInitPipeControl;
-    pCmd->setCommandStreamerStallEnable(true);
+    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
+    PIPE_CONTROL cmd = Family::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
+
+    auto pipeControl = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(Family::PIPE_CONTROL)));
+    *pipeControl = cmd;
 }
 
 template <>

@@ -13,11 +13,13 @@ namespace NEO {
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programL3(LinearStream *pCommandStream, uint32_t l3Config) {
-    auto pCmd = (MI_LOAD_REGISTER_IMM *)pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM));
-    *pCmd = GfxFamily::cmdInitLoadRegisterImm;
+    auto pCmd = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
+    MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
 
-    pCmd->setRegisterOffset(L3CNTLRegisterOffset<GfxFamily>::registerOffset);
-    pCmd->setDataDword(l3Config);
+    cmd.setRegisterOffset(L3CNTLRegisterOffset<GfxFamily>::registerOffset);
+    cmd.setDataDword(l3Config);
+
+    *pCmd = cmd;
 }
 
 template <typename GfxFamily>
@@ -37,19 +39,20 @@ uint64_t PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream
     addPipeControlBeforeVfeCmd(pCommandStream, &hwInfo, engineType);
 
     auto scratchSpaceAddressOffset = static_cast<uint64_t>(pCommandStream->getUsed() + MEDIA_VFE_STATE::PATCH_CONSTANTS::SCRATCHSPACEBASEPOINTER_BYTEOFFSET);
-    auto pMediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(pCommandStream->getSpace(sizeof(MEDIA_VFE_STATE)));
-    *pMediaVfeState = GfxFamily::cmdInitMediaVfeState;
-    pMediaVfeState->setMaximumNumberOfThreads(maxFrontEndThreads);
-    pMediaVfeState->setNumberOfUrbEntries(1);
-    pMediaVfeState->setUrbEntryAllocationSize(PreambleHelper<GfxFamily>::getUrbEntryAllocationSize());
-    pMediaVfeState->setPerThreadScratchSpace(Kernel::getScratchSizeValueToProgramMediaVfeState(scratchSize));
-    pMediaVfeState->setStackSize(Kernel::getScratchSizeValueToProgramMediaVfeState(scratchSize));
+    auto pMediaVfeState = pCommandStream->getSpaceForCmd<MEDIA_VFE_STATE>();
+    MEDIA_VFE_STATE cmd = GfxFamily::cmdInitMediaVfeState;
+    cmd.setMaximumNumberOfThreads(maxFrontEndThreads);
+    cmd.setNumberOfUrbEntries(1);
+    cmd.setUrbEntryAllocationSize(PreambleHelper<GfxFamily>::getUrbEntryAllocationSize());
+    cmd.setPerThreadScratchSpace(Kernel::getScratchSizeValueToProgramMediaVfeState(scratchSize));
+    cmd.setStackSize(Kernel::getScratchSizeValueToProgramMediaVfeState(scratchSize));
     uint32_t lowAddress = static_cast<uint32_t>(0xFFFFFFFF & scratchAddress);
     uint32_t highAddress = static_cast<uint32_t>(0xFFFFFFFF & (scratchAddress >> 32));
-    pMediaVfeState->setScratchSpaceBasePointer(lowAddress);
-    pMediaVfeState->setScratchSpaceBasePointerHigh(highAddress);
+    cmd.setScratchSpaceBasePointer(lowAddress);
+    cmd.setScratchSpaceBasePointerHigh(highAddress);
 
-    programAdditionalFieldsInVfeState(pMediaVfeState, hwInfo);
+    programAdditionalFieldsInVfeState(&cmd, hwInfo);
+    *pMediaVfeState = cmd;
 
     return scratchSpaceAddressOffset;
 }

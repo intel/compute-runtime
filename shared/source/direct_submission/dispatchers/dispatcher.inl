@@ -15,11 +15,13 @@ class LinearStream;
 template <typename GfxFamily>
 inline void Dispatcher<GfxFamily>::dispatchStartCommandBuffer(LinearStream &cmdBuffer, uint64_t gpuStartAddress) {
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
-    auto bbufferStart = cmdBuffer.getSpaceForCmd<MI_BATCH_BUFFER_START>();
-    *bbufferStart = GfxFamily::cmdInitBatchBufferStart;
 
-    bbufferStart->setBatchBufferStartAddressGraphicsaddress472(gpuStartAddress);
-    bbufferStart->setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
+    MI_BATCH_BUFFER_START cmd = GfxFamily::cmdInitBatchBufferStart;
+    cmd.setBatchBufferStartAddressGraphicsaddress472(gpuStartAddress);
+    cmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
+
+    auto bbufferStart = cmdBuffer.getSpaceForCmd<MI_BATCH_BUFFER_START>();
+    *bbufferStart = cmd;
 }
 
 template <typename GfxFamily>
@@ -32,8 +34,10 @@ template <typename GfxFamily>
 inline void Dispatcher<GfxFamily>::dispatchStopCommandBuffer(LinearStream &cmdBuffer) {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
 
+    MI_BATCH_BUFFER_END cmd = GfxFamily::cmdInitBatchBufferEnd;
+
     auto bbufferEnd = cmdBuffer.getSpaceForCmd<MI_BATCH_BUFFER_END>();
-    *bbufferEnd = GfxFamily::cmdInitBatchBufferEnd;
+    *bbufferEnd = cmd;
 }
 
 template <typename GfxFamily>
@@ -45,11 +49,13 @@ inline size_t Dispatcher<GfxFamily>::getSizeStopCommandBuffer() {
 template <typename GfxFamily>
 inline void Dispatcher<GfxFamily>::dispatchStoreDwordCommand(LinearStream &cmdBuffer, uint64_t gpuVa, uint32_t value) {
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
-    auto storeDataImmediate = cmdBuffer.getSpaceForCmd<MI_STORE_DATA_IMM>();
-    *storeDataImmediate = GfxFamily::cmdInitStoreDataImm;
 
-    storeDataImmediate->setAddress(gpuVa);
-    storeDataImmediate->setDataDword0(value);
+    MI_STORE_DATA_IMM cmd = GfxFamily::cmdInitStoreDataImm;
+    cmd.setAddress(gpuVa);
+    cmd.setDataDword0(value);
+
+    auto storeDataImmediate = cmdBuffer.getSpaceForCmd<MI_STORE_DATA_IMM>();
+    *storeDataImmediate = cmd;
 }
 
 template <typename GfxFamily>

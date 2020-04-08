@@ -12,9 +12,10 @@ namespace NEO {
 template <>
 void PreambleHelper<BDWFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, aub_stream::EngineType engineType) {
     auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl = BDWFamily::cmdInitPipeControl;
-    pipeControl->setCommandStreamerStallEnable(true);
-    pipeControl->setDcFlushEnable(true);
+    PIPE_CONTROL cmd = BDWFamily::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
+    cmd.setDcFlushEnable(true);
+    *pipeControl = cmd;
 }
 
 template <>
@@ -41,11 +42,14 @@ void PreambleHelper<BDWFamily>::programPipelineSelect(LinearStream *pCommandStre
                                                       const PipelineSelectArgs &pipelineSelectArgs,
                                                       const HardwareInfo &hwInfo) {
 
-    typedef typename BDWFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));
-    *pCmd = BDWFamily::cmdInitPipelineSelect;
-    pCmd->setMaskBits(pipelineSelectEnablePipelineSelectMaskBits);
-    pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
+    using PIPELINE_SELECT = typename BDWFamily::PIPELINE_SELECT;
+    auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
+    PIPELINE_SELECT cmd = BDWFamily::cmdInitPipelineSelect;
+
+    cmd.setMaskBits(pipelineSelectEnablePipelineSelectMaskBits);
+    cmd.setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
+
+    *pCmd = cmd;
 }
 
 template <>

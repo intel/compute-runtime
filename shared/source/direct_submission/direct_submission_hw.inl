@@ -329,8 +329,12 @@ template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::setReturnAddress(void *returnCmd, uint64_t returnAddress) {
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 
+    MI_BATCH_BUFFER_START cmd = GfxFamily::cmdInitBatchBufferStart;
+    cmd.setBatchBufferStartAddressGraphicsaddress472(returnAddress);
+    cmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
+
     MI_BATCH_BUFFER_START *returnBBStart = static_cast<MI_BATCH_BUFFER_START *>(returnCmd);
-    returnBBStart->setBatchBufferStartAddressGraphicsaddress472(returnAddress);
+    *returnBBStart = cmd;
 }
 
 template <typename GfxFamily, typename Dispatcher>
