@@ -115,7 +115,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfo) {
     EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.platform.usRevId);
     EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.gtSystemInfo.SubSliceCount);
-    EXPECT_EQ(2u, outHwInfo.gtSystemInfo.SliceCount);
+    EXPECT_EQ(1u, outHwInfo.gtSystemInfo.SliceCount);
     EXPECT_EQ(aub_stream::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT4, outHwInfo.platform.eGTType);
@@ -271,4 +271,18 @@ TYPED_TEST(SklHwInfoTests, gtSetupIsCorrect) {
     EXPECT_GT_VAL(gtSystemInfo.L3CacheSizeInKb, 0u);
     EXPECT_EQ(gtSystemInfo.CsrSizeInMb, 8u);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
+}
+
+TYPED_TEST(SklHwInfoTests, givenGTSystemInfoTypeWhenConfigureHardwareCustomThenSliceCountDontChange) {
+    HardwareInfo hwInfo;
+    auto osInterface = std::unique_ptr<OSInterface>(new OSInterface());
+    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+
+    TypeParam::setupHardwareInfo(&hwInfo, false);
+    auto sliceCount = gtSystemInfo.SliceCount;
+
+    HwInfoConfig *hwConfig = HwInfoConfig::get(PRODUCT_FAMILY::IGFX_SKYLAKE);
+
+    hwConfig->configureHardwareCustom(&hwInfo, osInterface.get());
+    EXPECT_EQ(gtSystemInfo.SliceCount, sliceCount);
 }

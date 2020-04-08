@@ -18,12 +18,6 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     }
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
 
-    if (gtSystemInfo->SubSliceCount > 3) {
-        gtSystemInfo->SliceCount = 2;
-    } else {
-        gtSystemInfo->SliceCount = 1;
-    }
-
     gtSystemInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled = 1;
     gtSystemInfo->VDBoxInfo.Instances.Bits.VDBox0Enabled = 1;
     gtSystemInfo->VEBoxInfo.IsValid = true;
