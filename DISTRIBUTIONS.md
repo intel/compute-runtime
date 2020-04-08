@@ -2,7 +2,7 @@
 
 ## Level Zero specific
 
-* [distributions](https://github.com/intel/compute-runtime/blob/master/level-zero/doc/DISTRIBUTIONS.md)
+* [distributions](https://github.com/intel/compute-runtime/blob/master/level_zero/doc/DISTRIBUTIONS.md)
 
 ## OpenCL specific
 
