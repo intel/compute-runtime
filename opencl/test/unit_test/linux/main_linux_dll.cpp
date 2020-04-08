@@ -55,6 +55,7 @@ void initializeTestedDevice() {
 }
 
 int openRetVal = 0;
+std::string lastOpenedPath;
 int testOpen(const char *fullPath, int, ...) {
     return openRetVal;
 };
@@ -62,6 +63,9 @@ int testOpen(const char *fullPath, int, ...) {
 int openCounter = 1;
 int openWithCounter(const char *fullPath, int, ...) {
     if (openCounter > 0) {
+        if (fullPath) {
+            lastOpenedPath = fullPath;
+        }
         openCounter--;
         return 1023; // valid file descriptor for ULT
     }
@@ -98,6 +102,26 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenGetDeviceFdThenReturnFd) {
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
+}
+
+TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevices) {
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, true);
+    openFull = openWithCounter;
+    openCounter = 1;
+
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_STREQ("/dev/dri/renderD128", lastOpenedPath.c_str());
+    EXPECT_EQ(1u, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
+
+    openCounter = 2;
+    hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_STREQ("/dev/dri/renderD129", lastOpenedPath.c_str());
+    EXPECT_EQ(2u, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
+    EXPECT_NE(nullptr, hwDeviceIds[1].get());
 }
 
 TEST(DrmTest, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {

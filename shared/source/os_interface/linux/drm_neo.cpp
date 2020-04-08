@@ -293,50 +293,60 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     return 0;
 }
 
+void appendHwDeviceId(std::vector<std::unique_ptr<HwDeviceId>> &hwDeviceIds, int fileDescriptor) {
+    if (fileDescriptor >= 0) {
+        if (Drm::isi915Version(fileDescriptor)) {
+            hwDeviceIds.push_back(std::make_unique<HwDeviceId>(fileDescriptor));
+        } else {
+            SysCalls::close(fileDescriptor);
+        }
+    }
+}
+
 std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionEnvironment &executionEnvironment) {
     std::vector<std::unique_ptr<HwDeviceId>> hwDeviceIds;
     executionEnvironment.osEnvironment = std::make_unique<OsEnvironment>();
-    char fullPath[PATH_MAX];
-    size_t numRootDevices = 1u;
+    std::string devicePrefix = std::string(Os::pciDevicesDirectory) + "/pci-0000:";
+    const char *renderDeviceSuffix = "-render";
+    size_t numRootDevices = 0u;
     if (DebugManager.flags.CreateMultipleRootDevices.get()) {
         numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
     }
-    if (DebugManager.flags.ForceDeviceId.get() != "unk") {
-        snprintf(fullPath, PATH_MAX, "/dev/dri/by-path/pci-0000:%s-render", DebugManager.flags.ForceDeviceId.get().c_str());
-        int fileDescriptor = SysCalls::open(fullPath, O_RDWR);
-        if (fileDescriptor >= 0) {
-            if (Drm::isi915Version(fileDescriptor)) {
-                while (hwDeviceIds.size() < numRootDevices) {
-                    hwDeviceIds.push_back(std::make_unique<HwDeviceId>(fileDescriptor));
+
+    std::vector<std::string> files = Directory::getFiles(Os::pciDevicesDirectory);
+
+    if (files.size() == 0) {
+        const char *pathPrefix = "/dev/dri/renderD";
+        const unsigned int maxDrmDevices = 64;
+        unsigned int startNum = 128;
+
+        for (unsigned int i = 0; i < maxDrmDevices; i++) {
+            std::string path = std::string(pathPrefix) + std::to_string(i + startNum);
+            int fileDescriptor = SysCalls::open(path.c_str(), O_RDWR);
+            appendHwDeviceId(hwDeviceIds, fileDescriptor);
+        }
+        return hwDeviceIds;
+    }
+
+    do {
+        for (std::vector<std::string>::iterator file = files.begin(); file != files.end(); ++file) {
+            if (file->find(renderDeviceSuffix) == std::string::npos) {
+                continue;
+            }
+            std::string pciPath = file->substr(devicePrefix.size(), file->size() - devicePrefix.size() - strlen(renderDeviceSuffix));
+
+            if (DebugManager.flags.ForceDeviceId.get() != "unk") {
+                if (file->find(DebugManager.flags.ForceDeviceId.get().c_str()) == std::string::npos) {
+                    continue;
                 }
-            } else {
-                SysCalls::close(fileDescriptor);
             }
+            int fileDescriptor = SysCalls::open(file->c_str(), O_RDWR);
+            appendHwDeviceId(hwDeviceIds, fileDescriptor);
         }
-        return hwDeviceIds;
-    }
-
-    const char *pathPrefix = "/dev/dri/renderD";
-    const unsigned int maxDrmDevices = 64;
-    unsigned int startNum = 128;
-
-    for (unsigned int i = 0; i < maxDrmDevices; i++) {
-        snprintf(fullPath, PATH_MAX, "%s%u", pathPrefix, i + startNum);
-        int fileDescriptor = SysCalls::open(fullPath, O_RDWR);
-        if (fileDescriptor >= 0) {
-            if (Drm::isi915Version(fileDescriptor)) {
-                hwDeviceIds.push_back(std::make_unique<HwDeviceId>(fileDescriptor));
-            } else {
-                SysCalls::close(fileDescriptor);
-            }
+        if (hwDeviceIds.empty()) {
+            return hwDeviceIds;
         }
-    }
-    if (hwDeviceIds.empty()) {
-        return hwDeviceIds;
-    }
-    while (hwDeviceIds.size() < numRootDevices) {
-        hwDeviceIds.push_back(std::make_unique<HwDeviceId>(hwDeviceIds[0]->getFileDescriptor()));
-    }
+    } while (hwDeviceIds.size() < numRootDevices);
     return hwDeviceIds;
 }
 

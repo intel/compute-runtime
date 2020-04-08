@@ -12,4 +12,5 @@
 namespace Os {
 // Pci Path
 extern const char *sysFsPciPath;
+extern const char *pciDevicesDirectory;
 } // namespace Os

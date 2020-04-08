@@ -8,6 +8,7 @@
 #include "mock_os_layer.h"
 
 #include <cassert>
+#include <dirent.h>
 #include <iostream>
 
 int (*c_open)(const char *pathname, int flags, ...) = nullptr;
@@ -55,6 +56,35 @@ int open(const char *pathname, int flags, ...) {
     }
 
     return c_open(pathname, flags);
+}
+bool failOnOpenDir = false;
+DIR *validDir = reinterpret_cast<DIR *>(0xc001);
+DIR *opendir(const char *name) {
+    if (failOnOpenDir) {
+        return nullptr;
+    }
+    return validDir;
+}
+int closedir(DIR *dirp) {
+    return 0u;
+}
+uint32_t entryIndex = 0u;
+const uint32_t numEntries = 4u;
+
+struct dirent entries[] = {
+    {0, 0, 0, 0, "."},
+    {0, 0, 0, 0, "pci-0000:test1-render"},
+    {0, 0, 0, 0, "pci-0000:test2-render"},
+    {0, 0, 0, 0, "pci-0000:1234-render"},
+
+};
+
+struct dirent *readdir(DIR *dir) {
+    if (entryIndex >= numEntries) {
+        entryIndex = 0;
+        return nullptr;
+    }
+    return &entries[entryIndex++];
 }
 
 int drmGetParam(drm_i915_getparam_t *param) {

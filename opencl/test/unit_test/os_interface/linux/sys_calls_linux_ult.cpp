@@ -30,7 +30,7 @@ int open(const char *file, int flags) {
     if (strcmp(file, "/dev/dri/by-path/pci-0000:invalid-render") == 0) {
         return 0;
     }
-    if (strcmp(file, "/dev/dri/renderD129") == 0) {
+    if (strcmp(file, "./test_files/linux/by-path/pci-0000-device-render") == 0) {
         return fakeFileDescriptor;
     }
     return 0;
