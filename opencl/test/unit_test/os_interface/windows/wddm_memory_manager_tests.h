@@ -61,8 +61,6 @@ class MockWddmMemoryManagerFixture {
         wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
         wddm->init();
 
-        rootDeviceEnvironment->osInterface.reset(new OSInterface());
-        rootDeviceEnvironment->osInterface->get()->setWddm(wddm);
         rootDeviceEnvironment->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         executionEnvironment->initializeMemoryManager();
 
@@ -110,11 +108,9 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         // wddm is deleted by memory manager
 
         wddm = new NiceMock<GmockWddm>(*executionEnvironment->rootDeviceEnvironments[0].get());
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         ASSERT_NE(nullptr, wddm);
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         wddm->init();
-        executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setWddm(wddm);
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<WddmMemoryOperationsHandler>(wddm);
         osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
         memoryManager = new (std::nothrow) MockWddmMemoryManager(*executionEnvironment);

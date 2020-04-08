@@ -46,15 +46,15 @@ class WddmKmDafListenerTest : public ::testing::Test {
         auto osEnvironment = new OsEnvironmentWin();
         osEnvironment->gdi.reset(new MockGdi());
         executionEnvironment->osEnvironment.reset(osEnvironment);
-        wddmWithKmDafMock.reset(new WddmWithKmDafMock(*rootDeviceEnvironment));
+        wddmWithKmDafMock = new WddmWithKmDafMock(*rootDeviceEnvironment);
         wddmWithKmDafMock->init();
         wddmWithKmDafMock->featureTable->ftrKmdDaf = true;
     }
     void TearDown() {
     }
 
-    std::unique_ptr<WddmWithKmDafMock> wddmWithKmDafMock;
-    ExecutionEnvironment *executionEnvironment;
+    WddmWithKmDafMock *wddmWithKmDafMock = nullptr;
+    ExecutionEnvironment *executionEnvironment = nullptr;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 

@@ -22,9 +22,9 @@ TEST(osInterfaceTests, whenOsInterfaceSetupGmmInputArgsThenProperAdapterBDFIsSet
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     auto wddm = new WddmMock(rootDeviceEnvironment);
-    OSInterface osInterface;
-    osInterface.get()->setWddm(wddm);
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.osInterface.get());
     wddm->init();
+    EXPECT_NE(nullptr, rootDeviceEnvironment.osInterface.get());
 
     auto &adapterBDF = wddm->adapterBDF;
     adapterBDF.Bus = 0x12;
@@ -33,6 +33,6 @@ TEST(osInterfaceTests, whenOsInterfaceSetupGmmInputArgsThenProperAdapterBDFIsSet
 
     GMM_INIT_IN_ARGS gmmInputArgs = {};
     EXPECT_NE(0, memcmp(&adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
-    osInterface.setGmmInputArgs(&gmmInputArgs);
+    rootDeviceEnvironment.osInterface->setGmmInputArgs(&gmmInputArgs);
     EXPECT_EQ(0, memcmp(&adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
 }

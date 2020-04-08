@@ -67,6 +67,10 @@ Wddm::~Wddm() {
 }
 
 bool Wddm::init() {
+    if (!rootDeviceEnvironment.osInterface) {
+        rootDeviceEnvironment.osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironment.osInterface->get()->setWddm(this);
+    }
     if (!queryAdapterInfo()) {
         return false;
     }

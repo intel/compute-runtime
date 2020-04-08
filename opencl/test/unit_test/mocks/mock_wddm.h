@@ -85,7 +85,6 @@ class WddmMock : public Wddm {
     uint64_t *getPagingFenceAddress() override;
     void waitOnPagingFenceFromCpu() override;
     void createPagingFenceLogger() override;
-    bool init() override;
 
     bool configureDeviceAddressSpace() {
         configureDeviceAddressSpaceResult.called++;
@@ -135,7 +134,6 @@ class WddmMock : public Wddm {
     bool makeResidentStatus = true;
     bool callBaseMakeResident = true;
     bool callBaseCreatePagingLogger = true;
-    bool osInterfaceAvailable = false;
 };
 
 struct GmockWddm : WddmMock {

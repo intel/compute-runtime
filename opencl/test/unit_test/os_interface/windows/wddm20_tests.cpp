@@ -134,7 +134,7 @@ TEST(Wddm20EnumAdaptersTest, expectTrue) {
 
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
+    auto wddm = Wddm::createWddm(nullptr, rootDeviceEnvironment);
     bool success = wddm->init();
 
     EXPECT_TRUE(success);
@@ -151,7 +151,7 @@ TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCa
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
+    auto wddm = Wddm::createWddm(nullptr, *rootDeviceEnvironment);
     bool success = wddm->init();
     HardwareInfo outHwInfo = *rootDeviceEnvironment->getHardwareInfo();
     EXPECT_TRUE(success);
@@ -175,7 +175,7 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
 
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(nullptr, rootDeviceEnvironment));
+    auto wddm = Wddm::createWddm(nullptr, rootDeviceEnvironment);
     auto ret = wddm->init();
     EXPECT_FALSE(ret);
 
@@ -1070,18 +1070,19 @@ TEST(WddmGfxPartitionTests, initGfxPartitionHeapStandard64KBSplit) {
         MockWddm(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(OSInterface::discoverDevices(rootDeviceEnvironment.executionEnvironment)[0]), rootDeviceEnvironment) {}
     };
 
-    MockWddm wddm(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]);
+    MockExecutionEnvironment executionEnvironment;
+    auto wddm = new MockWddm(*executionEnvironment.rootDeviceEnvironments[0]);
 
     uint32_t rootDeviceIndex = 3;
     size_t numRootDevices = 5;
 
     MockGfxPartition gfxPartition;
-    wddm.init();
-    wddm.initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices);
+    wddm->init();
+    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices);
 
-    auto heapStandard64KBSize = alignDown((wddm.gfxPartition.Standard64KB.Limit - wddm.gfxPartition.Standard64KB.Base + 1) / numRootDevices, GfxPartition::heapGranularity);
+    auto heapStandard64KBSize = alignDown((wddm->gfxPartition.Standard64KB.Limit - wddm->gfxPartition.Standard64KB.Base + 1) / numRootDevices, GfxPartition::heapGranularity);
     EXPECT_EQ(heapStandard64KBSize, gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD64KB));
-    EXPECT_EQ(wddm.gfxPartition.Standard64KB.Base + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
+    EXPECT_EQ(wddm->gfxPartition.Standard64KB.Base + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
 }
 
 TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndForceDeviceIdIsTheSameAsTheExistingDeviceThenReturnTheAdapter) {
@@ -1401,13 +1402,4 @@ TEST(DiscoverDevices, whenDriverInfoHasIncompatibleDriverStoreThenHwDeviceIdIsNo
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
-}
-
-TEST(InitOsInterfaceTest, givenRootDeviceEnvironmentWhenIntializingWddmDuringInitOsInterfaceMethodThenOsInterfaceIsAvailable) {
-    MockExecutionEnvironment executionEnvironment{};
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    EXPECT_EQ(1u, hwDeviceIds.size());
-    executionEnvironment.rootDeviceEnvironments[0]->initOsInterface(std::move(hwDeviceIds[0]));
-    auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->getWddm());
-    EXPECT_TRUE(wddm->osInterfaceAvailable);
 }

@@ -102,14 +102,16 @@ struct WddmInstrumentationGmmFixture {
     void SetUp() {
         executionEnvironment = platform()->peekExecutionEnvironment();
         auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment)));
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *rootDeviceEnvironment));
         gmmMem = new ::testing::NiceMock<GmockGmmMemory>(rootDeviceEnvironment->getGmmClientContext());
         wddm->gmmMemory.reset(gmmMem);
+        rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+        rootDeviceEnvironment->osInterface->get()->setWddm(wddm);
     }
     void TearDown() {
     }
 
-    std::unique_ptr<WddmMock> wddm;
+    WddmMock *wddm;
     GmockGmmMemory *gmmMem = nullptr;
     ExecutionEnvironment *executionEnvironment;
 };

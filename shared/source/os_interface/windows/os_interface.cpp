@@ -71,8 +71,6 @@ BOOL OSInterface::OSInterfaceImpl::closeHandle(HANDLE hObject) {
 }
 bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId) {
     auto wddm(Wddm::createWddm(std::move(hwDeviceId), *this));
-    osInterface = std::make_unique<OSInterface>();
-    osInterface->get()->setWddm(wddm);
     if (!wddm->init()) {
         return false;
     }

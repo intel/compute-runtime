@@ -87,17 +87,19 @@ struct GlArbSyncEventOsTest : public ::testing::Test {
         sharing.GLContextHandle = 0x2cU;
         sharing.GLDeviceHandle = 0x3cU;
         wddm = new WddmMock(*rootDeviceEnvironment);
+        rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+        osInterface = rootDeviceEnvironment->osInterface.get();
+        osInterface->get()->setWddm(wddm);
         gdi = new MockGdi();
         wddm->resetGdi(gdi);
-        osInterface.get()->setWddm(wddm);
     }
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment;
     GlSharingFunctionsMock sharing;
     MockGdi *gdi = nullptr;
     WddmMock *wddm = nullptr;
-    OSInterface osInterface;
     CL_GL_SYNC_INFO syncInfo = {};
+    OSInterface *osInterface = nullptr;
 };
 
 TEST_F(GlArbSyncEventOsTest, WhenCreateSynchronizationObjectSucceedsThenAllHAndlesAreValid) {
@@ -144,7 +146,7 @@ TEST_F(GlArbSyncEventOsTest, WhenCreateSynchronizationObjectSucceedsThenAllHAndl
     wddm->init();
     gdi->createSynchronizationObject.mFunc = CreateSyncObjectMock::createSynchObject;
     gdi->createSynchronizationObject2.mFunc = CreateSyncObjectMock::createSynchObject2;
-    auto ret = setupArbSyncObject(sharing, osInterface, syncInfo);
+    auto ret = setupArbSyncObject(sharing, *osInterface, syncInfo);
     EXPECT_TRUE(ret);
     EXPECT_EQ(1U, syncInfo.serverSynchronizationObject);
     EXPECT_EQ(2U, syncInfo.clientSynchronizationObject);
@@ -155,7 +157,7 @@ TEST_F(GlArbSyncEventOsTest, WhenCreateSynchronizationObjectSucceedsThenAllHAndl
     EXPECT_NE(nullptr, syncInfo.submissionEvent);
     EXPECT_NE(nullptr, syncInfo.submissionEventName);
     EXPECT_FALSE(syncInfo.waitCalled);
-    cleanupArbSyncObject(osInterface, &syncInfo);
+    cleanupArbSyncObject(*osInterface, &syncInfo);
 }
 
 TEST_F(GlArbSyncEventOsTest, GivenNewGlSyncInfoWhenCreateSynchronizationObjectFailsThenSetupArbSyncObjectFails) {
@@ -198,19 +200,21 @@ TEST_F(GlArbSyncEventOsTest, GivenNewGlSyncInfoWhenCreateSynchronizationObjectFa
 
     CreateSyncObjectMock::getFailHandleId() = CreateSyncObjectMock::getHandle();
     int failuresCount = 0;
-    auto ret = setupArbSyncObject(sharing, osInterface, syncInfo);
+    auto ret = setupArbSyncObject(sharing, *osInterface, syncInfo);
     while (false == ret) {
         ++failuresCount;
         CreateSyncObjectMock::getHandle() = 1;
         ++CreateSyncObjectMock::getFailHandleId();
-        ret = setupArbSyncObject(sharing, osInterface, syncInfo);
+        ret = setupArbSyncObject(sharing, *osInterface, syncInfo);
     }
     EXPECT_EQ(3, failuresCount);
-    cleanupArbSyncObject(osInterface, &syncInfo);
+    cleanupArbSyncObject(*osInterface, &syncInfo);
 }
 
 TEST_F(GlArbSyncEventOsTest, GivenNewGlSyncInfoWhenCreateEventFailsThenSetupArbSyncObjectFails) {
     auto rootDeviceEnvironment = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
+
     MockOSInterface mockOsInterface;
     MockOSInterfaceImpl *mockOsInterfaceImpl = static_cast<MockOSInterfaceImpl *>(mockOsInterface.get());
 
@@ -242,6 +246,7 @@ TEST_F(GlArbSyncEventOsTest, GivenInvalidGlSyncInfoWhenCleanupArbSyncObjectIsCal
         }
     };
     auto rootDeviceEnvironment = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
 
     auto wddm = new WddmMock(*rootDeviceEnvironment);
     auto gdi = new MockGdi();
@@ -272,6 +277,7 @@ TEST_F(GlArbSyncEventOsTest, GivenValidGlSyncInfoWhenCleanupArbSyncObjectIsCalle
         }
     };
     auto rootDeviceEnvironment = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
 
     auto wddm = new WddmMock(*rootDeviceEnvironment);
     auto gdi = new MockGdi();
@@ -336,7 +342,7 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
     FailSignalSyncObjectMock::reset();
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
     wddm->init();
-    OsContextWin osContext(*osInterface.get()->getWddm(), 0u, 1,
+    OsContextWin osContext(*wddm, 0u, 1,
                            HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                            preemptionMode, false, false, false);
 
@@ -397,7 +403,7 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToSignalArbSyncObjectWhenSignalSynchroniza
     FailSignalSyncObjectMock::reset();
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
     wddm->init();
-    OsContextWin osContext(*osInterface.get()->getWddm(), 0u, 1,
+    OsContextWin osContext(*wddm, 0u, 1,
                            HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
                            preemptionMode, false, false, false);
 
@@ -451,7 +457,7 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToServerWaitForArbSyncObjectWhenWaitForSyn
     gdi->waitForSynchronizationObject.mFunc = FailWaitSyncObjectMock::waitForSynchObject;
 
     EXPECT_FALSE(syncInfo.waitCalled);
-    serverWaitForArbSyncObject(osInterface, syncInfo);
+    serverWaitForArbSyncObject(*osInterface, syncInfo);
     EXPECT_FALSE(syncInfo.waitCalled);
 }
 
@@ -460,6 +466,6 @@ TEST_F(GlArbSyncEventOsTest, GivenCallToServerWaitForArbSyncObjectWhenWaitForSyn
     syncInfo.serverSynchronizationObject = 0x7cU;
 
     EXPECT_FALSE(syncInfo.waitCalled);
-    serverWaitForArbSyncObject(osInterface, syncInfo);
+    serverWaitForArbSyncObject(*osInterface, syncInfo);
     EXPECT_TRUE(syncInfo.waitCalled);
 }

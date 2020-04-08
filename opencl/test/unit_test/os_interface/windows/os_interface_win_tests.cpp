@@ -28,8 +28,6 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     auto wddm = new WddmMock(rootDeviceEnvironment);
-    OSInterface osInterface;
-    osInterface.get()->setWddm(wddm);
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
     wddm->init();
     EXPECT_EQ(0u, wddm->registerTrimCallbackResult.called);

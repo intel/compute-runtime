@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
@@ -29,6 +30,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
 
         executionEnvironment = platform()->peekExecutionEnvironment();
         wddm = static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get()));
+        auto &osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface;
         osInterface = std::make_unique<OSInterface>();
         osInterface->get()->setWddm(wddm);
 
@@ -52,7 +54,6 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture {
         GdiDllFixture::TearDown();
     }
 
-    std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<OsContextWin> osContext;
     WddmMock *wddm = nullptr;
     WddmMockInterface23 *wddmMockInterface = nullptr;
@@ -78,9 +79,9 @@ TEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
 
 TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutIfEnabled) {
     auto defaultEngine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0];
-    OsContextWin osContextWithoutPreemption(*osInterface->get()->getWddm(), 0u, 1, defaultEngine, PreemptionMode::Disabled,
+    OsContextWin osContextWithoutPreemption(*wddm, 0u, 1, defaultEngine, PreemptionMode::Disabled,
                                             false, false, false);
-    OsContextWin osContextWithPreemption(*osInterface->get()->getWddm(), 0u, 1, defaultEngine, PreemptionMode::MidBatch,
+    OsContextWin osContextWithPreemption(*wddm, 0u, 1, defaultEngine, PreemptionMode::MidBatch,
                                          false, false, false);
 
     wddm->wddmInterface->createHwQueue(osContextWithoutPreemption);

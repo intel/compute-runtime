@@ -25,12 +25,12 @@ typedef ::testing::Test MockOSTimeWinTest;
 TEST_F(MockOSTimeWinTest, WhenCreatingTimerThenResolutionIsSetCorrectly) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
-    auto wddmMock = std::unique_ptr<WddmMock>(new WddmMock(rootDeviceEnvironment));
+    auto wddmMock = new WddmMock(rootDeviceEnvironment);
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     wddmMock->init();
 
-    std::unique_ptr<MockOSTimeWin> timeWin(new MockOSTimeWin(wddmMock.get()));
+    std::unique_ptr<MockOSTimeWin> timeWin(new MockOSTimeWin(wddmMock));
 
     double res = 0.0;
     res = timeWin->getDynamicDeviceTimerResolution(device->getHardwareInfo());

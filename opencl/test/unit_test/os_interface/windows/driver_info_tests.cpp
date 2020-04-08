@@ -55,10 +55,8 @@ class DriverInfoDeviceTest : public ::testing::Test {
 CommandStreamReceiver *createMockCommandStreamReceiver(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
     auto csr = new MockCommandStreamReceiver(executionEnvironment, rootDeviceIndex);
     if (!executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface) {
-        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0]);
         wddm->init();
-        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setWddm(wddm);
     }
 
     EXPECT_NE(nullptr, executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface.get());
