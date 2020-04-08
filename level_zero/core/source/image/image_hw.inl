@@ -22,9 +22,6 @@ namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_desc_t *desc) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
-    if (desc == nullptr) {
-        return false;
-    }
 
     if (static_cast<uint32_t>(desc->format.layout) > ZE_IMAGE_FORMAT_LAYOUT_MAX) {
         return false;
@@ -53,10 +50,6 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
 
     UNRECOVERABLE_IF(device == nullptr);
     this->device = device;
-
-    if (desc == nullptr) {
-        return false;
-    }
 
     typename RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType;
     switch (desc->type) {
