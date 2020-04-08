@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
@@ -223,6 +224,94 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppend
         }
     }
     EXPECT_TRUE(postSyncFound);
+
+    {
+        auto itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),
+                                   std::end(commandList->commandContainer.getResidencyContainer()),
+                                   &event->getAllocation());
+        EXPECT_NE(itorEvent, std::end(commandList->commandContainer.getResidencyContainer()));
+    }
+}
+
+using TimestampEventSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernelThenSRMAndPCEncoded, TimestampEventSupport) {
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    Mock<::L0::Kernel> kernel;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, false));
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_TIMESTAMP,
+        1};
+
+    ze_event_desc_t eventDesc = {
+        ZE_EVENT_DESC_VERSION_CURRENT,
+        0,
+        ZE_EVENT_SCOPE_FLAG_NONE,
+        ZE_EVENT_SCOPE_FLAG_NONE};
+
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(device, &eventPoolDesc));
+    auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
+
+    ze_group_count_t groupCount{1, 1, 1};
+    auto result = commandList->appendLaunchKernel(
+        kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    {
+        auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+        EXPECT_EQ(REG_GLOBAL_TIMESTAMP_LDW, cmd->getRegisterAddress());
+    }
+    itor++;
+
+    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    {
+        auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+        EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, cmd->getRegisterAddress());
+    }
+    itor++;
+
+    itor = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    itor++;
+
+    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(0u, itorPC.size());
+    bool postSyncFound = false;
+    for (auto it : itorPC) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP) {
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_FALSE(cmd->getDcFlushEnable());
+            auto gpuAddress = event->getGpuAddress() +
+                              event->getOffsetOfEventTimestampRegister(Event::GLOBAL_END);
+            EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
+            EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
+            postSyncFound = true;
+        }
+    }
+    EXPECT_TRUE(postSyncFound);
+
+    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    {
+        auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+        EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, cmd->getRegisterAddress());
+    }
 
     {
         auto itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),

@@ -67,8 +67,8 @@ struct EventImp : public Event {
     EventPool *eventPool;
 
   protected:
-    ze_result_t hostEventSetValue(uint64_t eventValue);
-    ze_result_t hostEventSetValueTimestamps(uint64_t eventVal);
+    ze_result_t hostEventSetValue(uint32_t eventValue);
+    ze_result_t hostEventSetValueTimestamps(uint32_t eventVal);
     void makeAllocationResident();
 };
 
@@ -81,7 +81,7 @@ struct EventPoolImp : public EventPool {
         }
 
         auto timestampMultiplier = 1;
-        if (flags == ZE_EVENT_POOL_FLAG_TIMESTAMP) {
+        if (flags & ZE_EVENT_POOL_FLAG_TIMESTAMP) {
             isEventPoolUsedForTimestamp = true;
             timestampMultiplier = numEventTimestampsToRead;
         }
@@ -154,7 +154,7 @@ struct EventPoolImp : public EventPool {
   protected:
     const uint32_t eventSize = 16u;
     const uint32_t eventAlignment = MemoryConstants::cacheLineSize;
-    const int32_t numEventTimestampsToRead = 5u;
+    const int32_t numEventTimestampsToRead = 4u;
 };
 
 Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device) {
@@ -206,7 +206,7 @@ void EventImp::makeAllocationResident() {
     }
 }
 
-ze_result_t EventImp::hostEventSetValueTimestamps(uint64_t eventVal) {
+ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
     for (uint32_t i = 0; i < this->eventPool->getNumEventTimestampsToRead(); i++) {
         auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
         auto timeStampAddress = baseAddr + getOffsetOfEventTimestampRegister(i);
@@ -224,7 +224,7 @@ ze_result_t EventImp::hostEventSetValueTimestamps(uint64_t eventVal) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t EventImp::hostEventSetValue(uint64_t eventVal) {
+ze_result_t EventImp::hostEventSetValue(uint32_t eventVal) {
     if (isTimestampEvent) {
         hostEventSetValueTimestamps(eventVal);
     }
@@ -292,8 +292,8 @@ ze_result_t EventImp::reset() {
 ze_result_t EventImp::getTimestamp(ze_event_timestamp_type_t timestampType, void *dstptr) {
     auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
     uint64_t *tsptr = nullptr;
-    uint64_t tsData = Event::STATE_INITIAL;
     constexpr uint64_t tsMask = (1ull << 32) - 1;
+    uint64_t tsData = Event::STATE_INITIAL & tsMask;
 
     if (!this->isTimestampEvent)
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -305,15 +305,8 @@ ze_result_t EventImp::getTimestamp(ze_event_timestamp_type_t timestampType, void
     }
 
     if (timestampType == ZE_EVENT_TIMESTAMP_GLOBAL_START) {
-        tsptr = reinterpret_cast<uint64_t *>(baseAddr + getOffsetOfEventTimestampRegister(Event::GLOBAL_START_LOW));
-        auto tsptrUpper = reinterpret_cast<uint64_t *>(baseAddr + getOffsetOfEventTimestampRegister(Event::GLOBAL_START_HIGH));
-
-        tsData = ((*tsptrUpper & tsMask) << 32) | (*tsptr & tsMask);
-        memcpy_s(dstptr, sizeof(uint64_t), static_cast<void *>(&tsData), sizeof(uint64_t));
-        return ZE_RESULT_SUCCESS;
-    }
-
-    if (timestampType == ZE_EVENT_TIMESTAMP_GLOBAL_END) {
+        tsptr = reinterpret_cast<uint64_t *>(baseAddr + getOffsetOfEventTimestampRegister(Event::GLOBAL_START));
+    } else if (timestampType == ZE_EVENT_TIMESTAMP_GLOBAL_END) {
         tsptr = reinterpret_cast<uint64_t *>(baseAddr + getOffsetOfEventTimestampRegister(Event::GLOBAL_END));
     } else if (timestampType == ZE_EVENT_TIMESTAMP_CONTEXT_START) {
         tsptr = reinterpret_cast<uint64_t *>(baseAddr + getOffsetOfEventTimestampRegister(Event::CONTEXT_START));

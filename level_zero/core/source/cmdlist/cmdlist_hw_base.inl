@@ -92,17 +92,12 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
 
     commandContainer.addToResidencyContainer(&event->getAllocation());
     if (beforeWalker) {
-        timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::GLOBAL_START_LOW);
+        timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::GLOBAL_START);
         NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, REG_GLOBAL_TIMESTAMP_LDW, timeStampAddress);
-
-        timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::GLOBAL_START_HIGH);
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, REG_GLOBAL_TIMESTAMP_UN, timeStampAddress);
 
         timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::CONTEXT_START);
         NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timeStampAddress);
     } else {
-        timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::CONTEXT_END);
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timeStampAddress);
 
         timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::GLOBAL_END);
         bool dcFlushEnable = (event->signalScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
@@ -116,6 +111,13 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
                 0llu,
                 dcFlushEnable,
                 device->getHwInfo());
+
+            timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::CONTEXT_END);
+            NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timeStampAddress);
+
+            if (dcFlushEnable) {
+                NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), true);
+            }
         }
     }
 }
