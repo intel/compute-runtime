@@ -25,32 +25,31 @@
 #include <cstdint>
 #include <iostream>
 
-#define RENDER_DEVICE_NAME_MATCHER ::testing::StrEq("/dev/dri/renderD128")
-
 using NEO::constructPlatform;
 using NEO::Drm;
 using NEO::HwDeviceId;
 using NEO::RootDeviceEnvironment;
 
 static const int mockFd = 33;
+static const char *mockPciPath = "";
 
 class DrmMockImpl : public Drm {
   public:
-    DrmMockImpl(int fd) : Drm(std::make_unique<HwDeviceId>(fd), *constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]){};
+    DrmMockImpl(int fd) : Drm(std::make_unique<HwDeviceId>(fd, mockPciPath), *constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]){};
     MOCK_METHOD2(ioctl, int(unsigned long request, void *arg));
 };
 
 class DrmMockSuccess : public Drm {
   public:
     DrmMockSuccess() : DrmMockSuccess(*constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {}
-    DrmMockSuccess(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(mockFd), rootDeviceEnvironment) {}
+    DrmMockSuccess(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(mockFd, mockPciPath), rootDeviceEnvironment) {}
 
     int ioctl(unsigned long request, void *arg) override { return 0; };
 };
 
 class DrmMockFail : public Drm {
   public:
-    DrmMockFail() : Drm(std::make_unique<HwDeviceId>(mockFd), *constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {}
+    DrmMockFail() : Drm(std::make_unique<HwDeviceId>(mockFd, mockPciPath), *constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {}
 
     int ioctl(unsigned long request, void *arg) override { return -1; };
 };
@@ -335,7 +334,7 @@ class DrmMockCustom : public Drm {
         ioctl_res_ext = &NONE;
     }
 
-    DrmMockCustom() : Drm(std::make_unique<HwDeviceId>(mockFd), *constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {
+    DrmMockCustom() : Drm(std::make_unique<HwDeviceId>(mockFd, mockPciPath), *constructPlatform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {
         reset();
         ioctl_expected.contextCreate = static_cast<int>(NEO::HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*NEO::defaultHwInfo).size());
         ioctl_expected.contextDestroy = ioctl_expected.contextCreate.load();

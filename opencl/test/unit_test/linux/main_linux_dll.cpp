@@ -104,6 +104,31 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenGetDeviceFdThenReturnFd) {
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
 
+TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirSuccedsThenHwDeviceIdsHaveProperPciPaths) {
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, false);
+    VariableBackup<decltype(entryIndex)> backupEntryIndex(&entryIndex, 0u);
+    openFull = openWithCounter;
+
+    ExecutionEnvironment executionEnvironment;
+
+    entryIndex = 0;
+    openCounter = 1;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_EQ(1u, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
+    EXPECT_STREQ("test1", hwDeviceIds[0]->getPciPath());
+
+    entryIndex = 0;
+    openCounter = 2;
+    hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_EQ(2u, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
+    EXPECT_STREQ("test1", hwDeviceIds[0]->getPciPath());
+    EXPECT_NE(nullptr, hwDeviceIds[1].get());
+    EXPECT_STREQ("test2", hwDeviceIds[1]->getPciPath());
+}
+
 TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevices) {
     VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
     VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, true);
@@ -115,13 +140,16 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderD
     EXPECT_STREQ("/dev/dri/renderD128", lastOpenedPath.c_str());
     EXPECT_EQ(1u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
+    EXPECT_STREQ("00:02.0", hwDeviceIds[0]->getPciPath());
 
     openCounter = 2;
     hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_STREQ("/dev/dri/renderD129", lastOpenedPath.c_str());
     EXPECT_EQ(2u, hwDeviceIds.size());
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
+    EXPECT_STREQ("00:02.0", hwDeviceIds[0]->getPciPath());
     EXPECT_NE(nullptr, hwDeviceIds[1].get());
+    EXPECT_STREQ("00:02.0", hwDeviceIds[1]->getPciPath());
 }
 
 TEST(DrmTest, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {

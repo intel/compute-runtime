@@ -25,7 +25,7 @@ const char *gmmInitFuncName = "initMockGmm";
 const char *gmmDestroyFuncName = "destroyMockGmm";
 const char *metricsLibraryDllName = "";
 #endif
-const char *sysFsPciPath = "./test_files";
+const char *sysFsPciPathPrefix = "./test_files/linux/devices/";
 const char *pciDevicesDirectory = "./test_files/linux/by-path";
 } // namespace Os
 

@@ -11,6 +11,6 @@
 #define __cdecl
 namespace Os {
 // Pci Path
-extern const char *sysFsPciPath;
+extern const char *sysFsPciPathPrefix;
 extern const char *pciDevicesDirectory;
 } // namespace Os

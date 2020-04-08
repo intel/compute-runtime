@@ -34,23 +34,12 @@ class DrmMock : public Drm {
     using Drm::query;
     using Drm::sliceCountChangeSupported;
 
-    DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(mockFd), rootDeviceEnvironment) {
+    DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(mockFd, ""), rootDeviceEnvironment) {
         sliceCountChangeSupported = true;
     }
     DrmMock() : DrmMock(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {}
 
-    ~DrmMock() override {
-        if (sysFsDefaultGpuPathToRestore != nullptr) {
-            sysFsDefaultGpuPath = sysFsDefaultGpuPathToRestore;
-        }
-    }
-
     int ioctl(unsigned long request, void *arg) override;
-
-    void setSysFsDefaultGpuPath(const char *path) {
-        sysFsDefaultGpuPathToRestore = sysFsDefaultGpuPath;
-        sysFsDefaultGpuPath = path;
-    }
 
     void writeConfigFile(const char *name, int deviceID) {
         std::ofstream tempfile(name, std::ios::binary);
@@ -71,7 +60,11 @@ class DrmMock : public Drm {
     }
 
     void setFileDescriptor(int fd) {
-        hwDeviceId = std::make_unique<HwDeviceId>(fd);
+        hwDeviceId = std::make_unique<HwDeviceId>(fd, "");
+    }
+
+    void setPciPath(const char *pciPath) {
+        hwDeviceId = std::make_unique<HwDeviceId>(getFileDescriptor(), pciPath);
     }
 
     void setDeviceID(int deviceId) { this->deviceId = deviceId; }
@@ -139,7 +132,4 @@ class DrmMock : public Drm {
     uint64_t storedParamSseu = ULONG_MAX;
 
     virtual int handleRemainingRequests(unsigned long request, void *arg) { return -1; }
-
-  private:
-    const char *sysFsDefaultGpuPathToRestore = nullptr;
 };

@@ -48,3 +48,4 @@ extern char providedDrmVersion[5];
 extern int ioctlSeq[8];
 extern size_t ioctlCnt;
 extern bool failOnOpenDir;
+extern uint32_t entryIndex;

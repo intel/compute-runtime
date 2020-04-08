@@ -32,71 +32,34 @@ TEST(DrmTest, GetDeviceID) {
     delete pDrm;
 }
 
-TEST(DrmTest, GivenConfigFileWithWrongDeviceIDWhenFrequencyIsQueriedThenReturnZero) {
-    DrmMock *pDrm = new DrmMock;
-    EXPECT_NE(nullptr, pDrm);
-
-    pDrm->StoredDeviceID = 0x4321;
-    int maxFrequency = 0;
-    int ret = pDrm->getMaxGpuFrequency(maxFrequency);
-    EXPECT_EQ(0, ret);
-
-    EXPECT_EQ(0, maxFrequency);
-
-    delete pDrm;
-}
-
-TEST(DrmTest, GivenConfigFileWithWrongDeviceIDFailIoctlWhenFrequencyIsQueriedThenReturnZero) {
-    DrmMock *pDrm = new DrmMock;
-    EXPECT_NE(nullptr, pDrm);
-
-    pDrm->StoredDeviceID = 0x4321;
-    pDrm->StoredRetValForDeviceID = -1;
-    int maxFrequency = 0;
-    int ret = pDrm->getMaxGpuFrequency(maxFrequency);
-    EXPECT_EQ(-1, ret);
-
-    EXPECT_EQ(0, maxFrequency);
-
-    delete pDrm;
-}
-
 TEST(DrmTest, GivenValidConfigFileWhenFrequencyIsQueriedThenValidValueIsReturned) {
 
     int expectedMaxFrequency = 1000;
 
-    DrmMock *pDrm = new DrmMock;
-    EXPECT_NE(nullptr, pDrm);
+    DrmMock drm{};
 
-    pDrm->StoredDeviceID = 0x1234;
+    std::string gtMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt_max_freq_mhz";
 
-    std::string gpuFile = "test_files/devices/config";
-    std::string gtMaxFreqFile = "test_files/devices/drm/card0/gt_max_freq_mhz";
-
-    EXPECT_TRUE(fileExists(gpuFile));
     EXPECT_TRUE(fileExists(gtMaxFreqFile));
+    drm.setPciPath("device");
 
     int maxFrequency = 0;
-    int ret = pDrm->getMaxGpuFrequency(maxFrequency);
+    int ret = drm.getMaxGpuFrequency(maxFrequency);
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(expectedMaxFrequency, maxFrequency);
-    delete pDrm;
 }
 
 TEST(DrmTest, GivenNoConfigFileWhenFrequencyIsQueriedThenReturnZero) {
-    DrmMock *pDrm = new DrmMock;
-    EXPECT_NE(nullptr, pDrm);
+    DrmMock drm{};
 
-    pDrm->StoredDeviceID = 0x1234;
-    // change directory
-    pDrm->setSysFsDefaultGpuPath("./");
     int maxFrequency = 0;
-    int ret = pDrm->getMaxGpuFrequency(maxFrequency);
+
+    drm.setPciPath("invalidPci");
+    int ret = drm.getMaxGpuFrequency(maxFrequency);
     EXPECT_EQ(0, ret);
 
     EXPECT_EQ(0, maxFrequency);
-    delete pDrm;
 }
 
 TEST(DrmTest, GetRevisionID) {
@@ -399,7 +362,7 @@ TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenFileDescriptorIsClosed) {
     SysCalls::closeFuncCalled = 0;
     int fileDescriptor = 0x1234;
     {
-        HwDeviceId hwDeviceId(fileDescriptor);
+        HwDeviceId hwDeviceId(fileDescriptor, "");
     }
     EXPECT_EQ(1u, SysCalls::closeFuncCalled);
     EXPECT_EQ(fileDescriptor, SysCalls::closeFuncArgPassed);

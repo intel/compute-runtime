@@ -15,7 +15,7 @@ const char *frontEndDllName = FCL_LIBRARY_NAME;
 const char *igcDllName = IGC_LIBRARY_NAME;
 const char *libvaDllName = "libva.so.2";
 
-const char *sysFsPciPath = "/sys/bus/pci/devices/";
+const char *sysFsPciPathPrefix = "/sys/bus/pci/devices/0000:";
 const char *pciDevicesDirectory = "/dev/dri/by-path";
 const char *tbxLibName = "libtbxAccess.so";
 

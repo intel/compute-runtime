@@ -37,7 +37,7 @@ class DrmMockForWorker : public Drm {
     std::atomic<int> gem_close_cnt;
     std::atomic<int> gem_close_expected;
     std::atomic<std::thread::id> ioctl_caller_thread_id;
-    DrmMockForWorker() : Drm(std::make_unique<HwDeviceId>(33), *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {
+    DrmMockForWorker() : Drm(std::make_unique<HwDeviceId>(mockFd, mockPciPath), *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {
     }
     int ioctl(unsigned long request, void *arg) override {
         if (_IOC_TYPE(request) == DRM_IOCTL_BASE) {
