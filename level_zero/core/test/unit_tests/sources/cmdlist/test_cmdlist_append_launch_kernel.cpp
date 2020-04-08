@@ -5,13 +5,15 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
-
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 namespace L0 {
 namespace ult {
 
@@ -80,6 +82,90 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBind
     } else {
         EXPECT_EQ(0u, idd->getBindingTableEntryCount());
     }
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToCommandListThenKernelIsStored) {
+    createKernel();
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device));
+    ze_group_count_t groupCount{1, 1, 1};
+
+    EXPECT_TRUE(kernel->kernelImmData->getDescriptor().kernelAttributes.flags.usesPrintf);
+
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, commandList->getPrintfFunctionContainer().size());
+    EXPECT_EQ(kernel.get(), commandList->getPrintfFunctionContainer()[0]);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToCommandListMultipleTimesThenKernelIsStoredOnce) {
+    createKernel();
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device));
+    ze_group_count_t groupCount{1, 1, 1};
+
+    EXPECT_TRUE(kernel->kernelImmData->getDescriptor().kernelAttributes.flags.usesPrintf);
+
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, commandList->getPrintfFunctionContainer().size());
+    EXPECT_EQ(kernel.get(), commandList->getPrintfFunctionContainer()[0]);
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, commandList->getPrintfFunctionContainer().size());
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDepletedButReallocated) {
+    createKernel();
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device));
+    ze_group_count_t groupCount{1, 1, 1};
+
+    auto kernelSshSize = kernel->getSurfaceStateHeapDataSize();
+    auto ssh = commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto sshHeapSize = ssh->getMaxAvailableSpace();
+    auto initialAllocation = ssh->getGraphicsAllocation();
+    EXPECT_NE(nullptr, initialAllocation);
+
+    for (size_t i = 0; i < sshHeapSize / kernelSshSize + 1; i++) {
+        auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+
+    auto reallocatedAllocation = ssh->getGraphicsAllocation();
+    EXPECT_NE(nullptr, reallocatedAllocation);
+    EXPECT_NE(initialAllocation, reallocatedAllocation);
+}
+
+using SklPlusMatcher = IsAtLeastProduct<IGFX_SKYLAKE>;
+HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferSizeDoesNotExceedEstimate, SklPlusMatcher) {
+    createKernel();
+    ze_group_count_t groupCount{1, 1, 1};
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    bool ret = commandList->initialize(device);
+    ASSERT_TRUE(ret);
+
+    auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
+
+    auto result = commandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, false, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(device->getNEODevice());
+
+    EXPECT_LE(sizeAfter - sizeBefore, estimate);
+
+    sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
+
+    result = commandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, true, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    estimate = NEO::EncodeDispatchKernel<FamilyType>::estimateEncodeDispatchKernelCmdsSize(device->getNEODevice());
+
+    EXPECT_LE(sizeAfter - sizeBefore, estimate);
+    EXPECT_LE(sizeAfter - sizeBefore, estimate);
 }
 
 } // namespace ult

@@ -9,6 +9,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 namespace L0 {
 namespace ult {
@@ -59,6 +60,21 @@ TEST(zeCommandListAppendMemoryFill, whenCalledThenRedirectedToObject) {
     auto res = zeCommandListAppendMemoryFill(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
                                              sizeof(value), bufferSize, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST(zeCommandListAppendLaunchKernel, whenCalledThenRedirectedToObject) {
+    Mock<CommandList> commandList;
+    Mock<::L0::Kernel> kernel;
+    ze_group_count_t dispatchFunctionArguments;
+
+    EXPECT_CALL(commandList, appendLaunchKernel(kernel.toHandle(), &dispatchFunctionArguments,
+                                                nullptr, 0, nullptr))
+        .Times(1);
+
+    auto result =
+        zeCommandListAppendLaunchKernel(commandList.toHandle(), kernel.toHandle(),
+                                        &dispatchFunctionArguments, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 } // namespace ult
