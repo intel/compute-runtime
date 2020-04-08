@@ -23,9 +23,11 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenRenderCompressedGmmWhenAskingForCpuOpe
     auto gmm = new Gmm(pDevice->getGmmClientContext(), nullptr, 1, false);
     gmm->isRenderCompressed = false;
     buffer->getGraphicsAllocation()->setDefaultGmm(gmm);
+    auto allocation = buffer->getGraphicsAllocation();
 
     auto alignedPtr = alignedMalloc(2, MemoryConstants::cacheLineSize);
     auto unalignedPtr = ptrOffset(alignedPtr, 1);
+    EXPECT_EQ(1u, allocation->storageInfo.getNumHandles());
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(unalignedPtr, 1));
 

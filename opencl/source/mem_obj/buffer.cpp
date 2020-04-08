@@ -509,6 +509,10 @@ bool Buffer::isReadWriteOnCpuAllowed() {
     if (graphicsAllocation->peekSharedHandle() != 0) {
         return false;
     }
+
+    if (graphicsAllocation->storageInfo.getNumHandles() > 1) {
+        return false;
+    }
     return true;
 }
 
