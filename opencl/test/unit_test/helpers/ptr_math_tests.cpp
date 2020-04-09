@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(PtrMath, ptrOffset) {
+TEST(PtrMath, WhenUsingPtrOffsetThenReturnBasePointerPlusOffset) {
     auto addrBefore = (uintptr_t)ptrGarbage;
     auto ptrBefore = addrBefore;
 
@@ -20,7 +20,7 @@ TEST(PtrMath, ptrOffset) {
     EXPECT_EQ(offset, addrAfter - addrBefore);
 }
 
-TEST(PtrMath, ptrDiff) {
+TEST(PtrMath, WhenUsingPtrDiffThenReturnOffsetBetweenTwoPointers) {
     size_t offset = 0x1234;
     auto addrBefore = (uintptr_t)ptrGarbage;
     auto addrAfter = addrBefore + offset;
@@ -28,7 +28,7 @@ TEST(PtrMath, ptrDiff) {
     EXPECT_EQ(offset, ptrDiff(addrAfter, addrBefore));
 }
 
-TEST(PtrMath, addrToPtr) {
+TEST(PtrMath, WhenConvertingAddressToPtrThenPtrIsCorrect) {
     uint32_t addr32Bit = 0x3456;
     uint64_t addr64Bit = 0xf000000000003456;
     void *ptr32BitAddr = (void *)((uintptr_t)addr32Bit);
@@ -53,14 +53,14 @@ TEST(PtrMath, givenCastToUint64FunctionWhenConstPointerIsPassedItIsCalledThenPro
     EXPECT_EQ(uintAddress, expectedUint64Address);
 }
 
-TEST(ptrOffset, preserve64Bit) {
+TEST(ptrOffset, WhenGettingPtrOffsetThen64BitIsPreserved) {
     uint64_t ptrBefore = 0x800000000;
     size_t offset = 0x1234;
     auto ptrAfter = ptrOffset(ptrBefore, offset);
     EXPECT_EQ(0x800001234ull, ptrAfter);
 }
 
-TEST(ptrDiff, preserve64Bit) {
+TEST(ptrDiff, WhenGettingPtrDiffThen64BitIsPreserved) {
     auto ptrAfter = 0x800001234ull;
 
     auto ptrBefore = ptrDiff(ptrAfter, (size_t)0x1234);
