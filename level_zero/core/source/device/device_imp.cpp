@@ -330,7 +330,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->numAsyncComputeEngines = static_cast<uint32_t>(hwHelper.getGpgpuEngineInstances(hardwareInfo).size());
 
-    pDeviceProperties->numAsyncCopyEngines = 1;
+    pDeviceProperties->numAsyncCopyEngines = hardwareInfo.capabilityTable.blitterOperationsSupported ? 1 : 0;
 
     pDeviceProperties->maxCommandQueuePriority = 0;
 

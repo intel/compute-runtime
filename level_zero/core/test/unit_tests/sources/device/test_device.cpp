@@ -85,6 +85,16 @@ TEST_F(DeviceTest, givenKernelPropertiesStructureWhenKernelPropertiesCalledThenA
     EXPECT_NE(kernelPropertiesBefore.printfBufferSize, kernelProperties.printfBufferSize);
 }
 
+TEST_F(DeviceTest, givenDeviceWithCopyEngineThenNumAsyncCopyEnginesDevicePropertyIsCorrectlyReturned) {
+    ze_device_properties_t deviceProperties;
+    deviceProperties.version = ZE_DEVICE_PROPERTIES_VERSION_CURRENT;
+    deviceProperties.numAsyncCopyEngines = std::numeric_limits<int>::max();
+    device->getProperties(&deviceProperties);
+
+    uint32_t expecteNumOfCopyEngines = device->getNEODevice()->getHardwareInfo().capabilityTable.blitterOperationsSupported ? 1 : 0;
+    EXPECT_EQ(expecteNumOfCopyEngines, deviceProperties.numAsyncCopyEngines);
+}
+
 struct MockMemoryManagerMultiDevice : public MemoryManagerMock {
     MockMemoryManagerMultiDevice(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
