@@ -80,6 +80,8 @@ add_library(compute_runtime_mockable_extra
         ${CMAKE_CURRENT_LIST_DIR}/l0_tests.cmake
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/test_files.cpp
+        ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_compiler_interface.cpp
+        ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_compiler_interface.h
         ${COMPUTE_RUNTIME_DIR}/opencl/source/aub/aub_stream_interface.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/abort.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/helpers/built_ins_helper.cpp

@@ -24,6 +24,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_compiler_interface.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/gtpin/gtpin_notify.h"
@@ -989,27 +990,6 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuc
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ('a', data[0]);
 }
-
-struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
-    TranslationOutput::ErrorCode compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &) override {
-        buildOptions.clear();
-        if ((input.apiOptions.size() > 0) && (input.apiOptions.begin() != nullptr)) {
-            buildOptions.assign(input.apiOptions.begin(), input.apiOptions.end());
-        }
-        buildInternalOptions.clear();
-        if ((input.internalOptions.size() > 0) && (input.internalOptions.begin() != nullptr)) {
-            buildInternalOptions.assign(input.internalOptions.begin(), input.internalOptions.end());
-        }
-        return TranslationOutput::ErrorCode::Success;
-    }
-
-    TranslationOutput::ErrorCode build(const NEO::Device &device, const TranslationInput &input, TranslationOutput &out) override {
-        return this->MockCompilerInterfaceCaptureBuildOptions::compile(device, input, out);
-    }
-
-    std::string buildOptions;
-    std::string buildInternalOptions;
-};
 
 TEST_P(ProgramFromSourceTest, GivenFlagsWhenCompilingProgramThenBuildOptionsHaveBeenApplied) {
     auto cip = new MockCompilerInterfaceCaptureBuildOptions();

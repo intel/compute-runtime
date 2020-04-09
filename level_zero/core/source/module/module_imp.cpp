@@ -72,6 +72,9 @@ struct ModuleTranslationUnit {
         std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, NEO::CompilerOptions::hasBufferOffsetArg);
 
         if (device->getNEODevice()->getDeviceInfo().debuggerActive) {
+            if (device->getSourceLevelDebugger()->isOptimizationDisabled()) {
+                NEO::CompilerOptions::concatenateAppend(options, NEO::CompilerOptions::optDisable);
+            }
             options = NEO::CompilerOptions::concatenate(options, NEO::CompilerOptions::generateDebugInfo);
             internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::debugKernelEnable);
         }
