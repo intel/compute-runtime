@@ -14,6 +14,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/unit_test/mocks/mock_direct_submission_diagnostic_collector.h"
 #include "shared/test/unit_test/mocks/mock_direct_submission_hw.h"
 
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
@@ -1133,4 +1134,69 @@ HWTEST_F(DirectSubmissionTest,
 
     GenCmdList storeDataCmdList = hwParse.getCommandsList<MI_STORE_DATA_IMM>();
     EXPECT_EQ(0u, storeDataCmdList.size());
+}
+
+HWTEST_F(DirectSubmissionTest,
+         givenDirectSubmissionDiagnosticAvailableWhenLoggingTimeStampsThenExpectStoredTimeStampsAvailable) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    if (!NEO::directSubmissionDiagnosticAvailable) {
+        GTEST_SKIP();
+    }
+
+    uint32_t executions = 2;
+    int32_t workloadMode = 1;
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(workloadMode);
+    DebugManager.flags.DirectSubmissionDiagnosticExecutionCount.set(static_cast<int32_t>(executions));
+
+    NEO::IoFunctions::mockFopenCalled = 0u;
+    NEO::IoFunctions::mockVfptrinfCalled = 0u;
+    NEO::IoFunctions::mockFcloseCalled = 0u;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice,
+                                                                    *osContext.get());
+    EXPECT_NE(nullptr, directSubmission.diagnostic.get());
+
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
+    //ctor: preamble 1 call
+    EXPECT_EQ(1u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+
+    directSubmission.diagnostic = std::make_unique<MockDirectSubmissionDiagnosticsCollector>(
+        executions,
+        true,
+        DebugManager.flags.DirectSubmissionBufferPlacement.get(),
+        DebugManager.flags.DirectSubmissionSemaphorePlacement.get(),
+        workloadMode,
+        DebugManager.flags.DirectSubmissionDisableCacheFlush.get(),
+        DebugManager.flags.DirectSubmissionDisableMonitorFence.get());
+    EXPECT_EQ(2u, NEO::IoFunctions::mockFopenCalled);
+    //dtor: 1 call general delta, 2 calls storing execution, ctor: preamble 1 call
+    EXPECT_EQ(5u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(1u, NEO::IoFunctions::mockFcloseCalled);
+
+    bool ret = directSubmission.allocateResources();
+    EXPECT_TRUE(ret);
+    ASSERT_NE(nullptr, directSubmission.workloadModeOneStoreAddress);
+
+    directSubmission.diagnostic->diagnosticModeOneWait(0, directSubmission.workloadModeOneStoreAddress, directSubmission.workloadModeOneExpectedValue);
+    auto mockDiagnostic = reinterpret_cast<MockDirectSubmissionDiagnosticsCollector *>(directSubmission.diagnostic.get());
+
+    EXPECT_NE(0ll, mockDiagnostic->executionList[0].totalTimeDiff);
+    EXPECT_NE(0ll, mockDiagnostic->executionList[0].submitWaitTimeDiff);
+    EXPECT_EQ(0ll, mockDiagnostic->executionList[0].dispatchSubmitTimeDiff);
+
+    directSubmission.diagnostic->diagnosticModeOneWait(1, directSubmission.workloadModeOneStoreAddress, directSubmission.workloadModeOneExpectedValue);
+
+    EXPECT_NE(0ll, mockDiagnostic->executionList[1].totalTimeDiff);
+    EXPECT_NE(0ll, mockDiagnostic->executionList[1].submitWaitTimeDiff);
+    EXPECT_EQ(0ll, mockDiagnostic->executionList[1].dispatchSubmitTimeDiff);
+
+    //1 call general delta, 2 calls storing execution
+    uint32_t expectedVfprintfCall = NEO::IoFunctions::mockVfptrinfCalled + 1u + 2u;
+    directSubmission.diagnostic.reset(nullptr);
+    EXPECT_EQ(2u, NEO::IoFunctions::mockFopenCalled);
+    EXPECT_EQ(expectedVfprintfCall, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(2u, NEO::IoFunctions::mockFcloseCalled);
 }

@@ -36,13 +36,13 @@ DirectSubmissionDiagnosticsCollector::DirectSubmissionDiagnosticsCollector(uint3
 void DirectSubmissionDiagnosticsCollector::storeData() {
     auto initDelta = diagnosticModeDiagnosticTime - diagnosticModeAllocationTime;
     int64_t initTimeDiff =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(initDelta).count();
+        std::chrono::duration_cast<std::chrono::microseconds>(initDelta).count();
 
     IoFunctions::fprintf(logFile, "From allocations ready to exit of OS submit function %lld\n", initTimeDiff);
 
     if (storeExecutions) {
         for (uint32_t execution = 0; execution < executionsCount; execution++) {
-            DirectSubmissionSingleDelta delta = executionList.at(execution);
+            DirectSubmissionSingleDelta &delta = executionList[execution];
             std::stringstream value;
             value << std::dec << " execution: " << execution;
             value << " total diff: " << delta.totalTimeDiff

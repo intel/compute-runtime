@@ -57,22 +57,18 @@ class DirectSubmissionDiagnosticsCollector {
                                volatile void *waitLocation,
                                uint32_t waitValue) {
         volatile uint32_t *waitAddress = static_cast<volatile uint32_t *>(waitLocation);
-        while (waitValue >= *waitAddress)
+        while (waitValue > *waitAddress)
             ;
         diagnosticModeOneWaitTime = std::chrono::high_resolution_clock::now();
 
-        auto timeStamp = executionList.at(execution);
         auto delta = diagnosticModeOneWaitTime - diagnosticModeOneDispatchTime;
-        timeStamp.totalTimeDiff =
-            std::chrono::duration_cast<std::chrono::nanoseconds>(delta).count();
+        executionList[execution].totalTimeDiff = std::chrono::duration_cast<std::chrono::microseconds>(delta).count();
 
         delta = diagnosticModeOneSubmitTime - diagnosticModeOneDispatchTime;
-        timeStamp.dispatchSubmitTimeDiff =
-            std::chrono::duration_cast<std::chrono::nanoseconds>(delta).count();
+        executionList[execution].dispatchSubmitTimeDiff = std::chrono::duration_cast<std::chrono::microseconds>(delta).count();
 
         delta = diagnosticModeOneWaitTime - diagnosticModeOneSubmitTime;
-        timeStamp.dispatchSubmitTimeDiff =
-            std::chrono::duration_cast<std::chrono::nanoseconds>(delta).count();
+        executionList[execution].submitWaitTimeDiff = std::chrono::duration_cast<std::chrono::microseconds>(delta).count();
     }
 
     uint32_t getExecutionsCount() const {
