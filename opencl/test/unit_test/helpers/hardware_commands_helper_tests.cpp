@@ -58,7 +58,7 @@ void HardwareCommandsTest::addSpaceForSingleKernelArg() {
     mockKernelWithInternal->mockKernel->kernelArgRequiresCacheFlush.resize(1);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programInterfaceDescriptorDataResourceUsage) {
+HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptorDataIsCreatedThenOnlyRequiredSpaceOnIndirectHeapIsAllocated) {
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
     std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
@@ -96,7 +96,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programInterfaceDescriptorData
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), usedIndirectHeapAfter - usedIndirectHeapBefore);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programMediaInterfaceDescriptorLoadResourceUsage) {
+HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenMediaInterfaceDescriptorIsCreatedThenOnlyRequiredSpaceInCommandStreamIsAllocated) {
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
 
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -114,7 +114,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programMediaInterfaceDescripto
     EXPECT_EQ(sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD) + sizeof(MEDIA_STATE_FLUSH), usedAfter - usedBefore);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programMediaStateFlushResourceUsage) {
+HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenMediaStateFlushIsCreatedThenOnlyRequiredSpaceInCommandStreamIsAllocated) {
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
 
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -130,7 +130,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, programMediaStateFlushResource
     EXPECT_EQ(sizeof(MEDIA_STATE_FLUSH), usedAfter - usedBefore);
 }
 
-HWTEST_F(HardwareCommandsTest, sendCrossThreadDataResourceUsage) {
+HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpaceOnIndirectHeapIsAllocated) {
     CommandQueueHw<FamilyType> cmdQ(pContext, pClDevice, 0, false);
 
     std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
@@ -275,7 +275,7 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
     EXPECT_EQ(PatchInfoAllocationType::IndirectObjectHeap, kernel->getPatchInfoDataList()[0].targetType);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, sendIndirectStateResourceUsage) {
+HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateResourceThenCorrectSizeIsAllocated) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
@@ -577,7 +577,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     alignedFree(expectedLocalIds);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointer) {
+HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBindingTableStatesPointersAreCorrect) {
     typedef typename FamilyType::BINDING_TABLE_STATE BINDING_TABLE_STATE;
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
@@ -652,7 +652,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointer) 
     EXPECT_EQ(0x00000040u, *(&bindingTableStatesPointers[1]));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointersForGlobalAndConstantAndPrivateAndEventPoolAndDefaultCommandQueueSurfaces) {
+HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePointersAreCorrect) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
@@ -829,7 +829,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, usedBindingTableStatePointersF
     delete pKernel;
 }
 
-HWTEST_F(HardwareCommandsTest, setBindingTableStatesForKernelWithBuffersNotRequiringSSHDoesNotTouchSSH) {
+HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTableStatesForKernelThenSshIsNotUsed) {
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -887,7 +887,7 @@ HWTEST_F(HardwareCommandsTest, setBindingTableStatesForKernelWithBuffersNotRequi
     delete pKernel;
 }
 
-HWTEST_F(HardwareCommandsTest, setBindingTableStatesForNoSurfaces) {
+HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStatesThenPointerIsZero) {
 
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
@@ -1395,6 +1395,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenCacheFlushAfterWalkerEnab
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControl->getDcFlushEnable());
 }
+
 HWTEST_F(HardwareCommandsTest, givenCacheFlushAfterWalkerDisabledWhenGettingRequiredCacheFlushSizeThenReturnZero) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
