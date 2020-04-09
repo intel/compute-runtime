@@ -377,21 +377,21 @@ __zedllexport ze_result_t __zecall
 zetSysmanMemoryGetProperties(
     zet_sysman_mem_handle_t hMemory,
     zet_mem_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Memory::fromHandle(hMemory)->memoryGetProperties(pProperties);
 }
 
 __zedllexport ze_result_t __zecall
 zetSysmanMemoryGetState(
     zet_sysman_mem_handle_t hMemory,
     zet_mem_state_t *pState) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Memory::fromHandle(hMemory)->memoryGetState(pState);
 }
 
 __zedllexport ze_result_t __zecall
 zetSysmanMemoryGetBandwidth(
     zet_sysman_mem_handle_t hMemory,
     zet_mem_bandwidth_t *pBandwidth) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Memory::fromHandle(hMemory)->memoryGetBandwidth(pBandwidth);
 }
 
 __zedllexport ze_result_t __zecall

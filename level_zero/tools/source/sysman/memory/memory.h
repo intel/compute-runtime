@@ -39,6 +39,7 @@ struct MemoryHandleContext {
     ze_result_t memoryGet(uint32_t *pCount, zet_sysman_mem_handle_t *phMemory);
 
     OsSysman *pOsSysman;
+    bool isLmemSupported;
     std::vector<Memory *> handleList;
     ze_device_handle_t hCoreDevice;
 };
