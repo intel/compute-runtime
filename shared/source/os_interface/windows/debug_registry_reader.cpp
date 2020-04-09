@@ -39,7 +39,7 @@ const char *RegistryReader::appSpecificLocation(const std::string &name) {
 }
 
 bool RegistryReader::getSetting(const char *settingName, bool defaultValue) {
-    return getSetting(settingName, static_cast<int64_t>(defaultValue)) ? true : false;
+    return getSetting(settingName, static_cast<int32_t>(defaultValue)) ? true : false;
 }
 
 int32_t RegistryReader::getSetting(const char *settingName, int32_t defaultValue) {
