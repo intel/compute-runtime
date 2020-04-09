@@ -12,8 +12,10 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 namespace L0 {
 namespace ult {
 
@@ -166,6 +168,296 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferS
 
     EXPECT_LE(sizeAfter - sizeBefore, estimate);
     EXPECT_LE(sizeAfter - sizeBefore, estimate);
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppendingKernelThenPostSyncToEventIsGenerated) {
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    Mock<::L0::Kernel> kernel;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, false));
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        1};
+
+    ze_event_desc_t eventDesc = {
+        ZE_EVENT_DESC_VERSION_CURRENT,
+        0,
+        ZE_EVENT_SCOPE_FLAG_NONE,
+        ZE_EVENT_SCOPE_FLAG_NONE};
+
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(device, &eventPoolDesc));
+    auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
+
+    ze_group_count_t groupCount{1, 1, 1};
+    auto result = commandList->appendLaunchKernel(
+        kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    auto itor = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+
+    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(0u, itorPC.size());
+    bool postSyncFound = false;
+    for (auto it : itorPC) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_FALSE(cmd->getDcFlushEnable());
+            auto gpuAddress = event->getGpuAddress();
+            EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
+            EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
+            postSyncFound = true;
+        }
+    }
+    EXPECT_TRUE(postSyncFound);
+
+    {
+        auto itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),
+                                   std::end(commandList->commandContainer.getResidencyContainer()),
+                                   &event->getAllocation());
+        EXPECT_NE(itorEvent, std::end(commandList->commandContainer.getResidencyContainer()));
+    }
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelThenKernelIsExecutedOnImmediateCmdQ, SklPlusMatcher) {
+    createKernel();
+
+    Mock<CommandQueue> cmdQueue;
+    const ze_command_queue_desc_t desc = {};
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    ASSERT_NE(nullptr, commandList);
+    bool ret = commandList->initialize(device, false);
+    ASSERT_TRUE(ret);
+    commandList->device = device;
+    commandList->cmdQImmediate = &cmdQueue;
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdQImmediateDesc = &desc;
+
+    EXPECT_CALL(cmdQueue, executeCommandLists).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
+    EXPECT_CALL(cmdQueue, synchronize).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
+
+    ze_group_count_t groupCount{1, 1, 1};
+
+    auto result = commandList->appendLaunchKernel(
+        kernel->toHandle(),
+        &groupCount, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    commandList->cmdQImmediate = nullptr;
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWorkGroupCountAndGlobalWorkSizeIsSetInCrossThreadData) {
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    Mock<::L0::Kernel> kernel;
+    kernel.descriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 2;
+    kernel.descriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = 2;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, false));
+
+    void *alloc = nullptr;
+    auto result = device->getDriverHandle()->allocDeviceMem(device->toHandle(), ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT, 16384u, 4096u, &alloc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),
+                                                     static_cast<ze_group_count_t *>(alloc),
+                                                     nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+
+    itor = find<MI_LOAD_REGISTER_REG *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor = find<MI_LOAD_REGISTER_IMM *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+
+    device->getDriverHandle()->freeMem(alloc);
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenStateIsCleaned) {
+    createKernel();
+
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(L0::CommandList::create(productFamily, device, false)));
+    ASSERT_NE(nullptr, commandList);
+    ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
+
+    auto commandListControl = std::unique_ptr<CommandList>(whitebox_cast(L0::CommandList::create(productFamily, device, false)));
+    ASSERT_NE(nullptr, commandListControl);
+    ASSERT_NE(nullptr, commandListControl->commandContainer.getCommandStream());
+
+    ze_group_count_t groupCount{1, 1, 1};
+    auto result = commandList->appendLaunchKernel(
+        kernel->toHandle(), &groupCount, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->reset();
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ASSERT_EQ(device, commandList->device);
+    ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
+    ASSERT_GE(commandListControl->commandContainer.getCmdBufferAllocations()[0]->getUnderlyingBufferSize(), commandList->commandContainer.getCmdBufferAllocations()[0]->getUnderlyingBufferSize());
+    ASSERT_EQ(commandListControl->commandContainer.getResidencyContainer().size(),
+              commandList->commandContainer.getResidencyContainer().size());
+    ASSERT_EQ(commandListControl->commandContainer.getDeallocationContainer().size(),
+              commandList->commandContainer.getDeallocationContainer().size());
+    ASSERT_EQ(commandListControl->getPrintfFunctionContainer().size(),
+              commandList->getPrintfFunctionContainer().size());
+    ASSERT_EQ(commandListControl->commandContainer.getCommandStream()->getUsed(), commandList->commandContainer.getCommandStream()->getUsed());
+    ASSERT_EQ(commandListControl->commandContainer.slmSize, commandList->commandContainer.slmSize);
+
+    for (uint32_t i = 0; i < NEO::HeapType::NUM_TYPES; i++) {
+        auto heapType = static_cast<NEO::HeapType>(i);
+
+        ASSERT_NE(nullptr, commandListControl->commandContainer.getIndirectHeapAllocation(heapType));
+        ASSERT_NE(nullptr, commandList->commandContainer.getIndirectHeapAllocation(heapType));
+        ASSERT_EQ(commandListControl->commandContainer.getIndirectHeapAllocation(heapType)->getUnderlyingBufferSize(),
+                  commandList->commandContainer.getIndirectHeapAllocation(heapType)->getUnderlyingBufferSize());
+
+        ASSERT_NE(nullptr, commandListControl->commandContainer.getIndirectHeap(heapType));
+        ASSERT_NE(nullptr, commandList->commandContainer.getIndirectHeap(heapType));
+        ASSERT_EQ(commandListControl->commandContainer.getIndirectHeap(heapType)->getUsed(),
+                  commandList->commandContainer.getIndirectHeap(heapType)->getUsed());
+
+        ASSERT_EQ(commandListControl->commandContainer.isHeapDirty(heapType), commandList->commandContainer.isHeapDirty(heapType));
+    }
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, WhenAddingKernelsThenResidencyContainerDoesNotContainDuplicatesAfterClosingCommandList) {
+    Mock<::L0::Kernel> kernel;
+
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, false));
+
+    ze_group_count_t groupCount{1, 1, 1};
+    for (int i = 0; i < 4; ++i) {
+        auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    }
+
+    commandList->close();
+
+    uint32_t it = 0;
+    const auto &residencyCont = commandList->commandContainer.getResidencyContainer();
+    for (auto alloc : residencyCont) {
+        auto occurences = std::count(residencyCont.begin(), residencyCont.end(), alloc);
+        EXPECT_EQ(1U, static_cast<uint32_t>(occurences)) << it;
+        ++it;
+    }
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsAddsSemaphoreToCommandStream) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    Mock<::L0::Kernel> kernel;
+
+    auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, false));
+    ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        1};
+
+    ze_event_desc_t eventDesc = {ZE_EVENT_DESC_VERSION_CURRENT, 0, ZE_EVENT_SCOPE_FLAG_NONE,
+                                 ZE_EVENT_SCOPE_FLAG_NONE};
+
+    std::unique_ptr<EventPool> eventPool(EventPool::create(device, &eventPoolDesc));
+    std::unique_ptr<Event> event(Event::create(eventPool.get(), &eventDesc, device));
+    ze_event_handle_t hEventHandle = event->toHandle();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 1, &hEventHandle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+
+    {
+        auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+        EXPECT_EQ(cmd->getCompareOperation(),
+                  MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+        EXPECT_EQ(static_cast<uint32_t>(-1), cmd->getSemaphoreDataDword());
+        EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & device->getHwInfo().capabilityTable.gpuAddressSpace, event->getGpuAddress() & device->getHwInfo().capabilityTable.gpuAddressSpace);
+    }
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenMultipleValidWaitEventsAddsSemaphoreCommands) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    Mock<::L0::Kernel> kernel;
+
+    auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, false));
+    ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        2};
+
+    ze_event_desc_t eventDesc1 = {ZE_EVENT_DESC_VERSION_CURRENT, 0, ZE_EVENT_SCOPE_FLAG_NONE,
+                                  ZE_EVENT_SCOPE_FLAG_NONE};
+
+    ze_event_desc_t eventDesc2 = {ZE_EVENT_DESC_VERSION_CURRENT, 1, ZE_EVENT_SCOPE_FLAG_NONE,
+                                  ZE_EVENT_SCOPE_FLAG_NONE};
+
+    std::unique_ptr<EventPool> eventPool(EventPool::create(device, &eventPoolDesc));
+    std::unique_ptr<Event> event1(Event::create(eventPool.get(), &eventDesc1, device));
+    std::unique_ptr<Event> event2(Event::create(eventPool.get(), &eventDesc2, device));
+    ze_event_handle_t hEventHandle1 = event1->toHandle();
+    ze_event_handle_t hEventHandle2 = event2->toHandle();
+
+    ze_event_handle_t waitEvents[2];
+    waitEvents[0] = hEventHandle1;
+    waitEvents[1] = hEventHandle2;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 2, waitEvents);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto itor = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_FALSE(itor.empty());
+    ASSERT_EQ(2, static_cast<int>(itor.size()));
 }
 
 } // namespace ult

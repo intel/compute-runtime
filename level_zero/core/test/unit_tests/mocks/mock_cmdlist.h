@@ -7,6 +7,7 @@
 
 #pragma once
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
@@ -40,6 +41,16 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 using CommandListCoreFamily = WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>;
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
+    : public L0::CommandListCoreFamilyImmediate<gfxCoreFamily> {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using BaseClass = L0::CommandListCoreFamilyImmediate<gfxCoreFamily>;
+
+    WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
+    virtual ~WhiteBox() {}
+};
 
 template <>
 struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
