@@ -30,6 +30,7 @@ struct SysmanImp : Sysman {
 
     OsSysman *pOsSysman = nullptr;
     Pci *pPci = nullptr;
+    Scheduler *pSched = nullptr;
     SysmanDevice *pSysmanDevice = nullptr;
     FrequencyHandleContext *pFrequencyHandleContext = nullptr;
     StandbyHandleContext *pStandbyHandleContext = nullptr;

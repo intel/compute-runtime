@@ -10,6 +10,7 @@
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/pci/pci_imp.h"
+#include "level_zero/tools/source/sysman/scheduler/scheduler_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/source/sysman/sysman_device/sysman_device_imp.h"
 
@@ -22,6 +23,7 @@ SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
     pOsSysman = OsSysman::create(this);
     UNRECOVERABLE_IF(nullptr == pOsSysman);
     pPci = new PciImp(pOsSysman);
+    pSched = new SchedulerImp(pOsSysman);
     pSysmanDevice = new SysmanDeviceImp(pOsSysman, hCoreDevice);
     pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
     pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
@@ -44,6 +46,9 @@ SysmanImp::~SysmanImp() {
     if (pPci) {
         delete pPci;
     }
+    if (pSched) {
+        delete pSched;
+    }
     delete pOsSysman;
 }
 
@@ -61,6 +66,9 @@ void SysmanImp::init() {
     if (pPci) {
         pPci->init();
     }
+    if (pSched) {
+        pSched->init();
+    }
     if (pSysmanDevice) {
         pSysmanDevice->init();
     }
@@ -71,31 +79,31 @@ ze_result_t SysmanImp::deviceGetProperties(zet_sysman_properties_t *pProperties)
 }
 
 ze_result_t SysmanImp::schedulerGetCurrentMode(zet_sched_mode_t *pMode) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pSched->getCurrentMode(pMode);
 }
 
 ze_result_t SysmanImp::schedulerGetTimeoutModeProperties(ze_bool_t getDefaults, zet_sched_timeout_properties_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pSched->getTimeoutModeProperties(getDefaults, pConfig);
 }
 
 ze_result_t SysmanImp::schedulerGetTimesliceModeProperties(ze_bool_t getDefaults, zet_sched_timeslice_properties_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pSched->getTimesliceModeProperties(getDefaults, pConfig);
 }
 
 ze_result_t SysmanImp::schedulerSetTimeoutMode(zet_sched_timeout_properties_t *pProperties, ze_bool_t *pNeedReboot) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pSched->setTimeoutMode(pProperties, pNeedReboot);
 }
 
 ze_result_t SysmanImp::schedulerSetTimesliceMode(zet_sched_timeslice_properties_t *pProperties, ze_bool_t *pNeedReboot) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pSched->setTimesliceMode(pProperties, pNeedReboot);
 }
 
 ze_result_t SysmanImp::schedulerSetExclusiveMode(ze_bool_t *pNeedReboot) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pSched->setExclusiveMode(pNeedReboot);
 }
 
 ze_result_t SysmanImp::schedulerSetComputeUnitDebugMode(ze_bool_t *pNeedReboot) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pSched->setComputeUnitDebugMode(pNeedReboot);
 }
 
 ze_result_t SysmanImp::processesGetState(uint32_t *pCount, zet_process_state_t *pProcesses) {
