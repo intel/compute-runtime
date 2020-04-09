@@ -404,6 +404,14 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
         printfHandler->prepareDispatch(multiDispatchInfo);
     }
 
+    if (multiDispatchInfo.peekMainKernel()->usesSyncBuffer()) {
+        auto &gws = multiDispatchInfo.begin()->getGWS();
+        auto &lws = multiDispatchInfo.begin()->getLocalWorkgroupSize();
+        size_t workGroupsCount = (gws.x * gws.y * gws.z) /
+                                 (lws.x * lws.y * lws.z);
+        device->syncBufferHandler->prepareForEnqueue(workGroupsCount, *multiDispatchInfo.peekMainKernel());
+    }
+
     if (commandType == CL_COMMAND_NDRANGE_KERNEL) {
         if (multiDispatchInfo.peekMainKernel()->getProgram()->isKernelDebugEnabled()) {
             setupDebugSurface(multiDispatchInfo.peekMainKernel());
@@ -663,11 +671,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     if (multiDispatchInfo.peekMainKernel()->usesSyncBuffer()) {
-        auto &gws = multiDispatchInfo.begin()->getGWS();
-        auto &lws = multiDispatchInfo.begin()->getLocalWorkgroupSize();
-        size_t workGroupsCount = (gws.x * gws.y * gws.z) /
-                                 (lws.x * lws.y * lws.z);
-        device->syncBufferHandler->prepareForEnqueue(workGroupsCount, *multiDispatchInfo.peekMainKernel(), getGpgpuCommandStreamReceiver());
+        device->syncBufferHandler->makeResident(getGpgpuCommandStreamReceiver());
     }
 
     if (timestampPacketContainer) {

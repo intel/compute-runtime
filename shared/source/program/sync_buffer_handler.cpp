@@ -24,7 +24,7 @@ SyncBufferHandler::SyncBufferHandler(Device &device)
     allocateNewBuffer();
 }
 
-void SyncBufferHandler::prepareForEnqueue(size_t workGroupsCount, Kernel &kernel, CommandStreamReceiver &csr) {
+void SyncBufferHandler::prepareForEnqueue(size_t workGroupsCount, Kernel &kernel) {
     auto requiredSize = workGroupsCount;
     std::lock_guard<std::mutex> guard(this->mutex);
 
@@ -36,9 +36,12 @@ void SyncBufferHandler::prepareForEnqueue(size_t workGroupsCount, Kernel &kernel
     }
 
     kernel.patchSyncBuffer(device, graphicsAllocation, usedBufferSize);
-    csr.makeResident(*graphicsAllocation);
 
     usedBufferSize += requiredSize;
+}
+
+void SyncBufferHandler::makeResident(CommandStreamReceiver &csr) {
+    csr.makeResident(*graphicsAllocation);
 }
 
 void SyncBufferHandler::allocateNewBuffer() {
