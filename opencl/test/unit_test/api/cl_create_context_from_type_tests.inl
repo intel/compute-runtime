@@ -26,7 +26,7 @@ void CL_CALLBACK contextCallBack(const char *, const void *,
                                  size_t, void *) {
 }
 
-TEST_F(clCreateContextFromTypeTests, GivenOnlyGpuDeviceTypeAndReturnValueWhenCreatingContextFromTypeThenCallSucceeds) {
+TEST_F(clCreateContextFromTypeTests, GivenOnlyGpuDeviceTypeAndReturnValueWhenCreatingContextFromTypeThenContextWithSingleDeviceIsCreated) {
     auto context =
         clCreateContextFromType(nullptr, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
 
@@ -34,6 +34,9 @@ TEST_F(clCreateContextFromTypeTests, GivenOnlyGpuDeviceTypeAndReturnValueWhenCre
     ASSERT_NE(nullptr, context);
     EXPECT_NE(nullptr, context->dispatch.icdDispatch);
     EXPECT_NE(nullptr, context->dispatch.crtDispatch);
+
+    auto pContext = castToObject<Context>(context);
+    EXPECT_EQ(1u, pContext->getNumDevices());
 
     retVal = clReleaseContext(context);
     ASSERT_EQ(CL_SUCCESS, retVal);

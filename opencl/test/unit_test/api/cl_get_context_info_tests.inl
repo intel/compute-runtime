@@ -44,13 +44,18 @@ TEST_F(clGetContextInfoTests, GivenContextWithSingleDeviceAndContextDevicesParam
 }
 
 TEST_F(clGetContextInfoTests, GivenContextWithMultipleDevicesAndContextDevicesParamWhenGettingContextInfoThenListOfDevicesContainsAllDevices) {
-    auto devicesReturned = new cl_device_id[this->num_devices - 1];
-    cl_uint numDevices = this->num_devices - 1;
+    cl_uint numDevices = 2u;
+    auto inputDevices = std::make_unique<cl_device_id[]>(numDevices);
+    auto outputDevices = std::make_unique<cl_device_id[]>(numDevices);
+
+    for (auto i = 0u; i < numDevices; i++) {
+        inputDevices[i] = testedClDevice;
+    }
 
     auto context = clCreateContext(
         nullptr,
-        this->num_devices - 1,
-        this->devices + 1,
+        numDevices,
+        inputDevices.get(),
         nullptr,
         nullptr,
         &retVal);
@@ -61,16 +66,15 @@ TEST_F(clGetContextInfoTests, GivenContextWithMultipleDevicesAndContextDevicesPa
         context,
         CL_CONTEXT_DEVICES,
         numDevices * sizeof(cl_device_id),
-        devicesReturned,
+        outputDevices.get(),
         nullptr);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
-    for (size_t deviceOrdinal = 0; deviceOrdinal < this->num_devices - 1; ++deviceOrdinal) {
-        EXPECT_EQ(this->devices[deviceOrdinal + 1], devicesReturned[deviceOrdinal]);
+    for (size_t deviceOrdinal = 0; deviceOrdinal < numDevices; ++deviceOrdinal) {
+        EXPECT_EQ(inputDevices[deviceOrdinal], outputDevices[deviceOrdinal]);
     }
 
     clReleaseContext(context);
-    delete[] devicesReturned;
 }
 
 TEST(clGetContextInfo, GivenNullContextWhenGettingContextInfoThenInvalidContextErrorIsReturned) {

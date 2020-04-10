@@ -82,6 +82,15 @@ TEST_F(clCreateContextTests, nullUserData) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenOutOrHostMemoryErrorIsReturned) {
+    auto firstDeviceRootDeviceIndex = castToObject<ClDevice>(devices[testedRootDeviceIndex])->getRootDeviceIndex();
+    auto secondDeviceRootDeviceIndex = castToObject<ClDevice>(devices[testedRootDeviceIndex + 1])->getRootDeviceIndex();
+    EXPECT_NE(firstDeviceRootDeviceIndex, secondDeviceRootDeviceIndex);
+    auto context = clCreateContext(nullptr, 2u, &devices[testedRootDeviceIndex], eventCallBack, nullptr, &retVal);
+    EXPECT_EQ(nullptr, context);
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+}
+
 TEST_F(clCreateContextTests, givenInvalidContextCreationPropertiesThenContextCreationFails) {
     cl_context_properties invalidProperties[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties) nullptr, 0};
     auto context = clCreateContext(invalidProperties, 1u, &testedClDevice, nullptr, nullptr, &retVal);
