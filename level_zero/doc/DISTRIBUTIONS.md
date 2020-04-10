@@ -30,7 +30,7 @@ zypper addrepo -r https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl/
 zypper install level-zero intel-level-zero-gpu
 ```
 
-## Ubuntu* ppa for 16.04, 18.04, 19.10, 20.04
+## Ubuntu* ppa for 18.04, 19.10, 20.04
 
 ```
 add-apt-repository ppa:intel-opencl/intel-opencl

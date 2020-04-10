@@ -13,18 +13,6 @@ notifications:
 matrix:
     include:
         - os: linux
-          compiler: gcc
-          env: BUILD_OS=ubuntu-16.04 COMPILER=gcc GEN=gen-8
-        - os: linux
-          compiler: gcc
-          env: BUILD_OS=ubuntu-16.04 COMPILER=gcc GEN=gen-9
-        - os: linux
-          compiler: gcc
-          env: BUILD_OS=ubuntu-16.04 COMPILER=gcc GEN=gen-11
-        - os: linux
-          compiler: gcc
-          env: BUILD_OS=ubuntu-16.04 COMPILER=gcc GEN=gen-12
-        - os: linux
           compiler: clang
           env: BUILD_OS=ubuntu-18.04 COMPILER=clang-8
         - os: linux
