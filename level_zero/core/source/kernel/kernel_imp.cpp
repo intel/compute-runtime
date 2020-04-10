@@ -502,10 +502,6 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
 }
 
 ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
-    if (desc->version != ZE_KERNEL_DESC_VERSION_CURRENT) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_VERSION;
-    }
-
     this->kernelImmData = module->getKernelImmutableData(desc->pKernelName);
     if (this->kernelImmData == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
