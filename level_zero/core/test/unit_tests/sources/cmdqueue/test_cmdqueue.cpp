@@ -15,6 +15,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 
 namespace L0 {
@@ -154,6 +155,24 @@ TEST_F(CommandQueueCreate, givenCmdQueueWithBlitCopyWhenExecutingCopyBlitCommand
     EXPECT_EQ(status, ZE_RESULT_SUCCESS);
 
     commandQueue->destroy();
+}
+
+using CommandQueueDestroySupport = IsAtLeastProduct<IGFX_SKYLAKE>;
+using CommandQueueDestroy = Test<DeviceFixture>;
+
+HWTEST2_F(CommandQueueDestroy, whenCommandQueueDestroyIsCalledPrintPrintfOutputIsCalled, CommandQueueDestroySupport) {
+    ze_command_queue_desc_t desc = {};
+    desc.version = ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT;
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>(device, csr.get(), &desc);
+    commandQueue->initialize(false);
+
+    Mock<Kernel> kernel;
+    commandQueue->printfFunctionContainer.push_back(&kernel);
+
+    EXPECT_EQ(0u, kernel.printPrintfOutputCalledTimes);
+    commandQueue->destroy();
+    EXPECT_EQ(1u, kernel.printPrintfOutputCalledTimes);
 }
 
 } // namespace ult

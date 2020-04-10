@@ -42,6 +42,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::createFence(const ze_fence_desc_t *de
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandQueueHw<gfxCoreFamily>::destroy() {
+    this->printFunctionsPrintfOutput();
     delete commandStream;
     buffers.destroy(this->getDevice()->getNEODevice()->getMemoryManager());
     delete this;

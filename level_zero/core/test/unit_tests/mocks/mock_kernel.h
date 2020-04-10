@@ -86,8 +86,13 @@ struct Mock<::L0::Kernel> : public ::L0::KernelImp {
         return nullptr;
     }
 
+    void printPrintfOutput() override {
+        printPrintfOutputCalledTimes++;
+    }
+
     WhiteBox<::L0::KernelImmutableData> immutableData;
     NEO::KernelDescriptor descriptor;
+    uint32_t printPrintfOutputCalledTimes = 0;
 };
 
 } // namespace ult
