@@ -108,7 +108,6 @@ class MockProgram : public Program {
     void ClearOptions() { options = ""; }
     void SetCreatedFromBinary(bool createdFromBin) { isCreatedFromBinary = createdFromBin; }
     void ClearLog() { buildLog.clear(); }
-    void SetGlobalVariableTotalSize(size_t globalVarSize) { globalVarTotalSize = globalVarSize; }
     void SetDevice(Device *pDev) { pDevice = pDev; }
 
     void SetIrBinary(char *ptr, bool isSpirv) {

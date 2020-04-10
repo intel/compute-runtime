@@ -303,8 +303,8 @@ void ClDevice::initializeCaps() {
     }
 
     deviceInfo.preemptionSupported = false;
-    deviceInfo.maxGlobalVariableSize = 64 * KB;
-    deviceInfo.globalVariablePreferredTotalSize = static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize);
+    deviceInfo.maxGlobalVariableSize = enabledClVersion >= 20 ? 64 * KB : 0;
+    deviceInfo.globalVariablePreferredTotalSize = enabledClVersion >= 20 ? static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize) : 0;
 
     deviceInfo.planarYuvMaxWidth = 16384;
     deviceInfo.planarYuvMaxHeight = 16352;

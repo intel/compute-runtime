@@ -550,6 +550,7 @@ TEST_P(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlo
         paramValueSize,
         paramValue,
         &paramValueSizeRet);
+
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(paramValueSizeRet, sizeof(globalVarSize));
     EXPECT_EQ(globalVarSize, 0u);
@@ -557,7 +558,12 @@ TEST_P(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlo
     // Set GlobalVariableTotalSize as 1024
     CreateProgramFromBinary(pContext, &device, BinaryFileName);
     MockProgram *p = pProgram;
-    p->SetGlobalVariableTotalSize(1024u);
+    ProgramInfo programInfo;
+
+    char constantData[1024] = {};
+    programInfo.globalVariables.initData = constantData;
+    programInfo.globalVariables.size = sizeof(constantData);
+    p->processProgramInfo(programInfo);
 
     // get build info once again
     retVal = pProgram->getBuildInfo(
@@ -568,7 +574,11 @@ TEST_P(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlo
         &paramValueSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(paramValueSizeRet, sizeof(globalVarSize));
-    EXPECT_EQ(globalVarSize, 1024u);
+    if (castToObject<ClDevice>(pClDevice)->getEnabledClVersion() >= 20) {
+        EXPECT_EQ(globalVarSize, 1024u);
+    } else {
+        EXPECT_EQ(globalVarSize, 0u);
+    }
 }
 
 TEST_P(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphicsAllocationInKernelInfo) {

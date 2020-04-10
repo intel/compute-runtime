@@ -180,12 +180,15 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
         this->constantSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalConstants.size, true, linkerInput.get(), src.globalConstants.initData);
     }
 
+    this->globalVarTotalSize = src.globalVariables.size;
+
     if (src.globalVariables.size != 0) {
         UNRECOVERABLE_IF(nullptr == pDevice);
         this->globalSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalVariables.size, false, linkerInput.get(), src.globalVariables.initData);
+        if (pDevice->getSpecializedDevice<ClDevice>()->getEnabledClVersion() < 20) {
+            this->globalVarTotalSize = 0u;
+        }
     }
-
-    this->globalVarTotalSize = src.globalVariables.size;
 
     for (auto &kernelInfo : this->kernelInfoArray) {
         cl_int retVal = CL_SUCCESS;
