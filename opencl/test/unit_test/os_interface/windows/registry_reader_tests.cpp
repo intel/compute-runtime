@@ -17,6 +17,7 @@ using RegistryReaderTest = ::testing::Test;
 
 extern uint32_t regOpenKeySuccessCount;
 extern uint32_t regQueryValueSuccessCount;
+extern uint64_t regQueryValueExpectedData;
 
 TEST_F(RegistryReaderTest, givenRegistryReaderWhenItIsCreatedWithUserScopeSetToFalseThenItsHkeyTypeIsInitializedToHkeyLocalMachine) {
     bool userScope = false;
@@ -153,4 +154,82 @@ TEST_F(DebugReaderWithRegistryAndEnvTest, givenBinaryDebugKeyOnlyInRegistryWhenR
     regQueryValueSuccessCount = 0u;
 
     EXPECT_STREQ("default", registryReader.getSetting("settingSourceBinary", defaultValue).c_str());
+}
+
+TEST_F(RegistryReaderTest, givenRegistryKeyPresentWhenValueIsZeroThenExpectBooleanFalse) {
+    std::string regKey = "notExistPath";
+    std::string keyName = "boolRegistryKey";
+
+    bool defaultValue = false;
+    regOpenKeySuccessCount = 1;
+    regQueryValueSuccessCount = 1;
+    regQueryValueExpectedData = 0ull;
+
+    TestedRegistryReader registryReader(regKey);
+    bool value = registryReader.getSetting(keyName.c_str(), defaultValue);
+    EXPECT_FALSE(value);
+}
+
+TEST_F(RegistryReaderTest, givenRegistryKeyNotPresentWhenDefaulValueIsFalseOrTrueThenExpectReturnIsMatchingFalseOrTrue) {
+    std::string regKey = "notExistPath";
+    std::string keyName = "boolRegistryKey";
+
+    bool defaultValue = false;
+    regOpenKeySuccessCount = 1;
+    regQueryValueSuccessCount = 0;
+    regQueryValueExpectedData = 1ull;
+
+    TestedRegistryReader registryReader(regKey);
+    bool value = registryReader.getSetting(keyName.c_str(), defaultValue);
+    EXPECT_FALSE(value);
+
+    defaultValue = true;
+    regOpenKeySuccessCount = 1;
+    regQueryValueSuccessCount = 0;
+    regQueryValueExpectedData = 0ull;
+
+    value = registryReader.getSetting(keyName.c_str(), defaultValue);
+    EXPECT_TRUE(value);
+}
+
+TEST_F(RegistryReaderTest, givenRegistryKeyPresentWhenValueIsNonZeroInHigherDwordThenExpectBooleanFalse) {
+    std::string regKey = "notExistPath";
+    std::string keyName = "boolRegistryKey";
+
+    bool defaultValue = true;
+    regOpenKeySuccessCount = 1;
+    regQueryValueSuccessCount = 1;
+    regQueryValueExpectedData = 1ull << 32;
+
+    TestedRegistryReader registryReader(regKey);
+    bool value = registryReader.getSetting(keyName.c_str(), defaultValue);
+    EXPECT_FALSE(value);
+}
+
+TEST_F(RegistryReaderTest, givenRegistryKeyPresentWhenValueIsNonZeroInLowerDwordThenExpectBooleanTrue) {
+    std::string regKey = "notExistPath";
+    std::string keyName = "boolRegistryKey";
+
+    bool defaultValue = false;
+    regOpenKeySuccessCount = 1;
+    regQueryValueSuccessCount = 1;
+    regQueryValueExpectedData = 1ull;
+
+    TestedRegistryReader registryReader(regKey);
+    bool value = registryReader.getSetting(keyName.c_str(), defaultValue);
+    EXPECT_TRUE(value);
+}
+
+TEST_F(RegistryReaderTest, givenRegistryKeyPresentWhenValueIsNonZeroInBothDwordsThenExpectBooleanTrue) {
+    std::string regKey = "notExistPath";
+    std::string keyName = "boolRegistryKey";
+
+    bool defaultValue = false;
+    regOpenKeySuccessCount = 1;
+    regQueryValueSuccessCount = 1;
+    regQueryValueExpectedData = 1ull | (1ull << 32);
+
+    TestedRegistryReader registryReader(regKey);
+    bool value = registryReader.getSetting(keyName.c_str(), defaultValue);
+    EXPECT_TRUE(value);
 }
