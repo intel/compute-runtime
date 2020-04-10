@@ -77,5 +77,34 @@ TEST(zeCommandListAppendLaunchKernel, whenCalledThenRedirectedToObject) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST(zeCommandListAppendEventReset, whenCalledThenRedirectedToObject) {
+    Mock<CommandList> commandList;
+    ze_event_handle_t event = reinterpret_cast<ze_event_handle_t>(0x2000);
+
+    EXPECT_CALL(commandList, appendEventReset(event)).Times(1);
+
+    auto result = zeCommandListAppendEventReset(commandList.toHandle(), event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST(zeCommandListAppendExecutionBarrier, whenCalledThenRedirectedToObject) {
+    Mock<CommandList> commandList;
+
+    EXPECT_CALL(commandList, appendBarrier(::testing::_, ::testing::_, ::testing::_)).Times(1);
+
+    auto result = zeCommandListAppendBarrier(commandList.toHandle(), nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST(zeCommandListAppendSignalEvent, redirectsToObject) {
+    Mock<CommandList> commandList;
+    ze_event_handle_t event = reinterpret_cast<ze_event_handle_t>(0x2000);
+
+    EXPECT_CALL(commandList, appendSignalEvent(event)).Times(1);
+
+    auto result = zeCommandListAppendSignalEvent(commandList.toHandle(), event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 } // namespace ult
 } // namespace L0
