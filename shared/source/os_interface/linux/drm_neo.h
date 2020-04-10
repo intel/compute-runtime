@@ -56,7 +56,7 @@ class Drm {
     int getEuTotal(int &euTotal);
     int getSubsliceTotal(int &subsliceTotal);
 
-    int getMaxGpuFrequency(int &maxGpuFrequency);
+    int getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency);
     int getEnabledPooledEu(int &enabled);
     int getMinEuInPool(int &minEUinPool);
 

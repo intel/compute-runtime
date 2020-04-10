@@ -9,7 +9,25 @@
 
 #include "drm_neo.h"
 
+#include <fstream>
+
 namespace NEO {
+
+int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
+    maxGpuFrequency = 0;
+    std::string clockSysFsPath = getSysFsPciPath();
+
+    clockSysFsPath += "/gt_max_freq_mhz";
+
+    std::ifstream ifs(clockSysFsPath.c_str(), std::ifstream::in);
+    if (ifs.fail()) {
+        return -1;
+    }
+
+    ifs >> maxGpuFrequency;
+    ifs.close();
+    return 0;
+}
 
 std::unique_ptr<uint8_t[]> Drm::query(uint32_t queryId) {
     return nullptr;

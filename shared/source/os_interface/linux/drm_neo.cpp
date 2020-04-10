@@ -21,7 +21,6 @@
 
 #include <cstdio>
 #include <cstring>
-#include <fstream>
 #include <linux/limits.h>
 
 namespace NEO {
@@ -100,22 +99,6 @@ int Drm::enableTurboBoost() {
 
 int Drm::getEnabledPooledEu(int &enabled) {
     return getParamIoctl(I915_PARAM_HAS_POOLED_EU, &enabled);
-}
-
-int Drm::getMaxGpuFrequency(int &maxGpuFrequency) {
-    maxGpuFrequency = 0;
-    std::string clockSysFsPath = getSysFsPciPath();
-
-    clockSysFsPath += "/gt_max_freq_mhz";
-
-    std::ifstream ifs(clockSysFsPath.c_str(), std::ifstream::in);
-    if (ifs.fail()) {
-        return 0;
-    }
-
-    ifs >> maxGpuFrequency;
-    ifs.close();
-    return 0;
 }
 
 std::string Drm::getSysFsPciPath() {

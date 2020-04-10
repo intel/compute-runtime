@@ -6,9 +6,11 @@
  */
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_interface.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
 
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
@@ -32,32 +34,15 @@ TEST(DrmTest, GetDeviceID) {
     delete pDrm;
 }
 
-TEST(DrmTest, GivenValidConfigFileWhenFrequencyIsQueriedThenValidValueIsReturned) {
-
-    int expectedMaxFrequency = 1000;
-
+TEST(DrmTest, GivenInvalidPciPathWhenFrequencyIsQueriedThenReturnError) {
     DrmMock drm{};
-
-    std::string gtMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt_max_freq_mhz";
-
-    EXPECT_TRUE(fileExists(gtMaxFreqFile));
-    drm.setPciPath("device");
-
-    int maxFrequency = 0;
-    int ret = drm.getMaxGpuFrequency(maxFrequency);
-    EXPECT_EQ(0, ret);
-
-    EXPECT_EQ(expectedMaxFrequency, maxFrequency);
-}
-
-TEST(DrmTest, GivenNoConfigFileWhenFrequencyIsQueriedThenReturnZero) {
-    DrmMock drm{};
+    auto hwInfo = *defaultHwInfo;
 
     int maxFrequency = 0;
 
     drm.setPciPath("invalidPci");
-    int ret = drm.getMaxGpuFrequency(maxFrequency);
-    EXPECT_EQ(0, ret);
+    int ret = drm.getMaxGpuFrequency(hwInfo, maxFrequency);
+    EXPECT_NE(0, ret);
 
     EXPECT_EQ(0, maxFrequency);
 }

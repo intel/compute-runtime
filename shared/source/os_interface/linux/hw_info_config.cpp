@@ -118,7 +118,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     }
 
     int maxGpuFreq = 0;
-    drm->getMaxGpuFrequency(maxGpuFreq);
+    drm->getMaxGpuFrequency(*outHwInfo, maxGpuFreq);
 
     GTTYPE gtType = drm->getGtType();
     if (gtType == GTTYPE_UNDEFINED) {
