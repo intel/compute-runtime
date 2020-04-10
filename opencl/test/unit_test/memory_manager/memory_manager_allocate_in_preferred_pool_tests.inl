@@ -130,24 +130,6 @@ TEST(MemoryManagerGetAlloctionDataTest, givenDefaultAllocationFlagsWhenAllocatio
     EXPECT_FALSE(allocData.flags.allocateMemory);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenDebugModeToForceBuffersToSystemMemoryWhenGetAllocationDataIsCalledThenSystemMemoryIsRequired) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.ForceBuffersToSystemMemory.set(true);
-
-    AllocationData allocData;
-    AllocationProperties properties(0, true, 0, GraphicsAllocation::AllocationType::BUFFER, false);
-    MockMemoryManager mockMemoryManager;
-    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-
-    EXPECT_TRUE(allocData.flags.useSystemMemory);
-
-    //do not affect BUFFER COMPRESSED
-    allocData.flags.useSystemMemory = false;
-    AllocationProperties properties2(0, true, 0, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, false);
-    MockMemoryManager::getAllocationData(allocData, properties2, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_FALSE(allocData.flags.useSystemMemory);
-}
-
 TEST(MemoryManagerGetAlloctionDataTest, givenDebugModeWhenCertainAllocationTypesAreSelectedThenSystemPlacementIsChoosen) {
     DebugManagerStateRestore restorer;
     auto allocationType = GraphicsAllocation::AllocationType::BUFFER;

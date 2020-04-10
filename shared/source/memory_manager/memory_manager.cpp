@@ -300,12 +300,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
-    if (DebugManager.flags.ForceBuffersToSystemMemory.get()) {
-        if (properties.allocationType == GraphicsAllocation::AllocationType::BUFFER) {
-            allocationData.flags.useSystemMemory = true;
-        }
-    }
-
     if (DebugManager.flags.ForceSystemMemoryPlacement.get()) {
         if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceSystemMemoryPlacement.get()) {
             allocationData.flags.useSystemMemory = true;

@@ -105,7 +105,6 @@ DECLARE_DEBUG_VARIABLE(bool, UseNoRingFlushesKmdMode, true, "Windows only, passe
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForUseHostPtr, false, "When active all buffer allocations created with CL_MEM_USE_HOST_PTR flag will not share memory with CPU.")
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")
 DECLARE_DEBUG_VARIABLE(bool, DisableDcFlushInEpilogue, false, "Disable DC flush in epilogue")
-DECLARE_DEBUG_VARIABLE(bool, ForceBuffersToSystemMemory, false, "Forces buffers to be in system memory")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableHostPtrTracking, -1, "Enable host ptr tracking: -1 - default platform setting, 0 - disabled, 1 - enabled")
 
 /*FEATURE FLAGS*/
