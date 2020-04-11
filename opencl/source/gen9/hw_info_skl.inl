@@ -77,7 +77,8 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     true,                                          // supportsDeviceEnqueue
     true,                                          // supportsPipes
     true,                                          // supportsOcl21Features
-    true                                           // hostPtrTrackingEnabled
+    true,                                          // hostPtrTrackingEnabled
+    true                                           // levelZeroSupported
 };
 WorkaroundTable SKL::workaroundTable = {};
 FeatureTable SKL::featureTable = {};

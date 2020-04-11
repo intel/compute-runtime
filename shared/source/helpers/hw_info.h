@@ -57,6 +57,7 @@ struct RuntimeCapabilityTable {
     bool supportsPipes;
     bool supportsOcl21Features;
     bool hostPtrTrackingEnabled;
+    bool levelZeroSupported;
 };
 
 struct HardwareCapabilities {

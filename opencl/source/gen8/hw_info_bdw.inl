@@ -77,7 +77,8 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     true,                                          // supportsDeviceEnqueue
     true,                                          // supportsPipes
     true,                                          // supportsOcl21Features
-    true                                           // hostPtrTrackingEnabled
+    true,                                          // hostPtrTrackingEnabled
+    false                                          // levelZeroSupported
 };
 
 WorkaroundTable BDW::workaroundTable = {};

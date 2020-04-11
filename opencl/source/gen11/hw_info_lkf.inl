@@ -72,7 +72,8 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     true,                                          // supportsDeviceEnqueue
     false,                                         // supportsPipes
     false,                                         // supportsOcl21Features
-    true                                           // hostPtrTrackingEnabled
+    true,                                          // hostPtrTrackingEnabled
+    false                                          // levelZeroSupported
 };
 
 WorkaroundTable LKF::workaroundTable = {};

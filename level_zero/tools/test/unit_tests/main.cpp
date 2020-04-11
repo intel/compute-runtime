@@ -138,14 +138,20 @@ int main(int argc, char **argv) {
                     }
                 }
                 if (productFamily == IGFX_UNKNOWN) {
-                    std::cout << "unknown or unsupported product family has been set: " << argv[i]
+                    std::cout << "unknown product family has been set: " << argv[i]
                               << std::endl;
                     return -1;
-                } else {
-                    std::cout << "product family: " << NEO::hardwarePrefix[productFamily] << " ("
-                              << productFamily << ")" << std::endl;
                 }
+
                 hwInfoForTests = *NEO::hardwareInfoTable[productFamily];
+                if (!hwInfoForTests.capabilityTable.levelZeroSupported) {
+                    std::cout << "unsupported product family has been set: " << argv[i]
+                              << std::endl;
+                    return 0;
+                }
+
+                std::cout << "product family: " << NEO::hardwarePrefix[productFamily] << " ("
+                          << productFamily << ")" << std::endl;
             }
         }
         if (!strcmp("--disable_default_listener", argv[i])) {

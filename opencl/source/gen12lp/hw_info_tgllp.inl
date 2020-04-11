@@ -74,7 +74,8 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     true,                                            // supportsDeviceEnqueue
     false,                                           // supportsPipes
     true,                                            // supportsOcl21Features
-    false                                            // hostPtrTrackingEnabled
+    false,                                           // hostPtrTrackingEnabled
+    true                                             // levelZeroSupported
 };
 
 WorkaroundTable TGLLP::workaroundTable = {};

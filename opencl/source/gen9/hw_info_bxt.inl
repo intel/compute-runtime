@@ -74,7 +74,8 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     false,                                         // supportsDeviceEnqueue
     false,                                         // supportsPipes
     false,                                         // supportsOcl21Features
-    true                                           // hostPtrTrackingEnabled
+    true,                                          // hostPtrTrackingEnabled
+    false                                          // levelZeroSupported
 };
 
 WorkaroundTable BXT::workaroundTable = {};

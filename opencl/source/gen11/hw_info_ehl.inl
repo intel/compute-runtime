@@ -72,7 +72,8 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     true,                                          // supportsDeviceEnqueue
     false,                                         // supportsPipes
     false,                                         // supportsOcl21Features
-    true                                           // hostPtrTrackingEnabled
+    true,                                          // hostPtrTrackingEnabled
+    false                                          // levelZeroSupported
 };
 
 WorkaroundTable EHL::workaroundTable = {};

@@ -113,22 +113,32 @@ DriverHandleImp::~DriverHandleImp() {
 }
 
 ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> devices) {
-    this->memoryManager = devices[0]->getMemoryManager();
-    if (this->memoryManager == nullptr) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-
-    this->svmAllocsManager = new NEO::SVMAllocsManager(memoryManager);
-    if (this->svmAllocsManager == nullptr) {
-        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-    }
-
-    this->numDevices = static_cast<uint32_t>(devices.size());
-
     for (auto &neoDevice : devices) {
+        if (!neoDevice->getHardwareInfo().capabilityTable.levelZeroSupported) {
+            continue;
+        }
+
+        if (this->memoryManager == nullptr) {
+            this->memoryManager = neoDevice->getMemoryManager();
+            if (this->memoryManager == nullptr) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+
+            this->svmAllocsManager = new NEO::SVMAllocsManager(memoryManager);
+            if (this->svmAllocsManager == nullptr) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+        }
+
         auto device = Device::create(this, neoDevice.release());
         this->devices.push_back(device);
     }
+
+    if (this->devices.size() == 0) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    this->numDevices = static_cast<uint32_t>(this->devices.size());
 
     extensionFunctionsLookupMap = getExtensionFunctionsLookupMap();
 

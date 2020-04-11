@@ -69,7 +69,8 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     true,                                          // supportsDeviceEnqueue
     true,                                          // supportsPipes
     true,                                          // supportsOcl21Features
-    true                                           // hostPtrTrackingEnabled
+    true,                                          // hostPtrTrackingEnabled
+    true                                           // levelZeroSupported
 };
 
 WorkaroundTable CFL::workaroundTable = {};
