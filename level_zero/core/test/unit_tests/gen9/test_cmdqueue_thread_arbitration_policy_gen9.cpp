@@ -57,6 +57,7 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
     void TearDown() override {
         commandList->destroy();
         commandQueue->destroy();
+        L0::GlobalDriver = nullptr;
     }
 
     DebugManagerStateRestore restorer;

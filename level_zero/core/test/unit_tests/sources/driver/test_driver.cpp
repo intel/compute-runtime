@@ -47,6 +47,7 @@ TEST(DriverTestFamilySupport, whenInitializingDriverOnSupportedFamilyThenDriverI
     auto driverHandle = DriverHandle::create(std::move(devices));
     EXPECT_NE(nullptr, driverHandle);
     delete driverHandle;
+    L0::GlobalDriver = nullptr;
 }
 
 TEST(DriverTestFamilySupport, whenInitializingDriverOnNotSupportedFamilyThenDriverIsNotCreated) {
@@ -75,6 +76,7 @@ TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggin
     EXPECT_FALSE(driverHandle->enableProgramDebugging);
 
     delete driverHandle;
+    L0::GlobalDriver = nullptr;
 }
 
 TEST(DriverTest, givenEnvVariableNonZeroWhenCreatingDriverThenEnableProgramDebuggingIsSetTrue) {
@@ -93,6 +95,7 @@ TEST(DriverTest, givenEnvVariableNonZeroWhenCreatingDriverThenEnableProgramDebug
     EXPECT_TRUE(driverHandle->enableProgramDebugging);
 
     delete driverHandle;
+    L0::GlobalDriver = nullptr;
 }
 
 struct DriverTestMultipleFamilySupport : public ::testing::Test {
@@ -134,6 +137,7 @@ TEST_F(DriverTestMultipleFamilySupport, whenInitializingDriverWithArrayOfDevices
     }
 
     delete driverHandle;
+    L0::GlobalDriver = nullptr;
 }
 
 struct DriverTestMultipleFamilyNoSupport : public ::testing::Test {
@@ -224,6 +228,7 @@ TEST_F(DriverTestMultipleDeviceWithAffinityMask,
     }
 
     delete driverHandle;
+    L0::GlobalDriver = nullptr;
 }
 
 TEST_P(DriverTestMultipleDeviceWithAffinityMask,
@@ -284,6 +289,7 @@ TEST_P(DriverTestMultipleDeviceWithAffinityMask,
     }
 
     delete driverHandle;
+    L0::GlobalDriver = nullptr;
 }
 
 MaskArray maskArray;

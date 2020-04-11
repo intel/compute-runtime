@@ -69,4 +69,6 @@ struct DriverHandleImp : public DriverHandle {
     bool enableProgramDebugging = false;
 };
 
+extern struct DriverHandleImp *GlobalDriver;
+
 } // namespace L0

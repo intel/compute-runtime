@@ -26,5 +26,5 @@ ze_result_t init(_ze_init_flag_t);
 ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDrivers);
 
 extern uint32_t driverCount;
-extern std::unique_ptr<_ze_driver_handle_t> GlobalDriver;
+extern _ze_driver_handle_t *GlobalDriverHandle;
 } // namespace L0

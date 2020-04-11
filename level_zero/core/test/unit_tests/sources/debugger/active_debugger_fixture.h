@@ -13,6 +13,7 @@
 #include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -54,6 +55,7 @@ struct ActiveDebuggerFixture {
         ASSERT_NE(nullptr, deviceL0);
     }
     void TearDown() { // NOLINT(readability-identifier-naming)
+        L0::GlobalDriver = nullptr;
     }
 
     std::unique_ptr<L0::ult::WhiteBox<L0::DriverHandle>> driverHandle;

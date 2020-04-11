@@ -169,7 +169,7 @@ void MetricContext::enableMetricApi(ze_result_t &result) {
         return;
     }
 
-    DriverHandle *driverHandle = L0::DriverHandle::fromHandle(GlobalDriver.get());
+    DriverHandle *driverHandle = L0::DriverHandle::fromHandle(GlobalDriverHandle);
 
     uint32_t count = 0;
     result = driverHandle->getDevice(&count, nullptr);

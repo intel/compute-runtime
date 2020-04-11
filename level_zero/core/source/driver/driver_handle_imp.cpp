@@ -24,6 +24,8 @@
 
 namespace L0 {
 
+struct DriverHandleImp *GlobalDriver;
+
 NEO::MemoryManager *DriverHandleImp::getMemoryManager() {
     return this->memoryManager;
 }
@@ -190,7 +192,10 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
         return nullptr;
     }
 
+    GlobalDriver = driverHandle;
+
     driverHandle->memoryManager->setForceNonSvmForExternalHostPtr(true);
+
     return driverHandle;
 }
 
