@@ -22,6 +22,8 @@ ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const z
         return ret;
     }
 
+    samplerState.setNonNormalizedCoordinateEnable(!desc->isNormalized);
+
     auto addressControlModeX = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
     auto addressControlModeY = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;
     auto addressControlModeZ = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER;

@@ -57,6 +57,12 @@ HWTEST2_P(SamplerCreateTest, givenDifferentDescriptorValuesThenSamplerIsCorrectl
 
     sampler->initialize(device, &desc);
 
+    if (isNormalized == static_cast<ze_bool_t>(true)) {
+        EXPECT_FALSE(sampler->samplerState.getNonNormalizedCoordinateEnable());
+    } else {
+        EXPECT_TRUE(sampler->samplerState.getNonNormalizedCoordinateEnable());
+    }
+
     if (addressMode == ZE_SAMPLER_ADDRESS_MODE_NONE) {
         EXPECT_EQ(SAMPLER_STATE::TEXTURE_COORDINATE_MODE_CLAMP_BORDER,
                   sampler->samplerState.getTcxAddressControlMode());
