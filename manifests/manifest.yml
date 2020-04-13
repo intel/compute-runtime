@@ -9,7 +9,7 @@ components:
     dest_dir: igc
     type: git
     branch: igc
-    revision: 577887bf74c51a6084058836720fe58f8c35ca58
+    revision: ff097ca149e2441119c2ca6ebf53def250f99897
     repository: https://github.com/intel/intelgraphicscompiler
   infra:
     branch: infra
