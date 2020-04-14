@@ -335,6 +335,7 @@ HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAlloc
     DebugManager.flags.DisableTimestampPacketOptimizations.set(true);
 
     CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0);
+    csr.setupContext(*executionEnvironment->memoryManager->getRegisteredEngines()[0].osContext);
     EXPECT_EQ(1u, csr.getPreferredTagPoolSize());
 
     auto tag = csr.getTimestampPacketAllocator()->getTag();
@@ -1385,7 +1386,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingWithOmitTim
 
 HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentDevicesWhenEnqueueingThenMakeAllTimestampsResident) {
     TagAllocator<TimestampPacketStorage> tagAllocator(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1, 1,
-                                                      sizeof(TimestampPacketStorage), false);
+                                                      sizeof(TimestampPacketStorage), false, {});
     auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
     auto &ultCsr = device->getUltCommandStreamReceiver<FamilyType>();
@@ -1421,7 +1422,7 @@ HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentDevicesWhenEnqueu
 
 HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentCSRsWhenEnqueueingThenMakeAllTimestampsResident) {
     TagAllocator<TimestampPacketStorage> tagAllocator(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1, 1,
-                                                      sizeof(TimestampPacketStorage), false);
+                                                      sizeof(TimestampPacketStorage), false, {});
 
     auto &ultCsr = device->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.timestampPacketWriteEnabled = true;

@@ -1400,7 +1400,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenInputAndOutputTimestampPacketWhenBlitCal
     cmdQueueCsr.timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacketStorage>>(device->getRootDeviceIndex(), memoryManager, 1,
                                                                                                   MemoryConstants::cacheLineSize,
                                                                                                   sizeof(TimestampPacketStorage),
-                                                                                                  false);
+                                                                                                  false, DeviceBitfield{});
 
     auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
     buffer->forceDisallowCPUCopy = true;

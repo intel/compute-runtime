@@ -19,7 +19,7 @@ class MockTagAllocator : public TagAllocator<TagType> {
     using NodeType = typename BaseClass::NodeType;
 
     MockTagAllocator(uint32_t rootDeviceIndex, MemoryManager *memoryManager, size_t tagCount = 10)
-        : BaseClass(rootDeviceIndex, memoryManager, tagCount, MemoryConstants::cacheLineSize, sizeof(TagType), false) {}
+        : BaseClass(rootDeviceIndex, memoryManager, tagCount, MemoryConstants::cacheLineSize, sizeof(TagType), false, {}) {}
 
     void returnTag(NodeType *node) override {
         releaseReferenceNodes.push_back(node);

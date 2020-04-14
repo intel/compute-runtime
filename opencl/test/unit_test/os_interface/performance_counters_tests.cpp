@@ -15,6 +15,7 @@
 #include "opencl/test/unit_test/fixtures/device_instrumentation_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 
 #include "gtest/gtest.h"
@@ -153,11 +154,16 @@ struct PerformanceCountersMetricsLibraryTest : public PerformanceCountersMetrics
   public:
     void SetUp() override {
         PerformanceCountersMetricsLibraryFixture::SetUp();
+        auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
+        osContext = std::make_unique<MockOsContext>(0, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                    PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false, false, false);
+        queue->getGpgpuCommandStreamReceiver().setupContext(*osContext);
     }
 
     void TearDown() override {
         PerformanceCountersMetricsLibraryFixture::TearDown();
     }
+    std::unique_ptr<OsContext> osContext;
 };
 
 TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetricLibraryIsValidThenQueryIsCreated) {

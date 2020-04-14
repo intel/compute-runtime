@@ -450,7 +450,7 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
 TagAllocator<HwTimeStamps> *CommandStreamReceiver::getEventTsAllocator() {
     if (profilingTimeStampAllocator.get() == nullptr) {
         profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(
-            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, sizeof(HwTimeStamps), false);
+            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, sizeof(HwTimeStamps), false, osContext->getDeviceBitfield());
     }
     return profilingTimeStampAllocator.get();
 }
@@ -458,7 +458,7 @@ TagAllocator<HwTimeStamps> *CommandStreamReceiver::getEventTsAllocator() {
 TagAllocator<HwPerfCounter> *CommandStreamReceiver::getEventPerfCountAllocator(const uint32_t tagSize) {
     if (perfCounterAllocator.get() == nullptr) {
         perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(
-            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, tagSize, false);
+            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize, tagSize, false, osContext->getDeviceBitfield());
     }
     return perfCounterAllocator.get();
 }
@@ -471,7 +471,7 @@ TagAllocator<TimestampPacketStorage> *CommandStreamReceiver::getTimestampPacketA
 
         timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacketStorage>>(
             rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize,
-            sizeof(TimestampPacketStorage), doNotReleaseNodes);
+            sizeof(TimestampPacketStorage), doNotReleaseNodes, osContext->getDeviceBitfield());
     }
     return timestampPacketAllocator.get();
 }

@@ -17,7 +17,9 @@
 
 using namespace NEO;
 
-typedef Test<MemoryAllocatorFixture> TagAllocatorTest;
+struct TagAllocatorTest : public Test<MemoryAllocatorFixture> {
+    const DeviceBitfield deviceBitfield{0xef};
+};
 
 struct TimeStamps {
     void initialize() {
@@ -47,12 +49,12 @@ class MockTagAllocator : public TagAllocator<TagType> {
     using BaseClass::releaseDeferredTags;
     using BaseClass::usedTags;
 
-    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, bool disableCompletionCheck)
-        : BaseClass(0, memMngr, tagCount, tagAlignment, sizeof(TagType), disableCompletionCheck) {
+    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, bool disableCompletionCheck, DeviceBitfield deviceBitfield)
+        : BaseClass(0, memMngr, tagCount, tagAlignment, sizeof(TagType), disableCompletionCheck, deviceBitfield) {
     }
 
-    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment)
-        : MockTagAllocator(memMngr, tagCount, tagAlignment, false) {
+    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, DeviceBitfield deviceBitfield)
+        : MockTagAllocator(memMngr, tagCount, tagAlignment, false, deviceBitfield) {
     }
 
     GraphicsAllocation *getGraphicsAllocation(size_t id = 0) {
@@ -78,7 +80,7 @@ class MockTagAllocator : public TagAllocator<TagType> {
 
 TEST_F(TagAllocatorTest, Initialize) {
 
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 100, 64);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 100, 64, deviceBitfield);
 
     ASSERT_NE(nullptr, tagAllocator.getGraphicsAllocation());
 
@@ -92,7 +94,7 @@ TEST_F(TagAllocatorTest, Initialize) {
 
 TEST_F(TagAllocatorTest, GetReturnTagCheckFreeAndUsedLists) {
 
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 10, 16);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 10, 16, deviceBitfield);
 
     ASSERT_NE(nullptr, tagAllocator.getGraphicsAllocation());
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
@@ -120,10 +122,17 @@ TEST_F(TagAllocatorTest, GetReturnTagCheckFreeAndUsedLists) {
     EXPECT_FALSE(isFoundOnUsedList);
 }
 
-TEST_F(TagAllocatorTest, TagAlignment) {
-
+TEST_F(TagAllocatorTest, WhenTagAllocatorIsCreatedThenItPopulatesTagsWithProperDeviceBitfield) {
     size_t alignment = 64;
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 10, alignment);
+
+    EXPECT_NE(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 10, alignment, deviceBitfield);
+    EXPECT_EQ(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
+}
+
+TEST_F(TagAllocatorTest, TagAlignment) {
+    size_t alignment = 64;
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 10, alignment, deviceBitfield);
 
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
 
@@ -139,7 +148,7 @@ TEST_F(TagAllocatorTest, givenTagAllocatorWhenAllNodesWereUsedThenCreateNewGraph
 
     // Big alignment to force only 4 tags
     size_t alignment = 1024;
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 4, alignment);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 4, alignment, deviceBitfield);
 
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
 
@@ -172,7 +181,7 @@ TEST_F(TagAllocatorTest, givenInputTagCountWhenCreatingAllocatorThen) {
     auto mockMemoryManager = std::make_unique<MyMockMemoryManager>(true, true, *executionEnvironment);
 
     const size_t tagsCount = 3;
-    MockTagAllocator<TimestampPacketStorage> tagAllocator(mockMemoryManager.get(), tagsCount, 1);
+    MockTagAllocator<TimestampPacketStorage> tagAllocator(mockMemoryManager.get(), tagsCount, 1, deviceBitfield);
 
     size_t nodesFound = 0;
     auto head = tagAllocator.freeTags.peekHead();
@@ -188,7 +197,7 @@ TEST_F(TagAllocatorTest, GetTagsAndReturnInDifferentOrder) {
 
     // Big alignment to force only 4 tags
     size_t alignment = 1024;
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 4, alignment);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 4, alignment, deviceBitfield);
 
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
 
@@ -233,7 +242,7 @@ TEST_F(TagAllocatorTest, GetTagsFromTwoPools) {
 
     // Big alignment to force only 1 tag
     size_t alignment = 4096;
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, alignment);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, alignment, deviceBitfield);
 
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
 
@@ -257,7 +266,7 @@ TEST_F(TagAllocatorTest, CleanupResources) {
 
     // Big alignment to force only 1 tag
     size_t alignment = 4096;
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, alignment);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, alignment, deviceBitfield);
 
     TagNode<TimeStamps> *tagNode1, *tagNode2;
 
@@ -284,7 +293,7 @@ TEST_F(TagAllocatorTest, CleanupResources) {
 }
 
 TEST_F(TagAllocatorTest, whenNewTagIsTakenThenInitialize) {
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 2);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 2, deviceBitfield);
     tagAllocator.getFreeTagsHead()->tagForCpuAccess->start = 3;
     tagAllocator.getFreeTagsHead()->tagForCpuAccess->end = 4;
 
@@ -294,7 +303,7 @@ TEST_F(TagAllocatorTest, whenNewTagIsTakenThenInitialize) {
 }
 
 TEST_F(TagAllocatorTest, givenMultipleReferencesOnTagWhenReleasingThenReturnWhenAllRefCountsAreReleased) {
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 2, 1);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 2, 1, deviceBitfield);
 
     auto tag = tagAllocator.getTag();
     EXPECT_NE(nullptr, tagAllocator.getUsedTagsHead());
@@ -312,7 +321,7 @@ TEST_F(TagAllocatorTest, givenMultipleReferencesOnTagWhenReleasingThenReturnWhen
 }
 
 TEST_F(TagAllocatorTest, givenNotReadyTagWhenReturnedThenMoveToDeferredList) {
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1, deviceBitfield);
     auto node = tagAllocator.getTag();
 
     node->tagForCpuAccess->release = false;
@@ -323,7 +332,7 @@ TEST_F(TagAllocatorTest, givenNotReadyTagWhenReturnedThenMoveToDeferredList) {
 }
 
 TEST_F(TagAllocatorTest, givenTagNodeWhenCompletionCheckIsDisabledThenStatusIsMarkedAsNotReady) {
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1, deviceBitfield);
     EXPECT_FALSE(tagAllocator.doNotReleaseNodes);
     auto node = tagAllocator.getTag();
 
@@ -338,7 +347,7 @@ TEST_F(TagAllocatorTest, givenTagNodeWhenCompletionCheckIsDisabledThenStatusIsMa
 }
 
 TEST_F(TagAllocatorTest, givenTagAllocatorWhenDisabledCompletionCheckThenNodeInheritsItsState) {
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1, true);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1, true, deviceBitfield);
     EXPECT_TRUE(tagAllocator.doNotReleaseNodes);
 
     auto node = tagAllocator.getTag();
@@ -354,7 +363,7 @@ TEST_F(TagAllocatorTest, givenTagAllocatorWhenDisabledCompletionCheckThenNodeInh
 }
 
 TEST_F(TagAllocatorTest, givenReadyTagWhenReturnedThenMoveToFreeList) {
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1, deviceBitfield);
     auto node = tagAllocator.getTag();
 
     node->tagForCpuAccess->release = true;
@@ -365,7 +374,7 @@ TEST_F(TagAllocatorTest, givenReadyTagWhenReturnedThenMoveToFreeList) {
 }
 
 TEST_F(TagAllocatorTest, givenEmptyFreeListWhenAskingForNewTagThenTryToReleaseDeferredListFirst) {
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1);
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 1, deviceBitfield);
     auto node = tagAllocator.getTag();
 
     node->tagForCpuAccess->release = false;
@@ -378,7 +387,7 @@ TEST_F(TagAllocatorTest, givenEmptyFreeListWhenAskingForNewTagThenTryToReleaseDe
 }
 
 TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTagsToFreePool) {
-    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 2, 1); // pool with 2 tags
+    MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 2, 1, deviceBitfield); // pool with 2 tags
     auto node1 = tagAllocator.getTag();
     auto node2 = tagAllocator.getTag();
 
@@ -403,9 +412,9 @@ TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTags
 }
 
 TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetValidllocationType) {
-    TagAllocator<TimestampPacketStorage> timestampPacketAllocator(0, memoryManager, 1, 1, sizeof(TimestampPacketStorage), false);
-    TagAllocator<HwTimeStamps> hwTimeStampsAllocator(0, memoryManager, 1, 1, sizeof(HwTimeStamps), false);
-    TagAllocator<HwPerfCounter> hwPerfCounterAllocator(0, memoryManager, 1, 1, sizeof(HwPerfCounter), false);
+    TagAllocator<TimestampPacketStorage> timestampPacketAllocator(0, memoryManager, 1, 1, sizeof(TimestampPacketStorage), false, {});
+    TagAllocator<HwTimeStamps> hwTimeStampsAllocator(0, memoryManager, 1, 1, sizeof(HwTimeStamps), false, {});
+    TagAllocator<HwPerfCounter> hwPerfCounterAllocator(0, memoryManager, 1, 1, sizeof(HwPerfCounter), false, {});
 
     auto timestampPacketTag = timestampPacketAllocator.getTag();
     auto hwTimeStampsTag = hwTimeStampsAllocator.getTag();

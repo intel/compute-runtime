@@ -61,11 +61,13 @@ class TagAllocator {
     using NodeType = TagNode<TagType>;
 
     TagAllocator(uint32_t rootDeviceIndex, MemoryManager *memMngr, size_t tagCount,
-                 size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes) : rootDeviceIndex(rootDeviceIndex),
-                                                                                memoryManager(memMngr),
-                                                                                tagCount(tagCount),
-                                                                                tagAlignment(tagAlignment),
-                                                                                doNotReleaseNodes(doNotReleaseNodes) {
+                 size_t tagAlignment, size_t tagSize, bool doNotReleaseNodes,
+                 DeviceBitfield deviceBitfield) : deviceBitfield(deviceBitfield),
+                                                  rootDeviceIndex(rootDeviceIndex),
+                                                  memoryManager(memMngr),
+                                                  tagCount(tagCount),
+                                                  tagAlignment(tagAlignment),
+                                                  doNotReleaseNodes(doNotReleaseNodes) {
 
         this->tagSize = alignUp(tagSize, tagAlignment);
         populateFreeTags();
@@ -120,6 +122,7 @@ class TagAllocator {
     std::vector<GraphicsAllocation *> gfxAllocations;
     std::vector<NodeType *> tagPoolMemory;
 
+    const DeviceBitfield deviceBitfield;
     const uint32_t rootDeviceIndex;
     MemoryManager *memoryManager;
     size_t tagCount;
@@ -146,7 +149,9 @@ class TagAllocator {
         size_t allocationSizeRequired = tagCount * tagSize;
 
         auto allocationType = TagType::getAllocationType();
-        GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, allocationSizeRequired, allocationType});
+        AllocationProperties allocationProperties{rootDeviceIndex, allocationSizeRequired, allocationType};
+        allocationProperties.subDevicesBitfield = deviceBitfield;
+        GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
         gfxAllocations.push_back(graphicsAllocation);
 
         uint64_t gpuBaseAddress = graphicsAllocation->getGpuAddress();
