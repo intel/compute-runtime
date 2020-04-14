@@ -138,6 +138,11 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                            numWorkGroups, localWorkSizes, simd, dim,
                                                            false, false,
                                                            *kernel.getKernelInfo().patchInfo.threadPayload, 0u);
+
+    programAdditionalFieldsForWalker(*walkerCmd);
 }
+
+template <typename GfxFamily>
+void HardwareInterface<GfxFamily>::programAdditionalFieldsForWalker(WALKER_TYPE<GfxFamily> &walkerCmd) {}
 
 } // namespace NEO
