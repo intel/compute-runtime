@@ -158,33 +158,32 @@ TEST(AllocateGlobalSurfaceTest, WhenGlobalsAreNotExportedAndAllocationFailsThenG
     device.injectMemoryManager(memoryManager.release());
     MockSVMAllocsManager mockSvmAllocsManager(device.getMemoryManager());
     WhiteBox<LinkerInput> emptyLinkerInput;
-    SVMAllocsManager *svmAllocsManager = nullptr;
     std::vector<uint8_t> initData;
     initData.resize(64, 7U);
     GraphicsAllocation *alloc = nullptr;
 
-    alloc = allocateGlobalsSurface(svmAllocsManager = &mockSvmAllocsManager, device, initData.size(), true /* constant */, nullptr /* linker input */, initData.data());
+    alloc = allocateGlobalsSurface(&mockSvmAllocsManager, device, initData.size(), true /* constant */, nullptr /* linker input */, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(svmAllocsManager = &mockSvmAllocsManager, device, initData.size(), false /* constant */, nullptr /* linker input */, initData.data());
+    alloc = allocateGlobalsSurface(&mockSvmAllocsManager, device, initData.size(), false /* constant */, nullptr /* linker input */, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(svmAllocsManager = &mockSvmAllocsManager, device, initData.size(), true /* constant */, &emptyLinkerInput, initData.data());
+    alloc = allocateGlobalsSurface(&mockSvmAllocsManager, device, initData.size(), true /* constant */, &emptyLinkerInput, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(svmAllocsManager = &mockSvmAllocsManager, device, initData.size(), false /* constant */, &emptyLinkerInput, initData.data());
+    alloc = allocateGlobalsSurface(&mockSvmAllocsManager, device, initData.size(), false /* constant */, &emptyLinkerInput, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(svmAllocsManager = nullptr, device, initData.size(), true /* constant */, nullptr /* linker input */, initData.data());
+    alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), true /* constant */, nullptr /* linker input */, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(svmAllocsManager = nullptr, device, initData.size(), false /* constant */, nullptr /* linker input */, initData.data());
+    alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), false /* constant */, nullptr /* linker input */, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(svmAllocsManager = nullptr, device, initData.size(), true /* constant */, &emptyLinkerInput, initData.data());
+    alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), true /* constant */, &emptyLinkerInput, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(svmAllocsManager = nullptr, device, initData.size(), false /* constant */, &emptyLinkerInput, initData.data());
+    alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), false /* constant */, &emptyLinkerInput, initData.data());
     EXPECT_EQ(nullptr, alloc);
 }
 
