@@ -7,7 +7,6 @@
 
 #include "shared/source/utilities/debug_file_reader.h"
 
-
 namespace NEO {
 
 SettingsFileReader::SettingsFileReader(const char *filePath) {
@@ -37,7 +36,7 @@ int64_t SettingsFileReader::getSetting(const char *settingName, int64_t defaultV
 
     std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(settingName));
     if (it != settingStringMap.end()) {
-        value = atoi(it->second.c_str());
+        value = atoll(it->second.c_str());
     }
 
     return value;

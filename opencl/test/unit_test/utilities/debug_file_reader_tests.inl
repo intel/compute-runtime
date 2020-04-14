@@ -136,3 +136,17 @@ TEST(SettingsFileReader, givenHexNumbersSemiColonSeparatedListInInputStreamWhenP
 
     EXPECT_STREQ("0x1234;0x5555", returnedStringValue.c_str());
 }
+
+TEST(SettingsFileReader, given64bitKeyValueWhenGetSettingThenValueIsCorrect) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader);
+
+    EXPECT_EQ(0u, reader->getStringSettingsCount());
+    std::stringstream inputLine("Example64BitKey = -18764712120594");
+    reader->parseStream(inputLine);
+
+    int64_t defaultValue = 0;
+    int64_t returnedValue = reader->getSetting("Example64BitKey", defaultValue);
+
+    EXPECT_EQ(-18764712120594, returnedValue);
+}
