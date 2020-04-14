@@ -19,14 +19,14 @@ using MemoryManagement::indexAllocation;
 using MemoryManagement::indexDeallocation;
 using MemoryManagement::numAllocations;
 
-TEST(allocation, nothrow_defaultShouldPass) {
+TEST(allocation, GivenFailingAllocationNegativeOneWhenCreatingAllocationThenAllocationIsCreatedSuccesfully) {
     ASSERT_EQ(failingAllocation, static_cast<size_t>(-1));
     auto ptr = new (std::nothrow) char;
     EXPECT_NE(nullptr, ptr);
     delete ptr;
 }
 
-TEST(allocation, nothrow_injectingAFailure) {
+TEST(allocation, GivenFailingAllocationOneWhenCreatingAllocationsThenOnlyOneAllocationIsCreatedSuccesfully) {
     MemoryManagement::detailedAllocationLoggingActive = true;
     ASSERT_EQ(static_cast<size_t>(-1), failingAllocation);
     auto previousAllocations = numAllocations.load();
@@ -57,7 +57,7 @@ struct MemoryManagementTest : public MemoryManagementFixture,
     }
 };
 
-TEST_F(MemoryManagementTest, nothrow_injectingAFailure) {
+TEST_F(MemoryManagementTest, GivenFailingAllocationOneWhenCreatingAllocationsThenOnlyOneAllocationIsCreatedSuccesfully) {
     setFailingAllocation(1);
     auto ptr1 = new (std::nothrow) char;
     auto ptr2 = new (std::nothrow) char;
@@ -69,13 +69,13 @@ TEST_F(MemoryManagementTest, nothrow_injectingAFailure) {
     EXPECT_EQ(nullptr, ptr2);
 }
 
-TEST_F(MemoryManagementTest, NoLeaks) {
+TEST_F(MemoryManagementTest, GivenNoFailingAllocationWhenCreatingAllocationThenMemoryIsNotLeaked) {
     auto indexAllocationTop = indexAllocation.load();
     auto indexDellocationTop = indexDeallocation.load();
     EXPECT_EQ(static_cast<size_t>(-1), MemoryManagement::enumerateLeak(indexAllocationTop, indexDellocationTop, false, false));
 }
 
-TEST_F(MemoryManagementTest, OneLeak) {
+TEST_F(MemoryManagementTest, GivenOneFailingAllocationWhenCreatingAllocationThenMemoryIsLeaked) {
     size_t sizeBuffer = 10;
     auto ptr = new (std::nothrow) char[sizeBuffer];
     auto indexAllocationTop = indexAllocation.load();
@@ -91,7 +91,7 @@ TEST_F(MemoryManagementTest, OneLeak) {
     delete[] ptr;
 }
 
-TEST_F(MemoryManagementTest, OneLeakBetweenFourEvents) {
+TEST_F(MemoryManagementTest, GivenFourEventsWhenCreatingAllocationThenMemoryIsLeakedOnce) {
     size_t sizeBuffer = 10;
     delete new (std::nothrow) char;
     auto ptr = new (std::nothrow) char[sizeBuffer];
@@ -109,7 +109,7 @@ TEST_F(MemoryManagementTest, OneLeakBetweenFourEvents) {
     delete[] ptr;
 }
 
-TEST_F(MemoryManagementTest, TwoLeaks) {
+TEST_F(MemoryManagementTest, GivenTwoFailingAllocationsWhenCreatingAllocationThenMemoryIsLeaked) {
     size_t sizeBuffer = 10;
     auto ptr1 = new (std::nothrow) char[sizeBuffer];
     auto ptr2 = new (std::nothrow) char[sizeBuffer];
@@ -132,12 +132,12 @@ TEST_F(MemoryManagementTest, TwoLeaks) {
     delete[] ptr2;
 }
 
-TEST_F(MemoryManagementTest, delete_nullptr_shouldntReportLeak) {
+TEST_F(MemoryManagementTest, WhenDeletingNullPtrThenLeakIsNotReported) {
     char *ptr = nullptr;
     delete ptr;
 }
 
-TEST_F(MemoryManagementTest, shouldBeAbleToViewAllocation) {
+TEST_F(MemoryManagementTest, WhenPointerIsDeletedThenAllocationShouldbeVisible) {
     size_t sizeBuffer = 10;
     auto index = MemoryManagement::indexAllocation.load();
     auto ptr = new (std::nothrow) char[sizeBuffer];
