@@ -67,7 +67,7 @@ size_t findPos(const std::vector<std::string> &lines, const std::string &whatToF
                 return i;
             }
             char delimiter = lines[i][it + whatToFind.size()];
-            if ((delimiter == ' ') || (delimiter = '\t') || (delimiter = '\n') || (delimiter = '\r')) {
+            if ((' ' == delimiter) || ('\t' == delimiter) || ('\n' == delimiter) || ('\r' == delimiter)) {
                 return i;
             }
         }
