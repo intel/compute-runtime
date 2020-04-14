@@ -197,7 +197,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
 }
 
 void *SVMAllocsManager::createZeroCopySvmAllocation(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties &svmProperties) {
-    AllocationProperties properties{rootDeviceIndex, true, size, GraphicsAllocation::AllocationType::SVM_ZERO_COPY, false};
+    AllocationProperties properties{rootDeviceIndex, size, GraphicsAllocation::AllocationType::SVM_ZERO_COPY};
     MemoryPropertiesParser::fillCachePolicyInProperties(properties, false, svmProperties.readOnly, false);
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
     if (!allocation) {
@@ -216,7 +216,11 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(uint32_t rootDeviceIndex, si
 
 void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties) {
     size_t alignedSize = alignUp<size_t>(size, 2 * MemoryConstants::megaByte);
-    AllocationProperties cpuProperties{rootDeviceIndex, true, alignedSize, GraphicsAllocation::AllocationType::SVM_CPU, false};
+    AllocationProperties cpuProperties{rootDeviceIndex,
+                                       true, // allocateMemory
+                                       alignedSize, GraphicsAllocation::AllocationType::SVM_CPU,
+                                       false, // isMultiStorageAllocation
+                                       unifiedMemoryProperties.subdeviceBitfield};
     cpuProperties.alignment = 2 * MemoryConstants::megaByte;
     MemoryPropertiesParser::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly, false);
     GraphicsAllocation *allocationCpu = memoryManager->allocateGraphicsMemoryWithProperties(cpuProperties);

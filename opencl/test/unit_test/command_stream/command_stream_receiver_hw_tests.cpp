@@ -1269,7 +1269,7 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto memoryManager = csr.getMemoryManager();
 
-    AllocationProperties properties{csr.getRootDeviceIndex(), false, 1234, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false};
+    AllocationProperties properties{csr.getRootDeviceIndex(), false, 1234, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false, {}};
     GraphicsAllocation *mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, reinterpret_cast<void *>(0x12340000));
 
     auto mapAllocationOffset = 0x1234;
@@ -1373,7 +1373,7 @@ HWTEST_F(BcsTests, givenMapAllocationInBuiltinOpParamsWhenConstructingThenUseItA
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto memoryManager = csr.getMemoryManager();
 
-    AllocationProperties properties{csr.getRootDeviceIndex(), false, 1234, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false};
+    AllocationProperties properties{csr.getRootDeviceIndex(), false, 1234, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false, {}};
     GraphicsAllocation *mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, reinterpret_cast<void *>(0x12340000));
 
     auto mapAllocationOffset = 0x1234;

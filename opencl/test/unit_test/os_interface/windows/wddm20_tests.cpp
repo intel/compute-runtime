@@ -451,7 +451,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     EXPECT_EQ(0u, status);
 
     MemoryManagerCreate<WddmMemoryManager> mm(false, false, *executionEnvironment);
-    AllocationProperties properties(0, false, 4096u, GraphicsAllocation::AllocationType::SHARED_BUFFER, false);
+    AllocationProperties properties(0, false, 4096u, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
 
     auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, properties, false);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
@@ -488,7 +488,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     EXPECT_EQ(0u, status);
 
     MemoryManagerCreate<WddmMemoryManager> mm(false, false, *executionEnvironment);
-    AllocationProperties properties(0, false, 4096, GraphicsAllocation::AllocationType::SHARED_BUFFER, false);
+    AllocationProperties properties(0, false, 4096, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
 
     auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, properties, false);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;

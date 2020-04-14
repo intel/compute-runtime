@@ -41,7 +41,7 @@ class MockMM : public OsAgnosticMemoryManager {
     }
     GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
         auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), *allocationData.imgInfo, StorageInfo{});
-        AllocationProperties properties(allocationData.rootDeviceIndex, nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
+        AllocationProperties properties(allocationData.rootDeviceIndex, nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false, {});
         auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, properties, false);
         alloc->setDefaultGmm(forceGmm);
         gmmOwnershipPassed = true;

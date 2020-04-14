@@ -73,7 +73,7 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
     imgInfo.useLocalMemory = false;
     imgInfo.preferRenderCompression = false;
 
-    NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::GraphicsAllocation::AllocationType::IMAGE);
+    NEO::AllocationProperties properties(device->getRootDeviceIndex(), true, imgInfo, NEO::GraphicsAllocation::AllocationType::IMAGE, device->getNEODevice()->getDeviceBitfield());
     allocation = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     UNRECOVERABLE_IF(allocation == nullptr);
 

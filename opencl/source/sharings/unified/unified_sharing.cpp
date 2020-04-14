@@ -10,6 +10,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/sharings/sharing_factory.h"
 
@@ -35,11 +36,16 @@ GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, U
     auto memoryManager = context->getMemoryManager();
     switch (description.type) {
     case UnifiedSharingHandleType::Win32Nt: {
-        return memoryManager->createGraphicsAllocationFromNTHandle(description.handle, 0u);
+        return memoryManager->createGraphicsAllocationFromNTHandle(description.handle, context->getDevice(0)->getRootDeviceIndex());
     }
     case UnifiedSharingHandleType::LinuxFd:
     case UnifiedSharingHandleType::Win32Shared: {
-        const AllocationProperties properties{0u, false, 0u, allocationType, false};
+        const AllocationProperties properties{context->getDevice(0)->getRootDeviceIndex(),
+                                              false, // allocateMemory
+                                              0u,    // size
+                                              allocationType,
+                                              false, // isMultiStorageAllocation
+                                              context->getDevice(0)->getDeviceBitfield()};
         return memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(description.handle), properties, false);
     }
     default:

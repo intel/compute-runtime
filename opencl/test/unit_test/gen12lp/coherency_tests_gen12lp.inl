@@ -45,7 +45,7 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         csr = new myCsr(*device->executionEnvironment);
         device->resetCommandStreamReceiver(csr);
-        AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false);
+        AllocationProperties properties(device->getRootDeviceIndex(), false, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
 
         alloc = device->getMemoryManager()->createGraphicsAllocationFromSharedHandle((osHandle)123, properties, false);
     }

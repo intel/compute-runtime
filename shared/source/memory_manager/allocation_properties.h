@@ -38,12 +38,13 @@ struct AllocationProperties {
 
     AllocationProperties(uint32_t rootDeviceIndex, size_t size,
                          GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(rootDeviceIndex, true, size, allocationType, false) {}
+        : AllocationProperties(rootDeviceIndex, true, size, allocationType, false, {}) {}
 
     AllocationProperties(uint32_t rootDeviceIndex, bool allocateMemory,
                          ImageInfo &imgInfo,
-                         GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(rootDeviceIndex, allocateMemory, 0u, allocationType, false) {
+                         GraphicsAllocation::AllocationType allocationType,
+                         DeviceBitfield subDevicesBitfieldParam)
+        : AllocationProperties(rootDeviceIndex, allocateMemory, 0u, allocationType, false, subDevicesBitfieldParam) {
         this->imgInfo = &imgInfo;
     }
 
@@ -51,8 +52,9 @@ struct AllocationProperties {
                          bool allocateMemory,
                          size_t size,
                          GraphicsAllocation::AllocationType allocationType,
-                         bool isMultiStorageAllocation)
-        : AllocationProperties(rootDeviceIndex, allocateMemory, size, allocationType, false, isMultiStorageAllocation, {}) {}
+                         bool isMultiStorageAllocation,
+                         DeviceBitfield subDevicesBitfieldParam)
+        : AllocationProperties(rootDeviceIndex, allocateMemory, size, allocationType, false, isMultiStorageAllocation, subDevicesBitfieldParam) {}
 
     AllocationProperties(uint32_t rootDeviceIndexParam,
                          bool allocateMemoryParam,

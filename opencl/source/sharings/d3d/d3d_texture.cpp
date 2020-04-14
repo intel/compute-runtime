@@ -72,7 +72,12 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         alloc = memoryManager->createGraphicsAllocationFromNTHandle(sharedHandle, rootDeviceIndex);
     } else {
         sharingFcns->getSharedHandle(textureStaging, &sharedHandle);
-        AllocationProperties allocProperties(rootDeviceIndex, nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
+        AllocationProperties allocProperties(rootDeviceIndex,
+                                             false, // allocateMemory
+                                             0u,    // size
+                                             GraphicsAllocation::AllocationType::SHARED_IMAGE,
+                                             false, // isMultiStorageAllocation
+                                             context->getDevice(0)->getDeviceBitfield());
         alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false);
     }
     DEBUG_BREAK_IF(!alloc);
@@ -137,7 +142,12 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
         alloc = memoryManager->createGraphicsAllocationFromNTHandle(sharedHandle, rootDeviceIndex);
     } else {
         sharingFcns->getSharedHandle(textureStaging, &sharedHandle);
-        AllocationProperties allocProperties(rootDeviceIndex, nullptr, false, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
+        AllocationProperties allocProperties(rootDeviceIndex,
+                                             false, // allocateMemory
+                                             0u,    // size
+                                             GraphicsAllocation::AllocationType::SHARED_IMAGE,
+                                             false, // isMultiStorageAllocation
+                                             context->getDevice(0)->getDeviceBitfield());
         alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false);
     }
     DEBUG_BREAK_IF(!alloc);

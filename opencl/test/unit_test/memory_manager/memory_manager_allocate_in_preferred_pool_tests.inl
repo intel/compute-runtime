@@ -26,7 +26,7 @@ class MemoryManagerGetAlloctionDataTest : public testing::TestWithParam<Graphics
 
 TEST(MemoryManagerGetAlloctionDataTest, givenHostMemoryAllocationTypeAndAllocateMemoryFlagAndNullptrWhenAllocationDataIsQueriedThenCorrectFlagsAndSizeAreSet) {
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false);
+    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, {});
     MockMemoryManager mockMemoryManager;
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
 
@@ -37,7 +37,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenHostMemoryAllocationTypeAndAllocate
 
 TEST(MemoryManagerGetAlloctionDataTest, givenNonHostMemoryAllocatoinTypeWhenAllocationDataIsQueriedThenUseSystemMemoryFlagsIsNotSet) {
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false);
+    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false, {});
 
     MockMemoryManager mockMemoryManager;
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -49,7 +49,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenNonHostMemoryAllocatoinTypeWhenAllo
 
 TEST(MemoryManagerGetAlloctionDataTest, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::COMMAND_BUFFER, false);
+    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::COMMAND_BUFFER, false, {});
 
     MockMemoryManager mockMemoryManager;
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -59,7 +59,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenCommandBufferAllocationTypeWhenGetA
 
 TEST(MemoryManagerGetAlloctionDataTest, givenCommandBufferAllocationTypeAndMultiOsStorageRequirementWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::COMMAND_BUFFER, true);
+    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::COMMAND_BUFFER, true, {});
     properties.flags.multiOsContextCapable = true;
 
     MockMemoryManager mockMemoryManager;
@@ -71,7 +71,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenCommandBufferAllocationTypeAndMulti
 TEST(MemoryManagerGetAlloctionDataTest, givenAllocateMemoryFlagTrueWhenHostPtrIsNotNullThenAllocationDataHasHostPtrNulled) {
     AllocationData allocData;
     char memory = 0;
-    AllocationProperties properties(0, true, sizeof(memory), GraphicsAllocation::AllocationType::BUFFER, false);
+    AllocationProperties properties(0, true, sizeof(memory), GraphicsAllocation::AllocationType::BUFFER, false, {});
 
     MockMemoryManager mockMemoryManager;
     MockMemoryManager::getAllocationData(allocData, properties, &memory, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -82,7 +82,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenAllocateMemoryFlagTrueWhenHostPtrIs
 
 TEST(MemoryManagerGetAlloctionDataTest, givenBufferTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false);
+    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false, {});
 
     MockMemoryManager mockMemoryManager;
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -92,7 +92,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenBufferTypeWhenAllocationDataIsQueri
 
 TEST(MemoryManagerGetAlloctionDataTest, givenBufferHostMemoryTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false);
+    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, {});
 
     MockMemoryManager mockMemoryManager;
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -102,7 +102,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenBufferHostMemoryTypeWhenAllocationD
 
 TEST(MemoryManagerGetAlloctionDataTest, givenBufferCompressedTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, false);
+    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, false, {});
 
     MockMemoryManager mockMemoryManager;
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -112,7 +112,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenBufferCompressedTypeWhenAllocationD
 
 TEST(MemoryManagerGetAlloctionDataTest, givenWriteCombinedTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::WRITE_COMBINED, false);
+    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::WRITE_COMBINED, false, {});
 
     MockMemoryManager mockMemoryManager;
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -122,7 +122,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenWriteCombinedTypeWhenAllocationData
 
 TEST(MemoryManagerGetAlloctionDataTest, givenDefaultAllocationFlagsWhenAllocationDataIsQueriedThenAllocateMemoryIsFalse) {
     AllocationData allocData;
-    AllocationProperties properties(0, false, 0, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, false);
+    AllocationProperties properties(0, false, 0, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, false, {});
     char memory;
     MockMemoryManager mockMemoryManager;
     MockMemoryManager::getAllocationData(allocData, properties, &memory, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -138,7 +138,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenDebugModeWhenCertainAllocationTypes
     DebugManager.flags.ForceSystemMemoryPlacement.set(mask);
 
     AllocationData allocData;
-    AllocationProperties properties(0, true, 0, allocationType, false);
+    AllocationProperties properties(0, 0, allocationType);
     MockMemoryManager mockMemoryManager;
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
 
@@ -148,7 +148,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenDebugModeWhenCertainAllocationTypes
     mask |= 1llu << (static_cast<int64_t>(allocationType) - 1);
     DebugManager.flags.ForceSystemMemoryPlacement.set(mask);
 
-    AllocationProperties properties2(0, true, 0, allocationType, false);
+    AllocationProperties properties2(0, 0, allocationType);
     MockMemoryManager::getAllocationData(allocData, properties2, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties2));
 
     EXPECT_TRUE(allocData.flags.useSystemMemory);
@@ -168,7 +168,7 @@ typedef MemoryManagerGetAlloctionDataTest MemoryManagerGetAlloctionData32BitAnd6
 TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, givenAllocationTypesWith32BitAnd64kbPagesAllowedWhenAllocationDataIsQueriedThenProperFlagsAreSet) {
     AllocationData allocData;
     auto allocType = GetParam();
-    AllocationProperties properties(0, true, 0, allocType, false);
+    AllocationProperties properties(0, 0, allocType);
 
     MockMemoryManager mockMemoryManager;
     mockMemoryManager.mockExecutionEnvironment->initGmm();
@@ -182,7 +182,7 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, givenAllocatio
 TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, given64kbAllowedAllocationTypeWhenAllocatingThenPreferRenderCompressionOnlyForSpecificTypes) {
     auto allocType = GetParam();
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, allocType, false);
+    AllocationProperties properties(0, 10, allocType);
 
     MockMemoryManager mockMemoryManager(true, false);
     mockMemoryManager.mockExecutionEnvironment->initGmm();
@@ -202,7 +202,7 @@ typedef MemoryManagerGetAlloctionDataTest MemoryManagerGetAlloctionData32BitAnd6
 TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesNotAllowedTest, givenAllocationTypesWith32BitAnd64kbPagesDisallowedWhenAllocationDataIsQueriedThenFlagsAreNotSet) {
     AllocationData allocData;
     auto allocType = GetParam();
-    AllocationProperties properties(0, true, 0, allocType, false);
+    AllocationProperties properties(0, 0, allocType);
 
     MockMemoryManager mockMemoryManager;
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
@@ -244,7 +244,7 @@ TEST(MemoryManagerTest, givenForced32BitSetWhenGraphicsMemoryFor32BitAllowedType
     memoryManager.setForce32BitAllocations(true);
 
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false);
+    AllocationProperties properties(0, 10, GraphicsAllocation::AllocationType::BUFFER);
 
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
 
@@ -267,7 +267,7 @@ TEST(MemoryManagerTest, givenEnabledShareableWhenGraphicsAllocationIsAllocatedTh
     MockMemoryManager memoryManager(false, false, executionEnvironment);
 
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false);
+    AllocationProperties properties(0, 10, GraphicsAllocation::AllocationType::BUFFER);
     properties.flags.shareable = true;
 
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
@@ -285,7 +285,7 @@ TEST(MemoryManagerTest, givenEnabledShareableWhenGraphicsAllocationIsCalledAndSy
     MockMemoryManager memoryManager(false, false, executionEnvironment);
 
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false);
+    AllocationProperties properties(0, 10, GraphicsAllocation::AllocationType::BUFFER);
     properties.flags.shareable = true;
 
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
@@ -304,7 +304,7 @@ TEST(MemoryManagerTest, givenForced32BitEnabledWhenGraphicsMemoryWihtoutAllow32B
     memoryManager.setForce32BitAllocations(true);
 
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false);
+    AllocationProperties properties(0, 10, GraphicsAllocation::AllocationType::BUFFER);
 
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
     allocData.flags.allow32Bit = false;
@@ -322,7 +322,7 @@ TEST(MemoryManagerTest, givenForced32BitDisabledWhenGraphicsMemoryWith32BitFlagF
     memoryManager.setForce32BitAllocations(false);
 
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false);
+    AllocationProperties properties(0, 10, GraphicsAllocation::AllocationType::BUFFER);
 
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
 
@@ -338,7 +338,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryA
     executionEnvironment.initGmm();
     MockMemoryManager memoryManager(true, false, executionEnvironment);
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false);
+    AllocationProperties properties(0, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
 
@@ -356,7 +356,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryWithoutAllow64kbP
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(true, false, executionEnvironment);
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false);
+    AllocationProperties properties(0, 10, GraphicsAllocation::AllocationType::BUFFER);
 
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
     allocData.flags.allow64kbPages = false;
@@ -373,7 +373,7 @@ TEST(MemoryManagerTest, givenDisabled64kbPagesWhenGraphicsMemoryMustBeHostMemory
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(false, false, executionEnvironment);
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false);
+    AllocationProperties properties(0, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
 
@@ -392,7 +392,7 @@ TEST(MemoryManagerTest, givenForced32BitAndEnabled64kbPagesWhenGraphicsMemoryMus
     memoryManager.setForce32BitAllocations(true);
 
     AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false);
+    AllocationProperties properties(0, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, memoryManager.createStorageInfoFromProperties(properties));
 
@@ -411,7 +411,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithHo
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MockMemoryManager memoryManager(true, false, executionEnvironment);
     AllocationData allocData;
-    AllocationProperties properties(0, false, 1, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false);
+    AllocationProperties properties(0, false, 1, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, {});
 
     char memory[1];
     MockMemoryManager::getAllocationData(allocData, properties, &memory, memoryManager.createStorageInfoFromProperties(properties));
@@ -669,7 +669,7 @@ TEST(MemoryManagerTest, givenExternalHostMemoryWhenGetAllocationDataIsCalledThen
     AllocationData allocData;
     auto hostPtr = reinterpret_cast<void *>(0x1234);
     MockMemoryManager mockMemoryManager;
-    AllocationProperties properties{0, false, 1, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false};
+    AllocationProperties properties{0, false, 1, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false, {}};
     MockMemoryManager::getAllocationData(allocData, properties, hostPtr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_TRUE(allocData.flags.useSystemMemory);
     EXPECT_FALSE(allocData.flags.allocateMemory);
@@ -694,7 +694,7 @@ TEST(MemoryManagerTest, givenMapAllocationWhenGetAllocationDataIsCalledThenItHas
     AllocationData allocData;
     auto hostPtr = reinterpret_cast<void *>(0x1234);
     MockMemoryManager mockMemoryManager;
-    AllocationProperties properties{0, false, 1, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false};
+    AllocationProperties properties{0, false, 1, GraphicsAllocation::AllocationType::MAP_ALLOCATION, false, {}};
     MockMemoryManager::getAllocationData(allocData, properties, hostPtr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_TRUE(allocData.flags.useSystemMemory);
     EXPECT_FALSE(allocData.flags.allocateMemory);
@@ -706,7 +706,7 @@ TEST(MemoryManagerTest, givenMapAllocationWhenGetAllocationDataIsCalledThenItHas
 TEST(MemoryManagerTest, givenRingBufferAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
-    AllocationProperties properties{0, true, 0x10000u, GraphicsAllocation::AllocationType::RING_BUFFER, false};
+    AllocationProperties properties{0, 0x10000u, GraphicsAllocation::AllocationType::RING_BUFFER};
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_FALSE(allocData.flags.useSystemMemory);
     EXPECT_TRUE(allocData.flags.allocateMemory);
@@ -720,7 +720,7 @@ TEST(MemoryManagerTest, givenRingBufferAllocationWhenGetAllocationDataIsCalledTh
 TEST(MemoryManagerTest, givenSemaphoreBufferAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
-    AllocationProperties properties{0, true, 0x1000u, GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER, false};
+    AllocationProperties properties{0, 0x1000u, GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER};
     MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_FALSE(allocData.flags.useSystemMemory);
     EXPECT_TRUE(allocData.flags.allocateMemory);
@@ -873,7 +873,7 @@ TEST_P(MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest, givenAllocationTy
 
     std::tie(allocationType, propertiesFlag48Bit) = GetParam();
 
-    AllocationProperties properties(0, true, 0, allocationType, false);
+    AllocationProperties properties(0, 0, allocationType);
     properties.flags.resource48Bit = propertiesFlag48Bit;
 
     AllocationData allocationData;
@@ -890,7 +890,7 @@ TEST_P(MemoryManagerGetAlloctionDataHaveNotToBeForcedTo48BitTest, givenAllocatio
 
     std::tie(allocationType, propertiesFlag48Bit) = GetParam();
 
-    AllocationProperties properties(0, true, 0, allocationType, false);
+    AllocationProperties properties(0, 0, allocationType);
     properties.flags.resource48Bit = propertiesFlag48Bit;
 
     AllocationData allocationData;

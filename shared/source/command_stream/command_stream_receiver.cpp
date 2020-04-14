@@ -407,7 +407,7 @@ bool CommandStreamReceiver::createGlobalFenceAllocation() {
 
 bool CommandStreamReceiver::createPreemptionAllocation() {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    AllocationProperties properties{rootDeviceIndex, true, hwInfo->capabilityTable.requiredPreemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION, false};
+    AllocationProperties properties{rootDeviceIndex, hwInfo->capabilityTable.requiredPreemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION};
     properties.flags.uncacheable = hwInfo->workaroundTable.waCSRUncachable;
     properties.alignment = 256 * MemoryConstants::kiloByte;
     this->preemptionAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
@@ -422,7 +422,11 @@ AllocationsList &CommandStreamReceiver::getAllocationsForReuse() { return intern
 
 bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) {
     auto memoryManager = getMemoryManager();
-    AllocationProperties properties{rootDeviceIndex, false, surface.getSurfaceSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false};
+    AllocationProperties properties{rootDeviceIndex,
+                                    false, // allocateMemory
+                                    surface.getSurfaceSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR,
+                                    false, // isMultiStorageAllocation
+                                    osContext->getDeviceBitfield()};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = requiresL3Flush;
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, surface.getMemoryPointer());
     if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {

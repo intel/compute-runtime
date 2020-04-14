@@ -175,5 +175,8 @@ void ClDeviceVector::toDeviceIDs(std::vector<cl_device_id> &devIDs) {
 const std::string &ClDevice::peekCompilerExtensions() const {
     return compilerExtensions;
 }
+DeviceBitfield ClDevice::getDeviceBitfield() const {
+    return device.getDeviceBitfield();
+}
 
 } // namespace NEO

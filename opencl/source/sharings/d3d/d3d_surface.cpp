@@ -81,7 +81,12 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
     GraphicsAllocation *alloc = nullptr;
     if (surfaceInfo->shared_handle) {
         isSharedResource = true;
-        AllocationProperties allocProperties(rootDeviceIndex, false, 0u, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
+        AllocationProperties allocProperties(rootDeviceIndex,
+                                             false, // allocateMemory
+                                             0u,    // size
+                                             GraphicsAllocation::AllocationType::SHARED_IMAGE,
+                                             false, // isMultiStorageAllocation
+                                             context->getDevice(0)->getDeviceBitfield());
         alloc = context->getMemoryManager()->createGraphicsAllocationFromSharedHandle(toOsHandle(surfaceInfo->shared_handle), allocProperties,
                                                                                       false);
         updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, imagePlane, 0u);
@@ -95,7 +100,10 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
             imgInfo.imgDesc.imageHeight /= 2;
         }
         MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0);
-        AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo, true, memoryProperties, context->getDevice(0)->getHardwareInfo());
+        AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
+                                                                                                  true, // allocateMemory
+                                                                                                  memoryProperties, context->getDevice(0)->getHardwareInfo(),
+                                                                                                  context->getDevice(0)->getDeviceBitfield());
         allocProperties.allocationType = GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY;
 
         alloc = context->getMemoryManager()->allocateGraphicsMemoryInPreferredPool(allocProperties, nullptr);

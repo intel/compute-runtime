@@ -692,7 +692,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
     }
 
     allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-        {getRootDeviceIndex(), false, size, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false},
+        {getRootDeviceIndex(), false, size, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, neoDevice->getDeviceBitfield()},
         buffer);
 
     if (allocation == nullptr) {
@@ -711,7 +711,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
 }
 
 NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer, size_t size) {
-    NEO::AllocationProperties properties = {getRootDeviceIndex(), false, size, NEO::GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false};
+    NEO::AllocationProperties properties = {getRootDeviceIndex(), false, size, NEO::GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false, neoDevice->getDeviceBitfield()};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
     auto allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties,
                                                                                           buffer);

@@ -50,10 +50,10 @@ TEST(MemoryManagerTest, givenAllowed32BitAndFroce32BitWhenGraphicsAllocationInDe
 
 TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledThenAllocateFlagIsCorrectlySet) {
     HardwareInfo hwInfo(*defaultHwInfo);
-    auto allocationProperties = MemoryPropertiesParser::getAllocationProperties(0, {}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo);
+    auto allocationProperties = MemoryPropertiesParser::getAllocationProperties(0, {}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_TRUE(allocationProperties.flags.allocateMemory);
 
-    auto allocationProperties2 = MemoryPropertiesParser::getAllocationProperties(0, {}, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo);
+    auto allocationProperties2 = MemoryPropertiesParser::getAllocationProperties(0, {}, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_FALSE(allocationProperties2.flags.allocateMemory);
 }
 
@@ -61,12 +61,12 @@ TEST(UncacheableFlagsTest, givenUncachedResourceFlagWhenGetAllocationFlagsIsCall
     cl_mem_flags_intel flagsIntel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
     HardwareInfo hwInfo(*defaultHwInfo);
     MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, flagsIntel, 0);
-    auto allocationFlags = MemoryPropertiesParser::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo);
+    auto allocationFlags = MemoryPropertiesParser::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_TRUE(allocationFlags.flags.uncacheable);
 
     flagsIntel = 0;
     memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(0, flagsIntel, 0);
-    auto allocationFlags2 = MemoryPropertiesParser::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo);
+    auto allocationFlags2 = MemoryPropertiesParser::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_FALSE(allocationFlags2.flags.uncacheable);
 }
 
@@ -76,11 +76,11 @@ TEST(AllocationFlagsTest, givenReadOnlyResourceFlagWhenGetAllocationFlagsIsCalle
     HardwareInfo hwInfo(*defaultHwInfo);
 
     auto allocationFlags =
-        MemoryPropertiesParser::getAllocationProperties(0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo);
+        MemoryPropertiesParser::getAllocationProperties(0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForRead);
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForWrite);
 
-    auto allocationFlags2 = MemoryPropertiesParser::getAllocationProperties(0, {}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo);
+    auto allocationFlags2 = MemoryPropertiesParser::getAllocationProperties(0, {}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_TRUE(allocationFlags2.flags.flushL3RequiredForRead);
     EXPECT_TRUE(allocationFlags2.flags.flushL3RequiredForWrite);
 }

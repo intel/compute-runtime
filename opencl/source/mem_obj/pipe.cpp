@@ -59,7 +59,11 @@ Pipe *Pipe::create(Context *context,
         auto size = static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace);
         auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
         AllocationProperties allocProperties =
-            MemoryPropertiesParser::getAllocationProperties(rootDeviceIndex, memoryPropertiesFlags, true, size, GraphicsAllocation::AllocationType::PIPE, false, context->getDevice(0)->getHardwareInfo());
+            MemoryPropertiesParser::getAllocationProperties(rootDeviceIndex, memoryPropertiesFlags,
+                                                            true, // allocateMemory
+                                                            size, GraphicsAllocation::AllocationType::PIPE,
+                                                            false, // isMultiStorageAllocation
+                                                            context->getDevice(0)->getHardwareInfo(), context->getDevice(0)->getDeviceBitfield());
         GraphicsAllocation *memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
         if (!memory) {
             errcodeRet = CL_OUT_OF_HOST_MEMORY;

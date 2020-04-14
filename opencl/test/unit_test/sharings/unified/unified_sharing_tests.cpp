@@ -223,7 +223,7 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenWindowsSharedHandleWhenCreateGr
     EXPECT_FALSE(memoryManager->createFromNTHandleCalled);
     EXPECT_TRUE(memoryManager->createFromSharedHandleCalled);
     EXPECT_EQ(toOsHandle(desc.handle), memoryManager->handle);
-    const AllocationProperties expectedProperties{0u, false, 0u, allocationType, false};
+    const AllocationProperties expectedProperties{0u, false, 0u, allocationType, false, {}};
     EXPECT_EQ(expectedProperties.allFlags, memoryManager->properties->allFlags);
 }
 
@@ -237,6 +237,6 @@ TEST_F(UnifiedSharingCreateAllocationTests, givenLinuxSharedHandleWhenCreateGrap
     EXPECT_FALSE(memoryManager->createFromNTHandleCalled);
     EXPECT_TRUE(memoryManager->createFromSharedHandleCalled);
     EXPECT_EQ(toOsHandle(desc.handle), memoryManager->handle);
-    const AllocationProperties expectedProperties{0u, false, 0u, allocationType, false};
+    const AllocationProperties expectedProperties{0u, false, 0u, allocationType, false, {}};
     EXPECT_EQ(expectedProperties.allFlags, memoryManager->properties->allFlags);
 }

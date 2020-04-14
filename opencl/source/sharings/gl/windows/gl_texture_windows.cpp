@@ -50,7 +50,12 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     errorCode.set(CL_SUCCESS);
 
-    AllocationProperties allocProperties(context->getDevice(0)->getRootDeviceIndex(), false, 0u, GraphicsAllocation::AllocationType::SHARED_IMAGE, false);
+    AllocationProperties allocProperties(context->getDevice(0)->getRootDeviceIndex(),
+                                         false, // allocateMemory
+                                         0u,    // size
+                                         GraphicsAllocation::AllocationType::SHARED_IMAGE,
+                                         false, // isMultiStorageAllocation
+                                         context->getDevice(0)->getDeviceBitfield());
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandle, allocProperties, false);
 
     if (alloc == nullptr) {

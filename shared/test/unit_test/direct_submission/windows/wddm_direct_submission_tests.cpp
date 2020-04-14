@@ -129,9 +129,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenExpectRin
     MemoryManager *memoryManager = device->getExecutionEnvironment()->memoryManager.get();
     const auto allocationSize = MemoryConstants::pageSize;
     const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(),
-                                                                 true, allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER,
-                                                                 false};
+                                                                 allocationSize,
+                                                                 GraphicsAllocation::AllocationType::RING_BUFFER};
     GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     ASSERT_NE(nullptr, ringBuffer);
 
@@ -154,10 +153,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenExpectRin
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesFenceCreationFailsThenExpectRingMonitorFenceNotCreatedAndAllocationsNotResident) {
     MemoryManager *memoryManager = device->getExecutionEnvironment()->memoryManager.get();
     const auto allocationSize = MemoryConstants::pageSize;
-    const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(),
-                                                                 true, allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER,
-                                                                 false};
+    const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(), allocationSize,
+                                                                 GraphicsAllocation::AllocationType::RING_BUFFER};
     GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     ASSERT_NE(nullptr, ringBuffer);
 
@@ -183,9 +180,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFail
     MemoryManager *memoryManager = device->getExecutionEnvironment()->memoryManager.get();
     const auto allocationSize = MemoryConstants::pageSize;
     const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(),
-                                                                 true, allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER,
-                                                                 false};
+                                                                 allocationSize,
+                                                                 GraphicsAllocation::AllocationType::RING_BUFFER};
     GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     ASSERT_NE(nullptr, ringBuffer);
 
@@ -413,9 +409,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenAllocatingResour
     MemoryManager *memoryManager = device->getExecutionEnvironment()->memoryManager.get();
     const auto allocationSize = MemoryConstants::pageSize;
     const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(),
-                                                                 true, allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER,
-                                                                 false};
+                                                                 allocationSize,
+                                                                 GraphicsAllocation::AllocationType::RING_BUFFER};
     GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     ASSERT_NE(nullptr, ringBuffer);
 

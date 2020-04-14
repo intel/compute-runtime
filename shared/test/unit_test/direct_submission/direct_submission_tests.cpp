@@ -47,10 +47,8 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
     void SetUp() {
         DirectSubmissionFixture::SetUp();
         MemoryManager *memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
-        const AllocationProperties commandBufferProperties{pDevice->getRootDeviceIndex(),
-                                                           true, 0x1000,
-                                                           GraphicsAllocation::AllocationType::COMMAND_BUFFER,
-                                                           false};
+        const AllocationProperties commandBufferProperties{pDevice->getRootDeviceIndex(), 0x1000,
+                                                           GraphicsAllocation::AllocationType::COMMAND_BUFFER};
         commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
 
         batchBuffer.endCmdPtr = &bbStart[0];

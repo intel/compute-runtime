@@ -63,7 +63,10 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     auto imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
 
     sharingFunctions->extGetSurfaceHandle(surface, &sharedHandle);
-    AllocationProperties properties(context->getDevice(0)->getRootDeviceIndex(), false, imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE);
+    AllocationProperties properties(context->getDevice(0)->getRootDeviceIndex(),
+                                    false, // allocateMemory
+                                    imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE,
+                                    context->getDevice(0)->getDeviceBitfield());
 
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false);
 
