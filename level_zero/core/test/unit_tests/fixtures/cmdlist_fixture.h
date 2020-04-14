@@ -24,7 +24,7 @@ class CommandListFixture : public DeviceFixture {
         ze_event_pool_desc_t eventPoolDesc = {
             ZE_EVENT_POOL_DESC_VERSION_CURRENT,
             ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-            1};
+            2};
 
         ze_event_desc_t eventDesc = {
             ZE_EVENT_DESC_VERSION_CURRENT,

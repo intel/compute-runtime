@@ -62,6 +62,16 @@ TEST(zeCommandListAppendMemoryFill, whenCalledThenRedirectedToObject) {
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST(zeCommandListAppendWaitOnEvent, whenCalledThenRedirectedToObject) {
+    Mock<CommandList> commandList;
+    ze_event_handle_t event = reinterpret_cast<ze_event_handle_t>(0x2000);
+
+    EXPECT_CALL(commandList, appendWaitOnEvents(1, &event)).Times(1);
+
+    auto result = zeCommandListAppendWaitOnEvents(commandList.toHandle(), 1, &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 TEST(zeCommandListAppendLaunchKernel, whenCalledThenRedirectedToObject) {
     Mock<CommandList> commandList;
     Mock<::L0::Kernel> kernel;
@@ -76,7 +86,6 @@ TEST(zeCommandListAppendLaunchKernel, whenCalledThenRedirectedToObject) {
                                         &dispatchFunctionArguments, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
-
 TEST(zeCommandListAppendEventReset, whenCalledThenRedirectedToObject) {
     Mock<CommandList> commandList;
     ze_event_handle_t event = reinterpret_cast<ze_event_handle_t>(0x2000);
