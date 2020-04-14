@@ -336,7 +336,7 @@ function(generate_l0_lib LIB_NAME MOCKABLE)
         )
         target_compile_definitions(${LIB_NAME}
             PUBLIC MOCKABLE_VIRTUAL=virtual
-            PRIVATE
+            PUBLIC
                 ${COMPUTE_RUNTIME_DEFINITIONS}
         )
     else()
@@ -346,7 +346,7 @@ function(generate_l0_lib LIB_NAME MOCKABLE)
         )
         target_compile_definitions(${LIB_NAME}
             PUBLIC MOCKABLE_VIRTUAL=
-            PRIVATE
+            PUBLIC
                 ${COMPUTE_RUNTIME_DEFINITIONS}
         )
     endif()

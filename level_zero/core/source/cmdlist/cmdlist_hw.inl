@@ -232,7 +232,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
                                                                             ze_event_handle_t *phWaitEvents) {
 
     auto image = Image::fromHandle(hDstImage);
-    auto bytesPerPixel = image->getImageInfo().surfaceFormat->NumChannels * image->getImageInfo().surfaceFormat->PerChannelSizeInBytes;
+    auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
 
     ze_image_region_t tmpRegion;
 
@@ -329,7 +329,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
                                                                           ze_event_handle_t *phWaitEvents) {
 
     auto image = Image::fromHandle(hSrcImage);
-    auto bytesPerPixel = image->getImageInfo().surfaceFormat->NumChannels * image->getImageInfo().surfaceFormat->PerChannelSizeInBytes;
+    auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
     ze_image_region_t tmpRegion;
 
     if (pSrcRegion == nullptr) {

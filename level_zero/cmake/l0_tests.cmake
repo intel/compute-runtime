@@ -97,7 +97,6 @@ add_library(compute_runtime_mockable_extra
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_deferred_deleter.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks${BRANCH_SUFIX_DIR}/mock_gmm_client_context.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_gmm_client_context_base.cpp
-        ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_gmm_resource_info.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_memory_manager.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_program.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/mocks/mock_sip.cpp

@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/compiler_support.h"
 
+#include "level_zero/core/source/image/image_formats.h"
 #include "level_zero/core/source/image/image_hw.h"
 
 namespace L0 {
@@ -23,29 +24,12 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_desc_t *desc) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
-    if (static_cast<uint32_t>(desc->format.layout) > ZE_IMAGE_FORMAT_LAYOUT_MAX) {
-        return false;
-    }
-
-    if (static_cast<uint32_t>(desc->format.type) > ZE_IMAGE_FORMAT_TYPE_MAX) {
-        return false;
-    }
-
-    if (static_cast<uint32_t>(desc->format.x) > ZE_IMAGE_FORMAT_SWIZZLE_MAX ||
-        static_cast<uint32_t>(desc->format.y) > ZE_IMAGE_FORMAT_SWIZZLE_MAX ||
-        static_cast<uint32_t>(desc->format.z) > ZE_IMAGE_FORMAT_SWIZZLE_MAX ||
-        static_cast<uint32_t>(desc->format.w) > ZE_IMAGE_FORMAT_SWIZZLE_MAX) {
-        return false;
-    }
-
-    if (static_cast<uint32_t>(desc->format.type) > ZE_IMAGE_FORMAT_TYPE_MAX) {
-        return false;
-    }
+    bool isMediaFormatLayout = isMediaFormat(desc->format.layout);
 
     auto imageDescriptor = convertDescriptor(*desc);
     imgInfo.imgDesc = imageDescriptor;
-    imgInfo.surfaceFormat = &surfaceFormatTable[desc->format.layout][desc->format.type];
 
+    imgInfo.surfaceFormat = &ImageFormats::formats[desc->format.layout][desc->format.type];
     imageFormatDesc = *const_cast<ze_image_desc_t *>(desc);
 
     UNRECOVERABLE_IF(device == nullptr);
@@ -78,37 +62,39 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
     UNRECOVERABLE_IF(allocation == nullptr);
 
     auto gmm = this->allocation->getDefaultGmm();
-    NEO::SurfaceOffsets surfaceOffsets = {imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane};
     auto gmmHelper = static_cast<const NEO::RootDeviceEnvironment &>(device->getNEODevice()->getRootDeviceEnvironment()).getGmmHelper();
 
     if (gmm != nullptr) {
         gmm->updateImgInfoAndDesc(imgInfo, 0u);
     }
+    NEO::SurfaceOffsets surfaceOffsets = {imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane};
 
     {
         surfaceState = GfxFamily::cmdInitRenderSurfaceState;
 
         NEO::setImageSurfaceState<GfxFamily>(&surfaceState, imgInfo, gmm, *gmmHelper, __GMM_NO_CUBE_MAP,
                                              this->allocation->getGpuAddress(), surfaceOffsets,
-                                             desc->format.layout == ZE_IMAGE_FORMAT_LAYOUT_NV12);
+                                             isMediaFormatLayout);
 
         NEO::setImageSurfaceStateDimensions<GfxFamily>(&surfaceState, imgInfo, __GMM_NO_CUBE_MAP, surfaceType);
         surfaceState.setSurfaceMinLod(0u);
         surfaceState.setMipCountLod(0u);
         NEO::setMipTailStartLod<GfxFamily>(&surfaceState, gmm);
 
-        surfaceState.setShaderChannelSelectRed(
-            static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
-                shaderChannelSelect[desc->format.x]));
-        surfaceState.setShaderChannelSelectGreen(
-            static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
-                shaderChannelSelect[desc->format.y]));
-        surfaceState.setShaderChannelSelectBlue(
-            static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
-                shaderChannelSelect[desc->format.z]));
-        surfaceState.setShaderChannelSelectAlpha(
-            static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
-                shaderChannelSelect[desc->format.w]));
+        if (!isMediaFormatLayout) {
+            surfaceState.setShaderChannelSelectRed(
+                static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
+                    shaderChannelSelect[desc->format.x]));
+            surfaceState.setShaderChannelSelectGreen(
+                static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
+                    shaderChannelSelect[desc->format.y]));
+            surfaceState.setShaderChannelSelectBlue(
+                static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
+                    shaderChannelSelect[desc->format.z]));
+            surfaceState.setShaderChannelSelectAlpha(
+                static_cast<const typename RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT>(
+                    shaderChannelSelect[desc->format.w]));
+        }
 
         surfaceState.setNumberOfMultisamples(RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES::NUMBER_OF_MULTISAMPLES_MULTISAMPLECOUNT_1);
 
@@ -117,11 +103,11 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
         }
     }
     {
-        const uint32_t exponent = Math::log2(imgInfo.surfaceFormat->NumChannels * imgInfo.surfaceFormat->PerChannelSizeInBytes);
+        const uint32_t exponent = Math::log2(imgInfo.surfaceFormat->ImageElementSizeInBytes);
         DEBUG_BREAK_IF(exponent >= 5u);
 
         NEO::ImageInfo imgInfoRedescirebed;
-        imgInfoRedescirebed.surfaceFormat = &surfaceFormatsForRedescribe[exponent % 5];
+        imgInfoRedescirebed.surfaceFormat = &ImageFormats::surfaceFormatsForRedescribe[exponent % 5];
         imgInfoRedescirebed.imgDesc = imgInfo.imgDesc;
         imgInfoRedescirebed.qPitch = imgInfo.qPitch;
         redescribedSurfaceState = GfxFamily::cmdInitRenderSurfaceState;

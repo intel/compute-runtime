@@ -22,6 +22,7 @@ set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_driver_handle.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info_l0.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.cpp
@@ -37,7 +38,7 @@ target_include_directories(${TARGET_NAME} PRIVATE
     ${NEO_SOURCE_DIR}/level_zero/core/test/unit_test
 )
 
-target_compile_definitions(${TARGET_NAME} PRIVATE $<TARGET_PROPERTY:${L0_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
+target_compile_definitions(${TARGET_NAME} PUBLIC $<TARGET_PROPERTY:${L0_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER ${TARGET_NAME_L0})
 
 create_source_tree(${TARGET_NAME} ${L0_ROOT_DIR})

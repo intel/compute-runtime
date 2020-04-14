@@ -131,9 +131,6 @@ ze_result_t DeviceImp::createEventPool(const ze_event_pool_desc_t *desc,
 }
 
 ze_result_t DeviceImp::createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) {
-    if (desc->format.layout >= ze_image_format_layout_t::ZE_IMAGE_FORMAT_LAYOUT_Y8) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     *phImage = Image::create(productFamily, this, desc);
 

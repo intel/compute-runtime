@@ -216,6 +216,7 @@ void Gmm::updateOffsetsInImgInfo(ImageInfo &imgInfo, uint32_t arrayIndex) {
     reqOffsetInfo.ArrayIndex = arrayIndex;
     reqOffsetInfo.Plane = imgInfo.plane;
     gmmResourceInfo->getOffset(reqOffsetInfo);
+    UNRECOVERABLE_IF(gmmResourceInfo->getBitsPerPixel() == 0u);
     imgInfo.xOffset = reqOffsetInfo.Render.XOffset / (gmmResourceInfo->getBitsPerPixel() / 8);
     imgInfo.yOffset = reqOffsetInfo.Render.YOffset;
     imgInfo.offset = reqOffsetInfo.Render.Offset;

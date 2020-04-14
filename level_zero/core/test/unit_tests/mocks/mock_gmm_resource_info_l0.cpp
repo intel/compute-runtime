@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2017-2020 Intel Corporation
+ * Copyright (C) 2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
-
 #include "shared/source/helpers/aligned_memory.h"
 
-#include "opencl/source/helpers/surface_formats.h"
+#include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
+
+#include "level_zero/core/source/image/image_formats.h"
 
 using namespace ::testing;
 
@@ -81,36 +81,25 @@ void MockGmmResourceInfo::computeRowPitch() {
 }
 
 void MockGmmResourceInfo::setSurfaceFormat() {
-    auto iterate = [&](ArrayRef<const ClSurfaceFormatInfo> formats) {
+    auto iterateL0Formats = [&](const std::array<L0::ImageFormats::FormatTypes, 30> &formats) {
         if (!surfaceFormatInfo) {
-            for (auto &format : formats) {
-                if (mockResourceCreateParams.Format == format.surfaceFormat.GMMSurfaceFormat) {
-                    surfaceFormatInfo = &format.surfaceFormat;
-                    break;
+            for (auto &formatArray : formats) {
+                for (auto &format : formatArray) {
+                    if (mockResourceCreateParams.Format == format.GMMSurfaceFormat) {
+                        surfaceFormatInfo = &format;
+                        return;
+                    }
                 }
             }
         }
     };
 
-    if (mockResourceCreateParams.Format == GMM_RESOURCE_FORMAT::GMM_FORMAT_P010) {
-        tempSurface.GMMSurfaceFormat = GMM_RESOURCE_FORMAT::GMM_FORMAT_P010;
-        tempSurface.NumChannels = 1;
-        tempSurface.ImageElementSizeInBytes = 16;
-        tempSurface.PerChannelSizeInBytes = 16;
+    iterateL0Formats(L0::ImageFormats::formats);
 
-        surfaceFormatInfo = &tempSurface;
+    if (mockResourceCreateParams.Format == GMM_FORMAT_GENERIC_8BIT) {
+        static const NEO::SurfaceFormatInfo surfaceFormatGMM8BIT = {GMM_FORMAT_GENERIC_8BIT, GFX3DSTATE_SURFACEFORMAT_R8_UNORM, 0, 1, 1, 1};
+        surfaceFormatInfo = &surfaceFormatGMM8BIT;
     }
-
-    iterate(SurfaceFormats::readOnly12());
-    iterate(SurfaceFormats::readOnly20());
-    iterate(SurfaceFormats::writeOnly());
-    iterate(SurfaceFormats::readWrite());
-
-    iterate(SurfaceFormats::packedYuv());
-    iterate(SurfaceFormats::planarYuv());
-
-    iterate(SurfaceFormats::readOnlyDepth());
-    iterate(SurfaceFormats::readWriteDepth());
 
     ASSERT_NE(nullptr, surfaceFormatInfo);
 }
