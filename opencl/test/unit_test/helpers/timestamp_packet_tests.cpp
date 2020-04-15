@@ -126,6 +126,36 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWhenSemaphoreAndAtomicAreProgrammedTh
     verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*it++), &mockNode);
 }
 
+HWTEST_F(TimestampPacketTests, givenDebugModeWhereAtomicsAreNotEmittedWhenCommandIsParsedThereIsNoAtomicOperation) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DisableAtomicForPostSyncs.set(true);
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
+
+    struct MockTagNode : public TagNode<TimestampPacketStorage> {
+        using TagNode<TimestampPacketStorage>::gpuAddress;
+    };
+
+    TimestampPacketStorage tag;
+    MockTagNode mockNode;
+    mockNode.tagForCpuAccess = &tag;
+    mockNode.gpuAddress = 0x1230000;
+    auto &cmdStream = mockCmdQ->getCS(0);
+
+    TimestampPacketHelper::programSemaphoreWithImplicitDependency<FamilyType>(cmdStream, mockNode);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+    auto it = hwParser.cmdList.begin();
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), &mockNode, 0);
+    EXPECT_EQ(it, hwParser.cmdList.end());
+    EXPECT_EQ(0u, tag.implicitDependenciesCount);
+    tag.packets[0].contextEnd = 0u;
+    tag.packets[0].globalEnd = 0u;
+
+    EXPECT_FALSE(tag.isCompleted());
+}
+
 HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreAndAtomicAreProgrammedThenUseGpuAddress) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;

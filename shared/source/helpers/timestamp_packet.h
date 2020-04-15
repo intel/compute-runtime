@@ -45,6 +45,10 @@ struct TimestampPacketStorage {
     }
 
     bool isCompleted() const {
+        if (DebugManager.flags.DisableAtomicForPostSyncs.get()) {
+            return false;
+        }
+
         for (uint32_t i = 0; i < packetsUsed; i++) {
             if ((packets[i].contextEnd & 1) || (packets[i].globalEnd & 1)) {
                 return false;
@@ -119,12 +123,18 @@ struct TimestampPacketHelper {
             EncodeSempahore<GfxFamily>::programMiSemaphoreWait(miSemaphoreCmd, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         }
 
-        timestampPacketNode.tagForCpuAccess->incImplicitDependenciesCount();
+        bool trackPostSyncDependencies = true;
+        if (DebugManager.flags.DisableAtomicForPostSyncs.get()) {
+            trackPostSyncDependencies = false;
+        }
 
-        auto miAtomic = cmdStream.getSpaceForCmd<MI_ATOMIC>();
-        EncodeAtomic<GfxFamily>::programMiAtomic(miAtomic, dependenciesCountAddress,
-                                                 MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
-                                                 MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
+        if (trackPostSyncDependencies) {
+            timestampPacketNode.tagForCpuAccess->incImplicitDependenciesCount();
+            auto miAtomic = cmdStream.getSpaceForCmd<MI_ATOMIC>();
+            EncodeAtomic<GfxFamily>::programMiAtomic(miAtomic, dependenciesCountAddress,
+                                                     MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
+                                                     MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
+        }
     }
 
     template <typename GfxFamily>
