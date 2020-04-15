@@ -12,7 +12,7 @@ using namespace MetricsLibraryApi;
 
 namespace L0 {
 
-const char *MetricsLibrary::getFilename() { return "libigdml64.so"; }
+const char *MetricsLibrary::getFilename() { return "libigdml.so"; }
 
 bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &contextData) {
     return true;

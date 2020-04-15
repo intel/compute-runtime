@@ -19,10 +19,6 @@ const char *sysFsPciPathPrefix = "/sys/bus/pci/devices/0000:";
 const char *pciDevicesDirectory = "/dev/dri/by-path";
 const char *tbxLibName = "libtbxAccess.so";
 
-// Os specific Metrics Library name
-#if __x86_64__ || __ppc64__
-const char *metricsLibraryDllName = "libigdml64.so";
-#else
-const char *metricsLibraryDllName = "libigdml32.so";
-#endif
+// Metrics Library name
+const char *metricsLibraryDllName = "libigdml.so";
 } // namespace Os
