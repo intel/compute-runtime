@@ -421,29 +421,34 @@ AllocationsList &CommandStreamReceiver::getTemporaryAllocations() { return inter
 AllocationsList &CommandStreamReceiver::getAllocationsForReuse() { return internalAllocationStorage->getAllocationsForReuse(); }
 
 bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surface, bool requiresL3Flush) {
-    auto memoryManager = getMemoryManager();
-    AllocationProperties properties{rootDeviceIndex,
-                                    false, // allocateMemory
-                                    surface.getSurfaceSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR,
-                                    false, // isMultiStorageAllocation
-                                    osContext->getDeviceBitfield()};
-    properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = requiresL3Flush;
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, surface.getMemoryPointer());
-    if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
-        // Try with no host pointer allocation and copy
-        AllocationProperties copyProperties{rootDeviceIndex, surface.getSurfaceSize(), GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY};
-        copyProperties.alignment = MemoryConstants::pageSize;
-        allocation = memoryManager->allocateGraphicsMemoryWithProperties(copyProperties);
-        if (allocation) {
-            memcpy_s(allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), surface.getMemoryPointer(), surface.getSurfaceSize());
+    auto allocation = internalAllocationStorage->obtainTemporaryAllocationWithPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR);
+
+    if (allocation == nullptr) {
+        auto memoryManager = getMemoryManager();
+        AllocationProperties properties{rootDeviceIndex,
+                                        false, // allocateMemory
+                                        surface.getSurfaceSize(), GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR,
+                                        false, // isMultiStorageAllocation
+                                        osContext->getDeviceBitfield()};
+        properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = requiresL3Flush;
+        allocation.reset(memoryManager->allocateGraphicsMemoryWithProperties(properties, surface.getMemoryPointer()));
+        if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
+            // Try with no host pointer allocation and copy
+            AllocationProperties copyProperties{rootDeviceIndex, surface.getSurfaceSize(), GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY};
+            copyProperties.alignment = MemoryConstants::pageSize;
+            allocation.reset(memoryManager->allocateGraphicsMemoryWithProperties(copyProperties));
+            if (allocation) {
+                memcpy_s(allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), surface.getMemoryPointer(), surface.getSurfaceSize());
+            }
         }
     }
+
     if (allocation == nullptr) {
         return false;
     }
     allocation->updateTaskCount(CompletionStamp::levelNotReady, osContext->getContextId());
-    surface.setAllocation(allocation);
-    internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+    surface.setAllocation(allocation.get());
+    internalAllocationStorage->storeAllocation(std::move(allocation), TEMPORARY_ALLOCATION);
     return true;
 }
 

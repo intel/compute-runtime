@@ -62,7 +62,12 @@ void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, Allo
 }
 
 std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainReusableAllocation(size_t requiredSize, GraphicsAllocation::AllocationType allocationType) {
-    auto allocation = allocationsForReuse.detachAllocation(requiredSize, commandStreamReceiver, allocationType);
+    auto allocation = allocationsForReuse.detachAllocation(requiredSize, nullptr, commandStreamReceiver, allocationType);
+    return allocation;
+}
+
+std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainTemporaryAllocationWithPtr(size_t requiredSize, const void *requiredPtr, GraphicsAllocation::AllocationType allocationType) {
+    auto allocation = temporaryAllocations.detachAllocation(requiredSize, requiredPtr, commandStreamReceiver, allocationType);
     return allocation;
 }
 
@@ -71,14 +76,16 @@ struct ReusableAllocationRequirements {
     volatile uint32_t *csrTagAddress;
     GraphicsAllocation::AllocationType allocationType;
     uint32_t contextId;
+    const void *requiredPtr;
 };
 
-std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, CommandStreamReceiver &commandStreamReceiver, GraphicsAllocation::AllocationType allocationType) {
+std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver &commandStreamReceiver, GraphicsAllocation::AllocationType allocationType) {
     ReusableAllocationRequirements req;
     req.requiredMinimalSize = requiredMinimalSize;
     req.csrTagAddress = commandStreamReceiver.getTagAddress();
     req.allocationType = allocationType;
     req.contextId = commandStreamReceiver.getOsContext().getContextId();
+    req.requiredPtr = requiredPtr;
     GraphicsAllocation *a = nullptr;
     GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));
     return std::unique_ptr<GraphicsAllocation>(retAlloc);
@@ -91,7 +98,8 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
         auto currentTagValue = *req->csrTagAddress;
         if ((req->allocationType == curr->getAllocationType()) &&
             (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize) &&
-            (currentTagValue >= curr->getTaskCount(req->contextId))) {
+            (currentTagValue >= curr->getTaskCount(req->contextId)) &&
+            (req->requiredPtr == nullptr || req->requiredPtr == curr->getUnderlyingBuffer())) {
             return removeOneImpl(curr, nullptr);
         }
         curr = curr->next;

@@ -496,6 +496,22 @@ struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
     CommandStreamReceiver *commandStreamReceiver = nullptr;
 };
 
+TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAllocationForHostSurfaceThenReuseTemporaryAllocationWhenSizeAndAddressMatch) {
+    auto hostPtr = reinterpret_cast<void *>(0x1234);
+    size_t size = 100;
+    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages);
+    auto allocationPtr = temporaryAllocation.get();
+    temporaryAllocation->updateTaskCount(0u, 0u);
+    commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::move(temporaryAllocation), TEMPORARY_ALLOCATION);
+    *commandStreamReceiver->getTagAddress() = 1u;
+    HostPtrSurface hostSurface(hostPtr, size);
+
+    commandStreamReceiver->createAllocationForHostSurface(hostSurface, false);
+
+    auto hostSurfaceAllocationPtr = hostSurface.getAllocation();
+    EXPECT_EQ(allocationPtr, hostSurfaceAllocationPtr);
+}
+
 TEST_F(CreateAllocationForHostSurfaceTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyAllowedIsCreatedThenCopyAllocationIsCreatedAndMemoryCopied) {
     const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
     size_t size = sizeof(memory);
