@@ -24,7 +24,7 @@ namespace L0 {
 namespace ult {
 
 struct ActiveDebuggerFixture {
-    void SetUp() {
+    void SetUp() { // NOLINT(readability-identifier-naming)
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);
@@ -53,7 +53,7 @@ struct ActiveDebuggerFixture {
         deviceL0 = L0::Device::fromHandle(hDevice);
         ASSERT_NE(nullptr, deviceL0);
     }
-    void TearDown() {
+    void TearDown() { // NOLINT(readability-identifier-naming)
     }
 
     std::unique_ptr<L0::ult::WhiteBox<L0::DriverHandle>> driverHandle;
