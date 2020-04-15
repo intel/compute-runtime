@@ -30,8 +30,6 @@ kernel void test(const global float *a, const global float *b,
     c[global_id] = sum;
 
     int2 coord = {get_global_id(0), get_global_id(1)};
-    uint4 pixel = read_imageui(input, sampler, coord);
-    write_imageui(output, coord, pixel);
 
     printf("local_id = %d, global_id = %d \n", local_id, global_id);
 }

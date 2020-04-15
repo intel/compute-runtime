@@ -190,6 +190,11 @@ cl_int Program::createProgramFromBinary(
             this->isSpirV = NEO::isSpirVBitcode(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize));
             this->options = singleDeviceBinary.buildOptions.str();
 
+            if (false == singleDeviceBinary.debugData.empty()) {
+                this->debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
+                this->debugDataSize = singleDeviceBinary.debugData.size();
+            }
+
             if ((false == singleDeviceBinary.deviceBinary.empty()) && (false == DebugManager.flags.RebuildPrecompiledKernels.get())) {
                 this->unpackedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinary.deviceBinary.size());
                 this->unpackedDeviceBinarySize = singleDeviceBinary.deviceBinary.size();

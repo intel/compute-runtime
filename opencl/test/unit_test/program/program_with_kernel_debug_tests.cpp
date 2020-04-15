@@ -35,6 +35,27 @@ TEST_F(ProgramTests, givenProgramObjectWhenEnableKernelDebugIsCalledThenProgramH
     EXPECT_TRUE(program.isKernelDebugEnabled());
 }
 
+TEST(ProgramFromBinary, givenBinaryWithDebugDataWhenCreatingProgramFromBinaryThenDebugDataIsAvailable) {
+    if (!defaultHwInfo->capabilityTable.debuggerSupported) {
+        GTEST_SKIP();
+    }
+    std::string filePath;
+    retrieveBinaryKernelFilename(filePath, "-cl-kernel-debug-enable_", ".bin");
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto program = std::make_unique<MockProgram>(*device->getExecutionEnvironment());
+    program->pDevice = &device->getDevice();
+    program->enableKernelDebug();
+
+    size_t binarySize = 0;
+    auto pBinary = loadDataFromFile(filePath.c_str(), binarySize);
+    cl_int retVal = program->createProgramFromBinary(pBinary.get(), binarySize);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, program->getDebugData());
+    EXPECT_NE(0u, program->getDebugDataSize());
+}
+
 class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
                                        public ::testing::Test {
   public:

@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-function(level_zero_gen_kernels target platform_name suffix)
+function(level_zero_gen_kernels target platform_name suffix options)
 
   if(NOT DEFINED cloc_cmd_prefix)
     if(WIN32)
@@ -33,9 +33,9 @@ function(level_zero_gen_kernels target platform_name suffix)
     )
 
     add_custom_command(
-      COMMAND echo generate ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir}
+      COMMAND echo generate ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
       OUTPUT ${output_files}
-      COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir}
+      COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
       WORKING_DIRECTORY ${workdir}
       DEPENDS ${filepath} ocloc
     )
