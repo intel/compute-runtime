@@ -719,17 +719,4 @@ NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer
     return allocation;
 }
 
-template <typename DescriptionType, typename ExpectedFlagType>
-ze_result_t DeviceImp::isCreatedCommandListCopyOnly(const DescriptionType *desc, bool *useBliter, ExpectedFlagType flag) {
-    if (desc->flags & flag) {
-        auto hwInfo = neoDevice->getHardwareInfo();
-        if (hwInfo.capabilityTable.blitterOperationsSupported) {
-            *useBliter = true;
-            return ZE_RESULT_SUCCESS;
-        }
-        return ZE_RESULT_ERROR_INVALID_ENUMERATION;
-    }
-    return ZE_RESULT_SUCCESS;
-}
-
 } // namespace L0

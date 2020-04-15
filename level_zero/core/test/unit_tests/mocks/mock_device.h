@@ -114,6 +114,7 @@ struct Mock<Device> : public Device {
 template <>
 struct Mock<L0::DeviceImp> : public L0::DeviceImp {
     using Base = L0::DeviceImp;
+    using Base::isCreatedCommandListCopyOnly;
 
     explicit Mock(NEO::Device *device, NEO::ExecutionEnvironment *execEnv) {
         device->incRefInternal();
