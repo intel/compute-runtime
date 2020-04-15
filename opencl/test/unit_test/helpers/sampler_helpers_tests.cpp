@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(SamplerHelpers, ForAddressingModeCalledForEnumReturnClkEnum) {
+TEST(SamplerHelpers, WhenGettingAddrModeEnumsThenCorrectValuesAreReturned) {
     EXPECT_EQ(CLK_ADDRESS_REPEAT, GetAddrModeEnum(CL_ADDRESS_REPEAT));
     EXPECT_EQ(CLK_ADDRESS_CLAMP_TO_EDGE, GetAddrModeEnum(CL_ADDRESS_CLAMP_TO_EDGE));
     EXPECT_EQ(CLK_ADDRESS_CLAMP, GetAddrModeEnum(CL_ADDRESS_CLAMP));
@@ -17,7 +17,7 @@ TEST(SamplerHelpers, ForAddressingModeCalledForEnumReturnClkEnum) {
     EXPECT_EQ(CLK_ADDRESS_MIRRORED_REPEAT, GetAddrModeEnum(CL_ADDRESS_MIRRORED_REPEAT));
 }
 
-TEST(SamplerHelpers, ForNormalizationTypeCalledForEnumReturnClkEnum) {
+TEST(SamplerHelpers, WhenGettingNormCoordsEnumsThenCorrectValuesAreReturned) {
     EXPECT_EQ(CLK_NORMALIZED_COORDS_TRUE, GetNormCoordsEnum(true));
     EXPECT_EQ(CLK_NORMALIZED_COORDS_FALSE, GetNormCoordsEnum(false));
 }
