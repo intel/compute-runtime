@@ -20,7 +20,7 @@ class Scheduler {
     virtual ze_result_t setTimesliceMode(zet_sched_timeslice_properties_t *pProperties, ze_bool_t *pNeedReboot) = 0;
     virtual ze_result_t setExclusiveMode(ze_bool_t *pNeedReboot) = 0;
     virtual ze_result_t setComputeUnitDebugMode(ze_bool_t *pNeedReboot) = 0;
-    virtual void init() = 0;
+    virtual ze_result_t init() = 0;
 };
 
 } // namespace L0
