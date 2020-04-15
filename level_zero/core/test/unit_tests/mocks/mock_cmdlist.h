@@ -36,7 +36,6 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::getAlignedAllocation;
 
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
-    virtual ~WhiteBox() {}
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -49,7 +48,6 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass = L0::CommandListCoreFamilyImmediate<gfxCoreFamily>;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
-    virtual ~WhiteBox() {}
 };
 
 template <>

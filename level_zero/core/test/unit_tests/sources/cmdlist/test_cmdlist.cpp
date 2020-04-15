@@ -205,42 +205,42 @@ class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamil
         appendMemoryCopyKernelWithGACalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
-    virtual ze_result_t appendMemoryCopyBlit(NEO::GraphicsAllocation *dstPtrAlloc,
-                                             uint64_t dstOffset,
-                                             NEO::GraphicsAllocation *srcPtrAlloc,
-                                             uint64_t srcOffset, uint32_t size) override {
+    ze_result_t appendMemoryCopyBlit(NEO::GraphicsAllocation *dstPtrAlloc,
+                                     uint64_t dstOffset,
+                                     NEO::GraphicsAllocation *srcPtrAlloc,
+                                     uint64_t srcOffset, uint32_t size) override {
         appendMemoryCopyBlitCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
 
-    virtual ze_result_t appendMemoryCopyBlitRegion(const void *srcptr,
-                                                   const void *dstptr,
-                                                   ze_copy_region_t srcRegion,
-                                                   ze_copy_region_t dstRegion, Vec3<size_t> copySize,
-                                                   size_t srcRowPitch, size_t srcSlicePitch,
-                                                   size_t dstRowPitch, size_t dstSlicePitch,
-                                                   size_t srcSize, size_t dstSize) override {
+    ze_result_t appendMemoryCopyBlitRegion(const void *srcptr,
+                                           const void *dstptr,
+                                           ze_copy_region_t srcRegion,
+                                           ze_copy_region_t dstRegion, Vec3<size_t> copySize,
+                                           size_t srcRowPitch, size_t srcSlicePitch,
+                                           size_t dstRowPitch, size_t dstSlicePitch,
+                                           size_t srcSize, size_t dstSize) override {
         appendMemoryCopyBlitRegionCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
 
-    virtual ze_result_t appendMemoryCopyKernel2d(const void *dstptr, const void *srcptr,
-                                                 Builtin builtin, const ze_copy_region_t *dstRegion,
-                                                 uint32_t dstPitch, size_t dstOffset,
-                                                 const ze_copy_region_t *srcRegion, uint32_t srcPitch,
-                                                 size_t srcOffset, ze_event_handle_t hSignalEvent,
-                                                 uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+    ze_result_t appendMemoryCopyKernel2d(const void *dstptr, const void *srcptr,
+                                         Builtin builtin, const ze_copy_region_t *dstRegion,
+                                         uint32_t dstPitch, size_t dstOffset,
+                                         const ze_copy_region_t *srcRegion, uint32_t srcPitch,
+                                         size_t srcOffset, ze_event_handle_t hSignalEvent,
+                                         uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
         appendMemoryCopyKernel2dCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
 
-    virtual ze_result_t appendMemoryCopyKernel3d(const void *dstptr, const void *srcptr,
-                                                 Builtin builtin, const ze_copy_region_t *dstRegion,
-                                                 uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
-                                                 const ze_copy_region_t *srcRegion, uint32_t srcPitch,
-                                                 uint32_t srcSlicePitch, size_t srcOffset,
-                                                 ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
-                                                 ze_event_handle_t *phWaitEvents) override {
+    ze_result_t appendMemoryCopyKernel3d(const void *dstptr, const void *srcptr,
+                                         Builtin builtin, const ze_copy_region_t *dstRegion,
+                                         uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
+                                         const ze_copy_region_t *srcRegion, uint32_t srcPitch,
+                                         uint32_t srcSlicePitch, size_t srcOffset,
+                                         ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
+                                         ze_event_handle_t *phWaitEvents) override {
         appendMemoryCopyKernel3dalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
