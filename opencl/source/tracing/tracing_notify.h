@@ -145,8 +145,8 @@ class clBuildProgramTracer {
     }
 
   private:
-    cl_params_clBuildProgram params;
-    cl_callback_data data;
+    cl_params_clBuildProgram params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -206,8 +206,8 @@ class clCloneKernelTracer {
     }
 
   private:
-    cl_params_clCloneKernel params;
-    cl_callback_data data;
+    cl_params_clCloneKernel params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -281,8 +281,8 @@ class clCompileProgramTracer {
     }
 
   private:
-    cl_params_clCompileProgram params;
-    cl_callback_data data;
+    cl_params_clCompileProgram params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -348,8 +348,8 @@ class clCreateBufferTracer {
     }
 
   private:
-    cl_params_clCreateBuffer params;
-    cl_callback_data data;
+    cl_params_clCreateBuffer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -413,8 +413,8 @@ class clCreateCommandQueueTracer {
     }
 
   private:
-    cl_params_clCreateCommandQueue params;
-    cl_callback_data data;
+    cl_params_clCreateCommandQueue params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -478,8 +478,8 @@ class clCreateCommandQueueWithPropertiesTracer {
     }
 
   private:
-    cl_params_clCreateCommandQueueWithProperties params;
-    cl_callback_data data;
+    cl_params_clCreateCommandQueueWithProperties params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -547,8 +547,8 @@ class clCreateContextTracer {
     }
 
   private:
-    cl_params_clCreateContext params;
-    cl_callback_data data;
+    cl_params_clCreateContext params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -614,8 +614,8 @@ class clCreateContextFromTypeTracer {
     }
 
   private:
-    cl_params_clCreateContextFromType params;
-    cl_callback_data data;
+    cl_params_clCreateContextFromType params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -683,8 +683,8 @@ class clCreateImageTracer {
     }
 
   private:
-    cl_params_clCreateImage params;
-    cl_callback_data data;
+    cl_params_clCreateImage params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -756,8 +756,8 @@ class clCreateImage2DTracer {
     }
 
   private:
-    cl_params_clCreateImage2D params;
-    cl_callback_data data;
+    cl_params_clCreateImage2D params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -833,8 +833,8 @@ class clCreateImage3DTracer {
     }
 
   private:
-    cl_params_clCreateImage3D params;
-    cl_callback_data data;
+    cl_params_clCreateImage3D params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -896,8 +896,8 @@ class clCreateKernelTracer {
     }
 
   private:
-    cl_params_clCreateKernel params;
-    cl_callback_data data;
+    cl_params_clCreateKernel params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -961,8 +961,8 @@ class clCreateKernelsInProgramTracer {
     }
 
   private:
-    cl_params_clCreateKernelsInProgram params;
-    cl_callback_data data;
+    cl_params_clCreateKernelsInProgram params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1030,8 +1030,8 @@ class clCreatePipeTracer {
     }
 
   private:
-    cl_params_clCreatePipe params;
-    cl_callback_data data;
+    cl_params_clCreatePipe params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1101,8 +1101,8 @@ class clCreateProgramWithBinaryTracer {
     }
 
   private:
-    cl_params_clCreateProgramWithBinary params;
-    cl_callback_data data;
+    cl_params_clCreateProgramWithBinary params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1168,8 +1168,8 @@ class clCreateProgramWithBuiltInKernelsTracer {
     }
 
   private:
-    cl_params_clCreateProgramWithBuiltInKernels params;
-    cl_callback_data data;
+    cl_params_clCreateProgramWithBuiltInKernels params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1233,8 +1233,8 @@ class clCreateProgramWithILTracer {
     }
 
   private:
-    cl_params_clCreateProgramWithIL params;
-    cl_callback_data data;
+    cl_params_clCreateProgramWithIL params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1300,8 +1300,8 @@ class clCreateProgramWithSourceTracer {
     }
 
   private:
-    cl_params_clCreateProgramWithSource params;
-    cl_callback_data data;
+    cl_params_clCreateProgramWithSource params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1367,8 +1367,8 @@ class clCreateSamplerTracer {
     }
 
   private:
-    cl_params_clCreateSampler params;
-    cl_callback_data data;
+    cl_params_clCreateSampler params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1430,8 +1430,8 @@ class clCreateSamplerWithPropertiesTracer {
     }
 
   private:
-    cl_params_clCreateSamplerWithProperties params;
-    cl_callback_data data;
+    cl_params_clCreateSamplerWithProperties params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1497,8 +1497,8 @@ class clCreateSubBufferTracer {
     }
 
   private:
-    cl_params_clCreateSubBuffer params;
-    cl_callback_data data;
+    cl_params_clCreateSubBuffer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1558,8 +1558,8 @@ class clCreateUserEventTracer {
     }
 
   private:
-    cl_params_clCreateUserEvent params;
-    cl_callback_data data;
+    cl_params_clCreateUserEvent params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1617,8 +1617,8 @@ class clEnqueueBarrierTracer {
     }
 
   private:
-    cl_params_clEnqueueBarrier params;
-    cl_callback_data data;
+    cl_params_clEnqueueBarrier params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1682,8 +1682,8 @@ class clEnqueueBarrierWithWaitListTracer {
     }
 
   private:
-    cl_params_clEnqueueBarrierWithWaitList params;
-    cl_callback_data data;
+    cl_params_clEnqueueBarrierWithWaitList params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1757,8 +1757,8 @@ class clEnqueueCopyBufferTracer {
     }
 
   private:
-    cl_params_clEnqueueCopyBuffer params;
-    cl_callback_data data;
+    cl_params_clEnqueueCopyBuffer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1840,8 +1840,8 @@ class clEnqueueCopyBufferRectTracer {
     }
 
   private:
-    cl_params_clEnqueueCopyBufferRect params;
-    cl_callback_data data;
+    cl_params_clEnqueueCopyBufferRect params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1915,8 +1915,8 @@ class clEnqueueCopyBufferToImageTracer {
     }
 
   private:
-    cl_params_clEnqueueCopyBufferToImage params;
-    cl_callback_data data;
+    cl_params_clEnqueueCopyBufferToImage params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -1990,8 +1990,8 @@ class clEnqueueCopyImageTracer {
     }
 
   private:
-    cl_params_clEnqueueCopyImage params;
-    cl_callback_data data;
+    cl_params_clEnqueueCopyImage params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2065,8 +2065,8 @@ class clEnqueueCopyImageToBufferTracer {
     }
 
   private:
-    cl_params_clEnqueueCopyImageToBuffer params;
-    cl_callback_data data;
+    cl_params_clEnqueueCopyImageToBuffer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2140,8 +2140,8 @@ class clEnqueueFillBufferTracer {
     }
 
   private:
-    cl_params_clEnqueueFillBuffer params;
-    cl_callback_data data;
+    cl_params_clEnqueueFillBuffer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2213,8 +2213,8 @@ class clEnqueueFillImageTracer {
     }
 
   private:
-    cl_params_clEnqueueFillImage params;
-    cl_callback_data data;
+    cl_params_clEnqueueFillImage params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2290,8 +2290,8 @@ class clEnqueueMapBufferTracer {
     }
 
   private:
-    cl_params_clEnqueueMapBuffer params;
-    cl_callback_data data;
+    cl_params_clEnqueueMapBuffer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2371,8 +2371,8 @@ class clEnqueueMapImageTracer {
     }
 
   private:
-    cl_params_clEnqueueMapImage params;
-    cl_callback_data data;
+    cl_params_clEnqueueMapImage params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2432,8 +2432,8 @@ class clEnqueueMarkerTracer {
     }
 
   private:
-    cl_params_clEnqueueMarker params;
-    cl_callback_data data;
+    cl_params_clEnqueueMarker params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2497,8 +2497,8 @@ class clEnqueueMarkerWithWaitListTracer {
     }
 
   private:
-    cl_params_clEnqueueMarkerWithWaitList params;
-    cl_callback_data data;
+    cl_params_clEnqueueMarkerWithWaitList params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2568,8 +2568,8 @@ class clEnqueueMigrateMemObjectsTracer {
     }
 
   private:
-    cl_params_clEnqueueMigrateMemObjects params;
-    cl_callback_data data;
+    cl_params_clEnqueueMigrateMemObjects params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2643,8 +2643,8 @@ class clEnqueueNDRangeKernelTracer {
     }
 
   private:
-    cl_params_clEnqueueNDRangeKernel params;
-    cl_callback_data data;
+    cl_params_clEnqueueNDRangeKernel params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2720,8 +2720,8 @@ class clEnqueueNativeKernelTracer {
     }
 
   private:
-    cl_params_clEnqueueNativeKernel params;
-    cl_callback_data data;
+    cl_params_clEnqueueNativeKernel params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2795,8 +2795,8 @@ class clEnqueueReadBufferTracer {
     }
 
   private:
-    cl_params_clEnqueueReadBuffer params;
-    cl_callback_data data;
+    cl_params_clEnqueueReadBuffer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2880,8 +2880,8 @@ class clEnqueueReadBufferRectTracer {
     }
 
   private:
-    cl_params_clEnqueueReadBufferRect params;
-    cl_callback_data data;
+    cl_params_clEnqueueReadBufferRect params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -2959,8 +2959,8 @@ class clEnqueueReadImageTracer {
     }
 
   private:
-    cl_params_clEnqueueReadImage params;
-    cl_callback_data data;
+    cl_params_clEnqueueReadImage params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3032,8 +3032,8 @@ class clEnqueueSVMFreeTracer {
     }
 
   private:
-    cl_params_clEnqueueSVMFree params;
-    cl_callback_data data;
+    cl_params_clEnqueueSVMFree params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3105,8 +3105,8 @@ class clEnqueueSVMMapTracer {
     }
 
   private:
-    cl_params_clEnqueueSVMMap params;
-    cl_callback_data data;
+    cl_params_clEnqueueSVMMap params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3178,8 +3178,8 @@ class clEnqueueSVMMemFillTracer {
     }
 
   private:
-    cl_params_clEnqueueSVMMemFill params;
-    cl_callback_data data;
+    cl_params_clEnqueueSVMMemFill params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3251,8 +3251,8 @@ class clEnqueueSVMMemcpyTracer {
     }
 
   private:
-    cl_params_clEnqueueSVMMemcpy params;
-    cl_callback_data data;
+    cl_params_clEnqueueSVMMemcpy params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3324,8 +3324,8 @@ class clEnqueueSVMMigrateMemTracer {
     }
 
   private:
-    cl_params_clEnqueueSVMMigrateMem params;
-    cl_callback_data data;
+    cl_params_clEnqueueSVMMigrateMem params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3391,8 +3391,8 @@ class clEnqueueSVMUnmapTracer {
     }
 
   private:
-    cl_params_clEnqueueSVMUnmap params;
-    cl_callback_data data;
+    cl_params_clEnqueueSVMUnmap params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3458,8 +3458,8 @@ class clEnqueueTaskTracer {
     }
 
   private:
-    cl_params_clEnqueueTask params;
-    cl_callback_data data;
+    cl_params_clEnqueueTask params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3527,8 +3527,8 @@ class clEnqueueUnmapMemObjectTracer {
     }
 
   private:
-    cl_params_clEnqueueUnmapMemObject params;
-    cl_callback_data data;
+    cl_params_clEnqueueUnmapMemObject params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3590,8 +3590,8 @@ class clEnqueueWaitForEventsTracer {
     }
 
   private:
-    cl_params_clEnqueueWaitForEvents params;
-    cl_callback_data data;
+    cl_params_clEnqueueWaitForEvents params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3665,8 +3665,8 @@ class clEnqueueWriteBufferTracer {
     }
 
   private:
-    cl_params_clEnqueueWriteBuffer params;
-    cl_callback_data data;
+    cl_params_clEnqueueWriteBuffer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3750,8 +3750,8 @@ class clEnqueueWriteBufferRectTracer {
     }
 
   private:
-    cl_params_clEnqueueWriteBufferRect params;
-    cl_callback_data data;
+    cl_params_clEnqueueWriteBufferRect params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3829,8 +3829,8 @@ class clEnqueueWriteImageTracer {
     }
 
   private:
-    cl_params_clEnqueueWriteImage params;
-    cl_callback_data data;
+    cl_params_clEnqueueWriteImage params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3888,8 +3888,8 @@ class clFinishTracer {
     }
 
   private:
-    cl_params_clFinish params;
-    cl_callback_data data;
+    cl_params_clFinish params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -3947,8 +3947,8 @@ class clFlushTracer {
     }
 
   private:
-    cl_params_clFlush params;
-    cl_callback_data data;
+    cl_params_clFlush params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4014,8 +4014,8 @@ class clGetCommandQueueInfoTracer {
     }
 
   private:
-    cl_params_clGetCommandQueueInfo params;
-    cl_callback_data data;
+    cl_params_clGetCommandQueueInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4081,8 +4081,8 @@ class clGetContextInfoTracer {
     }
 
   private:
-    cl_params_clGetContextInfo params;
-    cl_callback_data data;
+    cl_params_clGetContextInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4144,8 +4144,8 @@ class clGetDeviceAndHostTimerTracer {
     }
 
   private:
-    cl_params_clGetDeviceAndHostTimer params;
-    cl_callback_data data;
+    cl_params_clGetDeviceAndHostTimer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4211,8 +4211,8 @@ class clGetDeviceIDsTracer {
     }
 
   private:
-    cl_params_clGetDeviceIDs params;
-    cl_callback_data data;
+    cl_params_clGetDeviceIDs params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4278,8 +4278,8 @@ class clGetDeviceInfoTracer {
     }
 
   private:
-    cl_params_clGetDeviceInfo params;
-    cl_callback_data data;
+    cl_params_clGetDeviceInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4345,8 +4345,8 @@ class clGetEventInfoTracer {
     }
 
   private:
-    cl_params_clGetEventInfo params;
-    cl_callback_data data;
+    cl_params_clGetEventInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4412,8 +4412,8 @@ class clGetEventProfilingInfoTracer {
     }
 
   private:
-    cl_params_clGetEventProfilingInfo params;
-    cl_callback_data data;
+    cl_params_clGetEventProfilingInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4471,8 +4471,8 @@ class clGetExtensionFunctionAddressTracer {
     }
 
   private:
-    cl_params_clGetExtensionFunctionAddress params;
-    cl_callback_data data;
+    cl_params_clGetExtensionFunctionAddress params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4532,8 +4532,8 @@ class clGetExtensionFunctionAddressForPlatformTracer {
     }
 
   private:
-    cl_params_clGetExtensionFunctionAddressForPlatform params;
-    cl_callback_data data;
+    cl_params_clGetExtensionFunctionAddressForPlatform params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4593,8 +4593,8 @@ class clGetHostTimerTracer {
     }
 
   private:
-    cl_params_clGetHostTimer params;
-    cl_callback_data data;
+    cl_params_clGetHostTimer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4660,8 +4660,8 @@ class clGetImageInfoTracer {
     }
 
   private:
-    cl_params_clGetImageInfo params;
-    cl_callback_data data;
+    cl_params_clGetImageInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4729,8 +4729,8 @@ class clGetKernelArgInfoTracer {
     }
 
   private:
-    cl_params_clGetKernelArgInfo params;
-    cl_callback_data data;
+    cl_params_clGetKernelArgInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4796,8 +4796,8 @@ class clGetKernelInfoTracer {
     }
 
   private:
-    cl_params_clGetKernelInfo params;
-    cl_callback_data data;
+    cl_params_clGetKernelInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4869,8 +4869,8 @@ class clGetKernelSubGroupInfoTracer {
     }
 
   private:
-    cl_params_clGetKernelSubGroupInfo params;
-    cl_callback_data data;
+    cl_params_clGetKernelSubGroupInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -4938,8 +4938,8 @@ class clGetKernelWorkGroupInfoTracer {
     }
 
   private:
-    cl_params_clGetKernelWorkGroupInfo params;
-    cl_callback_data data;
+    cl_params_clGetKernelWorkGroupInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5005,8 +5005,8 @@ class clGetMemObjectInfoTracer {
     }
 
   private:
-    cl_params_clGetMemObjectInfo params;
-    cl_callback_data data;
+    cl_params_clGetMemObjectInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5072,8 +5072,8 @@ class clGetPipeInfoTracer {
     }
 
   private:
-    cl_params_clGetPipeInfo params;
-    cl_callback_data data;
+    cl_params_clGetPipeInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5135,8 +5135,8 @@ class clGetPlatformIDsTracer {
     }
 
   private:
-    cl_params_clGetPlatformIDs params;
-    cl_callback_data data;
+    cl_params_clGetPlatformIDs params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5202,8 +5202,8 @@ class clGetPlatformInfoTracer {
     }
 
   private:
-    cl_params_clGetPlatformInfo params;
-    cl_callback_data data;
+    cl_params_clGetPlatformInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5271,8 +5271,8 @@ class clGetProgramBuildInfoTracer {
     }
 
   private:
-    cl_params_clGetProgramBuildInfo params;
-    cl_callback_data data;
+    cl_params_clGetProgramBuildInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5338,8 +5338,8 @@ class clGetProgramInfoTracer {
     }
 
   private:
-    cl_params_clGetProgramInfo params;
-    cl_callback_data data;
+    cl_params_clGetProgramInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5405,8 +5405,8 @@ class clGetSamplerInfoTracer {
     }
 
   private:
-    cl_params_clGetSamplerInfo params;
-    cl_callback_data data;
+    cl_params_clGetSamplerInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5474,8 +5474,8 @@ class clGetSupportedImageFormatsTracer {
     }
 
   private:
-    cl_params_clGetSupportedImageFormats params;
-    cl_callback_data data;
+    cl_params_clGetSupportedImageFormats params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5549,8 +5549,8 @@ class clLinkProgramTracer {
     }
 
   private:
-    cl_params_clLinkProgram params;
-    cl_callback_data data;
+    cl_params_clLinkProgram params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5608,8 +5608,8 @@ class clReleaseCommandQueueTracer {
     }
 
   private:
-    cl_params_clReleaseCommandQueue params;
-    cl_callback_data data;
+    cl_params_clReleaseCommandQueue params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5667,8 +5667,8 @@ class clReleaseContextTracer {
     }
 
   private:
-    cl_params_clReleaseContext params;
-    cl_callback_data data;
+    cl_params_clReleaseContext params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5726,8 +5726,8 @@ class clReleaseDeviceTracer {
     }
 
   private:
-    cl_params_clReleaseDevice params;
-    cl_callback_data data;
+    cl_params_clReleaseDevice params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5785,8 +5785,8 @@ class clReleaseEventTracer {
     }
 
   private:
-    cl_params_clReleaseEvent params;
-    cl_callback_data data;
+    cl_params_clReleaseEvent params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5844,8 +5844,8 @@ class clReleaseKernelTracer {
     }
 
   private:
-    cl_params_clReleaseKernel params;
-    cl_callback_data data;
+    cl_params_clReleaseKernel params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5903,8 +5903,8 @@ class clReleaseMemObjectTracer {
     }
 
   private:
-    cl_params_clReleaseMemObject params;
-    cl_callback_data data;
+    cl_params_clReleaseMemObject params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -5962,8 +5962,8 @@ class clReleaseProgramTracer {
     }
 
   private:
-    cl_params_clReleaseProgram params;
-    cl_callback_data data;
+    cl_params_clReleaseProgram params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6021,8 +6021,8 @@ class clReleaseSamplerTracer {
     }
 
   private:
-    cl_params_clReleaseSampler params;
-    cl_callback_data data;
+    cl_params_clReleaseSampler params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6080,8 +6080,8 @@ class clRetainCommandQueueTracer {
     }
 
   private:
-    cl_params_clRetainCommandQueue params;
-    cl_callback_data data;
+    cl_params_clRetainCommandQueue params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6139,8 +6139,8 @@ class clRetainContextTracer {
     }
 
   private:
-    cl_params_clRetainContext params;
-    cl_callback_data data;
+    cl_params_clRetainContext params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6198,8 +6198,8 @@ class clRetainDeviceTracer {
     }
 
   private:
-    cl_params_clRetainDevice params;
-    cl_callback_data data;
+    cl_params_clRetainDevice params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6257,8 +6257,8 @@ class clRetainEventTracer {
     }
 
   private:
-    cl_params_clRetainEvent params;
-    cl_callback_data data;
+    cl_params_clRetainEvent params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6316,8 +6316,8 @@ class clRetainKernelTracer {
     }
 
   private:
-    cl_params_clRetainKernel params;
-    cl_callback_data data;
+    cl_params_clRetainKernel params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6375,8 +6375,8 @@ class clRetainMemObjectTracer {
     }
 
   private:
-    cl_params_clRetainMemObject params;
-    cl_callback_data data;
+    cl_params_clRetainMemObject params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6434,8 +6434,8 @@ class clRetainProgramTracer {
     }
 
   private:
-    cl_params_clRetainProgram params;
-    cl_callback_data data;
+    cl_params_clRetainProgram params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6493,8 +6493,8 @@ class clRetainSamplerTracer {
     }
 
   private:
-    cl_params_clRetainSampler params;
-    cl_callback_data data;
+    cl_params_clRetainSampler params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6558,8 +6558,8 @@ class clSVMAllocTracer {
     }
 
   private:
-    cl_params_clSVMAlloc params;
-    cl_callback_data data;
+    cl_params_clSVMAlloc params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6619,8 +6619,8 @@ class clSVMFreeTracer {
     }
 
   private:
-    cl_params_clSVMFree params;
-    cl_callback_data data;
+    cl_params_clSVMFree params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6684,8 +6684,8 @@ class clSetCommandQueuePropertyTracer {
     }
 
   private:
-    cl_params_clSetCommandQueueProperty params;
-    cl_callback_data data;
+    cl_params_clSetCommandQueueProperty params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6747,8 +6747,8 @@ class clSetDefaultDeviceCommandQueueTracer {
     }
 
   private:
-    cl_params_clSetDefaultDeviceCommandQueue params;
-    cl_callback_data data;
+    cl_params_clSetDefaultDeviceCommandQueue params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6812,8 +6812,8 @@ class clSetEventCallbackTracer {
     }
 
   private:
-    cl_params_clSetEventCallback params;
-    cl_callback_data data;
+    cl_params_clSetEventCallback params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6877,8 +6877,8 @@ class clSetKernelArgTracer {
     }
 
   private:
-    cl_params_clSetKernelArg params;
-    cl_callback_data data;
+    cl_params_clSetKernelArg params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -6940,8 +6940,8 @@ class clSetKernelArgSVMPointerTracer {
     }
 
   private:
-    cl_params_clSetKernelArgSVMPointer params;
-    cl_callback_data data;
+    cl_params_clSetKernelArgSVMPointer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7005,8 +7005,8 @@ class clSetKernelExecInfoTracer {
     }
 
   private:
-    cl_params_clSetKernelExecInfo params;
-    cl_callback_data data;
+    cl_params_clSetKernelExecInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7068,8 +7068,8 @@ class clSetMemObjectDestructorCallbackTracer {
     }
 
   private:
-    cl_params_clSetMemObjectDestructorCallback params;
-    cl_callback_data data;
+    cl_params_clSetMemObjectDestructorCallback params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7129,8 +7129,8 @@ class clSetUserEventStatusTracer {
     }
 
   private:
-    cl_params_clSetUserEventStatus params;
-    cl_callback_data data;
+    cl_params_clSetUserEventStatus params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7186,7 +7186,7 @@ class clUnloadCompilerTracer {
     }
 
   private:
-    cl_callback_data data;
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7244,8 +7244,8 @@ class clUnloadPlatformCompilerTracer {
     }
 
   private:
-    cl_params_clUnloadPlatformCompiler params;
-    cl_callback_data data;
+    cl_params_clUnloadPlatformCompiler params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7305,8 +7305,8 @@ class clWaitForEventsTracer {
     }
 
   private:
-    cl_params_clWaitForEvents params;
-    cl_callback_data data;
+    cl_params_clWaitForEvents params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7372,8 +7372,8 @@ class clCreateFromGLBufferTracer {
     }
 
   private:
-    cl_params_clCreateFromGLBuffer params;
-    cl_callback_data data;
+    cl_params_clCreateFromGLBuffer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7437,8 +7437,8 @@ class clCreateFromGLRenderbufferTracer {
     }
 
   private:
-    cl_params_clCreateFromGLRenderbuffer params;
-    cl_callback_data data;
+    cl_params_clCreateFromGLRenderbuffer params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7506,8 +7506,8 @@ class clCreateFromGLTextureTracer {
     }
 
   private:
-    cl_params_clCreateFromGLTexture params;
-    cl_callback_data data;
+    cl_params_clCreateFromGLTexture params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7575,8 +7575,8 @@ class clCreateFromGLTexture2DTracer {
     }
 
   private:
-    cl_params_clCreateFromGLTexture2D params;
-    cl_callback_data data;
+    cl_params_clCreateFromGLTexture2D params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7644,8 +7644,8 @@ class clCreateFromGLTexture3DTracer {
     }
 
   private:
-    cl_params_clCreateFromGLTexture3D params;
-    cl_callback_data data;
+    cl_params_clCreateFromGLTexture3D params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7713,8 +7713,8 @@ class clEnqueueAcquireGLObjectsTracer {
     }
 
   private:
-    cl_params_clEnqueueAcquireGLObjects params;
-    cl_callback_data data;
+    cl_params_clEnqueueAcquireGLObjects params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7782,8 +7782,8 @@ class clEnqueueReleaseGLObjectsTracer {
     }
 
   private:
-    cl_params_clEnqueueReleaseGLObjects params;
-    cl_callback_data data;
+    cl_params_clEnqueueReleaseGLObjects params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7845,8 +7845,8 @@ class clGetGLObjectInfoTracer {
     }
 
   private:
-    cl_params_clGetGLObjectInfo params;
-    cl_callback_data data;
+    cl_params_clGetGLObjectInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
@@ -7912,8 +7912,8 @@ class clGetGLTextureInfoTracer {
     }
 
   private:
-    cl_params_clGetGLTextureInfo params;
-    cl_callback_data data;
+    cl_params_clGetGLTextureInfo params{};
+    cl_callback_data data{};
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
