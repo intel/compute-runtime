@@ -61,6 +61,10 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     virtual void setTbxWritable(bool writable, GraphicsAllocation &graphicsAllocation) = 0;
     virtual bool isTbxWritable(GraphicsAllocation &graphicsAllocation) const = 0;
 
+    virtual void dumpAllocation(GraphicsAllocation &gfxAllocation) = 0;
+
+    void makeNonResident(GraphicsAllocation &gfxAllocation) override;
+
     size_t getPreferredTagPoolSize() const override { return 1; }
 
     aub_stream::AubManager *aubManager = nullptr;

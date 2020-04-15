@@ -759,15 +759,6 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResident(GraphicsAllocation &gfxAllocation) {
-    if (gfxAllocation.isResident(this->osContext->getContextId())) {
-        dumpAllocation(gfxAllocation);
-        this->getEvictionAllocations().push_back(&gfxAllocation);
-        gfxAllocation.releaseResidencyInOsContext(this->osContext->getContextId());
-    }
-}
-
-template <typename GfxFamily>
 AubSubCaptureStatus AUBCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
     auto status = subCaptureManager->checkAndActivateSubCapture(dispatchInfo);
     if (status.isActive) {

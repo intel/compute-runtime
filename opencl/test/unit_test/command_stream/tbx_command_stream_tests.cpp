@@ -14,6 +14,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
 
+#include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
@@ -935,4 +936,106 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessCor
     uint32_t hostPtr = 0;
     error = cmdQ.enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, error);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalledButBcsIsUsedThenGraphicsAllocationShouldNotBeDumped) {
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
+    MockOsContext osContext(0, 1, aub_stream::ENGINE_BCS, PreemptionMode::Disabled, false, false, false);
+    tbxCsr.setupContext(osContext);
+
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
+
+    auto memoryManager = pDevice->getMemoryManager();
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+
+    tbxCsr.dumpAllocation(*gfxAllocation);
+    EXPECT_FALSE(mockHardwareContext->dumpSurfaceCalled);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWritableWhenDumpAllocationIsCalledButDumpFormatIsNotSpecifiedThenGraphicsAllocationShouldNotBeDumped) {
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
+    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    tbxCsr.setupContext(osContext);
+
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
+
+    auto memoryManager = pDevice->getMemoryManager();
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+
+    gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
+    EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
+    tbxCsr.dumpAllocation(*gfxAllocation);
+    EXPECT_FALSE(mockHardwareContext->dumpSurfaceCalled);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWritableWhenDumpAllocationIsCalledAndDumpFormatIsSpecifiedThenGraphicsAllocationShouldBeDumped) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AUBDumpBufferFormat.set("BIN");
+
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
+    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    tbxCsr.setupContext(osContext);
+
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
+
+    auto memoryManager = pDevice->getMemoryManager();
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
+    EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
+
+    tbxCsr.dumpAllocation(*gfxAllocation);
+    EXPECT_TRUE(mockHardwareContext->dumpSurfaceCalled);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalledAndAUBDumpAllocsOnEnqueueReadOnlyIsSetThenDumpableFlagShouldBeRespected) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
+    DebugManager.flags.AUBDumpBufferFormat.set("BIN");
+
+    MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
+    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    tbxCsr.setupContext(osContext);
+
+    auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
+
+    auto memoryManager = pDevice->getMemoryManager();
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+
+    for (bool dumpable : {false, true}) {
+        gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
+        gfxAllocation->setAllocDumpable(dumpable);
+
+        tbxCsr.dumpAllocation(*gfxAllocation);
+        EXPECT_EQ(dumpable, mockHardwareContext->dumpSurfaceCalled);
+        EXPECT_FALSE(gfxAllocation->isAllocDumpable());
+    }
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalledButUseAubStreamIsSetToFalseThenEarlyReturn) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.UseAubStream.set(false);
+    DebugManager.flags.AUBDumpBufferFormat.set("BIN");
+
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get(), false, 1);
+    executionEnvironment.initializeMemoryManager();
+
+    MockTbxCsr<FamilyType> tbxCsr(executionEnvironment);
+    EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->aubCenter->getAubManager());
+
+    auto memoryManager = pDevice->getMemoryManager();
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+
+    tbxCsr.dumpAllocation(*gfxAllocation);
+    EXPECT_TRUE(tbxCsr.dumpAllocationCalled);
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
 }

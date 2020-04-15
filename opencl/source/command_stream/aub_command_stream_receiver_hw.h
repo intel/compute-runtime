@@ -39,7 +39,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::stream;
 
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
-    void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
     void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
 
@@ -67,7 +66,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     uint32_t getDumpHandle();
     MOCKABLE_VIRTUAL void addContextToken(uint32_t dumpHandle);
-    MOCKABLE_VIRTUAL void dumpAllocation(GraphicsAllocation &gfxAllocation);
+    void dumpAllocation(GraphicsAllocation &gfxAllocation) override;
 
     static CommandStreamReceiver *create(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 

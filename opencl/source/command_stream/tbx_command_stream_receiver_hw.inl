@@ -11,6 +11,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -18,6 +19,8 @@
 
 #include "opencl/source/aub/aub_center.h"
 #include "opencl/source/aub/aub_helper.h"
+#include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
+#include "opencl/source/aub_mem_dump/aub_alloc_dump.inl"
 #include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
@@ -527,5 +530,30 @@ AubSubCaptureStatus TbxCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSu
         dumpTbxNonWritable = true;
     }
     return status;
+}
+
+template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &gfxAllocation) {
+    if (!hardwareContextController) {
+        return;
+    }
+
+    if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+        return;
+    }
+
+    if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
+        if (!gfxAllocation.isAllocDumpable()) {
+            return;
+        }
+        gfxAllocation.setAllocDumpable(false);
+    }
+
+    auto dumpFormat = AubAllocDump::getDumpFormat(gfxAllocation);
+    auto surfaceInfo = std::unique_ptr<aub_stream::SurfaceInfo>(AubAllocDump::getDumpSurfaceInfo<GfxFamily>(gfxAllocation, dumpFormat));
+    if (surfaceInfo) {
+        hardwareContextController->pollForCompletion();
+        hardwareContextController->dumpSurface(*surfaceInfo.get());
+    }
 }
 } // namespace NEO

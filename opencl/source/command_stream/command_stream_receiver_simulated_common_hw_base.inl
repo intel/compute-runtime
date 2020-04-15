@@ -91,6 +91,15 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::freeEngineInfo(AddressMa
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::makeNonResident(GraphicsAllocation &gfxAllocation) {
+    if (gfxAllocation.isResident(osContext->getContextId())) {
+        dumpAllocation(gfxAllocation);
+        this->getEvictionAllocations().push_back(&gfxAllocation);
+        gfxAllocation.releaseResidencyInOsContext(this->osContext->getContextId());
+    }
+}
+
+template <typename GfxFamily>
 uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getDeviceIndex() const {
     return osContext->getDeviceBitfield().any() ? static_cast<uint32_t>(Math::log2(static_cast<uint32_t>(osContext->getDeviceBitfield().to_ulong()))) : 0u;
 }

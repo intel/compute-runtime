@@ -56,6 +56,8 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL void submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits, bool overrideRingHead);
     void pollForCompletion() override;
 
+    void dumpAllocation(GraphicsAllocation &gfxAllocation) override;
+
     static CommandStreamReceiver *create(const std::string &baseName, bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 
     TbxCommandStreamReceiverHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);

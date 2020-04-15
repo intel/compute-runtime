@@ -55,6 +55,10 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
         TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocation(gfxAllocation);
         makeCoherentCalled = true;
     }
+    void dumpAllocation(GraphicsAllocation &gfxAllocation) override {
+        TbxCommandStreamReceiverHw<GfxFamily>::dumpAllocation(gfxAllocation);
+        dumpAllocationCalled = true;
+    }
     bool initializeEngineCalled = false;
     bool writeMemoryWithAubManagerCalled = false;
     bool writeMemoryCalled = false;
@@ -64,5 +68,6 @@ class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
     bool expectMemoryEqualCalled = false;
     bool expectMemoryNotEqualCalled = false;
     bool makeCoherentCalled = false;
+    bool dumpAllocationCalled = false;
 };
 } // namespace NEO
