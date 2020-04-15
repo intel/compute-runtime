@@ -2431,9 +2431,9 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
 
     auto compilerInterface = new MockCompilerInterface();
     auto compilerMain = new MockCIFMain();
-    compilerInterface->SetFclMain(compilerMain);
+    compilerInterface->setFclMain(compilerMain);
     compilerMain->Retain();
-    compilerInterface->SetIgcMain(compilerMain);
+    compilerInterface->setIgcMain(compilerMain);
     compilerMain->setDefaultCreatorFunc<NEO::MockIgcOclDeviceCtx>(NEO::MockIgcOclDeviceCtx::Create);
     compilerMain->setDefaultCreatorFunc<NEO::MockFclOclDeviceCtx>(NEO::MockFclOclDeviceCtx::Create);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(compilerInterface);
@@ -2466,7 +2466,7 @@ TEST_F(ProgramTests, whenRebuildingProgramThenStoreDeviceBinaryProperly) {
     auto compilerInterface = new MockCompilerInterface();
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(compilerInterface);
     auto compilerMain = new MockCIFMain();
-    compilerInterface->SetIgcMain(compilerMain);
+    compilerInterface->setIgcMain(compilerMain);
     compilerMain->setDefaultCreatorFunc<NEO::MockIgcOclDeviceCtx>(NEO::MockIgcOclDeviceCtx::Create);
 
     MockCompilerDebugVars debugVars = {};

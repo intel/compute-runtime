@@ -267,7 +267,7 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenCompileFailsGraceful
     fclDebugVars.fileName = clFiles + "copybuffer.elf";
     gEnvironment->fclPushDebugVars(fclDebugVars);
     pCompilerInterface->igcMain->Release();
-    pCompilerInterface->SetIgcMain(nullptr);
+    pCompilerInterface->setIgcMain(nullptr);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->compile(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::CompilerNotAvailable, err);
@@ -334,7 +334,7 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenLinkFailsGracefully)
     igcDebugVars.fileName = clFiles + "copybuffer.ll";
     gEnvironment->igcPushDebugVars(igcDebugVars);
     pCompilerInterface->igcMain->Release();
-    pCompilerInterface->SetIgcMain(nullptr);
+    pCompilerInterface->setIgcMain(nullptr);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->link(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::CompilerNotAvailable, err);
@@ -400,7 +400,7 @@ TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenCreateLibraryFailsGr
     igcDebugVars.fileName = clFiles + "copybuffer.ll";
     gEnvironment->igcPushDebugVars(igcDebugVars);
     pCompilerInterface->igcMain->Release();
-    pCompilerInterface->SetIgcMain(nullptr);
+    pCompilerInterface->setIgcMain(nullptr);
     TranslationOutput translationOutput = {};
     auto err = pCompilerInterface->createLibrary(*pDevice, inputArgs, translationOutput);
     EXPECT_EQ(TranslationOutput::ErrorCode::CompilerNotAvailable, err);

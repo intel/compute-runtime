@@ -77,12 +77,12 @@ class MockCompilerInterface : public CompilerInterface {
         return std::unique_lock<SpinLock>(spinlock);
     }
 
-    void SetIgcMain(CIF::CIFMain *main) {
+    void setIgcMain(CIF::CIFMain *main) {
         this->igcMain.release();
         this->igcMain.reset(main);
     }
 
-    void SetFclMain(CIF::CIFMain *main) {
+    void setFclMain(CIF::CIFMain *main) {
         this->fclMain.release();
         this->fclMain.reset(main);
     }
