@@ -18,31 +18,21 @@ namespace NEO {
 
 class OfflineCompilerTests : public ::testing::Test {
   public:
-    OfflineCompilerTests() : pOfflineCompiler(nullptr),
-                             retVal(SUCCESS) {
-        oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
-        // ctor
-    }
-
-    OfflineCompiler *pOfflineCompiler;
-    int retVal;
-    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput;
+    OfflineCompiler *pOfflineCompiler = nullptr;
+    int retVal = SUCCESS;
+    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
 };
 
 class MultiCommandTests : public ::testing::Test {
   public:
-    MultiCommandTests() : pMultiCommand(nullptr),
-                          retVal(SUCCESS) {
-        oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
-    }
     void createFileWithArgs(const std::vector<std::string> &, int numOfBuild);
     void deleteFileWithArgs();
     void deleteOutFileList();
     MultiCommand *pMultiCommand = nullptr;
     std::string nameOfFileWithArgs;
     std::string outFileList;
-    int retVal;
-    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput;
+    int retVal = SUCCESS;
+    std::unique_ptr<OclocArgHelper> oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
 };
 
 void MultiCommandTests::createFileWithArgs(const std::vector<std::string> &singleArgs, int numOfBuild) {

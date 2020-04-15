@@ -17,11 +17,6 @@
 using namespace NEO;
 
 class KernelArgSvmFixture : public ApiFixture<>, public DeviceFixture {
-  public:
-    KernelArgSvmFixture()
-        : pCrossThreadData{0} {
-    }
-
   protected:
     void SetUp() override {
         ApiFixture::SetUp();
@@ -64,9 +59,9 @@ class KernelArgSvmFixture : public ApiFixture<>, public DeviceFixture {
     cl_int retVal = CL_SUCCESS;
     MockKernel *pMockKernel = nullptr;
     std::unique_ptr<KernelInfo> pKernelInfo;
-    SKernelBinaryHeaderCommon kernelHeader;
-    char pSshLocal[64];
-    char pCrossThreadData[64];
+    SKernelBinaryHeaderCommon kernelHeader{};
+    char pSshLocal[64]{};
+    char pCrossThreadData[64]{};
 };
 
 typedef Test<KernelArgSvmFixture> clSetKernelArgSVMPointerTests;
