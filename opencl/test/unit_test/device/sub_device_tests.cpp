@@ -10,6 +10,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/unit_test/mocks/ult_device_factory.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -248,4 +249,16 @@ TEST(RootDevicesTest, givenRootDeviceWithSubdevicesWhenCreateEnginesThenDeviceCr
     EXPECT_EQ(0u, device.engines.size());
     device.createEngines();
     EXPECT_EQ(1u, device.engines.size());
+}
+
+TEST(SubDevicesTest, givenRootDeviceWithSubDevicesWhenGettingGlobalMemorySizeThenSubDevicesReturnReducedAmountOfGlobalMemAllocSize) {
+    const uint32_t numSubDevices = 2u;
+    UltDeviceFactory deviceFactory{1, numSubDevices};
+
+    auto totalGlobalMemorySize = deviceFactory.rootDevices[0]->getGlobalMemorySize();
+    auto expectedGlobalMemorySize = totalGlobalMemorySize / numSubDevices;
+
+    for (const auto &subDevice : deviceFactory.subDevices) {
+        EXPECT_EQ(expectedGlobalMemorySize, static_cast<MockSubDevice *>(subDevice)->getGlobalMemorySize());
+    }
 }

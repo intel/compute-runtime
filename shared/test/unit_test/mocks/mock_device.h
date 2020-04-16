@@ -26,6 +26,7 @@ class UltCommandStreamReceiver;
 extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
 
 struct MockSubDevice : public SubDevice {
+    using SubDevice::getGlobalMemorySize;
     using SubDevice::SubDevice;
 
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const override {
@@ -42,6 +43,7 @@ class MockDevice : public RootDevice {
     using Device::deviceInfo;
     using Device::engines;
     using Device::executionEnvironment;
+    using Device::getGlobalMemorySize;
     using Device::initializeCaps;
     using RootDevice::createEngines;
     using RootDevice::subdevices;

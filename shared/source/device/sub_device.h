@@ -24,6 +24,7 @@ class SubDevice : public Device {
 
   protected:
     DeviceBitfield getDeviceBitfield() const override;
+    uint64_t getGlobalMemorySize() const override;
     const uint32_t subDeviceIndex;
     RootDevice &rootDevice;
 };

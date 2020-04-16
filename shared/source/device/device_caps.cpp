@@ -50,11 +50,7 @@ void Device::initializeCaps() {
 
     deviceInfo.globalMemCachelineSize = 64;
 
-    deviceInfo.globalMemSize = getMemoryManager()->isLocalMemorySupported(this->getRootDeviceIndex())
-                                   ? getMemoryManager()->getLocalMemorySize(this->getRootDeviceIndex())
-                                   : getMemoryManager()->getSystemSharedMemory(this->getRootDeviceIndex());
-    deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, getMemoryManager()->getMaxApplicationAddress() + 1);
-    deviceInfo.globalMemSize = static_cast<uint64_t>(static_cast<double>(deviceInfo.globalMemSize) * 0.8);
+    deviceInfo.globalMemSize = getGlobalMemorySize();
 
     if (DebugManager.flags.Force32bitAddressing.get() || addressing32bitAllowed || is32bit) {
         deviceInfo.globalMemSize = std::min(deviceInfo.globalMemSize, static_cast<uint64_t>(4 * GB * 0.8));

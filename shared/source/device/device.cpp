@@ -227,4 +227,14 @@ GmmClientContext *Device::getGmmClientContext() const {
     return getGmmHelper()->getClientContext();
 }
 
+uint64_t Device::getGlobalMemorySize() const {
+
+    auto globalMemorySize = getMemoryManager()->isLocalMemorySupported(this->getRootDeviceIndex())
+                                ? getMemoryManager()->getLocalMemorySize(this->getRootDeviceIndex())
+                                : getMemoryManager()->getSystemSharedMemory(this->getRootDeviceIndex());
+    globalMemorySize = std::min(globalMemorySize, getMemoryManager()->getMaxApplicationAddress() + 1);
+    globalMemorySize = static_cast<uint64_t>(static_cast<double>(globalMemorySize) * 0.8);
+    return globalMemorySize;
+}
+
 } // namespace NEO
