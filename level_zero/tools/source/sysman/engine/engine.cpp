@@ -19,12 +19,27 @@ EngineHandleContext::~EngineHandleContext() {
 
 ze_result_t EngineHandleContext::init() {
     Engine *pEngine = new EngineImp(pOsSysman);
-    handleList.push_back(pEngine);
+    if (pEngine->initSuccess == true) {
+        handleList.push_back(pEngine);
+    } else {
+        delete pEngine;
+    }
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t EngineHandleContext::engineGet(uint32_t *pCount, zet_sysman_engine_handle_t *phEngine) {
-    *pCount = 0;
+    if (nullptr == phEngine) {
+        *pCount = static_cast<uint32_t>(handleList.size());
+        return ZE_RESULT_SUCCESS;
+    }
+    uint32_t i = 0;
+    for (Engine *engine : handleList) {
+        if (i >= *pCount) {
+            break;
+        }
+        phEngine[i++] = engine->toHandle();
+    }
+    *pCount = i;
     return ZE_RESULT_SUCCESS;
 }
 

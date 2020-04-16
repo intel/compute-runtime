@@ -12,7 +12,6 @@
 #include "level_zero/tools/source/sysman/engine/engine.h"
 #include "level_zero/tools/source/sysman/engine/os_engine.h"
 #include <level_zero/zet_api.h>
-
 namespace L0 {
 class EngineImp : public NEO::NonCopyableClass, public Engine {
   public:

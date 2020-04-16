@@ -12,12 +12,16 @@ namespace L0 {
 class WddmEngineImp : public OsEngine {
   public:
     ze_result_t getActiveTime(uint64_t &activeTime) override;
+    ze_result_t getEngineGroup(zet_engine_group_t &engineGroup) override;
 };
 
 ze_result_t WddmEngineImp::getActiveTime(uint64_t &activeTime) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t WddmEngineImp::getEngineGroup(zet_engine_group_t &engineGroup) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
 OsEngine *OsEngine::create(OsSysman *pOsSysman) {
     WddmEngineImp *pWddmEngineImp = new WddmEngineImp();
     return static_cast<OsEngine *>(pWddmEngineImp);

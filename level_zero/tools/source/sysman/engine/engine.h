@@ -27,6 +27,7 @@ class Engine : _zet_sysman_engine_handle_t {
         return static_cast<Engine *>(handle);
     }
     inline zet_sysman_engine_handle_t toHandle() { return this; }
+    bool initSuccess = false;
 };
 
 struct EngineHandleContext {
@@ -37,9 +38,8 @@ struct EngineHandleContext {
 
     ze_result_t engineGet(uint32_t *pCount, zet_sysman_engine_handle_t *phEngine);
 
-    OsSysman *pOsSysman;
+    OsSysman *pOsSysman = nullptr;
     std::vector<Engine *> handleList;
-    ze_device_handle_t hCoreDevice;
 };
 
 } // namespace L0
