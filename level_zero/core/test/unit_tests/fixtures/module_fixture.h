@@ -18,7 +18,7 @@ namespace L0 {
 namespace ult {
 
 struct ModuleFixture : public DeviceFixture {
-    void SetUp() {
+    void SetUp() override {
         DeviceFixture::SetUp();
         createModuleFromBinary();
     }
@@ -54,7 +54,7 @@ struct ModuleFixture : public DeviceFixture {
         kernel->initialize(&desc);
     }
 
-    void TearDown() {
+    void TearDown() override {
         DeviceFixture::TearDown();
     }
 
