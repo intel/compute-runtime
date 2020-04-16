@@ -2195,6 +2195,26 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrAndSizeIsAlign
     alignedFree(ptr);
 }
 
+HWTEST_F(BufferSetSurfaceTests, givenDebugVariableToDisableCachingForStatefulBufferThenL3CacheShouldBeOff) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.DisableCachingForStatefulBufferAccess.set(true);
+
+    auto size = MemoryConstants::pageSize;
+    auto ptr = (void *)alignedMalloc(size * 2, MemoryConstants::pageSize);
+
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    RENDER_SURFACE_STATE surfaceState = {};
+
+    Buffer::setSurfaceState(device.get(), &surfaceState, size, ptr, 0, nullptr, 0, 0);
+
+    auto mocs = surfaceState.getMemoryObjectControlState();
+    auto gmmHelper = device->getGmmHelper();
+    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
+
+    alignedFree(ptr);
+    DebugManager.flags.DisableCachingForStatefulBufferAccess.set(false);
+}
+
 HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsUnalignedToCachelineThenL3CacheShouldBeOff) {
 
     auto size = MemoryConstants::pageSize;

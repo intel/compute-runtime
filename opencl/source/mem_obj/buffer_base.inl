@@ -86,7 +86,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
 
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     if (DebugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
-        gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+        surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
 }
 
