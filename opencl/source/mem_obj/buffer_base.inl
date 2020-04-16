@@ -6,7 +6,9 @@
  */
 
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
@@ -81,6 +83,11 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
 
     appendBufferState(memory, context, getGraphicsAllocation(), isReadOnlyArgument);
     appendSurfaceStateExt(memory);
+
+    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    if (DebugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
+        gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    }
 }
 
 } // namespace NEO
