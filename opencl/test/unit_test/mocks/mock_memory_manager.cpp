@@ -37,6 +37,7 @@ void *MockMemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
 }
 
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
+    recentlyPassedDeviceBitfield = properties.subDevicesBitfield;
     AllocationProperties adjustedProperties(properties);
     adjustedProperties.size = redundancyRatio * properties.size;
     return OsAgnosticMemoryManager::allocateGraphicsMemoryWithProperties(adjustedProperties);

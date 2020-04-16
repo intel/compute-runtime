@@ -41,7 +41,11 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         return svmAllocManager->getSVMAlloc(ptr)->gpuAllocation;
     } else {
         auto allocationType = constant ? GraphicsAllocation::AllocationType::CONSTANT_SURFACE : GraphicsAllocation::AllocationType::GLOBAL_SURFACE;
-        auto gpuAlloc = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(), size, allocationType});
+        auto gpuAlloc = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(),
+                                                                                         true, // allocateMemory
+                                                                                         size, allocationType,
+                                                                                         false, // isMultiStorageAllocation
+                                                                                         device.getDeviceBitfield()});
         DEBUG_BREAK_IF(gpuAlloc == nullptr);
         if (gpuAlloc == nullptr) {
             return nullptr;

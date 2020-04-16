@@ -182,6 +182,20 @@ TEST_F(ProgramDataTest, AllocateConstantMemorySurfaceProgramBinaryInfo) {
     EXPECT_EQ(0, memcmp(constValue, pProgram->getConstantSurface()->getUnderlyingBuffer(), constSize));
 }
 
+TEST_F(ProgramDataTest, givenProgramWhenAllocatingConstantMemorySurfaceThenProperDeviceBitfieldIsPassed) {
+    auto executionEnvironment = pProgram->getDevice().getExecutionEnvironment();
+    auto memoryManager = new MockMemoryManager(*executionEnvironment);
+
+    std::unique_ptr<MemoryManager> memoryManagerBackup(memoryManager);
+    std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
+    EXPECT_NE(pProgram->getDevice().getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
+    setupConstantAllocation();
+    buildAndDecodeProgramPatchList();
+    EXPECT_NE(nullptr, pProgram->getConstantSurface());
+    EXPECT_EQ(pProgram->getDevice().getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
+    std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
+}
+
 TEST_F(ProgramDataTest, whenGlobalConstantsAreExportedThenAllocateSurfacesAsSvm) {
     if (this->pContext->getSVMAllocsManager() == nullptr) {
         return;
@@ -353,6 +367,20 @@ TEST_F(ProgramDataTest, AllocateGlobalMemorySurfaceProgramBinaryInfo) {
     buildAndDecodeProgramPatchList();
     EXPECT_NE(nullptr, pProgram->getGlobalSurface());
     EXPECT_EQ(0, memcmp(globalValue, pProgram->getGlobalSurface()->getUnderlyingBuffer(), globalSize));
+}
+TEST_F(ProgramDataTest, givenProgramWhenAllocatingGlobalMemorySurfaceThenProperDeviceBitfieldIsPassed) {
+    auto executionEnvironment = pProgram->getDevice().getExecutionEnvironment();
+    auto memoryManager = new MockMemoryManager(*executionEnvironment);
+
+    std::unique_ptr<MemoryManager> memoryManagerBackup(memoryManager);
+    std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
+    EXPECT_NE(pProgram->getDevice().getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
+
+    setupGlobalAllocation();
+    buildAndDecodeProgramPatchList();
+    EXPECT_NE(nullptr, pProgram->getGlobalSurface());
+    EXPECT_EQ(pProgram->getDevice().getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
+    std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
 }
 
 TEST_F(ProgramDataTest, Given32BitDeviceWhenGlobalMemorySurfaceIsPresentThenItHas32BitStorage) {
