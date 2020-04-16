@@ -5,7 +5,10 @@
  *
  */
 
+#include "shared/source/program/sync_buffer_handler.h"
+#include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/command_stream/aub_subcapture.h"
 #include "opencl/source/event/user_event.h"
@@ -523,6 +526,76 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadyse
     EXPECT_EQ(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(getNewKernelArbitrationPolicy(euThreadSetting)), pDevice->getUltCommandStreamReceiver<FamilyType>().requiredThreadArbitrationPolicy);
 
     mockCmdQ->release();
+}
+
+HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSshIsCorrectlyProgrammed) {
+    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    struct MockSyncBufferHandler : SyncBufferHandler {
+        using SyncBufferHandler::graphicsAllocation;
+    };
+
+    SPatchAllocateSyncBuffer sPatchAllocateSyncBuffer{};
+    sPatchAllocateSyncBuffer.SurfaceStateHeapOffset = 0;
+    sPatchAllocateSyncBuffer.DataParamOffset = 0;
+    sPatchAllocateSyncBuffer.DataParamSize = sizeof(uint8_t);
+
+    SPatchBindingTableState sPatchBindingTableState{};
+    sPatchBindingTableState.Offset = sizeof(RENDER_SURFACE_STATE);
+    sPatchBindingTableState.Count = 1;
+    sPatchBindingTableState.SurfaceStateOffset = 0;
+
+    SKernelBinaryHeaderCommon sKernelBinaryHeader{};
+    sKernelBinaryHeader.SurfaceStateHeapSize = sizeof(RENDER_SURFACE_STATE) + sizeof(BINDING_TABLE_STATE);
+
+    pClDevice->allocateSyncBufferHandler();
+
+    size_t offset = 0;
+    size_t size = 1;
+
+    size_t sshUsageWithoutSyncBuffer;
+
+    {
+        MockKernelWithInternals kernelInternals{*pClDevice, context};
+        kernelInternals.kernelInfo.usesSsh = true;
+        kernelInternals.kernelInfo.requiresSshForBuffers = true;
+        auto kernel = kernelInternals.mockKernel;
+        kernel->initialize();
+
+        auto mockCmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
+        mockCmdQ->enqueueKernel(kernel, 1, &offset, &size, &size, 0, nullptr, nullptr);
+
+        sshUsageWithoutSyncBuffer = mockCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getUsed();
+    }
+
+    {
+        MockKernelWithInternals kernelInternals{*pClDevice, context};
+        kernelInternals.kernelInfo.usesSsh = true;
+        kernelInternals.kernelInfo.requiresSshForBuffers = true;
+        kernelInternals.kernelInfo.patchInfo.pAllocateSyncBuffer = &sPatchAllocateSyncBuffer;
+        kernelInternals.kernelInfo.patchInfo.bindingTableState = &sPatchBindingTableState;
+        kernelInternals.kernelInfo.heapInfo.pKernelHeader = &sKernelBinaryHeader;
+        auto kernel = kernelInternals.mockKernel;
+        kernel->initialize();
+
+        auto bindingTableState = reinterpret_cast<BINDING_TABLE_STATE *>(
+            ptrOffset(kernel->getSurfaceStateHeap(), sPatchBindingTableState.Offset));
+        bindingTableState->setSurfaceStatePointer(0);
+
+        auto mockCmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
+        mockCmdQ->enqueueKernel(kernel, 1, &offset, &size, &size, 0, nullptr, nullptr);
+
+        auto &surfaceStateHeap = mockCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0);
+        EXPECT_EQ(sshUsageWithoutSyncBuffer + sKernelBinaryHeader.SurfaceStateHeapSize, surfaceStateHeap.getUsed());
+
+        HardwareParse hwParser;
+        hwParser.parseCommands<FamilyType>(*mockCmdQ);
+
+        auto &surfaceState = hwParser.getSurfaceState<FamilyType>(&surfaceStateHeap, 0);
+        auto pSyncBufferHandler = static_cast<MockSyncBufferHandler *>(pClDevice->syncBufferHandler.get());
+        EXPECT_EQ(pSyncBufferHandler->graphicsAllocation->getGpuAddress(), surfaceState.getSurfaceBaseAddress());
+    }
 }
 
 struct EnqueueHandlerTestBasic : public ::testing::Test {

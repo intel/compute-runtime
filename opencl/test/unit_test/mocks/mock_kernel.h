@@ -40,6 +40,7 @@ class MockKernel : public Kernel {
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::kernelUnifiedMemoryGfxAllocations;
     using Kernel::numberOfBindingTableStates;
+    using Kernel::sshLocalSize;
     using Kernel::svmAllocationsRequireCacheFlush;
     using Kernel::threadArbitrationPolicy;
     using Kernel::unifiedMemoryControls;
