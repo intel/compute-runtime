@@ -13,7 +13,7 @@
 
 using NEO::Hash;
 
-TEST(CreateCombinedStrings, singleString) {
+TEST(CreateCombinedStrings, GivenSingleStringWhenCreatingCombinedStringThenDstStringMatchesSrcString) {
     std::string dstString;
     size_t dstStringSizeInBytes = 0;
     const char srcString[] = "HelloWorld";
@@ -34,7 +34,7 @@ TEST(CreateCombinedStrings, singleString) {
     EXPECT_EQ(0, strcmp(srcString, dstString.c_str()));
 }
 
-TEST(CreateCombinedStrings, SingleStringWithNullLengthNoCrash) {
+TEST(CreateCombinedStrings, GivenNullLengthWhenCreatingCombinedStringThenDstStringIsCreatedCorrectly) {
     std::string dstString;
     size_t dstStringSizeInBytes = 0;
     const char srcString[] = "HelloWorld";
@@ -52,7 +52,7 @@ TEST(CreateCombinedStrings, SingleStringWithNullLengthNoCrash) {
     EXPECT_EQ(0, strcmp(srcString, dstString.c_str()));
 }
 
-TEST(CreateCombinedStrings, SingleStringWithZeroLengthNoCrash) {
+TEST(CreateCombinedStrings, GivenZeroLengthWhenCreatingCombinedStringThenDstStringIsCreatedCorrectly) {
     std::string dstString;
     size_t dstStringSizeInBytes = 0;
     const char srcString[] = "HelloWorld";
@@ -71,7 +71,7 @@ TEST(CreateCombinedStrings, SingleStringWithZeroLengthNoCrash) {
     EXPECT_EQ(0, strcmp(srcString, dstString.c_str()));
 }
 
-TEST(CreateCombinedStrings, multiString) {
+TEST(CreateCombinedStrings, GivenMultiStringWhenCreatingCombinedStringThenDstStringIsConcatenationOfSrcStrings) {
     std::string dstString;
     size_t dstStringSizeInBytes = 0;
     const char *srcString[] = {"HelloWorld", "dlroWolleH"};
@@ -92,7 +92,7 @@ TEST(CreateCombinedStrings, multiString) {
     EXPECT_EQ(0, strcmp(combined.c_str(), dstString.c_str()));
 }
 
-TEST(CreateCombinedStrings, multiStringWithNullLengthNoCrash) {
+TEST(CreateCombinedStrings, GivenMultiStringAndNullLengthWhenCreatingCombinedStringThenDstStringIsConcatenationOfSrcStrings) {
     std::string dstString;
     size_t dstStringSizeInBytes = 0;
     const char *srcString[] = {"HelloWorld", "dlroWolleH"};
@@ -111,7 +111,7 @@ TEST(CreateCombinedStrings, multiStringWithNullLengthNoCrash) {
     EXPECT_EQ(0, strcmp(combined.c_str(), dstString.c_str()));
 }
 
-TEST(CreateCombinedStrings, multiStringWithZeroLengthNoCrash) {
+TEST(CreateCombinedStrings, GivenMultiStringAndZeroLengthWhenCreatingCombinedStringThenDstStringIsConcatenationOfSrcStrings) {
     std::string dstString;
     size_t dstStringSizeInBytes = 0;
     const char *srcString[] = {"HelloWorld", "dlroWolleH"};
@@ -131,7 +131,7 @@ TEST(CreateCombinedStrings, multiStringWithZeroLengthNoCrash) {
     EXPECT_EQ(0, strcmp(combined.c_str(), dstString.c_str()));
 }
 
-TEST(CreateCombinedStrings, GivenMultipleStringWhichOneContainsAndErrorAndSizeThatForcesDriverToOmitTheErorrThenProgramSourceDoesntContainErrorString) {
+TEST(CreateCombinedStrings, GivenMultipleStringsIncludingOneWithErrorWhenCreatingCombinedStringThenErrorIsOmittedInDstString) {
     std::string dstString;
     size_t dstStringSizeInBytes = 0;
     const char *srcString[] = {"HelloWorld", "dlroWolleHBABA"};
@@ -151,7 +151,7 @@ TEST(CreateCombinedStrings, GivenMultipleStringWhichOneContainsAndErrorAndSizeTh
     EXPECT_EQ(0, strcmp(combined.c_str(), dstString.c_str()));
 }
 
-TEST(CreateCombinedStrings, negativeScenarios) {
+TEST(CreateCombinedStrings, GivenInvalidInputWhenCreatingCombinedStringThenInvalidValueErrorIsReturned) {
     std::string dstString;
     size_t dstStringSizeInBytes = 0;
     const char *srcString[] = {"HelloWorld", "dlroWolleH"};
@@ -186,7 +186,7 @@ TEST(CreateCombinedStrings, negativeScenarios) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST(CreateCombinedStrings, GivenMultipleStringThatCountIsHigherThenMaximalStackSizeSizesWhenAskedForCombinedThenProperStringIsRetruned) {
+TEST(CreateCombinedStrings, GivenMultipleStringThatCountIsHigherThanMaximalStackSizeSizesWhenCreatingCombinedStringThenCorrectStringIsReturned) {
     std::string dstString;
     size_t dstStringSizeInBytes = 0;
     const char *defaultString = "hello";
@@ -208,7 +208,7 @@ TEST(CreateCombinedStrings, GivenMultipleStringThatCountIsHigherThenMaximalStack
     EXPECT_EQ(0, strcmp(combinedString.c_str(), dstString.c_str()));
 }
 
-TEST(CreateHash, HashBuffers) {
+TEST(CreateHash, WhenGettingHashesThenHashesAreDeterministicAndDoNotCollide) {
     char pBuffer[128];
     memset(pBuffer, 0x23, sizeof(pBuffer));
 
@@ -225,7 +225,7 @@ TEST(CreateHash, HashBuffers) {
     EXPECT_NE(hash2, hash3);
 }
 
-TEST(CreateHash, unalignedLengths) {
+TEST(CreateHash, WhenGettingHashThenChangesPastLengthDoNotAffectOutput) {
     char pBuffer[] = {
         0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55, 0x55};
 
