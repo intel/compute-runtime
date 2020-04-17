@@ -1021,17 +1021,22 @@ cl_int Kernel::setKernelExecutionType(cl_execution_info_kernel_type_intel execut
 void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *globalWorkSize, const size_t *globalWorkOffset,
                                        size_t *localWorkSize) {
     UNRECOVERABLE_IF((workDim == 0) || (workDim > 3));
-    UNRECOVERABLE_IF(globalWorkOffset == nullptr);
     UNRECOVERABLE_IF(globalWorkSize == nullptr);
     Vec3<size_t> elws{0, 0, 0};
     Vec3<size_t> gws{
         globalWorkSize[0],
         (workDim > 1) ? globalWorkSize[1] : 0,
         (workDim > 2) ? globalWorkSize[2] : 0};
-    Vec3<size_t> offset{
-        globalWorkOffset[0],
-        (workDim > 1) ? globalWorkOffset[1] : 0,
-        (workDim > 2) ? globalWorkOffset[2] : 0};
+    Vec3<size_t> offset{0, 0, 0};
+    if (globalWorkOffset) {
+        offset.x = globalWorkOffset[0];
+        if (workDim > 1) {
+            offset.y = globalWorkOffset[1];
+            if (workDim > 2) {
+                offset.z = globalWorkOffset[2];
+            }
+        }
+    }
 
     const DispatchInfo dispatchInfo{this, workDim, gws, elws, offset};
     auto suggestedLws = computeWorkgroupSize(dispatchInfo);

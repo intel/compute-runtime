@@ -50,10 +50,6 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenInvalidInputWhenCallingGetKe
     EXPECT_EQ(CL_INVALID_WORK_DIMENSION, retVal);
 
     retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, workDim,
-                                                    nullptr, globalWorkSize, suggestedLocalWorkSize);
-    EXPECT_EQ(CL_INVALID_GLOBAL_OFFSET, retVal);
-
-    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, workDim,
                                                     globalWorkOffset, nullptr, suggestedLocalWorkSize);
     EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, retVal);
 }
@@ -87,6 +83,13 @@ TEST_F(clGetKernelSuggestedLocalWorkSizeTests, GivenVariousInputWhenGettingSugge
     dispatchInfo.setDim(3);
     expectedLws = computeWorkgroupSize(dispatchInfo);
     retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, 3, globalWorkOffset, globalWorkSize, suggestedLocalWorkSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(expectedLws.x, suggestedLocalWorkSize[0]);
+    EXPECT_EQ(expectedLws.y, suggestedLocalWorkSize[1]);
+    EXPECT_EQ(expectedLws.z, suggestedLocalWorkSize[2]);
+
+    //null global work offset is fine
+    retVal = clGetKernelSuggestedLocalWorkSizeINTEL(pCommandQueue, pKernel, 3, nullptr, globalWorkSize, suggestedLocalWorkSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(expectedLws.x, suggestedLocalWorkSize[0]);
     EXPECT_EQ(expectedLws.y, suggestedLocalWorkSize[1]);
