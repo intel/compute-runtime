@@ -156,6 +156,18 @@ HWTEST_F(TimestampPacketTests, givenDebugModeWhereAtomicsAreNotEmittedWhenComman
     EXPECT_FALSE(tag.isCompleted());
 }
 
+HWTEST_F(TimestampPacketTests, givenDebugModeWhereAtomicsAreNotEmittedWhenInitializingTagThenDontResetDependenciesCount) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DisableAtomicForPostSyncs.set(true);
+
+    TimestampPacketStorage tag;
+
+    tag.incImplicitDependenciesCount();
+    auto currentValue = tag.implicitDependenciesCount.load();
+    tag.initialize();
+    EXPECT_EQ(currentValue, tag.implicitDependenciesCount.load());
+}
+
 HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreAndAtomicAreProgrammedThenUseGpuAddress) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;

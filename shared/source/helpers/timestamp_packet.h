@@ -64,8 +64,11 @@ struct TimestampPacketStorage {
             packet.contextEnd = 1u;
             packet.globalEnd = 1u;
         }
-        implicitDependenciesCount.store(0);
         packetsUsed = 1;
+
+        if (!DebugManager.flags.DisableAtomicForPostSyncs.get()) {
+            implicitDependenciesCount.store(0);
+        }
     }
 
     void incImplicitDependenciesCount() { implicitDependenciesCount++; }
