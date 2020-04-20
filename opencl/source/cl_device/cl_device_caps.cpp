@@ -230,7 +230,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.nativeVectorWidthFloat = 1;
     deviceInfo.nativeVectorWidthDouble = 1;
     deviceInfo.nativeVectorWidthHalf = 8;
-    deviceInfo.maxReadWriteImageArgs = 128;
+    deviceInfo.maxReadWriteImageArgs = enabledClVersion >= 20 ? 128 : 0;
     deviceInfo.executionCapabilities = CL_EXEC_KERNEL;
 
     //copy system info to prevent misaligned reads

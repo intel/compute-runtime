@@ -97,7 +97,11 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
 
     EXPECT_LE(128u, sharedCaps.maxReadImageArgs);
     EXPECT_LE(128u, sharedCaps.maxWriteImageArgs);
-    EXPECT_EQ(128u, caps.maxReadWriteImageArgs);
+    if (device->getEnabledClVersion() >= 20) {
+        EXPECT_EQ(128u, caps.maxReadWriteImageArgs);
+    } else {
+        EXPECT_EQ(0u, caps.maxReadWriteImageArgs);
+    }
 
     EXPECT_LE(sharedCaps.maxReadImageArgs * sizeof(cl_mem), sharedCaps.maxParameterSize);
     EXPECT_LE(sharedCaps.maxWriteImageArgs * sizeof(cl_mem), sharedCaps.maxParameterSize);

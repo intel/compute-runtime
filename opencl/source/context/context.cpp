@@ -289,6 +289,14 @@ cl_int Context::getSupportedImageFormats(
     cl_image_format *imageFormats,
     cl_uint *numImageFormatsReturned) {
     size_t numImageFormats = 0;
+
+    if (flags & CL_MEM_KERNEL_READ_AND_WRITE && device->getSpecializedDevice<ClDevice>()->getEnabledClVersion() < 20) {
+        if (numImageFormatsReturned) {
+            *numImageFormatsReturned = static_cast<cl_uint>(numImageFormats);
+        }
+        return CL_SUCCESS;
+    }
+
     const bool nv12ExtensionEnabled = device->getSpecializedDevice<ClDevice>()->getDeviceInfo().nv12Extension;
     const bool packedYuvExtensionEnabled = device->getSpecializedDevice<ClDevice>()->getDeviceInfo().packedYuvExtension;
 

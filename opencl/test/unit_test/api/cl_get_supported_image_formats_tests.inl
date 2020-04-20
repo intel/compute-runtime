@@ -74,6 +74,32 @@ TEST(clGetSupportedImageFormatsTest, givenPlatforNotSupportingImageWhenGettingSu
     EXPECT_EQ(0u, numImageFormats);
 }
 
+TEST(clGetSupportedImageFormatsTest, givenPlatformNotSupportingReadWriteImagesWhenGettingSupportedImageFormatsThenCLSuccessIsReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.supportsImages = true;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    cl_device_id clDevice = device.get();
+    cl_int retVal;
+    auto context = ReleaseableObjectPtr<Context>(Context::create<Context>(nullptr, ClDeviceVector(&clDevice, 1), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_uint numImageFormats = 0;
+    retVal = clGetSupportedImageFormats(
+        context.get(),
+        CL_MEM_KERNEL_READ_AND_WRITE,
+        CL_MEM_OBJECT_IMAGE2D,
+        0,
+        nullptr,
+        &numImageFormats);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    if (context->getDevice(0)->getEnabledClVersion() >= 20) {
+        EXPECT_GT(numImageFormats, 0u);
+    } else {
+        EXPECT_EQ(0u, numImageFormats);
+    }
+}
+
 TEST(clGetSupportedImageFormatsTest, givenPlatforNotSupportingImageAndNullPointerToNumFormatsWhenGettingSupportImageFormatsThenCLSuccessReturned) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = false;

@@ -91,6 +91,15 @@ TEST_P(GetSupportedImageFormatsTest, retrieveImageFormats) {
         EXPECT_NE(0u, imageFormatList[entry].image_channel_data_type);
     }
 
+    retVal = pContext->getSupportedImageFormats(
+        &castToObject<ClDevice>(devices[0])->getDevice(),
+        CL_MEM_KERNEL_READ_AND_WRITE,
+        imageFormats,
+        numImageFormats,
+        imageFormatList,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
     delete[] imageFormatList;
 }
 
