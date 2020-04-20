@@ -21,7 +21,7 @@
 
 using namespace NEO;
 
-TEST(CommandTest, mapUnmapSubmitWithoutTerminateFlagFlushesCsr) {
+TEST(CommandTest, GivenNoTerminateFlagWhenSubmittingMapUnmapThenCsrIsFlushed) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
     MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
@@ -38,7 +38,7 @@ TEST(CommandTest, mapUnmapSubmitWithoutTerminateFlagFlushesCsr) {
     EXPECT_EQ(expectedTaskCount, completionStamp.taskCount);
 }
 
-TEST(CommandTest, mapUnmapSubmitWithTerminateFlagAbortsFlush) {
+TEST(CommandTest, GivenTerminateFlagWhenSubmittingMapUnmapThenFlushIsAborted) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
     MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
@@ -58,7 +58,7 @@ TEST(CommandTest, mapUnmapSubmitWithTerminateFlagAbortsFlush) {
     EXPECT_EQ(expectedTaskCount, completionStamp.taskCount);
 }
 
-TEST(CommandTest, markerSubmitWithoutTerminateFlagDosntFlushCsr) {
+TEST(CommandTest, GivenNoTerminateFlagWhenSubmittingMarkerThenCsrIsNotFlushed) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
     MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
@@ -72,7 +72,7 @@ TEST(CommandTest, markerSubmitWithoutTerminateFlagDosntFlushCsr) {
     EXPECT_EQ(initialTaskCount, csr.peekTaskCount());
 }
 
-TEST(CommandTest, markerSubmitWithTerminateFlagAbortsFlush) {
+TEST(CommandTest, GivenTerminateFlagWhenSubmittingMarkerThenFlushIsAborted) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
     MockCommandStreamReceiver csr(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
