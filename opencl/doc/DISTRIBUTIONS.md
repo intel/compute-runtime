@@ -74,14 +74,14 @@ ipoldek install intel-gmmlib intel-graphics-compiler intel-compute-runtime
 
 ```
 add-apt-repository ppa:intel-opencl/intel-opencl
-apt-get update
-apt-get install intel-opencl-icd
+apt update
+apt install intel-opencl-icd
 ```
 
 ## Ubuntu* 19.10, 20.04
 
 ```
-apt-get install intel-opencl-icd
+apt install intel-opencl-icd
 ```
 
 ## Building and installation

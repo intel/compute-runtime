@@ -34,8 +34,8 @@ zypper install level-zero intel-level-zero-gpu
 
 ```
 add-apt-repository ppa:intel-opencl/intel-opencl
-apt-get update
-apt-get install libze-loader libze-intel-gpu
+apt update
+apt install libze-loader libze-intel-gpu
 ```
 
 ## Building and installation
