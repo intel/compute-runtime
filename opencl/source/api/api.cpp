@@ -1467,7 +1467,11 @@ cl_int CL_API_CALL clBuildProgram(cl_program program,
     auto pProgram = castToObject<Program>(program);
 
     if (pProgram) {
-        retVal = pProgram->build(numDevices, deviceList, options, funcNotify, userData, clCacheEnabled);
+        if (pProgram->getBuildStatus() == CL_BUILD_SUCCESS) {
+            retVal = CL_INVALID_OPERATION;
+        } else {
+            retVal = pProgram->build(numDevices, deviceList, options, funcNotify, userData, clCacheEnabled);
+        }
     }
 
     TRACING_EXIT(clBuildProgram, &retVal);

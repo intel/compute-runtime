@@ -118,7 +118,7 @@ TEST_F(clCreateProgramWithILKHRTests, GivenCorrectParametersWhenCreatingProgramW
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateProgramWithILKHRTests, GivenProgramCreatedWithILWhenBuildAfterBuildIsCalledThenReturnSuccess) {
+TEST_F(clCreateProgramWithILKHRTests, GivenProgramCreatedWithILWhenBuildAfterBuildIsCalledThenReturnInvalidOperation) {
     const uint32_t spirv[16] = {0x03022307};
     cl_int err = CL_INVALID_VALUE;
     cl_program program = clCreateProgramWithIL(pContext, spirv, sizeof(spirv), &err);
@@ -127,7 +127,7 @@ TEST_F(clCreateProgramWithILKHRTests, GivenProgramCreatedWithILWhenBuildAfterBui
     err = clBuildProgram(program, 0, nullptr, "", nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, err);
     err = clBuildProgram(program, 0, nullptr, "", nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, err);
+    EXPECT_EQ(CL_INVALID_OPERATION, err);
     retVal = clReleaseProgram(program);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
