@@ -1740,6 +1740,57 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenDstHostPtrAndSrcHostPtrBlockingEnqueueSV
     EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
 }
 
+HWTEST_TEMPLATED_F(BcsBufferTests, givenSvmToSvmCopyWhenEnqueueSVMMemcpyThenSvmMemcpyCommandIsCalledAndBcs) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
+
+    auto pDstSVM = bcsMockContext->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {});
+    auto pSrcSVM = bcsMockContext->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {});
+
+    cmdQ->enqueueSVMMemcpy(false, pDstSVM, pSrcSVM, 256, 0, nullptr, nullptr);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(commandQueue->getBcsCommandStreamReceiver()->getCS(0));
+    auto commandItor = find<XY_COPY_BLT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_NE(hwParser.cmdList.end(), commandItor);
+    auto copyBltCmd = genCmdCast<XY_COPY_BLT *>(*commandItor);
+
+    EXPECT_EQ(pSrcSVM, reinterpret_cast<void *>(copyBltCmd->getSourceBaseAddress()));
+    EXPECT_EQ(pDstSVM, reinterpret_cast<void *>(copyBltCmd->getDestinationBaseAddress()));
+
+    bcsMockContext->getSVMAllocsManager()->freeSVMAlloc(pDstSVM);
+    bcsMockContext->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
+}
+
+HWTEST_TEMPLATED_F(BcsBufferTests, givenSvmToSvmCopyTypeWhenEnqueueNonBlockingSVMMemcpyThenSvmMemcpyCommandIsEnqueuedWhenUsingBcsThenCallWait) {
+    auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
+    myMockCsr->taskCount = 1234;
+    myMockCsr->initializeTagAllocation();
+    myMockCsr->setupContext(*bcsMockContext->bcsOsContext);
+    bcsMockContext->bcsCsr.reset(myMockCsr);
+
+    EngineControl bcsEngineControl = {myMockCsr, bcsMockContext->bcsOsContext.get()};
+
+    auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
+    cmdQ->bcsEngine = &bcsEngineControl;
+    auto &gpgpuCsr = cmdQ->getGpgpuCommandStreamReceiver();
+    myMockCsr->gpgpuCsr = &gpgpuCsr;
+
+    auto pDstSVM = bcsMockContext->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {});
+    auto pSrcSVM = bcsMockContext->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {});
+
+    cmdQ->enqueueSVMMemcpy(false, pDstSVM, pSrcSVM, 256, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
+    EXPECT_TRUE(gpgpuCsr.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(myMockCsr->getTemporaryAllocations().peekIsEmpty());
+
+    cmdQ->enqueueSVMMemcpy(true, pDstSVM, pSrcSVM, 256, 0, nullptr, nullptr);
+    EXPECT_EQ(1u, myMockCsr->waitForTaskCountAndCleanAllocationListCalled);
+
+    bcsMockContext->getSVMAllocsManager()->freeSVMAlloc(pDstSVM);
+    bcsMockContext->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
+}
+
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBlockedEnqueueWhenUsingBcsThenWaitForValidTaskCountOnBlockingCall) {
     auto myMockCsr = new MyMockCsr<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex());
     myMockCsr->taskCount = 1234;
