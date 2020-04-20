@@ -688,6 +688,11 @@ TEST_F(HwHelperTest, givenVariousCachesRequestProperMOCSIndexesAreBeingReturned)
     }
 }
 
+HWTEST_F(HwHelperTest, whenQueryingMaxNumSamplersThenReturnSixteen) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(16u, helper.getMaxNumSamplers());
+}
+
 HWTEST_F(HwHelperTest, givenMultiDispatchInfoWhenAskingForAuxTranslationThenCheckMemObjectsCountAndDebugFlag) {
     DebugManagerStateRestore restore;
     MockBuffer buffer;

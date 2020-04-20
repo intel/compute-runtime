@@ -91,7 +91,7 @@ void Device::initializeCaps() {
     deviceInfo.maxWorkItemSizes[0] = deviceInfo.maxWorkGroupSize;
     deviceInfo.maxWorkItemSizes[1] = deviceInfo.maxWorkGroupSize;
     deviceInfo.maxWorkItemSizes[2] = deviceInfo.maxWorkGroupSize;
-    deviceInfo.maxSamplers = 16;
+    deviceInfo.maxSamplers = hwHelper.getMaxNumSamplers();
 
     deviceInfo.computeUnitsUsedForScratch = hwHelper.getComputeUnitsUsedForScratch(&hwInfo);
     deviceInfo.maxFrontEndThreads = HwHelper::getMaxThreadsForVfe(hwInfo);

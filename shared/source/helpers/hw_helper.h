@@ -37,6 +37,7 @@ class HwHelper {
     virtual size_t getMaxBarrierRegisterPerSlice() const = 0;
     virtual uint32_t getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const = 0;
     virtual uint32_t getPitchAlignmentForImage(const HardwareInfo *hwInfo) = 0;
+    virtual uint32_t getMaxNumSamplers() const = 0;
     virtual void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
     virtual void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) = 0;
@@ -141,6 +142,8 @@ class HwHelperHw : public HwHelper {
     uint32_t getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const override;
 
     uint32_t getPitchAlignmentForImage(const HardwareInfo *hwInfo) override;
+
+    uint32_t getMaxNumSamplers() const override;
 
     void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) override;
 
