@@ -122,6 +122,15 @@ HWTEST_F(HwHelperTest, givenHwHelperWhenAskedForPageTableManagerSupportThenRetur
     EXPECT_EQ(helper.isPageTableManagerSupported(hardwareInfo), UnitTestHelper<FamilyType>::isPageTableManagerSupported(hardwareInfo));
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenGetGpuTimeStampInNSIsCalledThenCorrectValueIsReturned) {
+
+    auto &helper = HwHelper::get(renderCoreFamily);
+    auto timeStamp = 0x00ff'ffff'ffff;
+    auto frequency = 123456.0;
+    auto result = static_cast<uint64_t>(timeStamp * frequency);
+    EXPECT_EQ(result, helper.getGpuTimeStampInNS(timeStamp, frequency));
+}
+
 TEST(DwordBuilderTest, WhenSettingNonMaskedBitsThenOnlySelectedBitAreSet) {
     uint32_t dword = 0;
 
