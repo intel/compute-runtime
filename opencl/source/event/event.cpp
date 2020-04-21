@@ -288,8 +288,11 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     uint64_t gpuCompleteDuration = 0;
     uint64_t cpuCompleteDuration = 0;
 
-    double frequency = cmdQueue->getDevice().getDeviceInfo().profilingTimerResolution;
-    int64_t c0 = queueTimeStamp.CPUTimeinNS - static_cast<uint64_t>(queueTimeStamp.GPUTimeStamp * frequency);
+    auto &hwHelper = HwHelper::get(this->cmdQueue->getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    auto frequency = cmdQueue->getDevice().getDeviceInfo().profilingTimerResolution;
+    auto gpuTimeStamp = queueTimeStamp.GPUTimeStamp;
+
+    int64_t c0 = queueTimeStamp.CPUTimeinNS - hwHelper.getGpuTimeStampInNS(gpuTimeStamp, frequency);
     /* calculation based on equation
        CpuTime = GpuTime * scalar + const( == c0)
        scalar = DeltaCpu( == dCpu) / DeltaGpu( == dGpu)

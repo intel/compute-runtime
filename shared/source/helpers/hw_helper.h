@@ -85,6 +85,7 @@ class HwHelper {
     virtual bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool isIndependentForwardProgressSupported() = 0;
+    virtual uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -219,6 +220,8 @@ class HwHelperHw : public HwHelper {
     uint32_t getMinimalSIMDSize() override;
 
     bool isIndependentForwardProgressSupported() override;
+
+    uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

@@ -70,6 +70,10 @@ template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::isIndependentForwardProgressSupported() {
     return true;
 }
+template <typename GfxFamily>
+uint64_t HwHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const {
+    return static_cast<uint64_t>(timeStamp * frequency);
+}
 
 template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
