@@ -41,13 +41,12 @@ struct EventImp : public Event {
     ze_result_t queryStatus() override {
         uint64_t *hostAddr = static_cast<uint64_t *>(hostAddress);
         auto alloc = &(this->eventPool->getAllocation());
-        auto csr = static_cast<DeviceImp *>(this->device)->neoDevice->getDefaultEngine().commandStreamReceiver;
 
         if (metricTracer != nullptr) {
             *hostAddr = metricTracer->getNotificationState();
         }
 
-        csr->downloadAllocation(*alloc);
+        this->csr->downloadAllocation(*alloc);
 
         if (isTimestampEvent) {
             auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
@@ -168,6 +167,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
 
     event->signalScope = desc->signal;
     event->waitScope = desc->wait;
+    event->csr = static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver;
 
     event->reset();
 
@@ -250,9 +250,8 @@ ze_result_t EventImp::hostSynchronize(uint32_t timeout) {
     std::chrono::high_resolution_clock::time_point time1, time2;
     int64_t timeDiff = 0;
     ze_result_t ret = ZE_RESULT_NOT_READY;
-    auto csr = static_cast<DeviceImp *>(this->device)->neoDevice->getDefaultEngine().commandStreamReceiver;
 
-    if (csr->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
+    if (this->csr->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
         return ZE_RESULT_SUCCESS;
     }
 

@@ -15,6 +15,7 @@ namespace L0 {
 namespace ult {
 
 using EventPoolCreate = Test<DeviceFixture>;
+using EventCreate = Test<DeviceFixture>;
 
 TEST_F(EventPoolCreate, allocationContainsAtLeast16Bytes) {
     ze_event_pool_desc_t eventPoolDesc = {
@@ -43,6 +44,49 @@ TEST_F(EventPoolCreate, givenTimestampEventsThenVerifyNumTimestampsToRead) {
 
     uint32_t numTimestamps = 4u;
     EXPECT_EQ(numTimestamps, eventPool->getNumEventTimestampsToRead());
+}
+
+TEST_F(EventPoolCreate, givenAnEventIsCreatedFromThisEventPoolThenEventContainsDeviceCommandStreamReceiver) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        1};
+    const ze_event_desc_t eventDesc = {
+        ZE_EVENT_DESC_VERSION_CURRENT,
+        0,
+        ZE_EVENT_SCOPE_FLAG_HOST,
+        ZE_EVENT_SCOPE_FLAG_HOST};
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(device, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+
+    eventPool->createEvent(&eventDesc, &event);
+
+    std::unique_ptr<L0::Event> event_object(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, event_object->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event_object->csr);
+}
+
+TEST_F(EventCreate, givenAnEventCreatedThenTheEventHasTheDeviceCommandStreamReceiverSet) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        1};
+    const ze_event_desc_t eventDesc = {
+        ZE_EVENT_DESC_VERSION_CURRENT,
+        0,
+        ZE_EVENT_SCOPE_FLAG_DEVICE,
+        ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(device, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+
+    std::unique_ptr<L0::Event> event(Event::create(eventPool.get(), &eventDesc, device));
+    ASSERT_NE(nullptr, event);
+    ASSERT_NE(nullptr, event.get()->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event.get()->csr);
 }
 
 class TimestampEventCreate : public Test<DeviceFixture> {

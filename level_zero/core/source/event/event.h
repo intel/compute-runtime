@@ -66,6 +66,8 @@ struct Event : _ze_event_handle_t {
     // Metric tracer instance associated with the event.
     MetricTracer *metricTracer = nullptr;
 
+    NEO::CommandStreamReceiver *csr = nullptr;
+
   protected:
     NEO::GraphicsAllocation *allocation = nullptr;
 };
