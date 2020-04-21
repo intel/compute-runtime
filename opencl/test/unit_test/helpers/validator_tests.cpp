@@ -25,14 +25,14 @@ struct ValidatorFixture : public ::testing::Test {
 
 TYPED_TEST_CASE_P(ValidatorFixture);
 
-TYPED_TEST_P(ValidatorFixture, nullPtr) {
+TYPED_TEST_P(ValidatorFixture, GivenNullPtrWhenValidatingThenSuccessIsReturned) {
     TypeParam object = nullptr;
 
     cl_int rv = NullObjectErrorMapper<TypeParam>::retVal;
     EXPECT_EQ(rv, validateObjects(object));
 }
 
-TYPED_TEST_P(ValidatorFixture, randomMemory) {
+TYPED_TEST_P(ValidatorFixture, GivenRandomMemoryWhenValidatingThenSuccessIsReturned) {
     // 6*uint64_t to satisfy memory requirements
     // we need 2 before object (dispatchTable)
     // and 4 of object (magic)
@@ -47,8 +47,8 @@ TYPED_TEST_P(ValidatorFixture, randomMemory) {
 
 REGISTER_TYPED_TEST_CASE_P(
     ValidatorFixture,
-    nullPtr,
-    randomMemory);
+    GivenNullPtrWhenValidatingThenSuccessIsReturned,
+    GivenRandomMemoryWhenValidatingThenSuccessIsReturned);
 
 // Define new command types to run the parameterized tests
 typedef ::testing::Types<
@@ -67,91 +67,91 @@ typedef ::testing::Types<
 
 INSTANTIATE_TYPED_TEST_CASE_P(Validator, ValidatorFixture, ValidatorParams);
 
-TEST(GenericValidator, nullCTXTnullCQ) {
+TEST(GenericValidator, GivenNullCtxAndNullCqWhenValidatingThenInvalidContextIsReturned) {
     cl_context context = nullptr;
     cl_command_queue command_queue = nullptr;
 
     EXPECT_EQ(CL_INVALID_CONTEXT, validateObjects(context, command_queue));
 }
 
-TEST(UserPointer, ExpectNonNullUserPtr) {
+TEST(UserPointer, GivenNullPtrWhenValidatingThenInvalidValueIsReturned) {
     void *ptr = nullptr;
 
     EXPECT_EQ(CL_INVALID_VALUE, validateObjects(ptr));
 }
 
-TEST(UserPointer, DontValidateUserPointersForValidity) {
+TEST(UserPointer, GivenNonNullPtrWhenValidatingThenSuccessIsReturned) {
     void *ptr = ptrGarbage;
 
     EXPECT_EQ(CL_SUCCESS, validateObjects(ptr));
 }
 
-TEST(EventWaitList, zeroCount_nonNullPointer) {
+TEST(EventWaitList, GivenZeroEventsAndNonEmptyListWhenValidatingThenInvalidEventWaitListIsReturned) {
     cl_event eventList = (cl_event)ptrGarbage;
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, validateObjects(EventWaitList(0, &eventList)));
 }
 
-TEST(EventWaitList, zeroCount_nullPointer) {
+TEST(EventWaitList, GivenZeroEventsAndEmptyListWhenValidatingThenSuccessIsReturned) {
     EXPECT_EQ(CL_SUCCESS, validateObjects(EventWaitList(0, nullptr)));
 }
 
-TEST(EventWaitList, nonZeroCount_nullPointer) {
+TEST(EventWaitList, GivenNonZeroEventsAndEmptyListWhenValidatingThenInvalidEventWaitListIsReturned) {
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, validateObjects(EventWaitList(1, nullptr)));
 }
 
-TEST(EventWaitList, nonZeroCount_noNullPointer) {
+TEST(EventWaitList, GivenNonZeroEventsAndIncorrectListWhenValidatingThenInvalidEventWaitListIsReturned) {
     cl_event eventList = (cl_event)ptrGarbage;
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, validateObjects(EventWaitList(1, &eventList)));
 }
 
-TEST(DeviceList, zeroCount_nonNullPointer) {
+TEST(DeviceList, GivenZeroDevicesAndIncorrectListWhenValidatingThenInvalidValueIsReturned) {
     cl_device_id devList = (cl_device_id)ptrGarbage;
     EXPECT_EQ(CL_INVALID_VALUE, validateObjects(DeviceList(0, &devList)));
 }
 
-TEST(DeviceList, zeroCount_nullPointer) {
+TEST(DeviceList, GivenZeroDevicesAndEmptyListWhenValidatingThenSuccessIsReturned) {
     EXPECT_EQ(CL_SUCCESS, validateObjects(DeviceList(0, nullptr)));
 }
 
-TEST(DeviceList, nonZeroCount_nullPointer) {
+TEST(DeviceList, GivenNonZeroDevicesAndEmptyListWhenValidatingThenInvalidValueIsReturned) {
     EXPECT_EQ(CL_INVALID_VALUE, validateObjects(DeviceList(1, nullptr)));
 }
 
-TEST(DeviceList, nonZeroCount_noNullPointer) {
+TEST(DeviceList, GivenNonZeroDevicesAndInvalidListWhenValidatingThenInvalidValueIsReturned) {
     cl_device_id devList = (cl_device_id)ptrGarbage;
     EXPECT_EQ(CL_INVALID_DEVICE, validateObjects(DeviceList(1, &devList)));
 }
 
-TEST(MemObjList, zeroCount_nonNullPointer) {
+TEST(MemObjList, GivenZeroMemObjsAndIncorrectListWhenValidatingThenInvalidValueIsReturned) {
     cl_mem memList = static_cast<cl_mem>(ptrGarbage);
     EXPECT_EQ(CL_INVALID_VALUE, validateObjects(MemObjList(0, &memList)));
 }
 
-TEST(MemObjList, zeroCount_nullPointer) {
+TEST(MemObjList, GivenZeroMemObjsAndNullPtrWhenValidatingThenSuccessIsReturned) {
     EXPECT_EQ(CL_SUCCESS, validateObjects(MemObjList(0, nullptr)));
 }
 
-TEST(MemObjList, nonZeroCount_nullPointer) {
+TEST(MemObjList, GivenNonZeroMemObjsAndNullPtrWhenValidatingThenInvalidValueIsReturned) {
     EXPECT_EQ(CL_INVALID_VALUE, validateObjects(MemObjList(1, nullptr)));
 }
 
-TEST(MemObjList, nonZeroCount_noNullPointer) {
+TEST(MemObjList, GivenNonZeroMemObjsAndIncorrectListWhenValidatingThenInvalidMemObjIsReturned) {
     cl_mem memList = static_cast<cl_mem>(ptrGarbage);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, validateObjects(MemObjList(1, &memList)));
 }
 
-TEST(MemObjList, nonZeroCount_validPointer) {
+TEST(MemObjList, GivenNonZeroMemObjsAndNonNullPtrWhenValidatingBufferThenSuccessIsReturned) {
     std::unique_ptr<MockBuffer> buffer(new MockBuffer());
     cl_mem memList = static_cast<cl_mem>(buffer.get());
     EXPECT_EQ(CL_SUCCESS, validateObjects(MemObjList(1, &memList)));
 }
 
-TEST(NonZeroBufferSizeValidator, zero) {
+TEST(NonZeroBufferSizeValidator, GivenSizeZeroWhenValidatingBufferThenInvalidBufferSizeIsReturned) {
     auto bsv = (NonZeroBufferSize)0;
     EXPECT_EQ(CL_INVALID_BUFFER_SIZE, validateObjects(bsv));
 }
 
-TEST(NonZeroBufferSizeValidator, nonZero) {
+TEST(NonZeroBufferSizeValidator, GivenNonZeroSizeWhenValidatingBufferThenSuccessIsReturned) {
     auto bsv = (NonZeroBufferSize)~0;
     EXPECT_EQ(CL_SUCCESS, validateObjects(bsv));
 }
@@ -161,7 +161,7 @@ TEST(Platform, givenNullPlatformThenReturnInvalidPlatform) {
     EXPECT_EQ(CL_INVALID_PLATFORM, validateObjects(platform));
 }
 
-TEST(Platform, givenPlatformThenReturnSUCCESS) {
+TEST(Platform, GivenValidPlatformWhenValidatingThenSuccessIsReturned) {
     MockPlatform platform;
     cl_platform_id clPlatformId = &platform;
     EXPECT_EQ(CL_SUCCESS, validateObjects(clPlatformId));
@@ -169,7 +169,7 @@ TEST(Platform, givenPlatformThenReturnSUCCESS) {
 
 typedef ::testing::TestWithParam<size_t> PatternSizeValid;
 
-TEST_P(PatternSizeValid, valid) {
+TEST_P(PatternSizeValid, GivenValidPatternSizeWhenValidatingThenSuccessIsReturned) {
     auto psv = (PatternSize)GetParam();
     EXPECT_EQ(CL_SUCCESS, validateObjects(psv));
 }
@@ -180,7 +180,7 @@ INSTANTIATE_TEST_CASE_P(PatternSize,
 
 typedef ::testing::TestWithParam<size_t> PatternSizeInvalid;
 
-TEST_P(PatternSizeInvalid, invalid) {
+TEST_P(PatternSizeInvalid, GivenInvalidPatternSizeWhenValidatingThenInvalidValueIsReturned) {
     auto psv = (PatternSize)GetParam();
     EXPECT_EQ(CL_INVALID_VALUE, validateObjects(psv));
 }
@@ -189,7 +189,7 @@ INSTANTIATE_TEST_CASE_P(PatternSize,
                         PatternSizeInvalid,
                         ::testing::Values(0, 3, 5, 256, 512, 1024));
 
-TEST(WithCastToInternal, nullpointer) {
+TEST(WithCastToInternal, GivenNullPtrWhenCastingThenNullPtrIsReturned) {
     Context *pContext = nullptr;
     cl_context context = nullptr;
 
@@ -198,7 +198,7 @@ TEST(WithCastToInternal, nullpointer) {
     EXPECT_EQ(ret, nullptr);
 }
 
-TEST(WithCastToInternal, nonnullpointer) {
+TEST(WithCastToInternal, GivenNonNullPtrWhenCastingThenNonNullPtrIsReturned) {
     Context *pContext = nullptr;
     auto temp = std::unique_ptr<Context>(new MockContext());
     cl_context context = temp.get();
