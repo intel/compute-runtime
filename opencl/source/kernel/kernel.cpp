@@ -686,10 +686,7 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
 
     switch (paramName) {
     case CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR: {
-        for (size_t i = 0; i < numDimensions; i++) {
-            WGS *= ((size_t *)inputValue)[i];
-        }
-        return changeGetInfoStatusToCLResultType(info.set<size_t>(std::min(WGS, maxSimdSize)));
+        return changeGetInfoStatusToCLResultType(info.set<size_t>(maxSimdSize));
     }
     case CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE_KHR: {
         for (size_t i = 0; i < numDimensions; i++) {

@@ -120,19 +120,7 @@ TEST_P(KernelSubGroupInfoReturnSizeTest, GivenWorkGroupSizeWhenGettingMaxSubGrou
 
         EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
 
-        auto calculatedWGS = inputValue[0];
-        if (workDim > 1) {
-            calculatedWGS *= inputValue[1];
-        }
-        if (workDim > 2) {
-            calculatedWGS *= inputValue[2];
-        }
-
-        if (calculatedWGS < maxSimdSize) {
-            EXPECT_EQ(calculatedWGS, paramValue[0]);
-        } else {
-            EXPECT_EQ(maxSimdSize, paramValue[0]);
-        }
+        EXPECT_EQ(maxSimdSize, paramValue[0]);
     }
 }
 

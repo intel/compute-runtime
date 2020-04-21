@@ -72,10 +72,6 @@ INSTANTIATE_TEST_CASE_P(wgs,
 
 TEST_P(KernelSubGroupInfoKhrReturnSizeTest, GivenLwsParameterWhenGettingMaxSubGroupSizeThenCorrectValueIsReturned) {
     paramValueSizeRet = 0;
-    inputValue[0] = GetParam().gwsX;
-    inputValue[1] = GetParam().gwsY;
-    inputValue[2] = GetParam().gwsZ;
-    CalculatedWGS = inputValue[0] * inputValue[1] * inputValue[2];
 
     retVal = clGetKernelSubGroupInfoKHR(
         pKernel,
@@ -90,11 +86,7 @@ TEST_P(KernelSubGroupInfoKhrReturnSizeTest, GivenLwsParameterWhenGettingMaxSubGr
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
 
-    if (CalculatedWGS < MaxSimdSize) {
-        EXPECT_EQ(paramValue, CalculatedWGS);
-    } else {
-        EXPECT_EQ(paramValue, MaxSimdSize);
-    }
+    EXPECT_EQ(paramValue, MaxSimdSize);
 }
 
 typedef KernelSubGroupInfoKhrParamFixture<TestParam> KernelSubGroupInfoKhrReturnCountTest;
