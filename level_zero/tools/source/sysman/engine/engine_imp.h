@@ -18,12 +18,14 @@ class EngineImp : public NEO::NonCopyableClass, public Engine {
     ze_result_t engineGetProperties(zet_engine_properties_t *pProperties) override;
     ze_result_t engineGetActivity(zet_engine_stats_t *pStats) override;
 
+    EngineImp() = default;
     EngineImp(OsSysman *pOsSysman);
     ~EngineImp() override;
 
-  private:
     OsEngine *pOsEngine = nullptr;
-    zet_engine_properties_t engineProperties = {};
     void init();
+
+  private:
+    zet_engine_properties_t engineProperties = {};
 };
 } // namespace L0

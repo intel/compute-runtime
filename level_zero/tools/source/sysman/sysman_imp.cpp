@@ -157,7 +157,7 @@ ze_result_t SysmanImp::frequencyGet(uint32_t *pCount, zet_sysman_freq_handle_t *
 }
 
 ze_result_t SysmanImp::engineGet(uint32_t *pCount, zet_sysman_engine_handle_t *phEngine) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pEngineHandleContext->engineGet(pCount, phEngine);
 }
 
 ze_result_t SysmanImp::standbyGet(uint32_t *pCount, zet_sysman_standby_handle_t *phStandby) {
