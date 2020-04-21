@@ -89,5 +89,22 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsNullDevice
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MemoryTest, givenSharedPointerAndDeviceHandleAsNullThenDriverReturnsSuccessAndReturnsPointerToSharedAllocation) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ASSERT_NE(nullptr, device->toHandle());
+    auto result = driverHandle->allocSharedMem(nullptr,
+                                               ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                               ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    result = driverHandle->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
 } // namespace ult
 } // namespace L0
