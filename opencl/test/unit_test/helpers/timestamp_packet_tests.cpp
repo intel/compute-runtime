@@ -140,6 +140,7 @@ HWTEST_F(TimestampPacketTests, givenDebugModeWhereAtomicsAreNotEmittedWhenComman
     MockTagNode mockNode;
     mockNode.tagForCpuAccess = &tag;
     mockNode.gpuAddress = 0x1230000;
+    tag.implicitDependenciesCount.store(0);
     auto &cmdStream = mockCmdQ->getCS(0);
 
     TimestampPacketHelper::programSemaphoreWithImplicitDependency<FamilyType>(cmdStream, mockNode);
@@ -197,6 +198,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreAndAtomi
 TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenMarkAsCompleted) {
     TimestampPacketStorage timestampPacketStorage;
     auto &packet = timestampPacketStorage.packets[0];
+    timestampPacketStorage.initialize();
 
     packet.contextEnd = 1;
     packet.globalEnd = 1;
@@ -253,6 +255,7 @@ TEST_F(TimestampPacketSimpleTests, givenTimestampPacketContainerWhenMovedTheMove
 TEST_F(TimestampPacketSimpleTests, whenIsCompletedIsCalledThenItReturnsProperTimestampPacketStatus) {
     TimestampPacketStorage timestampPacketStorage;
     auto &packet = timestampPacketStorage.packets[0];
+    timestampPacketStorage.initialize();
 
     EXPECT_FALSE(timestampPacketStorage.isCompleted());
     packet.contextEnd = 0;
@@ -264,6 +267,7 @@ TEST_F(TimestampPacketSimpleTests, whenIsCompletedIsCalledThenItReturnsProperTim
 TEST_F(TimestampPacketSimpleTests, givenMultiplePacketsInUseWhenCompletionIsCheckedTheVerifyAllUsedNodes) {
     TimestampPacketStorage timestampPacketStorage;
     auto &packets = timestampPacketStorage.packets;
+    timestampPacketStorage.initialize();
 
     timestampPacketStorage.packetsUsed = TimestampPacketSizeControl::preferredPacketCount - 1;
 

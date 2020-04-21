@@ -74,7 +74,7 @@ struct TimestampPacketStorage {
     void incImplicitDependenciesCount() { implicitDependenciesCount++; }
 
     Packet packets[TimestampPacketSizeControl::preferredPacketCount];
-    std::atomic<uint32_t> implicitDependenciesCount{0u};
+    std::atomic<uint32_t> implicitDependenciesCount;
     uint32_t packetsUsed = 1;
 };
 #pragma pack()
