@@ -13,25 +13,28 @@
 
 using namespace NEO;
 
-TEST(Uint16_Sse4, booleanOperator) {
+TEST(Uint16Sse4, GivenMaskWhenCastingToBoolThenTrueIsReturned) {
     EXPECT_TRUE(static_cast<bool>(uint16x8_t::mask()));
+}
+
+TEST(Uint16Sse4, GivenZeroWhenCastingToBoolThenFalseIsReturned) {
     EXPECT_FALSE(static_cast<bool>(uint16x8_t::zero()));
 }
 
-TEST(Uint16_Sse4, logicalAnd) {
+TEST(Uint16Sse4, WhenConjoiningMaskAndZeroThenBooleanResultIsCorrect) {
     EXPECT_TRUE(uint16x8_t::mask() && uint16x8_t::mask());
     EXPECT_FALSE(uint16x8_t::mask() && uint16x8_t::zero());
     EXPECT_FALSE(uint16x8_t::zero() && uint16x8_t::mask());
     EXPECT_FALSE(uint16x8_t::zero() && uint16x8_t::zero());
 }
 
-TEST(Uint16_Sse4, constructor) {
+TEST(Uint16Sse4, GivenOneWhenCreatingThenInstancesAreSame) {
     auto one = uint16x8_t::one();
     uint16x8_t alsoOne(one.value);
     EXPECT_EQ(0, memcmp(&alsoOne, &one, sizeof(uint16x8_t)));
 }
 
-TEST(Uint16_Sse4, replicatingConstructor) {
+TEST(Uint16Sse4, GivenValueWhenCreatingThenConstructorIsReplicated) {
     uint16x8_t allSevens(7u);
     for (int i = 0; i < uint16x8_t::numChannels; ++i) {
         EXPECT_EQ(7u, allSevens.get(i));
@@ -43,14 +46,14 @@ static const uint16_t laneValues[] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
     16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
 
-TEST(Uint16_Sse4, pointerConstructor) {
+TEST(Uint16Sse4, GivenArrayWhenCreatingThenConstructorIsReplicated) {
     uint16x8_t lanes(laneValues);
     for (int i = 0; i < uint16x8_t::numChannels; ++i) {
         EXPECT_EQ(static_cast<uint16_t>(i), lanes.get(i));
     }
 }
 
-TEST(Uint16_Sse4, load) {
+TEST(Uint16Sse4, WhenLoadingThenValuesAreSetCorrectly) {
     uint16x8_t lanes;
     lanes.load(laneValues);
     for (int i = 0; i < uint16x8_t::numChannels; ++i) {
@@ -58,7 +61,7 @@ TEST(Uint16_Sse4, load) {
     }
 }
 
-TEST(Uint16_Sse4, loadUnaligned) {
+TEST(Uint16Sse4, WhenLoadingUnalignedThenValuesAreSetCorrectly) {
     uint16x8_t lanes;
     lanes.loadUnaligned(laneValues + 1);
     for (int i = 0; i < uint16x8_t::numChannels; ++i) {
@@ -66,7 +69,7 @@ TEST(Uint16_Sse4, loadUnaligned) {
     }
 }
 
-TEST(Uint16_Sse4, store) {
+TEST(Uint16Sse4, WhenStoringThenValuesAreSetCorrectly) {
     uint16_t *alignedMemory = reinterpret_cast<uint16_t *>(alignedMalloc(1024, 32));
 
     uint16x8_t lanes(laneValues);
@@ -78,7 +81,7 @@ TEST(Uint16_Sse4, store) {
     alignedFree(alignedMemory);
 }
 
-TEST(Uint16_Sse4, storeUnaligned) {
+TEST(Uint16Sse4, WhenStoringUnalignedThenValuesAreSetCorrectly) {
     uint16_t *alignedMemory = reinterpret_cast<uint16_t *>(alignedMalloc(1024, 32));
 
     uint16x8_t lanes(laneValues);
@@ -90,7 +93,7 @@ TEST(Uint16_Sse4, storeUnaligned) {
     alignedFree(alignedMemory);
 }
 
-TEST(Uint16_Sse4, decrementingAssignmentOperator) {
+TEST(Uint16Sse4, WhenDecrementingThenValuesAreSetCorrectly) {
     uint16x8_t result(laneValues);
     result -= uint16x8_t::one();
 
@@ -99,7 +102,7 @@ TEST(Uint16_Sse4, decrementingAssignmentOperator) {
     }
 }
 
-TEST(Uint16_Sse4, incrementingAssignmentOperator) {
+TEST(Uint16Sse4, WhenIncrementingThenValuesAreSetCorrectly) {
     uint16x8_t result(laneValues);
     result += uint16x8_t::one();
 
@@ -108,7 +111,7 @@ TEST(Uint16_Sse4, incrementingAssignmentOperator) {
     }
 }
 
-TEST(Uint16_Sse4, blend) {
+TEST(Uint16Sse4, WhenBlendingThenValuesAreSetCorrectly) {
     uint16x8_t a(uint16x8_t::one());
     uint16x8_t b(uint16x8_t::zero());
     uint16x8_t c;
