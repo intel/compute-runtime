@@ -476,6 +476,10 @@ cl_int Image::validate(Context *context,
     Image *parentImage = castToObject<Image>(imageDesc->mem_object);
     Buffer *parentBuffer = castToObject<Buffer>(imageDesc->mem_object);
     if (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D) {
+        if ((imageDesc->mem_object != nullptr) && (pClDevice->getSharedDeviceInfo().imageSupport == false)) {
+            return CL_INVALID_OPERATION;
+        }
+
         pClDevice->getCap<CL_DEVICE_IMAGE2D_MAX_WIDTH>(reinterpret_cast<const void *&>(maxWidth), srcSize, retSize);
         pClDevice->getCap<CL_DEVICE_IMAGE2D_MAX_HEIGHT>(reinterpret_cast<const void *&>(maxHeight), srcSize, retSize);
         if (imageDesc->image_width > *maxWidth ||

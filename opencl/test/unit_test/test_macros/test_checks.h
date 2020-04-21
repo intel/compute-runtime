@@ -9,11 +9,18 @@
 
 namespace NEO {
 class ClDevice;
+class Context;
 
 namespace TestChecks {
 bool supportsSvm(const ClDevice *pClDevice);
+bool supportsImages(const Context *pContext);
 } // namespace TestChecks
 
 } // namespace NEO
 
 #include "shared/test/unit_test/test_macros/test_checks.h"
+
+#define REQUIRE_IMAGES_OR_SKIP(param)                      \
+    if (NEO::TestChecks::supportsImages(param) == false) { \
+        GTEST_SKIP();                                      \
+    }

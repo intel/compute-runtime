@@ -345,6 +345,7 @@ TEST(GetDeviceInfo, GivenImageSupportEnabledWhenGettingImageBaseAddressAlignment
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(0u, value);
 }
 
 TEST(GetDeviceInfo, GivenImageSupportDisabledWhenGettingImageMaxArraySizeThenZeroIsReturned) {
@@ -438,6 +439,7 @@ TEST(GetDeviceInfo, GivenImageSupportEnabledWhenGettingImagePitchAlignmentThenCo
         nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(0u, value);
 }
 
 TEST(GetDeviceInfo, GivenNumSimultaneousInteropsWhenGettingDeviceInfoThenCorrectValueIsReturned) {

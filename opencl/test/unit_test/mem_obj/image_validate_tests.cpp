@@ -14,6 +14,7 @@
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 
 #include "gtest/gtest.h"
 
@@ -893,6 +894,8 @@ TEST(ImageValidatorTest, givenNV12Image2dAsParentImageWhenValidateImageZeroSized
     NullImage image;
     cl_image_desc descriptor;
     MockContext context;
+    REQUIRE_IMAGES_OR_SKIP(&context);
+
     void *dummyPtr = reinterpret_cast<void *>(0x17);
     ClSurfaceFormatInfo surfaceFormat = {};
     image.imageFormat.image_channel_order = CL_NV12_INTEL;
@@ -909,6 +912,8 @@ TEST(ImageValidatorTest, givenNonNV12Image2dAsParentImageWhenValidateImageZeroSi
     NullImage image;
     cl_image_desc descriptor;
     MockContext context;
+    REQUIRE_IMAGES_OR_SKIP(&context);
+
     void *dummyPtr = reinterpret_cast<void *>(0x17);
     ClSurfaceFormatInfo surfaceFormat;
     image.imageFormat.image_channel_order = CL_BGRA;

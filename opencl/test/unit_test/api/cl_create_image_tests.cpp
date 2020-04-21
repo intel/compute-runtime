@@ -11,6 +11,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 
 #include "cl_api_tests.h"
 
@@ -308,7 +309,34 @@ TEST_F(clCreateImageTest, GivenNullHostPtrAndNonZeroRowPitchWhenCreatingImageThe
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
+TEST_F(clCreateImageTest, GivenDeviceNotSupportingImagesWhenCreatingImageFromBufferThenInvalidOperationErrorIsReturned) {
+
+    auto hardwareInfo = *defaultHwInfo;
+    hardwareInfo.capabilityTable.supportsImages = false;
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0));
+    cl_device_id deviceId = pClDevice.get();
+    auto pContext = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
+
+    auto buffer = clCreateBuffer(pContext.get(), CL_MEM_READ_WRITE, 4096 * 9, nullptr, nullptr);
+    imageDesc.mem_object = buffer;
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+
+    auto image = clCreateImage(
+        pContext.get(),
+        CL_MEM_READ_WRITE,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(nullptr, image);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+
+    clReleaseMemObject(buffer);
+}
+
 TEST_F(clCreateImageTest, GivenNonZeroPitchWhenCreatingImageFromBufferThenImageIsCreatedAndSuccessReturned) {
+    REQUIRE_IMAGES_OR_SKIP(pContext);
 
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 4096 * 9, nullptr, nullptr);
     auto &helper = HwHelper::get(renderCoreFamily);
@@ -505,6 +533,7 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
                         ::testing::ValuesIn(flagsWithUnrestrictedIntel));
 
 TEST_P(clCreateImageFlagsUnrestrictedIntel, GivenFlagsIncludingUnrestrictedIntelWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
+    REQUIRE_IMAGES_OR_SKIP(pContext);
 
     imageFormat.image_channel_order = CL_NV12_INTEL;
     ImageFlags imageFlags = GetParam();
@@ -555,6 +584,7 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
                         ::testing::ValuesIn(validFlagsAndParentFlags));
 
 TEST_P(clCreateImageValidFlagsAndParentFlagsCombinations, GivenValidFlagsAndParentFlagsWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
+    REQUIRE_IMAGES_OR_SKIP(pContext);
 
     imageFormat.image_channel_order = CL_NV12_INTEL;
     ImageFlags imageFlags = GetParam();
@@ -845,6 +875,7 @@ TEST_F(clCreateImageWithPropertiesINTELTest, GivenInvalidPropertyKeyWhenCreating
 typedef clCreateImageTests<::testing::Test> clCreateImageFromImageTest;
 
 TEST_F(clCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithTheSameDescriptorAndValidFormatThenImageIsCreatedAndSuccessReturned) {
+    REQUIRE_IMAGES_OR_SKIP(pContext);
 
     imageFormat.image_channel_order = CL_BGRA;
 
@@ -902,6 +933,7 @@ TEST_F(clCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithT
 }
 
 TEST_F(clCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithDifferentDescriptorAndValidFormatThenInvalidImageFormatDescriptorErrorIsReturned) {
+    REQUIRE_IMAGES_OR_SKIP(pContext);
 
     imageFormat.image_channel_order = CL_BGRA;
 
@@ -956,6 +988,7 @@ TEST_F(clCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithD
 }
 
 TEST_F(clCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithTheSameDescriptorAndNotValidFormatThenInvalidImageFormatDescriptorErrorIsReturned) {
+    REQUIRE_IMAGES_OR_SKIP(pContext);
 
     imageFormat.image_channel_order = CL_BGRA;
 

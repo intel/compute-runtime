@@ -20,6 +20,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
+#include "opencl/test/unit_test/test_macros/test_checks.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -138,6 +139,7 @@ TEST_F(Nv12ImageTest, invalidNV12ImageFlag) {
 }
 
 TEST_F(Nv12ImageTest, validateNV12YPlane) {
+    REQUIRE_IMAGES_OR_SKIP(&context);
 
     auto image = createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL);
 
@@ -153,6 +155,7 @@ TEST_F(Nv12ImageTest, validateNV12YPlane) {
 }
 
 TEST_F(Nv12ImageTest, validateNV12YUVPlane) {
+    REQUIRE_IMAGES_OR_SKIP(&context);
 
     auto image = createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL);
 
@@ -168,6 +171,7 @@ TEST_F(Nv12ImageTest, validateNV12YUVPlane) {
 }
 
 TEST_F(Nv12ImageTest, givenNV12ImageWhenInvalidDepthIsPassedThenValidateFails) {
+    REQUIRE_IMAGES_OR_SKIP(&context);
 
     auto image = createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL);
 
