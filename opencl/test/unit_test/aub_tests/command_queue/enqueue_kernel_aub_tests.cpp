@@ -870,3 +870,79 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
     expectMemory<FamilyType>(bufferGpuAddress, this->expectedMemory, sizeWrittenMemory);
     expectMemory<FamilyType>(remainderBufferGpuAddress, this->expectedRemainderMemory, sizeRemainderMemory);
 }
+
+using AUBBindlessKernel = Test<KernelAUBFixture<BindlessKernelFixture>>;
+using IsBetweenSklAndTgllp = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+
+HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, IsBetweenSklAndTgllp) {
+    constexpr size_t bufferSize = MemoryConstants::pageSize;
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {bufferSize / 2, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
+    ;
+    cl_uint numEventsInWaitList = 0;
+    cl_event *eventWaitList = nullptr;
+    cl_event *event = nullptr;
+
+    uint8_t bufferDataSrc[bufferSize];
+    uint8_t bufferDataDst[bufferSize];
+
+    memset(bufferDataSrc, 1, bufferSize);
+    memset(bufferDataDst, 0, bufferSize);
+
+    auto pBufferSrc = std::unique_ptr<Buffer>(Buffer::create(context,
+                                                             CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
+                                                             bufferSize,
+                                                             bufferDataSrc,
+                                                             retVal));
+    ASSERT_NE(nullptr, pBufferSrc);
+
+    auto pBufferDst = std::unique_ptr<Buffer>(Buffer::create(context,
+                                                             CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
+                                                             bufferSize,
+                                                             bufferDataDst,
+                                                             retVal));
+    ASSERT_NE(nullptr, pBufferDst);
+
+    auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
+
+    simulatedCsr->writeMemory(*pBufferSrc->getGraphicsAllocation());
+    simulatedCsr->writeMemory(*pBufferDst->getGraphicsAllocation());
+
+    //Src
+    kernel->setArg(0, pBufferSrc.get());
+    //Dst
+    kernel->setArg(1, pBufferDst.get());
+
+    retVal = this->pCmdQ->enqueueKernel(
+        kernel.get(),
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        numEventsInWaitList,
+        eventWaitList,
+        event);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    globalWorkOffset[0] = bufferSize / 2;
+    retVal = this->pCmdQ->enqueueKernel(
+        kernel.get(),
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        numEventsInWaitList,
+        eventWaitList,
+        event);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(this->kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
+
+    this->pCmdQ->finish();
+    expectMemory<FamilyType>(reinterpret_cast<void *>(pBufferDst->getGraphicsAllocation()->getGpuAddress()),
+                             bufferDataSrc, bufferSize);
+}

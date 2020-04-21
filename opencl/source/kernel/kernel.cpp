@@ -2446,4 +2446,29 @@ uint64_t Kernel::getKernelStartOffset(
     return kernelStartOffset;
 }
 
+void Kernel::patchBindlessSurfaceStateOffsets(const size_t sshOffset) {
+
+    const bool bindlessBuffers = DebugManager.flags.UseBindlessBuffers.get();
+    const bool bindlessImages = DebugManager.flags.UseBindlessImages.get();
+    const bool bindlessUsed = bindlessBuffers || bindlessImages;
+    if (bindlessUsed) {
+
+        for (size_t i = 0; i < kernelInfo.kernelArgInfo.size(); i++) {
+            if ((kernelInfo.kernelArgInfo[i].isBuffer && bindlessBuffers) ||
+                (kernelInfo.kernelArgInfo[i].isImage && bindlessImages)) {
+
+                auto patchLocation = ptrOffset(getCrossThreadData(),
+                                               kernelInfo.kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset);
+
+                uint32_t patchSize = 4;
+                uint64_t patchValue = sshOffset + kernelInfo.kernelArgInfo[i].offsetHeap;
+                // compiler is not shifting surface offset << 6
+                patchValue <<= 6;
+
+                patchWithRequiredSize(patchLocation, patchSize, patchValue);
+            }
+        }
+    }
+}
+
 } // namespace NEO

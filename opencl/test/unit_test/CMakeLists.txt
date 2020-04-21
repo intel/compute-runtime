@@ -261,7 +261,7 @@ function(neo_gen_kernels_with_options platform_name_with_type platform_name suff
   set(kernels_to_compile_${platform_name_with_type} ${kernels_to_compile_${platform_name_with_type}} PARENT_SCOPE)
 endfunction()
 
-function(neo_gen_kernels_with_internal_options platform_name_with_type platform_name suffix filepath)
+function(neo_gen_kernels_with_internal_options platform_name_with_type platform_name suffix filepath output_name)
   set(kernels_to_compile)
   foreach(filearg ${filepath})
     get_filename_component(filename ${filearg} NAME)
@@ -271,24 +271,29 @@ function(neo_gen_kernels_with_internal_options platform_name_with_type platform_
     set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}/")
     set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
 
-    foreach(arg ${ARGN})
+    if (NOT "${output_name}" STREQUAL "")
+      set(basename ${output_name})
+    endif()
 
-      set(outputpath_base "${outputdir}/${basename}_${suffix}")
-      set(output_files
-        ${outputpath_base}.spv
-        ${outputpath_base}.bin
-        ${outputpath_base}.gen
-      )
+    set(outputpath_base "${outputdir}/${basename}_${suffix}")
+    set(output_files
+      ${outputpath_base}.spv
+      ${outputpath_base}.bin
+      ${outputpath_base}.gen
+    )
 
-      add_custom_command(
-        OUTPUT ${output_files}
-        COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${arg}
-        WORKING_DIRECTORY ${workdir}
-        DEPENDS ${filearg} ocloc
-      )
+    if (NOT "${output_name}" STREQUAL "")
+      set(output_name -output ${output_name})
+    endif()
 
-      list(APPEND kernels_to_compile ${output_files})
-    endforeach()
+    add_custom_command(
+      OUTPUT ${output_files}
+      COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} ${output_name} -internal_options ${ARGN}
+      WORKING_DIRECTORY ${workdir}
+      DEPENDS ${filearg} ocloc
+    )
+
+    list(APPEND kernels_to_compile ${output_files})
   endforeach()
   list(APPEND kernels_to_compile_${platform_name_with_type} ${kernels_to_compile})
   set(kernels_to_compile_${platform_name_with_type} ${kernels_to_compile_${platform_name_with_type}} PARENT_SCOPE)
@@ -378,7 +383,6 @@ set(TEST_KERNEL_STATELESS_internal_options_gen9lp
   "-cl-intel-greater-than-4GB-buffer-required -m32"
 )
 
-
 set(TEST_KERNEL_STATELESS
   test_files/stateless_kernel.cl
 )
@@ -395,6 +399,14 @@ set(TEST_KERNEL_SIP_DEBUG_options
 
 set(TEST_KERNEL_SIP_DEBUG_LOCAL_options
   "-cl-include-sip-kernel-local-debug -cl-include-sip-csr -cl-set-bti:0"
+)
+
+set(TEST_KERNEL_BINDLESS_internal_options
+  "-cl-intel-use-bindless-buffers -cl-intel-use-bindless-images"
+)
+
+set(TEST_KERNEL_BINDLESS
+  test_files/stateful_copy_buffer.cl
 )
 
 file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
@@ -429,10 +441,13 @@ macro(macro_for_each_gen)
         endif()
         # Gen9lp needs extra -m32 flag
         if( ("${GEN_TYPE_LOWER}" STREQUAL "gen9") AND ("${PLATFORM_TYPE_LOWER}" STREQUAL "lp"))
-          neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_STATELESS} ${TEST_KERNEL_STATELESS_internal_options_gen9lp})
+          neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_STATELESS} "" ${TEST_KERNEL_STATELESS_internal_options_gen9lp} )
         else()
-          neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_STATELESS} ${TEST_KERNEL_STATELESS_internal_options})
+          neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_STATELESS} "" ${TEST_KERNEL_STATELESS_internal_options})
         endif()
+
+        neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_BINDLESS} "bindless_copy_buffer" ${TEST_KERNEL_BINDLESS_internal_options})
+
         set(sip_kernel_file_name)
         set(sip_kernel_output_file)
         set(sip_debug_kernel_output_file)

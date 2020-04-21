@@ -43,13 +43,15 @@ class AUBFixture : public CommandQueueHwFixture {
         executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+
+        device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, deviceIndex));
+
         if (testMode == TestMode::AubTestsWithTbx) {
             this->csr = TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0);
         } else {
             this->csr = AUBCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0);
         }
 
-        device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, deviceIndex));
         device->resetCommandStreamReceiver(this->csr);
 
         CommandQueueHwFixture::SetUp(AUBFixture::device.get(), cl_command_queue_properties(0));

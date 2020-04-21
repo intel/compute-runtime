@@ -16,6 +16,8 @@ set(NEO_CORE_HELPERS_TESTS
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_leak_listener.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_management.h
   ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ult_hw_config.h

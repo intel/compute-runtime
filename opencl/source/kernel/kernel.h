@@ -219,6 +219,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     void patchBlocksSimdSize();
     bool usesSyncBuffer();
     void patchSyncBuffer(Device &device, GraphicsAllocation *gfxAllocation, size_t bufferOffset);
+    void patchBindlessSurfaceStateOffsets(const size_t sshOffset);
 
     GraphicsAllocation *getKernelReflectionSurface() const {
         return kernelReflectionSurface;

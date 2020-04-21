@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
@@ -206,4 +208,68 @@ TEST_F(KernelArgBufferTest, givenNoCacheFlushBufferWhenSettingAsArgThenNotExpect
     auto retVal = pKernel->setArg(0, sizeof(cl_mem *), pVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
+}
+
+TEST_F(KernelArgBufferTest, givenUsedBindlessBuffersWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessBuffers.set(1);
+
+    pKernelInfo->usesSsh = true;
+    pKernelInfo->requiresSshForBuffers = true;
+
+    auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
+    pKernelInfo->kernelArgInfo[0].offsetHeap = 64;
+    pKernelInfo->kernelArgInfo[0].isBuffer = true;
+
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+    *patchLocation = 0xdead;
+
+    uint32_t sshOffset = 4000;
+    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    auto expectedOffset = (sshOffset + pKernelInfo->kernelArgInfo[0].offsetHeap) << 6;
+    EXPECT_EQ(expectedOffset, *patchLocation);
+
+    sshOffset = static_cast<uint32_t>(maxNBitValue(20)) - 64;
+    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    expectedOffset = (sshOffset + pKernelInfo->kernelArgInfo[0].offsetHeap) << 6;
+    EXPECT_EQ(expectedOffset, *patchLocation);
+}
+
+TEST_F(KernelArgBufferTest, givenUsedBindlessBuffersAndNonBufferArgWhenPatchingSurfaceStateOffsetsThenCrossThreadDataIsNotPatched) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessBuffers.set(1);
+
+    pKernelInfo->usesSsh = true;
+    pKernelInfo->requiresSshForBuffers = true;
+
+    auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
+    pKernelInfo->kernelArgInfo[0].offsetHeap = 64;
+    pKernelInfo->kernelArgInfo[0].isBuffer = false;
+
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+    *patchLocation = 0xdead;
+
+    uint32_t sshOffset = 4000;
+    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    EXPECT_EQ(0xdeadu, *patchLocation);
+}
+
+TEST_F(KernelArgBufferTest, givenNotUsedBindlessBuffersAndBufferArgWhenPatchingSurfaceStateOffsetsThenCrossThreadDataIsNotPatched) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessBuffers.set(false);
+    DebugManager.flags.UseBindlessImages.set(true);
+
+    pKernelInfo->usesSsh = true;
+    pKernelInfo->requiresSshForBuffers = true;
+
+    auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
+    pKernelInfo->kernelArgInfo[0].offsetHeap = 64;
+    pKernelInfo->kernelArgInfo[0].isBuffer = true;
+
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+    *patchLocation = 0xdead;
+
+    uint32_t sshOffset = 4000;
+    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    EXPECT_EQ(0xdeadu, *patchLocation);
 }

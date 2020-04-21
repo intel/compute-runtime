@@ -237,8 +237,7 @@ size_t HardwareCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(Indir
     DEBUG_BREAK_IF(srcKernelSsh == nullptr);
 
     auto srcSurfaceState = srcKernelSsh;
-    // Align the heap and allocate space for new ssh data
-    dstHeap.align(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    // Allocate space for new ssh data
     auto dstSurfaceState = dstHeap.getSpace(sshSize);
 
     // Compiler sends BTI table that is already populated with surface state pointers relative to local SSH.
@@ -296,6 +295,9 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     // Copy the kernel over to the ISH
     const auto &kernelInfo = kernel.getKernelInfo();
     const auto &patchInfo = kernelInfo.patchInfo;
+
+    ssh.align(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    kernel.patchBindlessSurfaceStateOffsets(ssh.getUsed());
 
     auto dstBindingTablePointer = pushBindingTableAndSurfaceStates(ssh, (kernelInfo.patchInfo.bindingTableState != nullptr) ? kernelInfo.patchInfo.bindingTableState->Count : 0,
                                                                    kernel.getSurfaceStateHeap(), kernel.getSurfaceStateHeapSize(),

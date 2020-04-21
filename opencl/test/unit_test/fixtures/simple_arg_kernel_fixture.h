@@ -284,4 +284,46 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
     cl_int retVal = CL_SUCCESS;
 };
 
+class BindlessKernelFixture : public ProgramFixture {
+  public:
+    using ProgramFixture::SetUp;
+    void SetUp(ClDevice *device, Context *context) {
+        ProgramFixture::SetUp();
+        cl_device_id deviceId = device;
+        cl_context clContext = context;
+        DebugManager.flags.UseBindlessBuffers.set(true);
+        DebugManager.flags.UseBindlessImages.set(true);
+
+        CreateProgramFromBinary(
+            clContext,
+            &deviceId,
+            "bindless_copy_buffer");
+        ASSERT_NE(nullptr, pProgram);
+
+        retVal = pProgram->build(
+            1,
+            &deviceId,
+            nullptr,
+            nullptr,
+            nullptr,
+            false);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+
+        kernel.reset(Kernel::create<MockKernel>(
+            pProgram,
+            *pProgram->getKernelInfo("StatefulCopyBuffer"),
+            &retVal));
+        ASSERT_NE(nullptr, kernel);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+    }
+
+    void TearDown() override {
+        ProgramFixture::TearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<Kernel> kernel = nullptr;
+    cl_int retVal = CL_SUCCESS;
+};
+
 } // namespace NEO
