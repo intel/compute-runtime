@@ -228,5 +228,4 @@ void HardwareInterface<GfxFamily>::obtainIndirectHeaps(CommandQueue &commandQueu
         ssh = &getIndirectHeap<GfxFamily, IndirectHeap::SURFACE_STATE>(commandQueue, multiDispatchInfo);
     }
 }
-
 } // namespace NEO

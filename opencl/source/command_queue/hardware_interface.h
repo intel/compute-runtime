@@ -91,8 +91,6 @@ class HardwareInterface {
         Vec3<size_t> &numberOfWorkgroups,
         Vec3<size_t> &startOfWorkgroups);
 
-    static void programAdditionalFieldsForWalker(WALKER_TYPE<GfxFamily> &walkerCmd);
-
     static WALKER_TYPE<GfxFamily> *allocateWalkerSpace(LinearStream &commandStream,
                                                        const Kernel &kernel);
 

@@ -26,6 +26,7 @@ struct EncodeDispatchKernel {
 
     static void encode(CommandContainer &container,
                        const void *pThreadGroupDimensions, bool isIndirect, bool isPredicate, DispatchKernelEncoderI *dispatchInterface, uint64_t eventAddress, Device *device, PreemptionMode preemptionMode);
+    static void encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd);
 
     static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
 

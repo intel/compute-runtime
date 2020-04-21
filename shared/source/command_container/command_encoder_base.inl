@@ -285,6 +285,9 @@ size_t EncodeMiFlushDW<GfxFamily>::getMiFlushDwWaSize() {
 }
 
 template <typename GfxFamily>
+void EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd) {}
+
+template <typename GfxFamily>
 inline void EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(Device &device, LinearStream &stream, bool is3DPipeline) {}
 
 template <typename GfxFamily>
