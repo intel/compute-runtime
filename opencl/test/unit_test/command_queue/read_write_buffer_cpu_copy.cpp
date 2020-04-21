@@ -27,7 +27,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenRenderCompressedGmmWhenAskingForCpuOpe
 
     auto alignedPtr = alignedMalloc(2, MemoryConstants::cacheLineSize);
     auto unalignedPtr = ptrOffset(alignedPtr, 1);
-    EXPECT_EQ(1u, allocation->storageInfo.getNumHandles());
+    EXPECT_EQ(1u, allocation->storageInfo.getNumBanks());
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(unalignedPtr, 1));
 

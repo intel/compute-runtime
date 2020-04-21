@@ -562,10 +562,8 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
     executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->memoryOperationsInterface->evict(*gfxAllocation);
 
-    for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
-        if (gfxAllocation->getGmm(handleId)) {
-            delete gfxAllocation->getGmm(handleId);
-        }
+    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+        delete gfxAllocation->getGmm(handleId);
     }
 
     if (gfxAllocation->fragmentsStorage.fragmentCount) {

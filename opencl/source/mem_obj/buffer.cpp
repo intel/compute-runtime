@@ -569,7 +569,7 @@ bool Buffer::isReadWriteOnCpuAllowed() {
         return false;
     }
 
-    if (graphicsAllocation->storageInfo.getNumHandles() > 1) {
+    if (graphicsAllocation->storageInfo.getNumBanks() > 1) {
         return false;
     }
     return true;

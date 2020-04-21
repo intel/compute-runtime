@@ -148,7 +148,7 @@ TEST(GraphicsAllocationTest, whenAllocationTypeIsTimestampPacketThenCpuAccessIsR
 
 TEST(GraphicsAllocationTest, givenDefaultAllocationWhenGettingNumHandlesThenOneIsReturned) {
     MockGraphicsAllocation graphicsAllocation;
-    EXPECT_EQ(1u, graphicsAllocation.getNumHandles());
+    EXPECT_EQ(1u, graphicsAllocation.getNumGmms());
 }
 
 TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsBeingObtainedThenZeroIsReturned) {

@@ -35,10 +35,10 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(ArrayRef<Graphi
             }
         } else {
             memcpy_s(&handlesForResidency[totalHandlesCount],
-                     wddmAllocation->getNumHandles() * sizeof(D3DKMT_HANDLE),
-                     wddmAllocation->getHandles().data(),
-                     wddmAllocation->getNumHandles() * sizeof(D3DKMT_HANDLE));
-            totalHandlesCount += wddmAllocation->getNumHandles();
+                     wddmAllocation->getNumGmms() * sizeof(D3DKMT_HANDLE),
+                     &wddmAllocation->getHandles()[0],
+                     wddmAllocation->getNumGmms() * sizeof(D3DKMT_HANDLE));
+            totalHandlesCount += wddmAllocation->getNumGmms();
         }
     }
     return residentAllocations->makeResidentResources(handlesForResidency.begin(), totalHandlesCount, totalSize);
@@ -57,8 +57,8 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::evict(GraphicsAllocation &gf
             totalHandleCount++;
         }
     } else {
-        const D3DKMT_HANDLE *handlePtr = wddmAllocation.getHandles().data();
-        size_t handleCount = wddmAllocation.getNumHandles();
+        const D3DKMT_HANDLE *handlePtr = &wddmAllocation.getHandles()[0];
+        size_t handleCount = wddmAllocation.getNumGmms();
         for (uint32_t i = 0; i < handleCount; i++, totalHandleCount++) {
             handlesForEviction.push_back(*handlePtr);
             handlePtr++;

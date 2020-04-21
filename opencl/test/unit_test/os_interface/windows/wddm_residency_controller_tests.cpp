@@ -934,7 +934,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidency
         EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident[osContextId]);
     }
 
-    EXPECT_EQ(5u, gdi->getMakeResidentArg().NumAllocations);
+    EXPECT_EQ(EngineLimits::maxHandleCount + 3 + EngineLimits::maxHandleCount, gdi->getMakeResidentArg().NumAllocations);
 
     memoryManager->freeGraphicsMemory(allocationTriple);
 }
@@ -1021,12 +1021,12 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenAllocationPackPassedWhenCal
     ResidencyContainer residencyPack{&allocation1, &allocation2};
 
     auto makeResidentWithOutBytesToTrim = [](const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t size) -> bool {
-        EXPECT_EQ(1, handles[0]);
-        EXPECT_EQ(2, handles[1]);
+        EXPECT_EQ(1, handles[0 * EngineLimits::maxHandleCount]);
+        EXPECT_EQ(2, handles[1 * EngineLimits::maxHandleCount]);
         return true;
     };
     ON_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(makeResidentWithOutBytesToTrim));
-    EXPECT_CALL(*wddm, makeResident(::testing::_, 2, false, ::testing::_, ::testing::_)).Times(1);
+    EXPECT_CALL(*wddm, makeResident(::testing::_, 2 * EngineLimits::maxHandleCount, false, ::testing::_, ::testing::_)).Times(1);
 
     bool result = residencyController->makeResidentResidencyAllocations(residencyPack);
     EXPECT_TRUE(result);

@@ -17,8 +17,12 @@ bool WddmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAlloc
     return MemoryManager::copyMemoryToAllocation(graphicsAllocation, memoryToCopy, sizeToCopy);
 }
 bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const void *requiredPtr) {
+    if (allocation->getNumGmms() > 1) {
+        return mapMultiHandleAllocationWithRetry(allocation, &getWddm(allocation->getRootDeviceIndex()), this->getDeferredDeleter(), *getGfxPartition(allocation->getRootDeviceIndex()));
+    }
     return mapGpuVaForOneHandleAllocation(allocation, requiredPtr);
 }
+
 uint64_t WddmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex) {
     return 0 * GB;
 }

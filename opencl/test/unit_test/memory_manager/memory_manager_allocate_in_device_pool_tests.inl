@@ -95,5 +95,5 @@ TEST(AllocationFlagsTest, givenReadOnlyResourceFlagWhenGetAllocationFlagsIsCalle
 
 TEST(StorageInfoTest, whenStorageInfoIsCreatedWithDefaultConstructorThenReturnsOneHandle) {
     StorageInfo storageInfo;
-    EXPECT_EQ(1u, storageInfo.getNumHandles());
+    EXPECT_EQ(1u, storageInfo.getNumBanks());
 }

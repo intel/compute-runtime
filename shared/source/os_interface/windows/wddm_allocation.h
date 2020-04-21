@@ -27,19 +27,35 @@ constexpr size_t trimListUnusedPosition = std::numeric_limits<size_t>::max();
 class WddmAllocation : public GraphicsAllocation {
   public:
     WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool)
-        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {
+        : WddmAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, sizeIn, reservedAddr, pool) {}
+
+    WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
+                   void *reservedAddr, MemoryPool::Type pool)
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {
         reservedAddressRangeInfo.addressPtr = reservedAddr;
         reservedAddressRangeInfo.rangeSize = sizeIn;
+        handles.resize(gmms.size());
     }
 
     WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, void *reservedAddr, MemoryPool::Type pool, uint32_t shareable)
-        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool), shareable(shareable), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {
+        : WddmAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, sizeIn, reservedAddr, pool, shareable) {}
+
+    WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
+                   void *reservedAddr, MemoryPool::Type pool, uint32_t shareable)
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool), shareable(shareable), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {
         reservedAddressRangeInfo.addressPtr = reservedAddr;
         reservedAddressRangeInfo.rangeSize = sizeIn;
+        handles.resize(gmms.size());
     }
 
     WddmAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool)
-        : GraphicsAllocation(rootDeviceIndex, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {}
+        : WddmAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool) {}
+
+    WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
+                   osHandle sharedHandle, MemoryPool::Type pool)
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {
+        handles.resize(gmms.size());
+    }
 
     void *getAlignedCpuPtr() const {
         return alignDown(this->cpuPtr, MemoryConstants::pageSize);
@@ -52,11 +68,15 @@ class WddmAllocation : public GraphicsAllocation {
     ResidencyData &getResidencyData() {
         return residency;
     }
-    const std::array<D3DKMT_HANDLE, EngineLimits::maxHandleCount> &getHandles() const { return handles; }
+    const StackVec<D3DKMT_HANDLE, EngineLimits::maxHandleCount> &getHandles() const { return handles; }
     D3DKMT_HANDLE &getHandleToModify(uint32_t handleIndex) { return handles[handleIndex]; }
     D3DKMT_HANDLE getDefaultHandle() const { return handles[0]; }
+    D3DKMT_HANDLE getHandle(uint32_t handleIndex) const { return handles[handleIndex]; }
     void setDefaultHandle(D3DKMT_HANDLE handle) {
-        handles[0] = handle;
+        setHandle(handle, 0);
+    }
+    void setHandle(D3DKMT_HANDLE handle, uint32_t handleIndex) {
+        handles[handleIndex] = handle;
     }
 
     D3DKMT_HANDLE *getSharedHandleToModify() {
@@ -98,8 +118,8 @@ class WddmAllocation : public GraphicsAllocation {
         }
         return ss.str();
     }
-    std::array<D3DKMT_HANDLE, EngineLimits::maxHandleCount> handles{};
     ResidencyData residency;
     std::vector<size_t> trimCandidateListPositions;
+    StackVec<D3DKMT_HANDLE, EngineLimits::maxHandleCount> handles;
 };
 } // namespace NEO

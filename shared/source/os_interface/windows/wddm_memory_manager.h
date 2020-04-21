@@ -76,11 +76,15 @@ class WddmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
 
+    MOCKABLE_VIRTUAL size_t getHugeGfxMemoryChunkSize() const { return 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k; }
+    GraphicsAllocation *allocateHugeGraphicsMemory(const AllocationData &allocationData);
+
     GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex);
     static bool validateAllocation(WddmAllocation *alloc);
     bool createWddmAllocation(WddmAllocation *allocation, void *requiredGpuPtr);
     bool mapGpuVirtualAddress(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr);
     bool mapGpuVaForOneHandleAllocation(WddmAllocation *graphicsAllocation, const void *requiredGpuPtr);
+    bool mapMultiHandleAllocationWithRetry(WddmAllocation *allocation, Wddm *wddm, DeferredDeleter *deferredDeleter, GfxPartition &gfxPartition);
     bool createGpuAllocationsWithRetry(WddmAllocation *graphicsAllocation);
     AlignedMallocRestrictions mallocRestrictions;
 

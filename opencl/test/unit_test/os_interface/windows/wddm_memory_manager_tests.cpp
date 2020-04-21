@@ -1432,6 +1432,57 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLoc
     memoryManager64k.freeGraphicsMemory(galloc);
 }
 
+TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequestedSizeIsHugeThenResultAllocationIsSplitted) {
+    DebugManagerStateRestore dbgRestore;
+
+    wddm->init();
+    wddm->mapGpuVaStatus = true;
+    VariableBackup<bool> restorer{&wddm->callBaseMapGpuVa, false};
+
+    DebugManager.flags.Enable64kbpages.set(true);
+    MemoryManagerCreate<MockWddmMemoryManager> memoryManager(true, false, *executionEnvironment);
+    EXPECT_EQ(0, wddm->createAllocationResult.called);
+
+    memoryManager.hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k - MemoryConstants::pageSize;
+
+    GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize64k * 3, GraphicsAllocation::AllocationType::BUFFER});
+    EXPECT_NE(nullptr, galloc);
+    EXPECT_EQ(4, galloc->getNumGmms());
+    EXPECT_EQ(4, wddm->createAllocationResult.called);
+
+    memoryManager.freeGraphicsMemory(galloc);
+}
+
+TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenCorrectHugeGfxMemoryChunkIsSet) {
+    MockWddmMemoryManager memoryManager(*executionEnvironment);
+    EXPECT_EQ(memoryManager.getHugeGfxMemoryChunkSize(), 4 * MemoryConstants::gigaByte - MemoryConstants::pageSize64k);
+}
+
+TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForHostBufferAndRequestedSizeIsHugeThenResultAllocationIsSplitted) {
+    DebugManagerStateRestore dbgRestore;
+
+    wddm->init();
+    wddm->mapGpuVaStatus = true;
+    VariableBackup<bool> restorer{&wddm->callBaseMapGpuVa, false};
+
+    DebugManager.flags.Enable64kbpages.set(true);
+    MemoryManagerCreate<MockWddmMemoryManager> memoryManager(true, false, *executionEnvironment);
+    EXPECT_EQ(0, wddm->createAllocationResult.called);
+
+    memoryManager.hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k - MemoryConstants::pageSize;
+
+    std::vector<uint8_t> hostPtr(MemoryConstants::pageSize64k * 3);
+    AllocationProperties allocProps{rootDeviceIndex, MemoryConstants::pageSize64k * 3, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY};
+    allocProps.flags.allocateMemory = false;
+    GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryWithProperties(allocProps, hostPtr.data());
+
+    EXPECT_NE(nullptr, galloc);
+    EXPECT_EQ(4, galloc->getNumGmms());
+    EXPECT_EQ(4, wddm->createAllocationResult.called);
+
+    memoryManager.freeGraphicsMemory(galloc);
+}
+
 TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncDeleterEnabledIsTrue) {
     wddm->init();
     WddmMemoryManager memoryManager(*executionEnvironment);

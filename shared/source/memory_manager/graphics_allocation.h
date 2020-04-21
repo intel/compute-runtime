@@ -90,9 +90,19 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     GraphicsAllocation &operator=(const GraphicsAllocation &) = delete;
     GraphicsAllocation(const GraphicsAllocation &) = delete;
 
-    GraphicsAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool);
+    GraphicsAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn,
+                       uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool)
+        : GraphicsAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, gpuAddress, baseAddress, sizeIn, pool) {}
 
-    GraphicsAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool);
+    GraphicsAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn,
+                       size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool)
+        : GraphicsAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool) {}
+
+    GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn,
+                       uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool);
+
+    GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn,
+                       size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool);
 
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
     void *getUnderlyingBuffer() const { return cpuPtr; }
@@ -215,7 +225,10 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         gmms[handleId] = gmm;
     }
 
-    uint32_t getNumHandles() const { return storageInfo.getNumHandles(); }
+    uint32_t getNumGmms() const {
+        return static_cast<uint32_t>(gmms.size());
+    }
+
     uint32_t getUsedPageSize() const;
 
     OsHandleStorage fragmentsStorage;
@@ -288,6 +301,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     StackVec<UsageInfo, 32> usageInfos;
     std::atomic<uint32_t> registeredContextsNum{0};
-    std::array<Gmm *, EngineLimits::maxHandleCount> gmms{};
+    StackVec<Gmm *, EngineLimits::maxHandleCount> gmms;
 };
 } // namespace NEO

@@ -30,6 +30,10 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::localMemorySupported;
     using BaseClass::supportsMultiStorageResources;
     using MemoryManagerCreate<WddmMemoryManager>::MemoryManagerCreate;
+    using BaseClass::getHugeGfxMemoryChunkSize;
+
+    size_t hugeGfxMemoryChunkSize = BaseClass::getHugeGfxMemoryChunkSize();
+    size_t getHugeGfxMemoryChunkSize() const override { return hugeGfxMemoryChunkSize; }
 
     MockWddmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(false, false, executionEnvironment) {
         hostPtrManager.reset(new MockHostPtrManager);

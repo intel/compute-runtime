@@ -449,11 +449,11 @@ TEST_F(Wddm20Tests, makeResidentNonResident) {
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.getGpuAddress() != 0);
 
-    error = wddm->makeResident(allocation.getHandles().data(), allocation.getNumHandles(), false, nullptr, allocation.getAlignedSize());
+    error = wddm->makeResident(&allocation.getHandles()[0], allocation.getNumGmms(), false, nullptr, allocation.getAlignedSize());
     EXPECT_TRUE(error);
 
     uint64_t sizeToTrim;
-    error = wddm->evict(allocation.getHandles().data(), allocation.getNumHandles(), sizeToTrim);
+    error = wddm->evict(&allocation.getHandles()[0], allocation.getNumGmms(), sizeToTrim);
     EXPECT_TRUE(error);
 
     auto monitoredFence = osContext->getResidencyController().getMonitoredFence();

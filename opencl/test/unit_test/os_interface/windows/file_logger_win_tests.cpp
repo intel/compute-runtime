@@ -32,8 +32,6 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     allocation.handle = 4;
     allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
     allocation.memoryPool = MemoryPool::System64KBPages;
-    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 0, false);
-    allocation.setDefaultGmm(gmm.get());
     allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
 
     fileLogger.logAllocation(&allocation);
@@ -69,8 +67,6 @@ TEST_F(FileLoggerTests, GivenLogAllocationMemoryPoolFlagSetFalseThenAllocationIs
     allocation.handle = 4;
     allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
     allocation.memoryPool = MemoryPool::System64KBPages;
-    auto gmm = std::make_unique<Gmm>(getGmmClientContext(), nullptr, 0, false);
-    allocation.setDefaultGmm(gmm.get());
     allocation.getDefaultGmm()->resourceParams.Flags.Info.NonLocalOnly = 0;
 
     fileLogger.logAllocation(&allocation);

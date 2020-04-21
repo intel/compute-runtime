@@ -11,5 +11,5 @@ namespace NEO {
 StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationProperties &properties) {
     return {};
 }
-uint32_t StorageInfo::getNumHandles() const { return 1u; }
+uint32_t StorageInfo::getNumBanks() const { return 1u; }
 } // namespace NEO

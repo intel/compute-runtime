@@ -130,7 +130,7 @@ bool WddmMock::destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext)
     if (alloc->peekSharedHandle()) {
         resourceHandle = alloc->resourceHandle;
     } else {
-        allocationHandles = alloc->getHandles().data();
+        allocationHandles = &alloc->getHandles()[0];
         allocationCount = 1;
     }
     auto success = destroyAllocations(allocationHandles, allocationCount, resourceHandle);

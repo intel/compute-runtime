@@ -201,7 +201,7 @@ void WddmResidencyController::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags,
 
             if (wddmAllocation->fragmentsStorage.fragmentCount == 0) {
                 DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict allocation: default handle =", wddmAllocation->getDefaultHandle(), "lastFence =", (wddmAllocation)->getResidencyData().getFenceValueForContextId(osContextId));
-                this->wddm.evict(wddmAllocation->getHandles().data(), wddmAllocation->getNumHandles(), sizeToTrim);
+                this->wddm.evict(&wddmAllocation->getHandles()[0], wddmAllocation->getNumGmms(), sizeToTrim);
             }
 
             for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
@@ -258,7 +258,7 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
         }
 
         if (wddmAllocation->fragmentsStorage.fragmentCount == 0) {
-            this->wddm.evict(wddmAllocation->getHandles().data(), wddmAllocation->getNumHandles(), sizeToTrim);
+            this->wddm.evict(&wddmAllocation->getHandles()[0], wddmAllocation->getNumGmms(), sizeToTrim);
             sizeEvicted = wddmAllocation->getAlignedSize();
         } else {
             auto &fragmentStorageData = wddmAllocation->fragmentsStorage.fragmentStorageData;
@@ -299,7 +299,9 @@ bool WddmResidencyController::trimResidencyToBudget(uint64_t bytes) {
 
 bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyContainer &allocationsForResidency) {
     const size_t residencyCount = allocationsForResidency.size();
-    std::unique_ptr<D3DKMT_HANDLE[]> handlesForResidency(new D3DKMT_HANDLE[residencyCount * maxFragmentsCount * EngineLimits::maxHandleCount]);
+    constexpr uint32_t stackAllocations = 64;
+    constexpr uint32_t stackHandlesCount = NEO::maxFragmentsCount * EngineLimits::maxHandleCount * stackAllocations;
+    StackVec<D3DKMT_HANDLE, stackHandlesCount> handlesForResidency;
     uint32_t totalHandlesCount = 0;
     size_t totalSize = 0;
 
@@ -327,19 +329,23 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
 
         if (allocation->fragmentsStorage.fragmentCount > 0) {
             for (uint32_t allocationId = 0; allocationId < allocation->fragmentsStorage.fragmentCount; allocationId++) {
-                if (!fragmentResidency[allocationId])
-                    handlesForResidency[totalHandlesCount++] = allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle;
+                if (!fragmentResidency[allocationId]) {
+                    handlesForResidency.push_back(allocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle);
+                    totalHandlesCount++;
+                }
             }
         } else if (!residencyData.resident[osContextId]) {
-            memcpy_s(&handlesForResidency[totalHandlesCount], allocation->getNumHandles() * sizeof(D3DKMT_HANDLE), allocation->getHandles().data(), allocation->getNumHandles() * sizeof(D3DKMT_HANDLE));
-            totalHandlesCount += allocation->getNumHandles();
+            for (uint32_t gmmId = 0; gmmId < allocation->getNumGmms(); ++gmmId) {
+                handlesForResidency.push_back(allocation->getHandle(gmmId));
+                totalHandlesCount++;
+            }
         }
     }
 
     bool result = true;
     if (totalHandlesCount) {
         uint64_t bytesToTrim = 0;
-        while ((result = wddm.makeResident(handlesForResidency.get(), totalHandlesCount, false, &bytesToTrim, totalSize)) == false) {
+        while ((result = wddm.makeResident(&handlesForResidency[0], totalHandlesCount, false, &bytesToTrim, totalSize)) == false) {
             this->setMemoryBudgetExhausted();
             const bool trimmingDone = this->trimResidencyToBudget(bytesToTrim);
             if (!trimmingDone) {
@@ -348,7 +354,7 @@ bool WddmResidencyController::makeResidentResidencyAllocations(const ResidencyCo
                     continue;
                 }
                 DEBUG_BREAK_IF(evictionStatus != MemoryOperationsStatus::MEMORY_NOT_FOUND);
-                result = wddm.makeResident(handlesForResidency.get(), totalHandlesCount, true, &bytesToTrim, totalSize);
+                result = wddm.makeResident(&handlesForResidency[0], totalHandlesCount, true, &bytesToTrim, totalSize);
                 break;
             }
         }
