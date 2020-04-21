@@ -730,7 +730,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillBufferStatelessIsUsedTh
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
 }
 
-TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatelessIsUsedThenParamsAreCorrect) {
+HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatelessIsUsedThenParamsAreCorrect) {
 
     if (is32bit) {
         GTEST_SKIP();
@@ -766,7 +766,7 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStatelessI
     EXPECT_FALSE(kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
 }
 
-TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToBufferStatelessIsUsedThenParamsAreCorrect) {
+HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToBufferStatelessIsUsedThenParamsAreCorrect) {
 
     if (is32bit) {
         GTEST_SKIP();
