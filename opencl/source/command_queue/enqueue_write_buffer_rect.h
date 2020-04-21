@@ -65,7 +65,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     if (region[0] != 0 &&
         region[1] != 0 &&
         region[2] != 0) {
-        auto &csr = blitEnqueueAllowed(cmdType) ? *getBcsCommandStreamReceiver() : getGpgpuCommandStreamReceiver();
+        auto &csr = getCommandStreamReceiverByCommandType(cmdType);
         bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
         if (!status) {
             return CL_OUT_OF_RESOURCES;

@@ -118,6 +118,15 @@ CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver() const {
     return nullptr;
 }
 
+CommandStreamReceiver &CommandQueue::getCommandStreamReceiverByCommandType(cl_command_type cmdType) const {
+    if (blitEnqueueAllowed(cmdType)) {
+        auto csr = getBcsCommandStreamReceiver();
+        UNRECOVERABLE_IF(!csr);
+        return *csr;
+    }
+    return getGpgpuCommandStreamReceiver();
+}
+
 Device &CommandQueue::getDevice() const noexcept {
     return device->getDevice();
 }

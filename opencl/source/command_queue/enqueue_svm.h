@@ -348,7 +348,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         HostPtrSurface dstHostPtrSurf(dstPtr, size);
         cmdType = CL_COMMAND_READ_BUFFER;
         if (size != 0) {
-            auto &csr = blitEnqueueAllowed(cmdType) ? *getBcsCommandStreamReceiver() : getGpgpuCommandStreamReceiver();
+            auto &csr = getCommandStreamReceiverByCommandType(cmdType);
             bool status = csr.createAllocationForHostSurface(dstHostPtrSurf, true);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
@@ -371,7 +371,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         GeneralSurface dstSvmSurf(dstSvmData->gpuAllocation);
         cmdType = CL_COMMAND_WRITE_BUFFER;
         if (size != 0) {
-            auto &csr = blitEnqueueAllowed(cmdType) ? *getBcsCommandStreamReceiver() : getGpgpuCommandStreamReceiver();
+            auto &csr = getCommandStreamReceiverByCommandType(cmdType);
             bool status = csr.createAllocationForHostSurface(srcHostPtrSurf, false);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
@@ -408,7 +408,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
         HostPtrSurface dstHostPtrSurf(dstPtr, size);
         cmdType = CL_COMMAND_WRITE_BUFFER;
         if (size != 0) {
-            auto &csr = blitEnqueueAllowed(cmdType) ? *getBcsCommandStreamReceiver() : getGpgpuCommandStreamReceiver();
+            auto &csr = getCommandStreamReceiverByCommandType(cmdType);
             bool status = csr.createAllocationForHostSurface(srcHostPtrSurf, false);
             status &= csr.createAllocationForHostSurface(dstHostPtrSurf, true);
             if (!status) {
