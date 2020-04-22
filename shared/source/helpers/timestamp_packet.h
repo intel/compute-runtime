@@ -96,7 +96,6 @@ class TimestampPacketContainer : public NonCopyableClass {
     void assignAndIncrementNodesRefCounts(const TimestampPacketContainer &inputTimestampPacketContainer);
     void resolveDependencies(bool clearAllDependencies);
     void makeResident(CommandStreamReceiver &commandStreamReceiver);
-    bool isCompleted() const;
 
   protected:
     std::vector<Node *> timestampPacketNodes;

@@ -1206,25 +1206,6 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
     EXPECT_EQ(3u, semaphoresFound); // total number of semaphores found in cmdList
 }
 
-HWTEST_F(TimestampPacketTests, givenTimestampPacketWhenItIsQueriedForCompletionStatusThenItReturnsCurrentStatus) {
-    MockTimestampPacketContainer timestamp(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    EXPECT_FALSE(timestamp.isCompleted());
-    timestamp.getNode(0u)->tagForCpuAccess->packets[0].contextEnd = 0;
-    EXPECT_FALSE(timestamp.isCompleted());
-    timestamp.getNode(0u)->tagForCpuAccess->packets[0].globalEnd = 0;
-    EXPECT_TRUE(timestamp.isCompleted());
-}
-
-HWTEST_F(TimestampPacketTests, givenTimestampPacketWithMultipleNodesWhenItIsQueriedForCompletionStatusThenItReturnsCurrentStatus) {
-    MockTimestampPacketContainer timestamp(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);
-    timestamp.getNode(0u)->tagForCpuAccess->packets[0].contextEnd = 0;
-    timestamp.getNode(0u)->tagForCpuAccess->packets[0].globalEnd = 0;
-    EXPECT_FALSE(timestamp.isCompleted());
-    timestamp.getNode(1u)->tagForCpuAccess->packets[0].contextEnd = 0;
-    timestamp.getNode(1u)->tagForCpuAccess->packets[0].globalEnd = 0;
-    EXPECT_TRUE(timestamp.isCompleted());
-}
-
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedThenMakeItResident) {
     auto mockTagAllocator = new MockTagAllocator<>(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1);
 
