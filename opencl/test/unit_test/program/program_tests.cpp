@@ -309,6 +309,32 @@ TEST_P(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingKernelN
     EXPECT_EQ(CL_INVALID_PROGRAM_EXECUTABLE, retVal);
 }
 
+TEST_P(ProgramFromBinaryTest, WhenGettingProgramScopeGlobalCtorsAndDtorsPresentInfoThenCorrectValueIsReturned) {
+    cl_uint paramRet = 0;
+    cl_uint expectedParam = CL_FALSE;
+    size_t paramSizeRet = 0;
+
+    retVal = pProgram->getInfo(
+        CL_PROGRAM_SCOPE_GLOBAL_CTORS_PRESENT,
+        sizeof(cl_uint),
+        &paramRet,
+        &paramSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_uint), paramSizeRet);
+    EXPECT_EQ(expectedParam, paramRet);
+
+    retVal = pProgram->getInfo(
+        CL_PROGRAM_SCOPE_GLOBAL_DTORS_PRESENT,
+        sizeof(cl_uint),
+        &paramRet,
+        &paramSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_uint), paramSizeRet);
+    EXPECT_EQ(expectedParam, paramRet);
+}
+
 TEST_P(ProgramFromBinaryTest, GivenInvalidDeviceWhenGettingBuildStatusThenInvalidDeviceErrorIsReturned) {
     cl_build_status buildStatus = 0;
     size_t paramValueSize = sizeof(buildStatus);

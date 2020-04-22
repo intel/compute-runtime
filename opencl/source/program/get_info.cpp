@@ -31,6 +31,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
     cl_uint refCount = 0;
     size_t numKernels;
     cl_context clContext = context;
+    cl_uint clFalse = CL_FALSE;
 
     switch (paramName) {
     case CL_PROGRAM_CONTEXT:
@@ -135,6 +136,12 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
             paramValueSize = srcSize;
             paramValue = *(void **)paramValue;
         }
+        break;
+
+    case CL_PROGRAM_SCOPE_GLOBAL_CTORS_PRESENT:
+    case CL_PROGRAM_SCOPE_GLOBAL_DTORS_PRESENT:
+        retSize = srcSize = sizeof(clFalse);
+        pSrc = &clFalse;
         break;
 
     default:
