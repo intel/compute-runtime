@@ -24,44 +24,44 @@ struct IndirectHeapTest : public ::testing::Test {
     IndirectHeap indirectHeap = {&gfxAllocation};
 };
 
-TEST_F(IndirectHeapTest, getSpaceTestSizeZero) {
+TEST_F(IndirectHeapTest, GivenSizeZeroWhenGettingSpaceThenNonNullPtrIsReturned) {
     EXPECT_NE(nullptr, indirectHeap.getSpace(0));
 }
 
-TEST_F(IndirectHeapTest, getSpaceTestSizeNonZero) {
+TEST_F(IndirectHeapTest, GivenNonZeroSizeWhenGettingSpaceThenNonNullPtrIsReturned) {
     EXPECT_NE(nullptr, indirectHeap.getSpace(sizeof(uint32_t)));
 }
 
-TEST_F(IndirectHeapTest, getSpaceTestReturnsWritablePointer) {
+TEST_F(IndirectHeapTest, WhenGettingSpaceThenReturnedPointerIsWriteable) {
     uint32_t cmd = 0xbaddf00d;
     auto pCmd = indirectHeap.getSpace(sizeof(cmd));
     ASSERT_NE(nullptr, pCmd);
     *(uint32_t *)pCmd = cmd;
 }
 
-TEST_F(IndirectHeapTest, getSpaceReturnsDifferentPointersForEachRequest) {
+TEST_F(IndirectHeapTest, WhenGettingThenEachCallReturnsDifferentPointers) {
     auto pCmd = indirectHeap.getSpace(sizeof(uint32_t));
     ASSERT_NE(nullptr, pCmd);
     auto pCmd2 = indirectHeap.getSpace(sizeof(uint32_t));
     ASSERT_NE(pCmd2, pCmd);
 }
 
-TEST_F(IndirectHeapTest, getMaxAvailableSpace) {
+TEST_F(IndirectHeapTest, GivenNoAllocationWhenGettingAvailableSpaceThenEqualsMaxAvailableSpace) {
     ASSERT_EQ(indirectHeap.getMaxAvailableSpace(), indirectHeap.getAvailableSpace());
 }
 
-TEST_F(IndirectHeapTest, getAvailableSpaceShouldBeNonZeroAfterInit) {
+TEST_F(IndirectHeapTest, GivenNoAllocationWhenGettingAvailableSpaceThenSizeIsGreaterThenZero) {
     EXPECT_NE(0u, indirectHeap.getAvailableSpace());
 }
 
-TEST_F(IndirectHeapTest, getSpaceReducesAvailableSpace) {
+TEST_F(IndirectHeapTest, GivenNonZeroSpaceWhenGettingSpaceThenAvailableSpaceIsReduced) {
     auto originalAvailable = indirectHeap.getAvailableSpace();
     indirectHeap.getSpace(sizeof(uint32_t));
 
     EXPECT_LT(indirectHeap.getAvailableSpace(), originalAvailable);
 }
 
-TEST_F(IndirectHeapTest, align) {
+TEST_F(IndirectHeapTest, GivenAlignmentWhenGettingSpaceThenPointerIsAligned) {
     size_t alignment = 64 * sizeof(uint8_t);
     indirectHeap.align(alignment);
 
@@ -73,7 +73,7 @@ TEST_F(IndirectHeapTest, align) {
     EXPECT_EQ(0u, address % alignment);
 }
 
-TEST_F(IndirectHeapTest, alignShouldAlignUpward) {
+TEST_F(IndirectHeapTest, GivenAlignmentWhenGettingSpaceThenPointerIsAlignedUpward) {
     size_t size = 1;
     auto ptr1 = indirectHeap.getSpace(size);
     ASSERT_NE(nullptr, ptr1);
