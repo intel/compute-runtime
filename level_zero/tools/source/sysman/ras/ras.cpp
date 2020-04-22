@@ -21,7 +21,18 @@ void RasHandleContext::init() {
 }
 
 ze_result_t RasHandleContext::rasGet(uint32_t *pCount, zet_sysman_ras_handle_t *phRas) {
-    *pCount = 0;
+    if (nullptr == phRas) {
+        *pCount = static_cast<uint32_t>(handleList.size());
+        return ZE_RESULT_SUCCESS;
+    }
+    uint32_t i = 0;
+    for (Ras *ras : handleList) {
+        if (i >= *pCount) {
+            break;
+        }
+        phRas[i++] = ras->toHandle();
+    }
+    *pCount = i;
     return ZE_RESULT_SUCCESS;
 }
 
