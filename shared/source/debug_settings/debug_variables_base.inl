@@ -54,7 +54,7 @@ DECLARE_DEBUG_VARIABLE(bool, DisableResourceRecycling, false, "when set to true 
 DECLARE_DEBUG_VARIABLE(bool, ForceDispatchScheduler, false, "dispatches scheduler kernel instead of kernel enqueued")
 DECLARE_DEBUG_VARIABLE(bool, TrackParentEvents, false, "events track their parents")
 DECLARE_DEBUG_VARIABLE(bool, RebuildPrecompiledKernels, false, "forces driver to recompile precompiled kernels from sources")
-DECLARE_DEBUG_VARIABLE(bool, LoopAtPlatformInitialize, false, "Adds endless loop in platform initalize, useful for debugging.")
+DECLARE_DEBUG_VARIABLE(bool, LoopAtDriverInit, false, "Adds endless loop in DebugSettingsManager constructor, useful for debugging.")
 DECLARE_DEBUG_VARIABLE(bool, DoNotRegisterTrimCallback, false, "When set to true driver is not registering trim callback.")
 DECLARE_DEBUG_VARIABLE(bool, OverrideInvalidEngineWithDefault, false, "When set to true driver chooses engine 0 if no engine is found.")
 DECLARE_DEBUG_VARIABLE(bool, DisableAuxTranslation, false, "Disable aux translation when required by Kernel.")

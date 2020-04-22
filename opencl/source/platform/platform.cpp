@@ -113,11 +113,6 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
         return true;
     }
 
-    if (DebugManager.flags.LoopAtPlatformInitialize.get()) {
-        while (DebugManager.flags.LoopAtPlatformInitialize.get())
-            this->initializationLoopHelper();
-    }
-
     state = StateIniting;
 
     DEBUG_BREAK_IF(this->platformInfo);

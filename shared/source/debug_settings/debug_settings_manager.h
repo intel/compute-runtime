@@ -106,6 +106,10 @@ class DebugSettingsManager {
     std::mutex mtx;
     std::string logFileName;
 
+    bool isLoopAtDriverInitEnabled() const {
+        auto loopingEnabled = flags.LoopAtDriverInit.get();
+        return loopingEnabled;
+    }
     template <typename DataType>
     static void dumpNonDefaultFlag(const char *variableName, const DataType &variableValue, const DataType &defaultValue);
     void dumpFlags() const;

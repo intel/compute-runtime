@@ -67,7 +67,6 @@ class Platform : public BaseObject<_cl_platform_id> {
     };
     cl_uint state = StateNone;
     void fillGlobalDispatchTable();
-    MOCKABLE_VIRTUAL void initializationLoopHelper(){};
     std::unique_ptr<PlatformInfo> platformInfo;
     ClDeviceVector clDevices;
     ExecutionEnvironment &executionEnvironment;

@@ -33,6 +33,9 @@ DebugSettingsManager<DebugLevel>::DebugSettingsManager(const char *registryPath)
         dumpFlags();
     }
     translateDebugSettings(flags);
+
+    while (isLoopAtDriverInitEnabled())
+        ;
 }
 
 template <DebugFunctionalityLevel DebugLevel>

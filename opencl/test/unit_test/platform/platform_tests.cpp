@@ -358,11 +358,6 @@ TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledAfterResetT
     platformsImpl.clear();
 }
 
-TEST(PlatformInitLoopTests, givenPlatformWhenInitLoopHelperIsCalledThenItDoesNothing) {
-    MockPlatform platform;
-    platform.initializationLoopHelper();
-}
-
 TEST(PlatformInitTest, givenNullptrDeviceInPassedDeviceVectorWhenInitializePlatformThenExceptionIsThrown) {
     std::vector<std::unique_ptr<Device>> devices;
     devices.push_back(nullptr);
@@ -386,23 +381,6 @@ TEST(PlatformInitTest, givenSingleDeviceWithNonZeroRootDeviceIndexInPassedDevice
     size_t expectedNumDevices = 1u;
     EXPECT_EQ(expectedNumDevices, platform()->getNumDevices());
     EXPECT_EQ(2u, platform()->getClDevice(0)->getRootDeviceIndex());
-}
-
-TEST(PlatformInitLoopTests, givenPlatformWithDebugSettingWhenInitIsCalledThenItEntersEndlessLoop) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.LoopAtPlatformInitialize.set(true);
-    bool called = false;
-    struct mockPlatform : public MockPlatform {
-        mockPlatform(bool &called) : called(called){};
-        void initializationLoopHelper() override {
-            DebugManager.flags.LoopAtPlatformInitialize.set(false);
-            called = true;
-        }
-        bool &called;
-    };
-    mockPlatform platform(called);
-    platform.initializeWithNewDevices();
-    EXPECT_TRUE(called);
 }
 
 TEST(PlatformGroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCreatesVectorPerEachProductFamily) {
