@@ -237,6 +237,13 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps);
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
     }
+
+    if (DebugManager.flags.AddBlockingSemaphoreAfterSpecificEnqueue.get() != -1) {
+        if (DebugManager.flags.AddCacheFlushBeforeBlockingSemaphore.get()) {
+            expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
+        }
+        expectedSizeCS += sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+    }
     return expectedSizeCS;
 }
 

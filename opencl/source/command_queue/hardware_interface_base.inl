@@ -102,6 +102,22 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, commandQueue, mainKernel, postSyncAddress);
     }
     dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
+
+    if (DebugManager.flags.AddBlockingSemaphoreAfterSpecificEnqueue.get() != -1) {
+        auto &gpgpuCsr = commandQueue.getGpgpuCommandStreamReceiver();
+
+        if (static_cast<uint32_t>(DebugManager.flags.AddBlockingSemaphoreAfterSpecificEnqueue.get()) == gpgpuCsr.peekTaskCount()) {
+            if (DebugManager.flags.AddCacheFlushBeforeBlockingSemaphore.get()) {
+                MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandStream, true);
+            }
+
+            auto tagValue = *(gpgpuCsr.getTagAddress());
+            auto tagAddress = gpgpuCsr.getTagAllocation()->getGpuAddress();
+
+            // Wait for (tag == tag - 1). This will be never satisfied.
+            HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(*commandStream, tagAddress, (tagValue - 1), GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
+        }
+    }
 }
 
 template <typename GfxFamily>
