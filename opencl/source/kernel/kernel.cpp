@@ -2312,7 +2312,7 @@ cl_int Kernel::checkCorrectImageAccessQualifier(cl_uint argIndex,
         WithCastToInternal(mem, &pMemObj);
         if (pMemObj) {
             auto accessQualifier = getKernelInfo().kernelArgInfo[argIndex].metadata.accessQualifier;
-            cl_mem_flags flags = pMemObj->getMemoryPropertiesFlags();
+            cl_mem_flags flags = pMemObj->getFlags();
             if ((accessQualifier == KernelArgMetadata::AccessReadOnly && ((flags | CL_MEM_WRITE_ONLY) == flags)) ||
                 (accessQualifier == KernelArgMetadata::AccessWriteOnly && ((flags | CL_MEM_READ_ONLY) == flags))) {
                 return CL_INVALID_ARG_VALUE;

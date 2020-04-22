@@ -473,7 +473,7 @@ TEST_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenProperPe
     cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
     auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
     context->isSharedContext = false;
-    auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), MemoryPropertiesFlagsParser::createMemoryPropertiesFlags((1 << 21), 0, 0), (1 << 21), 0, size, static_cast<void *>(NULL), retVal));
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), MemoryPropertiesParser::createMemoryProperties((1 << 21), 0, 0), (1 << 21), 0, size, static_cast<void *>(NULL), retVal));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_COMPRESSED], buffer.get());
     auto compressionSupported = HwHelper::get(hwInfo.platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(hwInfo, size) &&
                                 HwHelper::renderCompressedBuffersSupported(hwInfo);
@@ -491,7 +491,7 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     cl_device_id deviceId = device.get();
-    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_READ_WRITE, 0, 0);
+    MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0);
 
     size_t size = 0u;
 
@@ -563,7 +563,7 @@ TEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerforma
 
     auto image = std::unique_ptr<Image>(Image::create(
         context.get(),
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
+        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
         flags,
         0,
         surfaceFormat,
@@ -622,7 +622,7 @@ TEST_F(PerformanceHintTest, givenImageWithNoGmmWhenItsCreatedThenNoPerformanceHi
 
     auto image = std::unique_ptr<Image>(Image::create(
         context.get(),
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
+        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
         flags,
         0,
         surfaceFormat,
@@ -683,7 +683,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
 
     auto image = std::unique_ptr<Image>(Image::create(
         context.get(),
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
+        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
         flags,
         0,
         surfaceFormat,

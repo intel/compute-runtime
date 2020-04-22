@@ -27,7 +27,7 @@ Pipe::Pipe(Context *context,
            GraphicsAllocation *gfxAllocation)
     : MemObj(context,
              CL_MEM_OBJECT_PIPE,
-             MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
+             MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
              flags,
              0,
              static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace),
@@ -54,16 +54,16 @@ Pipe *Pipe::create(Context *context,
     MemoryManager *memoryManager = context->getMemoryManager();
     DEBUG_BREAK_IF(!memoryManager);
 
-    MemoryPropertiesFlags memoryPropertiesFlags = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0);
+    MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, 0, 0);
     while (true) {
         auto size = static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace);
         auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
         AllocationProperties allocProperties =
-            MemoryPropertiesParser::getAllocationProperties(rootDeviceIndex, memoryPropertiesFlags,
-                                                            true, // allocateMemory
-                                                            size, GraphicsAllocation::AllocationType::PIPE,
-                                                            false, // isMultiStorageAllocation
-                                                            context->getDevice(0)->getHardwareInfo(), context->getDevice(0)->getDeviceBitfield());
+            MemoryPropertiesParserHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
+                                                                  true, // allocateMemory
+                                                                  size, GraphicsAllocation::AllocationType::PIPE,
+                                                                  false, // isMultiStorageAllocation
+                                                                  context->getDevice(0)->getHardwareInfo(), context->getDevice(0)->getDeviceBitfield());
         GraphicsAllocation *memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
         if (!memory) {
             errcodeRet = CL_OUT_OF_HOST_MEMORY;

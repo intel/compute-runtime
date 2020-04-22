@@ -12,9 +12,9 @@
 
 namespace NEO {
 
-bool MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryPropertiesFlags &memoryProperties,
-                                                   cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
-                                                   cl_mem_alloc_flags_intel &allocflags, ObjType objectType, Context &context) {
+bool MemoryPropertiesParserHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
+                                                         cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
+                                                         cl_mem_alloc_flags_intel &allocflags, ObjType objectType, Context &context) {
     if (properties == nullptr) {
         return true;
     }
@@ -35,13 +35,13 @@ bool MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_intel
         }
     }
 
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, allocflags);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, allocflags);
 
     switch (objectType) {
-    case MemoryPropertiesParser::ObjType::BUFFER:
+    case MemoryPropertiesParserHelper::ObjType::BUFFER:
         return isFieldValid(flags, MemObjHelper::validFlagsForBuffer) &&
                isFieldValid(flagsIntel, MemObjHelper::validFlagsForBufferIntel);
-    case MemoryPropertiesParser::ObjType::IMAGE:
+    case MemoryPropertiesParserHelper::ObjType::IMAGE:
         return isFieldValid(flags, MemObjHelper::validFlagsForImage) &&
                isFieldValid(flagsIntel, MemObjHelper::validFlagsForImageIntel);
     default:
@@ -50,7 +50,7 @@ bool MemoryPropertiesParser::parseMemoryProperties(const cl_mem_properties_intel
     return true;
 }
 
-void MemoryPropertiesParser::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryPropertiesFlags &memoryProperties, const HardwareInfo &hwInfo) {
+void MemoryPropertiesParserHelper::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties, const HardwareInfo &hwInfo) {
     fillCachePolicyInProperties(allocationProperties,
                                 memoryProperties.flags.locallyUncachedResource,
                                 memoryProperties.flags.readOnly,

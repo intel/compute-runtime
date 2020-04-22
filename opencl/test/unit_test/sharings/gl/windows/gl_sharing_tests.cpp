@@ -82,7 +82,7 @@ TEST_F(glSharingTests, givenMockGlWhenGlBufferIsCreatedThenMemObjectHasGlHandler
     EXPECT_EQ(bufferId, mockGlSharing->dllParam->getBufferInfo().bufferName);
     EXPECT_EQ(4096u, glBuffer->getSize());
     size_t flagsExpected = CL_MEM_READ_WRITE;
-    EXPECT_EQ(flagsExpected, glBuffer->getMemoryPropertiesFlags());
+    EXPECT_EQ(flagsExpected, glBuffer->getFlags());
 
     auto handler = glBuffer->peekSharingHandler();
     ASSERT_NE(nullptr, handler);

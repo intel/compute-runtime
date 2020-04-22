@@ -136,7 +136,7 @@ TYPED_TEST_P(D3DTests, WhenCreatingFromD3DBufferKhrApiThenValidBufferIsReturned)
     auto bufferObj = static_cast<D3DBuffer<TypeParam> *>(buffer->getSharingHandler().get());
 
     EXPECT_EQ((D3DResource *)&this->dummyD3DBuffer, *bufferObj->getResourceHandler());
-    EXPECT_TRUE(buffer->getMemoryPropertiesFlags() == CL_MEM_READ_WRITE);
+    EXPECT_TRUE(buffer->getFlags() == CL_MEM_READ_WRITE);
 
     clReleaseMemObject(memObj);
 }
@@ -256,7 +256,7 @@ TYPED_TEST_P(D3DTests, WhenCreatingFromD3D2dTextureKhrApiThenValidImageIsReturne
     auto textureObj = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
 
     EXPECT_EQ((D3DResource *)&this->dummyD3DTexture, *textureObj->getResourceHandler());
-    EXPECT_TRUE(image->getMemoryPropertiesFlags() == CL_MEM_READ_WRITE);
+    EXPECT_TRUE(image->getFlags() == CL_MEM_READ_WRITE);
     EXPECT_TRUE(image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE2D);
     EXPECT_EQ(1u, textureObj->getSubresource());
 
@@ -288,7 +288,7 @@ TYPED_TEST_P(D3DTests, WhenCreatingFromD3D3dTextureKhrApiThenValidImageIsReturne
     auto textureObj = static_cast<D3DTexture<TypeParam> *>(image->getSharingHandler().get());
 
     EXPECT_EQ((D3DResource *)&this->dummyD3DTexture, *textureObj->getResourceHandler());
-    EXPECT_TRUE(image->getMemoryPropertiesFlags() == CL_MEM_READ_WRITE);
+    EXPECT_TRUE(image->getFlags() == CL_MEM_READ_WRITE);
     EXPECT_TRUE(image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE3D);
     EXPECT_EQ(1u, textureObj->getSubresource());
 

@@ -188,7 +188,7 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
                 if (memObj != nullptr) {
                     ptr = static_cast<char *>(memObj->getCpuAddress());
                     size = memObj->getSize();
-                    flags = memObj->getMemoryPropertiesFlags();
+                    flags = memObj->getFlags();
                 }
             } else if (argInfo.isSampler) {
                 type = "sampler";
@@ -199,7 +199,7 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
                 if (memObj != nullptr) {
                     ptr = static_cast<char *>(memObj->getCpuAddress());
                     size = memObj->getSize();
-                    flags = memObj->getMemoryPropertiesFlags();
+                    flags = memObj->getFlags();
                 }
             } else {
                 type = "immediate";

@@ -23,7 +23,7 @@ class ClDevice;
 class MemoryManager;
 
 typedef Buffer *(*BufferCreatFunc)(Context *context,
-                                   MemoryPropertiesFlags memoryProperties,
+                                   MemoryProperties memoryProperties,
                                    cl_mem_flags flags,
                                    cl_mem_flags_intel flagsIntel,
                                    size_t size,
@@ -50,7 +50,7 @@ class Buffer : public MemObj {
     ~Buffer() override;
 
     static void validateInputAndCreateBuffer(Context &context,
-                                             MemoryPropertiesFlags memoryProperties,
+                                             MemoryProperties memoryProperties,
                                              cl_mem_flags flags,
                                              cl_mem_flags_intel flagsIntel,
                                              size_t size,
@@ -65,7 +65,7 @@ class Buffer : public MemObj {
                           cl_int &errcodeRet);
 
     static Buffer *create(Context *context,
-                          MemoryPropertiesFlags properties,
+                          MemoryProperties properties,
                           cl_mem_flags flags,
                           cl_mem_flags_intel flagsIntel,
                           size_t size,
@@ -78,7 +78,7 @@ class Buffer : public MemObj {
                                       GraphicsAllocation *graphicsAllocation);
 
     static Buffer *createBufferHw(Context *context,
-                                  MemoryPropertiesFlags memoryProperties,
+                                  MemoryProperties memoryProperties,
                                   cl_mem_flags flags,
                                   cl_mem_flags_intel flagsIntel,
                                   size_t size,
@@ -146,7 +146,7 @@ class Buffer : public MemObj {
 
   protected:
     Buffer(Context *context,
-           MemoryPropertiesFlags memoryProperties,
+           MemoryProperties memoryProperties,
            cl_mem_flags flags,
            cl_mem_flags_intel flagsIntel,
            size_t size,
@@ -159,17 +159,17 @@ class Buffer : public MemObj {
 
     Buffer();
 
-    static void checkMemory(MemoryPropertiesFlags memoryProperties,
+    static void checkMemory(MemoryProperties memoryProperties,
                             size_t size,
                             void *hostPtr,
                             cl_int &errcodeRet,
                             bool &isZeroCopy,
                             bool &copyMemoryFromHostPtr,
                             MemoryManager *memMngr);
-    static GraphicsAllocation::AllocationType getGraphicsAllocationType(const MemoryPropertiesFlags &properties, Context &context,
+    static GraphicsAllocation::AllocationType getGraphicsAllocationType(const MemoryProperties &properties, Context &context,
                                                                         bool renderCompressedBuffers, bool localMemoryEnabled,
                                                                         bool preferCompression);
-    static bool isReadOnlyMemoryPermittedByFlags(const MemoryPropertiesFlags &properties);
+    static bool isReadOnlyMemoryPermittedByFlags(const MemoryProperties &properties);
 
     void transferData(void *dst, void *src, size_t copySize, size_t copyOffset);
 };
@@ -178,7 +178,7 @@ template <typename GfxFamily>
 class BufferHw : public Buffer {
   public:
     BufferHw(Context *context,
-             MemoryPropertiesFlags memoryProperties,
+             MemoryProperties memoryProperties,
              cl_mem_flags flags,
              cl_mem_flags_intel flagsIntel,
              size_t size,
@@ -196,7 +196,7 @@ class BufferHw : public Buffer {
     void appendSurfaceStateExt(void *memory);
 
     static Buffer *create(Context *context,
-                          MemoryPropertiesFlags memoryProperties,
+                          MemoryProperties memoryProperties,
                           cl_mem_flags flags,
                           cl_mem_flags_intel flagsIntel,
                           size_t size,

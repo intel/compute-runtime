@@ -29,7 +29,7 @@ namespace NEO {
 
 MemObj::MemObj(Context *context,
                cl_mem_object_type memObjectType,
-               const MemoryPropertiesFlags &memoryProperties,
+               const MemoryProperties &memoryProperties,
                cl_mem_flags flags,
                cl_mem_flags_intel flagsIntel,
                size_t size,
@@ -327,7 +327,7 @@ void *MemObj::getBasePtrForMap(uint32_t rootDeviceIndex) {
     if (associatedMemObject) {
         return associatedMemObject->getBasePtrForMap(rootDeviceIndex);
     }
-    if (getMemoryPropertiesFlags() & CL_MEM_USE_HOST_PTR) {
+    if (getFlags() & CL_MEM_USE_HOST_PTR) {
         return getHostPtr();
     } else {
         TakeOwnershipWrapper<MemObj> memObjOwnership(*this);

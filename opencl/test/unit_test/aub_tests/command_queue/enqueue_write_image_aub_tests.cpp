@@ -139,7 +139,7 @@ HWTEST_P(AUBWriteImage, simpleUnalignedMemory) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
     dstImage.reset(Image::create(
         context.get(),
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
+        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
         flags,
         0,
         surfaceFormat,

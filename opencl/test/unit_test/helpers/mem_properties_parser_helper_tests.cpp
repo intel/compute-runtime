@@ -14,31 +14,31 @@
 
 using namespace NEO;
 
-struct MemoryPropertiesParserTests : ::testing::Test {
+struct MemoryPropertiesParserHelperTests : ::testing::Test {
     MockContext context;
-    MemoryPropertiesFlags memoryProperties;
+    MemoryProperties memoryProperties;
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
 };
 
-TEST_F(MemoryPropertiesParserTests, givenNullPropertiesWhenParsingMemoryPropertiesThenTrueIsReturned) {
-    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(nullptr, memoryProperties, flags, flagsIntel, allocflags,
-                                                              MemoryPropertiesParser::MemoryPropertiesParser::ObjType::UNKNOWN, context));
+TEST_F(MemoryPropertiesParserHelperTests, givenNullPropertiesWhenParsingMemoryPropertiesThenTrueIsReturned) {
+    EXPECT_TRUE(MemoryPropertiesParserHelper::parseMemoryProperties(nullptr, memoryProperties, flags, flagsIntel, allocflags,
+                                                                    MemoryPropertiesParserHelper::MemoryPropertiesParserHelper::ObjType::UNKNOWN, context));
 }
 
-TEST_F(MemoryPropertiesParserTests, givenEmptyPropertiesWhenParsingMemoryPropertiesThenTrueIsReturned) {
+TEST_F(MemoryPropertiesParserHelperTests, givenEmptyPropertiesWhenParsingMemoryPropertiesThenTrueIsReturned) {
     cl_mem_properties_intel properties[] = {0};
 
-    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                              MemoryPropertiesParser::MemoryPropertiesParser::ObjType::UNKNOWN, context));
-    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                              MemoryPropertiesParser::MemoryPropertiesParser::ObjType::BUFFER, context));
-    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                              MemoryPropertiesParser::MemoryPropertiesParser::ObjType::IMAGE, context));
+    EXPECT_TRUE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                    MemoryPropertiesParserHelper::MemoryPropertiesParserHelper::ObjType::UNKNOWN, context));
+    EXPECT_TRUE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                    MemoryPropertiesParserHelper::MemoryPropertiesParserHelper::ObjType::BUFFER, context));
+    EXPECT_TRUE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                    MemoryPropertiesParserHelper::MemoryPropertiesParserHelper::ObjType::IMAGE, context));
 }
 
-TEST_F(MemoryPropertiesParserTests, givenValidPropertiesWhenParsingMemoryPropertiesThenTrueIsReturned) {
+TEST_F(MemoryPropertiesParserHelperTests, givenValidPropertiesWhenParsingMemoryPropertiesThenTrueIsReturned) {
     cl_mem_properties_intel properties[] = {
         CL_MEM_FLAGS,
         CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR |
@@ -49,11 +49,11 @@ TEST_F(MemoryPropertiesParserTests, givenValidPropertiesWhenParsingMemoryPropert
         CL_MEM_ALLOC_WRITE_COMBINED_INTEL, CL_MEM_ALLOC_DEFAULT_INTEL,
         0};
 
-    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                              MemoryPropertiesParser::ObjType::UNKNOWN, context));
+    EXPECT_TRUE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                    MemoryPropertiesParserHelper::ObjType::UNKNOWN, context));
 }
 
-TEST_F(MemoryPropertiesParserTests, givenValidPropertiesWhenParsingMemoryPropertiesForBufferThenTrueIsReturned) {
+TEST_F(MemoryPropertiesParserHelperTests, givenValidPropertiesWhenParsingMemoryPropertiesForBufferThenTrueIsReturned) {
     cl_mem_properties_intel properties[] = {
         CL_MEM_FLAGS,
         MemObjHelper::validFlagsForBuffer,
@@ -61,11 +61,11 @@ TEST_F(MemoryPropertiesParserTests, givenValidPropertiesWhenParsingMemoryPropert
         MemObjHelper::validFlagsForBufferIntel,
         0};
 
-    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                              MemoryPropertiesParser::ObjType::BUFFER, context));
+    EXPECT_TRUE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                    MemoryPropertiesParserHelper::ObjType::BUFFER, context));
 }
 
-TEST_F(MemoryPropertiesParserTests, givenValidPropertiesWhenParsingMemoryPropertiesForImageThenTrueIsReturned) {
+TEST_F(MemoryPropertiesParserHelperTests, givenValidPropertiesWhenParsingMemoryPropertiesForImageThenTrueIsReturned) {
     cl_mem_properties_intel properties[] = {
         CL_MEM_FLAGS,
         MemObjHelper::validFlagsForImage,
@@ -73,24 +73,24 @@ TEST_F(MemoryPropertiesParserTests, givenValidPropertiesWhenParsingMemoryPropert
         MemObjHelper::validFlagsForImageIntel,
         0};
 
-    EXPECT_TRUE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                              MemoryPropertiesParser::ObjType::IMAGE, context));
+    EXPECT_TRUE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                    MemoryPropertiesParserHelper::ObjType::IMAGE, context));
 }
 
-TEST_F(MemoryPropertiesParserTests, givenInvalidPropertiesWhenParsingMemoryPropertiesThenFalseIsReturned) {
+TEST_F(MemoryPropertiesParserHelperTests, givenInvalidPropertiesWhenParsingMemoryPropertiesThenFalseIsReturned) {
     cl_mem_properties_intel properties[] = {
         (1 << 30), CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR,
         0};
 
-    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                               MemoryPropertiesParser::ObjType::UNKNOWN, context));
-    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                               MemoryPropertiesParser::ObjType::BUFFER, context));
-    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                               MemoryPropertiesParser::ObjType::IMAGE, context));
+    EXPECT_FALSE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                     MemoryPropertiesParserHelper::ObjType::UNKNOWN, context));
+    EXPECT_FALSE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                     MemoryPropertiesParserHelper::ObjType::BUFFER, context));
+    EXPECT_FALSE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                     MemoryPropertiesParserHelper::ObjType::IMAGE, context));
 }
 
-TEST_F(MemoryPropertiesParserTests, givenInvalidPropertiesWhenParsingMemoryPropertiesForImageThenFalseIsReturned) {
+TEST_F(MemoryPropertiesParserHelperTests, givenInvalidPropertiesWhenParsingMemoryPropertiesForImageThenFalseIsReturned) {
     cl_mem_properties_intel properties[] = {
         CL_MEM_FLAGS,
         MemObjHelper::validFlagsForBuffer,
@@ -98,11 +98,11 @@ TEST_F(MemoryPropertiesParserTests, givenInvalidPropertiesWhenParsingMemoryPrope
         MemObjHelper::validFlagsForBufferIntel,
         0};
 
-    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                               MemoryPropertiesParser::ObjType::IMAGE, context));
+    EXPECT_FALSE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                     MemoryPropertiesParserHelper::ObjType::IMAGE, context));
 }
 
-TEST_F(MemoryPropertiesParserTests, givenInvalidFlagsWhenParsingMemoryPropertiesForImageThenFalseIsReturned) {
+TEST_F(MemoryPropertiesParserHelperTests, givenInvalidFlagsWhenParsingMemoryPropertiesForImageThenFalseIsReturned) {
     cl_mem_properties_intel properties[] = {
         CL_MEM_FLAGS,
         (1 << 30),
@@ -110,11 +110,11 @@ TEST_F(MemoryPropertiesParserTests, givenInvalidFlagsWhenParsingMemoryProperties
         MemObjHelper::validFlagsForImageIntel,
         0};
 
-    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                               MemoryPropertiesParser::ObjType::IMAGE, context));
+    EXPECT_FALSE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                     MemoryPropertiesParserHelper::ObjType::IMAGE, context));
 }
 
-TEST_F(MemoryPropertiesParserTests, givenInvalidFlagsIntelWhenParsingMemoryPropertiesForImageThenFalseIsReturned) {
+TEST_F(MemoryPropertiesParserHelperTests, givenInvalidFlagsIntelWhenParsingMemoryPropertiesForImageThenFalseIsReturned) {
     cl_mem_properties_intel properties[] = {
         CL_MEM_FLAGS,
         MemObjHelper::validFlagsForImage,
@@ -122,11 +122,11 @@ TEST_F(MemoryPropertiesParserTests, givenInvalidFlagsIntelWhenParsingMemoryPrope
         (1 << 30),
         0};
 
-    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                               MemoryPropertiesParser::ObjType::IMAGE, context));
+    EXPECT_FALSE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                     MemoryPropertiesParserHelper::ObjType::IMAGE, context));
 }
 
-TEST_F(MemoryPropertiesParserTests, givenInvalidPropertiesWhenParsingMemoryPropertiesForBufferThenFalseIsReturned) {
+TEST_F(MemoryPropertiesParserHelperTests, givenInvalidPropertiesWhenParsingMemoryPropertiesForBufferThenFalseIsReturned) {
     cl_mem_properties_intel properties[] = {
         CL_MEM_FLAGS,
         MemObjHelper::validFlagsForImage,
@@ -134,11 +134,11 @@ TEST_F(MemoryPropertiesParserTests, givenInvalidPropertiesWhenParsingMemoryPrope
         MemObjHelper::validFlagsForImageIntel,
         0};
 
-    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                               MemoryPropertiesParser::ObjType::BUFFER, context));
+    EXPECT_FALSE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                     MemoryPropertiesParserHelper::ObjType::BUFFER, context));
 }
 
-TEST_F(MemoryPropertiesParserTests, givenInvalidFlagsWhenParsingMemoryPropertiesForBufferThenFalseIsReturned) {
+TEST_F(MemoryPropertiesParserHelperTests, givenInvalidFlagsWhenParsingMemoryPropertiesForBufferThenFalseIsReturned) {
     cl_mem_properties_intel properties[] = {
         CL_MEM_FLAGS,
         (1 << 30),
@@ -146,11 +146,11 @@ TEST_F(MemoryPropertiesParserTests, givenInvalidFlagsWhenParsingMemoryProperties
         MemObjHelper::validFlagsForBufferIntel,
         0};
 
-    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                               MemoryPropertiesParser::ObjType::BUFFER, context));
+    EXPECT_FALSE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                     MemoryPropertiesParserHelper::ObjType::BUFFER, context));
 }
 
-TEST_F(MemoryPropertiesParserTests, givenInvalidFlagsIntelWhenParsingMemoryPropertiesForBufferThenFalseIsReturned) {
+TEST_F(MemoryPropertiesParserHelperTests, givenInvalidFlagsIntelWhenParsingMemoryPropertiesForBufferThenFalseIsReturned) {
     cl_mem_properties_intel properties[] = {
         CL_MEM_FLAGS,
         MemObjHelper::validFlagsForBuffer,
@@ -158,11 +158,11 @@ TEST_F(MemoryPropertiesParserTests, givenInvalidFlagsIntelWhenParsingMemoryPrope
         (1 << 30),
         0};
 
-    EXPECT_FALSE(MemoryPropertiesParser::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                               MemoryPropertiesParser::ObjType::BUFFER, context));
+    EXPECT_FALSE(MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                     MemoryPropertiesParserHelper::ObjType::BUFFER, context));
 }
 
-TEST_F(MemoryPropertiesParserTests, givenDifferentParametersWhenCallingFillCachePolicyInPropertiesThenFlushL3FlagsAreCorrectlySet) {
+TEST_F(MemoryPropertiesParserHelperTests, givenDifferentParametersWhenCallingFillCachePolicyInPropertiesThenFlushL3FlagsAreCorrectlySet) {
     AllocationProperties allocationProperties{0, 0, GraphicsAllocation::AllocationType::BUFFER};
 
     for (auto uncached : ::testing::Bool()) {
@@ -171,13 +171,13 @@ TEST_F(MemoryPropertiesParserTests, givenDifferentParametersWhenCallingFillCache
                 if (uncached || readOnly || deviceOnlyVisibilty) {
                     allocationProperties.flags.flushL3RequiredForRead = true;
                     allocationProperties.flags.flushL3RequiredForWrite = true;
-                    MemoryPropertiesParser::fillCachePolicyInProperties(allocationProperties, uncached, readOnly, deviceOnlyVisibilty);
+                    MemoryPropertiesParserHelper::fillCachePolicyInProperties(allocationProperties, uncached, readOnly, deviceOnlyVisibilty);
                     EXPECT_FALSE(allocationProperties.flags.flushL3RequiredForRead);
                     EXPECT_FALSE(allocationProperties.flags.flushL3RequiredForWrite);
                 } else {
                     allocationProperties.flags.flushL3RequiredForRead = false;
                     allocationProperties.flags.flushL3RequiredForWrite = false;
-                    MemoryPropertiesParser::fillCachePolicyInProperties(allocationProperties, uncached, readOnly, deviceOnlyVisibilty);
+                    MemoryPropertiesParserHelper::fillCachePolicyInProperties(allocationProperties, uncached, readOnly, deviceOnlyVisibilty);
                     EXPECT_TRUE(allocationProperties.flags.flushL3RequiredForRead);
                     EXPECT_TRUE(allocationProperties.flags.flushL3RequiredForWrite);
                 }

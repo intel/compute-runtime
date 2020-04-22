@@ -38,7 +38,7 @@ struct AppendSurfaceStateParamsTest : public ::testing::Test {
     void createImage() {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
         EXPECT_NE(nullptr, surfaceFormat);
-        image.reset(Image::create(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+        image.reset(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     }
 
     cl_int retVal = CL_SUCCESS;

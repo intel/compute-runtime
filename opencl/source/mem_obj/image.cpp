@@ -42,7 +42,7 @@ namespace NEO {
 ImageFuncs imageFactory[IGFX_MAX_CORE] = {};
 
 Image::Image(Context *context,
-             const MemoryPropertiesFlags &memoryProperties,
+             const MemoryProperties &memoryProperties,
              cl_mem_flags flags,
              cl_mem_flags_intel flagsIntel,
              size_t size,
@@ -115,7 +115,7 @@ void Image::transferData(void *dest, size_t destRowPitch, size_t destSlicePitch,
 Image::~Image() = default;
 
 Image *Image::create(Context *context,
-                     const MemoryPropertiesFlags &memoryProperties,
+                     const MemoryProperties &memoryProperties,
                      cl_mem_flags flags,
                      cl_mem_flags_intel flagsIntel,
                      const ClSurfaceFormatInfo *surfaceFormat,
@@ -424,7 +424,7 @@ Image *Image::create(Context *context,
     return image;
 }
 
-Image *Image::createImageHw(Context *context, const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel, size_t size, void *hostPtr,
+Image *Image::createImageHw(Context *context, const MemoryProperties &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel, size_t size, void *hostPtr,
                             const cl_image_format &imageFormat, const cl_image_desc &imageDesc,
                             bool zeroCopy, GraphicsAllocation *graphicsAllocation,
                             bool isObjectRedescribed, uint32_t baseMipLevel, uint32_t mipCount,
@@ -444,7 +444,7 @@ Image *Image::createImageHw(Context *context, const MemoryPropertiesFlags &memor
 Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler, const McsSurfaceInfo &mcsSurfaceInfo,
                                 GraphicsAllocation *graphicsAllocation, GraphicsAllocation *mcsAllocation,
                                 cl_mem_flags flags, const ClSurfaceFormatInfo *surfaceFormat, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount) {
-    auto sharedImage = createImageHw(context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), flags, 0, graphicsAllocation->getUnderlyingBufferSize(),
+    auto sharedImage = createImageHw(context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), flags, 0, graphicsAllocation->getUnderlyingBufferSize(),
                                      nullptr, surfaceFormat->OCLImageFormat, Image::convertDescriptor(imgInfo.imgDesc), false, graphicsAllocation, false, baseMipLevel, mipCount, surfaceFormat);
     sharedImage->setSharingHandler(sharingHandler);
     sharedImage->setMcsAllocation(mcsAllocation);
@@ -458,7 +458,7 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
 }
 
 cl_int Image::validate(Context *context,
-                       const MemoryPropertiesFlags &memoryProperties,
+                       const MemoryProperties &memoryProperties,
                        const ClSurfaceFormatInfo *surfaceFormat,
                        const cl_image_desc *imageDesc,
                        const void *hostPtr) {
@@ -494,7 +494,7 @@ cl_int Image::validate(Context *context,
             const auto minimumBufferSize = imageDesc->image_height * rowSize;
 
             if ((imageDesc->image_row_pitch % (*pitchAlignment)) ||
-                ((parentBuffer->getMemoryPropertiesFlags() & CL_MEM_USE_HOST_PTR) && (reinterpret_cast<uint64_t>(parentBuffer->getHostPtr()) % (*baseAddressAlignment))) ||
+                ((parentBuffer->getFlags() & CL_MEM_USE_HOST_PTR) && (reinterpret_cast<uint64_t>(parentBuffer->getHostPtr()) % (*baseAddressAlignment))) ||
                 (minimumBufferSize > parentBuffer->getSize())) {
                 return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
             } else if (memoryProperties.flags.useHostPtr || memoryProperties.flags.copyHostPtr) {
@@ -558,7 +558,7 @@ cl_int Image::validateImageFormat(const cl_image_format *imageFormat) {
 }
 
 cl_int Image::validatePlanarYUV(Context *context,
-                                const MemoryPropertiesFlags &memoryProperties,
+                                const MemoryProperties &memoryProperties,
                                 const cl_image_desc *imageDesc,
                                 const void *hostPtr) {
     cl_int errorCode = CL_SUCCESS;
@@ -607,7 +607,7 @@ cl_int Image::validatePlanarYUV(Context *context,
     return errorCode;
 }
 
-cl_int Image::validatePackedYUV(const MemoryPropertiesFlags &memoryProperties, const cl_image_desc *imageDesc) {
+cl_int Image::validatePackedYUV(const MemoryProperties &memoryProperties, const cl_image_desc *imageDesc) {
     cl_int errorCode = CL_SUCCESS;
     while (true) {
         if (!memoryProperties.flags.readOnly) {
@@ -625,7 +625,7 @@ cl_int Image::validatePackedYUV(const MemoryPropertiesFlags &memoryProperties, c
     return errorCode;
 }
 
-cl_int Image::validateImageTraits(Context *context, const MemoryPropertiesFlags &memoryProperties, const cl_image_format *imageFormat, const cl_image_desc *imageDesc, const void *hostPtr) {
+cl_int Image::validateImageTraits(Context *context, const MemoryProperties &memoryProperties, const cl_image_format *imageFormat, const cl_image_desc *imageDesc, const void *hostPtr) {
     if (IsNV12Image(imageFormat))
         return validatePlanarYUV(context, memoryProperties, imageDesc, hostPtr);
     else if (IsPackedYuvImage(imageFormat))
@@ -917,7 +917,7 @@ Image *Image::redescribeFillImage() {
     imageFormatNew.image_channel_data_type = surfaceFormat->OCLImageFormat.image_channel_data_type;
 
     DEBUG_BREAK_IF(nullptr == createFunction);
-    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags | CL_MEM_USE_HOST_PTR, flagsIntel, 0);
+    MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags | CL_MEM_USE_HOST_PTR, flagsIntel, 0);
     auto image = createFunction(context,
                                 memoryProperties,
                                 flags | CL_MEM_USE_HOST_PTR,
@@ -973,7 +973,7 @@ Image *Image::redescribe() {
     imageFormatNew.image_channel_data_type = surfaceFormat->OCLImageFormat.image_channel_data_type;
 
     DEBUG_BREAK_IF(nullptr == createFunction);
-    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags | CL_MEM_USE_HOST_PTR, flagsIntel, 0);
+    MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags | CL_MEM_USE_HOST_PTR, flagsIntel, 0);
     auto image = createFunction(context,
                                 memoryProperties,
                                 flags | CL_MEM_USE_HOST_PTR,
@@ -1035,7 +1035,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch) {
     // Create NV12 UV Plane image
     std::unique_ptr<Image> imageYPlane(Image::create(
         context,
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
+        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
         flags,
         0,
         surfaceFormat,
@@ -1059,7 +1059,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch) {
     // Create NV12 UV Plane image
     std::unique_ptr<Image> imageUVPlane(Image::create(
         context,
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
+        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
         flags,
         0,
         surfaceFormat,
@@ -1111,7 +1111,7 @@ bool Image::isDepthFormat(const cl_image_format &imageFormat) {
 }
 
 Image *Image::validateAndCreateImage(Context *context,
-                                     const MemoryPropertiesFlags &memoryProperties,
+                                     const MemoryProperties &memoryProperties,
                                      cl_mem_flags flags,
                                      cl_mem_flags_intel flagsIntel,
                                      const cl_image_format *imageFormat,

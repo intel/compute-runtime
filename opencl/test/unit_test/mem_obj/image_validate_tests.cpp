@@ -683,7 +683,7 @@ TEST(validateAndCreateImage, givenNotSupportedImageFormatWhenValidateAndCreateIm
     cl_int retVal = CL_SUCCESS;
     Image *image;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    image = Image::validateAndCreateImage(&context, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0), flags, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
+    image = Image::validateAndCreateImage(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), flags, 0, &imageFormat, &Image1dDefaults::imageDesc, nullptr, retVal);
     EXPECT_EQ(nullptr, image);
     EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
 }
@@ -711,7 +711,7 @@ TEST(validateAndCreateImage, givenValidImageParamsWhenValidateAndCreateImageIsCa
     std::unique_ptr<Image> image = nullptr;
     image.reset(Image::validateAndCreateImage(
         &context,
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
+        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
         flags,
         0,
         &imageFormat,
@@ -763,7 +763,7 @@ struct NullImage : public Image {
     using Image::imageDesc;
     using Image::imageFormat;
 
-    NullImage() : Image(nullptr, MemoryPropertiesFlags(), cl_mem_flags{}, 0, 0, nullptr, cl_image_format{},
+    NullImage() : Image(nullptr, MemoryProperties(), cl_mem_flags{}, 0, 0, nullptr, cl_image_format{},
                         cl_image_desc{}, false, new MockGraphicsAllocation(nullptr, 0), false,
                         0, 0, ClSurfaceFormatInfo{}, nullptr) {
     }

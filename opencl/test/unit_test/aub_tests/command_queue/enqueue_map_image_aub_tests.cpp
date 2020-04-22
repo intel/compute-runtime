@@ -127,7 +127,7 @@ HWTEST_P(AUBMapImage, MapUpdateUnmapVerify) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.clVersionSupport);
     srcImage.reset(Image::create(
         context.get(),
-        MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, 0, 0),
+        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
         flags,
         0,
         surfaceFormat,

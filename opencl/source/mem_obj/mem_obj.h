@@ -41,7 +41,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     MemObj(Context *context,
            cl_mem_object_type memObjectType,
-           const MemoryPropertiesFlags &memoryProperties,
+           const MemoryProperties &memoryProperties,
            cl_mem_flags flags,
            cl_mem_flags_intel flagsIntel,
            size_t size,
@@ -125,15 +125,15 @@ class MemObj : public BaseObject<_cl_mem> {
         return mapAllocation;
     }
 
-    const cl_mem_flags &getMemoryPropertiesFlags() const { return flags; }
-    const cl_mem_flags &getMemoryPropertiesFlagsIntel() const { return flagsIntel; }
+    const cl_mem_flags &getFlags() const { return flags; }
+    const cl_mem_flags &getFlagsIntel() const { return flagsIntel; }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
 
     Context *context;
     cl_mem_object_type memObjectType;
-    MemoryPropertiesFlags memoryProperties;
+    MemoryProperties memoryProperties;
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     size_t size;

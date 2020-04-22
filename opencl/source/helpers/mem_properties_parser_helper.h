@@ -17,7 +17,7 @@ namespace NEO {
 
 class Context;
 
-class MemoryPropertiesParser {
+class MemoryPropertiesParserHelper {
   public:
     enum class ObjType {
         UNKNOWN,
@@ -25,18 +25,18 @@ class MemoryPropertiesParser {
         IMAGE,
     };
 
-    static bool parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryPropertiesFlags &memoryProperties,
+    static bool parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
                                       cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel, cl_mem_alloc_flags_intel &allocflags,
                                       ObjType objectType, Context &context);
 
-    static AllocationProperties getAllocationProperties(uint32_t rootDeviceIndex, MemoryPropertiesFlags memoryProperties, bool allocateMemory, size_t size,
+    static AllocationProperties getAllocationProperties(uint32_t rootDeviceIndex, MemoryProperties memoryProperties, bool allocateMemory, size_t size,
                                                         GraphicsAllocation::AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam) {
         AllocationProperties allocationProperties(rootDeviceIndex, allocateMemory, size, type, multiStorageResource, subDevicesBitfieldParam);
         fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo);
         return allocationProperties;
     }
 
-    static void fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryPropertiesFlags &memoryProperties, const HardwareInfo &hwInfo);
+    static void fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties, const HardwareInfo &hwInfo);
 
     static void fillCachePolicyInProperties(AllocationProperties &allocationProperties, bool uncached, bool readOnly,
                                             bool deviceOnlyVisibilty) {

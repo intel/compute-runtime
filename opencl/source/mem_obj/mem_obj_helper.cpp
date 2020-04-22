@@ -11,11 +11,11 @@
 
 namespace NEO {
 
-bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressed, const MemoryPropertiesFlags &properties, Context &context, bool preferCompression) {
+bool MemObjHelper::isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, Context &context, bool preferCompression) {
     return renderCompressed && preferCompression;
 }
 
-bool MemObjHelper::validateExtraMemoryProperties(const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const Context &context) {
+bool MemObjHelper::validateExtraMemoryProperties(const MemoryProperties &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const Context &context) {
     return true;
 }
 

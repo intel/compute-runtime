@@ -36,10 +36,10 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     using MockBufferStorage::device;
 
     MockBuffer(GraphicsAllocation &alloc)
-        : MockBufferStorage(), Buffer(nullptr, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, alloc.getUnderlyingBufferSize(), alloc.getUnderlyingBuffer(), alloc.getUnderlyingBuffer(), &alloc, true, false, false),
+        : MockBufferStorage(), Buffer(nullptr, MemoryPropertiesParser::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, alloc.getUnderlyingBufferSize(), alloc.getUnderlyingBuffer(), alloc.getUnderlyingBuffer(), &alloc, true, false, false),
           externalAlloc(&alloc) {
     }
-    MockBuffer() : MockBufferStorage(), Buffer(nullptr, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, sizeof(data), &data, &data, &mockGfxAllocation, true, false, false) {
+    MockBuffer() : MockBufferStorage(), Buffer(nullptr, MemoryPropertiesParser::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, sizeof(data), &data, &data, &mockGfxAllocation, true, false, false) {
     }
     ~MockBuffer() override {
         if (externalAlloc != nullptr) {
@@ -57,9 +57,9 @@ class MockBuffer : public MockBufferStorage, public Buffer {
 class AlignedBuffer : public MockBufferStorage, public Buffer {
   public:
     using MockBufferStorage::device;
-    AlignedBuffer() : MockBufferStorage(false), Buffer(nullptr, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64), &mockGfxAllocation, true, false, false) {
+    AlignedBuffer() : MockBufferStorage(false), Buffer(nullptr, MemoryPropertiesParser::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64), &mockGfxAllocation, true, false, false) {
     }
-    AlignedBuffer(GraphicsAllocation *gfxAllocation) : MockBufferStorage(), Buffer(nullptr, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64), gfxAllocation, true, false, false) {
+    AlignedBuffer(GraphicsAllocation *gfxAllocation) : MockBufferStorage(), Buffer(nullptr, MemoryPropertiesParser::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64), gfxAllocation, true, false, false) {
     }
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly) override {
         Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0);
@@ -69,9 +69,9 @@ class AlignedBuffer : public MockBufferStorage, public Buffer {
 class UnalignedBuffer : public MockBufferStorage, public Buffer {
   public:
     using MockBufferStorage::device;
-    UnalignedBuffer() : MockBufferStorage(true), Buffer(nullptr, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4), &mockGfxAllocation, false, false, false) {
+    UnalignedBuffer() : MockBufferStorage(true), Buffer(nullptr, MemoryPropertiesParser::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4), &mockGfxAllocation, false, false, false) {
     }
-    UnalignedBuffer(GraphicsAllocation *gfxAllocation) : MockBufferStorage(true), Buffer(nullptr, MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4), gfxAllocation, false, false, false) {
+    UnalignedBuffer(GraphicsAllocation *gfxAllocation) : MockBufferStorage(true), Buffer(nullptr, MemoryPropertiesParser::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4), gfxAllocation, false, false, false) {
     }
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly) override {
         Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0);

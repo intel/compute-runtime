@@ -30,20 +30,20 @@ class MemObjHelper {
     static const uint64_t validFlagsForImage;
     static const uint64_t validFlagsForImageIntel;
 
-    static bool validateMemoryPropertiesForBuffer(const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags,
+    static bool validateMemoryPropertiesForBuffer(const MemoryProperties &memoryProperties, cl_mem_flags flags,
                                                   cl_mem_flags_intel flagsIntel, const Context &context);
-    static bool validateMemoryPropertiesForImage(const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags,
+    static bool validateMemoryPropertiesForImage(const MemoryProperties &memoryProperties, cl_mem_flags flags,
                                                  cl_mem_flags_intel flagsIntel, cl_mem parent, const Context &context);
     static AllocationProperties getAllocationPropertiesWithImageInfo(uint32_t rootDeviceIndex, ImageInfo &imgInfo, bool allocateMemory,
-                                                                     const MemoryPropertiesFlags &memoryProperties,
+                                                                     const MemoryProperties &memoryProperties,
                                                                      const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam);
     static bool checkMemFlagsForSubBuffer(cl_mem_flags flags);
     static SVMAllocsManager::SvmAllocationProperties getSvmAllocationProperties(cl_mem_flags flags);
-    static bool isSuitableForRenderCompression(bool renderCompressed, const MemoryPropertiesFlags &properties, Context &context,
+    static bool isSuitableForRenderCompression(bool renderCompressed, const MemoryProperties &properties, Context &context,
                                                bool preferCompression);
 
   protected:
-    static bool validateExtraMemoryProperties(const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags,
+    static bool validateExtraMemoryProperties(const MemoryProperties &memoryProperties, cl_mem_flags flags,
                                               cl_mem_flags_intel flagsIntel, const Context &context);
 };
 } // namespace NEO

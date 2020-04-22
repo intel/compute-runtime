@@ -30,89 +30,89 @@ TEST(MemObjHelper, givenInvalidMemFlagsForSubBufferWhenFlagsAreCheckedThenTrueIs
 }
 
 TEST(MemObjHelper, givenClMemForceLinearStorageFlagWhenCheckForLinearStorageForceThenReturnProperValue) {
-    MemoryPropertiesFlags memoryProperties;
+    MemoryProperties memoryProperties;
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
 
     flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
     flagsIntel = 0;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     EXPECT_TRUE(memoryProperties.flags.forceLinearStorage);
 
     flags = 0;
     flagsIntel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     EXPECT_TRUE(memoryProperties.flags.forceLinearStorage);
 
     flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
     flagsIntel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     EXPECT_TRUE(memoryProperties.flags.forceLinearStorage);
 
     flags = 0;
     flagsIntel = 0;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     EXPECT_FALSE(memoryProperties.flags.forceLinearStorage);
 }
 
 TEST(MemObjHelper, givenValidPropertiesWhenValidatingMemoryPropertiesThenTrueIsReturned) {
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
-    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     MockContext context;
 
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, nullptr, context));
 
     flags = CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_NO_ACCESS_INTEL;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     flags = CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_NO_ACCESS_INTEL;
     flagsIntel = 0;
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, nullptr, context));
 
     flags = CL_MEM_NO_ACCESS_INTEL;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     flags = CL_MEM_NO_ACCESS_INTEL;
     flagsIntel = 0;
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, nullptr, context));
 
     flags = CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR | CL_MEM_HOST_NO_ACCESS;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     flags = CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR | CL_MEM_HOST_NO_ACCESS;
     flagsIntel = 0;
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, nullptr, context));
 
     flags = CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_HOST_WRITE_ONLY;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     flags = CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR | CL_MEM_HOST_WRITE_ONLY;
     flagsIntel = 0;
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, nullptr, context));
 
     flags = CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR | CL_MEM_HOST_NO_ACCESS;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     flags = CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR | CL_MEM_HOST_NO_ACCESS;
     flagsIntel = 0;
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, nullptr, context));
 
     flagsIntel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     flags = 0;
     flagsIntel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, nullptr, context));
 
     flagsIntel = CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     flags = 0;
     flagsIntel = CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE;
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, nullptr, context));
 
     flags = 0;
-    memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
     flags = 0;
     flagsIntel = 0;
     EXPECT_TRUE(MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context));
@@ -126,7 +126,7 @@ struct Image1dWithAccessFlagsUnrestricted : public Image1dDefaults {
 TEST(MemObjHelper, givenParentMemObjAndHostPtrFlagsWhenValidatingMemoryPropertiesForImageThenFalseIsReturned) {
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
-    MemoryPropertiesFlags memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+    MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
 
     MockContext context;
     auto image = clUniquePtr(Image1dHelper<>::create(&context));
@@ -136,13 +136,13 @@ TEST(MemObjHelper, givenParentMemObjAndHostPtrFlagsWhenValidatingMemoryPropertie
 
     for (auto hostPtrFlag : hostPtrFlags) {
         flags = hostPtrFlag;
-        memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+        memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
         flags = hostPtrFlag;
         EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, 0, image.get(), context));
         EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, 0, imageWithAccessFlagsUnrestricted.get(), context));
 
         flags |= CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL;
-        memoryProperties = MemoryPropertiesFlagsParser::createMemoryPropertiesFlags(flags, flagsIntel, 0);
+        memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
         flags |= CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL;
         EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, 0, image.get(), context));
         EXPECT_FALSE(MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, 0, imageWithAccessFlagsUnrestricted.get(), context));

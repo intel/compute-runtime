@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-struct MemoryPropertiesFlags {
+struct MemoryProperties {
     union {
         MemoryFlags flags;
         uint32_t allFlags = 0;
@@ -19,6 +19,6 @@ struct MemoryPropertiesFlags {
         MemoryAllocFlags allocFlags;
         uint32_t allAllocFlags = 0;
     };
-    static_assert(sizeof(MemoryPropertiesFlags::flags) == sizeof(MemoryPropertiesFlags::allFlags) && sizeof(MemoryPropertiesFlags::allocFlags) == sizeof(MemoryPropertiesFlags::allAllocFlags), "");
+    static_assert(sizeof(MemoryProperties::flags) == sizeof(MemoryProperties::allFlags) && sizeof(MemoryProperties::allocFlags) == sizeof(MemoryProperties::allAllocFlags), "");
 };
 } // namespace NEO

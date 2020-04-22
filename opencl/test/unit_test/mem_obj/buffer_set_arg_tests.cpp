@@ -223,7 +223,7 @@ TEST_F(BufferSetArgTest, givenBufferWhenOffsetedSubbufferIsPassedToSetKernelArgT
     region.origin = 0xc0;
     region.size = 32;
     cl_int error = 0;
-    auto subBuffer = buffer->createSubBuffer(buffer->getMemoryPropertiesFlags(), buffer->getMemoryPropertiesFlagsIntel(), &region, error);
+    auto subBuffer = buffer->createSubBuffer(buffer->getFlags(), buffer->getFlagsIntel(), &region, error);
 
     ASSERT_NE(nullptr, subBuffer);
 

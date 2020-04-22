@@ -19,7 +19,7 @@ struct MockImageBase : public Image {
     using Image::imageDesc;
 
     MockImageBase() : Image(
-                          nullptr, MemoryPropertiesFlags(), cl_mem_flags{}, 0, 0, nullptr, cl_image_format{},
+                          nullptr, MemoryProperties(), cl_mem_flags{}, 0, 0, nullptr, cl_image_format{},
                           cl_image_desc{}, false, new MockGraphicsAllocation(nullptr, 0), false,
                           0, 0, ClSurfaceFormatInfo{}, nullptr) {
     }

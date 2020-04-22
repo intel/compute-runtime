@@ -20,7 +20,7 @@ struct KernelInfo;
 struct SurfaceFormatInfo;
 
 typedef Image *(*ImageCreatFunc)(Context *context,
-                                 const MemoryPropertiesFlags &memoryProperties,
+                                 const MemoryProperties &memoryProperties,
                                  uint64_t flags,
                                  uint64_t flagsIntel,
                                  size_t size,
@@ -47,7 +47,7 @@ class Image : public MemObj {
     ~Image() override;
 
     static Image *create(Context *context,
-                         const MemoryPropertiesFlags &memoryProperties,
+                         const MemoryProperties &memoryProperties,
                          cl_mem_flags flags,
                          cl_mem_flags_intel flagsIntel,
                          const ClSurfaceFormatInfo *surfaceFormat,
@@ -56,7 +56,7 @@ class Image : public MemObj {
                          cl_int &errcodeRet);
 
     static Image *validateAndCreateImage(Context *context,
-                                         const MemoryPropertiesFlags &memoryProperties,
+                                         const MemoryProperties &memoryProperties,
                                          cl_mem_flags flags,
                                          cl_mem_flags_intel flagsIntel,
                                          const cl_image_format *imageFormat,
@@ -64,7 +64,7 @@ class Image : public MemObj {
                                          const void *hostPtr,
                                          cl_int &errcodeRet);
 
-    static Image *createImageHw(Context *context, const MemoryPropertiesFlags &memoryProperties, cl_mem_flags flags,
+    static Image *createImageHw(Context *context, const MemoryProperties &memoryProperties, cl_mem_flags flags,
                                 cl_mem_flags_intel flagsIntel, size_t size, void *hostPtr,
                                 const cl_image_format &imageFormat, const cl_image_desc &imageDesc,
                                 bool zeroCopy, GraphicsAllocation *graphicsAllocation,
@@ -75,20 +75,20 @@ class Image : public MemObj {
                                     cl_mem_flags flags, const ClSurfaceFormatInfo *surfaceFormat, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount);
 
     static cl_int validate(Context *context,
-                           const MemoryPropertiesFlags &memoryProperties,
+                           const MemoryProperties &memoryProperties,
                            const ClSurfaceFormatInfo *surfaceFormat,
                            const cl_image_desc *imageDesc,
                            const void *hostPtr);
     static cl_int validateImageFormat(const cl_image_format *imageFormat);
 
     static int32_t validatePlanarYUV(Context *context,
-                                     const MemoryPropertiesFlags &memoryProperties,
+                                     const MemoryProperties &memoryProperties,
                                      const cl_image_desc *imageDesc,
                                      const void *hostPtr);
 
-    static int32_t validatePackedYUV(const MemoryPropertiesFlags &memoryProperties, const cl_image_desc *imageDesc);
+    static int32_t validatePackedYUV(const MemoryProperties &memoryProperties, const cl_image_desc *imageDesc);
 
-    static cl_int validateImageTraits(Context *context, const MemoryPropertiesFlags &memoryProperties, const cl_image_format *imageFormat, const cl_image_desc *imageDesc, const void *hostPtr);
+    static cl_int validateImageTraits(Context *context, const MemoryProperties &memoryProperties, const cl_image_format *imageFormat, const cl_image_desc *imageDesc, const void *hostPtr);
 
     static size_t calculateHostPtrSize(const size_t *region, size_t rowPitch, size_t slicePitch, size_t pixelSize, uint32_t imageType);
 
@@ -187,7 +187,7 @@ class Image : public MemObj {
 
   protected:
     Image(Context *context,
-          const MemoryPropertiesFlags &memoryProperties,
+          const MemoryProperties &memoryProperties,
           cl_mem_flags flags,
           cl_mem_flags_intel flagsIntel,
           size_t size,
@@ -243,7 +243,7 @@ class ImageHw : public Image {
 
   public:
     ImageHw(Context *context,
-            const MemoryPropertiesFlags &memoryProperties,
+            const MemoryProperties &memoryProperties,
             cl_mem_flags flags,
             cl_mem_flags_intel flagsIntel,
             size_t size,
@@ -296,7 +296,7 @@ class ImageHw : public Image {
     void transformImage2dArrayTo3d(void *memory) override;
     void transformImage3dTo2dArray(void *memory) override;
     static Image *create(Context *context,
-                         const MemoryPropertiesFlags &memoryProperties,
+                         const MemoryProperties &memoryProperties,
                          cl_mem_flags flags,
                          cl_mem_flags_intel flagsIntel,
                          size_t size,

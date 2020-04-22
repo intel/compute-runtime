@@ -27,7 +27,7 @@ struct SvmAllocationData {
     GraphicsAllocation *gpuAllocation = nullptr;
     size_t size = 0;
     InternalMemoryType memoryType = InternalMemoryType::SVM;
-    MemoryPropertiesFlags allocationFlagsProperty;
+    MemoryProperties allocationFlagsProperty;
     void *device = nullptr;
 };
 
@@ -76,7 +76,7 @@ class SVMAllocsManager {
         UnifiedMemoryProperties() = default;
         UnifiedMemoryProperties(InternalMemoryType memoryType) : memoryType(memoryType){};
         InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
-        MemoryPropertiesFlags allocationFlags;
+        MemoryProperties allocationFlags;
         void *device = nullptr;
         DeviceBitfield subdeviceBitfield;
     };
