@@ -168,6 +168,11 @@ T *Program::createFromIL(Context *ctx,
                          cl_int &errcodeRet) {
     errcodeRet = CL_SUCCESS;
 
+    if (ctx->getDevice(0)->getEnabledClVersion() < 21) {
+        errcodeRet = CL_INVALID_VALUE;
+        return nullptr;
+    }
+
     if ((il == nullptr) || (length == 0)) {
         errcodeRet = CL_INVALID_BINARY;
         return nullptr;

@@ -9,6 +9,7 @@
 #include "shared/test/unit_test/helpers/test_files.h"
 
 #include "opencl/source/context/context.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "cl_api_tests.h"
 
@@ -66,6 +67,7 @@ TEST_F(clCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgram
 }
 
 TEST_F(clCreateProgramWithILTests, GivenInvalidContextWhenCreatingProgramWithIlThenInvalidContextErrorIsReturned) {
+    REQUIRE_OCL_21_OR_SKIP(pContext);
     const uint32_t spirv[16] = {0x03022307};
 
     cl_int err = CL_SUCCESS;
@@ -75,13 +77,29 @@ TEST_F(clCreateProgramWithILTests, GivenInvalidContextWhenCreatingProgramWithIlT
 }
 
 TEST_F(clCreateProgramWithILTests, GivenNullIlWhenCreatingProgramWithIlThenInvalidValueErrorIsReturned) {
+    REQUIRE_OCL_21_OR_SKIP(pContext);
     cl_int err = CL_SUCCESS;
     cl_program prog = clCreateProgramWithIL(pContext, nullptr, 0, &err);
     EXPECT_EQ(CL_INVALID_VALUE, err);
     EXPECT_EQ(nullptr, prog);
 }
 
+TEST_F(clCreateProgramWithILTests, GivenContextWithDevicesThatDontSupportILWhenCreatingProgramWithILThenErrorIsReturned) {
+    cl_int err = CL_SUCCESS;
+    const uint32_t spirv[16] = {0x03022307};
+    cl_program prog = clCreateProgramWithIL(pContext, spirv, sizeof(spirv), &err);
+    if (pContext->getDevice(0)->getEnabledClVersion() >= 21) {
+        EXPECT_EQ(CL_SUCCESS, err);
+        EXPECT_NE(nullptr, prog);
+        clReleaseProgram(prog);
+    } else {
+        EXPECT_EQ(CL_INVALID_VALUE, err);
+        EXPECT_EQ(nullptr, prog);
+    }
+}
+
 TEST_F(clCreateProgramWithILTests, GivenIncorrectIlSizeWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
+    REQUIRE_OCL_21_OR_SKIP(pContext);
     const uint32_t spirv[16] = {0x03022307};
 
     cl_int err = CL_SUCCESS;
@@ -91,6 +109,7 @@ TEST_F(clCreateProgramWithILTests, GivenIncorrectIlSizeWhenCreatingProgramWithIl
 }
 
 TEST_F(clCreateProgramWithILTests, GivenIncorrectIlWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
+    REQUIRE_OCL_21_OR_SKIP(pContext);
     const uint32_t notSpirv[16] = {0xDEADBEEF};
 
     cl_int err = CL_SUCCESS;
@@ -100,6 +119,7 @@ TEST_F(clCreateProgramWithILTests, GivenIncorrectIlWhenCreatingProgramWithIlThen
 }
 
 TEST_F(clCreateProgramWithILTests, GivenIncorrectIlAndNoErrorPointerWhenCreatingProgramWithIlThenInvalidBinaryErrorIsReturned) {
+    REQUIRE_OCL_21_OR_SKIP(pContext);
     const uint32_t notSpirv[16] = {0xDEADBEEF};
 
     cl_program prog = clCreateProgramWithIL(pContext, notSpirv, sizeof(notSpirv), nullptr);
@@ -107,6 +127,7 @@ TEST_F(clCreateProgramWithILTests, GivenIncorrectIlAndNoErrorPointerWhenCreating
 }
 
 TEST_F(clCreateProgramWithILKHRTests, GivenCorrectParametersWhenCreatingProgramWithIlkhrThenProgramIsCreatedAndSuccessIsReturned) {
+    REQUIRE_OCL_21_OR_SKIP(pContext);
     const uint32_t spirv[16] = {0x03022307};
 
     cl_int err = CL_INVALID_VALUE;
@@ -119,6 +140,7 @@ TEST_F(clCreateProgramWithILKHRTests, GivenCorrectParametersWhenCreatingProgramW
 }
 
 TEST_F(clCreateProgramWithILKHRTests, GivenProgramCreatedWithILWhenBuildAfterBuildIsCalledThenReturnSuccess) {
+    REQUIRE_OCL_21_OR_SKIP(pContext);
     const uint32_t spirv[16] = {0x03022307};
     cl_int err = CL_INVALID_VALUE;
     cl_program program = clCreateProgramWithIL(pContext, spirv, sizeof(spirv), &err);
@@ -133,6 +155,7 @@ TEST_F(clCreateProgramWithILKHRTests, GivenProgramCreatedWithILWhenBuildAfterBui
 }
 
 TEST_F(clCreateProgramWithILKHRTests, GivenNullIlWhenCreatingProgramWithIlkhrThenNullProgramIsReturned) {
+    REQUIRE_OCL_21_OR_SKIP(pContext);
     cl_program program = clCreateProgramWithILKHR(pContext, nullptr, 0, nullptr);
     EXPECT_EQ(nullptr, program);
 }

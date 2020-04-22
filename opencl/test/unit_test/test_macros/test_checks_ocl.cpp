@@ -21,3 +21,7 @@ bool TestChecks::supportsSvm(const ClDevice *pClDevice) {
 bool TestChecks::supportsImages(const Context *pContext) {
     return pContext->getDevice(0)->getSharedDeviceInfo().imageSupport;
 }
+
+bool TestChecks::supportsOcl21(const Context *pContext) {
+    return pContext->getDevice(0)->getEnabledClVersion() >= 21;
+}

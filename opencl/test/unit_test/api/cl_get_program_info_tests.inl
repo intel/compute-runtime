@@ -12,6 +12,7 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "cl_api_tests.h"
 
@@ -97,6 +98,7 @@ TEST_F(clGetProgramInfoTests, SuccessfulProgramWithSource) {
 }
 
 TEST_F(clGetProgramInfoTests, SuccessfulProgramWithIL) {
+    REQUIRE_OCL_21_OR_SKIP(pContext);
     const size_t binarySize = 16;
     const uint32_t spirv[binarySize] = {0x03022307};
 
@@ -117,6 +119,7 @@ TEST_F(clGetProgramInfoTests, SuccessfulProgramWithIL) {
 }
 
 TEST_F(clGetProgramInfoTests, GivenSPIRVProgramWhenGettingProgramSourceThenReturnNullString) {
+    REQUIRE_OCL_21_OR_SKIP(pContext);
     const size_t binarySize = 16;
     const uint32_t spirv[binarySize] = {0x03022307};
 

@@ -14,6 +14,7 @@ class Context;
 namespace TestChecks {
 bool supportsSvm(const ClDevice *pClDevice);
 bool supportsImages(const Context *pContext);
+bool supportsOcl21(const Context *pContext);
 } // namespace TestChecks
 
 } // namespace NEO
@@ -23,4 +24,9 @@ bool supportsImages(const Context *pContext);
 #define REQUIRE_IMAGES_OR_SKIP(param)                      \
     if (NEO::TestChecks::supportsImages(param) == false) { \
         GTEST_SKIP();                                      \
+    }
+
+#define REQUIRE_OCL_21_OR_SKIP(param)                     \
+    if (NEO::TestChecks::supportsOcl21(param) == false) { \
+        GTEST_SKIP();                                     \
     }
