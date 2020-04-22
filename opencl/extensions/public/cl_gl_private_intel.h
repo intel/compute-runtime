@@ -21,7 +21,7 @@ typedef struct _tagCLGLResourceInfo {
     GLenum glFormat;
     GLint glInternalFormat;
     GLuint glHWFormat;
-    GLboolean isEmulatedTarget;
+    GLboolean isAuxEnabled;
     GLuint borderWidth;
     GLint textureBufferWidth;
     GLint textureBufferSize;

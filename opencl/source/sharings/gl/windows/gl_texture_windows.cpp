@@ -146,9 +146,9 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
 
     auto glTexture = new GlTexture(sharingFunctions, getClGlObjectType(target), texture, texInfo, target, std::max(miplevel, 0));
 
-    auto hwInfo = context->getDevice(0)->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
+    if (texInfo.isAuxEnabled && alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
+        auto hwInfo = context->getDevice(0)->getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         alloc->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
                                                                                                   : true;
     }

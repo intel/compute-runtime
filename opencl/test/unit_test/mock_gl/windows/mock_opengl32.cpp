@@ -99,6 +99,7 @@ GLboolean WINAPI mockGLAcquireSharedTexture(GLDisplay, GLContext, GLContext, GLv
     pTextureInfo->glHWFormat = textureInfoOutput.glHWFormat;
     pTextureInfo->textureBufferOffset = textureInfoOutput.textureBufferOffset;
     pTextureInfo->numberOfSamples = textureInfoOutput.numberOfSamples;
+    pTextureInfo->isAuxEnabled = textureInfoOutput.isAuxEnabled;
     GLAcquireSharedTextureCalled++;
     return (GLboolean)1;
 };
