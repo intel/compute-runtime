@@ -9,7 +9,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
-#include "shared/test/unit_test/test_macros/test_checks.h"
+#include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 

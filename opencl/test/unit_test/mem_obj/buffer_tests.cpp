@@ -42,7 +42,7 @@
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
-#include "opencl/test/unit_test/test_macros/test_checks.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
 #include "gmock/gmock.h"

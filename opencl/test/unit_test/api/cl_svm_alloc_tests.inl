@@ -10,7 +10,7 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/test_macros/test_checks.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "cl_api_tests.h"
 

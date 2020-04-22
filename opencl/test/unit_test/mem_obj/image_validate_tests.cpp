@@ -14,7 +14,7 @@
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
-#include "opencl/test/unit_test/test_macros/test_checks.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "gtest/gtest.h"
 

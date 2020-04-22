@@ -11,7 +11,7 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/context/driver_diagnostics_tests.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/test_macros/test_checks.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 using namespace NEO;
 

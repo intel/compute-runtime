@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/test_macros/test_checks.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "shared/source/device/device_info.h"
 

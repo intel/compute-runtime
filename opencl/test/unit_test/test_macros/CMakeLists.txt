@@ -6,8 +6,8 @@
 
 set(IGDRCL_SRCS_test_macros
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/test_checks.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/test_checks.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_checks_ocl.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_checks_ocl.h
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_test_macros})
 

@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/unit_test/test_macros/test_checks.h"
+#include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #include "shared/source/device/device.h"
 

@@ -18,7 +18,7 @@ bool supportsImages(const Context *pContext);
 
 } // namespace NEO
 
-#include "shared/test/unit_test/test_macros/test_checks.h"
+#include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #define REQUIRE_IMAGES_OR_SKIP(param)                      \
     if (NEO::TestChecks::supportsImages(param) == false) { \
