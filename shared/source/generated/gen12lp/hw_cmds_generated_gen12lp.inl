@@ -904,6 +904,7 @@ typedef struct tagMI_ATOMIC {
         COMMAND_TYPE_MI_COMMAND = 0x0,
     } COMMAND_TYPE;
     typedef enum tagATOMIC_OPCODES {
+        ATOMIC_4B_INCREMENT = 0x5,
         ATOMIC_4B_DECREMENT = 0x6,
         ATOMIC_8B_INCREMENT = 0x25,
         ATOMIC_8B_DECREMENT = 0x26,
