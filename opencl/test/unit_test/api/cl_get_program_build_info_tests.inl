@@ -43,82 +43,59 @@ TEST_F(clGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledT
     ASSERT_NE(0u, sourceSize);
     ASSERT_NE(nullptr, pSource);
 
-    {
-        const char *sources[1] = {pSource.get()};
-        pProgram = clCreateProgramWithSource(
-            pContext,
-            1,
-            sources,
-            &sourceSize,
-            &retVal);
+    const char *sources[1] = {pSource.get()};
+    pProgram = clCreateProgramWithSource(
+        pContext,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
 
-        EXPECT_NE(nullptr, pProgram);
-        ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
 
-        cl_build_status buildStatus;
-        retVal = clGetProgramBuildInfo(pProgram, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_EQ(CL_BUILD_NONE, buildStatus);
+    cl_build_status buildStatus;
+    retVal = clGetProgramBuildInfo(pProgram, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_BUILD_NONE, buildStatus);
 
-        retVal = clCompileProgram(
-            pProgram,
-            num_devices,
-            devices,
-            nullptr,
-            0,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr);
+    retVal = clCompileProgram(
+        pProgram,
+        num_devices,
+        devices,
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
 
-        ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
 
-        retVal = clGetProgramBuildInfo(pProgram, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
+    retVal = clGetProgramBuildInfo(pProgram, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
 
-        retVal = clReleaseProgram(pProgram);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-    }
+    retVal = clBuildProgram(
+        pProgram,
+        num_devices,
+        devices,
+        nullptr,
+        nullptr,
+        nullptr);
 
-    {
-        const char *sources[1] = {pSource.get()};
-        pProgram = clCreateProgramWithSource(
-            pContext,
-            1,
-            sources,
-            &sourceSize,
-            &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
 
-        EXPECT_NE(nullptr, pProgram);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-
-        cl_build_status buildStatus;
-        retVal = clGetProgramBuildInfo(pProgram, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_EQ(CL_BUILD_NONE, buildStatus);
-
-        retVal = clBuildProgram(
-            pProgram,
-            num_devices,
-            devices,
-            nullptr,
-            nullptr,
-            nullptr);
-
-        ASSERT_EQ(CL_SUCCESS, retVal);
-
-        retVal = clGetProgramBuildInfo(pProgram, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
-
-        retVal = clReleaseProgram(pProgram);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-    }
+    retVal = clGetProgramBuildInfo(pProgram, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
 
     // try to get program build info for invalid program object - should fail
     retVal = clGetProgramBuildInfo(nullptr, devices[testedRootDeviceIndex], CL_PROGRAM_BUILD_STATUS, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 TEST_F(clGetProgramBuildInfoTests, givenElfBinaryWhenclGetProgramBuildInfoIsCalledThenReturnClBuildNone) {
