@@ -651,7 +651,7 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
         (paramName == CL_KERNEL_MAX_NUM_SUB_GROUPS) ||
         (paramName == CL_KERNEL_COMPILE_NUM_SUB_GROUPS)) {
         if (device.getEnabledClVersion() < 21) {
-            return CL_INVALID_VALUE;
+            return CL_INVALID_OPERATION;
         }
     }
 

@@ -357,7 +357,7 @@ INSTANTIATE_TEST_CASE_P(KernelSubGroupInfoInputParams,
                         KernelSubGroupInfoInputParamsTest,
                         ::testing::ValuesIn(KernelSubGroupInfoInputParams));
 
-TEST_P(KernelSubGroupInfoInputParamsTest, GivenOpenClVersionLowerThan21WhenGettingKenrelSubGroupInfoThenInvalidValueErrorIsReturned) {
+TEST_P(KernelSubGroupInfoInputParamsTest, GivenOpenClVersionLowerThan21WhenGettingKenrelSubGroupInfoThenInvalidOperationErrorIsReturned) {
     bool requireOpenCL21 = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ||
                            (GetParam() == CL_KERNEL_MAX_NUM_SUB_GROUPS) ||
                            (GetParam() == CL_KERNEL_COMPILE_NUM_SUB_GROUPS);
@@ -376,7 +376,7 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenOpenClVersionLowerThan21WhenGetti
             nullptr,
             nullptr);
 
-        EXPECT_EQ(CL_INVALID_VALUE, retVal);
+        EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 
         DebugManager.flags.ForceOCLVersion.set(0);
         pDevice->initializeCaps();
