@@ -27,6 +27,7 @@ class RasImp : public NEO::NonCopyableClass, public Ras {
   private:
     OsRas *pOsRas = nullptr;
     void init();
+    zet_ras_properties_t rasProperties = {};
 };
 
 } // namespace L0

@@ -36,6 +36,23 @@ FsAccess *FsAccess::create() {
     return new FsAccess();
 }
 
+ze_result_t FsAccess::read(const std::string file, uint64_t &val) {
+    // Read a single line from text file without trailing newline
+    std::ifstream fs;
+
+    fs.open(file.c_str());
+    if (fs.fail()) {
+        return getResult(errno);
+    }
+    fs >> val;
+    if (fs.fail()) {
+        fs.close();
+        return getResult(errno);
+    }
+    fs.close();
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t FsAccess::read(const std::string file, std::string &val) {
     // Read a single line from text file without trailing newline
     std::ifstream fs;

@@ -17,14 +17,19 @@ class LinuxRasImp : public OsRas, public NEO::NonCopyableClass {
   public:
     LinuxRasImp(OsSysman *pOsSysman);
     ~LinuxRasImp() override = default;
+    ze_result_t getCounterValues(zet_ras_details_t *pDetails) override;
 
   private:
-    SysfsAccess *pSysfsAccess = nullptr;
+    FsAccess *pFsAccess = nullptr;
 };
+
+ze_result_t LinuxRasImp::getCounterValues(zet_ras_details_t *pDetails) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
 
 LinuxRasImp::LinuxRasImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    pFsAccess = &pLinuxSysmanImp->getFsAccess();
 }
 
 OsRas *OsRas::create(OsSysman *pOsSysman) {

@@ -32,6 +32,7 @@ class FsAccess {
     ze_result_t canWrite(const std::string file);
     ze_result_t getFileMode(const std::string file, ::mode_t &mode);
 
+    ze_result_t read(const std::string file, uint64_t &val);
     ze_result_t read(const std::string file, std::string &val);
     ze_result_t read(const std::string file, std::vector<std::string> &val);
 
