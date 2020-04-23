@@ -409,11 +409,9 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionD
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, givenPlatformEnabledFtrCompressionWhenInitializingThenForceDisable) {
-    pInHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     pInHwInfo.capabilityTable.ftrRenderCompressedImages = true;
     int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
 }
 
