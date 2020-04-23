@@ -2141,24 +2141,30 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenGetReservedMemoryIsCalledManyTimes
 class MemoryManagerWithFailure : public MockMemoryManager {
   public:
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+        recentlyPassedDeviceBitfield = properties.subDevicesBitfield;
         return nullptr;
     }
 };
 
 TEST(MemoryManagerTest, whenMemoryManagerReturnsNullptrThenAllocateGlobalsSurfaceAlsoReturnsNullptr) {
     MockClDevice device{new MockDevice};
-    std::unique_ptr<MemoryManager> memoryManager(new MemoryManagerWithFailure());
-    device.injectMemoryManager(memoryManager.release());
+    auto deviceBitfield = device.getDeviceBitfield();
+    auto memoryManager = new MemoryManagerWithFailure();
+    device.injectMemoryManager(memoryManager);
 
     WhiteBox<NEO::LinkerInput> linkerInput;
     linkerInput.traits.exportsGlobalConstants = true;
     linkerInput.traits.exportsGlobalVariables = true;
+    memoryManager->recentlyPassedDeviceBitfield = {};
     GraphicsAllocation *allocation = allocateGlobalsSurface(nullptr, device.getDevice(), 1024, false, &linkerInput, nullptr);
     EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
 
     auto svmAllocsManager = std::make_unique<SVMAllocsManager>(device.getMemoryManager());
+    memoryManager->recentlyPassedDeviceBitfield = {};
     allocation = allocateGlobalsSurface(svmAllocsManager.get(), device.getDevice(), 1024, false, &linkerInput, nullptr);
     EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
 }
 
 HWTEST_F(MemoryAllocatorTest, givenMemoryManagerWhenEnableHostPtrTrackingFlagIsSetTo0ThenHostPointerTrackingIsDisabled) {

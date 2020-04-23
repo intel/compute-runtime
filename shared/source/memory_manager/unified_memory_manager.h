@@ -82,7 +82,7 @@ class SVMAllocsManager {
     };
 
     SVMAllocsManager(MemoryManager *memoryManager);
-    void *createSVMAlloc(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties svmProperties);
+    void *createSVMAlloc(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties svmProperties, const DeviceBitfield &deviceBitfield);
     void *createUnifiedMemoryAllocation(uint32_t rootDeviceIndex, size_t size, const UnifiedMemoryProperties &svmProperties);
     void *createSharedUnifiedMemoryAllocation(uint32_t rootDeviceIndex, size_t size, const UnifiedMemoryProperties &svmProperties, void *cmdQ);
     SvmAllocationData *getSVMAlloc(const void *ptr);
@@ -100,7 +100,7 @@ class SVMAllocsManager {
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
 
   protected:
-    void *createZeroCopySvmAllocation(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties &svmProperties);
+    void *createZeroCopySvmAllocation(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties &svmProperties, const DeviceBitfield &deviceBitfield);
 
     void freeZeroCopySvmAllocation(SvmAllocationData *svmData);
 

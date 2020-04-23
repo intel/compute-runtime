@@ -9,6 +9,7 @@
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/context/context.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
@@ -213,4 +214,25 @@ TEST_F(clSVMAllocTests, GivenAlignmentTooLargeWhenAllocatingSvmThenSvmIsNotAlloc
     auto SVMPtr = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 4096 /* Size */, 4096 /* alignment */);
     EXPECT_EQ(nullptr, SVMPtr);
 };
+TEST(clSvmAllocTest, givenSubDeviceWhenCreatingSvmAllocThenProperDeviceBitfieldIsPassed) {
+    REQUIRE_SVM_OR_SKIP(defaultHwInfo.get());
+    UltClDeviceFactory deviceFactory{1, 2};
+    auto device = deviceFactory.subDevices[1];
+    auto expectedDeviceBitfield = device->getDeviceBitfield();
+
+    auto executionEnvironment = device->getExecutionEnvironment();
+    auto memoryManager = new MockMemoryManager(*executionEnvironment);
+
+    std::unique_ptr<MemoryManager> memoryManagerBackup(memoryManager);
+    std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
+
+    MockContext context(device);
+    EXPECT_NE(expectedDeviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
+    auto svmPtr = clSVMAlloc(&context, CL_MEM_READ_WRITE, MemoryConstants::pageSize, MemoryConstants::cacheLineSize);
+    EXPECT_NE(nullptr, svmPtr);
+    EXPECT_EQ(expectedDeviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
+    clSVMFree(&context, svmPtr);
+
+    std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
+}
 } // namespace ULT

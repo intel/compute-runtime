@@ -782,8 +782,8 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSv
     REQUIRE_SVM_OR_SKIP(pDevice);
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
-    void *pSrcSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
-    void *pDstSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
+    void *pSrcSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, {});
+    void *pDstSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, {});
     size_t zeroSize = 0;
     mockCmdQ->enqueueSVMMemcpy(false, pSrcSVM, pDstSVM, zeroSize, 0, nullptr, nullptr);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
@@ -797,8 +797,8 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenCopyingSv
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;
-    void *pSrcSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
-    void *pDstSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
+    void *pSrcSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, {});
+    void *pDstSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, {});
     size_t zeroSize = 0;
     mockCmdQ->enqueueSVMMemcpy(false, pSrcSVM, pDstSVM, zeroSize, 0, nullptr, &event);
     EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_MARKER), mockCmdQ->lastCommandType);
@@ -820,7 +820,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingSv
     REQUIRE_SVM_OR_SKIP(pDevice);
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
-    void *pSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
+    void *pSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, {});
     const float pattern[1] = {1.2345f};
     size_t zeroSize = 0;
     mockCmdQ->enqueueSVMMemFill(pSVM, &pattern, sizeof(pattern), zeroSize, 0, nullptr, nullptr);
@@ -834,7 +834,7 @@ HWTEST_F(ZeroSizeEnqueueHandlerTest, GivenZeroSizeEnqueueIsDetectedWhenFillingSv
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pClDevice, 0));
 
     cl_event event;
-    void *pSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
+    void *pSVM = context.getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, {});
     const float pattern[1] = {1.2345f};
     size_t zeroSize = 0;
     mockCmdQ->enqueueSVMMemFill(pSVM, &pattern, sizeof(pattern), zeroSize, 0, nullptr, &event);

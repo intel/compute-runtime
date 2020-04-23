@@ -291,7 +291,7 @@ TEST_F(BufferSetArgTest, clSetKernelArgBuffer) {
 
 TEST_F(BufferSetArgTest, clSetKernelArgSVMPointer) {
     REQUIRE_SVM_OR_SKIP(pDevice);
-    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
+    void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, {});
     EXPECT_NE(nullptr, ptrSVM);
 
     auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSVM);

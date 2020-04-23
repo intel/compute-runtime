@@ -90,15 +90,17 @@ void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &co
 SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager) : memoryManager(memoryManager) {
 }
 
-void *SVMAllocsManager::createSVMAlloc(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties svmProperties) {
+void *SVMAllocsManager::createSVMAlloc(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties svmProperties, const DeviceBitfield &deviceBitfield) {
     if (size == 0)
         return nullptr;
 
     std::unique_lock<SpinLock> lock(mtx);
     if (!memoryManager->isLocalMemorySupported(rootDeviceIndex)) {
-        return createZeroCopySvmAllocation(rootDeviceIndex, size, svmProperties);
+        return createZeroCopySvmAllocation(rootDeviceIndex, size, svmProperties, deviceBitfield);
     } else {
-        return createUnifiedAllocationWithDeviceStorage(rootDeviceIndex, size, svmProperties, {});
+        UnifiedMemoryProperties unifiedMemoryProperties{};
+        unifiedMemoryProperties.subdeviceBitfield = deviceBitfield;
+        return createUnifiedAllocationWithDeviceStorage(rootDeviceIndex, size, svmProperties, unifiedMemoryProperties);
     }
 }
 
@@ -196,8 +198,13 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
     return false;
 }
 
-void *SVMAllocsManager::createZeroCopySvmAllocation(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties &svmProperties) {
-    AllocationProperties properties{rootDeviceIndex, size, GraphicsAllocation::AllocationType::SVM_ZERO_COPY};
+void *SVMAllocsManager::createZeroCopySvmAllocation(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties &svmProperties, const DeviceBitfield &deviceBitfield) {
+    AllocationProperties properties{rootDeviceIndex,
+                                    true, // allocateMemory
+                                    size,
+                                    GraphicsAllocation::AllocationType::SVM_ZERO_COPY,
+                                    false, // isMultiStorageAllocation
+                                    deviceBitfield};
     MemoryPropertiesParser::fillCachePolicyInProperties(properties, false, svmProperties.readOnly, false);
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
     if (!allocation) {

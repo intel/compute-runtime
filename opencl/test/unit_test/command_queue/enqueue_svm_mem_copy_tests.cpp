@@ -35,9 +35,9 @@ struct EnqueueSvmMemCopyTest : public DeviceFixture,
         }
 
         CommandQueueFixture::SetUp(pClDevice, 0);
-        srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
+        srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, {});
         ASSERT_NE(nullptr, srcSvmPtr);
-        dstSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
+        dstSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, {});
         ASSERT_NE(nullptr, dstSvmPtr);
         auto srcSvmData = context->getSVMAllocsManager()->getSVMAlloc(srcSvmPtr);
         ASSERT_NE(nullptr, srcSvmData);
@@ -312,7 +312,7 @@ struct EnqueueSvmMemCopyHw : public ::testing::Test {
         }
 
         context = std::make_unique<MockContext>(device.get());
-        srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {});
+        srcSvmPtr = context->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), 256, {}, {});
         ASSERT_NE(nullptr, srcSvmPtr);
         dstHostPtr = alignedMalloc(256, 64);
     }

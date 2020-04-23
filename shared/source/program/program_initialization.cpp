@@ -28,7 +28,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         svmProps.coherent = false;
         svmProps.readOnly = constant;
         svmProps.hostPtrReadOnly = constant;
-        auto ptr = svmAllocManager->createSVMAlloc(device.getRootDeviceIndex(), size, svmProps);
+        auto ptr = svmAllocManager->createSVMAlloc(device.getRootDeviceIndex(), size, svmProps, device.getDeviceBitfield());
         DEBUG_BREAK_IF(ptr == nullptr);
         if (ptr == nullptr) {
             return nullptr;
