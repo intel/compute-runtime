@@ -133,7 +133,7 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
     }
 
     template <typename GfxFamily>
-    const std::vector<BufferObject *> &getResidencyVector() const {
+    const std::unordered_set<BufferObject *> &getResidencyVector() const {
         return static_cast<const TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->residency;
     }
 

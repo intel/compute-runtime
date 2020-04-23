@@ -80,10 +80,12 @@ void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, u
     }
 
     int err = bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
-                       batchBuffer.startOffset, engineFlag | I915_EXEC_NO_RELOC,
+                       batchBuffer.startOffset,
+                       engineFlag | I915_EXEC_NO_RELOC,
                        batchBuffer.requiresCoherency,
                        drmContextId,
-                       this->residency.data(), this->residency.size(),
+                       this->residency.begin(),
+                       this->residency.size(),
                        this->execObjectsStorage.data());
     UNRECOVERABLE_IF(err != 0);
 
@@ -93,15 +95,7 @@ void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, u
 template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::makeResident(BufferObject *bo) {
     if (bo) {
-        if (bo->peekIsReusableAllocation()) {
-            for (auto bufferObject : this->residency) {
-                if (bufferObject == bo) {
-                    return;
-                }
-            }
-        }
-
-        residency.push_back(bo);
+        residency.insert(bo);
     }
 }
 

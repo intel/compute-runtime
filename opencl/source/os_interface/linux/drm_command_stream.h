@@ -11,6 +11,7 @@
 
 #include "drm/i915_drm.h"
 
+#include <unordered_set>
 #include <vector>
 
 namespace NEO {
@@ -55,7 +56,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     void flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency);
     void exec(const BatchBuffer &batchBuffer, uint32_t drmContextId);
 
-    std::vector<BufferObject *> residency;
+    std::unordered_set<BufferObject *> residency;
     std::vector<drm_i915_gem_exec_object2> execObjectsStorage;
     Drm *drm;
     gemCloseWorkerMode gemCloseWorkerOperationMode;
