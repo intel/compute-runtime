@@ -22,6 +22,8 @@ struct HwTimeStamps {
         ContextCompleteTS = 0;
     }
     bool isCompleted() const { return true; }
+    uint32_t getImplicitGpuDependenciesCount() const { return 0; }
+
     static GraphicsAllocation::AllocationType getAllocationType() {
         return GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER;
     }

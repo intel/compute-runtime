@@ -37,18 +37,30 @@ struct TagNode : public IDNode<TagNode<TagType>> {
     }
 
     bool canBeReleased() const {
-        return !doNotReleaseNodes && tagForCpuAccess->isCompleted();
+        return (!doNotReleaseNodes) &&
+               (tagForCpuAccess->isCompleted()) &&
+               (tagForCpuAccess->getImplicitGpuDependenciesCount() == getImplicitCpuDependenciesCount());
     }
 
     void setDoNotReleaseNodes(bool doNotRelease) {
         doNotReleaseNodes = doNotRelease;
     }
 
+    void incImplicitCpuDependenciesCount() { implicitCpuDependenciesCount++; }
+
+    void initialize() {
+        tagForCpuAccess->initialize();
+        implicitCpuDependenciesCount.store(0);
+    }
+
+    uint32_t getImplicitCpuDependenciesCount() const { return implicitCpuDependenciesCount.load(); }
+
   protected:
     TagAllocator<TagType> *allocator = nullptr;
     GraphicsAllocation *gfxAllocation = nullptr;
     uint64_t gpuAddress = 0;
     std::atomic<uint32_t> refCount{0};
+    std::atomic<uint32_t> implicitCpuDependenciesCount{0};
     bool doNotReleaseNodes = false;
 
     template <typename TagType2>
@@ -101,7 +113,7 @@ class TagAllocator {
         }
         usedTags.pushFrontOne(*node);
         node->incRefCount();
-        node->tagForCpuAccess->initialize();
+        node->initialize();
         return node;
     }
 

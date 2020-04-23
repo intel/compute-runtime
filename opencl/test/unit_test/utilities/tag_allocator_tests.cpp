@@ -31,6 +31,7 @@ struct TimeStamps {
         return GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER;
     }
     bool isCompleted() const { return release; }
+    uint32_t getImplicitGpuDependenciesCount() const { return 0; }
     bool release;
     uint64_t start;
     uint64_t end;

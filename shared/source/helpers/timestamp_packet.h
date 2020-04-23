@@ -54,7 +54,8 @@ struct TimestampPacketStorage {
                 return false;
             }
         }
-        return implicitDependenciesCount.load() == 0;
+
+        return true;
     }
 
     void initialize() {
@@ -65,16 +66,13 @@ struct TimestampPacketStorage {
             packet.globalEnd = 1u;
         }
         packetsUsed = 1;
-
-        if (!DebugManager.flags.DisableAtomicForPostSyncs.get()) {
-            implicitDependenciesCount.store(0);
-        }
+        implicitGpuDependenciesCount = 0;
     }
 
-    void incImplicitDependenciesCount() { implicitDependenciesCount++; }
+    uint32_t getImplicitGpuDependenciesCount() const { return implicitGpuDependenciesCount; }
 
     Packet packets[TimestampPacketSizeControl::preferredPacketCount];
-    std::atomic<uint32_t> implicitDependenciesCount;
+    uint32_t implicitGpuDependenciesCount = 0;
     uint32_t packetsUsed = 1;
 };
 #pragma pack()
@@ -117,7 +115,7 @@ struct TimestampPacketHelper {
         using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
         auto compareAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
-        auto dependenciesCountAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, implicitDependenciesCount);
+        auto dependenciesCountAddress = timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, implicitGpuDependenciesCount);
 
         for (uint32_t packetId = 0; packetId < timestampPacketNode.tagForCpuAccess->packetsUsed; packetId++) {
             uint64_t compareOffset = packetId * sizeof(TimestampPacketStorage::Packet);
@@ -131,10 +129,10 @@ struct TimestampPacketHelper {
         }
 
         if (trackPostSyncDependencies) {
-            timestampPacketNode.tagForCpuAccess->incImplicitDependenciesCount();
+            timestampPacketNode.incImplicitCpuDependenciesCount();
             auto miAtomic = cmdStream.getSpaceForCmd<MI_ATOMIC>();
             EncodeAtomic<GfxFamily>::programMiAtomic(miAtomic, dependenciesCountAddress,
-                                                     MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
+                                                     MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
                                                      MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
         }
     }

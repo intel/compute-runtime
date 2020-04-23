@@ -22,6 +22,7 @@ struct HwPerfCounter {
         return GraphicsAllocation::AllocationType::PROFILING_TAG_BUFFER;
     }
     bool isCompleted() const { return true; }
+    uint32_t getImplicitGpuDependenciesCount() const { return 0; }
 
     // Gpu report size is not known during compile time.
     // Such information will be provided by metrics library dll.
