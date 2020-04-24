@@ -30,34 +30,20 @@ SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
     pMemoryHandleContext = new MemoryHandleContext(pOsSysman, hCoreDevice);
     pEngineHandleContext = new EngineHandleContext(pOsSysman);
     pRasHandleContext = new RasHandleContext(pOsSysman);
+    pTempHandleContext = new TemperatureHandleContext(pOsSysman);
 }
 
 SysmanImp::~SysmanImp() {
-    if (pRasHandleContext) {
-        delete pRasHandleContext;
-    }
-    if (pEngineHandleContext) {
-        delete pEngineHandleContext;
-    }
-    if (pMemoryHandleContext) {
-        delete pMemoryHandleContext;
-    }
-    if (pStandbyHandleContext) {
-        delete pStandbyHandleContext;
-    }
-    if (pFrequencyHandleContext) {
-        delete pFrequencyHandleContext;
-    }
-    if (pSysmanDevice) {
-        delete pSysmanDevice;
-    }
-    if (pPci) {
-        delete pPci;
-    }
-    if (pSched) {
-        delete pSched;
-    }
-    delete pOsSysman;
+    freeResource(pTempHandleContext);
+    freeResource(pRasHandleContext);
+    freeResource(pEngineHandleContext);
+    freeResource(pMemoryHandleContext);
+    freeResource(pStandbyHandleContext);
+    freeResource(pFrequencyHandleContext);
+    freeResource(pSysmanDevice);
+    freeResource(pPci);
+    freeResource(pSched);
+    freeResource(pOsSysman);
 }
 
 void SysmanImp::init() {
@@ -77,13 +63,15 @@ void SysmanImp::init() {
     if (pRasHandleContext) {
         pRasHandleContext->init();
     }
+    if (pTempHandleContext) {
+        pTempHandleContext->init();
+    }
     if (pPci) {
         pPci->init();
     }
     if (pSched) {
         if (pSched->init() != ZE_RESULT_SUCCESS) {
-            delete pSched;
-            pSched = nullptr;
+            freeResource(pSched);
         }
     }
     if (pSysmanDevice) {
@@ -201,7 +189,7 @@ ze_result_t SysmanImp::fabricPortGet(uint32_t *pCount, zet_sysman_fabric_port_ha
 }
 
 ze_result_t SysmanImp::temperatureGet(uint32_t *pCount, zet_sysman_temp_handle_t *phTemperature) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pTempHandleContext->temperatureGet(pCount, phTemperature);
 }
 
 ze_result_t SysmanImp::psuGet(uint32_t *pCount, zet_sysman_psu_handle_t *phPsu) {

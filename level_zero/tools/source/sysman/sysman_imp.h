@@ -37,6 +37,7 @@ struct SysmanImp : Sysman {
     MemoryHandleContext *pMemoryHandleContext = nullptr;
     EngineHandleContext *pEngineHandleContext = nullptr;
     RasHandleContext *pRasHandleContext = nullptr;
+    TemperatureHandleContext *pTempHandleContext = nullptr;
 
     ze_result_t deviceGetProperties(zet_sysman_properties_t *pProperties) override;
     ze_result_t schedulerGetCurrentMode(zet_sched_mode_t *pMode) override;
@@ -67,6 +68,15 @@ struct SysmanImp : Sysman {
     ze_result_t rasGet(uint32_t *pCount, zet_sysman_ras_handle_t *phRas) override;
     ze_result_t eventGet(zet_sysman_event_handle_t *phEvent) override;
     ze_result_t diagnosticsGet(uint32_t *pCount, zet_sysman_diag_handle_t *phDiagnostics) override;
+
+  private:
+    template <typename T>
+    void inline freeResource(T *&resource) {
+        if (resource) {
+            delete resource;
+            resource = nullptr;
+        }
+    }
 };
 
 } // namespace L0

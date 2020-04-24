@@ -457,28 +457,28 @@ __zedllexport ze_result_t __zecall
 zetSysmanTemperatureGetProperties(
     zet_sysman_temp_handle_t hTemperature,
     zet_temp_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Temperature::fromHandle(hTemperature)->temperatureGetProperties(pProperties);
 }
 
 __zedllexport ze_result_t __zecall
 zetSysmanTemperatureGetConfig(
     zet_sysman_temp_handle_t hTemperature,
     zet_temp_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Temperature::fromHandle(hTemperature)->temperatureGetConfig(pConfig);
 }
 
 __zedllexport ze_result_t __zecall
 zetSysmanTemperatureSetConfig(
     zet_sysman_temp_handle_t hTemperature,
     const zet_temp_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Temperature::fromHandle(hTemperature)->temperatureSetConfig(pConfig);
 }
 
 __zedllexport ze_result_t __zecall
 zetSysmanTemperatureGetState(
     zet_sysman_temp_handle_t hTemperature,
     double *pTemperature) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Temperature::fromHandle(hTemperature)->temperatureGetState(pTemperature);
 }
 
 __zedllexport ze_result_t __zecall

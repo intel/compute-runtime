@@ -14,6 +14,7 @@
 #include "level_zero/tools/source/sysman/scheduler/scheduler.h"
 #include "level_zero/tools/source/sysman/standby/standby.h"
 #include "level_zero/tools/source/sysman/sysman_device/sysman_device.h"
+#include "level_zero/tools/source/sysman/temperature/temperature.h"
 #include <level_zero/zet_api.h>
 #include <level_zero/zet_sysman.h>
 
