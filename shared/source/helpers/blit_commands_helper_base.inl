@@ -38,8 +38,10 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(Vec3<size_t> copy
         }
     }
 
+    constexpr size_t cmdsSizePerBlit = (sizeof(typename GfxFamily::XY_COPY_BLT) + sizeof(typename GfxFamily::MI_ARB_CHECK));
+
     return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) +
-           (sizeof(typename GfxFamily::XY_COPY_BLT) * numberOfBlits) +
+           (cmdsSizePerBlit * numberOfBlits) +
            (EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() * static_cast<size_t>(updateTimestampPacket));
 }
 
@@ -94,21 +96,31 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProp
                     height = 1;
                 }
 
-                auto bltCmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
-                *bltCmd = GfxFamily::cmdInitXyCopyBlt;
+                {
+                    auto bltCmd = GfxFamily::cmdInitXyCopyBlt;
 
-                bltCmd->setTransferWidth(static_cast<uint32_t>(width));
-                bltCmd->setTransferHeight(static_cast<uint32_t>(height));
-                bltCmd->setDestinationPitch(static_cast<uint32_t>(width));
-                bltCmd->setSourcePitch(static_cast<uint32_t>(width));
+                    bltCmd.setTransferWidth(static_cast<uint32_t>(width));
+                    bltCmd.setTransferHeight(static_cast<uint32_t>(height));
+                    bltCmd.setDestinationPitch(static_cast<uint32_t>(width));
+                    bltCmd.setSourcePitch(static_cast<uint32_t>(width));
 
-                auto dstAddr = calculateBlitCommandDestinationBaseAddress(blitProperties, offset, row, slice);
-                auto srcAddr = calculateBlitCommandSourceBaseAddress(blitProperties, offset, row, slice);
+                    auto dstAddr = calculateBlitCommandDestinationBaseAddress(blitProperties, offset, row, slice);
+                    auto srcAddr = calculateBlitCommandSourceBaseAddress(blitProperties, offset, row, slice);
 
-                bltCmd->setDestinationBaseAddress(dstAddr);
-                bltCmd->setSourceBaseAddress(srcAddr);
+                    bltCmd.setDestinationBaseAddress(dstAddr);
+                    bltCmd.setSourceBaseAddress(srcAddr);
 
-                appendBlitCommandsForBuffer(blitProperties, *bltCmd, rootDeviceEnvironment);
+                    appendBlitCommandsForBuffer(blitProperties, bltCmd, rootDeviceEnvironment);
+
+                    auto bltStream = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
+                    *bltStream = bltCmd;
+                }
+
+                {
+                    auto miArbCheckCmd = GfxFamily::cmdInitArbCheck;
+                    auto miArbCheckStream = linearStream.getSpaceForCmd<typename GfxFamily::MI_ARB_CHECK>();
+                    *miArbCheckStream = miArbCheckCmd;
+                }
 
                 auto blitSize = width * height;
                 sizeToBlit -= blitSize;
