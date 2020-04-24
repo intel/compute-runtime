@@ -21,9 +21,9 @@ class KernelExecInfoFixture : public ApiFixture<> {
 
         pKernelInfo = std::make_unique<KernelInfo>();
 
-        pMockKernel = new MockKernel(pProgram, *pKernelInfo, *pPlatform->getClDevice(testedRootDeviceIndex));
+        pMockKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
         ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());
-        svmCapabilities = pPlatform->getClDevice(testedRootDeviceIndex)->getDeviceInfo().svmCapabilities;
+        svmCapabilities = pDevice->getDeviceInfo().svmCapabilities;
         if (svmCapabilities != 0) {
             ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
             EXPECT_NE(nullptr, ptrSvm);

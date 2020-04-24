@@ -40,7 +40,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenInvalidCommandQueueWhenMigratingSVMThen
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenNullSvmPointersWhenMigratingSvmThenInvalidValueErrorIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto retVal = clEnqueueSVMMigrateMem(
             pCommandQueue, // cl_command_queue command_queue
@@ -57,7 +57,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNullSvmPointersWhenMigratingSvmThenInva
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenNumSvmPointersIsZeroWhenMigratingSvmThenInvalidValueErrorIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -80,7 +80,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNumSvmPointersIsZeroWhenMigratingSvmThe
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenSvmPointerIsHostPtrWhenMigratingSvmThenInvalidValueErrorIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities == 0) {
         GTEST_SKIP();
     }
@@ -104,7 +104,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenSvmPointerIsHostPtrWhenMigratingSvmThen
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenNonZeroSizeIsNotContainedWithinAllocationWhenMigratingSvmThenInvalidValueErrorIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -134,7 +134,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNonZeroSizeIsNotContainedWithinAllocati
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenUnsupportedFlagsWhenMigratingSvmThenInvalidValueErrorIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -187,7 +187,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNonNullEventWaitListAndZeroNumEventsWhe
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenDifferentContextCommandQueueAndEventsWhenMigratingSvmThenInvalidContextErrorIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -213,7 +213,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenDifferentContextCommandQueueAndEventsWh
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenNullSizesWhenMigratingSvmThenSuccessIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -236,7 +236,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNullSizesWhenMigratingSvmThenSuccessIsR
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenSizeZeroWhenMigratingSvmThenSuccessIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -260,7 +260,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenSizeZeroWhenMigratingSvmThenSuccessIsRe
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenNonZeroSizeWhenMigratingSvmThenSuccessIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
@@ -284,7 +284,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNonZeroSizeWhenMigratingSvmThenSuccessI
 }
 
 TEST_F(clEnqueueSVMMigrateMemTests, GivenSameContextCommandQueueAndEventsWhenMigratingSvmThenSuccessIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);

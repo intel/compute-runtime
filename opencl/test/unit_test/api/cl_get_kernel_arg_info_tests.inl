@@ -52,8 +52,8 @@ TEST_F(clGetKernelArgInfoTests, GivenValidParamsWhenGettingKernelArgInfoThenSucc
 
     retVal = clBuildProgram(
         pProgram,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         CompilerOptions::argInfo,
         nullptr,
         nullptr);

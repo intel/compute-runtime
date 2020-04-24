@@ -60,7 +60,7 @@ TEST_F(clCreateContextTests, returnsFail) {
 
 TEST_F(clCreateContextTests, invalidDevices) {
     cl_device_id devList[2];
-    devList[0] = devices[testedRootDeviceIndex];
+    devList[0] = testedClDevice;
     devList[1] = (cl_device_id)ptrGarbage;
 
     auto context = clCreateContext(nullptr, 2, devList, nullptr, nullptr, &retVal);
@@ -83,10 +83,9 @@ TEST_F(clCreateContextTests, nullUserData) {
 }
 
 TEST_F(clCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenOutOrHostMemoryErrorIsReturned) {
-    auto firstDeviceRootDeviceIndex = castToObject<ClDevice>(devices[testedRootDeviceIndex])->getRootDeviceIndex();
-    auto secondDeviceRootDeviceIndex = castToObject<ClDevice>(devices[testedRootDeviceIndex + 1])->getRootDeviceIndex();
-    EXPECT_NE(firstDeviceRootDeviceIndex, secondDeviceRootDeviceIndex);
-    auto context = clCreateContext(nullptr, 2u, &devices[testedRootDeviceIndex], eventCallBack, nullptr, &retVal);
+    UltClDeviceFactory deviceFactory{2, 0};
+    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
+    auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
     EXPECT_EQ(nullptr, context);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }

@@ -27,7 +27,7 @@ typedef api_tests clCreateProgramWithBuiltInKernelsTests;
 struct clCreateProgramWithBuiltInVmeKernelsTests : clCreateProgramWithBuiltInKernelsTests {
     void SetUp() override {
         clCreateProgramWithBuiltInKernelsTests::SetUp();
-        if (!castToObject<ClDevice>(devices[testedRootDeviceIndex])->getHardwareInfo().capabilityTable.supportsVme) {
+        if (!castToObject<ClDevice>(testedClDevice)->getHardwareInfo().capabilityTable.supportsVme) {
             GTEST_SKIP();
         }
 

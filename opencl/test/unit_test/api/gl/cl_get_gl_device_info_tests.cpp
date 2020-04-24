@@ -34,13 +34,13 @@ TEST_P(GetDeviceGlInfoStr, StringType) {
     char *paramValue = nullptr;
     size_t paramRetSize = 0;
 
-    cl_int retVal = clGetDeviceInfo(devices[0], param, 0, nullptr, &paramRetSize);
+    cl_int retVal = clGetDeviceInfo(testedClDevice, param, 0, nullptr, &paramRetSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(0u, paramRetSize);
 
     paramValue = new char[paramRetSize];
 
-    retVal = clGetDeviceInfo(devices[0], param, paramRetSize, paramValue, nullptr);
+    retVal = clGetDeviceInfo(testedClDevice, param, paramRetSize, paramValue, nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_GE(std::strlen(paramValue), 0u);

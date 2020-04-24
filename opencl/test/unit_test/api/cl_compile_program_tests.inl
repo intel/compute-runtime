@@ -49,8 +49,8 @@ TEST_F(clCompileProgramTests, GivenKernelAsSingleSourceWhenCompilingProgramThenS
 
     retVal = clCompileProgram(
         pProgram,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         nullptr,
         0,
         nullptr,
@@ -115,8 +115,8 @@ TEST_F(clCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramT
 
     retVal = clCompileProgram(
         pProgram,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         nullptr,
         1,
         &pHeader,

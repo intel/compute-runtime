@@ -23,14 +23,14 @@ TEST_F(clRetainReleaseDeviceTests, GivenRootDeviceWhenRetainingThenReferenceCoun
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clRetainDevice(devices[testedRootDeviceIndex]);
+    retVal = clRetainDevice(testedClDevice);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clRetainDevice(devices[testedRootDeviceIndex]);
+    retVal = clRetainDevice(testedClDevice);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_uint theRef;
-    retVal = clGetDeviceInfo(devices[testedRootDeviceIndex], CL_DEVICE_REFERENCE_COUNT,
+    retVal = clGetDeviceInfo(testedClDevice, CL_DEVICE_REFERENCE_COUNT,
                              sizeof(cl_uint), &theRef, NULL);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, theRef);
@@ -45,14 +45,14 @@ TEST_F(clRetainReleaseDeviceTests, GivenRootDeviceWhenReleasingThenReferenceCoun
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clReleaseDevice(devices[testedRootDeviceIndex]);
+    retVal = clReleaseDevice(testedClDevice);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clReleaseDevice(devices[testedRootDeviceIndex]);
+    retVal = clReleaseDevice(testedClDevice);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_uint theRef;
-    retVal = clGetDeviceInfo(devices[testedRootDeviceIndex], CL_DEVICE_REFERENCE_COUNT,
+    retVal = clGetDeviceInfo(testedClDevice, CL_DEVICE_REFERENCE_COUNT,
                              sizeof(cl_uint), &theRef, NULL);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(1u, theRef);

@@ -42,7 +42,7 @@ struct ApiFixture : PlatformFixture {
             rootDeviceEnvironmentBackup.swap(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]);
         }
 
-        auto pDevice = pPlatform->getClDevice(testedRootDeviceIndex);
+        pDevice = pPlatform->getClDevice(testedRootDeviceIndex);
         ASSERT_NE(nullptr, pDevice);
 
         testedClDevice = pDevice;
@@ -80,6 +80,7 @@ struct ApiFixture : PlatformFixture {
     constexpr static uint32_t numRootDevices = maxRootDeviceCount;
     constexpr static uint32_t testedRootDeviceIndex = rootDeviceIndex;
     cl_device_id testedClDevice = nullptr;
+    ClDevice *pDevice = nullptr;
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironmentBackup;
 };
 

@@ -32,8 +32,8 @@ struct clCreateKernelsInProgramTests : public api_tests {
         const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
         program = clCreateProgramWithBinary(
             pContext,
-            num_devices,
-            devices,
+            1,
+            &testedClDevice,
             &binarySize,
             binaries,
             &binaryStatus,
@@ -45,8 +45,8 @@ struct clCreateKernelsInProgramTests : public api_tests {
 
         retVal = clBuildProgram(
             program,
-            num_devices,
-            devices,
+            1,
+            &testedClDevice,
             nullptr,
             nullptr,
             nullptr);

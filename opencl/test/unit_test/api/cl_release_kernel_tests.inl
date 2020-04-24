@@ -37,15 +37,14 @@ TEST_F(clReleaseKernelTests, GivenRetainedKernelWhenReleasingKernelThenKernelIsC
     ASSERT_NE(nullptr, binary);
 
     unsigned const char *binaries[1] = {reinterpret_cast<const unsigned char *>(binary.get())};
-    program = clCreateProgramWithBinary(pContext, num_devices, devices, &binarySize,
-                                        binaries, &binaryStatus, &retVal);
+    program = clCreateProgramWithBinary(pContext, 1, &testedClDevice, &binarySize, binaries, &binaryStatus, &retVal);
 
     binary.reset();
 
     EXPECT_NE(nullptr, program);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    retVal = clBuildProgram(program, num_devices, devices, nullptr, nullptr, nullptr);
+    retVal = clBuildProgram(program, 1, &testedClDevice, nullptr, nullptr, nullptr);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 

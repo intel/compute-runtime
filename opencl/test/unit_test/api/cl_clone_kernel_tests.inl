@@ -47,8 +47,8 @@ TEST_F(clCloneKernelTests, GivenValidKernelWhenCloningKernelThenSuccessIsReturne
     const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
     pProgram = clCreateProgramWithBinary(
         pContext,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         &binarySize,
         binaries,
         &binaryStatus,
@@ -61,8 +61,8 @@ TEST_F(clCloneKernelTests, GivenValidKernelWhenCloningKernelThenSuccessIsReturne
 
     retVal = clBuildProgram(
         pProgram,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         nullptr,
         nullptr,
         nullptr);

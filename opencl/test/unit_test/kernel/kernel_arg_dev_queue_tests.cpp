@@ -14,11 +14,9 @@
 using namespace NEO;
 using namespace DeviceHostQueue;
 
-struct KernelArgDevQueueTest : public DeviceFixture,
-                               public DeviceHostQueueFixture<DeviceQueue> {
+struct KernelArgDevQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
   protected:
     void SetUp() override {
-        DeviceFixture::SetUp();
         DeviceHostQueueFixture<DeviceQueue>::SetUp();
         if (!this->pDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
             GTEST_SKIP();
@@ -37,7 +35,7 @@ struct KernelArgDevQueueTest : public DeviceFixture,
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
 
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
-        pKernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
+        pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         uint8_t pCrossThreadData[crossThreadDataSize];
@@ -51,7 +49,6 @@ struct KernelArgDevQueueTest : public DeviceFixture,
         delete pDeviceQueue;
 
         DeviceHostQueueFixture<DeviceQueue>::TearDown();
-        DeviceFixture::TearDown();
     }
 
     bool crossThreadDataUnchanged() {

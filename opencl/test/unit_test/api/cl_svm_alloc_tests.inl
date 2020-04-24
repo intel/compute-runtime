@@ -26,7 +26,7 @@ class clSVMAllocTemplateTests : public ApiFixture<>,
   public:
     void SetUp() override {
         ApiFixture::SetUp();
-        REQUIRE_SVM_OR_SKIP(pPlatform->getClDevice(testedRootDeviceIndex));
+        REQUIRE_SVM_OR_SKIP(pDevice);
     }
 
     void TearDown() override {
@@ -61,7 +61,7 @@ TEST(clSVMAllocTest, givenPlatformWithoutDevicesWhenClSVMAllocIsCalledThenDevice
 
 TEST_P(clSVMAllocValidFlagsTests, GivenSvmSupportWhenAllocatingSvmThenSvmIsAllocated) {
     cl_mem_flags flags = GetParam();
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     //check for svm support
     if (devInfo.svmCapabilities != 0) {
         //fg svm flag
@@ -120,7 +120,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(SVMAllocValidFlags));
 
 TEST_P(clSVMAllocFtrFlagsTests, GivenCorrectFlagsWhenAllocatingSvmThenSvmIsAllocated) {
-    HardwareInfo *pHwInfo = pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[testedRootDeviceIndex]->getMutableHardwareInfo();
+    HardwareInfo *pHwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[testedRootDeviceIndex]->getMutableHardwareInfo();
 
     cl_mem_flags flags = GetParam();
     void *SVMPtr = nullptr;
@@ -185,7 +185,7 @@ TEST_F(clSVMAllocTests, GivenZeroSizeWhenAllocatingSvmThenSvmIsNotAllocated) {
 }
 
 TEST_F(clSVMAllocTests, GivenZeroAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         cl_mem_flags flags = CL_MEM_READ_WRITE;
         auto SVMPtr = clSVMAlloc(pContext /* cl_context */, flags, 4096 /* Size*/, 0 /* alignment */);
@@ -195,7 +195,7 @@ TEST_F(clSVMAllocTests, GivenZeroAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
 }
 
 TEST_F(clSVMAllocTests, GivenUnalignedSizeAndDefaultAlignmentWhenAllocatingSvmThenSvmIsAllocated) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         cl_mem_flags flags = CL_MEM_READ_WRITE;
         auto SVMPtr = clSVMAlloc(pContext /* cl_context */, flags, 4095 /* Size*/, 0 /* alignment */);

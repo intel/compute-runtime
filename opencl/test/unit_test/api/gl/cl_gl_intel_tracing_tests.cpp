@@ -20,7 +20,7 @@ struct IntelGlTracingTest : public api_tests {
     void SetUp() override {
         api_tests::SetUp();
 
-        status = clCreateTracingHandleINTEL(devices[0], callback, this, &handle);
+        status = clCreateTracingHandleINTEL(testedClDevice, callback, this, &handle);
         ASSERT_NE(nullptr, handle);
         ASSERT_EQ(CL_SUCCESS, status);
 

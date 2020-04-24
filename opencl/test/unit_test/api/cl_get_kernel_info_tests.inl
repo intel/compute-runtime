@@ -51,8 +51,8 @@ TEST_F(clGetKernelInfoTests, GivenValidParamsWhenGettingKernelInfoThenSuccessIsR
 
     retVal = clBuildProgram(
         pProgram,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         nullptr,
         nullptr,
         nullptr);

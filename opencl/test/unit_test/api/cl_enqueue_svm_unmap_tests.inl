@@ -67,7 +67,7 @@ TEST_F(clEnqueueSVMUnmapTests, GivenNonNullEventListAndZeroEventsWhenUnmappingSv
 }
 
 TEST_F(clEnqueueSVMUnmapTests, GivenValidParametersWhenUnmappingSvmThenSuccessIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);

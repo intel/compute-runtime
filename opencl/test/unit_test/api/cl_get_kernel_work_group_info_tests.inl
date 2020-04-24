@@ -53,8 +53,8 @@ struct clGetKernelWorkGroupInfoTests : public ApiFixture<>,
 
         retVal = clBuildProgram(
             pProgram,
-            num_devices,
-            devices,
+            1,
+            &testedClDevice,
             nullptr,
             nullptr,
             nullptr);
@@ -87,7 +87,7 @@ TEST_P(clGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkG
     size_t paramValueSizeRet;
     retVal = clGetKernelWorkGroupInfo(
         kernel,
-        devices[testedRootDeviceIndex],
+        testedClDevice,
         GetParam(),
         0,
         nullptr,
@@ -100,7 +100,7 @@ TEST_P(clGetKernelWorkGroupInfoTests, GivenValidParametersWhenGettingKernelWorkG
 TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettingKernelWorkGroupInfoThenCorrectSpillMemSizeIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong param_value;
-    auto pDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
+    auto pDevice = castToObject<ClDevice>(testedClDevice);
 
     MockKernelWithInternals mockKernel(*pDevice);
     SPatchMediaVFEState mediaVFEstate;
@@ -126,7 +126,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, GivenKernelRequiringScratchSpaceWhenGettin
 TEST_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenProperSizeIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong param_value;
-    auto pDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
+    auto pDevice = castToObject<ClDevice>(testedClDevice);
 
     MockKernelWithInternals mockKernel(*pDevice);
     SPatchAllocateStatelessPrivateSurface privateAllocation;
@@ -149,7 +149,7 @@ TEST_F(clGetKernelWorkGroupInfoTests, givenKernelHavingPrivateMemoryAllocationWh
 TEST_F(clGetKernelWorkGroupInfoTests, givenKernelNotHavingPrivateMemoryAllocationWhenAskedForPrivateAllocationSizeThenZeroIsReturned) {
     size_t paramValueSizeRet;
     cl_ulong param_value;
-    auto pDevice = castToObject<ClDevice>(devices[testedRootDeviceIndex]);
+    auto pDevice = castToObject<ClDevice>(testedClDevice);
 
     MockKernelWithInternals mockKernel(*pDevice);
 

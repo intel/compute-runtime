@@ -35,7 +35,7 @@ TEST_F(clEnqueueSVMMemFillTests, GivenInvalidCommandQueueWhenFillingSVMMemoryThe
 }
 
 TEST_F(clEnqueueSVMMemFillTests, GivenNullSVMPtrWhenFillingSVMMemoryThenInvalidValueErrorIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto retVal = clEnqueueSVMMemFill(
             pCommandQueue, // cl_command_queue command_queue
@@ -52,7 +52,7 @@ TEST_F(clEnqueueSVMMemFillTests, GivenNullSVMPtrWhenFillingSVMMemoryThenInvalidV
 }
 
 TEST_F(clEnqueueSVMMemFillTests, GivenRegionSizeZeroWhenFillingSVMMemoryThenInvalidValueErrorIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);
@@ -104,7 +104,7 @@ TEST_F(clEnqueueSVMMemFillTests, GivenNonNullEventWaitListAndZeroEventsWhenFilli
 }
 
 TEST_F(clEnqueueSVMMemFillTests, GivenValidParametersWhenFillingSVMMemoryThenSuccessIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         EXPECT_NE(nullptr, ptrSvm);

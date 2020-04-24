@@ -39,8 +39,8 @@ TEST_F(clCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgram
     const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
     pProgram = clCreateProgramWithBinary(
         pContext,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         &binarySize,
         binaries,
         &binaryStatus,
@@ -56,8 +56,8 @@ TEST_F(clCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgram
 
     pProgram = clCreateProgramWithBinary(
         nullptr,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         &binarySize,
         binaries,
         &binaryStatus,

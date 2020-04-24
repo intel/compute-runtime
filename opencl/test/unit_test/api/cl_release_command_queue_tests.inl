@@ -52,11 +52,11 @@ typedef api_tests clReleaseCommandQueueTests;
 TEST_F(clReleaseCommandQueueTests, givenBlockedEnqueueWithOutputEventStoredAsVirtualEventWhenReleasingCmdQueueThenInternalRefCountIsDecrementedAndQueueDeleted) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
-    ClDevice *device = (ClDevice *)devices[testedRootDeviceIndex];
+    ClDevice *device = (ClDevice *)testedClDevice;
     MockKernelWithInternals kernelInternals(*device, pContext);
     Kernel *kernel = kernelInternals.mockKernel;
 
-    cmdQ = clCreateCommandQueue(pContext, devices[testedRootDeviceIndex], properties, &retVal);
+    cmdQ = clCreateCommandQueue(pContext, testedClDevice, properties, &retVal);
 
     ASSERT_NE(nullptr, cmdQ);
     ASSERT_EQ(CL_SUCCESS, retVal);

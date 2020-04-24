@@ -49,8 +49,8 @@ TEST_F(clLinkProgramTests, GivenValidParamsWhenLinkingProgramThenSuccessIsReturn
 
     retVal = clCompileProgram(
         pProgram,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         nullptr,
         0,
         nullptr,
@@ -64,8 +64,8 @@ TEST_F(clLinkProgramTests, GivenValidParamsWhenLinkingProgramThenSuccessIsReturn
     cl_program oprog;
     oprog = clLinkProgram(
         pContext,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         nullptr,
         1,
         &program,
@@ -109,8 +109,8 @@ TEST_F(clLinkProgramTests, GivenCreateLibraryOptionWhenLinkingProgramThenSuccess
 
     retVal = clCompileProgram(
         pProgram,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         nullptr,
         0,
         nullptr,
@@ -124,8 +124,8 @@ TEST_F(clLinkProgramTests, GivenCreateLibraryOptionWhenLinkingProgramThenSuccess
     cl_program oprog;
     oprog = clLinkProgram(
         pContext,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         CompilerOptions::createLibrary,
         1,
         &program,
@@ -147,8 +147,8 @@ TEST_F(clLinkProgramTests, GivenNullContextWhenLinkingProgramThenClInvalidContex
     cl_program oprog;
     oprog = clLinkProgram(
         nullptr,
-        num_devices,
-        devices,
+        1,
+        &testedClDevice,
         nullptr,
         1,
         &program,

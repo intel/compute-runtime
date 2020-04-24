@@ -47,7 +47,7 @@ TEST_F(clGetMemObjectInfoTests, GivenBufferWithMappedRegionWhenGettingMemObjectI
     cl_mem buffer = nullptr;
 
     cl_queue_properties properties = 0;
-    cl_command_queue cmdQ = clCreateCommandQueue(pContext, devices[testedRootDeviceIndex], properties, &retVal);
+    cl_command_queue cmdQ = clCreateCommandQueue(pContext, testedClDevice, properties, &retVal);
 
     buffer = clCreateBuffer(
         pContext,
@@ -82,7 +82,7 @@ TEST_F(clGetMemObjectInfoTests, GivenBufferWithMappedRegionWhenGettingMemObjectI
 }
 
 TEST_F(clGetMemObjectInfoTests, GivenBufferCreatedFromSvmPointerWhenGettingMemObjectInfoThenClTrueIsReturned) {
-    const ClDeviceInfo &devInfo = pPlatform->getClDevice(0)->getDeviceInfo();
+    const ClDeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         size_t bufferSize = 64;
         cl_mem buffer = nullptr;

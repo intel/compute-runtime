@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "shared/source/execution_environment/execution_environment.h"
 
 namespace NEO {
