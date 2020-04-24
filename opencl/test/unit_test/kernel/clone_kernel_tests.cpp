@@ -115,7 +115,7 @@ class CloneKernelFixture : public ContextFixture, public DeviceFixture {
 
 typedef Test<CloneKernelFixture> CloneKernelTest;
 
-TEST_F(CloneKernelTest, cloneKernelWithUnsetArg) {
+TEST_F(CloneKernelTest, GivenUnsetArgWhenCloningKernelThenKernelInfoIsCorrect) {
     EXPECT_EQ(1u, pSourceKernel->getKernelArguments().size());
     EXPECT_EQ(Kernel::NONE_OBJ, pSourceKernel->getKernelArgInfo(0).type);
     EXPECT_EQ(nullptr, pSourceKernel->getKernelArgInfo(0).object);
@@ -136,7 +136,7 @@ TEST_F(CloneKernelTest, cloneKernelWithUnsetArg) {
     EXPECT_EQ(pSourceKernel->getKernelArgInfo(0).isPatched, pClonedKernel->getKernelArgInfo(0).isPatched);
 }
 
-TEST_F(CloneKernelTest, cloneKernelWithArgLocal) {
+TEST_F(CloneKernelTest, GivenArgLocalWhenCloningKernelThenKernelInfoIsCorrect) {
     const size_t slmSize = 0x800;
 
     pSourceKernel->setKernelArgHandler(0, &Kernel::setArgLocal);
@@ -165,7 +165,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgLocal) {
     EXPECT_EQ(alignUp(slmSize, 1024), pClonedKernel->slmTotalSize);
 }
 
-TEST_F(CloneKernelTest, cloneKernelWithArgBuffer) {
+TEST_F(CloneKernelTest, GivenArgBufferWhenCloningKernelThenKernelInfoIsCorrect) {
     MockBuffer buffer;
     cl_mem memObj = &buffer;
 
@@ -197,7 +197,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgBuffer) {
     EXPECT_EQ(buffer.getCpuAddress(), *pKernelArg);
 }
 
-TEST_F(CloneKernelTest, cloneKernelWithArgPipe) {
+TEST_F(CloneKernelTest, GivenArgPipeWhenCloningKernelThenKernelInfoIsCorrect) {
     MockPipe pipe(pContext);
     cl_mem memObj = &pipe;
 
@@ -229,7 +229,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgPipe) {
     EXPECT_EQ(pipe.getCpuAddress(), *pKernelArg);
 }
 
-TEST_F(CloneKernelTest, cloneKernelWithArgImage) {
+TEST_F(CloneKernelTest, GivenArgImageWhenCloningKernelThenKernelInfoIsCorrect) {
     auto image = std::unique_ptr<Image>(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, image);
 
@@ -278,7 +278,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgImage) {
     EXPECT_EQ(imageDepth, *pImgDepth);
 }
 
-TEST_F(CloneKernelTest, cloneKernelWithArgAccelerator) {
+TEST_F(CloneKernelTest, GivenArgAcceleratorWhenCloningKernelThenKernelInfoIsCorrect) {
     cl_motion_estimation_desc_intel desc = {
         CL_ME_MB_TYPE_4x4_INTEL,
         CL_ME_SUBPIXEL_MODE_QPEL_INTEL,
@@ -335,7 +335,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgAccelerator) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(CloneKernelTest, cloneKernelWithArgSampler) {
+TEST_F(CloneKernelTest, GivenArgSamplerWhenCloningKernelThenKernelInfoIsCorrect) {
     std::unique_ptr<Sampler> sampler(new MockSampler(pContext,
                                                      true,
                                                      (cl_addressing_mode)CL_ADDRESS_MIRRORED_REPEAT,
@@ -383,7 +383,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgSampler) {
     EXPECT_EQ(GetNormCoordsEnum(sampler->normalizedCoordinates), *pNormalizedCoords);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CloneKernelTest, cloneKernelWithArgDeviceQueue) {
+HWCMDTEST_F(IGFX_GEN8_CORE, CloneKernelTest, GivenArgDeviceQueueWhenCloningKernelThenKernelInfoIsCorrect) {
     cl_queue_properties queueProps[5] = {
         CL_QUEUE_PROPERTIES,
         CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
@@ -420,7 +420,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CloneKernelTest, cloneKernelWithArgDeviceQueue) {
     EXPECT_EQ(static_cast<uintptr_t>(mockDevQueue.getQueueBuffer()->getGpuAddressToPatch()), *pKernelArg);
 }
 
-TEST_F(CloneKernelTest, cloneKernelWithArgSvm) {
+TEST_F(CloneKernelTest, GivenArgSvmWhenCloningKernelThenKernelInfoIsCorrect) {
     char *svmPtr = new char[256];
 
     retVal = pSourceKernel->setArgSvm(0, 256, svmPtr, nullptr, 0u);
@@ -450,7 +450,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgSvm) {
     delete[] svmPtr;
 }
 
-TEST_F(CloneKernelTest, cloneKernelWithArgSvmAlloc) {
+TEST_F(CloneKernelTest, GivenArgSvmAllocWhenCloningKernelThenKernelInfoIsCorrect) {
     char *svmPtr = new char[256];
     MockGraphicsAllocation svmAlloc(svmPtr, 256);
 
@@ -481,7 +481,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgSvmAlloc) {
     delete[] svmPtr;
 }
 
-TEST_F(CloneKernelTest, cloneKernelWithArgImmediate) {
+TEST_F(CloneKernelTest, GivenArgImmediateWhenCloningKernelThenKernelInfoIsCorrect) {
     using TypeParam = unsigned long;
     auto value = (TypeParam)0xAA55AA55UL;
 
@@ -510,7 +510,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgImmediate) {
     EXPECT_EQ(value, *pKernelArg);
 }
 
-TEST_F(CloneKernelTest, cloneKernelWithExecInfo) {
+TEST_F(CloneKernelTest, GivenExecInfoWhenCloningKernelThenSvmAllocationIsCorrect) {
     REQUIRE_SVM_OR_SKIP(pDevice);
     void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {});
     ASSERT_NE(nullptr, ptrSVM);
