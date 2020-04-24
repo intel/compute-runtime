@@ -60,7 +60,6 @@ struct KernelDescriptor final {
 
         uint8_t gpuPointerSize = 0;
         uint8_t simdSize = 8;
-        uint8_t grfSize = 32;
         uint8_t numLocalIdChannels = 3;
 
         bool supportsBuffersBiggerThan4Gb() const {

@@ -209,7 +209,7 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION;
     }
-    auto grfSize = kernelImmData->getDescriptor().kernelAttributes.grfSize;
+    auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
     uint32_t perThreadDataSizeForWholeThreadGroupNeeded =
         static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
             kernelImmData->getDescriptor().kernelAttributes.simdSize, grfSize, numChannels, itemsInGroup));

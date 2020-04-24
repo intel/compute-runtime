@@ -34,14 +34,17 @@ struct WhiteBox<::L0::KernelImmutableData> : public ::L0::KernelImmutableData {
 template <>
 struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
     using BaseClass = ::L0::KernelImp;
+    using BaseClass::BaseClass;
     using ::L0::KernelImp::createPrintfBuffer;
     using ::L0::KernelImp::crossThreadData;
     using ::L0::KernelImp::crossThreadDataSize;
     using ::L0::KernelImp::groupSize;
     using ::L0::KernelImp::kernelImmData;
     using ::L0::KernelImp::module;
+    using ::L0::KernelImp::numThreadsPerThreadGroup;
     using ::L0::KernelImp::perThreadDataForWholeThreadGroup;
     using ::L0::KernelImp::perThreadDataSize;
+    using ::L0::KernelImp::perThreadDataSizeForWholeThreadGroup;
     using ::L0::KernelImp::printfBuffer;
     using ::L0::KernelImp::residencyContainer;
     using ::L0::KernelImp::unifiedMemoryControls;
@@ -55,8 +58,8 @@ struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
 };
 
 template <>
-struct Mock<::L0::Kernel> : public ::L0::KernelImp {
-    using BaseClass = ::L0::KernelImp;
+struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
+    using BaseClass = WhiteBox<::L0::Kernel>;
 
     Mock() : BaseClass(nullptr) {
         NEO::PatchTokenBinary::KernelFromPatchtokens kernelTokens;
