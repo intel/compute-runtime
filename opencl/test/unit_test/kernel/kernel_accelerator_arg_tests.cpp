@@ -91,7 +91,7 @@ class KernelArgAcceleratorFixture : public ContextFixture, public DeviceFixture 
 
 typedef Test<KernelArgAcceleratorFixture> KernelArgAcceleratorTest;
 
-TEST_F(KernelArgAcceleratorTest, SetKernelArgValidAccelerator) {
+TEST_F(KernelArgAcceleratorTest, WhenCreatingVmeAcceleratorThenCorrectKernelArgsAreSet) {
     cl_int status;
     cl_accelerator_intel accelerator = VmeAccelerator::create(
         pContext,
@@ -127,14 +127,14 @@ TEST_F(KernelArgAcceleratorTest, SetKernelArgValidAccelerator) {
     EXPECT_EQ(CL_SUCCESS, status);
 }
 
-TEST_F(KernelArgAcceleratorTest, SetKernelArgNullAccelerator) {
+TEST_F(KernelArgAcceleratorTest, GivenNullWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
     cl_int status;
 
     status = this->pKernel->setArg(0, sizeof(cl_accelerator_intel), nullptr);
     ASSERT_EQ(CL_INVALID_ARG_VALUE, status);
 }
 
-TEST_F(KernelArgAcceleratorTest, SetKernelArgInvalidSize) {
+TEST_F(KernelArgAcceleratorTest, GivenInvalidSizeWhenSettingKernelArgThenInvalidArgSizeErrorIsReturned) {
     cl_int status;
     cl_accelerator_intel accelerator = VmeAccelerator::create(
         pContext,
@@ -150,7 +150,7 @@ TEST_F(KernelArgAcceleratorTest, SetKernelArgInvalidSize) {
     EXPECT_EQ(CL_SUCCESS, status);
 }
 
-TEST_F(KernelArgAcceleratorTest, SetKernelArgInvalidAccelerator) {
+TEST_F(KernelArgAcceleratorTest, GivenInvalidAcceleratorWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
     cl_int status;
 
     const void *notAnAccelerator = static_cast<void *>(pKernel);
