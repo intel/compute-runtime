@@ -289,6 +289,10 @@ class BindlessKernelFixture : public ProgramFixture {
     using ProgramFixture::SetUp;
     void SetUp(ClDevice *device, Context *context) {
         ProgramFixture::SetUp();
+#ifdef _DEBUG
+        // temporarily skip test in Debug
+        GTEST_SKIP();
+#endif
         cl_device_id deviceId = device;
         cl_context clContext = context;
         DebugManager.flags.UseBindlessBuffers.set(true);

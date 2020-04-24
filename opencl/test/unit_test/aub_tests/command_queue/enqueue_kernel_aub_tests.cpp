@@ -880,7 +880,6 @@ HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValid
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {bufferSize / 2, 1, 1};
     size_t localWorkSize[3] = {1, 1, 1};
-    ;
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
