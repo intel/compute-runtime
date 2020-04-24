@@ -408,11 +408,13 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionD
     EXPECT_TRUE(drm->isPreemptionSupported());
 }
 
-TEST_F(HwInfoConfigTestLinuxDummy, givenPlatformEnabledFtrCompressionWhenInitializingThenForceDisable) {
+TEST_F(HwInfoConfigTestLinuxDummy, givenPlatformEnabledFtrCompressionWhenInitializingThenFlagsAreSet) {
     pInHwInfo.capabilityTable.ftrRenderCompressedImages = true;
+    pInHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, givenPointerToHwInfoWhenConfigureHwInfoCalledThenRequiedSurfaceSizeIsSettedProperly) {

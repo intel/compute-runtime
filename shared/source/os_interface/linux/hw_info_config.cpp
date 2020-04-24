@@ -153,7 +153,6 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     hwHelper.adjustDefaultEngineType(outHwInfo);
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
-    outHwInfo->capabilityTable.ftrRenderCompressedImages = false;
     drm->checkQueueSliceSupport();
     drm->checkNonPersistentContextsSupport();
     drm->checkPreemptionSupport();
