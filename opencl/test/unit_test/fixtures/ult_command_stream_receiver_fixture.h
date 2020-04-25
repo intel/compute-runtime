@@ -118,6 +118,7 @@ struct UltCommandStreamReceiverTest
 
         auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<GfxFamily>();
         commandStreamReceiver.isPreambleSent = true;
+        commandStreamReceiver.isEnginePrologueSent = true;
         commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
         commandStreamReceiver.setMediaVFEStateDirty(false);
         auto gmmHelper = pDevice->getGmmHelper();

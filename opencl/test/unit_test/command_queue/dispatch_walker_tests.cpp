@@ -1410,7 +1410,7 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
         if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
             itorPipeCtrl++;
         }
-        if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(pDevice->getHardwareInfo())) {
+        if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
             itorPipeCtrl++;
         }
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
@@ -1425,7 +1425,7 @@ HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenT
         if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
             itorPipeCtrl++;
         }
-        if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(pDevice->getHardwareInfo())) {
+        if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
             itorPipeCtrl++;
         }
         ASSERT_NE(cmdList.end(), itorPipeCtrl);

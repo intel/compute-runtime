@@ -84,7 +84,12 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         mock->ioctl_expected.gemClose = static_cast<int>(device->engines.size());
         mock->ioctl_expected.gemWait = static_cast<int>(device->engines.size());
 
-        if (device->getDefaultEngine().commandStreamReceiver->getPreemptionAllocation()) {
+        auto csr = static_cast<TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(device->getDefaultEngine().commandStreamReceiver);
+        if (csr->globalFenceAllocation) {
+            mock->ioctl_expected.gemClose += static_cast<int>(device->engines.size());
+            mock->ioctl_expected.gemWait += static_cast<int>(device->engines.size());
+        }
+        if (csr->getPreemptionAllocation()) {
             mock->ioctl_expected.gemClose += static_cast<int>(device->engines.size());
             mock->ioctl_expected.gemWait += static_cast<int>(device->engines.size());
         }

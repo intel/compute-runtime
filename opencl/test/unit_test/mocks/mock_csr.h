@@ -154,6 +154,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::programVFEState;
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::dispatchMode;
+    using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::isPreambleSent;
     using CommandStreamReceiver::lastSentCoherencyRequest;
     using CommandStreamReceiver::mediaVfeStateDirty;

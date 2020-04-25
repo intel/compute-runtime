@@ -61,6 +61,11 @@ bool UnitTestHelper<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwIn
 }
 
 template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isAdditionalSynchronizationRequired(const HardwareInfo &hwInfo) {
+    return false;
+}
+
+template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isAdditionalMiSemaphoreWaitRequired(const HardwareInfo &hwInfo) {
     return false;
 }

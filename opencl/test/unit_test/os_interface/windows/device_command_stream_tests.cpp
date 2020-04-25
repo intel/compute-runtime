@@ -91,6 +91,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::getCS;
+    using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiverHw<GfxFamily>::blitterDirectSubmission;
     using CommandStreamReceiverHw<GfxFamily>::directSubmission;
     using WddmCommandStreamReceiver<GfxFamily>::commandBufferHeader;
@@ -788,6 +789,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
         tmpAllocation = GlobalMockSipProgram::sipProgram->getAllocation();
         GlobalMockSipProgram::sipProgram->resetAllocation(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     }
+    csrSurfaceCount += csr->globalFenceAllocation ? 1 : 0;
 
     csr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 

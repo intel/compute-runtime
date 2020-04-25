@@ -191,6 +191,7 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
     if (createTagAllocation) {
         commandStreamReceiver->initializeTagAllocation();
     }
+    commandStreamReceiver->createGlobalFenceAllocation();
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(),
                                                                                      getChosenEngineType(*defaultHwInfo), 1,

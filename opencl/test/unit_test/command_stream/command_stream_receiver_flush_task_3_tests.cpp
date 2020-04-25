@@ -65,6 +65,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     auto cmdBuffer = cmdBufferList.peekHead();
     //two more because of preemption allocation and sipKernel in Mid Thread preemption mode
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
+    csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
 
     //we should have 3 heaps, tag allocation and csr command stream + cq
     EXPECT_EQ(5u + csrSurfaceCount, cmdBuffer->surfaces.size());
@@ -386,6 +387,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenRecorded
 
     //preemption allocation + sip kernel
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
+    csrSurfaceCount += mockCsr->globalFenceAllocation ? 1 : 0;
 
     EXPECT_EQ(4u + csrSurfaceCount, cmdBuffer->surfaces.size());
 

@@ -697,7 +697,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     csr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
-    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testedCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto dummyAllocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -720,6 +721,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
 
     //preemption allocation
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
+    csrSurfaceCount += testedCsr->globalFenceAllocation ? 1 : 0;
 
     auto recordedCmdBuffer = cmdBuffers.peekHead();
     EXPECT_EQ(3u + csrSurfaceCount, recordedCmdBuffer->surfaces.size());
@@ -734,7 +736,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     elementInVector = std::find(recordedCmdBuffer->surfaces.begin(), recordedCmdBuffer->surfaces.end(), tagAllocation);
     EXPECT_NE(elementInVector, recordedCmdBuffer->surfaces.end());
 
-    EXPECT_EQ(static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
+    EXPECT_EQ(testedCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
 
     int ioctlUserPtrCnt = 3;
 
@@ -754,7 +756,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     csr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
-    static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+    auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
+    testedCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap cs(commandBuffer);
@@ -785,6 +788,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
 
     //preemption allocation
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
+    csrSurfaceCount += testedCsr->globalFenceAllocation ? 1 : 0;
 
     //validate that submited command buffer has what we want
     EXPECT_EQ(3u + csrSurfaceCount, this->mock->execBuffer.buffer_count);

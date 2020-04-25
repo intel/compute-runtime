@@ -38,6 +38,8 @@ struct UnitTestHelper {
 
     static bool isPipeControlWArequired(const HardwareInfo &hwInfo);
 
+    static bool isAdditionalSynchronizationRequired(const HardwareInfo &hwInfo);
+
     static bool isAdditionalMiSemaphoreWaitRequired(const HardwareInfo &hwInfo);
 
     static bool isAdditionalMiSemaphoreWait(const typename GfxFamily::MI_SEMAPHORE_WAIT &semaphoreWait);
