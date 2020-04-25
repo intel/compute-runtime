@@ -8,6 +8,14 @@ set(TARGET_NAME ${TARGET_NAME_L0}_tools_tests)
 
 append_sources_from_properties(L0_CORE_ENABLERS NEO_CORE_SRCS_LINK)
 
+function(ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION)
+    set(L0_TESTED_PRODUCT_FAMILIES ${ALL_TESTED_PRODUCT_FAMILY})
+    string(REPLACE ";" "," L0_TESTED_PRODUCT_FAMILIES "${L0_TESTED_PRODUCT_FAMILIES}")
+    add_definitions(-DSUPPORTED_TEST_PRODUCT_FAMILIES=${L0_TESTED_PRODUCT_FAMILIES})
+endfunction()
+
+ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
+
 add_executable(${TARGET_NAME}
     ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
     ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.h
@@ -20,8 +28,10 @@ add_executable(${TARGET_NAME}
 target_sources(${TARGET_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/ult_configuration.cpp
+    ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mock.h
+    ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/test_mode.h
+    ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/ult_configuration.cpp
+    ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/white_box.h
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
 )
 
@@ -37,7 +47,7 @@ if (UNIX)
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
-   )
+    )
 else()
     target_sources(${TARGET_NAME} PRIVATE
         ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/os_interface/windows/create_wddm_memory_manager.cpp
@@ -63,6 +73,20 @@ target_include_directories(${TARGET_NAME}
 )
 
 if (UNIX)
+    target_include_directories(${TARGET_NAME}
+        BEFORE
+        PRIVATE
+            ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/linux
+    )
+else()
+    target_include_directories(${TARGET_NAME}
+        BEFORE
+        PRIVATE
+            ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/windows
+    )
+endif()
+
+if (UNIX)
     target_link_libraries(${TARGET_NAME} pthread rt)
 else()
     target_link_libraries(${TARGET_NAME} dbghelp)
@@ -79,5 +103,23 @@ target_sources(${TARGET_NAME} PRIVATE
     $<TARGET_OBJECTS:mock_gmm>
     $<TARGET_OBJECTS:${TARGET_NAME_L0}_mocks>
 )
+
+option(L0_ULT_VERBOSE "Use the default/verbose test output" OFF)
+if(NOT L0_ULT_VERBOSE)
+  set(L0_TESTS_LISTENER_OPTION "--disable_default_listener")
+else()
+  set(L0_TESTS_LISTENER_OPTION "--enable_default_listener")
+endif()
+
+if(MSVC)
+    set_target_properties(${TARGET_NAME}
+        PROPERTIES
+            VS_DEBUGGER_COMMAND_ARGUMENTS "${L0_TESTS_FILTER_OPTION} --gtest_catch_exceptions=0 ${L0_TESTS_LISTENER_OPTION}"
+            VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
+    )
+    set(RUN_ULT_CMD $<TARGET_FILE:${TARGET_NAME}>)
+else()
+    set(RUN_ULT_CMD LD_LIBRARY_PATH=$<TARGET_FILE_DIR:${TARGET_NAME}> $<TARGET_FILE:${TARGET_NAME}>)
+endif()
 
 create_source_tree(${TARGET_NAME} ${L0_ROOT_DIR}/..)

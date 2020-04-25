@@ -5,9 +5,12 @@
  *
  */
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/unit_test/helpers/default_hw_info.inl"
 #include "shared/test/unit_test/helpers/memory_leak_listener.h"
+#include "shared/test/unit_test/helpers/test_files.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.inl"
 
 #include "opencl/source/utilities/logger.h"
@@ -15,7 +18,10 @@
 #include "opencl/test/unit_test/mocks/mock_gmm_client_context.h"
 #include "opencl/test/unit_test/mocks/mock_sip.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist.h"
+
 #include "gmock/gmock.h"
+#include "igfxfmid.h"
 
 #include <fstream>
 #include <mutex>
@@ -41,6 +47,15 @@ namespace ult {
 ::testing::Environment *environment = nullptr;
 }
 } // namespace L0
+
+using namespace L0::ult;
+
+PRODUCT_FAMILY productFamily = NEO::DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;
+GFXCORE_FAMILY renderCoreFamily = NEO::DEFAULT_TEST_PLATFORM::hwInfo.platform.eRenderCoreFamily;
+
+namespace NEO {
+extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
+} // namespace NEO
 
 std::thread::id tempThreadID;
 
@@ -97,23 +112,85 @@ int main(int argc, char **argv) {
 
     testing::InitGoogleMock(&argc, argv);
 
+    NEO::HardwareInfo hwInfoForTests = NEO::DEFAULT_TEST_PLATFORM::hwInfo;
+
+    for (int i = 1; i < argc; ++i) {
+        if (!strcmp("--product", argv[i])) {
+            ++i;
+            if (i < argc) {
+                if (::isdigit(argv[i][0])) {
+                    int productValue = atoi(argv[i]);
+                    if (productValue > 0 && productValue < IGFX_MAX_PRODUCT &&
+                        NEO::hardwarePrefix[productValue] != nullptr) {
+                        productFamily = static_cast<PRODUCT_FAMILY>(productValue);
+                    } else {
+                        productFamily = IGFX_UNKNOWN;
+                    }
+                } else {
+                    productFamily = IGFX_UNKNOWN;
+                    for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
+                        if (NEO::hardwarePrefix[j] == nullptr)
+                            continue;
+                        if (strcmp(NEO::hardwarePrefix[j], argv[i]) == 0) {
+                            productFamily = static_cast<PRODUCT_FAMILY>(j);
+                            break;
+                        }
+                    }
+                }
+                if (productFamily == IGFX_UNKNOWN) {
+                    std::cout << "unknown or unsupported product family has been set: " << argv[i]
+                              << std::endl;
+                    return -1;
+                } else {
+                    std::cout << "product family: " << NEO::hardwarePrefix[productFamily] << " ("
+                              << productFamily << ")" << std::endl;
+                }
+                hwInfoForTests = *NEO::hardwareInfoTable[productFamily];
+            }
+        }
+        if (!strcmp("--disable_default_listener", argv[i])) {
+            useDefaultListener = false;
+        } else if (!strcmp("--enable_default_listener", argv[i])) {
+            useDefaultListener = true;
+        }
+    }
+    // Platforms with uninitialized factory are not supported
+    if (L0::commandListFactory[productFamily] == nullptr) {
+        std::cout << "unsupported product family has been set: " << NEO::hardwarePrefix[::productFamily] << std::endl;
+        std::cout << "skipping tests" << std::endl;
+        return 0;
+    }
+
     auto &listeners = ::testing::UnitTest::GetInstance()->listeners();
-
     if (useDefaultListener == false) {
-        ::testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
-        ::testing::TestEventListener *defaultListener = listeners.default_result_printer();
+        auto defaultListener = listeners.default_result_printer();
 
-        auto customEventListener = new CCustomEventListener(defaultListener);
+        auto customEventListener = new CCustomEventListener(defaultListener, NEO::hardwarePrefix[productFamily]);
 
-        listeners.Release(listeners.default_result_printer());
+        listeners.Release(defaultListener);
         listeners.Append(customEventListener);
     }
 
     listeners.Append(new NEO::MemoryLeakListener);
 
-    if (L0::ult::environment) {
-        ::testing::AddGlobalTestEnvironment(L0::ult::environment);
+    NEO::GmmHelper::createGmmContextWrapperFunc =
+        NEO::GmmClientContextBase::create<NEO::MockGmmClientContext>;
+
+    if (environment) {
+        ::testing::AddGlobalTestEnvironment(environment);
     }
+
+    uint64_t hwInfoConfig = NEO::defaultHardwareInfoConfigTable[productFamily];
+    NEO::setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
+
+    // set Gt and FeatureTable to initial state
+    NEO::hardwareInfoSetup[productFamily](&hwInfoForTests, false, hwInfoConfig);
+
+    productFamily = hwInfoForTests.platform.eProductFamily;
+    renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
+
+    NEO::defaultHwInfo = std::make_unique<NEO::HardwareInfo>();
+    *NEO::defaultHwInfo = hwInfoForTests;
 
     auto retVal = RUN_ALL_TESTS();
 
