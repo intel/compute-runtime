@@ -35,5 +35,6 @@ class VaSharingBuilderFactory : public SharingBuilderFactory {
     std::string getExtensions(DriverInfo *driverInfo) override;
     void fillGlobalDispatchTable() override;
     void *getExtensionFunctionAddress(const std::string &functionName) override;
+    virtual void *getExtensionFunctionAddressExtra(const std::string &functionName);
 };
 } // namespace NEO

@@ -115,7 +115,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
 
     auto surface = new D3DSurface(context, surfaceInfo, surfaceStaging, plane, imagePlane, adapterType, isSharedResource, lockable);
 
-    return Image::createSharedImage(context, surface, mcsSurfaceInfo, alloc, nullptr, flags, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
+    return Image::createSharedImage(context, surface, mcsSurfaceInfo, alloc, nullptr, flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
 }
 
 void D3DSurface::synchronizeObject(UpdateData &updateData) {

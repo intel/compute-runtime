@@ -21,7 +21,7 @@ TEST_F(KernelImageArgTest, givenSharedImageWhenSetArgIsCalledThenReportSharedObj
     VASurfaceID vaSurfaceId = 0u;
     vaSharing.updateAcquiredHandle(1u);
     std::unique_ptr<Image> sharedImage(VASurface::createSharedVaSurface(context.get(), &vaSharing.sharingFunctions,
-                                                                        CL_MEM_READ_WRITE, &vaSurfaceId, 0, nullptr));
+                                                                        CL_MEM_READ_WRITE, 0, &vaSurfaceId, 0, nullptr));
 
     auto sharedMem = static_cast<cl_mem>(sharedImage.get());
     auto nonSharedMem = static_cast<cl_mem>(image.get());

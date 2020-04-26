@@ -16,6 +16,7 @@ set(IGDRCL_SRCS_tests_sharings_va
   ${CMAKE_CURRENT_SOURCE_DIR}/va_base_object_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/va_sharing_linux_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/va_sharing_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/va_sharing_factory_tests.cpp
 )
 set_property(GLOBAL PROPERTY IGDRCL_SRCS_tests_sharings_va ${IGDRCL_SRCS_tests_sharings_va})
 
@@ -23,3 +24,5 @@ if(NEO__LIBVA_FOUND)
   list(APPEND IGDRCL_SRCS_tests_sharings_va ${CMAKE_CURRENT_SOURCE_DIR}/va_sharing_enable_tests.cpp)
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_sharings_va})
 endif(NEO__LIBVA_FOUND)
+
+add_subdirectories()

@@ -49,7 +49,7 @@ clCreateFromVA_APIMediaSurfaceINTEL(cl_context context, cl_mem_flags flags, VASu
         return nullptr;
     }
 
-    image = VASurface::createSharedVaSurface(pContext, pContext->getSharing<VASharingFunctions>(), flags, surface, plane, errcodeRet);
+    image = VASurface::createSharedVaSurface(pContext, pContext->getSharing<VASharingFunctions>(), flags, 0, surface, plane, errcodeRet);
     DBG_LOG_INPUTS("image", image);
     return image;
 }

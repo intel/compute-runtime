@@ -443,8 +443,8 @@ Image *Image::createImageHw(Context *context, const MemoryProperties &memoryProp
 
 Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler, const McsSurfaceInfo &mcsSurfaceInfo,
                                 GraphicsAllocation *graphicsAllocation, GraphicsAllocation *mcsAllocation,
-                                cl_mem_flags flags, const ClSurfaceFormatInfo *surfaceFormat, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount) {
-    auto sharedImage = createImageHw(context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), flags, 0, graphicsAllocation->getUnderlyingBufferSize(),
+                                cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const ClSurfaceFormatInfo *surfaceFormat, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount) {
+    auto sharedImage = createImageHw(context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), flags, flagsIntel, graphicsAllocation->getUnderlyingBufferSize(),
                                      nullptr, surfaceFormat->OCLImageFormat, Image::convertDescriptor(imgInfo.imgDesc), false, graphicsAllocation, false, baseMipLevel, mipCount, surfaceFormat);
     sharedImage->setSharingHandler(sharingHandler);
     sharedImage->setMcsAllocation(mcsAllocation);

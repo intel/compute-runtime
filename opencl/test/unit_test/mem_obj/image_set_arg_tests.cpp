@@ -287,6 +287,7 @@ HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArra
         allocation,
         nullptr,
         CL_MEM_READ_WRITE,
+        0,
         &surfaceFormatInfo,
         imageInfo,
         0, 0, 0)};

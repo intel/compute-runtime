@@ -153,7 +153,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
                                                                                                   : true;
     }
 
-    return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, alloc, mcsAlloc, flags, &surfaceFormatInfo, imgInfo, cubeFaceIndex,
+    return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, alloc, mcsAlloc, flags, 0, &surfaceFormatInfo, imgInfo, cubeFaceIndex,
                                     std::max(miplevel, 0), imgInfo.imgDesc.numMipLevels);
 } // namespace NEO
 

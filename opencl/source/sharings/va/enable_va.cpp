@@ -84,11 +84,11 @@ void *VaSharingBuilderFactory::getExtensionFunctionAddress(const std::string &fu
     RETURN_FUNC_PTR_IF_EXIST(clGetDeviceIDsFromVA_APIMediaAdapterINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueAcquireVA_APIMediaSurfacesINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueReleaseVA_APIMediaSurfacesINTEL);
-
     if (DebugManager.flags.EnableFormatQuery.get()) {
         RETURN_FUNC_PTR_IF_EXIST(clGetSupportedVA_APIMediaSurfaceFormatsINTEL);
     }
-    return nullptr;
+    auto extraFunction = getExtensionFunctionAddressExtra(functionName);
+    return extraFunction;
 }
 
 static SharingFactory::RegisterSharing<VaSharingBuilderFactory, VASharingFunctions> vaSharing;

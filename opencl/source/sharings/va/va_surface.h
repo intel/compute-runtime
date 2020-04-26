@@ -16,7 +16,7 @@ class Image;
 class VASurface : VASharing {
   public:
     static Image *createSharedVaSurface(Context *context, VASharingFunctions *sharingFunctions,
-                                        cl_mem_flags flags, VASurfaceID *surface, cl_uint plane,
+                                        cl_mem_flags flags, cl_mem_flags_intel flagsIntel, VASurfaceID *surface, cl_uint plane,
                                         cl_int *errcodeRet);
 
     void synchronizeObject(UpdateData &updateData) override;

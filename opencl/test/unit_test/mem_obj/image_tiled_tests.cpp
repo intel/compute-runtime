@@ -110,6 +110,7 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
         alloc,
         nullptr,
         CL_MEM_READ_WRITE,
+        0,
         &surfaceFormat,
         info,
         0, 0, 0);
@@ -149,6 +150,7 @@ TEST_P(CreateNonTiledImageTest, isTiledImageIsNotSetForNonTiledSharedImage) {
         alloc,
         nullptr,
         CL_MEM_READ_WRITE,
+        0,
         &surfaceFormat,
         info,
         0, 0, 0);

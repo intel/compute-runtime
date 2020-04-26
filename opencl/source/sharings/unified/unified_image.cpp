@@ -50,7 +50,7 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     const uint32_t sharedMipmapsCount = imageDesc->num_mip_levels;
     auto sharingHandler = new UnifiedImage(sharingFunctions, description.type);
     return Image::createSharedImage(context, sharingHandler, McsSurfaceInfo{}, graphicsAllocation, nullptr,
-                                    flags, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, baseMipmapIndex, sharedMipmapsCount);
+                                    flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, baseMipmapIndex, sharedMipmapsCount);
 }
 
 } // namespace NEO
