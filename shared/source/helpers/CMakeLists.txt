@@ -80,6 +80,8 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.h
   ${CMAKE_CURRENT_SOURCE_DIR}/vec.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/definitions/pipe_control_args_base.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/pipe_control_args.h
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_HELPERS ${NEO_CORE_HELPERS})

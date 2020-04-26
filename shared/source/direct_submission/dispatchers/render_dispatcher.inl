@@ -10,6 +10,8 @@
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/hw_helper.h"
 
+#include "pipe_control_args.h"
+
 namespace NEO {
 
 template <typename GfxFamily>
@@ -29,13 +31,14 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
                                                               uint64_t immediateData,
                                                               const HardwareInfo &hwInfo) {
     using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
-    MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+    PipeControlArgs args(true);
+    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
         cmdBuffer,
         POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
         gpuAddress,
         immediateData,
-        true,
-        hwInfo);
+        hwInfo,
+        args);
 }
 
 template <typename GfxFamily>

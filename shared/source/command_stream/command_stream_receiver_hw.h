@@ -18,6 +18,7 @@
 namespace NEO {
 template <typename GfxFamily>
 class DeviceCommandStreamReceiver;
+struct PipeControlArgs;
 
 template <typename GfxFamily>
 class CommandStreamReceiverHw : public CommandStreamReceiver {
@@ -111,8 +112,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForPrologue(const DispatchFlags &dispatchFlags) const;
 
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
-    PIPE_CONTROL *addPipeControlCmd(LinearStream &commandStream);
-    PIPE_CONTROL *addPipeControlBeforeStateBaseAddress(LinearStream &commandStream);
+    void addPipeControlCmd(LinearStream &commandStream, PipeControlArgs &args);
+    void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream);
     size_t getSshHeapSize();
 
     uint64_t getScratchPatchAddress();

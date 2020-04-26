@@ -108,7 +108,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         if (static_cast<uint32_t>(DebugManager.flags.AddBlockingSemaphoreAfterSpecificEnqueue.get()) == gpgpuCsr.peekTaskCount()) {
             if (DebugManager.flags.AddCacheFlushBeforeBlockingSemaphore.get()) {
-                MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandStream, true);
+                NEO::PipeControlArgs args(true);
+                MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandStream, args);
             }
 
             auto tagValue = *(gpgpuCsr.getTagAddress());

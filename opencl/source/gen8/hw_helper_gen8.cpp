@@ -28,12 +28,12 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
 }
 
 template <>
-typename Family::PIPE_CONTROL *MemorySynchronizationCommands<Family>::addPipeControl(LinearStream &commandStream, bool dcFlush) {
+void MemorySynchronizationCommands<Family>::addPipeControl(LinearStream &commandStream, PipeControlArgs &args) {
     Family::PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-    MemorySynchronizationCommands<Family>::setPipeControl(cmd, true);
+    args.dcFlushEnable = true;
+    MemorySynchronizationCommands<Family>::setPipeControl(cmd, args);
     Family::PIPE_CONTROL *cmdBuffer = commandStream.getSpaceForCmd<Family::PIPE_CONTROL>();
     *cmdBuffer = cmd;
-    return cmdBuffer;
 }
 
 template class AubHelperHw<Family>;

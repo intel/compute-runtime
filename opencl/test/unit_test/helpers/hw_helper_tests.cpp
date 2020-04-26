@@ -15,6 +15,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
 
@@ -24,6 +25,8 @@
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+
+#include "pipe_control_args.h"
 
 #include <chrono>
 #include <iostream>
@@ -212,13 +215,15 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteTimestampModeWhenHelperIsUsed
     expectedPipeControl.setAddressHigh(static_cast<uint32_t>(address >> 32));
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
-    auto pipeControl = MemorySynchronizationCommands<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(
-        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, false, hardwareInfo);
+    PipeControlArgs args;
+    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
+        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, address, immediateData, hardwareInfo, args);
     auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
     auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleSynchronization(hardwareInfo);
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
+    ASSERT_NE(nullptr, pipeControl);
 
     EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
-    EXPECT_EQ(pipeControl, ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
     EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
 }
 
@@ -238,13 +243,15 @@ HWTEST_F(PipeControlHelperTests, givenPostSyncWriteImmediateDataModeWhenHelperIs
     expectedPipeControl.setImmediateData(immediateData);
     HardwareInfo hardwareInfo = *defaultHwInfo;
 
-    auto pipeControl = MemorySynchronizationCommands<FamilyType>::obtainPipeControlAndProgramPostSyncOperation(
-        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, false, hardwareInfo);
+    PipeControlArgs args;
+    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(
+        stream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, immediateData, hardwareInfo, args);
     auto additionalPcSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo) - sizeof(PIPE_CONTROL);
     auto pipeControlLocationSize = additionalPcSize - MemorySynchronizationCommands<FamilyType>::getSizeForSingleSynchronization(hardwareInfo);
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
+    ASSERT_NE(nullptr, pipeControl);
 
     EXPECT_EQ(sizeof(PIPE_CONTROL) + additionalPcSize, stream.getUsed());
-    EXPECT_EQ(pipeControl, ptrOffset(stream.getCpuBase(), pipeControlLocationSize));
     EXPECT_TRUE(memcmp(pipeControl, &expectedPipeControl, sizeof(PIPE_CONTROL)) == 0);
 }
 
@@ -850,7 +857,10 @@ HWTEST_F(PipeControlHelperTests, WhenProgrammingCacheFlushThenExpectBasicFieldsS
 
     LinearStream stream(buffer.get(), 128);
 
-    PIPE_CONTROL *pipeControl = MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream);
+    MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream);
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
+    ASSERT_NE(nullptr, pipeControl);
+
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
     EXPECT_TRUE(pipeControl->getDcFlushEnable());
 

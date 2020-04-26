@@ -1555,7 +1555,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsTrueWhenCall
     std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
     LinearStream commandStream(buffer.get(), 128);
 
-    auto pipeControl = MemorySynchronizationCommands<FamilyType>::addPipeControl(commandStream, true);
+    PipeControlArgs args(true);
+    MemorySynchronizationCommands<FamilyType>::addPipeControl(commandStream, args);
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
+    ASSERT_NE(nullptr, pipeControl);
 
     EXPECT_TRUE(pipeControl->getDcFlushEnable());
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
@@ -1566,7 +1569,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDcFlushArgumentIsFalseWhenCal
     std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
     LinearStream commandStream(buffer.get(), 128);
 
-    auto pipeControl = MemorySynchronizationCommands<FamilyType>::addPipeControl(commandStream, false);
+    PipeControlArgs args;
+    MemorySynchronizationCommands<FamilyType>::addPipeControl(commandStream, args);
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
+    ASSERT_NE(nullptr, pipeControl);
 
     const bool expectedDcFlush = ::renderCoreFamily == IGFX_GEN8_CORE;
     EXPECT_EQ(expectedDcFlush, pipeControl->getDcFlushEnable());

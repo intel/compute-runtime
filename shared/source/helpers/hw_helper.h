@@ -21,10 +21,11 @@
 #include <type_traits>
 
 namespace NEO {
-class GraphicsAllocation;
-struct RootDeviceEnvironment;
-struct HardwareCapabilities;
 class GmmHelper;
+class GraphicsAllocation;
+struct HardwareCapabilities;
+struct RootDeviceEnvironment;
+struct PipeControlArgs;
 
 class HwHelper {
   public:
@@ -260,26 +261,32 @@ template <typename GfxFamily>
 struct MemorySynchronizationCommands {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
-    static PIPE_CONTROL *obtainPipeControlAndProgramPostSyncOperation(LinearStream &commandStream,
-                                                                      POST_SYNC_OPERATION operation,
-                                                                      uint64_t gpuAddress,
-                                                                      uint64_t immediateData,
-                                                                      bool dcFlush, const HardwareInfo &hwInfo);
-    static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
+
+    static void addPipeControlAndProgramPostSyncOperation(LinearStream &commandStream,
+                                                          POST_SYNC_OPERATION operation,
+                                                          uint64_t gpuAddress,
+                                                          uint64_t immediateData,
+                                                          const HardwareInfo &hwInfo,
+                                                          PipeControlArgs &args);
+    static void setPostSyncExtraProperties(PIPE_CONTROL &pipeControl, const HardwareInfo &hwInfo);
+
     static void addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
-    static void setExtraPipeControlProperties(PIPE_CONTROL &pipeControl, const HardwareInfo &hwInfo);
-    static PIPE_CONTROL *addPipeControl(LinearStream &commandStream, bool dcFlush);
+    static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
+
+    static void addPipeControl(LinearStream &commandStream, PipeControlArgs &args);
+
+    static void addFullCacheFlush(LinearStream &commandStream);
+    static void setCacheFlushExtraProperties(PIPE_CONTROL &pipeControl);
+
     static size_t getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo);
     static size_t getSizeForSinglePipeControl();
     static size_t getSizeForSingleSynchronization(const HardwareInfo &hwInfo);
     static size_t getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo);
-
-    static PIPE_CONTROL *addFullCacheFlush(LinearStream &commandStream);
     static size_t getSizeForFullCacheFlush();
-    static void setExtraCacheFlushFields(PIPE_CONTROL &pipeControl);
 
   protected:
-    static void setPipeControl(PIPE_CONTROL &pipeControl, bool dcFlush);
+    static void setPipeControl(PIPE_CONTROL &pipeControl, PipeControlArgs &args);
+    static void setPipeControlExtraProperties(PIPE_CONTROL &pipeControl, PipeControlArgs &args);
 };
 
 union SURFACE_STATE_BUFFER_LENGTH {

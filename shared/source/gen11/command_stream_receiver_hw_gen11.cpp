@@ -39,15 +39,16 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
     if (peekHwInfo().platform.eProductFamily == IGFX_ICELAKE_LP) {
         if (dispatchFlags.pipelineSelectArgs.mediaSamplerRequired) {
             if (!lastVmeSubslicesConfig) {
-                auto pc = addPipeControlCmd(stream);
-                pc->setDcFlushEnable(true);
-                pc->setRenderTargetCacheFlushEnable(true);
-                pc->setInstructionCacheInvalidateEnable(true);
-                pc->setTextureCacheInvalidationEnable(true);
-                pc->setPipeControlFlushEnable(true);
-                pc->setVfCacheInvalidationEnable(true);
-                pc->setConstantCacheInvalidationEnable(true);
-                pc->setStateCacheInvalidationEnable(true);
+                PipeControlArgs args;
+                args.dcFlushEnable = true;
+                args.renderTargetCacheFlushEnable = true;
+                args.instructionCacheInvalidateEnable = true;
+                args.textureCacheInvalidationEnable = true;
+                args.pipeControlFlushEnable = true;
+                args.vfCacheInvalidationEnable = true;
+                args.constantCacheInvalidationEnable = true;
+                args.stateCacheInvalidationEnable = true;
+                addPipeControlCmd(stream, args);
 
                 uint32_t numSubslices = peekHwInfo().gtSystemInfo.SubSliceCount;
                 uint32_t numSubslicesWithVme = numSubslices / 2; // 1 VME unit per DSS
@@ -62,24 +63,27 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 reg.TheStructure.Common.SliceCountRequest = numSlicesForPowerGating;
                 LriHelper<Family>::program(&stream, PWR_CLK_STATE_REGISTER::REG_ADDRESS, reg.TheStructure.RawData[0]);
 
-                addPipeControlCmd(stream);
+                args = {};
+                addPipeControlCmd(stream, args);
 
                 lastVmeSubslicesConfig = true;
             }
         } else {
             if (lastVmeSubslicesConfig) {
-                auto pc = addPipeControlCmd(stream);
-                pc->setDcFlushEnable(true);
-                pc->setRenderTargetCacheFlushEnable(true);
-                pc->setInstructionCacheInvalidateEnable(true);
-                pc->setTextureCacheInvalidationEnable(true);
-                pc->setPipeControlFlushEnable(true);
-                pc->setVfCacheInvalidationEnable(true);
-                pc->setConstantCacheInvalidationEnable(true);
-                pc->setStateCacheInvalidationEnable(true);
-                pc->setGenericMediaStateClear(true);
+                PipeControlArgs args;
+                args.dcFlushEnable = true;
+                args.renderTargetCacheFlushEnable = true;
+                args.instructionCacheInvalidateEnable = true;
+                args.textureCacheInvalidationEnable = true;
+                args.pipeControlFlushEnable = true;
+                args.vfCacheInvalidationEnable = true;
+                args.constantCacheInvalidationEnable = true;
+                args.stateCacheInvalidationEnable = true;
+                args.genericMediaStateClear = true;
+                addPipeControlCmd(stream, args);
 
-                addPipeControlCmd(stream);
+                args = {};
+                addPipeControlCmd(stream, args);
 
                 // In Gen11-LP, software programs this register as if GT consists of
                 // 2 slices with 4 subslices in each slice. Hardware maps this to the
@@ -98,7 +102,7 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
 
                 LriHelper<Family>::program(&stream, PWR_CLK_STATE_REGISTER::REG_ADDRESS, reg.TheStructure.RawData[0]);
 
-                addPipeControlCmd(stream);
+                addPipeControlCmd(stream, args);
             }
         }
     }

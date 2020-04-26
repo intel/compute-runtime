@@ -27,6 +27,8 @@
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
+#include "pipe_control_args.h"
+
 #include <algorithm>
 #include <cmath>
 
@@ -123,10 +125,14 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
 
     // PIPE_CONTROL for global timestamp
     uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
-
-    MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
-        *commandStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
-        timeStampAddress, 0llu, false, hwInfo);
+    PipeControlArgs args;
+    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+        *commandStream,
+        PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
+        timeStampAddress,
+        0llu,
+        hwInfo,
+        args);
 
     //MI_STORE_REGISTER_MEM for context local timestamp
     timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextStartTS);

@@ -14,6 +14,8 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/tag_allocator.h"
 
+#include "pipe_control_args.h"
+
 #include <atomic>
 #include <cstdint>
 #include <vector>
@@ -160,9 +162,10 @@ struct TimestampPacketHelper {
             auto cacheFlushTimestampPacketGpuAddress = timestampPacketDependencies->cacheFlushNodes.peekNodes()[0]->getGpuAddress() +
                                                        offsetof(TimestampPacketStorage, packets[0].contextEnd);
 
-            MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+            PipeControlArgs args(true);
+            MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 cmdStream, GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                cacheFlushTimestampPacketGpuAddress, 0, true, hwInfo);
+                cacheFlushTimestampPacketGpuAddress, 0, hwInfo, args);
         }
 
         for (auto &node : container.peekNodes()) {

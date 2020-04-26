@@ -76,15 +76,18 @@ uint64_t HwHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double f
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
+inline void MemorySynchronizationCommands<GfxFamily>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::setExtraPipeControlProperties(PIPE_CONTROL &pipeControl, const HardwareInfo &hwInfo) {
+inline void MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(PIPE_CONTROL &pipeControl, const HardwareInfo &hwInfo) {
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::setExtraCacheFlushFields(PIPE_CONTROL &pipeControl) {
+inline void MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperties(PIPE_CONTROL &pipeControl) {
 }
 
+template <typename GfxFamily>
+inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlExtraProperties(typename GfxFamily::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
+}
 } // namespace NEO

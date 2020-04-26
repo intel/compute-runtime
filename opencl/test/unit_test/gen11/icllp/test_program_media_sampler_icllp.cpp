@@ -93,17 +93,20 @@ ICLLPTEST_F(Gen11MediaSamplerProgramingTest, givenVmeEnableSubsliceDisabledWhenP
     auto expectedPipeControlCmd = FamilyType::cmdInitPipeControl;
     expectedPipeControlCmd.setCommandStreamerStallEnable(0x1);
     setFlushAllCaches(expectedPipeControlCmd);
-    auto pipeControlCmd = reinterpret_cast<PIPE_CONTROL *>(stream->getCpuBase());
+    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(stream->getCpuBase());
+    ASSERT_NE(nullptr, pipeControlCmd);
     EXPECT_EQ(0, memcmp(&expectedPipeControlCmd, pipeControlCmd, sizeof(PIPE_CONTROL)));
 
     size_t cmdOffset = sizeof(PIPE_CONTROL);
-    auto miLrCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(stream->getCpuBase(), cmdOffset));
+    auto miLrCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(ptrOffset(stream->getCpuBase(), cmdOffset));
+    ASSERT_NE(nullptr, miLrCmd);
     EXPECT_EQ(0, memcmp(&expectedMiLrCmd, miLrCmd, sizeof(MI_LOAD_REGISTER_IMM)));
 
     cmdOffset += sizeof(MI_LOAD_REGISTER_IMM);
     expectedPipeControlCmd = FamilyType::cmdInitPipeControl;
     expectedPipeControlCmd.setCommandStreamerStallEnable(0x1);
-    pipeControlCmd = reinterpret_cast<PIPE_CONTROL *>(ptrOffset(stream->getCpuBase(), cmdOffset));
+    pipeControlCmd = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream->getCpuBase(), cmdOffset));
+    ASSERT_NE(nullptr, pipeControlCmd);
     EXPECT_EQ(0, memcmp(&expectedPipeControlCmd, pipeControlCmd, sizeof(PIPE_CONTROL)));
 }
 
@@ -132,21 +135,25 @@ ICLLPTEST_F(Gen11MediaSamplerProgramingTest, givenVmeEnableSubsliceEnabledWhenPo
     expectedPipeControlCmd.setCommandStreamerStallEnable(0x1);
     setFlushAllCaches(expectedPipeControlCmd);
     expectedPipeControlCmd.setGenericMediaStateClear(true);
-    auto pipeControlCmd = reinterpret_cast<PIPE_CONTROL *>(stream->getCpuBase());
+    auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(stream->getCpuBase());
+    ASSERT_NE(nullptr, pipeControlCmd);
     EXPECT_EQ(0, memcmp(&expectedPipeControlCmd, pipeControlCmd, sizeof(PIPE_CONTROL)));
 
     size_t cmdOffset = sizeof(PIPE_CONTROL);
-    pipeControlCmd = reinterpret_cast<PIPE_CONTROL *>(ptrOffset(stream->getCpuBase(), cmdOffset));
+    pipeControlCmd = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream->getCpuBase(), cmdOffset));
+    ASSERT_NE(nullptr, pipeControlCmd);
     expectedPipeControlCmd = FamilyType::cmdInitPipeControl;
     expectedPipeControlCmd.setCommandStreamerStallEnable(0x1);
     EXPECT_EQ(0, memcmp(&expectedPipeControlCmd, pipeControlCmd, sizeof(PIPE_CONTROL)));
 
     cmdOffset += sizeof(PIPE_CONTROL);
-    auto miLrCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(stream->getCpuBase(), cmdOffset));
+    auto miLrCmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(ptrOffset(stream->getCpuBase(), cmdOffset));
+    ASSERT_NE(nullptr, miLrCmd);
     EXPECT_EQ(0, memcmp(&expectedMiLrCmd, miLrCmd, sizeof(MI_LOAD_REGISTER_IMM)));
 
     cmdOffset += sizeof(MI_LOAD_REGISTER_IMM);
-    pipeControlCmd = reinterpret_cast<PIPE_CONTROL *>(ptrOffset(stream->getCpuBase(), cmdOffset));
+    pipeControlCmd = genCmdCast<PIPE_CONTROL *>(ptrOffset(stream->getCpuBase(), cmdOffset));
+    ASSERT_NE(nullptr, pipeControlCmd);
     EXPECT_EQ(0, memcmp(&expectedPipeControlCmd, pipeControlCmd, sizeof(PIPE_CONTROL)));
 }
 

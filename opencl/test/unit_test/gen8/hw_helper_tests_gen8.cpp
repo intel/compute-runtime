@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/constants.h"
+#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 
 #include "opencl/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
@@ -60,6 +61,8 @@ GEN8TEST_F(MemorySynchronizatiopCommandsTestsGen8, WhenProgrammingCacheFlushThen
     std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
 
     LinearStream stream(buffer.get(), 128);
-    PIPE_CONTROL *pipeControl = MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream);
+    MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream);
+    PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
+    ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
 }

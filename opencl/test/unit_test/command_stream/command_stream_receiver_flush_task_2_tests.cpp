@@ -870,7 +870,8 @@ HWTEST_F(UltCommandStreamReceiverTest, addPipeControlWithFlushAllCaches) {
     char buff[sizeof(PIPE_CONTROL) * 3];
     LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);
 
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, false);
+    PipeControlArgs args;
+    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
 
     parseCommands<FamilyType>(stream, 0);
 

@@ -12,6 +12,7 @@
 #include "opencl/source/gen12lp/helpers_gen12lp.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
+#include "pipe_control_args.h"
 #include "reg_configs_common.h"
 
 namespace NEO {
@@ -38,8 +39,9 @@ void PreambleHelper<TGLLPFamily>::programPipelineSelect(LinearStream *pCommandSt
     using PIPELINE_SELECT = typename TGLLPFamily::PIPELINE_SELECT;
 
     if (HardwareCommandsHelper<TGLLPFamily>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
-        auto pipeControl = MemorySynchronizationCommands<TGLLPFamily>::addPipeControl(*pCommandStream, false);
-        pipeControl->setRenderTargetCacheFlushEnable(true);
+        PipeControlArgs args;
+        args.renderTargetCacheFlushEnable = true;
+        MemorySynchronizationCommands<TGLLPFamily>::addPipeControl(*pCommandStream, args);
     }
 
     auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();

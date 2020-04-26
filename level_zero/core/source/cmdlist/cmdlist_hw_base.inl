@@ -16,6 +16,8 @@
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
+#include "pipe_control_args.h"
+
 #include <algorithm>
 
 namespace L0 {
@@ -100,23 +102,24 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
     } else {
 
         timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::GLOBAL_END);
-        bool dcFlushEnable = (event->signalScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
+        NEO::PipeControlArgs args;
+        args.dcFlushEnable = (event->signalScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
 
         if (isCopyOnlyCmdList) {
             NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), timeStampAddress, 0llu, true, true);
         } else {
-            NEO::MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 *(commandContainer.getCommandStream()), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
                 timeStampAddress,
                 0llu,
-                dcFlushEnable,
-                device->getHwInfo());
+                device->getHwInfo(),
+                args);
 
             timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::CONTEXT_END);
             NEO::EncodeStoreMMIO<GfxFamily>::encode(commandContainer, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timeStampAddress);
 
-            if (dcFlushEnable) {
-                NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), true);
+            if (args.dcFlushEnable) {
+                NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
             }
         }
     }

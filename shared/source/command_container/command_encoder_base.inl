@@ -17,6 +17,8 @@
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
+#include "pipe_control_args.h"
+
 #include <algorithm>
 
 namespace NEO {
@@ -147,7 +149,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     bool flush = container.slmSize != slmSizeNew || container.isAnyHeapDirty();
 
     if (flush) {
-        MemorySynchronizationCommands<Family>::addPipeControl(*container.getCommandStream(), true);
+        PipeControlArgs args(true);
+        MemorySynchronizationCommands<Family>::addPipeControl(*container.getCommandStream(), args);
 
         if (container.slmSize != slmSizeNew) {
             EncodeL3State<Family>::encode(container, slmSizeNew != 0u);

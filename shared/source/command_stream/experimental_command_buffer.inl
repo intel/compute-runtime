@@ -12,6 +12,8 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
+#include "pipe_control_args.h"
+
 namespace NEO {
 
 template <typename GfxFamily>
@@ -73,10 +75,14 @@ void ExperimentalCommandBuffer::addTimeStampPipeControl() {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     uint64_t timeStampAddress = timestamps->getGpuAddress() + timestampsOffset;
-
-    MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
-        *currentStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, timeStampAddress, 0llu,
-        false, *commandStreamReceiver->peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->getHardwareInfo());
+    PipeControlArgs args;
+    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+        *currentStream,
+        PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
+        timeStampAddress,
+        0llu,
+        *commandStreamReceiver->peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->getHardwareInfo(),
+        args);
 
     //moving to next chunk
     timestampsOffset += sizeof(uint64_t);

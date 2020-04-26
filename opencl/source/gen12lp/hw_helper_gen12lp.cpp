@@ -158,7 +158,12 @@ bool HwHelperHw<Family>::isIndependentForwardProgressSupported() {
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::setExtraCacheFlushFields(Family::PIPE_CONTROL &pipeControl) {
+inline void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
+    pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
+}
+
+template <>
+void MemorySynchronizationCommands<Family>::setCacheFlushExtraProperties(Family::PIPE_CONTROL &pipeControl) {
     pipeControl.setHdcPipelineFlush(true);
     pipeControl.setConstantCacheInvalidationEnable(false);
 }

@@ -12,6 +12,8 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/gpgpu_walker_base.inl"
 
+#include "pipe_control_args.h"
+
 namespace NEO {
 
 template <typename GfxFamily>
@@ -69,8 +71,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 
-    bool dcFlush = false;
-    MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, dcFlush);
+    NEO::PipeControlArgs args;
+    MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
 
     uint32_t interfaceDescriptorIndex = devQueueHw.schedulerIDIndex;
     const size_t offsetInterfaceDescriptorTable = devQueueHw.colorCalcStateSize;
@@ -161,8 +163,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
 
     // Do not put BB_START only when returning in first Scheduler run
     if (devQueueHw.getSchedulerReturnInstance() != 1) {
-
-        MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, true);
+        args.dcFlushEnable = true;
+        MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStream, args);
 
         // Add BB Start Cmd to the SLB in the Primary Batch Buffer
         auto *bbStart = static_cast<MI_BATCH_BUFFER_START *>(commandStream.getSpace(sizeof(MI_BATCH_BUFFER_START)));
@@ -183,8 +185,14 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
 
     if (TimestampPacketStorage::WriteOperationType::AfterWalker == writeOperationType) {
         uint64_t address = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
-        MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
-            *cmdStream, PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, address, 0, false, *rootDeviceEnvironment.getHardwareInfo());
+        PipeControlArgs args;
+        MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+            *cmdStream,
+            PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            address,
+            0,
+            *rootDeviceEnvironment.getHardwareInfo(),
+            args);
     }
 }
 

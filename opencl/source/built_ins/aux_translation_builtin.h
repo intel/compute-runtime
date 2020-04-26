@@ -12,6 +12,8 @@
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 
+#include "pipe_control_args.h"
+
 #include <memory>
 
 namespace NEO {
@@ -65,7 +67,8 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
                                                                    DispatchInfo::EstimateCommandsMethodT>;
     template <typename GfxFamily, bool dcFlush>
     static void dispatchPipeControl(LinearStream &linearStream, TimestampPacketDependencies *, const HardwareInfo &) {
-        MemorySynchronizationCommands<GfxFamily>::addPipeControl(linearStream, dcFlush);
+        PipeControlArgs args(dcFlush);
+        MemorySynchronizationCommands<GfxFamily>::addPipeControl(linearStream, args);
     }
 
     template <typename GfxFamily>

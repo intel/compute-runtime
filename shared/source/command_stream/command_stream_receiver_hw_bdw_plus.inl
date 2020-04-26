@@ -87,11 +87,10 @@ bool CommandStreamReceiverHw<GfxFamily>::isMultiOsContextCapable() const {
 }
 
 template <typename GfxFamily>
-inline typename GfxFamily::PIPE_CONTROL *CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream) {
-    auto pCmd = addPipeControlCmd(commandStream);
-    pCmd->setTextureCacheInvalidationEnable(true);
-    pCmd->setDcFlushEnable(true);
-    return pCmd;
+inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream) {
+    PipeControlArgs args(true);
+    args.textureCacheInvalidationEnable = true;
+    addPipeControlCmd(commandStream, args);
 }
 
 } // namespace NEO

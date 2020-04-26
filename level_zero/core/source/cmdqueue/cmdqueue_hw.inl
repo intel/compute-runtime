@@ -28,6 +28,8 @@
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
+#include "pipe_control_args.h"
+
 #include <limits>
 #include <thread>
 
@@ -219,7 +221,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
         auto commandListPreemption = commandList->getCommandListPreemptionMode();
         if (statePreemption != commandListPreemption) {
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(child, false);
+            NEO::PipeControlArgs args;
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(child, args);
             NEO::PreemptionHelper::programCmdStream<GfxFamily>(child,
                                                                commandListPreemption,
                                                                statePreemption,
@@ -267,9 +270,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         if (isCopyOnlyCommandQueue) {
             NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(child, fence->getGpuAddress(), Fence::STATE_SIGNALED, false, true);
         } else {
-            NEO::MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
+            NEO::PipeControlArgs args(true);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
                 child, POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                fence->getGpuAddress(), Fence::STATE_SIGNALED, true, device->getHwInfo());
+                fence->getGpuAddress(),
+                Fence::STATE_SIGNALED,
+                device->getHwInfo(),
+                args);
         }
     }
 
@@ -352,9 +359,14 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountWrite(NEO::LinearStream &co
     if (isCopyOnlyCommandQueue) {
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, gpuAddress, taskCountToWrite, false, true);
     } else {
-        NEO::MemorySynchronizationCommands<GfxFamily>::obtainPipeControlAndProgramPostSyncOperation(
-            commandStream, POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-            gpuAddress, taskCountToWrite, true, device->getHwInfo());
+        NEO::PipeControlArgs args(true);
+        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+            commandStream,
+            POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            gpuAddress,
+            taskCountToWrite,
+            device->getHwInfo(),
+            args);
     }
 }
 } // namespace L0

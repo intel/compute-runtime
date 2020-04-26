@@ -9,6 +9,8 @@
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/helpers/state_compute_mode_helper.h"
 
+#include "pipe_control_args.h"
+
 namespace NEO {
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags) {
@@ -16,6 +18,7 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
     if (isComputeModeNeeded()) {
         programAdditionalPipelineSelect(stream, dispatchFlags.pipelineSelectArgs, true);
         this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
+
         auto stateComputeMode = GfxFamily::cmdInitStateComputeMode;
         adjustThreadArbitionPolicy(&stateComputeMode);
         EncodeStates<GfxFamily>::adjustStateComputeMode(stream, dispatchFlags.numGrfRequired, &stateComputeMode, isMultiOsContextCapable(), dispatchFlags.requiresCoherency);
@@ -35,11 +38,10 @@ inline bool CommandStreamReceiverHw<Family>::isComputeModeNeeded() const {
 }
 
 template <>
-inline typename Family::PIPE_CONTROL *CommandStreamReceiverHw<Family>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream) {
-    auto pCmd = addPipeControlCmd(commandStream);
-    pCmd->setTextureCacheInvalidationEnable(true);
-    pCmd->setDcFlushEnable(true);
-    pCmd->setHdcPipelineFlush(true);
-    return pCmd;
+inline void CommandStreamReceiverHw<Family>::addPipeControlBeforeStateBaseAddress(LinearStream &commandStream) {
+    PipeControlArgs args(true);
+    args.textureCacheInvalidationEnable = true;
+    args.hdcPipelineFlush = true;
+    addPipeControlCmd(commandStream, args);
 }
 } // namespace NEO
