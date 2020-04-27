@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/hw_cmds.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/kernel/kernel.h"
@@ -200,7 +201,8 @@ TEST_F(KernelArgBufferTest, givenNoCacheFlushBufferWhenSettingAsArgThenNotExpect
     EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
 }
 
-TEST_F(KernelArgBufferTest, givenUsedBindlessBuffersWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
+HWTEST_F(KernelArgBufferTest, givenUsedBindlessBuffersWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
+    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessBuffers.set(1);
 
@@ -214,14 +216,17 @@ TEST_F(KernelArgBufferTest, givenUsedBindlessBuffersWhenPatchingSurfaceStateOffs
     auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
     *patchLocation = 0xdead;
 
-    uint32_t sshOffset = 4000;
+    uint32_t sshOffset = 0x1000;
     pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
-    auto expectedOffset = (sshOffset + pKernelInfo->kernelArgInfo[0].offsetHeap) << 6;
+    DataPortBindlessSurfaceExtendedMessageDescriptor extMessageDesc;
+    extMessageDesc.setBindlessSurfaceOffset(sshOffset + pKernelInfo->kernelArgInfo[0].offsetHeap);
+    auto expectedOffset = extMessageDesc.getBindlessSurfaceOffsetToPatch();
     EXPECT_EQ(expectedOffset, *patchLocation);
 
-    sshOffset = static_cast<uint32_t>(maxNBitValue(20)) - 64;
+    sshOffset = static_cast<uint32_t>(maxNBitValue(20) + 1) - 64;
     pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
-    expectedOffset = (sshOffset + pKernelInfo->kernelArgInfo[0].offsetHeap) << 6;
+    extMessageDesc.setBindlessSurfaceOffset(sshOffset + pKernelInfo->kernelArgInfo[0].offsetHeap);
+    expectedOffset = extMessageDesc.getBindlessSurfaceOffsetToPatch();
     EXPECT_EQ(expectedOffset, *patchLocation);
 }
 

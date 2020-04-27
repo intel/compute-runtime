@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
@@ -326,14 +327,15 @@ TEST_F(KernelImageArgTest, givenNoCacheFlushImageWhenSettingAsArgThenExpectAlloc
     EXPECT_EQ(nullptr, pKernel->kernelArgRequiresCacheFlush[0]);
 }
 
-TEST_F(KernelImageArgTest, givenUsedBindlessImagesWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
+HWTEST_F(KernelImageArgTest, givenUsedBindlessImagesWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
+    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessImages.set(1);
 
     pKernelInfo->usesSsh = true;
 
     for (size_t i = 0; i < pKernelInfo->kernelArgInfo.size(); i++) {
-        pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20 + static_cast<uint32_t>(4 * i);
+        pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20 + static_cast<uint32_t>(0x20 * i);
         auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset;
         auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
         *patchLocation = 0xdead;
@@ -341,7 +343,7 @@ TEST_F(KernelImageArgTest, givenUsedBindlessImagesWhenPatchingSurfaceStateOffset
 
     pKernelInfo->kernelArgInfo[pKernelInfo->kernelArgInfo.size() - 1].isImage = false;
 
-    uint32_t sshOffset = 4000;
+    uint32_t sshOffset = 0x4000;
     pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
 
     for (size_t i = 0; i < pKernelInfo->kernelArgInfo.size(); i++) {
@@ -349,7 +351,9 @@ TEST_F(KernelImageArgTest, givenUsedBindlessImagesWhenPatchingSurfaceStateOffset
         auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
 
         if (pKernelInfo->kernelArgInfo[i].isImage) {
-            auto expectedOffset = (sshOffset + pKernelInfo->kernelArgInfo[i].offsetHeap) << 6;
+            DataPortBindlessSurfaceExtendedMessageDescriptor extMessageDesc;
+            extMessageDesc.setBindlessSurfaceOffset(sshOffset + pKernelInfo->kernelArgInfo[i].offsetHeap);
+            auto expectedOffset = extMessageDesc.getBindlessSurfaceOffsetToPatch();
             EXPECT_EQ(expectedOffset, *patchLocation);
         } else {
             EXPECT_EQ(0xdeadu, *patchLocation);
@@ -364,7 +368,7 @@ TEST_F(KernelImageArgTest, givenUsedBindlessImagesAndNonImageArgWhenPatchingSurf
     pKernelInfo->usesSsh = true;
 
     for (size_t i = 0; i < pKernelInfo->kernelArgInfo.size(); i++) {
-        pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20 + static_cast<uint32_t>(4 * i);
+        pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20 + static_cast<uint32_t>(0x20 * i);
         auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset;
         auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
         *patchLocation = 0xdead;
@@ -373,7 +377,7 @@ TEST_F(KernelImageArgTest, givenUsedBindlessImagesAndNonImageArgWhenPatchingSurf
     int nonImageIndex = 1;
     pKernelInfo->kernelArgInfo[nonImageIndex].isImage = false;
 
-    uint32_t sshOffset = 4000;
+    uint32_t sshOffset = 0x4000;
     pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
 
     auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[nonImageIndex].kernelArgPatchInfoVector[0].crossthreadOffset;
@@ -390,7 +394,7 @@ TEST_F(KernelImageArgTest, givenNotUsedBindlessImagesAndImageArgWhenPatchingSurf
     pKernelInfo->usesSsh = true;
 
     for (size_t i = 0; i < pKernelInfo->kernelArgInfo.size(); i++) {
-        pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20 + static_cast<uint32_t>(4 * i);
+        pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20 + static_cast<uint32_t>(0x20 * i);
         auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset;
         auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
         *patchLocation = 0xdead;
@@ -399,7 +403,7 @@ TEST_F(KernelImageArgTest, givenNotUsedBindlessImagesAndImageArgWhenPatchingSurf
     int nonImageIndex = 1;
     pKernelInfo->kernelArgInfo[nonImageIndex].isImage = true;
 
-    uint32_t sshOffset = 4000;
+    uint32_t sshOffset = 0x4000;
     pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
 
     auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[nonImageIndex].kernelArgPatchInfoVector[0].crossthreadOffset;

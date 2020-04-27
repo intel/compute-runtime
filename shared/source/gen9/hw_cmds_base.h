@@ -21,6 +21,31 @@ namespace NEO {
 
 struct GEN9 {
 #include "shared/source/generated/gen9/hw_cmds_generated_gen9.inl"
+
+    struct DataPortBindlessSurfaceExtendedMessageDescriptor {
+        union {
+            struct {
+                uint32_t bindlessSurfaceOffset : 20;
+                uint32_t reserved : 1;
+                uint32_t executionUnitExtendedMessageDescriptorDefinition : 11;
+            };
+            uint32_t packed;
+        };
+
+        DataPortBindlessSurfaceExtendedMessageDescriptor() {
+            packed = 0;
+        }
+
+        void setBindlessSurfaceOffset(uint32_t offsetInBindlessSurfaceHeapInBytes) {
+            bindlessSurfaceOffset = offsetInBindlessSurfaceHeapInBytes >> 6;
+        }
+
+        uint32_t getBindlessSurfaceOffsetToPatch() {
+            return bindlessSurfaceOffset << 12;
+        }
+    };
+
+    static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };
 
 struct SKLFamily : public GEN9 {

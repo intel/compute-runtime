@@ -28,3 +28,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenAskedForLowPriorityEn
     auto hwHelperEngineType = HwHelperHw<FamilyType>::lowPriorityEngineType;
     EXPECT_EQ(aub_stream::EngineType::ENGINE_RCS, hwHelperEngineType);
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenGettingBindlessSurfaceExtendedMessageDescriptorValueThenCorrectValueIsReturned) {
+    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto value = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(0x200);
+
+    typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor messageExtDescriptor = {};
+    messageExtDescriptor.setBindlessSurfaceOffset(0x200);
+
+    EXPECT_EQ(messageExtDescriptor.getBindlessSurfaceOffsetToPatch(), value);
+    EXPECT_EQ(0x200u << 6, value);
+}

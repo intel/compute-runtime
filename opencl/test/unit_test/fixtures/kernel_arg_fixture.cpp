@@ -28,7 +28,8 @@ void KernelImageArgTest::SetUp() {
     pKernelInfo->heapInfo.pKernelHeader = kernelHeader.get();
     pKernelInfo->usesSsh = true;
 
-    pKernelInfo->kernelArgInfo.resize(5);
+    constexpr int numImages = 5;
+    pKernelInfo->kernelArgInfo.resize(numImages);
     pKernelInfo->kernelArgInfo[4].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
     pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
     pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
@@ -67,7 +68,7 @@ void KernelImageArgTest::SetUp() {
     pKernel->setKernelArgHandler(3, &Kernel::setArgImage);
     pKernel->setKernelArgHandler(4, &Kernel::setArgImage);
 
-    uint32_t crossThreadData[0x44] = {};
+    uint32_t crossThreadData[numImages * 0x20] = {};
     crossThreadData[0x20 / sizeof(uint32_t)] = 0x12344321;
     pKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
 

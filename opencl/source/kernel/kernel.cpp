@@ -2447,11 +2447,13 @@ uint64_t Kernel::getKernelStartOffset(
 }
 
 void Kernel::patchBindlessSurfaceStateOffsets(const size_t sshOffset) {
-
     const bool bindlessBuffers = DebugManager.flags.UseBindlessBuffers.get();
     const bool bindlessImages = DebugManager.flags.UseBindlessImages.get();
     const bool bindlessUsed = bindlessBuffers || bindlessImages;
+
     if (bindlessUsed) {
+        auto &hardwareInfo = getDevice().getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
         for (size_t i = 0; i < kernelInfo.kernelArgInfo.size(); i++) {
             if ((kernelInfo.kernelArgInfo[i].isBuffer && bindlessBuffers) ||
@@ -2460,12 +2462,9 @@ void Kernel::patchBindlessSurfaceStateOffsets(const size_t sshOffset) {
                 auto patchLocation = ptrOffset(getCrossThreadData(),
                                                kernelInfo.kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset);
 
-                uint32_t patchSize = 4;
-                uint64_t patchValue = sshOffset + kernelInfo.kernelArgInfo[i].offsetHeap;
-                // compiler is not shifting surface offset << 6
-                patchValue <<= 6;
-
-                patchWithRequiredSize(patchLocation, patchSize, patchValue);
+                auto bindlessOffset = static_cast<uint32_t>(sshOffset) + kernelInfo.kernelArgInfo[i].offsetHeap;
+                auto patchValue = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(bindlessOffset);
+                patchWithRequiredSize(patchLocation, sizeof(patchValue), patchValue);
             }
         }
     }

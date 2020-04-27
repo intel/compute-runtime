@@ -872,9 +872,9 @@ HWTEST_F(AUBSimpleArgNonUniformTest, givenOpenCL20SupportWhenProvidingWork3DimNo
 }
 
 using AUBBindlessKernel = Test<KernelAUBFixture<BindlessKernelFixture>>;
-using IsBetweenSklAndTgllp = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using IsSklPlus = IsAtLeastProduct<IGFX_SKYLAKE>;
 
-HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, IsBetweenSklAndTgllp) {
+HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, IsSklPlus) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
@@ -891,20 +891,23 @@ HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValid
     memset(bufferDataDst, 0, bufferSize);
 
     auto pBufferSrc = std::unique_ptr<Buffer>(Buffer::create(context,
-                                                             CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
+                                                             CL_MEM_READ_WRITE,
                                                              bufferSize,
-                                                             bufferDataSrc,
+                                                             nullptr,
                                                              retVal));
     ASSERT_NE(nullptr, pBufferSrc);
 
     auto pBufferDst = std::unique_ptr<Buffer>(Buffer::create(context,
-                                                             CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,
+                                                             CL_MEM_READ_WRITE,
                                                              bufferSize,
-                                                             bufferDataDst,
+                                                             nullptr,
                                                              retVal));
     ASSERT_NE(nullptr, pBufferDst);
 
     auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
+
+    memcpy(pBufferSrc->getGraphicsAllocation()->getUnderlyingBuffer(), bufferDataSrc, bufferSize);
+    memcpy(pBufferDst->getGraphicsAllocation()->getUnderlyingBuffer(), bufferDataDst, bufferSize);
 
     simulatedCsr->writeMemory(*pBufferSrc->getGraphicsAllocation());
     simulatedCsr->writeMemory(*pBufferDst->getGraphicsAllocation());

@@ -87,6 +87,7 @@ class HwHelper {
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool isIndependentForwardProgressSupported() = 0;
     virtual uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const = 0;
+    virtual uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -133,6 +134,13 @@ class HwHelperHw : public HwHelper {
     size_t getRenderSurfaceStateSize() const override {
         using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
         return sizeof(RENDER_SURFACE_STATE);
+    }
+
+    uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const override {
+        using DataPortBindlessSurfaceExtendedMessageDescriptor = typename GfxFamily::DataPortBindlessSurfaceExtendedMessageDescriptor;
+        DataPortBindlessSurfaceExtendedMessageDescriptor messageExtDescriptor = {};
+        messageExtDescriptor.setBindlessSurfaceOffset(surfStateOffset);
+        return messageExtDescriptor.getBindlessSurfaceOffsetToPatch();
     }
 
     const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const override;
