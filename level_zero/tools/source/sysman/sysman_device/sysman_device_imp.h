@@ -21,22 +21,21 @@ class SysmanDeviceImp : public SysmanDevice {
     ze_result_t deviceGetProperties(zet_sysman_properties_t *pProperties) override;
     ze_result_t reset() override;
 
-    SysmanDeviceImp(OsSysman *pOsSysman, ze_device_handle_t hCoreDevice) : pOsSysman(pOsSysman),
-                                                                           hCoreDevice(hCoreDevice) { pOsSysmanDevice = nullptr; };
-    ~SysmanDeviceImp() override;
+    OsSysmanDevice *pOsSysmanDevice = nullptr;
+    ze_device_handle_t hCoreDevice = {};
 
-    SysmanDeviceImp(OsSysmanDevice *pOsSysmanDevice, ze_device_handle_t hCoreDevice) : pOsSysmanDevice(pOsSysmanDevice),
-                                                                                       hCoreDevice(hCoreDevice) { init(); };
+    SysmanDeviceImp() = default;
+    SysmanDeviceImp(OsSysman *pOsSysman, ze_device_handle_t hCoreDevice) : hCoreDevice(hCoreDevice),
+                                                                           pOsSysman(pOsSysman){};
+    ~SysmanDeviceImp() override;
 
     // Don't allow copies of the SysmanDeviceImp object
     SysmanDeviceImp(const SysmanDeviceImp &obj) = delete;
     SysmanDeviceImp &operator=(const SysmanDeviceImp &obj) = delete;
 
   private:
-    OsSysman *pOsSysman;
-    OsSysmanDevice *pOsSysmanDevice;
-    zet_sysman_properties_t sysmanProperties;
-    ze_device_handle_t hCoreDevice;
+    OsSysman *pOsSysman = nullptr;
+    zet_sysman_properties_t sysmanProperties = {};
 };
 
 } // namespace L0

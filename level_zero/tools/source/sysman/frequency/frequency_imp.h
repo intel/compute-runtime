@@ -20,10 +20,11 @@ class FrequencyImp : public Frequency {
     ze_result_t frequencySetRange(const zet_freq_range_t *pLimits) override;
     ze_result_t frequencyGetState(zet_freq_state_t *pState) override;
 
+    FrequencyImp() = default;
     FrequencyImp(OsSysman *pOsSysman);
     ~FrequencyImp() override;
-
-    FrequencyImp(OsFrequency *pOsFrequency) : pOsFrequency(pOsFrequency) { init(); };
+    OsFrequency *pOsFrequency = nullptr;
+    void init();
 
     // Don't allow copies of the FrequencyImp object
     FrequencyImp(const FrequencyImp &obj) = delete;
@@ -33,11 +34,9 @@ class FrequencyImp : public Frequency {
     static const double step;
     static const bool canControl;
 
-    OsFrequency *pOsFrequency;
-    zet_freq_properties_t frequencyProperties;
-    double *pClocks;
-    uint32_t numClocks;
-    void init();
+    zet_freq_properties_t frequencyProperties = {};
+    double *pClocks = nullptr;
+    uint32_t numClocks = 0;
 };
 
 } // namespace L0

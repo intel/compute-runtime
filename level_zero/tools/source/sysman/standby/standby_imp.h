@@ -20,19 +20,19 @@ class StandbyImp : public Standby {
     ze_result_t standbyGetMode(zet_standby_promo_mode_t *pMode) override;
     ze_result_t standbySetMode(const zet_standby_promo_mode_t mode) override;
 
+    StandbyImp() = default;
     StandbyImp(OsSysman *pOsSysman);
     ~StandbyImp() override;
+    OsStandby *pOsStandby = nullptr;
 
-    StandbyImp(OsStandby *pOsStandby) : pOsStandby(pOsStandby) { init(); };
+    void init();
 
     // Don't allow copies of the StandbyImp object
     StandbyImp(const StandbyImp &obj) = delete;
     StandbyImp &operator=(const StandbyImp &obj) = delete;
 
   private:
-    OsStandby *pOsStandby;
-    zet_standby_properties_t standbyProperties;
-    void init();
+    zet_standby_properties_t standbyProperties = {};
 };
 
 } // namespace L0
