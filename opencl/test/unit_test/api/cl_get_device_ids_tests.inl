@@ -10,21 +10,19 @@
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
 
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-
-#include "cl_api_tests.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "test.h"
 
 using namespace NEO;
 
-using clGetDeviceIDsTests = api_tests;
+using clGetDeviceIDsTests = Test<PlatformFixture>;
 
 namespace ULT {
 
 TEST_F(clGetDeviceIDsTests, GivenZeroNumEntriesWhenGettingDeviceIdsThenNumberOfDevicesIsGreaterThanZero) {
     cl_uint numDevices = 0;
 
-    retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices);
+    auto retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_GPU, 0, nullptr, &numDevices);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_GT(numDevices, (cl_uint)0);
@@ -34,7 +32,7 @@ TEST_F(clGetDeviceIDsTests, GivenNonNullDevicesWhenGettingDeviceIdsThenDeviceIdI
     cl_uint numEntries = 1;
     cl_device_id pDevices[1];
 
-    retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_GPU, numEntries, pDevices, nullptr);
+    auto retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_GPU, numEntries, pDevices, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -42,22 +40,22 @@ TEST_F(clGetDeviceIDsTests, GivenNullPlatformWhenGettingDeviceIdsThenDeviceIdIsR
     cl_uint numEntries = 1;
     cl_device_id pDevices[1];
 
-    retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_GPU, numEntries, pDevices, nullptr);
+    auto retVal = clGetDeviceIDs(nullptr, CL_DEVICE_TYPE_GPU, numEntries, pDevices, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clGetDeviceIDsTests, GivenInvalidDeviceTypeWhenGettingDeviceIdsThenInvalidDeivceTypeErrorIsReturned) {
+TEST_F(clGetDeviceIDsTests, GivenInvalidDeviceTypeWhenGettingDeviceIdsThenInvalidDeviceTypeErrorIsReturned) {
     cl_uint numEntries = 1;
     cl_device_id pDevices[1];
 
-    retVal = clGetDeviceIDs(pPlatform, 0x0f00, numEntries, pDevices, nullptr);
+    auto retVal = clGetDeviceIDs(pPlatform, 0x0f00, numEntries, pDevices, nullptr);
     EXPECT_EQ(CL_INVALID_DEVICE_TYPE, retVal);
 }
 
 TEST_F(clGetDeviceIDsTests, GivenZeroNumEntriesAndNonNullDevicesWhenGettingDeviceIdsThenInvalidValueErrorIsReturned) {
     cl_device_id pDevices[1];
 
-    retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_GPU, 0, pDevices, nullptr);
+    auto retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_GPU, 0, pDevices, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -67,7 +65,7 @@ TEST_F(clGetDeviceIDsTests, GivenInvalidPlatformWhenGettingDeviceIdsThenInvalidP
     uint32_t trash[6] = {0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef};
     cl_platform_id p = reinterpret_cast<cl_platform_id>(trash);
 
-    retVal = clGetDeviceIDs(p, CL_DEVICE_TYPE_GPU, numEntries, pDevices, nullptr);
+    auto retVal = clGetDeviceIDs(p, CL_DEVICE_TYPE_GPU, numEntries, pDevices, nullptr);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
 }
 
@@ -76,7 +74,7 @@ TEST_F(clGetDeviceIDsTests, GivenDeviceTypeAllWhenGettingDeviceIdsThenDeviceIdIs
     cl_uint numEntries = 1;
     cl_device_id pDevices[1];
 
-    retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_ALL, numEntries, pDevices, &numDevices);
+    auto retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_ALL, numEntries, pDevices, &numDevices);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_GT(numDevices, (cl_uint)0);
 }
@@ -86,7 +84,7 @@ TEST_F(clGetDeviceIDsTests, GivenDeviceTypeDefaultWhenGettingDeviceIdsThenDevice
     cl_uint numEntries = 1;
     cl_device_id pDevices[1];
 
-    retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_DEFAULT, numEntries, pDevices, &numDevices);
+    auto retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_DEFAULT, numEntries, pDevices, &numDevices);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_GT(numDevices, (cl_uint)0);
 }
@@ -94,7 +92,7 @@ TEST_F(clGetDeviceIDsTests, GivenDeviceTypeDefaultWhenGettingDeviceIdsThenDevice
 TEST_F(clGetDeviceIDsTests, GivenDeviceTypeCpuWhenGettingDeviceIdsThenDeviceNotFoundErrorIsReturned) {
     cl_uint numDevices = 0;
 
-    retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_CPU, 0, nullptr, &numDevices);
+    auto retVal = clGetDeviceIDs(pPlatform, CL_DEVICE_TYPE_CPU, 0, nullptr, &numDevices);
 
     EXPECT_EQ(CL_DEVICE_NOT_FOUND, retVal);
     EXPECT_EQ(numDevices, (cl_uint)0);

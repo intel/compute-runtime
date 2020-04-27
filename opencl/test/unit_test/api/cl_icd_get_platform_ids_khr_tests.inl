@@ -5,20 +5,13 @@
  *
  */
 
-#if defined(_WIN32)
-#include "shared/source/os_interface/windows/windows_wrapper.h"
-#endif
-
-#include "shared/source/device/device.h"
-
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/api/cl_api_tests.h"
-
-#include <algorithm>
+#include "opencl/source/cl_device/cl_device.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "test.h"
 
 using namespace NEO;
 
-typedef api_tests clIcdGetPlatformIDsKHRTests;
+using clIcdGetPlatformIDsKHRTests = Test<PlatformFixture>;
 
 namespace ULT {
 
@@ -48,7 +41,7 @@ TEST_F(clIcdGetPlatformIDsKHRTests, checkDeviceId) {
     cl_uint numPlatforms = 0;
     cl_uint numPlatformsIcd = 0;
 
-    retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
+    auto retVal = clGetPlatformIDs(0, nullptr, &numPlatforms);
     ASSERT_EQ(CL_SUCCESS, retVal);
     retVal = clIcdGetPlatformIDsKHR(0, nullptr, &numPlatformsIcd);
     ASSERT_EQ(CL_SUCCESS, retVal);

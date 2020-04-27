@@ -5,25 +5,28 @@
  *
  */
 
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/tracing/tracing_api.h"
 #include "opencl/source/tracing/tracing_notify.h"
-#include "opencl/test/unit_test/api/cl_api_tests.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "opencl/test/unit_test/helpers/ult_limits.h"
+#include "test.h"
 
 using namespace NEO;
 
 namespace ULT {
 
-struct IntelTracingMtTest : public api_tests {
-  public:
-    IntelTracingMtTest() : started(false), count(0) {}
-
+struct IntelTracingMtTest : public Test<PlatformFixture> {
     void SetUp() override {
-        api_tests::SetUp();
+        DebugManager.flags.CreateMultipleRootDevices.set(maxRootDeviceCount);
+        Test<PlatformFixture>::SetUp();
+        testedClDevice = pPlatform->getClDevice(rootDeviceIndex);
     }
-
-    void TearDown() override {
-        api_tests::TearDown();
-    }
+    DebugManagerStateRestore restorer;
+    const uint32_t rootDeviceIndex = 1u;
+    cl_device_id testedClDevice = nullptr;
 
   protected:
     static void threadBody(int iterationCount, IntelTracingMtTest *test) {
@@ -77,8 +80,8 @@ struct IntelTracingMtTest : public api_tests {
     cl_tracing_handle handle = nullptr;
     cl_int status = CL_SUCCESS;
 
-    std::atomic<bool> started;
-    std::atomic<int> count;
+    std::atomic<bool> started{false};
+    std::atomic<int> count{0};
 };
 
 TEST_F(IntelTracingMtTest, SafeTracingFromMultipleThreads) {

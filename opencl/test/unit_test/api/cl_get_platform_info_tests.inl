@@ -5,25 +5,20 @@
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/device/device.h"
-
-#include "opencl/source/platform/platform.h"
+#include "opencl/source/cl_device/cl_device.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "test.h"
-
-#include "CL/cl_ext.h"
-#include "cl_api_tests.h"
 
 using namespace NEO;
 
-struct clGetPlatformInfoTests : public api_tests {
+struct clGetPlatformInfoTests : Test<PlatformFixture> {
     void SetUp() override {
-        api_tests::SetUp();
+        Test<PlatformFixture>::SetUp();
     }
 
     void TearDown() override {
         delete[] paramValue;
-        api_tests::TearDown();
+        Test<PlatformFixture>::TearDown();
     }
 
     char *getPlatformInfoString(Platform *pPlatform, cl_platform_info paramName) {
@@ -40,6 +35,7 @@ struct clGetPlatformInfoTests : public api_tests {
         return value;
     }
 
+    size_t retSize = 0;
     char *paramValue = nullptr;
 };
 
@@ -123,7 +119,7 @@ TEST_F(clGetPlatformInfoTests, GivenClPlatformHostTimerResolutionWhenGettingPlat
 
 TEST_F(clGetPlatformInfoTests, GivenNullPlatformWhenGettingPlatformInfoStringThenClInvalidPlatformErrorIsReturned) {
     char extensions[512];
-    retVal = clGetPlatformInfo(
+    auto retVal = clGetPlatformInfo(
         nullptr, // invalid platform
         CL_PLATFORM_EXTENSIONS,
         sizeof(extensions),
@@ -135,7 +131,7 @@ TEST_F(clGetPlatformInfoTests, GivenNullPlatformWhenGettingPlatformInfoStringThe
 
 TEST_F(clGetPlatformInfoTests, GivenInvalidParamNameWhenGettingPlatformInfoStringThenClInvalidValueErrorIsReturned) {
     char extensions[512];
-    retVal = clGetPlatformInfo(
+    auto retVal = clGetPlatformInfo(
         pPlatform,
         0, // invalid platform info enum
         sizeof(extensions),
@@ -147,7 +143,7 @@ TEST_F(clGetPlatformInfoTests, GivenInvalidParamNameWhenGettingPlatformInfoStrin
 
 TEST_F(clGetPlatformInfoTests, GivenInvalidParamSizeWhenGettingPlatformInfoStringThenClInvalidValueErrorIsReturned) {
     char extensions[512];
-    retVal = clGetPlatformInfo(
+    auto retVal = clGetPlatformInfo(
         pPlatform,
         CL_PLATFORM_EXTENSIONS,
         0, // invalid size

@@ -7,42 +7,39 @@
 
 #pragma once
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/tracing/tracing_api.h"
-#include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/helpers/ult_limits.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
-#include "gtest/gtest.h"
-
 #include <memory>
 
 namespace NEO {
 
-class Context;
 class MockClDevice;
-struct RootDeviceEnvironment;
 
 template <uint32_t rootDeviceIndex = 1u>
-struct ApiFixture : PlatformFixture {
-    ApiFixture() = default;
-    ~ApiFixture() = default;
+struct ApiFixture {
 
     virtual void SetUp() {
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
-        PlatformFixture::SetUp();
-
+        executionEnvironment = new ClExecutionEnvironment();
+        prepareDeviceEnvironments(*executionEnvironment);
+        Device *rootDevice = MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, rootDeviceIndex);
         if (rootDeviceIndex != 0u) {
-            rootDeviceEnvironmentBackup.swap(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]);
+            rootDeviceEnvironmentBackup.swap(executionEnvironment->rootDeviceEnvironments[0]);
         }
 
-        pDevice = pPlatform->getClDevice(testedRootDeviceIndex);
+        pDevice = new ClDevice(*rootDevice, nullptr);
         ASSERT_NE(nullptr, pDevice);
 
         testedClDevice = pDevice;
@@ -62,12 +59,10 @@ struct ApiFixture : PlatformFixture {
         pCommandQueue->release();
         pContext->release();
         pProgram->release();
-
         if (rootDeviceIndex != 0u) {
-            rootDeviceEnvironmentBackup.swap(pPlatform->peekExecutionEnvironment()->rootDeviceEnvironments[0]);
+            rootDeviceEnvironmentBackup.swap(executionEnvironment->rootDeviceEnvironments[0]);
         }
-
-        PlatformFixture::TearDown();
+        pDevice->decRefInternal();
     }
     DebugManagerStateRestore restorer;
     cl_int retVal = CL_SUCCESS;
@@ -81,6 +76,7 @@ struct ApiFixture : PlatformFixture {
     constexpr static uint32_t testedRootDeviceIndex = rootDeviceIndex;
     cl_device_id testedClDevice = nullptr;
     ClDevice *pDevice = nullptr;
+    ClExecutionEnvironment *executionEnvironment = nullptr;
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironmentBackup;
 };
 

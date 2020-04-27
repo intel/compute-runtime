@@ -5,13 +5,12 @@
  *
  */
 
-#include "opencl/source/context/context.h"
-#include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/api/cl_api_tests.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "test.h"
 
 using namespace NEO;
 
-typedef api_tests clGetPlatformIDsMtTests;
+using clGetPlatformIDsMtTests = Test<PlatformFixture>;
 
 namespace ULT {
 

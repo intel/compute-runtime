@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-typedef api_tests clGetExtensionFunctionAddressForPlatformTests;
+using clGetExtensionFunctionAddressForPlatformTests = Test<PlatformFixture>;
 
 namespace ULT {
 

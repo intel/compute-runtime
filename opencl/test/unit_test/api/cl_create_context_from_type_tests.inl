@@ -5,20 +5,13 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-
-#include "cl_api_tests.h"
+#include "opencl/test/unit_test/fixtures/platform_fixture.h"
+#include "test.h"
 
 using namespace NEO;
 
-struct clCreateContextFromTypeTests : public ApiFixture<0u>,
-                                      public ::testing::Test {
-    void SetUp() override {
-        ApiFixture::SetUp();
-    }
-    void TearDown() override {
-        ApiFixture::TearDown();
-    }
+struct clCreateContextFromTypeTests : Test<PlatformFixture> {
+    cl_int retVal = CL_DEVICE_NOT_AVAILABLE;
 };
 
 namespace ULT {
