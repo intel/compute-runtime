@@ -28,7 +28,7 @@ using namespace NEO;
 
 typedef Test<KernelArgBufferFixture> KernelArgBufferTest;
 
-TEST_F(KernelArgBufferTest, SetKernelArgValidBuffer) {
+TEST_F(KernelArgBufferTest, GivenValidBufferWhenSettingKernelArgThenBufferAddressIsCorrect) {
     Buffer *buffer = new MockBuffer();
 
     auto val = (cl_mem)buffer;
@@ -44,7 +44,7 @@ TEST_F(KernelArgBufferTest, SetKernelArgValidBuffer) {
     delete buffer;
 }
 
-TEST_F(KernelArgBufferTest, SetKernelArgValidSvmPtrStateless) {
+TEST_F(KernelArgBufferTest, GivenSvmPtrStatelessWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
     Buffer *buffer = new MockBuffer();
 
     auto val = (cl_mem)buffer;
@@ -62,7 +62,7 @@ TEST_F(KernelArgBufferTest, SetKernelArgValidSvmPtrStateless) {
     delete buffer;
 }
 
-HWTEST_F(KernelArgBufferTest, SetKernelArgValidSvmPtrStateful) {
+HWTEST_F(KernelArgBufferTest, GivenSvmPtrStatefulWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
     Buffer *buffer = new MockBuffer();
 
     auto val = (cl_mem)buffer;
@@ -87,7 +87,7 @@ HWTEST_F(KernelArgBufferTest, SetKernelArgValidSvmPtrStateful) {
     delete buffer;
 }
 
-HWTEST_F(KernelArgBufferTest, SetKernelArgBufferFromSvmPtr) {
+HWTEST_F(KernelArgBufferTest, GivenBufferFromSvmPtrWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
 
     Buffer *buffer = new MockBuffer();
     buffer->getGraphicsAllocation()->setCoherent(true);
@@ -102,7 +102,7 @@ HWTEST_F(KernelArgBufferTest, SetKernelArgBufferFromSvmPtr) {
     delete buffer;
 }
 
-TEST_F(KernelArgBufferTest, SetKernelArgFakeBuffer) {
+TEST_F(KernelArgBufferTest, GivenInvalidBufferWhenSettingKernelArgThenInvalidMemObjectErrorIsReturned) {
     char *ptr = new char[sizeof(Buffer)];
 
     auto val = (cl_mem *)ptr;
@@ -113,7 +113,7 @@ TEST_F(KernelArgBufferTest, SetKernelArgFakeBuffer) {
     delete[] ptr;
 }
 
-TEST_F(KernelArgBufferTest, SetKernelArgPtrToNull) {
+TEST_F(KernelArgBufferTest, GivenNullPtrWhenSettingKernelArgThenKernelArgIsNull) {
     auto val = (cl_mem *)nullptr;
     auto pVal = &val;
     this->pKernel->setArg(0, sizeof(cl_mem *), pVal);
@@ -142,16 +142,6 @@ TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPtrPassedIsNullThenOnly4Bytes
 
     EXPECT_EQ(0u, *pKernelArg32bit);
     EXPECT_NE(expValue, *pKernelArg64bit);
-}
-
-TEST_F(KernelArgBufferTest, SetKernelArgNull) {
-    auto pVal = nullptr;
-    this->pKernel->setArg(0, sizeof(cl_mem *), pVal);
-
-    auto pKernelArg = (cl_mem **)(this->pKernel->getCrossThreadData() +
-                                  this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
-
-    EXPECT_EQ(nullptr, *pKernelArg);
 }
 
 TEST_F(KernelArgBufferTest, given32BitDeviceWhenArgPassedIsNullThenOnly4BytesAreBeingPatched) {
