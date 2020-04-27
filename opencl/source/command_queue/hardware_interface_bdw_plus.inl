@@ -102,7 +102,8 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     Vec3<size_t> &numberOfWorkgroups,
     Vec3<size_t> &startOfWorkgroups) {
 
-    auto walkerCmd = allocateWalkerSpace(commandStream, kernel);
+    auto walkerCmdBuf = allocateWalkerSpace(commandStream, kernel);
+    WALKER_TYPE<GfxFamily> walkerCmd = GfxFamily::cmdInitGpgpuWalker;
     uint32_t dim = dispatchInfo.getDim();
     uint32_t simd = kernel.getKernelInfo().getMaxSimdSize();
 
@@ -112,7 +113,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     if (currentTimestampPacketNodes && commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         auto timestampPacketNode = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
-        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, walkerCmd, timestampPacketNode, TimestampPacketStorage::WriteOperationType::AfterWalker, commandQueue.getDevice().getRootDeviceEnvironment());
+        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacketNode, TimestampPacketStorage::WriteOperationType::AfterWalker, commandQueue.getDevice().getRootDeviceEnvironment());
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
@@ -130,15 +131,16 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         offsetInterfaceDescriptorTable,
         interfaceDescriptorIndex,
         preemptionMode,
-        walkerCmd,
+        &walkerCmd,
         nullptr,
         true);
 
-    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(walkerCmd, globalOffsets, startWorkGroups,
+    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, globalOffsets, startWorkGroups,
                                                            numWorkGroups, localWorkSizes, simd, dim,
                                                            false, false,
                                                            *kernel.getKernelInfo().patchInfo.threadPayload, 0u);
 
-    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), *walkerCmd);
+    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd);
+    *walkerCmdBuf = walkerCmd;
 }
 } // namespace NEO

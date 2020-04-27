@@ -66,10 +66,12 @@ void HardwareCommandsHelper<GfxFamily>::sendMediaStateFlush(
     LinearStream &commandStream,
     size_t offsetInterfaceDescriptorData) {
 
-    typedef typename GfxFamily::MEDIA_STATE_FLUSH MEDIA_STATE_FLUSH;
-    auto pCmd = (MEDIA_STATE_FLUSH *)commandStream.getSpace(sizeof(MEDIA_STATE_FLUSH));
-    *pCmd = GfxFamily::cmdInitMediaStateFlush;
-    pCmd->setInterfaceDescriptorOffset((uint32_t)offsetInterfaceDescriptorData);
+    using MEDIA_STATE_FLUSH = typename GfxFamily::MEDIA_STATE_FLUSH;
+    auto pCmd = commandStream.getSpaceForCmd<MEDIA_STATE_FLUSH>();
+    MEDIA_STATE_FLUSH cmd = GfxFamily::cmdInitMediaStateFlush;
+
+    cmd.setInterfaceDescriptorOffset(static_cast<uint32_t>(offsetInterfaceDescriptorData));
+    *pCmd = cmd;
 }
 
 template <typename GfxFamily>
@@ -78,17 +80,18 @@ void HardwareCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
     size_t offsetInterfaceDescriptorData,
     size_t sizeInterfaceDescriptorData) {
     {
-        typedef typename GfxFamily::MEDIA_STATE_FLUSH MEDIA_STATE_FLUSH;
-        auto pCmd = (MEDIA_STATE_FLUSH *)commandStream.getSpace(sizeof(MEDIA_STATE_FLUSH));
+        using MEDIA_STATE_FLUSH = typename GfxFamily::MEDIA_STATE_FLUSH;
+        auto pCmd = commandStream.getSpaceForCmd<MEDIA_STATE_FLUSH>();
         *pCmd = GfxFamily::cmdInitMediaStateFlush;
     }
 
     {
-        typedef typename GfxFamily::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
-        auto pCmd = (MEDIA_INTERFACE_DESCRIPTOR_LOAD *)commandStream.getSpace(sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD));
-        *pCmd = GfxFamily::cmdInitMediaInterfaceDescriptorLoad;
-        pCmd->setInterfaceDescriptorDataStartAddress((uint32_t)offsetInterfaceDescriptorData);
-        pCmd->setInterfaceDescriptorTotalLength((uint32_t)sizeInterfaceDescriptorData);
+        using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename GfxFamily::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
+        auto pCmd = commandStream.getSpaceForCmd<MEDIA_INTERFACE_DESCRIPTOR_LOAD>();
+        MEDIA_INTERFACE_DESCRIPTOR_LOAD cmd = GfxFamily::cmdInitMediaInterfaceDescriptorLoad;
+        cmd.setInterfaceDescriptorDataStartAddress(static_cast<uint32_t>(offsetInterfaceDescriptorData));
+        cmd.setInterfaceDescriptorTotalLength(static_cast<uint32_t>(sizeInterfaceDescriptorData));
+        *pCmd = cmd;
     }
 }
 
@@ -154,10 +157,11 @@ void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
 template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(commandStream->getSpace(sizeof(PIPE_CONTROL)));
-    *pipeControl = GfxFamily::cmdInitPipeControl;
-    pipeControl->setCommandStreamerStallEnable(true);
-    pipeControl->setDcFlushEnable(true);
+    auto pipeControl = commandStream->getSpaceForCmd<PIPE_CONTROL>();
+    PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
+    cmd.setDcFlushEnable(true);
+    *pipeControl = cmd;
 }
 
 template <typename GfxFamily>

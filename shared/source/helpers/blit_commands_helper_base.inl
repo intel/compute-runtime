@@ -117,9 +117,8 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProp
                 }
 
                 {
-                    auto miArbCheckCmd = GfxFamily::cmdInitArbCheck;
                     auto miArbCheckStream = linearStream.getSpaceForCmd<typename GfxFamily::MI_ARB_CHECK>();
-                    *miArbCheckStream = miArbCheckCmd;
+                    *miArbCheckStream = GfxFamily::cmdInitArbCheck;
                 }
 
                 auto blitSize = width * height;

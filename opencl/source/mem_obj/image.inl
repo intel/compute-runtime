@@ -135,44 +135,46 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory) {
 
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
-    *surfaceState = GfxFamily::cmdInitMediaSurfaceState;
+    MEDIA_SURFACE_STATE state = GfxFamily::cmdInitMediaSurfaceState;
 
-    setMediaSurfaceRotation(reinterpret_cast<void *>(surfaceState));
+    setMediaSurfaceRotation(reinterpret_cast<void *>(&state));
 
     DEBUG_BREAK_IF(surfaceFormat == MEDIA_SURFACE_STATE::SURFACE_FORMAT_Y1_UNORM);
-    surfaceState->setWidth(static_cast<uint32_t>(getImageDesc().image_width));
+    state.setWidth(static_cast<uint32_t>(getImageDesc().image_width));
 
-    surfaceState->setHeight(static_cast<uint32_t>(getImageDesc().image_height));
-    surfaceState->setPictureStructure(MEDIA_SURFACE_STATE::PICTURE_STRUCTURE_FRAME_PICTURE);
+    state.setHeight(static_cast<uint32_t>(getImageDesc().image_height));
+    state.setPictureStructure(MEDIA_SURFACE_STATE::PICTURE_STRUCTURE_FRAME_PICTURE);
 
     auto gmm = getGraphicsAllocation()->getDefaultGmm();
     auto tileMode = static_cast<typename MEDIA_SURFACE_STATE::TILE_MODE>(gmm->gmmResourceInfo->getTileModeSurfaceState());
 
-    surfaceState->setTileMode(tileMode);
-    surfaceState->setSurfacePitch(static_cast<uint32_t>(getImageDesc().image_row_pitch));
+    state.setTileMode(tileMode);
+    state.setSurfacePitch(static_cast<uint32_t>(getImageDesc().image_row_pitch));
 
-    surfaceState->setSurfaceFormat(surfaceFormat);
+    state.setSurfaceFormat(surfaceFormat);
 
-    surfaceState->setHalfPitchForChroma(false);
-    surfaceState->setInterleaveChroma(false);
-    surfaceState->setXOffsetForUCb(0);
-    surfaceState->setYOffsetForUCb(0);
-    surfaceState->setXOffsetForVCr(0);
-    surfaceState->setYOffsetForVCr(0);
+    state.setHalfPitchForChroma(false);
+    state.setInterleaveChroma(false);
+    state.setXOffsetForUCb(0);
+    state.setYOffsetForUCb(0);
+    state.setXOffsetForVCr(0);
+    state.setYOffsetForVCr(0);
 
     setSurfaceMemoryObjectControlStateIndexToMocsTable(
-        reinterpret_cast<void *>(surfaceState),
+        reinterpret_cast<void *>(&state),
         gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
 
     if (IsNV12Image(&this->getImageFormat())) {
-        surfaceState->setInterleaveChroma(true);
-        surfaceState->setYOffsetForUCb(this->surfaceOffsets.yOffsetForUVplane);
+        state.setInterleaveChroma(true);
+        state.setYOffsetForUCb(this->surfaceOffsets.yOffsetForUVplane);
     }
 
-    surfaceState->setVerticalLineStride(0);
-    surfaceState->setVerticalLineStrideOffset(0);
+    state.setVerticalLineStride(0);
+    state.setVerticalLineStrideOffset(0);
 
-    surfaceState->setSurfaceBaseAddress(getGraphicsAllocation()->getGpuAddress() + this->surfaceOffsets.offset);
+    state.setSurfaceBaseAddress(getGraphicsAllocation()->getGpuAddress() + this->surfaceOffsets.offset);
+
+    *surfaceState = state;
 }
 
 template <typename GfxFamily>

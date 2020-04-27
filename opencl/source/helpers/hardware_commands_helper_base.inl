@@ -183,39 +183,40 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     // Allocate some memory for the interface descriptor
     auto pInterfaceDescriptor = getInterfaceDescriptor(indirectHeap, offsetInterfaceDescriptor, inlineInterfaceDescriptor);
-    *pInterfaceDescriptor = GfxFamily::cmdInitInterfaceDescriptorData;
+    auto interfaceDescriptor = GfxFamily::cmdInitInterfaceDescriptorData;
 
     // Program the kernel start pointer
-    pInterfaceDescriptor->setKernelStartPointerHigh(kernelStartOffset >> 32);
-    pInterfaceDescriptor->setKernelStartPointer((uint32_t)kernelStartOffset);
+    interfaceDescriptor.setKernelStartPointerHigh(kernelStartOffset >> 32);
+    interfaceDescriptor.setKernelStartPointer((uint32_t)kernelStartOffset);
 
     // # of threads in thread group should be based on LWS.
-    pInterfaceDescriptor->setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
+    interfaceDescriptor.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
 
-    pInterfaceDescriptor->setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
+    interfaceDescriptor.setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
 
-    setGrfInfo(pInterfaceDescriptor, kernel, sizeCrossThreadData, sizePerThreadData);
-    setAdditionalInfo(pInterfaceDescriptor, kernel, threadsPerThreadGroup);
+    setGrfInfo(&interfaceDescriptor, kernel, sizeCrossThreadData, sizePerThreadData);
+    setAdditionalInfo(&interfaceDescriptor, kernel, threadsPerThreadGroup);
 
-    pInterfaceDescriptor->setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
+    interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
 
-    pInterfaceDescriptor->setSamplerStatePointer(static_cast<uint32_t>(offsetSamplerState));
+    interfaceDescriptor.setSamplerStatePointer(static_cast<uint32_t>(offsetSamplerState));
 
     DEBUG_BREAK_IF(numSamplers > 16);
     auto samplerCountState = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT>((numSamplers + 3) / 4);
-    pInterfaceDescriptor->setSamplerCount(samplerCountState);
+    interfaceDescriptor.setSamplerCount(samplerCountState);
 
-    pInterfaceDescriptor->setBindingTableEntryCount(bindingTablePrefetchSize);
+    interfaceDescriptor.setBindingTableEntryCount(bindingTablePrefetchSize);
 
     auto programmableIDSLMSize = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(computeSlmValues(kernel.slmTotalSize));
 
-    pInterfaceDescriptor->setSharedLocalMemorySize(programmableIDSLMSize);
-    programBarrierEnable(pInterfaceDescriptor, kernel.getKernelInfo().patchInfo.executionEnvironment->HasBarriers,
+    interfaceDescriptor.setSharedLocalMemorySize(programmableIDSLMSize);
+    programBarrierEnable(&interfaceDescriptor, kernel.getKernelInfo().patchInfo.executionEnvironment->HasBarriers,
                          kernel.getDevice().getHardwareInfo());
 
-    PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(pInterfaceDescriptor, preemptionMode);
-    HardwareCommandsHelper<GfxFamily>::adjustInterfaceDescriptorData(pInterfaceDescriptor, kernel.getDevice().getHardwareInfo());
+    PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(&interfaceDescriptor, preemptionMode);
+    HardwareCommandsHelper<GfxFamily>::adjustInterfaceDescriptorData(&interfaceDescriptor, kernel.getDevice().getHardwareInfo());
 
+    *pInterfaceDescriptor = interfaceDescriptor;
     return (size_t)offsetInterfaceDescriptor;
 }
 
@@ -407,21 +408,24 @@ void HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &com
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
     auto miSemaphoreCmd = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-    *miSemaphoreCmd = GfxFamily::cmdInitMiSemaphoreWait;
-    miSemaphoreCmd->setCompareOperation(compareMode);
-    miSemaphoreCmd->setSemaphoreDataDword(compareData);
-    miSemaphoreCmd->setSemaphoreGraphicsAddress(compareAddress);
-    miSemaphoreCmd->setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    MI_SEMAPHORE_WAIT cmd = GfxFamily::cmdInitMiSemaphoreWait;
+
+    cmd.setCompareOperation(compareMode);
+    cmd.setSemaphoreDataDword(compareData);
+    cmd.setSemaphoreGraphicsAddress(compareAddress);
+    cmd.setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    *miSemaphoreCmd = cmd;
 }
 
 template <typename GfxFamily>
-typename GfxFamily::MI_ATOMIC *HardwareCommandsHelper<GfxFamily>::programMiAtomic(LinearStream &commandStream, uint64_t writeAddress,
-                                                                                  typename MI_ATOMIC::ATOMIC_OPCODES opcode,
-                                                                                  typename MI_ATOMIC::DATA_SIZE dataSize) {
+void HardwareCommandsHelper<GfxFamily>::programMiAtomic(LinearStream &commandStream, uint64_t writeAddress,
+                                                        typename MI_ATOMIC::ATOMIC_OPCODES opcode,
+                                                        typename MI_ATOMIC::DATA_SIZE dataSize) {
     auto miAtomic = commandStream.getSpaceForCmd<MI_ATOMIC>();
-    *miAtomic = GfxFamily::cmdInitAtomic;
-    HardwareCommandsHelper<GfxFamily>::programMiAtomic(*miAtomic, writeAddress, opcode, dataSize);
-    return miAtomic;
+    MI_ATOMIC cmd = GfxFamily::cmdInitAtomic;
+
+    HardwareCommandsHelper<GfxFamily>::programMiAtomic(cmd, writeAddress, opcode, dataSize);
+    *miAtomic = cmd;
 }
 
 template <typename GfxFamily>

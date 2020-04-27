@@ -1169,9 +1169,11 @@ HWTEST_F(HardwareCommandsHelperTests, whenProgrammingMiAtomicThenSetupAllFields)
     MI_ATOMIC referenceCommand = FamilyType::cmdInitAtomic;
     HardwareCommandsHelper<FamilyType>::programMiAtomic(referenceCommand, writeAddress, opcode, dataSize);
 
-    auto miAtomic = HardwareCommandsHelper<FamilyType>::programMiAtomic(cmdStream, writeAddress, opcode, dataSize);
+    HardwareCommandsHelper<FamilyType>::programMiAtomic(cmdStream, writeAddress, opcode, dataSize);
+    auto miAtomic = genCmdCast<MI_ATOMIC *>(cmdStream.getCpuBase());
+    ASSERT_NE(nullptr, miAtomic);
+
     EXPECT_EQ(sizeof(MI_ATOMIC), cmdStream.getUsed());
-    EXPECT_EQ(miAtomic, cmdStream.getCpuBase());
     EXPECT_EQ(0, memcmp(&referenceCommand, miAtomic, sizeof(MI_ATOMIC)));
 }
 

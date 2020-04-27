@@ -18,8 +18,7 @@ namespace NEO {
 template <typename GfxFamily>
 inline WALKER_TYPE<GfxFamily> *HardwareInterface<GfxFamily>::allocateWalkerSpace(LinearStream &commandStream,
                                                                                  const Kernel &kernel) {
-    auto walkerCmd = static_cast<WALKER_TYPE<GfxFamily> *>(commandStream.getSpace(sizeof(WALKER_TYPE<GfxFamily>)));
-    *walkerCmd = GfxFamily::cmdInitGpgpuWalker;
+    auto walkerCmd = commandStream.getSpaceForCmd<WALKER_TYPE<GfxFamily>>();
     return walkerCmd;
 }
 

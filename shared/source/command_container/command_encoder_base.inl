@@ -214,8 +214,8 @@ void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &contai
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     auto heap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
 
-    auto mediaStateFlush = container.getCommandStream()->getSpace(sizeof(MEDIA_STATE_FLUSH));
-    *reinterpret_cast<MEDIA_STATE_FLUSH *>(mediaStateFlush) = Family::cmdInitMediaStateFlush;
+    auto mediaStateFlush = container.getCommandStream()->getSpaceForCmd<MEDIA_STATE_FLUSH>();
+    *mediaStateFlush = Family::cmdInitMediaStateFlush;
 
     MEDIA_INTERFACE_DESCRIPTOR_LOAD cmd = Family::cmdInitMediaInterfaceDescriptorLoad;
     cmd.setInterfaceDescriptorDataStartAddress(static_cast<uint32_t>(ptrDiff(container.getIddBlock(), heap->getCpuBase())));

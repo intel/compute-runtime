@@ -110,17 +110,17 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(const RootDeviceEnvironm
 
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(surfaceStateBuffer);
-    *surfaceState = Family::cmdInitRenderSurfaceState;
+    RENDER_SURFACE_STATE state = Family::cmdInitRenderSurfaceState;
     auto surfaceSize = alignUp(bufferSize, 4);
 
     SURFACE_STATE_BUFFER_LENGTH Length = {0};
     Length.Length = static_cast<uint32_t>(surfaceSize - 1);
 
-    surfaceState->setWidth(Length.SurfaceState.Width + 1);
-    surfaceState->setHeight(Length.SurfaceState.Height + 1);
-    surfaceState->setDepth(Length.SurfaceState.Depth + 1);
+    state.setWidth(Length.SurfaceState.Width + 1);
+    state.setHeight(Length.SurfaceState.Height + 1);
+    state.setDepth(Length.SurfaceState.Depth + 1);
     if (pitch) {
-        surfaceState->setSurfacePitch(pitch);
+        state.setSurfacePitch(pitch);
     }
 
     // The graphics allocation for Host Ptr surface will be created in makeResident call and GPU address is expected to be the same as CPU address
@@ -129,34 +129,35 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(const RootDeviceEnvironm
 
     auto bufferStateSize = (gfxAlloc != nullptr) ? gfxAlloc->getUnderlyingBufferSize() : bufferSize;
 
-    surfaceState->setSurfaceType(static_cast<typename RENDER_SURFACE_STATE::SURFACE_TYPE>(surfaceType));
+    state.setSurfaceType(static_cast<typename RENDER_SURFACE_STATE::SURFACE_TYPE>(surfaceType));
 
-    surfaceState->setSurfaceFormat(SURFACE_FORMAT::SURFACE_FORMAT_RAW);
-    surfaceState->setSurfaceVerticalAlignment(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
-    surfaceState->setSurfaceHorizontalAlignment(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4);
+    state.setSurfaceFormat(SURFACE_FORMAT::SURFACE_FORMAT_RAW);
+    state.setSurfaceVerticalAlignment(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
+    state.setSurfaceHorizontalAlignment(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4);
 
-    surfaceState->setTileMode(RENDER_SURFACE_STATE::TILE_MODE_LINEAR);
-    surfaceState->setVerticalLineStride(0);
-    surfaceState->setVerticalLineStrideOffset(0);
+    state.setTileMode(RENDER_SURFACE_STATE::TILE_MODE_LINEAR);
+    state.setVerticalLineStride(0);
+    state.setVerticalLineStrideOffset(0);
     if ((isAligned<MemoryConstants::cacheLineSize>(bufferStateAddress) && isAligned<MemoryConstants::cacheLineSize>(bufferStateSize)) ||
         isReadOnly) {
-        surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+        state.setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
     } else {
-        surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+        state.setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
 
-    surfaceState->setSurfaceBaseAddress(bufferStateAddress);
+    state.setSurfaceBaseAddress(bufferStateAddress);
 
     Gmm *gmm = gfxAlloc ? gfxAlloc->getDefaultGmm() : nullptr;
     if (gmm && gmm->isRenderCompressed && !forceNonAuxMode &&
         GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == gfxAlloc->getAllocationType()) {
         // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
-        surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
-        surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+        state.setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+        state.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
     } else {
-        surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
-        surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
+        state.setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
+        state.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     }
+    *surfaceState = state;
 }
 
 template <typename Family>

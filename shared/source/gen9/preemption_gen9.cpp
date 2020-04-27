@@ -38,9 +38,10 @@ void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStream *pComm
         preemptionMode == PreemptionMode::MidThread) {
         if (device.getHardwareInfo().workaroundTable.waModifyVFEStateAfterGPGPUPreemption) {
             auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
-            *pCmd = GfxFamily::cmdInitLoadRegisterImm;
-            pCmd->setRegisterOffset(CS_GPR_R0);
-            pCmd->setDataDword(GPGPU_WALKER_COOKIE_VALUE_BEFORE_WALKER);
+            MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
+            cmd.setRegisterOffset(CS_GPR_R0);
+            cmd.setDataDword(GPGPU_WALKER_COOKIE_VALUE_BEFORE_WALKER);
+            *pCmd = cmd;
         }
     }
 }
@@ -53,9 +54,10 @@ void PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(LinearStream *pComman
         preemptionMode == PreemptionMode::MidThread) {
         if (device.getHardwareInfo().workaroundTable.waModifyVFEStateAfterGPGPUPreemption) {
             auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
-            *pCmd = GfxFamily::cmdInitLoadRegisterImm;
-            pCmd->setRegisterOffset(CS_GPR_R0);
-            pCmd->setDataDword(GPGPU_WALKER_COOKIE_VALUE_AFTER_WALKER);
+            MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
+            cmd.setRegisterOffset(CS_GPR_R0);
+            cmd.setDataDword(GPGPU_WALKER_COOKIE_VALUE_AFTER_WALKER);
+            *pCmd = cmd;
         }
     }
 }

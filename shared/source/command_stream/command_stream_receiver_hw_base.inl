@@ -78,7 +78,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &c
     if (directSubmissionEnabled) {
         *patchLocation = commandStream.getSpace(sizeof(MI_BATCH_BUFFER_START));
         auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(*patchLocation);
-        addBatchBufferStart(bbStart, 0ull, false);
+        MI_BATCH_BUFFER_START cmd = {};
+        addBatchBufferStart(&cmd, 0ull, false);
+        *bbStart = cmd;
     } else {
         this->addBatchBufferEnd(commandStream, patchLocation);
     }
@@ -86,15 +88,17 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEndingCmd(LinearStream &c
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress, bool secondary) {
-    *commandBufferMemory = GfxFamily::cmdInitBatchBufferStart;
-    commandBufferMemory->setBatchBufferStartAddressGraphicsaddress472(startAddress);
-    commandBufferMemory->setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
+    MI_BATCH_BUFFER_START cmd = GfxFamily::cmdInitBatchBufferStart;
+
+    cmd.setBatchBufferStartAddressGraphicsaddress472(startAddress);
+    cmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
     if (secondary) {
-        commandBufferMemory->setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
+        cmd.setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
     }
     if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
         flatBatchBufferHelper->registerBatchBufferStartAddress(reinterpret_cast<uint64_t>(commandBufferMemory), startAddress);
     }
+    *commandBufferMemory = cmd;
 }
 
 template <typename GfxFamily>

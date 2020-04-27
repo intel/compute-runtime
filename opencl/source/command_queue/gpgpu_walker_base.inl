@@ -42,77 +42,94 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
     AluRegisters operation,
     uint32_t mask) {
     // Load "Register" value into CS_GPR_R0
-    typedef typename GfxFamily::MI_LOAD_REGISTER_REG MI_LOAD_REGISTER_REG;
-    typedef typename GfxFamily::MI_MATH MI_MATH;
-    typedef typename GfxFamily::MI_MATH_ALU_INST_INLINE MI_MATH_ALU_INST_INLINE;
+    using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
+    using MI_MATH = typename GfxFamily::MI_MATH;
+    using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
+
     auto pCmd = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_REG>();
-    *pCmd = GfxFamily::cmdInitLoadRegisterReg;
-    pCmd->setSourceRegisterAddress(aluRegister);
-    pCmd->setDestinationRegisterAddress(CS_GPR_R0);
+    MI_LOAD_REGISTER_REG cmdReg = GfxFamily::cmdInitLoadRegisterReg;
+    cmdReg.setSourceRegisterAddress(aluRegister);
+    cmdReg.setDestinationRegisterAddress(CS_GPR_R0);
+    *pCmd = cmdReg;
 
     // Load "Mask" into CS_GPR_R1
     typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     auto pCmd2 = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    *pCmd2 = GfxFamily::cmdInitLoadRegisterImm;
-    pCmd2->setRegisterOffset(CS_GPR_R1);
-    pCmd2->setDataDword(mask);
+    MI_LOAD_REGISTER_IMM cmdImm = GfxFamily::cmdInitLoadRegisterImm;
+    cmdImm.setRegisterOffset(CS_GPR_R1);
+    cmdImm.setDataDword(mask);
+    *pCmd2 = cmdImm;
 
     // Add instruction MI_MATH with 4 MI_MATH_ALU_INST_INLINE operands
     auto pCmd3 = reinterpret_cast<uint32_t *>(pCommandStream->getSpace(sizeof(MI_MATH) + NUM_ALU_INST_FOR_READ_MODIFY_WRITE * sizeof(MI_MATH_ALU_INST_INLINE)));
-    reinterpret_cast<MI_MATH *>(pCmd3)->DW0.Value = 0x0;
-    reinterpret_cast<MI_MATH *>(pCmd3)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
-    reinterpret_cast<MI_MATH *>(pCmd3)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
+    MI_MATH mathCmd;
+    mathCmd.DW0.Value = 0x0;
+    mathCmd.DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
+    mathCmd.DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
     // 0x3 - 5 Dwords length cmd (-2): 1 for MI_MATH, 4 for MI_MATH_ALU_INST_INLINE
-    reinterpret_cast<MI_MATH *>(pCmd3)->DW0.BitField.DwordLength = NUM_ALU_INST_FOR_READ_MODIFY_WRITE - 1;
+    mathCmd.DW0.BitField.DwordLength = NUM_ALU_INST_FOR_READ_MODIFY_WRITE - 1;
+    *reinterpret_cast<MI_MATH *>(pCmd3) = mathCmd;
+
     pCmd3++;
     MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(pCmd3);
+    MI_MATH_ALU_INST_INLINE cmdAluParam;
+    cmdAluParam.DW0.Value = 0x0;
 
     // Setup first operand of MI_MATH - load CS_GPR_R0 into register A
-    pAluParam->DW0.BitField.ALUOpcode =
+    cmdAluParam.DW0.BitField.ALUOpcode =
         static_cast<uint32_t>(AluRegisters::OPCODE_LOAD);
-    pAluParam->DW0.BitField.Operand1 =
+    cmdAluParam.DW0.BitField.Operand1 =
         static_cast<uint32_t>(AluRegisters::R_SRCA);
-    pAluParam->DW0.BitField.Operand2 =
+    cmdAluParam.DW0.BitField.Operand2 =
         static_cast<uint32_t>(AluRegisters::R_0);
+    *pAluParam = cmdAluParam;
     pAluParam++;
 
+    cmdAluParam.DW0.Value = 0x0;
     // Setup second operand of MI_MATH - load CS_GPR_R1 into register B
-    pAluParam->DW0.BitField.ALUOpcode =
+    cmdAluParam.DW0.BitField.ALUOpcode =
         static_cast<uint32_t>(AluRegisters::OPCODE_LOAD);
-    pAluParam->DW0.BitField.Operand1 =
+    cmdAluParam.DW0.BitField.Operand1 =
         static_cast<uint32_t>(AluRegisters::R_SRCB);
-    pAluParam->DW0.BitField.Operand2 =
+    cmdAluParam.DW0.BitField.Operand2 =
         static_cast<uint32_t>(AluRegisters::R_1);
+    *pAluParam = cmdAluParam;
     pAluParam++;
 
+    cmdAluParam.DW0.Value = 0x0;
     // Setup third operand of MI_MATH - "Operation" on registers A and B
-    pAluParam->DW0.BitField.ALUOpcode = static_cast<uint32_t>(operation);
-    pAluParam->DW0.BitField.Operand1 = 0;
-    pAluParam->DW0.BitField.Operand2 = 0;
+    cmdAluParam.DW0.BitField.ALUOpcode = static_cast<uint32_t>(operation);
+    cmdAluParam.DW0.BitField.Operand1 = 0;
+    cmdAluParam.DW0.BitField.Operand2 = 0;
+    *pAluParam = cmdAluParam;
     pAluParam++;
 
+    cmdAluParam.DW0.Value = 0x0;
     // Setup fourth operand of MI_MATH - store result into CS_GPR_R0
-    pAluParam->DW0.BitField.ALUOpcode =
+    cmdAluParam.DW0.BitField.ALUOpcode =
         static_cast<uint32_t>(AluRegisters::OPCODE_STORE);
-    pAluParam->DW0.BitField.Operand1 =
+    cmdAluParam.DW0.BitField.Operand1 =
         static_cast<uint32_t>(AluRegisters::R_0);
-    pAluParam->DW0.BitField.Operand2 =
+    cmdAluParam.DW0.BitField.Operand2 =
         static_cast<uint32_t>(AluRegisters::R_ACCU);
+    *pAluParam = cmdAluParam;
 
     // LOAD value of CS_GPR_R0 into "Register"
     auto pCmd4 = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_REG>();
-    *pCmd4 = GfxFamily::cmdInitLoadRegisterReg;
-    pCmd4->setSourceRegisterAddress(CS_GPR_R0);
-    pCmd4->setDestinationRegisterAddress(aluRegister);
+    cmdReg = GfxFamily::cmdInitLoadRegisterReg;
+    cmdReg.setSourceRegisterAddress(CS_GPR_R0);
+    cmdReg.setDestinationRegisterAddress(aluRegister);
+    *pCmd4 = cmdReg;
 
     // Add PIPE_CONTROL to flush caches
     auto pCmd5 = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
-    *pCmd5 = GfxFamily::cmdInitPipeControl;
-    pCmd5->setCommandStreamerStallEnable(true);
-    pCmd5->setDcFlushEnable(true);
-    pCmd5->setTextureCacheInvalidationEnable(true);
-    pCmd5->setPipeControlFlushEnable(true);
-    pCmd5->setStateCacheInvalidationEnable(true);
+    PIPE_CONTROL cmdPipeControl = GfxFamily::cmdInitPipeControl;
+    cmdPipeControl.setCommandStreamerStallEnable(true);
+    cmdPipeControl.setDcFlushEnable(true);
+    cmdPipeControl.setTextureCacheInvalidationEnable(true);
+    cmdPipeControl.setPipeControlFlushEnable(true);
+    cmdPipeControl.setStateCacheInvalidationEnable(true);
+    *pCmd5 = cmdPipeControl;
 }
 
 template <typename GfxFamily>
@@ -139,10 +156,11 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
 
     //low part
     auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
-    *pMICmdLow = GfxFamily::cmdInitStoreRegisterMem;
-    adjustMiStoreRegMemMode(pMICmdLow);
-    pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
-    pMICmdLow->setMemoryAddress(timeStampAddress);
+    MI_STORE_REGISTER_MEM cmd = GfxFamily::cmdInitStoreRegisterMem;
+    adjustMiStoreRegMemMode(&cmd);
+    cmd.setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    cmd.setMemoryAddress(timeStampAddress);
+    *pMICmdLow = cmd;
 }
 
 template <typename GfxFamily>
@@ -154,18 +172,20 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
 
     // PIPE_CONTROL for global timestamp
     auto pPipeControlCmd = commandStream->getSpaceForCmd<PIPE_CONTROL>();
-    *pPipeControlCmd = GfxFamily::cmdInitPipeControl;
-    pPipeControlCmd->setCommandStreamerStallEnable(true);
+    PIPE_CONTROL cmdPipeControl = GfxFamily::cmdInitPipeControl;
+    cmdPipeControl.setCommandStreamerStallEnable(true);
+    *pPipeControlCmd = cmdPipeControl;
 
     //MI_STORE_REGISTER_MEM for context local timestamp
     uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, ContextEndTS);
 
     //low part
     auto pMICmdLow = commandStream->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
-    *pMICmdLow = GfxFamily::cmdInitStoreRegisterMem;
-    adjustMiStoreRegMemMode(pMICmdLow);
-    pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
-    pMICmdLow->setMemoryAddress(timeStampAddress);
+    MI_STORE_REGISTER_MEM cmd = GfxFamily::cmdInitStoreRegisterMem;
+    adjustMiStoreRegMemMode(&cmd);
+    cmd.setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    cmd.setMemoryAddress(timeStampAddress);
+    *pMICmdLow = cmd;
 }
 
 template <typename GfxFamily>

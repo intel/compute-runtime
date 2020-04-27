@@ -20,10 +20,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, Dis
     if (csrSizeRequestFlags.l3ConfigChanged && this->isPreambleSent) {
         // Add a PIPE_CONTROL w/ CS_stall
         auto pCmd = (PIPE_CONTROL *)csr.getSpace(sizeof(PIPE_CONTROL));
-        *pCmd = GfxFamily::cmdInitPipeControl;
-        pCmd->setCommandStreamerStallEnable(true);
-        pCmd->setDcFlushEnable(true);
-        addClearSLMWorkAround(pCmd);
+        PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
+        cmd.setCommandStreamerStallEnable(true);
+        cmd.setDcFlushEnable(true);
+        addClearSLMWorkAround(&cmd);
+        *pCmd = cmd;
 
         PreambleHelper<GfxFamily>::programL3(&csr, newL3Config);
         this->lastSentL3Config = newL3Config;
