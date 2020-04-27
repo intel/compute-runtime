@@ -21,7 +21,7 @@ class ExecutionEnvironment;
 
 class FlatBatchBufferHelper {
   public:
-    FlatBatchBufferHelper(ExecutionEnvironment &executionEnvironemnt) : executionEnvironemnt(executionEnvironemnt) {}
+    FlatBatchBufferHelper(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment) {}
     virtual ~FlatBatchBufferHelper(){};
     MOCKABLE_VIRTUAL bool setPatchInfoData(const PatchInfoData &data);
     MOCKABLE_VIRTUAL bool removePatchInfoData(uint64_t targetLocation);
@@ -41,7 +41,7 @@ class FlatBatchBufferHelper {
 
   protected:
     MemoryManager *getMemoryManager() const;
-    ExecutionEnvironment &executionEnvironemnt;
+    ExecutionEnvironment &executionEnvironment;
 
     std::vector<PatchInfoData> patchInfoCollection;
     std::vector<CommandChunk> commandChunkList;

@@ -65,6 +65,6 @@ void FlatBatchBufferHelper::fixCrossThreadDataInfo(std::vector<PatchInfoData> &d
 }
 
 MemoryManager *FlatBatchBufferHelper::getMemoryManager() const {
-    return executionEnvironemnt.memoryManager.get();
+    return executionEnvironment.memoryManager.get();
 }
 }; // namespace NEO
