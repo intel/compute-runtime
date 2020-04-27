@@ -89,6 +89,15 @@ TEST_F(clCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenOutOrH
     EXPECT_EQ(nullptr, context);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }
+TEST_F(clCreateContextTests, givenEnabledMultipleRootDeviceSupportWhenCreateContextWithMultipleRootDevicesThenContextIsCreated) {
+    UltClDeviceFactory deviceFactory{2, 0};
+    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
+    auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    clReleaseContext(context);
+}
 
 TEST_F(clCreateContextTests, givenInvalidContextCreationPropertiesThenContextCreationFails) {
     cl_context_properties invalidProperties[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties) nullptr, 0};

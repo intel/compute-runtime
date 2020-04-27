@@ -167,12 +167,14 @@ bool Context::createImpl(const cl_context_properties *properties,
 
     this->driverDiagnostics = driverDiagnostics.release();
     if (inputDevices.size() > 1) {
-        auto rootDeviceIndex = inputDevices[0]->getRootDeviceIndex();
-        for (const auto &device : inputDevices) {
-            if (device->getRootDeviceIndex() != rootDeviceIndex) {
-                DEBUG_BREAK_IF("No support for context with multiple root devices");
-                errcodeRet = CL_OUT_OF_HOST_MEMORY;
-                return false;
+        if (!DebugManager.flags.EnableMultiRootDeviceContexts.get()) {
+            auto rootDeviceIndex = inputDevices[0]->getRootDeviceIndex();
+            for (const auto &device : inputDevices) {
+                if (device->getRootDeviceIndex() != rootDeviceIndex) {
+                    DEBUG_BREAK_IF("No support for context with multiple root devices");
+                    errcodeRet = CL_OUT_OF_HOST_MEMORY;
+                    return false;
+                }
             }
         }
     }
