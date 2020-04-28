@@ -27,6 +27,7 @@ using MI_SEMAPHORE_WAIT               = GenStruct::MI_SEMAPHORE_WAIT;
 using MI_STORE_DATA_IMM               = GenStruct::MI_STORE_DATA_IMM;
 using MI_FLUSH_DW                     = GenStruct::MI_FLUSH_DW;
 using XY_COPY_BLT                     = GenGfxFamily::XY_COPY_BLT;
+using XY_COLOR_BLT                    = GenGfxFamily::XY_COLOR_BLT;
 // clang-format on
 
 template <>
@@ -205,6 +206,16 @@ XY_COPY_BLT *genCmdCast<XY_COPY_BLT *>(void *buffer) {
                : nullptr;
 }
 
+template <>
+XY_COLOR_BLT *genCmdCast<XY_COLOR_BLT *>(void *buffer) {
+    auto pCmd = reinterpret_cast<XY_COLOR_BLT *>(buffer);
+
+    return XY_COLOR_BLT::INSTRUCTIONTARGET_OPCODE_OPCODE == pCmd->TheStructure.Common.InstructionTarget_Opcode &&
+                   XY_COLOR_BLT::CLIENT_2D_PROCESSOR == pCmd->TheStructure.Common.Client
+               ? pCmd
+               : nullptr;
+}
+
 template <class T>
 size_t CmdParse<T>::getCommandLength(void *cmd) {
     {
@@ -297,6 +308,11 @@ size_t CmdParse<T>::getCommandLength(void *cmd) {
         if (pCmd)
             return pCmd->TheStructure.Common.DwordLength + 2;
     }
+    {
+        auto pCmd = genCmdCast<XY_COLOR_BLT *>(cmd);
+        if (pCmd)
+            return pCmd->TheStructure.Common.DwordLength + 2;
+    }
 
     auto commandLengthHwSpecific = getCommandLengthHwSpecific(cmd);
 
@@ -330,6 +346,7 @@ const char *CmdParse<T>::getCommandName(void *cmd) {
     RETURN_NAME_IF(MI_STORE_DATA_IMM);
     RETURN_NAME_IF(MI_FLUSH_DW);
     RETURN_NAME_IF(XY_COPY_BLT);
+    RETURN_NAME_IF(XY_COLOR_BLT);
 
 #undef RETURN_NAME_IF
 

@@ -128,5 +128,43 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProp
         }
     }
 }
+template <typename GfxFamily>
+template <size_t patternSize>
+void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocation *dstAlloc, uint32_t *pattern, LinearStream &linearStream, size_t size, const RootDeviceEnvironment &rootDeviceEnvironment, COLOR_DEPTH depth) {
+    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+    auto blitCmd = GfxFamily::cmdInitXyColorBlt;
+
+    blitCmd.setFillColor(pattern);
+    blitCmd.setColorDepth(depth);
+
+    appendBlitCommandsForFillBuffer(dstAlloc, blitCmd, rootDeviceEnvironment);
+
+    uint64_t offset = 0;
+    uint64_t sizeToFill = size;
+    while (sizeToFill != 0) {
+        auto tmpCmd = blitCmd;
+        tmpCmd.setDestinationBaseAddress(ptrOffset(dstAlloc->getGpuAddress(), static_cast<size_t>(offset)));
+        uint64_t height = 0;
+        uint64_t width = 0;
+        if (sizeToFill <= BlitterConstants::maxBlitWidth) {
+            width = sizeToFill;
+            height = 1;
+        } else {
+            width = BlitterConstants::maxBlitWidth;
+            height = std::min((sizeToFill / width), BlitterConstants::maxBlitHeight);
+            if (height > 1) {
+                appendTilingEnable(tmpCmd);
+            }
+        }
+        tmpCmd.setTransferWidth(static_cast<uint32_t>(width));
+        tmpCmd.setTransferHeight(static_cast<uint32_t>(height));
+        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width));
+        auto cmd = linearStream.getSpaceForCmd<XY_COLOR_BLT>();
+        *cmd = tmpCmd;
+        auto blitSize = width * height;
+        offset += (blitSize);
+        sizeToFill -= blitSize;
+    }
+}
 
 } // namespace NEO

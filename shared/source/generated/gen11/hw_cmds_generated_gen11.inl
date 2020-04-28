@@ -4276,6 +4276,7 @@ typedef struct tagXY_SRC_COPY_BLT {
         TheStructure.Common.ClippingEnabled = CLIPPING_ENABLED_DISABLED;
         TheStructure.Common.InstructionTarget_Opcode = INSTRUCTIONTARGET_OPCODE_OPCODE;
         TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        TheStructure.Common.RasterOperation = 0xCC;
     }
     static tagXY_SRC_COPY_BLT sInit(void) {
         XY_SRC_COPY_BLT state;
@@ -4406,6 +4407,175 @@ typedef struct tagXY_SRC_COPY_BLT {
     }
 } XY_SRC_COPY_BLT;
 STATIC_ASSERT(40 == sizeof(XY_SRC_COPY_BLT));
+
+typedef struct tagXY_COLOR_BLT {
+    union tagTheStructure {
+        struct tagCommon {
+            // DWORD 0
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
+            uint32_t Reserved_8 : BITFIELD_RANGE(8, 10);
+            uint32_t DestTilingEnable : BITFIELD_RANGE(11, 11);
+            uint32_t Reserved_12 : BITFIELD_RANGE(12, 19);
+            uint32_t _32BppByteMask : BITFIELD_RANGE(20, 21);
+            uint32_t InstructionTarget_Opcode : BITFIELD_RANGE(22, 28);
+            uint32_t Client : BITFIELD_RANGE(29, 31);
+            // DWORD 1
+            uint32_t DestinationPitch : BITFIELD_RANGE(0, 15);
+            uint32_t RasterOperation : BITFIELD_RANGE(16, 23);
+            uint32_t ColorDepth : BITFIELD_RANGE(24, 25);
+            uint32_t Reserved_58 : BITFIELD_RANGE(26, 29);
+            uint32_t ClippingEnabled : BITFIELD_RANGE(30, 30);
+            uint32_t Reserved_63 : BITFIELD_RANGE(31, 31);
+            // DWORD 2
+            uint32_t DestinationX1Coordinate_Left : BITFIELD_RANGE(0, 15);
+            uint32_t DestinationY1Coordinate_Top : BITFIELD_RANGE(16, 31);
+            // DWORD 3
+            uint32_t DestinationX2Coordinate_Right : BITFIELD_RANGE(0, 15);
+            uint32_t DestinationY2Coordinate_Bottom : BITFIELD_RANGE(16, 31);
+            // DWORD 4-5
+            uint64_t DestinationBaseAddress;
+            // DWORD 6
+            uint32_t SolidPaternColor;
+        } Common;
+        uint32_t RawData[7];
+    } TheStructure;
+    typedef enum tagDEST_TILING_ENABLE {
+        DEST_TILING_ENABLE_TILING_DISABLED_LINEAR_BLIT = 0x0,
+        DEST_TILING_ENABLE_TILING_ENABLED = 0x1,
+    } DEST_TILING_ENABLE;
+    typedef enum tag_32BPP_BYTE_MASK {
+        _32BPP_BYTE_MASK_WRITE_RGB_CHANNEL = 0x1,
+        _32BPP_BYTE_MASK_WRITE_ALPHA_CHANNEL = 0x2,
+        _32BPP_BYTE_MASK_WRITE_RGBA_CHANNEL = 0x3
+    } _32BPP_BYTE_MASK;
+    typedef enum tagCLIENT {
+        CLIENT_2D_PROCESSOR = 0x2,
+    } CLIENT;
+    typedef enum tagCOLOR_DEPTH {
+        COLOR_DEPTH_8_BIT_COLOR = 0x0,
+        COLOR_DEPTH_16_BIT_COLOR565 = 0x1,
+        COLOR_DEPTH_16_BIT_COLOR1555 = 0x2,
+        COLOR_DEPTH_32_BIT_COLOR = 0x3,
+    } COLOR_DEPTH;
+    typedef enum tagCLIPPING_ENABLED {
+        CLIPPING_ENABLED_DISABLED = 0x0,
+        CLIPPING_ENABLED_ENABLED = 0x1,
+    } CLIPPING_ENABLED;
+    typedef enum tagINSTRUCTIONTARGET_OPCODE {
+        INSTRUCTIONTARGET_OPCODE_OPCODE = 0x50,
+    } INSTRUCTIONTARGET_OPCODE;
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x5,
+    } DWORD_LENGTH;
+    inline void init(void) {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.DestTilingEnable = DEST_TILING_ENABLE_TILING_DISABLED_LINEAR_BLIT;
+        TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
+        TheStructure.Common.ColorDepth = COLOR_DEPTH_8_BIT_COLOR;
+        TheStructure.Common.ClippingEnabled = CLIPPING_ENABLED_DISABLED;
+        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTIONTARGET_OPCODE_OPCODE;
+        TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        TheStructure.Common.RasterOperation = 0xF0;
+    }
+    static tagXY_COLOR_BLT sInit(void) {
+        XY_COLOR_BLT state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 10);
+        return TheStructure.RawData[index];
+    }
+    inline void setDestTilingEnable(const DEST_TILING_ENABLE value) {
+        TheStructure.Common.DestTilingEnable = value;
+    }
+    inline DEST_TILING_ENABLE getDestTilingEnable(void) const {
+        return static_cast<DEST_TILING_ENABLE>(TheStructure.Common.DestTilingEnable);
+    }
+    inline void set32BppByteMask(const _32BPP_BYTE_MASK value) {
+        TheStructure.Common._32BppByteMask = value;
+    }
+    inline _32BPP_BYTE_MASK get32BppByteMask(void) const {
+        return static_cast<_32BPP_BYTE_MASK>(TheStructure.Common._32BppByteMask);
+    }
+    inline void setInstructionTargetOpcode(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x1fc00000);
+        TheStructure.Common.InstructionTarget_Opcode = value;
+    }
+    inline uint32_t getInstructionTargetOpcode(void) const {
+        return TheStructure.Common.InstructionTarget_Opcode;
+    }
+    inline void setClient(const CLIENT value) {
+        TheStructure.Common.Client = value;
+    }
+    inline CLIENT getClient(void) const {
+        return static_cast<CLIENT>(TheStructure.Common.Client);
+    }
+    inline void setDestinationPitch(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
+        TheStructure.Common.DestinationPitch = value;
+    }
+    inline uint32_t getDestinationPitch(void) const {
+        return TheStructure.Common.DestinationPitch;
+    }
+    inline void setRasterOperation(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xff0000);
+        TheStructure.Common.RasterOperation = value;
+    }
+    inline uint32_t getRasterOperation(void) const {
+        return TheStructure.Common.RasterOperation;
+    }
+    inline void setColorDepth(const COLOR_DEPTH value) {
+        TheStructure.Common.ColorDepth = value;
+    }
+    inline COLOR_DEPTH getColorDepth(void) const {
+        return static_cast<COLOR_DEPTH>(TheStructure.Common.ColorDepth);
+    }
+    inline void setClippingEnabled(const CLIPPING_ENABLED value) {
+        TheStructure.Common.ClippingEnabled = value;
+    }
+    inline CLIPPING_ENABLED getClippingEnabled(void) const {
+        return static_cast<CLIPPING_ENABLED>(TheStructure.Common.ClippingEnabled);
+    }
+    inline void setDestinationX1CoordinateLeft(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
+        TheStructure.Common.DestinationX1Coordinate_Left = value;
+    }
+    inline uint32_t getDestinationX1CoordinateLeft(void) const {
+        return TheStructure.Common.DestinationX1Coordinate_Left;
+    }
+    inline void setDestinationY1CoordinateTop(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff0000);
+        TheStructure.Common.DestinationY1Coordinate_Top = value;
+    }
+    inline uint32_t getDestinationY1CoordinateTop(void) const {
+        return TheStructure.Common.DestinationY1Coordinate_Top;
+    }
+    inline void setTransferWidth(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
+        TheStructure.Common.DestinationX2Coordinate_Right = value;
+    }
+    inline uint32_t getTransferWidth(void) const {
+        return TheStructure.Common.DestinationX2Coordinate_Right;
+    }
+    inline void setTransferHeight(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff0000);
+        TheStructure.Common.DestinationY2Coordinate_Bottom = value;
+    }
+    inline uint32_t getTransferHeight(void) const {
+        return TheStructure.Common.DestinationY2Coordinate_Bottom;
+    }
+    inline void setDestinationBaseAddress(const uint64_t value) {
+        TheStructure.Common.DestinationBaseAddress = value;
+    }
+    inline uint64_t getDestinationBaseAddress(void) const {
+        return TheStructure.Common.DestinationBaseAddress;
+    }
+    inline void setFillColor(const uint32_t *value) {
+        TheStructure.Common.SolidPaternColor = *value;
+    }
+} XY_COLOR_BLT;
+STATIC_ASSERT(28 == sizeof(XY_COLOR_BLT));
 
 typedef struct tagGRF {
     union tagTheStructure {

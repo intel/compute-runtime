@@ -158,6 +158,10 @@ struct CommandListCoreFamily : CommandListImp {
                                                           ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                                           ze_event_handle_t *phWaitEvents);
 
+    MOCKABLE_VIRTUAL ze_result_t appendBlitFill(void *ptr, const void *pattern,
+                                                size_t patternSize, size_t size,
+                                                ze_event_handle_t hEvent);
+
     ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                              const ze_group_count_t *pThreadGroupDimensions,
                                              ze_event_handle_t hEvent, uint32_t numWaitEvents,
@@ -171,6 +175,7 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, uint32_t lws[3]);
     void appendEventForProfiling(ze_event_handle_t hEvent, bool beforeWalker);
     void appendSignalEventPostWalker(ze_event_handle_t hEvent);
+    bool useMemCopyToBlitFill(size_t patternSize);
 
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
     virtual AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize);

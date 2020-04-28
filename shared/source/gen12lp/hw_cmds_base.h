@@ -85,6 +85,7 @@ struct TGLLPFamily : public GEN12LP {
     static const MI_USER_INTERRUPT cmdInitUserInterrupt;
     static const XY_SRC_COPY_BLT cmdInitXyCopyBlt;
     static const MI_FLUSH_DW cmdInitMiFlushDw;
+    static const XY_COLOR_BLT cmdInitXyColorBlt;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_GEN8_CORE;

@@ -241,14 +241,21 @@ class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamil
                                          uint32_t srcSlicePitch, size_t srcOffset,
                                          ze_event_handle_t hSignalEvent, uint32_t numWaitEvents,
                                          ze_event_handle_t *phWaitEvents) override {
-        appendMemoryCopyKernel3dalledTimes++;
+        appendMemoryCopyKernel3dCalledTimes++;
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t appendBlitFill(void *ptr, const void *pattern,
+                               size_t patternSize, size_t size,
+                               ze_event_handle_t hEvent) override {
+        appendBlitFillCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
     uint32_t appendMemoryCopyKernelWithGACalledTimes = 0;
     uint32_t appendMemoryCopyBlitCalledTimes = 0;
     uint32_t appendMemoryCopyBlitRegionCalledTimes = 0;
     uint32_t appendMemoryCopyKernel2dCalledTimes = 0;
-    uint32_t appendMemoryCopyKernel3dalledTimes = 0;
+    uint32_t appendMemoryCopyKernel3dCalledTimes = 0;
+    uint32_t appendBlitFillCalledTimes = 0;
 };
 
 using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
@@ -278,11 +285,16 @@ class MockDriverHandle : public L0::DriverHandleImp {
     bool findAllocationDataForRange(const void *buffer,
                                     size_t size,
                                     NEO::SvmAllocationData **allocData) override {
+        mockAllocation.reset(new NEO::MockGraphicsAllocation(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                             MemoryPool::System4KBPages));
+        data.gpuAllocation = mockAllocation.get();
         if (allocData) {
             *allocData = &data;
         }
         return true;
     }
+    std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
     NEO::SvmAllocationData data = {};
 };
 
@@ -310,7 +322,7 @@ HWTEST2_F(CommandListCreate, givenCommandListAnd3DWhbufferenMemoryCopyRegionCall
     ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
     cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitRegionCalledTimes, 0u);
-    EXPECT_GT(cmdList.appendMemoryCopyKernel3dalledTimes, 0u);
+    EXPECT_GT(cmdList.appendMemoryCopyKernel3dCalledTimes, 0u);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListAnd2DWhbufferenMemoryCopyRegionCalledThenCopyKernel2DCalled, Platforms) {
@@ -325,6 +337,24 @@ HWTEST2_F(CommandListCreate, givenCommandListAnd2DWhbufferenMemoryCopyRegionCall
     cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitRegionCalledTimes, 0u);
     EXPECT_GT(cmdList.appendMemoryCopyKernel2dCalledTimes, 0u);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendMemoryFillCalledThenAppendBlitFillCalled, Platforms) {
+    MockCommandList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    int pattern = 1;
+    cmdList.appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0, nullptr);
+    EXPECT_GT(cmdList.appendBlitFillCalledTimes, 0u);
+}
+
+HWTEST2_F(CommandListCreate, givenCommandListWhenAppendMemoryFillCalledThenAppendBlitFillNotCalled, Platforms) {
+    MockCommandList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, false);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+    int pattern = 1;
+    cmdList.appendMemoryFill(dstPtr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0, nullptr);
+    EXPECT_EQ(cmdList.appendBlitFillCalledTimes, 0u);
 }
 
 class MockEvent : public Mock<Event> {
@@ -406,5 +436,57 @@ HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushTheP
     EXPECT_NE(cmdList.end(), itor);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+  public:
+    MockCommandListForMemFill() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>(1) {}
+
+    AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize) override {
+        return {0, 0, nullptr, true};
+    }
+    ze_result_t appendMemoryCopyBlit(NEO::GraphicsAllocation *dstPtrAlloc,
+                                     uint64_t dstOffset,
+                                     NEO::GraphicsAllocation *srcPtrAlloc,
+                                     uint64_t srcOffset, uint32_t size) override {
+        appendMemoryCopyBlitCalledTimes++;
+        return ZE_RESULT_SUCCESS;
+    }
+    uint32_t appendMemoryCopyBlitCalledTimes = 0;
+};
+
+HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenMemCopyWasCalled, Platforms) {
+    MockCommandListForMemFill<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    uint64_t pattern[4] = {1, 2, 3, 4};
+    void *ptr = reinterpret_cast<void *>(0x1234);
+    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
+    EXPECT_GT(cmdList.appendMemoryCopyBlitCalledTimes, 0u);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppenBlitFillToNotDeviceMemThenInvalidArgumentReturned, Platforms) {
+    MockCommandListForMemFill<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    uint8_t pattern = 1;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+    auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
+    EXPECT_EQ(ret, ZE_RESULT_ERROR_INVALID_ARGUMENT);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBltIsProgrammed, Platforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+    MockCommandListForMemFill<gfxCoreFamily> commandList;
+    MockDriverHandle driverHandle;
+    device->setDriverHandle(&driverHandle);
+    commandList.initialize(device, true);
+    uint16_t pattern = 1;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+    commandList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0), commandList.commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+}
 } // namespace ult
 } // namespace L0

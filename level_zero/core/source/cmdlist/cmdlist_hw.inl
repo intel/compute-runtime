@@ -18,7 +18,9 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
@@ -969,6 +971,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
                                                                    size_t size,
                                                                    ze_event_handle_t hEvent) {
 
+    if (isCopyOnlyCmdList) {
+        return appendBlitFill(ptr, pattern, patternSize, size, hEvent);
+    }
+
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     bool hostPointerNeedsFlush = false;
 
@@ -1073,6 +1079,47 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     }
 
     return res;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
+                                                                 const void *pattern,
+                                                                 size_t patternSize,
+                                                                 size_t size,
+                                                                 ze_event_handle_t hEvent) {
+    if (useMemCopyToBlitFill(patternSize)) {
+        NEO::AllocationProperties properties = {device->getNEODevice()->getRootDeviceIndex(),
+                                                false,
+                                                size,
+                                                NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+                                                false,
+                                                device->getNEODevice()->getDeviceBitfield()};
+        properties.flags.allocateMemory = 1;
+        auto internalAlloc = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        size_t offset = 0;
+        for (uint32_t i = 0; i < size / patternSize; i++) {
+            memcpy(ptrOffset(internalAlloc->getDriverAllocatedCpuPtr(), offset), pattern, patternSize);
+            offset += patternSize;
+        }
+        auto ret = appendMemoryCopy(ptr, internalAlloc->getDriverAllocatedCpuPtr(), size, hEvent, 0, nullptr);
+        commandContainer.getDeallocationContainer().push_back(internalAlloc);
+        return ret;
+    } else {
+        appendEventForProfiling(hEvent, true);
+        NEO::SvmAllocationData *allocData = nullptr;
+        bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr, size, &allocData);
+        if (dstAllocFound == false) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        commandContainer.addToResidencyContainer(allocData->gpuAllocation);
+        uint32_t patternToCommand[4] = {};
+        memcpy(&patternToCommand, pattern, patternSize);
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(allocData->gpuAllocation, patternToCommand, patternSize, *commandContainer.getCommandStream(), size, *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+        if (hEvent) {
+            this->appendSignalEventPostWalker(hEvent);
+        }
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
