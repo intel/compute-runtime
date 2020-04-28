@@ -359,19 +359,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     default:
         UNRECOVERABLE_IF(true);
     case 1u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::CopyImage3dToBufferBytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBufferBytes);
         break;
     case 2u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::CopyImage3dToBuffer2Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBuffer2Bytes);
         break;
     case 4u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::CopyImage3dToBuffer4Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBuffer4Bytes);
         break;
     case 8u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::CopyImage3dToBuffer8Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBuffer8Bytes);
         break;
     case 16u:
-        builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::CopyImage3dToBuffer16Bytes);
+        builtinKernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImage3dToBuffer16Bytes);
         break;
     }
 
@@ -440,7 +440,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
                                                                         uint32_t numWaitEvents,
                                                                         ze_event_handle_t *phWaitEvents) {
 
-    auto kernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::CopyImageRegion);
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
     auto dstImage = L0::Image::fromHandle(hDstImage);
     auto srcImage = L0::Image::fromHandle(hSrcImage);
     cl_int4 srcOffset, dstOffset;

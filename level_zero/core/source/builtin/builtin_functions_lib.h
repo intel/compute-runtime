@@ -28,14 +28,18 @@ enum class Builtin : uint32_t {
     CopyBufferToImage3d4Bytes,
     CopyBufferToImage3d8Bytes,
     CopyBufferToImage3dBytes,
-    CopyImage3dToBuffer16Bytes,
+    FillBufferImmediate,
+    FillBufferSSHOffset,
+    COUNT
+};
+
+enum class ImageBuiltin : uint32_t {
+    CopyImage3dToBuffer16Bytes = 0u,
     CopyImage3dToBuffer2Bytes,
     CopyImage3dToBuffer4Bytes,
     CopyImage3dToBuffer8Bytes,
     CopyImage3dToBufferBytes,
     CopyImageRegion,
-    FillBufferImmediate,
-    FillBufferSSHOffset,
     COUNT
 };
 
@@ -45,7 +49,9 @@ struct BuiltinFunctionsLib {
                                                        NEO::BuiltIns *builtins);
 
     virtual Kernel *getFunction(Builtin func) = 0;
+    virtual Kernel *getImageFunction(ImageBuiltin func) = 0;
     virtual void initFunctions() = 0;
+    virtual void initImageFunctions() = 0;
     virtual Kernel *getPageFaultFunction() = 0;
     virtual void initPageFaultFunction() = 0;
 

@@ -576,6 +576,9 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice) {
     if (neoDevice->getCompilerInterface()) {
         device->getBuiltinFunctionsLib()->initFunctions();
         device->getBuiltinFunctionsLib()->initPageFaultFunction();
+        if (device->getHwInfo().capabilityTable.supportsImages) {
+            device->getBuiltinFunctionsLib()->initImageFunctions();
+        }
     }
 
     auto supportDualStorageSharedMemory = device->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(device->neoDevice->getRootDeviceIndex());

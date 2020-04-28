@@ -28,13 +28,16 @@ struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
     }
 
     Kernel *getFunction(Builtin func) override;
+    Kernel *getImageFunction(ImageBuiltin func) override;
     Kernel *getPageFaultFunction() override;
     void initFunctions() override;
+    void initImageFunctions() override;
     void initPageFaultFunction() override;
     std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName);
 
   protected:
     std::unique_ptr<BuiltinData> builtins[static_cast<uint32_t>(Builtin::COUNT)];
+    std::unique_ptr<BuiltinData> imageBuiltins[static_cast<uint32_t>(ImageBuiltin::COUNT)];
     std::unique_ptr<BuiltinData> pageFaultBuiltin;
 
     Device *device;
