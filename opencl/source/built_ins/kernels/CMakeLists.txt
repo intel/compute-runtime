@@ -75,7 +75,7 @@ function(compile_builtin gen_type platform_type builtin bits builtin_options)
   list(APPEND __cloc__options__ "-cl-kernel-arg-info")
   add_custom_command(
     OUTPUT ${OUTPUT_FILES}
-    COMMAND ${cloc_cmd_prefix} -q -file ${FILENAME} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -out_dir ${OUTPUTDIR} -cpp_file -options "$<JOIN:${__cloc__options__}, >"
+    COMMAND ${cloc_cmd_prefix} -q -file ${FILENAME} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -out_dir ${OUTPUTDIR} -options "$<JOIN:${__cloc__options__}, >"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     DEPENDS ${builtin} ocloc copy_compiler_files
   )

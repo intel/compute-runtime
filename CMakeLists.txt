@@ -856,6 +856,7 @@ set(BUILTINS_VME_LIB_NAME "builtins_vme")
 set(SCHEDULER_BINARY_LIB_NAME "scheduler_binary")
 
 add_subdirectory_unique(shared/source)
+add_subdirectory_unique(shared/generate_cpp_array)
 
 macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
     set(NEO_STATIC_LIB_NAME ${LIB_NAME})
