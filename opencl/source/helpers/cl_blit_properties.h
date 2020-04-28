@@ -33,6 +33,8 @@ struct ClBlitProperties {
             } else {
                 dstAllocation = builtinOpParams.dstSvmAlloc;
                 srcAllocation = builtinOpParams.srcSvmAlloc;
+                dstOffset += ptrDiff(builtinOpParams.dstPtr, dstAllocation->getGpuAddress());
+                srcOffset += ptrDiff(builtinOpParams.srcPtr, srcAllocation->getGpuAddress());
             }
 
             return BlitProperties::constructPropertiesForCopyBuffer(dstAllocation,
