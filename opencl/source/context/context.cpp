@@ -41,14 +41,8 @@ namespace NEO {
 Context::Context(
     void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
     void *data) {
-    properties = nullptr;
-    numProperties = 0;
     contextCallback = funcNotify;
     userData = data;
-    memoryManager = nullptr;
-    specialQueue = nullptr;
-    defaultDeviceQueue = nullptr;
-    driverDiagnostics = nullptr;
     sharingFunctions.resize(SharingType::MAX_SHARING_VALUE);
     schedulerBuiltIn = std::make_unique<BuiltInKernel>();
 }
@@ -422,5 +416,4 @@ ClDevice *Context::getSubDeviceByIndex(uint32_t subDeviceIndex) const {
 AsyncEventsHandler &Context::getAsyncEventsHandler() {
     return *static_cast<ClExecutionEnvironment *>(devices[0]->getExecutionEnvironment())->getAsyncEventsHandler();
 }
-
 } // namespace NEO

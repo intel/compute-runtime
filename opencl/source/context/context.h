@@ -20,7 +20,6 @@ namespace NEO {
 
 class AsyncEventsHandler;
 struct BuiltInKernel;
-class CommandStreamReceiver;
 class CommandQueue;
 class Device;
 class DeviceQueue;
@@ -156,20 +155,20 @@ class Context : public BaseObject<_cl_context> {
 
     cl_int processExtraProperties(cl_context_properties propertyType, cl_context_properties propertyValue);
 
-    const cl_context_properties *properties;
-    size_t numProperties;
-    void(CL_CALLBACK *contextCallback)(const char *, const void *, size_t, void *);
-    void *userData;
+    const cl_context_properties *properties = nullptr;
+    size_t numProperties = 0u;
+    void(CL_CALLBACK *contextCallback)(const char *, const void *, size_t, void *) = nullptr;
+    void *userData = nullptr;
 
     std::unique_ptr<BuiltInKernel> schedulerBuiltIn;
 
     ClDeviceVector devices;
-    MemoryManager *memoryManager;
+    MemoryManager *memoryManager = nullptr;
     SVMAllocsManager *svmAllocsManager = nullptr;
-    CommandQueue *specialQueue;
-    DeviceQueue *defaultDeviceQueue;
+    CommandQueue *specialQueue = nullptr;
+    DeviceQueue *defaultDeviceQueue = nullptr;
     std::vector<std::unique_ptr<SharingFunctions>> sharingFunctions;
-    DriverDiagnostics *driverDiagnostics;
+    DriverDiagnostics *driverDiagnostics = nullptr;
     bool interopUserSync = false;
     cl_bool preferD3dSharedResources = 0u;
     ContextType contextType = ContextType::CONTEXT_TYPE_DEFAULT;
