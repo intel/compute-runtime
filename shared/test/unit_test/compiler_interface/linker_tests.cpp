@@ -986,3 +986,45 @@ TEST(LinkerErrorMessageTests, givenListOfUnresolvedExternalsThenSymbolNameOrSymb
     EXPECT_THAT(err.c_str(), ::testing::HasSubstr(NEO::asString(NEO::SegmentType::Unknown)));
     EXPECT_THAT(err.c_str(), ::testing::HasSubstr(std::to_string(unresolvedExternal.unresolvedRelocation.offset).c_str()));
 }
+
+TEST(RelocationsDebugMessageTests, givenEmptyListOfRelocatedSymbolsTheReturnsEmptyString) {
+    auto message = NEO::constructRelocationsDebugMessage({});
+    EXPECT_EQ(0U, message.size()) << message;
+}
+
+TEST(RelocationsDebugMessageTests, givenListOfRelocatedSymbolsTheReturnsProperDebugMessage) {
+    NEO::Linker::RelocatedSymbolsMap symbols;
+
+    auto &funcSymbol = symbols["foo"];
+    auto &constDataSymbol = symbols["constInt"];
+    auto &globalVarSymbol = symbols["intX"];
+    funcSymbol.symbol.segment = NEO::SegmentType::Instructions;
+    funcSymbol.symbol.offset = 64U;
+    funcSymbol.symbol.size = 1024U;
+    funcSymbol.gpuAddress = 4096U;
+
+    constDataSymbol.symbol.segment = NEO::SegmentType::GlobalConstants;
+    constDataSymbol.symbol.offset = 32U;
+    constDataSymbol.symbol.size = 16U;
+    constDataSymbol.gpuAddress = 8U;
+
+    globalVarSymbol.symbol.segment = NEO::SegmentType::GlobalVariables;
+    globalVarSymbol.symbol.offset = 72U;
+    globalVarSymbol.symbol.size = 8U;
+    globalVarSymbol.gpuAddress = 256U;
+
+    auto message = NEO::constructRelocationsDebugMessage(symbols);
+
+    std::stringstream expected;
+    expected << "Relocations debug informations :\n";
+    for (const auto &symbol : symbols) {
+        if (symbol.first == "foo") {
+            expected << " * \"foo\" [1024 bytes] INSTRUCTIONS_SEGMENT@64 -> 0x1000 GPUVA\n";
+        } else if (symbol.first == "constInt") {
+            expected << " * \"constInt\" [16 bytes] GLOBAL_CONSTANTS_SEGMENT@32 -> 0x8 GPUVA\n";
+        } else {
+            expected << " * \"intX\" [8 bytes] GLOBAL_VARIABLES_SEGMENT@72 -> 0x100 GPUVA\n";
+        }
+    }
+    EXPECT_STREQ(expected.str().c_str(), message.c_str());
+}

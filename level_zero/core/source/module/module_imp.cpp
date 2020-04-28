@@ -475,6 +475,7 @@ bool ModuleImp::linkBinary() {
                                                                                         isaSegmentsForPatching[segmentId].segmentSize);
         }
     }
+    DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->symbols));
     return true;
 }
 

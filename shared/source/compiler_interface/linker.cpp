@@ -290,4 +290,19 @@ std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unres
     return errorStream.str();
 }
 
+std::string constructRelocationsDebugMessage(const Linker::RelocatedSymbolsMap &relocatedSymbols) {
+    if (relocatedSymbols.empty()) {
+        return "";
+    }
+    std::stringstream stream;
+    stream << "Relocations debug informations :\n";
+    for (const auto &symbol : relocatedSymbols) {
+        stream << " * \"" << symbol.first << "\" [" << symbol.second.symbol.size << " bytes]";
+        stream << " " << asString(symbol.second.symbol.segment) << "_SEGMENT@" << symbol.second.symbol.offset;
+        stream << " -> " << std::hex << std::showbase << symbol.second.gpuAddress << " GPUVA" << std::dec;
+        stream << "\n";
+    }
+    return stream.str();
+}
+
 } // namespace NEO

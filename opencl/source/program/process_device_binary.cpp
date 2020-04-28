@@ -117,6 +117,7 @@ cl_int Program::linkBinary() {
                                                                       kernHeapInfo.pKernelHeader->KernelHeapSize);
         }
     }
+    DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->symbols));
     return CL_SUCCESS;
 }
 
