@@ -243,10 +243,19 @@ void ClDevice::initializeCaps() {
     deviceInfo.memBaseAddressAlign = 1024;
     deviceInfo.minDataTypeAlignSize = 128;
 
-    deviceInfo.maxOnDeviceEvents = 1024;
-    deviceInfo.queueOnDeviceMaxSize = 64 * MB;
-    deviceInfo.queueOnDevicePreferredSize = 128 * KB;
-    deviceInfo.queueOnDeviceProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+    if (isDeviceEnqueueSupported()) {
+        deviceInfo.maxOnDeviceQueues = 1;
+        deviceInfo.maxOnDeviceEvents = 1024;
+        deviceInfo.queueOnDeviceMaxSize = 64 * MB;
+        deviceInfo.queueOnDevicePreferredSize = 128 * KB;
+        deviceInfo.queueOnDeviceProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+    } else {
+        deviceInfo.maxOnDeviceQueues = 0;
+        deviceInfo.maxOnDeviceEvents = 0;
+        deviceInfo.queueOnDeviceMaxSize = 0;
+        deviceInfo.queueOnDevicePreferredSize = 0;
+        deviceInfo.queueOnDeviceProperties = 0;
+    }
 
     deviceInfo.preferredInteropUserSync = 1u;
 

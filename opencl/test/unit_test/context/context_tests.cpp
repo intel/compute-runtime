@@ -21,6 +21,7 @@
 #include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "gtest/gtest.h"
 
@@ -123,6 +124,7 @@ TEST_F(ContextTest, WhenSettingSpecialQueueThenQueueIsAvailable) {
 }
 
 TEST_F(ContextTest, WhenSettingDefaultQueueThenQueueIsAvailable) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(context);
     EXPECT_EQ(nullptr, context->getDefaultDeviceQueue());
     auto dq = new DeviceQueue();
     context->setDefaultDeviceQueue(dq);
@@ -148,6 +150,7 @@ TEST_F(ContextTest, givenCmdQueueWithoutContextWhenBeingCreatedNextDeletedThenCo
 }
 
 TEST_F(ContextTest, givenDeviceQueueWithoutContextWhenBeingCreatedNextDeletedThenContextRefCountShouldNeitherBeIncrementedNorNextDecremented) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(context);
     MockContext context((ClDevice *)devices[0]);
     EXPECT_EQ(1, context.getRefInternalCount());
 
@@ -177,6 +180,7 @@ TEST_F(ContextTest, givenCmdQueueWithContextWhenBeingCreatedNextDeletedThenConte
 }
 
 TEST_F(ContextTest, givenDeviceCmdQueueWithContextWhenBeingCreatedNextDeletedThenContextRefCountShouldBeIncrementedNextDecremented) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(context);
     MockContext context((ClDevice *)devices[0]);
     EXPECT_EQ(1, context.getRefInternalCount());
 
@@ -189,6 +193,7 @@ TEST_F(ContextTest, givenDeviceCmdQueueWithContextWhenBeingCreatedNextDeletedThe
 }
 
 TEST_F(ContextTest, givenDefaultDeviceCmdQueueWithContextWhenBeingCreatedNextDeletedThenContextRefCountShouldBeIncrementedNextDecremented) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(context);
     MockContext context((ClDevice *)devices[0]);
     EXPECT_EQ(1, context.getRefInternalCount());
 

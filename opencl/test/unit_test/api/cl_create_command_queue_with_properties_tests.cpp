@@ -17,6 +17,7 @@
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "CL/cl_ext.h"
 #include "cl_api_tests.h"
@@ -273,9 +274,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDefaultDeviceQueueWithoutQueu
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenNumberOfDevicesGreaterThanMaxWhenCreatingCommandQueueWithPropertiesThenOutOfResourcesErrorIsReturned) {
-    if (!this->pContext->getDevice(0u)->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
-        GTEST_SKIP();
-    }
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pContext);
     cl_int retVal = CL_SUCCESS;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
     cl_queue_properties odq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE, 0, 0};
@@ -285,7 +284,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenNumberOf
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     auto cmdq2 = clCreateCommandQueueWithProperties(pContext, testedClDevice, odq, &retVal);
-    if (pDevice->getSharedDeviceInfo().maxOnDeviceQueues > 1) {
+    if (pDevice->getDeviceInfo().maxOnDeviceQueues > 1) {
         EXPECT_NE(nullptr, cmdq2);
         EXPECT_EQ(retVal, CL_SUCCESS);
     } else {
@@ -300,9 +299,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenNumberOf
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenFailedAllocationWhenCreatingCommandQueueWithPropertiesThenOutOfHostMemoryErrorIsReturned) {
-    if (!this->pContext->getDevice(0u)->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
-        GTEST_SKIP();
-    }
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pContext);
     InjectedFunction method = [this](size_t failureIndex) {
         cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0};
         auto retVal = CL_INVALID_VALUE;
@@ -341,6 +338,34 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenMedPriorityWhenCreatingOoqCom
     cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_MED_KHR, 0, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, testedClDevice, ondevice, &retVal);
     EXPECT_EQ(nullptr, cmdqd);
+    EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDeviceEnqueueDisabledWhenCreatingDeviceQueueThenNullQueueAndInvalidQueuePropertiesErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DisableDeviceEnqueue.set(true);
+
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context{pClDevice.get()};
+
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties queueProperties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0, 0};
+    auto pCmdQ = clCreateCommandQueueWithProperties(&context, pClDevice.get(), queueProperties, &retVal);
+    EXPECT_EQ(nullptr, pCmdQ);
+    EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDeviceEnqueueDisabledWhenCreatingDefaultDeviceQueueThenNullQueueAndInvalidQueuePropertiesErrorIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DisableDeviceEnqueue.set(true);
+
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext context{pClDevice.get()};
+
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties queueProperties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0, 0};
+    auto pCmdQ = clCreateCommandQueueWithProperties(&context, pClDevice.get(), queueProperties, &retVal);
+    EXPECT_EQ(nullptr, pCmdQ);
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
 }
 

@@ -7,14 +7,20 @@
 
 #pragma once
 
+#include <memory>
+
 namespace NEO {
 class ClDevice;
 class Context;
+struct HardwareInfo;
 
 namespace TestChecks {
 bool supportsSvm(const ClDevice *pClDevice);
 bool supportsImages(const Context *pContext);
 bool supportsOcl21(const Context *pContext);
+bool supportsDeviceEnqueue(const ClDevice *pClDevice);
+bool supportsDeviceEnqueue(const Context *pContext);
+bool supportsDeviceEnqueue(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
 } // namespace TestChecks
 
 } // namespace NEO
@@ -29,4 +35,9 @@ bool supportsOcl21(const Context *pContext);
 #define REQUIRE_OCL_21_OR_SKIP(param)                     \
     if (NEO::TestChecks::supportsOcl21(param) == false) { \
         GTEST_SKIP();                                     \
+    }
+
+#define REQUIRE_DEVICE_ENQUEUE_OR_SKIP(param)                     \
+    if (NEO::TestChecks::supportsDeviceEnqueue(param) == false) { \
+        GTEST_SKIP();                                             \
     }

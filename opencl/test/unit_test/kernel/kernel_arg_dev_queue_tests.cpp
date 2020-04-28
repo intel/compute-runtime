@@ -18,9 +18,7 @@ struct KernelArgDevQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
   protected:
     void SetUp() override {
         DeviceHostQueueFixture<DeviceQueue>::SetUp();
-        if (!this->pDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
-            GTEST_SKIP();
-        }
+        REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pDevice);
 
         pDeviceQueue = createQueueObject();
 

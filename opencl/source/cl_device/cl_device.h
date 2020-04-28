@@ -118,6 +118,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     const std::string &peekCompilerExtensions() const;
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
     DeviceBitfield getDeviceBitfield() const;
+    bool isDeviceEnqueueSupported() const;
 
   protected:
     void initializeCaps();

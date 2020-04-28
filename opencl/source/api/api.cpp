@@ -4782,7 +4782,6 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
 
     auto commandQueueProperties = getCmdQueueProperties<cl_command_queue_properties>(properties);
     uint32_t maxOnDeviceQueueSize = pDevice->getDeviceInfo().queueOnDeviceMaxSize;
-    uint32_t maxOnDeviceQueues = pDevice->getSharedDeviceInfo().maxOnDeviceQueues;
 
     if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
         if (!(commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))) {
@@ -4790,7 +4789,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
             TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
         }
-        if (!pDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
+        if (!pDevice->isDeviceEnqueueSupported()) {
             err.set(CL_INVALID_QUEUE_PROPERTIES);
             TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
@@ -4804,7 +4803,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
             return commandQueue;
         }
     } else if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
-        if ((maxOnDeviceQueues == 0) || ((maxOnDeviceQueues == 1) && pContext->getDefaultDeviceQueue())) {
+        if (pContext->getDefaultDeviceQueue()) {
             err.set(CL_OUT_OF_RESOURCES);
             TRACING_EXIT(clCreateCommandQueueWithProperties, &commandQueue);
             return commandQueue;
@@ -5059,10 +5058,18 @@ cl_int CL_API_CALL clSetDefaultDeviceCommandQueue(cl_context context,
                    "commandQueue", commandQueue);
 
     Context *pContext = nullptr;
+    ClDevice *pClDevice = nullptr;
 
-    retVal = validateObjects(WithCastToInternal(context, &pContext), device);
+    retVal = validateObjects(WithCastToInternal(context, &pContext),
+                             WithCastToInternal(device, &pClDevice));
 
     if (CL_SUCCESS != retVal) {
+        TRACING_EXIT(clSetDefaultDeviceCommandQueue, &retVal);
+        return retVal;
+    }
+
+    if (pClDevice->isDeviceEnqueueSupported() == false) {
+        retVal = CL_INVALID_OPERATION;
         TRACING_EXIT(clSetDefaultDeviceCommandQueue, &retVal);
         return retVal;
     }

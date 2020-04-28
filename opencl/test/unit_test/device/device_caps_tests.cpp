@@ -146,12 +146,20 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
 
     EXPECT_EQ(sharedCaps.maxWorkGroupSize / hwHelper.getMinimalSIMDSize(), caps.maxNumOfSubGroups);
 
-    EXPECT_EQ(1024u, caps.maxOnDeviceEvents);
-    EXPECT_EQ(1u, sharedCaps.maxOnDeviceQueues);
-    EXPECT_EQ(64u * MB, caps.queueOnDeviceMaxSize);
-    EXPECT_EQ(128 * KB, caps.queueOnDevicePreferredSize);
-    EXPECT_EQ(static_cast<cl_command_queue_properties>(CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE),
-              caps.queueOnDeviceProperties);
+    if (defaultHwInfo->capabilityTable.supportsDeviceEnqueue) {
+        EXPECT_EQ(1024u, caps.maxOnDeviceEvents);
+        EXPECT_EQ(1u, caps.maxOnDeviceQueues);
+        EXPECT_EQ(64u * MB, caps.queueOnDeviceMaxSize);
+        EXPECT_EQ(128 * KB, caps.queueOnDevicePreferredSize);
+        EXPECT_EQ(static_cast<cl_command_queue_properties>(CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE),
+                  caps.queueOnDeviceProperties);
+    } else {
+        EXPECT_EQ(0u, caps.maxOnDeviceEvents);
+        EXPECT_EQ(0u, caps.maxOnDeviceQueues);
+        EXPECT_EQ(0u, caps.queueOnDeviceMaxSize);
+        EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
+        EXPECT_EQ(static_cast<cl_command_queue_properties>(0), caps.queueOnDeviceProperties);
+    }
 
     EXPECT_EQ(64u, caps.preferredGlobalAtomicAlignment);
     EXPECT_EQ(64u, caps.preferredLocalAtomicAlignment);
@@ -950,6 +958,20 @@ TEST(DeviceGetCaps, givenDebugFlagToUseCertainWorkgroupSizeWhenDeviceIsCreatedIt
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     EXPECT_EQ(16u, device->getDeviceInfo().maxWorkGroupSize);
+}
+
+TEST(DeviceGetCaps, givenDebugFlagToDisableDeviceEnqueuesWhenCreatingDeviceThenDeviceQueueCapsAreSetCorrectly) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.DisableDeviceEnqueue.set(true);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    const auto &caps = device->getDeviceInfo();
+
+    EXPECT_EQ(0u, caps.queueOnDeviceProperties);
+    EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
+    EXPECT_EQ(0u, caps.queueOnDeviceMaxSize);
+    EXPECT_EQ(0u, caps.maxOnDeviceQueues);
+    EXPECT_EQ(0u, caps.maxOnDeviceEvents);
 }
 
 HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedItIsLimitedTo1024) {

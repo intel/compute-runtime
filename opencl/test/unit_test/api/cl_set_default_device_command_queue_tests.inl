@@ -64,7 +64,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenValidPar
                                         0};
     auto pDevice = castToObject<ClDevice>(testedClDevice);
 
-    if (pDevice->getSharedDeviceInfo().maxOnDeviceQueues > 1) {
+    if (pDevice->getDeviceInfo().maxOnDeviceQueues > 1) {
         auto newDeviceQueue = clCreateCommandQueueWithProperties(pContext, testedClDevice, properties, &retVal);
         ASSERT_NE(nullptr, newDeviceQueue);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -86,6 +86,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullCont
 HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullDeviceWhenSettingDefaultDeviceQueueThenClInvalidDeviceErrorIsReturned) {
     retVal = clSetDefaultDeviceCommandQueue(pContext, nullptr, deviceQueue);
     ASSERT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(clSetDefaultDeviceCommandQueueApiTest, GivenDeviceNotSupportingDeviceEnqueueWhenSettingDefaultDeviceQueueThenClInvalidOperationErrorIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.DisableDeviceEnqueue.set(true);
+
+    retVal = clSetDefaultDeviceCommandQueue(pContext, testedClDevice, nullptr);
+    ASSERT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullDeviceQueueWhenSettingDefaultDeviceQueueThenClInvalidCommandQueueErrorIsReturned) {

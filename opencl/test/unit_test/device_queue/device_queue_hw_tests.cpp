@@ -483,6 +483,7 @@ class DeviceQueueHwWithKernel : public ExecutionModelKernelFixture {
   public:
     void SetUp() override {
         ExecutionModelKernelFixture::SetUp();
+        REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
         cl_queue_properties properties[5] = {
             CL_QUEUE_PROPERTIES,
             CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
@@ -501,16 +502,22 @@ class DeviceQueueHwWithKernel : public ExecutionModelKernelFixture {
         ASSERT_NE(nullptr, devQueue);
     }
     void TearDown() override {
-        delete devQueue;
-        delete context;
-        delete clDevice;
+        if (devQueue) {
+            delete devQueue;
+        }
+        if (context) {
+            delete context;
+        }
+        if (clDevice) {
+            delete clDevice;
+        }
         ExecutionModelKernelFixture::TearDown();
     }
 
-    Device *device;
-    ClDevice *clDevice;
-    DeviceQueue *devQueue;
-    MockContext *context;
+    Device *device = nullptr;
+    ClDevice *clDevice = nullptr;
+    DeviceQueue *devQueue = nullptr;
+    MockContext *context = nullptr;
 };
 
 HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, WhenSetiingIUpIndirectStateThenDshIsNotUsed) {
@@ -649,7 +656,13 @@ INSTANTIATE_TEST_CASE_P(DeviceQueueHwWithKernel,
                             ::testing::Values(binaryFile),
                             ::testing::ValuesIn(KernelNames)));
 
-typedef testing::Test TheSimplestDeviceQueueFixture;
+struct TheSimplestDeviceQueueFixture : testing::Test {
+    void SetUp() override {
+        REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
+    }
+    void TearDown() override {
+    }
+};
 
 HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, WhenResettingDeviceQueueThenEarlyReturnValuesAreSet) {
 

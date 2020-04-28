@@ -48,11 +48,9 @@ class DeviceQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
     using BaseClass = DeviceHostQueueFixture<DeviceQueue>;
     void SetUp() override {
         BaseClass::SetUp();
+        REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pContext);
         device = pContext->getDevice(0);
 
-        if (!device->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
-            GTEST_SKIP();
-        }
         ASSERT_NE(device, nullptr);
     }
 
@@ -71,19 +69,9 @@ class DeviceQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
     ClDevice *device;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, createDeviceQueueWhenNoDeviceQueueIsSupported) {
-    auto maxOnDeviceQueues = device->getSharedDeviceInfo().maxOnDeviceQueues;
-    const_cast<DeviceInfo *>(&device->getSharedDeviceInfo())->maxOnDeviceQueues = 0;
-
-    auto deviceQueue = createQueueObject();
-    EXPECT_EQ(deviceQueue, nullptr);
-
-    const_cast<DeviceInfo *>(&device->getSharedDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
-}
-
 HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, createDeviceQueuesWhenSingleDeviceQueueIsSupported) {
-    auto maxOnDeviceQueues = device->getSharedDeviceInfo().maxOnDeviceQueues;
-    const_cast<DeviceInfo *>(&device->getSharedDeviceInfo())->maxOnDeviceQueues = 1;
+    auto maxOnDeviceQueues = device->getDeviceInfo().maxOnDeviceQueues;
+    const_cast<ClDeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = 1;
 
     auto deviceQueue1 = createQueueObject();
     ASSERT_NE(deviceQueue1, nullptr);
@@ -94,27 +82,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, createDeviceQueuesWhenSingleDeviceQ
 
     delete deviceQueue1;
 
-    const_cast<DeviceInfo *>(&device->getSharedDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
-}
-
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, createDeviceQueuesWhenMultipleDeviceQueuesAreSupported) {
-    auto maxOnDeviceQueues = device->getSharedDeviceInfo().maxOnDeviceQueues;
-    const_cast<DeviceInfo *>(&device->getSharedDeviceInfo())->maxOnDeviceQueues = 2;
-
-    auto deviceQueue1 = createQueueObject();
-    ASSERT_NE(deviceQueue1, nullptr);
-    EXPECT_EQ(deviceQueue1->getReference(), 1);
-
-    auto deviceQueue2 = createQueueObject();
-    ASSERT_NE(deviceQueue2, nullptr);
-    EXPECT_EQ(deviceQueue2->getReference(), 1);
-
-    EXPECT_NE(deviceQueue2, deviceQueue1);
-
-    delete deviceQueue1;
-    delete deviceQueue2;
-
-    const_cast<DeviceInfo *>(&device->getSharedDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
+    const_cast<ClDeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, GivenDeviceQueueWhenEventPoolIsCreatedThenTimestampResolutionIsSet) {
@@ -238,8 +206,8 @@ typedef DeviceQueueTest DefaultDeviceQueue;
 HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, createOnlyOneDefaultDeviceQueueWhenSingleDeviceQueueIsSupported) {
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0, 0};
 
-    auto maxOnDeviceQueues = device->getSharedDeviceInfo().maxOnDeviceQueues;
-    const_cast<DeviceInfo *>(&device->getSharedDeviceInfo())->maxOnDeviceQueues = 1;
+    auto maxOnDeviceQueues = device->getDeviceInfo().maxOnDeviceQueues;
+    const_cast<ClDeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = 1;
 
     auto deviceQueue1 = createQueueObject(properties);
     ASSERT_NE(deviceQueue1, nullptr);
@@ -258,14 +226,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, createOnlyOneDefaultDeviceQueueW
     deviceQueue1->release();
     deviceQueue2->release();
 
-    const_cast<DeviceInfo *>(&device->getSharedDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
+    const_cast<ClDeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, createOnlyOneDefaultDeviceQueueWhenMultipleDeviceQueuesAreSupported) {
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0, 0};
 
-    auto maxOnDeviceQueues = device->getSharedDeviceInfo().maxOnDeviceQueues;
-    const_cast<DeviceInfo *>(&device->getSharedDeviceInfo())->maxOnDeviceQueues = 2;
+    auto maxOnDeviceQueues = device->getDeviceInfo().maxOnDeviceQueues;
+    const_cast<ClDeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = 2;
 
     auto deviceQueue1 = createQueueObject(properties);
     ASSERT_NE(deviceQueue1, nullptr);
@@ -284,7 +252,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, createOnlyOneDefaultDeviceQueueW
     deviceQueue1->release();
     deviceQueue2->release();
 
-    const_cast<DeviceInfo *>(&device->getSharedDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
+    const_cast<ClDeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
 }
 
 typedef DeviceQueueTest DeviceQueueEventPool;

@@ -13,10 +13,12 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/execution_model_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 class DeviceQueueFixture {
   public:
     void SetUp(Context *context, ClDevice *device) {
+        REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
         cl_int errcodeRet = 0;
         cl_queue_properties properties[3];
 

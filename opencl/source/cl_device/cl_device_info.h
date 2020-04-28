@@ -83,6 +83,7 @@ struct ClDeviceInfo {
     cl_bool                      linkerAvailable;
     cl_uint                      queueOnDevicePreferredSize;
     cl_uint                      queueOnDeviceMaxSize;
+    cl_uint                      maxOnDeviceQueues;
     cl_uint                      maxOnDeviceEvents;
     cl_bool                      preferredInteropUserSync;
     cl_uint                      referenceCount;

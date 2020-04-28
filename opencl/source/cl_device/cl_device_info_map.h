@@ -70,7 +70,6 @@ template<> struct Map<CL_DEVICE_IMAGE_SUPPORT                   > : public MapBa
 template<> struct Map<CL_DEVICE_LOCAL_MEM_SIZE                  > : public MapBase<CL_DEVICE_LOCAL_MEM_SIZE,                   uint64_t,     &DeviceInfo::localMemSize> {};
 template<> struct Map<CL_DEVICE_MAX_CLOCK_FREQUENCY             > : public MapBase<CL_DEVICE_MAX_CLOCK_FREQUENCY,              uint32_t,     &DeviceInfo::maxClockFrequency> {};
 template<> struct Map<CL_DEVICE_MAX_MEM_ALLOC_SIZE              > : public MapBase<CL_DEVICE_MAX_MEM_ALLOC_SIZE,               uint64_t,     &DeviceInfo::maxMemAllocSize> {};
-template<> struct Map<CL_DEVICE_MAX_ON_DEVICE_QUEUES            > : public MapBase<CL_DEVICE_MAX_ON_DEVICE_QUEUES,             uint32_t,     &DeviceInfo::maxOnDeviceQueues> {};
 template<> struct Map<CL_DEVICE_MAX_PARAMETER_SIZE              > : public MapBase<CL_DEVICE_MAX_PARAMETER_SIZE,               size_t,       &DeviceInfo::maxParameterSize> {};
 template<> struct Map<CL_DEVICE_MAX_READ_IMAGE_ARGS             > : public MapBase<CL_DEVICE_MAX_READ_IMAGE_ARGS,              uint32_t,     &DeviceInfo::maxReadImageArgs> {};
 template<> struct Map<CL_DEVICE_MAX_SAMPLERS                    > : public MapBase<CL_DEVICE_MAX_SAMPLERS,                     uint32_t,     &DeviceInfo::maxSamplers> {};
@@ -147,6 +146,7 @@ template<> struct Map<CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG                 > : 
 template<> struct Map<CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT                > : public ClMapBase<CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT,                uint32_t,                        &ClDeviceInfo::preferredVectorWidthShort> {};
 template<> struct Map<CL_DEVICE_PROFILE                                     > : public ClMapBase<CL_DEVICE_PROFILE,                                     const char *,                    &ClDeviceInfo::profile> {};
 template<> struct Map<CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE                    > : public ClMapBase<CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE,                    uint32_t,                        &ClDeviceInfo::queueOnDeviceMaxSize> {};
+template<> struct Map<CL_DEVICE_MAX_ON_DEVICE_QUEUES                        > : public ClMapBase<CL_DEVICE_MAX_ON_DEVICE_QUEUES,                        uint32_t,                        &ClDeviceInfo::maxOnDeviceQueues> {};
 template<> struct Map<CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE              > : public ClMapBase<CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE,              uint32_t,                        &ClDeviceInfo::queueOnDevicePreferredSize> {};
 template<> struct Map<CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES                  > : public ClMapBase<CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES,                  uint64_t,                        &ClDeviceInfo::queueOnDeviceProperties> {};
 template<> struct Map<CL_DEVICE_QUEUE_ON_HOST_PROPERTIES                    > : public ClMapBase<CL_DEVICE_QUEUE_ON_HOST_PROPERTIES,                    uint64_t,                        &ClDeviceInfo::queueOnHostProperties> {};

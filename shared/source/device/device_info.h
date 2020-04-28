@@ -37,7 +37,6 @@ struct DeviceInfo {
     uint32_t imageSupport;
     uint32_t maxClockFrequency;
     uint32_t maxFrontEndThreads;
-    uint32_t maxOnDeviceQueues;
     uint32_t maxReadImageArgs;
     uint32_t maxSamplers;
     uint32_t maxWriteImageArgs;

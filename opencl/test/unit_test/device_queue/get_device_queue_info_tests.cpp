@@ -17,9 +17,7 @@ class GetDeviceQueueInfoTest : public DeviceHostQueueFixture<DeviceQueue> {
 
     void SetUp() override {
         BaseClass::SetUp();
-        if (!this->pContext->getDevice(0u)->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
-            GTEST_SKIP();
-        }
+        REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pContext);
         deviceQueue = createQueueObject(deviceQueueProperties::allProperties);
         ASSERT_NE(deviceQueue, nullptr);
     }

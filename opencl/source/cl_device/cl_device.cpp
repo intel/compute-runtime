@@ -7,6 +7,7 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -177,6 +178,13 @@ const std::string &ClDevice::peekCompilerExtensions() const {
 }
 DeviceBitfield ClDevice::getDeviceBitfield() const {
     return device.getDeviceBitfield();
+}
+
+bool ClDevice::isDeviceEnqueueSupported() const {
+    if (DebugManager.flags.DisableDeviceEnqueue.get()) {
+        return false;
+    }
+    return device.getHardwareInfo().capabilityTable.supportsDeviceEnqueue;
 }
 
 } // namespace NEO

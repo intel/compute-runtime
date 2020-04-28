@@ -24,6 +24,7 @@
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/mocks/mock_sampler.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "patch_list.h"
 
@@ -643,6 +644,7 @@ TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNon
 }
 
 TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithoutKernelArgs) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
     MockContext context;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockProgram program(*device->getExecutionEnvironment());
@@ -694,6 +696,7 @@ TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithoutKern
 }
 
 TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithDeviceQueueKernelArg) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
     MockContext context;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockProgram program(*device->getExecutionEnvironment());
@@ -1029,6 +1032,7 @@ INSTANTIATE_TEST_CASE_P(KernelReflectionSurfaceTest,
                             ::testing::ValuesIn(KernelNames)));
 
 HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, ObtainKernelReflectionSurfacePatchesBlocksCurbe) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pPlatform->getClDevice(0));
     if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
 
         BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
@@ -1904,6 +1908,7 @@ TEST_F(ReflectionSurfaceHelperFixture, PatchBlocksCurbeWithConstantValuesWithUnd
 typedef ParentKernelCommandQueueFixture ReflectionSurfaceTestForPrintfHandler;
 
 TEST_F(ReflectionSurfaceTestForPrintfHandler, PatchReflectionSurfacePatchesPrintfBufferWhenPrintfHandlerIsPassed) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     MockContext context(device);
     cl_queue_properties properties[3] = {0};
@@ -1932,6 +1937,7 @@ TEST_F(ReflectionSurfaceTestForPrintfHandler, PatchReflectionSurfacePatchesPrint
 }
 
 TEST_F(ReflectionSurfaceTestForPrintfHandler, PatchReflectionSurfaceDoesNotPatchPrintfBufferWhenPrintfSurfaceIsNotCreated) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     MockContext context(device);
     cl_queue_properties properties[3] = {0};
@@ -2126,6 +2132,7 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
 using KernelReflectionMultiDeviceTest = MultiRootDeviceFixture;
 
 TEST_F(KernelReflectionMultiDeviceTest, ObtainKernelReflectionSurfaceWithoutKernelArgs) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device.get());
     MockProgram program(*device->getExecutionEnvironment());
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;
@@ -2176,6 +2183,7 @@ TEST_F(KernelReflectionMultiDeviceTest, ObtainKernelReflectionSurfaceWithoutKern
 }
 
 TEST_F(KernelReflectionMultiDeviceTest, ObtainKernelReflectionSurfaceWithDeviceQueueKernelArg) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device.get());
     MockProgram program(*device->getExecutionEnvironment());
 
     KernelInfo *blockInfo = new KernelInfo;

@@ -318,7 +318,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->onDemandPageFaultsSupported = true;
 
-    pDeviceProperties->maxCommandQueues = deviceInfo.maxOnDeviceQueues;
+    pDeviceProperties->maxCommandQueues = 1;
 
     pDeviceProperties->numAsyncComputeEngines = static_cast<uint32_t>(hwHelper.getGpgpuEngineInstances(hardwareInfo).size());
 

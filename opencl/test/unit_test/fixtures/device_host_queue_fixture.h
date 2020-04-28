@@ -11,6 +11,7 @@
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
 using namespace NEO;
@@ -59,9 +60,7 @@ class DeviceQueueHwTest : public DeviceHostQueueFixture<DeviceQueue> {
         BaseClass::SetUp();
         device = castToObject<ClDevice>(testedClDevice);
         ASSERT_NE(device, nullptr);
-        if (!device->getHardwareInfo().capabilityTable.supportsDeviceEnqueue) {
-            GTEST_SKIP();
-        }
+        REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
     }
 
     void TearDown() override {
