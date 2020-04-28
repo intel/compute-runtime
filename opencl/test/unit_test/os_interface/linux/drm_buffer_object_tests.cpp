@@ -185,8 +185,6 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
     bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
     auto ret = bo->pin(array, 3, 1);
     EXPECT_EQ(mock->ioctl_res, ret);
-    uint32_t bb_end = 0x05000000;
-    EXPECT_EQ(buff[0], bb_end);
 
     EXPECT_LT(0u, mock->execBuffer.batch_len);
     EXPECT_EQ(4u, mock->execBuffer.buffer_count); // 3 bos to pin plus 1 exec bo

@@ -46,19 +46,28 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
     }
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
+        BufferObject *bo = nullptr;
         if (forcePinEnabled || validateHostPtrMemory) {
-            memoryForPinBBs.push_back(alignedMallocWrapper(MemoryConstants::pageSize, MemoryConstants::pageSize));
+            auto cpuAddrBo = alignedMallocWrapper(MemoryConstants::pageSize, MemoryConstants::pageSize);
+            // Preprogram the Bo with MI_BATCH_BUFFER_END and MI_NOOP. This BO will be used as the last BB in a series to indicate the end of submission.
+            reinterpret_cast<uint32_t *>(cpuAddrBo)[0] = 0x05000000; // MI_BATCH_BUFFER_END
+            reinterpret_cast<uint32_t *>(cpuAddrBo)[1] = 0;          // MI_NOOP
+            memoryForPinBBs.push_back(cpuAddrBo);
             DEBUG_BREAK_IF(memoryForPinBBs[rootDeviceIndex] == nullptr);
-            pinBBs.push_back(allocUserptr(reinterpret_cast<uintptr_t>(memoryForPinBBs[rootDeviceIndex]), MemoryConstants::pageSize, 0, rootDeviceIndex));
-            if (!pinBBs[rootDeviceIndex]) {
+            bo = allocUserptr(reinterpret_cast<uintptr_t>(memoryForPinBBs[rootDeviceIndex]), MemoryConstants::pageSize, 0, rootDeviceIndex);
+            if (bo) {
+                if (isLimitedRange(rootDeviceIndex)) {
+                    bo->gpuAddress = acquireGpuRange(bo->size, false, rootDeviceIndex, false);
+                }
+            } else {
                 alignedFreeWrapper(memoryForPinBBs[rootDeviceIndex]);
                 memoryForPinBBs[rootDeviceIndex] = nullptr;
                 DEBUG_BREAK_IF(true);
                 UNRECOVERABLE_IF(validateHostPtrMemory);
             }
-        } else {
-            pinBBs.push_back(nullptr);
         }
+
+        pinBBs.push_back(bo);
     }
 }
 
@@ -74,9 +83,13 @@ void DrmMemoryManager::commonCleanup() {
     if (gemCloseWorker) {
         gemCloseWorker->close(false);
     }
-    for (auto &pinBB : pinBBs) {
-        if (pinBB) {
-            DrmMemoryManager::unreference(pinBB, true);
+
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < pinBBs.size(); ++rootDeviceIndex) {
+        if (auto bo = pinBBs[rootDeviceIndex]) {
+            if (isLimitedRange(rootDeviceIndex)) {
+                releaseGpuRange(reinterpret_cast<void *>(bo->gpuAddress), bo->size, rootDeviceIndex);
+            }
+            DrmMemoryManager::unreference(bo, true);
         }
     }
     pinBBs.clear();

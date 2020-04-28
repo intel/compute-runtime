@@ -2930,6 +2930,34 @@ TEST_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEnabledWhenSmal
     ::alignedFree(const_cast<void *>(allocationData.hostPtr));
 }
 
+TEST_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEnabledThenPinnedBufferObjectGpuAddressWithinDeviceGpuAddressSpace) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, true, true, *executionEnvironment));
+
+    auto bo = memoryManager->pinBBs[rootDeviceIndex];
+
+    ASSERT_NE(nullptr, bo);
+
+    EXPECT_LT(bo->peekAddress(), defaultHwInfo->capabilityTable.gpuAddressSpace);
+}
+
+TEST_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEnabledThenPinnedBufferObjectWrittenWithMIBBENDAndNOOP) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(false, true, true, *executionEnvironment));
+
+    EXPECT_NE(0ul, memoryManager->memoryForPinBBs.size());
+    ASSERT_NE(nullptr, memoryManager->memoryForPinBBs[rootDeviceIndex]);
+
+    uint32_t *buffer = reinterpret_cast<uint32_t *>(memoryManager->memoryForPinBBs[rootDeviceIndex]);
+    uint32_t bb_end = 0x05000000;
+    EXPECT_EQ(bb_end, buffer[0]);
+    EXPECT_EQ(0ul, buffer[1]);
+}
+
 TEST_F(DrmMemoryManagerTest, givenForcePinAllowedAndNoPinBBInMemoryManagerWhenAllocationWithForcePinFlagTrueIsCreatedThenAllocationIsNotPinned) {
     mock->ioctl_expected.gemUserptr = 2;
     mock->ioctl_expected.gemWait = 1;
