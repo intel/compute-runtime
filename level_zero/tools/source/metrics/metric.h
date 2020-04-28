@@ -117,7 +117,7 @@ struct MetricTracer : _zet_metric_tracer_handle_t {
 struct MetricQueryPool : _zet_metric_query_pool_handle_t {
     virtual ~MetricQueryPool() = default;
 
-    virtual bool destroy() = 0;
+    virtual ze_result_t destroy() = 0;
     virtual ze_result_t createMetricQuery(uint32_t index,
                                           zet_metric_query_handle_t *phMetricQuery) = 0;
 
@@ -150,9 +150,6 @@ struct MetricQuery : _zet_metric_query_handle_t {
 // MetricGroup.
 ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups);
 
-// Metric.
-ze_result_t metricGet(zet_metric_group_handle_t hMetricGroup, uint32_t *pCount, zet_metric_handle_t *phMetrics);
-
 // MetricTracer.
 ze_result_t metricTracerOpen(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                              zet_metric_tracer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
@@ -161,6 +158,5 @@ ze_result_t metricTracerOpen(zet_device_handle_t hDevice, zet_metric_group_handl
 // MetricQueryPool.
 ze_result_t metricQueryPoolCreate(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup, const zet_metric_query_pool_desc_t *pDesc,
                                   zet_metric_query_pool_handle_t *phMetricQueryPool);
-ze_result_t metricQueryPoolDestroy(zet_metric_query_pool_handle_t hMetricQueryPool);
 
 } // namespace L0

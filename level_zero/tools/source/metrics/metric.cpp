@@ -354,11 +354,6 @@ ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_me
                                                                             phMetricGroups);
 }
 
-ze_result_t metricGet(zet_metric_group_handle_t hMetricGroup, uint32_t *pCount, zet_metric_handle_t *phMetrics) {
-    auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
-    return metricGroup->getMetric(pCount, phMetrics);
-}
-
 ze_result_t metricTracerOpen(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                              zet_metric_tracer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
                              zet_metric_tracer_handle_t *phMetricTracer) {

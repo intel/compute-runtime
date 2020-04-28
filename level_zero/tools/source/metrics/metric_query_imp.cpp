@@ -368,14 +368,12 @@ bool MetricQueryPoolImp::create() {
     }
 }
 
-bool MetricQueryPoolImp::destroy() {
-    bool result = false;
-
+ze_result_t MetricQueryPoolImp::destroy() {
     switch (description.flags) {
     case ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE:
         DEBUG_BREAK_IF(!(pAllocation && query.IsValid()));
         metricContext.getDevice().getDriverHandle()->getMemoryManager()->freeGraphicsMemory(pAllocation);
-        result = metricsLibrary.destroyMetricQuery(query);
+        metricsLibrary.destroyMetricQuery(query);
         delete this;
         break;
 
@@ -384,7 +382,7 @@ bool MetricQueryPoolImp::destroy() {
         break;
     }
 
-    return result;
+    return ZE_RESULT_SUCCESS;
 }
 
 bool MetricQueryPoolImp::createMetricQueryPool() {
@@ -404,11 +402,6 @@ bool MetricQueryPoolImp::createMetricQueryPool() {
 
     // Metrics library query object initialization.
     return metricsLibrary.createMetricQuery(description.count, query, pAllocation);
-}
-
-ze_result_t metricQueryPoolDestroy(zet_metric_query_pool_handle_t hMetricQueryPool) {
-    MetricQueryPool::fromHandle(hMetricQueryPool)->destroy();
-    return ZE_RESULT_SUCCESS;
 }
 
 MetricQueryPool *MetricQueryPool::fromHandle(zet_metric_query_pool_handle_t handle) {

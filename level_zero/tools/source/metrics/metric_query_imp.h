@@ -117,7 +117,7 @@ struct MetricQueryPoolImp : MetricQueryPool {
     MetricQueryPoolImp(MetricContext &metricContext, zet_metric_group_handle_t hEventMetricGroup, const zet_metric_query_pool_desc_t &poolDescription);
 
     bool create();
-    bool destroy() override;
+    ze_result_t destroy() override;
 
     ze_result_t createMetricQuery(uint32_t index, zet_metric_query_handle_t *phMetricQuery) override;
 

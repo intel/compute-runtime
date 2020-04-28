@@ -32,7 +32,7 @@ zetMetricGet(
     zet_metric_group_handle_t hMetricGroup,
     uint32_t *pCount,
     zet_metric_handle_t *phMetrics) {
-    return L0::metricGet(hMetricGroup, pCount, phMetrics);
+    return L0::MetricGroup::fromHandle(hMetricGroup)->getMetric(pCount, phMetrics);
 }
 
 __zedllexport ze_result_t __zecall
@@ -105,7 +105,7 @@ zetMetricQueryPoolCreate(
 __zedllexport ze_result_t __zecall
 zetMetricQueryPoolDestroy(
     zet_metric_query_pool_handle_t hMetricQueryPool) {
-    return L0::metricQueryPoolDestroy(hMetricQueryPool);
+    return L0::MetricQueryPool::fromHandle(hMetricQueryPool)->destroy();
 }
 
 __zedllexport ze_result_t __zecall

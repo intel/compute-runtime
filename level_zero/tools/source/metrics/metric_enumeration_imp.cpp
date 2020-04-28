@@ -377,7 +377,6 @@ MetricGroupImp ::~MetricGroupImp() {
 };
 
 ze_result_t MetricGroupImp::getProperties(zet_metric_group_properties_t *pProperties) {
-    DEBUG_BREAK_IF(pProperties->version > ZET_METRIC_GROUP_PROPERTIES_VERSION_CURRENT);
     copyProperties(properties, *pProperties);
     return ZE_RESULT_SUCCESS;
 }
@@ -605,7 +604,6 @@ void MetricGroupImp::copyValue(const MetricsDiscovery::TTypedValue_1_0 &source,
 }
 
 ze_result_t MetricImp::getProperties(zet_metric_properties_t *pProperties) {
-    DEBUG_BREAK_IF(pProperties->version > ZET_METRIC_PROPERTIES_VERSION_CURRENT);
     copyProperties(properties, *pProperties);
     return ZE_RESULT_SUCCESS;
 }
