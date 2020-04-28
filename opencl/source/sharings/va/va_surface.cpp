@@ -66,7 +66,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     AllocationProperties properties(context->getDevice(0)->getRootDeviceIndex(),
                                     false, // allocateMemory
                                     imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE,
-                                    context->getDevice(0)->getDeviceBitfield());
+                                    context->getDeviceBitfieldForAllocation());
 
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, properties, false);
 

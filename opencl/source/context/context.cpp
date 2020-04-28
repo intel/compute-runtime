@@ -415,7 +415,16 @@ ClDevice *Context::getSubDeviceByIndex(uint32_t subDeviceIndex) const {
     return (foundDeviceIterator != devices.end() ? *foundDeviceIterator : nullptr);
 }
 
-AsyncEventsHandler &Context::getAsyncEventsHandler() {
+AsyncEventsHandler &Context::getAsyncEventsHandler() const {
     return *static_cast<ClExecutionEnvironment *>(devices[0]->getExecutionEnvironment())->getAsyncEventsHandler();
+}
+
+DeviceBitfield Context::getDeviceBitfieldForAllocation() const {
+    DeviceBitfield deviceBitfield{};
+    for (const auto &pDevice : devices) {
+        deviceBitfield |= pDevice->getDeviceBitfield();
+    }
+
+    return deviceBitfield;
 }
 } // namespace NEO

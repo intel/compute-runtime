@@ -218,7 +218,6 @@ TEST(clSvmAllocTest, givenSubDeviceWhenCreatingSvmAllocThenProperDeviceBitfieldI
     REQUIRE_SVM_OR_SKIP(defaultHwInfo.get());
     UltClDeviceFactory deviceFactory{1, 2};
     auto device = deviceFactory.subDevices[1];
-    auto expectedDeviceBitfield = device->getDeviceBitfield();
 
     auto executionEnvironment = device->getExecutionEnvironment();
     auto memoryManager = new MockMemoryManager(*executionEnvironment);
@@ -227,6 +226,7 @@ TEST(clSvmAllocTest, givenSubDeviceWhenCreatingSvmAllocThenProperDeviceBitfieldI
     std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
 
     MockContext context(device);
+    auto expectedDeviceBitfield = context.getDeviceBitfieldForAllocation();
     EXPECT_NE(expectedDeviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
     auto svmPtr = clSVMAlloc(&context, CL_MEM_READ_WRITE, MemoryConstants::pageSize, MemoryConstants::cacheLineSize);
     EXPECT_NE(nullptr, svmPtr);

@@ -55,7 +55,7 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
                                          0u,    // size
                                          GraphicsAllocation::AllocationType::SHARED_IMAGE,
                                          false, // isMultiStorageAllocation
-                                         context->getDevice(0)->getDeviceBitfield());
+                                         context->getDeviceBitfieldForAllocation());
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(texInfo.globalShareHandle, allocProperties, false);
 
     if (alloc == nullptr) {

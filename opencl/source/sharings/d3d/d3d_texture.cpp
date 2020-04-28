@@ -77,7 +77,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
                                              0u,    // size
                                              GraphicsAllocation::AllocationType::SHARED_IMAGE,
                                              false, // isMultiStorageAllocation
-                                             context->getDevice(0)->getDeviceBitfield());
+                                             context->getDeviceBitfieldForAllocation());
         alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false);
     }
     DEBUG_BREAK_IF(!alloc);
@@ -147,7 +147,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
                                              0u,    // size
                                              GraphicsAllocation::AllocationType::SHARED_IMAGE,
                                              false, // isMultiStorageAllocation
-                                             context->getDevice(0)->getDeviceBitfield());
+                                             context->getDeviceBitfieldForAllocation());
         alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false);
     }
     DEBUG_BREAK_IF(!alloc);

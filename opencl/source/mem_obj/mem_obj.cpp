@@ -340,7 +340,7 @@ void *MemObj::getBasePtrForMap(uint32_t rootDeviceIndex) {
                                             false, // allocateMemory
                                             getSize(), GraphicsAllocation::AllocationType::MAP_ALLOCATION,
                                             false, //isMultiStorageAllocation
-                                            context->getDevice(0)->getDeviceBitfield()};
+                                            context->getDeviceBitfieldForAllocation()};
 
             auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, memory);
             setMapAllocation(allocation);

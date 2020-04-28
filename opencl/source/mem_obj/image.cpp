@@ -271,7 +271,7 @@ Image *Image::create(Context *context,
                     AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
                                                                                                               false, // allocateMemory
                                                                                                               memoryProperties, context->getDevice(0)->getHardwareInfo(),
-                                                                                                              context->getDevice(0)->getDeviceBitfield());
+                                                                                                              context->getDeviceBitfieldForAllocation());
 
                     memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
 
@@ -289,7 +289,7 @@ Image *Image::create(Context *context,
                                                                                   false, // allocateMemory
                                                                                   imgInfo.size, GraphicsAllocation::AllocationType::SHARED_CONTEXT_IMAGE,
                                                                                   false, // isMultiStorageAllocation
-                                                                                  context->getDevice(0)->getDeviceBitfield()},
+                                                                                  context->getDeviceBitfieldForAllocation()},
                                                                                  hostPtr);
                     memory->setDefaultGmm(gmm);
                     zeroCopy = true;
@@ -299,7 +299,7 @@ Image *Image::create(Context *context,
                                                     false, // allocateMemory
                                                     hostPtrMinSize, GraphicsAllocation::AllocationType::MAP_ALLOCATION,
                                                     false, // isMultiStorageAllocation
-                                                    context->getDevice(0)->getDeviceBitfield()};
+                                                    context->getDeviceBitfieldForAllocation()};
                     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
                     mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
                 }
@@ -307,7 +307,7 @@ Image *Image::create(Context *context,
                 AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
                                                                                                           true, // allocateMemory
                                                                                                           memoryProperties, context->getDevice(0)->getHardwareInfo(),
-                                                                                                          context->getDevice(0)->getDeviceBitfield());
+                                                                                                          context->getDeviceBitfieldForAllocation());
                 memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
 
                 if (memory && MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {

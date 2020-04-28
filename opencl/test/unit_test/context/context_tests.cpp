@@ -420,3 +420,22 @@ TEST(Context, givenContextWhenIsDeviceAssociatedIsCalledWithNotAssociatedDeviceT
     EXPECT_FALSE(context0.isDeviceAssociated(*context1.getDevice(0)));
     EXPECT_FALSE(context1.isDeviceAssociated(*context0.getDevice(0)));
 }
+TEST(Context, givenContextWithSingleDevicesWhenGettingDeviceBitfieldForAllocationThenDeviceBitfieldForDeviceIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 3};
+    auto device = deviceFactory.subDevices[1];
+    auto expectedDeviceBitfield = device->getDeviceBitfield();
+    MockContext context(device);
+    EXPECT_EQ(expectedDeviceBitfield.to_ulong(), context.getDeviceBitfieldForAllocation().to_ulong());
+}
+TEST(Context, givenContextWithMultipleSubDevicesWhenGettingDeviceBitfieldForAllocationThenMergedDeviceBitfieldIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 3};
+    cl_int retVal;
+    cl_device_id devices[]{deviceFactory.subDevices[0], deviceFactory.subDevices[2]};
+    ClDeviceVector deviceVector(devices, 2);
+    auto expectedDeviceBitfield = deviceFactory.subDevices[0]->getDeviceBitfield() | deviceFactory.subDevices[2]->getDeviceBitfield();
+    auto context = Context::create<Context>(0, deviceVector, nullptr, nullptr, retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(expectedDeviceBitfield.to_ulong(), context->getDeviceBitfieldForAllocation().to_ulong());
+    context->release();
+}
