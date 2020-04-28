@@ -31,9 +31,11 @@ SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
     pEngineHandleContext = new EngineHandleContext(pOsSysman);
     pRasHandleContext = new RasHandleContext(pOsSysman);
     pTempHandleContext = new TemperatureHandleContext(pOsSysman);
+    pPowerHandleContext = new PowerHandleContext(pOsSysman);
 }
 
 SysmanImp::~SysmanImp() {
+    freeResource(pPowerHandleContext);
     freeResource(pTempHandleContext);
     freeResource(pRasHandleContext);
     freeResource(pEngineHandleContext);
@@ -65,6 +67,9 @@ void SysmanImp::init() {
     }
     if (pTempHandleContext) {
         pTempHandleContext->init();
+    }
+    if (pPowerHandleContext) {
+        pPowerHandleContext->init();
     }
     if (pPci) {
         pPci->init();
@@ -161,7 +166,7 @@ ze_result_t SysmanImp::pciGetStats(zet_pci_stats_t *pStats) {
 }
 
 ze_result_t SysmanImp::powerGet(uint32_t *pCount, zet_sysman_pwr_handle_t *phPower) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pPowerHandleContext->powerGet(pCount, phPower);
 }
 
 ze_result_t SysmanImp::frequencyGet(uint32_t *pCount, zet_sysman_freq_handle_t *phFrequency) {

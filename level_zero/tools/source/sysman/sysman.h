@@ -10,6 +10,7 @@
 #include "level_zero/tools/source/sysman/frequency/frequency.h"
 #include "level_zero/tools/source/sysman/memory/memory.h"
 #include "level_zero/tools/source/sysman/pci/pci.h"
+#include "level_zero/tools/source/sysman/power/power.h"
 #include "level_zero/tools/source/sysman/ras/ras.h"
 #include "level_zero/tools/source/sysman/scheduler/scheduler.h"
 #include "level_zero/tools/source/sysman/standby/standby.h"

@@ -38,6 +38,7 @@ struct SysmanImp : Sysman {
     EngineHandleContext *pEngineHandleContext = nullptr;
     RasHandleContext *pRasHandleContext = nullptr;
     TemperatureHandleContext *pTempHandleContext = nullptr;
+    PowerHandleContext *pPowerHandleContext = nullptr;
 
     ze_result_t deviceGetProperties(zet_sysman_properties_t *pProperties) override;
     ze_result_t schedulerGetCurrentMode(zet_sched_mode_t *pMode) override;

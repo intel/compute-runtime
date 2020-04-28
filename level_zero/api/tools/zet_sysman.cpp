@@ -141,14 +141,14 @@ __zedllexport ze_result_t __zecall
 zetSysmanPowerGetProperties(
     zet_sysman_pwr_handle_t hPower,
     zet_power_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Power::fromHandle(hPower)->powerGetProperties(pProperties);
 }
 
 __zedllexport ze_result_t __zecall
 zetSysmanPowerGetEnergyCounter(
     zet_sysman_pwr_handle_t hPower,
     zet_power_energy_counter_t *pEnergy) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Power::fromHandle(hPower)->powerGetEnergyCounter(pEnergy);
 }
 
 __zedllexport ze_result_t __zecall
@@ -157,7 +157,7 @@ zetSysmanPowerGetLimits(
     zet_power_sustained_limit_t *pSustained,
     zet_power_burst_limit_t *pBurst,
     zet_power_peak_limit_t *pPeak) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Power::fromHandle(hPower)->powerGetLimits(pSustained, pBurst, pPeak);
 }
 
 __zedllexport ze_result_t __zecall
@@ -166,21 +166,21 @@ zetSysmanPowerSetLimits(
     const zet_power_sustained_limit_t *pSustained,
     const zet_power_burst_limit_t *pBurst,
     const zet_power_peak_limit_t *pPeak) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Power::fromHandle(hPower)->powerSetLimits(pSustained, pBurst, pPeak);
 }
 
 __zedllexport ze_result_t __zecall
 zetSysmanPowerGetEnergyThreshold(
     zet_sysman_pwr_handle_t hPower,
     zet_energy_threshold_t *pThreshold) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Power::fromHandle(hPower)->powerGetEnergyThreshold(pThreshold);
 }
 
 __zedllexport ze_result_t __zecall
 zetSysmanPowerSetEnergyThreshold(
     zet_sysman_pwr_handle_t hPower,
     double threshold) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Power::fromHandle(hPower)->powerSetEnergyThreshold(threshold);
 }
 
 __zedllexport ze_result_t __zecall
