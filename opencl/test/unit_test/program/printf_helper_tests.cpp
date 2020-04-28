@@ -269,6 +269,21 @@ TEST_P(PrintfUint32Test, GivenPrintfFormatWhenConatinsUintThenInstertValueIntoSt
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
+TEST_P(PrintfUint32Test, GivenPrintfFormatWhenBufferSizeExceedsPrintfBufferCapacityThenUseSmallerValue) {
+    auto input = GetParam();
+    printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), 0, is32bit, kernelInfo->patchInfo.stringDataMap));
+
+    auto stringIndex = injectFormatString(input.format);
+    storeData(stringIndex);
+    injectValue(input.value);
+
+    char referenceOutput[PrintFormatter::maxPrintfOutputLength] = "";
+    char actualOutput[PrintFormatter::maxPrintfOutputLength] = "";
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+
+    EXPECT_STREQ(referenceOutput, actualOutput);
+}
+
 INSTANTIATE_TEST_CASE_P(PrintfUint32Test,
                         PrintfUint32Test,
                         ::testing::ValuesIn(uintValues));
