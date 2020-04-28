@@ -83,7 +83,7 @@ class KernelArgPipeFixture : public ContextFixture, public DeviceFixture {
 
 typedef Test<KernelArgPipeFixture> KernelArgPipeTest;
 
-TEST_F(KernelArgPipeTest, SetKernelArgValidPipe) {
+TEST_F(KernelArgPipeTest, GivenValidPipeWhenSettingKernelArgThenPipeAddressIsCorrect) {
     Pipe *pipe = new MockPipe(pContext);
 
     auto val = (cl_mem)pipe;
@@ -99,7 +99,7 @@ TEST_F(KernelArgPipeTest, SetKernelArgValidPipe) {
     delete pipe;
 }
 
-TEST_F(KernelArgPipeTest, SetKernelArgValidSvmPtrStateless) {
+TEST_F(KernelArgPipeTest, GivenSvmPtrStatelessWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
     Pipe *pipe = new MockPipe(pContext);
 
     auto val = (cl_mem)pipe;
@@ -116,7 +116,7 @@ TEST_F(KernelArgPipeTest, SetKernelArgValidSvmPtrStateless) {
     delete pipe;
 }
 
-HWTEST_F(KernelArgPipeTest, SetKernelArgValidSvmPtrStateful) {
+HWTEST_F(KernelArgPipeTest, GivenSvmPtrStatefulWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
     Pipe *pipe = new MockPipe(pContext);
 
     auto val = (cl_mem)pipe;
@@ -141,7 +141,7 @@ HWTEST_F(KernelArgPipeTest, SetKernelArgValidSvmPtrStateful) {
     delete pipe;
 }
 
-TEST_F(KernelArgPipeTest, SetKernelArgFakePipe) {
+TEST_F(KernelArgPipeTest, GivenInvalidPipeWhenSettingKernelArgThenInvalidMemObjectErrorIsReturned) {
     char *ptr = new char[sizeof(Pipe)];
 
     auto val = (cl_mem *)ptr;
@@ -152,7 +152,7 @@ TEST_F(KernelArgPipeTest, SetKernelArgFakePipe) {
     delete[] ptr;
 }
 
-TEST_F(KernelArgPipeTest, SetKernelArgBufferAsPipe) {
+TEST_F(KernelArgPipeTest, GivenBufferWhenSettingKernelArgThenInvalidArgValueErrorIsReturned) {
     Buffer *buffer = new MockBuffer();
 
     auto val = (cl_mem)buffer;
@@ -163,7 +163,7 @@ TEST_F(KernelArgPipeTest, SetKernelArgBufferAsPipe) {
     delete buffer;
 }
 
-TEST_F(KernelArgPipeTest, SetKernelArgPipeFromDifferentContext) {
+TEST_F(KernelArgPipeTest, GivenPipeFromDifferentContextWhenSettingKernelArgThenInvalidMemObjectErrorIsReturned) {
     Pipe *pipe = new MockPipe(pContext);
     Context *oldContext = &pKernel->getContext();
     MockContext newContext;
@@ -179,7 +179,7 @@ TEST_F(KernelArgPipeTest, SetKernelArgPipeFromDifferentContext) {
     delete pipe;
 }
 
-TEST_F(KernelArgPipeTest, SetKernelArgInvalidSize) {
+TEST_F(KernelArgPipeTest, GivenInvalidSizeWhenSettingKernelArgThenInvalidArgSizeErrorIsReturned) {
     Pipe *pipe = new MockPipe(pContext);
 
     auto val = (cl_mem *)pipe;
@@ -190,14 +190,14 @@ TEST_F(KernelArgPipeTest, SetKernelArgInvalidSize) {
     delete pipe;
 }
 
-TEST_F(KernelArgPipeTest, SetKernelArgPtrToNull) {
+TEST_F(KernelArgPipeTest, GivenPtrToNullWhenSettingKernelArgThenInvalidMemObjectErrorIsReturned) {
     auto val = (cl_mem *)nullptr;
     auto pVal = &val;
     auto retVal = this->pKernel->setArg(0, sizeof(cl_mem *), pVal);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(KernelArgPipeTest, SetKernelArgNull) {
+TEST_F(KernelArgPipeTest, GivenNullWhenSettingKernelArgThenInvalidMemObjectErrorIsReturned) {
     auto pVal = nullptr;
     auto retVal = this->pKernel->setArg(0, sizeof(cl_mem *), pVal);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);

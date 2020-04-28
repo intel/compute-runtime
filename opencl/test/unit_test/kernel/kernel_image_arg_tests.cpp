@@ -25,7 +25,7 @@
 
 using namespace NEO;
 
-TEST_F(KernelImageArgTest, GIVENkernelWithImageArgsWHENcheckDifferentScenariosTHENproperBehaviour) {
+TEST_F(KernelImageArgTest, GivenKernelWithImageArgsWhenCheckingDifferentScenariosThenBehaviourIsCorrect) {
     size_t imageWidth = image->getImageDesc().image_width;
     size_t imageHeight = image->getImageDesc().image_height;
     size_t imageDepth = image->getImageDesc().image_depth;

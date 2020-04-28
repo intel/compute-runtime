@@ -80,7 +80,7 @@ class KernelArgSvmFixture_ : public ContextFixture, public DeviceFixture {
 
 typedef Test<KernelArgSvmFixture_> KernelArgSvmTest;
 
-TEST_F(KernelArgSvmTest, SetKernelArgValidSvmPtr) {
+TEST_F(KernelArgSvmTest, GivenValidSvmPtrWhenSettingKernelArgThenSvmPtrIsCorrect) {
     char *svmPtr = new char[256];
 
     auto retVal = pKernel->setArgSvm(0, 256, svmPtr, nullptr, 0u);
@@ -93,7 +93,7 @@ TEST_F(KernelArgSvmTest, SetKernelArgValidSvmPtr) {
     delete[] svmPtr;
 }
 
-TEST_F(KernelArgSvmTest, SetKernelArgValidSvmPtrStateless) {
+TEST_F(KernelArgSvmTest, GivenSvmPtrStatelessWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
     char *svmPtr = new char[256];
 
     pKernelInfo->usesSsh = false;
@@ -107,7 +107,7 @@ TEST_F(KernelArgSvmTest, SetKernelArgValidSvmPtrStateless) {
     delete[] svmPtr;
 }
 
-HWTEST_F(KernelArgSvmTest, SetKernelArgValidSvmPtrStateful) {
+HWTEST_F(KernelArgSvmTest, GivenSvmPtrStatefulWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
     char *svmPtr = new char[256];
 
     pKernelInfo->usesSsh = true;
@@ -129,7 +129,7 @@ HWTEST_F(KernelArgSvmTest, SetKernelArgValidSvmPtrStateful) {
     delete[] svmPtr;
 }
 
-TEST_F(KernelArgSvmTest, SetKernelArgValidSvmAlloc) {
+TEST_F(KernelArgSvmTest, GivenValidSvmAllocWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
     char *svmPtr = new char[256];
 
     MockGraphicsAllocation svmAlloc(svmPtr, 256);
@@ -144,7 +144,7 @@ TEST_F(KernelArgSvmTest, SetKernelArgValidSvmAlloc) {
     delete[] svmPtr;
 }
 
-TEST_F(KernelArgSvmTest, SetKernelArgValidSvmAllocStateless) {
+TEST_F(KernelArgSvmTest, GivenValidSvmAllocStatelessWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
     char *svmPtr = new char[256];
 
     MockGraphicsAllocation svmAlloc(svmPtr, 256);
@@ -160,7 +160,7 @@ TEST_F(KernelArgSvmTest, SetKernelArgValidSvmAllocStateless) {
     delete[] svmPtr;
 }
 
-HWTEST_F(KernelArgSvmTest, SetKernelArgValidSvmAllocStateful) {
+HWTEST_F(KernelArgSvmTest, GivenValidSvmAllocStatefulWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
     char *svmPtr = new char[256];
 
     MockGraphicsAllocation svmAlloc(svmPtr, 256);
@@ -225,12 +225,12 @@ HWTEST_F(KernelArgSvmTest, givenDeviceSupportingSharedSystemAllocationsWhenSetAr
     EXPECT_EQ(16384u, surfaceState->getHeight());
 }
 
-TEST_F(KernelArgSvmTest, SetKernelArgImmediateInvalidArgValue) {
+TEST_F(KernelArgSvmTest, WhenSettingKernelArgImmediateThenInvalidArgValueErrorIsReturned) {
     auto retVal = pKernel->setArgImmediate(0, 256, nullptr);
     EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
 }
 
-HWTEST_F(KernelArgSvmTest, PatchWithImplicitSurface) {
+HWTEST_F(KernelArgSvmTest, WhenPatchingWithImplicitSurfaceThenPatchIsApplied) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     constexpr size_t rendSurfSize = sizeof(RENDER_SURFACE_STATE);
 
@@ -284,7 +284,7 @@ HWTEST_F(KernelArgSvmTest, PatchWithImplicitSurface) {
     }
 }
 
-TEST_F(KernelArgSvmTest, patchBufferOffset) {
+TEST_F(KernelArgSvmTest, WhenPatchingBufferOffsetThenPatchIsApplied) {
     std::vector<char> svmPtr;
     svmPtr.resize(256);
 
