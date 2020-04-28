@@ -9,8 +9,6 @@
 
 #include "shared/source/os_interface/os_library.h"
 
-#include "utilities/get_path.h"
-
 #include <iostream>
 #include <string>
 
@@ -41,7 +39,7 @@ struct OclocWrapper::Impl {
 
     void loadOcloc() {
         OclocLibrary ocloc;
-        std::string oclocLibName = "";
+        std::string oclocLibName = OCLOC_LIB_NAME;
         ocloc.library.reset(NEO::OsLibrary::load(oclocLibName));
         if (nullptr == (ocloc.invoke = reinterpret_cast<pOclocInvoke>(ocloc.library->getProcAddress("oclocInvoke")))) {
             std::cout << "Error! Couldn't find OclocInvoke function.\n";

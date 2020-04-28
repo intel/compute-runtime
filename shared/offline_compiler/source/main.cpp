@@ -5,9 +5,11 @@
  *
  */
 
-#include "ocloc_wrapper.h"
+#include "ocloc_api.h"
 
 int main(int argc, const char *argv[]) {
-    OclocWrapper oclocWrapper;
-    return oclocWrapper.invokeOcloc(argc, argv);
+    return oclocInvoke(argc, argv,
+                       0, nullptr, nullptr, nullptr,
+                       0, nullptr, nullptr, nullptr,
+                       nullptr, nullptr, nullptr, nullptr);
 }
