@@ -37,15 +37,15 @@ template <typename GfxFamily>
 int __stdcall TTCallbacks<GfxFamily>::writeL3Address(void *queueHandle, uint64_t l3GfxAddress, uint64_t regOffset) {
     auto csr = reinterpret_cast<CommandStreamReceiverHw<GfxFamily> *>(queueHandle);
 
-    auto lri1 = LriHelper<GfxFamily>::program(&csr->getCS(0),
-                                              static_cast<uint32_t>(regOffset & 0xFFFFFFFF),
-                                              static_cast<uint32_t>(l3GfxAddress & 0xFFFFFFFF));
-    lri1->setMmioRemapEnable(true);
+    LriHelper<GfxFamily>::program(&csr->getCS(0),
+                                  static_cast<uint32_t>(regOffset & 0xFFFFFFFF),
+                                  static_cast<uint32_t>(l3GfxAddress & 0xFFFFFFFF),
+                                  true);
 
-    auto lri2 = LriHelper<GfxFamily>::program(&csr->getCS(0),
-                                              static_cast<uint32_t>(regOffset >> 32),
-                                              static_cast<uint32_t>(l3GfxAddress >> 32));
-    lri2->setMmioRemapEnable(true);
+    LriHelper<GfxFamily>::program(&csr->getCS(0),
+                                  static_cast<uint32_t>(regOffset >> 32),
+                                  static_cast<uint32_t>(l3GfxAddress >> 32),
+                                  true);
 
     return 1;
 }

@@ -61,7 +61,7 @@ void PreemptionHelper::programCmdStream(LinearStream &cmdStream, PreemptionMode 
         regVal = PreemptionConfig<GfxFamily>::cmdLevelVal | PreemptionConfig<GfxFamily>::mask;
     }
 
-    LriHelper<GfxFamily>::program(&cmdStream, PreemptionConfig<GfxFamily>::mmioAddress, regVal);
+    LriHelper<GfxFamily>::program(&cmdStream, PreemptionConfig<GfxFamily>::mmioAddress, regVal, true);
 }
 
 template <typename GfxFamily>

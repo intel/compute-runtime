@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
@@ -82,4 +83,17 @@ GEN12LPTEST_F(Gen12LpPreemptionTests, givenInterfaceDescriptorDataWhenNoMidThrea
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::ThreadGroup);
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_PREEMPTION_DISABLE_ENABLE, iddArg.getThreadPreemptionDisable());
+}
+
+GEN12LPTEST_F(Gen12LpPreemptionTests, WhenProgrammingPreemptionThenExpectLoarRegisterCommandRemapFlagEnabled) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    const size_t bufferSize = 128;
+    uint8_t buffer[bufferSize];
+    LinearStream cmdStream(buffer, bufferSize);
+
+    PreemptionHelper::programCmdStream<FamilyType>(cmdStream, PreemptionMode::ThreadGroup, PreemptionMode::Initial, nullptr);
+    auto lriCommand = genCmdCast<MI_LOAD_REGISTER_IMM *>(cmdStream.getCpuBase());
+    ASSERT_NE(nullptr, lriCommand);
+    EXPECT_TRUE(lriCommand->getMmioRemapEnable());
 }

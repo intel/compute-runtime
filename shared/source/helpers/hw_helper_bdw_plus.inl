@@ -90,4 +90,15 @@ inline void MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperti
 template <typename GfxFamily>
 inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlExtraProperties(typename GfxFamily::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
 }
+
+template <typename GfxFamily>
+void LriHelper<GfxFamily>::program(LinearStream *cmdStream, uint32_t address, uint32_t value, bool remap) {
+    MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
+    cmd.setRegisterOffset(address);
+    cmd.setDataDword(value);
+
+    auto lri = cmdStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
+    *lri = cmd;
+}
+
 } // namespace NEO

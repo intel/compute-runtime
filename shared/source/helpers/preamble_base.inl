@@ -88,10 +88,15 @@ void PreambleHelper<GfxFamily>::programPreemption(LinearStream *pCommandStream, 
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programKernelDebugging(LinearStream *pCommandStream) {
-    LriHelper<GfxFamily>::program(pCommandStream, DebugModeRegisterOffset<GfxFamily>::registerOffset,
-                                  DebugModeRegisterOffset<GfxFamily>::debugEnabledValue);
-    LriHelper<GfxFamily>::program(pCommandStream, TdDebugControlRegisterOffset::registerOffset,
-                                  TdDebugControlRegisterOffset::debugEnabledValue);
+    LriHelper<GfxFamily>::program(pCommandStream,
+                                  DebugModeRegisterOffset<GfxFamily>::registerOffset,
+                                  DebugModeRegisterOffset<GfxFamily>::debugEnabledValue,
+                                  false);
+
+    LriHelper<GfxFamily>::program(pCommandStream,
+                                  TdDebugControlRegisterOffset::registerOffset,
+                                  TdDebugControlRegisterOffset::debugEnabledValue,
+                                  false);
 }
 
 template <typename GfxFamily>

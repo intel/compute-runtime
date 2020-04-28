@@ -172,4 +172,5 @@ template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
+template struct LriHelper<Family>;
 } // namespace NEO

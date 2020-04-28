@@ -254,15 +254,7 @@ template <typename GfxFamily>
 struct LriHelper {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
-    static MI_LOAD_REGISTER_IMM *program(LinearStream *cmdStream, uint32_t address, uint32_t value) {
-        MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
-        cmd.setRegisterOffset(address);
-        cmd.setDataDword(value);
-
-        auto lri = cmdStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-        *lri = cmd;
-        return lri;
-    }
+    static void program(LinearStream *cmdStream, uint32_t address, uint32_t value, bool remap);
 };
 
 template <typename GfxFamily>

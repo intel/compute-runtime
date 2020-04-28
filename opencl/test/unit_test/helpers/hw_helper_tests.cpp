@@ -191,11 +191,13 @@ HWTEST_F(LriHelperTests, givenAddressAndOffsetWhenHelperIsUsedThenProgramCmdStre
     expectedLri.setRegisterOffset(address);
     expectedLri.setDataDword(data);
 
-    auto lri = LriHelper<FamilyType>::program(&stream, address, data);
+    LriHelper<FamilyType>::program(&stream, address, data, false);
+    auto lri = genCmdCast<MI_LOAD_REGISTER_IMM *>(stream.getCpuBase());
+    ASSERT_NE(nullptr, lri);
 
     EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), stream.getUsed());
-    EXPECT_EQ(lri, stream.getCpuBase());
-    EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
+    EXPECT_EQ(address, lri->getRegisterOffset());
+    EXPECT_EQ(data, lri->getDataDword());
 }
 
 using PipeControlHelperTests = ::testing::Test;

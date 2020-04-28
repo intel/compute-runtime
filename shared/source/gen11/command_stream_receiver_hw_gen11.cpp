@@ -26,8 +26,10 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
 template <>
 void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags) {
     if (csrSizeRequestFlags.coherencyRequestChanged) {
-        LriHelper<Family>::program(&stream, gen11HdcModeRegister::address,
-                                   DwordBuilder::build(gen11HdcModeRegister::forceNonCoherentEnableBit, true, !dispatchFlags.requiresCoherency));
+        LriHelper<Family>::program(&stream,
+                                   gen11HdcModeRegister::address,
+                                   DwordBuilder::build(gen11HdcModeRegister::forceNonCoherentEnableBit, true, !dispatchFlags.requiresCoherency),
+                                   false);
         this->lastSentCoherencyRequest = static_cast<int8_t>(dispatchFlags.requiresCoherency);
     }
 }
@@ -61,7 +63,10 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 reg.TheStructure.Common.SScount = numSubslicesWithVme;
                 reg.TheStructure.Common.EnableSliceCountRequest = 1; // Enable SliceCountRequest
                 reg.TheStructure.Common.SliceCountRequest = numSlicesForPowerGating;
-                LriHelper<Family>::program(&stream, PWR_CLK_STATE_REGISTER::REG_ADDRESS, reg.TheStructure.RawData[0]);
+                LriHelper<Family>::program(&stream,
+                                           PWR_CLK_STATE_REGISTER::REG_ADDRESS,
+                                           reg.TheStructure.RawData[0],
+                                           false);
 
                 args = {};
                 addPipeControlCmd(stream, args);
@@ -100,7 +105,10 @@ void CommandStreamReceiverHw<Family>::programMediaSampler(LinearStream &stream, 
                 reg.TheStructure.Common.EnableSliceCountRequest = 1; // Enable SliceCountRequest
                 reg.TheStructure.Common.SliceCountRequest = numSlicesMapped;
 
-                LriHelper<Family>::program(&stream, PWR_CLK_STATE_REGISTER::REG_ADDRESS, reg.TheStructure.RawData[0]);
+                LriHelper<Family>::program(&stream,
+                                           PWR_CLK_STATE_REGISTER::REG_ADDRESS,
+                                           reg.TheStructure.RawData[0],
+                                           false);
 
                 addPipeControlCmd(stream, args);
             }
