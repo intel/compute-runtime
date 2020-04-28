@@ -188,6 +188,8 @@ DEFINE_GET_SET(GTSystemInfo, 1, MaxSubSlicesSupported, uint32_t);
 DEFINE_GET_SET(GTSystemInfo, 1, IsL3HashModeEnabled, bool);
 DEFINE_GET_SET(GTSystemInfo, 1, IsDynamicallyPopulated, bool);
 
+DEFINE_GET_SET(GTSystemInfo, 3, DualSubSliceCount, uint32_t);
+
 #undef DEFINE_GET_SET
 
 // IgcFeaturesAndWorkarounds stubs

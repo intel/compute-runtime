@@ -129,7 +129,6 @@ if(WIN32)
             ${NEO_SOURCE_DIR}/shared/source/dll/windows/environment_variables.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_memory_base.cpp
             ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_wddm.cpp
-            ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_compilers_windows.cpp
     )
 
     target_link_libraries(compute_runtime_mockable_extra

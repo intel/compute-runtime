@@ -56,6 +56,8 @@ if(TR_DEPRECATED)
     add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
 endif(TR_DEPRECATED)
 
+add_definitions(-DIGC_CLEANUP)
+
 if(RELEASE_WITH_REGKEYS)
     message(STATUS "Enabling RegKey reading in release build")
     add_definitions(-D_RELEASE_BUILD_WITH_REGKEYS)

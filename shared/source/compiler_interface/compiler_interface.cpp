@@ -21,6 +21,8 @@
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
+
+#undef IGC_CLEANUP
 #include "ocl_igc_interface/platform_helper.h"
 
 #include <fstream>
