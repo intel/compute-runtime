@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/kernel_helpers.h"
 
 #include "test.h"

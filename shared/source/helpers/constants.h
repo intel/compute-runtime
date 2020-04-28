@@ -51,6 +51,10 @@ constexpr uint64_t maxSvmAddress = is64bit ? maxNBitValue(47) : maxNBitValue(32)
 
 } // namespace MemoryConstants
 
+constexpr uint64_t KB = MemoryConstants::kiloByte;
+constexpr uint64_t MB = MemoryConstants::megaByte;
+constexpr uint64_t GB = MemoryConstants::gigaByte;
+
 namespace BlitterConstants {
 constexpr uint64_t maxBlitWidth = 0x7FC0;  // 0x7FFF aligned to cacheline size
 constexpr uint64_t maxBlitHeight = 0x3FC0; // 0x4000 aligned to cacheline size

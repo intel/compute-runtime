@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/constants.h"
 
 #include <mutex>
 

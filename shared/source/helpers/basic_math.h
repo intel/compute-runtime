@@ -14,10 +14,6 @@
 #include <cstdlib>
 #include <stdio.h>
 
-#define KB 1024uLL
-#define MB (KB * KB)
-#define GB (KB * MB)
-
 namespace Math {
 
 constexpr uint32_t nextPowerOfTwo(uint32_t value) {
