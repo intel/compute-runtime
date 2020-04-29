@@ -76,7 +76,7 @@ TEST_F(SysmanEngineFixture, GivenComponentCountZeroWhenCallingZetSysmanEngineGet
     ze_result_t result = zetSysmanEngineGet(hSysman, &count, NULL);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(0u, count);
+    EXPECT_GT(count, 0u);
 
     uint32_t testcount = count + 1;
 
@@ -89,7 +89,7 @@ TEST_F(SysmanEngineFixture, GivenComponentCountZeroWhenCallingZetSysmanEngineGet
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, engineHandle);
-    EXPECT_NE(0u, count);
+    EXPECT_GT(count, 0u);
 }
 TEST_F(SysmanEngineFixture, GivenValidEngineHandleWhenCallingZetSysmanEngineGetPropertiesThenVerifySysmanEngineGetPropertiesCallSucceeds) {
     zet_engine_properties_t properties;
