@@ -42,7 +42,15 @@ bool HwHelper::cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo) {
 
 uint32_t HwHelper::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
     uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
-    return hwInfo.gtSystemInfo.EUCount * threadsPerEU;
+    auto maxHwThreadsCapable = hwInfo.gtSystemInfo.EUCount * threadsPerEU;
+    auto maxHwThreadsReturned = maxHwThreadsCapable;
+    if (DebugManager.flags.MaxHwThreadsPercent.get() != 0) {
+        maxHwThreadsReturned = int(maxHwThreadsCapable * (DebugManager.flags.MaxHwThreadsPercent.get() / 100.0f));
+    }
+    if (DebugManager.flags.MinHwThreadsUnoccupied.get() != 0) {
+        maxHwThreadsReturned = std::min(maxHwThreadsReturned, maxHwThreadsCapable - DebugManager.flags.MinHwThreadsUnoccupied.get());
+    }
+    return maxHwThreadsReturned;
 }
 
 uint32_t HwHelper::getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const {

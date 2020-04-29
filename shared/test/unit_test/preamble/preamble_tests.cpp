@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gen_common/reg_configs/reg_configs_common.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
 #include "shared/source/helpers/preamble.h"
@@ -188,6 +189,28 @@ HWTEST_F(PreambleTest, givenDefaultPreambleWhenGetThreadsMaxNumberIsCalledThenMa
     uint32_t value = HwHelper::getMaxThreadsForVfe(hwInfo);
 
     uint32_t expected = hwInfo.gtSystemInfo.EUCount * threadsPerEU;
+    EXPECT_EQ(expected, value);
+}
+
+HWTEST_F(PreambleTest, givenMaxHwThreadsPercentDebugVariableWhenGetThreadsMaxNumberIsCalledThenMaximumNumberOfThreadsIsCappedToRequestedNumber) {
+    const HardwareInfo &hwInfo = *defaultHwInfo;
+    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    DebugManagerStateRestore debugManagerStateRestore;
+    DebugManager.flags.MaxHwThreadsPercent.set(80);
+    uint32_t value = HwHelper::getMaxThreadsForVfe(hwInfo);
+
+    uint32_t expected = int(hwInfo.gtSystemInfo.EUCount * threadsPerEU * 80 / 100.0f);
+    EXPECT_EQ(expected, value);
+}
+
+HWTEST_F(PreambleTest, givenMinHwThreadsUnoccupiedDebugVariableWhenGetThreadsMaxNumberIsCalledThenMaximumNumberOfThreadsIsCappedToMatchRequestedNumber) {
+    const HardwareInfo &hwInfo = *defaultHwInfo;
+    uint32_t threadsPerEU = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    DebugManagerStateRestore debugManagerStateRestore;
+    DebugManager.flags.MinHwThreadsUnoccupied.set(2);
+    uint32_t value = HwHelper::getMaxThreadsForVfe(hwInfo);
+
+    uint32_t expected = hwInfo.gtSystemInfo.EUCount * threadsPerEU - 2;
     EXPECT_EQ(expected, value);
 }
 
