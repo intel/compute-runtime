@@ -33,17 +33,17 @@ TEST_F(EventPoolCreate, allocationContainsAtLeast16Bytes) {
     EXPECT_GE(allocation->getUnderlyingBufferSize(), minAllocationSize);
 }
 
-TEST_F(EventPoolCreate, givenTimestampEventsThenVerifyNumTimestampsToRead) {
+TEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelTimestamps) {
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-        ZE_EVENT_POOL_FLAG_TIMESTAMP, // all events in pool are visible to Host
+        ZE_EVENT_POOL_FLAG_TIMESTAMP,
         1};
 
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
 
-    uint32_t numTimestamps = 4u;
-    EXPECT_EQ(numTimestamps, eventPool->getNumEventTimestampsToRead());
+    uint32_t kernelTimestampsSize = sizeof(struct KernelTimestampEvent);
+    EXPECT_EQ(kernelTimestampsSize, eventPool->getEventSize());
 }
 
 TEST_F(EventPoolCreate, givenAnEventIsCreatedFromThisEventPoolThenEventContainsDeviceCommandStreamReceiver) {
@@ -165,8 +165,7 @@ TEST_F(TimestampEventCreate, givenSingleTimestampEventThenAllocationSizeCreatedF
     auto allocation = &eventPool->getAllocation();
     ASSERT_NE(nullptr, allocation);
 
-    uint32_t minTimestampEventAllocation = eventPool->getEventSize() *
-                                           eventPool->getNumEventTimestampsToRead();
+    uint32_t minTimestampEventAllocation = eventPool->getEventSize();
     EXPECT_GE(minTimestampEventAllocation, allocation->getUnderlyingBufferSize());
 }
 

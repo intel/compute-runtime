@@ -1242,7 +1242,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
         gpuAddr = event->getGpuAddress();
         if (event->isTimestampEvent) {
-            gpuAddr += event->getOffsetOfEventTimestampRegister(Event::CONTEXT_END);
+            gpuAddr += offsetof(KernelTimestampEvent, contextEnd);
         }
 
         NEO::HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(*(commandContainer.getCommandStream()),

@@ -289,22 +289,22 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     ASSERT_NE(cmdList.end(), itor);
     itor++;
 
-    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(0u, itorPC.size());
-    bool postSyncFound = false;
-    for (auto it : itorPC) {
-        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
-        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP) {
-            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_FALSE(cmd->getDcFlushEnable());
-            auto gpuAddress = event->getGpuAddress() +
-                              event->getOffsetOfEventTimestampRegister(Event::GLOBAL_END);
-            EXPECT_EQ(cmd->getAddressHigh(), gpuAddress >> 32u);
-            EXPECT_EQ(cmd->getAddress(), uint32_t(gpuAddress));
-            postSyncFound = true;
-        }
+    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
+        EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+        EXPECT_FALSE(cmd->getDcFlushEnable());
     }
-    EXPECT_TRUE(postSyncFound);
+    itor++;
+
+    itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+    {
+        auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+        EXPECT_EQ(REG_GLOBAL_TIMESTAMP_LDW, cmd->getRegisterAddress());
+    }
+    itor++;
 
     itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
@@ -319,6 +319,49 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
                                    &event->getAllocation());
         EXPECT_NE(itorEvent, std::end(commandList->commandContainer.getResidencyContainer()));
     }
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFlagHostThenPCWithDCFlushEncoded, TimestampEventSupport) {
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+
+    Mock<::L0::Kernel> kernel;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, false));
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_TIMESTAMP,
+        1};
+
+    ze_event_desc_t eventDesc = {
+        ZE_EVENT_DESC_VERSION_CURRENT,
+        0,
+        ZE_EVENT_SCOPE_FLAG_HOST,
+        ZE_EVENT_SCOPE_FLAG_HOST};
+
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
+
+    ze_group_count_t groupCount{1, 1, 1};
+    auto result = commandList->appendLaunchKernel(
+        kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, itorPC.size());
+
+    PIPE_CONTROL *cmd = genCmdCast<PIPE_CONTROL *>(*itorPC[itorPC.size() - 1]);
+    EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+    EXPECT_TRUE(cmd->getDcFlushEnable());
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelThenKernelIsExecutedOnImmediateCmdQ, SklPlusMatcher) {

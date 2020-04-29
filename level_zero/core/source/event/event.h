@@ -36,13 +36,6 @@ struct Event : _ze_event_handle_t {
         STATE_INITIAL = STATE_CLEARED
     };
 
-    enum EventTimestampRegister : uint32_t {
-        GLOBAL_START = 0u,
-        GLOBAL_END,
-        CONTEXT_START,
-        CONTEXT_END
-    };
-
     static Event *create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device);
 
     static Event *fromHandle(ze_event_handle_t handle) { return static_cast<Event *>(handle); }
@@ -70,6 +63,13 @@ struct Event : _ze_event_handle_t {
 
   protected:
     NEO::GraphicsAllocation *allocation = nullptr;
+};
+
+struct KernelTimestampEvent {
+    uint32_t contextStart = Event::STATE_INITIAL;
+    uint32_t globalStart = Event::STATE_INITIAL;
+    uint32_t contextEnd = Event::STATE_INITIAL;
+    uint32_t globalEnd = Event::STATE_INITIAL;
 };
 
 struct EventPool : _ze_event_pool_handle_t {
@@ -100,7 +100,6 @@ struct EventPool : _ze_event_pool_handle_t {
     virtual NEO::GraphicsAllocation &getAllocation() { return *eventPoolAllocation; }
 
     virtual uint32_t getEventSize() = 0;
-    virtual uint32_t getNumEventTimestampsToRead() = 0;
 
     bool isEventPoolUsedForTimestamp = false;
 

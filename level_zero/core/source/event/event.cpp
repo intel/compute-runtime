@@ -51,7 +51,7 @@ struct EventImp : public Event {
         if (isTimestampEvent) {
             auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
 
-            auto timeStampAddress = baseAddr + getOffsetOfEventTimestampRegister(Event::CONTEXT_END);
+            auto timeStampAddress = baseAddr + offsetof(KernelTimestampEvent, contextEnd);
             hostAddr = reinterpret_cast<uint64_t *>(timeStampAddress);
         }
 
@@ -80,10 +80,8 @@ struct EventPoolImp : public EventPool {
             pool[i] = EventPool::EVENT_STATE_INITIAL;
         }
 
-        auto timestampMultiplier = 1;
         if (flags & ZE_EVENT_POOL_FLAG_TIMESTAMP) {
             isEventPoolUsedForTimestamp = true;
-            timestampMultiplier = numEventTimestampsToRead;
         }
 
         ze_device_handle_t hDevice;
@@ -98,7 +96,7 @@ struct EventPoolImp : public EventPool {
         device = Device::fromHandle(hDevice);
 
         NEO::AllocationProperties properties(
-            device->getRootDeviceIndex(), count * eventSize * timestampMultiplier,
+            device->getRootDeviceIndex(), count * eventSize,
             NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
         properties.alignment = MemoryConstants::cacheLineSize;
         eventPoolAllocation = driver->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
@@ -142,8 +140,6 @@ struct EventPoolImp : public EventPool {
 
     uint32_t getEventSize() override { return eventSize; }
 
-    uint32_t getNumEventTimestampsToRead() override { return numEventTimestampsToRead; }
-
     ze_result_t destroyPool() {
         if (eventPoolUsedCount != 0) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -164,9 +160,8 @@ struct EventPoolImp : public EventPool {
     std::queue<int> lastEventPoolOffsetUsed;
 
   protected:
-    const uint32_t eventSize = 16u;
+    const uint32_t eventSize = sizeof(struct KernelTimestampEvent);
     const uint32_t eventAlignment = MemoryConstants::cacheLineSize;
-    const int32_t numEventTimestampsToRead = 4u;
 };
 
 Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device) {
@@ -220,17 +215,22 @@ void EventImp::makeAllocationResident() {
 }
 
 ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
-    for (uint32_t i = 0; i < this->eventPool->getNumEventTimestampsToRead(); i++) {
-        auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
-        auto timeStampAddress = baseAddr + getOffsetOfEventTimestampRegister(i);
-        auto tsptr = reinterpret_cast<uint64_t *>(timeStampAddress);
 
-        *(tsptr) = eventVal;
+    auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
+    auto signalScopeFlag = this->signalScope;
 
-        if (this->signalScope != ZE_EVENT_SCOPE_FLAG_NONE) {
+    auto eventTsSetFunc = [&](auto tsAddr) {
+        auto tsptr = reinterpret_cast<void *>(tsAddr);
+        memcpy_s(tsptr, sizeof(uint32_t), static_cast<void *>(&eventVal), sizeof(uint32_t));
+        if (signalScopeFlag != ZE_EVENT_SCOPE_FLAG_NONE) {
             NEO::CpuIntrinsics::clFlush(tsptr);
         }
-    }
+    };
+
+    eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, contextStart));
+    eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalStart));
+    eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, contextEnd));
+    eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalEnd));
 
     makeAllocationResident();
 
@@ -239,7 +239,7 @@ ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
 
 ze_result_t EventImp::hostEventSetValue(uint32_t eventVal) {
     if (isTimestampEvent) {
-        hostEventSetValueTimestamps(eventVal);
+        return hostEventSetValueTimestamps(eventVal);
     }
 
     auto hostAddr = static_cast<uint64_t *>(hostAddress);
@@ -303,7 +303,7 @@ ze_result_t EventImp::reset() {
 
 ze_result_t EventImp::getTimestamp(ze_event_timestamp_type_t timestampType, void *dstptr) {
     auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
-    uint64_t *tsptr = nullptr;
+    uint64_t tsAddr = 0u;
     constexpr uint64_t tsMask = (1ull << 32) - 1;
     uint64_t tsData = Event::STATE_INITIAL & tsMask;
 
@@ -316,17 +316,19 @@ ze_result_t EventImp::getTimestamp(ze_event_timestamp_type_t timestampType, void
         return ZE_RESULT_SUCCESS;
     }
 
-    if (timestampType == ZE_EVENT_TIMESTAMP_GLOBAL_START) {
-        tsptr = reinterpret_cast<uint64_t *>(baseAddr + getOffsetOfEventTimestampRegister(Event::GLOBAL_START));
-    } else if (timestampType == ZE_EVENT_TIMESTAMP_GLOBAL_END) {
-        tsptr = reinterpret_cast<uint64_t *>(baseAddr + getOffsetOfEventTimestampRegister(Event::GLOBAL_END));
-    } else if (timestampType == ZE_EVENT_TIMESTAMP_CONTEXT_START) {
-        tsptr = reinterpret_cast<uint64_t *>(baseAddr + getOffsetOfEventTimestampRegister(Event::CONTEXT_START));
+    if (timestampType == ZE_EVENT_TIMESTAMP_CONTEXT_START) {
+        tsAddr = baseAddr + offsetof(KernelTimestampEvent, contextStart);
+    } else if (timestampType == ZE_EVENT_TIMESTAMP_GLOBAL_START) {
+        tsAddr = baseAddr + offsetof(KernelTimestampEvent, globalStart);
+    } else if (timestampType == ZE_EVENT_TIMESTAMP_CONTEXT_END) {
+        tsAddr = baseAddr + offsetof(KernelTimestampEvent, contextEnd);
     } else {
-        tsptr = reinterpret_cast<uint64_t *>(baseAddr + getOffsetOfEventTimestampRegister(Event::CONTEXT_END));
+        tsAddr = baseAddr + offsetof(KernelTimestampEvent, globalEnd);
     }
 
-    tsData = (*tsptr & tsMask);
+    memcpy_s(static_cast<void *>(&tsData), sizeof(uint32_t), reinterpret_cast<void *>(tsAddr), sizeof(uint32_t));
+
+    tsData &= tsMask;
     memcpy_s(dstptr, sizeof(uint64_t), static_cast<void *>(&tsData), sizeof(uint64_t));
 
     return ZE_RESULT_SUCCESS;
@@ -353,14 +355,9 @@ ze_result_t EventPoolImp::reserveEventFromPool(int index, Event *event) {
         lastEventPoolOffsetUsed.pop();
     }
 
-    auto timestampMultiplier = 1;
-    if (static_cast<struct EventPool *>(this)->isEventPoolUsedForTimestamp) {
-        timestampMultiplier = numEventTimestampsToRead;
-    }
-
     uint64_t baseHostAddr = reinterpret_cast<uint64_t>(eventPoolAllocation->getUnderlyingBuffer());
-    event->hostAddress = reinterpret_cast<void *>(baseHostAddr + (event->offsetUsed * eventSize * timestampMultiplier));
-    event->gpuAddress = eventPoolAllocation->getGpuAddress() + (event->offsetUsed * eventSize * timestampMultiplier);
+    event->hostAddress = reinterpret_cast<void *>(baseHostAddr + (event->offsetUsed * eventSize));
+    event->gpuAddress = eventPoolAllocation->getGpuAddress() + (event->offsetUsed * eventSize);
 
     eventPoolUsedCount++;
 

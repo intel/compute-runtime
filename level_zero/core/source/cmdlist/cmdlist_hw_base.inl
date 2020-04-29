@@ -87,37 +87,34 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
         return;
     }
 
-    uint64_t timeStampAddress = 0;
-
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
     commandContainer.addToResidencyContainer(&event->getAllocation());
+    auto baseAddr = event->getGpuAddress();
+
     if (beforeWalker) {
-        timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::GLOBAL_START);
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, timeStampAddress);
+        auto contextStartAddr = baseAddr;
+        auto globalStartAddr = baseAddr + offsetof(KernelTimestampEvent, globalStart);
 
-        timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::CONTEXT_START);
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timeStampAddress);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, globalStartAddr);
+        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddr);
     } else {
-
-        timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::GLOBAL_END);
-        NEO::PipeControlArgs args;
-        args.dcFlushEnable = (event->signalScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
+        auto contextEndAddr = baseAddr + offsetof(KernelTimestampEvent, contextEnd);
+        auto globalEndAddr = baseAddr + offsetof(KernelTimestampEvent, globalEnd);
 
         if (isCopyOnlyCmdList) {
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), timeStampAddress, 0llu, true, true);
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), globalEndAddr, 0llu, true, true);
         } else {
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-                *(commandContainer.getCommandStream()), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
-                timeStampAddress,
-                0llu,
-                device->getHwInfo(),
-                args);
+            NEO::PipeControlArgs args;
+            args.dcFlushEnable = false;
 
-            timeStampAddress = event->getGpuAddress() + event->getOffsetOfEventTimestampRegister(Event::CONTEXT_END);
-            NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timeStampAddress);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
 
+            NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, globalEndAddr);
+            NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddr);
+
+            args.dcFlushEnable = (event->signalScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
             if (args.dcFlushEnable) {
                 NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
             }
