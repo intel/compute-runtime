@@ -60,7 +60,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize() {
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(Vec3<size_t> copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket) {
+size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(Vec3<size_t> copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket, bool profilingEnabled) {
     size_t numberOfBlits = 0;
     uint64_t width = 1;
     uint64_t height = 1;
@@ -87,17 +87,25 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(Vec3<size_t> copy
 
     const size_t cmdsSizePerBlit = (sizeof(typename GfxFamily::XY_COPY_BLT) + estimatePostBlitCommandSize());
 
+    size_t timestampCmdSize = 0;
+    if (updateTimestampPacket) {
+        if (profilingEnabled) {
+            timestampCmdSize = 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        } else {
+            timestampCmdSize = EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
+        }
+    }
+
     return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) +
-           (cmdsSizePerBlit * numberOfBlits) +
-           (EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() * static_cast<size_t>(updateTimestampPacket));
+           (cmdsSizePerBlit * numberOfBlits) + timestampCmdSize;
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, const HardwareInfo &hwInfo) {
+size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, const HardwareInfo &hwInfo, bool profilingEnabled) {
     size_t size = 0;
     for (auto &blitProperties : blitPropertiesContainer) {
         size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitProperties.copySize, blitProperties.csrDependencies,
-                                                                        blitProperties.outputTimestampPacket != nullptr);
+                                                                        blitProperties.outputTimestampPacket != nullptr, profilingEnabled);
     }
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(hwInfo);
     size += EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);

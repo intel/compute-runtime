@@ -331,7 +331,7 @@ struct BcsTests : public CommandStreamReceiverHwTest {
         BlitPropertiesContainer container;
         container.push_back(blitProperties);
 
-        return bcsCsr->blitBuffer(container, blocking);
+        return bcsCsr->blitBuffer(container, blocking, false);
     }
 
     TimestampPacketContainer timestampPacketContainer;
@@ -350,8 +350,8 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredComman
     auto expectedAlignedSize = cmdsSizePerBlit * alignedNumberOfBlts;
     auto expectedNotAlignedSize = cmdsSizePerBlit * notAlignedNumberOfBlts;
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({alignedBltSize, 1, 1}, csrDependencies, false);
-    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({notAlignedBltSize, 1, 1}, csrDependencies, false);
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({alignedBltSize, 1, 1}, csrDependencies, false, false);
+    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({notAlignedBltSize, 1, 1}, csrDependencies, false, false);
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
@@ -368,8 +368,8 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeForReadBufferRectThenAdd
     auto expectedAlignedSize = cmdsSizePerBlit * alignedNumberOfBlts;
     auto expectedNotAlignedSize = cmdsSizePerBlit * notAlignedNumberOfBlts;
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(alignedBltSize, csrDependencies, false);
-    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(notAlignedBltSize, csrDependencies, false);
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(alignedBltSize, csrDependencies, false, false);
+    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(notAlignedBltSize, csrDependencies, false, false);
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
@@ -409,7 +409,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeThenCa
 
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(blitPropertiesContainer, pDevice->getHardwareInfo());
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(blitPropertiesContainer, pDevice->getHardwareInfo(), false);
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
@@ -437,7 +437,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeForWri
 
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(blitPropertiesContainer, pDevice->getHardwareInfo());
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(blitPropertiesContainer, pDevice->getHardwareInfo(), false);
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
@@ -448,8 +448,8 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     auto expectedSizeWithTimestampPacketWrite = expectedBaseSize + EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
     auto expectedSizeWithoutTimestampPacketWrite = expectedBaseSize;
 
-    auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({1, 1, 1}, csrDependencies, true);
-    auto estimatedSizeWithoutTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({1, 1, 1}, csrDependencies, false);
+    auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({1, 1, 1}, csrDependencies, true, false);
+    auto estimatedSizeWithoutTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({1, 1, 1}, csrDependencies, false, false);
 
     EXPECT_EQ(expectedSizeWithTimestampPacketWrite, estimatedSizeWithTimestampPacketWrite);
     EXPECT_EQ(expectedSizeWithoutTimestampPacketWrite, estimatedSizeWithoutTimestampPacketWrite);
@@ -469,7 +469,7 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
     size_t expectedSize = (cmdsSizePerBlit * numberOfBlts) +
                           TimestampPacketHelper::getRequiredCmdStreamSize<FamilyType>(csrDependencies);
 
-    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({1, 1, 1}, csrDependencies, false);
+    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({1, 1, 1}, csrDependencies, false, false);
 
     EXPECT_EQ(expectedSize, estimatedSize);
 }
@@ -972,7 +972,7 @@ HWTEST_F(BcsTests, givenMultipleBlitPropertiesWhenDispatchingThenProgramCommands
     blitPropertiesContainer.push_back(blitProperties1);
     blitPropertiesContainer.push_back(blitProperties2);
 
-    csr.blitBuffer(blitPropertiesContainer, true);
+    csr.blitBuffer(blitPropertiesContainer, true, false);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr.commandStream);
@@ -1001,6 +1001,46 @@ HWTEST_F(BcsTests, givenMultipleBlitPropertiesWhenDispatchingThenProgramCommands
     EXPECT_EQ(2u, dependenciesFound);
 }
 
+HWTEST_F(BcsTests, givenProfilingEnabledWhenBlitBufferThenCommandBufferIsConstructedProperly) {
+    auto bcsOsContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
+                                                                     false, false, false));
+    auto bcsCsr = std::make_unique<UltCommandStreamReceiver<FamilyType>>(*pDevice->getExecutionEnvironment(), pDevice->getRootDeviceIndex());
+    bcsCsr->setupContext(*bcsOsContext);
+    bcsCsr->initializeTagAllocation();
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                                *bcsCsr, buffer->getGraphicsAllocation(), nullptr, hostPtr,
+                                                                                buffer->getGraphicsAllocation()->getGpuAddress(), 0,
+                                                                                0, 0, {1, 1, 1}, 0, 0, 0, 0);
+
+    MockTimestampPacketContainer timestamp(*bcsCsr->getTimestampPacketAllocator(), 1u);
+    blitProperties.outputTimestampPacket = timestamp.getNode(0);
+
+    BlitPropertiesContainer blitPropertiesContainer;
+    blitPropertiesContainer.push_back(blitProperties);
+
+    bcsCsr->blitBuffer(blitPropertiesContainer, false, true);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(bcsCsr->commandStream);
+    auto &cmdList = hwParser.cmdList;
+
+    auto cmdIterator = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), cmdIterator);
+    cmdIterator = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(++cmdIterator, cmdList.end());
+    ASSERT_NE(cmdList.end(), cmdIterator);
+    cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(++cmdIterator, cmdList.end());
+    ASSERT_NE(cmdList.end(), cmdIterator);
+    cmdIterator = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(++cmdIterator, cmdList.end());
+    ASSERT_NE(cmdList.end(), cmdIterator);
+    cmdIterator = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(++cmdIterator, cmdList.end());
+    ASSERT_NE(cmdList.end(), cmdIterator);
+}
+
 HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocationsResident) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.storeMakeResidentAllocations = true;
@@ -1027,7 +1067,7 @@ HWTEST_F(BcsTests, givenInputAllocationsWhenBlitDispatchedThenMakeAllAllocations
     blitPropertiesContainer.push_back(blitProperties1);
     blitPropertiesContainer.push_back(blitProperties2);
 
-    csr.blitBuffer(blitPropertiesContainer, false);
+    csr.blitBuffer(blitPropertiesContainer, false, false);
 
     EXPECT_TRUE(csr.isMadeResident(buffer1->getGraphicsAllocation()));
     EXPECT_TRUE(csr.isMadeResident(buffer2->getGraphicsAllocation()));
@@ -1070,7 +1110,7 @@ HWTEST_F(BcsTests, givenFenceAllocationIsRequiredWhenBlitDispatchedThenMakeAllAl
     blitPropertiesContainer.push_back(blitProperties1);
     blitPropertiesContainer.push_back(blitProperties2);
 
-    bcsCsr->blitBuffer(blitPropertiesContainer, false);
+    bcsCsr->blitBuffer(blitPropertiesContainer, false, false);
 
     EXPECT_TRUE(bcsCsr->isMadeResident(buffer1->getGraphicsAllocation()));
     EXPECT_TRUE(bcsCsr->isMadeResident(buffer2->getGraphicsAllocation()));

@@ -13,4 +13,8 @@ namespace NEO {
 template <typename Family>
 void EncodeStates<Family>::adjustStateComputeMode(LinearStream &csr, uint32_t numGrfRequired, void *const stateComputeModePtr, bool isMultiOsContextCapable, bool requiresCoherency) {
 }
+
+template <typename Family>
+void EncodeStoreMMIO<Family>::remapOffset(MI_STORE_REGISTER_MEM *pStoreRegMem) {
+}
 } // namespace NEO

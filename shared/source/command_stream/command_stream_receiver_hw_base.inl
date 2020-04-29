@@ -854,13 +854,13 @@ bool CommandStreamReceiverHw<GfxFamily>::detectInitProgrammingFlagsRequired(cons
 }
 
 template <typename GfxFamily>
-uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking) {
+uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled) {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
     auto lock = obtainUniqueOwnership();
 
-    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, peekHwInfo()));
+    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, peekHwInfo(), profilingEnabled));
     auto commandStreamStart = commandStream.getUsed();
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;
@@ -870,11 +870,27 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     for (auto &blitProperties : blitPropertiesContainer) {
         TimestampPacketHelper::programCsrDependencies<GfxFamily>(commandStream, blitProperties.csrDependencies, getOsContext().getNumSupportedDevices());
 
+        if (blitProperties.outputTimestampPacket && profilingEnabled) {
+            auto timestampContextStartGpuAddress = blitProperties.outputTimestampPacket->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextStart);
+            auto timestampGlobalStartAddress = blitProperties.outputTimestampPacket->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].globalStart);
+
+            EncodeStoreMMIO<GfxFamily>::encode(commandStream, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timestampContextStartGpuAddress);
+            EncodeStoreMMIO<GfxFamily>::encode(commandStream, REG_GLOBAL_TIMESTAMP_LDW, timestampGlobalStartAddress);
+        }
+
         BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, commandStream, *this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]);
 
         if (blitProperties.outputTimestampPacket) {
-            auto timestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*blitProperties.outputTimestampPacket);
-            EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, timestampPacketGpuAddress, 0, true, true);
+            if (profilingEnabled) {
+                auto timestampContextEndGpuAddress = blitProperties.outputTimestampPacket->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+                auto timestampGlobalEndAddress = blitProperties.outputTimestampPacket->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].globalEnd);
+
+                EncodeStoreMMIO<GfxFamily>::encode(commandStream, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timestampContextEndGpuAddress);
+                EncodeStoreMMIO<GfxFamily>::encode(commandStream, REG_GLOBAL_TIMESTAMP_LDW, timestampGlobalEndAddress);
+            } else {
+                auto timestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*blitProperties.outputTimestampPacket);
+                EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, timestampPacketGpuAddress, 0, true, true);
+            }
             makeResident(*blitProperties.outputTimestampPacket->getBaseGraphicsAllocation());
         }
 

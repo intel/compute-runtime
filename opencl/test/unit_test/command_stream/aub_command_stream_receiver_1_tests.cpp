@@ -1167,7 +1167,7 @@ HWTEST_F(AubCommandStreamReceiverTests, WhenBlitBufferIsCalledThenCounterIsCorre
     BlitProperties blitProperties = BlitProperties::constructPropertiesForCopyBuffer(&allocation, &allocation, 0, 0, 0, 0, 0, 0, 0);
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
-    aubCsr->blitBuffer(blitPropertiesContainer, true);
+    aubCsr->blitBuffer(blitPropertiesContainer, true, false);
     EXPECT_EQ(1u, aubCsr->blitBufferCalled);
 }
 

@@ -689,7 +689,7 @@ struct BcsBufferTests : public ::testing::Test {
 
             BlitPropertiesContainer container;
             container.push_back(blitProperties);
-            bcsCsr->blitBuffer(container, true);
+            bcsCsr->blitBuffer(container, true, false);
 
             return BlitOperationResult::Success;
         }

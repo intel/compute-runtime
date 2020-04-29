@@ -22,4 +22,9 @@ void EncodeStates<Family>::adjustStateComputeMode(LinearStream &csr, uint32_t nu
 
     EncodeComputeMode<Family>::adjustComputeMode(csr, numGrfRequired, &stateComputeMode, isMultiOsContextCapable);
 }
+
+template <typename Family>
+void EncodeStoreMMIO<Family>::remapOffset(MI_STORE_REGISTER_MEM *pStoreRegMem) {
+    pStoreRegMem->setMmioRemapEnable(true);
+}
 } // namespace NEO

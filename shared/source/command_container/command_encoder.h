@@ -148,6 +148,7 @@ struct EncodeStoreMMIO {
 
     static const size_t size = sizeof(MI_STORE_REGISTER_MEM);
     static void encode(LinearStream &csr, uint32_t offset, uint64_t address);
+    static void remapOffset(MI_STORE_REGISTER_MEM *pStoreRegMem);
 };
 
 template <typename GfxFamily>

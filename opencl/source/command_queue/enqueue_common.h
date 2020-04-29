@@ -809,7 +809,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     if (enqueueProperties.blitPropertiesContainer->size() > 0) {
-        this->bcsTaskCount = getBcsCommandStreamReceiver()->blitBuffer(*enqueueProperties.blitPropertiesContainer, false);
+        this->bcsTaskCount = getBcsCommandStreamReceiver()->blitBuffer(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled());
         dispatchFlags.implicitFlush = true;
     }
 
@@ -956,9 +956,16 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         surface->makeResident(getGpgpuCommandStreamReceiver());
     }
 
+    TimeStampData submitTimeStamp;
+    if (eventBuilder.getEvent() && isProfilingEnabled() && getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        this->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
+        eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
+        eventBuilder.getEvent()->getTimestampPacketNodes()->makeResident(getGpgpuCommandStreamReceiver());
+    }
+
     if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
         UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);
-        this->bcsTaskCount = getBcsCommandStreamReceiver()->blitBuffer(*enqueueProperties.blitPropertiesContainer, false);
+        this->bcsTaskCount = getBcsCommandStreamReceiver()->blitBuffer(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled());
     }
 
     DispatchFlags dispatchFlags(

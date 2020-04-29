@@ -16,6 +16,7 @@
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
+#include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
@@ -51,6 +52,80 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelWhenCommandEnqueuedT
     mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
                                           eventsRequest, eventBuilder, 0);
     EXPECT_EQ(allocation->getTaskCount(mockCmdQ->getGpgpuCommandStreamReceiver().getOsContext().getContextId()), 1u);
+}
+
+template <bool enabled>
+struct EnqueueHandlerTimestampTest : public EnqueueHandlerTest {
+    void SetUp() override {
+        DebugManager.flags.EnableTimestampPacket.set(enabled);
+        EnqueueHandlerTest::SetUp();
+    }
+
+    void TearDown() override {
+        EnqueueHandlerTest::TearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+using EnqueueHandlerTimestampEnabledTest = EnqueueHandlerTimestampTest<true>;
+
+HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEnabledWhenEnqueueCommandWithoutKernelThenSubmitTimeStampIsSet) {
+    cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(context, pClDevice, properties));
+
+    char buffer[64];
+    std::unique_ptr<MockGraphicsAllocation> allocation(new MockGraphicsAllocation(buffer, sizeof(buffer)));
+    std::unique_ptr<GeneralSurface> surface(new GeneralSurface(allocation.get()));
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+    eventBuilder.create<MockEvent<Event>>(mockCmdQ.get(), CL_COMMAND_USER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    auto ev = static_cast<MockEvent<UserEvent> *>(eventBuilder.getEvent());
+    Surface *surfaces[] = {surface.get()};
+    auto blocking = true;
+    TimestampPacketDependencies timestampPacketDependencies;
+    EnqueueProperties enqueueProperties(false, false, false, true, nullptr);
+
+    EXPECT_EQ(ev->submitTimeStamp.CPUTimeinNS, 0u);
+    EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
+
+    mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
+                                          eventsRequest, eventBuilder, 0);
+
+    EXPECT_NE(ev->submitTimeStamp.CPUTimeinNS, 0u);
+    EXPECT_NE(ev->submitTimeStamp.GPUTimeStamp, 0u);
+
+    delete ev;
+}
+
+using EnqueueHandlerTimestampDisabledTest = EnqueueHandlerTimestampTest<false>;
+
+HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacketsDisabledWhenEnqueueCommandWithoutKernelThenSubmitTimeStampIsNotSet) {
+    cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
+    std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(context, pClDevice, properties));
+
+    char buffer[64];
+    std::unique_ptr<MockGraphicsAllocation> allocation(new MockGraphicsAllocation(buffer, sizeof(buffer)));
+    std::unique_ptr<GeneralSurface> surface(new GeneralSurface(allocation.get()));
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+    eventBuilder.create<MockEvent<Event>>(mockCmdQ.get(), CL_COMMAND_USER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    auto ev = static_cast<MockEvent<UserEvent> *>(eventBuilder.getEvent());
+    Surface *surfaces[] = {surface.get()};
+    auto blocking = true;
+    TimestampPacketDependencies timestampPacketDependencies;
+    EnqueueProperties enqueueProperties(false, false, false, true, nullptr);
+
+    EXPECT_EQ(ev->submitTimeStamp.CPUTimeinNS, 0u);
+    EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
+
+    mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
+                                          eventsRequest, eventBuilder, 0);
+
+    EXPECT_EQ(ev->submitTimeStamp.CPUTimeinNS, 0u);
+    EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
+
+    delete ev;
 }
 
 HWTEST_F(EnqueueHandlerTest, givenNonBlitPropertyWhenEnqueueIsBlockedThenDontRegisterBlitProperties) {

@@ -165,7 +165,6 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
         if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
             src = &queueTimeStamp.GPUTimeStamp;
         }
-
         srcSize = sizeof(cl_ulong);
         break;
 

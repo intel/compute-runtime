@@ -259,6 +259,7 @@ void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_
     MI_STORE_REGISTER_MEM cmd = Family::cmdInitStoreRegisterMem;
     cmd.setRegisterAddress(offset);
     cmd.setMemoryAddress(address);
+    remapOffset(&cmd);
     auto buffer = csr.getSpaceForCmd<MI_STORE_REGISTER_MEM>();
     *buffer = cmd;
 }

@@ -204,7 +204,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                            *currentTimestampPacketNodes, csrDeps,
                                                            commandQueue.getGpgpuCommandStreamReceiver(), bcsCsr);
 
-        auto bcsTaskCount = bcsCsr.blitBuffer(kernelOperation->blitPropertiesContainer, false);
+        auto bcsTaskCount = bcsCsr.blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled());
         commandQueue.updateBcsTaskCount(bcsTaskCount);
     }
 
@@ -290,7 +290,7 @@ void CommandWithoutKernel::dispatchBlitOperation() {
     blitProperties.csrDependencies.push_back(&timestampPacketDependencies->barrierNodes);
     blitProperties.outputTimestampPacket = currentTimestampPacketNodes->peekNodes()[0];
 
-    auto bcsTaskCount = bcsCsr->blitBuffer(kernelOperation->blitPropertiesContainer, false);
+    auto bcsTaskCount = bcsCsr->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled());
 
     commandQueue.updateBcsTaskCount(bcsTaskCount);
 }
