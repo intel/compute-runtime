@@ -21,12 +21,14 @@ class RasImp : public NEO::NonCopyableClass, public Ras {
     ze_result_t rasSetConfig(const zet_ras_config_t *pConfig) override;
     ze_result_t rasGetState(ze_bool_t clear, uint64_t *pTotalErrors, zet_ras_details_t *pDetails) override;
 
+    RasImp() = default;
     RasImp(OsSysman *pOsSysman);
     ~RasImp() override;
 
-  private:
     OsRas *pOsRas = nullptr;
     void init();
+
+  private:
     zet_ras_properties_t rasProperties = {};
 };
 
