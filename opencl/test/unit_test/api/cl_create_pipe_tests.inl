@@ -11,12 +11,15 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "cl_api_tests.h"
 
 using namespace NEO;
 
-typedef api_tests clCreatePipeTests;
+struct clCreatePipeTests : api_tests {
+    VariableBackup<bool> supportsPipesBackup{&defaultHwInfo->capabilityTable.supportsPipes, true};
+};
 
 namespace ClCreatePipeTests {
 
@@ -27,6 +30,7 @@ class clCreatePipeWithParamTests : public ApiFixture<>, public testing::TestWith
     void TearDown() override {
         ApiFixture::TearDown();
     }
+    VariableBackup<bool> supportsPipesBackup{&defaultHwInfo->capabilityTable.supportsPipes, true};
 };
 
 class clCreatePipeWithParamNegativeTests : public ApiFixture<>, public testing::TestWithParam<uint64_t> {
@@ -36,6 +40,7 @@ class clCreatePipeWithParamNegativeTests : public ApiFixture<>, public testing::
     void TearDown() override {
         ApiFixture::TearDown();
     }
+    VariableBackup<bool> supportsPipesBackup{&defaultHwInfo->capabilityTable.supportsPipes, true};
 };
 
 TEST_P(clCreatePipeWithParamTests, GivenValidFlagsWhenCreatingPipeThenPipeIsCreatedAndSuccessIsReturned) {
@@ -136,6 +141,18 @@ TEST_F(clCreatePipeTests, GivenPipePropertiesNotNullWhenCreatingPipeThenInvalidV
     clReleaseMemObject(pipe);
 }
 
+TEST_F(clCreatePipeTests, GivenDeviceNotSupportingPipesWhenCreatingPipeThenInvalidOperationErrorIsReturned) {
+    auto hardwareInfo = *defaultHwInfo;
+    hardwareInfo.capabilityTable.supportsPipes = false;
+
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0));
+    MockContext mockContext{pClDevice.get(), false};
+
+    auto pipe = clCreatePipe(&mockContext, 0, 1, 20, nullptr, &retVal);
+    EXPECT_EQ(nullptr, pipe);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
 TEST_F(clCreatePipeTests, GivenPipePacketSizeGreaterThanAllowedWhenCreatingPipeThenInvalidPipeSizeErrorIsReturned) {
     cl_uint packetSize = pContext->getDevice(0)->getDeviceInfo().pipeMaxPacketSize;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -171,7 +188,7 @@ TEST(clCreatePipeTest, givenPlatformWithoutDevicesWhenClCreatePipeIsCalledThenDe
     executionEnvironment->prepareRootDeviceEnvironments(1);
     auto device = std::make_unique<ClDevice>(*Device::create<RootDevice>(executionEnvironment, 0u), platform());
     const ClDeviceInfo &devInfo = device->getDeviceInfo();
-    if (devInfo.svmCapabilities == 0) {
+    if (devInfo.svmCapabilities == 0 || device->getHardwareInfo().capabilityTable.supportsPipes == false) {
         GTEST_SKIP();
     }
     cl_device_id clDevice = device.get();

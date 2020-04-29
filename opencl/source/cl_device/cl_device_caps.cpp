@@ -294,10 +294,17 @@ void ClDevice::initializeCaps() {
     // cl_khr_image2d_from_buffer
     deviceInfo.imagePitchAlignment = hwHelper.getPitchAlignmentForImage(&hwInfo);
     deviceInfo.imageBaseAddressAlignment = 4;
-    deviceInfo.maxPipeArgs = 16;
-    deviceInfo.pipeMaxPacketSize = 1024;
-    deviceInfo.pipeMaxActiveReservations = 1;
     deviceInfo.queueOnHostProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+
+    if (arePipesSupported()) {
+        deviceInfo.maxPipeArgs = 16;
+        deviceInfo.pipeMaxPacketSize = 1024;
+        deviceInfo.pipeMaxActiveReservations = 1;
+    } else {
+        deviceInfo.maxPipeArgs = 0;
+        deviceInfo.pipeMaxPacketSize = 0;
+        deviceInfo.pipeMaxActiveReservations = 0;
+    }
 
     deviceInfo.linkerAvailable = true;
     deviceInfo.svmCapabilities = hwInfo.capabilityTable.ftrSvm * CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;

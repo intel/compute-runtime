@@ -71,6 +71,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     false,                                           // supportCacheFlushAfterWalker
     true,                                            // supportsImages
     true,                                            // supportsDeviceEnqueue
+    true,                                            // supportsPipes
     true                                             // hostPtrTrackingEnabled
 };
 

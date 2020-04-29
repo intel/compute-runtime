@@ -7,12 +7,15 @@
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/pipe.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "cl_api_tests.h"
 
 using namespace NEO;
 
-typedef api_tests clGetPipeInfoTests;
+struct clGetPipeInfoTests : api_tests {
+    VariableBackup<bool> supportsPipesBackup{&defaultHwInfo->capabilityTable.supportsPipes, true};
+};
 
 namespace ULT {
 

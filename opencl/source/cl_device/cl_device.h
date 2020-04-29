@@ -119,6 +119,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     std::unique_ptr<SyncBufferHandler> syncBufferHandler;
     DeviceBitfield getDeviceBitfield() const;
     bool isDeviceEnqueueSupported() const;
+    bool arePipesSupported() const;
 
   protected:
     void initializeCaps();

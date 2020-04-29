@@ -187,4 +187,8 @@ bool ClDevice::isDeviceEnqueueSupported() const {
     return device.getHardwareInfo().capabilityTable.supportsDeviceEnqueue;
 }
 
+bool ClDevice::arePipesSupported() const {
+    return device.getHardwareInfo().capabilityTable.supportsPipes;
+}
+
 } // namespace NEO

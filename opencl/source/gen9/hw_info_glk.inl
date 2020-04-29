@@ -67,6 +67,7 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages
     false,                                         // supportsDeviceEnqueue
+    false,                                         // supportsPipes
     true                                           // hostPtrTrackingEnabled
 };
 

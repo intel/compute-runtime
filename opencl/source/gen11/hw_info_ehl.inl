@@ -70,6 +70,7 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages
     true,                                          // supportsDeviceEnqueue
+    false,                                         // supportsPipes
     true                                           // hostPtrTrackingEnabled
 };
 

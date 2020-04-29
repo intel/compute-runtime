@@ -70,6 +70,7 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages
     true,                                          // supportsDeviceEnqueue
+    false,                                         // supportsPipes
     true                                           // hostPtrTrackingEnabled
 };
 

@@ -72,6 +72,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     false,                                           // supportCacheFlushAfterWalker
     true,                                            // supportsImages
     true,                                            // supportsDeviceEnqueue
+    false,                                           // supportsPipes
     false                                            // hostPtrTrackingEnabled
 };
 

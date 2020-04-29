@@ -21,6 +21,7 @@ bool supportsOcl21(const Context *pContext);
 bool supportsDeviceEnqueue(const ClDevice *pClDevice);
 bool supportsDeviceEnqueue(const Context *pContext);
 bool supportsDeviceEnqueue(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
+bool supportsPipes(const ClDevice *pClDevice);
 } // namespace TestChecks
 
 } // namespace NEO

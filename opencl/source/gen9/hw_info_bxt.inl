@@ -72,6 +72,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages
     false,                                         // supportsDeviceEnqueue
+    false,                                         // supportsPipes
     true                                           // hostPtrTrackingEnabled
 };
 
