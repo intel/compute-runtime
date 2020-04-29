@@ -94,7 +94,7 @@ typedef ::testing::Types<
 
 TYPED_TEST_CASE(KernelArgImmediateTest, KernelArgImmediateTypes);
 
-TYPED_TEST(KernelArgImmediateTest, SetKernelArg) {
+TYPED_TEST(KernelArgImmediateTest, WhenSettingKernelArgThenArgIsSetCorrectly) {
     auto val = (TypeParam)0xaaaaaaaaULL;
     auto pVal = &val;
     this->pKernel->setArg(0, sizeof(TypeParam), pVal);
@@ -105,7 +105,7 @@ TYPED_TEST(KernelArgImmediateTest, SetKernelArg) {
     EXPECT_EQ(val, *pKernelArg);
 }
 
-TYPED_TEST(KernelArgImmediateTest, SetKernelArgWithInvalidIndex) {
+TYPED_TEST(KernelArgImmediateTest, GivenInvalidIndexWhenSettingKernelArgThenInvalidArgIndexErrorIsReturned) {
     auto val = (TypeParam)0U;
     auto pVal = &val;
     auto ret = this->pKernel->setArg((uint32_t)-1, sizeof(TypeParam), pVal);
@@ -113,7 +113,7 @@ TYPED_TEST(KernelArgImmediateTest, SetKernelArgWithInvalidIndex) {
     EXPECT_EQ(ret, CL_INVALID_ARG_INDEX);
 }
 
-TYPED_TEST(KernelArgImmediateTest, setKernelArgMultipleArguments) {
+TYPED_TEST(KernelArgImmediateTest, GivenMultipleArgumentsWhenSettingKernelArgThenEachArgIsSetCorrectly) {
     auto val = (TypeParam)0xaaaaaaaaULL;
     auto pVal = &val;
     this->pKernel->setArg(0, sizeof(TypeParam), pVal);
@@ -140,7 +140,7 @@ TYPED_TEST(KernelArgImmediateTest, setKernelArgMultipleArguments) {
     EXPECT_EQ(val, *pKernelArg);
 }
 
-TYPED_TEST(KernelArgImmediateTest, setKernelArgOverwritesCrossThreadData) {
+TYPED_TEST(KernelArgImmediateTest, GivenCrossThreadDataOverwritesWhenSettingKernelArgThenArgsAreSetCorrectly) {
     TypeParam val = (TypeParam)0xaaaaaaaaULL;
     TypeParam *pVal = &val;
     this->pKernel->setArg(0, sizeof(TypeParam), pVal);
@@ -167,7 +167,7 @@ TYPED_TEST(KernelArgImmediateTest, setKernelArgOverwritesCrossThreadData) {
     EXPECT_EQ(val, *pKernelArg);
 }
 
-TYPED_TEST(KernelArgImmediateTest, setSingleKernelArgMultipleStructElements) {
+TYPED_TEST(KernelArgImmediateTest, GivenMultipleStructElementsWhenSettingKernelArgThenArgsAreSetCorrectly) {
     struct ImmediateStruct {
         TypeParam a;
         unsigned char unused[3]; // want to force a gap, ideally unpadded
