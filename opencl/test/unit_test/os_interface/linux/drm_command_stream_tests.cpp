@@ -185,6 +185,22 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, Flush) {
     EXPECT_EQ(availableSpacePriorToFlush, cs.getAvailableSpace());
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndices) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.set(true);
+
+    auto &cs = csr->getCS();
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr};
+
+    ::testing::internal::CaptureStdout();
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+    std::ostringstream expectedValue;
+    expectedValue << "Submission to RootDevice Index: " << csr->getRootDeviceIndex() << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong() << ", EngineId: " << csr->getOsContext().getEngineType() << "\n";
+    EXPECT_THAT(::testing::internal::GetCapturedStdout(), ::testing::HasSubstr(expectedValue.str()));
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdToAllExecBuffersAndObjects) {
     uint32_t expectedDrmContextId = 321;
     uint32_t numAllocations = 3;

@@ -66,6 +66,7 @@ WddmCommandStreamReceiver<GfxFamily>::~WddmCommandStreamReceiver() {
 
 template <typename GfxFamily>
 bool WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
+    this->printDeviceIndex();
     auto commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
 
     allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);

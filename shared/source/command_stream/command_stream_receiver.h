@@ -210,6 +210,7 @@ class CommandStreamReceiver {
 
   protected:
     void cleanupResources();
+    void printDeviceIndex();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;

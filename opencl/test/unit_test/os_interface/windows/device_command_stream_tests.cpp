@@ -221,6 +221,22 @@ TEST_F(WddmCommandStreamTest, Flush) {
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
+TEST_F(WddmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPrintIndices) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.set(true);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr};
+    ::testing::internal::CaptureStdout();
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+    std::ostringstream expectedValue;
+    expectedValue << "Submission to RootDevice Index: " << csr->getRootDeviceIndex() << ", Sub-Devices Mask: " << csr->getOsContext().getDeviceBitfield().to_ulong() << ", EngineId: " << csr->getOsContext().getEngineType() << "\n";
+    EXPECT_STREQ(::testing::internal::GetCapturedStdout().c_str(), expectedValue.str().c_str());
+
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
 TEST_F(WddmCommandStreamTest, givenGraphicsAllocationWithDifferentGpuAddressThenCpuAddressWhenSubmitIsCalledThenGpuAddressIsUsed) {
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
 

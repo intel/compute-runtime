@@ -510,4 +510,10 @@ bool CommandStreamReceiver::needsPageTableManager(aub_stream::EngineType engineT
     return HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo);
 }
 
+void CommandStreamReceiver::printDeviceIndex() {
+    if (DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
+        printf("Submission to RootDevice Index: %u, Sub-Devices Mask: %lu, EngineId: %u\n", this->getRootDeviceIndex(), this->osContext->getDeviceBitfield().to_ulong(), this->osContext->getEngineType());
+    }
+}
+
 } // namespace NEO
