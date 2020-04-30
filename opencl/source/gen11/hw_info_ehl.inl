@@ -56,7 +56,7 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     false,                                         // ftrSupportsFP64
     false,                                         // ftrSupports64BitMath
     false,                                         // ftrSvm
-    true,                                          // ftrSupportsCoherency
+    false,                                         // ftrSupportsCoherency
     true,                                          // ftrSupportsVmeAvcTextureSampler
     true,                                          // ftrSupportsVmeAvcPreemption
     false,                                         // ftrRenderCompressedBuffers

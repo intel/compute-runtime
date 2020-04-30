@@ -57,7 +57,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     false,                                           // ftrSupportsFP64
     false,                                           // ftrSupports64BitMath
     true,                                            // ftrSvm
-    true,                                            // ftrSupportsCoherency
+    false,                                           // ftrSupportsCoherency
     true,                                            // ftrSupportsVmeAvcTextureSampler
     true,                                            // ftrSupportsVmeAvcPreemption
     false,                                           // ftrRenderCompressedBuffers

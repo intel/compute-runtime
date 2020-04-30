@@ -58,7 +58,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     false,                                           // ftrSupportsFP64
     false,                                           // ftrSupports64BitMath
     true,                                            // ftrSvm
-    true,                                            // ftrSupportsCoherency
+    false,                                           // ftrSupportsCoherency
     false,                                           // ftrSupportsVmeAvcTextureSampler
     false,                                           // ftrSupportsVmeAvcPreemption
     false,                                           // ftrRenderCompressedBuffers
