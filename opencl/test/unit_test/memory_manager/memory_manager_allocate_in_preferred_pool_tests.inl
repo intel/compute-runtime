@@ -134,32 +134,35 @@ TEST(MemoryManagerGetAlloctionDataTest, givenDebugModeWhenCertainAllocationTypes
     DebugManagerStateRestore restorer;
     auto allocationType = GraphicsAllocation::AllocationType::BUFFER;
     auto mask = 1llu << (static_cast<int64_t>(allocationType) - 1);
-
     DebugManager.flags.ForceSystemMemoryPlacement.set(mask);
 
     AllocationData allocData;
     AllocationProperties properties(0, 0, allocationType);
-    MockMemoryManager mockMemoryManager;
-    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    allocData.flags.useSystemMemory = false;
 
+    MockMemoryManager::overrideAllocationData(allocData, properties);
     EXPECT_TRUE(allocData.flags.useSystemMemory);
+
     allocData.flags.useSystemMemory = false;
     allocationType = GraphicsAllocation::AllocationType::WRITE_COMBINED;
     mask |= 1llu << (static_cast<int64_t>(allocationType) - 1);
     DebugManager.flags.ForceSystemMemoryPlacement.set(mask);
 
     AllocationProperties properties2(0, 0, allocationType);
-    MockMemoryManager::getAllocationData(allocData, properties2, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties2));
-
-    EXPECT_TRUE(allocData.flags.useSystemMemory);
-    allocData.flags.useSystemMemory = false;
-
-    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    MockMemoryManager::overrideAllocationData(allocData, properties2);
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 
     allocData.flags.useSystemMemory = false;
-    DebugManager.flags.ForceSystemMemoryPlacement.set(8llu);
-    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+
+    MockMemoryManager::overrideAllocationData(allocData, properties);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+
+    allocData.flags.useSystemMemory = false;
+    allocationType = GraphicsAllocation::AllocationType::IMAGE;
+    mask = 1llu << (static_cast<int64_t>(allocationType) - 1);
+    DebugManager.flags.ForceSystemMemoryPlacement.set(mask);
+
+    MockMemoryManager::overrideAllocationData(allocData, properties);
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
@@ -863,6 +866,32 @@ TEST(MemoryManagerTest, givenDirectSemaphoreAddressingDefaultWhenNoOverrideThenE
     MockMemoryManager::overrideAllocationData(allocationData, properties);
 
     EXPECT_EQ(1u, allocationData.flags.resource48Bit);
+}
+
+TEST(MemoryManagerTest, givenForceNonSystemMaskWhenAllocationTypeMatchesMaskThenExpectSystemFlagFalse) {
+    DebugManagerStateRestore restorer;
+    auto allocationType = GraphicsAllocation::AllocationType::BUFFER;
+    auto mask = 1llu << (static_cast<int64_t>(allocationType) - 1);
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(mask);
+
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::BUFFER);
+    allocationData.flags.useSystemMemory = 1;
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+    EXPECT_EQ(0u, allocationData.flags.useSystemMemory);
+}
+
+TEST(MemoryManagerTest, givenForceNonSystemMaskWhenAllocationTypeNotMatchesMaskThenExpectSystemFlagTrue) {
+    DebugManagerStateRestore restorer;
+    auto allocationType = GraphicsAllocation::AllocationType::BUFFER;
+    auto mask = 1llu << (static_cast<int64_t>(allocationType) - 1);
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(mask);
+
+    AllocationData allocationData;
+    AllocationProperties properties(0, 0x1000, GraphicsAllocation::AllocationType::COMMAND_BUFFER);
+    allocationData.flags.useSystemMemory = 1;
+    MockMemoryManager::overrideAllocationData(allocationData, properties);
+    EXPECT_EQ(1u, allocationData.flags.useSystemMemory);
 }
 
 using MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest = testing::TestWithParam<std::tuple<GraphicsAllocation::AllocationType, bool>>;

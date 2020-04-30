@@ -300,12 +300,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
-    if (DebugManager.flags.ForceSystemMemoryPlacement.get()) {
-        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceSystemMemoryPlacement.get()) {
-            allocationData.flags.useSystemMemory = true;
-        }
-    }
-
     if (properties.allocationType == GraphicsAllocation::AllocationType::COMMAND_BUFFER && properties.flags.multiOsContextCapable) {
         allocationData.flags.useSystemMemory = false;
     }
@@ -598,6 +592,18 @@ bool MemoryManager::isCopyRequired(ImageInfo &imgInfo, const void *hostPtr) {
 }
 
 void MemoryManager::overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties) {
+    if (DebugManager.flags.ForceSystemMemoryPlacement.get()) {
+        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceSystemMemoryPlacement.get()) {
+            allocationData.flags.useSystemMemory = true;
+        }
+    }
+
+    if (DebugManager.flags.ForceNonSystemMemoryPlacement.get()) {
+        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceNonSystemMemoryPlacement.get()) {
+            allocationData.flags.useSystemMemory = false;
+        }
+    }
+
     int32_t directRingPlacement = DebugManager.flags.DirectSubmissionBufferPlacement.get();
     int32_t directRingAddressing = DebugManager.flags.DirectSubmissionBufferAddressing.get();
     if (properties.allocationType == GraphicsAllocation::AllocationType::RING_BUFFER) {
