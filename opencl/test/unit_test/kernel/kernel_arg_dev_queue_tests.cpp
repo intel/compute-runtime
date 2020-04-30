@@ -69,11 +69,11 @@ struct KernelArgDevQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
     KernelArgPatchInfo kernelArgPatchInfo;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GIVENkernelWithDevQueueArgWHENsetArgHandleTHENsetsProperHandle) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GivenKernelWithDevQueueArgWhenSettingArgHandleThenCorrectHandleIsSet) {
     EXPECT_EQ(pKernel->kernelArgHandlers[0], &Kernel::setArgDevQueue);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GIVENdevQueueArgHandlerWHENpassDevQueueTHENacceptObjAndPatch) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GivenDeviceQueueWhenSettingArgDevQueueThenCorrectlyPatched) {
     auto clDeviceQueue = static_cast<cl_command_queue>(pDeviceQueue);
 
     auto ret = pKernel->setArgDevQueue(0, sizeof(cl_command_queue), &clDeviceQueue);
@@ -84,7 +84,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GIVENdevQueueArgHandlerWHENpa
     EXPECT_EQ(*(reinterpret_cast<uint32_t *>(patchLocation)), gpuAddress);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GIVENdevQueueArgHandlerWHENpassNormalQueueTHENrejectObjAndReturnError) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GivenCommandQueueWhenSettingArgDevQueueThenInvalidDeviceQueueErrorIsReturned) {
     auto clCmdQueue = static_cast<cl_command_queue>(pCommandQueue);
 
     auto ret = pKernel->setArgDevQueue(0, sizeof(cl_command_queue), &clCmdQueue);
@@ -92,7 +92,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GIVENdevQueueArgHandlerWHENpa
     EXPECT_EQ(crossThreadDataUnchanged(), true);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GIVENdevQueueArgHandlerWHENpassNonQueueObjTHENrejectObjAndReturnError) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GivenNonQueueObjectWhenSettingArgDevQueueThenInvalidDeviceQueueErrorIsReturned) {
     Buffer *buffer = new MockBuffer();
     auto clBuffer = static_cast<cl_mem>(buffer);
 
@@ -103,7 +103,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GIVENdevQueueArgHandlerWHENpa
     delete buffer;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GIVENdevQueueArgHandlerWHENpassFakeQueueTHENrejectObjAndReturnError) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GivenInvalidQueueWhenSettingArgDevQueueThenInvalidDeviceQueueErrorIsReturned) {
     char *pFakeDeviceQueue = new char[sizeof(DeviceQueue)];
     auto clFakeDeviceQueue = reinterpret_cast<cl_command_queue *>(pFakeDeviceQueue);
 
@@ -114,13 +114,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GIVENdevQueueArgHandlerWHENpa
     delete[] pFakeDeviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GIVENdevQueueArgHandlerWHENpassNullptrTHENrejectObjAndReturnError) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GivenNullDeviceQueueWhenSettingArgDevQueueThenInvalidArgValueErrorIsReturned) {
     auto ret = pKernel->setArgDevQueue(0, sizeof(cl_command_queue), nullptr);
     EXPECT_EQ(ret, CL_INVALID_ARG_VALUE);
     EXPECT_EQ(crossThreadDataUnchanged(), true);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GIVENdevQueueArgHandlerWHENpassWrongSizeTHENrejectObjAndReturnError) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelArgDevQueueTest, GivenInvalidSizeWhenSettingArgDevQueueThenInvalidArgSizeErrorIsReturned) {
     auto clDeviceQueue = static_cast<cl_command_queue>(pDeviceQueue);
 
     auto ret = pKernel->setArgDevQueue(0, sizeof(cl_command_queue) - 1, &clDeviceQueue);
