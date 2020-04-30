@@ -176,15 +176,21 @@ typename FamilyType::XY_COLOR_BLT::COLOR_DEPTH getColorDepth(size_t patternSize)
     return depth;
 }
 
-HWTEST2_P(BlitColorTests, givenCommandStreamWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, BlitPlatforms) {
-    auto patternSize = GetParam();
+HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualOneWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, BlitPlatforms) {
+    size_t patternSize = 1;
     auto expecttedDepth = getColorDepth<FamilyType>(patternSize);
     GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> test(pDevice);
     test.TestBodyImpl(patternSize, expecttedDepth);
 }
-
-INSTANTIATE_TEST_CASE_P(size_t,
-                        BlitColorTests,
-                        testing::Values(1,
-                                        2,
-                                        4));
+HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualTwoWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, BlitPlatforms) {
+    size_t patternSize = 2;
+    auto expecttedDepth = getColorDepth<FamilyType>(patternSize);
+    GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> test(pDevice);
+    test.TestBodyImpl(patternSize, expecttedDepth);
+}
+HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualFourWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, BlitPlatforms) {
+    size_t patternSize = 4;
+    auto expecttedDepth = getColorDepth<FamilyType>(patternSize);
+    GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> test(pDevice);
+    test.TestBodyImpl(patternSize, expecttedDepth);
+}
