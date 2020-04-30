@@ -531,14 +531,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr);
     if (allocData) {
-        if (allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
             return ZE_RESULT_SUCCESS;
-        } else {
-            DEBUG_BREAK_IF(true);
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
     }
-    DEBUG_BREAK_IF(true);
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 
@@ -926,14 +920,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryPrefetch(const voi
                                                                        size_t count) {
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr);
     if (allocData) {
-        if (allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
             return ZE_RESULT_SUCCESS;
-        } else {
-            DEBUG_BREAK_IF(true);
-            return ZE_RESULT_ERROR_UNKNOWN;
-        }
     }
-    DEBUG_BREAK_IF(true);
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 

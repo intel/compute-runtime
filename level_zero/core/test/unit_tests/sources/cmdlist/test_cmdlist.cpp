@@ -69,6 +69,64 @@ TEST_F(CommandListCreate, givenRegularCommandListThenDefaultNumIddPerBlockIsUsed
     EXPECT_EQ(defaultNumIdds, commandList->commandContainer.getNumIddPerBlock());
 }
 
+TEST_F(CommandListCreate, givenNonExistingPtrThenAppendMemAdviseReturnsError) {
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    ASSERT_NE(nullptr, commandList);
+
+    auto res = commandList->appendMemAdvise(device, nullptr, 0, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+}
+
+TEST_F(CommandListCreate, givenNonExistingPtrThenAppendMemoryPrefetchReturnsError) {
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    ASSERT_NE(nullptr, commandList);
+
+    auto res = commandList->appendMemoryPrefetch(nullptr, 0);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, res);
+}
+
+TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseReturnsSuccess) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    auto res = driverHandle->allocDeviceMem(device->toHandle(),
+                                            ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                            size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, ptr);
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    ASSERT_NE(nullptr, commandList);
+
+    res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = driverHandle->freeMem(ptr);
+    ASSERT_EQ(res, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(CommandListCreate, givenValidPtrThenAppendMemoryPrefetchReturnsSuccess) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    auto res = driverHandle->allocDeviceMem(device->toHandle(),
+                                            ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                            size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, ptr);
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    ASSERT_NE(nullptr, commandList);
+
+    res = commandList->appendMemoryPrefetch(ptr, size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = driverHandle->freeMem(ptr);
+    ASSERT_EQ(res, ZE_RESULT_SUCCESS);
+}
+
 TEST_F(CommandListCreate, givenImmediateCommandListThenCustomNumIddPerBlockUsed) {
     const ze_command_queue_desc_t desc = {
         ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT,
