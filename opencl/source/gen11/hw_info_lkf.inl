@@ -71,6 +71,7 @@ const RuntimeCapabilityTable LKF::capabilityTable{
     true,                                          // supportsImages
     true,                                          // supportsDeviceEnqueue
     false,                                         // supportsPipes
+    false,                                         // supportsOcl21Features
     true                                           // hostPtrTrackingEnabled
 };
 

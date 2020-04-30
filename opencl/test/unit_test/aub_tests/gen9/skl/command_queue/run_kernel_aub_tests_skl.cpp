@@ -329,7 +329,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
     refMemory[xMovement + yMovement * testWidth + 1] = 0xFF;
 
     cl_mem_flags flags = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto srcImage = Image::create(
         context,
         MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),

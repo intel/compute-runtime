@@ -72,6 +72,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     true,                                            // supportsImages
     true,                                            // supportsDeviceEnqueue
     true,                                            // supportsPipes
+    true,                                            // supportsOcl21Features
     true                                             // hostPtrTrackingEnabled
 };
 

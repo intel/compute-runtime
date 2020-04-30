@@ -179,7 +179,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(16384u, sharedCaps.image2DMaxWidth);
     EXPECT_EQ(16384u, sharedCaps.image2DMaxHeight);
     EXPECT_EQ(2048u, sharedCaps.imageMaxArraySize);
-    if (device->getHardwareInfo().capabilityTable.clVersionSupport == 12 && is64bit) {
+    if (device->getHardwareInfo().capabilityTable.supportsOcl21Features == false && is64bit) {
         EXPECT_TRUE(sharedCaps.force32BitAddressess);
     }
 }

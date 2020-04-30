@@ -50,7 +50,7 @@ class ImageRedescribeTest : public testing::TestWithParam<std::tuple<size_t, uin
 
         retVal = CL_INVALID_VALUE;
         cl_mem_flags flags = CL_MEM_READ_WRITE;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         image.reset(Image::create(
             &context,
             MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
@@ -192,7 +192,7 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
     imageDesc.num_samples = 0;
     imageDesc.mem_object = NULL;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto bigImage = std::unique_ptr<Image>(Image::create(&context,
                                                          MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
                                                          flags,

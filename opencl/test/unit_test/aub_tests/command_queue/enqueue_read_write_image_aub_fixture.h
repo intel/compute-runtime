@@ -77,7 +77,7 @@ struct AUBImageUnaligned
         imageDesc.mem_object = NULL;
 
         cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.clVersionSupport);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
         auto retVal = CL_INVALID_VALUE;
 
         auto image = std::unique_ptr<Image>(Image::create(
@@ -172,7 +172,7 @@ struct AUBImageUnaligned
         imageDesc.mem_object = NULL;
 
         cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.clVersionSupport);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
         auto retVal = CL_INVALID_VALUE;
 
         auto image = std::unique_ptr<Image>(Image::create(

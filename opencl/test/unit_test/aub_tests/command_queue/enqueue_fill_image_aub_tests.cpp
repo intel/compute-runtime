@@ -100,7 +100,7 @@ struct AubFillImage
         CommandStreamFixture::SetUp(pCmdQ);
 
         context = std::make_unique<MockContext>(pClDevice);
-        if ((pClDevice->getHardwareInfo().capabilityTable.clVersionSupport < 20) && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
+        if ((pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features == false) && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
             GTEST_SKIP();
         }
     }
@@ -182,7 +182,7 @@ HWTEST_P(AubFillImage, simple) {
 
     auto retVal = CL_INVALID_VALUE;
     cl_mem_flags flags = CL_MEM_READ_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     image.reset(Image::create(
         context.get(),
         MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),

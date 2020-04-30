@@ -632,7 +632,7 @@ TYPED_TEST_P(D3DTests, givenReadonlyFormatWhenLookingForSurfaceFormatThenReturnV
             format.OCLImageFormat.image_channel_order == CL_BGRA ||
             format.OCLImageFormat.image_channel_order == CL_RG ||
             format.OCLImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_ONLY, 12);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -647,7 +647,7 @@ TYPED_TEST_P(D3DTests, givenWriteOnlyFormatWhenLookingForSurfaceFormatThenReturn
             format.OCLImageFormat.image_channel_order == CL_BGRA ||
             format.OCLImageFormat.image_channel_order == CL_RG ||
             format.OCLImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_WRITE_ONLY, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_WRITE_ONLY, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -662,7 +662,7 @@ TYPED_TEST_P(D3DTests, givenReadWriteFormatWhenLookingForSurfaceFormatThenReturn
             format.OCLImageFormat.image_channel_order == CL_BGRA ||
             format.OCLImageFormat.image_channel_order == CL_RG ||
             format.OCLImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_WRITE, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_WRITE, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }

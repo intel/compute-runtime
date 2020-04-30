@@ -38,7 +38,7 @@ std::string getExtensionsList(const HardwareInfo &hwInfo) {
 
     allExtensionsList.append(deviceExtensionsList);
 
-    if (hwInfo.capabilityTable.clVersionSupport >= 21) {
+    if (hwInfo.capabilityTable.supportsOcl21Features) {
         allExtensionsList += "cl_khr_subgroups ";
         allExtensionsList += "cl_khr_il_program ";
         if (hwInfo.capabilityTable.supportsVme) {

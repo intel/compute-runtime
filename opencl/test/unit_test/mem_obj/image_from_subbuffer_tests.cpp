@@ -61,7 +61,7 @@ class ImageFromSubBufferTest : public DeviceFixture, public ::testing::Test {
 
     Image *createImage() {
         cl_mem_flags flags = CL_MEM_READ_ONLY;
-        auto surfaceFormat = (ClSurfaceFormatInfo *)Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+        auto surfaceFormat = (ClSurfaceFormatInfo *)Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         return Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, NULL, retVal);
     }
     cl_image_format imageFormat;

@@ -1332,7 +1332,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountZe
     auto retVal = CL_SUCCESS;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1379,7 +1379,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountNo
     auto retVal = CL_SUCCESS;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1419,7 +1419,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedAn
 
     InjectedFunction method = [&](size_t failureIndex) {
         cl_mem_flags flags = CL_MEM_WRITE_ONLY;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
                                                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
         if (MemoryManagement::nonfailingAllocation == failureIndex) {
@@ -1480,7 +1480,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreated
     auto retVal = CL_SUCCESS;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, data, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1525,7 +1525,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAllocatedForImageThe
     auto retVal = CL_SUCCESS;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, data, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1557,7 +1557,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZer
     auto retVal = CL_SUCCESS;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, data, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1601,7 +1601,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountNon
     auto retVal = CL_SUCCESS;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, data, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -1645,7 +1645,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreated
     auto retVal = CL_SUCCESS;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, data, retVal));
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
@@ -1679,7 +1679,7 @@ TEST_F(DrmMemoryManagerTest, givenHostPointerNotRequiringCopyWhenAllocateGraphic
 
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
     MockContext context(device);
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, surfaceFormat);
     imgInfo.rowPitch = imgDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
@@ -1788,7 +1788,7 @@ TEST_F(DrmMemoryManagerTest, givenOsHandleWithNonTiledObjectWhenCreateFromShared
 
     imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
     MockContext context(device);
-    gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 
@@ -1830,7 +1830,7 @@ TEST_F(DrmMemoryManagerTest, givenOsHandleWithTileYObjectWhenCreateFromSharedHan
 
     imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
     MockContext context(device);
-    gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 
@@ -1872,7 +1872,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCreateFromSharedHandleFail
 
     imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
     MockContext context(device);
-    gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
     imgInfo.plane = GMM_PLANE_Y;
 

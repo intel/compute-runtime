@@ -60,7 +60,7 @@ class CreateImage3DTest : public DeviceFixture,
 
 HWTEST_F(CreateImage3DTest, validTypes) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = Image::create(context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -88,7 +88,7 @@ HWTEST_F(CreateImage3DTest, validTypes) {
 HWTEST_F(CreateImage3DTest, calculate3dImageQpitchTiledAndLinear) {
     bool defaultTiling = DebugManager.flags.ForceLinearImages.get();
     imageDesc.image_height = 1;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto imgInfo = MockGmm::initImgInfo(imageDesc, 0, surfaceFormat);
     MockGmm::queryImgParams(context->getDevice(0)->getGmmClientContext(), imgInfo);
 
@@ -113,7 +113,7 @@ HWTEST_F(CreateImage3DTest, calculate3dImageQpitchTiledAndLinear) {
     DebugManager.flags.ForceLinearImages.set(!defaultTiling);
 
     // query again
-    surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     MockGmm::queryImgParams(context->getDevice(0)->getGmmClientContext(), imgInfo);
 
     image = Image::create(

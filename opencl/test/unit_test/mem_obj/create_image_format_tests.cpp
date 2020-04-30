@@ -29,7 +29,7 @@ class CreateImageFormatTest : public testing::TestWithParam<size_t> {
         indexImageFormat = GetParam();
 
         ArrayRef<const ClSurfaceFormatInfo>
-            surfaceFormatTable = SurfaceFormats::surfaceFormats(flags, defaultHwInfo->capabilityTable.clVersionSupport);
+            surfaceFormatTable = SurfaceFormats::surfaceFormats(flags, defaultHwInfo->capabilityTable.supportsOcl21Features);
         ASSERT_GT(surfaceFormatTable.size(), indexImageFormat);
 
         surfaceFormat = &surfaceFormatTable[indexImageFormat];

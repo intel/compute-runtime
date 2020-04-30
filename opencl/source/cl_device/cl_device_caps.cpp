@@ -111,7 +111,7 @@ void ClDevice::initializeCaps() {
         deviceInfo.clCVersion = "OpenCL C 1.2 ";
         break;
     }
-    deviceInfo.platformLP = (hwInfo.capabilityTable.clVersionSupport == 12) ? true : false;
+    deviceInfo.platformLP = (hwInfo.capabilityTable.supportsOcl21Features == false);
     deviceInfo.spirVersions = spirVersions.c_str();
     auto supportsVme = hwInfo.capabilityTable.supportsVme;
     auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;

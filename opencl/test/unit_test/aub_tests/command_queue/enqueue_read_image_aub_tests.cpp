@@ -141,7 +141,7 @@ HWTEST_P(AUBReadImage, simpleUnalignedMemory) {
     }
 
     cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto retVal = CL_INVALID_VALUE;
     srcImage.reset(Image::create(
         context.get(),

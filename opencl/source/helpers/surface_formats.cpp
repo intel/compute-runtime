@@ -139,9 +139,9 @@ ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::readWriteDepth() noexcept {
     return ArrayRef<const ClSurfaceFormatInfo>(readWriteDepthSurfaceFormats);
 }
 
-ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags flags, unsigned int clVersionSupport) noexcept {
+ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags flags, bool supportsOcl20Features) noexcept {
     if (flags & CL_MEM_READ_ONLY) {
-        if(clVersionSupport >= 20 ) {
+        if(supportsOcl20Features) {
             return readOnly20();
         }
         else {
@@ -156,7 +156,7 @@ ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags 
     }
 }
 
-ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat, unsigned int clVersionSupport) noexcept {
+ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat, bool supportsOcl20Features) noexcept {
     if (NEO::IsNV12Image(imageFormat)) {
         return planarYuv();
     }
@@ -172,7 +172,7 @@ ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::surfaceFormats(cl_mem_flags 
         }
     }
     else if (flags & CL_MEM_READ_ONLY) {
-        if(clVersionSupport >= 20 ) {
+        if(supportsOcl20Features) {
             return readOnly20();
         }
         else {

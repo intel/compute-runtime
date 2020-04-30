@@ -72,7 +72,7 @@ typedef ImageArraySizeTest CreateImageArraySize;
 HWTEST_P(CreateImageArraySize, arrayTypes) {
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = Image::create(
         context,
         MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
@@ -113,7 +113,7 @@ typedef ImageArraySizeTest CreateImageNonArraySize;
 HWTEST_P(CreateImageNonArraySize, NonArrayTypes) {
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = Image::create(
         context,
         MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),

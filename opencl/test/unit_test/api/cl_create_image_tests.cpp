@@ -918,7 +918,7 @@ TEST_F(clCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithT
         nullptr,
         &retVal);
 
-    if (pContext->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport < 20) {
+    if (pContext->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
         EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
         EXPECT_EQ(nullptr, imageFromImageObject);
     } else {
@@ -976,7 +976,7 @@ TEST_F(clCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithD
         nullptr,
         &retVal);
 
-    if (pContext->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport >= 20) {
+    if (pContext->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features) {
         EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
     } else {
         EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);

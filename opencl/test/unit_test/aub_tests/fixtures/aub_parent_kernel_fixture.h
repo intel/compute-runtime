@@ -20,11 +20,11 @@ class AUBParentKernelFixture : public CommandEnqueueAUBFixture,
     using HelloWorldKernelFixture::SetUp;
 
     void SetUp() override {
-        CommandEnqueueAUBFixture::SetUp();
-        ASSERT_NE(nullptr, pClDevice);
-        if (pClDevice->getHardwareInfo().capabilityTable.clVersionSupport < 20) {
+        if (defaultHwInfo->capabilityTable.supportsOcl21Features == false) {
             GTEST_SKIP();
         }
+        CommandEnqueueAUBFixture::SetUp();
+        ASSERT_NE(nullptr, pClDevice);
         HelloWorldKernelFixture::SetUp(pClDevice, programFile, kernelName, "-cl-std=CL2.0");
     }
     void TearDown() override {

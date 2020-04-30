@@ -51,7 +51,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
         UNRECOVERABLE_IF(true);
     }
 
-    auto gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport); //vaImage.format.fourcc == VA_FOURCC_NV12
+    auto gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features); //vaImage.format.fourcc == VA_FOURCC_NV12
 
     if (DebugManager.flags.EnableExtendedVaFormats.get() && vaImage.format.fourcc == VA_FOURCC_P010) {
         channelType = CL_UNORM_INT16;
@@ -60,7 +60,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
 
     cl_image_format imgFormat = {channelOrder, channelType};
-    auto imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
 
     sharingFunctions->extGetSurfaceHandle(surface, &sharedHandle);
     AllocationProperties properties(context->getDevice(0)->getRootDeviceIndex(),

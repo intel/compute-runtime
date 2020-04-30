@@ -329,7 +329,7 @@ HWTEST_F(UsmDestructionTests, givenSharedUsmAllocationWhenBlockingFreeIsCalledTh
     MockClDevice mockClDevice(&mockDevice);
     MockContext mockContext(&mockClDevice, false);
 
-    if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.clVersionSupport < 20) {
+    if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
         GTEST_SKIP();
     }
 
@@ -368,7 +368,7 @@ HWTEST_F(UsmDestructionTests, givenUsmAllocationWhenBlockingFreeIsCalledThenWait
     MockClDevice mockClDevice(&mockDevice);
     MockContext mockContext(&mockClDevice, false);
 
-    if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.clVersionSupport < 20) {
+    if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
         GTEST_SKIP();
     }
 

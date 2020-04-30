@@ -36,7 +36,7 @@ struct AppendSurfaceStateParamsTest : public ::testing::Test {
     }
 
     void createImage() {
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         EXPECT_NE(nullptr, surfaceFormat);
         image.reset(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     }

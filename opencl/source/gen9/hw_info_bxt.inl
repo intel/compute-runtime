@@ -73,6 +73,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     true,                                          // supportsImages
     false,                                         // supportsDeviceEnqueue
     false,                                         // supportsPipes
+    false,                                         // supportsOcl21Features
     true                                           // hostPtrTrackingEnabled
 };
 

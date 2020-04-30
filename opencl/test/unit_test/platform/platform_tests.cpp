@@ -242,7 +242,7 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
     EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string(" -cl-ext=-all,+cl")));
 
-    if (hwInfo->capabilityTable.clVersionSupport > 20) {
+    if (hwInfo->capabilityTable.supportsOcl21Features) {
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_subgroups")));
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_il_program")));
         if (hwInfo->capabilityTable.supportsVme) {
@@ -274,6 +274,7 @@ TEST_F(PlatformTest, givenNotSupportingCl21WhenPlatformNotSupportFp64ThenNotFill
     HardwareInfo TesthwInfo = *defaultHwInfo;
     TesthwInfo.capabilityTable.ftrSupportsFP64 = false;
     TesthwInfo.capabilityTable.clVersionSupport = 10;
+    TesthwInfo.capabilityTable.supportsOcl21Features = false;
 
     std::string extensionsList = getExtensionsList(TesthwInfo);
     if (TesthwInfo.capabilityTable.supportsImages) {
@@ -308,6 +309,7 @@ TEST_F(PlatformTest, givenSupporteImagesAndClVersion21WhenCreateExtentionsListTh
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = true;
     hwInfo.capabilityTable.clVersionSupport = 21;
+    hwInfo.capabilityTable.supportsOcl21Features = true;
     std::string extensionsList = getExtensionsList(hwInfo);
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
 

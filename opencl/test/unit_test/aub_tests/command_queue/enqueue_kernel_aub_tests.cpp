@@ -370,7 +370,7 @@ INSTANTIATE_TEST_CASE_P(
 
 struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUniformKernelFixture> {
     void SetUp() override {
-        if (NEO::defaultHwInfo->capabilityTable.clVersionSupport < 20) {
+        if (NEO::defaultHwInfo->capabilityTable.supportsOcl21Features == false) {
             GTEST_SKIP();
         }
         KernelAUBFixture<SimpleArgNonUniformKernelFixture>::SetUp();
@@ -430,7 +430,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
     }
 
     void TearDown() override {
-        if (NEO::defaultHwInfo->capabilityTable.clVersionSupport < 20) {
+        if (NEO::defaultHwInfo->capabilityTable.supportsOcl21Features == false) {
             return;
         }
         if (destMemory) {

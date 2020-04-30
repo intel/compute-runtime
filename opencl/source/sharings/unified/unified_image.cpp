@@ -26,7 +26,7 @@ Image *UnifiedImage::createSharedUnifiedImage(Context *context, cl_mem_flags fla
     ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);
     UnifiedSharingFunctions *sharingFunctions = context->getSharing<UnifiedSharingFunctions>();
 
-    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto *clSurfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     ImageInfo imgInfo = {};
     imgInfo.imgDesc = Image::convertDescriptor(*imageDesc);
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;

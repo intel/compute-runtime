@@ -709,7 +709,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTran
     MockContext mockContext;
     cl_context clContext = &mockContext;
 
-    if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.clVersionSupport < 20) {
+    if (mockContext.getDevice(0u)->getHardwareInfo().capabilityTable.supportsOcl21Features == false) {
         GTEST_SKIP();
     }
 

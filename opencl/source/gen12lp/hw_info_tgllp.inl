@@ -73,6 +73,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     true,                                            // supportsImages
     true,                                            // supportsDeviceEnqueue
     false,                                           // supportsPipes
+    true,                                            // supportsOcl21Features
     false                                            // hostPtrTrackingEnabled
 };
 

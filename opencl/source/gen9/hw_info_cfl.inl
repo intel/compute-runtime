@@ -68,6 +68,7 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     true,                                          // supportsImages
     true,                                          // supportsDeviceEnqueue
     true,                                          // supportsPipes
+    true,                                          // supportsOcl21Features
     true                                           // hostPtrTrackingEnabled
 };
 

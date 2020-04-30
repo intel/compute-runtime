@@ -41,8 +41,8 @@ class SurfaceFormats {
     static ArrayRef<const ClSurfaceFormatInfo> readOnlyDepth() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> readWriteDepth() noexcept;
 
-    static ArrayRef<const ClSurfaceFormatInfo> surfaceFormats(cl_mem_flags flags, unsigned int clVersionSupport) noexcept;
-    static ArrayRef<const ClSurfaceFormatInfo> surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat, unsigned int clVersionSupport) noexcept;
+    static ArrayRef<const ClSurfaceFormatInfo> surfaceFormats(cl_mem_flags flags, bool supportsOcl20Features) noexcept;
+    static ArrayRef<const ClSurfaceFormatInfo> surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat, bool supportsOcl20Features) noexcept;
 };
 
 } // namespace NEO

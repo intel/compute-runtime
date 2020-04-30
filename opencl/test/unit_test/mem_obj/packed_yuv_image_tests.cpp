@@ -54,7 +54,7 @@ class PackedYuvImageTest : public testing::Test,
         retVal = Image::validateImageFormat(&imageFormat);
         if (retVal != CL_SUCCESS)
             return;
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         retVal = Image::validate(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), surfaceFormat, &imageDesc, nullptr);
     }
 
@@ -70,7 +70,7 @@ cl_channel_order packedYuvChannels[] = {CL_YUYV_INTEL, CL_UYVY_INTEL, CL_YVYU_IN
 TEST_P(PackedYuvImageTest, isPackedYuvImageReturnsTrue) {
 
     flags = CL_MEM_READ_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = Image::create(
         &context,
         MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),

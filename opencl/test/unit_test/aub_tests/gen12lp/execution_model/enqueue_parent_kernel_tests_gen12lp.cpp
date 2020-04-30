@@ -53,7 +53,7 @@ GEN12LPTEST_F(GEN12LPAUBParentKernelFixture, EnqueueParentKernel) {
     desc.image_slice_pitch = 0;
     // clang-format on
 
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     Image *image = Image::create(
         pContext,
         {},
