@@ -435,6 +435,11 @@ ze_result_t SysfsAccess::write(const std::string file, const uint64_t val) {
     return FsAccess::write(fullPath(file), stream.str());
 }
 
+ze_result_t SysfsAccess::scanDirEntries(const std::string path, std::vector<std::string> &list) {
+    list.clear();
+    return FsAccess::listDirectory(fullPath(path).c_str(), list);
+}
+
 ze_result_t SysfsAccess::readSymLink(const std::string path, std::string &val) {
     // Prepend sysfs directory path and call the base readSymLink
     return FsAccess::readSymLink(fullPath(path).c_str(), val);

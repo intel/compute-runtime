@@ -33,6 +33,7 @@ struct Mock<OsSysmanDevice> : public OsSysmanDevice {
     MOCK_METHOD1(getVendorName, void(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]));
     MOCK_METHOD1(getDriverVersion, void(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]));
     MOCK_METHOD0(reset, ze_result_t());
+    MOCK_METHOD1(scanProcessesState, ze_result_t(std::vector<zet_process_state_t> &pProcessList));
 };
 
 } // namespace ult

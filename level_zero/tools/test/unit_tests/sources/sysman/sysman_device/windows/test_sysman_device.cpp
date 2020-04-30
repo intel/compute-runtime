@@ -27,6 +27,20 @@ ACTION_P(SetString, value) {
     }
 }
 
+ACTION_P(SetProcessList, value) {
+    arg0 = value;
+}
+
+constexpr uint32_t pid1 = 1711u;
+constexpr uint32_t pid2 = 1722u;
+constexpr uint32_t pid3 = 1733u;
+constexpr int64_t memSize1 = 0;
+constexpr int64_t memSize2 = 0;
+constexpr int64_t memSize3 = 0;
+constexpr int64_t engines1 = 12u;
+constexpr int64_t engines2 = 10u;
+constexpr int64_t engines3 = 4u;
+
 class SysmanSysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
 
   protected:
@@ -37,6 +51,11 @@ class SysmanSysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
     L0::SysmanDeviceImp *pSysmanDevice;
     L0::SysmanDevice *pSysmanDevice_prev;
     ze_device_handle_t hCoreDevice;
+
+    zet_process_state_t mockProcessState1 = {pid1, memSize1, engines1};
+    zet_process_state_t mockProcessState2 = {pid2, memSize2, engines2};
+    zet_process_state_t mockProcessState3 = {pid3, memSize3, engines3};
+    std::vector<zet_process_state_t> mockProcessStates{mockProcessState1, mockProcessState2, mockProcessState3};
 
     void SetUp() override {
         DeviceFixture::SetUp();
@@ -74,6 +93,10 @@ class SysmanSysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
                 Return()));
         ON_CALL(*pOsSysmanDevice, reset())
             .WillByDefault(Return(ZE_RESULT_SUCCESS));
+        ON_CALL(*pOsSysmanDevice, scanProcessesState(_))
+            .WillByDefault(DoAll(
+                SetProcessList(mockProcessStates),
+                Return(ZE_RESULT_SUCCESS)));
 
         pSysmanDevice_prev = sysmanImp->pSysmanDevice;
         sysmanImp->pSysmanDevice = static_cast<L0::SysmanDevice *>(pSysmanDevice);
@@ -102,6 +125,24 @@ TEST_F(SysmanSysmanDeviceFixture, GivenValidSysmanHandleWhenCallingzetSysmanDevi
     ze_result_t result = zetSysmanDeviceGetProperties(hSysman, &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(SysmanSysmanDeviceFixture, GivenValidSysmanHandleWhileRetrievingInformationAboutHostProcessesUsingDeviceThenSuccessIsReturned) {
+    uint32_t count = 0;
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zetSysmanProcessesGetState(hSysman, &count, nullptr));
+    EXPECT_EQ(count, 3u);
+    std::vector<zet_process_state_t> processes(count);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, zetSysmanProcessesGetState(hSysman, &count, processes.data()));
+    EXPECT_EQ(count, 3u);
+    EXPECT_EQ(processes[0].processId, pid1);
+    EXPECT_EQ(processes[1].processId, pid2);
+    EXPECT_EQ(processes[2].processId, pid3);
+    EXPECT_EQ(processes[0].engines, engines1);
+    EXPECT_EQ(processes[1].engines, engines2);
+    EXPECT_EQ(processes[2].engines, engines3);
+    EXPECT_EQ(processes[0].memSize, memSize1);
+    EXPECT_EQ(processes[1].memSize, memSize2);
+    EXPECT_EQ(processes[2].memSize, memSize3);
 }
 
 } // namespace ult

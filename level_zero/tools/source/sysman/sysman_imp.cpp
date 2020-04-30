@@ -138,7 +138,7 @@ ze_result_t SysmanImp::schedulerSetComputeUnitDebugMode(ze_bool_t *pNeedReboot) 
 }
 
 ze_result_t SysmanImp::processesGetState(uint32_t *pCount, zet_process_state_t *pProcesses) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pSysmanDevice->processesGetState(pCount, pProcesses);
 }
 
 ze_result_t SysmanImp::deviceReset() {

@@ -5,45 +5,17 @@
  *
  */
 
+#include "level_zero/tools/source/sysman/sysman_device/linux/os_sysman_device_imp.h"
+
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/tools/source/sysman/linux/fs_access.h"
-#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
-#include "level_zero/tools/source/sysman/sysman_device/os_sysman_device.h"
-#include "level_zero/tools/source/sysman/sysman_device/sysman_device_imp.h"
+#include <level_zero/zet_api.h>
 
 #include <csignal>
 
 namespace L0 {
-
-class LinuxSysmanDeviceImp : public OsSysmanDevice {
-  public:
-    void getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) override;
-    void getBoardNumber(int8_t (&boardNumber)[ZET_STRING_PROPERTY_SIZE]) override;
-    void getBrandName(int8_t (&brandName)[ZET_STRING_PROPERTY_SIZE]) override;
-    void getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_SIZE]) override;
-    void getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]) override;
-    void getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) override;
-    ze_result_t reset() override;
-    LinuxSysmanDeviceImp(OsSysman *pOsSysman);
-    ~LinuxSysmanDeviceImp() override = default;
-
-    // Don't allow copies of the LinuxSysmanDeviceImp object
-    LinuxSysmanDeviceImp(const LinuxSysmanDeviceImp &obj) = delete;
-    LinuxSysmanDeviceImp &operator=(const LinuxSysmanDeviceImp &obj) = delete;
-
-  private:
-    SysfsAccess *pSysfsAccess;
-    LinuxSysmanImp *pLinuxSysmanImp;
-    static const std::string deviceDir;
-    static const std::string vendorFile;
-    static const std::string deviceFile;
-    static const std::string subsystemVendorFile;
-    static const std::string driverFile;
-    static const std::string functionLevelReset;
-};
 
 const std::string vendorIntel("Intel(R) Corporation");
 const std::string unknown("Unknown");
@@ -54,15 +26,27 @@ const std::string LinuxSysmanDeviceImp::deviceFile("device/device");
 const std::string LinuxSysmanDeviceImp::subsystemVendorFile("device/subsystem_vendor");
 const std::string LinuxSysmanDeviceImp::driverFile("device/driver");
 const std::string LinuxSysmanDeviceImp::functionLevelReset("device/reset");
+const std::string LinuxSysmanDeviceImp::clientsDir("clients");
+
+// Map engine entries(numeric values) present in /sys/class/drm/card<n>/clients/<client_n>/busy,
+// with engine enum defined in leve-zero spec
+// Note that entries with int 2 and 3(represented by i915 as CLASS_VIDEO and CLASS_VIDEO_ENHANCE)
+// are both mapped to MEDIA, as CLASS_VIDEO represents any media fixed-function hardware.
+const std::map<int, zet_engine_type_t> engineMap = {
+    {0, ZET_ENGINE_TYPE_3D},
+    {1, ZET_ENGINE_TYPE_DMA},
+    {2, ZET_ENGINE_TYPE_MEDIA},
+    {3, ZET_ENGINE_TYPE_MEDIA},
+    {4, ZET_ENGINE_TYPE_COMPUTE}};
 
 void LinuxSysmanDeviceImp::getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) {
     std::copy(unknown.begin(), unknown.end(), serialNumber);
-    serialNumber[unknown.size()] = '\0';
+    serialNumber[unknown.size() - 1] = '\0';
 }
 
 void LinuxSysmanDeviceImp::getBoardNumber(int8_t (&boardNumber)[ZET_STRING_PROPERTY_SIZE]) {
     std::copy(unknown.begin(), unknown.end(), boardNumber);
-    boardNumber[unknown.size()] = '\0';
+    boardNumber[unknown.size() - 1] = '\0';
 }
 
 void LinuxSysmanDeviceImp::getBrandName(int8_t (&brandName)[ZET_STRING_PROPERTY_SIZE]) {
@@ -70,16 +54,16 @@ void LinuxSysmanDeviceImp::getBrandName(int8_t (&brandName)[ZET_STRING_PROPERTY_
     ze_result_t result = pSysfsAccess->read(subsystemVendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
         std::copy(unknown.begin(), unknown.end(), brandName);
-        brandName[unknown.size()] = '\0';
+        brandName[unknown.size() - 1] = '\0';
         return;
     }
     if (strVal.compare(intelPciId) == 0) {
         std::copy(vendorIntel.begin(), vendorIntel.end(), brandName);
-        brandName[vendorIntel.size()] = '\0';
+        brandName[vendorIntel.size() - 1] = '\0';
         return;
     }
     std::copy(unknown.begin(), unknown.end(), brandName);
-    brandName[unknown.size()] = '\0';
+    brandName[unknown.size() - 1] = '\0';
 }
 
 void LinuxSysmanDeviceImp::getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_SIZE]) {
@@ -87,12 +71,12 @@ void LinuxSysmanDeviceImp::getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_
     ze_result_t result = pSysfsAccess->read(deviceFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
         std::copy(unknown.begin(), unknown.end(), modelName);
-        modelName[unknown.size()] = '\0';
+        modelName[unknown.size() - 1] = '\0';
         return;
     }
 
     std::copy(strVal.begin(), strVal.end(), modelName);
-    modelName[strVal.size()] = '\0';
+    modelName[strVal.size() - 1] = '\0';
 }
 
 void LinuxSysmanDeviceImp::getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]) {
@@ -100,21 +84,21 @@ void LinuxSysmanDeviceImp::getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERT
     ze_result_t result = pSysfsAccess->read(vendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
         std::copy(unknown.begin(), unknown.end(), vendorName);
-        vendorName[unknown.size()] = '\0';
+        vendorName[unknown.size() - 1] = '\0';
         return;
     }
     if (strVal.compare(intelPciId) == 0) {
         std::copy(vendorIntel.begin(), vendorIntel.end(), vendorName);
-        vendorName[vendorIntel.size()] = '\0';
+        vendorName[vendorIntel.size() - 1] = '\0';
         return;
     }
     std::copy(unknown.begin(), unknown.end(), vendorName);
-    vendorName[unknown.size()] = '\0';
+    vendorName[unknown.size() - 1] = '\0';
 }
 
 void LinuxSysmanDeviceImp::getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) {
     std::copy(unknown.begin(), unknown.end(), driverVersion);
-    driverVersion[unknown.size()] = '\0';
+    driverVersion[unknown.size() - 1] = '\0';
 }
 
 static void getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAccess *pSysfsAccess, const ::pid_t pid, std::vector<int> &deviceFds) {
@@ -226,6 +210,94 @@ ze_result_t LinuxSysmanDeviceImp::reset() {
     }
 
     return ZE_RESULT_SUCCESS;
+}
+
+// Processes in the form of clients are present in sysfs like this:
+// # /sys/class/drm/card0/clients$ ls
+// 4  5
+// # /sys/class/drm/card0/clients/4$ ls
+// busy  name  pid
+// # /sys/class/drm/card0/clients/4/busy$ ls
+// 0  1  2  3
+//
+// Number of processes(If one process opened drm device multiple times, then multiple entries will be
+// present for same process in clients directory) will be the number of clients
+// (For example from above example, processes dirs are 4,5)
+// Thus total number of times drm connection opened with this device will be 2.
+// process.pid = pid (from above example)
+// process.engines -> For each client's busy dir, numbers 0,1,2,3 represent engines and they contain
+// accumulated nanoseconds each client spent on engines.
+// Thus we traverse each file in busy dir for non-zero time and if we find that file say 0,then we could say that
+// this engine 0 is used by process.
+ze_result_t LinuxSysmanDeviceImp::scanProcessesState(std::vector<zet_process_state_t> &pProcessList) {
+    std::vector<std::string> clientIds;
+    ze_result_t result = pSysfsAccess->scanDirEntries(clientsDir, clientIds);
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+
+    // Create a map with unique pid as key and engineType as value
+    std::map<uint64_t, int64_t> pidClientMap;
+    for (auto clientId : clientIds) {
+        // realClientPidPath will be something like: clients/<clientId>/pid
+        std::string realClientPidPath = clientsDir + "/" + clientId + "/" + "pid";
+        uint64_t pid;
+        result = pSysfsAccess->read(realClientPidPath, pid);
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+
+        // Traverse the clients/<clientId>/busy directory to get accelerator engines used by process
+        std::vector<std::string> engineNums;
+        std::string busyDirForEngines = clientsDir + "/" + clientId + "/" + "busy";
+        result = pSysfsAccess->scanDirEntries(busyDirForEngines, engineNums);
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+        int64_t engineType = 0;
+        // Scan all engine files present in /sys/class/drm/card0/clients/<ClientId>/busy and check
+        // whether that engine is used by process
+        for (auto engineNum : engineNums) {
+            uint64_t timeSpent = 0;
+            std::string engine = busyDirForEngines + "/" + engineNum;
+            result = pSysfsAccess->read(engine, timeSpent);
+            if (ZE_RESULT_SUCCESS != result) {
+                return result;
+            }
+            if (timeSpent > 0) {
+                int i915EnginNumber = stoi(engineNum);
+                auto i915MapToL0EngineType = engineMap.find(i915EnginNumber);
+                zet_engine_type_t val = ZET_ENGINE_TYPE_OTHER;
+                if (i915MapToL0EngineType != engineMap.end()) {
+                    // Found a valid map
+                    val = i915MapToL0EngineType->second;
+                }
+                // In this for loop we want to retrieve the overall engines used by process
+                engineType = engineType | (1 << val);
+            }
+        }
+
+        auto ret = pidClientMap.insert(std::make_pair(pid, engineType));
+        if (ret.second == false) {
+            // insertion failed as entry with same pid already exists in map
+            // Now update the engineType field of the existing pid entry
+            auto pidEntryFromMap = pidClientMap.find(pid);
+            auto existingEngineType = pidEntryFromMap->second;
+            engineType = existingEngineType | engineType;
+            pidClientMap[pid] = engineType;
+        }
+    }
+
+    // iterate through all elements of pidClientMap
+    for (auto itr = pidClientMap.begin(); itr != pidClientMap.end(); ++itr) {
+        zet_process_state_t process;
+        process.processId = static_cast<uint32_t>(itr->first);
+        process.memSize = 0; // Unsupported
+        process.engines = itr->second;
+        pProcessList.push_back(process);
+    }
+
+    return result;
 }
 
 LinuxSysmanDeviceImp::LinuxSysmanDeviceImp(OsSysman *pOsSysman) {

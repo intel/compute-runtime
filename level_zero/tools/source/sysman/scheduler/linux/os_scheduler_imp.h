@@ -26,6 +26,8 @@ class LinuxSchedulerImp : public NEO::NonCopyableClass, public OsScheduler {
     LinuxSchedulerImp() = default;
     LinuxSchedulerImp(OsSysman *pOsSysman);
     ~LinuxSchedulerImp() override = default;
+
+  protected:
     SysfsAccess *pSysfsAccess = nullptr;
 
   private:

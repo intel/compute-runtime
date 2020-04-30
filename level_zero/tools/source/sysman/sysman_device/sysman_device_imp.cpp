@@ -14,6 +14,29 @@
 
 namespace L0 {
 
+ze_result_t SysmanDeviceImp::processesGetState(uint32_t *pCount, zet_process_state_t *pProcesses) {
+    std::vector<zet_process_state_t> pProcessList;
+    ze_result_t result = pOsSysmanDevice->scanProcessesState(pProcessList);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+
+    if ((*pCount > 0) && (*pCount < pProcessList.size())) {
+        result = ZE_RESULT_ERROR_INVALID_SIZE;
+    }
+    if (pProcesses != nullptr) {
+        uint32_t limit = std::min(*pCount, static_cast<uint32_t>(pProcessList.size()));
+        for (uint32_t i = 0; i < limit; i++) {
+            pProcesses[i].processId = pProcessList[i].processId;
+            pProcesses[i].engines = pProcessList[i].engines;
+            pProcesses[i].memSize = pProcessList[i].memSize;
+        }
+    }
+    *pCount = static_cast<uint32_t>(pProcessList.size());
+
+    return result;
+}
+
 ze_result_t SysmanDeviceImp::deviceGetProperties(zet_sysman_properties_t *pProperties) {
     Device *device = L0::Device::fromHandle(hCoreDevice);
     ze_device_properties_t deviceProperties;

@@ -19,6 +19,7 @@ class WddmSysmanDeviceImp : public OsSysmanDevice {
     void getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]) override;
     void getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) override;
     ze_result_t reset() override;
+    ze_result_t scanProcessesState(std::vector<zet_process_state_t> &pProcessList) override;
 
     WddmSysmanDeviceImp(OsSysman *pOsSysman);
     ~WddmSysmanDeviceImp() = default;
@@ -47,6 +48,10 @@ void WddmSysmanDeviceImp::getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PR
 }
 
 ze_result_t WddmSysmanDeviceImp::reset() {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmSysmanDeviceImp::scanProcessesState(std::vector<zet_process_state_t> &pProcessList) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

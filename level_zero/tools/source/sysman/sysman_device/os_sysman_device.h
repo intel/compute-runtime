@@ -11,6 +11,7 @@
 #include <level_zero/zet_api.h>
 
 #include <string>
+#include <vector>
 
 namespace L0 {
 
@@ -23,6 +24,7 @@ class OsSysmanDevice {
     virtual void getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]) = 0;
     virtual void getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) = 0;
     virtual ze_result_t reset() = 0;
+    virtual ze_result_t scanProcessesState(std::vector<zet_process_state_t> &pProcessList) = 0;
     static OsSysmanDevice *create(OsSysman *pOsSysman);
     virtual ~OsSysmanDevice() {}
 };

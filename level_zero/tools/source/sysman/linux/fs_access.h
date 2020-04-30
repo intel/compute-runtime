@@ -90,6 +90,7 @@ class SysfsAccess : private FsAccess {
     MOCKABLE_VIRTUAL ze_result_t write(const std::string file, const uint64_t val);
     ze_result_t write(const std::string file, const double val);
 
+    MOCKABLE_VIRTUAL ze_result_t scanDirEntries(const std::string path, std::vector<std::string> &list);
     ze_result_t readSymLink(const std::string path, std::string &buf);
     ze_result_t getRealPath(const std::string path, std::string &buf);
     ze_result_t bindDevice(const std::string device);

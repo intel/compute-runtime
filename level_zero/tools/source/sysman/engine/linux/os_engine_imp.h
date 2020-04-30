@@ -23,6 +23,8 @@ class LinuxEngineImp : public OsEngine, public NEO::NonCopyableClass {
 
   protected:
     SysfsAccess *pSysfsAccess = nullptr;
+
+  private:
     static const std::string computeEngineGroupFile;
     static const std::string computeEngineGroupName;
 };
