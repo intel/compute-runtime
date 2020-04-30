@@ -42,6 +42,7 @@ if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
 
     add_definitions( -DL0_PROJECT_VERSION_MAJOR="${PROJECT_VERSION_MAJOR}" )
     add_definitions( -DL0_PROJECT_VERSION_MINOR="${PROJECT_VERSION_MINOR}" )
+    add_definitions( -DNEO_VERSION_BUILD="${NEO_VERSION_BUILD}" )
 
     add_definitions( -DZE_ENABLE_OCL_INTEROP=1)
 
