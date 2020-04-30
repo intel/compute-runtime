@@ -165,6 +165,7 @@ DECLARE_DEBUG_VARIABLE(int64_t, ForceSystemMemoryPlacement, 0, "0: default,  >0:
 DECLARE_DEBUG_VARIABLE(int64_t, ForceNonSystemMemoryPlacement, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force non-system memory placement")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCLVersion, 0, "Force specific OpenCL API version")
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePreemptionMode, -1, "Keep this variable in sync with PreemptionMode enum. -1 - devices default mode, 1 - disable, 2 - midBatch, 3 - threadGroup, 4 - midThread")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceKernelPreemptionMode, -1, "Keep this variable in sync with PreemptionMode enum. -1 - kernel default mode, 1 - disable, 2 - midBatch, 3 - threadGroup, 4 - midThread")
 DECLARE_DEBUG_VARIABLE(int32_t, NodeOrdinal, -1, "-1: default do not override, 0: ENGINE_RCS")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideThreadArbitrationPolicy, -1, "-1 (dont override) or any valid config (0: Age Based, 1: Round Robin)")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideAubDeviceId, -1, "-1 dont override, any other: use this value for AUB generation device id")

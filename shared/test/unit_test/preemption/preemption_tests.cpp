@@ -278,6 +278,30 @@ TEST_F(MidThreadPreemptionTests, taskPreemptionAllowDeviceSupportsPreemptionOnVm
     EXPECT_EQ(PreemptionMode::MidThread, outMode);
 }
 
+TEST_F(ThreadGroupPreemptionTests, GivenDebugKernelPreemptionWhenDeviceSupportsThreadGroupThenExpectDebugKeyMidThreadValue) {
+    DebugManager.flags.ForceKernelPreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
+
+    EXPECT_EQ(PreemptionMode::ThreadGroup, device->getPreemptionMode());
+
+    PreemptionFlags flags = {};
+    kernel.reset(new MockKernel(program.get(), *kernelInfo, *device));
+    PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
+    PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags);
+    EXPECT_EQ(PreemptionMode::MidThread, outMode);
+}
+
+TEST_F(MidThreadPreemptionTests, GivenDebugKernelPreemptionWhenDeviceSupportsMidThreadThenExpectDebugKeyMidBatchValue) {
+    DebugManager.flags.ForceKernelPreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidBatch));
+
+    EXPECT_EQ(PreemptionMode::MidThread, device->getPreemptionMode());
+
+    PreemptionFlags flags = {};
+    kernel.reset(new MockKernel(program.get(), *kernelInfo, *device));
+    PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
+    PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(device->getPreemptionMode(), flags);
+    EXPECT_EQ(PreemptionMode::MidBatch, outMode);
+}
+
 TEST_F(DevicePreemptionTests, setDefaultMidThreadPreemption) {
     RuntimeCapabilityTable devCapabilities = {};
 

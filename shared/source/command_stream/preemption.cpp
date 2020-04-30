@@ -38,6 +38,9 @@ bool PreemptionHelper::allowMidThreadPreemption(const PreemptionFlags &flags) {
 }
 
 PreemptionMode PreemptionHelper::taskPreemptionMode(PreemptionMode devicePreemptionMode, const PreemptionFlags &flags) {
+    if (DebugManager.flags.ForceKernelPreemptionMode.get() != -1) {
+        return static_cast<PreemptionMode>(DebugManager.flags.ForceKernelPreemptionMode.get());
+    }
     if (devicePreemptionMode == PreemptionMode::Disabled) {
         return PreemptionMode::Disabled;
     }
