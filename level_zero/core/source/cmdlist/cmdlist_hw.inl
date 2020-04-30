@@ -1098,7 +1098,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         auto internalAlloc = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
         size_t offset = 0;
         for (uint32_t i = 0; i < size / patternSize; i++) {
-            memcpy(ptrOffset(internalAlloc->getDriverAllocatedCpuPtr(), offset), pattern, patternSize);
+            memcpy_s(ptrOffset(internalAlloc->getDriverAllocatedCpuPtr(), offset), (internalAlloc->getUnderlyingBufferSize() - offset), pattern, patternSize);
             offset += patternSize;
         }
         auto ret = appendMemoryCopy(ptr, internalAlloc->getDriverAllocatedCpuPtr(), size, hEvent, 0, nullptr);
@@ -1113,7 +1113,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         }
         commandContainer.addToResidencyContainer(allocData->gpuAllocation);
         uint32_t patternToCommand[4] = {};
-        memcpy(&patternToCommand, pattern, patternSize);
+        memcpy_s(&patternToCommand, sizeof(patternToCommand), pattern, patternSize);
         NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(allocData->gpuAllocation, patternToCommand, patternSize, *commandContainer.getCommandStream(), size, *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
         if (hEvent) {
             this->appendSignalEventPostWalker(hEvent);
