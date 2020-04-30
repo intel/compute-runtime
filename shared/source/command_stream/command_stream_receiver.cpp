@@ -49,6 +49,11 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {
+    if (userPauseConfirmation.joinable()) {
+        *debugPauseStateAddress = DebugPauseState::terminate;
+        userPauseConfirmation.join();
+    }
+
     for (int i = 0; i < IndirectHeap::NUM_TYPES; ++i) {
         if (indirectHeap[i] != nullptr) {
             auto allocation = indirectHeap[i]->getGraphicsAllocation();
@@ -238,6 +243,8 @@ void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
     this->tagAllocation = allocation;
     UNRECOVERABLE_IF(allocation == nullptr);
     this->tagAddress = reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer());
+    this->debugPauseStateAddress = reinterpret_cast<DebugPauseState *>(
+        reinterpret_cast<uint8_t *>(allocation->getUnderlyingBuffer()) + debugPauseStateAddressOffset);
 }
 
 FlushStamp CommandStreamReceiver::obtainCurrentFlushStamp() const {
@@ -390,6 +397,36 @@ bool CommandStreamReceiver::initializeTagAllocation() {
 
     this->setTagAllocation(tagAllocation);
     *this->tagAddress = DebugManager.flags.EnableNullHardware.get() ? -1 : initialHardwareTag;
+    *this->debugPauseStateAddress = DebugManager.flags.EnableNullHardware.get() ? DebugPauseState::disabled : DebugPauseState::waitingForFirstSemaphore;
+
+    if (DebugManager.flags.PauseOnEnqueue.get() != -1) {
+        userPauseConfirmation = std::thread(
+            [this]() {
+                while (*debugPauseStateAddress != DebugPauseState::waitingForUserStartConfirmation) {
+                    if (*debugPauseStateAddress == DebugPauseState::terminate) {
+                        return;
+                    }
+                    std::this_thread::yield();
+                }
+
+                std::cout << "Debug break: Press enter to start workload" << std::endl;
+                debugConfirmationFunction();
+
+                *debugPauseStateAddress = DebugPauseState::hasUserStartConfirmation;
+
+                while (*debugPauseStateAddress != DebugPauseState::waitingForUserEndConfirmation) {
+                    if (*debugPauseStateAddress == DebugPauseState::terminate) {
+                        return;
+                    }
+                    std::this_thread::yield();
+                }
+
+                std::cout << "Debug break: Workload ended, press enter to continue" << std::endl;
+                debugConfirmationFunction();
+
+                *debugPauseStateAddress = DebugPauseState::hasUserEndConfirmation;
+            });
+    }
 
     return true;
 }

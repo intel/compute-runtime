@@ -268,6 +268,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         this->isSpecialCommandQueue = newValue;
     }
 
+    bool isSpecial() {
+        return this->isSpecialCommandQueue;
+    }
+
     QueuePriority getPriority() const {
         return priority;
     }

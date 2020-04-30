@@ -80,6 +80,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     DEBUG_BREAK_IF(offsetInterfaceDescriptorTable % 64 != 0);
 
     dispatchProfilingPerfStartCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
+    dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserStartConfirmation, DebugPauseState::hasUserStartConfirmation);
 
     size_t currentDispatchIndex = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
@@ -101,24 +102,9 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         }
         HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, commandQueue, mainKernel, postSyncAddress);
     }
+
+    dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserEndConfirmation, DebugPauseState::hasUserEndConfirmation);
     dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
-
-    if (DebugManager.flags.AddBlockingSemaphoreAfterSpecificEnqueue.get() != -1) {
-        auto &gpgpuCsr = commandQueue.getGpgpuCommandStreamReceiver();
-
-        if (static_cast<uint32_t>(DebugManager.flags.AddBlockingSemaphoreAfterSpecificEnqueue.get()) == gpgpuCsr.peekTaskCount()) {
-            if (DebugManager.flags.AddCacheFlushBeforeBlockingSemaphore.get()) {
-                NEO::PipeControlArgs args(true);
-                MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandStream, args);
-            }
-
-            auto tagValue = *(gpgpuCsr.getTagAddress());
-            auto tagAddress = gpgpuCsr.getTagAllocation()->getGpuAddress();
-
-            // Wait for (tag == tag - 1). This will be never satisfied.
-            HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(*commandStream, tagAddress, (tagValue - 1), GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
-        }
-    }
 }
 
 template <typename GfxFamily>
@@ -245,4 +231,44 @@ void HardwareInterface<GfxFamily>::obtainIndirectHeaps(CommandQueue &commandQueu
         ssh = &getIndirectHeap<GfxFamily, IndirectHeap::SURFACE_STATE>(commandQueue, multiDispatchInfo);
     }
 }
+
+template <typename GfxFamily>
+inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
+    LinearStream *commandStream,
+    CommandQueue &commandQueue,
+    DebugPauseState confirmationTrigger,
+    DebugPauseState waitCondition) {
+
+    if (static_cast<int32_t>(commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount()) == DebugManager.flags.PauseOnEnqueue.get() &&
+        !commandQueue.isSpecial()) {
+        auto address = commandQueue.getGpgpuCommandStreamReceiver().getDebugPauseStateGPUAddress();
+        {
+            using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+            using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+            auto pCmd = (PIPE_CONTROL *)commandStream->getSpace(sizeof(PIPE_CONTROL));
+            *pCmd = GfxFamily::cmdInitPipeControl;
+
+            pCmd->setCommandStreamerStallEnable(true);
+            pCmd->setDcFlushEnable(true);
+            pCmd->setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
+            pCmd->setAddressHigh(static_cast<uint32_t>(address >> 32));
+            pCmd->setPostSyncOperation(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
+            pCmd->setImmediateData(static_cast<uint32_t>(confirmationTrigger));
+        }
+
+        {
+            using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+
+            auto pCmd = (MI_SEMAPHORE_WAIT *)commandStream->getSpace(sizeof(MI_SEMAPHORE_WAIT));
+            *pCmd = GfxFamily::cmdInitMiSemaphoreWait;
+
+            pCmd->setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
+            pCmd->setSemaphoreDataDword(static_cast<uint32_t>(waitCondition));
+            pCmd->setSemaphoreGraphicsAddress(address);
+            pCmd->setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+        }
+    }
+}
+
 } // namespace NEO

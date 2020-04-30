@@ -52,6 +52,16 @@ enum class DispatchMode {
     BatchedDispatch             // dispatching is batched, explicit clFlush is required
 };
 
+enum class DebugPauseState : uint32_t {
+    disabled,
+    waitingForFirstSemaphore,
+    waitingForUserStartConfirmation,
+    hasUserStartConfirmation,
+    waitingForUserEndConfirmation,
+    hasUserEndConfirmation,
+    terminate
+};
+
 class CommandStreamReceiver {
   public:
     enum class SamplerCacheFlushState {
@@ -59,6 +69,7 @@ class CommandStreamReceiver {
         samplerCacheFlushBefore, //add sampler cache flush before Walker with redescribed image
         samplerCacheFlushAfter   //add sampler cache flush after Walker with redescribed image
     };
+
     using MutexType = std::recursive_mutex;
     CommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);
     virtual ~CommandStreamReceiver();
@@ -101,6 +112,7 @@ class CommandStreamReceiver {
         return tagAllocation;
     }
     volatile uint32_t *getTagAddress() const { return tagAddress; }
+    uint64_t getDebugPauseStateGPUAddress() const { return tagAllocation->getGpuAddress() + debugPauseStateAddressOffset; }
 
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; };
 
@@ -231,6 +243,13 @@ class CommandStreamReceiver {
     LinearStream commandStream;
 
     volatile uint32_t *tagAddress = nullptr;
+    volatile DebugPauseState *debugPauseStateAddress = nullptr;
+
+    // offset for debug state must be 8 bytes, if only 4 bytes are used tag writes overwrite it
+    const uint64_t debugPauseStateAddressOffset = 8;
+
+    std::thread userPauseConfirmation;
+    std::function<void()> debugConfirmationFunction = []() { std::cin.get(); };
 
     GraphicsAllocation *tagAllocation = nullptr;
     GraphicsAllocation *globalFenceAllocation = nullptr;
@@ -253,6 +272,7 @@ class CommandStreamReceiver {
 
     // taskCount - # of tasks submitted
     uint32_t taskCount = 0;
+
     uint32_t lastSentL3Config = 0;
     uint32_t latestSentStatelessMocsConfig = 0;
     uint32_t lastSentNumGrfRequired = GrfConfig::DefaultGrfNumber;

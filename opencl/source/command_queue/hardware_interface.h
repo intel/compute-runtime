@@ -73,6 +73,12 @@ class HardwareInterface {
         LinearStream *commandStream,
         CommandQueue &commandQueue);
 
+    static void dispatchDebugPauseCommands(
+        LinearStream *commandStream,
+        CommandQueue &commandQueue,
+        DebugPauseState confirmationTrigger,
+        DebugPauseState waitCondition);
+
     static void programWalker(
         LinearStream &commandStream,
         Kernel &kernel,
