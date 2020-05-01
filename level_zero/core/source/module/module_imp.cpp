@@ -383,9 +383,14 @@ void ModuleImp::updateBuildLog(NEO::Device *neoDevice) {
 
 ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
                                     ze_kernel_handle_t *phFunction) {
-    ze_result_t res = ZE_RESULT_SUCCESS;
-    *phFunction = Kernel::create(productFamily, this, desc, &res)->toHandle();
-    return ZE_RESULT_SUCCESS;
+    ze_result_t res;
+    auto kernel = Kernel::create(productFamily, this, desc, &res);
+
+    if (res == ZE_RESULT_SUCCESS) {
+        *phFunction = kernel->toHandle();
+    }
+
+    return res;
 }
 
 ze_result_t ModuleImp::getNativeBinary(size_t *pSize, uint8_t *pModuleNativeBinary) {
