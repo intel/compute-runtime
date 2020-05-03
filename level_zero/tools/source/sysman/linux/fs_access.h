@@ -26,7 +26,7 @@ namespace L0 {
 class FsAccess {
   public:
     static FsAccess *create();
-    ~FsAccess() = default;
+    virtual ~FsAccess() = default;
 
     ze_result_t canRead(const std::string file);
     ze_result_t canWrite(const std::string file);
@@ -52,7 +52,7 @@ class FsAccess {
 class ProcfsAccess : private FsAccess {
   public:
     static ProcfsAccess *create();
-    ~ProcfsAccess() = default;
+    ~ProcfsAccess() override = default;
 
     ze_result_t listProcesses(std::vector<::pid_t> &list);
     ::pid_t myProcessId();
@@ -72,13 +72,14 @@ class ProcfsAccess : private FsAccess {
 class SysfsAccess : private FsAccess {
   public:
     static SysfsAccess *create(const std::string file);
-    ~SysfsAccess() = default;
+    SysfsAccess() = default;
+    ~SysfsAccess() override = default;
 
     ze_result_t canRead(const std::string file);
     ze_result_t canWrite(const std::string file);
     ze_result_t getFileMode(const std::string file, ::mode_t &mode);
 
-    ze_result_t read(const std::string file, std::string &val);
+    MOCKABLE_VIRTUAL ze_result_t read(const std::string file, std::string &val);
     ze_result_t read(const std::string file, int &val);
     ze_result_t read(const std::string file, uint64_t &val);
     ze_result_t read(const std::string file, double &val);
@@ -97,7 +98,6 @@ class SysfsAccess : private FsAccess {
     ze_bool_t isMyDeviceFile(const std::string dev);
 
   private:
-    SysfsAccess() = delete;
     SysfsAccess(const std::string file);
 
     std::string fullPath(const std::string file);
