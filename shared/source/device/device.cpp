@@ -207,6 +207,11 @@ EngineControl &Device::getEngine(aub_stream::EngineType engineType, bool lowPrio
     UNRECOVERABLE_IF(true);
 }
 
+EngineControl &Device::getEngine(uint32_t index) {
+    UNRECOVERABLE_IF(index >= engines.size());
+    return engines[index];
+}
+
 bool Device::getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const {
     TimeStampData queueTimeStamp;
     bool retVal = getOSTime()->getCpuGpuTime(&queueTimeStamp);

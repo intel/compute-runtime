@@ -54,7 +54,7 @@ TEST_F(DeviceTest, givenDeviceWhenEngineIsCreatedThenSetInitialValueForTag) {
     }
 }
 
-TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenRetrunIt) {
+TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenReturnIt) {
     auto &engines = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo);
     for (uint32_t i = 0; i < engines.size(); i++) {
         bool lowPriority = (HwHelper::lowPriorityGpgpuEngineIndex == i);
@@ -64,6 +64,14 @@ TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenRetrunIt) {
     }
 
     EXPECT_THROW(pDevice->getEngine(aub_stream::ENGINE_VCS, false), std::exception);
+}
+
+TEST_F(DeviceTest, givenDeviceWhenAskedForEngineWithValidIndexThenReturnIt) {
+    auto &engines = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo);
+    for (uint32_t i = 0; i < engines.size(); i++) {
+        auto &deviceEngine = pDevice->getEngine(i);
+        EXPECT_EQ(deviceEngine.osContext->getEngineType(), engines[i]);
+    }
 }
 
 TEST_F(DeviceTest, givenDebugVariableToAlwaysChooseEngineZeroWhenNotExistingEngineSelectedThenIndexZeroEngineIsReturned) {

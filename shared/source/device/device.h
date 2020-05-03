@@ -42,6 +42,7 @@ class Device : public ReferenceTrackedObject<Device> {
     const HardwareInfo &getHardwareInfo() const;
     const DeviceInfo &getDeviceInfo() const;
     EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority);
+    EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
     EngineControl &getInternalEngine();
     std::atomic<uint32_t> &getSelectorCopyEngine();

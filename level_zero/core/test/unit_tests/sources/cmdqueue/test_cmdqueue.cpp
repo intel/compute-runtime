@@ -49,6 +49,40 @@ TEST_F(CommandQueueCreate, whenCreatingCommandQueueThenItIsInitialized) {
     commandQueue->destroy();
 }
 
+TEST_F(CommandQueueCreate, givenOrdinalThenQueueIsCreatedOnlyIfOrdinalIsLessThanNumOfAsyncComputeEngines) {
+    ze_device_properties_t deviceProperties;
+    ze_result_t res = device->getProperties(&deviceProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_command_queue_desc_t desc = {};
+    desc.version = ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT;
+    desc.ordinal = deviceProperties.numAsyncComputeEngines;
+
+    ze_command_queue_handle_t commandQueue = {};
+    res = device->createCommandQueue(&desc, &commandQueue);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+    EXPECT_EQ(nullptr, commandQueue);
+
+    desc.ordinal = 0;
+    res = device->createCommandQueue(&desc, &commandQueue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, commandQueue);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+
+    const auto &hardwareInfo = neoDevice->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+    for (uint32_t i = hwHelper.internalUsageEngineIndex; i < NEO::HwHelper::getEnginesCount(hardwareInfo); i++) {
+        desc.ordinal = i;
+        res = device->createCommandQueue(&desc, &commandQueue);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_NE(nullptr, commandQueue);
+
+        L0::CommandQueue::fromHandle(commandQueue)->destroy();
+    }
+}
+
 using CommandQueueSBASupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
 struct MockMemoryManagerCommandQueueSBA : public MemoryManagerMock {

@@ -117,7 +117,21 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
         auto &selectorCopyEngine = this->neoDevice->getDeviceById(0)->getSelectorCopyEngine();
         csr = this->neoDevice->getDeviceById(0)->getEngine(NEO::EngineHelpers::getBcsEngineType(neoDevice->getHardwareInfo(), selectorCopyEngine), false).commandStreamReceiver;
     } else {
-        csr = neoDevice->getDefaultEngine().commandStreamReceiver;
+        const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
+        auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+        if (desc->ordinal >= NEO::HwHelper::getEnginesCount(hardwareInfo)) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
+        if (desc->ordinal == 0) {
+            csr = neoDevice->getEngine(0).commandStreamReceiver;
+        } else {
+            // Skip low-priority and internal engines in engines vector
+            csr = neoDevice->getEngine(desc->ordinal + hwHelper.internalUsageEngineIndex).commandStreamReceiver;
+        }
+
+        UNRECOVERABLE_IF(csr == nullptr);
     }
     *commandQueue = CommandQueue::create(productFamily, this, csr, desc, useBliter);
 
