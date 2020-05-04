@@ -75,6 +75,7 @@ TEST(VaSharingTest, givenVASharingFunctionsObjectWhenFunctionsAreCalledThenCalls
     unsigned int handle = 0u;
     VASurfaceID vaSurfaceId = 0u;
     VAImage vaImage = {};
+    VADRMPRIMESurfaceDescriptor vaDrmPrimeSurfaceDesc = {};
 
     class VASharingFunctionsGlobalFunctionPointersMock : public VASharingFunctions {
       public:
@@ -88,6 +89,7 @@ TEST(VaSharingTest, givenVASharingFunctionsObjectWhenFunctionsAreCalledThenCalls
         bool vaSyncSurfaceCalled = false;
         bool vaGetLibFuncCalled = false;
         bool vaExtGetSurfaceHandleCalled = false;
+        bool vaExportSurfaceHandleCalled = false;
         bool vaQueryImageFormatsCalled = false;
         bool vaMaxNumImageFormatsCalled = false;
 
@@ -98,6 +100,7 @@ TEST(VaSharingTest, givenVASharingFunctionsObjectWhenFunctionsAreCalledThenCalls
             vaSyncSurfacePFN = mockVaSyncSurface;
             vaGetLibFuncPFN = mockVaGetLibFunc;
             vaExtGetSurfaceHandlePFN = mockExtGetSurfaceHandle;
+            vaExportSurfaceHandlePFN = mockExportSurfaceHandle;
             vaQueryImageFormatsPFN = mockVaQueryImageFormats;
             vaMaxNumImageFormatsPFN = mockVaMaxNumImageFormats;
         }
@@ -143,6 +146,11 @@ TEST(VaSharingTest, givenVASharingFunctionsObjectWhenFunctionsAreCalledThenCalls
             return VA_STATUS_SUCCESS;
         };
 
+        static VAStatus mockExportSurfaceHandle(VADisplay vaDisplay, VASurfaceID vaSurface, uint32_t memType, uint32_t flags, void *descriptor) {
+            getInstance(false)->vaExportSurfaceHandleCalled = true;
+            return VA_STATUS_SUCCESS;
+        };
+
         static VAStatus mockVaQueryImageFormats(VADisplay vaDisplay, VAImageFormat *formatList, int *numFormats) {
             getInstance(false)->vaQueryImageFormatsCalled = true;
             return VA_STATUS_SUCCESS;
@@ -160,6 +168,7 @@ TEST(VaSharingTest, givenVASharingFunctionsObjectWhenFunctionsAreCalledThenCalls
     EXPECT_EQ(0, vaSharingFunctions->syncSurface(vaSurfaceId));
     EXPECT_TRUE(nullptr == vaSharingFunctions->getLibFunc("funcName"));
     EXPECT_EQ(0, vaSharingFunctions->extGetSurfaceHandle(&vaSurfaceId, &handle));
+    EXPECT_EQ(0, vaSharingFunctions->exportSurfaceHandle(vaSurfaceId, VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME_2, 0, &vaDrmPrimeSurfaceDesc));
     int numFormats = 0;
     EXPECT_EQ(0, vaSharingFunctions->queryImageFormats(VADisplay(1), nullptr, &numFormats));
     EXPECT_EQ(0, vaSharingFunctions->maxNumImageFormats(VADisplay(1)));
@@ -172,10 +181,57 @@ TEST(VaSharingTest, givenVASharingFunctionsObjectWhenFunctionsAreCalledThenCalls
     EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaSyncSurfaceCalled);
     EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaGetLibFuncCalled);
     EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaExtGetSurfaceHandleCalled);
+    EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaExportSurfaceHandleCalled);
     EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaQueryImageFormatsCalled);
     EXPECT_TRUE(VASharingFunctionsGlobalFunctionPointersMock::getInstance(false)->vaMaxNumImageFormatsCalled);
 
     VASharingFunctionsGlobalFunctionPointersMock::getInstance(true);
+}
+
+TEST_F(VaSharingTests, givenMockVaWithExportSurfaceHandlerWhenVaSurfaceIsCreatedThenCallHandlerWithDrmPrime2ToGetSurfaceFormatsInDescriptor) {
+    vaSharing->sharingFunctions.haveExportSurfaceHandle = true;
+
+    for (int plane = 0; plane < 2; plane++) {
+        auto vaSurface = std::unique_ptr<Image>(VASurface::createSharedVaSurface(
+            &context, &vaSharing->sharingFunctions, CL_MEM_READ_WRITE, 0, &vaSurfaceId, plane, &errCode));
+        ASSERT_NE(nullptr, vaSurface);
+
+        auto handler = vaSurface->peekSharingHandler();
+        ASSERT_NE(nullptr, handler);
+
+        auto vaHandler = static_cast<VASharing *>(handler);
+        EXPECT_EQ(vaHandler->peekFunctionsHandler(), &vaSharing->sharingFunctions);
+
+        auto sharingFunctions = vaSharing->sharingFunctions;
+        EXPECT_FALSE(sharingFunctions.deriveImageCalled);
+        EXPECT_FALSE(sharingFunctions.destroyImageCalled);
+
+        EXPECT_TRUE(sharingFunctions.exportSurfaceHandleCalled);
+
+        EXPECT_EQ(static_cast<uint32_t>(VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME_2), sharingFunctions.receivedSurfaceMemType);
+        EXPECT_EQ(static_cast<uint32_t>(VA_EXPORT_SURFACE_READ_WRITE | VA_EXPORT_SURFACE_SEPARATE_LAYERS), sharingFunctions.receivedSurfaceFlags);
+
+        if (plane == 0) {
+            EXPECT_EQ(256u, vaSurface->getImageDesc().image_width);
+            EXPECT_EQ(256u, vaSurface->getImageDesc().image_height);
+        }
+
+        if (plane == 1) {
+            EXPECT_EQ(128u, vaSurface->getImageDesc().image_width);
+            EXPECT_EQ(128u, vaSurface->getImageDesc().image_height);
+
+            SurfaceOffsets surfaceOffsets;
+            vaSurface->getSurfaceOffsets(surfaceOffsets);
+            auto vaSurfaceDesc = sharingFunctions.mockVaSurfaceDesc;
+            EXPECT_EQ(vaSurfaceDesc.layers[1].offset[0], surfaceOffsets.offset);
+            EXPECT_EQ(0u, surfaceOffsets.xOffset);
+            EXPECT_EQ(0u, surfaceOffsets.yOffset);
+            EXPECT_EQ(vaSurfaceDesc.layers[1].offset[0] / vaSurfaceDesc.layers[1].pitch[0], surfaceOffsets.yOffsetForUVplane);
+        }
+
+        EXPECT_TRUE(vaSurface->isTiledAllocation());
+        EXPECT_EQ(8u, vaSurface->getGraphicsAllocation()->peekSharedHandle());
+    }
 }
 
 TEST_F(VaSharingTests, givenMockVaWhenVaSurfaceIsCreatedThenMemObjectHasVaHandler) {

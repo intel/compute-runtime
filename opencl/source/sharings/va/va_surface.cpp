@@ -15,6 +15,9 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/image.h"
 
+#include <drm/drm_fourcc.h>
+#include <va/va_drmcommon.h>
+
 namespace NEO {
 Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sharingFunctions,
                                         cl_mem_flags flags, cl_mem_flags_intel flagsIntel, VASurfaceID *surface,
@@ -23,6 +26,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     auto memoryManager = context->getMemoryManager();
     unsigned int sharedHandle = 0;
+    VADRMPRIMESurfaceDescriptor vaDrmPrimeSurfaceDesc = {};
     VAImage vaImage = {};
     cl_image_desc imgDesc = {};
     cl_image_format gmmImgFormat = {CL_NV12_INTEL, CL_UNORM_INT8};
@@ -31,13 +35,41 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     ImageInfo imgInfo = {};
     VAImageID imageId = 0;
     McsSurfaceInfo mcsSurfaceInfo = {};
+    VAStatus vaStatus;
 
-    sharingFunctions->deriveImage(*surface, &vaImage);
+    uint32_t imageFourcc = 0;
+    size_t imageOffset = 0;
+    size_t imagePitch = 0;
 
-    imageId = vaImage.image_id;
+    vaStatus = sharingFunctions->exportSurfaceHandle(*surface,
+                                                     VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME_2,
+                                                     VA_EXPORT_SURFACE_READ_WRITE | VA_EXPORT_SURFACE_SEPARATE_LAYERS,
+                                                     &vaDrmPrimeSurfaceDesc);
+    if (VA_STATUS_SUCCESS == vaStatus) {
+        imageId = VA_INVALID_ID;
+        imgDesc.image_width = vaDrmPrimeSurfaceDesc.width;
+        imgDesc.image_height = vaDrmPrimeSurfaceDesc.height;
+        imageFourcc = vaDrmPrimeSurfaceDesc.fourcc;
+        if (plane == 1) {
+            imageOffset = vaDrmPrimeSurfaceDesc.layers[1].offset[0];
+            imagePitch = vaDrmPrimeSurfaceDesc.layers[1].pitch[0];
+        }
+        imgInfo.linearStorage = DRM_FORMAT_MOD_LINEAR == vaDrmPrimeSurfaceDesc.objects[0].drm_format_modifier;
+        sharedHandle = vaDrmPrimeSurfaceDesc.objects[0].fd;
+    } else {
+        sharingFunctions->deriveImage(*surface, &vaImage);
+        imageId = vaImage.image_id;
+        imgDesc.image_width = vaImage.width;
+        imgDesc.image_height = vaImage.height;
+        imageFourcc = vaImage.format.fourcc;
+        if (plane == 1) {
+            imageOffset = vaImage.offsets[1];
+            imagePitch = vaImage.pitches[0];
+        }
+        imgInfo.linearStorage = false;
+        sharingFunctions->extGetSurfaceHandle(surface, &sharedHandle);
+    }
 
-    imgDesc.image_width = vaImage.width;
-    imgDesc.image_height = vaImage.height;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
 
@@ -53,16 +85,15 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     auto gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features); //vaImage.format.fourcc == VA_FOURCC_NV12
 
-    if (DebugManager.flags.EnableExtendedVaFormats.get() && vaImage.format.fourcc == VA_FOURCC_P010) {
+    if (DebugManager.flags.EnableExtendedVaFormats.get() && imageFourcc == VA_FOURCC_P010) {
         channelType = CL_UNORM_INT16;
-        gmmSurfaceFormat = getExtendedSurfaceFormatInfo(vaImage.format.fourcc);
+        gmmSurfaceFormat = getExtendedSurfaceFormatInfo(imageFourcc);
     }
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
 
     cl_image_format imgFormat = {channelOrder, channelType};
     auto imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
 
-    sharingFunctions->extGetSurfaceHandle(surface, &sharedHandle);
     AllocationProperties properties(context->getDevice(0)->getRootDeviceIndex(),
                                     false, // allocateMemory
                                     imgInfo, GraphicsAllocation::AllocationType::SHARED_IMAGE,
@@ -77,13 +108,15 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     if (plane == 1) {
         imgDesc.image_width /= 2;
         imgDesc.image_height /= 2;
-        imgInfo.offset = vaImage.offsets[1];
+        imgInfo.offset = imageOffset;
         imgInfo.yOffset = 0;
         imgInfo.xOffset = 0;
-        imgInfo.yOffsetForUVPlane = static_cast<uint32_t>(imgInfo.offset / vaImage.pitches[0]);
+        imgInfo.yOffsetForUVPlane = static_cast<uint32_t>(imageOffset / imagePitch);
     }
     imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
-    sharingFunctions->destroyImage(vaImage.image_id);
+    if (VA_INVALID_ID != imageId) {
+        sharingFunctions->destroyImage(imageId);
+    }
 
     auto vaSurface = new VASurface(sharingFunctions, imageId, plane, surface, context->getInteropUserSyncEnabled());
 

@@ -40,6 +40,10 @@ class VASharingFunctions : public SharingFunctions {
         return vaExtGetSurfaceHandlePFN(vaDisplay, vaSurface, handleId);
     }
 
+    MOCKABLE_VIRTUAL VAStatus exportSurfaceHandle(VASurfaceID vaSurface, uint32_t memType, uint32_t flags, void *descriptor) {
+        return vaExportSurfaceHandlePFN(vaDisplay, vaSurface, memType, flags, descriptor);
+    }
+
     MOCKABLE_VIRTUAL VAStatus syncSurface(VASurfaceID vaSurface) {
         return vaSyncSurfacePFN(vaDisplay, vaSurface);
     }
@@ -85,6 +89,7 @@ class VASharingFunctions : public SharingFunctions {
     VADestroyImagePFN vaDestroyImagePFN;
     VASyncSurfacePFN vaSyncSurfacePFN;
     VAExtGetSurfaceHandlePFN vaExtGetSurfaceHandlePFN;
+    VAExportSurfaceHandlePFN vaExportSurfaceHandlePFN;
     VAGetLibFuncPFN vaGetLibFuncPFN;
     VAQueryImageFormatsPFN vaQueryImageFormatsPFN;
     VAMaxNumImageFormatsPFN vaMaxNumImageFormatsPFN;

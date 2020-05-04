@@ -52,6 +52,7 @@ void VASharingFunctions::initFunctions() {
             vaSyncSurfacePFN = reinterpret_cast<VASyncSurfacePFN>(fdlsym(libHandle, "vaSyncSurface"));
             vaGetLibFuncPFN = reinterpret_cast<VAGetLibFuncPFN>(fdlsym(libHandle, "vaGetLibFunc"));
             vaExtGetSurfaceHandlePFN = reinterpret_cast<VAExtGetSurfaceHandlePFN>(getLibFunc("DdiMedia_ExtGetSurfaceHandle"));
+            vaExportSurfaceHandlePFN = reinterpret_cast<VAExportSurfaceHandlePFN>(fdlsym(libHandle, "vaExportSurfaceHandle"));
             vaQueryImageFormatsPFN = reinterpret_cast<VAQueryImageFormatsPFN>(fdlsym(libHandle, "vaQueryImageFormats"));
             vaMaxNumImageFormatsPFN = reinterpret_cast<VAMaxNumImageFormatsPFN>(fdlsym(libHandle, "vaMaxNumImageFormats"));
 
@@ -62,6 +63,7 @@ void VASharingFunctions::initFunctions() {
             vaSyncSurfacePFN = nullptr;
             vaGetLibFuncPFN = nullptr;
             vaExtGetSurfaceHandlePFN = nullptr;
+            vaExportSurfaceHandlePFN = nullptr;
             vaQueryImageFormatsPFN = nullptr;
             vaMaxNumImageFormatsPFN = nullptr;
         }

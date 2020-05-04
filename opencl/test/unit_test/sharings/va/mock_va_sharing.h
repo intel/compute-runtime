@@ -10,6 +10,9 @@
 
 #include "opencl/source/sharings/va/va_sharing.h"
 
+#include <drm/drm_fourcc.h>
+#include <va/va_drmcommon.h>
+
 namespace NEO {
 
 class VASharingFunctionsMock : public VASharingFunctions {
@@ -28,8 +31,28 @@ class VASharingFunctionsMock : public VASharingFunctions {
     bool destroyImageCalled = false;
     bool syncSurfaceCalled = false;
     bool extGetSurfaceHandleCalled = false;
+    bool exportSurfaceHandleCalled = false;
 
     osHandle acquiredVaHandle = 0;
+
+    bool haveExportSurfaceHandle = false;
+
+    uint32_t receivedSurfaceMemType = 0;
+    uint32_t receivedSurfaceFlags = 0;
+
+    VADRMPRIMESurfaceDescriptor mockVaSurfaceDesc{
+        VA_FOURCC_NV12,
+        256,
+        256,
+        1,
+        {{8, 98304, I915_FORMAT_MOD_Y_TILED}, {}, {}, {}},
+        2,
+        {
+            {DRM_FORMAT_R8, 1, {}, {0, 0, 0, 0}, {256, 0, 0, 0}},
+            {DRM_FORMAT_GR88, 1, {}, {65536, 0, 0, 0}, {256, 0, 0, 0}},
+            {0, 0, {}, {0, 0, 0, 0}, {0, 0, 0, 0}},
+            {0, 0, {}, {0, 0, 0, 0}, {0, 0, 0, 0}},
+        }};
 
     VASharingFunctionsMock(VADisplay vaDisplay) : VASharingFunctions(vaDisplay) {}
     VASharingFunctionsMock() : VASharingFunctionsMock(nullptr){};
@@ -66,6 +89,20 @@ class VASharingFunctionsMock : public VASharingFunctions {
         extGetSurfaceHandleCalled = true;
         *handleId = acquiredVaHandle;
         return VA_STATUS_SUCCESS;
+    }
+
+    VAStatus exportSurfaceHandle(VASurfaceID vaSurface, uint32_t memType, uint32_t flags, void *descriptor) override {
+        exportSurfaceHandleCalled = true;
+        receivedSurfaceMemType = memType;
+        receivedSurfaceFlags = flags;
+        if (haveExportSurfaceHandle) {
+            if (memType != VA_SURFACE_ATTRIB_MEM_TYPE_DRM_PRIME_2) {
+                return VA_STATUS_ERROR_UNSUPPORTED_MEMORY_TYPE;
+            }
+            *(static_cast<VADRMPRIMESurfaceDescriptor *>(descriptor)) = mockVaSurfaceDesc;
+            return VA_STATUS_SUCCESS;
+        }
+        return VA_STATUS_ERROR_UNIMPLEMENTED;
     }
 
     VAStatus syncSurface(VASurfaceID vaSurface) override {
