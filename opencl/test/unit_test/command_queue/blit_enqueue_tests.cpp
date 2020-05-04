@@ -795,3 +795,17 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
 
     EXPECT_FALSE(commandQueue->isQueueBlocked());
 }
+
+HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenEnqueueIsCalledThenDoImplicitFlushOnGpgpuCsr) {
+    auto buffer = createBuffer(1, true);
+    setMockKernelArgs(std::array<Buffer *, 1>{{buffer.get()}});
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
+
+    EXPECT_EQ(0u, ultCsr->taskCount);
+
+    commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_EQ(1u, ultCsr->taskCount);
+    EXPECT_TRUE(ultCsr->recordedDispatchFlags.implicitFlush);
+}
