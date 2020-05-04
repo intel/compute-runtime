@@ -36,7 +36,7 @@ using namespace NEO;
 typedef ExecutionModelKernelFixture KernelReflectionSurfaceTest;
 typedef ExecutionModelKernelTest KernelReflectionSurfaceWithQueueTest;
 
-TEST_P(KernelReflectionSurfaceTest, CreatedKernelHasNullKernelReflectionSurface) {
+TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelThenKernelReflectionSurfaceIsNull) {
     if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_EQ(nullptr, pKernel->getKernelReflectionSurface());
     }
@@ -485,7 +485,7 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithoutLocalMemoryParameterWh
     EXPECT_TRUE((tokenMask & ((uint64_t)1 << iOpenCL::DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES)) == 0);
 }
 
-TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsSortedVector) {
+TEST_P(KernelReflectionSurfaceTest, WhenGettingCurbeParamsThenReturnedVectorIsSortedIncreasing) {
     if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
@@ -523,7 +523,7 @@ TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsSortedVector) {
     }
 }
 
-TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsVectorWithExpectedParamTypes) {
+TEST_P(KernelReflectionSurfaceTest, WhenGettingCurbeParamsThenReturnedVectorHasExpectedParamTypes) {
     if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
@@ -576,7 +576,7 @@ TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsVectorWithExpectedParam
     }
 }
 
-TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsTokenMask) {
+TEST_P(KernelReflectionSurfaceTest, WhenGettingCurbeParamsThenTokenMaskIsCorrect) {
     if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
@@ -610,7 +610,7 @@ TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsTokenMask) {
     }
 }
 
-TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNonParentKernelDoesNotCreateReflectionSurface) {
+TEST(KernelReflectionSurfaceTestSingle, GivenNonParentKernelWhenCreatingKernelReflectionSurfaceThenKernelReflectionSurfaceIsNotCreated) {
     MockClDevice device{new MockDevice};
     MockProgram program(*device.getExecutionEnvironment());
     KernelInfo info;
@@ -625,7 +625,7 @@ TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNon
     EXPECT_EQ(nullptr, reflectionSurface);
 }
 
-TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNonSchedulerKernelWithForcedSchedulerDispatchDoesNotCreateKRS) {
+TEST(KernelReflectionSurfaceTestSingle, GivenNonSchedulerKernelWithForcedSchedulerDispatchWhenCreatingKernelReflectionSurfaceThenKernelReflectionSurfaceIsNotCreated) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceDispatchScheduler.set(true);
 
@@ -643,7 +643,7 @@ TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNon
     EXPECT_EQ(nullptr, reflectionSurface);
 }
 
-TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithoutKernelArgs) {
+TEST(KernelReflectionSurfaceTestSingle, GivenNoKernelArgsWhenObtainingKernelReflectionSurfaceThenParamsAreCorrect) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
     MockContext context;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
@@ -695,7 +695,7 @@ TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithoutKern
     EXPECT_EQ(0u, MockKernel::ReflectionSurfaceHelperPublic::eventPool.size);
 }
 
-TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithDeviceQueueKernelArg) {
+TEST(KernelReflectionSurfaceTestSingle, GivenDeviceQueueKernelArgWhenObtainingKernelReflectionSurfaceThenParamsAreCorrect) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
     MockContext context;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
@@ -760,7 +760,7 @@ TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithDeviceQ
     EXPECT_EQ(0u, MockKernel::ReflectionSurfaceHelperPublic::eventPool.size);
 }
 
-TEST_P(KernelReflectionSurfaceTest, CreateKernelReflectionSurface) {
+TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelReflectionSurfaceThenKernelReflectionSurfaceIsCorrect) {
     if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
@@ -864,7 +864,7 @@ TEST_P(KernelReflectionSurfaceTest, CreateKernelReflectionSurface) {
     }
 }
 
-TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithArgsWhenPassedToGetCurbeParamsThenProperFirstSSHTokenIndexIsReturned) {
+TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithArgsWhenPassedToGetCurbeParamsThenProperFirstSshTokenIndexIsReturned) {
 
     KernelInfo info;
 
@@ -1031,8 +1031,9 @@ INSTANTIATE_TEST_CASE_P(KernelReflectionSurfaceTest,
                             ::testing::Values(binaryFile),
                             ::testing::ValuesIn(KernelNames)));
 
-HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, ObtainKernelReflectionSurfacePatchesBlocksCurbe) {
+HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingKernelReflectionSurfacePatchesThenCurbeIsBlocked) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pPlatform->getClDevice(0));
+
     if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
 
         BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
@@ -1104,7 +1105,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, ObtainKernelRe
     }
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, ObtainKernelReflectionSurfaceSetsParentImageAndSamplersParams) {
+HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingKernelReflectionSurfaceThenParentImageAndSamplersParamsAreSet) {
     if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
 
         BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
@@ -1188,7 +1189,7 @@ class ReflectionSurfaceHelperTest : public testing::TestWithParam<std::tuple<con
     }
 };
 
-TEST_P(ReflectionSurfaceHelperTest, ReflectionSurfaceHelperCompareFunction) {
+TEST_P(ReflectionSurfaceHelperTest, WhenComparingThenResultIsCorrect) {
     IGIL_KernelCurbeParams curbeParamFirst, curbeParamSecond;
     bool result;
     std::tie(curbeParamFirst, curbeParamSecond, result) = GetParam();
@@ -1302,7 +1303,7 @@ INSTANTIATE_TEST_CASE_P(ReflectionSurfaceHelperSetKernelDataTest,
                         ReflectionSurfaceHelperSetKernelDataTest,
                         ::testing::ValuesIn(InputsSetKernelData));
 
-TEST_P(ReflectionSurfaceHelperSetKernelDataTest, setKernelData) {
+TEST_P(ReflectionSurfaceHelperSetKernelDataTest, WhenSettingKernelDataThenDataAndOffsetsAreCorrect) {
 
     LocalIDPresent localIDPresent;
     uint32_t privateSurfaceSize;
@@ -1366,7 +1367,7 @@ TEST_P(ReflectionSurfaceHelperSetKernelDataTest, setKernelData) {
     EXPECT_EQ(expectedOffset, offset);
 }
 
-TEST_F(ReflectionSurfaceHelperSetKernelDataTest, nullExecutionEnvironment) {
+TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullExecutionEnvironmentWhenSettingKernelDataThenDataAndOffsetsAreCorrect) {
     info.patchInfo.executionEnvironment = nullptr;
 
     std::unique_ptr<char> kernelDataMemory(new char[4096]);
@@ -1396,7 +1397,7 @@ TEST_F(ReflectionSurfaceHelperSetKernelDataTest, nullExecutionEnvironment) {
     EXPECT_EQ(expectedOffset, offset);
 }
 
-TEST_F(ReflectionSurfaceHelperSetKernelDataTest, nullThreadPayload) {
+TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullThreadPayloadWhenSettingKernelDataThenDataAndOffsetsAreCorrect) {
     info.patchInfo.threadPayload = nullptr;
 
     std::unique_ptr<char> kernelDataMemory(new char[4096]);
@@ -1425,7 +1426,7 @@ TEST_F(ReflectionSurfaceHelperSetKernelDataTest, nullThreadPayload) {
     EXPECT_EQ(expectedOffset, offset);
 }
 
-TEST_F(ReflectionSurfaceHelperSetKernelDataTest, nullPrivateSurface) {
+TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullPrivateSurfaceWhenSettingKernelDataThenDataAndOffsetsAreCorrect) {
     info.patchInfo.pAllocateStatelessPrivateSurface = nullptr;
 
     std::unique_ptr<char> kernelDataMemory(new char[4096]);
@@ -1454,7 +1455,7 @@ TEST_F(ReflectionSurfaceHelperSetKernelDataTest, nullPrivateSurface) {
     EXPECT_EQ(expectedOffset, offset);
 }
 
-TEST_F(ReflectionSurfaceHelperSetKernelDataTest, nullSamplerState) {
+TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenNullSamplerStateWhenSettingKernelDataThenDataAndOffsetsAreCorrect) {
     info.patchInfo.samplerStateArray = nullptr;
 
     std::unique_ptr<char> kernelDataMemory(new char[4096]);
@@ -1483,7 +1484,7 @@ TEST_F(ReflectionSurfaceHelperSetKernelDataTest, nullSamplerState) {
     EXPECT_EQ(expectedOffset, offset);
 }
 
-TEST_F(ReflectionSurfaceHelperSetKernelDataTest, setKernelDataWithDisabledConcurrentExecutionDebugFlag) {
+TEST_F(ReflectionSurfaceHelperSetKernelDataTest, GivenDisabledConcurrentExecutionDebugFlagWhenSettingKernelDataThenCanRunConCurrentlyFlagIsZero) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.DisableConcurrentBlockExecution.set(true);
 
@@ -1505,7 +1506,7 @@ TEST_F(ReflectionSurfaceHelperSetKernelDataTest, setKernelDataWithDisabledConcur
     EXPECT_EQ(0u, kernelData->m_CanRunConcurently);
 }
 
-TEST_F(ReflectionSurfaceHelperFixture, setKernelAddressDataWithNullBindingTable) {
+TEST_F(ReflectionSurfaceHelperFixture, GivenNullBindingTableWhenSettingKernelDataThenDataIsCorrectlySet) {
     KernelInfo info;
 
     info.patchInfo.bindingTableState = nullptr;
@@ -1523,7 +1524,7 @@ TEST_F(ReflectionSurfaceHelperFixture, setKernelAddressDataWithNullBindingTable)
     EXPECT_EQ(0u, kernalAddressData->m_BTSize);
 }
 
-TEST_F(ReflectionSurfaceHelperFixture, setKernelAddressDataWithSetBindingTable) {
+TEST_F(ReflectionSurfaceHelperFixture, GivenSetBindingTableWhenSettingKernelDataThenDataIsCorrectlySet) {
     KernelInfo info;
     SPatchBindingTableState bindingTableStateInfo;
     bindingTableStateInfo.Offset = 0;
@@ -1544,7 +1545,7 @@ TEST_F(ReflectionSurfaceHelperFixture, setKernelAddressDataWithSetBindingTable) 
     EXPECT_NE(0u, kernalAddressData->m_BTSize);
 }
 
-TEST_F(ReflectionSurfaceHelperFixture, patchBlocksCurbe) {
+TEST_F(ReflectionSurfaceHelperFixture, WhenPatchingBlocksCurbeThenAddressesAreSetCorrectly) {
     KernelInfo info;
 
     info.patchInfo.bindingTableState = nullptr;
@@ -1592,7 +1593,7 @@ TEST_F(ReflectionSurfaceHelperFixture, patchBlocksCurbe) {
     }
 }
 
-TEST_F(ReflectionSurfaceHelperFixture, patchBlocksCurbeWithUndefinedOffsets) {
+TEST_F(ReflectionSurfaceHelperFixture, GivenUndefinedOffsetsWhenPatchingBlocksCurbeThenAddressesAreSetCorrectly) {
     KernelInfo info;
 
     info.patchInfo.bindingTableState = nullptr;
@@ -1642,7 +1643,7 @@ TEST_F(ReflectionSurfaceHelperFixture, patchBlocksCurbeWithUndefinedOffsets) {
     }
 }
 
-TEST_F(ReflectionSurfaceHelperFixture, setParentImageParams) {
+TEST_F(ReflectionSurfaceHelperFixture, WhenSettingParentImageParamsThenParamsAreSetCorrectly) {
     MockContext context;
     KernelInfo info;
     std::vector<Kernel::SimpleKernelArgInfo> kernelArguments;
@@ -1725,7 +1726,7 @@ TEST_F(ReflectionSurfaceHelperFixture, setParentImageParams) {
     }
 }
 
-TEST_F(ReflectionSurfaceHelperFixture, setParentSamplerParams) {
+TEST_F(ReflectionSurfaceHelperFixture, WhenSettingParentSamplerParamsThenParamsAreSetCorrectly) {
     MockContext context;
     KernelInfo info;
     std::vector<Kernel::SimpleKernelArgInfo> kernelArguments;
@@ -1813,7 +1814,7 @@ TEST_F(ReflectionSurfaceHelperFixture, setParentSamplerParams) {
     }
 }
 
-TEST_F(ReflectionSurfaceHelperFixture, PatchBlocksCurbeWithConstantValuesWithDefinedOffsetsPatchesCurbeOnReflectionSurface) {
+TEST_F(ReflectionSurfaceHelperFixture, GivenDefinedOffsetsWhenPatchingBlocksCurbeWithConstantValuesThenCurbeOnReflectionSurfaceIsPatched) {
 
     IGIL_KernelDataHeader reflectionSurface[10];
     IGIL_KernelDataHeader referenceHeader = {0};
@@ -1864,7 +1865,7 @@ TEST_F(ReflectionSurfaceHelperFixture, PatchBlocksCurbeWithConstantValuesWithDef
     EXPECT_THAT(&referenceKerneldData, MemCompare(kernelData, sizeof(IGIL_KernelData)));
 }
 
-TEST_F(ReflectionSurfaceHelperFixture, PatchBlocksCurbeWithConstantValuesWithUndefinedOffsetsDoesNotPatchCurbeOnReflectionSurface) {
+TEST_F(ReflectionSurfaceHelperFixture, GivenUndefinedOffsetsWhenPatchingBlocksCurbeWithConstantValuesThenCurbeOnReflectionSurfaceIsNotPatched) {
 
     IGIL_KernelDataHeader reflectionSurface[10];
     IGIL_KernelDataHeader referenceHeader = {0};
@@ -1907,9 +1908,8 @@ TEST_F(ReflectionSurfaceHelperFixture, PatchBlocksCurbeWithConstantValuesWithUnd
 
 typedef ParentKernelCommandQueueFixture ReflectionSurfaceTestForPrintfHandler;
 
-TEST_F(ReflectionSurfaceTestForPrintfHandler, PatchReflectionSurfacePatchesPrintfBufferWhenPrintfHandlerIsPassed) {
+TEST_F(ReflectionSurfaceTestForPrintfHandler, GivenPrintfHandlerWhenPatchingReflectionSurfaceThenPrintBufferIsPatched) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
-
     MockContext context(device);
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(context);
@@ -1936,9 +1936,8 @@ TEST_F(ReflectionSurfaceTestForPrintfHandler, PatchReflectionSurfacePatchesPrint
     delete parentKernel;
 }
 
-TEST_F(ReflectionSurfaceTestForPrintfHandler, PatchReflectionSurfaceDoesNotPatchPrintfBufferWhenPrintfSurfaceIsNotCreated) {
+TEST_F(ReflectionSurfaceTestForPrintfHandler, GivenNoPrintfSurfaceWhenPatchingReflectionSurfaceThenPrintBufferIsNotPatched) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
-
     MockContext context(device);
     cl_queue_properties properties[3] = {0};
     MockParentKernel *parentKernel = MockParentKernel::create(context);
@@ -2131,8 +2130,9 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
 
 using KernelReflectionMultiDeviceTest = MultiRootDeviceFixture;
 
-TEST_F(KernelReflectionMultiDeviceTest, ObtainKernelReflectionSurfaceWithoutKernelArgs) {
+TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelReflectionSurfaceThenParamsAreCorrect) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device.get());
+
     MockProgram program(*device->getExecutionEnvironment());
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;
@@ -2182,8 +2182,9 @@ TEST_F(KernelReflectionMultiDeviceTest, ObtainKernelReflectionSurfaceWithoutKern
     EXPECT_EQ(0u, MockKernel::ReflectionSurfaceHelperPublic::eventPool.size);
 }
 
-TEST_F(KernelReflectionMultiDeviceTest, ObtainKernelReflectionSurfaceWithDeviceQueueKernelArg) {
+TEST_F(KernelReflectionMultiDeviceTest, GivenDeviceQueueKernelArgWhenObtainingKernelReflectionSurfaceThenParamsAreCorrect) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device.get());
+
     MockProgram program(*device->getExecutionEnvironment());
 
     KernelInfo *blockInfo = new KernelInfo;
