@@ -78,7 +78,7 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
         EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R0, CS_GPR_R2);
         i++;
     }
-    EncodeStoreMMIO<Family>::encode(container, CS_GPR_R1, dstAddress);
+    EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), CS_GPR_R1, dstAddress);
 }
 
 /*
@@ -213,7 +213,7 @@ void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &conta
         if (NEO::isUndefinedOffset(offsets[i])) {
             continue;
         }
-        EncodeStoreMMIO<Family>::encode(container, GPUGPU_DISPATCHDIM[i], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[i]));
+        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), GPUGPU_DISPATCHDIM[i], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[i]));
     }
 }
 
@@ -255,11 +255,11 @@ void EncodeSetMMIO<Family>::encodeREG(CommandContainer &container, uint32_t dstO
 }
 
 template <typename Family>
-void EncodeStoreMMIO<Family>::encode(CommandContainer &container, uint32_t offset, uint64_t address) {
+void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_t address) {
     MI_STORE_REGISTER_MEM cmd = Family::cmdInitStoreRegisterMem;
     cmd.setRegisterAddress(offset);
     cmd.setMemoryAddress(address);
-    auto buffer = container.getCommandStream()->getSpaceForCmd<MI_STORE_REGISTER_MEM>();
+    auto buffer = csr.getSpaceForCmd<MI_STORE_REGISTER_MEM>();
     *buffer = cmd;
 }
 
