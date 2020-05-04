@@ -6,7 +6,7 @@
  */
 
 {
-  global: 
+  global:
       clGetExtensionFunctionAddress;
       clIcdGetPlatformIDsKHR;
       clGetPlatformInfo;

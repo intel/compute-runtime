@@ -111,7 +111,14 @@ if(WIN32)
     else()
       configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll/windows/OpenCLInternalExports.def.in" "${EXPORTS_FILENAME}")
     endif()
-endif(WIN32)
+elseif(UNIX)
+    set(EXPORTS_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/ocl.exports")
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+      configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/ocl_release.exports" "${EXPORTS_FILENAME}" COPYONLY)
+    else()
+      configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/ocl_internal.exports" "${EXPORTS_FILENAME}" COPYONLY)
+    endif()
+endif()
 
 if(${GENERATE_EXECUTABLE})
   list(APPEND NEO_DYNAMIC_LIB__TARGET_OBJECTS
@@ -168,7 +175,7 @@ if(${GENERATE_EXECUTABLE})
       ${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/devices${BRANCH_DIR_SUFFIX}
     )
     set_property(TARGET ${NEO_DYNAMIC_LIB_NAME}
-      APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/ocl.exports"
+      APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${EXPORTS_FILENAME}"
     )
     set_property(TARGET ${NEO_DYNAMIC_LIB_NAME}
       APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Bsymbolic"
