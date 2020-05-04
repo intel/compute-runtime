@@ -196,6 +196,7 @@ bool Context::createImpl(const cl_context_properties *properties,
         if (anySvmSupport) {
             this->svmAllocsManager = new SVMAllocsManager(this->memoryManager);
         }
+        setupContextType();
     }
 
     auto commandQueue = CommandQueue::create(this, devices[0], nullptr, true, errcodeRet);
@@ -427,4 +428,21 @@ DeviceBitfield Context::getDeviceBitfieldForAllocation() const {
 
     return deviceBitfield;
 }
+
+void Context::setupContextType() {
+    if (contextType == ContextType::CONTEXT_TYPE_DEFAULT) {
+        if (devices.size() > 1) {
+            for (const auto &pDevice : devices) {
+                if (!pDevice->getDeviceInfo().parentDevice) {
+                    contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
+                    return;
+                }
+            }
+        }
+        if (devices[0]->getDeviceInfo().parentDevice) {
+            contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
+        }
+    }
+}
+
 } // namespace NEO

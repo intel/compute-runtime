@@ -9,9 +9,12 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -128,4 +131,94 @@ TEST(ContextMultiDevice, WhenGettingSubDeviceByIndexFromContextThenCorrectDevice
     EXPECT_EQ(pSubDevice1, pContextWithAllDevices->getSubDeviceByIndex(1));
     EXPECT_EQ(nullptr, pContextWithRootDevices->getSubDeviceByIndex(1));
     EXPECT_EQ(pSubDevice1, pContextWithSubDevices->getSubDeviceByIndex(1));
+}
+
+TEST(ContextMultiDevice, givenContextWithNonDefaultContextTypeWhenSetupContextTypeThenDoNothing) {
+    UltClDeviceFactory deviceFactory{1, 2};
+
+    MockContext context0(deviceFactory.rootDevices[0]);
+    context0.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
+    context0.setupContextType();
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_DEFAULT, context0.peekContextType());
+
+    MockContext context1(deviceFactory.rootDevices[0]);
+    context1.contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
+    context1.setupContextType();
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_SPECIALIZED, context1.peekContextType());
+
+    MockContext context2(deviceFactory.rootDevices[0]);
+    context2.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
+    context2.setupContextType();
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_UNRESTRICTIVE, context2.peekContextType());
+
+    MockContext context3(deviceFactory.subDevices[0]);
+    context3.contextType = ContextType::CONTEXT_TYPE_DEFAULT;
+    context3.setupContextType();
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_SPECIALIZED, context3.peekContextType());
+
+    MockContext context4(deviceFactory.subDevices[0]);
+    context4.contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
+    context4.setupContextType();
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_UNRESTRICTIVE, context4.peekContextType());
+}
+
+TEST(ContextMultiDevice, givenRootDeviceWhenCreatingContextThenItHasDefaultType) {
+    UltClDeviceFactory deviceFactory{1, 2};
+    cl_int retVal = CL_INVALID_CONTEXT;
+    cl_device_id device = deviceFactory.rootDevices[0];
+
+    auto context = clUniquePtr(Context::create<Context>(nullptr, ClDeviceVector(&device, 1), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context.get());
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_DEFAULT, context->peekContextType());
+}
+
+TEST(ContextMultiDevice, givenSubsetOfSubdevicesWhenCreatingContextThenItHasSpecializedType) {
+    UltClDeviceFactory deviceFactory{1, 2};
+    cl_int retVal = CL_INVALID_CONTEXT;
+    cl_device_id firstSubDevice = deviceFactory.subDevices[0];
+    cl_device_id secondSubDevice = deviceFactory.subDevices[1];
+    cl_device_id bothSubDevices[]{firstSubDevice, secondSubDevice};
+
+    auto context0 = clUniquePtr(Context::create<Context>(nullptr, ClDeviceVector(&firstSubDevice, 1), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context0.get());
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_SPECIALIZED, context0->peekContextType());
+
+    retVal = CL_INVALID_CONTEXT;
+    auto context1 = clUniquePtr(Context::create<Context>(nullptr, ClDeviceVector(&secondSubDevice, 1), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context1.get());
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_SPECIALIZED, context1->peekContextType());
+
+    retVal = CL_INVALID_CONTEXT;
+    auto context2 = clUniquePtr(Context::create<Context>(nullptr, ClDeviceVector(bothSubDevices, 2), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context2.get());
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_SPECIALIZED, context2->peekContextType());
+}
+
+TEST(ContextMultiDevice, givenRootDeviceAndSubsetOfSubdevicesWhenCreatingContextThenItHasUnrestrictiveType) {
+    UltClDeviceFactory deviceFactory{1, 2};
+    cl_int retVal = CL_INVALID_CONTEXT;
+    cl_device_id rootDeviceAndFirstSubDevice[]{deviceFactory.subDevices[0], deviceFactory.rootDevices[0]};
+    cl_device_id rootDeviceAndSecondSubDevice[]{deviceFactory.subDevices[1], deviceFactory.rootDevices[0]};
+    cl_device_id rootDeviceAndBothSubDevices[]{deviceFactory.subDevices[0], deviceFactory.subDevices[1], deviceFactory.rootDevices[0]};
+
+    auto context0 = clUniquePtr(Context::create<Context>(nullptr, ClDeviceVector(rootDeviceAndFirstSubDevice, 2), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context0.get());
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_UNRESTRICTIVE, context0->peekContextType());
+
+    retVal = CL_INVALID_CONTEXT;
+    auto context1 = clUniquePtr(Context::create<Context>(nullptr, ClDeviceVector(rootDeviceAndSecondSubDevice, 2), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context1.get());
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_UNRESTRICTIVE, context1->peekContextType());
+
+    retVal = CL_INVALID_CONTEXT;
+    auto context2 = clUniquePtr(Context::create<Context>(nullptr, ClDeviceVector(rootDeviceAndBothSubDevices, 3), nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context2.get());
+    EXPECT_EQ(ContextType::CONTEXT_TYPE_UNRESTRICTIVE, context2->peekContextType());
 }

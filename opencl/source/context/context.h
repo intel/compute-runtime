@@ -134,7 +134,7 @@ class Context : public BaseObject<_cl_context> {
     void setInteropUserSyncEnabled(bool enabled) { interopUserSync = enabled; }
     bool areMultiStorageAllocationsPreferred();
 
-    ContextType peekContextType() { return this->contextType; }
+    ContextType peekContextType() const { return contextType; }
 
     MOCKABLE_VIRTUAL BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, Vec3<size_t> size) const;
 
@@ -155,14 +155,13 @@ class Context : public BaseObject<_cl_context> {
     void *getOsContextInfo(cl_context_info &paramName, size_t *srcParamSize);
 
     cl_int processExtraProperties(cl_context_properties propertyType, cl_context_properties propertyValue);
+    void setupContextType();
 
     const cl_context_properties *properties = nullptr;
     size_t numProperties = 0u;
     void(CL_CALLBACK *contextCallback)(const char *, const void *, size_t, void *) = nullptr;
     void *userData = nullptr;
-
     std::unique_ptr<BuiltInKernel> schedulerBuiltIn;
-
     ClDeviceVector devices;
     MemoryManager *memoryManager = nullptr;
     SVMAllocsManager *svmAllocsManager = nullptr;

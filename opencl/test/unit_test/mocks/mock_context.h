@@ -22,6 +22,7 @@ class MockContext : public Context {
     using Context::driverDiagnostics;
     using Context::memoryManager;
     using Context::preferD3dSharedResources;
+    using Context::setupContextType;
     using Context::sharingFunctions;
     using Context::svmAllocsManager;
     MockContext(ClDevice *pDevice, bool noSpecialQueue = false);
