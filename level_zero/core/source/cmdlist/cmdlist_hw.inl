@@ -597,8 +597,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(NEO::Grap
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(const void *srcptr,
-                                                                             const void *dstptr,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(NEO::GraphicsAllocation *srcAlloc,
+                                                                             NEO::GraphicsAllocation *dstAlloc,
                                                                              ze_copy_region_t srcRegion,
                                                                              ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                                                              size_t srcRowPitch, size_t srcSlicePitch,
@@ -606,20 +606,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(con
                                                                              size_t srcSize, size_t dstSize) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
-    auto dstAllocationStruct = getAlignedAllocation(this->device, dstptr, dstSize);
-    auto srcAllocationStruct = getAlignedAllocation(this->device, srcptr, srcSize);
-
-    auto srcPtrAlloc = srcAllocationStruct.alloc;
-    auto dstPtrAlloc = dstAllocationStruct.alloc;
-
     Vec3<size_t> srcPtrOffset = {srcRegion.originX, srcRegion.originY, srcRegion.originZ};
     Vec3<size_t> dstPtrOffset = {dstRegion.originX, dstRegion.originY, dstRegion.originZ};
 
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dstPtrAlloc, srcPtrAlloc,
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dstAlloc, srcAlloc,
                                                                                 dstPtrOffset, srcPtrOffset, copySize, srcRowPitch, srcSlicePitch,
                                                                                 dstRowPitch, dstSlicePitch);
-    commandContainer.addToResidencyContainer(dstPtrAlloc);
-    commandContainer.addToResidencyContainer(srcPtrAlloc);
+    commandContainer.addToResidencyContainer(dstAlloc);
+    commandContainer.addToResidencyContainer(srcAlloc);
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
     return ZE_RESULT_SUCCESS;
 }
@@ -759,73 +753,47 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                                                                          uint32_t srcPitch,
                                                                          uint32_t srcSlicePitch,
                                                                          ze_event_handle_t hSignalEvent) {
-
-    uintptr_t destinationPtr = reinterpret_cast<uintptr_t>(dstPtr);
-    size_t dstOffset = 0;
-    NEO::EncodeSurfaceState<GfxFamily>::getSshAlignedPointer(destinationPtr, dstOffset);
-    void *alignedDstPtr = reinterpret_cast<void *>(destinationPtr);
-
-    uintptr_t sourcePtr = reinterpret_cast<uintptr_t>(const_cast<void *>(srcPtr));
-    size_t srcOffset = 0;
-    NEO::EncodeSurfaceState<GfxFamily>::getSshAlignedPointer(sourcePtr, srcOffset);
-    void *alignedSrcPtr = reinterpret_cast<void *>(sourcePtr);
-
     size_t dstSize = 0;
     size_t srcSize = 0;
 
     if (srcRegion->depth > 1) {
         uint hostPtrDstOffset = dstRegion->originX + ((dstRegion->originY) * dstPitch) + ((dstRegion->originZ) * dstSlicePitch);
         uint hostPtrSrcOffset = srcRegion->originX + ((srcRegion->originY) * srcPitch) + ((srcRegion->originZ) * srcSlicePitch);
-        dstSize = (dstRegion->width * dstRegion->height * dstRegion->depth) + dstOffset + hostPtrDstOffset;
-        srcSize = (srcRegion->width * srcRegion->height * srcRegion->depth) + srcOffset + hostPtrSrcOffset;
+        dstSize = (dstRegion->width * dstRegion->height * dstRegion->depth) + hostPtrDstOffset;
+        srcSize = (srcRegion->width * srcRegion->height * srcRegion->depth) + hostPtrSrcOffset;
     } else {
         uint hostPtrDstOffset = dstRegion->originX + ((dstRegion->originY) * dstPitch);
         uint hostPtrSrcOffset = srcRegion->originX + ((srcRegion->originY) * srcPitch);
-        dstSize = (dstRegion->width * dstRegion->height) + dstOffset + hostPtrDstOffset;
-        srcSize = (srcRegion->width * srcRegion->height) + srcOffset + hostPtrSrcOffset;
+        dstSize = (dstRegion->width * dstRegion->height) + hostPtrDstOffset;
+        srcSize = (srcRegion->width * srcRegion->height) + hostPtrSrcOffset;
     }
 
-    NEO::SvmAllocationData *allocData = nullptr;
-    bool hostPointerNeedsFlush = false;
-    bool dstAllocFound = device->getDriverHandle()->findAllocationDataForRange(alignedDstPtr, dstSize, &allocData);
-    if (dstAllocFound == false) {
-        auto dstAlloc = device->allocateManagedMemoryFromHostPtr(alignedDstPtr, dstSize, this);
-        commandContainer.getDeallocationContainer().push_back(dstAlloc);
-        hostPointerNeedsFlush = true;
-    } else {
-        if (allocData->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY ||
-            allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
-            hostPointerNeedsFlush = true;
-        }
-    }
+    auto dstAllocationStruct = getAlignedAllocation(this->device, dstPtr, dstSize);
+    auto srcAllocationStruct = getAlignedAllocation(this->device, srcPtr, srcSize);
 
-    bool srcAllocFound = device->getDriverHandle()->findAllocationDataForRange(alignedSrcPtr,
-                                                                               srcSize, nullptr);
-    if (srcAllocFound == false) {
-        auto srcAlloc = device->allocateManagedMemoryFromHostPtr(alignedSrcPtr, dstSize, this);
-        commandContainer.getDeallocationContainer().push_back(srcAlloc);
-    }
+    dstSize += dstAllocationStruct.offset;
+    srcSize += srcAllocationStruct.offset;
 
     appendEventForProfiling(hSignalEvent, true);
 
     ze_result_t result = ZE_RESULT_SUCCESS;
     if (srcRegion->depth > 1) {
-        result = isCopyOnlyCmdList ? appendMemoryCopyBlitRegion(alignedSrcPtr, alignedDstPtr, *srcRegion, *dstRegion, {srcRegion->width, srcRegion->height, srcRegion->depth}, srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize, dstSize)
-                                   : this->appendMemoryCopyKernel3d(alignedDstPtr, alignedSrcPtr,
-                                                                    Builtin::CopyBufferRectBytes3d, dstRegion, dstPitch, dstSlicePitch, dstOffset,
-                                                                    srcRegion, srcPitch, srcSlicePitch, srcOffset, hSignalEvent, 0, nullptr);
+        result = isCopyOnlyCmdList ? appendMemoryCopyBlitRegion(srcAllocationStruct.alloc, dstAllocationStruct.alloc, *srcRegion, *dstRegion, {srcRegion->width, srcRegion->height, srcRegion->depth}, srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize, dstSize)
+                                   : this->appendMemoryCopyKernel3d(dstAllocationStruct.alloc, srcAllocationStruct.alloc,
+                                                                    Builtin::CopyBufferRectBytes3d, dstRegion, dstPitch, dstSlicePitch, dstAllocationStruct.offset,
+                                                                    srcRegion, srcPitch, srcSlicePitch, srcAllocationStruct.offset, hSignalEvent, 0, nullptr);
     } else {
-        result = isCopyOnlyCmdList ? appendMemoryCopyBlitRegion(alignedSrcPtr, alignedDstPtr, *srcRegion, *dstRegion, {srcRegion->width, srcRegion->height, srcRegion->depth}, srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize, dstSize)
-                                   : this->appendMemoryCopyKernel2d(alignedDstPtr, alignedSrcPtr,
-                                                                    Builtin::CopyBufferRectBytes2d, dstRegion, dstPitch, dstOffset,
-                                                                    srcRegion, srcPitch, srcOffset, hSignalEvent, 0, nullptr);
+        result = isCopyOnlyCmdList ? appendMemoryCopyBlitRegion(srcAllocationStruct.alloc, dstAllocationStruct.alloc, *srcRegion, *dstRegion, {srcRegion->width, srcRegion->height, srcRegion->depth}, srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize, dstSize)
+                                   : this->appendMemoryCopyKernel2d(dstAllocationStruct.alloc, srcAllocationStruct.alloc,
+                                                                    Builtin::CopyBufferRectBytes2d, dstRegion, dstPitch, dstAllocationStruct.offset,
+                                                                    srcRegion, srcPitch, srcAllocationStruct.offset, hSignalEvent, 0, nullptr);
     }
 
     if (result) {
         return result;
     }
 
-    if (hostPointerNeedsFlush) {
+    if (dstAllocationStruct.needsFlush) {
         if (isCopyOnlyCmdList) {
             NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
         } else {
@@ -838,8 +806,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(const void *dstptr,
-                                                                           const void *srcptr,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(NEO::GraphicsAllocation *dstGA,
+                                                                           NEO::GraphicsAllocation *srcGA,
                                                                            Builtin builtin,
                                                                            const ze_copy_region_t *dstRegion,
                                                                            uint32_t dstPitch,
@@ -883,8 +851,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(const
     uint srcPitches[2] = {(srcPitch), (srcSlicePitch)};
     uint dstPitches[2] = {(dstPitch), (dstSlicePitch)};
 
-    builtinFunction->setArgumentValue(0, sizeof(dstptr), &srcptr);
-    builtinFunction->setArgumentValue(1, sizeof(srcptr), &dstptr);
+    auto dstValPtr = static_cast<uintptr_t>(dstGA->getGpuAddress());
+    auto srcValPtr = static_cast<uintptr_t>(srcGA->getGpuAddress());
+
+    builtinFunction->setArgBufferWithAlloc(0, reinterpret_cast<void *>(&srcValPtr), srcGA);
+    builtinFunction->setArgBufferWithAlloc(1, reinterpret_cast<void *>(&dstValPtr), dstGA);
     builtinFunction->setArgumentValue(2, sizeof(srcOrigin), &srcOrigin);
     builtinFunction->setArgumentValue(3, sizeof(dstOrigin), &dstOrigin);
     builtinFunction->setArgumentValue(4, sizeof(srcPitches), &srcPitches);
@@ -895,8 +866,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(const
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(const void *dstptr,
-                                                                           const void *srcptr,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(NEO::GraphicsAllocation *dstGA,
+                                                                           NEO::GraphicsAllocation *srcGA,
                                                                            Builtin builtin,
                                                                            const ze_copy_region_t *dstRegion,
                                                                            uint32_t dstPitch,
@@ -935,8 +906,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(const
     uint srcOrigin[2] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY)};
     uint dstOrigin[2] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY)};
 
-    builtinFunction->setArgumentValue(0, sizeof(dstptr), &srcptr);
-    builtinFunction->setArgumentValue(1, sizeof(srcptr), &dstptr);
+    auto dstValPtr = static_cast<uintptr_t>(dstGA->getGpuAddress());
+    auto srcValPtr = static_cast<uintptr_t>(srcGA->getGpuAddress());
+
+    builtinFunction->setArgBufferWithAlloc(0, reinterpret_cast<void *>(&srcValPtr), srcGA);
+    builtinFunction->setArgBufferWithAlloc(1, reinterpret_cast<void *>(&dstValPtr), dstGA);
     builtinFunction->setArgumentValue(2, sizeof(srcOrigin), &srcOrigin);
     builtinFunction->setArgumentValue(3, sizeof(dstOrigin), &dstOrigin);
     builtinFunction->setArgumentValue(4, sizeof(srcPitch), &srcPitch);

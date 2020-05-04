@@ -213,8 +213,8 @@ class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamil
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t appendMemoryCopyBlitRegion(const void *srcptr,
-                                           const void *dstptr,
+    ze_result_t appendMemoryCopyBlitRegion(NEO::GraphicsAllocation *srcptr,
+                                           NEO::GraphicsAllocation *dstptr,
                                            ze_copy_region_t srcRegion,
                                            ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                            size_t srcRowPitch, size_t srcSlicePitch,
@@ -224,7 +224,7 @@ class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamil
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t appendMemoryCopyKernel2d(const void *dstptr, const void *srcptr,
+    ze_result_t appendMemoryCopyKernel2d(NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr,
                                          Builtin builtin, const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
@@ -234,7 +234,7 @@ class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamil
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t appendMemoryCopyKernel3d(const void *dstptr, const void *srcptr,
+    ze_result_t appendMemoryCopyKernel3d(NEO::GraphicsAllocation *dstptr, NEO::GraphicsAllocation *srcptr,
                                          Builtin builtin, const ze_copy_region_t *dstRegion,
                                          uint32_t dstPitch, uint32_t dstSlicePitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
@@ -323,6 +323,25 @@ HWTEST2_F(CommandListCreate, givenCommandListAnd3DWhbufferenMemoryCopyRegionCall
     cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitRegionCalledTimes, 0u);
     EXPECT_GT(cmdList.appendMemoryCopyKernel3dCalledTimes, 0u);
+}
+
+HWTEST2_F(CommandListCreate, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenTwoNewAllocationAreAddedToHostMapPtr, Platforms) {
+    class MockAppendMemoryCopyRegion : public MockCommandList<gfxCoreFamily> {
+      public:
+        using CommandList::hostPtrMap;
+        AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize) override {
+            return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocation(device, buffer, bufferSize);
+        }
+    };
+
+    MockAppendMemoryCopyRegion cmdList;
+    cmdList.initialize(device, false);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
+    ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr);
+    EXPECT_EQ(cmdList.hostPtrMap.size(), 2u);
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListAnd2DWhbufferenMemoryCopyRegionCalledThenCopyKernel2DCalled, Platforms) {
