@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 
-#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
@@ -62,7 +62,7 @@ class ImageFromSubBufferTest : public DeviceFixture, public ::testing::Test {
     Image *createImage() {
         cl_mem_flags flags = CL_MEM_READ_ONLY;
         auto surfaceFormat = (ClSurfaceFormatInfo *)Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-        return Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, NULL, retVal);
+        return Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, NULL, retVal);
     }
     cl_image_format imageFormat;
     cl_image_desc imageDesc;

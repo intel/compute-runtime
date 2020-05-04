@@ -28,7 +28,7 @@
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
 
 #include "opencl/source/event/event.h"
-#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
@@ -1333,7 +1333,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountZe
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
@@ -1380,7 +1380,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountNo
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
@@ -1420,7 +1420,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedAn
     InjectedFunction method = [&](size_t failureIndex) {
         cl_mem_flags flags = CL_MEM_WRITE_ONLY;
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-        std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+        std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
                                                       flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
         if (MemoryManagement::nonfailingAllocation == failureIndex) {
             EXPECT_NE(nullptr, dstImage.get());
@@ -1481,7 +1481,7 @@ HWTEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreated
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, data, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
@@ -1526,7 +1526,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenMemoryAllocatedForImageThe
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, data, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
@@ -1558,7 +1558,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountZer
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, data, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
@@ -1602,7 +1602,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipCountNon
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, data, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
@@ -1646,7 +1646,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreated
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+    std::unique_ptr<Image> dstImage(Image::create(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
                                                   flags, 0, surfaceFormat, &imageDesc, data, retVal));
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);

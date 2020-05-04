@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
@@ -55,7 +55,7 @@ class CreateImage2DTest : public DeviceFixture,
     }
     Image *createImageWithFlags(cl_mem_flags flags) {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-        return Image::create(context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
+        return Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
     }
     cl_image_format imageFormat;
     cl_image_desc imageDesc;

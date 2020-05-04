@@ -10,7 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 
-#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
@@ -78,7 +78,7 @@ struct ImageHelper {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, imgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         auto image = Image::create(
             context,
-            NEO::MemoryPropertiesParser::createMemoryProperties(Traits::flags, 0, 0),
+            NEO::MemoryPropertiesHelper::createMemoryProperties(Traits::flags, 0, 0),
             Traits::flags,
             0,
             surfaceFormat,

@@ -8,13 +8,13 @@
 #include "shared/source/helpers/bit_helpers.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/memory_properties_helpers.h"
 
 #include "CL/cl_ext_intel.h"
 
 namespace NEO {
 
-MemoryProperties MemoryPropertiesParser::createMemoryProperties(cl_mem_flags flags, cl_mem_flags_intel flagsIntel, cl_mem_alloc_flags_intel allocflags) {
+MemoryProperties MemoryPropertiesHelper::createMemoryProperties(cl_mem_flags flags, cl_mem_flags_intel flagsIntel, cl_mem_alloc_flags_intel allocflags) {
     MemoryProperties memoryProperties;
 
     if (isValueSet(flags, CL_MEM_READ_WRITE)) {
@@ -84,6 +84,21 @@ MemoryProperties MemoryPropertiesParser::createMemoryProperties(cl_mem_flags fla
     addExtraMemoryProperties(memoryProperties, flags, flagsIntel);
 
     return memoryProperties;
+}
+
+AllocationProperties MemoryPropertiesHelper::getAllocationProperties(uint32_t rootDeviceIndex, MemoryProperties memoryProperties, bool allocateMemory, size_t size,
+                                                                     GraphicsAllocation::AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam) {
+    AllocationProperties allocationProperties(rootDeviceIndex, allocateMemory, size, type, multiStorageResource, subDevicesBitfieldParam);
+    fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo);
+    return allocationProperties;
+}
+
+void MemoryPropertiesHelper::fillCachePolicyInProperties(AllocationProperties &allocationProperties, bool uncached, bool readOnly,
+                                                         bool deviceOnlyVisibilty) {
+    allocationProperties.flags.uncacheable = uncached;
+    auto cacheFlushRequired = !uncached && !readOnly && !deviceOnlyVisibilty;
+    allocationProperties.flags.flushL3RequiredForRead = cacheFlushRequired;
+    allocationProperties.flags.flushL3RequiredForWrite = cacheFlushRequired;
 }
 
 } // namespace NEO

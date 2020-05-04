@@ -995,7 +995,7 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedTh
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, device->getHardwareInfo().capabilityTable.clVersionSupport);
     auto image = std::unique_ptr<Image>(Image::create(
         contextCl,
-        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
         flags,
         0,
         surfaceFormat,

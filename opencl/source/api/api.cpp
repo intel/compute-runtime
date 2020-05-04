@@ -34,8 +34,7 @@
 #include "opencl/source/execution_environment/cl_execution_environment.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
-#include "opencl/source/helpers/mem_properties_parser_helper.h"
-#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/helpers/queue_helpers.h"
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/kernel/kernel.h"
@@ -661,7 +660,7 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
         return nullptr;
     }
 
-    MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, 0, 0);
+    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0);
     if (isFieldValid(flags, MemObjHelper::validFlagsForBuffer)) {
         Buffer::validateInputAndCreateBuffer(*pContext, memoryProperties, flags, 0, size, hostPtr, retVal, buffer);
     } else {
@@ -701,8 +700,8 @@ cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
-    if (MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                            MemoryPropertiesParserHelper::MemoryPropertiesParserHelper::ObjType::BUFFER, *pContext)) {
+    if (MemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                      MemoryPropertiesHelper::ObjType::BUFFER, *pContext)) {
         Buffer::validateInputAndCreateBuffer(*pContext, memoryProperties, flags, flagsIntel, size, hostPtr, retVal, buffer);
     } else {
         retVal = CL_INVALID_VALUE;
@@ -845,7 +844,7 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
     retVal = validateObjects(WithCastToInternal(context, &pContext));
 
     if (retVal == CL_SUCCESS) {
-        MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, 0, 0);
+        MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0);
         if (isFieldValid(flags, MemObjHelper::validFlagsForImage)) {
             image = Image::validateAndCreateImage(pContext, memoryProperties, flags, 0, imageFormat, imageDesc, hostPtr, retVal);
         } else {
@@ -888,8 +887,8 @@ cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(cl_context context,
     retVal = validateObjects(WithCastToInternal(context, &pContext));
 
     if (retVal == CL_SUCCESS) {
-        if (MemoryPropertiesParserHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                                MemoryPropertiesParserHelper::MemoryPropertiesParserHelper::ObjType::IMAGE, *pContext)) {
+        if (MemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                          MemoryPropertiesHelper::ObjType::IMAGE, *pContext)) {
             image = Image::validateAndCreateImage(pContext, memoryProperties, flags, flagsIntel, imageFormat, imageDesc, hostPtr, retVal);
         } else {
             retVal = CL_INVALID_VALUE;
@@ -936,7 +935,7 @@ cl_mem CL_API_CALL clCreateImage2D(cl_context context,
     retVal = validateObjects(WithCastToInternal(context, &pContext));
 
     if (retVal == CL_SUCCESS) {
-        MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, 0, 0);
+        MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0);
         image2D = Image::validateAndCreateImage(pContext, memoryProperties, flags, 0, imageFormat, &imageDesc, hostPtr, retVal);
     }
 
@@ -987,7 +986,7 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
     retVal = validateObjects(WithCastToInternal(context, &pContext));
 
     if (retVal == CL_SUCCESS) {
-        MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, 0, 0);
+        MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0);
         image3D = Image::validateAndCreateImage(pContext, memoryProperties, flags, 0, imageFormat, &imageDesc, hostPtr, retVal);
     }
 
@@ -1154,7 +1153,7 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
     }
     if (CL_SUCCESS == retVal) {
         surfaceFormat = (ClSurfaceFormatInfo *)Image::getSurfaceFormatFromTable(memFlags, imageFormat, pContext->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-        retVal = Image::validate(pContext, MemoryPropertiesParser::createMemoryProperties(memFlags, 0, 0), surfaceFormat, imageDesc, nullptr);
+        retVal = Image::validate(pContext, MemoryPropertiesHelper::createMemoryProperties(memFlags, 0, 0), surfaceFormat, imageDesc, nullptr);
     }
     if (CL_SUCCESS == retVal) {
         retVal = Image::getImageParams(pContext, memFlags, surfaceFormat, imageDesc, imageRowPitch, imageSlicePitch);
@@ -3502,9 +3501,9 @@ void *clHostMemAllocINTEL(
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
-    if (!MemoryPropertiesParserHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                             allocflags, MemoryPropertiesParserHelper::MemoryPropertiesParserHelper::ObjType::UNKNOWN,
-                                                             *neoContext)) {
+    if (!MemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
+                                                       allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                       *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
     }
@@ -3540,9 +3539,9 @@ void *clDeviceMemAllocINTEL(
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
-    if (!MemoryPropertiesParserHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                             allocflags, MemoryPropertiesParserHelper::MemoryPropertiesParserHelper::ObjType::UNKNOWN,
-                                                             *neoContext)) {
+    if (!MemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
+                                                       allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                       *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
     }
@@ -3581,9 +3580,9 @@ void *clSharedMemAllocINTEL(
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
-    if (!MemoryPropertiesParserHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                             allocflags, MemoryPropertiesParserHelper::MemoryPropertiesParserHelper::ObjType::UNKNOWN,
-                                                             *neoContext)) {
+    if (!MemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
+                                                       allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                       *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
     }

@@ -5,16 +5,17 @@
  *
  */
 
-#include "opencl/source/helpers/mem_properties_parser_helper.h"
-
-#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/memory_properties_helpers_base.inl"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
 namespace NEO {
 
-bool MemoryPropertiesParserHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
-                                                         cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
-                                                         cl_mem_alloc_flags_intel &allocflags, ObjType objectType, Context &context) {
+void MemoryPropertiesHelper::addExtraMemoryProperties(MemoryProperties &properties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel) {
+}
+
+bool MemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
+                                                   cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
+                                                   cl_mem_alloc_flags_intel &allocflags, ObjType objectType, Context &context) {
     if (properties == nullptr) {
         return true;
     }
@@ -35,13 +36,13 @@ bool MemoryPropertiesParserHelper::parseMemoryProperties(const cl_mem_properties
         }
     }
 
-    memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, allocflags);
+    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, allocflags);
 
     switch (objectType) {
-    case MemoryPropertiesParserHelper::ObjType::BUFFER:
+    case MemoryPropertiesHelper::ObjType::BUFFER:
         return isFieldValid(flags, MemObjHelper::validFlagsForBuffer) &&
                isFieldValid(flagsIntel, MemObjHelper::validFlagsForBufferIntel);
-    case MemoryPropertiesParserHelper::ObjType::IMAGE:
+    case MemoryPropertiesHelper::ObjType::IMAGE:
         return isFieldValid(flags, MemObjHelper::validFlagsForImage) &&
                isFieldValid(flagsIntel, MemObjHelper::validFlagsForImageIntel);
     default:
@@ -50,7 +51,7 @@ bool MemoryPropertiesParserHelper::parseMemoryProperties(const cl_mem_properties
     return true;
 }
 
-void MemoryPropertiesParserHelper::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties, const HardwareInfo &hwInfo) {
+void MemoryPropertiesHelper::fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties, const HardwareInfo &hwInfo) {
     fillCachePolicyInProperties(allocationProperties,
                                 memoryProperties.flags.locallyUncachedResource,
                                 memoryProperties.flags.readOnly,

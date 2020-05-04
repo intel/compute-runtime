@@ -7,7 +7,7 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 
-#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
@@ -50,37 +50,37 @@ TEST(MemoryManagerTest, givenAllowed32BitAndFroce32BitWhenGraphicsAllocationInDe
 
 TEST(AllocationFlagsTest, givenAllocateMemoryFlagWhenGetAllocationFlagsIsCalledThenAllocateFlagIsCorrectlySet) {
     HardwareInfo hwInfo(*defaultHwInfo);
-    auto allocationProperties = MemoryPropertiesParserHelper::getAllocationProperties(0, {}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
+    auto allocationProperties = MemoryPropertiesHelper::getAllocationProperties(0, {}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_TRUE(allocationProperties.flags.allocateMemory);
 
-    auto allocationProperties2 = MemoryPropertiesParserHelper::getAllocationProperties(0, {}, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
+    auto allocationProperties2 = MemoryPropertiesHelper::getAllocationProperties(0, {}, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_FALSE(allocationProperties2.flags.allocateMemory);
 }
 
 TEST(UncacheableFlagsTest, givenUncachedResourceFlagWhenGetAllocationFlagsIsCalledThenUncacheableFlagIsCorrectlySet) {
     cl_mem_flags_intel flagsIntel = CL_MEM_LOCALLY_UNCACHED_RESOURCE;
     HardwareInfo hwInfo(*defaultHwInfo);
-    MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(0, flagsIntel, 0);
-    auto allocationFlags = MemoryPropertiesParserHelper::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
+    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, flagsIntel, 0);
+    auto allocationFlags = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_TRUE(allocationFlags.flags.uncacheable);
 
     flagsIntel = 0;
-    memoryProperties = MemoryPropertiesParser::createMemoryProperties(0, flagsIntel, 0);
-    auto allocationFlags2 = MemoryPropertiesParserHelper::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
+    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(0, flagsIntel, 0);
+    auto allocationFlags2 = MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, false, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_FALSE(allocationFlags2.flags.uncacheable);
 }
 
 TEST(AllocationFlagsTest, givenReadOnlyResourceFlagWhenGetAllocationFlagsIsCalledThenFlushL3FlagsAreCorrectlySet) {
     cl_mem_flags flags = CL_MEM_READ_ONLY;
-    MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, 0, 0);
+    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0);
     HardwareInfo hwInfo(*defaultHwInfo);
 
     auto allocationFlags =
-        MemoryPropertiesParserHelper::getAllocationProperties(0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
+        MemoryPropertiesHelper::getAllocationProperties(0, memoryProperties, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForRead);
     EXPECT_FALSE(allocationFlags.flags.flushL3RequiredForWrite);
 
-    auto allocationFlags2 = MemoryPropertiesParserHelper::getAllocationProperties(0, {}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
+    auto allocationFlags2 = MemoryPropertiesHelper::getAllocationProperties(0, {}, true, 0, GraphicsAllocation::AllocationType::BUFFER, false, hwInfo, {});
     EXPECT_TRUE(allocationFlags2.flags.flushL3RequiredForRead);
     EXPECT_TRUE(allocationFlags2.flags.flushL3RequiredForWrite);
 }

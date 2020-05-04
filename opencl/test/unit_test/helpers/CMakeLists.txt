@@ -32,9 +32,8 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_filename_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/mem_properties_parser_helper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_management_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_flags_helpers_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mipmap_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math_tests.cpp

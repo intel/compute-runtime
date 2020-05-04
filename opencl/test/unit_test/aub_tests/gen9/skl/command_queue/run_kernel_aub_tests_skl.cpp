@@ -332,7 +332,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto srcImage = Image::create(
         context,
-        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
         flags,
         0,
         surfaceFormat,
@@ -343,7 +343,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
 
     auto refImage = Image::create(
         context,
-        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
         flags,
         0,
         surfaceFormat,

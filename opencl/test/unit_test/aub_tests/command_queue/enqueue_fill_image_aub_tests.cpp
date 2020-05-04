@@ -185,7 +185,7 @@ HWTEST_P(AubFillImage, simple) {
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
     image.reset(Image::create(
         context.get(),
-        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
         flags,
         0,
         surfaceFormat,

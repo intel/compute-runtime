@@ -205,7 +205,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(uint32_t rootDeviceIndex, si
                                     GraphicsAllocation::AllocationType::SVM_ZERO_COPY,
                                     false, // isMultiStorageAllocation
                                     deviceBitfield};
-    MemoryPropertiesParserHelper::fillCachePolicyInProperties(properties, false, svmProperties.readOnly, false);
+    MemoryPropertiesHelper::fillCachePolicyInProperties(properties, false, svmProperties.readOnly, false);
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
     if (!allocation) {
         return nullptr;
@@ -229,7 +229,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(uint32_t rootDe
                                        false, // isMultiStorageAllocation
                                        unifiedMemoryProperties.subdeviceBitfield};
     cpuProperties.alignment = 2 * MemoryConstants::megaByte;
-    MemoryPropertiesParserHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly, false);
+    MemoryPropertiesHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly, false);
     GraphicsAllocation *allocationCpu = memoryManager->allocateGraphicsMemoryWithProperties(cpuProperties);
     if (!allocationCpu) {
         return nullptr;
@@ -247,7 +247,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(uint32_t rootDe
                                        unifiedMemoryProperties.subdeviceBitfield};
 
     gpuProperties.alignment = 2 * MemoryConstants::megaByte;
-    MemoryPropertiesParserHelper::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly, false);
+    MemoryPropertiesHelper::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly, false);
     GraphicsAllocation *allocationGpu = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties, svmPtr);
     if (!allocationGpu) {
         memoryManager->freeGraphicsMemory(allocationCpu);

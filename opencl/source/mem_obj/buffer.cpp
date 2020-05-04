@@ -26,7 +26,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
@@ -124,7 +124,7 @@ Buffer *Buffer::create(Context *context,
                        size_t size,
                        void *hostPtr,
                        cl_int &errcodeRet) {
-    return create(context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), flags, 0, size, hostPtr, errcodeRet);
+    return create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0, size, hostPtr, errcodeRet);
 }
 
 Buffer *Buffer::create(Context *context,
@@ -223,9 +223,9 @@ Buffer *Buffer::create(Context *context,
     }
 
     if (!memory) {
-        AllocationProperties allocProperties = MemoryPropertiesParserHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
-                                                                                                     allocateMemory, size, allocationType, context->areMultiStorageAllocationsPreferred(),
-                                                                                                     context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation());
+        AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
+                                                                                               allocateMemory, size, allocationType, context->areMultiStorageAllocationsPreferred(),
+                                                                                               context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation());
         memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
     }
 
@@ -238,10 +238,10 @@ Buffer *Buffer::create(Context *context,
         allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
         zeroCopyAllowed = false;
         copyMemoryFromHostPtr = true;
-        AllocationProperties allocProperties = MemoryPropertiesParserHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
-                                                                                                     true, // allocateMemory
-                                                                                                     size, allocationType, context->areMultiStorageAllocationsPreferred(),
-                                                                                                     context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation());
+        AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
+                                                                                               true, // allocateMemory
+                                                                                               size, allocationType, context->areMultiStorageAllocationsPreferred(),
+                                                                                               context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation());
         memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
     }
 
@@ -337,7 +337,7 @@ Buffer *Buffer::create(Context *context,
 
 Buffer *Buffer::createSharedBuffer(Context *context, cl_mem_flags flags, SharingHandler *sharingHandler,
                                    GraphicsAllocation *graphicsAllocation) {
-    auto sharedBuffer = createBufferHw(context, MemoryPropertiesParser::createMemoryProperties(flags, 0, 0), flags, 0, graphicsAllocation->getUnderlyingBufferSize(), nullptr, nullptr, graphicsAllocation, false, false, false);
+    auto sharedBuffer = createBufferHw(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0, graphicsAllocation->getUnderlyingBufferSize(), nullptr, nullptr, graphicsAllocation, false, false, false);
 
     sharedBuffer->setSharingHandler(sharingHandler);
     return sharedBuffer;
@@ -422,7 +422,7 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
                                 const cl_buffer_region *region,
                                 cl_int &errcodeRet) {
     DEBUG_BREAK_IF(nullptr == createFunction);
-    MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
+    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0);
     auto buffer = createFunction(this->context, memoryProperties, flags, 0, region->size,
                                  ptrOffset(this->memoryStorage, region->origin),
                                  this->hostPtr ? ptrOffset(this->hostPtr, region->origin) : nullptr,
@@ -583,7 +583,7 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
 
     auto funcCreate = bufferFactory[hwInfo.platform.eRenderCoreFamily].createBufferFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
-    MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, flagsIntel, 0);
+    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0);
     auto pBuffer = funcCreate(nullptr, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
     pBuffer->offset = offset;

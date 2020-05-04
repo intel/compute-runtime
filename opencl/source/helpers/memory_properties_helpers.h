@@ -17,7 +17,7 @@ namespace NEO {
 
 class Context;
 
-class MemoryPropertiesParserHelper {
+class MemoryPropertiesHelper {
   public:
     enum class ObjType {
         UNKNOWN,
@@ -25,25 +25,20 @@ class MemoryPropertiesParserHelper {
         IMAGE,
     };
 
+    static void addExtraMemoryProperties(MemoryProperties &properties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel);
+
+    static MemoryProperties createMemoryProperties(cl_mem_flags flags, cl_mem_flags_intel flagsIntel, cl_mem_alloc_flags_intel allocflags);
+
     static bool parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
                                       cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel, cl_mem_alloc_flags_intel &allocflags,
                                       ObjType objectType, Context &context);
 
     static AllocationProperties getAllocationProperties(uint32_t rootDeviceIndex, MemoryProperties memoryProperties, bool allocateMemory, size_t size,
-                                                        GraphicsAllocation::AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam) {
-        AllocationProperties allocationProperties(rootDeviceIndex, allocateMemory, size, type, multiStorageResource, subDevicesBitfieldParam);
-        fillPoliciesInProperties(allocationProperties, memoryProperties, hwInfo);
-        return allocationProperties;
-    }
+                                                        GraphicsAllocation::AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo, DeviceBitfield subDevicesBitfieldParam);
 
     static void fillPoliciesInProperties(AllocationProperties &allocationProperties, const MemoryProperties &memoryProperties, const HardwareInfo &hwInfo);
 
     static void fillCachePolicyInProperties(AllocationProperties &allocationProperties, bool uncached, bool readOnly,
-                                            bool deviceOnlyVisibilty) {
-        allocationProperties.flags.uncacheable = uncached;
-        auto cacheFlushRequired = !uncached && !readOnly && !deviceOnlyVisibilty;
-        allocationProperties.flags.flushL3RequiredForRead = cacheFlushRequired;
-        allocationProperties.flags.flushL3RequiredForWrite = cacheFlushRequired;
-    }
+                                            bool deviceOnlyVisibilty);
 };
 } // namespace NEO

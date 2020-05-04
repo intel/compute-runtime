@@ -14,7 +14,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/gmm_types_converter.h"
-#include "opencl/source/helpers/memory_properties_flags_helpers.h"
+#include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
@@ -99,7 +99,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
             imgInfo.imgDesc.imageWidth /= 2;
             imgInfo.imgDesc.imageHeight /= 2;
         }
-        MemoryProperties memoryProperties = MemoryPropertiesParser::createMemoryProperties(flags, 0, 0);
+        MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0);
         AllocationProperties allocProperties = MemObjHelper::getAllocationPropertiesWithImageInfo(rootDeviceIndex, imgInfo,
                                                                                                   true, // allocateMemory
                                                                                                   memoryProperties, context->getDevice(0)->getHardwareInfo(),
