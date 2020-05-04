@@ -90,7 +90,7 @@ const Family::GPGPU_CSR_BASE_ADDRESS Family::cmdInitGpgpuCsrBaseAddress = Family
 const Family::STATE_SIP Family::cmdInitStateSip = Family::STATE_SIP::sInit();
 const Family::BINDING_TABLE_STATE Family::cmdInitBindingTableState = Family::BINDING_TABLE_STATE::sInit();
 const Family::MI_USER_INTERRUPT Family::cmdInitUserInterrupt = Family::MI_USER_INTERRUPT::sInit();
-const Family::XY_SRC_COPY_BLT Family::cmdInitXyCopyBlt = Family::XY_SRC_COPY_BLT::sInit();
+const Family::XY_COPY_BLT Family::cmdInitXyCopyBlt = Family::XY_COPY_BLT::sInit();
 const Family::MI_FLUSH_DW Family::cmdInitMiFlushDw = Family::MI_FLUSH_DW::sInit();
 const Family::XY_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_COLOR_BLT::sInit();
 } // namespace NEO

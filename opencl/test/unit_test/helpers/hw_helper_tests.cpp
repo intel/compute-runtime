@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/hw_info_config_common_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -744,7 +745,7 @@ HWTEST_F(HwHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationModeThenR
 
     if (HwHelperHw<FamilyType>::getAuxTranslationMode() == AuxTranslationMode::Blit) {
         auto hwInfoConfig = HwInfoConfig::get(productFamily);
-        HardwareInfo hwInfo = {};
+        HardwareInfo hwInfo = *defaultHwInfo;
         hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
         EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
     }
@@ -871,4 +872,25 @@ HWTEST_F(PipeControlHelperTests, WhenProgrammingCacheFlushThenExpectBasicFieldsS
     EXPECT_TRUE(pipeControl->getTextureCacheInvalidationEnable());
     EXPECT_TRUE(pipeControl->getPipeControlFlushEnable());
     EXPECT_TRUE(pipeControl->getStateCacheInvalidationEnable());
+}
+
+TEST(HwInfoConfigCommonHelperTest, givenBlitterPreferenceWhenEnablingBlitterOperationsSupportThenHonorThePreference) {
+    HardwareInfo hardwareInfo = *defaultHwInfo;
+
+    HwInfoConfigCommonHelper::enableBlitterOperationsSupport(hardwareInfo);
+    const auto expectedBlitterSupport = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily).obtainBlitterPreference(hardwareInfo);
+    EXPECT_EQ(expectedBlitterSupport, hardwareInfo.capabilityTable.blitterOperationsSupported);
+}
+
+TEST(HwInfoConfigCommonHelperTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag) {
+    DebugManagerStateRestore restore{};
+    HardwareInfo hardwareInfo = *defaultHwInfo;
+
+    DebugManager.flags.EnableBlitterOperationsSupport.set(1);
+    HwInfoConfigCommonHelper::enableBlitterOperationsSupport(hardwareInfo);
+    EXPECT_TRUE(hardwareInfo.capabilityTable.blitterOperationsSupported);
+
+    DebugManager.flags.EnableBlitterOperationsSupport.set(0);
+    HwInfoConfigCommonHelper::enableBlitterOperationsSupport(hardwareInfo);
+    EXPECT_FALSE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }

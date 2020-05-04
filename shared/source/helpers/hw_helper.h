@@ -50,6 +50,7 @@ class HwHelper {
     virtual const AubMemDump::LrcaHelper &getCsTraits(aub_stream::EngineType engineType) const = 0;
     virtual bool hvAlign4Required() const = 0;
     virtual bool obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo, const size_t size) const = 0;
+    virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
     static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
     static bool renderCompressedImagesSupported(const HardwareInfo &hwInfo);
@@ -173,6 +174,8 @@ class HwHelperHw : public HwHelper {
     bool hvAlign4Required() const override;
 
     bool obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo, const size_t size) const override;
+
+    bool obtainBlitterPreference(const HardwareInfo &hwInfo) const override;
 
     bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) override;
 

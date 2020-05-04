@@ -5392,4 +5392,253 @@ typedef struct tagGPGPU_CSR_BASE_ADDRESS {
 } GPGPU_CSR_BASE_ADDRESS;
 STATIC_ASSERT(12 == sizeof(GPGPU_CSR_BASE_ADDRESS));
 
+typedef struct tagXY_BLOCK_COPY_BLT {
+    union tagTheStructure {
+        struct tagCommon {
+            // DWORD 0
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
+            uint32_t Reserved_8 : BITFIELD_RANGE(8, 18);
+            uint32_t ColorDepth : BITFIELD_RANGE(19, 21);
+            uint32_t InstructionTarget_Opcode : BITFIELD_RANGE(22, 28);
+            uint32_t Client : BITFIELD_RANGE(29, 31);
+            // DWORD 1
+            uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
+            uint32_t Reserved_50 : BITFIELD_RANGE(18, 20);
+            uint32_t DestinationMocsValue : BITFIELD_RANGE(21, 27);
+            uint32_t Reserved_60 : BITFIELD_RANGE(28, 29);
+            uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
+            // DWORD 2
+            uint32_t DestinationX1Coordinate_Left : BITFIELD_RANGE(0, 15);
+            uint32_t DestinationY1Coordinate_Top : BITFIELD_RANGE(16, 31);
+            // DWORD 3
+            uint32_t DestinationX2Coordinate_Right : BITFIELD_RANGE(0, 15);
+            uint32_t DestinationY2Coordinate_Bottom : BITFIELD_RANGE(16, 31);
+            // DWORD 4
+            uint64_t DestinationBaseAddress;
+            // DWORD 6
+            uint32_t DestinationXOffset : BITFIELD_RANGE(0, 13);
+            uint32_t Reserved_206 : BITFIELD_RANGE(14, 15);
+            uint32_t DestinationYOffset : BITFIELD_RANGE(16, 29);
+            uint32_t Reserved_222 : BITFIELD_RANGE(30, 31);
+            // DWORD 7
+            uint32_t SourceX1Coordinate_Left : BITFIELD_RANGE(0, 15);
+            uint32_t SourceY1Coordinate_Top : BITFIELD_RANGE(16, 31);
+            // DWORD 8
+            uint32_t SourcePitch : BITFIELD_RANGE(0, 17);
+            uint32_t Reserved_274 : BITFIELD_RANGE(18, 20);
+            uint32_t SourceMocs : BITFIELD_RANGE(21, 27);
+            uint32_t Reserved_284 : BITFIELD_RANGE(28, 29);
+            uint32_t SourceTiling : BITFIELD_RANGE(30, 31);
+            // DWORD 9
+            uint64_t SourceBaseAddress;
+            // DWORD 11
+            uint32_t SourceXOffset : BITFIELD_RANGE(0, 13);
+            uint32_t Reserved_366 : BITFIELD_RANGE(14, 15);
+            uint32_t SourceYOffset : BITFIELD_RANGE(16, 29);
+            uint32_t Reserved_382 : BITFIELD_RANGE(30, 31);
+        } Common;
+        uint32_t RawData[12];
+    } TheStructure;
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0xa,
+    } DWORD_LENGTH;
+    typedef enum tagCOLOR_DEPTH {
+        COLOR_DEPTH_8_BIT_COLOR = 0x0,
+        COLOR_DEPTH_16_BIT_COLOR = 0x1,
+        COLOR_DEPTH_32_BIT_COLOR = 0x2,
+        COLOR_DEPTH_64_BIT_COLOR = 0x3,
+        COLOR_DEPTH_96_BIT_COLOR_ONLY_LINEAR_CASE_IS_SUPPORTED = 0x4,
+        COLOR_DEPTH_128_BIT_COLOR = 0x5,
+    } COLOR_DEPTH;
+    typedef enum tagCLIENT {
+        CLIENT_2D_PROCESSOR = 0x2,
+    } CLIENT;
+    typedef enum tagDESTINATION_TILING {
+        DESTINATION_TILING_LINEAR = 0x0,
+        DESTINATION_TILING_YMAJOR = 0x1,
+    } DESTINATION_TILING;
+    typedef enum tagSOURCE_TILING {
+        SOURCE_TILING_LINEAR = 0x0,
+        SOURCE_TILING_YMAJOR = 0x1,
+    } SOURCE_TILING;
+    enum INSTRUCTIONTARGET_OPCODE {
+        INSTRUCTIONTARGET_OPCODE_OPCODE = 0x41,
+    };
+    inline void init(void) {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        TheStructure.Common.ColorDepth = COLOR_DEPTH_8_BIT_COLOR;
+        TheStructure.Common.InstructionTarget_Opcode = INSTRUCTIONTARGET_OPCODE_OPCODE;
+        TheStructure.Common.Client = CLIENT_2D_PROCESSOR;
+        TheStructure.Common.DestinationTiling = DESTINATION_TILING_LINEAR;
+        TheStructure.Common.SourceTiling = SOURCE_TILING_LINEAR;
+    }
+    static tagXY_BLOCK_COPY_BLT sInit(void) {
+        XY_BLOCK_COPY_BLT state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 13);
+        return TheStructure.RawData[index];
+    }
+    inline void setTransferWidth(const uint32_t value) {
+        TheStructure.Common.DestinationX2Coordinate_Right = value;
+    }
+
+    inline uint32_t getTransferWidth(void) const {
+        return (TheStructure.Common.DestinationX2Coordinate_Right);
+    }
+
+    inline void setTransferHeight(const uint32_t value) {
+        TheStructure.Common.DestinationY2Coordinate_Bottom = value;
+    }
+
+    inline uint32_t getTransferHeight(void) const {
+        return (TheStructure.Common.DestinationY2Coordinate_Bottom);
+    }
+    inline void setColorDepth(const COLOR_DEPTH value) {
+        TheStructure.Common.ColorDepth = value;
+    }
+    inline COLOR_DEPTH getColorDepth(void) const {
+        return static_cast<COLOR_DEPTH>(TheStructure.Common.ColorDepth);
+    }
+    inline void setInstructionTargetOpcode(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7f);
+        TheStructure.Common.InstructionTarget_Opcode = value;
+    }
+    inline uint32_t getInstructionTargetOpcode(void) const {
+        return TheStructure.Common.InstructionTarget_Opcode;
+    }
+    inline void setClient(const CLIENT value) {
+        TheStructure.Common.Client = value;
+    }
+    inline CLIENT getClient(void) const {
+        return static_cast<CLIENT>(TheStructure.Common.Client);
+    }
+    inline void setDestinationPitch(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3ffff);
+        TheStructure.Common.DestinationPitch = value - 1;
+    }
+    inline uint32_t getDestinationPitch(void) const {
+        return TheStructure.Common.DestinationPitch + 1;
+    }
+    inline void setDestinationMocsValue(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7f);
+        TheStructure.Common.DestinationMocsValue = value;
+    }
+    inline uint32_t getDestinationMocsValue(void) const {
+        return TheStructure.Common.DestinationMocsValue;
+    }
+    inline void setDestinationTiling(const DESTINATION_TILING value) {
+        TheStructure.Common.DestinationTiling = value;
+    }
+    inline DESTINATION_TILING getDestinationTiling(void) const {
+        return static_cast<DESTINATION_TILING>(TheStructure.Common.DestinationTiling);
+    }
+    inline void setDestinationX1CoordinateLeft(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
+        TheStructure.Common.DestinationX1Coordinate_Left = value;
+    }
+    inline uint32_t getDestinationX1CoordinateLeft(void) const {
+        return TheStructure.Common.DestinationX1Coordinate_Left;
+    }
+    inline void setDestinationY1CoordinateTop(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
+        TheStructure.Common.DestinationY1Coordinate_Top = value;
+    }
+    inline uint32_t getDestinationY1CoordinateTop(void) const {
+        return TheStructure.Common.DestinationY1Coordinate_Top;
+    }
+    inline void setDestinationX2CoordinateRight(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
+        TheStructure.Common.DestinationX2Coordinate_Right = value;
+    }
+    inline uint32_t getDestinationX2CoordinateRight(void) const {
+        return TheStructure.Common.DestinationX2Coordinate_Right;
+    }
+    inline void setDestinationY2CoordinateBottom(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
+        TheStructure.Common.DestinationY2Coordinate_Bottom = value;
+    }
+    inline uint32_t getDestinationY2CoordinateBottom(void) const {
+        return TheStructure.Common.DestinationY2Coordinate_Bottom;
+    }
+    inline void setDestinationBaseAddress(const uint64_t value) {
+        TheStructure.Common.DestinationBaseAddress = value;
+    }
+    inline uint64_t getDestinationBaseAddress(void) const {
+        return TheStructure.Common.DestinationBaseAddress;
+    }
+    inline void setDestinationXOffset(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3fff);
+        TheStructure.Common.DestinationXOffset = value;
+    }
+    inline uint32_t getDestinationXOffset(void) const {
+        return TheStructure.Common.DestinationXOffset;
+    }
+    inline void setDestinationYOffset(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3fff);
+        TheStructure.Common.DestinationYOffset = value;
+    }
+    inline uint32_t getDestinationYOffset(void) const {
+        return TheStructure.Common.DestinationYOffset;
+    }
+    inline void setSourceX1CoordinateLeft(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
+        TheStructure.Common.SourceX1Coordinate_Left = value;
+    }
+    inline uint32_t getSourceX1CoordinateLeft(void) const {
+        return TheStructure.Common.SourceX1Coordinate_Left;
+    }
+    inline void setSourceY1CoordinateTop(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0xffff);
+        TheStructure.Common.SourceY1Coordinate_Top = value;
+    }
+    inline uint32_t getSourceY1CoordinateTop(void) const {
+        return TheStructure.Common.SourceY1Coordinate_Top;
+    }
+    inline void setSourcePitch(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3ffff);
+        TheStructure.Common.SourcePitch = value - 1;
+    }
+    inline uint32_t getSourcePitch(void) const {
+        return TheStructure.Common.SourcePitch + 1;
+    }
+    inline void setSourceMocs(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x7f);
+        TheStructure.Common.SourceMocs = value;
+    }
+    inline uint32_t getSourceMocs(void) const {
+        return TheStructure.Common.SourceMocs;
+    }
+    inline void setSourceTiling(const SOURCE_TILING value) {
+        TheStructure.Common.SourceTiling = value;
+    }
+    inline SOURCE_TILING getSourceTiling(void) const {
+        return static_cast<SOURCE_TILING>(TheStructure.Common.SourceTiling);
+    }
+    inline void setSourceBaseAddress(const uint64_t value) {
+        TheStructure.Common.SourceBaseAddress = value;
+    }
+    inline uint64_t getSourceBaseAddress(void) const {
+        return TheStructure.Common.SourceBaseAddress;
+    }
+    inline void setSourceXOffset(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3fff);
+        TheStructure.Common.SourceXOffset = value;
+    }
+    inline uint32_t getSourceXOffset(void) const {
+        return TheStructure.Common.SourceXOffset;
+    }
+    inline void setSourceYOffset(const uint32_t value) {
+        UNRECOVERABLE_IF(value > 0x3fff);
+        TheStructure.Common.SourceYOffset = value;
+    }
+    inline uint32_t getSourceYOffset(void) const {
+        return TheStructure.Common.SourceYOffset;
+    }
+} XY_BLOCK_COPY_BLT;
+STATIC_ASSERT(48 == sizeof(XY_BLOCK_COPY_BLT));
+
 #pragma pack()
