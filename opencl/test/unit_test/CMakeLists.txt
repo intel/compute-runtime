@@ -261,40 +261,40 @@ function(neo_gen_kernels_with_options platform_name_with_type platform_name suff
   set(kernels_to_compile_${platform_name_with_type} ${kernels_to_compile_${platform_name_with_type}} PARENT_SCOPE)
 endfunction()
 
-function(neo_gen_kernels_with_internal_options platform_name_with_type platform_name suffix filepath output_name)
+function(neo_gen_kernels_with_internal_options platform_name_with_type platform_name suffix filepath output_name_prefix)
   set(kernels_to_compile)
-  foreach(filearg ${filepath})
-    get_filename_component(filename ${filearg} NAME)
-    get_filename_component(basename ${filearg} NAME_WE)
-    get_filename_component(base_workdir ${filearg} DIRECTORY)
 
-    set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}/")
-    set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
+  set(filearg ${filepath})
+  get_filename_component(filename ${filearg} NAME)
+  get_filename_component(basename ${filearg} NAME_WE)
+  get_filename_component(base_workdir ${filearg} DIRECTORY)
 
-    if (NOT "${output_name}" STREQUAL "")
-      set(basename ${output_name})
-    endif()
+  set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}/")
+  set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
 
-    set(outputpath_base "${outputdir}/${basename}_${suffix}")
-    set(output_files
-      ${outputpath_base}.spv
-      ${outputpath_base}.bin
-      ${outputpath_base}.gen
-    )
+  if (NOT "${output_name_prefix}" STREQUAL "")
+    set(basename ${output_name_prefix}_${basename})
+  endif()
 
-    if (NOT "${output_name}" STREQUAL "")
-      set(output_name -output ${output_name})
-    endif()
+  set(outputpath_base "${outputdir}/${basename}_${suffix}")
+  set(output_files
+    ${outputpath_base}.spv
+    ${outputpath_base}.bin
+    ${outputpath_base}.gen
+  )
 
-    add_custom_command(
-      OUTPUT ${output_files}
-      COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} ${output_name} -internal_options ${ARGN}
-      WORKING_DIRECTORY ${workdir}
-      DEPENDS ${filearg} ocloc
-    )
+  if (NOT "${output_name_prefix}" STREQUAL "")
+    set(output_name -output ${basename})
+  endif()
 
-    list(APPEND kernels_to_compile ${output_files})
-  endforeach()
+  add_custom_command(
+    OUTPUT ${output_files}
+    COMMAND ${cloc_cmd_prefix}  -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} ${output_name} -internal_options ${ARGN}
+    WORKING_DIRECTORY ${workdir}
+    DEPENDS ${filearg} ocloc
+  )
+
+  list(APPEND kernels_to_compile ${output_files})
   list(APPEND kernels_to_compile_${platform_name_with_type} ${kernels_to_compile})
   set(kernels_to_compile_${platform_name_with_type} ${kernels_to_compile_${platform_name_with_type}} PARENT_SCOPE)
 endfunction()
@@ -407,6 +407,7 @@ set(TEST_KERNEL_BINDLESS_internal_options
 
 set(TEST_KERNEL_BINDLESS
   test_files/stateful_copy_buffer.cl
+  test_files/copy_buffer_to_image.cl
 )
 
 file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
@@ -448,7 +449,9 @@ macro(macro_for_each_gen)
 
         # Temporarily disable in Debug builds
         if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-          neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_BINDLESS} "bindless_copy_buffer" ${TEST_KERNEL_BINDLESS_internal_options})
+          foreach(file ${TEST_KERNEL_BINDLESS})
+            neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${file} "bindless" ${TEST_KERNEL_BINDLESS_internal_options})
+          endforeach()
         endif()
 
         set(sip_kernel_file_name)

@@ -293,15 +293,23 @@ class BindlessKernelFixture : public ProgramFixture {
         // temporarily skip test in Debug
         GTEST_SKIP();
 #endif
-        cl_device_id deviceId = device;
-        cl_context clContext = context;
+        this->deviceCl = device;
+        this->contextCl = context;
+    }
+
+    void TearDown() override {
+        ProgramFixture::TearDown();
+    }
+
+    void createKernel(const std::string &programName, const std::string &kernelName) {
         DebugManager.flags.UseBindlessBuffers.set(true);
         DebugManager.flags.UseBindlessImages.set(true);
-
+        cl_device_id deviceId = deviceCl;
+        cl_context clContext = contextCl;
         CreateProgramFromBinary(
             clContext,
             &deviceId,
-            "bindless_copy_buffer");
+            programName);
         ASSERT_NE(nullptr, pProgram);
 
         retVal = pProgram->build(
@@ -315,19 +323,17 @@ class BindlessKernelFixture : public ProgramFixture {
 
         kernel.reset(Kernel::create<MockKernel>(
             pProgram,
-            *pProgram->getKernelInfo("StatefulCopyBuffer"),
+            *pProgram->getKernelInfo(kernelName.c_str()),
             &retVal));
         ASSERT_NE(nullptr, kernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
-    void TearDown() override {
-        ProgramFixture::TearDown();
-    }
-
     DebugManagerStateRestore restorer;
     std::unique_ptr<Kernel> kernel = nullptr;
     cl_int retVal = CL_SUCCESS;
+    ClDevice *deviceCl = nullptr;
+    Context *contextCl = nullptr;
 };
 
 } // namespace NEO

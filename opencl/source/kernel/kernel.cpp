@@ -2449,7 +2449,7 @@ uint64_t Kernel::getKernelStartOffset(
 void Kernel::patchBindlessSurfaceStateOffsets(const size_t sshOffset) {
     const bool bindlessBuffers = DebugManager.flags.UseBindlessBuffers.get();
     const bool bindlessImages = DebugManager.flags.UseBindlessImages.get();
-    const bool bindlessUsed = bindlessBuffers || bindlessImages;
+    const bool bindlessUsed = (bindlessBuffers || bindlessImages) && !isBuiltIn;
 
     if (bindlessUsed) {
         auto &hardwareInfo = getDevice().getHardwareInfo();

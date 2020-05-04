@@ -268,3 +268,25 @@ TEST_F(KernelArgBufferTest, givenNotUsedBindlessBuffersAndBufferArgWhenPatchingS
     pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
     EXPECT_EQ(0xdeadu, *patchLocation);
 }
+
+HWTEST_F(KernelArgBufferTest, givenUsedBindlessBuffersAndBuiltinKernelWhenPatchingSurfaceStateOffsetsThenOffsetIsNotPatched) {
+    using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessBuffers.set(1);
+
+    pKernelInfo->usesSsh = true;
+    pKernelInfo->requiresSshForBuffers = true;
+
+    auto crossThreadDataOffset = pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
+    pKernelInfo->kernelArgInfo[0].offsetHeap = 64;
+    pKernelInfo->kernelArgInfo[0].isBuffer = true;
+
+    auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(pKernel->getCrossThreadData(), crossThreadDataOffset));
+    *patchLocation = 0xdead;
+
+    pKernel->isBuiltIn = true;
+
+    uint32_t sshOffset = 0x1000;
+    pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
+    EXPECT_EQ(0xdeadu, *patchLocation);
+}

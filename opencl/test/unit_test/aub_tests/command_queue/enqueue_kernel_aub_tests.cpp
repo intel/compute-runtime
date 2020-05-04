@@ -876,6 +876,9 @@ using IsSklPlus = IsAtLeastProduct<IGFX_SKYLAKE>;
 
 HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValidate, IsSklPlus) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
+
+    createKernel(std::string("bindless_stateful_copy_buffer"), std::string("StatefulCopyBuffer"));
+
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {bufferSize / 2, 1, 1};
@@ -947,4 +950,101 @@ HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValid
     this->pCmdQ->finish();
     expectMemory<FamilyType>(reinterpret_cast<void *>(pBufferDst->getGraphicsAllocation()->getGpuAddress()),
                              bufferDataSrc, bufferSize);
+}
+
+HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedThenResultsValidate, IsSklPlus) {
+    constexpr unsigned int testWidth = 5;
+    constexpr unsigned int testHeight = 1;
+    constexpr unsigned int testDepth = 1;
+
+    createKernel(std::string("bindless_copy_buffer_to_image"), std::string("CopyBufferToImage3d"));
+
+    constexpr size_t imageSize = testWidth * testHeight * testDepth;
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {imageSize, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
+    cl_uint numEventsInWaitList = 0;
+    cl_event *eventWaitList = nullptr;
+    cl_event *event = nullptr;
+
+    uint8_t imageDataSrc[imageSize];
+    uint8_t imageDataDst[imageSize + 1];
+
+    memset(imageDataSrc, 1, imageSize);
+    memset(imageDataDst, 0, imageSize + 1);
+
+    cl_image_format imageFormat = {0};
+    cl_image_desc imageDesc = {0};
+
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_R;
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = testWidth;
+    imageDesc.image_height = testHeight;
+    imageDesc.image_depth = testDepth;
+    imageDesc.image_array_size = 1;
+    imageDesc.image_row_pitch = 0;
+    imageDesc.image_slice_pitch = 0;
+    imageDesc.num_mip_levels = 0;
+    imageDesc.num_samples = 0;
+
+    auto retVal = CL_INVALID_VALUE;
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, device->getHardwareInfo().capabilityTable.clVersionSupport);
+    auto image = std::unique_ptr<Image>(Image::create(
+        contextCl,
+        MemoryPropertiesParser::createMemoryProperties(flags, 0, 0),
+        flags,
+        0,
+        surfaceFormat,
+        &imageDesc,
+        imageDataDst,
+        retVal));
+    ASSERT_NE(nullptr, image.get());
+    EXPECT_FALSE(image->isMemObjZeroCopy());
+
+    auto bufferSrc = std::unique_ptr<Buffer>(Buffer::create(context,
+                                                            CL_MEM_READ_WRITE,
+                                                            imageSize,
+                                                            nullptr,
+                                                            retVal));
+    ASSERT_NE(nullptr, bufferSrc);
+
+    memcpy(image->getGraphicsAllocation()->getUnderlyingBuffer(), imageDataDst, imageSize);
+    memcpy(bufferSrc->getGraphicsAllocation()->getUnderlyingBuffer(), imageDataSrc, imageSize);
+
+    auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
+
+    simulatedCsr->writeMemory(*bufferSrc->getGraphicsAllocation());
+    simulatedCsr->writeMemory(*image->getGraphicsAllocation());
+
+    kernel->setArg(0, bufferSrc.get());
+    kernel->setArg(1, image.get());
+
+    int srcOffset = 0;
+    int dstOffset[4] = {0, 0, 0, 0};
+    int pitch[2] = {0, 0};
+
+    kernel->setArg(2, sizeof(srcOffset), &srcOffset);
+    kernel->setArg(3, sizeof(dstOffset), &dstOffset);
+    kernel->setArg(4, sizeof(pitch), &pitch);
+
+    retVal = this->pCmdQ->enqueueKernel(
+        kernel.get(),
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        numEventsInWaitList,
+        eventWaitList,
+        event);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = this->pCmdQ->finish();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    expectMemory<FamilyType>(reinterpret_cast<void *>(image->getGraphicsAllocation()->getGpuAddress()),
+                             imageDataSrc, imageSize);
 }
