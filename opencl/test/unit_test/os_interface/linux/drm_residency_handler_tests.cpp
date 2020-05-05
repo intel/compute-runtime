@@ -27,19 +27,12 @@ struct DrmMemoryOperationsHandlerTest : public ::testing::Test {
 };
 
 TEST_F(DrmMemoryOperationsHandlerTest, whenMakingResidentAllocaionExpectMakeResidentFail) {
-    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(drmMemoryOperationsHandler->getResidencySet().size(), 1u);
-    EXPECT_EQ(*drmMemoryOperationsHandler->getResidencySet().find(allocationPtr), allocationPtr);
-    EXPECT_EQ(drmMemoryOperationsHandler->isResident(graphicsAllocation), MemoryOperationsStatus::SUCCESS);
+    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::UNSUPPORTED);
+    EXPECT_EQ(drmMemoryOperationsHandler->isResident(graphicsAllocation), MemoryOperationsStatus::UNSUPPORTED);
 }
 
 TEST_F(DrmMemoryOperationsHandlerTest, whenEvictingResidentAllocationExpectEvictFalse) {
-    EXPECT_EQ(drmMemoryOperationsHandler->getResidencySet().size(), 0u);
-    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(drmMemoryOperationsHandler->isResident(graphicsAllocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(drmMemoryOperationsHandler->getResidencySet().size(), 1u);
-    EXPECT_EQ(*drmMemoryOperationsHandler->getResidencySet().find(allocationPtr), allocationPtr);
-    EXPECT_EQ(drmMemoryOperationsHandler->evict(graphicsAllocation), MemoryOperationsStatus::SUCCESS);
-    EXPECT_EQ(drmMemoryOperationsHandler->isResident(graphicsAllocation), MemoryOperationsStatus::MEMORY_NOT_FOUND);
-    EXPECT_EQ(drmMemoryOperationsHandler->getResidencySet().size(), 0u);
+    EXPECT_EQ(drmMemoryOperationsHandler->makeResident(ArrayRef<GraphicsAllocation *>(&allocationPtr, 1)), MemoryOperationsStatus::UNSUPPORTED);
+    EXPECT_EQ(drmMemoryOperationsHandler->evict(graphicsAllocation), MemoryOperationsStatus::UNSUPPORTED);
+    EXPECT_EQ(drmMemoryOperationsHandler->isResident(graphicsAllocation), MemoryOperationsStatus::UNSUPPORTED);
 }

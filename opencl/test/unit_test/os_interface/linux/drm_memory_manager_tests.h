@@ -61,7 +61,6 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
             auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[i].get();
             rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
             rootDeviceEnvironment->osInterface->get()->setDrm(new DrmMockCustom());
-            rootDeviceEnvironment->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
         }
 
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get();

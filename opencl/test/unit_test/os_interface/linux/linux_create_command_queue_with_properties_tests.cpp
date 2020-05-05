@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -26,7 +25,6 @@ struct clCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiver
         auto osInterface = new OSInterface();
         osInterface->get()->setDrm(drm);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(osInterface);
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
         executionEnvironment->memoryManager.reset(new TestedDrmMemoryManager(*executionEnvironment));
         mdevice = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
 

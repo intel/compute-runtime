@@ -576,17 +576,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemCloseWorkerInactiveMode
     mm->freeGraphicsMemory(dummyAllocation);
 }
 
-HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocInMemoryOperationsInterfaceWhenProcessResidencyThenAllocIsResident) {
-    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
-    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&allocation, 1));
-
-    csr->processResidency(csr->getResidencyAllocations(), 0u);
-
-    EXPECT_TRUE(isResident<FamilyType>(static_cast<DrmAllocation *>(allocation)->getBO()));
-
-    mm->freeGraphicsMemory(allocation);
-}
-
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenTwoAllocationsWhenBackingStorageIsDifferentThenMakeResidentShouldAddTwoLocations) {
     auto allocation = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     auto allocation2 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));

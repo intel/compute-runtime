@@ -9,32 +9,19 @@
 
 namespace NEO {
 
-DrmMemoryOperationsHandler::DrmMemoryOperationsHandler() = default;
-DrmMemoryOperationsHandler::~DrmMemoryOperationsHandler() = default;
+DrmMemoryOperationsHandler::DrmMemoryOperationsHandler() {
+}
 
 MemoryOperationsStatus DrmMemoryOperationsHandler::makeResident(ArrayRef<GraphicsAllocation *> gfxAllocations) {
-    std::lock_guard<std::mutex> lock(mutex);
-    this->residency.insert(gfxAllocations.begin(), gfxAllocations.end());
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::UNSUPPORTED;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandler::evict(GraphicsAllocation &gfxAllocation) {
-    std::lock_guard<std::mutex> lock(mutex);
-    this->residency.erase(&gfxAllocation);
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::UNSUPPORTED;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandler::isResident(GraphicsAllocation &gfxAllocation) {
-    std::lock_guard<std::mutex> lock(mutex);
-    auto ret = this->residency.find(&gfxAllocation);
-    if (ret == this->residency.end()) {
-        return MemoryOperationsStatus::MEMORY_NOT_FOUND;
-    }
-    return MemoryOperationsStatus::SUCCESS;
+    return MemoryOperationsStatus::UNSUPPORTED;
 }
 
-std::unordered_set<GraphicsAllocation *> DrmMemoryOperationsHandler::getResidencySet() {
-    std::lock_guard<std::mutex> lock(mutex);
-    return this->residency;
-}
 } // namespace NEO

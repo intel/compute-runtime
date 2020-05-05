@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/command_stream/preemption.h"
-#include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
@@ -35,7 +34,6 @@ class DrmCommandStreamTest : public ::testing::Test {
 
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
-        executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
 
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = std::make_unique<OsContextLinux>(*mock, 0u, 1, HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
@@ -104,7 +102,6 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
         mock = new DrmMockCustom();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(mock);
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
 
         csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment, rootDeviceIndex);
         ASSERT_NE(nullptr, csr);
