@@ -39,8 +39,8 @@ TEST_F(DeviceTest, WhenDeviceIsCreatedThenCommandStreamReceiverIsNotNull) {
     EXPECT_NE(nullptr, &pDevice->getGpgpuCommandStreamReceiver());
 }
 
-TEST_F(DeviceTest, WhenDeviceIsCreatedThenSupportedClVersionMatchesHardwareInfo) {
-    auto version = pClDevice->getSupportedClVersion();
+TEST_F(DeviceTest, WhenDeviceIsCreatedThenEnabledClVersionMatchesHardwareInfo) {
+    auto version = pClDevice->getEnabledClVersion();
     auto version2 = pDevice->getHardwareInfo().capabilityTable.clVersionSupport;
 
     EXPECT_EQ(version, version2);

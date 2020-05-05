@@ -66,9 +66,6 @@ TEST_P(clGetPlatformInfoParameterizedTests, GivenClPlatformVersionWhenGettingPla
     case 21:
         deviceVer = "OpenCL 2.1 ";
         break;
-    case 20:
-        deviceVer = "OpenCL 2.0 ";
-        break;
     case 12:
     default:
         deviceVer = "OpenCL 1.2 ";
@@ -79,7 +76,7 @@ TEST_P(clGetPlatformInfoParameterizedTests, GivenClPlatformVersionWhenGettingPla
 
 INSTANTIATE_TEST_CASE_P(OCLVersions,
                         clGetPlatformInfoParameterizedTests,
-                        ::testing::Values(12, 20, 21));
+                        ::testing::Values(12, 21));
 
 TEST_F(clGetPlatformInfoTests, GivenClPlatformNameWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_NAME);

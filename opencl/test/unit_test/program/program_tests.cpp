@@ -601,7 +601,7 @@ TEST_P(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlo
         &paramValueSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(paramValueSizeRet, sizeof(globalVarSize));
-    if (castToObject<ClDevice>(pClDevice)->getEnabledClVersion() >= 20) {
+    if (castToObject<ClDevice>(pClDevice)->areOcl21FeaturesEnabled()) {
         EXPECT_EQ(globalVarSize, 1024u);
     } else {
         EXPECT_EQ(globalVarSize, 0u);

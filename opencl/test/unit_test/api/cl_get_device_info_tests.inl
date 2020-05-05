@@ -243,7 +243,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamAndOcl21WhenGettingDevic
 
     ClDevice *pDevice = castToObject<ClDevice>(testedClDevice);
 
-    if (pDevice->getSupportedClVersion() < 21)
+    if (pDevice->areOcl21FeaturesEnabled() == false)
         return;
 
     cl_int retVal = clGetDeviceInfo(

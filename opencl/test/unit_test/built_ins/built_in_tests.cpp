@@ -913,7 +913,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetBuilderForUnknownBuiltInOp) {
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernel) {
-    if (pClDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->areOcl21FeaturesSupported()) {
         SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
         std::string name = SchedulerKernel::schedulerName;
         EXPECT_EQ(name, schedulerKernel.getKernelInfo().name);
@@ -921,7 +921,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernel) {
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernelForSecondTimeDoesNotCreateNewKernel) {
-    if (pClDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->areOcl21FeaturesSupported()) {
         SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
 
         Program *program = schedulerKernel.getProgram();

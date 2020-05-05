@@ -131,9 +131,6 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
         case 21:
             this->platformInfo->version = "OpenCL 2.1 ";
             break;
-        case 20:
-            this->platformInfo->version = "OpenCL 2.0 ";
-            break;
         default:
             this->platformInfo->version = "OpenCL 1.2 ";
             break;

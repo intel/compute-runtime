@@ -186,7 +186,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
     if (src.globalVariables.size != 0) {
         UNRECOVERABLE_IF(nullptr == pDevice);
         this->globalSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalVariables.size, false, linkerInput.get(), src.globalVariables.initData);
-        if (pDevice->getSpecializedDevice<ClDevice>()->getEnabledClVersion() < 20) {
+        if (pDevice->getSpecializedDevice<ClDevice>()->areOcl21FeaturesEnabled() == false) {
             this->globalVarTotalSize = 0u;
         }
     }

@@ -24,7 +24,7 @@ bool TestChecks::supportsImages(const Context *pContext) {
 }
 
 bool TestChecks::supportsOcl21(const Context *pContext) {
-    return pContext->getDevice(0)->getEnabledClVersion() >= 21;
+    return pContext->getDevice(0)->areOcl21FeaturesEnabled();
 }
 
 bool TestChecks::supportsDeviceEnqueue(const ClDevice *pClDevice) {

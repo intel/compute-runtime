@@ -76,7 +76,7 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
 };
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenLockedEMcritcalSectionWhenParentKernelCommandIsSubmittedThenItWaitsForcriticalSectionReleasement) {
-    if (device->getSupportedClVersion() >= 20) {
+    if (device->areOcl21FeaturesSupported()) {
         cl_queue_properties properties[3] = {0};
         MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
@@ -116,7 +116,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenLockedEMcritca
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenPassedDshIsUsed) {
-    if (device->getSupportedClVersion() >= 20) {
+    if (device->areOcl21FeaturesSupported()) {
         cl_queue_properties properties[3] = {0};
         MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
@@ -179,7 +179,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenIndirectStateAndEMCleanupSectionIsSetup) {
-    if (device->getSupportedClVersion() >= 20) {
+    if (device->areOcl21FeaturesSupported()) {
         cl_queue_properties properties[3] = {0};
         MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
@@ -219,7 +219,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedParentKernelWithProfilingWhenCommandIsSubmittedThenEMCleanupSectionsSetsCompleteTimestamp) {
-    if (device->getSupportedClVersion() >= 20) {
+    if (device->areOcl21FeaturesSupported()) {
         cl_queue_properties properties[3] = {0};
         MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
@@ -259,7 +259,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedParentK
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenSchedulerIsDispatched) {
-    if (device->getSupportedClVersion() >= 20) {
+    if (device->areOcl21FeaturesSupported()) {
         cl_queue_properties properties[3] = {0};
         MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
@@ -297,7 +297,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQueueHeapshenParentKernelIsSubmittedThenQueueHeapsAreNotUsed) {
-    if (device->getSupportedClVersion() >= 20) {
+    if (device->areOcl21FeaturesSupported()) {
         cl_queue_properties properties[3] = {0};
         MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
@@ -351,7 +351,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQue
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmittedThenExistingSSHIsUsed) {
-    if (device->getSupportedClVersion() >= 20) {
+    if (device->areOcl21FeaturesSupported()) {
         cl_queue_properties properties[3] = {0};
         MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
@@ -398,7 +398,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhen
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommandQueueWhenDispatchWalkerIsCalledThenHeapsHaveProperSizes) {
-    if (device->getSupportedClVersion() >= 20) {
+    if (device->areOcl21FeaturesSupported()) {
         cl_queue_properties properties[3] = {0};
         std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context));
 

@@ -650,7 +650,7 @@ cl_int Kernel::getSubGroupInfo(cl_kernel_sub_group_info paramName,
     if ((paramName == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ||
         (paramName == CL_KERNEL_MAX_NUM_SUB_GROUPS) ||
         (paramName == CL_KERNEL_COMPILE_NUM_SUB_GROUPS)) {
-        if (device.getEnabledClVersion() < 21) {
+        if (device.areOcl21FeaturesEnabled() == false) {
             return CL_INVALID_OPERATION;
         }
     }

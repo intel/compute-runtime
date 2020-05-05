@@ -88,7 +88,7 @@ TEST_F(clCreateProgramWithILTests, GivenContextWithDevicesThatDontSupportILWhenC
     cl_int err = CL_SUCCESS;
     const uint32_t spirv[16] = {0x03022307};
     cl_program prog = clCreateProgramWithIL(pContext, spirv, sizeof(spirv), &err);
-    if (pContext->getDevice(0)->getEnabledClVersion() >= 21) {
+    if (pContext->getDevice(0)->areOcl21FeaturesEnabled()) {
         EXPECT_EQ(CL_SUCCESS, err);
         EXPECT_NE(nullptr, prog);
         clReleaseProgram(prog);

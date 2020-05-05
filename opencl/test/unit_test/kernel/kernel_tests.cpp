@@ -1363,7 +1363,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatelessKernelWhen
     pKernelInfo->requiresSshForBuffers = false;
 
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
-    if (pClDevice->getSupportedClVersion() < 20) {
+    if (pClDevice->areOcl21FeaturesSupported() == false) {
         EXPECT_EQ(0u, pKernel->getSurfaceStateHeapSize());
     } else {
     }

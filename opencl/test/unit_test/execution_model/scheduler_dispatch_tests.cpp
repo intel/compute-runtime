@@ -43,7 +43,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchScheduler) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    if (pClDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->areOcl21FeaturesSupported()) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
         SchedulerKernel &scheduler = context->getSchedulerKernel();
 
@@ -172,7 +172,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchSchedulerDoe
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    if (pClDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->areOcl21FeaturesSupported()) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
         SchedulerKernel &scheduler = context->getSchedulerKernel();
 
@@ -201,7 +201,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchSchedulerDoe
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWithEarlyReturnSetToFirstInstanceDoesNotPutBBStartCmd) {
 
-    if (device->getSupportedClVersion() >= 20) {
+    if (device->areOcl21FeaturesSupported()) {
 
         cl_queue_properties properties[3] = {0};
         MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
@@ -241,7 +241,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWi
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, ForceDispatchSchedulerEnqueuesSchedulerKernel) {
 
-    if (pClDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->areOcl21FeaturesSupported()) {
         DebugManagerStateRestore dbgRestorer;
 
         DebugManager.flags.ForceDispatchScheduler.set(true);

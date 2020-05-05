@@ -93,7 +93,7 @@ TEST(clGetSupportedImageFormatsTest, givenPlatformNotSupportingReadWriteImagesWh
         &numImageFormats);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    if (context->getDevice(0)->getEnabledClVersion() >= 20) {
+    if (context->getDevice(0)->areOcl21FeaturesEnabled()) {
         EXPECT_GT(numImageFormats, 0u);
     } else {
         EXPECT_EQ(0u, numImageFormats);

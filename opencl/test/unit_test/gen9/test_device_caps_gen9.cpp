@@ -28,7 +28,7 @@ GEN9TEST_F(Gen9DeviceCaps, skuSpecificCaps) {
 
 GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckExtensionsThenDeviceProperlyReportsClKhrSubgroupsExtension) {
     const auto &caps = pClDevice->getDeviceInfo();
-    if (pClDevice->getEnabledClVersion() >= 21) {
+    if (pClDevice->areOcl21FeaturesEnabled()) {
         EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_subgroups")));
     } else {
         EXPECT_THAT(caps.deviceExtensions, ::testing::Not(testing::HasSubstr(std::string("cl_khr_subgroups"))));
@@ -38,7 +38,7 @@ GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckExtensionsThenDeviceProperlyReports
 GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckingCapsThenDeviceDoesProperlyReportsIndependentForwardProgress) {
     const auto &caps = pClDevice->getDeviceInfo();
 
-    if (pClDevice->getEnabledClVersion() >= 21) {
+    if (pClDevice->areOcl21FeaturesEnabled()) {
         EXPECT_TRUE(caps.independentForwardProgress != 0);
     } else {
         EXPECT_FALSE(caps.independentForwardProgress != 0);

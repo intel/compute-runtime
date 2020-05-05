@@ -12,8 +12,8 @@ using namespace NEO;
 
 typedef Test<DeviceFixture> DeviceTest;
 
-BXTTEST_F(DeviceTest, getSupportedClVersion12Device) {
-    auto version = pClDevice->getSupportedClVersion();
+BXTTEST_F(DeviceTest, getEnabledClVersion12Device) {
+    auto version = pClDevice->getEnabledClVersion();
     EXPECT_EQ(12u, version);
 }
 

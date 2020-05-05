@@ -904,7 +904,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabled
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTranslationIsRequiredThenMakeEnqueueBlocking) {
-    if (pClDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->areOcl21FeaturesSupported()) {
         MyCmdQ<FamilyType> cmdQ(context, pClDevice);
         size_t gws[3] = {1, 0, 0};
 
@@ -926,7 +926,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTrans
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelButNoDeviceQueueWhenEnqueueIsCalledItReturnsInvalidOperation) {
-    if (pClDevice->getSupportedClVersion() >= 20) {
+    if (pClDevice->areOcl21FeaturesSupported()) {
         MyCmdQ<FamilyType> cmdQ(context, pClDevice);
         size_t gws[3] = {1, 0, 0};
 

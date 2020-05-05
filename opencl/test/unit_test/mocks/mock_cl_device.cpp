@@ -20,3 +20,7 @@ MockClDevice::MockClDevice(MockDevice *pMockDevice)
       executionEnvironment(pMockDevice->executionEnvironment), mockMemoryManager(pMockDevice->mockMemoryManager),
       engines(pMockDevice->engines) {
 }
+
+bool MockClDevice::areOcl21FeaturesSupported() const {
+    return device.getHardwareInfo().capabilityTable.supportsOcl21Features;
+}

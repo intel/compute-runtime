@@ -20,7 +20,7 @@ GEN8TEST_F(Gen8DeviceCaps, defaultPreemptionMode) {
 
 GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckExtensionsThenDeviceProperlyReportsClKhrSubgroupsExtension) {
     const auto &caps = pClDevice->getDeviceInfo();
-    if (pClDevice->getEnabledClVersion() >= 21) {
+    if (pClDevice->areOcl21FeaturesEnabled()) {
         EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_subgroups")));
     } else {
         EXPECT_THAT(caps.deviceExtensions, ::testing::Not(testing::HasSubstr(std::string("cl_khr_subgroups"))));
@@ -30,7 +30,7 @@ GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckExtensionsThenDeviceProperlyReports
 GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckingCapsThenDeviceDoesProperlyReportsIndependentForwardProgress) {
     const auto &caps = pClDevice->getDeviceInfo();
 
-    if (pClDevice->getEnabledClVersion() >= 21) {
+    if (pClDevice->areOcl21FeaturesEnabled()) {
         EXPECT_TRUE(caps.independentForwardProgress != 0);
     } else {
         EXPECT_FALSE(caps.independentForwardProgress != 0);

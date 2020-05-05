@@ -31,6 +31,7 @@ class MockClDevice : public ClDevice {
     using ClDevice::enabledClVersion;
     using ClDevice::initializeCaps;
     using ClDevice::name;
+    using ClDevice::ocl21FeaturesEnabled;
     using ClDevice::simultaneousInterops;
     using ClDevice::subDevices;
 
@@ -69,6 +70,8 @@ class MockClDevice : public ClDevice {
     SubDevice *createSubDevice(uint32_t subDeviceIndex) { return device.createSubDevice(subDeviceIndex); }
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const { return device.createCommandStreamReceiver(); }
     BuiltIns *getBuiltIns() const { return getDevice().getBuiltIns(); }
+
+    bool areOcl21FeaturesSupported() const;
 
     void setDebuggerActive(bool active) {
         sharedDeviceInfo.debuggerActive = active;

@@ -287,7 +287,7 @@ cl_int Context::getSupportedImageFormats(
     cl_uint *numImageFormatsReturned) {
     size_t numImageFormats = 0;
 
-    if (flags & CL_MEM_KERNEL_READ_AND_WRITE && device->getSpecializedDevice<ClDevice>()->getEnabledClVersion() < 20) {
+    if (flags & CL_MEM_KERNEL_READ_AND_WRITE && device->getSpecializedDevice<ClDevice>()->areOcl21FeaturesEnabled() == false) {
         if (numImageFormatsReturned) {
             *numImageFormatsReturned = static_cast<cl_uint>(numImageFormats);
         }

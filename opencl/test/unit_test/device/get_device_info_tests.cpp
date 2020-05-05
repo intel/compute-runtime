@@ -488,7 +488,7 @@ TEST(GetDeviceInfo, GivenMaxGlobalVariableSizeWhenGettingDeviceInfoThenCorrectVa
     auto retVal = device->getDeviceInfo(CL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE, sizeof(size_t), &value, &size);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(size_t), size);
-    if (device->getEnabledClVersion() >= 20) {
+    if (device->areOcl21FeaturesEnabled()) {
         EXPECT_EQ(value, 65536u);
     } else {
         EXPECT_EQ(value, 0u);
@@ -504,7 +504,7 @@ TEST(GetDeviceInfo, GivenGlobalVariablePreferredTotalSizeWhenGettingDeviceInfoTh
     auto retVal = device->getDeviceInfo(CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE, sizeof(size_t), &value, &size);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(size_t), size);
-    if (device->getEnabledClVersion() >= 20) {
+    if (device->areOcl21FeaturesEnabled()) {
         EXPECT_EQ(value, static_cast<size_t>(device->getSharedDeviceInfo().maxMemAllocSize));
     } else {
         EXPECT_EQ(value, 0u);
