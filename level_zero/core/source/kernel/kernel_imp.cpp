@@ -12,6 +12,7 @@
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/arrayref.h"
@@ -29,6 +30,33 @@
 #include <memory>
 
 namespace L0 {
+enum class SamplerPatchValues : uint32_t {
+    DefaultSampler = 0x00,
+    AddressNone = 0x00,
+    AddressClamp = 0x01,
+    AddressClampToEdge = 0x02,
+    AddressRepeat = 0x03,
+    AddressMirroredRepeat = 0x04,
+    AddressMirroredRepeat101 = 0x05,
+    NormalizedCoordsFalse = 0x00,
+    NormalizedCoordsTrue = 0x08
+};
+
+inline SamplerPatchValues getAddrMode(ze_sampler_address_mode_t addressingMode) {
+    switch (addressingMode) {
+    case ZE_SAMPLER_ADDRESS_MODE_REPEAT:
+        return SamplerPatchValues::AddressRepeat;
+    case ZE_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER:
+        return SamplerPatchValues::AddressClampToEdge;
+    case ZE_SAMPLER_ADDRESS_MODE_CLAMP:
+        return SamplerPatchValues::AddressClamp;
+    case ZE_SAMPLER_ADDRESS_MODE_NONE:
+        return SamplerPatchValues::AddressNone;
+    case ZE_SAMPLER_ADDRESS_MODE_MIRROR:
+        return SamplerPatchValues::AddressMirroredRepeat;
+    }
+    return SamplerPatchValues::AddressNone;
+}
 
 KernelImmutableData::KernelImmutableData(L0::Device *l0device) : device(l0device) {}
 
@@ -475,6 +503,21 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
     image->copySurfaceStateToSSH(surfaceStateHeapData.get(), arg.bindful);
     residencyContainer[argIndex] = image->getAllocation();
 
+    auto imageInfo = image->getImageInfo();
+
+    NEO::patchNonPointer<size_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.imgWidth, imageInfo.imgDesc.imageWidth);
+    NEO::patchNonPointer<size_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.imgHeight, imageInfo.imgDesc.imageHeight);
+    NEO::patchNonPointer<size_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.imgDepth, imageInfo.imgDesc.imageDepth);
+    NEO::patchNonPointer<uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.numSamples, imageInfo.imgDesc.numSamples);
+    NEO::patchNonPointer<size_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.arraySize, imageInfo.imgDesc.imageArraySize);
+    NEO::patchNonPointer<uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.numMipLevels, imageInfo.imgDesc.numMipLevels);
+
+    auto pixelSize = imageInfo.surfaceFormat->ImageElementSizeInBytes;
+    NEO::patchNonPointer<uint64_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.flatBaseOffset, image->getAllocation()->getGpuAddress());
+    NEO::patchNonPointer<size_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.flatWidth, (imageInfo.imgDesc.imageWidth * pixelSize) - 1u);
+    NEO::patchNonPointer<size_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.flatHeight, (imageInfo.imgDesc.imageHeight * pixelSize) - 1u);
+    NEO::patchNonPointer<size_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.flatPitch, imageInfo.imgDesc.imageRowPitch - 1u);
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -482,6 +525,13 @@ ze_result_t KernelImp::setArgSampler(uint32_t argIndex, size_t argSize, const vo
     const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescSampler>();
     const auto sampler = Sampler::fromHandle(*static_cast<const ze_sampler_handle_t *>(argVal));
     sampler->copySamplerStateToDSH(dynamicStateHeapData.get(), dynamicStateHeapDataSize, arg.bindful);
+
+    auto samplerDesc = sampler->getSamplerDesc();
+
+    NEO::patchNonPointer<uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.samplerSnapWa, (samplerDesc.addressMode == ZE_SAMPLER_ADDRESS_MODE_CLAMP && samplerDesc.filterMode == ZE_SAMPLER_FILTER_MODE_NEAREST) ? std::numeric_limits<uint32_t>::max() : 0u);
+    NEO::patchNonPointer<uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.samplerAddressingMode, static_cast<uint32_t>(getAddrMode(samplerDesc.addressMode)));
+    NEO::patchNonPointer<uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.samplerNormalizedCoords, samplerDesc.isNormalized ? static_cast<uint32_t>(SamplerPatchValues::NormalizedCoordsTrue) : static_cast<uint32_t>(SamplerPatchValues::NormalizedCoordsFalse));
+
     return ZE_RESULT_SUCCESS;
 }
 

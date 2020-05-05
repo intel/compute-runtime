@@ -35,6 +35,12 @@ struct Sampler : _ze_sampler_handle_t {
     }
 
     inline ze_sampler_handle_t toHandle() { return this; }
+    const ze_sampler_desc_t getSamplerDesc() const {
+        return samplerDesc;
+    }
+
+  protected:
+    ze_sampler_desc_t samplerDesc = {};
 };
 
 using SamplerAllocatorFn = Sampler *(*)();

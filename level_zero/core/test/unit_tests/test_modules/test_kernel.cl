@@ -11,7 +11,8 @@ const sampler_t sampler =
 kernel void test(const global float *a, const global float *b,
                  global float *c,
                  read_only image2d_t input,
-                 write_only image2d_t output) {
+                 write_only image2d_t output,
+                 sampler_t sampler) {
     const int global_id = get_global_id(0);
     const int local_id = get_local_id(0);
 
