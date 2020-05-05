@@ -413,9 +413,9 @@ ze_result_t KernelImp::setArgRedescribedImage(uint32_t argIndex, ze_image_handle
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, const void *argVal, NEO::GraphicsAllocation *allocation) {
+ze_result_t KernelImp::setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation) {
     const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
-    const auto val = *reinterpret_cast<const uintptr_t *>(argVal);
+    const auto val = argVal;
 
     NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg, val);
     if (NEO::isValidOffset(arg.bindful)) {
@@ -460,8 +460,8 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
     auto svmAllocsManager = module->getDevice()->getDriverHandle()->getSvmAllocsManager();
     NEO::GraphicsAllocation *alloc = svmAllocsManager->getSVMAllocs()->get(requestedAddress)->gpuAllocation;
-
-    return setArgBufferWithAlloc(argIndex, argVal, alloc);
+    auto gpuAddress = reinterpret_cast<uintptr_t>(requestedAddress);
+    return setArgBufferWithAlloc(argIndex, gpuAddress, alloc);
 }
 
 ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void *argVal) {

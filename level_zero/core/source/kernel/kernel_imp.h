@@ -64,7 +64,7 @@ struct KernelImp : Kernel {
 
     ze_result_t setArgRedescribedImage(uint32_t argIndex, ze_image_handle_t argVal) override;
 
-    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, const void *argVal, NEO::GraphicsAllocation *allocation) override;
+    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation) override;
 
     ze_result_t setArgImage(uint32_t argIndex, size_t argSize, const void *argVal);
 

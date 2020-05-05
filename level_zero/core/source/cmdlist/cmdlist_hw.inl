@@ -281,7 +281,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
         break;
     }
 
-    builtinKernel->setArgBufferWithAlloc(0u, reinterpret_cast<void *>(&allocationStruct.alignedAllocationPtr),
+    builtinKernel->setArgBufferWithAlloc(0u, allocationStruct.alignedAllocationPtr,
                                          allocationStruct.alloc);
     builtinKernel->setArgRedescribedImage(1u, hDstImage);
     builtinKernel->setArgumentValue(2u, sizeof(size_t), &allocationStruct.offset);
@@ -378,7 +378,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     }
 
     builtinKernel->setArgRedescribedImage(0u, hSrcImage);
-    builtinKernel->setArgBufferWithAlloc(1u, reinterpret_cast<void *>(&allocationStruct.alignedAllocationPtr),
+    builtinKernel->setArgBufferWithAlloc(1u, allocationStruct.alignedAllocationPtr,
                                          allocationStruct.alloc);
 
     uint32_t origin[] = {
@@ -566,9 +566,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    builtinFunction->setArgBufferWithAlloc(0u, dstPtr, dstPtrAlloc);
-
-    builtinFunction->setArgBufferWithAlloc(1u, srcPtr, srcPtrAlloc);
+    builtinFunction->setArgBufferWithAlloc(0u, *reinterpret_cast<uintptr_t *>(dstPtr), dstPtrAlloc);
+    builtinFunction->setArgBufferWithAlloc(1u, *reinterpret_cast<uintptr_t *>(srcPtr), srcPtrAlloc);
 
     uint32_t elems = size / elementSize;
     builtinFunction->setArgumentValue(2, sizeof(elems), &elems);
@@ -639,8 +638,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
     auto dstValPtr = static_cast<uintptr_t>(dstptr->getGpuAddress());
     auto srcValPtr = static_cast<uintptr_t>(srcptr->getGpuAddress());
 
-    builtinFunction->setArgBufferWithAlloc(0, reinterpret_cast<void *>(&dstValPtr), dstptr);
-    builtinFunction->setArgBufferWithAlloc(1, reinterpret_cast<void *>(&srcValPtr), srcptr);
+    builtinFunction->setArgBufferWithAlloc(0, dstValPtr, dstptr);
+    builtinFunction->setArgBufferWithAlloc(1, srcValPtr, srcptr);
     builtinFunction->setArgumentValue(2, sizeof(size), &size);
 
     uint32_t groups = (static_cast<uint32_t>(size) + ((groupSizeX)-1)) / (groupSizeX);
@@ -854,8 +853,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(NEO::
     auto dstValPtr = static_cast<uintptr_t>(dstGA->getGpuAddress());
     auto srcValPtr = static_cast<uintptr_t>(srcGA->getGpuAddress());
 
-    builtinFunction->setArgBufferWithAlloc(0, reinterpret_cast<void *>(&srcValPtr), srcGA);
-    builtinFunction->setArgBufferWithAlloc(1, reinterpret_cast<void *>(&dstValPtr), dstGA);
+    builtinFunction->setArgBufferWithAlloc(0, srcValPtr, srcGA);
+    builtinFunction->setArgBufferWithAlloc(1, dstValPtr, dstGA);
     builtinFunction->setArgumentValue(2, sizeof(srcOrigin), &srcOrigin);
     builtinFunction->setArgumentValue(3, sizeof(dstOrigin), &dstOrigin);
     builtinFunction->setArgumentValue(4, sizeof(srcPitches), &srcPitches);
@@ -909,8 +908,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(NEO::
     auto dstValPtr = static_cast<uintptr_t>(dstGA->getGpuAddress());
     auto srcValPtr = static_cast<uintptr_t>(srcGA->getGpuAddress());
 
-    builtinFunction->setArgBufferWithAlloc(0, reinterpret_cast<void *>(&srcValPtr), srcGA);
-    builtinFunction->setArgBufferWithAlloc(1, reinterpret_cast<void *>(&dstValPtr), dstGA);
+    builtinFunction->setArgBufferWithAlloc(0, srcValPtr, srcGA);
+    builtinFunction->setArgBufferWithAlloc(1, dstValPtr, dstGA);
     builtinFunction->setArgumentValue(2, sizeof(srcOrigin), &srcOrigin);
     builtinFunction->setArgumentValue(3, sizeof(dstOrigin), &dstOrigin);
     builtinFunction->setArgumentValue(4, sizeof(srcPitch), &srcPitch);
