@@ -320,9 +320,9 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->maxCommandQueues = 1;
 
-    pDeviceProperties->numAsyncComputeEngines = static_cast<uint32_t>(hwHelper.getGpgpuEngineInstances(hardwareInfo).size());
+    pDeviceProperties->numAsyncComputeEngines = NEO::HwHelper::getEnginesCount(hardwareInfo);
 
-    pDeviceProperties->numAsyncCopyEngines = hardwareInfo.capabilityTable.blitterOperationsSupported ? 1 : 0;
+    pDeviceProperties->numAsyncCopyEngines = NEO::HwHelper::getCopyEnginesCount(hardwareInfo);
 
     pDeviceProperties->maxCommandQueuePriority = 0;
 

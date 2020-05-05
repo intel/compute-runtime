@@ -91,8 +91,18 @@ TEST_F(DeviceTest, givenDeviceWithCopyEngineThenNumAsyncCopyEnginesDevicePropert
     deviceProperties.numAsyncCopyEngines = std::numeric_limits<int>::max();
     device->getProperties(&deviceProperties);
 
-    uint32_t expecteNumOfCopyEngines = device->getNEODevice()->getHardwareInfo().capabilityTable.blitterOperationsSupported ? 1 : 0;
+    auto expecteNumOfCopyEngines = NEO::HwHelper::getCopyEnginesCount(device->getNEODevice()->getHardwareInfo());
     EXPECT_EQ(expecteNumOfCopyEngines, deviceProperties.numAsyncCopyEngines);
+}
+
+TEST_F(DeviceTest, givenDeviceWithComputeEngineThenNumAsyncComputeEnginesDevicePropertyIsCorrectlyReturned) {
+    ze_device_properties_t deviceProperties;
+    deviceProperties.version = ZE_DEVICE_PROPERTIES_VERSION_CURRENT;
+    deviceProperties.numAsyncComputeEngines = std::numeric_limits<int>::max();
+    device->getProperties(&deviceProperties);
+
+    auto expecteNumOfComputeEngines = NEO::HwHelper::getEnginesCount(device->getNEODevice()->getHardwareInfo());
+    EXPECT_EQ(expecteNumOfComputeEngines, deviceProperties.numAsyncComputeEngines);
 }
 
 TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenAllPropertiesAreAssigned) {

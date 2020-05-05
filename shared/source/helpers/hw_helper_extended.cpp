@@ -18,4 +18,8 @@ uint32_t HwHelper::getEnginesCount(const HardwareInfo &hwInfo) {
     return 1u;
 }
 
+uint32_t HwHelper::getCopyEnginesCount(const HardwareInfo &hwInfo) {
+    return hwInfo.capabilityTable.blitterOperationsSupported ? 1 : 0;
+}
+
 } // namespace NEO
