@@ -112,9 +112,16 @@ int OfflineCompiler::buildSourceCode() {
             auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), sourceCode.c_str(), sourceCode.size() + 1);
             auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), options.c_str(), options.size());
             auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), internalOptions.c_str(), internalOptions.size());
+            auto err = CIF::Builtins::CreateConstBuffer(fclMain.get(), nullptr, 0);
 
-            auto fclTranslationCtx = fclDeviceCtx->CreateTranslationCtx(IGC::CodeType::oclC, intermediateRepresentation);
+            auto fclTranslationCtx = fclDeviceCtx->CreateTranslationCtx(IGC::CodeType::oclC, intermediateRepresentation, err.get());
             auto igcTranslationCtx = igcDeviceCtx->CreateTranslationCtx(intermediateRepresentation, IGC::CodeType::oclGenBin);
+
+            if (true == NEO::areNotNullptr(err->GetMemory<char>())) {
+                updateBuildLog(err->GetMemory<char>(), err->GetSizeRaw());
+                retVal = CL_BUILD_PROGRAM_FAILURE;
+                break;
+            }
 
             if (false == NEO::areNotNullptr(fclSrc.get(), fclOptions.get(), fclInternalOptions.get(),
                                             fclTranslationCtx.get(), igcTranslationCtx.get())) {
