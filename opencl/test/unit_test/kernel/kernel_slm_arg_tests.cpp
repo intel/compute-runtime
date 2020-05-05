@@ -67,7 +67,7 @@ class KernelSlmArgTest : public Test<DeviceFixture> {
     static const size_t slmSize2 = 0x30;
 };
 
-TEST_F(KernelSlmArgTest, settingSizeUpdatesAlignmentOfHigherSlmArgs) {
+TEST_F(KernelSlmArgTest, WhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
     pKernel->setArg(0, slmSize0, nullptr);
     pKernel->setArg(2, slmSize2, nullptr);
 
@@ -84,7 +84,7 @@ TEST_F(KernelSlmArgTest, settingSizeUpdatesAlignmentOfHigherSlmArgs) {
     EXPECT_EQ(5 * KB, pKernel->slmTotalSize);
 }
 
-TEST_F(KernelSlmArgTest, settingSizeUpdatesAlignmentOfHigherSlmArgsReverseOrder) {
+TEST_F(KernelSlmArgTest, GivenReverseOrderWhenSettingSizeThenAlignmentOfHigherSlmArgsIsUpdated) {
     pKernel->setArg(2, slmSize2, nullptr);
     pKernel->setArg(0, slmSize0, nullptr);
 
