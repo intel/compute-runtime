@@ -24,7 +24,8 @@ struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
     }
     ~BuiltinFunctionsLibImpl() override {
         builtins->reset();
-        pageFaultBuiltin.release();
+        pageFaultBuiltin.reset();
+        imageBuiltins->reset();
     }
 
     Kernel *getFunction(Builtin func) override;
@@ -43,5 +44,4 @@ struct BuiltinFunctionsLibImpl : BuiltinFunctionsLib {
     Device *device;
     NEO::BuiltIns *builtInsLib;
 };
-
 } // namespace L0
