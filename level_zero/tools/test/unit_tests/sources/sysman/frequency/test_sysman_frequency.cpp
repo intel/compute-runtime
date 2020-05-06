@@ -37,6 +37,17 @@ class SysmanFrequencyFixture : public DeviceFixture, public ::testing::Test {
     FrequencyImp *pFrequencyImp;
     const float minFreq = 300.0;
     const float maxFreq = 1100.0;
+    const double step = 100.0 / 6;
+    const uint32_t numClocks = static_cast<uint32_t>((maxFreq - minFreq) / step) + 1;
+
+    double clockValue(const double calculatedClock) {
+        // i915 specific. frequency step is a fraction
+        // However, the i915 represents all clock
+        // rates as integer values. So clocks are
+        // rounded to the nearest integer.
+        uint32_t actualClock = static_cast<uint32_t>(calculatedClock + 0.5);
+        return static_cast<double>(actualClock);
+    }
 
     void SetUp() override {
         DeviceFixture::SetUp();
@@ -126,8 +137,34 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
     EXPECT_DOUBLE_EQ(maxFreq, properties.max);
     EXPECT_DOUBLE_EQ(minFreq, properties.min);
     EXPECT_TRUE(properties.canControl);
-    EXPECT_DOUBLE_EQ((100.0 / 6.0), properties.step);
+    EXPECT_DOUBLE_EQ(step, properties.step);
     ASSERT_NE(0.0, properties.step);
+}
+
+TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleAndZeroCountWhenCallingzetSysmanFrequencyGetAvailableClocksCallSucceeds) {
+    uint32_t count = 0;
+
+    ze_result_t result = zetSysmanFrequencyGetAvailableClocks(hSysmanFrequency, &count, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numClocks, count);
+}
+
+TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleAndCorrectCountWhenCallingzetSysmanFrequencyGetAvailableClocksCallSucceeds) {
+    uint32_t count = 0;
+
+    ze_result_t result = zetSysmanFrequencyGetAvailableClocks(hSysmanFrequency, &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numClocks, count);
+
+    double *clocks = new double[count];
+    result = zetSysmanFrequencyGetAvailableClocks(hSysmanFrequency, &count, clocks);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numClocks, count);
+    for (uint32_t i = 0; i < count; i++) {
+        EXPECT_DOUBLE_EQ(clockValue(minFreq + (step * i)), clocks[i]);
+    }
+    delete[] clocks;
 }
 
 TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFrequencyGetRangeThenVerifyzetSysmanFrequencyGetRangeTestCallSucceeds) {
@@ -141,11 +178,14 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
 }
 
 TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFrequencySetRangeThenVerifyzetSysmanFrequencySetRangeTest1CallSucceeds) {
+    const float startingMin = 900.0;
+    const float newMax = 600.0;
+
     zet_freq_range_t limits;
 
     ON_CALL(*pOsFrequency, getMin(_))
         .WillByDefault(DoAll(
-            SetFloat(900.0),
+            SetFloat(startingMin),
             Return(ZE_RESULT_SUCCESS)));
     ON_CALL(*pOsFrequency, getMax(_))
         .WillByDefault(DoAll(
@@ -155,30 +195,33 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
     // If the new Max value is less than the old Min
     // value, the new Min must be set before the new Max
     InSequence s;
-    EXPECT_CALL(*pOsFrequency, setMin(450))
+    EXPECT_CALL(*pOsFrequency, setMin(minFreq))
         .Times(1)
         .WillOnce(Return(ZE_RESULT_SUCCESS));
-    EXPECT_CALL(*pOsFrequency, setMax(600.0))
+    EXPECT_CALL(*pOsFrequency, setMax(newMax))
         .Times(1)
         .WillOnce(Return(ZE_RESULT_SUCCESS));
 
-    limits.min = 450.0;
-    limits.max = 600.0;
+    limits.min = minFreq;
+    limits.max = newMax;
     ze_result_t result = zetSysmanFrequencySetRange(hSysmanFrequency, &limits);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFrequencySetRangeThenVerifyzetSysmanFrequencySetRangeTest2CallSucceeds) {
+    const float startingMax = 600.0;
+    const float newMin = 900.0;
+
     zet_freq_range_t limits;
 
     ON_CALL(*pOsFrequency, getMin(_))
         .WillByDefault(DoAll(
-            SetFloat(450.0),
+            SetFloat(minFreq),
             Return(ZE_RESULT_SUCCESS)));
     ON_CALL(*pOsFrequency, getMax(_))
         .WillByDefault(DoAll(
-            SetFloat(600.0),
+            SetFloat(startingMax),
             Return(ZE_RESULT_SUCCESS)));
 
     // If the new Min value is greater than the old Max
@@ -187,11 +230,11 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
     EXPECT_CALL(*pOsFrequency, setMax(maxFreq))
         .Times(1)
         .WillOnce(Return(ZE_RESULT_SUCCESS));
-    EXPECT_CALL(*pOsFrequency, setMin(900.0))
+    EXPECT_CALL(*pOsFrequency, setMin(newMin))
         .Times(1)
         .WillOnce(Return(ZE_RESULT_SUCCESS));
 
-    limits.min = 900.0;
+    limits.min = newMin;
     limits.max = maxFreq;
     ze_result_t result = zetSysmanFrequencySetRange(hSysmanFrequency, &limits);
 
@@ -203,7 +246,7 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
 
     // Verify that Max must be within range.
     limits.min = minFreq;
-    limits.max = 1200.0;
+    limits.max = clockValue(maxFreq + step);
     ze_result_t result = zetSysmanFrequencySetRange(hSysmanFrequency, &limits);
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
@@ -213,7 +256,7 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
     zet_freq_range_t limits;
 
     // Verify that Min must be within range.
-    limits.min = 200.0;
+    limits.min = clockValue(minFreq - step);
     limits.max = maxFreq;
     ze_result_t result = zetSysmanFrequencySetRange(hSysmanFrequency, &limits);
 
@@ -223,8 +266,8 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
 TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFrequencySetRangeThenVerifyzetSysmanFrequencySetRangeTest5CallSucceeds) {
     zet_freq_range_t limits;
 
-    // Verify that values must be multiples of step (16.666667).
-    limits.min = 310.0;
+    // Verify that values must be multiples of step.
+    limits.min = clockValue(minFreq + (step * 0.5));
     limits.max = maxFreq;
     ze_result_t result = zetSysmanFrequencySetRange(hSysmanFrequency, &limits);
 
@@ -232,27 +275,32 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
 }
 
 TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFrequencyGetStateThenVerifyzetSysmanFrequencyGetStateTestCallSucceeds) {
+    const float testRequestValue = 450.0;
+    const float testTdpValue = 1200.0;
+    const float testEfficientValue = 400.0;
+    const float testActualValue = 550.0;
+
     zet_freq_state_t state;
 
     EXPECT_CALL(*pOsFrequency, getRequest(_))
         .Times(1)
         .WillOnce(DoAll(
-            SetFloat(450.0),
+            SetFloat(testRequestValue),
             Return(ZE_RESULT_SUCCESS)));
     EXPECT_CALL(*pOsFrequency, getTdp(_))
         .Times(1)
         .WillOnce(DoAll(
-            SetFloat(1200.0),
+            SetFloat(testTdpValue),
             Return(ZE_RESULT_SUCCESS)));
     EXPECT_CALL(*pOsFrequency, getEfficient(_))
         .Times(1)
         .WillOnce(DoAll(
-            SetFloat(400.0),
+            SetFloat(testEfficientValue),
             Return(ZE_RESULT_SUCCESS)));
     EXPECT_CALL(*pOsFrequency, getActual(_))
         .Times(1)
         .WillOnce(DoAll(
-            SetFloat(550.0),
+            SetFloat(testActualValue),
             Return(ZE_RESULT_SUCCESS)));
     EXPECT_CALL(*pOsFrequency, getThrottleReasons(_))
         .Times(1)
@@ -261,10 +309,10 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
     ze_result_t result = zetSysmanFrequencyGetState(hSysmanFrequency, &state);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_DOUBLE_EQ(450.0, state.request);
-    EXPECT_DOUBLE_EQ(1200.0, state.tdp);
-    EXPECT_DOUBLE_EQ(400.0, state.efficient);
-    EXPECT_DOUBLE_EQ(550.0, state.actual);
+    EXPECT_DOUBLE_EQ(testRequestValue, state.request);
+    EXPECT_DOUBLE_EQ(testTdpValue, state.tdp);
+    EXPECT_DOUBLE_EQ(testEfficientValue, state.efficient);
+    EXPECT_DOUBLE_EQ(testActualValue, state.actual);
     EXPECT_EQ(0u, state.throttleReasons);
 }
 

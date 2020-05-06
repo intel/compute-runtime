@@ -21,6 +21,22 @@ ze_result_t FrequencyImp::frequencyGetProperties(zet_freq_properties_t *pPropert
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t FrequencyImp::frequencyGetAvailableClocks(uint32_t *pCount, double *phFrequency) {
+    if (*pCount == 0) {
+        *pCount = numClocks;
+        return ZE_RESULT_SUCCESS;
+    }
+    if (*pCount > numClocks) {
+        *pCount = numClocks;
+    }
+    if (phFrequency != nullptr) {
+        for (unsigned int i = 0; i < *pCount; i++) {
+            phFrequency[i] = pClocks[i];
+        }
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t FrequencyImp::frequencyGetRange(zet_freq_range_t *pLimits) {
     ze_result_t result = pOsFrequency->getMax(pLimits->max);
     if (ZE_RESULT_SUCCESS != result) {

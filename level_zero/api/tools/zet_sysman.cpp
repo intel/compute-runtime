@@ -203,7 +203,7 @@ zetSysmanFrequencyGetAvailableClocks(
     zet_sysman_freq_handle_t hFrequency,
     uint32_t *pCount,
     double *phFrequency) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyGetAvailableClocks(pCount, phFrequency);
 }
 
 __zedllexport ze_result_t __zecall

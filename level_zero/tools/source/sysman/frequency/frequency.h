@@ -20,6 +20,7 @@ class Frequency : _zet_sysman_freq_handle_t {
   public:
     virtual ~Frequency() {}
     virtual ze_result_t frequencyGetProperties(zet_freq_properties_t *pProperties) = 0;
+    virtual ze_result_t frequencyGetAvailableClocks(uint32_t *pCount, double *phFrequency) = 0;
     virtual ze_result_t frequencyGetRange(zet_freq_range_t *pLimits) = 0;
     virtual ze_result_t frequencySetRange(const zet_freq_range_t *pLimits) = 0;
     virtual ze_result_t frequencyGetState(zet_freq_state_t *pState) = 0;
