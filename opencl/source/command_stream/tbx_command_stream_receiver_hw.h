@@ -31,6 +31,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     uint32_t getMaskAndValueForPollForCompletion() const;
     bool getpollNotEqualValueForPollForCompletion() const;
+    void flushSubmissionsAndDownloadAllocations();
 
   public:
     using CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initAdditionalMMIO;
@@ -42,6 +43,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
+    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override;
     void downloadAllocation(GraphicsAllocation &gfxAllocation) override;
 
     void processEviction() override;

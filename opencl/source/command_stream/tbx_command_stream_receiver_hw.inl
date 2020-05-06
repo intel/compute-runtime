@@ -451,7 +451,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::expectMemory(const void *gfxAddress,
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
+void TbxCommandStreamReceiverHw<GfxFamily>::flushSubmissionsAndDownloadAllocations() {
     this->flushBatchedSubmissions();
 
     while (*this->getTagAddress() < this->latestFlushedTaskCount) {
@@ -462,8 +462,18 @@ void TbxCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallbac
         downloadAllocation(*graphicsAllocation);
     }
     this->allocationsForDownload.clear();
+}
 
+template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
+    flushSubmissionsAndDownloadAllocations();
     BaseClass::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
+}
+
+template <typename GfxFamily>
+bool TbxCommandStreamReceiverHw<GfxFamily>::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
+    flushSubmissionsAndDownloadAllocations();
+    return BaseClass::waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
 }
 
 template <typename GfxFamily>

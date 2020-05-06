@@ -15,12 +15,4 @@ namespace L0 {
 inline uint64_t getIntermediateCacheSize(const NEO::HardwareInfo &hwInfo) {
     return 0u;
 }
-
-inline void waitForTaskCountWithKmdNotifyFallbackHelper(NEO::CommandStreamReceiver *csr,
-                                                        uint32_t taskCountToWait,
-                                                        NEO::FlushStamp flushStampToWait,
-                                                        bool useQuickKmdSleep,
-                                                        bool forcePowerSavingMode) {
-}
-
 } // namespace L0

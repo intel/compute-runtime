@@ -68,9 +68,6 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint32_t timeout) 
     UNRECOVERABLE_IF(csr == nullptr);
 
     auto taskCountToWait = this->taskCount;
-
-    waitForTaskCountWithKmdNotifyFallbackHelper(csr, this->taskCount, 0, false, false);
-
     bool enableTimeout = (timeout != std::numeric_limits<uint32_t>::max());
     csr->waitForCompletionWithTimeout(enableTimeout, timeout, this->taskCount);
 

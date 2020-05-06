@@ -92,8 +92,6 @@ ze_result_t FenceImp::hostSynchronize(uint32_t timeout) {
         return ZE_RESULT_SUCCESS;
     }
 
-    waitForTaskCountWithKmdNotifyFallbackHelper(cmdQueue->getCsr(), cmdQueue->getTaskCount(), 0, false, false);
-
     if (timeout == 0) {
         return queryStatus();
     }
