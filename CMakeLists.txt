@@ -76,7 +76,13 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type: [Release, ReleaseInternal, Debug]" FORCE)
 endif()
 
-add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_1_APIS -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_USE_DEPRECATED_OPENCL_2_0_APIS)
+add_definitions(
+    -DCL_USE_DEPRECATED_OPENCL_1_1_APIS
+    -DCL_USE_DEPRECATED_OPENCL_1_2_APIS
+    -DCL_USE_DEPRECATED_OPENCL_2_0_APIS
+    -DCL_USE_DEPRECATED_OPENCL_2_1_APIS
+    -DCL_USE_DEPRECATED_OPENCL_2_2_APIS
+)
 
 if(WIN32)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS -DWDDM_VERSION_NUMBER=23 -DNOMINMAX)
@@ -240,7 +246,7 @@ if(NOT DEFINED KHRONOS_HEADERS_DIR)
   get_filename_component(DIR_tmp "${CMAKE_CURRENT_SOURCE_DIR}/third_party/opencl_headers" ABSOLUTE)
   if(IS_DIRECTORY ${DIR_tmp})
     set(KHRONOS_HEADERS_DIR ${DIR_tmp})
-    add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
+    add_definitions(-DCL_TARGET_OPENCL_VERSION=300)
   else()
     message(FATAL_ERROR "Khronos OpenCL headers not available!")
   endif()
