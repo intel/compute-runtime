@@ -327,6 +327,11 @@ HWTEST_F(CommandStreamReceiverTest, givenTimestampPacketAllocatorWhenAskingForTa
     EXPECT_NE(nullptr, node1);
     EXPECT_NE(nullptr, node2);
     EXPECT_NE(node1, node2);
+
+    constexpr auto tagAlignment = MemoryConstants::cacheLineSize * 4;
+
+    EXPECT_TRUE(isAligned(node1->getGpuAddress(), tagAlignment));
+    EXPECT_TRUE(isAligned(node2->getGpuAddress(), tagAlignment));
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenAddAubCommentIsCalledThenCallAddAubCommentOnCsr) {

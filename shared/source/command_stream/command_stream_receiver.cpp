@@ -475,7 +475,7 @@ TagAllocator<TimestampPacketStorage> *CommandStreamReceiver::getTimestampPacketA
                                  DebugManager.flags.DisableTimestampPacketOptimizations.get();
 
         timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacketStorage>>(
-            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize,
+            rootDeviceIndex, getMemoryManager(), getPreferredTagPoolSize(), MemoryConstants::cacheLineSize * 4,
             sizeof(TimestampPacketStorage), doNotReleaseNodes, osContext->getDeviceBitfield());
     }
     return timestampPacketAllocator.get();
