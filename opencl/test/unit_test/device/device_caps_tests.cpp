@@ -1111,6 +1111,14 @@ TEST_F(DeviceGetCapsTest, givenDeviceWithNullSourceLevelDebuggerWhenCapsAreIniti
     EXPECT_FALSE(caps.debuggerActive);
 }
 
+TEST_F(DeviceGetCapsTest, givenOcl21DeviceWhenCheckingPipesSupportThenPipesAreSupported) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    if (device->getEnabledClVersion() == 21) {
+        EXPECT_EQ(1u, device->getHardwareInfo().capabilityTable.supportsPipes);
+    }
+}
+
 TEST(Device_UseCaps, givenCapabilityTableWhenDeviceInitializeCapsThenVmeVersionsAreSetProperly) {
     HardwareInfo hwInfo = *defaultHwInfo;
 
