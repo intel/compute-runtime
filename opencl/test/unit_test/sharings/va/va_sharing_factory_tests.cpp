@@ -13,7 +13,7 @@ using namespace NEO;
 
 class TestVaSharingBuilderFactory : public VaSharingBuilderFactory {
   public:
-    void *getExtensionFunctionAddressExtra(const std::string &functionName) {
+    void *getExtensionFunctionAddressExtra(const std::string &functionName) override {
         if (functionName == "someFunction") {
             invocationCount++;
             return reinterpret_cast<void *>(0x1234);

@@ -87,6 +87,7 @@ void MockGmmResourceInfo::setSurfaceFormat() {
                 for (auto &format : formatArray) {
                     if (mockResourceCreateParams.Format == format.GMMSurfaceFormat) {
                         surfaceFormatInfo = &format;
+                        ASSERT_NE(nullptr, surfaceFormatInfo);
                         return;
                     }
                 }
