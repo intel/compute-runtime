@@ -30,10 +30,10 @@ void DriverImp::initialize(bool *result) {
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
 
     executionEnvironment->incRefInternal();
-    auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
+    auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     executionEnvironment->decRefInternal();
-    if (!devices.empty()) {
-        GlobalDriver.reset(DriverHandle::create(std::move(devices)));
+    if (!neoDevices.empty()) {
+        GlobalDriver.reset(DriverHandle::create(std::move(neoDevices)));
         if (GlobalDriver != nullptr) {
             *result = true;
         }

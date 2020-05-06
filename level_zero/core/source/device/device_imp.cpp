@@ -556,7 +556,7 @@ bool DeviceImp::isMultiDeviceCapable() const {
     return neoDevice->getNumAvailableDevices() > 1u;
 }
 
-Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice) {
+Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint32_t currentDeviceMask) {
     auto device = new DeviceImp;
     UNRECOVERABLE_IF(device == nullptr);
 
@@ -575,16 +575,22 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice) {
     if (device->neoDevice->getNumAvailableDevices() == 1) {
         device->numSubDevices = 0;
     } else {
-        device->numSubDevices = device->neoDevice->getNumAvailableDevices();
-        for (uint32_t i = 0; i < device->numSubDevices; i++) {
+        for (uint32_t i = 0; i < device->neoDevice->getNumAvailableDevices(); i++) {
+
+            if (!((1UL << i) & currentDeviceMask)) {
+                continue;
+            }
+
             ze_device_handle_t subDevice = Device::create(driverHandle,
-                                                          device->neoDevice->getDeviceById(i));
+                                                          device->neoDevice->getDeviceById(i),
+                                                          0);
             if (subDevice == nullptr) {
                 return nullptr;
             }
             reinterpret_cast<DeviceImp *>(subDevice)->isSubdevice = true;
             device->subDevices.push_back(static_cast<Device *>(subDevice));
         }
+        device->numSubDevices = static_cast<uint32_t>(device->subDevices.size());
     }
 
     if (neoDevice->getCompilerInterface()) {

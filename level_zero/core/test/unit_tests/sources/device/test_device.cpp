@@ -191,6 +191,32 @@ struct MultipleDevicesTest : public ::testing::Test {
     const uint32_t numSubDevices = 2u;
 };
 
+TEST_F(MultipleDevicesTest, whenDeviceContainsSubDevicesThenItIsMultiDeviceCapable) {
+    L0::Device *device0 = driverHandle->devices[0];
+    EXPECT_TRUE(device0->isMultiDeviceCapable());
+
+    L0::Device *device1 = driverHandle->devices[1];
+    EXPECT_TRUE(device1->isMultiDeviceCapable());
+}
+
+TEST_F(MultipleDevicesTest, whenRetrievingNumberOfSubdevicesThenCorrectNumberIsReturned) {
+    L0::Device *device0 = driverHandle->devices[0];
+
+    uint32_t count = 0;
+    auto result = device0->getSubDevices(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numSubDevices, count);
+
+    std::vector<ze_device_handle_t> subDevices(count);
+    count++;
+    result = device0->getSubDevices(&count, subDevices.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numSubDevices, count);
+    for (auto subDevice : subDevices) {
+        EXPECT_NE(nullptr, subDevice);
+    }
+}
+
 TEST_F(MultipleDevicesTest, givenTheSameDeviceThenCanAccessPeerReturnsTrue) {
     L0::Device *device0 = driverHandle->devices[0];
 

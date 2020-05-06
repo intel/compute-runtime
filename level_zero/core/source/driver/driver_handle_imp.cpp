@@ -112,9 +112,19 @@ DriverHandleImp::~DriverHandleImp() {
     }
 }
 
-ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> devices) {
-    for (auto &neoDevice : devices) {
+ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
+
+    uint32_t currentMaskOffset = 0;
+    for (auto &neoDevice : neoDevices) {
         if (!neoDevice->getHardwareInfo().capabilityTable.levelZeroSupported) {
+            continue;
+        }
+
+        uint32_t currentDeviceMask = (affinityMask >> currentMaskOffset) & ((1UL << neoDevice->getNumAvailableDevices()) - 1);
+        bool isDeviceExposed = currentDeviceMask ? true : false;
+
+        currentMaskOffset += neoDevice->getNumAvailableDevices();
+        if (!isDeviceExposed) {
             continue;
         }
 
@@ -130,7 +140,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
             }
         }
 
-        auto device = Device::create(this, neoDevice.release());
+        auto device = Device::create(this, neoDevice.release(), currentDeviceMask);
         this->devices.push_back(device);
     }
 
@@ -148,6 +158,8 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> devices) {
     DriverHandleImp *driverHandle = new DriverHandleImp;
     UNRECOVERABLE_IF(nullptr == driverHandle);
+
+    driverHandle->getEnv("ZE_AFFINITY_MASK", driverHandle->affinityMask);
 
     ze_result_t res = driverHandle->initialize(std::move(devices));
     if (res != ZE_RESULT_SUCCESS) {

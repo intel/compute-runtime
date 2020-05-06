@@ -50,7 +50,7 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc, ze_event_pool_handle_t *phEventPool) override;
     ze_result_t checkMemoryAccessFromDevice(Device *device, const void *ptr) override;
     NEO::SVMAllocsManager *getSvmAllocsManager() override;
-    ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> devices);
+    ze_result_t initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices);
     bool findAllocationDataForRange(const void *buffer,
                                     size_t size,
                                     NEO::SvmAllocationData **allocData) override;
@@ -58,11 +58,23 @@ struct DriverHandleImp : public DriverHandle {
                                                                      size_t size,
                                                                      bool *allocationRangeCovered) override;
 
+    template <typename T>
+    bool getEnv(const char *varName, T &varValue) {
+        char *varChar = getenv(varName);
+        if (varChar) {
+            varValue = static_cast<T>(atoi(varChar));
+            return true;
+        }
+        return false;
+    }
+
     uint32_t numDevices = 0;
     std::unordered_map<std::string, void *> extensionFunctionsLookupMap;
     std::vector<Device *> devices;
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
+
+    uint32_t affinityMask = std::numeric_limits<uint32_t>::max();
 };
 
 } // namespace L0

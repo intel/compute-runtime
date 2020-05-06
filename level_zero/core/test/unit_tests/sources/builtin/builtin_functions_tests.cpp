@@ -76,21 +76,21 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenInitFunctionWhenBultinsTableConstainN
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceAndImageSupportedThenBuiltinsImageFunctionsAreLoaded) {
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(new NEO::MockCompilerInterface());
-    std::unique_ptr<L0::Device> testDvice(Device::create(device->getDriverHandle(), neoDevice));
+    std::unique_ptr<L0::Device> testDevice(Device::create(device->getDriverHandle(), neoDevice, std::numeric_limits<uint32_t>::max()));
 
     if (device->getHwInfo().capabilityTable.supportsImages) {
         for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
-            EXPECT_NE(nullptr, testDvice->getBuiltinFunctionsLib()->getImageFunction(static_cast<L0::ImageBuiltin>(builtId)));
+            EXPECT_NE(nullptr, testDevice->getBuiltinFunctionsLib()->getImageFunction(static_cast<L0::ImageBuiltin>(builtId)));
         }
     }
 }
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceThenBuiltinsFunctionsAreLoaded) {
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->compilerInterface.reset(new NEO::MockCompilerInterface());
-    std::unique_ptr<L0::Device> testDvice(Device::create(device->getDriverHandle(), neoDevice));
+    std::unique_ptr<L0::Device> testDevice(Device::create(device->getDriverHandle(), neoDevice, std::numeric_limits<uint32_t>::max()));
 
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
-        EXPECT_NE(nullptr, testDvice->getBuiltinFunctionsLib()->getFunction(static_cast<L0::Builtin>(builtId)));
+        EXPECT_NE(nullptr, testDevice->getBuiltinFunctionsLib()->getFunction(static_cast<L0::Builtin>(builtId)));
     }
 }
 } // namespace ult
