@@ -11,6 +11,9 @@
 
 namespace L0 {
 
+constexpr uint64_t minTimeoutModeHeartbeat = 5000u;
+constexpr uint64_t minTimeoutInMicroSeconds = 1000u;
+
 ze_result_t SchedulerImp::getCurrentMode(zet_sched_mode_t *pMode) {
     uint64_t timeout = 0;
     uint64_t timeslice = 0;
@@ -78,7 +81,7 @@ ze_result_t SchedulerImp::setTimeoutMode(zet_sched_timeout_properties_t *pProper
         return result;
     }
 
-    if (pProperties->watchdogTimeout < 5000) {
+    if (pProperties->watchdogTimeout < minTimeoutModeHeartbeat) {
         // watchdogTimeout(in usec) less than 5000 would be computed to
         // 0 milli seconds preempt timeout, and then after returning from
         // this method, we would end up in EXCLUSIVE mode
@@ -105,7 +108,9 @@ ze_result_t SchedulerImp::setTimeoutMode(zet_sched_timeout_properties_t *pProper
 }
 
 ze_result_t SchedulerImp::setTimesliceMode(zet_sched_timeslice_properties_t *pProperties, ze_bool_t *pNeedReboot) {
-    if (pProperties->interval < 1) {
+    if (pProperties->interval < minTimeoutInMicroSeconds) {
+        // interval(in usec) less than 1000 would be computed to
+        // 0 milli seconds interval.
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     *pNeedReboot = false;
@@ -172,6 +177,7 @@ ze_result_t SchedulerImp::init() {
 SchedulerImp::~SchedulerImp() {
     if (nullptr != pOsScheduler) {
         delete pOsScheduler;
+        pOsScheduler = nullptr;
     }
 }
 

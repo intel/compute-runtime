@@ -7,6 +7,7 @@
 set(L0_SRCS_TOOLS_SYSMAN_SCHEDULER_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/os_scheduler_imp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_scheduler_imp.h
 )
 
 if(UNIX)

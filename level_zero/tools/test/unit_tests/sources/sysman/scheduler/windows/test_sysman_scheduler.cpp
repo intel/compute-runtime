@@ -21,6 +21,10 @@ using ::testing::Return;
 namespace L0 {
 namespace ult {
 
+constexpr uint64_t defaultTimeoutMilliSecs = 640u;
+constexpr uint64_t defaultTimesliceMilliSecs = 1000u;
+constexpr uint64_t defaultHeartbeatMilliSecs = 2500u;
+
 class SysmanSchedulerFixture : public DeviceFixture, public ::testing::Test {
   protected:
     SysmanImp *sysmanImp;
@@ -34,9 +38,9 @@ class SysmanSchedulerFixture : public DeviceFixture, public ::testing::Test {
         DeviceFixture::SetUp();
         sysmanImp = new SysmanImp(device->toHandle());
         pOsScheduler = new NiceMock<Mock<OsScheduler>>;
-        pOsScheduler->setMockTimeout(640);
-        pOsScheduler->setMockTimeslice(1);
-        pOsScheduler->setMockHeartbeat(2500);
+        pOsScheduler->setMockTimeout(defaultTimeoutMilliSecs);
+        pOsScheduler->setMockTimeslice(defaultTimesliceMilliSecs);
+        pOsScheduler->setMockHeartbeat(defaultHeartbeatMilliSecs);
 
         ON_CALL(*pOsScheduler, getPreemptTimeout(_))
             .WillByDefault(Invoke(pOsScheduler, &Mock<OsScheduler>::getMockTimeout));
@@ -102,24 +106,24 @@ TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedul
 
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetTimeoutModePropertiesThenVerifyzetSysmanSchedulerGetTimeoutModePropertiesCallSucceeds) {
     auto config = fixtureGetTimeoutModeProperties(hSysman);
-    EXPECT_EQ(config.watchdogTimeout, 2500ul);
+    EXPECT_EQ(config.watchdogTimeout, defaultHeartbeatMilliSecs);
 }
 
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetTimesliceModePropertiesThenVerifyzetSysmanSchedulerGetTimesliceModePropertiesCallSucceeds) {
     auto config = fixtureGetTimesliceModeProperties(hSysman);
-    EXPECT_EQ(config.interval, 1ul);
-    EXPECT_EQ(config.yieldTimeout, 640ul);
+    EXPECT_EQ(config.interval, defaultTimesliceMilliSecs);
+    EXPECT_EQ(config.yieldTimeout, defaultTimeoutMilliSecs);
 }
 
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerSetTimeoutModeThenVerifyzetSysmanSchedulerSetTimeoutModeCallSucceeds) {
     ze_bool_t needReboot;
     zet_sched_timeout_properties_t setConfig;
-    setConfig.watchdogTimeout = 5000;
+    setConfig.watchdogTimeout = 5000u;
     ze_result_t result = zetSysmanSchedulerSetTimeoutMode(hSysman, &setConfig, &needReboot);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(needReboot);
     auto getConfig = fixtureGetTimeoutModeProperties(hSysman);
-    EXPECT_EQ(getConfig.watchdogTimeout, 5000ul);
+    EXPECT_EQ(getConfig.watchdogTimeout, setConfig.watchdogTimeout);
     auto mode = fixtureGetCurrentMode(hSysman);
     EXPECT_EQ(mode, ZET_SCHED_MODE_TIMEOUT);
 }
@@ -127,14 +131,14 @@ TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedul
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerSetTimesliceModeThenVerifyzetSysmanSchedulerSetTimesliceModeCallSucceeds) {
     ze_bool_t needReboot;
     zet_sched_timeslice_properties_t setConfig;
-    setConfig.interval = 2;
-    setConfig.yieldTimeout = 1000;
+    setConfig.interval = 2000u;
+    setConfig.yieldTimeout = 1000u;
     ze_result_t result = zetSysmanSchedulerSetTimesliceMode(hSysman, &setConfig, &needReboot);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(needReboot);
     auto getConfig = fixtureGetTimesliceModeProperties(hSysman);
-    EXPECT_EQ(getConfig.interval, 2ul);
-    EXPECT_EQ(getConfig.yieldTimeout, 1000ul);
+    EXPECT_EQ(getConfig.interval, setConfig.interval);
+    EXPECT_EQ(getConfig.yieldTimeout, setConfig.yieldTimeout);
     auto mode = fixtureGetCurrentMode(hSysman);
     EXPECT_EQ(mode, ZET_SCHED_MODE_TIMESLICE);
 }
