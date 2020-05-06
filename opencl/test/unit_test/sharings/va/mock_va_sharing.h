@@ -10,7 +10,7 @@
 
 #include "opencl/source/sharings/va/va_sharing.h"
 
-#include <drm/drm_fourcc.h>
+#include <libdrm/drm_fourcc.h>
 #include <va/va_drmcommon.h>
 
 namespace NEO {
