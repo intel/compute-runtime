@@ -13,6 +13,50 @@
 namespace NEO {
 
 template <typename GfxFamily>
+uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitWidth() {
+    if (DebugManager.flags.LimitBlitterMaxWidth.get() != -1) {
+        return static_cast<uint64_t>(DebugManager.flags.LimitBlitterMaxWidth.get());
+    }
+    return BlitterConstants::maxBlitWidth;
+}
+
+template <typename GfxFamily>
+uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeight() {
+    if (DebugManager.flags.LimitBlitterMaxHeight.get() != -1) {
+        return static_cast<uint64_t>(DebugManager.flags.LimitBlitterMaxHeight.get());
+    }
+    return BlitterConstants::maxBlitHeight;
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream) {
+    bool useFlush = false;
+    if (DebugManager.flags.FlushAfterEachBlit.get() != -1) {
+        useFlush = static_cast<bool>(DebugManager.flags.FlushAfterEachBlit.get());
+    }
+
+    if (useFlush) {
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, false, false);
+    } else {
+        auto miArbCheckStream = linearStream.getSpaceForCmd<typename GfxFamily::MI_ARB_CHECK>();
+        *miArbCheckStream = GfxFamily::cmdInitArbCheck;
+    }
+}
+
+template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize() {
+    bool useFlush = false;
+    if (DebugManager.flags.FlushAfterEachBlit.get() != -1) {
+        useFlush = static_cast<bool>(DebugManager.flags.FlushAfterEachBlit.get());
+    }
+
+    if (useFlush) {
+        return sizeof(typename GfxFamily::MI_FLUSH_DW);
+    }
+    return sizeof(typename GfxFamily::MI_ARB_CHECK);
+}
+
+template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(Vec3<size_t> copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket) {
     size_t numberOfBlits = 0;
     uint64_t width = 1;
@@ -22,10 +66,10 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(Vec3<size_t> copy
         for (uint64_t row = 0; row < copySize.y; row++) {
             uint64_t sizeToBlit = copySize.x;
             while (sizeToBlit != 0) {
-                if (sizeToBlit > BlitterConstants::maxBlitWidth) {
+                if (sizeToBlit > getMaxBlitWidth()) {
                     // dispatch 2D blit: maxBlitWidth x (1 .. maxBlitHeight)
-                    width = BlitterConstants::maxBlitWidth;
-                    height = std::min((sizeToBlit / width), BlitterConstants::maxBlitHeight);
+                    width = getMaxBlitWidth();
+                    height = std::min((sizeToBlit / width), getMaxBlitHeight());
 
                 } else {
                     // dispatch 1D blt: (1 .. maxBlitWidth) x 1
@@ -38,7 +82,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(Vec3<size_t> copy
         }
     }
 
-    constexpr size_t cmdsSizePerBlit = (sizeof(typename GfxFamily::XY_COPY_BLT) + sizeof(typename GfxFamily::MI_ARB_CHECK));
+    const size_t cmdsSizePerBlit = (sizeof(typename GfxFamily::XY_COPY_BLT) + estimatePostBlitCommandSize());
 
     return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) +
            (cmdsSizePerBlit * numberOfBlits) +
@@ -86,10 +130,10 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProp
             uint64_t offset = 0;
             uint64_t sizeToBlit = blitProperties.copySize.x;
             while (sizeToBlit != 0) {
-                if (sizeToBlit > BlitterConstants::maxBlitWidth) {
+                if (sizeToBlit > getMaxBlitWidth()) {
                     // dispatch 2D blit: maxBlitWidth x (1 .. maxBlitHeight)
-                    width = BlitterConstants::maxBlitWidth;
-                    height = std::min((sizeToBlit / width), BlitterConstants::maxBlitHeight);
+                    width = getMaxBlitWidth();
+                    height = std::min((sizeToBlit / width), getMaxBlitHeight());
                 } else {
                     // dispatch 1D blt: (1 .. maxBlitWidth) x 1
                     width = sizeToBlit;
@@ -116,10 +160,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProp
                     *bltStream = bltCmd;
                 }
 
-                {
-                    auto miArbCheckStream = linearStream.getSpaceForCmd<typename GfxFamily::MI_ARB_CHECK>();
-                    *miArbCheckStream = GfxFamily::cmdInitArbCheck;
-                }
+                dispatchPostBlitCommand(linearStream);
 
                 auto blitSize = width * height;
                 sizeToBlit -= blitSize;
@@ -146,12 +187,12 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
         tmpCmd.setDestinationBaseAddress(ptrOffset(dstAlloc->getGpuAddress(), static_cast<size_t>(offset)));
         uint64_t height = 0;
         uint64_t width = 0;
-        if (sizeToFill <= BlitterConstants::maxBlitWidth) {
+        if (sizeToFill <= getMaxBlitWidth()) {
             width = sizeToFill;
             height = 1;
         } else {
-            width = BlitterConstants::maxBlitWidth;
-            height = std::min((sizeToFill / width), BlitterConstants::maxBlitHeight);
+            width = getMaxBlitWidth();
+            height = std::min((sizeToFill / width), getMaxBlitHeight());
             if (height > 1) {
                 appendTilingEnable(tmpCmd);
             }

@@ -75,6 +75,10 @@ struct BlitProperties {
 template <typename GfxFamily>
 struct BlitCommandsHelper {
     using COLOR_DEPTH = typename GfxFamily::XY_COLOR_BLT::COLOR_DEPTH;
+    static uint64_t getMaxBlitWidth();
+    static uint64_t getMaxBlitHeight();
+    static void dispatchPostBlitCommand(LinearStream &linearStream);
+    static size_t estimatePostBlitCommandSize();
     static size_t estimateBlitCommandsSize(Vec3<size_t> copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket);
     static size_t estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, const HardwareInfo &hwInfo);
     static uint64_t calculateBlitCommandDestinationBaseAddress(const BlitProperties &blitProperties, uint64_t offset, uint64_t row, uint64_t slice);

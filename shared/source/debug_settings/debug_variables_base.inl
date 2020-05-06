@@ -60,6 +60,9 @@ DECLARE_DEBUG_VARIABLE(bool, OverrideInvalidEngineWithDefault, false, "When set 
 DECLARE_DEBUG_VARIABLE(bool, DisableAuxTranslation, false, "Disable aux translation when required by Kernel.")
 DECLARE_DEBUG_VARIABLE(bool, DisableTimestampPacketOptimizations, false, "Allocate new allocation per node + dont reuse old nodes")
 DECLARE_DEBUG_VARIABLE(bool, DisableCachingForStatefulBufferAccess, false, "Disable caching for stateful buffer access")
+DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxWidth, -1, "-1: default, >=0: Max width")
+DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxHeight, -1, "-1: default, >=0: Max height")
+DECLARE_DEBUG_VARIABLE(int32_t, FlushAfterEachBlit, -1, "-1: default, 0: disable, 1: enable")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, PrintDebugSettings, false, "Dump all debug variables settings to text file. Print to stdout if value is different than default.")
