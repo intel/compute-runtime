@@ -300,10 +300,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
-    if (properties.allocationType == GraphicsAllocation::AllocationType::COMMAND_BUFFER && properties.flags.multiOsContextCapable) {
-        allocationData.flags.useSystemMemory = false;
-    }
-
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::COMMAND_BUFFER:
     case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:

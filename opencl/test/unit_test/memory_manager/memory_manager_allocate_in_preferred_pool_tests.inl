@@ -57,17 +57,6 @@ TEST(MemoryManagerGetAlloctionDataTest, givenCommandBufferAllocationTypeWhenGetA
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenCommandBufferAllocationTypeAndMultiOsStorageRequirementWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
-    AllocationData allocData;
-    AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::COMMAND_BUFFER, true, {});
-    properties.flags.multiOsContextCapable = true;
-
-    MockMemoryManager mockMemoryManager;
-    MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-
-    EXPECT_FALSE(allocData.flags.useSystemMemory);
-}
-
 TEST(MemoryManagerGetAlloctionDataTest, givenAllocateMemoryFlagTrueWhenHostPtrIsNotNullThenAllocationDataHasHostPtrNulled) {
     AllocationData allocData;
     char memory = 0;
