@@ -179,7 +179,7 @@ ze_result_t DeviceImp::evictImage(ze_image_handle_t hImage) {
 }
 
 ze_result_t DeviceImp::evictMemory(void *ptr, size_t size) {
-    auto alloc = getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr);
+    auto alloc = getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     if (alloc == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -390,7 +390,7 @@ ze_result_t DeviceImp::makeImageResident(ze_image_handle_t hImage) {
 }
 
 ze_result_t DeviceImp::makeMemoryResident(void *ptr, size_t size) {
-    auto alloc = getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr);
+    auto alloc = getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     if (alloc == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -676,7 +676,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
             char *allocAddress = reinterpret_cast<char *>(allocation->getGpuAddress());
             size_t allocSize = allocData->size;
 
-            driverHandle->getSvmAllocsManager()->getSVMAllocs()->remove(*allocData);
+            driverHandle->getSvmAllocsManager()->removeSVMAlloc(*allocData);
             neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
             commandList->eraseDeallocationContainerEntry(allocation);
             commandList->eraseResidencyContainerEntry(allocation);
@@ -713,7 +713,7 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
     allocData.size = size;
     allocData.memoryType = InternalMemoryType::NOT_SPECIFIED;
     allocData.device = nullptr;
-    driverHandle->getSvmAllocsManager()->getSVMAllocs()->insert(allocData);
+    driverHandle->getSvmAllocsManager()->insertSVMAlloc(allocData);
 
     return allocation;
 }

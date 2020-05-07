@@ -82,7 +82,7 @@ ze_result_t Mock<DriverHandle>::doAllocDeviceMem(ze_device_handle_t hDevice, ze_
 }
 
 ze_result_t Mock<DriverHandle>::doFreeMem(const void *ptr) {
-    auto allocation = svmAllocsManager->getSVMAllocs()->get(ptr);
+    auto allocation = svmAllocsManager->getSVMAlloc(ptr);
     if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }

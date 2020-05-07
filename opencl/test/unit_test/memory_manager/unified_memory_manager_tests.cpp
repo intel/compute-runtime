@@ -82,6 +82,34 @@ TEST_F(SVMMemoryAllocatorTest, whenSVMAllocationIsFreedThenCannotBeGotAgain) {
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
 }
 
+TEST_F(SVMMemoryAllocatorTest, givenSvmManagerWhenOperatedOnThenCorrectAllocationIsInsertedReturnedAndRemoved) {
+    int data;
+    size_t size = sizeof(data);
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({0, size, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY});
+
+    NEO::SvmAllocationData svmData;
+    svmData.gpuAllocation = allocation;
+    svmData.cpuAllocation = nullptr;
+    svmData.size = size;
+    svmData.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    svmData.device = nullptr;
+    auto ptr = reinterpret_cast<void *>(allocation->getGpuAddress());
+
+    svmManager->insertSVMAlloc(svmData);
+    auto svmDataTemp = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, svmDataTemp);
+    EXPECT_NE(nullptr, svmDataTemp->gpuAllocation);
+    EXPECT_EQ(1u, svmManager->SVMAllocs.getNumAllocs());
+    auto svmAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocation;
+    EXPECT_FALSE(svmAllocation->isCoherent());
+
+    svmManager->removeSVMAlloc(svmData);
+    EXPECT_EQ(nullptr, svmManager->getSVMAlloc(ptr));
+    EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
+
+    svmManager->memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromReturnedPointerAreaThenReturnSameAllocation) {
     auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
     EXPECT_NE(ptr, nullptr);

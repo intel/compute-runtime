@@ -529,7 +529,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
                                                                   const void *ptr, size_t size,
                                                                   ze_memory_advice_t advice) {
 
-    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr);
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     if (allocData) {
         return ZE_RESULT_SUCCESS;
     }
@@ -914,7 +914,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(NEO::
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryPrefetch(const void *ptr,
                                                                        size_t count) {
-    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr);
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     if (allocData) {
         return ZE_RESULT_SUCCESS;
     }
@@ -1249,7 +1249,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze_group_count_t *pThreadGroupDimensions) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
-    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(pThreadGroupDimensions);
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(pThreadGroupDimensions);
     if (allocData) {
         auto alloc = allocData->gpuAllocation;
         commandContainer.addToResidencyContainer(alloc);

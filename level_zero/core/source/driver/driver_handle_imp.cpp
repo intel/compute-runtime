@@ -83,7 +83,7 @@ ze_result_t DriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, 
 ze_result_t DriverHandleImp::getMemAllocProperties(const void *ptr,
                                                    ze_memory_allocation_properties_t *pMemAllocProperties,
                                                    ze_device_handle_t *phDevice) {
-    auto alloc = svmAllocsManager->getSVMAllocs()->get(ptr);
+    auto alloc = svmAllocsManager->getSVMAlloc(ptr);
     if (alloc) {
         pMemAllocProperties->type = parseUSMType(alloc->memoryType);
         pMemAllocProperties->id = alloc->gpuAllocation->getGpuAddress();
@@ -181,8 +181,8 @@ bool DriverHandleImp::findAllocationDataForRange(const void *buffer,
                                                  NEO::SvmAllocationData **allocData) {
     // Make sure the host buffer does not overlap any existing allocation
     const char *baseAddress = reinterpret_cast<const char *>(buffer);
-    NEO::SvmAllocationData *beginAllocData = svmAllocsManager->getSVMAllocs()->get(baseAddress);
-    NEO::SvmAllocationData *endAllocData = svmAllocsManager->getSVMAllocs()->get(baseAddress + size - 1);
+    NEO::SvmAllocationData *beginAllocData = svmAllocsManager->getSVMAlloc(baseAddress);
+    NEO::SvmAllocationData *endAllocData = svmAllocsManager->getSVMAlloc(baseAddress + size - 1);
 
     if (allocData) {
         if (beginAllocData) {
@@ -206,8 +206,8 @@ std::vector<NEO::SvmAllocationData *> DriverHandleImp::findAllocationsWithinRang
     std::vector<NEO::SvmAllocationData *> allocDataArray;
     const char *baseAddress = reinterpret_cast<const char *>(buffer);
     // Check if the host buffer overlaps any existing allocation
-    NEO::SvmAllocationData *beginAllocData = svmAllocsManager->getSVMAllocs()->get(baseAddress);
-    NEO::SvmAllocationData *endAllocData = svmAllocsManager->getSVMAllocs()->get(baseAddress + size - 1);
+    NEO::SvmAllocationData *beginAllocData = svmAllocsManager->getSVMAlloc(baseAddress);
+    NEO::SvmAllocationData *endAllocData = svmAllocsManager->getSVMAlloc(baseAddress + size - 1);
 
     // Add the allocation that matches the beginning address
     if (beginAllocData) {

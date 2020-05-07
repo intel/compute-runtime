@@ -487,7 +487,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
 
     auto requestedAddress = *reinterpret_cast<void *const *>(argVal);
     auto svmAllocsManager = module->getDevice()->getDriverHandle()->getSvmAllocsManager();
-    NEO::GraphicsAllocation *alloc = svmAllocsManager->getSVMAllocs()->get(requestedAddress)->gpuAllocation;
+    NEO::GraphicsAllocation *alloc = svmAllocsManager->getSVMAlloc(requestedAddress)->gpuAllocation;
     auto gpuAddress = reinterpret_cast<uintptr_t>(requestedAddress);
     return setArgBufferWithAlloc(argIndex, gpuAddress, alloc);
 }

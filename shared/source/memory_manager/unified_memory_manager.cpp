@@ -28,8 +28,9 @@ void SVMAllocsManager::MapBasedAllocationTracker::remove(SvmAllocationData alloc
 SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *ptr) {
     SvmAllocationContainer::iterator Iter, End;
     SvmAllocationData *svmAllocData;
-    if (ptr == nullptr)
+    if ((ptr == nullptr) || (allocations.size() == 0)) {
         return nullptr;
+    }
     End = allocations.end();
     Iter = allocations.lower_bound(ptr);
     if (((Iter != End) && (Iter->first != ptr)) ||
@@ -171,6 +172,16 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(uint32_t rootDeviceI
 SvmAllocationData *SVMAllocsManager::getSVMAlloc(const void *ptr) {
     std::unique_lock<SpinLock> lock(mtx);
     return SVMAllocs.get(ptr);
+}
+
+void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
+    std::unique_lock<SpinLock> lock(mtx);
+    SVMAllocs.insert(svmAllocData);
+}
+
+void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
+    std::unique_lock<SpinLock> lock(mtx);
+    SVMAllocs.remove(svmAllocData);
 }
 
 bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {

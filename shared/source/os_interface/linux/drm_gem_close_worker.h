@@ -41,7 +41,7 @@ class DrmGemCloseWorker {
     void close(BufferObject *workItem);
     void closeThread();
     static void *worker(void *arg);
-    bool active = true;
+    std::atomic<bool> active{true};
 
     std::unique_ptr<Thread> thread;
 

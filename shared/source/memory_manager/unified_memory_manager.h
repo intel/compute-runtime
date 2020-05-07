@@ -88,6 +88,8 @@ class SVMAllocsManager {
     SvmAllocationData *getSVMAlloc(const void *ptr);
     bool freeSVMAlloc(void *ptr, bool blocking);
     bool freeSVMAlloc(void *ptr) { return freeSVMAlloc(ptr, false); }
+    void insertSVMAlloc(const SvmAllocationData &svmData);
+    void removeSVMAlloc(const SvmAllocationData &svmData);
     size_t getNumAllocs() const { return SVMAllocs.getNumAllocs(); }
     MapBasedAllocationTracker *getSVMAllocs() { return &SVMAllocs; }
 

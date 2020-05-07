@@ -14,7 +14,7 @@
 namespace L0 {
 
 ze_result_t DriverHandleImp::getIpcMemHandle(const void *ptr, ze_ipc_mem_handle_t *pIpcHandle) {
-    NEO::SvmAllocationData *allocData = svmAllocsManager->getSVMAllocs()->get(ptr);
+    NEO::SvmAllocationData *allocData = svmAllocsManager->getSVMAlloc(ptr);
     if (allocData) {
         uint64_t handle = allocData->gpuAllocation->peekInternalHandle(this->getMemoryManager());
         memcpy_s(reinterpret_cast<void *>(pIpcHandle->data),
@@ -49,7 +49,7 @@ ze_result_t DriverHandleImp::openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc
     allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocData.device = Device::fromHandle(hDevice)->getNEODevice();
 
-    this->getSvmAllocsManager()->getSVMAllocs()->insert(allocData);
+    this->getSvmAllocsManager()->insertSVMAlloc(allocData);
 
     *ptr = reinterpret_cast<void *>(alloc->getGpuAddress());
 
@@ -61,7 +61,7 @@ ze_result_t DriverHandleImp::closeIpcMemHandle(const void *ptr) {
 }
 
 ze_result_t DriverHandleImp::checkMemoryAccessFromDevice(Device *device, const void *ptr) {
-    auto allocation = svmAllocsManager->getSVMAllocs()->get(ptr);
+    auto allocation = svmAllocsManager->getSVMAlloc(ptr);
     if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
@@ -80,7 +80,7 @@ ze_result_t DriverHandleImp::checkMemoryAccessFromDevice(Device *device, const v
 }
 
 ze_result_t DriverHandleImp::getMemAddressRange(const void *ptr, void **pBase, size_t *pSize) {
-    NEO::SvmAllocationData *allocData = svmAllocsManager->getSVMAllocs()->get(ptr);
+    NEO::SvmAllocationData *allocData = svmAllocsManager->getSVMAlloc(ptr);
     if (allocData) {
         NEO::GraphicsAllocation *alloc;
         alloc = allocData->gpuAllocation;
@@ -166,7 +166,7 @@ ze_result_t DriverHandleImp::allocSharedMem(ze_device_handle_t hDevice, ze_devic
 }
 
 ze_result_t DriverHandleImp::freeMem(const void *ptr) {
-    auto allocation = svmAllocsManager->getSVMAllocs()->get(ptr);
+    auto allocation = svmAllocsManager->getSVMAlloc(ptr);
     if (allocation == nullptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }

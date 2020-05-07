@@ -45,9 +45,9 @@ void CommandList::removeDeallocationContainerData() {
     for (auto deallocation : container) {
         DEBUG_BREAK_IF(deallocation == nullptr);
         UNRECOVERABLE_IF(memoryManager == nullptr);
-        NEO::SvmAllocationData *allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(reinterpret_cast<void *>(deallocation->getGpuAddress()));
+        NEO::SvmAllocationData *allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(deallocation->getGpuAddress()));
         if (allocData) {
-            device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->remove(*allocData);
+            device->getDriverHandle()->getSvmAllocsManager()->removeSVMAlloc(*allocData);
         }
         if (!((deallocation->getAllocationType() == NEO::GraphicsAllocation::AllocationType::INTERNAL_HEAP) ||
               (deallocation->getAllocationType() == NEO::GraphicsAllocation::AllocationType::LINEAR_STREAM))) {
