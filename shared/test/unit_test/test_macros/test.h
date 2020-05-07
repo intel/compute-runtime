@@ -600,9 +600,7 @@ extern GFXCORE_FAMILY renderCoreFamily;
         template <unsigned int matcherOrdinal>                                                                    \
         void checkForMatch(PRODUCT_FAMILY matchProduct);                                                          \
                                                                                                                   \
-        virtual void TestBody() {                                                                                 \
-            checkForMatch<SupportedProductFamilies::size - 1u>(::productFamily);                                  \
-        }                                                                                                         \
+        virtual void TestBody();                                                                                  \
                                                                                                                   \
         static int AddToRegistry() {                                                                              \
             ::testing::UnitTest::GetInstance()                                                                    \
@@ -649,6 +647,10 @@ extern GFXCORE_FAMILY renderCoreFamily;
                                           MatcherFalse>::type;                                                    \
             Matcher::template matched<productFamily>();                                                           \
         }                                                                                                         \
+    }                                                                                                             \
+                                                                                                                  \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TestBody() {                                         \
+        checkForMatch<SupportedProductFamilies::size - 1u>(::productFamily);                                      \
     }                                                                                                             \
                                                                                                                   \
     int GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::gtest_registering_dummy_ =                            \
