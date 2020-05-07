@@ -66,7 +66,8 @@ class HwHelper {
                                                 GraphicsAllocation *gfxAlloc,
                                                 bool isReadOnly,
                                                 uint32_t surfaceType,
-                                                bool forceNonAuxMode) = 0;
+                                                bool forceNonAuxMode,
+                                                bool useL1Cache) = 0;
     virtual const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const = 0;
     virtual const StackVec<size_t, 3> getDeviceSubGroupSizes() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
@@ -194,7 +195,10 @@ class HwHelperHw : public HwHelper {
                                         GraphicsAllocation *gfxAlloc,
                                         bool isReadOnly,
                                         uint32_t surfaceType,
-                                        bool forceNonAuxMode) override;
+                                        bool forceNonAuxMode,
+                                        bool useL1Cache) override;
+
+    void setL1CachePolicy(bool useL1Cache, typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo);
 
     const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override;
 

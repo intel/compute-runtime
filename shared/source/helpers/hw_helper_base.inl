@@ -103,7 +103,8 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(const RootDeviceEnvironm
                                                         GraphicsAllocation *gfxAlloc,
                                                         bool isReadOnly,
                                                         uint32_t surfaceType,
-                                                        bool forceNonAuxMode) {
+                                                        bool forceNonAuxMode,
+                                                        bool useL1Cache) {
     using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
@@ -158,7 +159,12 @@ void HwHelperHw<Family>::setRenderSurfaceStateForBuffer(const RootDeviceEnvironm
         state.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     }
     *surfaceState = state;
+
+    setL1CachePolicy(useL1Cache, surfaceState, rootDeviceEnvironment.getHardwareInfo());
 }
+
+template <typename GfxFamily>
+void NEO::HwHelperHw<GfxFamily>::setL1CachePolicy(bool useL1Cache, typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) {}
 
 template <typename Family>
 bool HwHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const {
