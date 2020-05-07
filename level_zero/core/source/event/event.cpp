@@ -40,6 +40,8 @@ struct EventImp : public Event {
 
     ze_result_t queryStatus() override {
         uint64_t *hostAddr = static_cast<uint64_t *>(hostAddress);
+        uint32_t queryVal = Event::STATE_CLEARED;
+
         auto alloc = &(this->eventPool->getAllocation());
 
         if (metricTracer != nullptr) {
@@ -55,7 +57,9 @@ struct EventImp : public Event {
             hostAddr = reinterpret_cast<uint64_t *>(timeStampAddress);
         }
 
-        return *hostAddr == Event::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
+        memcpy_s(static_cast<void *>(&queryVal), sizeof(uint32_t), static_cast<void *>(hostAddr), sizeof(uint32_t));
+
+        return queryVal == Event::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
     }
 
     ze_result_t reset() override;
@@ -244,7 +248,7 @@ ze_result_t EventImp::hostEventSetValue(uint32_t eventVal) {
 
     auto hostAddr = static_cast<uint64_t *>(hostAddress);
     UNRECOVERABLE_IF(hostAddr == nullptr);
-    *(hostAddr) = eventVal;
+    memcpy_s(static_cast<void *>(hostAddr), sizeof(uint32_t), static_cast<void *>(&eventVal), sizeof(uint32_t));
 
     makeAllocationResident();
 
