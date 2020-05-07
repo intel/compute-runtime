@@ -87,6 +87,8 @@ Vec3<size_t> canonizeWorkgroup(
 
 void provideLocalWorkGroupSizeHints(Context *context, DispatchInfo dispatchInfo);
 
+void setSpecialWorkgroupSize(size_t workgroupSize[3]);
+
 inline cl_uint computeDimensions(const size_t workItems[3]) {
     return (workItems[2] > 1) ? 3 : (workItems[1] > 1) ? 2 : 1;
 }

@@ -9,7 +9,9 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/hw_helper.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
@@ -205,6 +207,12 @@ void choosePreferredWorkGroupSizeWithOutRatio(uint32_t xyzFactors[3][1024], uint
             }
         }
     }
+}
+
+void setSpecialWorkgroupSize(size_t workgroupSize[3]) {
+    workgroupSize[0] = 1;
+    workgroupSize[1] = 1;
+    workgroupSize[2] = 1;
 }
 
 void computeWorkgroupSize1D(uint32_t maxWorkGroupSize,
@@ -403,14 +411,21 @@ void computeWorkgroupSizeND(WorkSizeInfo wsInfo, size_t workGroupSize[3], const 
 
 Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
     size_t workGroupSize[3] = {};
-    if (dispatchInfo.getKernel() != nullptr) {
-        if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
+    auto kernel = dispatchInfo.getKernel();
+
+    if (kernel != nullptr) {
+        const auto &hwInfo = kernel->getDevice().getHardwareInfo();
+        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+        if (kernel->isBuiltIn && hwHelper.isSpecialWorkgroupSizeRequired(hwInfo)) {
+            setSpecialWorkgroupSize(workGroupSize);
+        } else if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
             WorkSizeInfo wsInfo(dispatchInfo);
             size_t workItems[3] = {dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z};
             computeWorkgroupSizeND(wsInfo, workGroupSize, workItems, dispatchInfo.getDim());
         } else {
-            auto maxWorkGroupSize = dispatchInfo.getKernel()->maxKernelWorkGroupSize;
-            auto simd = dispatchInfo.getKernel()->getKernelInfo().getMaxSimdSize();
+            auto maxWorkGroupSize = kernel->maxKernelWorkGroupSize;
+            auto simd = kernel->getKernelInfo().getMaxSimdSize();
             size_t workItems[3] = {dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z};
             if (dispatchInfo.getDim() == 1) {
                 computeWorkgroupSize1D(maxWorkGroupSize, workGroupSize, workItems, simd);

@@ -348,3 +348,12 @@ INSTANTIATE_TEST_CASE_P(wgs,
                         ::testing::Combine(
                             ::testing::ValuesIn(simdSizes),
                             ::testing::ValuesIn(regionCases)));
+
+TEST(WorkgroupSizeTest, WhenSetSpecialWorkgroupSizeIsCalledThenWorkgroupSizeIsSetTo1x1x1) {
+    size_t workgroupSize[3] = {};
+    setSpecialWorkgroupSize(workgroupSize);
+
+    EXPECT_EQ(1u, workgroupSize[0]);
+    EXPECT_EQ(1u, workgroupSize[1]);
+    EXPECT_EQ(1u, workgroupSize[2]);
+}

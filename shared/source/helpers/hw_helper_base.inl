@@ -341,6 +341,11 @@ inline bool HwHelperHw<GfxFamily>::isFusedEuDispatchEnabled(const HardwareInfo &
 }
 
 template <typename GfxFamily>
+inline bool HwHelperHw<GfxFamily>::isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush() {
     return sizeof(typename GfxFamily::PIPE_CONTROL);
 }
