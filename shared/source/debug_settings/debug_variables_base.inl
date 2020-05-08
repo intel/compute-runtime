@@ -180,3 +180,4 @@ DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "Wit
 DECLARE_DEBUG_VARIABLE(bool, ReturnRawGpuTimestamps, false, "Driver returns raw GPU tiemstamps instead of calculated ones.")
 DECLARE_DEBUG_VARIABLE(bool, ForcePerDssBackedBufferProgramming, false, "Always program per-DSS memory backed buffer in preamble")
 DECLARE_DEBUG_VARIABLE(bool, DisableAtomicForPostSyncs, false, "When enabled, post syncs are not tracked with atomics")
+DECLARE_DEBUG_VARIABLE(bool, UseCommandBufferHeaderSizeForWddmQueueSubmission, false, "Default: Page size (4096). Use sizeof(COMMAND_BUFFER_HEADER) if true.")
