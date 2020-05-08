@@ -101,8 +101,8 @@ TEST_F(DeviceTest, givenDeviceWithComputeEngineThenNumAsyncComputeEnginesDeviceP
     deviceProperties.numAsyncComputeEngines = std::numeric_limits<int>::max();
     device->getProperties(&deviceProperties);
 
-    auto expecteNumOfComputeEngines = NEO::HwHelper::getEnginesCount(device->getNEODevice()->getHardwareInfo());
-    EXPECT_EQ(expecteNumOfComputeEngines, deviceProperties.numAsyncComputeEngines);
+    auto expectedNumOfComputeEngines = NEO::HwHelper::getEnginesCount(device->getNEODevice()->getHardwareInfo());
+    EXPECT_EQ(expectedNumOfComputeEngines, deviceProperties.numAsyncComputeEngines);
 }
 
 TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenAllPropertiesAreAssigned) {
