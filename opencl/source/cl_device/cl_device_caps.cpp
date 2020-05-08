@@ -265,7 +265,7 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.maxWorkItemDimensions = 3;
 
-    deviceInfo.maxComputUnits = systemInfo.EUCount;
+    deviceInfo.maxComputUnits = systemInfo.EUCount * getNumAvailableDevices();
     deviceInfo.maxConstantArgs = 8;
     deviceInfo.maxSliceCount = systemInfo.SliceCount;
     auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() ? 32u : hwHelper.getMinimalSIMDSize();

@@ -8,6 +8,7 @@
 #include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -653,3 +654,26 @@ INSTANTIATE_TEST_CASE_P(
     Device_,
     GetDeviceInfo,
     testing::ValuesIn(deviceInfoParams));
+
+TEST(GetDeviceInfoTest, givenDeviceWithSubDevicesWhenGettingNumberOfComputeUnitsThenRootDeviceExposesAllComputeUnits) {
+    UltClDeviceFactory deviceFactory{1, 3};
+    auto expectedComputeUnitsForSubDevice = deviceFactory.rootDevices[0]->getHardwareInfo().gtSystemInfo.EUCount;
+
+    uint32_t expectedComputeUnitsForRootDevice = 0u;
+
+    for (const auto &subDevice : deviceFactory.rootDevices[0]->subDevices) {
+        uint32_t numComputeUnits = 0;
+        size_t retSize = 0;
+        auto status = clGetDeviceInfo(subDevice.get(), CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(numComputeUnits), &numComputeUnits, &retSize);
+        EXPECT_EQ(CL_SUCCESS, status);
+        EXPECT_EQ(expectedComputeUnitsForSubDevice, numComputeUnits);
+        EXPECT_EQ(sizeof(numComputeUnits), retSize);
+        expectedComputeUnitsForRootDevice += numComputeUnits;
+    }
+    uint32_t numComputeUnits = 0;
+    size_t retSize = 0;
+    auto status = clGetDeviceInfo(deviceFactory.rootDevices[0], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(numComputeUnits), &numComputeUnits, &retSize);
+    EXPECT_EQ(CL_SUCCESS, status);
+    EXPECT_EQ(expectedComputeUnitsForRootDevice, numComputeUnits);
+    EXPECT_EQ(sizeof(numComputeUnits), retSize);
+}
