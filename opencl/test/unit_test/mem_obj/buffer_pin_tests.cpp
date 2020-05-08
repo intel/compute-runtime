@@ -48,7 +48,7 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
     uint32_t HPAllocCount = 0;
 };
 
-TEST(BufferTests, doPinIsSet) {
+TEST(BufferTests, WhenBufferIsCreatedThenPinIsSet) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     std::unique_ptr<TestedMemoryManager> mm(new MemoryManagerCreate<TestedMemoryManager>(false, false, executionEnvironment));
     {
@@ -71,7 +71,7 @@ TEST(BufferTests, doPinIsSet) {
         delete buffer;
     }
 }
-TEST(BufferTests, doPinIsSetForHostPtr) {
+TEST(BufferTests, GivenHostPtrWhenBufferIsCreatedThenPinIsSet) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(executionEnvironment));
     {
