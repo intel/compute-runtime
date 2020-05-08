@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_interface.h"
@@ -53,6 +54,9 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
             this->lastSentSliceCount = batchBuffer.sliceCount;
         }
     }
+
+    auto memoryOperationsInterface = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get();
+    static_cast<DrmMemoryOperationsHandler *>(memoryOperationsInterface)->mergeWithResidencyContainer(allocationsForResidency);
 
     this->flushStamp->setStamp(bb->peekHandle());
     this->flushInternal(batchBuffer, allocationsForResidency);

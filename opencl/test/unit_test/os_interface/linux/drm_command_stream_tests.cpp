@@ -592,6 +592,45 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenGemCloseWorkerInactiveMode
     mm->freeGraphicsMemory(dummyAllocation);
 }
 
+HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocInMemoryOperationsInterfaceWhenFlushThenAllocIsResident) {
+    auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    LinearStream cs(commandBuffer);
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr};
+
+    auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&allocation, 1));
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    const auto boRequirments = [&allocation](const auto &bo) {
+        return (static_cast<int>(bo.handle) == static_cast<DrmAllocation *>(allocation)->getBO()->peekHandle() &&
+                bo.offset == static_cast<DrmAllocation *>(allocation)->getBO()->peekAddress());
+    };
+
+    auto &residency = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->getExecStorage();
+    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), boRequirments) != residency.end());
+    EXPECT_EQ(residency.size(), 2u);
+    residency.clear();
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+    EXPECT_TRUE(std::find_if(residency.begin(), residency.end(), boRequirments) != residency.end());
+    EXPECT_EQ(residency.size(), 2u);
+    residency.clear();
+
+    csr->getResidencyAllocations().clear();
+    executionEnvironment->rootDeviceEnvironments[csr->getRootDeviceIndex()]->memoryOperationsInterface->evict(*allocation);
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    EXPECT_FALSE(std::find_if(residency.begin(), residency.end(), boRequirments) != residency.end());
+    EXPECT_EQ(residency.size(), 1u);
+
+    mm->freeGraphicsMemory(allocation);
+    mm->freeGraphicsMemory(commandBuffer);
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, GivenTwoAllocationsWhenBackingStorageIsDifferentThenMakeResidentShouldAddTwoLocations) {
     auto allocation = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     auto allocation2 = static_cast<DrmAllocation *>(mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));

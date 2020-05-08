@@ -19,6 +19,7 @@
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 
@@ -545,6 +546,8 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 }
 
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
+    executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->memoryOperationsInterface->evict(*gfxAllocation);
+
     for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
         if (gfxAllocation->getGmm(handleId)) {
             delete gfxAllocation->getGmm(handleId);
