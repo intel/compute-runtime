@@ -357,9 +357,8 @@ ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_me
 ze_result_t metricTracerOpen(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                              zet_metric_tracer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
                              zet_metric_tracer_handle_t *phMetricTracer) {
-    *phMetricTracer = MetricTracer::open(hDevice, hMetricGroup, *pDesc, hNotificationEvent);
 
-    return (*phMetricTracer != nullptr) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
+    return MetricTracer::open(hDevice, hMetricGroup, *pDesc, hNotificationEvent, phMetricTracer);
 }
 
 } // namespace L0

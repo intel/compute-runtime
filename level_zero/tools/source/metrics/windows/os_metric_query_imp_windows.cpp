@@ -64,4 +64,7 @@ bool MetricsLibrary::deactivateConfiguration(const ConfigurationHandle_1_0 confi
     return result;
 }
 
+void MetricsLibrary::cacheConfiguration(zet_metric_group_handle_t metricGroup, ConfigurationHandle_1_0 configurationHandle) {
+    configurations[metricGroup] = configurationHandle;
+}
 } // namespace L0

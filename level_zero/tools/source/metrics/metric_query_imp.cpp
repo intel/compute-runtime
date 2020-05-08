@@ -28,20 +28,7 @@ MetricsLibrary::MetricsLibrary(MetricContext &metricContextInput)
     : metricContext(metricContextInput) {}
 
 MetricsLibrary::~MetricsLibrary() {
-    // Delete all metric group configurations.
-    for (auto &configuration : configurations) {
-        if (configuration.second.IsValid()) {
-            api.ConfigurationDelete(configuration.second);
-        }
-    }
-
-    configurations.clear();
-
-    // Destroy context.
-    if (context.IsValid() && contextDeleteFunction) {
-        contextDeleteFunction(context);
-        context = {};
-    }
+    release();
 }
 
 bool MetricsLibrary::isInitialized() {
@@ -55,6 +42,8 @@ bool MetricsLibrary::isInitialized() {
 
 bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_0 &query,
                                        NEO::GraphicsAllocation *&pAllocation) {
+    std::lock_guard<std::mutex> lock(mutex);
+
     // Validate metrics library state.
     if (!isInitialized()) {
         DEBUG_BREAK_IF(true);
@@ -99,14 +88,36 @@ bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_
         return false;
     }
 
+    // Register created query.
+    queries.push_back(query);
+
     return true;
 }
 
+uint32_t MetricsLibrary::getMetricQueryCount() {
+    std::lock_guard<std::mutex> lock(mutex);
+    return static_cast<uint32_t>(queries.size());
+}
+
 bool MetricsLibrary::destroyMetricQuery(QueryHandle_1_0 &query) {
+    std::lock_guard<std::mutex> lock(mutex);
     DEBUG_BREAK_IF(!query.IsValid());
 
     const bool result = isInitialized() && (api.QueryDelete(query) == StatusCode::Success);
-    DEBUG_BREAK_IF(!result);
+    auto iter = std::find_if(queries.begin(), queries.end(), [&](const QueryHandle_1_0 &element) { return element.data == query.data; });
+
+    // Unregister query.
+    if (iter != queries.end()) {
+        queries.erase(iter);
+    }
+
+    // Unload metrics library if there are no active queries.
+    // It will allow to open metric tracer. Query and tracer cannot be used
+    // simultaneously since they use the same exclusive resource (oa buffer).
+    if (queries.size() == 0) {
+        release();
+    }
+
     return result;
 }
 
@@ -149,6 +160,23 @@ void MetricsLibrary::initialize() {
     // Load metrics library and exported functions.
     initializationState = validMetricsLibrary ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
     DEBUG_BREAK_IF(initializationState != ZE_RESULT_SUCCESS);
+}
+
+void MetricsLibrary::release() {
+
+    // Delete metric group configurations.
+    deleteAllConfigurations();
+
+    // Destroy context.
+    if (context.IsValid() && contextDeleteFunction) {
+        contextDeleteFunction(context);
+    }
+
+    // Reset metric query state to not initialized.
+    api = {};
+    callbacks = {};
+    context = {};
+    initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
 }
 
 bool MetricsLibrary::load() {
@@ -320,15 +348,38 @@ ConfigurationHandle_1_0 MetricsLibrary::addConfiguration(zet_metric_group_handle
     // Cache configuration if valid.
     if (configuration.IsValid()) {
         libraryHandle = configuration;
-        configurations[handle] = libraryHandle;
+        cacheConfiguration(handle, libraryHandle);
     }
 
     DEBUG_BREAK_IF(!libraryHandle.IsValid());
     return libraryHandle;
 }
 
+void MetricsLibrary::deleteAllConfigurations() {
+
+    if (api.ConfigurationDelete) {
+        for (auto &configuration : configurations) {
+            if (configuration.second.IsValid()) {
+                api.ConfigurationDelete(configuration.second);
+            }
+        }
+    }
+
+    configurations.clear();
+}
+
 ze_result_t metricQueryPoolCreate(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup, const zet_metric_query_pool_desc_t *pDesc,
                                   zet_metric_query_pool_handle_t *phMetricQueryPool) {
+
+    auto device = Device::fromHandle(hDevice);
+    auto &metricContext = device->getMetricContext();
+
+    // Metric query cannot be used with tracer simultaneously
+    // (due to oa buffer usage constraints).
+    if (metricContext.getMetricTracer() != nullptr) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
     // Create metric query pool
     *phMetricQueryPool = MetricQueryPool::create(hDevice, hMetricGroup, *pDesc);
 

@@ -10,6 +10,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/tools/source/metrics/metric_query_imp.h"
 
 namespace L0 {
 
@@ -137,25 +138,34 @@ uint32_t MetricTracerImp::getRequiredBufferSize(const uint32_t maxReportCount) c
                                                    : maxReportCount * rawReportSize;
 }
 
-MetricTracer *MetricTracer::open(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
-                                 zet_metric_tracer_desc_t &desc, ze_event_handle_t hNotificationEvent) {
+ze_result_t MetricTracer::open(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+                               zet_metric_tracer_desc_t &desc, ze_event_handle_t hNotificationEvent,
+                               zet_metric_tracer_handle_t *phMetricTracer) {
     auto pDevice = Device::fromHandle(hDevice);
     auto &metricContext = pDevice->getMetricContext();
 
+    *phMetricTracer = nullptr;
+
     // Check whether metric tracer is already open.
     if (metricContext.getMetricTracer() != nullptr) {
-        return nullptr;
+        return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
+    }
+
+    // Metric tracer cannot be used with query simultaneously
+    // (oa buffer cannot be shared).
+    if (metricContext.getMetricsLibrary().getMetricQueryCount() > 0) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     // Check metric group sampling type.
     auto metricGroupProperties = MetricGroup::getProperties(hMetricGroup);
     if (metricGroupProperties.samplingType != ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED) {
-        return nullptr;
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     // Check whether metric group is activated.
     if (!metricContext.isMetricGroupActivated(hMetricGroup)) {
-        return nullptr;
+        return ZE_RESULT_NOT_READY;
     }
 
     auto pMetricTracer = new MetricTracerImp();
@@ -169,9 +179,11 @@ MetricTracer *MetricTracer::open(zet_device_handle_t hDevice, zet_metric_group_h
     } else {
         delete pMetricTracer;
         pMetricTracer = nullptr;
+        return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    return pMetricTracer;
+    *phMetricTracer = pMetricTracer->toHandle();
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

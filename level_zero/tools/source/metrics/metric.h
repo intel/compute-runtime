@@ -104,8 +104,8 @@ struct MetricTracer : _zet_metric_tracer_handle_t {
                                  uint8_t *pRawData) = 0;
     virtual ze_result_t close() = 0;
 
-    static MetricTracer *open(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
-                              zet_metric_tracer_desc_t &desc, ze_event_handle_t hNotificationEvent);
+    static ze_result_t open(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+                            zet_metric_tracer_desc_t &desc, ze_event_handle_t hNotificationEvent, zet_metric_tracer_handle_t *phMetricTracer);
     static MetricTracer *fromHandle(zet_metric_tracer_handle_t handle) {
         return static_cast<MetricTracer *>(handle);
     }

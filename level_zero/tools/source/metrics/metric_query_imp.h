@@ -48,6 +48,7 @@ struct MetricsLibrary {
     // Metric query.
     bool createMetricQuery(const uint32_t slotsCount, QueryHandle_1_0 &query,
                            NEO::GraphicsAllocation *&pAllocation);
+    uint32_t getMetricQueryCount();
     bool getMetricQueryReport(QueryHandle_1_0 &query, const size_t rawDataSize, uint8_t *pData);
     virtual bool getMetricQueryReportSize(size_t &rawDataSize);
     bool destroyMetricQuery(QueryHandle_1_0 &query);
@@ -60,9 +61,12 @@ struct MetricsLibrary {
     ConfigurationHandle_1_0 getConfiguration(const zet_metric_group_handle_t metricGroup);
     bool activateConfiguration(const ConfigurationHandle_1_0 configurationHandle);
     bool deactivateConfiguration(const ConfigurationHandle_1_0 configurationHandle);
+    void cacheConfiguration(zet_metric_group_handle_t metricGroup, ConfigurationHandle_1_0 configurationHandle);
+    void deleteAllConfigurations();
 
   protected:
     void initialize();
+    void release();
 
     bool createContext();
     virtual bool getContextData(Device &device, ContextCreateData_1_0 &contextData);
@@ -77,6 +81,7 @@ struct MetricsLibrary {
     NEO::OsLibrary *handle = nullptr;
     MetricContext &metricContext;
     ze_result_t initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
+    std::mutex mutex;
 
     // Metrics library types.
     Interface_1_0 api = {};
@@ -84,8 +89,8 @@ struct MetricsLibrary {
     ContextHandle_1_0 context = {};
     ContextCreateFunction_1_0 contextCreateFunction = nullptr;
     ContextDeleteFunction_1_0 contextDeleteFunction = nullptr;
-    // MetricGroup configurations
     std::map<zet_metric_group_handle_t, ConfigurationHandle_1_0> configurations;
+    std::vector<QueryHandle_1_0> queries;
 };
 
 struct MetricQueryImp : MetricQuery {

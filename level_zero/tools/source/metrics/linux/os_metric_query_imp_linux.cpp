@@ -44,4 +44,12 @@ bool MetricsLibrary::deactivateConfiguration(const ConfigurationHandle_1_0 confi
     return result;
 }
 
+void MetricsLibrary::cacheConfiguration(zet_metric_group_handle_t metricGroup, ConfigurationHandle_1_0 configurationHandle) {
+    // Linux does not support configuration cache.
+    // Any previous configuration should be deleted.
+    deleteAllConfigurations();
+
+    // Cache only a single configuration.
+    configurations[metricGroup] = configurationHandle;
+}
 } // namespace L0
