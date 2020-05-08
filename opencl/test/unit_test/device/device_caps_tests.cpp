@@ -146,7 +146,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
 
     EXPECT_EQ(sharedCaps.maxWorkGroupSize / hwHelper.getMinimalSIMDSize(), caps.maxNumOfSubGroups);
 
-    if (defaultHwInfo->capabilityTable.supportsDeviceEnqueue) {
+    if (defaultHwInfo->capabilityTable.supportsDeviceEnqueue || (defaultHwInfo->capabilityTable.clVersionSupport == 21)) {
         EXPECT_EQ(1024u, caps.maxOnDeviceEvents);
         EXPECT_EQ(1u, caps.maxOnDeviceQueues);
         EXPECT_EQ(64u * MB, caps.queueOnDeviceMaxSize);
@@ -989,6 +989,10 @@ TEST(DeviceGetCaps, givenDebugFlagToUseCertainWorkgroupSizeWhenDeviceIsCreatedIt
 }
 
 TEST(DeviceGetCaps, givenDebugFlagToDisableDeviceEnqueuesWhenCreatingDeviceThenDeviceQueueCapsAreSetCorrectly) {
+    if (defaultHwInfo->capabilityTable.clVersionSupport == 21) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.DisableDeviceEnqueue.set(true);
 
