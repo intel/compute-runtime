@@ -436,6 +436,11 @@ macro(macro_for_each_gen)
       if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
         neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${PLATFORM_TEST_KERNELS})
         neo_gen_kernels_with_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL} ${TEST_KERNEL_options})
+        # Compile platform specific kernels if any were found
+        file(GLOB_RECURSE ${PLATFORM_LOWER}_TEST_KERNELS test_files/*.${PLATFORM_LOWER})
+        if (NOT "${${PLATFORM_LOWER}_TEST_KERNELS}" STREQUAL "")
+            neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${${PLATFORM_LOWER}_TEST_KERNELS})
+        endif()
         # Temporarily disabled debug kernel generation on gen8
         if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
           neo_gen_kernel_with_kernel_debug_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL})
