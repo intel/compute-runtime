@@ -383,16 +383,19 @@ HWTEST2_F(CommandListCreate, givenCommandListAnd3DWhbufferenMemoryCopyRegionCall
     EXPECT_GT(cmdList.appendMemoryCopyKernel3dCalledTimes, 0u);
 }
 
-HWTEST2_F(CommandListCreate, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenTwoNewAllocationAreAddedToHostMapPtr, Platforms) {
-    class MockAppendMemoryCopyRegion : public MockCommandList<gfxCoreFamily> {
-      public:
-        using CommandList::hostPtrMap;
-        AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize) override {
-            return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocation(device, buffer, bufferSize);
-        }
-    };
+using AppendMemoryCopy = CommandListCreate;
 
-    MockAppendMemoryCopyRegion cmdList;
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockAppendMemoryCopy : public MockCommandList<gfxCoreFamily> {
+  public:
+    using CommandList::hostPtrMap;
+    AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize) override {
+        return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocation(device, buffer, bufferSize);
+    }
+};
+
+HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenTwoNewAllocationAreAddedToHostMapPtr, Platforms) {
+    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
     cmdList.initialize(device, false);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
@@ -400,6 +403,54 @@ HWTEST2_F(CommandListCreate, givenCommandListAndHostPointersWhenMemoryCopyRegion
     ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
     cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr);
     EXPECT_EQ(cmdList.hostPtrMap.size(), 2u);
+}
+
+HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenPipeControlWithDcFlushAdded, Platforms) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, false);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
+    ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr);
+
+    auto &commandContainer = cmdList.commandContainer;
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<PIPE_CONTROL *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_NE(genCmdList.end(), itor);
+    PIPE_CONTROL *cmd = nullptr;
+    while (itor != genCmdList.end()) {
+        cmd = genCmdCast<PIPE_CONTROL *>(*itor);
+        itor = find<PIPE_CONTROL *>(++itor, genCmdList.end());
+    }
+    EXPECT_TRUE(cmd->getDcFlushEnable());
+}
+
+HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAdded, Platforms) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, false);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    cmdList.appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
+
+    auto &commandContainer = cmdList.commandContainer;
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<PIPE_CONTROL *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_NE(genCmdList.end(), itor);
+    PIPE_CONTROL *cmd = nullptr;
+    while (itor != genCmdList.end()) {
+        cmd = genCmdCast<PIPE_CONTROL *>(*itor);
+        itor = find<PIPE_CONTROL *>(++itor, genCmdList.end());
+    }
+    EXPECT_TRUE(cmd->getDcFlushEnable());
 }
 
 HWTEST2_F(CommandListCreate, givenCommandListAnd2DWhbufferenMemoryCopyRegionCalledThenCopyKernel2DCalled, Platforms) {
@@ -414,6 +465,54 @@ HWTEST2_F(CommandListCreate, givenCommandListAnd2DWhbufferenMemoryCopyRegionCall
     cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitRegionCalledTimes, 0u);
     EXPECT_GT(cmdList.appendMemoryCopyKernel2dCalledTimes, 0u);
+}
+
+HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, Platforms) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    WhiteBox<CommandListCoreFamily<gfxCoreFamily>> cmdList(1);
+    cmdList.initialize(device, true);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    cmdList.appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
+
+    auto &commandContainer = cmdList.commandContainer;
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_NE(genCmdList.end(), itor);
+
+    itor = find<PIPE_CONTROL *>(++itor, genCmdList.end());
+
+    EXPECT_EQ(genCmdList.end(), itor);
+}
+
+HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyRegionCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, Platforms) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    WhiteBox<CommandListCoreFamily<gfxCoreFamily>> cmdList(1);
+    cmdList.initialize(device, true);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
+    ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr);
+
+    auto &commandContainer = cmdList.commandContainer;
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_NE(genCmdList.end(), itor);
+
+    itor = find<PIPE_CONTROL *>(++itor, genCmdList.end());
+
+    EXPECT_EQ(genCmdList.end(), itor);
 }
 
 HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendMemoryFillCalledThenAppendBlitFillCalled, Platforms) {

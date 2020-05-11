@@ -531,7 +531,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemAdvise(ze_device_hand
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr);
     if (allocData) {
-            return ZE_RESULT_SUCCESS;
+        return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_ERROR_UNKNOWN;
 }
@@ -728,7 +728,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
         this->appendSignalEventPostWalker(hSignalEvent);
     }
 
-    if (dstAllocationStruct.needsFlush) {
+    if (dstAllocationStruct.needsFlush && !isCopyOnlyCmdList) {
         NEO::PipeControlArgs args(true);
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
     }
@@ -786,13 +786,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
         return result;
     }
 
-    if (dstAllocationStruct.needsFlush) {
-        if (isCopyOnlyCmdList) {
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
-        } else {
-            NEO::PipeControlArgs args(true);
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
-        }
+    if (dstAllocationStruct.needsFlush && !isCopyOnlyCmdList) {
+        NEO::PipeControlArgs args(true);
+        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -920,7 +916,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryPrefetch(const voi
                                                                        size_t count) {
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(ptr);
     if (allocData) {
-            return ZE_RESULT_SUCCESS;
+        return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_ERROR_UNKNOWN;
 }
@@ -1133,6 +1129,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         hostPtrMap.insert(std::make_pair(buffer, alloc));
 
         alignedPtr = static_cast<uintptr_t>(alloc->getGpuAddress() - offset);
+        hostPointerNeedsFlush = true;
     } else {
         alloc = allocData->gpuAllocation;
 
