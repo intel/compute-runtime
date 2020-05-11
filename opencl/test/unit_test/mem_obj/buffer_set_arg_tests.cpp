@@ -104,7 +104,7 @@ class BufferSetArgTest : public ContextFixture,
     Buffer *buffer = nullptr;
 };
 
-TEST_F(BufferSetArgTest, setKernelArgBuffer) {
+TEST_F(BufferSetArgTest, WhenSettingKernelArgBufferThenGpuAddressIsSet) {
     auto pKernelArg = (void **)(pKernel->getCrossThreadData() +
                                 pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
@@ -205,7 +205,7 @@ HWTEST_F(BufferSetArgTest, givenNonPureStatefulArgWhenRenderCompressedBufferIsSe
     EXPECT_TRUE(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E == surfaceState->getAuxiliarySurfaceMode());
 }
 
-TEST_F(BufferSetArgTest, setKernelArgBufferFor32BitAddressing) {
+TEST_F(BufferSetArgTest, Given32BitAddressingWhenSettingArgStatelessThenGpuAddressIsSetCorrectly) {
     auto pKernelArg = (void **)(pKernel->getCrossThreadData() +
                                 pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
@@ -265,7 +265,7 @@ TEST_F(BufferSetArgTest, givenCurbeTokenThatSizeIs4BytesWhenStatelessArgIsPatche
     EXPECT_EQ(address32bits, lowerPart);
 }
 
-TEST_F(BufferSetArgTest, clSetKernelArgBuffer) {
+TEST_F(BufferSetArgTest, WhenSettingKernelArgThenAddressToPatchIsSetCorrectlyAndSurfacesSet) {
     cl_mem memObj = buffer;
 
     retVal = clSetKernelArg(
@@ -289,7 +289,7 @@ TEST_F(BufferSetArgTest, clSetKernelArgBuffer) {
     }
 }
 
-TEST_F(BufferSetArgTest, clSetKernelArgSVMPointer) {
+TEST_F(BufferSetArgTest, GivenSvmPointerWhenSettingKernelArgThenAddressToPatchIsSetCorrectlyAndSurfacesSet) {
     REQUIRE_SVM_OR_SKIP(pDevice);
     void *ptrSVM = pContext->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, {});
     EXPECT_NE(nullptr, ptrSVM);
@@ -320,7 +320,7 @@ TEST_F(BufferSetArgTest, clSetKernelArgSVMPointer) {
     pContext->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
 }
 
-TEST_F(BufferSetArgTest, getKernelArgShouldReturnBuffer) {
+TEST_F(BufferSetArgTest, WhenGettingKernelArgThenBufferIsReturned) {
     cl_mem memObj = buffer;
 
     retVal = pKernel->setArg(
