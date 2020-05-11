@@ -10,12 +10,13 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mock_engine.h"
+#include "mock_sysfs_engine.h"
 
 using ::testing::_;
 using ::testing::DoAll;
 using ::testing::InSequence;
 using ::testing::Invoke;
+using ::testing::Matcher;
 using ::testing::NiceMock;
 using ::testing::Return;
 
@@ -36,29 +37,27 @@ ACTION_P(SetString_t, value) {
 class SysmanEngineFixture : public DeviceFixture, public ::testing::Test {
 
   protected:
-    SysmanImp *sysmanImp;
+    std::unique_ptr<SysmanImp> sysmanImp;
     zet_sysman_handle_t hSysman;
     zet_sysman_engine_handle_t hSysmanEngine;
+    Mock<EngineSysfsAccess> *pSysfsAccess = nullptr;
 
-    Mock<OsEngine> *pOsEngine;
-    EngineImp *pEngineImp;
-    const uint64_t activeTime = 2147483648u;
+    OsEngine *pOsEngine = nullptr;
+    PublicLinuxEngineImp linuxEngineImp;
+    EngineImp *pEngineImp = nullptr;
 
     void SetUp() override {
 
         DeviceFixture::SetUp();
-        sysmanImp = new SysmanImp(device->toHandle());
-        pOsEngine = new NiceMock<Mock<OsEngine>>;
+        sysmanImp = std::make_unique<SysmanImp>(device->toHandle());
+        pSysfsAccess = new NiceMock<Mock<EngineSysfsAccess>>;
+        linuxEngineImp.pSysfsAccess = pSysfsAccess;
+        pOsEngine = static_cast<OsEngine *>(&linuxEngineImp);
         pEngineImp = new EngineImp();
         pEngineImp->pOsEngine = pOsEngine;
-        ON_CALL(*pOsEngine, getEngineGroup(_))
-            .WillByDefault(DoAll(
-                SetEngGroup_t(ZET_ENGINE_GROUP_COMPUTE_ALL),
-                Return(ZE_RESULT_SUCCESS)));
-        ON_CALL(*pOsEngine, getActiveTime(_))
-            .WillByDefault(DoAll(
-                SetUint64_t(activeTime),
-                Return(ZE_RESULT_SUCCESS)));
+
+        ON_CALL(*pSysfsAccess, read(_, Matcher<std::string &>(_)))
+            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<EngineSysfsAccess>::getVal));
 
         pEngineImp->init();
         sysmanImp->pEngineHandleContext->handleList.push_back(pEngineImp);
@@ -67,10 +66,12 @@ class SysmanEngineFixture : public DeviceFixture, public ::testing::Test {
         hSysmanEngine = pEngineImp->toHandle();
     }
     void TearDown() override {
-        //pOsEngine will be deleted in pEngineImp destructor and pEngineImp will be deleted by sysmanImp destructor
-        if (sysmanImp != nullptr) {
-            delete sysmanImp;
-            sysmanImp = nullptr;
+        //pOsEngine is static_cast of LinuxEngineImp class , hence in cleanup assign to nullptr
+        pEngineImp->pOsEngine = nullptr;
+
+        if (pSysfsAccess != nullptr) {
+            delete pSysfsAccess;
+            pSysfsAccess = nullptr;
         }
         DeviceFixture::TearDown();
     }
@@ -106,45 +107,13 @@ TEST_F(SysmanEngineFixture, GivenValidEngineHandleWhenCallingZetSysmanEngineGetP
     EXPECT_EQ(ZET_ENGINE_GROUP_COMPUTE_ALL, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 }
-
-TEST_F(SysmanEngineFixture, GivenValidEngineHandleWhenCallingZetSysmanGetActivityThenVerifySysmanEngineGetActivityCallSucceeds) {
+TEST_F(SysmanEngineFixture, GivenValidEngineHandleWhenCallingZetSysmanGetActivityThenVerifySysmanEngineGetActivityCallReturnsUnsupportedErrorStatus) {
     zet_engine_stats_t Stats;
 
     ze_result_t result = zetSysmanEngineGetActivity(hSysmanEngine, &Stats);
 
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(activeTime, Stats.activeTime);
-    EXPECT_GT(Stats.timestamp, 0u);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-TEST_F(SysmanEngineFixture, whenCalllingGetEngineGroupWithNoValidGroupFileThenResultDifferentToSuccessIsRetured) {
-    auto engineImp = std::make_unique<WhiteBox<::L0::LinuxEngineImp>>();
-
-    Mock<SysfsAccess> sysfsAccess;
-    engineImp->pSysfsAccess = &sysfsAccess;
-
-    EXPECT_CALL(sysfsAccess, read(_, _))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_ERROR_UNKNOWN));
-
-    zet_engine_group_t engineGroup;
-    ze_result_t res = engineImp->getEngineGroup(engineGroup);
-    EXPECT_NE(ZE_RESULT_SUCCESS, res);
-}
-
-TEST_F(SysmanEngineFixture, whenCalllingGetEngineGroupWithValidGroupFileThenResultSuccessIsRetured) {
-    auto engineImp = std::make_unique<WhiteBox<::L0::LinuxEngineImp>>();
-
-    Mock<SysfsAccess> sysfsAccess;
-    engineImp->pSysfsAccess = &sysfsAccess;
-
-    zet_engine_group_t engineGroup;
-    EXPECT_CALL(sysfsAccess, read(_, _))
-        .Times(1)
-        .WillOnce(::testing::Invoke(&sysfsAccess, &Mock<SysfsAccess>::doRead));
-    ze_result_t res = engineImp->getEngineGroup(engineGroup);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(ZET_ENGINE_GROUP_COMPUTE_ALL, engineGroup);
-}
 } // namespace ult
 } // namespace L0

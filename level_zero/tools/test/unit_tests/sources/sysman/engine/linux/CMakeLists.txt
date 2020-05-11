@@ -9,6 +9,6 @@ if(UNIX)
         PRIVATE
            ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
            ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_engine.cpp
-           ${CMAKE_CURRENT_SOURCE_DIR}/mock_engine.h
+           ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysfs_engine.h
     )
 endif()

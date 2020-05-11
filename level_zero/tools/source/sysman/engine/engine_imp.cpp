@@ -52,6 +52,7 @@ EngineImp::EngineImp(OsSysman *pOsSysman) {
 EngineImp::~EngineImp() {
     if (nullptr != pOsEngine) {
         delete pOsEngine;
+        pOsEngine = nullptr;
     }
 }
 

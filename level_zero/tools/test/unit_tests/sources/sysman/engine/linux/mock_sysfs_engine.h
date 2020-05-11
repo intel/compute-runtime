@@ -24,33 +24,27 @@ using ::testing::_;
 namespace L0 {
 namespace ult {
 
-template <>
-struct Mock<OsEngine> : public OsEngine {
+const std::string computeEngineGroupFile("engine/rcs0/name");
 
-    Mock<OsEngine>() = default;
-
-    MOCK_METHOD1(getActiveTime, ze_result_t(uint64_t &activeTime));
-    MOCK_METHOD1(getEngineGroup, ze_result_t(zet_engine_group_t &engineGroup));
-};
+class EngineSysfsAccess : public SysfsAccess {};
 
 template <>
-struct Mock<SysfsAccess> : public SysfsAccess {
+struct Mock<EngineSysfsAccess> : public EngineSysfsAccess {
     MOCK_METHOD2(read, ze_result_t(const std::string file, std::string &val));
 
-    ze_result_t doRead(const std::string file, std::string &val) {
-        val = "rcs0";
+    ze_result_t getVal(const std::string file, std::string &val) {
+        if (file.compare(computeEngineGroupFile) == 0) {
+            val = "rcs0";
+        }
         return ZE_RESULT_SUCCESS;
     }
 
-    Mock<SysfsAccess>() = default;
+    Mock<EngineSysfsAccess>() = default;
 };
-
-template <>
-struct WhiteBox<::L0::LinuxEngineImp> : public ::L0::LinuxEngineImp {
-    using BaseClass = ::L0::LinuxEngineImp;
-    using BaseClass::pSysfsAccess;
+class PublicLinuxEngineImp : public L0::LinuxEngineImp {
+  public:
+    using LinuxEngineImp::pSysfsAccess;
 };
-
 } // namespace ult
 } // namespace L0
 
