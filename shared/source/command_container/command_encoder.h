@@ -31,6 +31,8 @@ struct EncodeDispatchKernel {
     static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
 
     static size_t estimateEncodeDispatchKernelCmdsSize(Device *device);
+
+    static void patchBindlessSurfaceStateOffsets(const size_t sshOffset, const KernelDescriptor &kernelDesc, uint8_t *crossThread);
 };
 
 template <typename GfxFamily>

@@ -309,6 +309,41 @@ void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &con
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(container.getIddBlock());
     return &interfaceDescriptorData[container.nextIddInBlock++];
 }
+
+template <typename Family>
+void EncodeDispatchKernel<Family>::patchBindlessSurfaceStateOffsets(const size_t sshOffset, const KernelDescriptor &kernelDesc, uint8_t *crossThread) {
+    auto &hwHelper = HwHelperHw<Family>::get();
+
+    for (const auto &argT : kernelDesc.payloadMappings.explicitArgs) {
+        CrossThreadDataOffset bindless = undefined<CrossThreadDataOffset>;
+        SurfaceStateHeapOffset bindful = undefined<SurfaceStateHeapOffset>;
+
+        switch (argT.type) {
+        case ArgDescriptor::ArgTPointer: {
+            auto &arg = argT.as<NEO::ArgDescPointer>();
+            bindless = arg.bindless;
+            bindful = arg.bindful;
+        } break;
+
+        case ArgDescriptor::ArgTImage: {
+            auto &arg = argT.as<NEO::ArgDescImage>();
+            bindless = arg.bindless;
+            bindful = arg.bindful;
+        } break;
+
+        default:
+            break;
+        }
+
+        if (NEO::isValidOffset(bindless)) {
+            auto patchLocation = ptrOffset(crossThread, bindless);
+            auto bindlessOffset = static_cast<uint32_t>(sshOffset) + bindful;
+            auto patchValue = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(bindlessOffset);
+            patchWithRequiredSize(patchLocation, sizeof(patchValue), patchValue);
+        }
+    }
+}
+
 template <typename Family>
 size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
     return 0;

@@ -37,6 +37,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     auto sizePerThreadDataForWholeGroup = dispatchInterface->getPerThreadDataSizeForWholeThreadGroup();
 
     LinearStream *listCmdBufferStream = container.getCommandStream();
+    size_t sshOffset = 0;
 
     size_t estimatedSizeRequired = estimateEncodeDispatchKernelCmdsSize(device);
     if (container.getCommandStream()->getAvailableSpace() < estimatedSizeRequired) {
@@ -76,6 +77,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
 
         if (bindingTableStateCount > 0u) {
             auto ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+            sshOffset = ssh->getUsed();
             bindingTablePointer = static_cast<uint32_t>(HardwareCommandsHelper<Family>::pushBindingTableAndSurfaceStates(
                 *ssh, bindingTableStateCount,
                 dispatchInterface->getSurfaceStateHeapData(),
@@ -138,6 +140,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
             void *gpuPtr = reinterpret_cast<void *>(heapIndirect->getHeapGpuBase() + heapIndirect->getUsed() - sizeThreadData);
             EncodeIndirectParams<Family>::setGroupCountIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups, gpuPtr);
             EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(container, kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize, gpuPtr, dispatchInterface->getGroupSize());
+        }
+
+        if (kernelDescriptor.payloadMappings.bindingTable.numEntries > 0) {
+            patchBindlessSurfaceStateOffsets(sshOffset, dispatchInterface->getKernelDescriptor(), reinterpret_cast<uint8_t *>(ptr));
         }
 
         ptr = ptrOffset(ptr, sizeCrossThreadData);
@@ -208,6 +214,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         *reinterpret_cast<MEDIA_STATE_FLUSH *>(mediaStateFlush) = Family::cmdInitMediaStateFlush;
     }
 }
+
 template <typename Family>
 void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &container) {
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
