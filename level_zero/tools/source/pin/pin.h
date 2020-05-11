@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/os_library.h"
+
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
@@ -13,7 +15,10 @@ namespace L0 {
 
 class PinContext {
   public:
-    static void init(ze_init_flag_t flag);
+    static void init(ze_init_flag_t flag, ze_result_t &result);
+
+  private:
+    static const std::string gtPinLibraryFilename;
 };
 
 } // namespace L0

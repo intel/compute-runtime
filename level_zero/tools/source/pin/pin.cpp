@@ -7,19 +7,43 @@
 
 #include "pin.h"
 
-#include "level_zero/core/source/module/module.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
+
 #include "level_zero/source/inc/ze_intel_gpu.h"
+
+#include "os_pin.h"
+
+const std::string gtPinOpenFunctionName = "OpenGTPin";
 
 namespace L0 {
 
-static PinContext *PinContextInstance = nullptr;
+void PinContext::init(ze_init_flag_t flag, ze_result_t &result) {
+    result = ZE_RESULT_SUCCESS;
 
-void PinContext::init(ze_init_flag_t flag) {
     if (!getenv_tobool("ZE_ENABLE_PROGRAM_INSTRUMENTATION")) {
         return;
     }
-    if (PinContextInstance == nullptr) {
-        PinContextInstance = new PinContext();
+
+    NEO::OsLibrary *hPin = NEO::OsLibrary::load(gtPinLibraryFilename.c_str());
+    if (hPin == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Unable to find gtpin library %s\n", gtPinLibraryFilename.c_str());
+        result = ZE_RESULT_ERROR_UNKNOWN;
+        return;
+    }
+
+    OpenGTPin_fn openGTPin = reinterpret_cast<OpenGTPin_fn>(hPin->getProcAddress(gtPinOpenFunctionName.c_str()));
+    if (openGTPin == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Unable to find gtpin library open function symbol %s\n", gtPinOpenFunctionName.c_str());
+        result = ZE_RESULT_ERROR_UNKNOWN;
+        return;
+    }
+
+    uint32_t openResult = openGTPin(nullptr);
+    if (openResult != 0) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "gtpin library open %s failed with status %u\n", gtPinOpenFunctionName.c_str(), openResult);
+        result = ZE_RESULT_ERROR_UNKNOWN;
+        return;
     }
 }
 

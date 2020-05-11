@@ -25,7 +25,10 @@ static void enableTools(ze_result_t &result, ze_init_flag_t flag, bool *ptoolsAr
         return;
     }
     SysmanHandleContext::init(flag);
-    PinContext::init(flag);
+    PinContext::init(flag, std::ref(result));
+    if (result != ZE_RESULT_SUCCESS) {
+        return;
+    }
     APITracerContextImp::apiTracingEnable(flag);
     *ptoolsAreEnabled = true;
 }
