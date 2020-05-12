@@ -102,6 +102,10 @@ void ClDevice::initializeCaps() {
         ocl21FeaturesEnabled = DebugManager.flags.ForceOCL21FeaturesSupport.get();
     }
     switch (enabledClVersion) {
+    case 30:
+        deviceInfo.clVersion = "OpenCL 3.0 NEO ";
+        deviceInfo.clCVersion = "OpenCL C 3.0 ";
+        break;
     case 21:
         deviceInfo.clVersion = "OpenCL 2.1 NEO ";
         deviceInfo.clCVersion = "OpenCL C 2.0 ";

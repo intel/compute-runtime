@@ -254,6 +254,16 @@ TEST_F(DeviceGetCapsTest, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedT
     }
 }
 
+TEST_F(DeviceGetCapsTest, givenForceOclVersion30WhenCapsAreCreatedThenDeviceReportsOpenCL30) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceOCLVersion.set(30);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    const auto &caps = device->getDeviceInfo();
+    EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
+    EXPECT_STREQ("OpenCL C 3.0 ", caps.clCVersion);
+    EXPECT_FALSE(device->ocl21FeaturesEnabled);
+}
+
 TEST_F(DeviceGetCapsTest, givenForceOclVersion21WhenCapsAreCreatedThenDeviceReportsOpenCL21) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceOCLVersion.set(21);
@@ -288,6 +298,14 @@ TEST_F(DeviceGetCapsTest, givenForceOCL21FeaturesSupportDisabledWhenCapsAreCreat
     DebugManager.flags.ForceOCL21FeaturesSupport.set(0);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     EXPECT_FALSE(device->ocl21FeaturesEnabled);
+}
+
+TEST_F(DeviceGetCapsTest, givenForceOcl30AndForceOCL21FeaturesSupportEnabledWhenCapsAreCreatedThenDeviceReportsSupportOfOcl21Features) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceOCLVersion.set(30);
+    DebugManager.flags.ForceOCL21FeaturesSupport.set(1);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    EXPECT_TRUE(device->ocl21FeaturesEnabled);
 }
 
 TEST_F(DeviceGetCapsTest, givenForceInvalidOclVersionWhenCapsAreCreatedThenDeviceWillDefaultToOpenCL12) {
