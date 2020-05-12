@@ -310,6 +310,13 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     auto gpuTimeStamp = queueTimeStamp.GPUTimeStamp;
 
     int64_t c0 = queueTimeStamp.CPUTimeinNS - hwHelper.getGpuTimeStampInNS(gpuTimeStamp, frequency);
+
+    startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
+    if (startTimeStamp < queueTimeStamp.CPUTimeinNS) {
+        c0 += static_cast<uint64_t>((1ULL << (hwHelper.getGlobalTimeStampBits())) * frequency);
+        startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
+    }
+
     /* calculation based on equation
        CpuTime = GpuTime * scalar + const( == c0)
        scalar = DeltaCpu( == dCpu) / DeltaGpu( == dGpu)
@@ -328,7 +335,6 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     cpuDuration = static_cast<uint64_t>(gpuDuration * frequency);
     cpuCompleteDuration = static_cast<uint64_t>(gpuCompleteDuration * frequency);
 
-    startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
     endTimeStamp = startTimeStamp + cpuDuration;
     completeTimeStamp = startTimeStamp + cpuCompleteDuration;
 

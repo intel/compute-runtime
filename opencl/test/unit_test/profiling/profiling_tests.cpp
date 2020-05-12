@@ -522,6 +522,48 @@ TEST(EventProfilingTest, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawData
     event.timeStampNode = nullptr;
 }
 
+TEST(EventProfilingTest, givenRawTimestampsDebugModeWhenStartTimeStampLTQueueTimeStampThenIncreaseStartTimeStamp) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ReturnRawGpuTimestamps.set(1);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MyOSTime::instanceNum = 0;
+    device->setOSTime(new MyOSTime());
+    EXPECT_EQ(1, MyOSTime::instanceNum);
+    MockContext context(device.get());
+    MockCommandQueue cmdQ(&context, device.get(), nullptr);
+    cmdQ.setProfilingEnabled();
+    cmdQ.device = device.get();
+
+    HwTimeStamps timestamp;
+    timestamp.GlobalStartTS = 0;
+    timestamp.ContextStartTS = 20;
+    timestamp.GlobalEndTS = 80;
+    timestamp.ContextEndTS = 56;
+    timestamp.GlobalCompleteTS = 0;
+    timestamp.ContextCompleteTS = 70;
+
+    MockTagNode<HwTimeStamps> timestampNode;
+    timestampNode.tagForCpuAccess = &timestamp;
+
+    MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
+    cl_event clEvent = &event;
+
+    event.queueTimeStamp.CPUTimeinNS = 83;
+    event.queueTimeStamp.GPUTimeStamp = 1;
+
+    event.setCPUProfilingPath(false);
+    event.timeStampNode = &timestampNode;
+    event.calcProfilingData();
+
+    cl_ulong queued, start;
+
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queued, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
+
+    EXPECT_LT(queued, start);
+    event.timeStampNode = nullptr;
+}
+
 struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::testing::Test {
     void SetUp() override {
         PerformanceCountersFixture::SetUp();

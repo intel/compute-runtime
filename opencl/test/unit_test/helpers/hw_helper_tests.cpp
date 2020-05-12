@@ -697,6 +697,11 @@ TEST(HwHelperCacheFlushTest, givenEnableCacheFlushFlagIsReadPlatformSettingWhenP
     EXPECT_TRUE(HwHelper::cacheFlushAfterWalkerSupported(device->getHardwareInfo()));
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenCallGetGlobalTimeStampBitsReturnsCorrectValue) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(helper.getGlobalTimeStampBits(), 36U);
+}
+
 TEST_F(HwHelperTest, givenEnableLocalMemoryDebugVarAndOsEnableLocalMemoryWhenSetThenGetEnableLocalMemoryReturnsCorrectValue) {
     DebugManagerStateRestore dbgRestore;
     VariableBackup<bool> orgOsEnableLocalMemory(&OSInterface::osEnableLocalMemory);
