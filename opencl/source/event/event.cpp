@@ -251,24 +251,43 @@ bool Event::calcProfilingData() {
     if (!dataCalculated && !profilingCpuPath) {
         if (timestampPacketContainer && timestampPacketContainer->peekNodes().size() > 0) {
             const auto timestamps = timestampPacketContainer->peekNodes();
+            auto isMultiOsContextCapable = this->getCommandQueue()->getGpgpuCommandStreamReceiver().isMultiOsContextCapable();
 
-            auto contextStartTS = timestamps[0]->tagForCpuAccess->packets[0].contextStart;
-            uint64_t contextEndTS = timestamps[0]->tagForCpuAccess->packets[0].contextEnd;
-            auto globalStartTS = timestamps[0]->tagForCpuAccess->packets[0].globalStart;
+            if (isMultiOsContextCapable) {
+                auto globalStartTS = timestamps[0]->tagForCpuAccess->packets[0].globalStart;
+                uint64_t globalEndTS = timestamps[0]->tagForCpuAccess->packets[0].globalEnd;
 
-            for (const auto &timestamp : timestamps) {
-                const auto &packet = timestamp->tagForCpuAccess->packets[0];
-                if (contextStartTS > packet.contextStart) {
-                    contextStartTS = packet.contextStart;
+                for (const auto &timestamp : timestamps) {
+                    for (auto i = 0u; i < timestamp->tagForCpuAccess->packetsUsed; ++i) {
+                        const auto &packet = timestamp->tagForCpuAccess->packets[i];
+                        if (globalStartTS > packet.globalStart) {
+                            globalStartTS = packet.globalStart;
+                        }
+                        if (globalEndTS < packet.globalEnd) {
+                            globalEndTS = packet.globalEnd;
+                        }
+                    }
                 }
-                if (contextEndTS < packet.contextEnd) {
-                    contextEndTS = packet.contextEnd;
+                calculateProfilingDataInternal(globalStartTS, globalEndTS, &globalEndTS, globalStartTS);
+            } else {
+                auto contextStartTS = timestamps[0]->tagForCpuAccess->packets[0].contextStart;
+                uint64_t contextEndTS = timestamps[0]->tagForCpuAccess->packets[0].contextEnd;
+                auto globalStartTS = timestamps[0]->tagForCpuAccess->packets[0].globalStart;
+
+                for (const auto &timestamp : timestamps) {
+                    const auto &packet = timestamp->tagForCpuAccess->packets[0];
+                    if (contextStartTS > packet.contextStart) {
+                        contextStartTS = packet.contextStart;
+                    }
+                    if (contextEndTS < packet.contextEnd) {
+                        contextEndTS = packet.contextEnd;
+                    }
+                    if (globalStartTS > packet.globalStart) {
+                        globalStartTS = packet.globalStart;
+                    }
                 }
-                if (globalStartTS > packet.globalStart) {
-                    globalStartTS = packet.globalStart;
-                }
+                calculateProfilingDataInternal(contextStartTS, contextEndTS, &contextEndTS, globalStartTS);
             }
-            calculateProfilingDataInternal(contextStartTS, contextEndTS, &contextEndTS, globalStartTS);
         } else if (timeStampNode) {
             calculateProfilingDataInternal(
                 timeStampNode->tagForCpuAccess->ContextStartTS,
