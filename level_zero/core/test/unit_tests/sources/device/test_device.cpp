@@ -301,23 +301,7 @@ TEST_F(MultipleDevicesDifferentFamilyAndLocalMemorySupportTest, givenTwoDevicesF
     EXPECT_FALSE(canAccess);
 }
 
-TEST_F(DeviceTest, givenHwInfoAndCopyOnlyFlagWhenCopyOnlyDebugFlagIsDefaultThenUseBliterIsFalse) {
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    Mock<L0::DeviceImp> l0Device(neoMockDevice, neoDevice->getExecutionEnvironment());
-    ze_command_list_desc_t desc = {};
-    desc.flags = ZE_COMMAND_LIST_FLAG_COPY_ONLY;
-    auto flag = ZE_COMMAND_LIST_FLAG_COPY_ONLY;
-    bool useBliter = true;
-    ze_result_t res = l0Device.isCreatedCommandListCopyOnly(&desc, &useBliter, flag);
-    EXPECT_FALSE(useBliter);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
-TEST_F(DeviceTest, givenHwInfoAndCopyOnlyFlagWhenCopyOnlyDebugFlagIsEnabledThenUseBliterIsTrue) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCopyOnlyCommandListsAndCommandQueues.set(true);
+TEST_F(DeviceTest, givenBlitterSupportAndCopyOnlyFlagWhenCopyOnlyDebugFlagIsDefaultThenUseBliterIsTrueAndSuccessIsReturned) {
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
@@ -331,9 +315,25 @@ TEST_F(DeviceTest, givenHwInfoAndCopyOnlyFlagWhenCopyOnlyDebugFlagIsEnabledThenU
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
-TEST_F(DeviceTest, givenHwInfoAndCopyOnlyFlagWhenCopyOnlyDebugFlagIsDisabledThenUseBliterIsFalse) {
+TEST_F(DeviceTest, givenBlitterSupportAndCopyOnlyFlagWhenCopyOnlyDebugFlagIsSetToZeroThenUseBliterIsFalseAndSuccessIsReturned) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCopyOnlyCommandListsAndCommandQueues.set(false);
+    DebugManager.flags.EnableCopyOnlyCommandListsAndCommandQueues.set(0);
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
+    Mock<L0::DeviceImp> l0Device(neoMockDevice, neoDevice->getExecutionEnvironment());
+    ze_command_list_desc_t desc = {};
+    desc.flags = ZE_COMMAND_LIST_FLAG_COPY_ONLY;
+    auto flag = ZE_COMMAND_LIST_FLAG_COPY_ONLY;
+    bool useBliter = true;
+    ze_result_t res = l0Device.isCreatedCommandListCopyOnly(&desc, &useBliter, flag);
+    EXPECT_FALSE(useBliter);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(DeviceTest, givenBlitterSupportAndCopyOnlyFlagWhenCopyOnlyDebugFlagIsSetToOneThenUseBliterIsTrueAndSuccessIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableCopyOnlyCommandListsAndCommandQueues.set(1);
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
@@ -343,7 +343,7 @@ TEST_F(DeviceTest, givenHwInfoAndCopyOnlyFlagWhenCopyOnlyDebugFlagIsDisabledThen
     auto flag = ZE_COMMAND_LIST_FLAG_COPY_ONLY;
     bool useBliter = false;
     ze_result_t res = l0Device.isCreatedCommandListCopyOnly(&desc, &useBliter, flag);
-    EXPECT_FALSE(useBliter);
+    EXPECT_TRUE(useBliter);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
