@@ -5,36 +5,9 @@
  *
  */
 
-#include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
-
-#include "level_zero/core/source/device/device.h"
-
-#include "sysman/linux/os_sysman_imp.h"
-#include "sysman/standby/os_standby.h"
-#include "sysman/standby/standby_imp.h"
+#include "level_zero/tools/source/sysman/standby/linux/os_standby_imp.h"
 
 namespace L0 {
-
-class LinuxStandbyImp : public OsStandby {
-  public:
-    ze_result_t getMode(zet_standby_promo_mode_t &mode) override;
-    ze_result_t setMode(zet_standby_promo_mode_t mode) override;
-
-    LinuxStandbyImp(OsSysman *pOsSysman);
-    ~LinuxStandbyImp() override = default;
-
-    // Don't allow copies of the LinuxStandbyImp object
-    LinuxStandbyImp(const LinuxStandbyImp &obj) = delete;
-    LinuxStandbyImp &operator=(const LinuxStandbyImp &obj) = delete;
-
-  private:
-    SysfsAccess *pSysfsAccess;
-
-    static const std::string standbyModeFile;
-    static const int standbyModeDefault = 1;
-    static const int standbyModeNever = 0;
-};
 
 const std::string LinuxStandbyImp::standbyModeFile("power/rc6_enable");
 
