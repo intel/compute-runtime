@@ -49,6 +49,7 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
         BufferObject *bo = nullptr;
         if (forcePinEnabled || validateHostPtrMemory) {
             auto cpuAddrBo = alignedMallocWrapper(MemoryConstants::pageSize, MemoryConstants::pageSize);
+            UNRECOVERABLE_IF(cpuAddrBo == nullptr);
             // Preprogram the Bo with MI_BATCH_BUFFER_END and MI_NOOP. This BO will be used as the last BB in a series to indicate the end of submission.
             reinterpret_cast<uint32_t *>(cpuAddrBo)[0] = 0x05000000; // MI_BATCH_BUFFER_END
             reinterpret_cast<uint32_t *>(cpuAddrBo)[1] = 0;          // MI_NOOP
