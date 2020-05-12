@@ -374,4 +374,9 @@ const StackVec<size_t, 3> HwHelperHw<GfxFamily>::getDeviceSubGroupSizes() const 
     return {8, 16, 32};
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isSystemMemoryRequired(const HardwareInfo &hwInfo, GraphicsAllocation::AllocationType allocationType) const {
+    return false;
+}
+
 } // namespace NEO
