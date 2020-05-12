@@ -341,7 +341,7 @@ inline bool HwHelperHw<GfxFamily>::isFusedEuDispatchEnabled(const HardwareInfo &
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo) const {
+inline bool HwHelperHw<GfxFamily>::isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const {
     return false;
 }
 
