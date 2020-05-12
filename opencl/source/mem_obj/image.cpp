@@ -39,7 +39,11 @@
 
 namespace NEO {
 
-ImageFuncs imageFactory[IGFX_MAX_CORE] = {};
+ImageFactoryFuncs imageFactory[IGFX_MAX_CORE] = {};
+
+namespace ImageFunctions {
+ValidateAndCreateImageFunc validateAndCreateImage = Image::validateAndCreateImage;
+} // namespace ImageFunctions
 
 Image::Image(Context *context,
              const MemoryProperties &memoryProperties,
@@ -1110,8 +1114,8 @@ bool Image::isDepthFormat(const cl_image_format &imageFormat) {
     return imageFormat.image_channel_order == CL_DEPTH || imageFormat.image_channel_order == CL_DEPTH_STENCIL;
 }
 
-Image *Image::validateAndCreateImage(Context *context,
-                                     const MemoryProperties &memoryProperties,
+cl_mem Image::validateAndCreateImage(cl_context context,
+                                     const cl_mem_properties *properties,
                                      cl_mem_flags flags,
                                      cl_mem_flags_intel flagsIntel,
                                      const cl_image_format *imageFormat,
@@ -1119,8 +1123,28 @@ Image *Image::validateAndCreateImage(Context *context,
                                      const void *hostPtr,
                                      cl_int &errcodeRet) {
 
-    if (!MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, imageDesc->mem_object, *context)) {
+    Context *pContext = nullptr;
+    errcodeRet = validateObjects(WithCastToInternal(context, &pContext));
+    if (errcodeRet != CL_SUCCESS) {
+        return nullptr;
+    }
+
+    cl_mem_alloc_flags_intel allocflags = 0;
+    MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, allocflags);
+    if ((false == isFieldValid(flags, MemObjHelper::validFlagsForImage)) ||
+        (false == MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, imageDesc->mem_object, *pContext))) {
         errcodeRet = CL_INVALID_VALUE;
+        return nullptr;
+    }
+
+    if (false == MemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                               MemoryPropertiesHelper::ObjType::IMAGE, *pContext)) {
+        errcodeRet = CL_INVALID_PROPERTY;
+        return nullptr;
+    }
+
+    if (!MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, imageDesc->mem_object, *pContext)) {
+        errcodeRet = CL_INVALID_PROPERTY;
         return nullptr;
     }
 
@@ -1136,14 +1160,14 @@ Image *Image::validateAndCreateImage(Context *context,
         return nullptr;
     }
 
-    const auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    const auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, imageFormat, pContext->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
 
-    errcodeRet = Image::validate(context, memoryProperties, surfaceFormat, imageDesc, hostPtr);
+    errcodeRet = Image::validate(pContext, memoryProperties, surfaceFormat, imageDesc, hostPtr);
     if (errcodeRet != CL_SUCCESS) {
         return nullptr;
     }
 
-    return Image::create(context, memoryProperties, flags, flagsIntel, surfaceFormat, imageDesc, hostPtr, errcodeRet);
+    return Image::create(pContext, memoryProperties, flags, flagsIntel, surfaceFormat, imageDesc, hostPtr, errcodeRet);
 }
 
 bool Image::isValidSingleChannelFormat(const cl_image_format *imageFormat) {

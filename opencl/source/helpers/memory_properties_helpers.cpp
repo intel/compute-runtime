@@ -16,23 +16,22 @@ void MemoryPropertiesHelper::addExtraMemoryProperties(MemoryProperties &properti
 bool MemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
                                                    cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
                                                    cl_mem_alloc_flags_intel &allocflags, ObjType objectType, Context &context) {
-    if (properties == nullptr) {
-        return true;
-    }
 
-    for (int i = 0; properties[i] != 0; i += 2) {
-        switch (properties[i]) {
-        case CL_MEM_FLAGS:
-            flags |= static_cast<cl_mem_flags>(properties[i + 1]);
-            break;
-        case CL_MEM_FLAGS_INTEL:
-            flagsIntel |= static_cast<cl_mem_flags_intel>(properties[i + 1]);
-            break;
-        case CL_MEM_ALLOC_FLAGS_INTEL:
-            allocflags |= static_cast<cl_mem_alloc_flags_intel>(properties[i + 1]);
-            break;
-        default:
-            return false;
+    if (properties != nullptr) {
+        for (int i = 0; properties[i] != 0; i += 2) {
+            switch (properties[i]) {
+            case CL_MEM_FLAGS:
+                flags |= static_cast<cl_mem_flags>(properties[i + 1]);
+                break;
+            case CL_MEM_FLAGS_INTEL:
+                flagsIntel |= static_cast<cl_mem_flags_intel>(properties[i + 1]);
+                break;
+            case CL_MEM_ALLOC_FLAGS_INTEL:
+                allocflags |= static_cast<cl_mem_alloc_flags_intel>(properties[i + 1]);
+                break;
+            default:
+                return false;
+            }
         }
     }
 

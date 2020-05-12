@@ -988,6 +988,24 @@ typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clSetProgramSpecializationConsta
     size_t specSize,
     const void *specValue) CL_API_SUFFIX__VERSION_2_2;
 
+/*OpenCL3.0*/
+typedef CL_API_ENTRY cl_mem(CL_API_CALL *KHRpfn_clCreateBufferWithProperties)(
+    cl_context context,
+    const cl_mem_properties *properties,
+    cl_mem_flags flags,
+    size_t size,
+    void *hostPtr,
+    cl_int *errcodeRet) CL_API_SUFFIX__VERSION_3_0;
+
+typedef CL_API_ENTRY cl_mem(CL_API_CALL *KHRpfn_clCreateImageWithProperties)(
+    cl_context context,
+    const cl_mem_properties *properties,
+    cl_mem_flags flags,
+    const cl_image_format *imageFormat,
+    const cl_image_desc *imageDesc,
+    void *hostPtr,
+    cl_int *errcodeRet) CL_API_SUFFIX__VERSION_3_0;
+
 /* clCreateImage */
 
 typedef CL_API_ENTRY cl_int(CL_API_CALL *INTELpfn_clGetImageParamsINTEL)(
@@ -1255,6 +1273,10 @@ struct SDispatchTable {
     /* OpenCL 2.2 */
     KHRpfn_clSetProgramReleaseCallback clSetProgramReleaseCallback;
     KHRpfn_clSetProgramSpecializationConstant clSetProgramSpecializationConstant;
+
+    /* OpenCL 3.0 */
+    KHRpfn_clCreateBufferWithProperties clCreateBufferWithProperties;
+    KHRpfn_clCreateImageWithProperties clCreateImageWithProperties;
 };
 
 struct SCRTDispatchTable {

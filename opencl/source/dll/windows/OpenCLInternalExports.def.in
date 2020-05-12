@@ -134,6 +134,8 @@ clGetKernelSubGroupInfo
 clSetDefaultDeviceCommandQueue
 clSetProgramReleaseCallback
 clSetProgramSpecializationConstant
+clCreateBufferWithProperties
+clCreateImageWithProperties
 clGetKernelArgInfo
 clGetImageParamsINTEL
 clCreatePerfCountersCommandQueueINTEL

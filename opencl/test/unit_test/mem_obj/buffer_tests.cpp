@@ -1989,7 +1989,7 @@ TEST_P(NoHostPtr, ValidFlags) {
 }
 
 TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
-    BufferFuncs BufferFuncsBackup[IGFX_MAX_CORE];
+    BufferFactoryFuncs BufferFuncsBackup[IGFX_MAX_CORE];
 
     for (uint32_t i = 0; i < IGFX_MAX_CORE; i++) {
         BufferFuncsBackup[i] = bufferFactory[i];

@@ -8,6 +8,6 @@
 template class ImageHw<Family>;
 template <>
 void populateFactoryTable<ImageHw<Family>>() {
-    extern ImageFuncs imageFactory[IGFX_MAX_CORE];
+    extern ImageFactoryFuncs imageFactory[IGFX_MAX_CORE];
     imageFactory[gfxCore].createImageFunction = ImageHw<Family>::create;
 }

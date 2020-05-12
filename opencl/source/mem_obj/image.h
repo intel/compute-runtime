@@ -19,25 +19,37 @@ class Image;
 struct KernelInfo;
 struct SurfaceFormatInfo;
 
-typedef Image *(*ImageCreatFunc)(Context *context,
-                                 const MemoryProperties &memoryProperties,
-                                 uint64_t flags,
-                                 uint64_t flagsIntel,
-                                 size_t size,
-                                 void *hostPtr,
-                                 const cl_image_format &imageFormat,
-                                 const cl_image_desc &imageDesc,
-                                 bool zeroCopy,
-                                 GraphicsAllocation *graphicsAllocation,
-                                 bool isImageRedescribed,
-                                 uint32_t baseMipLevel,
-                                 uint32_t mipCount,
-                                 const ClSurfaceFormatInfo *surfaceFormatInfo,
-                                 const SurfaceOffsets *surfaceOffsets);
+using ImageCreatFunc = Image *(*)(Context *context,
+                                  const MemoryProperties &memoryProperties,
+                                  uint64_t flags,
+                                  uint64_t flagsIntel,
+                                  size_t size,
+                                  void *hostPtr,
+                                  const cl_image_format &imageFormat,
+                                  const cl_image_desc &imageDesc,
+                                  bool zeroCopy,
+                                  GraphicsAllocation *graphicsAllocation,
+                                  bool isImageRedescribed,
+                                  uint32_t baseMipLevel,
+                                  uint32_t mipCount,
+                                  const ClSurfaceFormatInfo *surfaceFormatInfo,
+                                  const SurfaceOffsets *surfaceOffsets);
 
-typedef struct {
+struct ImageFactoryFuncs {
     ImageCreatFunc createImageFunction;
-} ImageFuncs;
+};
+
+namespace ImageFunctions {
+using ValidateAndCreateImageFunc = std::function<cl_mem(cl_context context,
+                                                        const uint64_t *properties,
+                                                        uint64_t flags,
+                                                        uint64_t flagsIntel,
+                                                        const cl_image_format *imageFormat,
+                                                        const cl_image_desc *imageDesc,
+                                                        const void *hostPtr,
+                                                        int32_t &errcodeRet)>;
+extern ValidateAndCreateImageFunc validateAndCreateImage;
+} // namespace ImageFunctions
 
 class Image : public MemObj {
   public:
@@ -55,8 +67,8 @@ class Image : public MemObj {
                          const void *hostPtr,
                          cl_int &errcodeRet);
 
-    static Image *validateAndCreateImage(Context *context,
-                                         const MemoryProperties &memoryProperties,
+    static cl_mem validateAndCreateImage(cl_context context,
+                                         const cl_mem_properties *properties,
                                          cl_mem_flags flags,
                                          cl_mem_flags_intel flagsIntel,
                                          const cl_image_format *imageFormat,
@@ -352,4 +364,5 @@ class ImageHw : public Image {
     }
     typename RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType;
 };
+
 } // namespace NEO

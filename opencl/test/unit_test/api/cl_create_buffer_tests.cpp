@@ -83,7 +83,7 @@ TEST_P(clCreateBufferInvalidFlagsTests, GivenInvalidFlagsWhenCreatingBufferThenB
 
     buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
     EXPECT_EQ(nullptr, buffer);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
 };
 
 cl_mem_flags invalidFlags[] = {
@@ -132,7 +132,7 @@ TEST_P(clCreateBufferInvalidFlagsIntelTests, GivenInvalidFlagsIntelWhenCreatingB
 
     auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
     EXPECT_EQ(nullptr, buffer);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
 };
 
 cl_mem_flags invalidFlagsIntel[] = {
@@ -151,7 +151,7 @@ TEST_F(clCreateBufferInvalidProperties, GivenInvalidPropertyKeyWhenCreatingBuffe
 
     auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
     EXPECT_EQ(nullptr, buffer);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
 };
 
 TEST_F(clCreateBufferTests, GivenValidParametersWhenCreatingBufferThenSuccessIsReturned) {
@@ -287,6 +287,70 @@ TEST_F(clCreateBufferTests, GivenNullHostPointerAndMemCopyHostPtrFlagWhenCreatin
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clCreateBufferTests, WhenCreatingBufferWithPropertiesThenParametersAreCorrectlyPassed) {
+    VariableBackup<BufferFunctions::ValidateInputAndCreateBufferFunc> bufferCreateBackup{&BufferFunctions::validateInputAndCreateBuffer};
+
+    cl_context context = pContext;
+    cl_mem_properties *propertiesValues[] = {nullptr, reinterpret_cast<cl_mem_properties *>(0x1234)};
+    cl_mem_flags flagsValues[] = {0, 4321};
+    size_t bufferSize = 128;
+    void *pHostMem = reinterpret_cast<void *>(0x8000);
+
+    for (auto properties : propertiesValues) {
+        for (auto flags : flagsValues) {
+            auto mockFunction = [context, properties, flags, bufferSize, pHostMem](cl_context contextArg,
+                                                                                   const cl_mem_properties *propertiesArg,
+                                                                                   cl_mem_flags flagsArg,
+                                                                                   cl_mem_flags_intel flagsIntelArg,
+                                                                                   size_t sizeArg,
+                                                                                   void *hostPtrArg,
+                                                                                   cl_int &retValArg) -> cl_mem {
+                cl_mem_flags_intel expectedFlagsIntelArg = 0;
+
+                EXPECT_EQ(context, contextArg);
+                EXPECT_EQ(properties, propertiesArg);
+                EXPECT_EQ(flags, flagsArg);
+                EXPECT_EQ(expectedFlagsIntelArg, flagsIntelArg);
+                EXPECT_EQ(bufferSize, sizeArg);
+                EXPECT_EQ(pHostMem, hostPtrArg);
+
+                return nullptr;
+            };
+            bufferCreateBackup = mockFunction;
+            clCreateBufferWithProperties(context, properties, flags, bufferSize, pHostMem, nullptr);
+        }
+    }
+}
+
+TEST_F(clCreateBufferTests, WhenCreatingBufferWithPropertiesThenErrorCodeIsCorrectlySet) {
+    VariableBackup<BufferFunctions::ValidateInputAndCreateBufferFunc> bufferCreateBackup{&BufferFunctions::validateInputAndCreateBuffer};
+
+    cl_mem_properties *properties = nullptr;
+    cl_mem_flags flags = 0;
+    size_t bufferSize = 128;
+    void *pHostMem = nullptr;
+    cl_int errcodeRet;
+
+    cl_int retValues[] = {CL_SUCCESS, CL_INVALID_PROPERTY};
+
+    for (auto retValue : retValues) {
+        auto mockFunction = [retValue](cl_context contextArg,
+                                       const cl_mem_properties *propertiesArg,
+                                       cl_mem_flags flagsArg,
+                                       cl_mem_flags_intel flagsIntelArg,
+                                       size_t sizeArg,
+                                       void *hostPtrArg,
+                                       cl_int &retValArg) -> cl_mem {
+            retValArg = retValue;
+
+            return nullptr;
+        };
+        bufferCreateBackup = mockFunction;
+        clCreateBufferWithProperties(pContext, properties, flags, bufferSize, pHostMem, &errcodeRet);
+        EXPECT_EQ(retValue, errcodeRet);
+    }
 }
 
 using clCreateBufferTestsWithRestrictions = api_test_using_aligned_memory_manager;

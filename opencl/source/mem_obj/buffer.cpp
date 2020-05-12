@@ -13,6 +13,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -32,7 +33,11 @@
 
 namespace NEO {
 
-BufferFuncs bufferFactory[IGFX_MAX_CORE] = {};
+BufferFactoryFuncs bufferFactory[IGFX_MAX_CORE] = {};
+
+namespace BufferFunctions {
+ValidateInputAndCreateBufferFunc validateInputAndCreateBuffer = Buffer::validateInputAndCreateBuffer;
+} // namespace BufferFunctions
 
 Buffer::Buffer(Context *context,
                MemoryProperties memoryProperties,
@@ -85,38 +90,57 @@ bool Buffer::isValidSubBufferOffset(size_t offset) {
     return false;
 }
 
-void Buffer::validateInputAndCreateBuffer(Context &context,
-                                          MemoryProperties memoryProperties,
-                                          cl_mem_flags flags,
-                                          cl_mem_flags_intel flagsIntel,
-                                          size_t size,
-                                          void *hostPtr,
-                                          cl_int &retVal,
-                                          cl_mem &buffer) {
+cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
+                                            const cl_mem_properties *properties,
+                                            cl_mem_flags flags,
+                                            cl_mem_flags_intel flagsIntel,
+                                            size_t size,
+                                            void *hostPtr,
+                                            cl_int &retVal) {
 
-    if (!MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, context)) {
-        retVal = CL_INVALID_VALUE;
-        return;
+    Context *pContext = nullptr;
+    retVal = validateObjects(WithCastToInternal(context, &pContext));
+    if (retVal != CL_SUCCESS) {
+        return nullptr;
     }
 
-    auto pDevice = context.getDevice(0);
+    MemoryProperties memoryProperties{};
+    if ((false == isFieldValid(flags, MemObjHelper::validFlagsForBuffer)) ||
+        (false == MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, *pContext))) {
+        retVal = CL_INVALID_VALUE;
+        return nullptr;
+    }
+
+    cl_mem_alloc_flags_intel allocflags = 0;
+    if (false == MemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                               MemoryPropertiesHelper::ObjType::BUFFER, *pContext)) {
+        retVal = CL_INVALID_PROPERTY;
+        return nullptr;
+    }
+
+    if (!MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, *pContext)) {
+        retVal = CL_INVALID_PROPERTY;
+        return nullptr;
+    }
+
+    auto pDevice = pContext->getDevice(0);
     bool allowCreateBuffersWithUnrestrictedSize = isValueSet(flags, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL) ||
                                                   isValueSet(flagsIntel, CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL);
 
     if (size == 0 || (size > pDevice->getHardwareCapabilities().maxMemAllocSize && !allowCreateBuffersWithUnrestrictedSize)) {
         retVal = CL_INVALID_BUFFER_SIZE;
-        return;
+        return nullptr;
     }
 
     /* Check the host ptr and data */
     bool expectHostPtr = (flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) != 0;
     if ((hostPtr == nullptr) == expectHostPtr) {
         retVal = CL_INVALID_HOST_PTR;
-        return;
+        return nullptr;
     }
 
     // create the buffer
-    buffer = create(&context, memoryProperties, flags, flagsIntel, size, hostPtr, retVal);
+    return create(pContext, memoryProperties, flags, flagsIntel, size, hostPtr, retVal);
 }
 
 Buffer *Buffer::create(Context *context,

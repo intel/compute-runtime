@@ -9,6 +9,7 @@
 #include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/context/context.h"
+#include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -396,6 +397,74 @@ TEST_F(clCreateImageTest, GivenNullContextWhenCreatingImageThenInvalidContextErr
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
+TEST_F(clCreateImageTest, WhenCreatingImageWithPropertiesThenParametersAreCorrectlyPassed) {
+    VariableBackup<ImageFunctions::ValidateAndCreateImageFunc> imageCreateBackup{&ImageFunctions::validateAndCreateImage};
+
+    cl_context context = pContext;
+    cl_mem_properties *propertiesValues[] = {nullptr, reinterpret_cast<cl_mem_properties *>(0x1234)};
+    cl_mem_flags flagsValues[] = {0, 4321};
+    cl_image_format imageFormat = this->imageFormat;
+    cl_image_desc imageDesc = this->imageDesc;
+    void *pHostMem = reinterpret_cast<void *>(0x8000);
+
+    for (auto properties : propertiesValues) {
+        for (auto flags : flagsValues) {
+
+            auto mockFunction = [context, properties, flags, &imageFormat, &imageDesc, pHostMem](cl_context contextArg,
+                                                                                                 const cl_mem_properties *propertiesArg,
+                                                                                                 cl_mem_flags flagsArg,
+                                                                                                 cl_mem_flags_intel flagsIntelArg,
+                                                                                                 const cl_image_format *imageFormatArg,
+                                                                                                 const cl_image_desc *imageDescArg,
+                                                                                                 const void *hostPtrArg,
+                                                                                                 cl_int &errcodeRetArg) -> cl_mem {
+                cl_mem_flags_intel expectedFlagsIntelArg = 0;
+
+                EXPECT_EQ(context, contextArg);
+                EXPECT_EQ(properties, propertiesArg);
+                EXPECT_EQ(flags, flagsArg);
+                EXPECT_EQ(expectedFlagsIntelArg, flagsIntelArg);
+                EXPECT_EQ(&imageFormat, imageFormatArg);
+                EXPECT_EQ(&imageDesc, imageDescArg);
+                EXPECT_EQ(pHostMem, hostPtrArg);
+
+                return nullptr;
+            };
+            imageCreateBackup = mockFunction;
+            clCreateImageWithProperties(context, properties, flags, &imageFormat, &imageDesc, pHostMem, nullptr);
+        }
+    }
+}
+
+TEST_F(clCreateImageTest, WhenCreatingImageWithPropertiesThenErrorCodeIsCorrectlySet) {
+    VariableBackup<ImageFunctions::ValidateAndCreateImageFunc> imageCreateBackup{&ImageFunctions::validateAndCreateImage};
+
+    cl_mem_properties *properties = nullptr;
+    cl_mem_flags flags = 0;
+    void *pHostMem = nullptr;
+    cl_int errcodeRet;
+
+    cl_int retValues[] = {CL_SUCCESS, CL_INVALID_PROPERTY};
+
+    for (auto retValue : retValues) {
+        auto mockFunction = [retValue](cl_context contextArg,
+                                       const cl_mem_properties *propertiesArg,
+                                       cl_mem_flags flagsArg,
+                                       cl_mem_flags_intel flagsIntelArg,
+                                       const cl_image_format *imageFormatArg,
+                                       const cl_image_desc *imageDescArg,
+                                       const void *hostPtrArg,
+                                       cl_int &errcodeRetArg) -> cl_mem {
+            errcodeRetArg = retValue;
+
+            return nullptr;
+        };
+        imageCreateBackup = mockFunction;
+        clCreateImageWithProperties(pContext, properties, flags, &imageFormat, &imageDesc, pHostMem, &errcodeRet);
+        EXPECT_EQ(retValue, errcodeRet);
+    }
+}
+
 typedef clCreateImageTests<::testing::Test> clCreateImageTestYUV;
 TEST_F(clCreateImageTestYUV, GivenInvalidGlagWhenCreatingYuvImageThenInvalidValueErrorIsReturned) {
     imageFormat.image_channel_order = CL_YUYV_INTEL;
@@ -511,6 +580,19 @@ TEST_P(clCreateImageInvalidFlags, GivenInvalidFlagsCombinationsWhenCreatingImage
         &retVal);
 
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, image);
+
+    cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, flags, 0};
+
+    image = clCreateImageWithPropertiesINTEL(
+        pContext,
+        properties,
+        &imageFormat,
+        &imageDesc,
+        ptr,
+        &retVal);
+
+    ASSERT_EQ(CL_INVALID_PROPERTY, retVal);
     EXPECT_EQ(nullptr, image);
 
     retVal = clReleaseMemObject(image);
@@ -869,7 +951,7 @@ TEST_F(clCreateImageWithPropertiesINTELTest, GivenInvalidPropertyKeyWhenCreating
         &retVal);
 
     EXPECT_EQ(nullptr, image);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
 }
 
 typedef clCreateImageTests<::testing::Test> clCreateImageFromImageTest;

@@ -16,29 +16,42 @@
 #include "igfxfmid.h"
 #include "memory_properties_flags.h"
 
+#include <functional>
+
 namespace NEO {
 class Device;
 class Buffer;
 class ClDevice;
 class MemoryManager;
 
-typedef Buffer *(*BufferCreatFunc)(Context *context,
-                                   MemoryProperties memoryProperties,
-                                   cl_mem_flags flags,
-                                   cl_mem_flags_intel flagsIntel,
-                                   size_t size,
-                                   void *memoryStorage,
-                                   void *hostPtr,
-                                   GraphicsAllocation *gfxAllocation,
-                                   bool zeroCopy,
-                                   bool isHostPtrSVM,
-                                   bool isImageRedescribed);
+using BufferCreatFunc = Buffer *(*)(Context *context,
+                                    MemoryProperties memoryProperties,
+                                    cl_mem_flags flags,
+                                    cl_mem_flags_intel flagsIntel,
+                                    size_t size,
+                                    void *memoryStorage,
+                                    void *hostPtr,
+                                    GraphicsAllocation *gfxAllocation,
+                                    bool zeroCopy,
+                                    bool isHostPtrSVM,
+                                    bool isImageRedescribed);
 
-typedef struct {
+struct BufferFactoryFuncs {
     BufferCreatFunc createBufferFunction;
-} BufferFuncs;
+};
 
-extern BufferFuncs bufferFactory[IGFX_MAX_CORE];
+extern BufferFactoryFuncs bufferFactory[IGFX_MAX_CORE];
+
+namespace BufferFunctions {
+using ValidateInputAndCreateBufferFunc = std::function<cl_mem(cl_context context,
+                                                              const uint64_t *properties,
+                                                              uint64_t flags,
+                                                              uint64_t flagsIntel,
+                                                              size_t size,
+                                                              void *hostPtr,
+                                                              int32_t &retVal)>;
+extern ValidateInputAndCreateBufferFunc validateInputAndCreateBuffer;
+} // namespace BufferFunctions
 
 class Buffer : public MemObj {
   public:
@@ -49,14 +62,13 @@ class Buffer : public MemObj {
 
     ~Buffer() override;
 
-    static void validateInputAndCreateBuffer(Context &context,
-                                             MemoryProperties memoryProperties,
-                                             cl_mem_flags flags,
-                                             cl_mem_flags_intel flagsIntel,
-                                             size_t size,
-                                             void *hostPtr,
-                                             cl_int &retVal,
-                                             cl_mem &buffer);
+    static cl_mem validateInputAndCreateBuffer(cl_context context,
+                                               const cl_mem_properties *properties,
+                                               cl_mem_flags flags,
+                                               cl_mem_flags_intel flagsIntel,
+                                               size_t size,
+                                               void *hostPtr,
+                                               cl_int &retVal);
 
     static Buffer *create(Context *context,
                           cl_mem_flags flags,
@@ -224,4 +236,5 @@ class BufferHw : public Buffer {
     typedef typename GfxFamily::RENDER_SURFACE_STATE SURFACE_STATE;
     typename SURFACE_STATE::SURFACE_TYPE surfaceType;
 };
+
 } // namespace NEO

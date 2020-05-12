@@ -16,7 +16,7 @@
 #include "test.h"
 
 namespace NEO {
-extern ImageFuncs imageFactory[IGFX_MAX_CORE];
+extern ImageFactoryFuncs imageFactory[IGFX_MAX_CORE];
 
 struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
     template <typename T>

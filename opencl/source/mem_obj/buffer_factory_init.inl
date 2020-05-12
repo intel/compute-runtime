@@ -7,6 +7,6 @@
 
 template <>
 void populateFactoryTable<BufferHw<Family>>() {
-    extern BufferFuncs bufferFactory[IGFX_MAX_CORE];
+    extern BufferFactoryFuncs bufferFactory[IGFX_MAX_CORE];
     bufferFactory[gfxCore].createBufferFunction = BufferHw<Family>::create;
 }
