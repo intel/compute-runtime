@@ -41,13 +41,15 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         regReader->forceRetValue = forceReturnPreemptionRegKeyValue;
         auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoTest);
         wddm->init();
-        auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+        hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+        ASSERT_NE(nullptr, hwInfo);
         auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
         osContext = std::make_unique<OsContextWin>(*wddm, 0u, 1, engine, preemptionMode, false, false, false);
     }
 
     DebugManagerStateRestore *dbgRestorer = nullptr;
     HardwareInfo hwInfoTest;
+    const HardwareInfo *hwInfo = nullptr;
 };
 
 TEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOn) {
@@ -101,4 +103,17 @@ TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagForcePreemptio
     createAndInitWddm(0u);
     EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
     EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
+}
+
+TEST_F(WddmPreemptionTests, whenFlagToOverridePreemptionSurfaceSizeIsSetThenSurfaceSizeIsChanged) {
+    DebugManagerStateRestore restore;
+    uint32_t expectedValue = 123;
+    DebugManager.flags.OverridePreemptionSurfaceSizeInMb.set(expectedValue);
+    createAndInitWddm(0u);
+    EXPECT_EQ(expectedValue, hwInfo->gtSystemInfo.CsrSizeInMb);
+}
+
+TEST_F(WddmPreemptionTests, whenFlagToOverridePreemptionSurfaceSizeIsNotSetThenSurfaceSizeIsNotChanged) {
+    createAndInitWddm(0u);
+    EXPECT_EQ(wddm->getGtSysInfo()->CsrSizeInMb, hwInfo->gtSystemInfo.CsrSizeInMb);
 }
