@@ -123,7 +123,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
     void setPreemptionAllocation(GraphicsAllocation *allocation) { this->preemptionAllocation = allocation; }
 
-    void downloadAllocation(GraphicsAllocation &gfxAllocation) override {
+    void downloadAllocations() override {
         downloadAllocationCalled = true;
     }
 

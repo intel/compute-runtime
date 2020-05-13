@@ -446,6 +446,23 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForCompletionWithT
     EXPECT_TRUE(tbxCsr.flushBatchedSubmissionsCalled);
 }
 
+HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenDownloadAllocatoinsCalledThenTagAndScheduledAllocationsAreDownloadedButNotRemovedFromContainer) {
+    MockTbxCsrRegisterDownloadedAllocations<FamilyType> tbxCsr{*pDevice->executionEnvironment, pDevice->getRootDeviceIndex()};
+    MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    uint32_t tag = 0u;
+    tbxCsr.setupContext(osContext);
+    tbxCsr.setTagAllocation(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), false, sizeof(tag)}, &tag));
+
+    MockGraphicsAllocation allocation1, allocation2, allocation3;
+    tbxCsr.allocationsForDownload = {&allocation1, &allocation2, &allocation3};
+
+    tbxCsr.downloadAllocations();
+
+    std::set<GraphicsAllocation *> expectedDownloadedAllocations = {tbxCsr.getTagAllocation(), &allocation1, &allocation2, &allocation3};
+    EXPECT_EQ(expectedDownloadedAllocations, tbxCsr.downloadedAllocations);
+    EXPECT_EQ(3u, tbxCsr.allocationsForDownload.size());
+}
+
 HWTEST_F(TbxCommandSteamSimpleTest, whenTbxCommandStreamReceiverIsCreatedThenPPGTTAndGGTTCreatedHavePhysicalAddressAllocatorSet) {
     MockTbxCsr<FamilyType> tbxCsr(*pDevice->executionEnvironment);
 

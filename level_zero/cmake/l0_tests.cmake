@@ -69,6 +69,7 @@ add_library(compute_runtime_mockable_extra
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/helpers/test_files.cpp
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_compiler_interface.cpp
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_compiler_interface.h
+        ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_command_stream_receiver.cpp
         ${NEO_SOURCE_DIR}/opencl/source/aub/aub_stream_interface.cpp
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/built_ins_helper.cpp
@@ -78,7 +79,6 @@ add_library(compute_runtime_mockable_extra
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/source_level_debugger_library.cpp
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_cif.cpp
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_compilers.cpp
-        ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_csr.cpp
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_gmm_page_table_mngr.cpp
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/create_tbx_sockets.cpp
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_deferred_deleter.cpp

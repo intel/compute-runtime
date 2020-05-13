@@ -114,9 +114,10 @@ TEST_F(CommandStreamReceiverTest, givenBaseDownloadAllocationCalledThenDoesNotCh
 
     ASSERT_NE(nullptr, graphicsAllocation);
     auto numEvictionAllocsBefore = commandStreamReceiver->getEvictionAllocations().size();
-    commandStreamReceiver->CommandStreamReceiver::downloadAllocation(*graphicsAllocation);
+    commandStreamReceiver->CommandStreamReceiver::downloadAllocations();
     auto numEvictionAllocsAfter = commandStreamReceiver->getEvictionAllocations().size();
     EXPECT_EQ(numEvictionAllocsBefore, numEvictionAllocsAfter);
+    EXPECT_EQ(0u, numEvictionAllocsAfter);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -338,29 +339,6 @@ HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenAddAubComme
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.addAubComment("message");
     EXPECT_TRUE(csr.addAubCommentCalled);
-}
-
-TEST(CommandStreamReceiverSimpleTest, givenCsrWhenDownloadAllocationCalledVerifyCallOccurs) {
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.initializeMemoryManager();
-    MockCommandStreamReceiver csr(executionEnvironment, 0);
-    MockGraphicsAllocation graphicsAllocation;
-
-    csr.downloadAllocation(graphicsAllocation);
-    EXPECT_TRUE(csr.downloadAllocationCalled);
-}
-
-HWTEST_F(CommandStreamReceiverTest, givenUltCommandStreamReceiverWhenDownloadAllocationIsCalledThenVerifyCallOccurs) {
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto *memoryManager = commandStreamReceiver->getMemoryManager();
-
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-
-    ASSERT_NE(nullptr, graphicsAllocation);
-    csr.downloadAllocation(*graphicsAllocation);
-    EXPECT_TRUE(csr.downloadAllocationCalled);
-    memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroyedThenItDestroysTagAllocation) {

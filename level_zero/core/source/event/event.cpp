@@ -42,13 +42,11 @@ struct EventImp : public Event {
         uint64_t *hostAddr = static_cast<uint64_t *>(hostAddress);
         uint32_t queryVal = Event::STATE_CLEARED;
 
-        auto alloc = &(this->eventPool->getAllocation());
-
         if (metricTracer != nullptr) {
             *hostAddr = metricTracer->getNotificationState();
         }
 
-        this->csr->downloadAllocation(*alloc);
+        this->csr->downloadAllocations();
 
         if (isTimestampEvent) {
             auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);

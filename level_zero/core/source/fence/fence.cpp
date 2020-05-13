@@ -16,43 +16,6 @@
 
 namespace L0 {
 
-struct FenceImp : public Fence {
-    FenceImp(CommandQueueImp *cmdQueueImp) : cmdQueue(cmdQueueImp) {}
-
-    ~FenceImp() override {
-        cmdQueue->getDevice()->getDriverHandle()->getMemoryManager()->freeGraphicsMemory(allocation);
-        allocation = nullptr;
-    }
-
-    ze_result_t destroy() override {
-        delete this;
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t hostSynchronize(uint32_t timeout) override;
-
-    ze_result_t queryStatus() override {
-        auto csr = cmdQueue->getCsr();
-        if (csr) {
-            csr->downloadAllocation(*allocation);
-        }
-
-        auto hostAddr = static_cast<uint64_t *>(allocation->getUnderlyingBuffer());
-        return *hostAddr == Fence::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t reset() override;
-
-    static Fence *fromHandle(ze_fence_handle_t handle) { return static_cast<Fence *>(handle); }
-
-    inline ze_fence_handle_t toHandle() { return this; }
-
-    bool initialize();
-
-  protected:
-    CommandQueueImp *cmdQueue;
-};
-
 Fence *Fence::create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc) {
     auto fence = new FenceImp(cmdQueue);
     UNRECOVERABLE_IF(fence == nullptr);
@@ -60,6 +23,21 @@ Fence *Fence::create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc) {
     fence->initialize();
 
     return fence;
+}
+
+FenceImp::~FenceImp() {
+    cmdQueue->getDevice()->getDriverHandle()->getMemoryManager()->freeGraphicsMemory(allocation);
+    allocation = nullptr;
+}
+
+ze_result_t FenceImp::queryStatus() {
+    auto csr = cmdQueue->getCsr();
+    if (csr) {
+        csr->downloadAllocations();
+    }
+
+    auto hostAddr = static_cast<uint64_t *>(allocation->getUnderlyingBuffer());
+    return *hostAddr == Fence::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
 }
 
 bool FenceImp::initialize() {

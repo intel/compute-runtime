@@ -35,7 +35,6 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/mock_csr.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferrable_deletion.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferrable_deletion.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_deferred_deleter.cpp
