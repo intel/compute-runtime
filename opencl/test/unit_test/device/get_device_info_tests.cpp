@@ -535,6 +535,132 @@ TEST(GetDeviceInfo, GivenPreferredInteropsWhenGettingDeviceInfoThenCorrectValueI
     EXPECT_EQ(sizeof(cl_bool), size);
     EXPECT_TRUE(value == 1u);
 }
+TEST(GetDeviceInfo, WhenQueryingIlsWithVersionThenProperValueIsReturned) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    cl_name_version ilsWithVersion[1];
+    size_t paramRetSize;
+    const auto retVal = device->getDeviceInfo(CL_DEVICE_ILS_WITH_VERSION, sizeof(ilsWithVersion), &ilsWithVersion,
+                                              &paramRetSize);
+
+    if (device->areOcl21FeaturesSupported()) {
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(sizeof(cl_name_version), paramRetSize);
+        EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), ilsWithVersion->version);
+        EXPECT_STREQ("SPIR-V_1.2 ", ilsWithVersion->name);
+    } else {
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(0u, paramRetSize);
+    }
+}
+
+TEST(GetDeviceInfo, WhenQueryingAtomicMemoryCapabilitiesThenProperValueIsReturned) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    cl_device_atomic_capabilities atomicMemoryCapabilities;
+    size_t paramRetSize;
+    const auto retVal = device->getDeviceInfo(CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES, sizeof(cl_device_atomic_capabilities),
+                                              &atomicMemoryCapabilities, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_device_atomic_capabilities), paramRetSize);
+
+    cl_device_atomic_capabilities expectedCapabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+    if (device->areOcl21FeaturesSupported()) {
+        expectedCapabilities |= CL_DEVICE_ATOMIC_ORDER_ACQ_REL | CL_DEVICE_ATOMIC_ORDER_SEQ_CST |
+                                CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+    }
+    EXPECT_EQ(expectedCapabilities, atomicMemoryCapabilities);
+}
+
+TEST(GetDeviceInfo, WhenQueryingAtomicFenceCapabilitiesThenProperValueIsReturned) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    cl_device_atomic_capabilities atomicFenceCapabilities;
+    size_t paramRetSize;
+    const auto retVal = device->getDeviceInfo(CL_DEVICE_ATOMIC_FENCE_CAPABILITIES, sizeof(cl_device_atomic_capabilities),
+                                              &atomicFenceCapabilities, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_device_atomic_capabilities), paramRetSize);
+
+    cl_device_atomic_capabilities expectedCapabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
+                                                         CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+    if (device->areOcl21FeaturesSupported()) {
+        expectedCapabilities |= CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES |
+                                CL_DEVICE_ATOMIC_SCOPE_DEVICE | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM;
+    }
+    EXPECT_EQ(expectedCapabilities, atomicFenceCapabilities);
+}
+
+TEST(GetDeviceInfo, WhenQueryingDeviceEnqueueSupportThenProperValueIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 0};
+
+    cl_bool deviceEnqueueSupport;
+    size_t paramRetSize;
+    const auto retVal = deviceFactory.rootDevices[0]->getDeviceInfo(CL_DEVICE_DEVICE_ENQUEUE_SUPPORT, sizeof(cl_bool),
+                                                                    &deviceEnqueueSupport, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_bool), paramRetSize);
+
+    cl_bool expectedDeviceEnqueueSupport = deviceFactory.rootDevices[0]->isDeviceEnqueueSupported() ? CL_TRUE : CL_FALSE;
+    EXPECT_EQ(expectedDeviceEnqueueSupport, deviceEnqueueSupport);
+}
+
+TEST(GetDeviceInfo, WhenQueryingPipesSupportThenProperValueIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 0};
+
+    cl_bool pipesSupport;
+    size_t paramRetSize;
+    const auto retVal = deviceFactory.rootDevices[0]->getDeviceInfo(CL_DEVICE_PIPE_SUPPORT, sizeof(cl_bool),
+                                                                    &pipesSupport, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_bool), paramRetSize);
+
+    cl_bool expectedPipesSupport = deviceFactory.rootDevices[0]->arePipesSupported() ? CL_TRUE : CL_FALSE;
+    EXPECT_EQ(expectedPipesSupport, pipesSupport);
+}
+
+TEST(GetDeviceInfo, WhenQueryingNonUniformWorkGroupSupportThenProperValueIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 0};
+
+    cl_bool nonUniformGroupSupport;
+    size_t paramRetSize;
+    const auto retVal = deviceFactory.rootDevices[0]->getDeviceInfo(CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT, sizeof(cl_bool),
+                                                                    &nonUniformGroupSupport, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_bool), paramRetSize);
+
+    cl_bool expectedNonUniformGroupSupport = deviceFactory.rootDevices[0]->areOcl21FeaturesSupported() ? CL_TRUE : CL_FALSE;
+    EXPECT_EQ(expectedNonUniformGroupSupport, nonUniformGroupSupport);
+}
+
+TEST(GetDeviceInfo, WhenQueryingWorkGroupCollectiveFunctionsSupportThenProperValueIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 0};
+
+    cl_bool workGroupCollectiveFunctionsSupport;
+    size_t paramRetSize;
+    const auto retVal = deviceFactory.rootDevices[0]->getDeviceInfo(CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT, sizeof(cl_bool),
+                                                                    &workGroupCollectiveFunctionsSupport, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_bool), paramRetSize);
+
+    cl_bool expectedWorkGroupCollectiveFunctionsSupport =
+        deviceFactory.rootDevices[0]->areOcl21FeaturesSupported() ? CL_TRUE : CL_FALSE;
+    EXPECT_EQ(expectedWorkGroupCollectiveFunctionsSupport, workGroupCollectiveFunctionsSupport);
+}
+
+TEST(GetDeviceInfo, WhenQueryingGenericAddressSpaceSupportThenProperValueIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 0};
+
+    cl_bool genericAddressSpaceSupport;
+    size_t paramRetSize;
+    const auto retVal = deviceFactory.rootDevices[0]->getDeviceInfo(CL_DEVICE_GENERIC_ADDRESS_SPACE_SUPPORT, sizeof(cl_bool),
+                                                                    &genericAddressSpaceSupport, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_bool), paramRetSize);
+
+    cl_bool expectedGenericAddressSpaceSupport = deviceFactory.rootDevices[0]->areOcl21FeaturesSupported() ? CL_TRUE : CL_FALSE;
+    EXPECT_EQ(expectedGenericAddressSpaceSupport, genericAddressSpaceSupport);
+}
 
 struct GetDeviceInfo : public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
     void SetUp() override {

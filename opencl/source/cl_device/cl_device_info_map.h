@@ -79,24 +79,29 @@ template<> struct Map<CL_DEVICE_PRINTF_BUFFER_SIZE              > : public MapBa
 template<> struct Map<CL_DEVICE_PROFILING_TIMER_RESOLUTION      > : public MapBase<CL_DEVICE_PROFILING_TIMER_RESOLUTION,       size_t,       &DeviceInfo::outProfilingTimerResolution> {};
 template<> struct Map<CL_DEVICE_VENDOR_ID                       > : public MapBase<CL_DEVICE_VENDOR_ID,                        uint32_t,     &DeviceInfo::vendorId> {};
 
+template<> struct Map<CL_DEVICE_ATOMIC_FENCE_CAPABILITIES                   > : public ClMapBase<CL_DEVICE_ATOMIC_FENCE_CAPABILITIES,                   uint64_t,                        &ClDeviceInfo::atomicFenceCapabilities> {};
+template<> struct Map<CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES                  > : public ClMapBase<CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES,                  uint64_t,                        &ClDeviceInfo::atomicMemoryCapabilities> {};
 template<> struct Map<CL_DEVICE_AVAILABLE                                   > : public ClMapBase<CL_DEVICE_AVAILABLE,                                   uint32_t,                        &ClDeviceInfo::deviceAvailable> {};
 template<> struct Map<CL_DEVICE_AVC_ME_SUPPORTS_TEXTURE_SAMPLER_USE_INTEL   > : public ClMapBase<CL_DEVICE_AVC_ME_SUPPORTS_TEXTURE_SAMPLER_USE_INTEL,   uint32_t,                        &ClDeviceInfo::vmeAvcSupportsTextureSampler> {};
 template<> struct Map<CL_DEVICE_AVC_ME_VERSION_INTEL                        > : public ClMapBase<CL_DEVICE_AVC_ME_VERSION_INTEL,                        uint32_t,                        &ClDeviceInfo::vmeAvcVersion> {};
 template<> struct Map<CL_DEVICE_BUILT_IN_KERNELS                            > : public ClMapBase<CL_DEVICE_BUILT_IN_KERNELS,                            const char *,                    &ClDeviceInfo::builtInKernels> {};
 template<> struct Map<CL_DEVICE_COMPILER_AVAILABLE                          > : public ClMapBase<CL_DEVICE_COMPILER_AVAILABLE,                          uint32_t,                        &ClDeviceInfo::compilerAvailable> {};
 template<> struct Map<CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL  > : public ClMapBase<CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL,  uint64_t,                        &ClDeviceInfo::crossDeviceSharedMemCapabilities> {};
+template<> struct Map<CL_DEVICE_DEVICE_ENQUEUE_SUPPORT                      > : public ClMapBase<CL_DEVICE_DEVICE_ENQUEUE_SUPPORT,                      uint32_t,                        &ClDeviceInfo::deviceEnqueueSupport> {};
 template<> struct Map<CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL               > : public ClMapBase<CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL,               uint64_t,                        &ClDeviceInfo::deviceMemCapabilities> {};
 template<> struct Map<CL_DEVICE_DOUBLE_FP_CONFIG                            > : public ClMapBase<CL_DEVICE_DOUBLE_FP_CONFIG,                            uint64_t,                        &ClDeviceInfo::doubleFpConfig> {};
 template<> struct Map<CL_DEVICE_DRIVER_VERSION_INTEL                        > : public ClMapBase<CL_DEVICE_DRIVER_VERSION_INTEL,                        uint32_t,                        &ClDeviceInfo::internalDriverVersion> {};
 template<> struct Map<CL_DEVICE_ENDIAN_LITTLE                               > : public ClMapBase<CL_DEVICE_ENDIAN_LITTLE,                               uint32_t,                        &ClDeviceInfo::endianLittle> {};
 template<> struct Map<CL_DEVICE_EXECUTION_CAPABILITIES                      > : public ClMapBase<CL_DEVICE_EXECUTION_CAPABILITIES,                      uint64_t,                        &ClDeviceInfo::executionCapabilities> {};
 template<> struct Map<CL_DEVICE_EXTENSIONS                                  > : public ClMapBase<CL_DEVICE_EXTENSIONS,                                  const char *,                    &ClDeviceInfo::deviceExtensions> {};
+template<> struct Map<CL_DEVICE_GENERIC_ADDRESS_SPACE_SUPPORT               > : public ClMapBase<CL_DEVICE_GENERIC_ADDRESS_SPACE_SUPPORT,               uint32_t,                        &ClDeviceInfo::genericAddressSpaceSupport> {};
 template<> struct Map<CL_DEVICE_GLOBAL_MEM_CACHE_SIZE                       > : public ClMapBase<CL_DEVICE_GLOBAL_MEM_CACHE_SIZE,                       uint64_t,                        &ClDeviceInfo::globalMemCacheSize> {};
 template<> struct Map<CL_DEVICE_GLOBAL_MEM_CACHE_TYPE                       > : public ClMapBase<CL_DEVICE_GLOBAL_MEM_CACHE_TYPE,                       uint32_t,                        &ClDeviceInfo::globalMemCacheType> {};
 template<> struct Map<CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE        > : public ClMapBase<CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE,        size_t,                          &ClDeviceInfo::globalVariablePreferredTotalSize> {};
 template<> struct Map<CL_DEVICE_HALF_FP_CONFIG                              > : public ClMapBase<CL_DEVICE_HALF_FP_CONFIG,                              uint64_t,                        &ClDeviceInfo::halfFpConfig> {};
 template<> struct Map<CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL                 > : public ClMapBase<CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL,                 uint64_t,                        &ClDeviceInfo::hostMemCapabilities> {};
 template<> struct Map<CL_DEVICE_HOST_UNIFIED_MEMORY                         > : public ClMapBase<CL_DEVICE_HOST_UNIFIED_MEMORY,                         uint32_t,                        &ClDeviceInfo::hostUnifiedMemory> {};
+template<> struct Map<CL_DEVICE_ILS_WITH_VERSION                            > : public ClMapBase<CL_DEVICE_ILS_WITH_VERSION,                            cl_name_version[1],              &ClDeviceInfo::ilsWithVersion> {};
 template<> struct Map<CL_DEVICE_IMAGE3D_MAX_HEIGHT                          > : public ClMapBase<CL_DEVICE_IMAGE3D_MAX_HEIGHT,                          size_t,                          &ClDeviceInfo::image3DMaxHeight> {};
 template<> struct Map<CL_DEVICE_IMAGE3D_MAX_WIDTH                           > : public ClMapBase<CL_DEVICE_IMAGE3D_MAX_WIDTH,                           size_t,                          &ClDeviceInfo::image3DMaxWidth> {};
 template<> struct Map<CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT                > : public ClMapBase<CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT,                uint32_t,                        &ClDeviceInfo::imageBaseAddressAlignment> {};
@@ -123,6 +128,7 @@ template<> struct Map<CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF                    > : 
 template<> struct Map<CL_DEVICE_NATIVE_VECTOR_WIDTH_INT                     > : public ClMapBase<CL_DEVICE_NATIVE_VECTOR_WIDTH_INT,                     uint32_t,                        &ClDeviceInfo::nativeVectorWidthInt> {};
 template<> struct Map<CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG                    > : public ClMapBase<CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG,                    uint32_t,                        &ClDeviceInfo::nativeVectorWidthLong> {};
 template<> struct Map<CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT                   > : public ClMapBase<CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT,                   uint32_t,                        &ClDeviceInfo::nativeVectorWidthShort> {};
+template<> struct Map<CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT              > : public ClMapBase<CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT,              uint32_t,                        &ClDeviceInfo::nonUniformWorkGroupSupport> {};
 template<> struct Map<CL_DEVICE_OPENCL_C_VERSION                            > : public ClMapBase<CL_DEVICE_OPENCL_C_VERSION,                            const char *,                    &ClDeviceInfo::clCVersion> {};
 template<> struct Map<CL_DEVICE_PARENT_DEVICE                               > : public ClMapBase<CL_DEVICE_PARENT_DEVICE,                               cl_device_id,                    &ClDeviceInfo::parentDevice> {};
 template<> struct Map<CL_DEVICE_PARTITION_AFFINITY_DOMAIN                   > : public ClMapBase<CL_DEVICE_PARTITION_AFFINITY_DOMAIN,                   uint64_t,                        &ClDeviceInfo::partitionAffinityDomain> {};
@@ -131,6 +137,7 @@ template<> struct Map<CL_DEVICE_PARTITION_PROPERTIES                        > : 
 template<> struct Map<CL_DEVICE_PARTITION_TYPE                              > : public ClMapBase<CL_DEVICE_PARTITION_TYPE,                              cl_device_partition_property[3], &ClDeviceInfo::partitionType> {};
 template<> struct Map<CL_DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS                > : public ClMapBase<CL_DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS,                uint32_t,                        &ClDeviceInfo::pipeMaxActiveReservations> {};
 template<> struct Map<CL_DEVICE_PIPE_MAX_PACKET_SIZE                        > : public ClMapBase<CL_DEVICE_PIPE_MAX_PACKET_SIZE,                        uint32_t,                        &ClDeviceInfo::pipeMaxPacketSize> {};
+template<> struct Map<CL_DEVICE_PIPE_SUPPORT                                > : public ClMapBase<CL_DEVICE_PIPE_SUPPORT,                                uint32_t,                        &ClDeviceInfo::pipeSupport> {};
 template<> struct Map<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL                 > : public ClMapBase<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL,                 size_t,                          &ClDeviceInfo::planarYuvMaxHeight> {};
 template<> struct Map<CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL                  > : public ClMapBase<CL_DEVICE_PLANAR_YUV_MAX_WIDTH_INTEL,                  size_t,                          &ClDeviceInfo::planarYuvMaxWidth> {};
 template<> struct Map<CL_DEVICE_PREFERRED_GLOBAL_ATOMIC_ALIGNMENT           > : public ClMapBase<CL_DEVICE_PREFERRED_GLOBAL_ATOMIC_ALIGNMENT,           uint32_t,                        &ClDeviceInfo::preferredGlobalAtomicAlignment> {};
@@ -161,6 +168,7 @@ template<> struct Map<CL_DEVICE_TYPE                                        > : 
 template<> struct Map<CL_DEVICE_VENDOR                                      > : public ClMapBase<CL_DEVICE_VENDOR,                                      const char *,                    &ClDeviceInfo::vendor> {};
 template<> struct Map<CL_DEVICE_VERSION                                     > : public ClMapBase<CL_DEVICE_VERSION,                                     const char *,                    &ClDeviceInfo::clVersion> {};
 template<> struct Map<CL_DRIVER_VERSION                                     > : public ClMapBase<CL_DRIVER_VERSION,                                     const char *,                    &ClDeviceInfo::driverVersion> {};
+template<> struct Map<CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT     > : public ClMapBase<CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT,     uint32_t,                        &ClDeviceInfo::workGroupCollectiveFunctionsSupport> {};
 // clang-format on
 
 } // namespace ClDeviceInfoTable

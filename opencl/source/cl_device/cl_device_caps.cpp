@@ -8,6 +8,7 @@
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
@@ -122,6 +123,8 @@ void ClDevice::initializeCaps() {
     auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
 
     deviceInfo.independentForwardProgress = false;
+    deviceInfo.ilsWithVersion[0].name[0] = 0;
+    deviceInfo.ilsWithVersion[0].version = 0;
 
     if (ocl21FeaturesEnabled) {
         if (hwHelper.isIndependentForwardProgressSupported()) {
@@ -130,6 +133,9 @@ void ClDevice::initializeCaps() {
         }
 
         deviceExtensions += "cl_khr_il_program ";
+        deviceInfo.ilsWithVersion[0].version = CL_MAKE_VERSION(1, 2, 0);
+        strcpy_s(deviceInfo.ilsWithVersion[0].name, CL_NAME_VERSION_MAX_NAME_SIZE, sharedDeviceInfo.ilVersion);
+
         if (supportsVme) {
             deviceExtensions += "cl_intel_spirv_device_side_avc_motion_estimation ";
         }
@@ -246,6 +252,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.memBaseAddressAlign = 1024;
     deviceInfo.minDataTypeAlignSize = 128;
 
+    deviceInfo.deviceEnqueueSupport = isDeviceEnqueueSupported();
     if (isDeviceEnqueueSupported() || (enabledClVersion == 21)) {
         deviceInfo.maxOnDeviceQueues = 1;
         deviceInfo.maxOnDeviceEvents = 1024;
@@ -299,6 +306,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.imageBaseAddressAlignment = 4;
     deviceInfo.queueOnHostProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 
+    deviceInfo.pipeSupport = arePipesSupported();
     if (arePipesSupported()) {
         deviceInfo.maxPipeArgs = 16;
         deviceInfo.pipeMaxPacketSize = 1024;
@@ -308,6 +316,23 @@ void ClDevice::initializeCaps() {
         deviceInfo.pipeMaxPacketSize = 0;
         deviceInfo.pipeMaxActiveReservations = 0;
     }
+
+    deviceInfo.atomicMemoryCapabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+    if (ocl21FeaturesEnabled) {
+        deviceInfo.atomicMemoryCapabilities |= CL_DEVICE_ATOMIC_ORDER_ACQ_REL | CL_DEVICE_ATOMIC_ORDER_SEQ_CST |
+                                               CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES | CL_DEVICE_ATOMIC_SCOPE_DEVICE;
+    }
+
+    deviceInfo.atomicFenceCapabilities = CL_DEVICE_ATOMIC_ORDER_RELAXED | CL_DEVICE_ATOMIC_ORDER_ACQ_REL |
+                                         CL_DEVICE_ATOMIC_SCOPE_WORK_GROUP;
+    if (ocl21FeaturesEnabled) {
+        deviceInfo.atomicFenceCapabilities |= CL_DEVICE_ATOMIC_ORDER_SEQ_CST | CL_DEVICE_ATOMIC_SCOPE_ALL_DEVICES |
+                                              CL_DEVICE_ATOMIC_SCOPE_DEVICE | CL_DEVICE_ATOMIC_SCOPE_WORK_ITEM;
+    }
+
+    deviceInfo.nonUniformWorkGroupSupport = ocl21FeaturesEnabled;
+    deviceInfo.workGroupCollectiveFunctionsSupport = ocl21FeaturesEnabled;
+    deviceInfo.genericAddressSpaceSupport = ocl21FeaturesEnabled;
 
     deviceInfo.linkerAvailable = true;
     deviceInfo.svmCapabilities = hwInfo.capabilityTable.ftrSvm * CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
