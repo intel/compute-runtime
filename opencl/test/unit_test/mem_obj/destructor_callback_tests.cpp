@@ -46,7 +46,7 @@ void CL_CALLBACK callBack2(cl_mem memObj, void *userData) {
 void CL_CALLBACK callBack3(cl_mem memObj, void *userData) {
     calls.push_back(3);
 }
-TEST_F(DestructorCallbackTest, checkCallOrder) {
+TEST_F(DestructorCallbackTest, WhenSettingDestructorCallbackThenCallOrderIsPreserved) {
     auto buffer = BufferHelper<BufferUseHostPtr<>>::create();
 
     auto address = buffer->getCpuAddress();
@@ -71,7 +71,7 @@ TEST_F(DestructorCallbackTest, checkCallOrder) {
     calls.clear();
 }
 
-TEST_F(DestructorCallbackTest, doFailAllocations) {
+TEST_F(DestructorCallbackTest, GivenInjectedFailureWhenSettingDestructorCallbackThenFailingAllocationIsNotRegistered) {
     std::shared_ptr<MockContext> context(new MockContext);
     InjectedFunction method = [this, context](size_t failureIndex) {
         char hostPtr[42];
