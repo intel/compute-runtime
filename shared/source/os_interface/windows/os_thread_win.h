@@ -14,6 +14,7 @@ class ThreadWin : public Thread {
   public:
     ThreadWin(std::thread *thread);
     void join() override;
+    ~ThreadWin() override = default;
 
   protected:
     std::unique_ptr<std::thread> thread;
