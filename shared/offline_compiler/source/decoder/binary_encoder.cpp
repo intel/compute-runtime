@@ -51,7 +51,7 @@ void BinaryEncoder::calculatePatchListSizes(std::vector<std::string> &ptmFile) {
 }
 
 bool BinaryEncoder::copyBinaryToBinary(const std::string &srcFileName, std::ostream &outBinary, uint32_t *binaryLength) {
-    if (argHelper->fileExists(srcFileName)) {
+    if (!argHelper->fileExists(srcFileName)) {
         return false;
     }
 
