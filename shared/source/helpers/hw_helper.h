@@ -86,7 +86,6 @@ class HwHelper {
     virtual bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool isIndependentForwardProgressSupported() = 0;
-    virtual bool isSystemMemoryRequired(const HardwareInfo &hwInfo, GraphicsAllocation::AllocationType allocationType) const = 0;
     virtual uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const = 0;
     virtual uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const = 0;
 
@@ -237,8 +236,6 @@ class HwHelperHw : public HwHelper {
     uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const override;
 
     bool isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo) const override;
-
-    bool isSystemMemoryRequired(const HardwareInfo &hwInfo, GraphicsAllocation::AllocationType allocationType) const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

@@ -353,7 +353,6 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const AllocationProperties &properties, const void *hostPtr) {
     AllocationData allocationData;
     getAllocationData(allocationData, properties, hostPtr, createStorageInfoFromProperties(properties));
-    applyMemoryPlacementWorkarounds(allocationData, properties);
     overrideAllocationData(allocationData, properties);
 
     AllocationStatus status = AllocationStatus::Error;
@@ -643,10 +642,4 @@ void MemoryManager::overrideAllocationData(AllocationData &allocationData, const
         }
     }
 } // namespace NEO
-void MemoryManager::applyMemoryPlacementWorkarounds(AllocationData &allocationData, const AllocationProperties &properties) {
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo();
-    if (HwHelper::get(hwInfo->platform.eRenderCoreFamily).isSystemMemoryRequired(*hwInfo, properties.allocationType)) {
-        allocationData.flags.useSystemMemory = true;
-    }
-}
 } // namespace NEO

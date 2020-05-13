@@ -199,7 +199,6 @@ class MemoryManager {
 
     static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);
-    void applyMemoryPlacementWorkarounds(AllocationData &allocationData, const AllocationProperties &properties);
     static bool useInternal32BitAllocator(GraphicsAllocation::AllocationType allocationType) {
         return allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA ||
                allocationType == GraphicsAllocation::AllocationType::INTERNAL_HEAP;
