@@ -56,12 +56,15 @@ LinuxSysmanImp::LinuxSysmanImp(SysmanImp *pParentSysmanImp) {
 LinuxSysmanImp::~LinuxSysmanImp() {
     if (nullptr != pSysfsAccess) {
         delete pSysfsAccess;
+        pSysfsAccess = nullptr;
     }
     if (nullptr != pProcfsAccess) {
         delete pProcfsAccess;
+        pProcfsAccess = nullptr;
     }
     if (nullptr != pFsAccess) {
         delete pFsAccess;
+        pFsAccess = nullptr;
     }
 }
 

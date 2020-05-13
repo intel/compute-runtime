@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 
@@ -14,14 +15,10 @@
 
 namespace L0 {
 
-class LinuxSysmanImp : public OsSysman {
+class LinuxSysmanImp : public OsSysman, public NEO::NonCopyableClass {
   public:
     LinuxSysmanImp(SysmanImp *pParentSysmanImp);
     ~LinuxSysmanImp() override;
-
-    // Don't allow copies of the LinuxSysmanImp object
-    LinuxSysmanImp(const LinuxSysmanImp &obj) = delete;
-    LinuxSysmanImp &operator=(const LinuxSysmanImp &obj) = delete;
 
     ze_result_t init() override;
 
