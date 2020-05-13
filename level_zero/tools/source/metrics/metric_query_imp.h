@@ -45,6 +45,9 @@ struct MetricsLibrary {
     bool isInitialized();
     static const char *getFilename();
 
+    // Deinitialization.
+    void release();
+
     // Metric query.
     bool createMetricQuery(const uint32_t slotsCount, QueryHandle_1_0 &query,
                            NEO::GraphicsAllocation *&pAllocation);
@@ -66,7 +69,6 @@ struct MetricsLibrary {
 
   protected:
     void initialize();
-    void release();
 
     bool createContext();
     virtual bool getContextData(Device &device, ContextCreateData_1_0 &contextData);

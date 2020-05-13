@@ -47,9 +47,18 @@ ze_result_t MetricTracerImp::close() {
     const auto result = stopMeasurements();
     if (result == ZE_RESULT_SUCCESS) {
 
-        // Clear metric tracer reference in context.
         auto device = Device::fromHandle(hDevice);
-        device->getMetricContext().setMetricTracer(nullptr);
+        auto &metricContext = device->getMetricContext();
+        auto &metricsLibrary = metricContext.getMetricsLibrary();
+
+        // Clear metric tracer reference in context.
+        // Another metric tracer instance or query can be used.
+        metricContext.setMetricTracer(nullptr);
+
+        // Close metrics library (if was used to generate tracer's marker gpu commands).
+        // It will allow metric query to use Linux Tbs stream exclusively
+        // (to activate metric sets and to read context switch reports).
+        metricsLibrary.release();
 
         // Release notification event.
         if (pNotificationEvent != nullptr) {
