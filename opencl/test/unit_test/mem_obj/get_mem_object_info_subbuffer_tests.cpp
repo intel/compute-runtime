@@ -60,7 +60,7 @@ struct GetMemObjectSubBufferInfo : public ::testing::Test {
     size_t sizeReturned = 0;
 };
 
-TEST_F(GetMemObjectSubBufferInfo, MEM_ASSOCIATED_MEMOBJECT) {
+TEST_F(GetMemObjectSubBufferInfo, GivenMemAssociatedMemobjectWhenGettingMembojectInfoThenCorrectValueIsReturned) {
     createBuffer();
     createSubBuffer();
 
@@ -77,7 +77,7 @@ TEST_F(GetMemObjectSubBufferInfo, MEM_ASSOCIATED_MEMOBJECT) {
     EXPECT_EQ(clBuffer, object);
 }
 
-TEST_F(GetMemObjectSubBufferInfo, MEM_OFFSET) {
+TEST_F(GetMemObjectSubBufferInfo, GivenMemOffsetWhenGettingMembojectInfoThenCorrectValueIsReturned) {
     createBuffer();
     createSubBuffer();
 
@@ -91,7 +91,7 @@ TEST_F(GetMemObjectSubBufferInfo, MEM_OFFSET) {
     EXPECT_EQ(region.origin, offset);
 }
 
-TEST_F(GetMemObjectSubBufferInfo, MEM_FLAGS) {
+TEST_F(GetMemObjectSubBufferInfo, GivenMemFlagsWhenGettingMembojectInfoThenCorrectValueIsReturned) {
     createBuffer();
     createSubBuffer();
 
@@ -105,7 +105,7 @@ TEST_F(GetMemObjectSubBufferInfo, MEM_FLAGS) {
     EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_READ_WRITE), flags);
 }
 
-TEST_F(GetMemObjectSubBufferInfo, MEM_FLAGS_empty) {
+TEST_F(GetMemObjectSubBufferInfo, GivenMemAssociatedMemobjectAndReadOnlyBufferWhenGettingMembojectInfoThenCorrectValueIsReturned) {
     createBuffer(CL_MEM_READ_ONLY);
     createSubBuffer(0);
 
@@ -123,7 +123,7 @@ TEST_F(GetMemObjectSubBufferInfo, MEM_FLAGS_empty) {
     EXPECT_EQ(static_cast<cl_mem_flags>(0), flags);
 }
 
-TEST_F(GetMemObjectSubBufferInfo, MEM_HOST_PTR) {
+TEST_F(GetMemObjectSubBufferInfo, GivenMemHostPtrWhenGettingMembojectInfoThenCorrectValueIsReturned) {
     createHostPtrBuffer();
     createSubBuffer();
 
