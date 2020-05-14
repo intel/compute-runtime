@@ -58,7 +58,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         commandStream = &commandQueue.getCS(0);
     }
 
-    TimestampPacketHelper::programCsrDependencies<GfxFamily>(*commandStream, csrDependencies);
+    auto numSupportedDevices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices();
+    TimestampPacketHelper::programCsrDependencies<GfxFamily>(*commandStream, csrDependencies, numSupportedDevices);
 
     dsh->align(HardwareCommandsHelper<GfxFamily>::alignInterfaceDescriptorData);
 
@@ -82,7 +83,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
     size_t currentDispatchIndex = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
-        dispatchInfo.dispatchInitCommands(*commandStream, timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
+        dispatchInfo.dispatchInitCommands(*commandStream, timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo(), numSupportedDevices);
         bool isMainKernel = (dispatchInfo.getKernel() == mainKernel);
 
         dispatchKernelCommands(commandQueue, dispatchInfo, commandType, *commandStream, isMainKernel,
@@ -90,7 +91,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                offsetInterfaceDescriptorTable, *dsh, *ioh, *ssh);
 
         currentDispatchIndex++;
-        dispatchInfo.dispatchEpilogueCommands(*commandStream, timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
+        dispatchInfo.dispatchEpilogueCommands(*commandStream, timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo(), numSupportedDevices);
     }
     if (mainKernel->requiresCacheFlushCommand(commandQueue)) {
         uint64_t postSyncAddress = 0;

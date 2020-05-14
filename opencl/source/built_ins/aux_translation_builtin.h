@@ -66,7 +66,7 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
     using RegisteredMethodDispatcherT = RegisteredMethodDispatcher<DispatchInfo::DispatchCommandMethodT,
                                                                    DispatchInfo::EstimateCommandsMethodT>;
     template <typename GfxFamily, bool dcFlush>
-    static void dispatchPipeControl(LinearStream &linearStream, TimestampPacketDependencies *, const HardwareInfo &) {
+    static void dispatchPipeControl(LinearStream &linearStream, TimestampPacketDependencies *, const HardwareInfo &, uint32_t) {
         PipeControlArgs args(dcFlush);
         MemorySynchronizationCommands<GfxFamily>::addPipeControl(linearStream, args);
     }

@@ -120,7 +120,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWhenSemaphoreAndAtomicAreProgrammedTh
     mockNode.gpuAddress = 0x1230000;
     auto &cmdStream = mockCmdQ->getCS(0);
 
-    TimestampPacketHelper::programSemaphoreWithImplicitDependency<FamilyType>(cmdStream, mockNode);
+    TimestampPacketHelper::programSemaphoreWithImplicitDependency<FamilyType>(cmdStream, mockNode, 1);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -141,7 +141,7 @@ HWTEST_F(TimestampPacketTests, givenDebugModeWhereAtomicsAreNotEmittedWhenComman
     mockNode.gpuAddress = 0x1230000;
     auto &cmdStream = mockCmdQ->getCS(0);
 
-    TimestampPacketHelper::programSemaphoreWithImplicitDependency<FamilyType>(cmdStream, mockNode);
+    TimestampPacketHelper::programSemaphoreWithImplicitDependency<FamilyType>(cmdStream, mockNode, 1);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -155,6 +155,20 @@ HWTEST_F(TimestampPacketTests, givenDebugModeWhereAtomicsAreNotEmittedWhenComman
     EXPECT_FALSE(tag.isCompleted());
 }
 
+HWTEST_F(TimestampPacketTests, givenMultipleDeviesWhenIncrementingCpuDependenciesThenIncrementMultipleTimes) {
+    TimestampPacketStorage tag;
+    MockTagNode mockNode;
+    mockNode.tagForCpuAccess = &tag;
+    mockNode.gpuAddress = 0x1230000;
+    auto &cmdStream = mockCmdQ->getCS(0);
+
+    const uint32_t numDevices = 3;
+
+    TimestampPacketHelper::programSemaphoreWithImplicitDependency<FamilyType>(cmdStream, mockNode, numDevices);
+
+    EXPECT_EQ(numDevices, mockNode.getImplicitCpuDependenciesCount());
+}
+
 HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreAndAtomicAreProgrammedThenUseGpuAddress) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
@@ -166,7 +180,7 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreAndAtomi
     mockNode.gpuAddress = 0x1230000;
     auto &cmdStream = mockCmdQ->getCS(0);
 
-    TimestampPacketHelper::programSemaphoreWithImplicitDependency<FamilyType>(cmdStream, mockNode);
+    TimestampPacketHelper::programSemaphoreWithImplicitDependency<FamilyType>(cmdStream, mockNode, 1);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -851,6 +865,52 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
         EXPECT_EQ(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));
         it++;
     }
+}
+
+HWTEST_F(TimestampPacketTests, givenMultipleDevicesOnCsrWhenIncrementingCpuDependenciesCountThenIncrementByTargetCsrDeviceCountValue) {
+    DeviceBitfield osContext0DeviceBitfiled = 0b011;
+    DeviceBitfield osContext1DeviceBitfiled = 0b1011;
+    auto osContext0 = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, osContext0DeviceBitfiled, aub_stream::EngineType::ENGINE_RCS, PreemptionMode::Disabled, false, false, false));
+    auto osContext1 = std::unique_ptr<OsContext>(OsContext::create(nullptr, 1, osContext1DeviceBitfiled, aub_stream::EngineType::ENGINE_RCS, PreemptionMode::Disabled, false, false, false));
+    EXPECT_EQ(2u, osContext0->getNumSupportedDevices());
+    EXPECT_EQ(3u, osContext1->getNumSupportedDevices());
+
+    auto device0 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+    auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+
+    device0->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    device0->getUltCommandStreamReceiver<FamilyType>().setupContext(*osContext0);
+    device1->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    device1->getUltCommandStreamReceiver<FamilyType>().setupContext(*osContext1);
+
+    MockContext context0(device0.get());
+    MockContext context1(device1.get());
+
+    auto cmdQ0 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context0, device0.get(), nullptr);
+    auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context1, device1.get(), nullptr);
+
+    const cl_uint eventsOnWaitlist = 2;
+    MockTimestampPacketContainer timestamp0(*device0->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+    MockTimestampPacketContainer timestamp1(*device1->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
+
+    Event event0(cmdQ0.get(), 0, 0, 0);
+    Event event1(cmdQ1.get(), 0, 0, 0);
+    event0.addTimestampPacketNodes(timestamp0);
+    event1.addTimestampPacketNodes(timestamp1);
+
+    cl_event waitlist[] = {&event0, &event1};
+
+    cmdQ0->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr);
+
+    verifyDependencyCounterValues(event0.getTimestampPacketNodes(), osContext0->getNumSupportedDevices());
+
+    verifyDependencyCounterValues(event1.getTimestampPacketNodes(), osContext0->getNumSupportedDevices());
+
+    cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr);
+
+    verifyDependencyCounterValues(event0.getTimestampPacketNodes(), osContext0->getNumSupportedDevices() + osContext1->getNumSupportedDevices());
+
+    verifyDependencyCounterValues(event1.getTimestampPacketNodes(), osContext0->getNumSupportedDevices() + osContext1->getNumSupportedDevices());
 }
 
 HWTEST_F(TimestampPacketTests, givenAllDependencyTypesModeWhenFillingFromDifferentCsrsThenPushEverything) {
