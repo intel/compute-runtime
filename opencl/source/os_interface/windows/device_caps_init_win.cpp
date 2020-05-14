@@ -13,7 +13,7 @@
 
 namespace NEO {
 
-void ClDevice::initializeExtraCaps() {
+void ClDevice::initializeOsSpecificCaps() {
     deviceExtensions += "cl_intel_simultaneous_sharing ";
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
 

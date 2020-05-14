@@ -354,7 +354,7 @@ void ClDevice::initializeCaps() {
         }
     }
 
-    initializeExtraCaps();
+    initializeOsSpecificCaps();
 }
 
 } // namespace NEO

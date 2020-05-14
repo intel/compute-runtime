@@ -9,6 +9,6 @@
 
 namespace NEO {
 
-void ClDevice::initializeExtraCaps() {
+void ClDevice::initializeOsSpecificCaps() {
 }
 } // namespace NEO

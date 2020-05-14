@@ -123,7 +123,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
 
   protected:
     void initializeCaps();
-    void initializeExtraCaps();
+    void initializeOsSpecificCaps();
     void setupFp64Flags();
 
     Device &device;
