@@ -233,7 +233,7 @@ if(DEFINED AUB_STREAM_DIR)
 endif()
     target_sources(${TARGET_NAME_L0}
         PRIVATE
-            $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>
+            $<TARGET_OBJECTS:${BUILTINS_SPIRV_LIB_NAME}>
     )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/inc)
