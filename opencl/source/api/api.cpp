@@ -5334,6 +5334,26 @@ cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
     return retVal;
 }
 
+cl_int CL_API_CALL clSetProgramReleaseCallback(cl_program program,
+                                               void(CL_CALLBACK *pfnNotify)(cl_program /* program */, void * /* user_data */),
+                                               void *userData) {
+    DBG_LOG_INPUTS("program", program,
+                   "pfn_notify", pfnNotify,
+                   "user_data", userData);
+
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+
+    retVal = validateObjects(program,
+                             reinterpret_cast<void *>(pfnNotify));
+
+    if (retVal == CL_SUCCESS) {
+        retVal = CL_INVALID_OPERATION;
+    }
+
+    return retVal;
+}
+
 cl_int CL_API_CALL clSetProgramSpecializationConstant(cl_program program, cl_uint specId, size_t specSize, const void *specValue) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);

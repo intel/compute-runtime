@@ -1059,6 +1059,11 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(
 
 // OpenCL 2.2
 
+cl_int CL_API_CALL clSetProgramReleaseCallback(
+    cl_program program,
+    void(CL_CALLBACK *pfnNotify)(cl_program /* program */, void * /* user_data */),
+    void *userData);
+
 cl_int CL_API_CALL clSetProgramSpecializationConstant(
     cl_program program,
     cl_uint specId,

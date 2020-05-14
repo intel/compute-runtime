@@ -117,6 +117,7 @@
       clGetHostTimer;
       clGetKernelSubGroupInfo;
       clSetDefaultDeviceCommandQueue;
+      clSetProgramReleaseCallback;
       clSetProgramSpecializationConstant;
       clGetKernelArgInfo;
       clGetImageParamsINTEL;

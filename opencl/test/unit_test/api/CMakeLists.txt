@@ -114,6 +114,7 @@ set(IGDRCL_SRCS_tests_api
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_kernel_exec_info_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_mem_object_destructor_callback_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_performance_configuration_tests.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_program_release_callback.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_set_program_specialization_constant_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_svm_alloc_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_svm_free_tests.inl
