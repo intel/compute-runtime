@@ -45,7 +45,7 @@ bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) {
 }
 
 bool isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo) {
-    return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & (hwInfo.platform.usRevId == REVISION_A0));
+    return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP));
 }
 
 bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {

@@ -18,9 +18,19 @@ TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpA0WhenAdjustDefaultEngineTypeCalledTh
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpBWhenAdjustDefaultEngineTypeCalledThenCcsIsReturned) {
+TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllpBWhenAdjustDefaultEngineTypeCalledThenRcsIsReturned) {
     hardwareInfo.featureTable.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = REVISION_A0 + 1;
+
+    auto &helper = HwHelper::get(renderCoreFamily);
+    helper.adjustDefaultEngineType(&hardwareInfo);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
+}
+
+TGLLPTEST_F(HwHelperTestGen12Lp, givenTgllWhenWaForDefaultEngineIsNotAplliedThenCcsIsReturned) {
+    hardwareInfo.featureTable.ftrCCSNode = true;
+    hardwareInfo.platform.usRevId = REVISION_A0;
+    hardwareInfo.platform.eProductFamily = IGFX_UNKNOWN;
 
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
