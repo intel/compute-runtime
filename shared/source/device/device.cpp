@@ -171,9 +171,12 @@ bool Device::isSimulation() const {
     auto &hwInfo = getHardwareInfo();
 
     bool simulation = hwInfo.capabilityTable.isSimulation(hwInfo.platform.usDeviceID);
-    if (engines[0].commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
-        simulation = true;
+    for (const auto &engine : engines) {
+        if (engine.commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
+            simulation = true;
+        }
     }
+
     if (hwInfo.featureTable.ftrSimulationMode) {
         simulation = true;
     }
