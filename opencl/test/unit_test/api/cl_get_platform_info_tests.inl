@@ -63,6 +63,9 @@ TEST_P(clGetPlatformInfoParameterizedTests, GivenClPlatformVersionWhenGettingPla
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_VERSION);
     std::string deviceVer;
     switch (GetParam()) {
+    case 30:
+        deviceVer = "OpenCL 3.0 ";
+        break;
     case 21:
         deviceVer = "OpenCL 2.1 ";
         break;
@@ -76,7 +79,7 @@ TEST_P(clGetPlatformInfoParameterizedTests, GivenClPlatformVersionWhenGettingPla
 
 INSTANTIATE_TEST_CASE_P(OCLVersions,
                         clGetPlatformInfoParameterizedTests,
-                        ::testing::Values(12, 21));
+                        ::testing::Values(12, 21, 30));
 
 TEST_F(clGetPlatformInfoTests, GivenClPlatformNameWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_NAME);

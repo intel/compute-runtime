@@ -128,6 +128,9 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
         this->platformInfo->extensions = pClDevice->getDeviceInfo().deviceExtensions;
 
         switch (pClDevice->getEnabledClVersion()) {
+        case 30:
+            this->platformInfo->version = "OpenCL 3.0 ";
+            break;
         case 21:
             this->platformInfo->version = "OpenCL 2.1 ";
             break;
