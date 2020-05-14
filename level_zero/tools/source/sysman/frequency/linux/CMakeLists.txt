@@ -7,6 +7,7 @@
 set(L0_SRCS_TOOLS_SYSMAN_FREQUENCY_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency_imp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_frequency_imp.h
 )
 
 if(UNIX)

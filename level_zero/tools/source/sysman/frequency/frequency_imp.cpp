@@ -58,7 +58,7 @@ ze_result_t FrequencyImp::frequencySetRange(const zet_freq_range_t *pLimits) {
         }
     }
     if (newMin > newMax || !newMinValid || !newMaxValid) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     double currentMax;
     pOsFrequency->getMax(currentMax);

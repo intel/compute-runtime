@@ -6,39 +6,47 @@
  */
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/tools/source/sysman/frequency/linux/os_frequency_imp.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mock_frequency.h"
+#include "mock_sysfs_frequency.h"
 
 #include <cmath>
 
 using ::testing::_;
 using ::testing::DoAll;
 using ::testing::InSequence;
+using ::testing::Invoke;
+using ::testing::Matcher;
 using ::testing::NiceMock;
 using ::testing::Return;
 
 namespace L0 {
 namespace ult {
 
-ACTION_P(SetFloat, value) {
-    arg0 = value;
-}
+constexpr double minFreq = 300.0;
+constexpr double maxFreq = 1100.0;
+constexpr double step = 100.0 / 6;
+constexpr double request = 300.0;
+constexpr double tdp = 1100.0;
+constexpr double actual = 300.0;
+constexpr double efficient = 300.0;
+constexpr double maxVal = 1100.0;
+constexpr double minVal = 300.0;
+constexpr uint32_t numClocks = static_cast<uint32_t>((maxFreq - minFreq) / step) + 1;
 
 class SysmanFrequencyFixture : public DeviceFixture, public ::testing::Test {
 
   protected:
-    SysmanImp *sysmanImp;
+    std::unique_ptr<SysmanImp> sysmanImp;
     zet_sysman_handle_t hSysman;
     zet_sysman_freq_handle_t hSysmanFrequency;
+    Mock<FrequencySysfsAccess> *pSysfsAccess = nullptr;
 
-    Mock<OsFrequency> *pOsFrequency;
-    FrequencyImp *pFrequencyImp;
-    const float minFreq = 300.0;
-    const float maxFreq = 1100.0;
-    const double step = 100.0 / 6;
-    const uint32_t numClocks = static_cast<uint32_t>((maxFreq - minFreq) / step) + 1;
+    OsFrequency *pOsFrequency = nullptr;
+    FrequencyImp *pFrequencyImp = nullptr;
+    PublicLinuxFrequencyImp linuxFrequencyImp;
 
     double clockValue(const double calculatedClock) {
         // i915 specific. frequency step is a fraction
@@ -51,54 +59,36 @@ class SysmanFrequencyFixture : public DeviceFixture, public ::testing::Test {
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        sysmanImp = new SysmanImp(device->toHandle());
-        pOsFrequency = new NiceMock<Mock<OsFrequency>>;
+        sysmanImp = std::make_unique<SysmanImp>(device->toHandle());
+        pSysfsAccess = new NiceMock<Mock<FrequencySysfsAccess>>;
+        linuxFrequencyImp.pSysfsAccess = pSysfsAccess;
+        pOsFrequency = static_cast<OsFrequency *>(&linuxFrequencyImp);
         pFrequencyImp = new FrequencyImp();
         pFrequencyImp->pOsFrequency = pOsFrequency;
-        ON_CALL(*pOsFrequency, getMin(_))
-            .WillByDefault(DoAll(
-                SetFloat(minFreq),
-                Return(ZE_RESULT_SUCCESS)));
-        ON_CALL(*pOsFrequency, getMax(_))
-            .WillByDefault(DoAll(
-                SetFloat(maxFreq),
-                Return(ZE_RESULT_SUCCESS)));
-        ON_CALL(*pOsFrequency, getRequest(_))
-            .WillByDefault(DoAll(
-                SetFloat(minFreq),
-                Return(ZE_RESULT_SUCCESS)));
-        ON_CALL(*pOsFrequency, getTdp(_))
-            .WillByDefault(DoAll(
-                SetFloat(maxFreq),
-                Return(ZE_RESULT_SUCCESS)));
-        ON_CALL(*pOsFrequency, getActual(_))
-            .WillByDefault(DoAll(
-                SetFloat(minFreq),
-                Return(ZE_RESULT_SUCCESS)));
-        ON_CALL(*pOsFrequency, getEfficient(_))
-            .WillByDefault(DoAll(
-                SetFloat(minFreq),
-                Return(ZE_RESULT_SUCCESS)));
-        ON_CALL(*pOsFrequency, getMaxVal(_))
-            .WillByDefault(DoAll(
-                SetFloat(maxFreq),
-                Return(ZE_RESULT_SUCCESS)));
-        ON_CALL(*pOsFrequency, getMinVal(_))
-            .WillByDefault(DoAll(
-                SetFloat(minFreq),
-                Return(ZE_RESULT_SUCCESS)));
-
+        pSysfsAccess->setVal(minFreqFile, minFreq);
+        pSysfsAccess->setVal(maxFreqFile, maxFreq);
+        pSysfsAccess->setVal(requestFreqFile, request);
+        pSysfsAccess->setVal(tdpFreqFile, tdp);
+        pSysfsAccess->setVal(actualFreqFile, actual);
+        pSysfsAccess->setVal(efficientFreqFile, efficient);
+        pSysfsAccess->setVal(maxValFreqFile, maxVal);
+        pSysfsAccess->setVal(minValFreqFile, minVal);
+        ON_CALL(*pSysfsAccess, read(_, _))
+            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<FrequencySysfsAccess>::getVal));
+        ON_CALL(*pSysfsAccess, write(_, _))
+            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<FrequencySysfsAccess>::setVal));
         pFrequencyImp->init();
         sysmanImp->pFrequencyHandleContext->handle_list.push_back(pFrequencyImp);
-
         hSysman = sysmanImp->toHandle();
         hSysmanFrequency = pFrequencyImp->toHandle();
     }
 
     void TearDown() override {
-        if (sysmanImp != nullptr) {
-            delete sysmanImp;
-            sysmanImp = nullptr;
+        pFrequencyImp->pOsFrequency = nullptr;
+
+        if (pSysfsAccess != nullptr) {
+            delete pSysfsAccess;
+            pSysfsAccess = nullptr;
         }
         DeviceFixture::TearDown();
     }
@@ -178,67 +168,51 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
 }
 
 TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFrequencySetRangeThenVerifyzetSysmanFrequencySetRangeTest1CallSucceeds) {
-    const float startingMin = 900.0;
-    const float newMax = 600.0;
+    const double startingMin = 900.0;
+    const double newMax = 600.0;
 
     zet_freq_range_t limits;
 
-    ON_CALL(*pOsFrequency, getMin(_))
-        .WillByDefault(DoAll(
-            SetFloat(startingMin),
-            Return(ZE_RESULT_SUCCESS)));
-    ON_CALL(*pOsFrequency, getMax(_))
-        .WillByDefault(DoAll(
-            SetFloat(maxFreq),
-            Return(ZE_RESULT_SUCCESS)));
+    pSysfsAccess->setVal(minFreqFile, startingMin);
 
     // If the new Max value is less than the old Min
     // value, the new Min must be set before the new Max
-    InSequence s;
-    EXPECT_CALL(*pOsFrequency, setMin(minFreq))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-    EXPECT_CALL(*pOsFrequency, setMax(newMax))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
 
     limits.min = minFreq;
     limits.max = newMax;
     ze_result_t result = zetSysmanFrequencySetRange(hSysmanFrequency, &limits);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zetSysmanFrequencyGetRange(hSysmanFrequency, &limits);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_DOUBLE_EQ(minFreq, limits.min);
+    EXPECT_DOUBLE_EQ(newMax, limits.max);
 }
 
 TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFrequencySetRangeThenVerifyzetSysmanFrequencySetRangeTest2CallSucceeds) {
-    const float startingMax = 600.0;
-    const float newMin = 900.0;
+    const double startingMax = 600.0;
+    const double newMin = 900.0;
 
     zet_freq_range_t limits;
 
-    ON_CALL(*pOsFrequency, getMin(_))
-        .WillByDefault(DoAll(
-            SetFloat(minFreq),
-            Return(ZE_RESULT_SUCCESS)));
-    ON_CALL(*pOsFrequency, getMax(_))
-        .WillByDefault(DoAll(
-            SetFloat(startingMax),
-            Return(ZE_RESULT_SUCCESS)));
+    pSysfsAccess->setVal(maxFreqFile, startingMax);
 
     // If the new Min value is greater than the old Max
     // value, the new Max must be set before the new Min
-    InSequence s;
-    EXPECT_CALL(*pOsFrequency, setMax(maxFreq))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-    EXPECT_CALL(*pOsFrequency, setMin(newMin))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
 
     limits.min = newMin;
     limits.max = maxFreq;
     ze_result_t result = zetSysmanFrequencySetRange(hSysmanFrequency, &limits);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = zetSysmanFrequencyGetRange(hSysmanFrequency, &limits);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_DOUBLE_EQ(newMin, limits.min);
+    EXPECT_DOUBLE_EQ(maxFreq, limits.max);
 }
 
 TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFrequencySetRangeThenVerifyzetSysmanFrequencySetRangeTest3CallSucceeds) {
@@ -249,7 +223,7 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
     limits.max = clockValue(maxFreq + step);
     ze_result_t result = zetSysmanFrequencySetRange(hSysmanFrequency, &limits);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFrequencySetRangeThenVerifyzetSysmanFrequencySetRangeTest4CallSucceeds) {
@@ -260,7 +234,7 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
     limits.max = maxFreq;
     ze_result_t result = zetSysmanFrequencySetRange(hSysmanFrequency, &limits);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFrequencySetRangeThenVerifyzetSysmanFrequencySetRangeTest5CallSucceeds) {
@@ -271,40 +245,21 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
     limits.max = maxFreq;
     ze_result_t result = zetSysmanFrequencySetRange(hSysmanFrequency, &limits);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
 TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFrequencyGetStateThenVerifyzetSysmanFrequencyGetStateTestCallSucceeds) {
-    const float testRequestValue = 450.0;
-    const float testTdpValue = 1200.0;
-    const float testEfficientValue = 400.0;
-    const float testActualValue = 550.0;
+    const double testRequestValue = 450.0;
+    const double testTdpValue = 1200.0;
+    const double testEfficientValue = 400.0;
+    const double testActualValue = 550.0;
 
     zet_freq_state_t state;
 
-    EXPECT_CALL(*pOsFrequency, getRequest(_))
-        .Times(1)
-        .WillOnce(DoAll(
-            SetFloat(testRequestValue),
-            Return(ZE_RESULT_SUCCESS)));
-    EXPECT_CALL(*pOsFrequency, getTdp(_))
-        .Times(1)
-        .WillOnce(DoAll(
-            SetFloat(testTdpValue),
-            Return(ZE_RESULT_SUCCESS)));
-    EXPECT_CALL(*pOsFrequency, getEfficient(_))
-        .Times(1)
-        .WillOnce(DoAll(
-            SetFloat(testEfficientValue),
-            Return(ZE_RESULT_SUCCESS)));
-    EXPECT_CALL(*pOsFrequency, getActual(_))
-        .Times(1)
-        .WillOnce(DoAll(
-            SetFloat(testActualValue),
-            Return(ZE_RESULT_SUCCESS)));
-    EXPECT_CALL(*pOsFrequency, getThrottleReasons(_))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_ERROR_UNKNOWN));
+    pSysfsAccess->setVal(requestFreqFile, testRequestValue);
+    pSysfsAccess->setVal(tdpFreqFile, testTdpValue);
+    pSysfsAccess->setVal(actualFreqFile, testActualValue);
+    pSysfsAccess->setVal(efficientFreqFile, testEfficientValue);
 
     ze_result_t result = zetSysmanFrequencyGetState(hSysmanFrequency, &state);
 
