@@ -5,22 +5,13 @@
  *
  */
 
-#include "shared/source/helpers/non_copyable_or_moveable.h"
-
-#include "level_zero/tools/source/sysman/temperature/os_temperature.h"
-
-#include "sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/temperature/linux/os_temperature_imp.h"
 
 namespace L0 {
 
-class LinuxTemperatureImp : public OsTemperature, public NEO::NonCopyableClass {
-  public:
-    LinuxTemperatureImp(OsSysman *pOsSysman);
-    ~LinuxTemperatureImp() override = default;
-
-  private:
-    SysfsAccess *pSysfsAccess = nullptr;
-};
+ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
 
 LinuxTemperatureImp::LinuxTemperatureImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);

@@ -24,7 +24,7 @@ ze_result_t TemperatureImp::temperatureSetConfig(const zet_temp_config_t *pConfi
 }
 
 ze_result_t TemperatureImp::temperatureGetState(double *pTemperature) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pOsTemperature->getSensorTemperature(pTemperature);
 }
 
 TemperatureImp::TemperatureImp(OsSysman *pOsSysman) {
