@@ -1441,6 +1441,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithSingleBuffer
 template <typename GfxFamily>
 struct MockDrmCsr : public DrmCommandStreamReceiver<GfxFamily> {
     using DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver;
+    using DrmCommandStreamReceiver<GfxFamily>::dispatchMode;
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreatePageTableMngrIsCalledThenCreatePageTableManager) {
@@ -1452,6 +1453,33 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmCommandStreamReceiverWhenCreate
     auto csr = std::make_unique<MockDrmCsr<FamilyType>>(executionEnvironment, 1, gemCloseWorkerMode::gemCloseWorkerActive);
     auto pageTableManager = csr->createPageTableManager();
     EXPECT_EQ(executionEnvironment.rootDeviceEnvironments[1]->pageTableManager.get(), pageTableManager);
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenLocalMemoryEnabledWhenCreatingDrmCsrThenEnableBatching) {
+
+    {
+        DebugManagerStateRestore restore;
+        DebugManager.flags.EnableLocalMemory.set(1);
+
+        MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
+        EXPECT_EQ(DispatchMode::BatchedDispatch, csr1.dispatchMode);
+
+        DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
+        MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
+        EXPECT_EQ(DispatchMode::ImmediateDispatch, csr2.dispatchMode);
+    }
+
+    {
+        DebugManagerStateRestore restore;
+        DebugManager.flags.EnableLocalMemory.set(0);
+
+        MockDrmCsr<FamilyType> csr1(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
+        EXPECT_EQ(DispatchMode::ImmediateDispatch, csr1.dispatchMode);
+
+        DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::BatchedDispatch));
+        MockDrmCsr<FamilyType> csr2(executionEnvironment, 0, gemCloseWorkerMode::gemCloseWorkerInactive);
+        EXPECT_EQ(DispatchMode::BatchedDispatch, csr2.dispatchMode);
+    }
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPageTableManagerAndMapTrueWhenUpdateAuxTableIsCalledThenItReturnsTrue) {

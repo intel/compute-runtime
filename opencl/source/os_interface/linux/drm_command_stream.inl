@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
@@ -33,9 +34,20 @@ template <typename GfxFamily>
 DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex, gemCloseWorkerMode mode)
     : BaseClass(executionEnvironment, rootDeviceIndex), gemCloseWorkerOperationMode(mode) {
 
-    this->drm = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm();
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
+
+    this->drm = rootDeviceEnvironment->osInterface->get()->getDrm();
     residency.reserve(512);
     execObjectsStorage.reserve(512);
+
+    auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
+    auto localMemoryEnabled = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
+
+    this->dispatchMode = localMemoryEnabled ? DispatchMode::BatchedDispatch : DispatchMode::ImmediateDispatch;
+
+    if (DebugManager.flags.CsrDispatchMode.get()) {
+        this->dispatchMode = static_cast<DispatchMode>(DebugManager.flags.CsrDispatchMode.get());
+    }
 }
 
 template <typename GfxFamily>

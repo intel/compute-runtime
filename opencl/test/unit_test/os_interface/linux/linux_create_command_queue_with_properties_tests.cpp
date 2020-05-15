@@ -126,6 +126,7 @@ HWTEST_F(clCreateCommandQueueWithPropertiesLinux, givenPropertiesWithClQueueSlic
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.sliceCount = commandQueue->getSliceCount();
+    dispatchFlags.implicitFlush = true;
 
     mockCsr->flushTask(commandStream,
                        0u,
@@ -170,6 +171,7 @@ HWTEST_F(clCreateCommandQueueWithPropertiesLinux, givenSameSliceCountAsRecentlyS
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.sliceCount = commandQueue->getSliceCount();
+    dispatchFlags.implicitFlush = true;
 
     mockCsr->lastSentSliceCount = newSliceCount;
     mockCsr->flushTask(commandStream,
