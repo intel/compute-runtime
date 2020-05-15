@@ -10,7 +10,10 @@
 
 namespace NEO {
 
-class PerformanceCountersLinux : virtual public PerformanceCounters {
+using MetricsLibraryApi::ClientDataLinuxAdapter_1_0;
+using MetricsLibraryApi::LinuxAdapterType;
+
+class PerformanceCountersLinux : public PerformanceCounters {
   public:
     PerformanceCountersLinux() = default;
     ~PerformanceCountersLinux() override = default;
@@ -20,5 +23,10 @@ class PerformanceCountersLinux : virtual public PerformanceCounters {
     /////////////////////////////////////////////////////
     bool enableCountersConfiguration() override;
     void releaseCountersConfiguration() override;
+
+    /////////////////////////////////////////////////////
+    // Metrics Library client adapter data.
+    /////////////////////////////////////////////////////
+    ClientDataLinuxAdapter_1_0 adapter = {};
 };
 } // namespace NEO

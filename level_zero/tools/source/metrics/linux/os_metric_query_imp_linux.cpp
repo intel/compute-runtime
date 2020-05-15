@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/os_interface.h"
+
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/metrics/metric_query_imp.h"
 
@@ -15,7 +18,16 @@ namespace L0 {
 const char *MetricsLibrary::getFilename() { return "libigdml.so"; }
 
 bool MetricsLibrary::getContextData(Device &device, ContextCreateData_1_0 &contextData) {
-    return true;
+
+    auto osInterface = device.getOsInterface().get();
+    auto drm = osInterface->getDrm();
+    auto drmFileDescriptor = drm->getFileDescriptor();
+    auto &osData = contextData.ClientData->Linux;
+
+    osData.Adapter->Type = LinuxAdapterType::DrmFileDescriptor;
+    osData.Adapter->DrmFileDescriptor = drmFileDescriptor;
+
+    return drmFileDescriptor != -1;
 }
 
 bool MetricsLibrary::activateConfiguration(const ConfigurationHandle_1_0 configurationHandle) {

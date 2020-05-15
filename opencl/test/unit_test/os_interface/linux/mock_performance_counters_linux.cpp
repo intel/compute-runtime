@@ -7,6 +7,7 @@
 
 #include "mock_performance_counters_linux.h"
 
+#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "opencl/test/unit_test/os_interface/linux/mock_os_time_linux.h"
 #include "opencl/test/unit_test/os_interface/mock_performance_counters.h"
 
@@ -48,6 +49,7 @@ void PerformanceCountersFixture::SetUp() {
     context = std::make_unique<MockContext>(device.get());
     queue = std::make_unique<MockCommandQueue>(context.get(), device.get(), &queueProperties);
     osInterface = std::unique_ptr<OSInterface>(new OSInterface());
+    osInterface->get()->setDrm(new DrmMock());
     device->setOSTime(new MockOSTimeLinux(osInterface.get()));
 }
 

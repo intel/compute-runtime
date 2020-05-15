@@ -205,6 +205,7 @@ bool MetricsLibrary::createContext() {
     ClientOptionsData_1_0 clientOptions[1] = {};
     ClientData_1_0 clientData = {};
     ClientType_1_0 clientType = {};
+    ClientDataLinuxAdapter_1_0 adapter = {};
 
     // Check if compute command streamer is used.
     auto asyncComputeEngine = std::find_if(asyncComputeEngines.begin(), asyncComputeEngines.end(), [&](const auto &engine) {
@@ -220,12 +221,13 @@ bool MetricsLibrary::createContext() {
 
     // Create metrics library context.
     DEBUG_BREAK_IF(!contextCreateFunction);
-    clientType.Api = ClientApi::OpenCL;
+    clientType.Api = ClientApi::OneApi;
     clientType.Gen = getGenType(device.getPlatformInfo());
 
     clientOptions[0].Type = ClientOptionsType::Compute;
     clientOptions[0].Compute.Asynchronous = asyncComputeEngine != asyncComputeEngines.end();
 
+    clientData.Linux.Adapter = &adapter;
     clientData.ClientOptions = clientOptions;
     clientData.ClientOptionsCount = sizeof(clientOptions) / sizeof(ClientOptionsData_1_0);
 

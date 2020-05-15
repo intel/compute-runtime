@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-class PerformanceCountersWin : virtual public PerformanceCounters {
+class PerformanceCountersWin : public PerformanceCounters {
   public:
     PerformanceCountersWin() = default;
     ~PerformanceCountersWin() override = default;

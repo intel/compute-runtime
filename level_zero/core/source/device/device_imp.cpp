@@ -475,7 +475,7 @@ NEO::HwHelper &DeviceImp::getHwHelper() {
     return NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 }
 
-NEO::OSInterface &DeviceImp::getOsInterface() { return *neoDevice->getOSTime()->getOSInterface(); }
+NEO::OSInterface &DeviceImp::getOsInterface() { return *neoDevice->getRootDeviceEnvironment().osInterface; }
 
 uint32_t DeviceImp::getPlatformInfo() const {
     const auto &hardwareInfo = neoDevice->getHardwareInfo();

@@ -15,6 +15,12 @@
 #include "opencl/test/unit_test/os_interface/windows/mock_os_time_win.h"
 
 namespace NEO {
+///////////////////////////////////////////////////////
+// MockPerformanceCountersWin::MockPerformanceCountersWin
+///////////////////////////////////////////////////////
+MockPerformanceCountersWin::MockPerformanceCountersWin(Device *device)
+    : PerformanceCountersWin() {
+}
 
 ///////////////////////////////////////////////////////
 // MockPerformanceCounters::create
@@ -29,13 +35,6 @@ std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create(Device *dev
     performanceCounters->setMetricsLibraryInterface(std::move(metricsLibrary));
 
     return performanceCounters;
-}
-
-///////////////////////////////////////////////////////
-// MockPerformanceCountersWin::MockPerformanceCountersWin
-///////////////////////////////////////////////////////
-MockPerformanceCountersWin::MockPerformanceCountersWin(Device *device)
-    : PerformanceCountersWin() {
 }
 
 //////////////////////////////////////////////////////
