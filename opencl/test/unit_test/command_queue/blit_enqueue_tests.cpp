@@ -252,7 +252,8 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenConstruct
         cmdFound = expectCommand<XY_COPY_BLT>(++cmdFound, cmdList.end());
         cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdList.end());
 
-        // wait for NDR
+        // wait for NDR (walker split)
+        cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdList.end());
         cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdList.end());
 
         // NonAux to Aux
@@ -325,7 +326,8 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenConstruct
         cmdFound = expectCommand<XY_COPY_BLT>(++cmdFound, cmdList.end());
         cmdFound = expectCommand<MI_FLUSH_DW>(++cmdFound, cmdList.end());
 
-        // wait for NDR
+        // wait for NDR (walker split)
+        cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdList.end());
         cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdList.end());
 
         // NonAux to Aux
