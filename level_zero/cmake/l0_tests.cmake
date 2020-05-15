@@ -70,7 +70,8 @@ add_library(compute_runtime_mockable_extra
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_compiler_interface.cpp
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_compiler_interface.h
         ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_command_stream_receiver.cpp
-        ${NEO_SOURCE_DIR}/opencl/source/aub/aub_stream_interface.cpp
+        ${NEO_SHARED_TEST_DIRECTORY}/unit_test/mocks/mock_device.cpp
+        ${NEO_SOURCE_DIR}/opencl/test/unit_test/aub_stream_mocks/aub_stream_interface_mock.cpp
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/built_ins_helper.cpp
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/debug_helpers.cpp
@@ -90,7 +91,6 @@ add_library(compute_runtime_mockable_extra
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_sip.cpp
         ${NEO_SOURCE_DIR}/opencl/test/unit_test/utilities/debug_settings_reader_creator.cpp
         ${NEO_SOURCE_DIR}/shared/source/debug_settings/debug_settings_manager.cpp
-        ${NEO_SOURCE_DIR}/shared/test/unit_test/mocks/mock_device.cpp
 )
 
 set_property(TARGET compute_runtime_mockable_extra APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})

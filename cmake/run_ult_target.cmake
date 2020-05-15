@@ -16,6 +16,14 @@ if(NOT SKIP_NEO_UNIT_TESTS)
       TARGET run_${product}_unit_tests
       POST_BUILD
       COMMAND WORKING_DIRECTORY ${TargetDir}
+      COMMAND echo Running neo_shared_tests ${target} ${slices}x${subslices}x${eu_per_ss} in ${TargetDir}/${product}
+      COMMAND $<TARGET_FILE:neo_shared_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
+    )
+
+    add_custom_command(
+      TARGET run_${product}_unit_tests
+      POST_BUILD
+      COMMAND WORKING_DIRECTORY ${TargetDir}
       COMMAND echo Running igdrcl_tests ${target} ${slices}x${subslices}x${eu_per_ss} in ${TargetDir}/${product}
       COMMAND ${GTEST_ENV} $<TARGET_FILE:igdrcl_tests> --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
     )
