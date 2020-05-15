@@ -9,7 +9,15 @@
 
 namespace L0 {
 
-class WddmPowerImp : public OsPower {};
+class WddmPowerImp : public OsPower {
+  public:
+    ze_result_t getEnergyCounter(uint64_t &energy) override;
+};
+
+ze_result_t WddmPowerImp::getEnergyCounter(uint64_t &energy) {
+
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
 
 OsPower *OsPower::create(OsSysman *pOsSysman) {
     WddmPowerImp *pWddmPowerImp = new WddmPowerImp();

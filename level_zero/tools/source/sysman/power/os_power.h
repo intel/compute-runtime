@@ -14,6 +14,7 @@ namespace L0 {
 struct OsSysman;
 class OsPower {
   public:
+    virtual ze_result_t getEnergyCounter(uint64_t &energy) = 0;
     static OsPower *create(OsSysman *pOsSysman);
     virtual ~OsPower() = default;
 };

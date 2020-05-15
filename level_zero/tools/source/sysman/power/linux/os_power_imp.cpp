@@ -5,22 +5,14 @@
  *
  */
 
-#include "shared/source/helpers/non_copyable_or_moveable.h"
-
-#include "level_zero/tools/source/sysman/power/os_power.h"
-
-#include "sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/power/linux/os_power_imp.h"
 
 namespace L0 {
 
-class LinuxPowerImp : public OsPower, public NEO::NonCopyableClass {
-  public:
-    LinuxPowerImp(OsSysman *pOsSysman);
-    ~LinuxPowerImp() override = default;
+ze_result_t LinuxPowerImp::getEnergyCounter(uint64_t &energy) {
 
-  private:
-    SysfsAccess *pSysfsAccess = nullptr;
-};
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
 
 LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
