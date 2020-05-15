@@ -911,14 +911,21 @@ TEST(DeviceGetCaps, givenOclVersionLessThan21WhenCapsAreCreatedThenDeviceReports
     }
 }
 
-TEST(DeviceGetCaps, givenOclVersion21WhenCapsAreCreatedThenDeviceReportsSpirvAsSupportedIl) {
+TEST(DeviceGetCaps, givenOcl21FeaturesSupportedWhenCapsAreCreatedThenDeviceReportsSpirvAsSupportedIl) {
     DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceOCL21FeaturesSupport.set(1);
     {
-        DebugManager.flags.ForceOCLVersion.set(21);
         auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
         EXPECT_STREQ("SPIR-V_1.2 ", caps.ilVersion);
-        DebugManager.flags.ForceOCLVersion.set(0);
+    }
+
+    DebugManager.flags.ForceOCL21FeaturesSupport.set(-1);
+    DebugManager.flags.ForceOCLVersion.set(21);
+    {
+        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+        const auto &caps = device->getDeviceInfo();
+        EXPECT_STREQ("SPIR-V_1.2 ", caps.ilVersion);
     }
 }
 
