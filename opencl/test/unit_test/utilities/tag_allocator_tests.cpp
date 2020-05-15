@@ -290,7 +290,6 @@ TEST_F(TagAllocatorTest, CleanupResources) {
     tagAllocator.cleanUpResources();
 
     EXPECT_EQ(0u, tagAllocator.getGraphicsAllocationsCount());
-    EXPECT_EQ(0u, tagAllocator.getTagPoolCount());
 }
 
 TEST_F(TagAllocatorTest, whenNewTagIsTakenThenInitialize) {

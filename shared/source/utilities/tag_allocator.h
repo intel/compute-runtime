@@ -78,7 +78,6 @@ class TagAllocator {
                                                   rootDeviceIndex(rootDeviceIndex),
                                                   memoryManager(memMngr),
                                                   tagCount(tagCount),
-                                                  tagAlignment(tagAlignment),
                                                   doNotReleaseNodes(doNotReleaseNodes) {
 
         this->tagSize = alignUp(tagSize, tagAlignment);
@@ -94,11 +93,6 @@ class TagAllocator {
             memoryManager->freeGraphicsMemory(gfxAllocation);
         }
         gfxAllocations.clear();
-
-        for (auto nodesMemory : tagPoolMemory) {
-            delete[] nodesMemory;
-        }
-        tagPoolMemory.clear();
     }
 
     NodeType *getTag() {
@@ -132,13 +126,12 @@ class TagAllocator {
     IDList<NodeType> usedTags;
     IDList<NodeType> deferredTags;
     std::vector<GraphicsAllocation *> gfxAllocations;
-    std::vector<NodeType *> tagPoolMemory;
+    std::vector<std::unique_ptr<NodeType[]>> tagPoolMemory;
 
     const DeviceBitfield deviceBitfield;
     const uint32_t rootDeviceIndex;
     MemoryManager *memoryManager;
     size_t tagCount;
-    size_t tagAlignment;
     size_t tagSize;
     bool doNotReleaseNodes = false;
 
@@ -166,25 +159,21 @@ class TagAllocator {
         GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
         gfxAllocations.push_back(graphicsAllocation);
 
-        uint64_t gpuBaseAddress = graphicsAllocation->getGpuAddress();
-        uintptr_t Size = graphicsAllocation->getUnderlyingBufferSize();
-        uintptr_t Start = reinterpret_cast<uintptr_t>(graphicsAllocation->getUnderlyingBuffer());
-        uintptr_t End = Start + Size;
-
-        NodeType *nodesMemory = new NodeType[tagCount];
+        auto nodesMemory = std::make_unique<NodeType[]>(tagCount);
 
         for (size_t i = 0; i < tagCount; ++i) {
+            auto tagOffset = i * tagSize;
+
             nodesMemory[i].allocator = this;
             nodesMemory[i].gfxAllocation = graphicsAllocation;
-            nodesMemory[i].tagForCpuAccess = reinterpret_cast<TagType *>(Start);
-            nodesMemory[i].gpuAddress = gpuBaseAddress + (i * tagSize);
+            nodesMemory[i].tagForCpuAccess = reinterpret_cast<TagType *>(ptrOffset(graphicsAllocation->getUnderlyingBuffer(), tagOffset));
+            nodesMemory[i].gpuAddress = graphicsAllocation->getGpuAddress() + tagOffset;
             nodesMemory[i].setDoNotReleaseNodes(doNotReleaseNodes);
+
             freeTags.pushTailOne(nodesMemory[i]);
-            Start += tagSize;
         }
-        DEBUG_BREAK_IF(Start > End);
-        UNUSED_VARIABLE(End);
-        tagPoolMemory.push_back(nodesMemory);
+
+        tagPoolMemory.push_back(std::move(nodesMemory));
     }
 
     void releaseDeferredTags() {
