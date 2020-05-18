@@ -33,4 +33,8 @@ bool Kernel::requiresPerDssBackedBuffer() const {
     return DebugManager.flags.ForcePerDssBackedBufferProgramming.get();
 }
 
+bool Kernel::requiresLimitedWorkgroupSize() const {
+    return this->isBuiltIn;
+}
+
 } // namespace NEO

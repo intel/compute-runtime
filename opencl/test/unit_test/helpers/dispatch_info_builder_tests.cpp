@@ -275,13 +275,26 @@ TEST_F(DispatchInfoBuilderTest, WhenGettingLwsThenCorrectValuesAreReturned) {
         EXPECT_EQ(1u, dispatchInfo.getLocalWorkgroupSize().z);
     }
 
+    size_t expectedResult[] = {16u, 16u, 1u};
+    const auto &hwInfo = pProgram->getDevice().getHardwareInfo();
+    auto isSimulation = pProgram->getDevice().isSimulation();
+
+    EXPECT_FALSE(isSimulation);
+
+    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (hwHelper.isSpecialWorkgroupSizeRequired(hwInfo, isSimulation)) {
+        for (auto &result : expectedResult) {
+            result = 1u;
+        }
+    }
+
     diBuilder->setKernel(pKernel);
     diBuilder->setDispatchGeometry(Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0), Vec3<size_t>(0, 0, 0));
     diBuilder->bake(mdi3);
     for (auto &dispatchInfo : mdi3) {
-        EXPECT_EQ(16u, dispatchInfo.getLocalWorkgroupSize().x);
-        EXPECT_EQ(16u, dispatchInfo.getLocalWorkgroupSize().y);
-        EXPECT_EQ(1u, dispatchInfo.getLocalWorkgroupSize().z);
+        EXPECT_EQ(expectedResult[0], dispatchInfo.getLocalWorkgroupSize().x);
+        EXPECT_EQ(expectedResult[1], dispatchInfo.getLocalWorkgroupSize().y);
+        EXPECT_EQ(expectedResult[2], dispatchInfo.getLocalWorkgroupSize().z);
     }
 
     delete diBuilder;

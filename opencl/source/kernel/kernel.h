@@ -414,6 +414,7 @@ class Kernel : public BaseObject<_cl_kernel> {
         const bool isCssUsed) const;
 
     bool requiresPerDssBackedBuffer() const;
+    bool requiresLimitedWorkgroupSize() const;
 
   protected:
     struct ObjectCounts {
