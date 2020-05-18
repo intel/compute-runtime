@@ -95,6 +95,8 @@ class DirectSubmissionHw {
     void createDiagnostic();
     void initDiagnostic(bool &submitOnInit);
     MOCKABLE_VIRTUAL void performDiagnosticMode();
+    void dispatchDiagnosticModeSection();
+    size_t getDiagnosticModeSection();
 
     enum RingBufferUse : uint32_t {
         FirstBuffer,

@@ -1019,11 +1019,12 @@ HWTEST_F(DirectSubmissionTest,
         GTEST_SKIP();
     }
 
+    uint32_t execCount = 5u;
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionEnableDebugBuffer.set(1);
     DebugManager.flags.DirectSubmissionDisableCacheFlush.set(true);
     DebugManager.flags.DirectSubmissionDisableMonitorFence.set(true);
-    DebugManager.flags.DirectSubmissionDiagnosticExecutionCount.set(5);
+    DebugManager.flags.DirectSubmissionDiagnosticExecutionCount.set(static_cast<int32_t>(execCount));
 
     NEO::IoFunctions::mockFopenCalled = 0u;
     NEO::IoFunctions::mockVfptrinfCalled = 0u;
@@ -1041,7 +1042,8 @@ HWTEST_F(DirectSubmissionTest,
     expectedSemaphoreValue += expectedExecCount;
     EXPECT_EQ(expectedExecCount, directSubmission.diagnostic->getExecutionsCount());
     size_t expectedSize = Dispatcher::getSizePreemption() +
-                          directSubmission.getSizeSemaphoreSection();
+                          directSubmission.getSizeSemaphoreSection() +
+                          directSubmission.getDiagnosticModeSection();
     expectedSize += expectedExecCount * directSubmission.getSizeDispatch();
 
     bool ret = directSubmission.initialize(false);
@@ -1064,11 +1066,12 @@ HWTEST_F(DirectSubmissionTest,
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
 
     GenCmdList storeDataCmdList = hwParse.getCommandsList<MI_STORE_DATA_IMM>();
-    ASSERT_EQ(5u, storeDataCmdList.size());
+    execCount += 1;
+    ASSERT_EQ(execCount, storeDataCmdList.size());
+
     uint32_t expectedData = 1u;
     for (auto &storeCmdData : storeDataCmdList) {
         MI_STORE_DATA_IMM *storeCmd = static_cast<MI_STORE_DATA_IMM *>(storeCmdData);
-
         auto storeData = storeCmd->getDataDword0();
         EXPECT_EQ(expectedData, storeData);
         expectedData++;
@@ -1178,14 +1181,14 @@ HWTEST_F(DirectSubmissionTest,
     EXPECT_TRUE(ret);
     ASSERT_NE(nullptr, directSubmission.workloadModeOneStoreAddress);
 
-    directSubmission.diagnostic->diagnosticModeOneWait(0, directSubmission.workloadModeOneStoreAddress, directSubmission.workloadModeOneExpectedValue);
+    directSubmission.diagnostic->diagnosticModeOneWaitCollect(0, directSubmission.workloadModeOneStoreAddress, directSubmission.workloadModeOneExpectedValue);
     auto mockDiagnostic = reinterpret_cast<MockDirectSubmissionDiagnosticsCollector *>(directSubmission.diagnostic.get());
 
     EXPECT_NE(0ll, mockDiagnostic->executionList[0].totalTimeDiff);
     EXPECT_NE(0ll, mockDiagnostic->executionList[0].submitWaitTimeDiff);
     EXPECT_EQ(0ll, mockDiagnostic->executionList[0].dispatchSubmitTimeDiff);
 
-    directSubmission.diagnostic->diagnosticModeOneWait(1, directSubmission.workloadModeOneStoreAddress, directSubmission.workloadModeOneExpectedValue);
+    directSubmission.diagnostic->diagnosticModeOneWaitCollect(1, directSubmission.workloadModeOneStoreAddress, directSubmission.workloadModeOneExpectedValue);
 
     EXPECT_NE(0ll, mockDiagnostic->executionList[1].totalTimeDiff);
     EXPECT_NE(0ll, mockDiagnostic->executionList[1].submitWaitTimeDiff);

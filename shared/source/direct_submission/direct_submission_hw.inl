@@ -119,6 +119,9 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit) {
                                  getSizeSemaphoreSection();
         Dispatcher::dispatchPreemption(ringCommandStream);
         dispatchSemaphoreSection(currentQueueWorkCount);
+        if (workloadMode == 1) {
+            dispatchDiagnosticModeSection();
+        }
 
         ringStart = submit(ringCommandStream.getGraphicsAllocation()->getGpuAddress(), startBufferSize);
         performDiagnosticMode();
@@ -233,7 +236,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch() {
     if (workloadMode == 0) {
         size += getSizeStartSection();
     } else if (workloadMode == 1) {
-        size += Dispatcher::getSizeStoreDwordCommand();
+        size += getDiagnosticModeSection();
     }
     //mode 2 does not dispatch any commands
 
@@ -260,11 +263,8 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
 
         setReturnAddress(returnCmd, getCommandBufferPositionGpuAddress(returnPosition));
     } else if (workloadMode == 1) {
-        workloadModeOneExpectedValue++;
-        uint64_t storeAddress = semaphoreGpuVa;
-        storeAddress += ptrDiff(workloadModeOneStoreAddress, semaphorePtr);
         DirectSubmissionDiagnostics::diagnosticModeOneDispatch(diagnostic.get());
-        Dispatcher::dispatchStoreDwordCommand(ringCommandStream, storeAddress, workloadModeOneExpectedValue);
+        dispatchDiagnosticModeSection();
     }
     //mode 2 does not dispatch any commands
 
@@ -403,12 +403,15 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::performDiagnosticMode() {
     if (directSubmissionDiagnosticAvailable) {
         if (diagnostic.get()) {
             diagnostic->diagnosticModeDiagnostic();
+            if (workloadMode == 1) {
+                diagnostic->diagnosticModeOneWait(workloadModeOneStoreAddress, workloadModeOneExpectedValue);
+            }
             BatchBuffer dummyBuffer = {};
             FlushStampTracker dummyTracker(true);
             for (uint32_t execution = 0; execution < diagnostic->getExecutionsCount(); execution++) {
                 dispatchCommandBuffer(dummyBuffer, dummyTracker);
                 if (workloadMode == 1) {
-                    diagnostic->diagnosticModeOneWait(execution, workloadModeOneStoreAddress, workloadModeOneExpectedValue);
+                    diagnostic->diagnosticModeOneWaitCollect(execution, workloadModeOneStoreAddress, workloadModeOneExpectedValue);
                 }
             }
             workloadMode = 0;
@@ -417,6 +420,19 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::performDiagnosticMode() {
             diagnostic.reset(nullptr);
         }
     }
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchDiagnosticModeSection() {
+    workloadModeOneExpectedValue++;
+    uint64_t storeAddress = semaphoreGpuVa;
+    storeAddress += ptrDiff(workloadModeOneStoreAddress, semaphorePtr);
+    Dispatcher::dispatchStoreDwordCommand(ringCommandStream, storeAddress, workloadModeOneExpectedValue);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getDiagnosticModeSection() {
+    return Dispatcher::getSizeStoreDwordCommand();
 }
 
 } // namespace NEO
