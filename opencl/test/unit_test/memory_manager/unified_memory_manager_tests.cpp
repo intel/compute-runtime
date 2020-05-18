@@ -7,13 +7,11 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/memory_manager/allocations_list.h"
-#include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
@@ -298,33 +296,6 @@ TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithPr
     svmManager->freeSVMAlloc(ptr);
 }
 
-HWTEST_F(SVMMemoryAllocatorTest, givenZeroCopyAllocationWhenDestroyingThenCheckUsage) {
-    MockContext mockContext;
-    MockCommandQueue cmdQ(&mockContext, mockContext.getDevice(0), nullptr);
-    auto &csr = static_cast<UltCommandStreamReceiver<FamilyType> &>(cmdQ.getGpgpuCommandStreamReceiver());
-    csr.getOsContext().incRefInternal();
-    memoryManager->getRegisteredEngines().push_back(cmdQ.getGpgpuEngine());
-
-    auto ptr = svmManager->createSVMAlloc(0, 4096u, MemObjHelper::getSvmAllocationProperties(0), 0);
-    auto allocation = svmManager->getSVMAlloc(ptr);
-    auto gpuAllocation = allocation->gpuAllocation;
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_ZERO_COPY, gpuAllocation->getAllocationType());
-
-    csr.taskCount = 1;
-    *csr.getTagAddress() = 1;
-
-    csr.makeResident(*gpuAllocation);
-
-    auto &temporaryAllocations = csr.getInternalAllocationStorage()->getTemporaryAllocations();
-    EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
-
-    EXPECT_TRUE(svmManager->freeSVMAlloc(ptr));
-
-    EXPECT_FALSE(temporaryAllocations.peekIsEmpty());
-
-    EXPECT_EQ(gpuAllocation, temporaryAllocations.peekHead());
-}
-
 TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSetThenItIsStoredWithProperTypeInAllocationMapAndHasCpuAndGpuStorage) {
     MockCommandQueue cmdQ;
     MockContext mockContext;
@@ -355,42 +326,6 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
 
     EXPECT_NE(nullptr, allocation->gpuAllocation->getUnderlyingBuffer());
     svmManager->freeSVMAlloc(ptr);
-}
-
-HWTEST_F(SVMLocalMemoryAllocatorTest, givenUsmAllocationWhenDestroyingThenCheckUsage) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
-
-    MockContext mockContext;
-    MockCommandQueue cmdQ(&mockContext, mockContext.getDevice(0), nullptr);
-    auto &csr = static_cast<UltCommandStreamReceiver<FamilyType> &>(cmdQ.getGpgpuCommandStreamReceiver());
-    csr.getOsContext().incRefInternal();
-    memoryManager->getRegisteredEngines().push_back(cmdQ.getGpgpuEngine());
-
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
-    unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
-    unifiedMemoryProperties.device = mockContext.getDevice(0u);
-
-    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties, &cmdQ);
-    auto allocation = svmManager->getSVMAlloc(ptr);
-    auto cpuAllocation = allocation->cpuAllocation;
-    auto gpuAllocation = allocation->gpuAllocation;
-
-    csr.taskCount = 1;
-    *csr.getTagAddress() = 1;
-
-    csr.makeResident(*cpuAllocation);
-    csr.makeResident(*gpuAllocation);
-
-    auto &temporaryAllocations = csr.getInternalAllocationStorage()->getTemporaryAllocations();
-    EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
-
-    EXPECT_TRUE(svmManager->freeSVMAlloc(ptr));
-
-    EXPECT_FALSE(temporaryAllocations.peekIsEmpty());
-
-    EXPECT_EQ(gpuAllocation, temporaryAllocations.peekHead());
-    EXPECT_EQ(cpuAllocation, temporaryAllocations.peekHead()->next);
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemoryAndRegisteredPageFaultHandlerThenItIsStoredWithProperTypeInAllocationMapAndHasCpuAndGpuStorage) {

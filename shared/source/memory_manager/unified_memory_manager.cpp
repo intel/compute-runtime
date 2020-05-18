@@ -281,7 +281,7 @@ void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
     GraphicsAllocation *gpuAllocation = svmData->gpuAllocation;
     SVMAllocs.remove(*svmData);
 
-    memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData) {
@@ -289,10 +289,8 @@ void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svm
     GraphicsAllocation *cpuAllocation = svmData->cpuAllocation;
     SVMAllocs.remove(*svmData);
 
-    memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(gpuAllocation);
-    if (cpuAllocation) {
-        memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(cpuAllocation);
-    }
+    memoryManager->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(cpuAllocation);
 }
 
 SvmMapOperation *SVMAllocsManager::getSvmMapOperation(const void *ptr) {
