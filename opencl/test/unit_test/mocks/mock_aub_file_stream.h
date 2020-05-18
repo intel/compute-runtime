@@ -11,11 +11,6 @@
 
 #include "gmock/gmock.h"
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
-
 namespace NEO {
 
 struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
@@ -87,10 +82,6 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
 };
 
 struct GmockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
-    MOCK_METHOD1(addComment, bool(const char *message));
+    MOCK_METHOD(bool, addComment, (const char *message), (override));
 };
 } // namespace NEO
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

@@ -11,11 +11,6 @@
 
 #include "gmock/gmock.h"
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
-
 namespace NEO {
 class MockGmmPageTableMngr : public GmmPageTableMngr {
   public:
@@ -28,9 +23,9 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
         }
     };
 
-    MOCK_METHOD2(initContextAuxTableRegister, GMM_STATUS(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType));
+    MOCK_METHOD(GMM_STATUS, initContextAuxTableRegister, (HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType), (override));
 
-    MOCK_METHOD1(updateAuxTable, GMM_STATUS(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable));
+    MOCK_METHOD(GMM_STATUS, updateAuxTable, (const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable), (override));
 
     void setCsrHandle(void *csrHandle) override;
 
@@ -42,7 +37,3 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
 };
 
 } // namespace NEO
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

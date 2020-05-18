@@ -12,10 +12,6 @@
 
 #include "gmock/gmock.h"
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
 
 namespace NEO {
 struct SurfaceFormatInfo;
@@ -72,11 +68,11 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     GMM_STATUS getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) override;
 
-    MOCK_METHOD1(cpuBlt, uint8_t(GMM_RES_COPY_BLT *resCopyBlt));
+    MOCK_METHOD(uint8_t, cpuBlt, (GMM_RES_COPY_BLT * resCopyBlt), (override));
 
     void *getSystemMemPointer() override { return (void *)mockResourceCreateParams.pExistingSysMem; }
 
-    MOCK_METHOD1(getUnifiedAuxSurfaceOffset, uint64_t(GMM_UNIFIED_AUX_TYPE auxType));
+    MOCK_METHOD(uint64_t, getUnifiedAuxSurfaceOffset, (GMM_UNIFIED_AUX_TYPE auxType), (override));
 
     bool is64KBPageSuitable() const override { return is64KBPageSuitableValue; }
 
@@ -117,6 +113,3 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 };
 } // namespace NEO
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

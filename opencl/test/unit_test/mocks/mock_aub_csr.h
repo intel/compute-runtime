@@ -21,11 +21,6 @@
 
 #include <string>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
-
 namespace NEO {
 
 struct MockAubFileStreamMockMmioWrite : public AubMemDump::AubFileStream {
@@ -158,7 +153,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     bool fileIsOpen = false;
     std::string openFileName = "";
 
-    MOCK_METHOD0(addPatchInfoComments, bool(void));
+    MOCK_METHOD(bool, addPatchInfoComments, (), (override));
 
     using CommandStreamReceiverHw<GfxFamily>::localMemoryEnabled;
 };
@@ -208,7 +203,3 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
     return aubExecutionEnvironment;
 }
 } // namespace NEO
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

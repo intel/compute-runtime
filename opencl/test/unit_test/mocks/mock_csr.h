@@ -14,11 +14,6 @@
 
 #include <vector>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
-
 using namespace NEO;
 
 template <typename GfxFamily>
@@ -226,14 +221,13 @@ template <typename GfxFamily>
 class MockFlatBatchBufferHelper : public FlatBatchBufferHelperHw<GfxFamily> {
   public:
     using FlatBatchBufferHelperHw<GfxFamily>::FlatBatchBufferHelperHw;
-    MOCK_METHOD1(setPatchInfoData, bool(const PatchInfoData &));
-    MOCK_METHOD1(removePatchInfoData, bool(uint64_t));
-    MOCK_METHOD1(registerCommandChunk, bool(CommandChunk &));
-    MOCK_METHOD2(registerBatchBufferStartAddress, bool(uint64_t, uint64_t));
-    MOCK_METHOD4(flattenBatchBuffer,
-                 GraphicsAllocation *(uint32_t rootDeviceIndex, BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode));
+    MOCK_METHOD(bool, setPatchInfoData, (const PatchInfoData &), (override));
+    MOCK_METHOD(bool, removePatchInfoData, (uint64_t), (override));
+    MOCK_METHOD(bool, registerCommandChunk, (CommandChunk &), (override));
+    MOCK_METHOD(bool, registerBatchBufferStartAddress, (uint64_t, uint64_t), (override));
+    MOCK_METHOD(GraphicsAllocation *,
+                flattenBatchBuffer,
+                (uint32_t rootDeviceIndex, BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode),
+                (override));
 };
 
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

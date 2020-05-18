@@ -13,11 +13,6 @@
 
 #include <string>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
-
 using namespace NEO;
 
 class MockSourceLevelDebugger : public SourceLevelDebugger {
@@ -97,10 +92,10 @@ class GMockSourceLevelDebugger : public SourceLevelDebugger {
         return isActive;
     }
 
-    MOCK_METHOD0(notifyDeviceDestruction, bool(void));
-    MOCK_CONST_METHOD4(notifyKernelDebugData, bool(const DebugData *debugData, const std::string &name, const void *isa, size_t isaSize));
-    MOCK_CONST_METHOD0(isOptimizationDisabled, bool());
-    MOCK_METHOD1(notifyNewDevice, bool(uint32_t));
-    MOCK_CONST_METHOD3(notifySourceCode, bool(const char *, size_t, std::string &));
-    MOCK_METHOD1(initialize, bool(bool));
+    MOCK_METHOD(bool, notifyDeviceDestruction, (), (override));
+    MOCK_METHOD(bool, notifyKernelDebugData, (const DebugData *debugData, const std::string &name, const void *isa, size_t isaSize), (const, override));
+    MOCK_METHOD(bool, isOptimizationDisabled, (), (const, override));
+    MOCK_METHOD(bool, notifyNewDevice, (uint32_t), (override));
+    MOCK_METHOD(bool, notifySourceCode, (const char *, size_t, std::string &), (const, override));
+    MOCK_METHOD(bool, initialize, (bool), (override));
 };
