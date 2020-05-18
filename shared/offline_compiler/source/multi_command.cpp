@@ -7,32 +7,38 @@
 
 #include "shared/offline_compiler/source/multi_command.h"
 
+#include "shared/offline_compiler/source/ocloc_fatbinary.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include <memory>
 
 namespace NEO {
-int MultiCommand::singleBuild(const std::vector<std::string> &allArgs) {
+int MultiCommand::singleBuild(const std::vector<std::string> &args) {
     int retVal = SUCCESS;
-    std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(allArgs.size(), allArgs, true, retVal, argHelper)};
+
+    if (requestedFatBinary(args)) {
+        retVal = buildFatBinary(args, argHelper);
+    } else {
+        std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(args.size(), args, true, retVal, argHelper)};
+        if (retVal == SUCCESS) {
+            retVal = buildWithSafetyGuard(pCompiler.get());
+
+            std::string &buildLog = pCompiler->getBuildLog();
+            if (buildLog.empty() == false) {
+                argHelper->printf("%s\n", buildLog.c_str());
+            }
+        }
+        outFileName += ".bin";
+    }
     if (retVal == SUCCESS) {
-        retVal = buildWithSafetyGuard(pCompiler.get());
-
-        std::string &buildLog = pCompiler->getBuildLog();
-        if (buildLog.empty() == false) {
-            argHelper->printf("%s\n", buildLog.c_str());
-        }
-
-        if (retVal == ErrorCode::SUCCESS) {
-            if (!pCompiler->isQuiet())
-                argHelper->printf("Build succeeded.\n");
-        } else {
-            argHelper->printf("Build failed with error code: %d\n", retVal);
-        }
+        if (!quiet)
+            argHelper->printf("Build succeeded.\n");
+    } else {
+        argHelper->printf("Build failed with error code: %d\n", retVal);
     }
 
     if (retVal == SUCCESS) {
-        outputFile << getCurrentDirectoryOwn(outDirForBuilds) + outFileName + ".bin";
+        outputFile << getCurrentDirectoryOwn(outDirForBuilds) + outFileName;
     } else {
         outputFile << "Unsuccesful build";
     }
@@ -198,9 +204,9 @@ int MultiCommand::showResults() {
         retValue |= retVal;
         if (!quiet) {
             if (retVal != SUCCESS) {
-                argHelper->printf("Build %d: failed. Error code: %d\n", indexRetVal, retVal);
+                argHelper->printf("Build command %d: failed. Error code: %d\n", indexRetVal, retVal);
             } else {
-                argHelper->printf("Build %d: successful\n", indexRetVal);
+                argHelper->printf("Build command %d: successful\n", indexRetVal);
             }
         }
         indexRetVal++;

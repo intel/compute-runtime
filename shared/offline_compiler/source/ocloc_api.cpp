@@ -90,8 +90,8 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             int retValue = ErrorCode::SUCCESS;
             std::unique_ptr<MultiCommand> pMulti{(MultiCommand::create(allArgs, retValue, helper.get()))};
             return retValue;
-        } else if (requestedFatBinary(numArgs, argv)) {
-            return buildFatbinary(numArgs, argv, helper.get());
+        } else if (requestedFatBinary(allArgs)) {
+            return buildFatBinary(allArgs, helper.get());
         } else {
             int retVal = ErrorCode::SUCCESS;
 

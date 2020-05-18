@@ -20,16 +20,15 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <vector>
 
 namespace NEO {
 
-bool requestedFatBinary(int argc, const char *argv[]) {
-    for (int argIndex = 1; argIndex < argc; argIndex++) {
-        const auto &currArg = argv[argIndex];
-        const bool hasMoreArgs = (argIndex + 1 < argc);
+bool requestedFatBinary(const std::vector<std::string> &args) {
+    for (size_t argIndex = 1; argIndex < args.size(); argIndex++) {
+        const auto &currArg = args[argIndex];
+        const bool hasMoreArgs = (argIndex + 1 < args.size());
         if ((ConstStringRef("-device") == currArg) && hasMoreArgs) {
-            ConstStringRef deviceArg(argv[argIndex + 1], strlen(argv[argIndex + 1]));
+            ConstStringRef deviceArg(args[argIndex + 1]);
             return deviceArg.contains("*") || deviceArg.contains("-") || deviceArg.contains(",") || deviceArg.contains("gen");
         }
     }
@@ -203,21 +202,17 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
     return toProductNames(requestedPlatforms);
 }
 
-int buildFatbinary(int argc, const char *argv[], OclocArgHelper *argHelper) {
+int buildFatBinary(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
     std::string pointerSizeInBits = (sizeof(void *) == 4) ? "32" : "64";
-    int deviceArgIndex = -1;
+    size_t deviceArgIndex = -1;
     std::string inputFileName = "";
     std::string outputFileName = "";
     std::string outputDirectory = "";
 
-    std::vector<std::string> argsCopy;
-    if (argc > 1) {
-        argsCopy.assign(argv, argv + argc);
-    }
-
-    for (int argIndex = 1; argIndex < argc; argIndex++) {
-        const auto &currArg = argv[argIndex];
-        const bool hasMoreArgs = (argIndex + 1 < argc);
+    std::vector<std::string> argsCopy(args);
+    for (size_t argIndex = 1; argIndex < args.size(); argIndex++) {
+        const auto &currArg = args[argIndex];
+        const bool hasMoreArgs = (argIndex + 1 < args.size());
         if ((ConstStringRef("-device") == currArg) && hasMoreArgs) {
             deviceArgIndex = argIndex + 1;
             ++argIndex;
@@ -226,21 +221,21 @@ int buildFatbinary(int argc, const char *argv[], OclocArgHelper *argHelper) {
         } else if ((CompilerOptions::arch64bit == currArg) || (ConstStringRef("-64") == currArg)) {
             pointerSizeInBits = "64";
         } else if ((ConstStringRef("-file") == currArg) && hasMoreArgs) {
-            inputFileName = argv[argIndex + 1];
+            inputFileName = args[argIndex + 1];
             ++argIndex;
         } else if ((ConstStringRef("-output") == currArg) && hasMoreArgs) {
-            outputFileName = argv[argIndex + 1];
+            outputFileName = args[argIndex + 1];
             ++argIndex;
         } else if ((ConstStringRef("-out_dir") == currArg) && hasMoreArgs) {
-            outputDirectory = argv[argIndex + 1];
+            outputDirectory = args[argIndex + 1];
             ++argIndex;
         }
     }
 
     std::vector<ConstStringRef> targetPlatforms;
-    targetPlatforms = getTargetPlatformsForFatbinary(ConstStringRef(argv[deviceArgIndex], strlen(argv[deviceArgIndex])), argHelper);
+    targetPlatforms = getTargetPlatformsForFatbinary(ConstStringRef(args[deviceArgIndex]), argHelper);
     if (targetPlatforms.empty()) {
-        argHelper->printf("Failed to parse target devices from : %s\n", argv[deviceArgIndex]);
+        argHelper->printf("Failed to parse target devices from : %s\n", args[deviceArgIndex].c_str());
         return 1;
     }
 
@@ -250,7 +245,7 @@ int buildFatbinary(int argc, const char *argv[], OclocArgHelper *argHelper) {
         int retVal = 0;
         argsCopy[deviceArgIndex] = targetPlatform.str();
 
-        std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argc, argsCopy, false, retVal, argHelper)};
+        std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(argsCopy.size(), argsCopy, false, retVal, argHelper)};
         if (ErrorCode::SUCCESS != retVal) {
             argHelper->printf("Error! Couldn't create OfflineCompiler. Exiting.\n");
             return retVal;
@@ -271,8 +266,8 @@ int buildFatbinary(int argc, const char *argv[], OclocArgHelper *argHelper) {
             } else {
                 argHelper->printf("Build failed for : %s with error code: %d\n", (targetPlatform.str() + "." + std::to_string(stepping)).c_str(), retVal);
                 argHelper->printf("Command was:");
-                for (auto i = 0; i < argc; ++i)
-                    argHelper->printf(" %s", argv[i]);
+                for (const auto &arg : argsCopy)
+                    argHelper->printf(" %s", arg.c_str());
                 argHelper->printf("\n");
             }
         }
