@@ -7,7 +7,9 @@
 
 #pragma once
 
+#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/linker.h"
+#include "shared/source/program/program_info.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -20,7 +22,39 @@
 
 namespace L0 {
 
-struct ModuleTranslationUnit;
+struct ModuleTranslationUnit {
+    ModuleTranslationUnit(L0::Device *device);
+    virtual ~ModuleTranslationUnit();
+    bool buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
+                        const ze_module_constants_t *pConstants);
+    bool createFromNativeBinary(const char *input, size_t inputSize);
+    MOCKABLE_VIRTUAL bool processUnpackedBinary();
+    void updateBuildLog(const std::string &newLogEntry);
+    void processDebugData();
+    L0::Device *device = nullptr;
+
+    NEO::GraphicsAllocation *globalConstBuffer = nullptr;
+    NEO::GraphicsAllocation *globalVarBuffer = nullptr;
+    NEO::ProgramInfo programInfo;
+
+    std::string options;
+
+    std::string buildLog;
+
+    std::unique_ptr<char[]> irBinary;
+    size_t irBinarySize = 0U;
+
+    std::unique_ptr<char[]> unpackedDeviceBinary;
+    size_t unpackedDeviceBinarySize = 0U;
+
+    std::unique_ptr<char[]> packedDeviceBinary;
+    size_t packedDeviceBinarySize = 0U;
+
+    std::unique_ptr<char[]> debugData;
+    size_t debugDataSize = 0U;
+
+    NEO::specConstValuesMap specConstantsValues;
+};
 
 struct ModuleImp : public Module {
     ModuleImp() = delete;
@@ -68,7 +102,7 @@ struct ModuleImp : public Module {
   protected:
     Device *device = nullptr;
     PRODUCT_FAMILY productFamily{};
-    ModuleTranslationUnit *translationUnit = nullptr;
+    std::unique_ptr<ModuleTranslationUnit> translationUnit;
     ModuleBuildLog *moduleBuildLog = nullptr;
     NEO::GraphicsAllocation *exportedFunctionsSurface = nullptr;
     uint32_t maxGroupSize = 0U;
