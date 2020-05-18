@@ -101,6 +101,15 @@ void MockGmmResourceInfo::setSurfaceFormat() {
         surfaceFormatInfo = &tempSurface;
     }
 
+    if (mockResourceCreateParams.Format == GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP) {
+        tempSurface.GMMSurfaceFormat = GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP;
+        tempSurface.NumChannels = 1;
+        tempSurface.ImageElementSizeInBytes = 8;
+        tempSurface.PerChannelSizeInBytes = 8;
+
+        surfaceFormatInfo = &tempSurface;
+    }
+
     iterate(SurfaceFormats::readOnly12());
     iterate(SurfaceFormats::readOnly20());
     iterate(SurfaceFormats::writeOnly());

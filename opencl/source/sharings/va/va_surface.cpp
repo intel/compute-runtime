@@ -53,6 +53,9 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
         if (plane == 1) {
             imageOffset = vaDrmPrimeSurfaceDesc.layers[1].offset[0];
             imagePitch = vaDrmPrimeSurfaceDesc.layers[1].pitch[0];
+        } else if (plane == 2) {
+            imageOffset = vaDrmPrimeSurfaceDesc.layers[2].offset[0];
+            imagePitch = vaDrmPrimeSurfaceDesc.layers[2].pitch[0];
         }
         imgInfo.linearStorage = DRM_FORMAT_MOD_LINEAR == vaDrmPrimeSurfaceDesc.objects[0].drm_format_modifier;
         sharedHandle = vaDrmPrimeSurfaceDesc.objects[0].fd;
@@ -65,10 +68,15 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
         if (plane == 1) {
             imageOffset = vaImage.offsets[1];
             imagePitch = vaImage.pitches[0];
+        } else if (plane == 2) {
+            imageOffset = vaImage.offsets[2];
+            imagePitch = vaImage.pitches[0];
         }
         imgInfo.linearStorage = false;
         sharingFunctions->extGetSurfaceHandle(surface, &sharedHandle);
     }
+
+    bool isRGBPFormat = DebugManager.flags.EnableExtendedVaFormats.get() && imageFourcc == VA_FOURCC_RGBP;
 
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
@@ -78,15 +86,19 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
         channelOrder = CL_R;
     } else if (plane == 1) {
         imgInfo.plane = GMM_PLANE_U;
-        channelOrder = CL_RG;
+        channelOrder = isRGBPFormat ? CL_R : CL_RG;
+    } else if (plane == 2) {
+        UNRECOVERABLE_IF(!isRGBPFormat);
+        imgInfo.plane = GMM_PLANE_V;
+        channelOrder = CL_R;
     } else {
         UNRECOVERABLE_IF(true);
     }
 
     auto gmmSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &gmmImgFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features); //vaImage.format.fourcc == VA_FOURCC_NV12
 
-    if (DebugManager.flags.EnableExtendedVaFormats.get() && imageFourcc == VA_FOURCC_P010) {
-        channelType = CL_UNORM_INT16;
+    if (DebugManager.flags.EnableExtendedVaFormats.get() && (imageFourcc == VA_FOURCC_P010 || imageFourcc == VA_FOURCC_RGBP)) {
+        channelType = isRGBPFormat ? CL_UNORM_INT8 : CL_UNORM_INT16;
         gmmSurfaceFormat = getExtendedSurfaceFormatInfo(imageFourcc);
     }
     imgInfo.surfaceFormat = &gmmSurfaceFormat->surfaceFormat;
@@ -105,13 +117,18 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     imgDesc.image_slice_pitch = 0u;
     imgInfo.slicePitch = 0u;
     imgInfo.surfaceFormat = &imgSurfaceFormat->surfaceFormat;
+    imgInfo.yOffset = 0;
+    imgInfo.xOffset = 0;
     if (plane == 1) {
-        imgDesc.image_width /= 2;
-        imgDesc.image_height /= 2;
+        if (!isRGBPFormat) {
+            imgDesc.image_width /= 2;
+            imgDesc.image_height /= 2;
+        }
         imgInfo.offset = imageOffset;
-        imgInfo.yOffset = 0;
-        imgInfo.xOffset = 0;
         imgInfo.yOffsetForUVPlane = static_cast<uint32_t>(imageOffset / imagePitch);
+    }
+    if (isRGBPFormat && plane == 2) {
+        imgInfo.offset = imageOffset;
     }
     imgInfo.imgDesc = Image::convertDescriptor(imgDesc);
     if (VA_INVALID_ID != imageId) {
@@ -162,6 +179,16 @@ const ClSurfaceFormatInfo *VASurface::getExtendedSurfaceFormatInfo(uint32_t form
                                                         2,
                                                         2}};
         return &formatInfo;
+    }
+    if (formatFourCC == VA_FOURCC_RGBP) {
+        static const ClSurfaceFormatInfo formatInfoRGBP = {{CL_NV12_INTEL, CL_UNORM_INT8},
+                                                           {GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP,
+                                                            static_cast<GFX3DSTATE_SURFACEFORMAT>(GFX3DSTATE_SURFACEFORMAT_R8_UNORM), // not used for plane images
+                                                            0,
+                                                            1,
+                                                            1,
+                                                            1}};
+        return &formatInfoRGBP;
     }
     return nullptr;
 }
