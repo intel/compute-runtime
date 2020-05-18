@@ -70,7 +70,7 @@ class Image2dFromBufferTest : public DeviceFixture, public ::testing::Test {
     size_t size;
 };
 
-TEST_F(Image2dFromBufferTest, CreateImage2dFromBuffer) {
+TEST_F(Image2dFromBufferTest, WhenCreatingImage2dFromBufferThenImagePropertiesAreCorrect) {
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     ASSERT_NE(nullptr, buffer);
     EXPECT_EQ(1, buffer->getRefInternalCount());
@@ -94,10 +94,9 @@ TEST_F(Image2dFromBufferTest, givenBufferWhenCreateImage2dArrayFromBufferThenIma
     retVal = Image::validate(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), surfaceFormat, &imageDesc, NULL);
     EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
 }
-TEST_F(Image2dFromBufferTest, CalculateRowPitch) {
+TEST_F(Image2dFromBufferTest, WhenCreatingImageThenRowPitchIsCorrect) {
     auto imageFromBuffer = createImage();
     ASSERT_NE(nullptr, imageFromBuffer);
-    EXPECT_NE(0u, imageFromBuffer->getImageDesc().image_row_pitch);
     EXPECT_EQ(1024u, imageFromBuffer->getImageDesc().image_row_pitch);
     delete imageFromBuffer;
 }
@@ -122,7 +121,7 @@ TEST_F(Image2dFromBufferTest, givenRowPitchThatIsGreaterThenComputedWhenImageIsC
     delete imageFromBuffer;
 }
 
-TEST_F(Image2dFromBufferTest, InvalidHostPtrAlignment) {
+TEST_F(Image2dFromBufferTest, GivenInvalidHostPtrAlignmentWhenCreatingImageThenInvalidImageFormatDescriptorErrorIsReturned) {
     REQUIRE_IMAGES_OR_SKIP(&context);
     std::unique_ptr<void, decltype(free) *> myHostPtr(malloc(size + 1), free);
     ASSERT_NE(nullptr, myHostPtr);
@@ -243,7 +242,7 @@ TEST_F(Image2dFromBufferTest, givenUnalignedImageWidthAndNoSpaceInBufferForAlign
     EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
 }
 
-TEST_F(Image2dFromBufferTest, ExtensionString) {
+TEST_F(Image2dFromBufferTest, GivenPlatformWhenGettingExtensionStringThenImage2dFromBufferExtensionIsCorrectlyReported) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto hwInfo = device->getHardwareInfo();
     const auto &caps = device->getDeviceInfo();
@@ -256,7 +255,7 @@ TEST_F(Image2dFromBufferTest, ExtensionString) {
     }
 }
 
-TEST_F(Image2dFromBufferTest, InterceptBuffersHostPtr) {
+TEST_F(Image2dFromBufferTest, WhenCreatingImageThenHostPtrIsCorrectlySet) {
     auto buffer = castToObject<Buffer>(imageDesc.mem_object);
     ASSERT_NE(nullptr, buffer);
     EXPECT_EQ(1, buffer->getRefInternalCount());
