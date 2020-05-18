@@ -38,7 +38,7 @@ class UnifiedSharing : public SharingHandler {
 
   protected:
     void synchronizeObject(UpdateData &updateData) override;
-    void releaseResource(MemObj *memObject) override;
+    void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override;
 
     static GraphicsAllocation *createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, GraphicsAllocation::AllocationType allocationType);
 

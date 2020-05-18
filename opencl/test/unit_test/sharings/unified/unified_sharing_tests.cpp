@@ -132,8 +132,8 @@ TEST_F(UnifiedSharingTestsWithMemoryManager, givenUnifiedSharingHandlerWhenAcqui
             UnifiedSharing::synchronizeObject(updateData);
             synchronizeObjectCalled++;
         }
-        void releaseResource(MemObj *memObject) override {
-            UnifiedSharing::releaseResource(memObject);
+        void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override {
+            UnifiedSharing::releaseResource(memObject, rootDeviceIndex);
             releaseResourceCalled++;
         };
     };
@@ -159,9 +159,9 @@ TEST_F(UnifiedSharingTestsWithMemoryManager, givenUnifiedSharingHandlerWhenAcqui
     EXPECT_EQ(1u, sharingHandler->synchronizeObjectCalled);
 
     ASSERT_EQ(0u, sharingHandler->releaseResourceCalled);
-    sharingHandler->release(buffer.get());
+    sharingHandler->release(buffer.get(), context->getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(0u, sharingHandler->releaseResourceCalled);
-    sharingHandler->release(buffer.get());
+    sharingHandler->release(buffer.get(), context->getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(1u, sharingHandler->releaseResourceCalled);
 }
 

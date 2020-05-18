@@ -27,7 +27,7 @@ class GlBuffer : public GlSharing {
     GlBuffer(GLSharingFunctions *sharingFunctions, unsigned int glObjectId)
         : GlSharing(sharingFunctions, CL_GL_OBJECT_BUFFER, glObjectId){};
 
-    void releaseResource(MemObj *memObject) override;
+    void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override;
 
     void resolveGraphicsAllocationChange(osHandle currentSharedHandle, UpdateData *updateData) override;
     void popGraphicsAllocationFromReuse(GraphicsAllocation *graphicsAllocation);

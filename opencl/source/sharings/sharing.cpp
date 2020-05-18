@@ -51,11 +51,11 @@ int SharingHandler::validateUpdateData(UpdateData &updateData) {
 void SharingHandler::resolveGraphicsAllocationChange(osHandle currentSharedHandle, UpdateData *updateData) {
 }
 
-void SharingHandler::release(MemObj *memObject) {
+void SharingHandler::release(MemObj *memObject, uint32_t rootDeviceIndex) {
     DEBUG_BREAK_IF(acquireCount <= 0);
     acquireCount--;
     if (acquireCount == 0) {
-        releaseResource(memObject);
+        releaseResource(memObject, rootDeviceIndex);
     }
 }
 } // namespace NEO

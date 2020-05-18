@@ -112,7 +112,7 @@ TEST_F(GlReusedBufferTests, givenGlobalShareHandleChangedWhenAcquiringSharedBuff
     EXPECT_NE(oldGraphicsAllocation, newGraphicsAllocation);
     EXPECT_EQ(41, newGraphicsAllocation->peekSharedHandle());
 
-    glBuffer->release(clBuffer.get());
+    glBuffer->release(clBuffer.get(), context.getDevice(0)->getRootDeviceIndex());
 }
 
 TEST_F(GlReusedBufferTests, givenGlobalShareHandleDidNotChangeWhenAcquiringSharedBufferThenDontDynamicallyAllocateBufferInfo) {
@@ -137,7 +137,7 @@ TEST_F(GlReusedBufferTests, givenGlobalShareHandleDidNotChangeWhenAcquiringShare
 
     glBuffer->acquire(clBuffer.get());
 
-    glBuffer->release(clBuffer.get());
+    glBuffer->release(clBuffer.get(), context.getDevice(0)->getRootDeviceIndex());
 }
 
 TEST_F(GlReusedBufferTests, givenGlobalShareHandleChangedWhenAcquiringSharedBufferThenDynamicallyAllocateBufferInfo) {
@@ -163,7 +163,7 @@ TEST_F(GlReusedBufferTests, givenGlobalShareHandleChangedWhenAcquiringSharedBuff
     dllParam.loadBuffer(bufferInfoOutput);
     glBuffer->acquire(clBuffer.get());
 
-    glBuffer->release(clBuffer.get());
+    glBuffer->release(clBuffer.get(), context.getDevice(0)->getRootDeviceIndex());
 }
 
 TEST_F(GlReusedBufferTests, givenMultipleBuffersAndGlobalShareHandleChangedWhenAcquiringSharedBufferDeleteOldGfxAllocationFromReuseVector) {
@@ -191,8 +191,8 @@ TEST_F(GlReusedBufferTests, givenMultipleBuffersAndGlobalShareHandleChangedWhenA
     EXPECT_EQ(1, graphicsAllocationsForGlBufferReuse->size());
     EXPECT_EQ(newGraphicsAllocation, graphicsAllocationsForGlBufferReuse->at(0).second);
 
-    clBuffer1->peekSharingHandler()->release(clBuffer1.get());
-    clBuffer2->peekSharingHandler()->release(clBuffer2.get());
+    clBuffer1->peekSharingHandler()->release(clBuffer1.get(), context.getDevice(0)->getRootDeviceIndex());
+    clBuffer2->peekSharingHandler()->release(clBuffer2.get(), context.getDevice(0)->getRootDeviceIndex());
 }
 
 TEST_F(GlReusedBufferTests, givenGraphicsAllocationCreationReturnsNullptrWhenAcquiringGlBufferThenReturnOutOfResourcesAndNullifyAllocation) {

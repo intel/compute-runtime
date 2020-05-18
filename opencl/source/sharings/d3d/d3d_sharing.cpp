@@ -56,7 +56,7 @@ void D3DSharing<D3D>::synchronizeObject(UpdateData &updateData) {
 }
 
 template <typename D3D>
-void D3DSharing<D3D>::releaseResource(MemObj *memObject) {
+void D3DSharing<D3D>::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
     if (!sharedResource) {
         sharingFunctions->getDeviceContext(d3dQuery);
         sharingFunctions->copySubresourceRegion(resource, subresource, resourceStaging, 0);

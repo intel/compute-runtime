@@ -41,21 +41,18 @@ TEST(sharingHandler, givenMemObjWhenAcquireIncrementCounterThenReleaseShouldDecr
                                               sizeof(buffer), buffer, buffer, mockAllocation, true, false, false));
 
     struct MockSharingHandler : SharingHandler {
-        unsigned int acquire(MemObj *memObj) {
-            SharingHandler::acquire(memObj);
-            return acquireCount;
-        }
-        unsigned int release(MemObj *memObj) {
-            SharingHandler::release(memObj);
-            return acquireCount;
-        }
+        using SharingHandler::acquireCount;
+
         void synchronizeObject(UpdateData &updateData) override {
             updateData.synchronizationStatus = ACQUIRE_SUCCESFUL;
         }
     } sharingHandler;
 
-    EXPECT_EQ(sharingHandler.acquire(memObj.get()), 1u);
-    EXPECT_EQ(sharingHandler.release(memObj.get()), 0u);
+    EXPECT_EQ(0u, sharingHandler.acquireCount);
+    sharingHandler.acquire(memObj.get());
+    EXPECT_EQ(1u, sharingHandler.acquireCount);
+    sharingHandler.release(memObj.get(), mockAllocation->getRootDeviceIndex());
+    EXPECT_EQ(0u, sharingHandler.acquireCount);
 }
 
 TEST(sharingHandler, givenMemObjWhenAcquireTwoTimesThenReleaseShouldBeCalledTwoTimesToReleaseObject) {
@@ -66,31 +63,27 @@ TEST(sharingHandler, givenMemObjWhenAcquireTwoTimesThenReleaseShouldBeCalledTwoT
                                               sizeof(buffer), buffer, buffer, mockAllocation, true, false, false));
 
     struct MockSharingHandler : SharingHandler {
-        MockSharingHandler() {
-            releaseCount = 0;
-        }
-        unsigned int acquire(MemObj *memObj) {
-            SharingHandler::acquire(memObj);
-            return acquireCount;
-        }
-        unsigned int release(MemObj *memObj) {
-            SharingHandler::release(memObj);
-            return acquireCount;
-        }
+        using SharingHandler::acquireCount;
         void synchronizeObject(UpdateData &updateData) override {
             updateData.synchronizationStatus = ACQUIRE_SUCCESFUL;
         }
-        void releaseResource(MemObj *memObject) override {
+        void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override {
             releaseCount++;
         };
-        int releaseCount;
+        int releaseCount = 0;
     } sharingHandler;
 
-    EXPECT_EQ(sharingHandler.acquire(memObj.get()), 1u);
-    EXPECT_EQ(sharingHandler.acquire(memObj.get()), 2u);
-    EXPECT_EQ(sharingHandler.release(memObj.get()), 1u);
-    EXPECT_EQ(sharingHandler.release(memObj.get()), 0u);
-    EXPECT_EQ(sharingHandler.releaseCount, 1);
+    EXPECT_EQ(0u, sharingHandler.acquireCount);
+    sharingHandler.acquire(memObj.get());
+    EXPECT_EQ(1u, sharingHandler.acquireCount);
+    sharingHandler.acquire(memObj.get());
+    EXPECT_EQ(2u, sharingHandler.acquireCount);
+    sharingHandler.release(memObj.get(), mockAllocation->getRootDeviceIndex());
+    EXPECT_EQ(1u, sharingHandler.acquireCount);
+    EXPECT_EQ(0, sharingHandler.releaseCount);
+    sharingHandler.release(memObj.get(), mockAllocation->getRootDeviceIndex());
+    EXPECT_EQ(0u, sharingHandler.acquireCount);
+    EXPECT_EQ(1, sharingHandler.releaseCount);
 }
 
 TEST(sharingHandler, givenSharingHandlerWhenValidateUpdateDataIsCalledWithNonNullInputThenAbortIsNotCalled) {

@@ -29,7 +29,7 @@ class D3DSharing : public SharingHandler {
     ~D3DSharing() override;
 
     void synchronizeObject(UpdateData &updateData) override;
-    void releaseResource(MemObj *memObject) override;
+    void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override;
 
     D3DResource **getResourceHandler() { return &resource; }
     void *getResourceStaging() { return resourceStaging; }

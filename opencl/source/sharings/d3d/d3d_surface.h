@@ -30,7 +30,7 @@ class D3DSurface : public D3DSharing<D3DTypesHelper::D3D9> {
     static const std::vector<D3DFORMAT> D3DPlane2Formats;
     static cl_int findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat, cl_uint plane, ImagePlane &imagePlane);
     void synchronizeObject(UpdateData &updateData) override;
-    void releaseResource(MemObj *memObject) override;
+    void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override;
     int validateUpdateData(UpdateData &updateData) override;
 
     cl_dx9_surface_info_khr &getSurfaceInfo() { return surfaceInfo; }

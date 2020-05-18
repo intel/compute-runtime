@@ -866,7 +866,7 @@ class MockSharingHandler : public SharingHandler {
 
 TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageWhenUsingSharingHandlerThenReturnSuccess) {
     MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0);
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0);
     MockSharingHandler *mockSharingHandler = new MockSharingHandler;
 
     auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context));

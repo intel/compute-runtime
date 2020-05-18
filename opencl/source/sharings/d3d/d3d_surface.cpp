@@ -152,7 +152,7 @@ void D3DSurface::synchronizeObject(UpdateData &updateData) {
     updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
 }
 
-void D3DSurface::releaseResource(MemObj *memObject) {
+void D3DSurface::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
     D3DLOCKED_RECT lockedRect = {};
     auto image = castToObject<Image>(memObject);
     if (!image) {

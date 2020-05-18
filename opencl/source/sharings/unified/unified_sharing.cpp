@@ -29,7 +29,7 @@ void UnifiedSharing::synchronizeObject(UpdateData &updateData) {
     updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
 }
 
-void UnifiedSharing::releaseResource(MemObj *memObject) {
+void UnifiedSharing::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
 }
 
 GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, UnifiedSharingMemoryDescription description, GraphicsAllocation::AllocationType allocationType) {

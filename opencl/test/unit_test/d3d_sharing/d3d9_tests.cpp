@@ -872,7 +872,7 @@ TEST_F(D3D9Tests, givenResourcesCreatedFromDifferentDevicesWhenAcquireReleaseCal
     EXPECT_EQ(createdResourceDevice, mockSharingFcns->getDevice());
 
     mockSharingFcns->setDevice(nullptr); // force device change
-    sharedImg->getSharingHandler()->release(sharedImg.get());
+    sharedImg->getSharingHandler()->release(sharedImg.get(), context->getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(createdResourceDevice, mockSharingFcns->getDevice());
 }
 

@@ -278,7 +278,7 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
             return CL_INVALID_MEM_OBJECT;
         }
 
-        memObject->peekSharingHandler()->release(memObject);
+        memObject->peekSharingHandler()->release(memObject, getDevice().getRootDeviceIndex());
         DEBUG_BREAK_IF(memObject->acquireCount <= 0);
         memObject->acquireCount--;
     }

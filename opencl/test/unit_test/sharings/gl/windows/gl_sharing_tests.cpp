@@ -241,8 +241,8 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredTwiceThenAcuqireIsNotCalle
     EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
     EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
 
-    memObject->peekSharingHandler()->release(memObject);
-    memObject->peekSharingHandler()->release(memObject);
+    memObject->peekSharingHandler()->release(memObject, context.getDevice(0)->getRootDeviceIndex());
+    memObject->peekSharingHandler()->release(memObject, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
 
     retVal = clReleaseMemObject(glBuffer);
@@ -278,7 +278,7 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredTwiceAfterReleaseThenAcuqi
     EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
     EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
 
-    memObject->peekSharingHandler()->release(memObject);
+    memObject->peekSharingHandler()->release(memObject, context.getDevice(0)->getRootDeviceIndex());
 
     memObject->peekSharingHandler()->acquire(memObject);
     EXPECT_EQ(3, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
@@ -295,10 +295,10 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquireCountIsDecrementedToZeroThe
     sharingHandler->acquire(buffer.get());
     sharingHandler->acquire(buffer.get());
 
-    sharingHandler->release(buffer.get());
+    sharingHandler->release(buffer.get(), context.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(0, mockGlSharing->dllParam->getParam("GLReleaseSharedBufferCalled"));
 
-    sharingHandler->release(buffer.get());
+    sharingHandler->release(buffer.get(), context.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLReleaseSharedBufferCalled"));
     EXPECT_EQ(bufferId, mockGlSharing->dllParam->getBufferInfo().bufferName);
 }

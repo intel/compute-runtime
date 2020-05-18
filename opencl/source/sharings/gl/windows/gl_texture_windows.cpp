@@ -253,7 +253,7 @@ cl_GLenum GlTexture::getBaseTargetType(cl_GLenum target) {
     return returnTarget;
 }
 
-void GlTexture::releaseResource(MemObj *memObject) {
+void GlTexture::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
     auto sharingFunctions = static_cast<GLSharingFunctionsWindows *>(this->sharingFunctions);
     if (target == GL_RENDERBUFFER_EXT) {
         sharingFunctions->releaseSharedRenderBuffer(&textureInfo);

@@ -164,7 +164,7 @@ GraphicsAllocation *GlBuffer::createGraphicsAllocation(Context *context, unsigne
     return graphicsAllocation;
 }
 
-void GlBuffer::releaseResource(MemObj *memObject) {
+void GlBuffer::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
     auto sharingFunctions = static_cast<GLSharingFunctionsWindows *>(this->sharingFunctions);
     CL_GL_BUFFER_INFO bufferInfo = {};
     bufferInfo.bufferName = this->clGlObjectId;
