@@ -80,6 +80,14 @@ TEST_F(clGetImageInfoTests, GivenInvalidParamNameWhenGettingImageInfoThenInvalid
     ASSERT_EQ(0u, paramRetSize);
 }
 
+TEST_F(clGetImageInfoTests, GivenInvalidParametersWhenGettingImageInfoThenValueSizeRetIsNotUpdated) {
+    size_t paramRetSize = 0x1234;
+
+    retVal = clGetImageInfo(image, CL_MEM_SIZE, 0, nullptr, &paramRetSize);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0x1234u, paramRetSize);
+}
+
 TEST_F(clGetImageInfoTests, GivenClImageFormatWhenGettingImageInfoThenImageFormatIsReturned) {
     cl_image_format imgFmtRet;
     size_t paramRetSize = 0;

@@ -99,6 +99,19 @@ TEST_P(KernelArgInfoTest, WhenQueryingWithNullptrKernelNameTheniReturnNullptr) {
     EXPECT_EQ(nullptr, kernelInfo);
 }
 
+TEST_P(KernelArgInfoTest, GivenInvalidParametersWhenGettingKernelArgInfoThenValueSizeRetIsNotUpdated) {
+    size_t paramValueSizeRet = 0x1234;
+
+    retVal = pKernel->getArgInfo(
+        0,
+        0,
+        0,
+        nullptr,
+        &paramValueSizeRet);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0x1234u, paramValueSizeRet);
+}
+
 TEST_P(KernelArgInfoTest, getKernelArgAcessQualifier) {
     cl_kernel_arg_access_qualifier param_value = 0;
     queryArgInfo<cl_kernel_arg_access_qualifier>(CL_KERNEL_ARG_ACCESS_QUALIFIER, param_value);

@@ -47,6 +47,18 @@ TEST_F(ContextGetInfoTest, GivenInvalidParamNameWhenGettingInfoThenInvalidValueE
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+TEST_F(ContextGetInfoTest, GivenInvalidParametersWhenGettingContextInfoThenValueSizeRetIsNotUpdated) {
+    size_t retSize = 0x1234;
+
+    retVal = pContext->getInfo(
+        0,
+        0,
+        nullptr,
+        &retSize);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0x1234u, retSize);
+}
+
 TEST_F(ContextGetInfoTest, GivenNumDevicesParamNameWhenGettingInfoThenNumberOfDevicesIsReturned) {
     cl_uint numDevices = 0;
     size_t retSize = 0;

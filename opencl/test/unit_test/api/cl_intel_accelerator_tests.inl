@@ -299,7 +299,6 @@ TEST_F(IntelAcceleratorGetInfoTest, GivenShortForDescriptorSizeWhenGettingAccele
         &param_value_size_ret);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
-    EXPECT_EQ(sizeof(cl_context), param_value_size_ret);
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GivenZeroForDescriptorSizeGivenLongForDescriptorSizeWhenGettingAcceleratorContextInfoThenCorrectValuesAreReturned) {

@@ -8,31 +8,44 @@
 #pragma once
 #include "get_info_status.h"
 
-#include <cstring>
-
 // Need for linux compatibility with memcpy_s
 #include "shared/source/helpers/string.h"
 
+#include <cstring>
+#include <limits>
+
+namespace GetInfo {
+
+constexpr size_t invalidSourceSize = std::numeric_limits<size_t>::max();
+
 inline GetInfoStatus getInfo(void *destParamValue, size_t destParamValueSize,
                              const void *srcParamValue, size_t srcParamValueSize) {
-    auto retVal = GetInfoStatus::INVALID_VALUE;
-    if (srcParamValue && srcParamValueSize) {
-        if (!destParamValue && !destParamValueSize) {
-            // Report ok if they're looking for size.
-            retVal = GetInfoStatus::SUCCESS;
-        } else if (destParamValue && destParamValueSize >= srcParamValueSize) {
-            // Report ok if we can copy safely
-            retVal = GetInfoStatus::SUCCESS;
 
-            memcpy_s(destParamValue, destParamValueSize, srcParamValue, srcParamValueSize);
-        } else if (!destParamValue) {
-            // Report ok if destParamValue == nullptr and destParamValueSize > 0
-            retVal = GetInfoStatus::SUCCESS;
-        }
+    if ((srcParamValue == nullptr) || (srcParamValueSize == invalidSourceSize)) {
+        return GetInfoStatus::INVALID_VALUE;
     }
 
-    return retVal;
+    if ((srcParamValueSize == 0) || (destParamValue == nullptr)) {
+        // Report ok if there is nothing to copy or when only size is queried.
+        return GetInfoStatus::SUCCESS;
+    }
+
+    if (destParamValueSize < srcParamValueSize) {
+        return GetInfoStatus::INVALID_VALUE;
+    }
+
+    // Report ok if we can copy safely.
+    memcpy_s(destParamValue, destParamValueSize, srcParamValue, srcParamValueSize);
+    return GetInfoStatus::SUCCESS;
 }
+
+inline void setParamValueReturnSize(size_t *paramValueSizeRet, size_t newValue, GetInfoStatus getInfoStatus) {
+    if ((paramValueSizeRet != nullptr) && (getInfoStatus == GetInfoStatus::SUCCESS)) {
+        *paramValueSizeRet = newValue;
+    }
+}
+
+} // namespace GetInfo
 
 struct GetInfoHelper {
     GetInfoHelper(void *dst, size_t dstSize, size_t *retSize, GetInfoStatus *retVal = nullptr)

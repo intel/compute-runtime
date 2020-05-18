@@ -163,7 +163,7 @@ unsigned int Sampler::getSnapWaValue() const {
 cl_int Sampler::getInfo(cl_sampler_info paramName, size_t paramValueSize,
                         void *paramValue, size_t *paramValueSizeRet) {
     cl_int retVal;
-    size_t valueSize = 0;
+    size_t valueSize = GetInfo::invalidSourceSize;
     const void *pValue = nullptr;
     cl_uint refCount = 0;
 
@@ -213,11 +213,9 @@ cl_int Sampler::getInfo(cl_sampler_info paramName, size_t paramValueSize,
         break;
     }
 
-    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, pValue, valueSize));
-
-    if (paramValueSizeRet) {
-        *paramValueSizeRet = valueSize;
-    }
+    auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, pValue, valueSize);
+    retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, valueSize, getInfoStatus);
 
     return retVal;
 }

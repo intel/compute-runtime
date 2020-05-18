@@ -20,12 +20,13 @@ cl_int IntelAccelerator::getInfo(cl_accelerator_info_intel paramName,
                                  void *paramValue,
                                  size_t *paramValueSizeRet) const {
     cl_int result = CL_SUCCESS;
-    size_t ret = 0;
+    size_t ret = GetInfo::invalidSourceSize;
+    auto getInfoStatus = GetInfoStatus::INVALID_VALUE;
 
     switch (paramName) {
     case CL_ACCELERATOR_DESCRIPTOR_INTEL: {
         ret = getDescriptorSize();
-        result = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, getDescriptor(), ret));
+        getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, getDescriptor(), ret);
     }
 
     break;
@@ -34,7 +35,7 @@ cl_int IntelAccelerator::getInfo(cl_accelerator_info_intel paramName,
         auto v = getReference();
 
         ret = sizeof(cl_uint);
-        result = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, &v, ret));
+        getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, &v, ret);
     }
 
     break;
@@ -42,7 +43,7 @@ cl_int IntelAccelerator::getInfo(cl_accelerator_info_intel paramName,
     case CL_ACCELERATOR_CONTEXT_INTEL: {
         ret = sizeof(cl_context);
         cl_context ctx = static_cast<cl_context>(pContext);
-        result = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, &ctx, ret));
+        getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, &ctx, ret);
     }
 
     break;
@@ -50,19 +51,18 @@ cl_int IntelAccelerator::getInfo(cl_accelerator_info_intel paramName,
     case CL_ACCELERATOR_TYPE_INTEL: {
         auto v = getTypeId();
         ret = sizeof(cl_accelerator_type_intel);
-        result = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, &v, ret));
+        getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, &v, ret);
     }
 
     break;
 
     default:
-        result = CL_INVALID_VALUE;
+        getInfoStatus = GetInfoStatus::INVALID_VALUE;
         break;
     }
 
-    if (paramValueSizeRet) {
-        *paramValueSizeRet = ret;
-    }
+    result = changeGetInfoStatusToCLResultType(getInfoStatus);
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, ret, getInfoStatus);
 
     return result;
 }

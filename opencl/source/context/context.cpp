@@ -209,7 +209,7 @@ bool Context::createImpl(const cl_context_properties *properties,
 cl_int Context::getInfo(cl_context_info paramName, size_t paramValueSize,
                         void *paramValue, size_t *paramValueSizeRet) {
     cl_int retVal;
-    size_t valueSize = 0;
+    size_t valueSize = GetInfo::invalidSourceSize;
     const void *pValue = nullptr;
     cl_uint numDevices;
     cl_uint refCount = 0;
@@ -249,15 +249,13 @@ cl_int Context::getInfo(cl_context_info paramName, size_t paramValueSize,
         break;
     }
 
+    GetInfoStatus getInfoStatus = GetInfoStatus::SUCCESS;
     if (callGetinfo) {
-        retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, pValue, valueSize));
-    } else {
-        retVal = CL_SUCCESS;
+        getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, pValue, valueSize);
     }
 
-    if (paramValueSizeRet) {
-        *paramValueSizeRet = valueSize;
-    }
+    retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, valueSize, getInfoStatus);
 
     return retVal;
 }

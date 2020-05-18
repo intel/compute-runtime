@@ -444,7 +444,7 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
                        void *paramValue, size_t *paramValueSizeRet) const {
     cl_int retVal;
     const void *pSrc = nullptr;
-    size_t srcSize = 0;
+    size_t srcSize = GetInfo::invalidSourceSize;
     cl_uint numArgs = 0;
     const _cl_program *prog;
     const _cl_context *ctxt;
@@ -500,11 +500,9 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
         break;
     }
 
-    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, pSrc, srcSize));
-
-    if (paramValueSizeRet) {
-        *paramValueSizeRet = srcSize;
-    }
+    auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, pSrc, srcSize);
+    retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, srcSize, getInfoStatus);
 
     return retVal;
 }
@@ -513,7 +511,7 @@ cl_int Kernel::getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName, size_t 
                           void *paramValue, size_t *paramValueSizeRet) const {
     cl_int retVal;
     const void *pSrc = nullptr;
-    size_t srcSize = 0;
+    size_t srcSize = GetInfo::invalidSourceSize;
     auto numArgs = (cl_uint)kernelInfo.kernelArgInfo.size();
     const auto &argInfo = kernelInfo.kernelArgInfo[argIndx];
 
@@ -559,11 +557,9 @@ cl_int Kernel::getArgInfo(cl_uint argIndx, cl_kernel_arg_info paramName, size_t 
         break;
     }
 
-    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, pSrc, srcSize));
-
-    if (paramValueSizeRet) {
-        *paramValueSizeRet = srcSize;
-    }
+    auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, pSrc, srcSize);
+    retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, srcSize, getInfoStatus);
 
     return retVal;
 }

@@ -268,7 +268,6 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenTooShortDescriptorLengthWhenGettin
         &param_value_size_ret);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
-    EXPECT_EQ(sizeof(cl_motion_estimation_desc_intel), param_value_size_ret);
 }
 
 TEST_F(IntelMotionEstimationGetInfoTest, GivenDescriptorLengthZeroWhenGettingAcceleratorInfoThanClInvalidValueErrorIsReturned) {
@@ -280,7 +279,20 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenDescriptorLengthZeroWhenGettingAcc
         &param_value_size_ret);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
-    EXPECT_EQ(sizeof(cl_motion_estimation_desc_intel), param_value_size_ret);
+}
+
+TEST_F(IntelMotionEstimationGetInfoTest, GivenInvalidParametersWhenGettingAcceleratorInfoThenValueSizeRetIsNotUpdated) {
+    param_value_size_ret = 0x1234;
+
+    result = clGetAcceleratorInfoINTEL(
+        accelerator,
+        CL_ACCELERATOR_DESCRIPTOR_INTEL,
+        0,
+        &descReturn,
+        &param_value_size_ret);
+
+    EXPECT_EQ(CL_INVALID_VALUE, result);
+    EXPECT_EQ(0x1234u, param_value_size_ret);
 }
 
 TEST_F(IntelMotionEstimationGetInfoTest, GivenLongerDescriptorLengthWhenGettingAcceleratorInfoThanCorrectDescriptorLengthIsReturned) {
@@ -346,7 +358,6 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTooShortTyp
         &param_value_size_ret);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
-    EXPECT_EQ(sizeof(cl_accelerator_type_intel), param_value_size_ret);
 }
 
 TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTypeLengthZeroWhenGettingAcceleratorInfoThanClInvalidValueIsReturned) {
@@ -358,7 +369,6 @@ TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTypeLengthZ
         &param_value_size_ret);
 
     EXPECT_EQ(CL_INVALID_VALUE, result);
-    EXPECT_EQ(sizeof(cl_accelerator_type_intel), param_value_size_ret);
 }
 
 TEST_F(IntelMotionEstimationGetInfoTest, GivenAcceleratorTypeIntelAndTooLongTypeLengthWhenGettingAcceleratorInfoThanCorrectLengthIsReturned) {

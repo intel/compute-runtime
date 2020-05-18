@@ -141,6 +141,20 @@ TEST_F(clGetPlatformInfoTests, GivenInvalidParamNameWhenGettingPlatformInfoStrin
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+TEST_F(clGetPlatformInfoTests, GivenInvalidParametersWhenGettingPlatformInfoThenValueSizeRetIsNotUpdated) {
+    char extensions[512];
+    retSize = 0x1234;
+    auto retVal = clGetPlatformInfo(
+        pPlatform,
+        0, // invalid platform info enum
+        sizeof(extensions),
+        extensions,
+        &retSize);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0x1234u, retSize);
+}
+
 TEST_F(clGetPlatformInfoTests, GivenInvalidParamSizeWhenGettingPlatformInfoStringThenClInvalidValueErrorIsReturned) {
     char extensions[512];
     auto retVal = clGetPlatformInfo(

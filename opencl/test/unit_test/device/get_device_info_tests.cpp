@@ -28,6 +28,19 @@ TEST(GetDeviceInfo, GivenInvalidParamsWhenGettingDeviceInfoThenInvalidValueError
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+TEST(GetDeviceInfo, GivenInvalidParametersWhenGettingDeviceInfoThenValueSizeRetIsNotUpdated) {
+    size_t valueSizeRet = 0x1234;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    auto retVal = device->getDeviceInfo(
+        0,
+        0,
+        nullptr,
+        &valueSizeRet);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0x1234u, valueSizeRet);
+}
+
 HWCMDTEST_F(IGFX_GEN8_CORE, GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInfoIsCalledForBdwPlusThenClSuccessIsReturned) {
 
     std::vector<TestParams> params = {

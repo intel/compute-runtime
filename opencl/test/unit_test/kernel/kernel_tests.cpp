@@ -117,6 +117,20 @@ TEST_P(KernelTest, GivenInvalidParamNameWhenGettingInfoThenInvalidValueErrorIsRe
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+TEST_P(KernelTest, GivenInvalidParametersWhenGettingInfoThenValueSizeRetIsNotUpdated) {
+    size_t paramValueSizeRet = 0x1234;
+
+    // get size
+    retVal = pKernel->getInfo(
+        0,
+        0,
+        nullptr,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0x1234u, paramValueSizeRet);
+}
+
 TEST_P(KernelTest, GivenKernelFunctionNameWhenGettingInfoThenKernelFunctionNameIsReturned) {
     cl_kernel_info paramName = CL_KERNEL_FUNCTION_NAME;
     size_t paramValueSize = 0;

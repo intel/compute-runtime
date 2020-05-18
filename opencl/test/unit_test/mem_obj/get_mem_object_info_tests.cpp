@@ -51,6 +51,19 @@ TEST_F(GetMemObjectInfo, GivenInvalidParamsWhenGettingMemObjectInfoThenInvalidVa
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+TEST_F(GetMemObjectInfo, GivenInvalidParametersWhenGettingMemObjectInfoThenValueSizeRetIsNotUpdated) {
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+
+    size_t sizeReturned = 0x1234;
+    auto retVal = buffer->getMemObjectInfo(
+        0,
+        0,
+        nullptr,
+        &sizeReturned);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0x1234u, sizeReturned);
+}
+
 TEST_F(GetMemObjectInfo, GivenMemTypeWhenGettingMemObjectInfoThenCorrectValueIsReturned) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 

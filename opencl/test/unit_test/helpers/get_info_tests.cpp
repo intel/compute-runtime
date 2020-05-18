@@ -13,7 +13,7 @@ TEST(getInfo, GivenSrcSizeLessThanOrEqualDstSizeWhenGettingInfoThenSrcCopiedToDs
     float dest = 0.0f;
     float src = 1.0f;
 
-    auto retVal = getInfo(&dest, sizeof(dest), &src, sizeof(src));
+    auto retVal = GetInfo::getInfo(&dest, sizeof(dest), &src, sizeof(src));
     EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
     EXPECT_EQ(src, dest);
 }
@@ -22,7 +22,7 @@ TEST(getInfo, GivenSrcSizeGreaterThanEqualDstSizeAndDstNullPtrWhenGettingInfoThe
     float dest = 0.0f;
     float src = 1.0f;
 
-    auto retVal = getInfo(nullptr, 0, &src, sizeof(src));
+    auto retVal = GetInfo::getInfo(nullptr, 0, &src, sizeof(src));
     EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
     EXPECT_NE(src, dest);
 }
@@ -31,16 +31,16 @@ TEST(getInfo, GivenSrcSizeLessThanOrEqualDstSizeAndDstIsNullPtrWhenGettingInfoTh
     float dest = 0.0f;
     float src = 1.0f;
 
-    auto retVal = getInfo(nullptr, sizeof(dest), &src, sizeof(src));
+    auto retVal = GetInfo::getInfo(nullptr, sizeof(dest), &src, sizeof(src));
     EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
     EXPECT_NE(src, dest);
 }
 
-TEST(getInfo, GivenSrcSizeLessThanOrEqualDstSizeAndDstIsNotNullPtrWhenGettingInfoThenInvalidValueIsReturned) {
+TEST(getInfo, GivenSrcSizeGreaterThanDstSizeAndDstIsNotNullPtrWhenGettingInfoThenInvalidValueIsReturned) {
     float dest = 0.0f;
     float src = 1.0f;
 
-    auto retVal = getInfo(&dest, 0, &src, sizeof(src));
+    auto retVal = GetInfo::getInfo(&dest, 0, &src, sizeof(src));
     EXPECT_EQ(GetInfoStatus::INVALID_VALUE, retVal);
     EXPECT_NE(src, dest);
 }
@@ -49,18 +49,42 @@ TEST(getInfo, GivenNullSrcPtrWhenGettingInfoThenInvalidValueErrorIsReturned) {
     float dest = 0.0f;
     float src = 1.0f;
 
-    auto retVal = getInfo(&dest, sizeof(dest), nullptr, sizeof(src));
+    auto retVal = GetInfo::getInfo(&dest, sizeof(dest), nullptr, sizeof(src));
     EXPECT_EQ(GetInfoStatus::INVALID_VALUE, retVal);
     EXPECT_NE(src, dest);
 }
 
-TEST(getInfo, GivenZeroSrcSizeWhenGettingInfoThenInvalidValueErrorIsReturned) {
+TEST(getInfo, GivenZeroSrcSizeWhenGettingInfoThenSuccessIsReturned) {
     float dest = 0.0f;
     float src = 1.0f;
 
-    auto retVal = getInfo(&dest, sizeof(dest), &src, 0);
+    auto retVal = GetInfo::getInfo(&dest, sizeof(dest), &src, 0);
+    EXPECT_EQ(GetInfoStatus::SUCCESS, retVal);
+    EXPECT_NE(src, dest);
+}
+
+TEST(getInfo, GivenInvalidSrcSizeWhenGettingInfoThenInvalidValueErrorIsReturned) {
+    float dest = 0.0f;
+    float src = 1.0f;
+
+    auto retVal = GetInfo::getInfo(&dest, sizeof(dest), &src, GetInfo::invalidSourceSize);
     EXPECT_EQ(GetInfoStatus::INVALID_VALUE, retVal);
     EXPECT_NE(src, dest);
+}
+
+TEST(getInfo, GivenInvalidInputWhenSettingParamValueReturnSizeThenNothingHappens) {
+    size_t paramValueReturnSize = 0u;
+
+    GetInfo::setParamValueReturnSize(nullptr, 1, GetInfoStatus::SUCCESS);
+    GetInfo::setParamValueReturnSize(&paramValueReturnSize, 1, GetInfoStatus::INVALID_VALUE);
+    EXPECT_EQ(0u, paramValueReturnSize);
+}
+
+TEST(getInfo, GivenValidInputWhenSettingParamValueReturnSizeThenValueIsUpdated) {
+    size_t paramValueReturnSize = 0u;
+
+    GetInfo::setParamValueReturnSize(&paramValueReturnSize, 1, GetInfoStatus::SUCCESS);
+    EXPECT_EQ(1u, paramValueReturnSize);
 }
 
 TEST(getInfoHelper, GivenInstanceOfGetInfoHelperAndNullPtrParamsSuccessIsReturned) {

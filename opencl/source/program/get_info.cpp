@@ -24,7 +24,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
                         void *paramValue, size_t *paramValueSizeRet) {
     cl_int retVal = CL_SUCCESS;
     const void *pSrc = nullptr;
-    size_t srcSize = 0;
+    size_t srcSize = GetInfo::invalidSourceSize;
     size_t retSize = 0;
     std::string kernelNamesString;
     cl_device_id device_id = pDevice->getSpecializedDevice<ClDevice>();
@@ -149,12 +149,12 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
     }
 
-    retVal = (retVal == CL_SUCCESS)
-                 ? changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, pSrc, srcSize))
-                 : retVal;
-    if (paramValueSizeRet) {
-        *paramValueSizeRet = retSize;
+    auto getInfoStatus = GetInfoStatus::INVALID_VALUE;
+    if (retVal == CL_SUCCESS) {
+        getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, pSrc, srcSize);
+        retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
     }
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, retSize, getInfoStatus);
     return retVal;
 }
 
@@ -162,7 +162,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
                              size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const {
     cl_int retVal = CL_SUCCESS;
     const void *pSrc = nullptr;
-    size_t srcSize = 0;
+    size_t srcSize = GetInfo::invalidSourceSize;
     size_t retSize = 0;
     cl_device_id device_id = pDevice->getSpecializedDevice<ClDevice>();
 
@@ -210,13 +210,12 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
         break;
     }
 
-    retVal = (retVal == CL_SUCCESS)
-                 ? changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, pSrc, srcSize))
-                 : retVal;
-
-    if (paramValueSizeRet) {
-        *paramValueSizeRet = retSize;
+    auto getInfoStatus = GetInfoStatus::INVALID_VALUE;
+    if (retVal == CL_SUCCESS) {
+        getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, pSrc, srcSize);
+        retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
     }
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, retSize, getInfoStatus);
 
     return retVal;
 }

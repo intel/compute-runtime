@@ -181,6 +181,19 @@ TEST_P(ProgramFromBinaryTest, GivenNonNullParamValueAndParamValueSizeZeroWhenGet
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+TEST_P(ProgramFromBinaryTest, GivenInvalidParametersWhenGettingProgramInfoThenValueSizeRetIsNotUpdated) {
+    size_t paramValueSizeRet = 0x1234;
+    auto testBinary = std::make_unique<char[]>(knownSourceSize);
+
+    retVal = pProgram->getInfo(
+        CL_PROGRAM_BINARIES,
+        0,
+        &testBinary,
+        &paramValueSizeRet);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0x1234u, paramValueSizeRet);
+}
+
 TEST_P(ProgramFromBinaryTest, GivenInvalidParamWhenGettingProgramBinaryInfoThenInvalidValueErrorIsReturned) {
     size_t paramValueSizeRet = 0;
     auto testBinary = std::make_unique<char[]>(knownSourceSize);
@@ -386,6 +399,23 @@ TEST_P(ProgramFromBinaryTest, GivenNullDeviceWhenGettingBuildStatusThenBuildNone
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
     EXPECT_EQ(CL_BUILD_NONE, buildStatus);
+}
+
+TEST_P(ProgramFromBinaryTest, GivenInvalidParametersWhenGettingBuildInfoThenValueSizeRetIsNotUpdated) {
+    cl_device_id device = pClDevice;
+    cl_build_status buildStatus = 0;
+    size_t paramValueSize = sizeof(buildStatus);
+    size_t paramValueSizeRet = 0x1234;
+
+    retVal = pProgram->getBuildInfo(
+        device,
+        0,
+        paramValueSize,
+        &buildStatus,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0x1234u, paramValueSizeRet);
 }
 
 TEST_P(ProgramFromBinaryTest, GivenDefaultDeviceWhenGettingBuildOptionsThenBuildOptionsAreEmpty) {

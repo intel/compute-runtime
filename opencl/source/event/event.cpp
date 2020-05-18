@@ -148,7 +148,7 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
                                     size_t *paramValueSizeRet) {
     cl_int retVal;
     const void *src = nullptr;
-    size_t srcSize = 0;
+    size_t srcSize = GetInfo::invalidSourceSize;
 
     // CL_PROFILING_INFO_NOT_AVAILABLE if event refers to the clEnqueueSVMFree command
     if (isUserEvent() != CL_FALSE ||         // or is a user event object.
@@ -210,11 +210,9 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
         return CL_INVALID_VALUE;
     }
 
-    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, src, srcSize));
-
-    if (paramValueSizeRet) {
-        *paramValueSizeRet = srcSize;
-    }
+    auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, src, srcSize);
+    retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, srcSize, getInfoStatus);
 
     return retVal;
 } // namespace NEO

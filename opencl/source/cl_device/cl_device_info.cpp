@@ -61,7 +61,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
                                void *paramValue,
                                size_t *paramValueSizeRet) {
     cl_int retVal = CL_INVALID_VALUE;
-    size_t srcSize = 0;
+    size_t srcSize = GetInfo::invalidSourceSize;
     size_t retSize = 0;
     size_t value = 0u;
     cl_uint param;
@@ -193,11 +193,10 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         ClDeviceHelper::getExtraDeviceInfo(*this, paramName, param, src, srcSize, retSize);
     }
 
-    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, src, srcSize));
+    auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, src, srcSize);
 
-    if (paramValueSizeRet) {
-        *paramValueSizeRet = retSize;
-    }
+    retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, retSize, getInfoStatus);
 
     return retVal;
 }

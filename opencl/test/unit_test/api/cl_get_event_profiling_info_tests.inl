@@ -58,6 +58,24 @@ TEST_F(clEventProfilingTests, GivenInvalidParamNameWhenGettingEventProfilingInfo
     delete pEvent;
 }
 
+TEST_F(clEventProfilingTests, GivenInvalidParametersWhenGettingEventProfilingInfoThenValueSizeRetIsNotUpdated) {
+    Event event{nullptr, 0, 0, 0};
+    event.setStatus(CL_COMPLETE);
+    size_t paramValueSize = sizeof(cl_ulong);
+    cl_ulong paramValue;
+    size_t paramValueSizeRet = 0x1234;
+    cl_int retVal = CL_PROFILING_INFO_NOT_AVAILABLE;
+
+    event.setProfilingEnabled(true);
+    retVal = clGetEventProfilingInfo(&event,
+                                     0,
+                                     paramValueSize,
+                                     &paramValue,
+                                     &paramValueSizeRet);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0x1234u, paramValueSizeRet);
+}
+
 TEST_F(clEventProfilingTests, GivenInvalidParamValueSizeWhenGettingEventProfilingInfoThenInvalidValueErrorIsReturned) {
     Event *pEvent = new Event(nullptr, 0, 0, 0);
     pEvent->setStatus(CL_COMPLETE);

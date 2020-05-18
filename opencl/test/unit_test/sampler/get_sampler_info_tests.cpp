@@ -13,7 +13,7 @@
 
 using namespace NEO;
 
-TEST(GetSamplerInfo, InvalidFlags_returnsError) {
+TEST(GetSamplerInfo, GivenInvalidFlagsWhenGettingSamplerInfoThenInvalidValueErrorIsReturnedAndValueSizeRetIsNotUpdated) {
     MockContext context;
     auto retVal = CL_INVALID_VALUE;
     auto normalizedCoords = CL_TRUE;
@@ -22,8 +22,11 @@ TEST(GetSamplerInfo, InvalidFlags_returnsError) {
     auto sampler = Sampler::create(&context, normalizedCoords,
                                    addressingMode, filterMode, retVal);
 
-    retVal = sampler->getInfo(0, 0, nullptr, nullptr);
+    size_t valueSizeRet = 0x1234;
+
+    retVal = sampler->getInfo(0, 0, nullptr, &valueSizeRet);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0x1234u, valueSizeRet);
 
     delete sampler;
 }

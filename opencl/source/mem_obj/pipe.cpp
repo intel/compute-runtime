@@ -92,7 +92,7 @@ cl_int Pipe::getPipeInfo(cl_image_info paramName,
                          size_t *paramValueSizeRet) {
 
     cl_int retVal;
-    size_t srcParamSize = 0;
+    size_t srcParamSize = GetInfo::invalidSourceSize;
     void *srcParam = nullptr;
 
     switch (paramName) {
@@ -110,11 +110,9 @@ cl_int Pipe::getPipeInfo(cl_image_info paramName,
         break;
     }
 
-    retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, srcParam, srcParamSize));
-
-    if (paramValueSizeRet) {
-        *paramValueSizeRet = srcParamSize;
-    }
+    auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, srcParam, srcParamSize);
+    retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, srcParamSize, getInfoStatus);
 
     return retVal;
 }

@@ -59,14 +59,15 @@ cl_int Platform::getInfo(cl_platform_info paramName,
                          size_t *paramValueSizeRet) {
     auto retVal = CL_INVALID_VALUE;
     const std::string *param = nullptr;
-    size_t paramSize = 0;
+    size_t paramSize = GetInfo::invalidSourceSize;
     uint64_t pVal = 0;
+    auto getInfoStatus = GetInfoStatus::INVALID_VALUE;
 
     switch (paramName) {
     case CL_PLATFORM_HOST_TIMER_RESOLUTION:
         pVal = static_cast<uint64_t>(this->clDevices[0]->getPlatformHostTimerResolution());
         paramSize = sizeof(uint64_t);
-        retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, &pVal, paramSize));
+        getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, &pVal, paramSize);
         break;
     case CL_PLATFORM_PROFILE:
         param = &platformInfo->profile;
@@ -93,12 +94,11 @@ cl_int Platform::getInfo(cl_platform_info paramName,
     // Case for string parameters
     if (param) {
         paramSize = param->length() + 1;
-        retVal = changeGetInfoStatusToCLResultType(::getInfo(paramValue, paramValueSize, param->c_str(), paramSize));
+        getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, param->c_str(), paramSize);
     }
 
-    if (paramValueSizeRet) {
-        *paramValueSizeRet = paramSize;
-    }
+    retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, paramSize, getInfoStatus);
 
     return retVal;
 }
