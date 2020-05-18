@@ -92,7 +92,7 @@ int MultiCommand::initialize(const std::vector<std::string> &args) {
     for (size_t argIndex = 1; argIndex < args.size(); argIndex++) {
         const auto &currArg = args[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < args.size());
-        if (hasMoreArgs && ConstStringRef("-multi") == currArg) {
+        if (hasMoreArgs && ConstStringRef("multi") == currArg) {
             pathToCommandFile = args[++argIndex];
         } else if (hasMoreArgs && ConstStringRef("-output_file_list") == currArg) {
             outputFileList = args[++argIndex];

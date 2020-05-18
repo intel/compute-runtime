@@ -48,7 +48,7 @@ TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildTest) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
-        "-multi",
+        "multi",
         nameOfFileWithArgs.c_str(),
         "-q",
     };
@@ -73,7 +73,7 @@ TEST_F(MultiCommandTests, MultiCommandSuccessfulBuildWithOutputFileTest) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
-        "-multi",
+        "multi",
         nameOfFileWithArgs.c_str(),
         "-q",
     };
@@ -105,7 +105,7 @@ TEST_F(MultiCommandTests, GoodMultiBuildTestWithspecifiedOutputDir) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
-        "-multi",
+        "multi",
         nameOfFileWithArgs.c_str(),
         "-q",
     };
@@ -140,7 +140,7 @@ TEST_F(MultiCommandTests, LackOfTxtFileWithArgsMultiTest) {
     nameOfFileWithArgs = "test_files/ImANotExistedComandFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
-        "-multi",
+        "multi",
         "test_files/ImANaughtyFile.txt",
         "-q",
     };
@@ -158,7 +158,7 @@ TEST_F(MultiCommandTests, LackOfClFilePointedInTxtFileMultiTest) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
-        "-multi",
+        "multi",
         nameOfFileWithArgs.c_str(),
         "-q",
     };
@@ -185,7 +185,7 @@ TEST_F(MultiCommandTests, GoodMultiBuildTestWithOutputFileListFlag) {
     nameOfFileWithArgs = "test_files/ImAMulitiComandMinimalGoodFile.txt";
     std::vector<std::string> argv = {
         "ocloc",
-        "-multi",
+        "multi",
         nameOfFileWithArgs.c_str(),
         "-q",
         "-output_file_list",
