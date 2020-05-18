@@ -62,6 +62,17 @@ if(BUILD_WITH_L0)
     endif()
 
     if(UNIX)
+        # Xml Library
+        find_package(LibXml2)
+        if(PC_LIBXML_FOUND)
+            include_directories(SYSTEM ${LIBXML2_INCLUDE_DIR})
+            message(STATUS "LibXml2 Library headers directory: ${LIBXML2_INCLUDE_DIR}")
+        else()
+            message(STATUS "LibXml2 Library headers not available. Building without.")
+        endif()
+    endif()
+
+    if(UNIX)
         # Load GNUInstallDirs to determine install targets for Linux packages
         include(GNUInstallDirs)
     endif()

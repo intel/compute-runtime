@@ -12,7 +12,6 @@
 #include "sysman/linux/fs_access.h"
 #include "sysman/ras/ras.h"
 #include "sysman/ras/ras_imp.h"
-#include "sysman/sysman_imp.h"
 
 namespace L0 {
 namespace ult {

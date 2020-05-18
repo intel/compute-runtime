@@ -12,6 +12,8 @@
 namespace L0 {
 
 ze_result_t LinuxSysmanImp::init() {
+    pXmlParser = XmlParser::create();
+
     pFsAccess = FsAccess::create();
     UNRECOVERABLE_IF(nullptr == pFsAccess);
 
@@ -44,6 +46,10 @@ ze_result_t LinuxSysmanImp::init() {
     pPmt->init(myDeviceName, pFsAccess);
 
     return ZE_RESULT_SUCCESS;
+}
+
+XmlParser *LinuxSysmanImp::getXmlParser() {
+    return pXmlParser;
 }
 
 FsAccess &LinuxSysmanImp::getFsAccess() {
@@ -91,6 +97,10 @@ LinuxSysmanImp::~LinuxSysmanImp() {
     if (nullptr != pFsAccess) {
         delete pFsAccess;
         pFsAccess = nullptr;
+    }
+    if (nullptr != pXmlParser) {
+        delete pXmlParser;
+        pXmlParser = nullptr;
     }
     if (nullptr != pPmt) {
         delete pPmt;

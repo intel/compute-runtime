@@ -12,6 +12,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/pmt.h"
+#include "level_zero/tools/source/sysman/linux/xml_parser/xml_parser.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
@@ -24,6 +25,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
 
     ze_result_t init() override;
 
+    XmlParser *getXmlParser();
     FsAccess &getFsAccess();
     ProcfsAccess &getProcfsAccess();
     SysfsAccess &getSysfsAccess();
@@ -31,6 +33,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     PlatformMonitoringTech &getPlatformMonitoringTechAccess();
 
   protected:
+    XmlParser *pXmlParser = nullptr;
     FsAccess *pFsAccess = nullptr;
     ProcfsAccess *pProcfsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;

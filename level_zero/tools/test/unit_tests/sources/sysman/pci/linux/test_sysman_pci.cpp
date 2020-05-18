@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 #include "level_zero/tools/source/sysman/pci/linux/os_pci_imp.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

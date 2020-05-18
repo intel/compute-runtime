@@ -12,7 +12,6 @@
 #include "level_zero/tools/source/sysman/temperature/linux/os_temperature_imp.h"
 
 #include "sysman/linux/pmt.h"
-#include "sysman/sysman_imp.h"
 #include "sysman/temperature/temperature_imp.h"
 
 #if defined(__clang__)

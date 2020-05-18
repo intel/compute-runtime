@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/fabric_port/linux/os_fabric_port_imp.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

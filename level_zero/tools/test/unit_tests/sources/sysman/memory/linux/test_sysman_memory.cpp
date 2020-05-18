@@ -6,9 +6,9 @@
  */
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include "gtest/gtest.h"
-#include "sysman/linux/os_sysman_imp.h"
 
 using ::testing::_;
 

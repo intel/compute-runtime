@@ -10,7 +10,6 @@
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/pci/linux/os_pci_imp.h"
 
-#include "sysman/linux/os_sysman_imp.h"
 #include "sysman/pci/pci_imp.h"
 
 using ::testing::_;

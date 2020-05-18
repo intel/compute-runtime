@@ -12,8 +12,6 @@
 #include "sysman/frequency/frequency_imp.h"
 #include "sysman/frequency/os_frequency.h"
 #include "sysman/linux/fs_access.h"
-#include "sysman/sysman.h"
-#include "sysman/sysman_imp.h"
 
 #if defined(__clang__)
 #pragma clang diagnostic push

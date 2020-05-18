@@ -12,8 +12,6 @@
 #include "sysman/linux/fs_access.h"
 #include "sysman/standby/os_standby.h"
 #include "sysman/standby/standby_imp.h"
-#include "sysman/sysman.h"
-#include "sysman/sysman_imp.h"
 
 #if defined(__clang__)
 #pragma clang diagnostic push

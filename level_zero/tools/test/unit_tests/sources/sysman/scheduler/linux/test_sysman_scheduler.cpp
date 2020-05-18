@@ -7,6 +7,7 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/sysman/scheduler/linux/os_scheduler_imp.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"

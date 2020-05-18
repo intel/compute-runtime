@@ -9,8 +9,6 @@
 #include "level_zero/core/test/unit_tests/mock.h"
 
 #include "sysman/linux/fs_access.h"
-#include "sysman/linux/os_sysman_imp.h"
-#include "sysman/sysman.h"
 
 using ::testing::_;
 
