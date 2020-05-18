@@ -74,7 +74,7 @@ class ImageFromSubBufferTest : public DeviceFixture, public ::testing::Test {
     cl_mem subBuffer;
 };
 
-TEST_F(ImageFromSubBufferTest, CreateImage2dFromSubBufferWithOffset) {
+TEST_F(ImageFromSubBufferTest, GivenSubBufferWithOffsetWhenCreatingImageThenOffsetsAreCorrect) {
     std::unique_ptr<Image> imageFromSubBuffer(createImage());
     EXPECT_NE(nullptr, imageFromSubBuffer);
 
@@ -89,7 +89,7 @@ TEST_F(ImageFromSubBufferTest, CreateImage2dFromSubBufferWithOffset) {
     EXPECT_EQ(0u, surfaceOffsets.yOffsetForUVplane);
 }
 
-TEST_F(ImageFromSubBufferTest, givenSubbufferWithOffsetGreaterThan4GBWhenImageIsCreatedThenSurfaceOffsetsOffsetHasCorrectValue) {
+TEST_F(ImageFromSubBufferTest, GivenSubBufferWithOffsetGreaterThan4gbWhenCreatingImageThenSurfaceOffsetsAreCorrect) {
     Buffer *buffer = castToObject<Buffer>(parentBuffer);
     uint64_t offsetExpected = 0;
     cl_buffer_region region = {0, size / 2};
