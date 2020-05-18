@@ -128,8 +128,6 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_PARENT_DEVICE:                               getCap<CL_DEVICE_PARENT_DEVICE                               >(src, srcSize, retSize); break;
     case CL_DEVICE_PARTITION_AFFINITY_DOMAIN:                   getCap<CL_DEVICE_PARTITION_AFFINITY_DOMAIN                   >(src, srcSize, retSize); break;
     case CL_DEVICE_PARTITION_MAX_SUB_DEVICES:                   getCap<CL_DEVICE_PARTITION_MAX_SUB_DEVICES                   >(src, srcSize, retSize); break;
-    case CL_DEVICE_PARTITION_PROPERTIES:                        getCap<CL_DEVICE_PARTITION_PROPERTIES                        >(src, srcSize, retSize); break;
-    case CL_DEVICE_PARTITION_TYPE:                              getCap<CL_DEVICE_PARTITION_TYPE                              >(src, srcSize, retSize); break;
     case CL_DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS:                getCap<CL_DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS                >(src, srcSize, retSize); break;
     case CL_DEVICE_PIPE_MAX_PACKET_SIZE:                        getCap<CL_DEVICE_PIPE_MAX_PACKET_SIZE                        >(src, srcSize, retSize); break;
     case CL_DEVICE_PLATFORM:                                    getCap<CL_DEVICE_PLATFORM                                    >(src, srcSize, retSize); break;
@@ -185,6 +183,18 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = sizeof(param);
         break;
     }
+    case CL_DEVICE_PARTITION_PROPERTIES:
+        getCap<CL_DEVICE_PARTITION_PROPERTIES>(src, srcSize, retSize);
+        if (deviceInfo.partitionProperties[0] == 0) {
+            retSize = srcSize = sizeof(deviceInfo.partitionProperties[0]);
+        }
+        break;
+    case CL_DEVICE_PARTITION_TYPE:
+        getCap<CL_DEVICE_PARTITION_TYPE>(src, srcSize, retSize);
+        if (deviceInfo.partitionType[0] == 0) {
+            retSize = srcSize = sizeof(deviceInfo.partitionType[0]);
+        }
+        break;
     default:
         if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !getSharedDeviceInfo().imageSupport) {
             src = &value;

@@ -133,26 +133,27 @@ struct clCreateSubDevicesDeviceInfoTests : clCreateSubDevicesTests {
         CL_DEVICE_AFFINITY_DOMAIN_NUMA | CL_DEVICE_AFFINITY_DOMAIN_NEXT_PARTITIONABLE;
     cl_uint expectedRootDevicePartitionMaxSubDevices;
     cl_device_partition_property expectedRootDevicePartitionProperties[2] = {CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN, 0};
-    cl_device_partition_property expectedRootDevicePartitionType[3] = {0};
+    cl_device_partition_property expectedRootDevicePartitionType[1] = {0};
 
     cl_device_id expectedSubDeviceParentDevice;
     cl_device_affinity_domain expectedSubDevicePartitionAffinityDomain = 0;
     cl_uint expectedSubDevicePartitionMaxSubDevices = 0;
-    cl_device_partition_property expectedSubDevicePartitionProperties[2] = {0};
+    cl_device_partition_property expectedSubDevicePartitionProperties[1] = {0};
     cl_device_partition_property expectedSubDevicePartitionType[3] =
         {CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN, CL_DEVICE_AFFINITY_DOMAIN_NUMA, 0};
 
     cl_device_id expectedRootDeviceWithoutSubDevicesParentDevice = nullptr;
     cl_device_affinity_domain expectedRootDeviceWithoutSubDevicesPartitionAffinityDomain = 0;
     cl_uint expectedRootDeviceWithoutSubDevicesPartitionMaxSubDevices = 0;
-    cl_device_partition_property expectedRootDeviceWithoutSubDevicesPartitionProperties[2] = {0};
-    cl_device_partition_property expectedRootDeviceWithoutSubDevicesPartitionType[3] = {0};
+    cl_device_partition_property expectedRootDeviceWithoutSubDevicesPartitionProperties[1] = {0};
+    cl_device_partition_property expectedRootDeviceWithoutSubDevicesPartitionType[1] = {0};
 
     cl_device_id parentDevice;
     cl_device_affinity_domain partitionAffinityDomain;
     cl_uint partitionMaxSubDevices;
     cl_device_partition_property partitionProperties[2];
     cl_device_partition_property partitionType[3];
+    size_t returnValueSize;
 };
 
 TEST_F(clCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoThenCorrectValuesAreSet) {
@@ -195,38 +196,52 @@ TEST_F(clCreateSubDevicesDeviceInfoTests, GivenRootDeviceWithoutSubDevicesWhenGe
 TEST_F(clCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoViaApiThenCorrectValuesAreSet) {
     setup(4);
 
-    clGetDeviceInfo(device.get(), CL_DEVICE_PARENT_DEVICE, sizeof(parentDevice), &parentDevice, nullptr);
+    clGetDeviceInfo(device.get(), CL_DEVICE_PARENT_DEVICE,
+                    sizeof(parentDevice), &parentDevice, nullptr);
     EXPECT_EQ(expectedRootDeviceParentDevice, parentDevice);
 
-    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_AFFINITY_DOMAIN, sizeof(partitionAffinityDomain), &partitionAffinityDomain, nullptr);
+    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_AFFINITY_DOMAIN,
+                    sizeof(partitionAffinityDomain), &partitionAffinityDomain, nullptr);
     EXPECT_EQ(expectedRootDevicePartitionAffinityDomain, partitionAffinityDomain);
 
-    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_MAX_SUB_DEVICES, sizeof(partitionMaxSubDevices), &partitionMaxSubDevices, nullptr);
+    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_MAX_SUB_DEVICES,
+                    sizeof(partitionMaxSubDevices), &partitionMaxSubDevices, nullptr);
     EXPECT_EQ(expectedRootDevicePartitionMaxSubDevices, partitionMaxSubDevices);
 
-    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_PROPERTIES, sizeof(partitionProperties), &partitionProperties, nullptr);
+    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_PROPERTIES,
+                    sizeof(partitionProperties), &partitionProperties, &returnValueSize);
+    EXPECT_EQ(sizeof(expectedRootDevicePartitionProperties), returnValueSize);
     EXPECT_EQ(expectedRootDevicePartitionProperties[0], partitionProperties[0]);
     EXPECT_EQ(expectedRootDevicePartitionProperties[1], partitionProperties[1]);
 
-    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_TYPE, sizeof(partitionType), &partitionType, nullptr);
+    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_TYPE,
+                    sizeof(partitionType), &partitionType, &returnValueSize);
+    EXPECT_EQ(sizeof(expectedRootDevicePartitionType), returnValueSize);
     EXPECT_EQ(expectedRootDevicePartitionType[0], partitionType[0]);
 
     auto retVal = clCreateSubDevices(device.get(), properties, outDevicesCount, outDevices, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     for (auto subDevice : outDevices) {
-        clGetDeviceInfo(subDevice, CL_DEVICE_PARENT_DEVICE, sizeof(parentDevice), &parentDevice, nullptr);
+        clGetDeviceInfo(subDevice, CL_DEVICE_PARENT_DEVICE,
+                        sizeof(parentDevice), &parentDevice, nullptr);
         EXPECT_EQ(expectedSubDeviceParentDevice, parentDevice);
 
-        clGetDeviceInfo(subDevice, CL_DEVICE_PARTITION_AFFINITY_DOMAIN, sizeof(partitionAffinityDomain), &partitionAffinityDomain, nullptr);
+        clGetDeviceInfo(subDevice, CL_DEVICE_PARTITION_AFFINITY_DOMAIN,
+                        sizeof(partitionAffinityDomain), &partitionAffinityDomain, nullptr);
         EXPECT_EQ(expectedSubDevicePartitionAffinityDomain, partitionAffinityDomain);
 
-        clGetDeviceInfo(subDevice, CL_DEVICE_PARTITION_MAX_SUB_DEVICES, sizeof(partitionMaxSubDevices), &partitionMaxSubDevices, nullptr);
+        clGetDeviceInfo(subDevice, CL_DEVICE_PARTITION_MAX_SUB_DEVICES,
+                        sizeof(partitionMaxSubDevices), &partitionMaxSubDevices, nullptr);
         EXPECT_EQ(expectedSubDevicePartitionMaxSubDevices, partitionMaxSubDevices);
 
-        clGetDeviceInfo(subDevice, CL_DEVICE_PARTITION_PROPERTIES, sizeof(partitionProperties), &partitionProperties, nullptr);
+        clGetDeviceInfo(subDevice, CL_DEVICE_PARTITION_PROPERTIES,
+                        sizeof(partitionProperties), &partitionProperties, &returnValueSize);
+        EXPECT_EQ(sizeof(expectedSubDevicePartitionProperties), returnValueSize);
         EXPECT_EQ(expectedSubDevicePartitionProperties[0], partitionProperties[0]);
 
-        clGetDeviceInfo(subDevice, CL_DEVICE_PARTITION_TYPE, sizeof(partitionType), &partitionType, nullptr);
+        clGetDeviceInfo(subDevice, CL_DEVICE_PARTITION_TYPE,
+                        sizeof(partitionType), &partitionType, &returnValueSize);
+        EXPECT_EQ(sizeof(expectedSubDevicePartitionType), returnValueSize);
         EXPECT_EQ(expectedSubDevicePartitionType[0], partitionType[0]);
         EXPECT_EQ(expectedSubDevicePartitionType[1], partitionType[1]);
         EXPECT_EQ(expectedSubDevicePartitionType[2], partitionType[2]);
@@ -236,19 +251,26 @@ TEST_F(clCreateSubDevicesDeviceInfoTests, WhenGettingSubDeviceRelatedDeviceInfoV
 TEST_F(clCreateSubDevicesDeviceInfoTests, GivenRootDeviceWithoutSubDevicesWhenGettingSubDeviceRelatedDeviceInfoViaApiThenCorrectValuesAreSet) {
     setup(1);
 
-    clGetDeviceInfo(device.get(), CL_DEVICE_PARENT_DEVICE, sizeof(parentDevice), &parentDevice, nullptr);
+    clGetDeviceInfo(device.get(), CL_DEVICE_PARENT_DEVICE,
+                    sizeof(parentDevice), &parentDevice, nullptr);
     EXPECT_EQ(expectedRootDeviceWithoutSubDevicesParentDevice, parentDevice);
 
-    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_AFFINITY_DOMAIN, sizeof(partitionAffinityDomain), &partitionAffinityDomain, nullptr);
+    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_AFFINITY_DOMAIN,
+                    sizeof(partitionAffinityDomain), &partitionAffinityDomain, nullptr);
     EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionAffinityDomain, partitionAffinityDomain);
 
-    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_MAX_SUB_DEVICES, sizeof(partitionMaxSubDevices), &partitionMaxSubDevices, nullptr);
+    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_MAX_SUB_DEVICES,
+                    sizeof(partitionMaxSubDevices), &partitionMaxSubDevices, nullptr);
     EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionMaxSubDevices, partitionMaxSubDevices);
 
-    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_PROPERTIES, sizeof(partitionProperties), &partitionProperties, nullptr);
+    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_PROPERTIES,
+                    sizeof(partitionProperties), &partitionProperties, &returnValueSize);
+    EXPECT_EQ(sizeof(expectedRootDeviceWithoutSubDevicesPartitionProperties), returnValueSize);
     EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionProperties[0], partitionProperties[0]);
 
-    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_TYPE, sizeof(partitionType), &partitionType, nullptr);
+    clGetDeviceInfo(device.get(), CL_DEVICE_PARTITION_TYPE,
+                    sizeof(partitionType), &partitionType, &returnValueSize);
+    EXPECT_EQ(sizeof(expectedRootDeviceWithoutSubDevicesPartitionType), returnValueSize);
     EXPECT_EQ(expectedRootDeviceWithoutSubDevicesPartitionType[0], partitionType[0]);
 }
 
