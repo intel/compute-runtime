@@ -35,6 +35,10 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
     UNRECOVERABLE_IF(device == nullptr);
     this->device = device;
 
+    if (imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_INVALID) {
+        return false;
+    }
+
     typename RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType;
     switch (desc->type) {
     case ZE_IMAGE_TYPE_1D:
