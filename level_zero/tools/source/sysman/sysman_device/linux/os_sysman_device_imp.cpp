@@ -41,12 +41,12 @@ const std::map<int, zet_engine_type_t> engineMap = {
 
 void LinuxSysmanDeviceImp::getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) {
     std::copy(unknown.begin(), unknown.end(), serialNumber);
-    serialNumber[unknown.size() - 1] = '\0';
+    serialNumber[unknown.size()] = '\0';
 }
 
 void LinuxSysmanDeviceImp::getBoardNumber(int8_t (&boardNumber)[ZET_STRING_PROPERTY_SIZE]) {
     std::copy(unknown.begin(), unknown.end(), boardNumber);
-    boardNumber[unknown.size() - 1] = '\0';
+    boardNumber[unknown.size()] = '\0';
 }
 
 void LinuxSysmanDeviceImp::getBrandName(int8_t (&brandName)[ZET_STRING_PROPERTY_SIZE]) {
@@ -54,16 +54,16 @@ void LinuxSysmanDeviceImp::getBrandName(int8_t (&brandName)[ZET_STRING_PROPERTY_
     ze_result_t result = pSysfsAccess->read(subsystemVendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
         std::copy(unknown.begin(), unknown.end(), brandName);
-        brandName[unknown.size() - 1] = '\0';
+        brandName[unknown.size()] = '\0';
         return;
     }
     if (strVal.compare(intelPciId) == 0) {
         std::copy(vendorIntel.begin(), vendorIntel.end(), brandName);
-        brandName[vendorIntel.size() - 1] = '\0';
+        brandName[vendorIntel.size()] = '\0';
         return;
     }
     std::copy(unknown.begin(), unknown.end(), brandName);
-    brandName[unknown.size() - 1] = '\0';
+    brandName[unknown.size()] = '\0';
 }
 
 void LinuxSysmanDeviceImp::getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_SIZE]) {
@@ -71,12 +71,12 @@ void LinuxSysmanDeviceImp::getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_
     ze_result_t result = pSysfsAccess->read(deviceFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
         std::copy(unknown.begin(), unknown.end(), modelName);
-        modelName[unknown.size() - 1] = '\0';
+        modelName[unknown.size()] = '\0';
         return;
     }
 
     std::copy(strVal.begin(), strVal.end(), modelName);
-    modelName[strVal.size() - 1] = '\0';
+    modelName[strVal.size()] = '\0';
 }
 
 void LinuxSysmanDeviceImp::getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]) {
@@ -84,21 +84,21 @@ void LinuxSysmanDeviceImp::getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERT
     ze_result_t result = pSysfsAccess->read(vendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
         std::copy(unknown.begin(), unknown.end(), vendorName);
-        vendorName[unknown.size() - 1] = '\0';
+        vendorName[unknown.size()] = '\0';
         return;
     }
     if (strVal.compare(intelPciId) == 0) {
         std::copy(vendorIntel.begin(), vendorIntel.end(), vendorName);
-        vendorName[vendorIntel.size() - 1] = '\0';
+        vendorName[vendorIntel.size()] = '\0';
         return;
     }
     std::copy(unknown.begin(), unknown.end(), vendorName);
-    vendorName[unknown.size() - 1] = '\0';
+    vendorName[unknown.size()] = '\0';
 }
 
 void LinuxSysmanDeviceImp::getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) {
     std::copy(unknown.begin(), unknown.end(), driverVersion);
-    driverVersion[unknown.size() - 1] = '\0';
+    driverVersion[unknown.size()] = '\0';
 }
 
 static void getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAccess *pSysfsAccess, const ::pid_t pid, std::vector<int> &deviceFds) {
@@ -233,7 +233,7 @@ ze_result_t LinuxSysmanDeviceImp::scanProcessesState(std::vector<zet_process_sta
     std::vector<std::string> clientIds;
     ze_result_t result = pSysfsAccess->scanDirEntries(clientsDir, clientIds);
     if (ZE_RESULT_SUCCESS != result) {
-        return result;
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
     // Create a map with unique pid as key and engineType as value

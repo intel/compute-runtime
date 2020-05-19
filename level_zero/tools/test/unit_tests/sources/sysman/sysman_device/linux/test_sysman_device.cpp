@@ -79,19 +79,6 @@ class SysmanSysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         }
         DeviceFixture::TearDown();
     }
-
-    uint32_t getPropLength(int8_t prop[ZET_STRING_PROPERTY_SIZE]) {
-        uint32_t length = 0;
-        for (int i = 0; i < ZET_STRING_PROPERTY_SIZE; i++) {
-            if (prop[i] == '\0') {
-                break;
-            } else {
-                length += 1;
-            }
-        }
-
-        return length;
-    }
 };
 
 TEST_F(SysmanSysmanDeviceFixture, GivenValidSysmanHandleWhenCallingzetSysmanDeviceGetPropertiesThenVerifyzetSysmanDeviceGetPropertiesCallSucceeds) {
@@ -100,12 +87,12 @@ TEST_F(SysmanSysmanDeviceFixture, GivenValidSysmanHandleWhenCallingzetSysmanDevi
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(properties.numSubdevices, 0u);
-    EXPECT_TRUE(0 == std::memcmp(properties.boardNumber, unknown.c_str(), getPropLength(properties.boardNumber)));
-    EXPECT_TRUE(0 == std::memcmp(properties.brandName, vendorIntel.c_str(), getPropLength(properties.brandName)));
-    EXPECT_TRUE(0 == std::memcmp(properties.driverVersion, unknown.c_str(), getPropLength(properties.driverVersion)));
-    EXPECT_TRUE(0 == std::memcmp(properties.modelName, expectedModelName.c_str(), getPropLength(properties.modelName)));
-    EXPECT_TRUE(0 == std::memcmp(properties.serialNumber, unknown.c_str(), getPropLength(properties.serialNumber)));
-    EXPECT_TRUE(0 == std::memcmp(properties.vendorName, vendorIntel.c_str(), getPropLength(properties.vendorName)));
+    EXPECT_TRUE(0 == std::memcmp(properties.boardNumber, unknown.c_str(), unknown.size()));
+    EXPECT_TRUE(0 == std::memcmp(properties.brandName, vendorIntel.c_str(), vendorIntel.size()));
+    EXPECT_TRUE(0 == std::memcmp(properties.driverVersion, unknown.c_str(), unknown.size()));
+    EXPECT_TRUE(0 == std::memcmp(properties.modelName, expectedModelName.c_str(), expectedModelName.size()));
+    EXPECT_TRUE(0 == std::memcmp(properties.serialNumber, unknown.c_str(), unknown.size()));
+    EXPECT_TRUE(0 == std::memcmp(properties.vendorName, vendorIntel.c_str(), vendorIntel.size()));
 }
 
 TEST_F(SysmanSysmanDeviceFixture, GivenValidSysmanHandleWhileRetrievingInformationAboutHostProcessesUsingDeviceThenSuccessIsReturned) {
