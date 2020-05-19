@@ -341,7 +341,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.preferredLocalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredPlatformAtomicAlignment = MemoryConstants::cacheLineSize;
 
-    deviceInfo.hostMemCapabilities = hwInfoConfig->getHostMemCapabilities();
+    deviceInfo.hostMemCapabilities = hwInfoConfig->getHostMemCapabilities(&hwInfo);
     deviceInfo.deviceMemCapabilities = hwInfoConfig->getDeviceMemCapabilities();
     deviceInfo.singleDeviceSharedMemCapabilities = hwInfoConfig->getSingleDeviceSharedMemCapabilities();
     deviceInfo.crossDeviceSharedMemCapabilities = hwInfoConfig->getCrossDeviceSharedMemCapabilities();

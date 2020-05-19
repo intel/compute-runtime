@@ -28,7 +28,7 @@ class HwInfoConfig {
     int configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface);
     virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) = 0;
     virtual void adjustPlatformForProductFamily(HardwareInfo *hwInfo) = 0;
-    virtual uint64_t getHostMemCapabilities() = 0;
+    virtual uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) = 0;
     virtual uint64_t getDeviceMemCapabilities() = 0;
     virtual uint64_t getSingleDeviceSharedMemCapabilities() = 0;
     virtual uint64_t getCrossDeviceSharedMemCapabilities() = 0;
@@ -45,7 +45,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     }
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) override;
     void adjustPlatformForProductFamily(HardwareInfo *hwInfo) override;
-    uint64_t getHostMemCapabilities() override;
+    uint64_t getHostMemCapabilities(const HardwareInfo *hwInfo) override;
     uint64_t getDeviceMemCapabilities() override;
     uint64_t getSingleDeviceSharedMemCapabilities() override;
     uint64_t getCrossDeviceSharedMemCapabilities() override;

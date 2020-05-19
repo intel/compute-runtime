@@ -19,7 +19,7 @@
 namespace NEO {
 
 template <>
-uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getHostMemCapabilities() {
+uint64_t HwInfoConfigHw<IGFX_UNKNOWN>::getHostMemCapabilities(const HardwareInfo * /*hwInfo*/) {
     return 0;
 }
 

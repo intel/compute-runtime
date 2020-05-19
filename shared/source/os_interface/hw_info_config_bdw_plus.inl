@@ -9,7 +9,7 @@
 
 namespace NEO {
 template <PRODUCT_FAMILY gfxProduct>
-uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilities() {
+uint64_t HwInfoConfigHw<gfxProduct>::getHostMemCapabilities(const HardwareInfo * /*hwInfo*/) {
     return (UNIFIED_SHARED_MEMORY_ACCESS | UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS);
 }
 
