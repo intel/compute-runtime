@@ -486,8 +486,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
     blitProperties.outputTimestampPacket = currentTimestampPacketNode;
 
     if (isCacheFlushForBcsRequired()) {
-        auto cacheFlushTimestampPacketGpuAddress = timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]->getGpuAddress() +
-                                                   offsetof(TimestampPacketStorage, packets[0].contextEnd);
+        auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]);
         PipeControlArgs args(true);
         MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
             commandStream,
@@ -553,7 +552,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForCacheFlush(Surface **surfaces,
     uint64_t postSyncAddress = 0;
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         auto timestampPacketNodeForPostSync = timestampPacketContainer->peekNodes().at(0);
-        postSyncAddress = timestampPacketNodeForPostSync->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+        postSyncAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNodeForPostSync);
     }
 
     submitCacheFlush(surfaces, numSurfaces, commandStream, postSyncAddress);

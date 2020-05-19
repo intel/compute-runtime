@@ -537,8 +537,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPipeControlForBar
     auto barrierTimestampPacketNodes = dispatchFlags.barrierTimestampPacketNodes;
 
     if (barrierTimestampPacketNodes && barrierTimestampPacketNodes->peekNodes().size() != 0) {
-        auto barrierTimestampPacketGpuAddress = dispatchFlags.barrierTimestampPacketNodes->peekNodes()[0]->getGpuAddress() +
-                                                offsetof(TimestampPacketStorage, packets[0].contextEnd);
+        auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*dispatchFlags.barrierTimestampPacketNodes->peekNodes()[0]);
 
         PipeControlArgs args(true);
         MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
@@ -863,7 +862,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
         BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, commandStream, *this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]);
 
         if (blitProperties.outputTimestampPacket) {
-            auto timestampPacketGpuAddress = blitProperties.outputTimestampPacket->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+            auto timestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*blitProperties.outputTimestampPacket);
             EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, timestampPacketGpuAddress, 0, true, true);
             makeResident(*blitProperties.outputTimestampPacket->getBaseGraphicsAllocation());
         }

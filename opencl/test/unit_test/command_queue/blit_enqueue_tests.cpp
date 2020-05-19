@@ -438,7 +438,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
     mockCmdQ->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
     auto kernelNode = mockCmdQ->timestampPacketContainer->peekNodes()[0];
-    auto kernelNodeAddress = kernelNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+    auto kernelNodeAddress = TimestampPacketHelper::getContextEndGpuAddress(*kernelNode);
 
     auto cmdList = getCmdList<FamilyType>(bcsCsr->getCS(0));
 
@@ -513,7 +513,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
 
     commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 1, clEvent, nullptr);
 
-    auto eventDependencyAddress = eventDependency->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+    auto eventDependencyAddress = TimestampPacketHelper::getContextEndGpuAddress(*eventDependency);
 
     auto cmdList = getCmdList<FamilyType>(bcsCsr->getCS(0));
 
@@ -550,11 +550,11 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenOutEventWhenDispatchingThenAssi
 
     // NonAux to Aux
     cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
-    auto eventNodeAddress = eventNodes[1]->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+    auto eventNodeAddress = TimestampPacketHelper::getContextEndGpuAddress(*eventNodes[1]);
     verifySemaphore<FamilyType>(cmdFound, eventNodeAddress);
 
     cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(++cmdFound, cmdListQueue.end());
-    eventNodeAddress = eventNodes[2]->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+    eventNodeAddress = TimestampPacketHelper::getContextEndGpuAddress(*eventNodes[2]);
     verifySemaphore<FamilyType>(cmdFound, eventNodeAddress);
 
     clReleaseEvent(clEvent);
@@ -683,7 +683,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
     commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 2, waitlist, nullptr);
     userEvent.setStatus(CL_COMPLETE);
 
-    auto eventDependencyAddress = eventDependency->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+    auto eventDependencyAddress = TimestampPacketHelper::getContextEndGpuAddress(*eventDependency);
 
     auto cmdList = getCmdList<FamilyType>(bcsCsr->getCS(0));
 
@@ -715,7 +715,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
     userEvent.setStatus(CL_COMPLETE);
 
     auto kernelNode = mockCmdQ->timestampPacketContainer->peekNodes()[0];
-    auto kernelNodeAddress = kernelNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+    auto kernelNodeAddress = TimestampPacketHelper::getContextEndGpuAddress(*kernelNode);
 
     auto cmdList = getCmdList<FamilyType>(bcsCsr->getCS(0));
 

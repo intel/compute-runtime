@@ -1105,13 +1105,13 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenWriteBufferEnqueueWhenProgrammingCommand
                 continue;
             }
             semaphoresCount++;
-            auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+            auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
             EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
             EXPECT_EQ(0u, miAtomicsCount);
 
         } else if (auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(cmd)) {
             miAtomicsCount++;
-            auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, implicitGpuDependenciesCount);
+            auto dataAddress = TimestampPacketHelper::getGpuDependenciesCountGpuAddress(*timestampPacketNode);
             EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomicCmd->getAtomicOpcode());
             EXPECT_EQ(dataAddress, UnitTestHelper<FamilyType>::getMemoryAddress(*miAtomicCmd));
             EXPECT_EQ(1u, semaphoresCount);
@@ -1150,13 +1150,13 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenReadBufferEnqueueWhenProgrammingCommandS
                 continue;
             }
             semaphoresCount++;
-            auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+            auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
             EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
             EXPECT_EQ(0u, miAtomicsCount);
 
         } else if (auto miAtomicCmd = genCmdCast<MI_ATOMIC *>(cmd)) {
             miAtomicsCount++;
-            auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, implicitGpuDependenciesCount);
+            auto dataAddress = TimestampPacketHelper::getGpuDependenciesCountGpuAddress(*timestampPacketNode);
             EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomicCmd->getAtomicOpcode());
             EXPECT_EQ(dataAddress, UnitTestHelper<FamilyType>::getMemoryAddress(*miAtomicCmd));
             EXPECT_EQ(1u, semaphoresCount);
@@ -1404,8 +1404,8 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenOutputTimestampPacketWhenBlitCalledThenP
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
     cmdQ->enqueueWriteBuffer(buffer.get(), true, 0, 1, hostPtr, nullptr, 0, nullptr, nullptr);
-    auto outputTimestampPacket = cmdQ->timestampPacketContainer->peekNodes().at(0);
-    auto timestampPacketGpuWriteAddress = outputTimestampPacket->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+    auto outputTimestampPacket = cmdQ->timestampPacketContainer->peekNodes()[0];
+    auto timestampPacketGpuWriteAddress = TimestampPacketHelper::getContextEndGpuAddress(*outputTimestampPacket);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(csr->commandStream);

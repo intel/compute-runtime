@@ -187,7 +187,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     const RootDeviceEnvironment &rootDeviceEnvironment) {
 
     if (TimestampPacketStorage::WriteOperationType::AfterWalker == writeOperationType) {
-        uint64_t address = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+        uint64_t address = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode);
         PipeControlArgs args;
         MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
             *cmdStream,

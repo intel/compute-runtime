@@ -80,7 +80,7 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
 
         uint64_t compareOffset = packetId * sizeof(TimestampPacketStorage::Packet);
-        auto dataAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd) + compareOffset;
+        auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNode) + compareOffset;
 
         EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
     };
@@ -89,7 +89,7 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
     void verifyMiAtomic(typename GfxFamily::MI_ATOMIC *miAtomicCmd, TagNode<TimestampPacketStorage> *timestampPacketNode) {
         using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
         EXPECT_NE(nullptr, miAtomicCmd);
-        auto writeAddress = timestampPacketNode->getGpuAddress() + offsetof(TimestampPacketStorage, implicitGpuDependenciesCount);
+        auto writeAddress = TimestampPacketHelper::getGpuDependenciesCountGpuAddress(*timestampPacketNode);
 
         EXPECT_EQ(MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT, miAtomicCmd->getAtomicOpcode());
         EXPECT_EQ(writeAddress, UnitTestHelper<GfxFamily>::getMemoryAddress(*miAtomicCmd));
@@ -189,6 +189,19 @@ HWTEST_F(TimestampPacketTests, givenTagNodeWithPacketsUsed2WhenSemaphoreAndAtomi
         verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), &mockNode, packetId);
     }
     verifyMiAtomic<FamilyType>(genCmdCast<MI_ATOMIC *>(*it++), &mockNode);
+}
+
+TEST_F(TimestampPacketTests, givenTagNodeWhatAskingForGpuAddressesThenReturnCorrectValue) {
+    TimestampPacketStorage tag;
+    MockTagNode mockNode;
+    mockNode.tagForCpuAccess = &tag;
+    mockNode.gpuAddress = 0x1230000;
+
+    auto expectedEndAddress = mockNode.getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+    EXPECT_EQ(expectedEndAddress, TimestampPacketHelper::getContextEndGpuAddress(mockNode));
+
+    auto expectedCounterAddress = mockNode.getGpuAddress() + offsetof(TimestampPacketStorage, implicitGpuDependenciesCount);
+    EXPECT_EQ(expectedCounterAddress, TimestampPacketHelper::getGpuDependenciesCountGpuAddress(mockNode));
 }
 
 TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenMarkAsCompleted) {
@@ -596,7 +609,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
             }
             auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
             EXPECT_NE(nullptr, pipeControl);
-            auto expectedAddress = timestampPacket.getNode(walkersFound)->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
+            auto expectedAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacket.getNode(walkersFound));
 
             EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
             EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
