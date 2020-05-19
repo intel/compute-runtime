@@ -27,6 +27,11 @@ class TestSettingsFileReader : public SettingsFileReader {
     ~TestSettingsFileReader() override {
     }
 
+    bool hasSetting(const char *settingName) {
+        std::map<std::string, std::string>::iterator it = settingStringMap.find(std::string(settingName));
+        return (it != settingStringMap.end());
+    }
+
     size_t getStringSettingsCount() {
         return settingStringMap.size();
     }
