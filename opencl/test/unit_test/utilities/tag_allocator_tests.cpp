@@ -79,6 +79,11 @@ class MockTagAllocator : public TagAllocator<TagType> {
     }
 };
 
+TEST_F(TagAllocatorTest, givenTagNodeTypeWhenCopyingOrMovingThenDisallow) {
+    EXPECT_FALSE(std::is_move_constructible<TagNode<TimeStamps>>::value);
+    EXPECT_FALSE(std::is_copy_constructible<TagNode<TimeStamps>>::value);
+}
+
 TEST_F(TagAllocatorTest, Initialize) {
 
     MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 100, 64, deviceBitfield);

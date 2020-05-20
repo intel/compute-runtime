@@ -23,7 +23,7 @@ template <typename TagType>
 class TagAllocator;
 
 template <typename TagType>
-struct TagNode : public IDNode<TagNode<TagType>> {
+struct TagNode : public IDNode<TagNode<TagType>>, NonCopyableOrMovableClass {
   public:
     TagType *tagForCpuAccess;
 
