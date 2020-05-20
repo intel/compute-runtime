@@ -179,7 +179,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         break;
     case CL_DEVICE_REFERENCE_COUNT: {
         cl_int ref = this->getReference();
-        DEBUG_BREAK_IF(ref != 1);
+        DEBUG_BREAK_IF(ref != 1 && !deviceInfo.parentDevice);
         param = static_cast<cl_uint>(ref);
         src = &param;
         retSize = srcSize = sizeof(param);
