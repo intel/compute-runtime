@@ -162,7 +162,8 @@ struct EventPoolImp : public EventPool {
     std::queue<int> lastEventPoolOffsetUsed;
 
   protected:
-    const uint32_t eventSize = sizeof(struct KernelTimestampEvent);
+    const uint32_t eventSize = static_cast<uint32_t>(alignUp(sizeof(struct KernelTimestampEvent),
+                                                             MemoryConstants::cacheLineSize));
     const uint32_t eventAlignment = MemoryConstants::cacheLineSize;
 };
 

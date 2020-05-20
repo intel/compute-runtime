@@ -42,7 +42,8 @@ TEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelT
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
 
-    uint32_t kernelTimestampsSize = sizeof(struct KernelTimestampEvent);
+    uint32_t kernelTimestampsSize = static_cast<uint32_t>(alignUp(sizeof(struct KernelTimestampEvent),
+                                                                  MemoryConstants::cacheLineSize));
     EXPECT_EQ(kernelTimestampsSize, eventPool->getEventSize());
 }
 
