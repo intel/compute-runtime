@@ -188,9 +188,7 @@ static void deallocate(void *p) {
     deleteCallback(p);
 
     if (!fastLeakDetectionEnabled) {
-        if (p) {
-            free(p);
-        }
+        free(p);
         return;
     }
 

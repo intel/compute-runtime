@@ -73,6 +73,7 @@ OfflineCompiler::OfflineCompiler() = default;
 OfflineCompiler::~OfflineCompiler() {
     delete[] irBinary;
     delete[] genBinary;
+    delete[] debugDataBinary;
 }
 
 OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, OclocArgHelper *helper) {
