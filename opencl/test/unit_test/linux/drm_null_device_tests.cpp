@@ -31,7 +31,7 @@ class DrmNullDeviceTestsFixture {
     void TearDown() {
     }
 
-    Drm *drmNullDevice;
+    std::unique_ptr<Drm> drmNullDevice;
     ExecutionEnvironment executionEnvironment;
 
   protected:

@@ -15,10 +15,10 @@
 
 class DrmWrap : public NEO::Drm {
   public:
-    static NEO::Drm *createDrm(RootDeviceEnvironment &rootDeviceEnvironment) {
+    static std::unique_ptr<NEO::Drm> createDrm(RootDeviceEnvironment &rootDeviceEnvironment) {
         auto hwDeviceIds = OSInterface::discoverDevices(rootDeviceEnvironment.executionEnvironment);
         if (!hwDeviceIds.empty()) {
-            return NEO::Drm::create(std::move(hwDeviceIds[0]), rootDeviceEnvironment);
+            return std::unique_ptr<Drm>{NEO::Drm::create(std::move(hwDeviceIds[0]), rootDeviceEnvironment)};
         }
         return nullptr;
     }

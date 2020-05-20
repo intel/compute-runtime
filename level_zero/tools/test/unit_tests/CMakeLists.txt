@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: MIT
 #
 
+link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
+
 set(TARGET_NAME ${TARGET_NAME_L0}_tools_tests)
 
 append_sources_from_properties(L0_CORE_ENABLERS NEO_CORE_SRCS_LINK)

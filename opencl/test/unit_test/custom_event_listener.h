@@ -28,6 +28,10 @@ class CCustomEventListener : public ::testing::TestEventListener {
                        [](unsigned char c) { return std::toupper(c); });
     }
 
+    ~CCustomEventListener() {
+        delete _listener;
+    }
+
   private:
     void OnTestProgramStart(const ::testing::UnitTest &unitTest) override {
     }
