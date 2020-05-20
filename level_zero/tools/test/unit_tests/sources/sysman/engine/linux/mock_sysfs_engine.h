@@ -39,7 +39,8 @@ struct Mock<EngineSysfsAccess> : public EngineSysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    Mock<EngineSysfsAccess>() = default;
+    Mock() = default;
+    ~Mock() override = default;
 };
 class PublicLinuxEngineImp : public L0::LinuxEngineImp {
   public:

@@ -49,7 +49,8 @@ struct Mock<StandbySysfsAccess> : public StandbySysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    Mock<StandbySysfsAccess>() = default;
+    Mock() = default;
+    ~Mock() override = default;
 };
 
 class PublicLinuxStandbyImp : public L0::LinuxStandbyImp {

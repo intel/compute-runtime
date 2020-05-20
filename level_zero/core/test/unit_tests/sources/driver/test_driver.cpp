@@ -163,6 +163,7 @@ TEST_F(DriverTestMultipleDeviceWithAffinityMask, whenNotSettingAffinityThenAllRo
     L0::DriverHandleImp *driverHandle = new DriverHandleImp;
 
     ze_result_t res = driverHandle->initialize(std::move(devices));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     uint32_t deviceCount = 0;
     res = zeDeviceGet(driverHandle->toHandle(), &deviceCount, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -199,11 +200,16 @@ TEST_P(DriverTestMultipleDeviceWithAffinityMask, whenSettingAffinityMaskToDiffer
 
     driverHandle->affinityMask = device0Mask | (device1Mask << numSubDevices);
 
+    uint32_t totalRootDevices = rootDevice0Exposed + rootDevice1Exposed;
     ze_result_t res = driverHandle->initialize(std::move(devices));
+    if (0 == totalRootDevices) {
+        EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, res);
+    } else {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    }
     uint32_t deviceCount = 0;
     res = zeDeviceGet(driverHandle->toHandle(), &deviceCount, nullptr);
 
-    uint32_t totalRootDevices = rootDevice0Exposed + rootDevice1Exposed;
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(deviceCount, totalRootDevices);
 

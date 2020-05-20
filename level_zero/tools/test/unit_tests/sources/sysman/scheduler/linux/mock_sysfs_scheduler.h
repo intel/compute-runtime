@@ -58,7 +58,8 @@ struct Mock<SchedulerSysfsAccess> : public SysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    Mock<SchedulerSysfsAccess>() = default;
+    Mock() = default;
+    ~Mock() override = default;
 
     MOCK_METHOD2(read, ze_result_t(const std::string file, uint64_t &val));
     MOCK_METHOD2(write, ze_result_t(const std::string file, const uint64_t val));

@@ -105,7 +105,8 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    Mock<FrequencySysfsAccess>() = default;
+    Mock() = default;
+    ~Mock() override = default;
 };
 
 class PublicLinuxFrequencyImp : public L0::LinuxFrequencyImp {

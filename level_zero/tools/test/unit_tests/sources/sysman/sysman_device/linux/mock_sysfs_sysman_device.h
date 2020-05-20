@@ -88,7 +88,8 @@ struct Mock<SysmanDeviceSysfsAccess> : public SysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    Mock<SysmanDeviceSysfsAccess>() = default;
+    Mock() = default;
+    ~Mock() override = default;
 
     MOCK_METHOD2(read, ze_result_t(const std::string file, std::string &val));
     MOCK_METHOD2(read, ze_result_t(const std::string file, uint64_t &val));
