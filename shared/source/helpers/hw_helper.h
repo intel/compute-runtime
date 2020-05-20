@@ -198,7 +198,7 @@ class HwHelperHw : public HwHelper {
                                         bool forceNonAuxMode,
                                         bool useL1Cache) override;
 
-    void setL1CachePolicy(bool useL1Cache, typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo);
+    MOCKABLE_VIRTUAL void setL1CachePolicy(bool useL1Cache, typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo);
 
     const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override;
 
