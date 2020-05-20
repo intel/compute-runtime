@@ -122,6 +122,10 @@ if(GTEST_FILTERING_PATTERN)
   message(STATUS "GTest filter for regular tests: ${GTEST_FILTERING_PATTERN}")
 endif()
 
+if(USE_ASAN)
+  set(GTEST_ENV "LSAN_OPTIONS=suppressions=${CMAKE_CURRENT_SOURCE_DIR}/lsan_suppressions.txt")
+endif()
+
 if(NOT MSVC)
   set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
 endif()

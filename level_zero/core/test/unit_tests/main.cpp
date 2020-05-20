@@ -69,11 +69,14 @@ std::string getRunPath(char *argv0) {
         res = res.substr(0, pos);
 
     if (res == "." || pos == std::string::npos) {
+        char *cwd;
 #if defined(__linux__)
-        res = getcwd(nullptr, 0);
+        cwd = getcwd(nullptr, 0);
 #else
-        res = _getcwd(nullptr, 0);
+        cwd = _getcwd(nullptr, 0);
 #endif
+        res = cwd;
+        free(cwd);
     }
 
     return res;
