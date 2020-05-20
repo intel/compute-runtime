@@ -24,6 +24,6 @@ void WINAPI ULTGetSystemInfo(SYSTEM_INFO *pSystemInfo) {
 
 const wchar_t *UltIDXGIAdapter1::description = L"Intel";
 
-extern uint32_t numRootDevicesToEnum = 0;
+extern uint32_t numRootDevicesToEnum = 1;
 
 } // namespace NEO

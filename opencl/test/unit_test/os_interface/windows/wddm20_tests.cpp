@@ -115,6 +115,30 @@ TEST(WddmDiscoverDevices, WhenMultipleRootDevicesAreAvailableThenAllAreDiscovere
     EXPECT_EQ(numRootDevicesToEnum, hwDeviceIds.size());
 }
 
+TEST(WddmDiscoverDevices, givenMultipleRootDevicesExposedWhenCreateMultipleRootDevicesFlagIsSetToLowerValueThenDiscoverOnlySpecifiedNumberOfDevices) {
+    DebugManagerStateRestore restorer{};
+    VariableBackup<uint32_t> backup{&numRootDevicesToEnum};
+    numRootDevicesToEnum = 3u;
+    uint32_t requestedNumRootDevices = 2u;
+
+    DebugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
+}
+
+TEST(WddmDiscoverDevices, givenMultipleRootDevicesExposedWhenCreateMultipleRootDevicesFlagIsSetToGreaterValueThenDiscoverSpecifiedNumberOfDevices) {
+    DebugManagerStateRestore restorer{};
+    VariableBackup<uint32_t> backup{&numRootDevicesToEnum};
+    numRootDevicesToEnum = 3u;
+    uint32_t requestedNumRootDevices = 4u;
+
+    DebugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
+}
+
 TEST(WddmDiscoverDevices, WhenAdapterDescriptionContainsVirtualRenderThenAdapterIsDiscovered) {
     VariableBackup<const wchar_t *> descriptionBackup(&UltIDXGIAdapter1::description);
     descriptionBackup = L"Virtual Render";

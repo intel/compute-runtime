@@ -262,58 +262,55 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionE
 
     IDXGIFactory1 *pFactory = nullptr;
     IDXGIAdapter1 *pAdapter = nullptr;
-    DWORD iDevNum = 0;
 
     HRESULT hr = Wddm::createDxgiFactory(__uuidof(IDXGIFactory), (void **)(&pFactory));
     if ((hr != S_OK) || (pFactory == nullptr)) {
         return hwDeviceIds;
     }
 
-    while (pFactory->EnumAdapters1(iDevNum++, &pAdapter) != DXGI_ERROR_NOT_FOUND) {
-        hr = pAdapter->GetDesc1(&OpenAdapterDesc);
-        if (hr == S_OK) {
-            bool createHwDeviceId = false;
-            // Check for adapters that include either "Intel" or "Citrix" (which may
-            // be virtualizing one of our adapters) in the description
-            if ((wcsstr(OpenAdapterDesc.Description, L"Intel") != 0) ||
-                (wcsstr(OpenAdapterDesc.Description, L"Citrix") != 0) ||
-                (wcsstr(OpenAdapterDesc.Description, L"Virtual Render") != 0)) {
-                char deviceId[16];
-                sprintf_s(deviceId, "%X", OpenAdapterDesc.DeviceId);
-                createHwDeviceId = (DebugManager.flags.ForceDeviceId.get() == "unk") || (DebugManager.flags.ForceDeviceId.get() == deviceId);
-            }
-            if (createHwDeviceId) {
-                auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnvironment, OpenAdapterDesc.AdapterLuid);
-                if (hwDeviceId) {
-                    hwDeviceIds.push_back(std::move(hwDeviceId));
-                }
-            }
-        }
-        // Release all the non-Intel adapters
-        pAdapter->Release();
-        pAdapter = nullptr;
+    size_t numRootDevices = 0u;
+    if (DebugManager.flags.CreateMultipleRootDevices.get()) {
+        numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
     }
 
-    if (pAdapter != nullptr) {
-        pAdapter->Release();
-        pAdapter = nullptr;
-    }
+    do {
+        DWORD iDevNum = 0;
+        while (pFactory->EnumAdapters1(iDevNum++, &pAdapter) != DXGI_ERROR_NOT_FOUND) {
+            hr = pAdapter->GetDesc1(&OpenAdapterDesc);
+            if (hr == S_OK) {
+                bool createHwDeviceId = false;
+                // Check for adapters that include either "Intel" or "Citrix" (which may
+                // be virtualizing one of our adapters) in the description
+                if ((wcsstr(OpenAdapterDesc.Description, L"Intel") != 0) ||
+                    (wcsstr(OpenAdapterDesc.Description, L"Citrix") != 0) ||
+                    (wcsstr(OpenAdapterDesc.Description, L"Virtual Render") != 0)) {
+                    char deviceId[16];
+                    sprintf_s(deviceId, "%X", OpenAdapterDesc.DeviceId);
+                    createHwDeviceId = (DebugManager.flags.ForceDeviceId.get() == "unk") || (DebugManager.flags.ForceDeviceId.get() == deviceId);
+                }
+                if (createHwDeviceId) {
+                    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnvironment, OpenAdapterDesc.AdapterLuid);
+                    if (hwDeviceId) {
+                        hwDeviceIds.push_back(std::move(hwDeviceId));
+                    }
+                }
+            }
+            // Release all the non-Intel adapters
+            pAdapter->Release();
+            pAdapter = nullptr;
+            if (!hwDeviceIds.empty() && hwDeviceIds.size() == numRootDevices) {
+                break;
+            }
+        }
+        if (hwDeviceIds.empty()) {
+            break;
+        }
+    } while (hwDeviceIds.size() < numRootDevices);
+
     if (pFactory != nullptr) {
         pFactory->Release();
         pFactory = nullptr;
     }
-    size_t numRootDevices = 1u;
-    if (DebugManager.flags.CreateMultipleRootDevices.get()) {
-        numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get();
-    }
-    if (hwDeviceIds.empty()) {
-        return hwDeviceIds;
-    }
-
-    while (hwDeviceIds.size() < numRootDevices) {
-        hwDeviceIds.push_back(std::make_unique<HwDeviceId>(hwDeviceIds[0]->getAdapter(), hwDeviceIds[0]->getAdapterLuid(), osEnvironment));
-    }
-
     return hwDeviceIds;
 }
 

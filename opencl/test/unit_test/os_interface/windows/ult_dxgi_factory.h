@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 
 #include <cwchar>
@@ -100,13 +99,7 @@ class UltIDXGIFactory1 : public IDXGIFactory1 {
     HRESULT STDMETHODCALLTYPE EnumAdapters1(
         UINT Adapter,
         IDXGIAdapter1 **ppAdapter) {
-        UINT numRootDevices = 1u;
-        if (numRootDevicesToEnum > 0u) {
-            numRootDevices = numRootDevicesToEnum;
-        } else if (DebugManager.flags.CreateMultipleRootDevices.get()) {
-            numRootDevices = static_cast<UINT>(DebugManager.flags.CreateMultipleRootDevices.get());
-        }
-        if (Adapter >= numRootDevices) {
+        if (Adapter >= numRootDevicesToEnum) {
             *(IDXGIAdapter1 **)ppAdapter = nullptr;
             return DXGI_ERROR_NOT_FOUND;
         }
