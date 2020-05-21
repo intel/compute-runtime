@@ -5,45 +5,20 @@
  *
  */
 
-#include "shared/source/os_interface/linux/drm_neo.h"
-#include "shared/source/os_interface/linux/os_interface.h"
+#include "level_zero/tools/source/sysman/pci/linux/os_pci_imp.h"
 
-#include "level_zero/core/source/device/device.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 
 #include "sysman/linux/os_sysman_imp.h"
-#include "sysman/pci/os_pci.h"
 #include "sysman/pci/pci_imp.h"
 
-#include <unistd.h>
-
 namespace L0 {
-constexpr uint8_t maxPciBars = 6;
-class LinuxPciImp : public OsPci {
-  public:
-    ze_result_t getPciBdf(std::string &bdf) override;
-    ze_result_t getMaxLinkSpeed(double &maxLinkSpeed) override;
-    ze_result_t getMaxLinkWidth(uint32_t &maxLinkwidth) override;
-    ze_result_t getLinkGen(uint32_t &linkGen) override;
-    ze_result_t initializeBarProperties(std::vector<zet_pci_bar_properties_t *> &pBarProperties) override;
-    LinuxPciImp(OsSysman *pOsSysman);
-    ~LinuxPciImp() override = default;
-
-    // Don't allow copies of the LinuxPciImp object
-    LinuxPciImp(const LinuxPciImp &obj) = delete;
-    LinuxPciImp &operator=(const LinuxPciImp &obj) = delete;
-
-  private:
-    SysfsAccess *pSysfsAccess;
-    static const std::string deviceDir;
-    static const std::string resourceFile;
-    static const std::string maxLinkSpeedFile;
-    static const std::string maxLinkWidthFile;
-};
 
 const std::string LinuxPciImp::deviceDir("device");
 const std::string LinuxPciImp::resourceFile("device/resource");
 const std::string LinuxPciImp::maxLinkSpeedFile("device/max_link_speed");
 const std::string LinuxPciImp::maxLinkWidthFile("device/max_link_width");
+constexpr uint8_t maxPciBars = 6;
 
 ze_result_t LinuxPciImp::getPciBdf(std::string &bdf) {
     std::string bdfDir;

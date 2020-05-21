@@ -9,7 +9,9 @@
 
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/string.h"
 
+#include <cstring>
 namespace L0 {
 
 //
@@ -91,9 +93,13 @@ void PciImp::init() {
 }
 
 PciImp::~PciImp() {
+    for (zet_pci_bar_properties_t *pProperties : pciBarProperties) {
+        delete pProperties;
+        pProperties = nullptr;
+    }
     if (nullptr != pOsPci) {
         delete pOsPci;
+        pOsPci = nullptr;
     }
 }
-
 } // namespace L0
