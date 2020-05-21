@@ -55,6 +55,38 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenPost
     ASSERT_TRUE(postSyncFound);
 }
 
+HWTEST_F(CommandListAppendEventReset, givenCopyOnlyCmdlistWhenResetEventAppendedThenMiFlushWithPostSyncIsGenerated) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    commandList.reset(whitebox_cast(CommandList::create(productFamily, device, true)));
+
+    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+
+    auto result = commandList->appendEventReset(event->toHandle());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+                                                      usedSpaceAfter));
+
+    auto itorPC = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, itorPC.size());
+    bool postSyncFound = false;
+    for (auto it : itorPC) {
+        auto cmd = genCmdCast<MI_FLUSH_DW *>(*it);
+        if (cmd->getPostSyncOperation() == MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD) {
+            EXPECT_EQ(cmd->getImmediateData(), Event::STATE_INITIAL);
+            auto gpuAddress = event->getGpuAddress();
+            EXPECT_EQ(cmd->getDestinationAddress(), gpuAddress);
+            postSyncFound = true;
+        }
+    }
+    ASSERT_TRUE(postSyncFound);
+}
+
 HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenAppendingEventResetThenEventPoolGraphicsAllocationIsAddedToResidencyContainer) {
     auto result = commandList->appendEventReset(event->toHandle());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
