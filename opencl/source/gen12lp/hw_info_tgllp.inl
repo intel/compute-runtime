@@ -48,7 +48,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     PreemptionMode::ThreadGroup,                     // defaultPreemptionMode
     aub_stream::ENGINE_CCS,                          // defaultEngineType
     0,                                               // maxRenderFrequency
-    21,                                              // clVersionSupport
+    30,                                              // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Tgllp, // aubDeviceId
     1,                                               // extraQuantityThreadsPerEU
     64,                                              // slmSize

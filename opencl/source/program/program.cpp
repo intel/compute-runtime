@@ -60,16 +60,13 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
     }
 
     numDevices = 1;
-    char paramValue[32] = {};
     bool force32BitAddressess = false;
 
     if (pClDevice) {
-        pClDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, nullptr);
-        if (strstr(paramValue, "2.1")) {
+        auto areOcl21FeaturesEnabled = pClDevice->areOcl21FeaturesEnabled();
+        if (areOcl21FeaturesEnabled) {
             internalOptions = "-ocl-version=210 ";
-        } else if (strstr(paramValue, "2.0")) {
-            internalOptions = "-ocl-version=200 ";
-        } else if (strstr(paramValue, "1.2")) {
+        } else {
             internalOptions = "-ocl-version=120 ";
         }
         force32BitAddressess = pClDevice->getSharedDeviceInfo().force32BitAddressess;

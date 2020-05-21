@@ -1555,54 +1555,33 @@ INSTANTIATE_TEST_CASE_P(ProgramFromSourceTests,
                             ::testing::ValuesIn(KernelNames)));
 
 TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclVersionIsInOptions) {
-    auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
-
+    DebugManagerStateRestore restorer;
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
+
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
-    char paramValue[32];
-    pClDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
-    if (strstr(paramValue, "2.1")) {
+    if (pClDevice->areOcl21FeaturesEnabled()) {
         EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=210")) << program.getInternalOptions();
-    } else if (strstr(paramValue, "2.0")) {
-        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=200")) << program.getInternalOptions();
-    } else if (strstr(paramValue, "1.2")) {
-        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=120")) << program.getInternalOptions();
     } else {
-        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=000")) << program.getInternalOptions();
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=120")) << program.getInternalOptions();
     }
-    DebugManager.flags.DisableStatelessToStatefulOptimization.set(defaultSetting);
 }
 
-TEST_F(ProgramTests, GivenForced20WhenProgramIsCreatedThenOcl20IsInOptions) {
-    auto defaultVersion = pClDevice->deviceInfo.clVersion;
-
-    pClDevice->deviceInfo.clVersion = "OpenCL 2.0";
+TEST_F(ProgramTests, GivenOcl21FeaturesEnabledWhenProgramIsCreatedThenOcl21IsInOptions) {
+    pClDevice->ocl21FeaturesEnabled = true;
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
-    char paramValue[32];
-    pClDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
-    EXPECT_STREQ("OpenCL 2.0", paramValue);
-    EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=200"));
-    pClDevice->deviceInfo.clVersion = defaultVersion;
+    EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=210"));
 }
 
 TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredOptionIsSet) {
     DebugManagerStateRestore restorer;
-
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
+
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
-    char paramValue[32];
-    pClDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
-    if (strstr(paramValue, "2.1")) {
+    if (pClDevice->areOcl21FeaturesEnabled()) {
         EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=210")) << program.getInternalOptions();
         EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired));
-    } else if (strstr(paramValue, "2.0")) {
-        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=200")) << program.getInternalOptions();
-        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired));
-    } else if (strstr(paramValue, "1.2")) {
-        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=120")) << program.getInternalOptions();
-        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired));
     } else {
-        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=000")) << program.getInternalOptions();
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=120")) << program.getInternalOptions();
         EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired));
     }
 }
@@ -1658,16 +1637,10 @@ TEST_F(ProgramTests, GivenForce32BitAddressessWhenProgramIsCreatedThenGreaterTha
     if (pDevice) {
         const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
         MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
-        char paramValue[32];
-        pClDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
-        if (strstr(paramValue, "2.1")) {
+        if (pClDevice->areOcl21FeaturesEnabled()) {
             EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=210")) << program.getInternalOptions();
-        } else if (strstr(paramValue, "2.0")) {
-            EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=200")) << program.getInternalOptions();
-        } else if (strstr(paramValue, "1.2")) {
-            EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=120")) << program.getInternalOptions();
         } else {
-            EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=000")) << program.getInternalOptions();
+            EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=120")) << program.getInternalOptions();
         }
         if (pDevice->areSharedSystemAllocationsAllowed()) {
             EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), CompilerOptions::greaterThan4gbBuffersRequired)) << program.getInternalOptions();

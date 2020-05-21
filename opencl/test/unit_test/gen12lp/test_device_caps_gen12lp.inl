@@ -14,10 +14,10 @@ using namespace NEO;
 
 typedef Test<DeviceFixture> Gen12LpDeviceCaps;
 
-GEN12LPTEST_F(Gen12LpDeviceCaps, reportsOcl21) {
+TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenQueryingDeviceInfoThenOcl30IsReported) {
     const auto &caps = pClDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
+    EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
+    EXPECT_STREQ("OpenCL C 3.0 ", caps.clCVersion);
 }
 
 TGLLPTEST_F(Gen12LpDeviceCaps, lpSkusDontSupportFP64) {
