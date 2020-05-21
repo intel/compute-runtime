@@ -163,6 +163,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, RenderCompressedBuffersEnabled, -1, "-1: default
 DECLARE_DEBUG_VARIABLE(int32_t, EnableSharedSystemUsmSupport, -1, "-1: default, 0: shared system memory disabled, 1: shared system memory enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePassInlineData, -1, "-1: default, 0: Do not allow to pass inline data 1: Enable passing of inline data")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceFineGrainedSVMSupport, -1, "-1: default, 0: Do not report Fine Grained SVM capabilties 1: Report SVM Fine Grained capabilities if device supports SVM")
+DECLARE_DEBUG_VARIABLE(int32_t, UseAsyncDrmExec, -1, "-1: default, 0: Disabled 1: Enabled. If enabled, pass EXEC_OBJECT_ASYNC to exec ioctl.")
 
 /*DRIVER TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int64_t, ForceSystemMemoryPlacement, 0, "0: default,  >0: (bitmask) for given Graphics Allocation Type, force system memory placement")

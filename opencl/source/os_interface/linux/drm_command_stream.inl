@@ -88,7 +88,10 @@ void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, u
     BufferObject *bb = alloc->getBO();
     DEBUG_BREAK_IF(!bb);
 
-    auto engineFlag = static_cast<OsContextLinux *>(osContext)->getEngineFlag();
+    auto execFlags = static_cast<OsContextLinux *>(osContext)->getEngineFlag() | I915_EXEC_NO_RELOC;
+    if (DebugManager.flags.UseAsyncDrmExec.get() != -1) {
+        execFlags |= (EXEC_OBJECT_ASYNC * DebugManager.flags.UseAsyncDrmExec.get());
+    }
 
     // Residency hold all allocation except command buffer, hence + 1
     auto requiredSize = this->residency.size() + 1;
@@ -97,7 +100,7 @@ void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, u
     }
 
     int err = bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
-                       batchBuffer.startOffset, engineFlag | I915_EXEC_NO_RELOC,
+                       batchBuffer.startOffset, execFlags,
                        batchBuffer.requiresCoherency,
                        drmContextId,
                        this->residency.data(), this->residency.size(),
