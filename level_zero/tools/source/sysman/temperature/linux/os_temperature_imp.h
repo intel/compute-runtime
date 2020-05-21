@@ -17,6 +17,7 @@ namespace L0 {
 class LinuxTemperatureImp : public OsTemperature, public NEO::NonCopyableClass {
   public:
     ze_result_t getSensorTemperature(double *pTemperature) override;
+    bool isTempModuleSupported() override;
     LinuxTemperatureImp(OsSysman *pOsSysman);
     LinuxTemperatureImp() = default;
     ~LinuxTemperatureImp() override = default;

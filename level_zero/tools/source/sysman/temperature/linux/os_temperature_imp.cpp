@@ -13,6 +13,10 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+bool LinuxTemperatureImp::isTempModuleSupported() {
+    return false;
+}
+
 LinuxTemperatureImp::LinuxTemperatureImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();

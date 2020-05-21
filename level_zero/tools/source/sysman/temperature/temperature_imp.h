@@ -25,6 +25,6 @@ class TemperatureImp : public NEO::NonCopyableClass, public Temperature {
     ~TemperatureImp() override;
 
     OsTemperature *pOsTemperature = nullptr;
-    void init() {}
+    void init();
 };
 } // namespace L0

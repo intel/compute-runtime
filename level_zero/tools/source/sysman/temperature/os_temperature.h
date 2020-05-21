@@ -15,6 +15,7 @@ struct OsSysman;
 class OsTemperature {
   public:
     virtual ze_result_t getSensorTemperature(double *pTemperature) = 0;
+    virtual bool isTempModuleSupported() = 0;
     static OsTemperature *create(OsSysman *pOsSysman);
     virtual ~OsTemperature() = default;
 };
