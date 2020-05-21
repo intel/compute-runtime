@@ -104,6 +104,14 @@ TGLLPTEST_F(Gen12LpDeviceCaps, givenTglLpWhenCheckSupportCacheFlushAfterWalkerTh
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportCacheFlushAfterWalker);
 }
 
+TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenCheckingDeviceEnqueueSupportThenFalseIsReturned) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue);
+}
+
+TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenCheckingPipesSupportThenFalseIsReturned) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsPipes);
+}
+
 using TglLpUsDeviceIdTest = Test<DeviceFixture>;
 
 TGLLPTEST_F(TglLpUsDeviceIdTest, isSimulationCap) {

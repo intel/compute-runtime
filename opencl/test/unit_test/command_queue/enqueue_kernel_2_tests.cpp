@@ -20,6 +20,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "reg_configs_common.h"
 
@@ -904,36 +905,36 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenCacheFlushAfterWalkerEnabled
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTranslationIsRequiredThenMakeEnqueueBlocking) {
-    if (pClDevice->areOcl21FeaturesSupported()) {
-        MyCmdQ<FamilyType> cmdQ(context, pClDevice);
-        size_t gws[3] = {1, 0, 0};
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pClDevice);
 
-        cl_queue_properties queueProperties = {};
-        auto mockDevQueue = std::make_unique<MockDeviceQueueHw<FamilyType>>(context, pClDevice, queueProperties);
-        context->setDefaultDeviceQueue(mockDevQueue.get());
-        std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, false, false, false, false, false));
-        parentKernel->initialize();
+    MyCmdQ<FamilyType> cmdQ(context, pClDevice);
+    size_t gws[3] = {1, 0, 0};
 
-        parentKernel->auxTranslationRequired = false;
-        cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-        EXPECT_EQ(0u, cmdQ.waitCalled);
-        mockDevQueue->getIgilQueue()->m_controls.m_CriticalSection = 0;
+    cl_queue_properties queueProperties = {};
+    auto mockDevQueue = std::make_unique<MockDeviceQueueHw<FamilyType>>(context, pClDevice, queueProperties);
+    context->setDefaultDeviceQueue(mockDevQueue.get());
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, false, false, false, false, false));
+    parentKernel->initialize();
 
-        parentKernel->auxTranslationRequired = true;
-        cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-        EXPECT_EQ(1u, cmdQ.waitCalled);
-    }
+    parentKernel->auxTranslationRequired = false;
+    cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, cmdQ.waitCalled);
+    mockDevQueue->getIgilQueue()->m_controls.m_CriticalSection = 0;
+
+    parentKernel->auxTranslationRequired = true;
+    cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(1u, cmdQ.waitCalled);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelButNoDeviceQueueWhenEnqueueIsCalledItReturnsInvalidOperation) {
-    if (pClDevice->areOcl21FeaturesSupported()) {
-        MyCmdQ<FamilyType> cmdQ(context, pClDevice);
-        size_t gws[3] = {1, 0, 0};
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pClDevice);
 
-        std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, false, false, false, false, false));
-        parentKernel->initialize();
+    MyCmdQ<FamilyType> cmdQ(context, pClDevice);
+    size_t gws[3] = {1, 0, 0};
 
-        auto status = cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-        EXPECT_EQ(CL_INVALID_OPERATION, status);
-    }
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, false, false, false, false, false));
+    parentKernel->initialize();
+
+    auto status = cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_OPERATION, status);
 }

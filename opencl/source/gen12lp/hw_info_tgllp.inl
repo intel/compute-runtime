@@ -71,8 +71,8 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     false,                                           // supportsVme
     false,                                           // supportCacheFlushAfterWalker
     true,                                            // supportsImages
-    true,                                            // supportsDeviceEnqueue
-    true,                                            // supportsPipes
+    false,                                           // supportsDeviceEnqueue
+    false,                                           // supportsPipes
     true,                                            // supportsOcl21Features
     false,                                           // hostPtrTrackingEnabled
     true                                             // levelZeroSupported

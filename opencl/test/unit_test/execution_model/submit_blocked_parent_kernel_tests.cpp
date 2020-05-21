@@ -15,6 +15,7 @@
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include <memory>
 
@@ -76,361 +77,361 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
 };
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenLockedEMcritcalSectionWhenParentKernelCommandIsSubmittedThenItWaitsForcriticalSectionReleasement) {
-    if (device->areOcl21FeaturesSupported()) {
-        cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*context);
-        MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
-        parentKernel->createReflectionSurface();
-        context->setDefaultDeviceQueue(&mockDevQueue);
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
-        mockDevQueue.acquireEMCriticalSection();
+    cl_queue_properties properties[3] = {0};
+    MockParentKernel *parentKernel = MockParentKernel::create(*context);
+    MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
+    parentKernel->createReflectionSurface();
+    context->setDefaultDeviceQueue(&mockDevQueue);
 
-        size_t heapSize = 20;
-        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+    mockDevQueue.acquireEMCriticalSection();
 
-        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
+    size_t heapSize = 20;
+    size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
 
-        dsh->getSpace(mockDevQueue.getDshOffset());
+    IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
+    dsh->getSpace(mockDevQueue.getDshOffset());
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
-                                                                    *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-        blockedCommandData->setHeaps(dsh, ioh, ssh);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
-        blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-        PreemptionMode preemptionMode = device->getPreemptionMode();
-        std::vector<Surface *> surfaces;
-        auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
+    auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
+                                                                *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-        cmdComputeKernel->submit(0, false);
+    blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
+    PreemptionMode preemptionMode = device->getPreemptionMode();
+    std::vector<Surface *> surfaces;
+    auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
-        EXPECT_EQ(mockDevQueue.maxCounter, mockDevQueue.criticalSectioncheckCounter);
-        delete cmdComputeKernel;
-        delete parentKernel;
-    }
+    cmdComputeKernel->submit(0, false);
+
+    EXPECT_EQ(mockDevQueue.maxCounter, mockDevQueue.criticalSectioncheckCounter);
+    delete cmdComputeKernel;
+    delete parentKernel;
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenPassedDshIsUsed) {
-    if (device->areOcl21FeaturesSupported()) {
-        cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*context);
-        MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
-        parentKernel->createReflectionSurface();
-        context->setDefaultDeviceQueue(&mockDevQueue);
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
-        auto *dshOfDevQueue = mockDevQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
+    cl_queue_properties properties[3] = {0};
+    MockParentKernel *parentKernel = MockParentKernel::create(*context);
+    MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
+    parentKernel->createReflectionSurface();
+    context->setDefaultDeviceQueue(&mockDevQueue);
 
-        size_t heapSize = 20;
-        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+    auto *dshOfDevQueue = mockDevQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
 
-        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
+    size_t heapSize = 20;
+    size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
 
-        // add initial offset of colorCalState
-        dsh->getSpace(DeviceQueue::colorCalcStateSize);
+    IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
 
-        uint64_t ValueToFillDsh = 5;
-        uint64_t *dshVal = (uint64_t *)dsh->getSpace(sizeof(uint64_t));
+    // add initial offset of colorCalState
+    dsh->getSpace(DeviceQueue::colorCalcStateSize);
 
-        // Fill Interface Descriptor Data
-        *dshVal = ValueToFillDsh;
+    uint64_t ValueToFillDsh = 5;
+    uint64_t *dshVal = (uint64_t *)dsh->getSpace(sizeof(uint64_t));
 
-        // Move to parent DSH Offset
-        size_t alignToOffsetDshSize = mockDevQueue.getDshOffset() - DeviceQueue::colorCalcStateSize - sizeof(uint64_t);
-        dsh->getSpace(alignToOffsetDshSize);
+    // Fill Interface Descriptor Data
+    *dshVal = ValueToFillDsh;
 
-        // Fill with pattern
-        dshVal = (uint64_t *)dsh->getSpace(sizeof(uint64_t));
-        *dshVal = ValueToFillDsh;
+    // Move to parent DSH Offset
+    size_t alignToOffsetDshSize = mockDevQueue.getDshOffset() - DeviceQueue::colorCalcStateSize - sizeof(uint64_t);
+    dsh->getSpace(alignToOffsetDshSize);
 
-        size_t usedDSHBeforeSubmit = dshOfDevQueue->getUsed();
+    // Fill with pattern
+    dshVal = (uint64_t *)dsh->getSpace(sizeof(uint64_t));
+    *dshVal = ValueToFillDsh;
 
-        uint32_t colorCalcSizeDevQueue = DeviceQueue::colorCalcStateSize;
-        EXPECT_EQ(colorCalcSizeDevQueue, usedDSHBeforeSubmit);
+    size_t usedDSHBeforeSubmit = dshOfDevQueue->getUsed();
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
-                                                                    *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-        blockedCommandData->setHeaps(dsh, ioh, ssh);
+    uint32_t colorCalcSizeDevQueue = DeviceQueue::colorCalcStateSize;
+    EXPECT_EQ(colorCalcSizeDevQueue, usedDSHBeforeSubmit);
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
+    auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
+                                                                *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-        blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-        PreemptionMode preemptionMode = device->getPreemptionMode();
-        std::vector<Surface *> surfaces;
-        auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
-        cmdComputeKernel->submit(0, false);
+    blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
+    PreemptionMode preemptionMode = device->getPreemptionMode();
+    std::vector<Surface *> surfaces;
+    auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
-        //device queue dsh is not changed
-        size_t usedDSHAfterSubmit = dshOfDevQueue->getUsed();
-        EXPECT_EQ(usedDSHAfterSubmit, usedDSHAfterSubmit);
+    cmdComputeKernel->submit(0, false);
 
-        delete cmdComputeKernel;
-        delete parentKernel;
-    }
+    //device queue dsh is not changed
+    size_t usedDSHAfterSubmit = dshOfDevQueue->getUsed();
+    EXPECT_EQ(usedDSHAfterSubmit, usedDSHAfterSubmit);
+
+    delete cmdComputeKernel;
+    delete parentKernel;
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenIndirectStateAndEMCleanupSectionIsSetup) {
-    if (device->areOcl21FeaturesSupported()) {
-        cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*context);
-        MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
-        parentKernel->createReflectionSurface();
-        context->setDefaultDeviceQueue(&mockDevQueue);
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
-        size_t heapSize = 20;
-        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+    cl_queue_properties properties[3] = {0};
+    MockParentKernel *parentKernel = MockParentKernel::create(*context);
+    MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
+    parentKernel->createReflectionSurface();
+    context->setDefaultDeviceQueue(&mockDevQueue);
 
-        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
+    size_t heapSize = 20;
+    size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
 
-        dsh->getSpace(mockDevQueue.getDshOffset());
+    IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
-                                                                    *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-        blockedCommandData->setHeaps(dsh, ioh, ssh);
+    dsh->getSpace(mockDevQueue.getDshOffset());
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
+    auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
+                                                                *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-        blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-        PreemptionMode preemptionMode = device->getPreemptionMode();
-        std::vector<Surface *> surfaces;
-        auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
-        cmdComputeKernel->submit(0, false);
+    blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
+    PreemptionMode preemptionMode = device->getPreemptionMode();
+    std::vector<Surface *> surfaces;
+    auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
-        EXPECT_TRUE(mockDevQueue.indirectStateSetup);
-        EXPECT_TRUE(mockDevQueue.cleanupSectionAdded);
+    cmdComputeKernel->submit(0, false);
 
-        delete cmdComputeKernel;
-        delete parentKernel;
-    }
+    EXPECT_TRUE(mockDevQueue.indirectStateSetup);
+    EXPECT_TRUE(mockDevQueue.cleanupSectionAdded);
+
+    delete cmdComputeKernel;
+    delete parentKernel;
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedParentKernelWithProfilingWhenCommandIsSubmittedThenEMCleanupSectionsSetsCompleteTimestamp) {
-    if (device->areOcl21FeaturesSupported()) {
-        cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*context);
-        MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
-        parentKernel->createReflectionSurface();
-        context->setDefaultDeviceQueue(&mockDevQueue);
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
-        size_t heapSize = 20;
-        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
-        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
-        dsh->getSpace(mockDevQueue.getDshOffset());
+    cl_queue_properties properties[3] = {0};
+    MockParentKernel *parentKernel = MockParentKernel::create(*context);
+    MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
+    parentKernel->createReflectionSurface();
+    context->setDefaultDeviceQueue(&mockDevQueue);
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
-                                                                    *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-        blockedCommandData->setHeaps(dsh, ioh, ssh);
+    size_t heapSize = 20;
+    size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+    IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
+    dsh->getSpace(mockDevQueue.getDshOffset());
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
+    auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
+                                                                *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-        blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-        PreemptionMode preemptionMode = device->getPreemptionMode();
-        std::vector<Surface *> surfaces;
-        auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
-        auto timestamp = pCmdQ->getGpgpuCommandStreamReceiver().getEventTsAllocator()->getTag();
-        cmdComputeKernel->timestamp = timestamp;
-        cmdComputeKernel->submit(0, false);
+    blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
+    PreemptionMode preemptionMode = device->getPreemptionMode();
+    std::vector<Surface *> surfaces;
+    auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
-        EXPECT_TRUE(mockDevQueue.cleanupSectionAdded);
-        EXPECT_EQ(mockDevQueue.timestampAddedInCleanupSection, timestamp->tagForCpuAccess);
+    auto timestamp = pCmdQ->getGpgpuCommandStreamReceiver().getEventTsAllocator()->getTag();
+    cmdComputeKernel->timestamp = timestamp;
+    cmdComputeKernel->submit(0, false);
 
-        delete cmdComputeKernel;
-        delete parentKernel;
-    }
+    EXPECT_TRUE(mockDevQueue.cleanupSectionAdded);
+    EXPECT_EQ(mockDevQueue.timestampAddedInCleanupSection, timestamp->tagForCpuAccess);
+
+    delete cmdComputeKernel;
+    delete parentKernel;
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenSchedulerIsDispatched) {
-    if (device->areOcl21FeaturesSupported()) {
-        cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*context);
-        MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
-        parentKernel->createReflectionSurface();
-        context->setDefaultDeviceQueue(&mockDevQueue);
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
-        size_t heapSize = 20;
-        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+    cl_queue_properties properties[3] = {0};
+    MockParentKernel *parentKernel = MockParentKernel::create(*context);
+    MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
+    parentKernel->createReflectionSurface();
+    context->setDefaultDeviceQueue(&mockDevQueue);
 
-        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
-        dsh->getSpace(mockDevQueue.getDshOffset());
+    size_t heapSize = 20;
+    size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
-                                                                    *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-        blockedCommandData->setHeaps(dsh, ioh, ssh);
+    IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
+    dsh->getSpace(mockDevQueue.getDshOffset());
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
+    auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
+                                                                *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-        blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-        PreemptionMode preemptionMode = device->getPreemptionMode();
-        std::vector<Surface *> surfaces;
-        auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
-        cmdComputeKernel->submit(0, false);
+    blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
+    PreemptionMode preemptionMode = device->getPreemptionMode();
+    std::vector<Surface *> surfaces;
+    auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
-        EXPECT_TRUE(mockDevQueue.schedulerDispatched);
+    cmdComputeKernel->submit(0, false);
 
-        delete cmdComputeKernel;
-        delete parentKernel;
-    }
+    EXPECT_TRUE(mockDevQueue.schedulerDispatched);
+
+    delete cmdComputeKernel;
+    delete parentKernel;
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQueueHeapshenParentKernelIsSubmittedThenQueueHeapsAreNotUsed) {
-    if (device->areOcl21FeaturesSupported()) {
-        cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*context);
-        MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
-        parentKernel->createReflectionSurface();
-        context->setDefaultDeviceQueue(&mockDevQueue);
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
-        MockCommandQueue cmdQ(context, device, properties);
+    cl_queue_properties properties[3] = {0};
+    MockParentKernel *parentKernel = MockParentKernel::create(*context);
+    MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
+    parentKernel->createReflectionSurface();
+    context->setDefaultDeviceQueue(&mockDevQueue);
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
+    MockCommandQueue cmdQ(context, device, properties);
 
-        size_t heapSize = 20;
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
-        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
-        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
+    size_t heapSize = 20;
 
-        dsh->getSpace(mockDevQueue.getDshOffset());
+    size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+    IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
 
-        auto &queueSsh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 100);
-        auto &queueDsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 100);
-        auto &queueIoh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 100);
+    dsh->getSpace(mockDevQueue.getDshOffset());
 
-        size_t usedSize = 4u;
+    auto &queueSsh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 100);
+    auto &queueDsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 100);
+    auto &queueIoh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 100);
 
-        queueSsh.getSpace(usedSize);
-        queueDsh.getSpace(usedSize);
-        queueIoh.getSpace(usedSize);
+    size_t usedSize = 4u;
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
-                                                                    *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-        blockedCommandData->setHeaps(dsh, ioh, ssh);
+    queueSsh.getSpace(usedSize);
+    queueDsh.getSpace(usedSize);
+    queueIoh.getSpace(usedSize);
 
-        blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-        PreemptionMode preemptionMode = device->getPreemptionMode();
-        std::vector<Surface *> surfaces;
-        auto *cmdComputeKernel = new CommandComputeKernel(cmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
+    auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
+                                                                *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-        cmdComputeKernel->submit(0, false);
+    blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
+    PreemptionMode preemptionMode = device->getPreemptionMode();
+    std::vector<Surface *> surfaces;
+    auto *cmdComputeKernel = new CommandComputeKernel(cmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
-        EXPECT_FALSE(cmdQ.releaseIndirectHeapCalled);
-        EXPECT_EQ(usedSize, queueDsh.getUsed());
-        EXPECT_EQ(usedSize, queueIoh.getUsed());
-        EXPECT_EQ(usedSize, queueSsh.getUsed());
+    cmdComputeKernel->submit(0, false);
 
-        delete cmdComputeKernel;
-        delete parentKernel;
-    }
+    EXPECT_FALSE(cmdQ.releaseIndirectHeapCalled);
+    EXPECT_EQ(usedSize, queueDsh.getUsed());
+    EXPECT_EQ(usedSize, queueIoh.getUsed());
+    EXPECT_EQ(usedSize, queueSsh.getUsed());
+
+    delete cmdComputeKernel;
+    delete parentKernel;
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmittedThenExistingSSHIsUsed) {
-    if (device->areOcl21FeaturesSupported()) {
-        cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*context);
-        MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
-        parentKernel->createReflectionSurface();
-        context->setDefaultDeviceQueue(&mockDevQueue);
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
-        size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
+    cl_queue_properties properties[3] = {0};
+    MockParentKernel *parentKernel = MockParentKernel::create(*context);
+    MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
+    parentKernel->createReflectionSurface();
+    context->setDefaultDeviceQueue(&mockDevQueue);
 
-        size_t heapSize = 20;
+    size_t minSizeSSHForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*parentKernel);
 
-        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
-        size_t sshSize = 1000;
-        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
-        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, sshSize, ssh);
-        dsh->getSpace(mockDevQueue.getDshOffset());
+    size_t heapSize = 20;
 
-        EXPECT_EQ(0u, ssh->getUsed());
+    size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+    size_t sshSize = 1000;
+    IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+    pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, sshSize, ssh);
+    dsh->getSpace(mockDevQueue.getDshOffset());
 
-        pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, sshSize);
+    EXPECT_EQ(0u, ssh->getUsed());
 
-        void *sshBuffer = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getCpuBase();
+    pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, sshSize);
 
-        auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
-        auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
-                                                                    *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
-        blockedCommandData->setHeaps(dsh, ioh, ssh);
+    void *sshBuffer = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getCpuBase();
 
-        blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-        PreemptionMode preemptionMode = device->getPreemptionMode();
-        std::vector<Surface *> surfaces;
-        auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
+    auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+    auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
+                                                                *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    blockedCommandData->setHeaps(dsh, ioh, ssh);
 
-        cmdComputeKernel->submit(0, false);
+    blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
+    PreemptionMode preemptionMode = device->getPreemptionMode();
+    std::vector<Surface *> surfaces;
+    auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, blockedCommandData, surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
-        void *newSshBuffer = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getCpuBase();
+    cmdComputeKernel->submit(0, false);
 
-        EXPECT_EQ(sshBuffer, newSshBuffer);
+    void *newSshBuffer = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getCpuBase();
 
-        delete cmdComputeKernel;
-        delete parentKernel;
-    }
+    EXPECT_EQ(sshBuffer, newSshBuffer);
+
+    delete cmdComputeKernel;
+    delete parentKernel;
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommandQueueWhenDispatchWalkerIsCalledThenHeapsHaveProperSizes) {
-    if (device->areOcl21FeaturesSupported()) {
-        cl_queue_properties properties[3] = {0};
-        std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context));
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
-        MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
-        parentKernel->createReflectionSurface();
-        context->setDefaultDeviceQueue(&mockDevQueue);
+    cl_queue_properties properties[3] = {0};
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context));
 
-        auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
-        const size_t globalOffsets[3] = {0, 0, 0};
-        const size_t workItems[3] = {1, 1, 1};
+    MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
+    parentKernel->createReflectionSurface();
+    context->setDefaultDeviceQueue(&mockDevQueue);
 
-        DispatchInfo dispatchInfo(parentKernel.get(), 1, workItems, nullptr, globalOffsets);
-        MultiDispatchInfo multiDispatchInfo(parentKernel.get());
-        multiDispatchInfo.push(dispatchInfo);
-        HardwareInterface<FamilyType>::dispatchWalker(
-            *pCmdQ,
-            multiDispatchInfo,
-            CsrDependencies(),
-            blockedCommandsData.get(),
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr,
-            CL_COMMAND_NDRANGE_KERNEL);
+    auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
+    const size_t globalOffsets[3] = {0, 0, 0};
+    const size_t workItems[3] = {1, 1, 1};
 
-        EXPECT_NE(nullptr, blockedCommandsData);
-        EXPECT_EQ(blockedCommandsData->dsh->getMaxAvailableSpace(), mockDevQueue.getDshBuffer()->getUnderlyingBufferSize());
-        EXPECT_EQ(blockedCommandsData->dsh, blockedCommandsData->ioh);
+    DispatchInfo dispatchInfo(parentKernel.get(), 1, workItems, nullptr, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo(parentKernel.get());
+    multiDispatchInfo.push(dispatchInfo);
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        blockedCommandsData.get(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        CL_COMMAND_NDRANGE_KERNEL);
 
-        EXPECT_NE(nullptr, blockedCommandsData->dsh->getGraphicsAllocation());
-        EXPECT_NE(nullptr, blockedCommandsData->ioh->getGraphicsAllocation());
-        EXPECT_NE(nullptr, blockedCommandsData->ssh->getGraphicsAllocation());
-        EXPECT_EQ(blockedCommandsData->dsh->getGraphicsAllocation(), blockedCommandsData->ioh->getGraphicsAllocation());
-    }
+    EXPECT_NE(nullptr, blockedCommandsData);
+    EXPECT_EQ(blockedCommandsData->dsh->getMaxAvailableSpace(), mockDevQueue.getDshBuffer()->getUnderlyingBufferSize());
+    EXPECT_EQ(blockedCommandsData->dsh, blockedCommandsData->ioh);
+
+    EXPECT_NE(nullptr, blockedCommandsData->dsh->getGraphicsAllocation());
+    EXPECT_NE(nullptr, blockedCommandsData->ioh->getGraphicsAllocation());
+    EXPECT_NE(nullptr, blockedCommandsData->ssh->getGraphicsAllocation());
+    EXPECT_EQ(blockedCommandsData->dsh->getGraphicsAllocation(), blockedCommandsData->ioh->getGraphicsAllocation());
 }

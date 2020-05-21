@@ -11,6 +11,7 @@
 #include "opencl/source/sampler/sampler.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_parent_kernel_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
 using namespace NEO;
@@ -18,6 +19,8 @@ using namespace NEO;
 typedef AUBParentKernelFixture GEN11AUBParentKernelFixture;
 
 GEN11TEST_F(GEN11AUBParentKernelFixture, EnqueueParentKernel) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pClDevice);
+
     ASSERT_NE(nullptr, pKernel);
     ASSERT_TRUE(pKernel->isParentKernel);
 
