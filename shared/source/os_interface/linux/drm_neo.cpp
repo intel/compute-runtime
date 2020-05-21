@@ -282,6 +282,9 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionE
             std::string path = std::string(pathPrefix) + std::to_string(i + startNum);
             int fileDescriptor = SysCalls::open(path.c_str(), O_RDWR);
             appendHwDeviceId(hwDeviceIds, fileDescriptor, "00:02.0");
+            if (!hwDeviceIds.empty() && hwDeviceIds.size() == numRootDevices) {
+                break;
+            }
         }
         return hwDeviceIds;
     }
@@ -300,6 +303,9 @@ std::vector<std::unique_ptr<HwDeviceId>> OSInterface::discoverDevices(ExecutionE
             }
             int fileDescriptor = SysCalls::open(file->c_str(), O_RDWR);
             appendHwDeviceId(hwDeviceIds, fileDescriptor, pciPath.c_str());
+            if (!hwDeviceIds.empty() && hwDeviceIds.size() == numRootDevices) {
+                break;
+            }
         }
         if (hwDeviceIds.empty()) {
             return hwDeviceIds;

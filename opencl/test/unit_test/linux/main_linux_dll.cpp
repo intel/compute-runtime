@@ -152,6 +152,54 @@ TEST(DrmTest, GivenSelectedExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderD
     EXPECT_STREQ("00:02.0", hwDeviceIds[1]->getPciPath());
 }
 
+TEST(DrmTest, GivenSelectedNonExistingDeviceWhenOpenDirFailsThenRetryOpeningRenderDevicesAndNoDevicesAreCreated) {
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, true);
+    openFull = openWithCounter;
+    openCounter = 0;
+
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_EQ(0u, hwDeviceIds.size());
+}
+
+TEST(DrmTest, GivenFailingOpenDirAndMultipleAvailableDevicesWhenCreateMultipleRootDevicesFlagIsSetThenTheFlagIsRespected) {
+    DebugManagerStateRestore stateRestore;
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    VariableBackup<decltype(failOnOpenDir)> backupOpenDir(&failOnOpenDir, true);
+    openFull = openWithCounter;
+    ExecutionEnvironment executionEnvironment;
+    const uint32_t requestedNumRootDevices = 2u;
+    DebugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
+
+    openCounter = 4;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_STREQ("/dev/dri/renderD129", lastOpenedPath.c_str());
+    EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
+    EXPECT_STREQ("00:02.0", hwDeviceIds[0]->getPciPath());
+    EXPECT_NE(nullptr, hwDeviceIds[1].get());
+    EXPECT_STREQ("00:02.0", hwDeviceIds[1]->getPciPath());
+}
+
+TEST(DrmTest, GivenMultipleAvailableDevicesWhenCreateMultipleRootDevicesFlagIsSetThenTheFlagIsRespected) {
+    DebugManagerStateRestore stateRestore;
+    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
+    openFull = openWithCounter;
+    ExecutionEnvironment executionEnvironment;
+    const uint32_t requestedNumRootDevices = 2u;
+    DebugManager.flags.CreateMultipleRootDevices.set(requestedNumRootDevices);
+
+    openCounter = 4;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
+    EXPECT_STREQ("/dev/dri/by-path/pci-0000:test2-render", lastOpenedPath.c_str());
+    EXPECT_EQ(requestedNumRootDevices, hwDeviceIds.size());
+    EXPECT_NE(nullptr, hwDeviceIds[0].get());
+    EXPECT_STREQ("test1", hwDeviceIds[0]->getPciPath());
+    EXPECT_NE(nullptr, hwDeviceIds[1].get());
+    EXPECT_STREQ("test2", hwDeviceIds[1]->getPciPath());
+}
+
 TEST(DrmTest, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("1234");
