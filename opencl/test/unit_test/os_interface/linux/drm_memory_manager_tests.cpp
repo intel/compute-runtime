@@ -57,6 +57,7 @@ AllocationProperties createAllocationProperties(uint32_t rootDeviceIndex, size_t
 }
 
 typedef Test<DrmMemoryManagerFixture> DrmMemoryManagerTest;
+typedef Test<DrmMemoryManagerWithLocalMemoryFixture> DrmMemoryManagerWithLocalMemoryTest;
 typedef Test<DrmMemoryManagerFixtureWithoutQuietIoctlExpectation> DrmMemoryManagerWithExplicitExpectationsTest;
 
 TEST_F(DrmMemoryManagerTest, whenCreatingDrmMemoryManagerThenSupportsMultiStorageResourcesFlagIsSetToFalse) {
@@ -1727,6 +1728,39 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledT
     EXPECT_EQ(bo->peekHandle(), (int)this->mock->outputHandle);
     EXPECT_NE(0llu, bo->peekAddress());
     EXPECT_EQ(1u, bo->getRefCount());
+    EXPECT_EQ(size, bo->peekSize());
+
+    EXPECT_EQ(handle, graphicsAllocation->peekSharedHandle());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+TEST_F(DrmMemoryManagerWithLocalMemoryTest, givenDrmMemoryManagerWithLocalMemoryWhenCreateGraphicsAllocationFromSharedHandleIsCalledThenAcquireGpuAddressFromStandardHeap64KB) {
+    mock->ioctl_expected.primeFdToHandle = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    osHandle handle = 1u;
+    this->mock->outputHandle = 2u;
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, false, size, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, {});
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(size, graphicsAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, graphicsAllocation->getMemoryPool());
+    EXPECT_EQ(this->mock->inputFd, static_cast<int32_t>(handle));
+
+    auto gpuAddress = graphicsAllocation->getGpuAddress();
+    EXPECT_LT(GmmHelper::canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapBase(HeapIndex::HEAP_STANDARD64KB)), gpuAddress);
+    EXPECT_GT(GmmHelper::canonize(memoryManager->getGfxPartition(rootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_STANDARD64KB)), gpuAddress);
+
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
+    auto bo = drmAllocation->getBO();
+    EXPECT_EQ(this->mock->outputHandle, static_cast<uint32_t>(bo->peekHandle()));
+    EXPECT_EQ(gpuAddress, bo->peekAddress());
     EXPECT_EQ(size, bo->peekSize());
 
     EXPECT_EQ(handle, graphicsAllocation->peekSharedHandle());

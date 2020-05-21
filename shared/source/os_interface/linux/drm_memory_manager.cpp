@@ -441,7 +441,7 @@ BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle)
 BufferObject *DrmMemoryManager::createSharedBufferObject(int boHandle, size_t size, bool requireSpecificBitness, uint32_t rootDeviceIndex) {
     uint64_t gpuRange = 0llu;
 
-    gpuRange = acquireGpuRange(size, requireSpecificBitness, rootDeviceIndex, false);
+    gpuRange = acquireGpuRange(size, requireSpecificBitness, rootDeviceIndex, isLocalMemorySupported(rootDeviceIndex));
 
     auto bo = new (std::nothrow) BufferObject(&getDrm(rootDeviceIndex), boHandle, size);
     if (!bo) {
