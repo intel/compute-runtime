@@ -89,7 +89,7 @@ class CreateImageTest : public DeviceFixture,
 
 typedef CreateImageTest CreateImageNoHostPtr;
 
-TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitchReturnsProperValues) {
+TEST(TestSliceAndRowPitch, Given1dImageWithZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceLinearImages.set(true);
 
@@ -136,6 +136,29 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     EXPECT_EQ(0u, image->getHostPtrSlicePitch());
 
     delete image;
+    alignedFree(hostPtr);
+}
+
+TEST(TestSliceAndRowPitch, Given1dImageWithNonZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+
+    cl_image_format imageFormat;
+    cl_image_desc imageDesc;
+    cl_int retVal;
+    MockContext context;
+
+    const size_t width = 5;
+    const size_t height = 3;
+    const size_t depth = 2;
+    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+
+    imageFormat.image_channel_data_type = channelType;
+    imageFormat.image_channel_order = channelOrder;
+
+    imageDesc.num_mip_levels = 0;
+    imageDesc.num_samples = 0;
+    imageDesc.mem_object = NULL;
 
     // 1D image with non-zero row_pitch and 0 slice_pitch
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
@@ -146,7 +169,9 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     imageDesc.image_row_pitch = (width + 1) * elementSize;
     imageDesc.image_slice_pitch = 0;
 
-    image = Image::create(
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto image = Image::create(
         &context,
         MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
         flags,
@@ -161,6 +186,29 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     EXPECT_EQ(0u, image->getHostPtrSlicePitch());
 
     delete image;
+    alignedFree(hostPtr);
+}
+
+TEST(TestSliceAndRowPitch, Given2dImageWithNonZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+
+    cl_image_format imageFormat;
+    cl_image_desc imageDesc;
+    cl_int retVal;
+    MockContext context;
+
+    const size_t width = 5;
+    const size_t height = 3;
+    const size_t depth = 2;
+    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+
+    imageFormat.image_channel_data_type = channelType;
+    imageFormat.image_channel_order = channelOrder;
+
+    imageDesc.num_mip_levels = 0;
+    imageDesc.num_samples = 0;
+    imageDesc.mem_object = NULL;
 
     // 2D image with non-zero row_pitch and 0 slice_pitch
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
@@ -171,7 +219,9 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     imageDesc.image_row_pitch = (width + 1) * elementSize;
     imageDesc.image_slice_pitch = 0;
 
-    image = Image::create(
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto image = Image::create(
         &context,
         MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
         flags,
@@ -186,6 +236,29 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     EXPECT_EQ(0u, image->getHostPtrSlicePitch());
 
     delete image;
+    alignedFree(hostPtr);
+}
+
+TEST(TestSliceAndRowPitch, Given1dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+
+    cl_image_format imageFormat;
+    cl_image_desc imageDesc;
+    cl_int retVal;
+    MockContext context;
+
+    const size_t width = 5;
+    const size_t height = 3;
+    const size_t depth = 2;
+    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+
+    imageFormat.image_channel_data_type = channelType;
+    imageFormat.image_channel_order = channelOrder;
+
+    imageDesc.num_mip_levels = 0;
+    imageDesc.num_samples = 0;
+    imageDesc.mem_object = NULL;
 
     // 1D ARRAY image with non-zero row_pitch and 0 slice_pitch
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
@@ -196,7 +269,9 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     imageDesc.image_row_pitch = (width + 1) * elementSize;
     imageDesc.image_slice_pitch = 0;
 
-    image = Image::create(
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto image = Image::create(
         &context,
         MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
         flags,
@@ -211,6 +286,29 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     EXPECT_EQ((width + 1) * elementSize, image->getHostPtrSlicePitch());
 
     delete image;
+    alignedFree(hostPtr);
+}
+
+TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+
+    cl_image_format imageFormat;
+    cl_image_desc imageDesc;
+    cl_int retVal;
+    MockContext context;
+
+    const size_t width = 5;
+    const size_t height = 3;
+    const size_t depth = 2;
+    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+
+    imageFormat.image_channel_data_type = channelType;
+    imageFormat.image_channel_order = channelOrder;
+
+    imageDesc.num_mip_levels = 0;
+    imageDesc.num_samples = 0;
+    imageDesc.mem_object = NULL;
 
     // 2D ARRAY image with non-zero row_pitch and 0 slice_pitch
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
@@ -221,7 +319,9 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     imageDesc.image_row_pitch = (width + 1) * elementSize;
     imageDesc.image_slice_pitch = 0;
 
-    image = Image::create(
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto image = Image::create(
         &context,
         MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
         flags,
@@ -236,6 +336,29 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     EXPECT_EQ((width + 1) * elementSize * height, image->getHostPtrSlicePitch());
 
     delete image;
+    alignedFree(hostPtr);
+}
+
+TEST(TestSliceAndRowPitch, Given2dArrayWithZeroRowPitchAndNonZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+
+    cl_image_format imageFormat;
+    cl_image_desc imageDesc;
+    cl_int retVal;
+    MockContext context;
+
+    const size_t width = 5;
+    const size_t height = 3;
+    const size_t depth = 2;
+    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+
+    imageFormat.image_channel_data_type = channelType;
+    imageFormat.image_channel_order = channelOrder;
+
+    imageDesc.num_mip_levels = 0;
+    imageDesc.num_samples = 0;
+    imageDesc.mem_object = NULL;
 
     // 2D ARRAY image with zero row_pitch and non-zero slice_pitch
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
@@ -246,7 +369,9 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     imageDesc.image_row_pitch = 0;
     imageDesc.image_slice_pitch = (width + 1) * elementSize * height;
 
-    image = Image::create(
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto image = Image::create(
         &context,
         MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
         flags,
@@ -261,6 +386,29 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     EXPECT_EQ((width + 1) * elementSize * height, image->getHostPtrSlicePitch());
 
     delete image;
+    alignedFree(hostPtr);
+}
+
+TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+
+    cl_image_format imageFormat;
+    cl_image_desc imageDesc;
+    cl_int retVal;
+    MockContext context;
+
+    const size_t width = 5;
+    const size_t height = 3;
+    const size_t depth = 2;
+    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+
+    imageFormat.image_channel_data_type = channelType;
+    imageFormat.image_channel_order = channelOrder;
+
+    imageDesc.num_mip_levels = 0;
+    imageDesc.num_samples = 0;
+    imageDesc.mem_object = NULL;
 
     // 2D ARRAY image with non-zero row_pitch and non-zero slice_pitch
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
@@ -271,7 +419,9 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     imageDesc.image_row_pitch = (width + 1) * elementSize;
     imageDesc.image_slice_pitch = (width + 1) * elementSize * height;
 
-    image = Image::create(
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto image = Image::create(
         &context,
         MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
         flags,
@@ -286,6 +436,29 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     EXPECT_EQ((width + 1) * elementSize * height, image->getHostPtrSlicePitch());
 
     delete image;
+    alignedFree(hostPtr);
+}
+
+TEST(TestSliceAndRowPitch, Given2dArrayWithNonZeroRowPitchAndNonZeroSlicePitchGreaterThanRowPitchTimesHeightWhenGettingHostPtrSlicePitchAndRowPitchThenCorrectValuesAreReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+
+    cl_image_format imageFormat;
+    cl_image_desc imageDesc;
+    cl_int retVal;
+    MockContext context;
+
+    const size_t width = 5;
+    const size_t height = 3;
+    const size_t depth = 2;
+    char *hostPtr = (char *)alignedMalloc(width * height * depth * elementSize * 2, 64);
+
+    imageFormat.image_channel_data_type = channelType;
+    imageFormat.image_channel_order = channelOrder;
+
+    imageDesc.num_mip_levels = 0;
+    imageDesc.num_samples = 0;
+    imageDesc.mem_object = NULL;
 
     // 2D ARRAY image with non-zero row_pitch and non-zero slice_pitch > row_pitch * height
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
@@ -296,7 +469,9 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     imageDesc.image_row_pitch = (width + 1) * elementSize;
     imageDesc.image_slice_pitch = (width + 1) * elementSize * (height + 1);
 
-    image = Image::create(
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    auto image = Image::create(
         &context,
         MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
         flags,
@@ -311,11 +486,10 @@ TEST(TestSliceAndRowPitch, ForDifferentDescriptorsGetHostPtrSlicePitchAndRowPitc
     EXPECT_EQ((width + 1) * elementSize * (height + 1), image->getHostPtrSlicePitch());
 
     delete image;
-
     alignedFree(hostPtr);
 }
 
-TEST(TestCreateImage, UseSharedContextToCreateImage) {
+TEST(TestCreateImage, GivenSharedContextWhenImageIsCreatedThenRowAndSliceAreCorrect) {
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
     cl_int retVal;
@@ -367,7 +541,7 @@ TEST(TestCreateImage, UseSharedContextToCreateImage) {
     alignedFree(hostPtr);
 }
 
-TEST(TestCreateImageUseHostPtr, CheckMemoryAllocationForDifferenHostPtrAlignments) {
+TEST(TestCreateImageUseHostPtr, GivenDifferenHostPtrAlignmentsWhenCheckingMemoryALignmentThenCorrectValueIsReturned) {
     KernelBinaryHelper kbHelper(KernelBinaryHelper::BUILT_INS);
 
     cl_image_format imageFormat;
@@ -485,7 +659,7 @@ TEST(TestRedescribableFormatCheck, givenVariousOclFormatsWhenCheckingIfRedescrib
     }
 }
 
-TEST_P(CreateImageNoHostPtr, getImageDesc) {
+TEST_P(CreateImageNoHostPtr, GivenMissingPitchWhenImageIsCreatedThenConstructorFillsMissingData) {
     auto image = createImageWithFlags(flags);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -570,14 +744,14 @@ struct CreateImageHostPtr
     Image *image = nullptr;
 };
 
-TEST_P(CreateImageHostPtr, isResidentDefaultsToFalseAfterCreate) {
+TEST_P(CreateImageHostPtr, WhenImageIsCreatedThenResidencyIsFalse) {
     image = createImage(retVal);
     ASSERT_NE(nullptr, image);
 
     EXPECT_FALSE(image->getGraphicsAllocation()->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
 }
 
-TEST_P(CreateImageHostPtr, getAddress) {
+TEST_P(CreateImageHostPtr, WhenCheckingAddressThenAlllocationDependsOnSizeRelativeToPage) {
     image = createImage(retVal);
     ASSERT_NE(nullptr, image);
 
@@ -619,7 +793,7 @@ TEST_P(CreateImageHostPtr, getAddress) {
     }
 }
 
-TEST_P(CreateImageHostPtr, getImageDesc) {
+TEST_P(CreateImageHostPtr, WhenGettingImageDescThenCorrectValuesAreReturned) {
     image = createImage(retVal);
     ASSERT_NE(nullptr, image);
 
@@ -653,7 +827,7 @@ TEST_P(CreateImageHostPtr, getImageDesc) {
     EXPECT_NE(nullptr, image->getGraphicsAllocation());
 }
 
-TEST_P(CreateImageHostPtr, failedAllocationInjection) {
+TEST_P(CreateImageHostPtr, GivenFailedAllocationInjectionWhenCheckingAllocationThenOnlyFailedAllocationReturnsNull) {
     InjectedFunction method = [this](size_t failureIndex) {
         // System under test
         image = createImage(retVal);
@@ -694,7 +868,7 @@ TEST_P(CreateImageHostPtr, givenLinearImageWhenFailedAtCreationThenReturnError) 
     injectFailures(method, 4); // check only first 5 allocations - avoid checks on writeImg call allocations for tiled imgs
 }
 
-TEST_P(CreateImageHostPtr, checkWritingOutsideAllocatedMemoryWhileCreatingImage) {
+TEST_P(CreateImageHostPtr, WhenWritingOutsideAllocatedMemoryWhileCreatingImageThenWriteIsHandledCorrectly) {
     auto mockMemoryManager = new MockMemoryManager(*pDevice->executionEnvironment);
     pDevice->injectMemoryManager(mockMemoryManager);
     context->memoryManager = mockMemoryManager;
@@ -1455,7 +1629,7 @@ HWTEST_F(HwImageTest, givenImageHwWithUnifiedSurfaceAndMcsWhenSettingParamsForMu
 
 using ImageMultiRootDeviceTests = MultiRootDeviceFixture;
 
-TEST_F(ImageMultiRootDeviceTests, imageAllocationHasCorrectRootDeviceIndex) {
+TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedThenImageAllocationHasCorrectRootDeviceIndex) {
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(context.get()));
 
     auto graphicsAllocation = image->getGraphicsAllocation();
