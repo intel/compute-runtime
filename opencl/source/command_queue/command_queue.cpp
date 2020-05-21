@@ -66,11 +66,11 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
     flushStamp.reset(new FlushStampTracker(true));
 
     if (device) {
+        auto hwInfo = device->getHardwareInfo();
         gpgpuEngine = &device->getDefaultEngine();
-        if (gpgpuEngine->commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
+        if (hwInfo.capabilityTable.blitterOperationsSupported || gpgpuEngine->commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
-        auto hwInfo = device->getHardwareInfo();
         if (hwInfo.capabilityTable.blitterOperationsSupported) {
             auto &selectorCopyEngine = device->getDeviceById(0)->getSelectorCopyEngine();
             bcsEngine = &device->getDeviceById(0)->getEngine(EngineHelpers::getBcsEngineType(hwInfo, selectorCopyEngine), false);

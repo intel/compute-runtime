@@ -343,7 +343,7 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         false                                                 //usePerDssBackedBuffer
     );
 
-    UNRECOVERABLE_IF(!commandStreamReceiver.peekTimestampPacketWriteEnabled());
+    UNRECOVERABLE_IF(!kernelOperation->blitEnqueue && !commandStreamReceiver.peekTimestampPacketWriteEnabled());
 
     eventsRequest.fillCsrDependencies(dispatchFlags.csrDependencies, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
     makeTimestampPacketsResident(commandStreamReceiver);

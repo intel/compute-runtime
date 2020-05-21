@@ -22,7 +22,8 @@
 
 using namespace NEO;
 
-struct BlitAuxTranslationTests : public ::testing::Test {
+template <int timestampPacketEnabled>
+struct BlitEnqueueTests : public ::testing::Test {
     class BcsMockContext : public MockContext {
       public:
         BcsMockContext(ClDevice *device) : MockContext(device) {
@@ -56,7 +57,7 @@ struct BlitAuxTranslationTests : public ::testing::Test {
         if (is32bit || !hwHelper.requiresAuxResolves()) {
             GTEST_SKIP();
         }
-        DebugManager.flags.EnableTimestampPacket.set(1);
+        DebugManager.flags.EnableTimestampPacket.set(timestampPacketEnabled);
         DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
         DebugManager.flags.ForceAuxTranslationMode.set(1);
         DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
@@ -197,6 +198,8 @@ struct BlitAuxTranslationTests : public ::testing::Test {
     uint32_t hostPtr = 0;
     cl_int retVal = CL_SUCCESS;
 };
+
+using BlitAuxTranslationTests = BlitEnqueueTests<1>;
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenConstructingCommandBufferThenEnsureCorrectOrder) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -810,4 +813,38 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenEnqueueIsCal
 
     EXPECT_EQ(1u, ultCsr->taskCount);
     EXPECT_TRUE(ultCsr->recordedDispatchFlags.implicitFlush);
+}
+
+using BlitEnqueueWithNoTimestampPacketTests = BlitEnqueueTests<0>;
+
+HWTEST_TEMPLATED_F(BlitEnqueueWithNoTimestampPacketTests, givenNoTimestampPacketsWritewhenEnqueueingBlitOperationThenEnginesAreSynchronized) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    const size_t bufferSize = 1u;
+    auto buffer = createBuffer(bufferSize, false);
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
+    ASSERT_EQ(0u, ultCsr->taskCount);
+
+    setMockKernelArgs(std::array<Buffer *, 1>{{buffer.get()}});
+    commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    char cpuBuffer[bufferSize]{};
+    commandQueue->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, bufferSize, cpuBuffer, nullptr, 0, nullptr, nullptr);
+    commandQueue->finish();
+
+    auto bcsCommands = getCmdList<FamilyType>(bcsCsr->getCS(0));
+    auto ccsCommands = getCmdList<FamilyType>(commandQueue->getCS(0));
+
+    auto cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(bcsCommands.begin(), bcsCommands.end());
+
+    cmdFound = expectMiFlush<MI_FLUSH_DW>(cmdFound++, bcsCommands.end());
+    auto miflushDwCmd = genCmdCast<MI_FLUSH_DW *>(*cmdFound);
+    const auto bcsSignalAddress = miflushDwCmd->getDestinationAddress();
+
+    cmdFound = expectCommand<WALKER_TYPE>(ccsCommands.begin(), ccsCommands.end());
+
+    cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(cmdFound++, ccsCommands.end());
+    verifySemaphore<FamilyType>(cmdFound, bcsSignalAddress);
 }

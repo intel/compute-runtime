@@ -1117,3 +1117,18 @@ TEST(CommandQueue, GivenCommandQueueWhenEnqueueInitDispatchGlobalsCalledThenSucc
         nullptr);
     EXPECT_EQ(CL_SUCCESS, result);
 }
+
+TEST(CommandQueue, givenBlitterOperationsSupportedWhenCreatingQueueThenTimestampPacketIsCreated) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableTimestampPacket.set(0);
+
+    MockContext context{};
+    HardwareInfo *hwInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
+    if (!HwHelper::get(hwInfo->platform.eDisplayCoreFamily).obtainBlitterPreference(*hwInfo)) {
+        GTEST_SKIP();
+    }
+
+    hwInfo->capabilityTable.blitterOperationsSupported = true;
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0);
+    EXPECT_NE(nullptr, cmdQ.timestampPacketContainer);
+}

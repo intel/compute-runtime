@@ -202,7 +202,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     bool enqueueWithBlitAuxTranslation = HwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(device->getHardwareInfo(), multiDispatchInfo);
 
-    if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (blitEnqueue || getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         eventsRequest.fillCsrDependencies(csrDeps, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
         auto allocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
 
