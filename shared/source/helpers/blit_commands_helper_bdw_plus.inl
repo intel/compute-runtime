@@ -13,6 +13,11 @@ template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
 template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForImages(BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd) {
+    appendTilingType(GMM_NOT_TILED, GMM_NOT_TILED, blitCmd);
+}
+
+template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForFillBuffer(NEO::GraphicsAllocation *dstAlloc, typename GfxFamily::XY_COLOR_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     if (blitCmd.getColorDepth() == XY_COLOR_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR) {
@@ -35,9 +40,23 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(NEO::GraphicsAll
 }
 
 template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd) {
+}
+template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendTilingEnable(typename GfxFamily::XY_COLOR_BLT &blitCmd) {
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     blitCmd.setDestTilingEnable(XY_COLOR_BLT::DEST_TILING_ENABLE::DEST_TILING_ENABLE_TILING_ENABLED);
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_COPY_BLT &blitCmd) {
+}
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::appendColorDepth(const BlitProperties &blitProperites, typename GfxFamily::XY_COPY_BLT &blitCmd) {
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::appendSliceOffsets(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd, uint32_t sliceIndex) {
 }
 
 } // namespace NEO

@@ -162,6 +162,14 @@ struct CommandListCoreFamily : CommandListImp {
                                                 size_t patternSize, size_t size,
                                                 ze_event_handle_t hEvent);
 
+    MOCKABLE_VIRTUAL ze_result_t appendCopyImageBlit(NEO::GraphicsAllocation *src,
+                                                     NEO::GraphicsAllocation *dst,
+                                                     Vec3<size_t> srcOffsets, Vec3<size_t> dstOffsets,
+                                                     size_t srcRowPitch, size_t srcSlicePitch,
+                                                     size_t dstRowPitch, size_t dstSlicePitch,
+                                                     size_t bytesPerPixel, Vec3<size_t> copySize,
+                                                     Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize);
+
     ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                              const ze_group_count_t *pThreadGroupDimensions,
                                              ze_event_handle_t hEvent, uint32_t numWaitEvents,

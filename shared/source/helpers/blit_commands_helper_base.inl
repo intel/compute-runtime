@@ -6,6 +6,9 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
@@ -178,8 +181,6 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
     blitCmd.setFillColor(pattern);
     blitCmd.setColorDepth(depth);
 
-    appendBlitCommandsForFillBuffer(dstAlloc, blitCmd, rootDeviceEnvironment);
-
     uint64_t offset = 0;
     uint64_t sizeToFill = size;
     while (sizeToFill != 0) {
@@ -200,11 +201,44 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
         tmpCmd.setTransferWidth(static_cast<uint32_t>(width));
         tmpCmd.setTransferHeight(static_cast<uint32_t>(height));
         tmpCmd.setDestinationPitch(static_cast<uint32_t>(width));
+
+        appendBlitCommandsForFillBuffer(dstAlloc, tmpCmd, rootDeviceEnvironment);
+
         auto cmd = linearStream.getSpaceForCmd<XY_COLOR_BLT>();
         *cmd = tmpCmd;
         auto blitSize = width * height;
         offset += (blitSize);
         sizeToFill -= blitSize;
+    }
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImages(BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    auto dstAllocation = blitProperties.dstAllocation;
+    auto srcAllocation = blitProperties.srcAllocation;
+
+    UNRECOVERABLE_IF(blitProperties.copySize.x > BlitterConstants::maxBlitWidth || blitProperties.copySize.y > BlitterConstants::maxBlitWidth);
+    auto bltCmd = GfxFamily::cmdInitXyCopyBlt;
+
+    bltCmd.setSourceBaseAddress(srcAllocation->getGpuAddress());
+    bltCmd.setDestinationBaseAddress(dstAllocation->getGpuAddress());
+
+    bltCmd.setDestinationX1CoordinateLeft(static_cast<uint32_t>(blitProperties.dstOffset.x));
+    bltCmd.setDestinationY1CoordinateTop(static_cast<uint32_t>(blitProperties.dstOffset.y));
+    bltCmd.setTransferWidth(static_cast<uint32_t>(blitProperties.dstOffset.x + blitProperties.copySize.x));
+    bltCmd.setTransferHeight(static_cast<uint32_t>(blitProperties.dstOffset.y + blitProperties.copySize.y));
+
+    bltCmd.setSourceX1CoordinateLeft(static_cast<uint32_t>(blitProperties.srcOffset.x));
+    bltCmd.setSourceY1CoordinateTop(static_cast<uint32_t>(blitProperties.srcOffset.y));
+
+    appendBlitCommandsForBuffer(blitProperties, bltCmd, rootDeviceEnvironment);
+    appendBlitCommandsForImages(blitProperties, bltCmd);
+    appendColorDepth(blitProperties, bltCmd);
+    appendSurfaceType(blitProperties, bltCmd);
+    for (uint32_t i = 0; i < blitProperties.copySize.z; i++) {
+        appendSliceOffsets(blitProperties, bltCmd, i);
+        auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
+        *cmd = bltCmd;
     }
 }
 

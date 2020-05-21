@@ -247,21 +247,34 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     auto image = Image::fromHandle(hDstImage);
     auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
 
-    ze_image_region_t tmpRegion;
+    Vec3<uint32_t> imgSize = {static_cast<uint32_t>(image->getImageInfo().imgDesc.imageWidth),
+                              static_cast<uint32_t>(image->getImageInfo().imgDesc.imageHeight),
+                              static_cast<uint32_t>(image->getImageInfo().imgDesc.imageDepth)};
 
+    ze_image_region_t tmpRegion;
     if (pDstRegion == nullptr) {
         tmpRegion = {0,
                      0,
                      0,
-                     static_cast<uint32_t>(image->getImageInfo().imgDesc.imageWidth),
-                     static_cast<uint32_t>(image->getImageInfo().imgDesc.imageHeight),
-                     static_cast<uint32_t>(image->getImageInfo().imgDesc.imageDepth)};
+                     imgSize.x,
+                     imgSize.y,
+                     imgSize.z};
         pDstRegion = &tmpRegion;
     }
 
     uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, bytesPerPixel, pDstRegion);
 
     auto allocationStruct = getAlignedAllocation(this->device, srcPtr, bufferSize);
+
+    auto rowPitch = pDstRegion->width * bytesPerPixel;
+    auto slicePitch =
+        image->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : pDstRegion->height * rowPitch;
+
+    if (isCopyOnlyCmdList) {
+        return appendCopyImageBlit(allocationStruct.alloc, image->getAllocation(),
+                                   {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, rowPitch, slicePitch,
+                                   rowPitch, slicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize);
+    }
 
     Kernel *builtinKernel = nullptr;
 
@@ -297,13 +310,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
         0};
     builtinKernel->setArgumentValue(3u, sizeof(origin), &origin);
 
-    auto srcRowPitch = pDstRegion->width * bytesPerPixel;
-    auto srcSlicePitch =
-        (image->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : pDstRegion->height) * srcRowPitch;
-
     uint32_t pitch[] = {
-        srcRowPitch,
-        srcSlicePitch};
+        rowPitch,
+        slicePitch};
     builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
 
     uint32_t groupSizeX = pDstRegion->width;
@@ -343,21 +352,35 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
 
     auto image = Image::fromHandle(hSrcImage);
     auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
-    ze_image_region_t tmpRegion;
 
+    Vec3<uint32_t> imgSize = {static_cast<uint32_t>(image->getImageInfo().imgDesc.imageWidth),
+                              static_cast<uint32_t>(image->getImageInfo().imgDesc.imageHeight),
+                              static_cast<uint32_t>(image->getImageInfo().imgDesc.imageDepth)};
+
+    ze_image_region_t tmpRegion;
     if (pSrcRegion == nullptr) {
         tmpRegion = {0,
                      0,
                      0,
-                     static_cast<uint32_t>(image->getImageInfo().imgDesc.imageWidth),
-                     static_cast<uint32_t>(image->getImageInfo().imgDesc.imageHeight),
-                     static_cast<uint32_t>(image->getImageInfo().imgDesc.imageDepth)};
+                     imgSize.x,
+                     imgSize.y,
+                     imgSize.z};
         pSrcRegion = &tmpRegion;
     }
 
     uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, bytesPerPixel, pSrcRegion);
 
     auto allocationStruct = getAlignedAllocation(this->device, dstPtr, bufferSize);
+
+    auto rowPitch = pSrcRegion->width * bytesPerPixel;
+    auto slicePitch =
+        (image->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : pSrcRegion->height) * rowPitch;
+
+    if (isCopyOnlyCmdList) {
+        return appendCopyImageBlit(image->getAllocation(), allocationStruct.alloc,
+                                   {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, rowPitch, slicePitch,
+                                   rowPitch, slicePitch, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth});
+    }
 
     Kernel *builtinKernel = nullptr;
 
@@ -394,13 +417,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
 
     builtinKernel->setArgumentValue(3u, sizeof(size_t), &allocationStruct.offset);
 
-    auto srcRowPitch = pSrcRegion->width * bytesPerPixel;
-    auto srcSlicePitch =
-        (image->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : pSrcRegion->height) * srcRowPitch;
-
     uint32_t pitch[] = {
-        srcRowPitch,
-        srcSlicePitch};
+        rowPitch,
+        slicePitch};
     builtinKernel->setArgumentValue(4u, sizeof(pitch), &pitch);
 
     uint32_t groupSizeX = pSrcRegion->width;
@@ -445,8 +464,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
                                                                         ze_event_handle_t hEvent,
                                                                         uint32_t numWaitEvents,
                                                                         ze_event_handle_t *phWaitEvents) {
-
-    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
     auto dstImage = L0::Image::fromHandle(hDstImage);
     auto srcImage = L0::Image::fromHandle(hSrcImage);
     cl_int4 srcOffset, dstOffset;
@@ -486,6 +503,32 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     uint32_t groupSizeX = srcRegion.width;
     uint32_t groupSizeY = srcRegion.height;
     uint32_t groupSizeZ = srcRegion.depth;
+
+    if (isCopyOnlyCmdList) {
+        auto bytesPerPixel = static_cast<uint32_t>(srcImage->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
+
+        Vec3<uint32_t> srcImgSize = {static_cast<uint32_t>(srcImage->getImageInfo().imgDesc.imageWidth),
+                                     static_cast<uint32_t>(srcImage->getImageInfo().imgDesc.imageHeight),
+                                     static_cast<uint32_t>(srcImage->getImageInfo().imgDesc.imageDepth)};
+
+        Vec3<uint32_t> dstImgSize = {static_cast<uint32_t>(dstImage->getImageInfo().imgDesc.imageWidth),
+                                     static_cast<uint32_t>(dstImage->getImageInfo().imgDesc.imageHeight),
+                                     static_cast<uint32_t>(dstImage->getImageInfo().imgDesc.imageDepth)};
+
+        auto srcRowPitch = srcRegion.width * bytesPerPixel;
+        auto srcSlicePitch =
+            (srcImage->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : srcRegion.height) * srcRowPitch;
+
+        auto dstRowPitch = dstRegion.width * bytesPerPixel;
+        auto dstSlicePitch =
+            (dstImage->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : dstRegion.height) * dstRowPitch;
+
+        return appendCopyImageBlit(srcImage->getAllocation(), dstImage->getAllocation(),
+                                   {srcRegion.originX, srcRegion.originY, srcRegion.originZ}, {dstRegion.originX, dstRegion.originY, dstRegion.originZ}, srcRowPitch, srcSlicePitch,
+                                   dstRowPitch, dstSlicePitch, bytesPerPixel, {srcRegion.width, srcRegion.height, srcRegion.depth}, srcImgSize, dstImgSize);
+    }
+
+    auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
 
     if (kernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX,
                                  &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
@@ -612,6 +655,28 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(NEO
     commandContainer.addToResidencyContainer(dstAlloc);
     commandContainer.addToResidencyContainer(srcAlloc);
     NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::GraphicsAllocation *src,
+                                                                      NEO::GraphicsAllocation *dst,
+                                                                      Vec3<size_t> srcOffsets, Vec3<size_t> dstOffsets,
+                                                                      size_t srcRowPitch, size_t srcSlicePitch,
+                                                                      size_t dstRowPitch, size_t dstSlicePitch,
+                                                                      size_t bytesPerPixel, Vec3<size_t> copySize,
+                                                                      Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dst, src,
+                                                                                dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
+                                                                                dstRowPitch, dstSlicePitch);
+    blitProperties.bytesPerPixel = bytesPerPixel;
+    blitProperties.srcSize = srcSize;
+    blitProperties.dstSize = dstSize;
+    commandContainer.addToResidencyContainer(dst);
+    commandContainer.addToResidencyContainer(src);
+    NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImages(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
     return ZE_RESULT_SUCCESS;
 }
 

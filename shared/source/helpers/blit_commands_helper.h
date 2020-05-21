@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/csr_deps.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/vec.h"
@@ -70,6 +71,9 @@ struct BlitProperties {
     size_t dstSlicePitch = 0;
     size_t srcRowPitch = 0;
     size_t srcSlicePitch = 0;
+    size_t bytesPerPixel = 0;
+    Vec3<uint32_t> dstSize = 0;
+    Vec3<uint32_t> srcSize = 0;
 };
 
 template <typename GfxFamily>
@@ -84,11 +88,17 @@ struct BlitCommandsHelper {
     static uint64_t calculateBlitCommandDestinationBaseAddress(const BlitProperties &blitProperties, uint64_t offset, uint64_t row, uint64_t slice);
     static uint64_t calculateBlitCommandSourceBaseAddress(const BlitProperties &blitProperties, uint64_t offset, uint64_t row, uint64_t slice);
     static void dispatchBlitCommandsForBuffer(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void dispatchBlitCommandsForImages(BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void dispatchBlitMemoryColorFill(NEO::GraphicsAllocation *dstAlloc, uint32_t *pattern, size_t patternSize, LinearStream &linearStream, size_t size, const RootDeviceEnvironment &rootDeviceEnvironment);
     template <size_t patternSize>
     static void dispatchBlitMemoryFill(NEO::GraphicsAllocation *dstAlloc, uint32_t *pattern, LinearStream &linearStream, size_t size, const RootDeviceEnvironment &rootDeviceEnvironment, COLOR_DEPTH depth);
     static void appendBlitCommandsForBuffer(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void appendBlitCommandsForImages(BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd);
+    static void appendColorDepth(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd);
     static void appendBlitCommandsForFillBuffer(NEO::GraphicsAllocation *dstAlloc, typename GfxFamily::XY_COLOR_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void appendSurfaceType(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd);
     static void appendTilingEnable(typename GfxFamily::XY_COLOR_BLT &blitCmd);
+    static void appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_COPY_BLT &blitCmd);
+    static void appendSliceOffsets(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd, uint32_t sliceIndex);
 };
 } // namespace NEO

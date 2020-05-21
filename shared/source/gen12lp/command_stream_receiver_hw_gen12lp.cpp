@@ -59,6 +59,110 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
 }
 
+template <>
+void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd) {
+    using XY_COPY_BLT = typename Family::XY_COPY_BLT;
+    switch (blitProperites.bytesPerPixel) {
+    default:
+        UNRECOVERABLE_IF(true);
+    case 1:
+        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
+        break;
+    case 2:
+        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
+        break;
+    case 4:
+        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
+        break;
+    case 8:
+        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
+        break;
+    case 16:
+        blitCmd.setColorDepth(XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
+        break;
+    }
+}
+
+template <>
+void BlitCommandsHelper<Family>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename Family::XY_COPY_BLT &blitCmd) {
+    using XY_COPY_BLT = typename Family::XY_COPY_BLT;
+    if (srcTilingType == GMM_TILED_Y) {
+        blitCmd.setSourceTiling(XY_COPY_BLT::SOURCE_TILING::SOURCE_TILING_YMAJOR);
+    }
+    if (dstTilingType == GMM_TILED_Y) {
+        blitCmd.setDestinationTiling(XY_COPY_BLT::DESTINATION_TILING::DESTINATION_TILING_YMAJOR);
+    }
+}
+
+template <>
+void BlitCommandsHelper<Family>::appendSurfaceType(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
+}
+
+template <>
+void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, uint32_t sliceIndex) {
+    using XY_COPY_BLT = typename Family::XY_COPY_BLT;
+    auto dstAllocation = blitProperties.dstAllocation;
+    auto srcAllocation = blitProperties.srcAllocation;
+
+    size_t srcOffset = blitProperties.srcSlicePitch * (sliceIndex + static_cast<uint32_t>(blitProperties.srcOffset.z));
+    size_t dstOffset = blitProperties.dstSlicePitch * (sliceIndex + static_cast<uint32_t>(blitProperties.dstOffset.z));
+
+    blitCmd.setSourceBaseAddress(ptrOffset(srcAllocation->getGpuAddress(), srcOffset));
+    blitCmd.setDestinationBaseAddress(ptrOffset(dstAllocation->getGpuAddress(), dstOffset));
+}
+
+template <>
+void BlitCommandsHelper<Family>::appendBlitCommandsForImages(BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
+    uint32_t dstPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
+    uint32_t srcPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
+    uint32_t dstQPitch = static_cast<uint32_t>(blitProperties.dstSize.y);
+    uint32_t srcQPitch = static_cast<uint32_t>(blitProperties.srcSize.y);
+    auto dstAllocation = blitProperties.dstAllocation;
+    auto srcAllocation = blitProperties.srcAllocation;
+    GMM_TILE_TYPE dstTileType = GMM_NOT_TILED;
+    GMM_TILE_TYPE srcTileType = GMM_NOT_TILED;
+
+    constexpr uint32_t TILED_Y_PITCH_ALIGNMENT = 128;
+    constexpr uint32_t NON_TILED_PITCH_ALIGNMENT = 16;
+
+    if (dstAllocation->getDefaultGmm()) {
+        auto dstResInfo = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info;
+        dstPitch = static_cast<uint32_t>(dstAllocation->getDefaultGmm()->gmmResourceInfo->getRenderPitch());
+        dstQPitch = static_cast<uint32_t>(dstAllocation->getDefaultGmm()->gmmResourceInfo->getQPitch());
+        if (dstResInfo.TiledY) {
+            dstTileType = GMM_TILED_Y;
+            dstPitch = alignUp<uint32_t>(dstPitch, TILED_Y_PITCH_ALIGNMENT);
+        } else {
+            dstPitch = alignUp<uint32_t>(dstPitch, NON_TILED_PITCH_ALIGNMENT);
+        }
+    }
+    if (srcAllocation->getDefaultGmm()) {
+        auto srcResInfo = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info;
+        srcPitch = static_cast<uint32_t>(srcAllocation->getDefaultGmm()->gmmResourceInfo->getRenderPitch());
+        srcQPitch = static_cast<uint32_t>(srcAllocation->getDefaultGmm()->gmmResourceInfo->getQPitch());
+        if (srcResInfo.TiledY) {
+            srcTileType = GMM_TILED_Y;
+            srcPitch = alignUp<uint32_t>(srcPitch, TILED_Y_PITCH_ALIGNMENT);
+        } else {
+            srcPitch = alignUp<uint32_t>(srcPitch, NON_TILED_PITCH_ALIGNMENT);
+        }
+    }
+    blitProperties.srcSlicePitch = srcPitch * srcQPitch;
+    blitProperties.dstSlicePitch = dstPitch * dstQPitch;
+    if (dstTileType != GMM_NOT_TILED) {
+        blitCmd.setDestinationPitch(dstPitch / 4);
+    } else {
+        blitCmd.setDestinationPitch(dstPitch);
+    }
+    if (srcTileType != GMM_NOT_TILED) {
+        blitCmd.setSourcePitch(srcPitch / 4);
+    } else {
+        blitCmd.setSourcePitch(srcPitch);
+    }
+
+    appendTilingType(srcTileType, dstTileType, blitCmd);
+}
+
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;
 

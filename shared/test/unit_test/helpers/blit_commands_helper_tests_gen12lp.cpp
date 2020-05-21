@@ -1,0 +1,162 @@
+/*
+ * Copyright (C) 2020 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/test/unit_test/helpers/blit_commands_helper_tests.inl"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+
+#include "gtest/gtest.h"
+
+using namespace NEO;
+
+using BlitTests = Test<DeviceFixture>;
+
+HWTEST2_F(BlitTests, givenOneBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    properties.bytesPerPixel = 1;
+    BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd);
+    EXPECT_EQ(bltCmd.getColorDepth(), XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
+}
+
+HWTEST2_F(BlitTests, givenTwoBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    properties.bytesPerPixel = 2;
+    BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd);
+    EXPECT_EQ(bltCmd.getColorDepth(), XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
+}
+
+HWTEST2_F(BlitTests, givenFourBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    properties.bytesPerPixel = 4;
+    BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd);
+    EXPECT_EQ(bltCmd.getColorDepth(), XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
+}
+
+HWTEST2_F(BlitTests, givenEightBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    properties.bytesPerPixel = 8;
+    BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd);
+    EXPECT_EQ(bltCmd.getColorDepth(), XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
+}
+
+HWTEST2_F(BlitTests, givenSixteenBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    properties.bytesPerPixel = 16;
+    BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd);
+    EXPECT_EQ(bltCmd.getColorDepth(), XY_COPY_BLT::COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
+}
+
+HWTEST2_F(BlitTests, givenIncorrectBytePerPixelWhenAppendColorDepthThenAbortIsThrown, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    properties.bytesPerPixel = 48;
+    EXPECT_THROW(BlitCommandsHelper<FamilyType>::appendColorDepth(properties, bltCmd), std::exception);
+}
+
+HWTEST2_F(BlitTests, givenNotTiledSrcAndDestinationWhenAppendTilingTypeThenCorrectTilingIsSet, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    BlitCommandsHelper<FamilyType>::appendTilingType(GMM_NOT_TILED, GMM_NOT_TILED, bltCmd);
+    EXPECT_EQ(bltCmd.getSourceTiling(), XY_COPY_BLT::SOURCE_TILING::SOURCE_TILING_LINEAR);
+    EXPECT_EQ(bltCmd.getDestinationTiling(), XY_COPY_BLT::DESTINATION_TILING::DESTINATION_TILING_LINEAR);
+}
+HWTEST2_F(BlitTests, givenTiledSrcAndDestinationAppendTilingTypeThenCorrectTilingIsSet, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    BlitCommandsHelper<FamilyType>::appendTilingType(GMM_TILED_Y, GMM_TILED_Y, bltCmd);
+    EXPECT_EQ(bltCmd.getSourceTiling(), XY_COPY_BLT::SOURCE_TILING::SOURCE_TILING_YMAJOR);
+    EXPECT_EQ(bltCmd.getDestinationTiling(), XY_COPY_BLT::DESTINATION_TILING::DESTINATION_TILING_YMAJOR);
+}
+
+HWTEST2_F(BlitTests, givenTiledSrcAndDestinationWhenAppendImageCommandsThenCorrectTiledIsSet, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto gmm = std::make_unique<MockGmm>();
+    auto flags = gmm->gmmResourceInfo->getResourceFlags();
+    flags->Info.TiledY = true;
+    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages);
+    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages);
+    mockAllocationSrc.setGmm(gmm.get(), 0);
+    mockAllocationDst.setGmm(gmm.get(), 0);
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    properties.srcAllocation = &mockAllocationSrc;
+    properties.dstAllocation = &mockAllocationDst;
+    BlitCommandsHelper<FamilyType>::appendBlitCommandsForImages(properties, bltCmd);
+    EXPECT_EQ(bltCmd.getSourceTiling(), XY_COPY_BLT::SOURCE_TILING::SOURCE_TILING_YMAJOR);
+    EXPECT_EQ(bltCmd.getDestinationTiling(), XY_COPY_BLT::DESTINATION_TILING::DESTINATION_TILING_YMAJOR);
+}
+
+HWTEST2_F(BlitTests, givenNotTiledSrcAndDestinationWhenAppendImageCommandsThenCorrectTiledIsSet, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto gmm = std::make_unique<MockGmm>();
+    auto flags = gmm->gmmResourceInfo->getResourceFlags();
+    flags->Info.TiledY = false;
+    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages);
+    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages);
+    mockAllocationSrc.setGmm(gmm.get(), 0);
+    mockAllocationDst.setGmm(gmm.get(), 0);
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    properties.srcAllocation = &mockAllocationSrc;
+    properties.dstAllocation = &mockAllocationDst;
+    BlitCommandsHelper<FamilyType>::appendBlitCommandsForImages(properties, bltCmd);
+    EXPECT_EQ(bltCmd.getSourceTiling(), XY_COPY_BLT::SOURCE_TILING::SOURCE_TILING_LINEAR);
+    EXPECT_EQ(bltCmd.getDestinationTiling(), XY_COPY_BLT::DESTINATION_TILING::DESTINATION_TILING_LINEAR);
+}
+
+HWTEST2_F(BlitTests, givenSrcAndDestinationImagesWhenAppendSliceOffsetsThenAdressAreCorectOffseted, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto gmm = std::make_unique<MockGmm>();
+    auto flags = gmm->gmmResourceInfo->getResourceFlags();
+    flags->Info.TiledY = false;
+    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages);
+    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages);
+    mockAllocationSrc.setGmm(gmm.get(), 0);
+    mockAllocationDst.setGmm(gmm.get(), 0);
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    properties.srcAllocation = &mockAllocationSrc;
+    properties.dstAllocation = &mockAllocationDst;
+    properties.dstSlicePitch = 0x1000;
+    properties.srcSlicePitch = 0x2000;
+    properties.srcOffset = {0x10, 0x10, 0x10};
+    properties.dstOffset = {0x20, 0x20, 0x20};
+    uint32_t index = 7;
+    BlitCommandsHelper<FamilyType>::appendSliceOffsets(properties, bltCmd, index);
+    auto expectesSrcOffset = (index + properties.srcOffset.z) * properties.srcSlicePitch;
+    auto expectesDstOffset = (index + properties.dstOffset.z) * properties.dstSlicePitch;
+    EXPECT_EQ(bltCmd.getSourceBaseAddress(), ptrOffset(mockAllocationSrc.getGpuAddress(), expectesSrcOffset));
+    EXPECT_EQ(bltCmd.getDestinationBaseAddress(), ptrOffset(mockAllocationDst.getGpuAddress(), expectesDstOffset));
+}

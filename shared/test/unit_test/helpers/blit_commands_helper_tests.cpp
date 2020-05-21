@@ -241,3 +241,39 @@ HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualFourWhenCallToDisp
     GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> test(pDevice);
     test.TestBodyImpl(patternSize, expecttedDepth);
 }
+
+using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+
+HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAddedToStream, BlitPlatforms) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    MockGraphicsAllocation srcAlloc;
+    MockGraphicsAllocation dstAlloc;
+
+    Vec3<size_t> dstOffsets = {0, 0, 0};
+    Vec3<size_t> srcOffsets = {0, 0, 0};
+
+    Vec3<size_t> copySize = {0x100, 0x40, 0x1};
+    Vec3<uint32_t> srcSize = {0x100, 0x40, 0x1};
+    Vec3<uint32_t> dstSize = {0x100, 0x40, 0x1};
+
+    uint32_t srcRowPitch = srcSize.x;
+    uint32_t srcSlicePitch = srcSize.y;
+    uint32_t dstRowPitch = dstSize.x;
+    uint32_t dstSlicePitch = dstSize.y;
+
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(&dstAlloc, &srcAlloc,
+                                                                                dstOffsets, srcOffsets, copySize, srcRowPitch, srcSlicePitch,
+                                                                                dstRowPitch, dstSlicePitch);
+
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+    blitProperties.bytesPerPixel = 4;
+    blitProperties.srcSize = srcSize;
+    blitProperties.dstSize = dstSize;
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImages(blitProperties, stream, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
+    auto itor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+}
