@@ -525,6 +525,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations() {
     for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {
         downloadAllocation(*graphicsAllocation);
     }
+    this->allocationsForDownload.clear();
 }
 
 template <typename GfxFamily>
