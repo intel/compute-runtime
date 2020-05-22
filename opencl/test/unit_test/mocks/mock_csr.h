@@ -132,92 +132,6 @@ class MockCsr : public MockCsrBase<GfxFamily> {
 };
 
 template <typename GfxFamily>
-class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
-  public:
-    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
-    using CommandStreamReceiverHw<GfxFamily>::csrSizeRequestFlags;
-    using CommandStreamReceiverHw<GfxFamily>::flushStamp;
-    using CommandStreamReceiverHw<GfxFamily>::programL3;
-    using CommandStreamReceiverHw<GfxFamily>::programVFEState;
-    using CommandStreamReceiver::commandStream;
-    using CommandStreamReceiver::dispatchMode;
-    using CommandStreamReceiver::globalFenceAllocation;
-    using CommandStreamReceiver::isPreambleSent;
-    using CommandStreamReceiver::lastSentCoherencyRequest;
-    using CommandStreamReceiver::mediaVfeStateDirty;
-    using CommandStreamReceiver::nTo1SubmissionModelEnabled;
-    using CommandStreamReceiver::pageTableManagerInitialized;
-    using CommandStreamReceiver::requiredScratchSize;
-    using CommandStreamReceiver::requiredThreadArbitrationPolicy;
-    using CommandStreamReceiver::taskCount;
-    using CommandStreamReceiver::taskLevel;
-    using CommandStreamReceiver::timestampPacketWriteEnabled;
-
-    MockCsrHw2(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(executionEnvironment, rootDeviceIndex) {}
-
-    SubmissionAggregator *peekSubmissionAggregator() {
-        return this->submissionAggregator.get();
-    }
-
-    void overrideSubmissionAggregator(SubmissionAggregator *newSubmissionsAggregator) {
-        this->submissionAggregator.reset(newSubmissionsAggregator);
-    }
-
-    uint64_t peekTotalMemoryUsed() {
-        return this->totalMemoryUsed;
-    }
-
-    bool peekMediaVfeStateDirty() const { return mediaVfeStateDirty; }
-
-    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
-        flushCalledCount++;
-        recordedCommandBuffer->batchBuffer = batchBuffer;
-        copyOfAllocations = allocationsForResidency;
-        flushStamp->setStamp(flushStamp->peekStamp() + 1);
-        return true;
-    }
-
-    CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
-                              const IndirectHeap &dsh, const IndirectHeap &ioh,
-                              const IndirectHeap &ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
-        passedDispatchFlags = dispatchFlags;
-
-        recordedCommandBuffer = std::unique_ptr<CommandBuffer>(new CommandBuffer(device));
-        auto completionStamp = CommandStreamReceiverHw<GfxFamily>::flushTask(commandStream, commandStreamStart,
-                                                                             dsh, ioh, ssh, taskLevel, dispatchFlags, device);
-
-        if (storeFlushedTaskStream && commandStream.getUsed() > commandStreamStart) {
-            storedTaskStreamSize = commandStream.getUsed() - commandStreamStart;
-            // Overfetch to allow command parser verify if "big" command is programmed at the end of allocation
-            auto overfetchedSize = storedTaskStreamSize + MemoryConstants::cacheLineSize;
-            storedTaskStream.reset(new uint8_t[overfetchedSize]);
-            memset(storedTaskStream.get(), 0, overfetchedSize);
-            memcpy_s(storedTaskStream.get(), storedTaskStreamSize,
-                     ptrOffset(commandStream.getCpuBase(), commandStreamStart), storedTaskStreamSize);
-        }
-
-        return completionStamp;
-    }
-
-    uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking) override {
-        if (!skipBlitCalls) {
-            return CommandStreamReceiverHw<GfxFamily>::blitBuffer(blitPropertiesContainer, blocking);
-        }
-        return taskCount;
-    }
-
-    bool skipBlitCalls = false;
-    bool storeFlushedTaskStream = false;
-    std::unique_ptr<uint8_t> storedTaskStream;
-    size_t storedTaskStreamSize = 0;
-
-    int flushCalledCount = 0;
-    std::unique_ptr<CommandBuffer> recordedCommandBuffer = nullptr;
-    ResidencyContainer copyOfAllocations;
-    DispatchFlags passedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-};
-
-template <typename GfxFamily>
 class MockFlatBatchBufferHelper : public FlatBatchBufferHelperHw<GfxFamily> {
   public:
     using FlatBatchBufferHelperHw<GfxFamily>::FlatBatchBufferHelperHw;
@@ -230,4 +144,3 @@ class MockFlatBatchBufferHelper : public FlatBatchBufferHelperHw<GfxFamily> {
                 (uint32_t rootDeviceIndex, BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode),
                 (override));
 };
-

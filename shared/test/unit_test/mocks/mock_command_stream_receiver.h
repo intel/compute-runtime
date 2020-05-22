@@ -15,6 +15,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/unit_test/helpers/dispatch_flags_helper.h"
 
 #include "gmock/gmock.h"
 
@@ -37,6 +38,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     uint32_t waitForCompletionWithTimeoutCalled = 0;
     bool multiOsContextCapable = false;
     bool downloadAllocationsCalled = false;
+    bool programHardwareContextCalled = false;
 
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
@@ -76,8 +78,103 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         downloadAllocationsCalled = true;
     }
 
-    void programHardwareContext() override {}
+    void programHardwareContext(LinearStream &cmdStream) override {
+        programHardwareContextCalled = true;
+    }
     size_t getCmdsSizeForHardwareContext() const override {
         return 0;
     }
+};
+
+template <typename GfxFamily>
+class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
+  public:
+    using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw;
+    using CommandStreamReceiverHw<GfxFamily>::csrSizeRequestFlags;
+    using CommandStreamReceiverHw<GfxFamily>::flushStamp;
+    using CommandStreamReceiverHw<GfxFamily>::programL3;
+    using CommandStreamReceiverHw<GfxFamily>::programVFEState;
+    using CommandStreamReceiver::commandStream;
+    using CommandStreamReceiver::dispatchMode;
+    using CommandStreamReceiver::globalFenceAllocation;
+    using CommandStreamReceiver::isPreambleSent;
+    using CommandStreamReceiver::lastSentCoherencyRequest;
+    using CommandStreamReceiver::mediaVfeStateDirty;
+    using CommandStreamReceiver::nTo1SubmissionModelEnabled;
+    using CommandStreamReceiver::pageTableManagerInitialized;
+    using CommandStreamReceiver::requiredScratchSize;
+    using CommandStreamReceiver::requiredThreadArbitrationPolicy;
+    using CommandStreamReceiver::taskCount;
+    using CommandStreamReceiver::taskLevel;
+    using CommandStreamReceiver::timestampPacketWriteEnabled;
+
+    MockCsrHw2(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(executionEnvironment, rootDeviceIndex) {}
+
+    SubmissionAggregator *peekSubmissionAggregator() {
+        return this->submissionAggregator.get();
+    }
+
+    void overrideSubmissionAggregator(SubmissionAggregator *newSubmissionsAggregator) {
+        this->submissionAggregator.reset(newSubmissionsAggregator);
+    }
+
+    uint64_t peekTotalMemoryUsed() {
+        return this->totalMemoryUsed;
+    }
+
+    bool peekMediaVfeStateDirty() const { return mediaVfeStateDirty; }
+
+    bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+        flushCalledCount++;
+        if (recordedCommandBuffer) {
+            recordedCommandBuffer->batchBuffer = batchBuffer;
+        }
+        copyOfAllocations = allocationsForResidency;
+        flushStamp->setStamp(flushStamp->peekStamp() + 1);
+        return true;
+    }
+
+    CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
+                              const IndirectHeap &dsh, const IndirectHeap &ioh,
+                              const IndirectHeap &ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+        passedDispatchFlags = dispatchFlags;
+
+        recordedCommandBuffer = std::unique_ptr<CommandBuffer>(new CommandBuffer(device));
+        auto completionStamp = CommandStreamReceiverHw<GfxFamily>::flushTask(commandStream, commandStreamStart,
+                                                                             dsh, ioh, ssh, taskLevel, dispatchFlags, device);
+
+        if (storeFlushedTaskStream && commandStream.getUsed() > commandStreamStart) {
+            storedTaskStreamSize = commandStream.getUsed() - commandStreamStart;
+            // Overfetch to allow command parser verify if "big" command is programmed at the end of allocation
+            auto overfetchedSize = storedTaskStreamSize + MemoryConstants::cacheLineSize;
+            storedTaskStream.reset(new uint8_t[overfetchedSize]);
+            memset(storedTaskStream.get(), 0, overfetchedSize);
+            memcpy_s(storedTaskStream.get(), storedTaskStreamSize,
+                     ptrOffset(commandStream.getCpuBase(), commandStreamStart), storedTaskStreamSize);
+        }
+
+        return completionStamp;
+    }
+
+    uint32_t blitBuffer(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking) override {
+        if (!skipBlitCalls) {
+            return CommandStreamReceiverHw<GfxFamily>::blitBuffer(blitPropertiesContainer, blocking);
+        }
+        return taskCount;
+    }
+
+    void programHardwareContext(LinearStream &cmdStream) override {
+        programHardwareContextCalled = true;
+    }
+
+    bool skipBlitCalls = false;
+    bool storeFlushedTaskStream = false;
+    std::unique_ptr<uint8_t> storedTaskStream;
+    size_t storedTaskStreamSize = 0;
+
+    int flushCalledCount = 0;
+    std::unique_ptr<CommandBuffer> recordedCommandBuffer = nullptr;
+    ResidencyContainer copyOfAllocations;
+    DispatchFlags passedDispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    bool programHardwareContextCalled = false;
 };

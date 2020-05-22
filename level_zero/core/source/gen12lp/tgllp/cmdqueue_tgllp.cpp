@@ -15,7 +15,7 @@
 #include "igfxfmid.h"
 
 namespace L0 {
-
+template struct CommandQueueHw<IGFX_GEN12LP_CORE>;
 static CommandQueuePopulateFactory<IGFX_TIGERLAKE_LP, CommandQueueHw<IGFX_GEN12LP_CORE>>
     populateTGLLP;
 

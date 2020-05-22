@@ -15,7 +15,7 @@
 #include "igfxfmid.h"
 
 namespace L0 {
-
+template struct CommandQueueHw<IGFX_GEN9_CORE>;
 static CommandQueuePopulateFactory<IGFX_SKYLAKE, CommandQueueHw<IGFX_GEN9_CORE>> populateSKL;
 
 } // namespace L0

@@ -530,7 +530,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return CommandStreamReceiverType::CSR_HW;
     }
 
-    void programHardwareContext() override {}
+    void programHardwareContext(LinearStream &cmdStream) override {}
     size_t getCmdsSizeForHardwareContext() const override {
         return 0;
     }

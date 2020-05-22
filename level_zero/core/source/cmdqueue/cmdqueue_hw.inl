@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
@@ -126,6 +127,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     size_t linearStreamSizeEstimate = totalCmdBuffers * sizeof(MI_BATCH_BUFFER_START);
+    linearStreamSizeEstimate += csr->getCmdsSizeForHardwareContext();
 
     if (directSubmissionEnabled) {
         linearStreamSizeEstimate += sizeof(MI_BATCH_BUFFER_START);
@@ -174,6 +176,13 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     size_t padding = alignedSize - linearStreamSizeEstimate;
     reserveLinearStreamSize(alignedSize);
     NEO::LinearStream child(commandStream->getSpace(alignedSize), alignedSize);
+
+    const auto globalFenceAllocation = csr->getGlobalFenceAllocation();
+    if (globalFenceAllocation) {
+        residencyContainer.push_back(globalFenceAllocation);
+    }
+
+    csr->programHardwareContext(child);
 
     if (!isCopyOnlyCommandQueue) {
         if (!gpgpuEnabled) {

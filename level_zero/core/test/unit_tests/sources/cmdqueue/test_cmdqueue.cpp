@@ -8,8 +8,8 @@
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
+#include "shared/test/unit_test/mocks/mock_command_stream_receiver.h"
 
-#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -215,6 +215,46 @@ HWTEST2_F(CommandQueueDestroy, whenCommandQueueDestroyIsCalledPrintPrintfOutputI
     EXPECT_EQ(0u, kernel.printPrintfOutputCalledTimes);
     commandQueue->destroy();
     EXPECT_EQ(1u, kernel.printPrintfOutputCalledTimes);
+}
+
+using CommandQueueCommands = Test<DeviceFixture>;
+HWTEST_F(CommandQueueCommands, givenCommandQueueWhenExecutingCommandListsThenHardwareContextIsProgrammedAndGlobalAllocationResident) {
+    const ze_command_queue_desc_t desc = {
+        ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT,
+        ZE_COMMAND_QUEUE_FLAG_NONE,
+        ZE_COMMAND_QUEUE_MODE_DEFAULT,
+        ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
+        0};
+
+    MockCsrHw2<FamilyType> csr(*neoDevice->getExecutionEnvironment(), 0);
+    csr.initializeTagAllocation();
+    csr.setupContext(*neoDevice->getDefaultEngine().osContext);
+
+    L0::CommandQueue *commandQueue = CommandQueue::create(productFamily,
+                                                          device,
+                                                          &csr,
+                                                          &desc,
+                                                          true);
+    ASSERT_NE(nullptr, commandQueue);
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, true));
+    auto commandListHandle = commandList->toHandle();
+    auto status = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+
+    auto globalFence = csr.getGlobalFenceAllocation();
+    if (globalFence) {
+        bool found = false;
+        for (auto alloc : csr.copyOfAllocations) {
+            if (alloc == globalFence) {
+                found = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(found);
+    }
+    EXPECT_EQ(status, ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(csr.programHardwareContextCalled);
+    commandQueue->destroy();
 }
 
 } // namespace ult

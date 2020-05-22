@@ -143,8 +143,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlCmd(
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programHardwareContext() {
-    programEnginePrologue(commandStream);
+void CommandStreamReceiverHw<GfxFamily>::programHardwareContext(LinearStream &cmdStream) {
+    programEnginePrologue(cmdStream);
 }
 
 template <typename GfxFamily>
@@ -294,7 +294,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         pageTableManagerInitialized = executionEnvironment.rootDeviceEnvironments[device.getRootDeviceIndex()]->pageTableManager->initPageTableManagerRegisters(this);
     }
 
-    programHardwareContext();
+    programHardwareContext(commandStreamCSR);
     programComputeMode(commandStreamCSR, dispatchFlags);
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);

@@ -7,9 +7,9 @@
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/test/unit_test/helpers/dispatch_flags_helper.h"
 
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/helpers/dispatch_flags_helper.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "test.h"
 
