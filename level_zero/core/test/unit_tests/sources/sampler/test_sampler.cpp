@@ -37,7 +37,15 @@ class SamplerCreateTest
     : public Test<DeviceFixture>,
       public ::testing::WithParamInterface<std::tuple<ze_sampler_address_mode_t,
                                                       ze_sampler_filter_mode_t,
-                                                      ze_bool_t>> {};
+                                                      ze_bool_t>> {
+  public:
+    void SetUp() {
+        Test<DeviceFixture>::SetUp();
+    }
+    void TearDown() {
+        Test<DeviceFixture>::TearDown();
+    }
+};
 
 HWTEST2_P(SamplerCreateTest, givenDifferentDescriptorValuesThenSamplerIsCorrectlyCreated, SamplerCreateSupport) {
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;

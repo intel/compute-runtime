@@ -113,6 +113,7 @@ HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreat
 }
 
 class TestImageFormats : public DeviceFixture, public testing::TestWithParam<std::pair<ze_image_format_layout_t, ze_image_format_type_t>> {
+  public:
     void SetUp() override {
         DeviceFixture::SetUp();
     }

@@ -231,7 +231,21 @@ extern GFXCORE_FAMILY renderCoreFamily;
         template <unsigned int matcherOrdinal>                                                     \
         void checkForMatch(PRODUCT_FAMILY matchProduct);                                           \
                                                                                                    \
+        template <unsigned int matcherOrdinal>                                                     \
+        bool checkMatch(PRODUCT_FAMILY matchProduct);                                              \
+                                                                                                   \
+        void SetUp() override {                                                                    \
+            if (checkMatch<SupportedProductFamilies::size - 1u>(::productFamily)) {                \
+                parent_class::SetUp();                                                             \
+            }                                                                                      \
+        }                                                                                          \
+        void TearDown() override {                                                                 \
+            if (checkMatch<SupportedProductFamilies::size - 1u>(::productFamily)) {                \
+                parent_class::TearDown();                                                          \
+            }                                                                                      \
+        }                                                                                          \
         void TestBody() override;                                                                  \
+                                                                                                   \
         static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                      \
         GTEST_DISALLOW_COPY_AND_ASSIGN_(GTEST_TEST_CLASS_NAME_(test_suite_name, test_name));       \
     };                                                                                             \
@@ -275,6 +289,32 @@ extern GFXCORE_FAMILY renderCoreFamily;
                                           GTEST_TEST_CLASS_NAME_(test_suite_name, test_name),      \
                                           MatcherFalse>::type;                                     \
             Matcher::template matched<productFamily>();                                            \
+        }                                                                                          \
+    }                                                                                              \
+    template <unsigned int matcherOrdinal>                                                         \
+    bool GTEST_TEST_CLASS_NAME_(test_suite_name,                                                   \
+                                test_name)::checkMatch(PRODUCT_FAMILY matchProduct) {              \
+        const PRODUCT_FAMILY productFamily = At<ContainerType, matcherOrdinal>::productFamily;     \
+                                                                                                   \
+        if (matchProduct == productFamily) {                                                       \
+            const bool isMatched = MatcherType::isMatched<productFamily>();                        \
+            return isMatched;                                                                      \
+        } else {                                                                                   \
+            return checkMatch<matcherOrdinal - 1u>(matchProduct);                                  \
+        }                                                                                          \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
+    bool GTEST_TEST_CLASS_NAME_(test_suite_name,                                                   \
+                                test_name)::checkMatch<0>(PRODUCT_FAMILY matchProduct) {           \
+        const int matcherOrdinal = 0u;                                                             \
+        const PRODUCT_FAMILY productFamily = At<ContainerType, matcherOrdinal>::productFamily;     \
+                                                                                                   \
+        if (matchProduct == productFamily) {                                                       \
+            const bool isMatched = MatcherType::isMatched<productFamily>();                        \
+            return isMatched;                                                                      \
+        } else {                                                                                   \
+            return false;                                                                          \
         }                                                                                          \
     }                                                                                              \
                                                                                                    \
@@ -600,7 +640,21 @@ extern GFXCORE_FAMILY renderCoreFamily;
         template <unsigned int matcherOrdinal>                                                                    \
         void checkForMatch(PRODUCT_FAMILY matchProduct);                                                          \
                                                                                                                   \
-        virtual void TestBody();                                                                                  \
+        template <unsigned int matcherOrdinal>                                                                    \
+        bool checkMatch(PRODUCT_FAMILY matchProduct);                                                             \
+                                                                                                                  \
+        void SetUp() override {                                                                                   \
+            if (checkMatch<SupportedProductFamilies::size - 1u>(::productFamily)) {                               \
+                test_suite_name::SetUp();                                                                         \
+            }                                                                                                     \
+        }                                                                                                         \
+        void TearDown() override {                                                                                \
+            if (checkMatch<SupportedProductFamilies::size - 1u>(::productFamily)) {                               \
+                test_suite_name::TearDown();                                                                      \
+            }                                                                                                     \
+        }                                                                                                         \
+                                                                                                                  \
+        void TestBody() override;                                                                                 \
                                                                                                                   \
         static int AddToRegistry() {                                                                              \
             ::testing::UnitTest::GetInstance()                                                                    \
@@ -646,6 +700,32 @@ extern GFXCORE_FAMILY renderCoreFamily;
                                           GTEST_TEST_CLASS_NAME_(test_suite_name, test_name),                     \
                                           MatcherFalse>::type;                                                    \
             Matcher::template matched<productFamily>();                                                           \
+        }                                                                                                         \
+    }                                                                                                             \
+    template <unsigned int matcherOrdinal>                                                                        \
+    bool GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                  \
+                                test_name)::checkMatch(PRODUCT_FAMILY matchProduct) {                             \
+        const PRODUCT_FAMILY productFamily = At<ContainerType, matcherOrdinal>::productFamily;                    \
+                                                                                                                  \
+        if (matchProduct == productFamily) {                                                                      \
+            const bool isMatched = MatcherType::isMatched<productFamily>();                                       \
+            return isMatched;                                                                                     \
+        } else {                                                                                                  \
+            return checkMatch<matcherOrdinal - 1u>(matchProduct);                                                 \
+        }                                                                                                         \
+    }                                                                                                             \
+                                                                                                                  \
+    template <>                                                                                                   \
+    bool GTEST_TEST_CLASS_NAME_(test_suite_name,                                                                  \
+                                test_name)::checkMatch<0>(PRODUCT_FAMILY matchProduct) {                          \
+        const int matcherOrdinal = 0u;                                                                            \
+        const PRODUCT_FAMILY productFamily = At<ContainerType, matcherOrdinal>::productFamily;                    \
+                                                                                                                  \
+        if (matchProduct == productFamily) {                                                                      \
+            const bool isMatched = MatcherType::isMatched<productFamily>();                                       \
+            return isMatched;                                                                                     \
+        } else {                                                                                                  \
+            return false;                                                                                         \
         }                                                                                                         \
     }                                                                                                             \
                                                                                                                   \

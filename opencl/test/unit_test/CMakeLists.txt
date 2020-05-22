@@ -188,7 +188,7 @@ set_target_properties(unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER
 set_target_properties(prepare_test_kernels PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 set_target_properties(run_unit_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})
 
-target_include_directories(igdrcl_tests BEFORE PRIVATE ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX})
+target_include_directories(igdrcl_tests BEFORE PRIVATE ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros/header${BRANCH_DIR_SUFFIX})
 
 if(NOT DEFINED cloc_cmd_prefix)
   if(WIN32)

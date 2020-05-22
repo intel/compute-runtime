@@ -6,6 +6,7 @@
 
 set(NEO_CORE_test_macros
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/header${BRANCH_DIR_SUFFIX}/test.h
   ${CMAKE_CURRENT_SOURCE_DIR}/test_checks_shared.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_checks_shared.h
 )

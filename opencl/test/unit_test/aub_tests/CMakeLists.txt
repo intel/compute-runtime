@@ -81,6 +81,6 @@ else()
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
   )
 endif()
-target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX})
+target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros/header${BRANCH_DIR_SUFFIX})
 
 create_project_source_tree(igdrcl_aub_tests)

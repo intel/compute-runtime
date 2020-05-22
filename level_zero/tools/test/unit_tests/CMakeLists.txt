@@ -71,7 +71,7 @@ target_include_directories(${TARGET_NAME}
     BEFORE
     PRIVATE
         $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/tools
-        ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros${BRANCH_DIR_SUFFIX}
+        ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros/header${BRANCH_DIR_SUFFIX}
 )
 
 if (UNIX)
