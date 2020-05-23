@@ -5,16 +5,9 @@
  *
  */
 
-#include "sysman/memory/os_memory.h"
+#include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
 
 namespace L0 {
-
-class LinuxMemoryImp : public OsMemory {
-  public:
-    ze_result_t getAllocSize(uint64_t &allocSize) override;
-    ze_result_t getMaxSize(uint64_t &maxSize) override;
-    ze_result_t getMemHealth(zet_mem_health_t &memHealth) override;
-};
 
 ze_result_t LinuxMemoryImp::getAllocSize(uint64_t &allocSize) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
