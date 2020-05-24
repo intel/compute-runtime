@@ -170,5 +170,12 @@ TEST_F(TimestampEventCreate, givenSingleTimestampEventThenAllocationSizeCreatedF
     EXPECT_GE(minTimestampEventAllocation, allocation->getUnderlyingBufferSize());
 }
 
+TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsOfPacketTagBufferType) {
+    auto allocation = &eventPool->getAllocation();
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, allocation->getAllocationType());
+}
+
 } // namespace ult
 } // namespace L0

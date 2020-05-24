@@ -99,7 +99,8 @@ struct EventPoolImp : public EventPool {
 
         NEO::AllocationProperties properties(
             device->getRootDeviceIndex(), count * eventSize,
-            NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+            isEventPoolUsedForTimestamp ? NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
+                                        : NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
         properties.alignment = MemoryConstants::cacheLineSize;
         eventPoolAllocation = driver->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
