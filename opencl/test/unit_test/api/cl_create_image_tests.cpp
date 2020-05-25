@@ -55,6 +55,7 @@ struct clCreateImageTests : public ApiFixture<>,
 typedef clCreateImageTests<::testing::Test> clCreateImageTest;
 
 TEST_F(clCreateImageTest, GivenNullHostPtrWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_WRITE,
@@ -70,6 +71,7 @@ TEST_F(clCreateImageTest, GivenNullHostPtrWhenCreatingImageThenImageIsCreatedAnd
 }
 
 HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingTiledImageThenInvalidOperationErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0)};
     MockContext mockContext{&mockClDevice};
 
@@ -99,6 +101,7 @@ HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingTiledI
 }
 
 HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingNonTiledImageThenCreate) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0)};
     MockContext mockContext{&mockClDevice};
 
@@ -127,7 +130,68 @@ HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingNonTil
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingImageWithPropertiesINTELThenImageCreatedAndSuccessIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get(), 0)};
+    MockContext mockContext{&mockClDevice};
+
+    mockClDevice.sharedDeviceInfo.imageSupport = CL_FALSE;
+    cl_bool imageSupportInfo = CL_TRUE;
+    auto status = clGetDeviceInfo(&mockClDevice, CL_DEVICE_IMAGE_SUPPORT, sizeof(imageSupportInfo), &imageSupportInfo, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+    cl_bool expectedValue = CL_FALSE;
+    EXPECT_EQ(expectedValue, imageSupportInfo);
+
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_height = 1;
+    DebugManager.flags.ForceLinearImages.set(true);
+
+    auto image = clCreateImageWithPropertiesINTEL(
+        &mockContext,
+        nullptr,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, image);
+
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingImagesWithPropertiesAndWithoutThenInvalidOperationErrorIsReturned) {
+    auto hardwareInfo = *defaultHwInfo;
+    hardwareInfo.capabilityTable.supportsImages = false;
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0));
+    cl_device_id deviceId = pClDevice.get();
+    auto pContext = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
+
+    auto image = clCreateImage(pContext.get(), CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    EXPECT_EQ(nullptr, image);
+
+    auto imageWithProperties = clCreateImageWithProperties(pContext.get(), nullptr, CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
+    EXPECT_EQ(nullptr, imageWithProperties);
+}
+
+TEST_F(clCreateImageTest, GivenNullContextWhenCreatingImageWithPropertiesThenInvalidContextErrorIsReturned) {
+    auto image = clCreateImageWithProperties(
+        nullptr,
+        nullptr,
+        CL_MEM_READ_WRITE,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+    ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
+    EXPECT_EQ(nullptr, image);
+}
+
 TEST_F(clCreateImageTest, GivenNonNullHostPtrAndAlignedRowPitchWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     char hostPtr[4096];
     imageDesc.image_row_pitch = 128;
 
@@ -146,6 +210,7 @@ TEST_F(clCreateImageTest, GivenNonNullHostPtrAndAlignedRowPitchWhenCreatingImage
 }
 
 TEST_F(clCreateImageTest, GivenNonNullHostPtrAndUnalignedRowPitchWhenCreatingImageThenInvalidImageDescriptotErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     char hostPtr[4096];
     imageDesc.image_row_pitch = 129;
     auto image = clCreateImage(
@@ -160,6 +225,7 @@ TEST_F(clCreateImageTest, GivenNonNullHostPtrAndUnalignedRowPitchWhenCreatingIma
 }
 
 TEST_F(clCreateImageTest, GivenNonNullHostPtrAndSmallRowPitchWhenCreatingImageThenInvalidImageDescriptorErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     char hostPtr[4096];
     imageDesc.image_row_pitch = 4;
     auto image = clCreateImage(
@@ -174,6 +240,7 @@ TEST_F(clCreateImageTest, GivenNonNullHostPtrAndSmallRowPitchWhenCreatingImageTh
 }
 
 TEST_F(clCreateImageTest, GivenUnrestrictedIntelFlagWhenCreatingImageWithInvalidFlagCombinationThenImageIsCreatedAndSuccessReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL;
     auto image = clCreateImage(
         pContext,
@@ -191,6 +258,7 @@ TEST_F(clCreateImageTest, GivenUnrestrictedIntelFlagWhenCreatingImageWithInvalid
 }
 
 TEST_F(clCreateImageTest, GivenNotNullHostPtrAndNoHostPtrFlagWhenCreatingImageThenInvalidHostPtrErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     char hostPtr[4096];
     auto image = clCreateImage(
         pContext,
@@ -204,6 +272,7 @@ TEST_F(clCreateImageTest, GivenNotNullHostPtrAndNoHostPtrFlagWhenCreatingImageTh
 }
 
 TEST_F(clCreateImageTest, GivenInvalidFlagBitsWhenCreatingImageThenInvalidValueErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     cl_mem_flags flags = (1 << 12);
     auto image = clCreateImage(
         pContext,
@@ -221,6 +290,7 @@ TEST_F(clCreateImageTest, GivenInvalidFlagBitsWhenCreatingImageThenInvalidValueE
 }
 
 TEST_F(clCreateImageTest, GivenInvalidFlagBitsWhenCreatingImageFromAnotherImageThenInvalidValueErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     imageFormat.image_channel_order = CL_NV12_INTEL;
     auto image = clCreateImage(
         pContext,
@@ -255,6 +325,7 @@ TEST_F(clCreateImageTest, GivenInvalidFlagBitsWhenCreatingImageFromAnotherImageT
 }
 
 TEST_F(clCreateImageTest, GivenInvalidRowPitchWhenCreatingImageThenInvalidImageDescriptorErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     imageDesc.image_row_pitch = 655;
     auto image = clCreateImage(
         pContext,
@@ -271,6 +342,7 @@ TEST_F(clCreateImageTest, GivenInvalidRowPitchWhenCreatingImageThenInvalidImageD
 }
 
 TEST_F(clCreateImageTest, GivenNullHostPtrAndCopyHostPtrFlagWhenCreatingImageThenInvalidHostPtrErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
@@ -283,6 +355,7 @@ TEST_F(clCreateImageTest, GivenNullHostPtrAndCopyHostPtrFlagWhenCreatingImageThe
 }
 
 TEST_F(clCreateImageTest, GivenNullHostPtrAndMemUseHostPtrFlagWhenCreatingImageThenInvalidHostPtrErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
@@ -295,6 +368,7 @@ TEST_F(clCreateImageTest, GivenNullHostPtrAndMemUseHostPtrFlagWhenCreatingImageT
 }
 
 TEST_F(clCreateImageTest, GivenNullHostPtrAndNonZeroRowPitchWhenCreatingImageThenInvalidImageDescriptorErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     imageDesc.image_row_pitch = 4;
     auto image = clCreateImage(
         pContext,
@@ -322,9 +396,9 @@ TEST_F(clCreateImageTest, GivenDeviceNotSupportingImagesWhenCreatingImageFromBuf
     imageDesc.mem_object = buffer;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
 
-    auto image = clCreateImage(
+    auto image = clCreateImageWithPropertiesINTEL(
         pContext.get(),
-        CL_MEM_READ_WRITE,
+        nullptr,
         &imageFormat,
         &imageDesc,
         nullptr,
@@ -367,6 +441,7 @@ TEST_F(clCreateImageTest, GivenNonZeroPitchWhenCreatingImageFromBufferThenImageI
 }
 
 TEST_F(clCreateImageTest, GivenNotNullHostPtrAndRowPitchIsNotGreaterThanWidthTimesElementSizeWhenCreatingImageThenInvalidImageDescriptorErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     imageDesc.image_row_pitch = 64;
     auto image = clCreateImage(
         pContext,
@@ -437,6 +512,7 @@ TEST_F(clCreateImageTest, WhenCreatingImageWithPropertiesThenParametersAreCorrec
 }
 
 TEST_F(clCreateImageTest, WhenCreatingImageWithPropertiesThenErrorCodeIsCorrectlySet) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     VariableBackup<ImageFunctions::ValidateAndCreateImageFunc> imageCreateBackup{&ImageFunctions::validateAndCreateImage};
 
     cl_mem_properties *properties = nullptr;
@@ -466,6 +542,7 @@ TEST_F(clCreateImageTest, WhenCreatingImageWithPropertiesThenErrorCodeIsCorrectl
 }
 
 TEST_F(clCreateImageTest, GivenImageCreatedWithNullPropertiesWhenQueryingPropertiesThenNothingIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     cl_int retVal = CL_SUCCESS;
     auto image = clCreateImageWithProperties(pContext, nullptr, 0, &imageFormat, &imageDesc, nullptr, &retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -480,6 +557,7 @@ TEST_F(clCreateImageTest, GivenImageCreatedWithNullPropertiesWhenQueryingPropert
 }
 
 TEST_F(clCreateImageTest, WhenCreatingImageWithPropertiesThenPropertiesAreCorrectlyStored) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     cl_int retVal = CL_SUCCESS;
     cl_mem_properties properties[5];
     size_t propertiesSize;
@@ -508,6 +586,7 @@ TEST_F(clCreateImageTest, WhenCreatingImageWithPropertiesThenPropertiesAreCorrec
 
 typedef clCreateImageTests<::testing::Test> clCreateImageTestYUV;
 TEST_F(clCreateImageTestYUV, GivenInvalidGlagWhenCreatingYuvImageThenInvalidValueErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     imageFormat.image_channel_order = CL_YUYV_INTEL;
     auto image = clCreateImage(
         pContext,
@@ -524,6 +603,7 @@ TEST_F(clCreateImageTestYUV, GivenInvalidGlagWhenCreatingYuvImageThenInvalidValu
 }
 
 TEST_F(clCreateImageTestYUV, Given1DImageTypeWhenCreatingYuvImageThenInvalidImageDescriptorErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     imageFormat.image_channel_order = CL_YUYV_INTEL;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     auto image = clCreateImage(
@@ -562,6 +642,7 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
                         ::testing::ValuesIn(validFlags));
 
 TEST_P(clCreateImageValidFlags, GivenValidFlagsWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     cl_mem_flags flags = GetParam();
     std::unique_ptr<char[]> ptr;
     char *hostPtr = nullptr;
@@ -607,6 +688,7 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
                         ::testing::ValuesIn(invalidFlagsCombinations));
 
 TEST_P(clCreateImageInvalidFlags, GivenInvalidFlagsCombinationsWhenCreatingImageThenInvalidValueErrorIsReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
 
     char ptr[10];
     imageDesc.image_row_pitch = 128;
@@ -763,7 +845,7 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
                         ::testing::ValuesIn(invalidFlagsAndParentFlags));
 
 TEST_P(clCreateImageInvalidFlagsAndParentFlagsCombinations, GivenInvalidFlagsAndParentFlagsWhenCreatingImageThenInvalidMemObjectErrorIsReturned) {
-
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     imageFormat.image_channel_order = CL_NV12_INTEL;
     ImageFlags imageFlags = GetParam();
     cl_mem_flags parentFlags = imageFlags.parentFlags;
@@ -815,7 +897,7 @@ INSTANTIATE_TEST_CASE_P(validImage2DSizes,
                         ::testing::ValuesIn(validImage2DSizes));
 
 TEST_P(clCreateImageValidSizesTest, GivenValidSizesWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
-
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     ImageSizes sizes = GetParam();
     imageDesc.image_width = sizes.width;
     imageDesc.image_height = sizes.height;
@@ -837,6 +919,7 @@ TEST_P(clCreateImageValidSizesTest, GivenValidSizesWhenCreatingImageThenImageIsC
 typedef clCreateImageTests<::testing::Test> clCreateImage2DTest;
 
 TEST_F(clCreateImage2DTest, GivenValidParametersWhenCreating2DImageThenImageIsCreatedAndSuccessReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     auto image = clCreateImage2D(
         pContext,
         CL_MEM_READ_WRITE,
@@ -855,6 +938,7 @@ TEST_F(clCreateImage2DTest, GivenValidParametersWhenCreating2DImageThenImageIsCr
 }
 
 TEST_F(clCreateImage2DTest, GivenNoPtrToReturnValueWhenCreating2DImageThenImageIsCreated) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     auto image = clCreateImage2D(
         pContext,
         CL_MEM_READ_WRITE,
@@ -886,9 +970,30 @@ TEST_F(clCreateImage2DTest, GivenInvalidContextsWhenCreating2DImageThenInvalidCo
     EXPECT_EQ(nullptr, image);
 }
 
+TEST_F(clCreateImage2DTest, GivenDeviceThatDoesntSupportImagesWhenCreatingImagesWithclCreateImage2DThenInvalidOperationErrorIsReturned) {
+    auto hardwareInfo = *defaultHwInfo;
+    hardwareInfo.capabilityTable.supportsImages = false;
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0));
+    cl_device_id deviceId = pClDevice.get();
+    auto pContext = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
+
+    auto image = clCreateImage2D(
+        pContext.get(),
+        CL_MEM_READ_WRITE,
+        &imageFormat,
+        10,
+        10,
+        0,
+        0,
+        &retVal);
+    ASSERT_EQ(nullptr, image);
+    ASSERT_EQ(CL_INVALID_OPERATION, retVal);
+}
+
 typedef clCreateImageTests<::testing::Test> clCreateImage3DTest;
 
 TEST_F(clCreateImage3DTest, GivenValidParametersWhenCreating3DImageThenImageIsCreatedAndSuccessReturned) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     auto image = clCreateImage3D(
         pContext,
         CL_MEM_READ_WRITE,
@@ -909,6 +1014,7 @@ TEST_F(clCreateImage3DTest, GivenValidParametersWhenCreating3DImageThenImageIsCr
 }
 
 TEST_F(clCreateImage3DTest, GivenNoPtrToReturnValueWhenCreating3DImageThenImageIsCreated) {
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     auto image = clCreateImage3D(
         pContext,
         CL_MEM_READ_WRITE,
@@ -942,6 +1048,28 @@ TEST_F(clCreateImage3DTest, GivenInvalidContextsWhenCreating3DImageThenInvalidCo
 
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
     EXPECT_EQ(nullptr, image);
+}
+
+TEST_F(clCreateImage3DTest, GivenDeviceThatDoesntSupportImagesWhenCreatingImagesWithclCreateImage3DThenInvalidOperationErrorIsReturned) {
+    auto hardwareInfo = *defaultHwInfo;
+    hardwareInfo.capabilityTable.supportsImages = false;
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, 0));
+    cl_device_id deviceId = pClDevice.get();
+    auto pContext = std::unique_ptr<MockContext>(Context::create<MockContext>(nullptr, ClDeviceVector(&deviceId, 1), nullptr, nullptr, retVal));
+
+    auto image = clCreateImage3D(
+        pContext.get(),
+        CL_MEM_READ_WRITE,
+        &imageFormat,
+        10,
+        10,
+        1,
+        0,
+        0,
+        0,
+        &retVal);
+    ASSERT_EQ(nullptr, image);
+    ASSERT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
 using clCreateImageWithPropertiesINTELTest = clCreateImageTest;
@@ -1166,13 +1294,7 @@ struct clCreateNon2dImageFromImageTest : public clCreateImageFromImageTest,
                                          public ::testing::WithParamInterface<uint32_t /*image type*/> {
     void SetUp() override {
         clCreateImageFromImageTest::SetUp();
-        image = clCreateImage(
-            pContext,
-            CL_MEM_READ_ONLY,
-            &imageFormat,
-            &imageDesc,
-            nullptr,
-            &retVal);
+        image = ImageFunctions::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, image);
         imageDesc.mem_object = image;
@@ -1185,7 +1307,7 @@ struct clCreateNon2dImageFromImageTest : public clCreateImageFromImageTest,
 };
 
 TEST_P(clCreateNon2dImageFromImageTest, GivenImage2dWhenCreatingImageFromNon2dImageThenInvalidImageDescriptorErrorIsReturned) {
-
+    REQUIRE_IMAGE_SUPPORT_OR_SKIP(pContext);
     imageDesc.image_type = GetParam();
     auto imageFromImageObject = clCreateImage(
         pContext,

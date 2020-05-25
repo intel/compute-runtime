@@ -197,6 +197,8 @@ class Image : public MemObj {
     bool isImageFromBuffer() const { return castToObject<Buffer>(static_cast<cl_mem>(associatedMemObject)) ? true : false; }
     bool isImageFromImage() const { return castToObject<Image>(static_cast<cl_mem>(associatedMemObject)) ? true : false; }
 
+    static cl_int checkIfDeviceSupportsImages(cl_context context);
+
   protected:
     Image(Context *context,
           const MemoryProperties &memoryProperties,

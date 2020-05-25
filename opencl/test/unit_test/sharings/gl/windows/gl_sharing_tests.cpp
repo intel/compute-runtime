@@ -874,6 +874,9 @@ TEST_F(glSharingTests, givenContextWhenCreateFromSharedBufferThenSharedImageIsRe
     ASSERT_NE(nullptr, glBuffer);
     auto parentbBuffer = castToObject<Buffer>(glBuffer);
 
+    auto hardwareInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hardwareInfo->capabilityTable.supportsImages = true;
+
     cl_image_format format = {CL_RGBA, CL_FLOAT};
     cl_image_desc image_desc = {CL_MEM_OBJECT_IMAGE1D_BUFFER, 1, 1, 1, 1, 0, 0, 0, 0, {glBuffer}};
     cl_mem image = clCreateImage(&context, CL_MEM_READ_WRITE, &format, &image_desc, 0, &retVal);

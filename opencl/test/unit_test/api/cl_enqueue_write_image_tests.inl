@@ -8,6 +8,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/surface_formats.h"
+#include "opencl/source/mem_obj/image.h"
 
 #include "cl_api_tests.h"
 
@@ -83,13 +84,7 @@ TEST_F(clEnqueueWriteImageTests, GivenNullImageWhenWritingImageThenInvalidMemObj
 
 TEST_F(clEnqueueWriteImageTests, GivenValidParametersWhenWritingImageThenSuccessIsReturned) {
     imageFormat.image_channel_order = CL_RGBA;
-    auto image = clCreateImage(
-        pContext,
-        CL_MEM_READ_WRITE,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {2, 2, 0};
@@ -115,13 +110,7 @@ TEST_F(clEnqueueWriteImageTests, GivenValidParametersWhenWritingImageThenSuccess
 typedef clEnqueueWriteImageTests clEnqueueWriteImageYUV;
 
 TEST_F(clEnqueueWriteImageYUV, GivenValidParametersWhenWritingYuvImageThenSuccessIsReturned) {
-    auto image = clCreateImage(
-        pContext,
-        CL_MEM_READ_ONLY,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {2, 2, 0};
@@ -145,13 +134,7 @@ TEST_F(clEnqueueWriteImageYUV, GivenValidParametersWhenWritingYuvImageThenSucces
 }
 
 TEST_F(clEnqueueWriteImageYUV, GivenInvalidOriginWhenWritingYuvImageThenInvalidValueErrorIsReturned) {
-    auto image = clCreateImage(
-        pContext,
-        CL_MEM_READ_ONLY,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {1, 2, 0};
@@ -174,13 +157,7 @@ TEST_F(clEnqueueWriteImageYUV, GivenInvalidOriginWhenWritingYuvImageThenInvalidV
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 TEST_F(clEnqueueWriteImageYUV, GivenInvalidRegionWhenWritingYuvImageThenInvalidValueErrorIsReturned) {
-    auto image = clCreateImage(
-        pContext,
-        CL_MEM_READ_ONLY,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {2, 2, 0};

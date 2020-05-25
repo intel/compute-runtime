@@ -834,9 +834,15 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
 
     cl_mem_properties *properties = nullptr;
     cl_mem_flags_intel flagsIntel = 0;
-    cl_mem image = ImageFunctions::validateAndCreateImage(context, properties, flags, flagsIntel, imageFormat, imageDesc, hostPtr, retVal);
 
-    ErrorCodeHelper err(errcodeRet, retVal);
+    retVal = Image::checkIfDeviceSupportsImages(context);
+
+    cl_mem image = nullptr;
+    if (retVal == CL_SUCCESS) {
+        image = ImageFunctions::validateAndCreateImage(context, properties, flags, flagsIntel, imageFormat, imageDesc, hostPtr, retVal);
+    }
+
+    ErrorCodeHelper{errcodeRet, retVal};
     DBG_LOG_INPUTS("image", image);
     TRACING_EXIT(clCreateImage, &image);
     return image;
@@ -866,7 +872,13 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
     API_ENTER(&retVal);
 
     cl_mem_flags_intel flagsIntel = 0;
-    cl_mem image = ImageFunctions::validateAndCreateImage(context, properties, flags, flagsIntel, imageFormat, imageDesc, hostPtr, retVal);
+
+    retVal = Image::checkIfDeviceSupportsImages(context);
+
+    cl_mem image = nullptr;
+    if (retVal == CL_SUCCESS) {
+        image = ImageFunctions::validateAndCreateImage(context, properties, flags, flagsIntel, imageFormat, imageDesc, hostPtr, retVal);
+    }
 
     ErrorCodeHelper{errcodeRet, retVal};
     DBG_LOG_INPUTS("image", image);
@@ -935,7 +947,13 @@ cl_mem CL_API_CALL clCreateImage2D(cl_context context,
 
     cl_mem_properties *properties = nullptr;
     cl_mem_flags_intel flagsIntel = 0;
-    cl_mem image2D = ImageFunctions::validateAndCreateImage(context, properties, flags, flagsIntel, imageFormat, &imageDesc, hostPtr, retVal);
+
+    retVal = Image::checkIfDeviceSupportsImages(context);
+
+    cl_mem image2D = nullptr;
+    if (retVal == CL_SUCCESS) {
+        image2D = ImageFunctions::validateAndCreateImage(context, properties, flags, flagsIntel, imageFormat, &imageDesc, hostPtr, retVal);
+    }
 
     ErrorCodeHelper{errcodeRet, retVal};
     DBG_LOG_INPUTS("image 2D", image2D);
@@ -981,7 +999,13 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
 
     cl_mem_properties *properties = nullptr;
     cl_mem_flags_intel intelFlags = 0;
-    cl_mem image3D = ImageFunctions::validateAndCreateImage(context, properties, flags, intelFlags, imageFormat, &imageDesc, hostPtr, retVal);
+
+    retVal = Image::checkIfDeviceSupportsImages(context);
+
+    cl_mem image3D = nullptr;
+    if (retVal == CL_SUCCESS) {
+        image3D = ImageFunctions::validateAndCreateImage(context, properties, flags, intelFlags, imageFormat, &imageDesc, hostPtr, retVal);
+    }
 
     ErrorCodeHelper{errcodeRet, retVal};
     DBG_LOG_INPUTS("image 3D", image3D);

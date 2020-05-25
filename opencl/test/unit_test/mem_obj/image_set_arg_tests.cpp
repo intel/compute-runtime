@@ -780,7 +780,9 @@ HWTEST_F(ImageSetArgTest, GivenImageFrom1dBufferWhenSettingKernelArgThenProperti
     cl_image_format imageFormat = {0};
     imageFormat.image_channel_data_type = CL_FLOAT;
     imageFormat.image_channel_order = CL_RGBA;
-    auto imageFromBuffer = clCreateImage(context, 0, &imageFormat, &imageDesc, nullptr, nullptr);
+    cl_int retVal;
+    auto imageFromBuffer = Image::validateAndCreateImage(context, nullptr, 0, 0, &imageFormat, &imageDesc, nullptr, retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, imageFromBuffer);
 
     retVal = clSetKernelArg(

@@ -86,13 +86,7 @@ TEST_F(clEnqueueCopyImageToBufferTests, GivenInvalidBufferWhenCopyingImageToBuff
 TEST_F(clEnqueueCopyImageToBufferTests, GivenValidParametersWhenCopyingImageToBufferThenSuccessIsReturned) {
 
     imageFormat.image_channel_order = CL_RGBA;
-    auto srcImage = clCreateImage(
-        pContext,
-        CL_MEM_READ_WRITE,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto srcImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, srcImage);
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
@@ -119,13 +113,7 @@ typedef clEnqueueCopyImageToBufferTests clEnqueueCopyImageToBufferYUVTests;
 
 TEST_F(clEnqueueCopyImageToBufferYUVTests, GivenValidParametersWhenCopyingYuvImageToBufferThenSuccessIsReturned) {
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
-    auto srcImage = clCreateImage(
-        pContext,
-        CL_MEM_READ_ONLY,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto srcImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, srcImage);
     const size_t origin[] = {2, 2, 0};
@@ -148,13 +136,7 @@ TEST_F(clEnqueueCopyImageToBufferYUVTests, GivenValidParametersWhenCopyingYuvIma
 
 TEST_F(clEnqueueCopyImageToBufferYUVTests, GivenInvalidOriginWhenCopyingYuvImageToBufferThenInvalidValueErrorIsReturned) {
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
-    auto srcImage = clCreateImage(
-        pContext,
-        CL_MEM_READ_ONLY,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto srcImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, srcImage);
     const size_t origin[] = {1, 2, 0};
@@ -177,13 +159,7 @@ TEST_F(clEnqueueCopyImageToBufferYUVTests, GivenInvalidOriginWhenCopyingYuvImage
 
 TEST_F(clEnqueueCopyImageToBufferYUVTests, GivenInvalidRegionWhenCopyingYuvImageToBufferThenInvalidValueErrorIsReturned) {
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
-    auto srcImage = clCreateImage(
-        pContext,
-        CL_MEM_READ_ONLY,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto srcImage = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, srcImage);
     const size_t origin[] = {2, 2, 0};

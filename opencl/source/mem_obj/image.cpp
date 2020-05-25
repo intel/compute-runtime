@@ -1453,4 +1453,19 @@ bool Image::hasValidParentImageFormat(const cl_image_format &imageFormat) const 
         return false;
     }
 }
+
+cl_int Image::checkIfDeviceSupportsImages(cl_context context) {
+    auto pContext = castToObject<Context>(context);
+    if (pContext != nullptr) {
+        auto capabilityTable = pContext->getDevice(0)->getHardwareInfo().capabilityTable;
+        if (!capabilityTable.supportsImages) {
+            return CL_INVALID_OPERATION;
+        }
+
+        return CL_SUCCESS;
+    }
+
+    return CL_INVALID_CONTEXT;
+}
+
 } // namespace NEO

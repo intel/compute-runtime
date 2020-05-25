@@ -33,6 +33,12 @@ bool supportsPipes(const ClDevice *pClDevice);
         GTEST_SKIP();                                      \
     }
 
+#define REQUIRE_IMAGE_SUPPORT_OR_SKIP(param)                                     \
+    auto hwInfo = castToObject<Context>(param)->getDevice(0)->getHardwareInfo(); \
+    if (!hwInfo.capabilityTable.supportsImages) {                                \
+        GTEST_SKIP();                                                            \
+    }
+
 #define REQUIRE_OCL_21_OR_SKIP(param)                     \
     if (NEO::TestChecks::supportsOcl21(param) == false) { \
         GTEST_SKIP();                                     \

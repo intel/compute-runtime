@@ -48,13 +48,7 @@ struct clEnqueueMapImageTests : public ApiFixture<>,
 };
 
 TEST_F(clEnqueueMapImageTests, GivenValidParametersWhenMappingImageThenSuccessIsReturned) {
-    auto image = clCreateImage(
-        pContext,
-        CL_MEM_READ_WRITE,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_WRITE, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
 
@@ -112,13 +106,7 @@ struct clEnqueueMapImageYUVTests : public ApiFixture<>,
 };
 
 TEST_F(clEnqueueMapImageYUVTests, GivenValidYuvImageWhenMappingImageThenSuccessIsReturned) {
-    auto image = clCreateImage(
-        pContext,
-        CL_MEM_READ_ONLY,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {2, 2, 0};
@@ -143,13 +131,7 @@ TEST_F(clEnqueueMapImageYUVTests, GivenValidYuvImageWhenMappingImageThenSuccessI
 }
 
 TEST_F(clEnqueueMapImageYUVTests, GivenInvalidOriginWhenMappingYuvImageThenInvalidValueErrorIsReturned) {
-    auto image = clCreateImage(
-        pContext,
-        CL_MEM_READ_ONLY,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {1, 2, 0};
@@ -174,13 +156,7 @@ TEST_F(clEnqueueMapImageYUVTests, GivenInvalidOriginWhenMappingYuvImageThenInval
 }
 
 TEST_F(clEnqueueMapImageYUVTests, GivenInvalidRegionWhenMappingYuvImageThenInvalidValueErrorIsReturned) {
-    auto image = clCreateImage(
-        pContext,
-        CL_MEM_READ_ONLY,
-        &imageFormat,
-        &imageDesc,
-        nullptr,
-        &retVal);
+    auto image = Image::validateAndCreateImage(pContext, nullptr, CL_MEM_READ_ONLY, 0, &imageFormat, &imageDesc, nullptr, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {2, 2, 0};
