@@ -13,6 +13,7 @@
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
 
+#include "opencl/source/command_stream/tbx_command_stream_receiver.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
@@ -128,6 +129,24 @@ HWTEST_F(DeviceTest, WhenDeviceIsCreatedThenActualEngineTypeIsSameAsDefault) {
 
     EXPECT_EQ(&device->getDefaultEngine().commandStreamReceiver->getOsContext(), device->getDefaultEngine().osContext);
     EXPECT_EQ(defaultEngineType, actualEngineType);
+}
+
+HWTEST_F(DeviceTest, givenNoHwCsrTypeAndModifiedDefaultEngineIndexWhenIsSimulationIsCalledThenTrueIsReturned) {
+    EXPECT_FALSE(pDevice->isSimulation());
+    auto csr = TbxCommandStreamReceiver::create("", false, *pDevice->executionEnvironment, 0);
+    pDevice->defaultEngineIndex = 1;
+    pDevice->resetCommandStreamReceiver(csr);
+
+    EXPECT_TRUE(pDevice->isSimulation());
+
+    std::array<CommandStreamReceiverType, 3> exptectedEngineTypes = {CommandStreamReceiverType::CSR_HW,
+                                                                     CommandStreamReceiverType::CSR_TBX,
+                                                                     CommandStreamReceiverType::CSR_HW};
+
+    for (uint32_t i = 0u; i < 3u; ++i) {
+        auto engineType = pDevice->engines[i].commandStreamReceiver->getType();
+        EXPECT_EQ(exptectedEngineTypes[i], engineType);
+    }
 }
 
 TEST(DeviceCleanup, givenDeviceWhenItIsDestroyedThenFlushBatchedSubmissionsIsCalled) {
