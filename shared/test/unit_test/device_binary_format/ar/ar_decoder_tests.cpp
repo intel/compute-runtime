@@ -119,7 +119,7 @@ TEST(ArDecoderDecodeAr, GivenValidArThenDecodingSucceeds) {
     EXPECT_TRUE(ar.longFileNamesEntry.fileName.empty());
     ASSERT_EQ(1U, ar.files.size());
     EXPECT_EQ(reinterpret_cast<ArFileEntryHeader *>(arStorage.data() + arMagic.size()), ar.files[0].fullHeader);
-    EXPECT_EQ("a", ar.files[0].fileName);
+    EXPECT_EQ(NEO::ConstStringRef("a"), ar.files[0].fileName);
     EXPECT_EQ(arStorage.data() + arMagic.size() + sizeof(ArFileEntryHeader), ar.files[0].fileData.begin());
     EXPECT_EQ(8U, ar.files[0].fileData.size());
 }
@@ -139,8 +139,8 @@ TEST(ArDecoderDecodeAr, GivenArWhenFileEntryHeaderHasEmptyIdentifierThenDecoding
     EXPECT_EQ(nullptr, ar.magic);
     EXPECT_EQ(0U, ar.files.size());
     EXPECT_EQ(nullptr, ar.longFileNamesEntry.fullHeader);
-    EXPECT_TRUE(decodeWarnings.empty());
-    EXPECT_FALSE(decodeErrors.empty());
+    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_FALSE(decodeErrors.empty()) << decodeErrors;
     EXPECT_STREQ("Corrupt AR archive - file entry does not have identifier : '/               '", decodeErrors.c_str());
 }
 

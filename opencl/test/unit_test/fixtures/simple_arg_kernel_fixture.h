@@ -262,7 +262,7 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
         retVal = pProgram->build(
             1,
             &deviceId,
-            CompilerOptions::greaterThan4gbBuffersRequired,
+            CompilerOptions::greaterThan4gbBuffersRequired.data(),
             nullptr,
             nullptr,
             false);

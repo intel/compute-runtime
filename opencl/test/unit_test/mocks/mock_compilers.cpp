@@ -411,7 +411,7 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
             options->GetSizeRaw()) {
             std::string opts(options->GetMemory<char>(), options->GetMemory<char>() + options->GetSize<char>());
             // handle special option "-create-library" - just erase it
-            size_t pos = opts.find(CompilerOptions::createLibrary, 0);
+            size_t pos = opts.find(CompilerOptions::createLibrary.data(), 0);
             if (pos != std::string::npos) {
                 opts.erase(pos, CompilerOptions::createLibrary.length());
             }

@@ -69,7 +69,7 @@ cl_int Program::link(
         options = (buildOptions != nullptr) ? buildOptions : "";
 
         for (const auto &optionString : {CompilerOptions::gtpinRera, CompilerOptions::greaterThan4gbBuffersRequired}) {
-            size_t pos = options.find(optionString);
+            size_t pos = options.find(optionString.data());
             if (pos != std::string::npos) {
                 options.erase(pos, optionString.length());
                 CompilerOptions::concatenateAppend(internalOptions, optionString);

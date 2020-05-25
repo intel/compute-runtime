@@ -267,7 +267,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
 
 TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenBuiltThenPatchTokenAllocateSipSurfaceHasSizeGreaterThanZero) {
     if (pDevice->getHardwareInfo().platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
-        retVal = pProgram->build(1, &device, CompilerOptions::debugKernelEnable, nullptr, nullptr, false);
+        retVal = pProgram->build(1, &device, CompilerOptions::debugKernelEnable.data(), nullptr, nullptr, false);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         auto kernelInfo = pProgram->getKernelInfo("CopyBuffer");

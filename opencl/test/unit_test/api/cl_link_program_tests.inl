@@ -126,7 +126,7 @@ TEST_F(clLinkProgramTests, GivenCreateLibraryOptionWhenLinkingProgramThenSuccess
         pContext,
         1,
         &testedClDevice,
-        CompilerOptions::createLibrary,
+        CompilerOptions::createLibrary.data(),
         1,
         &program,
         nullptr,

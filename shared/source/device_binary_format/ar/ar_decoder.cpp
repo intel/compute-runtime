@@ -31,7 +31,7 @@ Ar decodeAr(const ArrayRef<const uint8_t> binary, std::string &outErrReason, std
             return {};
         }
 
-        if (ConstStringRef(fileEntryHeader->trailingMagic) != arFileEntryTrailingMagic) {
+        if (ConstStringRef::fromArray(fileEntryHeader->trailingMagic) != arFileEntryTrailingMagic) {
             outWarnings.append("File entry header with identifier '" + std::string(fileEntryHeader->identifier, sizeof(fileEntryHeader->identifier)) + "' has invalid header trailing string");
         }
 

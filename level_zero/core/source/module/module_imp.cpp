@@ -30,8 +30,8 @@
 namespace L0 {
 
 namespace BuildOptions {
-ConstStringRef optDisable = "-ze-opt-disable";
-ConstStringRef greaterThan4GbRequired = "-ze-opt-greater-than-4GB-buffer-required";
+NEO::ConstStringRef optDisable = "-ze-opt-disable";
+NEO::ConstStringRef greaterThan4GbRequired = "-ze-opt-greater-than-4GB-buffer-required";
 } // namespace BuildOptions
 
 ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
@@ -121,7 +121,7 @@ bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inp
     std::string decodeErrors;
     std::string decodeWarnings;
     ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(input), inputSize);
-    auto singleDeviceBinary = unpackSingleDeviceBinary(archive, ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,
+    auto singleDeviceBinary = unpackSingleDeviceBinary(archive, NEO::ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,
                                                        decodeErrors, decodeWarnings);
     if (decodeWarnings.empty() == false) {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
@@ -555,7 +555,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, ConstStringRef dstOptionName, ConstStringRef srcOptionName) {
+bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName) {
     auto optInSrcPos = srcOptionSet.find(srcOptionName.begin());
     if (std::string::npos == optInSrcPos) {
         return false;

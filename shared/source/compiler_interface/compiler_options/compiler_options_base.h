@@ -137,6 +137,16 @@ class ConstConcatenation {
     size_t length = 0U;
 };
 
+template <size_t MaxLength>
+bool operator==(const ConstStringRef &lhs, const ConstConcatenation<MaxLength> &rhs) {
+    return lhs == rhs.operator ConstStringRef();
+}
+
+template <size_t MaxLength>
+bool operator==(const ConstConcatenation<MaxLength> &lhs, const ConstStringRef &rhs) {
+    return rhs == lhs;
+}
+
 bool contains(const char *options, ConstStringRef optionToFind);
 
 bool contains(const std::string &options, ConstStringRef optionToFind);

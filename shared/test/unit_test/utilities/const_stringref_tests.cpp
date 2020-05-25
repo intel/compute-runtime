@@ -9,10 +9,12 @@
 
 #include "gtest/gtest.h"
 
-TEST(ConstStringRef, WhenCreatingFromConstantArrayThenIsConstexpr) {
-    static constexpr ConstStringRef str0("some_text");
-    static_assert(9 == str0.length(), "");
-    static_assert(9 == str0.size(), "");
+using namespace NEO;
+
+TEST(ConstStringRef, WhenCreatingFromConstantArrayThenIsConstexprAndContainsAllArrayElements) {
+    static constexpr ConstStringRef str0 = ConstStringRef::fromArray("some_text");
+    static_assert(10U == str0.length(), "");
+    static_assert(10U == str0.size(), "");
     static_assert(false == str0.empty(), "");
     static_assert('s' == str0[0], "");
     static_assert('o' == str0[1], "");
@@ -32,7 +34,7 @@ TEST(ConstStringRef, WhenCreatingFromConstantArrayThenIsConstexpr) {
     static_assert('e' == str1[1], "");
     static_assert('c' == str1[2], "");
 
-    static_assert('s' == static_cast<const char *>(str1)[0], "");
+    static_assert('s' == str1.data()[0], "");
     static_assert('s' == *str1.begin(), "");
     static_assert(3 == str1.end() - str1.begin(), "");
     static_assert(str1.begin() == str1.data(), "");
@@ -42,7 +44,7 @@ TEST(ConstStringRef, WhenCreatingFromConstantArrayThenIsConstexpr) {
     static_assert(0U == strEmpty.size(), "");
     static_assert(strEmpty.empty(), "");
 
-    static_assert(9 == str0.length(), "");
+    static_assert(10 == str0.length(), "");
 
     static_assert(str0 == str0, "");
     static_assert(str1 != str0, "");
@@ -102,13 +104,88 @@ TEST(ConstStringRef, WhenCopyAsignedThenIdenticalAsOrigin) {
 TEST(ConstStringRef, WhenCheckingForInclusionThenDoesNotReadOutOfBounds) {
     static constexpr ConstStringRef str1("Text", 2);
     ConstStringRef substr1("Tex");
-    EXPECT_FALSE(str1.contains(substr1));
+    EXPECT_FALSE(str1.contains(substr1.data()));
 
     static constexpr ConstStringRef str2("AabAac");
     ConstStringRef substr2("Aac");
-    EXPECT_TRUE(str2.contains(substr2));
+    EXPECT_TRUE(str2.contains(substr2.data()));
 
     static constexpr ConstStringRef str3("AabAac");
     ConstStringRef substr3("Aacd");
-    EXPECT_FALSE(str3.contains(substr3));
+    EXPECT_FALSE(str3.contains(substr3.data()));
+}
+
+TEST(ConstStringRef, WhenCreatingFromStringThenUsesUnderlyingDataAndLength) {
+    std::string src = "abc";
+    ConstStringRef fromCopy = src;
+    EXPECT_EQ(src.data(), fromCopy.begin());
+    EXPECT_EQ(src.data() + src.size(), fromCopy.end());
+    ConstStringRef fromMove = std::move(src);
+    EXPECT_EQ(fromCopy.begin(), fromMove.begin());
+    EXPECT_EQ(fromCopy.end(), fromMove.end());
+}
+
+TEST(ConstStringRef, WhenCreatingFromCStringThenImplicitlyCalculatesLength) {
+    const char *src = "text";
+    ConstStringRef fromCString = src;
+    EXPECT_EQ(src, fromCString.begin());
+    EXPECT_EQ(4U, fromCString.size());
+}
+
+TEST(ConstStringRefSubstr, GivenPositiveLengthThenCountFromLeft) {
+    ConstStringRef fromCString = "some text";
+    ConstStringRef substr = fromCString.substr(2, 2);
+    EXPECT_EQ(fromCString.data() + 2, substr.begin());
+    EXPECT_EQ(fromCString.data() + 4, substr.end());
+    EXPECT_EQ(2U, substr.length());
+}
+
+TEST(ConstStringRefSubstr, GivenNegativeLengthThenCountFromRight) {
+    ConstStringRef fromCString = "some text";
+    ConstStringRef substr = fromCString.substr(2, -2);
+    EXPECT_EQ(fromCString.data() + 2, substr.begin());
+    EXPECT_EQ(fromCString.data() + fromCString.length() - 2, substr.end());
+    EXPECT_EQ(5U, substr.length());
+}
+
+TEST(ConstStringRefSubstr, GivenOnlyPositionThenReturnRemainingPartOfString) {
+    ConstStringRef fromCString = "some text";
+    ConstStringRef substr = fromCString.substr(2);
+    EXPECT_EQ(fromCString.data() + 2, substr.begin());
+    EXPECT_EQ(fromCString.end(), substr.end());
+    EXPECT_EQ(fromCString.length() - 2, substr.length());
+}
+
+TEST(ConstStringRefTruncated, GivenPositiveLengthThenCountFromLeft) {
+    ConstStringRef fromCString = "some text";
+    ConstStringRef substr = fromCString.truncated(2);
+    EXPECT_EQ(fromCString.begin(), substr.begin());
+    EXPECT_EQ(fromCString.begin() + 2, substr.end());
+    EXPECT_EQ(2U, substr.length());
+}
+
+TEST(ConstStringRefTruncated, GivenNegativeLengthThenCountFromRight) {
+    ConstStringRef fromCString = "some text";
+    ConstStringRef substr = fromCString.truncated(-2);
+    EXPECT_EQ(fromCString.begin(), substr.begin());
+    EXPECT_EQ(fromCString.data() + fromCString.length() - 2, substr.end());
+    EXPECT_EQ(7U, substr.length());
+}
+
+TEST(ConstStringRefEqualsCaseInsesitive, WhenSizesDifferReturnFalse) {
+    ConstStringRef lhs = ConstStringRef::fromArray("\0");
+    ConstStringRef rhs = ConstStringRef::fromArray("\0\0");
+    EXPECT_FALSE(equalsCaseInsesitive(lhs, rhs));
+}
+
+TEST(ConstStringRefEqualsCaseInsesitive, WhenStringsDontMatchThenReturnFalse) {
+    EXPECT_FALSE(equalsCaseInsesitive(ConstStringRef("abc"), ConstStringRef("abd")));
+}
+
+TEST(ConstStringRefEqualsCaseInsesitive, WhenStringsIdenticalThenReturnTrue) {
+    EXPECT_TRUE(equalsCaseInsesitive(ConstStringRef("abc"), ConstStringRef("abc")));
+}
+
+TEST(ConstStringRefEqualsCaseInsesitive, WhenStringsDifferOnlyByCaseThenReturnTrue) {
+    EXPECT_TRUE(equalsCaseInsesitive(ConstStringRef("aBc"), ConstStringRef("Abc")));
 }

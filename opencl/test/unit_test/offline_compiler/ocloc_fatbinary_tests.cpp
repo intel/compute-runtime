@@ -75,7 +75,7 @@ TEST(OclocFatBinaryAsProductId, GivenEnabledPlatformNameThenReturnsProperPlatfor
     auto names = NEO::toProductNames(platforms);
     for (size_t i = 0; i < platforms.size(); ++i) {
         auto idByName = NEO::asProductId(names[i], platforms);
-        EXPECT_EQ(idByName, platforms[i]) << names[i] << " : " << platforms[i] << " != " << idByName;
+        EXPECT_EQ(idByName, platforms[i]) << names[i].data() << " : " << platforms[i] << " != " << idByName;
     }
 }
 
@@ -85,7 +85,7 @@ TEST(OclocFatBinaryAsProductId, GivenDisabledPlatformNameThenReturnsUnknownPlatf
     platforms.clear();
     for (size_t i = 0; i < platforms.size(); ++i) {
         auto idByName = NEO::asProductId(names[i], platforms);
-        EXPECT_EQ(IGFX_UNKNOWN, platforms[i]) << names[i] << " : IGFX_UNKNOWN != " << idByName;
+        EXPECT_EQ(IGFX_UNKNOWN, platforms[i]) << names[i].data() << " : IGFX_UNKNOWN != " << idByName;
     }
 }
 

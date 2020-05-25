@@ -850,13 +850,13 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build_Options_Duplicate) {
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath, nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath.data(), nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath, nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath.data(), nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(0, nullptr, CompilerOptions::finiteMathOnly, nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::finiteMathOnly.data(), nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
@@ -945,7 +945,7 @@ TEST_P(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     Callback::watch(kernel1);
     EXPECT_NE(nullptr, kernel1);
 
-    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath, nullptr, nullptr, true);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath.data(), nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash2 = pProgram->getCachedFileName();
     auto kernel2 = pProgram->getKernelInfo("CopyBuffer");
@@ -954,7 +954,7 @@ TEST_P(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     Callback::unwatch(kernel1);
     Callback::watch(kernel2);
 
-    retVal = pProgram->build(0, nullptr, CompilerOptions::finiteMathOnly, nullptr, nullptr, true);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::finiteMathOnly.data(), nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash3 = pProgram->getCachedFileName();
     auto kernel3 = pProgram->getKernelInfo("CopyBuffer");
@@ -1103,7 +1103,7 @@ TEST_P(ProgramFromSourceTest, GivenFlagsWhenCompilingProgramThenBuildOptionsHave
     program->sourceCode = "__kernel mock() {}";
 
     // Ask to build created program without NEO::CompilerOptions::gtpinRera and NEO::CompilerOptions::greaterThan4gbBuffersRequired flags.
-    cl_int retVal = program->compile(0, nullptr, CompilerOptions::fastRelaxedMath, 0, nullptr, nullptr, nullptr, nullptr);
+    cl_int retVal = program->compile(0, nullptr, CompilerOptions::fastRelaxedMath.data(), 0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -1314,7 +1314,7 @@ TEST_P(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectE
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // create library successfully
-    retVal = pProgram->link(0, nullptr, CompilerOptions::createLibrary, 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, CompilerOptions::createLibrary.data(), 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // fail library creation - any link error (here caused by specifying unrecognized option)
@@ -1329,7 +1329,7 @@ TEST_P(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectE
     failingProgram->setDevice(&device->getDevice());
 
     // fail library creation - CompilerInterface cannot be obtained
-    retVal = failingProgram->link(0, nullptr, CompilerOptions::createLibrary, 1, &program, nullptr, nullptr);
+    retVal = failingProgram->link(0, nullptr, CompilerOptions::createLibrary.data(), 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 }
@@ -2006,7 +2006,7 @@ TEST_F(ProgramTests, GivenGtpinReraFlagWhenBuildingProgramThenCorrectOptionsAreS
     program->createdFrom = Program::CreatedFrom::SOURCE;
 
     // Ask to build created program without NEO::CompilerOptions::gtpinRera flag.
-    cl_int retVal = program->build(0, nullptr, CompilerOptions::fastRelaxedMath, nullptr, nullptr, false);
+    cl_int retVal = program->build(0, nullptr, CompilerOptions::fastRelaxedMath.data(), nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -2188,7 +2188,7 @@ TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCrea
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
     auto &internalOptions = program.getInternalOptions();
     std::string s1 = internalOptions;
-    size_t pos = s1.find(NEO::CompilerOptions::arch32bit);
+    size_t pos = s1.find(NEO::CompilerOptions::arch32bit.data());
     if (is64bit) {
         EXPECT_NE(pos, std::string::npos);
     } else {
@@ -2657,7 +2657,7 @@ TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedWithInvalidValuesTh
     EXPECT_EQ(expectedOutput, program.getInternalOptions());
 
     program.isOptionValueValidOverride = true;
-    buildOptions = CompilerOptions::gtpinRera;
+    buildOptions = std::string(CompilerOptions::gtpinRera);
     program.getInternalOptions().erase();
     program.extractInternalOptions(buildOptions);
     EXPECT_EQ(expectedOutput, program.getInternalOptions());
@@ -2691,7 +2691,7 @@ TEST_F(ProgramTests, givenProgramWhenBuiltThenAdditionalOptionsAreApplied) {
 
 TEST_F(ProgramTests, WhenProgramIsCreatedThenItsDeviceIsProperlySet) {
     auto wasValidClDeviceUsed = [](MockProgram &program) -> bool {
-        return (program.getInternalOptions().find(CompilerOptions::arch32bit) != std::string::npos);
+        return (program.getInternalOptions().find(CompilerOptions::arch32bit.data()) != std::string::npos);
     };
 
     MockExecutionEnvironment executionEnvironment;

@@ -43,7 +43,7 @@ TEST(IsAnyDeviceBinaryFormat, GivenArFormatThenReturnsTrue) {
 
 TEST(UnpackSingleDeviceBinary, GivenUnknownBinaryThenReturnError) {
     const uint8_t data[] = "none of known formats";
-    ConstStringRef requestedProductAbbreviation = "unk";
+    auto requestedProductAbbreviation = "unk";
     NEO::TargetDevice requestedTargetDevice;
     std::string outErrors;
     std::string outWarnings;
@@ -62,7 +62,7 @@ TEST(UnpackSingleDeviceBinary, GivenUnknownBinaryThenReturnError) {
 
 TEST(UnpackSingleDeviceBinary, GivenPatchtoknsBinaryThenReturnSelf) {
     PatchTokensTestData::ValidEmptyProgram patchtokensProgram;
-    ConstStringRef requestedProductAbbreviation = "unk";
+    auto requestedProductAbbreviation = "unk";
     NEO::TargetDevice requestedTargetDevice;
     requestedTargetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(patchtokensProgram.header->Device);
     requestedTargetDevice.stepping = patchtokensProgram.header->SteppingId;
@@ -91,7 +91,7 @@ TEST(UnpackSingleDeviceBinary, GivenOclElfBinaryThenReturnPatchtokensBinary) {
     elfEnc.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
     elfEnc.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, NEO::Elf::SectionNamesOpenCl::deviceBinary, patchtokensProgram.storage);
 
-    ConstStringRef requestedProductAbbreviation = "unk";
+    auto requestedProductAbbreviation = "unk";
     NEO::TargetDevice requestedTargetDevice;
     requestedTargetDevice.coreFamily = static_cast<GFXCORE_FAMILY>(patchtokensProgram.header->Device);
     requestedTargetDevice.stepping = patchtokensProgram.header->SteppingId;
@@ -130,7 +130,7 @@ TEST(UnpackSingleDeviceBinary, GivenArBinaryWithOclElfThenReturnPatchtokensBinar
     std::string outWarnings;
     auto elfData = elfEnc.encode();
 
-    std::string requiredProduct = NEO::hardwarePrefix[productFamily];
+    auto requiredProduct = NEO::hardwarePrefix[productFamily];
     std::string requiredStepping = std::to_string(patchtokensProgram.header->SteppingId);
     std::string requiredPointerSize = (patchtokensProgram.header->GPUPointerSizeInBytes == 4) ? "32" : "64";
     NEO::Ar::ArEncoder arEnc(true);

@@ -1425,10 +1425,10 @@ TEST_F(BuiltInTests, createProgramFromCodeInternalOptionsFor32Bit) {
     ASSERT_NE(nullptr, program.get());
 
     auto builtinInternalOptions = program->getInternalOptions();
-    auto it = builtinInternalOptions.find(NEO::CompilerOptions::arch32bit);
+    auto it = builtinInternalOptions.find(NEO::CompilerOptions::arch32bit.data());
     EXPECT_EQ(std::string::npos, it);
 
-    it = builtinInternalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired);
+    it = builtinInternalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired.data());
     if (is32bit || pDevice->areSharedSystemAllocationsAllowed()) {
         EXPECT_NE(std::string::npos, it);
     } else {

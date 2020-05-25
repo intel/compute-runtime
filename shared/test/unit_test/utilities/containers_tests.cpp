@@ -1252,6 +1252,49 @@ TEST(StackVec, PushBack) {
     ASSERT_FALSE(contains(&v, &*v.begin()));
 }
 
+TEST(StackVecPopBack, GivenNonEmptyStackVecThenRemoveSingleElementFromTheEnd) {
+    using Type = uint32_t;
+    StackVec<Type, 2> v;
+    ASSERT_EQ(2U, v.capacity());
+    v.push_back(3);
+    EXPECT_EQ(1U, v.size());
+    EXPECT_EQ(3U, *v.rbegin());
+    v.push_back(5);
+    EXPECT_EQ(2U, v.size());
+    EXPECT_EQ(5U, *v.rbegin());
+
+    v.pop_back();
+    EXPECT_EQ(1U, v.size());
+    EXPECT_EQ(3U, *v.rbegin());
+    v.pop_back();
+    EXPECT_EQ(0U, v.size());
+
+    v.push_back(3);
+    EXPECT_EQ(1U, v.size());
+    EXPECT_EQ(3U, *v.rbegin());
+    v.push_back(5);
+    EXPECT_EQ(2U, v.size());
+    EXPECT_EQ(5U, *v.rbegin());
+    v.push_back(7);
+    EXPECT_EQ(3U, v.size());
+    EXPECT_EQ(7U, *v.rbegin());
+    v.push_back(11);
+    EXPECT_EQ(4U, v.size());
+    EXPECT_EQ(11U, *v.rbegin());
+
+    v.pop_back();
+    EXPECT_EQ(3U, v.size());
+    EXPECT_EQ(7U, *v.rbegin());
+    v.pop_back();
+    EXPECT_EQ(2U, v.size());
+    EXPECT_EQ(5U, *v.rbegin());
+    v.pop_back();
+    EXPECT_EQ(1U, v.size());
+    EXPECT_EQ(3U, *v.rbegin());
+    v.pop_back();
+    EXPECT_EQ(0U, v.size());
+}
+
 TEST(StackVec, Reserve) {
     using Type = uint32_t;
     StackVec<Type, 5> v;

@@ -18,4 +18,6 @@ target_sources(${TARGET_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_dumper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_validator_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/yaml/yaml_parser_tests.cpp
 )
+

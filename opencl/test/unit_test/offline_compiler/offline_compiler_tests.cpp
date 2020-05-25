@@ -564,7 +564,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDebugS
     mockOfflineCompiler.parseDebugSettings();
 
     std::string internalOptions = mockOfflineCompiler.internalOptions;
-    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg);
+    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
     EXPECT_NE(std::string::npos, found);
 }
 
@@ -576,7 +576,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDebugS
     mockOfflineCompiler.parseDebugSettings();
 
     std::string internalOptions = mockOfflineCompiler.internalOptions;
-    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg);
+    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
     EXPECT_NE(std::string::npos, found);
 }
 
@@ -588,7 +588,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationDisableddWhenDevi
     mockOfflineCompiler.parseDebugSettings();
 
     std::string internalOptions = mockOfflineCompiler.internalOptions;
-    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg);
+    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
     EXPECT_EQ(std::string::npos, found);
 }
 
@@ -600,7 +600,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDevice
     mockOfflineCompiler.parseDebugSettings();
 
     std::string internalOptions = mockOfflineCompiler.internalOptions;
-    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg);
+    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
     EXPECT_NE(std::string::npos, found);
 }
 
@@ -613,7 +613,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationDisabledWhenDevic
     mockOfflineCompiler.parseDebugSettings();
 
     std::string internalOptions = mockOfflineCompiler.internalOptions;
-    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg);
+    size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
     EXPECT_EQ(std::string::npos, found);
 }
 
@@ -1076,7 +1076,7 @@ TEST(OfflineCompilerTest, givenInputOptionsAndOclockOptionsFileWithForceStosOptW
     mockOfflineCompiler->build();
 
     auto &internalOptions = mockOfflineCompiler->internalOptions;
-    size_t found = internalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired);
+    size_t found = internalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired.data());
     EXPECT_EQ(std::string::npos, found);
 }
 

@@ -117,6 +117,6 @@ struct ModuleImp : public Module {
     bool isFullyLinked = false;
 };
 
-bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, ConstStringRef dstOptionName, ConstStringRef srcOptionName);
+bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName);
 
 } // namespace L0

@@ -442,9 +442,9 @@ TEST(ElfEncoder, WhenAppendingEmptySectionNameThenAlwaysReturn0AsOffset) {
 
 TEST(ElfEncoder, WhenAppendingSectionNameThenEmplacedStringIsAlwaysNullterminated) {
     ElfEncoder<EI_CLASS_64> elfEncoder64(true, true);
-    auto strOffset = elfEncoder64.appendSectionName(ConstStringRef("abc", 2));
-    auto strOffset2 = elfEncoder64.appendSectionName(ConstStringRef("de", 3));
-    auto strOffset3 = elfEncoder64.appendSectionName(ConstStringRef("g"));
+    auto strOffset = elfEncoder64.appendSectionName(NEO::ConstStringRef("abc", 2));
+    auto strOffset2 = elfEncoder64.appendSectionName(NEO::ConstStringRef("de", 3));
+    auto strOffset3 = elfEncoder64.appendSectionName(NEO::ConstStringRef("g"));
     elfEncoder64.appendSection(SHT_NOBITS, "my_name_is_important", {});
     EXPECT_EQ(strOffset + 3, strOffset2);
     EXPECT_EQ(strOffset2 + 3, strOffset3);

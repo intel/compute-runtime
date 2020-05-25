@@ -23,23 +23,25 @@ TEST(CompilerOptions, WhenConcatenateIsCalledThenUsesSpaceAsSeparator) {
     auto expected = (std::string(NEO::CompilerOptions::optDisable) + " " + NEO::CompilerOptions::finiteMathOnly.data());
     EXPECT_STREQ(expected.c_str(), concatenated.c_str());
 
-    constexpr ConstStringRef toConcatenate[] = {"a", "b", "c"};
+    constexpr NEO::ConstStringRef toConcatenate[] = {"a", "b", "c"};
     constexpr ConstConcatenation<concatenationLength(toConcatenate)> constConcatenationSpecificSize(toConcatenate);
     constexpr ConstConcatenation<> constConcatenationDefaultSize(toConcatenate);
-    EXPECT_TRUE(ConstStringRef("a b c") == constConcatenationSpecificSize);
-    EXPECT_TRUE(ConstStringRef("a b c") == constConcatenationDefaultSize);
+    EXPECT_TRUE(NEO::ConstStringRef("a b c") == constConcatenationSpecificSize);
+    EXPECT_TRUE(NEO::ConstStringRef("a b c") == constConcatenationDefaultSize);
+    EXPECT_TRUE(constConcatenationSpecificSize == NEO::ConstStringRef("a b c"));
+    EXPECT_TRUE(constConcatenationDefaultSize == NEO::ConstStringRef("a b c"));
 }
 
 TEST(CompilerOptions, WhenConcatenateAppendIsCalledThenAddsSpaceAsSeparatorOnlyIfMissing) {
     using namespace NEO::CompilerOptions;
     std::string concatenated = NEO::CompilerOptions::optDisable.data();
     concatenateAppend(concatenated, NEO::CompilerOptions::finiteMathOnly);
-    auto expected = (std::string(NEO::CompilerOptions::optDisable) + " " + NEO::CompilerOptions::finiteMathOnly.data());
+    auto expected = (NEO::CompilerOptions::optDisable.str() + " " + NEO::CompilerOptions::finiteMathOnly.data());
     EXPECT_STREQ(expected.c_str(), concatenated.c_str());
     concatenated += " ";
     concatenateAppend(concatenated, NEO::CompilerOptions::fastRelaxedMath);
     expected += " ";
-    expected += NEO::CompilerOptions::fastRelaxedMath;
+    expected += NEO::CompilerOptions::fastRelaxedMath.data();
     EXPECT_STREQ(expected.c_str(), concatenated.c_str());
 }
 

@@ -54,7 +54,7 @@ TEST_F(clGetKernelArgInfoTests, GivenValidParamsWhenGettingKernelArgInfoThenSucc
         pProgram,
         1,
         &testedClDevice,
-        CompilerOptions::argInfo,
+        CompilerOptions::argInfo.data(),
         nullptr,
         nullptr);
 

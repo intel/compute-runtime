@@ -8,7 +8,11 @@
 #pragma once
 
 #include <cinttypes>
+#include <cstddef>
+#include <cstring>
 #include <string>
+
+namespace NEO {
 
 constexpr size_t constLength(const char *string) {
     if (nullptr == string) {
@@ -34,25 +38,61 @@ class ConstStringRef {
         return *this;
     }
 
-    template <size_t Length>
-    constexpr ConstStringRef(const char (&array)[Length]) noexcept
-        : ptr(array), len(((Length > 0) && (array[Length - 1] == '\0')) ? (Length - 1) : Length) {
+    constexpr ConstStringRef(const char &c) noexcept
+        : ptr(&c), len(1) {
+    }
+
+    constexpr ConstStringRef(const char *const ptr) noexcept
+        : ptr(ptr), len(constLength(ptr)) {
     }
 
     constexpr ConstStringRef(const char *const ptr, const size_t length) noexcept
         : ptr(ptr), len(length) {
     }
 
+    template <size_t Length>
+    static constexpr ConstStringRef fromArray(const char (&array)[Length]) noexcept {
+        return ConstStringRef(array, Length);
+    }
+
     ConstStringRef(const std::string &str) noexcept
         : ptr(str.data()), len(str.length()) {
+    }
+
+    constexpr ConstStringRef substr(int offset, int len) const noexcept {
+        if (len >= 0) {
+            return ConstStringRef(this->ptr + offset, len);
+        } else {
+            return ConstStringRef(this->ptr + offset, this->len + len - offset);
+        }
+    }
+
+    constexpr ConstStringRef substr(int offset) const noexcept {
+        return ConstStringRef(this->ptr + offset, this->len - offset);
+    }
+
+    constexpr ConstStringRef truncated(int len) const noexcept {
+        if (len >= 0) {
+            return ConstStringRef(this->ptr, len);
+        } else {
+            return ConstStringRef(this->ptr, this->len + len);
+        }
     }
 
     constexpr const char *data() const noexcept {
         return ptr;
     }
 
-    constexpr operator const char *() const noexcept {
-        return ptr;
+    constexpr char operator[](size_t pos) const noexcept {
+        return ptr[pos];
+    }
+
+    constexpr char operator[](int pos) const noexcept {
+        return ptr[pos];
+    }
+
+    explicit operator std::string() const {
+        return str();
     }
 
     std::string str() const {
@@ -98,6 +138,8 @@ class ConstStringRef {
     }
 
   protected:
+    ConstStringRef(std::nullptr_t) = delete;
+
     const char *ptr = nullptr;
     size_t len = 0U;
 };
@@ -116,26 +158,28 @@ constexpr bool equals(const ConstStringRef &lhs, const ConstStringRef &rhs) {
     return true;
 }
 
-template <typename T = char>
-constexpr bool equals(const ConstStringRef &lhs, const T *rhs) {
-    return equals(lhs, ConstStringRef(rhs, constLength(rhs)));
-}
+constexpr bool equals(const ConstStringRef &lhs, const char *rhs) {
+    for (size_t i = 0, e = lhs.size(); i < e; ++i) {
+        if (lhs[i] != rhs[i]) {
+            return false;
+        }
+        if ((rhs[i] == '\0') && (i + 1 < e)) {
+            return false;
+        }
+    }
 
-inline bool equals(const ConstStringRef &lhs, const std::string &rhs) {
-    return equals(lhs, ConstStringRef(rhs.data(), rhs.length()));
+    return true;
 }
 
 constexpr bool operator==(const ConstStringRef &lhs, const ConstStringRef &rhs) {
     return equals(lhs, rhs);
 }
 
-template <typename RhsT>
-constexpr bool operator==(const ConstStringRef &lhs, const RhsT &rhs) {
+constexpr bool operator==(const ConstStringRef &lhs, const char *rhs) {
     return equals(lhs, rhs);
 }
 
-template <typename LhsT>
-constexpr bool operator==(const LhsT &lhs, const ConstStringRef &rhs) {
+constexpr bool operator==(const char *lhs, const ConstStringRef &rhs) {
     return equals(rhs, lhs);
 }
 
@@ -143,12 +187,28 @@ constexpr bool operator!=(const ConstStringRef &lhs, const ConstStringRef &rhs) 
     return false == equals(lhs, rhs);
 }
 
-template <typename RhsT>
-constexpr bool operator!=(const ConstStringRef &lhs, const RhsT &rhs) {
-    return false == (lhs == rhs);
+constexpr bool operator!=(const ConstStringRef &lhs, const char *rhs) {
+    return false == equals(lhs, rhs);
 }
 
-template <typename LhsT>
-constexpr bool operator!=(const LhsT &lhs, const ConstStringRef &rhs) {
-    return rhs != lhs;
+constexpr bool operator!=(const char *lhs, const ConstStringRef &rhs) {
+    return false == equals(rhs, lhs);
 }
+
+constexpr bool equalsCaseInsesitive(const ConstStringRef &lhs, const ConstStringRef &rhs) {
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+
+    constexpr auto caseDiff = 'a' - 'A';
+    for (size_t i = 0, e = lhs.size(); i < e; ++i) {
+
+        if ((lhs[i] != rhs[i]) & (lhs[i] + caseDiff != rhs[i]) & (lhs[i] != rhs[i] + caseDiff)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+} // namespace NEO
