@@ -67,8 +67,14 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
         }
     }
 
-    auto memoryOperationsInterface = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get();
-    static_cast<DrmMemoryOperationsHandler *>(memoryOperationsInterface)->mergeWithResidencyContainer(allocationsForResidency);
+    auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get());
+
+    std::unique_lock<std::mutex> lock;
+    if (DebugManager.flags.MakeAllBuffersResident.get()) {
+        lock = memoryOperationsInterface->acquireLock();
+    }
+
+    memoryOperationsInterface->mergeWithResidencyContainer(allocationsForResidency);
 
     this->flushStamp->setStamp(bb->peekHandle());
     this->flushInternal(batchBuffer, allocationsForResidency);

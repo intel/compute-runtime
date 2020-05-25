@@ -52,7 +52,8 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
   protected:
     void makeResidentBufferObjects(const DrmAllocation *drmAllocation, uint32_t handleId);
     void makeResident(BufferObject *bo);
-    void flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency);
+
+    MOCKABLE_VIRTUAL void flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency);
     MOCKABLE_VIRTUAL void exec(const BatchBuffer &batchBuffer, uint32_t drmContextId);
 
     std::vector<BufferObject *> residency;

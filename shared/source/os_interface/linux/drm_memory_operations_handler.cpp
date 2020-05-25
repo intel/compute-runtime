@@ -36,13 +36,16 @@ MemoryOperationsStatus DrmMemoryOperationsHandler::isResident(GraphicsAllocation
 }
 
 void DrmMemoryOperationsHandler::mergeWithResidencyContainer(ResidencyContainer &residencyContainer) {
-    std::lock_guard<std::mutex> lock(mutex);
     for (auto gfxAllocation = this->residency.begin(); gfxAllocation != this->residency.end(); gfxAllocation++) {
         auto ret = std::find(residencyContainer.begin(), residencyContainer.end(), *gfxAllocation);
         if (ret == residencyContainer.end()) {
             residencyContainer.push_back(*gfxAllocation);
         }
     }
+}
+
+std::unique_lock<std::mutex> DrmMemoryOperationsHandler::acquireLock() {
+    return std::unique_lock<std::mutex>(this->mutex);
 }
 
 } // namespace NEO

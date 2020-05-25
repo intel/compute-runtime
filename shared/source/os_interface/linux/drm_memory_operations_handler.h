@@ -24,6 +24,8 @@ class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
 
     void mergeWithResidencyContainer(ResidencyContainer &residencyContainer);
 
+    std::unique_lock<std::mutex> acquireLock();
+
   protected:
     std::unordered_set<GraphicsAllocation *> residency;
     std::mutex mutex;
