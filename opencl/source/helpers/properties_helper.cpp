@@ -41,7 +41,7 @@ void EventsRequest::fillCsrDependencies(CsrDependencies &csrDeps, CommandStreamR
 }
 
 TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking,
-                                       size_t *offsetPtr, size_t *sizePtr, void *ptr, bool doTransferOnCpu)
+                                       size_t *offsetPtr, size_t *sizePtr, void *ptr, bool doTransferOnCpu, uint32_t rootDeviceIndex)
     : memObj(memObj), ptr(ptr), cmdType(cmdType), mapFlags(mapFlags), blocking(blocking), doTransferOnCpu(doTransferOnCpu) {
 
     // no size or offset passed for unmap operation

@@ -52,7 +52,7 @@ cl_int CommandQueueHw<Family>::enqueueReadWriteBufferOnCpuWithMemoryTransfer(cl_
     cl_int retVal = CL_SUCCESS;
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
 
-    TransferProperties transferProperties(buffer, commandType, 0, true, &offset, &size, ptr, true);
+    TransferProperties transferProperties(buffer, commandType, 0, true, &offset, &size, ptr, true, getDevice().getRootDeviceIndex());
     cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
     return retVal;
 }
@@ -64,7 +64,7 @@ cl_int CommandQueueHw<Family>::enqueueReadWriteBufferOnCpuWithoutMemoryTransfer(
     cl_int retVal = CL_SUCCESS;
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
 
-    TransferProperties transferProperties(buffer, CL_COMMAND_MARKER, 0, true, &offset, &size, ptr, false);
+    TransferProperties transferProperties(buffer, CL_COMMAND_MARKER, 0, true, &offset, &size, ptr, false, getDevice().getRootDeviceIndex());
     cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
     if (event) {
         auto pEvent = castToObjectOrAbort<Event>(*event);

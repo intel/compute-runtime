@@ -40,7 +40,7 @@ struct TransferProperties {
     TransferProperties() = delete;
 
     TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking, size_t *offsetPtr, size_t *sizePtr,
-                       void *ptr, bool doTransferOnCpu);
+                       void *ptr, bool doTransferOnCpu, uint32_t rootDeviceIndex);
 
     MemObjOffsetArray offset = {};
     MemObjSizeArray size = {};

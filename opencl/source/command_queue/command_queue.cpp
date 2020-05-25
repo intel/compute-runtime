@@ -428,7 +428,7 @@ void *CommandQueue::enqueueMapBuffer(Buffer *buffer, cl_bool blockingMap,
                                      size_t size, cl_uint numEventsInWaitList,
                                      const cl_event *eventWaitList, cl_event *event,
                                      cl_int &errcodeRet) {
-    TransferProperties transferProperties(buffer, CL_COMMAND_MAP_BUFFER, mapFlags, blockingMap != CL_FALSE, &offset, &size, nullptr, false);
+    TransferProperties transferProperties(buffer, CL_COMMAND_MAP_BUFFER, mapFlags, blockingMap != CL_FALSE, &offset, &size, nullptr, false, getDevice().getRootDeviceIndex());
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
 
     return enqueueMapMemObject(transferProperties, eventsRequest, errcodeRet);
@@ -442,7 +442,7 @@ void *CommandQueue::enqueueMapImage(Image *image, cl_bool blockingMap,
                                     const cl_event *eventWaitList, cl_event *event,
                                     cl_int &errcodeRet) {
     TransferProperties transferProperties(image, CL_COMMAND_MAP_IMAGE, mapFlags, blockingMap != CL_FALSE,
-                                          const_cast<size_t *>(origin), const_cast<size_t *>(region), nullptr, false);
+                                          const_cast<size_t *>(origin), const_cast<size_t *>(region), nullptr, false, getDevice().getRootDeviceIndex());
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
 
     if (image->isMemObjZeroCopy() && image->mappingOnCpuAllowed()) {
@@ -467,7 +467,7 @@ void *CommandQueue::enqueueMapImage(Image *image, cl_bool blockingMap,
 }
 
 cl_int CommandQueue::enqueueUnmapMemObject(MemObj *memObj, void *mappedPtr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
-    TransferProperties transferProperties(memObj, CL_COMMAND_UNMAP_MEM_OBJECT, 0, false, nullptr, nullptr, mappedPtr, false);
+    TransferProperties transferProperties(memObj, CL_COMMAND_UNMAP_MEM_OBJECT, 0, false, nullptr, nullptr, mappedPtr, false, getDevice().getRootDeviceIndex());
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
 
     return enqueueUnmapMemObject(transferProperties, eventsRequest);
