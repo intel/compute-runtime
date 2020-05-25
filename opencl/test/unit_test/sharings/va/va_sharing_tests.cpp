@@ -19,6 +19,7 @@
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/libult/create_command_stream.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/sharings/va/mock_va_sharing.h"
@@ -788,4 +789,35 @@ TEST(VaSharingFunctions, givenNumEntriesLowerThanSupportedFormatsWhenGettingSupp
     EXPECT_EQ(static_cast<uint32_t>(VA_FOURCC_NV12), vaApiFormats[0].fourcc);
     EXPECT_EQ(0u, vaApiFormats[1].fourcc);
     EXPECT_EQ(0u, vaApiFormats[2].fourcc);
+}
+
+TEST_F(VaSharingTests, givenInteropUserSyncIsNotSpecifiedDuringContextCreationWhenEnqueueReleaseVAIsCalledThenAllWorkAlreadySubmittedShouldCompleteExecution) {
+    struct MockCommandQueueToTestFinish : MockCommandQueue {
+        MockCommandQueueToTestFinish(Context *context, ClDevice *device, const cl_queue_properties *props)
+            : MockCommandQueue(context, device, props) {
+        }
+        cl_int finish() override {
+            finishCalled = true;
+            return CL_SUCCESS;
+        }
+        bool finishCalled = false;
+    };
+
+    MockContext mockContext;
+    MockCommandQueueToTestFinish mockCommandQueue(&mockContext, mockContext.getDevice(0), 0);
+
+    createMediaSurface();
+
+    for (bool specifyInteropUseSync : {false, true}) {
+        mockContext.setInteropUserSyncEnabled(specifyInteropUseSync);
+        mockCommandQueue.finishCalled = false;
+
+        errCode = clEnqueueAcquireVA_APIMediaSurfacesINTEL(&mockCommandQueue, 1, &sharedClMem, 0, nullptr, nullptr);
+        EXPECT_EQ(CL_SUCCESS, errCode);
+
+        errCode = clEnqueueReleaseVA_APIMediaSurfacesINTEL(&mockCommandQueue, 1, &sharedClMem, 0, nullptr, nullptr);
+        EXPECT_EQ(CL_SUCCESS, errCode);
+
+        EXPECT_EQ(!specifyInteropUseSync, mockCommandQueue.finishCalled);
+    }
 }
