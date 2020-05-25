@@ -234,16 +234,8 @@ extern GFXCORE_FAMILY renderCoreFamily;
         template <unsigned int matcherOrdinal>                                                     \
         bool checkMatch(PRODUCT_FAMILY matchProduct);                                              \
                                                                                                    \
-        void SetUp() override {                                                                    \
-            if (checkMatch<SupportedProductFamilies::size - 1u>(::productFamily)) {                \
-                parent_class::SetUp();                                                             \
-            }                                                                                      \
-        }                                                                                          \
-        void TearDown() override {                                                                 \
-            if (checkMatch<SupportedProductFamilies::size - 1u>(::productFamily)) {                \
-                parent_class::TearDown();                                                          \
-            }                                                                                      \
-        }                                                                                          \
+        void SetUp() override;                                                                     \
+        void TearDown() override;                                                                  \
         void TestBody() override;                                                                  \
                                                                                                    \
         static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                      \
@@ -315,6 +307,17 @@ extern GFXCORE_FAMILY renderCoreFamily;
             return isMatched;                                                                      \
         } else {                                                                                   \
             return false;                                                                          \
+        }                                                                                          \
+    }                                                                                              \
+                                                                                                   \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::SetUp() {                             \
+        if (checkMatch<SupportedProductFamilies::size - 1u>(::productFamily)) {                    \
+            parent_class::SetUp();                                                                 \
+        }                                                                                          \
+    }                                                                                              \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TearDown() {                          \
+        if (checkMatch<SupportedProductFamilies::size - 1u>(::productFamily)) {                    \
+            parent_class::TearDown();                                                              \
         }                                                                                          \
     }                                                                                              \
                                                                                                    \
@@ -643,16 +646,8 @@ extern GFXCORE_FAMILY renderCoreFamily;
         template <unsigned int matcherOrdinal>                                                                    \
         bool checkMatch(PRODUCT_FAMILY matchProduct);                                                             \
                                                                                                                   \
-        void SetUp() override {                                                                                   \
-            if (checkMatch<SupportedProductFamilies::size - 1u>(::productFamily)) {                               \
-                test_suite_name::SetUp();                                                                         \
-            }                                                                                                     \
-        }                                                                                                         \
-        void TearDown() override {                                                                                \
-            if (checkMatch<SupportedProductFamilies::size - 1u>(::productFamily)) {                               \
-                test_suite_name::TearDown();                                                                      \
-            }                                                                                                     \
-        }                                                                                                         \
+        void SetUp() override;                                                                                    \
+        void TearDown() override;                                                                                 \
                                                                                                                   \
         void TestBody() override;                                                                                 \
                                                                                                                   \
@@ -726,6 +721,17 @@ extern GFXCORE_FAMILY renderCoreFamily;
             return isMatched;                                                                                     \
         } else {                                                                                                  \
             return false;                                                                                         \
+        }                                                                                                         \
+    }                                                                                                             \
+                                                                                                                  \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::SetUp() {                                            \
+        if (checkMatch<SupportedProductFamilies::size - 1u>(::productFamily)) {                                   \
+            test_suite_name::SetUp();                                                                             \
+        }                                                                                                         \
+    }                                                                                                             \
+    void GTEST_TEST_CLASS_NAME_(test_suite_name, test_name)::TearDown() {                                         \
+        if (checkMatch<SupportedProductFamilies::size - 1u>(::productFamily)) {                                   \
+            test_suite_name::TearDown();                                                                          \
         }                                                                                                         \
     }                                                                                                             \
                                                                                                                   \
