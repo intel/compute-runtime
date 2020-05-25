@@ -927,6 +927,33 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
         ev->timestampPacketContainer->add(node);
     }
 
+    void addTimestampNodeMultiOsContext(int globalStart[16], int globalEnd[16], uint32_t size) {
+        auto node = new MockTagNode<TimestampPacketStorage>();
+        auto timestampPacketStorage = new TimestampPacketStorage();
+        timestampPacketStorage->packetsUsed = size;
+
+        for (uint32_t i = 0u; i < timestampPacketStorage->packetsUsed; ++i) {
+            timestampPacketStorage->packets[i].globalStart = globalStart[i];
+            timestampPacketStorage->packets[i].globalEnd = globalEnd[i];
+        }
+
+        node->tagForCpuAccess = timestampPacketStorage;
+        ev->timestampPacketContainer->add(node);
+    }
+
+    void initTimestampNodeMultiOsContextData(int globalStart[16], int globalEnd[16], uint32_t size) {
+
+        for (uint32_t i = 0u; i < size; ++i) {
+            globalStart[i] = 100;
+        }
+        globalStart[5] = {50};
+
+        for (uint32_t i = 0u; i < size; ++i) {
+            globalEnd[i] = 200;
+        }
+        globalEnd[7] = {350};
+    }
+
     DebugManagerStateRestore restorer;
     MockContext context;
     cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
@@ -952,6 +979,20 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithOneEleme
     EXPECT_EQ(12u, ev->getGlobalStartTimestamp());
 
     ev->timeStampNode = nullptr;
+}
+
+TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCalcProfilingDataIsCalledThenCorrectedValuesAreReturned) {
+    int globalStart[16] = {0};
+    int globalEnd[16] = {0};
+    initTimestampNodeMultiOsContextData(globalStart, globalEnd, 16u);
+    addTimestampNodeMultiOsContext(globalStart, globalEnd, 16u);
+    auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());
+    auto &csr = device.getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
+    csr.multiOsContextCapable = true;
+
+    ev->calcProfilingData();
+    EXPECT_EQ(50u, ev->getStartTimeStamp());
+    EXPECT_EQ(350u, ev->getEndTimeStamp());
 }
 
 TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithThreeElementsWhenCalculatingProfilingThenTimesAreTakenFromProperPacket) {
