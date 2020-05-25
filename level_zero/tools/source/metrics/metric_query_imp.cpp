@@ -202,7 +202,7 @@ bool MetricsLibrary::createContext() {
     const auto &hwHelper = device.getHwHelper();
     const auto &asyncComputeEngines = hwHelper.getGpgpuEngineInstances(device.getHwInfo());
     ContextCreateData_1_0 createData = {};
-    ClientOptionsData_1_0 clientOptions[1] = {};
+    ClientOptionsData_1_0 clientOptions[2] = {};
     ClientData_1_0 clientData = {};
     ClientType_1_0 clientType = {};
     ClientDataLinuxAdapter_1_0 adapter = {};
@@ -226,6 +226,9 @@ bool MetricsLibrary::createContext() {
 
     clientOptions[0].Type = ClientOptionsType::Compute;
     clientOptions[0].Compute.Asynchronous = asyncComputeEngine != asyncComputeEngines.end();
+
+    clientOptions[1].Type = ClientOptionsType::Tbs;
+    clientOptions[1].Tbs.Enabled = metricContext.getMetricTracer() != nullptr;
 
     clientData.Linux.Adapter = &adapter;
     clientData.ClientOptions = clientOptions;

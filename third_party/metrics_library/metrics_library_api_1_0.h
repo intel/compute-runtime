@@ -130,6 +130,7 @@ enum class ClientOptionsType : uint32_t
     Posh = 0,
     Ptbr,
     Compute,
+    Tbs,
     // ...
     Last
 };
@@ -157,6 +158,7 @@ enum class StatusCode : uint32_t
     ReportNotReady,
     ReportLost,
     ReportInconsistent,
+    CannotOpenFile,
     // ...
     Last
 };
@@ -639,6 +641,14 @@ struct ClientOptionsComputeData_1_0
 };
 
 //////////////////////////////////////////////////////////////////////////
+/// @brief Client options time based sampling data.
+//////////////////////////////////////////////////////////////////////////
+struct ClientOptionsTbsData_1_0
+{
+    bool    Enabled;
+};
+
+//////////////////////////////////////////////////////////////////////////
 /// @brief Client options data.
 //////////////////////////////////////////////////////////////////////////
 struct ClientOptionsData_1_0
@@ -650,6 +660,7 @@ struct ClientOptionsData_1_0
         ClientOptionsPoshData_1_0       Posh;
         ClientOptionsPtbrData_1_0       Ptbr;
         ClientOptionsComputeData_1_0    Compute;
+        ClientOptionsTbsData_1_0        Tbs;
     };
 };
 
@@ -694,6 +705,6 @@ using ContextDeleteFunction_1_0 = StatusCode ( ML_STDCALL* ) ( const ContextHand
 //////////////////////////////////////////////////////////////////////////
 #define METRICS_LIBRARY_MAJOR_NUMBER 1
 #define METRICS_LIBRARY_MINOR_NUMBER 0
-#define METRICS_LIBRARY_BUILD_NUMBER 3
+#define METRICS_LIBRARY_BUILD_NUMBER 6
 
 } // namespace MetricsLibraryApi
