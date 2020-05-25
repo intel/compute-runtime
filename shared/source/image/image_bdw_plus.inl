@@ -16,3 +16,6 @@ void setFlagsForMediaCompression<Family>(typename Family::RENDER_SURFACE_STATE *
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     }
 }
+
+template <>
+void setFilterMode<Family>(typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo){};
