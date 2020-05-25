@@ -48,19 +48,19 @@ typedef ImageValidateTest ValidDescriptor;
 typedef ImageValidateTest InvalidDescriptor;
 typedef ImageValidateTest InvalidSize;
 
-TEST_P(ValidDescriptor, validSizePassedToValidateReturnsSuccess) {
+TEST_P(ValidDescriptor, GivenValidSizeWhenValidatingThenSuccessIsReturned) {
     imageDesc = GetParam();
     retVal = Image::validate(&context, {}, &surfaceFormat, &imageDesc, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(InvalidDescriptor, zeroSizePassedToValidateReturnsError) {
+TEST_P(InvalidDescriptor, GivenZeroSizeWhenValidatingThenInvalidImageDescriptorErrorIsReturned) {
     imageDesc = GetParam();
     retVal = Image::validate(&context, {}, &surfaceFormat, &imageDesc, nullptr);
     EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
 }
 
-TEST_P(InvalidSize, invalidSizePassedToValidateReturnsError) {
+TEST_P(InvalidSize, GivenInvalidSizeWhenValidatingThenInvalidImageSizeErrorIsReturned) {
     imageDesc = GetParam();
     retVal = Image::validate(&context, {}, &surfaceFormat, &imageDesc, nullptr);
     EXPECT_EQ(CL_INVALID_IMAGE_SIZE, retVal);
@@ -107,7 +107,7 @@ TEST_P(ValidDescriptor, given3dImageFormatWhenGetSupportedFormatIsCalledThenDont
     delete[] readWriteOnlyImgFormats;
 }
 
-TEST(ImageDepthFormatTest, returnSurfaceFormatForDepthFormats) {
+TEST(ImageDepthFormatTest, GivenDepthFormatsWhenGettingSurfaceFormatThenCorrectSurfaceFormatIsReturned) {
     cl_image_format imgFormat = {};
     imgFormat.image_channel_order = CL_DEPTH;
     imgFormat.image_channel_data_type = CL_FLOAT;
@@ -122,7 +122,7 @@ TEST(ImageDepthFormatTest, returnSurfaceFormatForDepthFormats) {
     EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
 }
 
-TEST(ImageDepthFormatTest, returnSurfaceFormatForWriteOnlyDepthFormats) {
+TEST(ImageDepthFormatTest, GivenWriteOnlyDepthFormatsWhenGettingSurfaceFormatThenCorrectSurfaceFormatIsReturned) {
     cl_image_format imgFormat = {};
     imgFormat.image_channel_order = CL_DEPTH;
     imgFormat.image_channel_data_type = CL_FLOAT;
@@ -137,7 +137,7 @@ TEST(ImageDepthFormatTest, returnSurfaceFormatForWriteOnlyDepthFormats) {
     EXPECT_TRUE(surfaceFormatInfo->surfaceFormat.GMMSurfaceFormat == GMM_FORMAT_R16_UNORM_TYPE);
 }
 
-TEST(ImageDepthFormatTest, returnSurfaceFormatForDepthStencilFormats) {
+TEST(ImageDepthFormatTest, GivenDepthStencilFormatsWhenGettingSurfaceFormatThenCorrectSurfaceFormatIsReturned) {
     cl_image_format imgFormat = {};
     imgFormat.image_channel_order = CL_DEPTH_STENCIL;
     imgFormat.image_channel_data_type = CL_UNORM_INT24;
