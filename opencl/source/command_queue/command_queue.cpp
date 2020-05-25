@@ -249,7 +249,7 @@ cl_int CommandQueue::enqueueAcquireSharedObjects(cl_uint numObjects, const cl_me
             return CL_INVALID_MEM_OBJECT;
         }
 
-        int result = memObject->peekSharingHandler()->acquire(memObject);
+        int result = memObject->peekSharingHandler()->acquire(memObject, getDevice().getRootDeviceIndex());
         if (result != CL_SUCCESS) {
             return result;
         }

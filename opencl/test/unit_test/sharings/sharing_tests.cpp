@@ -21,7 +21,8 @@ TEST(sharingHandler, givenBasicSharingHandlerWhenSynchronizeObjectThenErrorIsRet
 
     } sharingHandler;
 
-    UpdateData updateData;
+    const uint32_t rootDeviceIndex = 1u;
+    UpdateData updateData{rootDeviceIndex};
     sharingHandler.synchronizeHandlerMock(updateData);
     EXPECT_EQ(SynchronizeStatus::SYNCHRONIZE_ERROR, updateData.synchronizationStatus);
 
@@ -49,7 +50,7 @@ TEST(sharingHandler, givenMemObjWhenAcquireIncrementCounterThenReleaseShouldDecr
     } sharingHandler;
 
     EXPECT_EQ(0u, sharingHandler.acquireCount);
-    sharingHandler.acquire(memObj.get());
+    sharingHandler.acquire(memObj.get(), mockAllocation->getRootDeviceIndex());
     EXPECT_EQ(1u, sharingHandler.acquireCount);
     sharingHandler.release(memObj.get(), mockAllocation->getRootDeviceIndex());
     EXPECT_EQ(0u, sharingHandler.acquireCount);
@@ -74,9 +75,9 @@ TEST(sharingHandler, givenMemObjWhenAcquireTwoTimesThenReleaseShouldBeCalledTwoT
     } sharingHandler;
 
     EXPECT_EQ(0u, sharingHandler.acquireCount);
-    sharingHandler.acquire(memObj.get());
+    sharingHandler.acquire(memObj.get(), mockAllocation->getRootDeviceIndex());
     EXPECT_EQ(1u, sharingHandler.acquireCount);
-    sharingHandler.acquire(memObj.get());
+    sharingHandler.acquire(memObj.get(), mockAllocation->getRootDeviceIndex());
     EXPECT_EQ(2u, sharingHandler.acquireCount);
     sharingHandler.release(memObj.get(), mockAllocation->getRootDeviceIndex());
     EXPECT_EQ(1u, sharingHandler.acquireCount);
@@ -92,7 +93,8 @@ TEST(sharingHandler, givenSharingHandlerWhenValidateUpdateDataIsCalledWithNonNul
         using SharingHandler::validateUpdateData;
     };
     MockSharingHandler sharingHandler;
-    UpdateData updateData;
+    const uint32_t rootDeviceIndex = 1u;
+    UpdateData updateData{rootDeviceIndex};
     sharingHandler.validateUpdateData(updateData);
 }
 
@@ -103,6 +105,6 @@ TEST(sharingHandler, givenSharingHandlerWhenAcquiringThenReturnErrorCode) {
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0), CL_MEM_USE_HOST_PTR, 0,
                   1, nullptr, nullptr, graphicsAllocation, true, false, false);
 
-    auto result = sharingHandler.acquire(&memObj);
+    auto result = sharingHandler.acquire(&memObj, graphicsAllocation->getRootDeviceIndex());
     EXPECT_NE(CL_SUCCESS, result);
 }

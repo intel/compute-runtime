@@ -868,7 +868,7 @@ TEST_F(D3D9Tests, givenResourcesCreatedFromDifferentDevicesWhenAcquireReleaseCal
     memoryManager->expectedLockingAllocation = sharedImg->getGraphicsAllocation();
 
     mockSharingFcns->setDevice(nullptr); // force device change
-    sharedImg->getSharingHandler()->acquire(sharedImg.get());
+    sharedImg->getSharingHandler()->acquire(sharedImg.get(), context->getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(createdResourceDevice, mockSharingFcns->getDevice());
 
     mockSharingFcns->setDevice(nullptr); // force device change

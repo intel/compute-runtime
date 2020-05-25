@@ -216,7 +216,7 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredThenAcuqireCountIsIncremen
     EXPECT_FALSE(memObject->isReadWriteOnCpuAllowed());
     auto currentGraphicsAllocation = memObject->getGraphicsAllocation();
 
-    memObject->peekSharingHandler()->acquire(memObject);
+    memObject->peekSharingHandler()->acquire(memObject, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
     EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
 
@@ -233,11 +233,11 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredTwiceThenAcuqireIsNotCalle
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
     auto memObject = castToObject<MemObj>(glBuffer);
 
-    memObject->peekSharingHandler()->acquire(memObject);
+    memObject->peekSharingHandler()->acquire(memObject, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
     EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
 
-    memObject->peekSharingHandler()->acquire(memObject);
+    memObject->peekSharingHandler()->acquire(memObject, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
     EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
 
@@ -274,13 +274,13 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredTwiceAfterReleaseThenAcuqi
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
     auto memObject = castToObject<MemObj>(glBuffer);
 
-    memObject->peekSharingHandler()->acquire(memObject);
+    memObject->peekSharingHandler()->acquire(memObject, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
     EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
 
     memObject->peekSharingHandler()->release(memObject, context.getDevice(0)->getRootDeviceIndex());
 
-    memObject->peekSharingHandler()->acquire(memObject);
+    memObject->peekSharingHandler()->acquire(memObject, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(3, mockGlSharing->dllParam->getParam("GLAcquireSharedBufferCalled"));
     EXPECT_EQ(2, mockGlSharing->dllParam->getParam("GLGetCurrentContextCalled"));
 
@@ -292,8 +292,8 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquireCountIsDecrementedToZeroThe
     std::unique_ptr<Buffer> buffer(GlBuffer::createSharedGlBuffer(&context, CL_MEM_READ_WRITE, bufferId, nullptr));
     auto sharingHandler = buffer->peekSharingHandler();
 
-    sharingHandler->acquire(buffer.get());
-    sharingHandler->acquire(buffer.get());
+    sharingHandler->acquire(buffer.get(), context.getDevice(0)->getRootDeviceIndex());
+    sharingHandler->acquire(buffer.get(), context.getDevice(0)->getRootDeviceIndex());
 
     sharingHandler->release(buffer.get(), context.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(0, mockGlSharing->dllParam->getParam("GLReleaseSharedBufferCalled"));
@@ -313,7 +313,7 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredWithDifferentOffsetThenGra
     mockGlSharing->m_bufferInfoOutput.bufferOffset = 50u;
     mockGlSharing->uploadDataToBufferInfo();
 
-    memObject->peekSharingHandler()->acquire(memObject);
+    memObject->peekSharingHandler()->acquire(memObject, context.getDevice(0)->getRootDeviceIndex());
 
     auto offsetedGraphicsAddress = memObject->getGraphicsAllocation()->getGpuAddress();
 

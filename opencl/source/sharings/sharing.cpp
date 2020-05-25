@@ -15,9 +15,9 @@
 
 namespace NEO {
 
-int SharingHandler::acquire(MemObj *memObj) {
+int SharingHandler::acquire(MemObj *memObj, uint32_t rootDeviceIndex) {
     if (acquireCount == 0) {
-        UpdateData updateData;
+        UpdateData updateData{rootDeviceIndex};
         auto currentSharedHandle = memObj->getGraphicsAllocation()->peekSharedHandle();
         updateData.sharedHandle = currentSharedHandle;
         updateData.memObject = memObj;

@@ -442,8 +442,8 @@ TEST_F(GlSharingTextureTests, givenSharedGlTextureWhenItIsAcquireCountIsDecremen
     std::unique_ptr<Image> image(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_READ_ONLY, GL_TEXTURE_2D, 0, textureId, nullptr));
     auto sharingHandler = image->peekSharingHandler();
 
-    sharingHandler->acquire(image.get());
-    sharingHandler->acquire(image.get());
+    sharingHandler->acquire(image.get(), clContext->getDevice(0)->getRootDeviceIndex());
+    sharingHandler->acquire(image.get(), clContext->getDevice(0)->getRootDeviceIndex());
 
     sharingHandler->release(image.get(), clContext->getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(0, glSharing->dllParam->getParam("GLReleaseSharedTextureCalled"));
@@ -458,8 +458,8 @@ TEST_F(GlSharingTextureTests, givenSharedRenderBufferWhenItIsAcquireCountIsDecre
     std::unique_ptr<Image> image(GlTexture::createSharedGlTexture(clContext.get(), CL_MEM_READ_WRITE, GL_RENDERBUFFER_EXT, 0, textureId, nullptr));
     auto sharingHandler = image->peekSharingHandler();
 
-    sharingHandler->acquire(image.get());
-    sharingHandler->acquire(image.get());
+    sharingHandler->acquire(image.get(), clContext->getDevice(0)->getRootDeviceIndex());
+    sharingHandler->acquire(image.get(), clContext->getDevice(0)->getRootDeviceIndex());
 
     sharingHandler->release(image.get(), clContext->getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(0, glSharing->dllParam->getParam("GLReleaseSharedRenderBufferCalled"));

@@ -1003,13 +1003,17 @@ TEST(CommandQueue, givenEnqueueReleaseSharedObjectsWhenIncorrectArgumentsThenRet
 }
 
 TEST(CommandQueue, givenEnqueueAcquireSharedObjectsCallWhenAcquireFailsThenCorrectErrorIsReturned) {
+    const auto rootDeviceIndex = 1u;
     class MockSharingHandler : public SharingHandler {
         int validateUpdateData(UpdateData &data) override {
+            EXPECT_EQ(1u, data.rootDeviceIndex);
             return CL_INVALID_MEM_OBJECT;
         }
     };
-    MockContext context;
-    MockCommandQueue cmdQ(&context, nullptr, 0);
+
+    UltClDeviceFactory deviceFactory{2, 0};
+    MockContext context(deviceFactory.rootDevices[rootDeviceIndex]);
+    MockCommandQueue cmdQ(&context, context.getDevice(0), 0);
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(&context));
 
     MockSharingHandler *handler = new MockSharingHandler;

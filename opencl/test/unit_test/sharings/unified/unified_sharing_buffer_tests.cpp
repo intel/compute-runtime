@@ -29,10 +29,10 @@ TEST_F(UnifiedSharingBufferTestsWithMemoryManager, givenUnifiedBufferThenItCanBe
 
     ASSERT_EQ(0u, sharingHandler->acquireCount);
 
-    ASSERT_EQ(CL_SUCCESS, sharingHandler->acquire(buffer.get()));
+    ASSERT_EQ(CL_SUCCESS, sharingHandler->acquire(buffer.get(), context->getDevice(0)->getRootDeviceIndex()));
     EXPECT_EQ(1u, sharingHandler->acquireCount);
 
-    ASSERT_EQ(CL_SUCCESS, sharingHandler->acquire(buffer.get()));
+    ASSERT_EQ(CL_SUCCESS, sharingHandler->acquire(buffer.get(), context->getDevice(0)->getRootDeviceIndex()));
     EXPECT_EQ(2u, sharingHandler->acquireCount);
 
     sharingHandler->release(buffer.get(), context->getDevice(0)->getRootDeviceIndex());

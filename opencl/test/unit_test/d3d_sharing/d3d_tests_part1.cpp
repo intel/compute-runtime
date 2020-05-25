@@ -713,7 +713,7 @@ TEST(D3DSurfaceTest, givenD3DSurfaceWhenInvalidMemObjectIsPassedToValidateUpdate
     std::unique_ptr<D3DSurface> surface(new MockD3DSurface(&context, &surfaceInfo, nullptr, 0, imagePlane, 0, false, false));
 
     MockBuffer buffer;
-    UpdateData updateData;
+    UpdateData updateData{context.getDevice(0)->getRootDeviceIndex()};
     updateData.memObject = &buffer;
     auto result = surface->validateUpdateData(updateData);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, result);

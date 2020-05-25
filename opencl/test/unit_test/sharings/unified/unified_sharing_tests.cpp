@@ -152,10 +152,10 @@ TEST_F(UnifiedSharingTestsWithMemoryManager, givenUnifiedSharingHandlerWhenAcqui
 
     ASSERT_EQ(0u, sharingHandler->synchronizeObjectCalled);
 
-    ASSERT_EQ(CL_SUCCESS, sharingHandler->acquire(buffer.get()));
+    ASSERT_EQ(CL_SUCCESS, sharingHandler->acquire(buffer.get(), context->getDevice(0)->getRootDeviceIndex()));
     EXPECT_EQ(1u, sharingHandler->synchronizeObjectCalled);
 
-    ASSERT_EQ(CL_SUCCESS, sharingHandler->acquire(buffer.get()));
+    ASSERT_EQ(CL_SUCCESS, sharingHandler->acquire(buffer.get(), context->getDevice(0)->getRootDeviceIndex()));
     EXPECT_EQ(1u, sharingHandler->synchronizeObjectCalled);
 
     ASSERT_EQ(0u, sharingHandler->releaseResourceCalled);

@@ -329,11 +329,11 @@ TEST_F(VaSharingTests, givenContextWhenClCreateFromVaApiMediaSurfaceIsCalledThen
 TEST_F(VaSharingTests, givenVASurfaceWhenItIsAcquiredTwiceThenAcquireIsNotCalled) {
     createMediaSurface();
 
-    sharedImg->peekSharingHandler()->acquire(sharedImg);
+    sharedImg->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_TRUE(vaSharing->sharingFunctions.extGetSurfaceHandleCalled);
 
     vaSharing->sharingFunctions.extGetSurfaceHandleCalled = false;
-    sharedImg->peekSharingHandler()->acquire(sharedImg);
+    sharedImg->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_FALSE(vaSharing->sharingFunctions.extGetSurfaceHandleCalled);
 }
 
@@ -471,7 +471,7 @@ TEST_F(VaSharingTests, givenNonInteropUserSyncContextWhenAcquireIsCalledThenSync
     auto memObj = castToObject<MemObj>(sharedClMem);
 
     EXPECT_FALSE(vaSharing->sharingFunctions.syncSurfaceCalled);
-    memObj->peekSharingHandler()->acquire(sharedImg);
+    memObj->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_TRUE(vaSharing->sharingFunctions.syncSurfaceCalled);
 }
 
@@ -481,7 +481,7 @@ TEST_F(VaSharingTests, givenInteropUserSyncContextWhenAcquireIsCalledThenDontSyn
     createMediaSurface();
 
     EXPECT_FALSE(vaSharing->sharingFunctions.syncSurfaceCalled);
-    sharedImg->peekSharingHandler()->acquire(sharedImg);
+    sharedImg->peekSharingHandler()->acquire(sharedImg, context.getDevice(0)->getRootDeviceIndex());
     EXPECT_FALSE(vaSharing->sharingFunctions.syncSurfaceCalled);
 }
 

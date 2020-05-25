@@ -20,6 +20,8 @@ enum SynchronizeStatus {
 };
 
 struct UpdateData {
+    UpdateData(uint32_t inRootDeviceIndex) : rootDeviceIndex(inRootDeviceIndex){};
+    const uint32_t rootDeviceIndex;
     SynchronizeStatus synchronizationStatus;
     osHandle sharedHandle;
     MemObj *memObject = nullptr;
@@ -35,7 +37,7 @@ class SharingFunctions {
 
 class SharingHandler {
   public:
-    int acquire(MemObj *memObj);
+    int acquire(MemObj *memObj, uint32_t rootDeviceIndex);
     void release(MemObj *memObject, uint32_t rootDeviceIndex);
     virtual ~SharingHandler() = default;
 
