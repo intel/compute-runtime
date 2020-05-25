@@ -28,7 +28,7 @@ class CCustomEventListener : public ::testing::TestEventListener {
                        [](unsigned char c) { return std::toupper(c); });
     }
 
-    ~CCustomEventListener() {
+    ~CCustomEventListener() override {
         delete _listener;
     }
 
