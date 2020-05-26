@@ -38,9 +38,8 @@ class SamplerSetArgFixture : public DeviceFixture {
         pKernelInfo = std::make_unique<KernelInfo>();
 
         // define kernel info
-        kernelHeader.DynamicStateHeapSize = sizeof(samplerStateHeap);
         pKernelInfo->heapInfo.pDsh = samplerStateHeap;
-        pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+        pKernelInfo->heapInfo.DynamicStateHeapSize = sizeof(samplerStateHeap);
 
         // setup kernel arg offsets
         pKernelInfo->kernelArgInfo.resize(2);

@@ -65,13 +65,13 @@ struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, pu
         samplerArray.Token = 0;
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
-        kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+        kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
         kernelInfo.patchInfo.dataParameterStream = &dataParameterStream;
         kernelInfo.patchInfo.executionEnvironment = &executionEnvironment;
         kernelInfo.patchInfo.threadPayload = &threadPayload;
 
         kernelInfoWithSampler.heapInfo.pKernelHeap = kernelIsa;
-        kernelInfoWithSampler.heapInfo.pKernelHeader = &kernelHeader;
+        kernelInfoWithSampler.heapInfo.KernelHeapSize = sizeof(kernelIsa);
         kernelInfoWithSampler.patchInfo.dataParameterStream = &dataParameterStream;
         kernelInfoWithSampler.patchInfo.executionEnvironment = &executionEnvironment;
         kernelInfoWithSampler.patchInfo.threadPayload = &threadPayload;

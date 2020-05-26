@@ -21,11 +21,9 @@ KernelImageArgTest::~KernelImageArgTest() = default;
 void KernelImageArgTest::SetUp() {
     pKernelInfo = std::make_unique<KernelInfo>();
     KernelArgPatchInfo kernelArgPatchInfo;
-    kernelHeader.reset(new iOpenCL::SKernelBinaryHeaderCommon{});
 
-    kernelHeader->SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.pKernelHeader = kernelHeader.get();
     pKernelInfo->usesSsh = true;
 
     constexpr int numImages = 5;

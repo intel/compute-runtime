@@ -646,11 +646,11 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     auto graphicsAllocation = kernelInfo->getGraphicsAllocation();
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_TRUE(graphicsAllocation->is32BitAllocation());
-    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo->heapInfo.pKernelHeader->KernelHeapSize);
+    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo->heapInfo.KernelHeapSize);
 
     auto kernelIsa = graphicsAllocation->getUnderlyingBuffer();
     EXPECT_NE(kernelInfo->heapInfo.pKernelHeap, kernelIsa);
-    EXPECT_EQ(0, memcmp(kernelIsa, kernelInfo->heapInfo.pKernelHeap, kernelInfo->heapInfo.pKernelHeader->KernelHeapSize));
+    EXPECT_EQ(0, memcmp(kernelIsa, kernelInfo->heapInfo.pKernelHeap, kernelInfo->heapInfo.KernelHeapSize));
     auto rootDeviceIndex = graphicsAllocation->getRootDeviceIndex();
     EXPECT_EQ(GmmHelper::decanonize(graphicsAllocation->getGpuBaseAddress()), pProgram->getDevice().getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex));
 }

@@ -181,12 +181,12 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
         auto bindingTableCount = pBlockInfo->patchInfo.bindingTableState->Count;
         maxBindingTableCount = std::max(maxBindingTableCount, bindingTableCount);
 
-        totalBlockSSHSize += alignUp(pBlockInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+        totalBlockSSHSize += alignUp(pBlockInfo->heapInfo.SurfaceStateHeapSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
         surfaceStateHeap.align(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
         auto btOffset = HardwareCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(surfaceStateHeap, bindingTableCount,
                                                                                             pBlockInfo->heapInfo.pSsh,
-                                                                                            pBlockInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize,
+                                                                                            pBlockInfo->heapInfo.SurfaceStateHeapSize,
                                                                                             bindingTableCount,
                                                                                             pBlockInfo->patchInfo.bindingTableState->Offset);
 

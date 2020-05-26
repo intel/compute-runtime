@@ -64,9 +64,8 @@ class BufferSetArgTest : public ContextFixture,
         pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].size = sizeOfPointer;
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeOfPointer;
 
-        kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->usesSsh = true;
 
         pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);

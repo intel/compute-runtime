@@ -108,11 +108,9 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKerne
     KernelInfo kernelInfo;
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     OsAgnosticMemoryManager memoryManager(executionEnvironment);
-    SKernelBinaryHeaderCommon kernelHeader;
     const size_t heapSize = 0x40;
     char heap[heapSize];
-    kernelHeader.KernelHeapSize = heapSize;
-    kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+    kernelInfo.heapInfo.KernelHeapSize = heapSize;
     kernelInfo.heapInfo.pKernelHeap = &heap;
 
     for (size_t i = 0; i < heapSize; i++) {
@@ -137,8 +135,6 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateM
     KernelInfo kernelInfo;
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MyMemoryManager memoryManager(executionEnvironment);
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
     auto retVal = kernelInfo.createKernelAllocation(0, &memoryManager);
     EXPECT_FALSE(retVal);
 }
@@ -233,11 +229,9 @@ using KernelInfoMultiRootDeviceTests = MultiRootDeviceFixture;
 
 TEST_F(KernelInfoMultiRootDeviceTests, kernelAllocationHasCorrectRootDeviceIndex) {
     KernelInfo kernelInfo;
-    SKernelBinaryHeaderCommon kernelHeader;
     const size_t heapSize = 0x40;
     char heap[heapSize];
-    kernelHeader.KernelHeapSize = heapSize;
-    kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+    kernelInfo.heapInfo.KernelHeapSize = heapSize;
     kernelInfo.heapInfo.pKernelHeap = &heap;
 
     auto retVal = kernelInfo.createKernelAllocation(expectedRootDeviceIndex, mockMemoryManager);

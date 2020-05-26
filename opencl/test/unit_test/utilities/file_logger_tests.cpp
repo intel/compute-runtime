@@ -645,12 +645,9 @@ TEST(FileLogger, WithDebugFunctionalityDumpKernelArgsImageNotSet) {
     auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false, &device->getDevice()));
     auto kernel = clUniquePtr(new MockKernel(program.get(), *kernelInfo, *device));
 
-    SKernelBinaryHeaderCommon kernelHeader;
     char surfaceStateHeap[0x80];
-
-    kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
     kernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    kernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    kernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
     kernelInfo->usesSsh = true;
 
     KernelArgPatchInfo kernelArgPatchInfo;

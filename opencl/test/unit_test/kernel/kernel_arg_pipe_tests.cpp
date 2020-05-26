@@ -43,9 +43,8 @@ class KernelArgPipeFixture : public ContextFixture, public DeviceFixture {
         // setup kernel arg offsets
         KernelArgPatchInfo kernelArgPatchInfo;
 
-        kernelHeader.SurfaceStateHeapSize = sizeof(pSshLocal);
         pKernelInfo->heapInfo.pSsh = pSshLocal;
-        pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(pSshLocal);
         pKernelInfo->usesSsh = true;
         pKernelInfo->requiresSshForBuffers = true;
 

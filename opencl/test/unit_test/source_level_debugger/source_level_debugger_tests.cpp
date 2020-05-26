@@ -294,12 +294,10 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyKernelDebugD
 
     info.name = "debugKernel";
 
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.KernelHeapSize = sizeof(isa);
-    info.heapInfo.pKernelHeader = &kernelHeader;
+    info.heapInfo.KernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
-    debugger.notifyKernelDebugData(&info.debugData, info.name, info.heapInfo.pKernelHeap, info.heapInfo.pKernelHeader->KernelHeapSize);
+    debugger.notifyKernelDebugData(&info.debugData, info.name, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
 
     EXPECT_TRUE(interceptor.kernelDebugDataCalled);
 
@@ -312,7 +310,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyKernelDebugD
     EXPECT_EQ(visa, interceptor.kernelDebugDataArgIn.dbgVisaBuffer);
     EXPECT_EQ(sizeof(visa), interceptor.kernelDebugDataArgIn.dbgVisaSize);
 
-    EXPECT_EQ(kernelHeader.KernelHeapSize, interceptor.kernelDebugDataArgIn.KernelBinSize);
+    EXPECT_EQ(info.heapInfo.KernelHeapSize, interceptor.kernelDebugDataArgIn.KernelBinSize);
     EXPECT_EQ(isa, interceptor.kernelDebugDataArgIn.kernelBinBuffer);
     EXPECT_STREQ(info.name.c_str(), interceptor.kernelDebugDataArgIn.kernelName);
 }
@@ -337,12 +335,10 @@ TEST(SourceLevelDebugger, givenNoVisaWhenNotifyKernelDebugDataIsCalledThenDebugg
 
     info.name = "debugKernel";
 
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.KernelHeapSize = sizeof(isa);
-    info.heapInfo.pKernelHeader = &kernelHeader;
+    info.heapInfo.KernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
-    debugger.notifyKernelDebugData(&info.debugData, info.name, info.heapInfo.pKernelHeap, info.heapInfo.pKernelHeader->KernelHeapSize);
+    debugger.notifyKernelDebugData(&info.debugData, info.name, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
     EXPECT_FALSE(interceptor.kernelDebugDataCalled);
 }
 
@@ -366,9 +362,7 @@ TEST(SourceLevelDebugger, givenNoGenIsaWhenNotifyKernelDebugDataIsCalledThenDebu
 
     info.name = "debugKernel";
 
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.KernelHeapSize = sizeof(isa);
-    info.heapInfo.pKernelHeader = &kernelHeader;
+    info.heapInfo.KernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
     debugger.notifyKernelDebugData(&info.debugData, info.name, isa, sizeof(isa));

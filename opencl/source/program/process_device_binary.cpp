@@ -87,8 +87,8 @@ cl_int Program::linkBinary() {
         for (const auto &kernelInfo : this->kernelInfoArray) {
             auto &kernHeapInfo = kernelInfo->heapInfo;
             const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
-            patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.pKernelHeader->KernelHeapSize));
-            isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.pKernelHeader->KernelHeapSize});
+            patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.KernelHeapSize));
+            isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.KernelHeapSize});
         }
     }
 
@@ -114,7 +114,7 @@ cl_int Program::linkBinary() {
             auto segmentId = &kernelInfo - &this->kernelInfoArray[0];
             this->pDevice->getMemoryManager()->copyMemoryToAllocation(kernelInfo->getGraphicsAllocation(),
                                                                       isaSegmentsForPatching[segmentId].hostPointer,
-                                                                      kernHeapInfo.pKernelHeader->KernelHeapSize);
+                                                                      kernHeapInfo.KernelHeapSize);
         }
     }
     DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->symbols));
@@ -193,11 +193,11 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
 
     for (auto &kernelInfo : this->kernelInfoArray) {
         cl_int retVal = CL_SUCCESS;
-        if (kernelInfo->heapInfo.pKernelHeader->KernelHeapSize && this->pDevice) {
+        if (kernelInfo->heapInfo.KernelHeapSize && this->pDevice) {
             retVal = kernelInfo->createKernelAllocation(this->pDevice->getRootDeviceIndex(), this->pDevice->getMemoryManager()) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
         }
 
-        DEBUG_BREAK_IF(kernelInfo->heapInfo.pKernelHeader->KernelHeapSize && !this->pDevice);
+        DEBUG_BREAK_IF(kernelInfo->heapInfo.KernelHeapSize && !this->pDevice);
         if (retVal != CL_SUCCESS) {
             return retVal;
         }

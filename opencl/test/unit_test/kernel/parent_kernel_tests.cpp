@@ -145,15 +145,6 @@ TEST(ParentKernelTest, WhenInitializingParentKernelThenPrivateMemoryForBlocksIsA
 
     crossThreadOffsetBlock += 8;
 
-    SKernelBinaryHeaderCommon *headerBlock = new SKernelBinaryHeaderCommon;
-    headerBlock->DynamicStateHeapSize = 0;
-    headerBlock->GeneralStateHeapSize = 0;
-    headerBlock->KernelHeapSize = 0;
-    headerBlock->KernelNameSize = 0;
-    headerBlock->PatchListSize = 0;
-    headerBlock->SurfaceStateHeapSize = 0;
-    infoBlock->heapInfo.pKernelHeader = headerBlock;
-
     SPatchThreadPayload *threadPayloadBlock = new SPatchThreadPayload;
     threadPayloadBlock->LocalIDXPresent = 0;
     threadPayloadBlock->LocalIDYPresent = 0;

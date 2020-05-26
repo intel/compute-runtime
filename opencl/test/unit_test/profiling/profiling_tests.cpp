@@ -37,9 +37,6 @@ struct ProfilingTests : public CommandEnqueueFixture,
         program = ReleaseableObjectPtr<MockProgram>(new MockProgram(*pDevice->getExecutionEnvironment()));
         program->setContext(&ctx);
 
-        memset(&kernelHeader, 0, sizeof(kernelHeader));
-        kernelHeader.KernelHeapSize = sizeof(kernelIsa);
-
         memset(&dataParameterStream, 0, sizeof(dataParameterStream));
         dataParameterStream.DataParameterStreamSize = sizeof(crossThreadData);
 
@@ -54,7 +51,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
         threadPayload.LocalIDZPresent = 1;
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
-        kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+        kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
         kernelInfo.patchInfo.dataParameterStream = &dataParameterStream;
         kernelInfo.patchInfo.executionEnvironment = &executionEnvironment;
         kernelInfo.patchInfo.threadPayload = &threadPayload;

@@ -22,9 +22,6 @@ struct KernelSLMAndBarrierTest : public DeviceFixture,
         DeviceFixture::SetUp();
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
 
-        memset(&kernelHeader, 0, sizeof(kernelHeader));
-        kernelHeader.KernelHeapSize = sizeof(kernelIsa);
-
         memset(&dataParameterStream, 0, sizeof(dataParameterStream));
         dataParameterStream.DataParameterStreamSize = sizeof(crossThreadData);
 
@@ -39,7 +36,7 @@ struct KernelSLMAndBarrierTest : public DeviceFixture,
         threadPayload.LocalIDZPresent = 1;
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
-        kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+        kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
         kernelInfo.patchInfo.dataParameterStream = &dataParameterStream;
         kernelInfo.patchInfo.executionEnvironment = &executionEnvironment;
         kernelInfo.patchInfo.threadPayload = &threadPayload;

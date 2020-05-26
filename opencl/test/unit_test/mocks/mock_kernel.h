@@ -103,7 +103,6 @@ class MockKernel : public Kernel {
         }
 
         if (kernelInfoAllocated) {
-            delete kernelInfoAllocated->heapInfo.pKernelHeader;
             delete kernelInfoAllocated->patchInfo.executionEnvironment;
             delete kernelInfoAllocated->patchInfo.threadPayload;
             delete kernelInfoAllocated;
@@ -120,15 +119,6 @@ class MockKernel : public Kernel {
         auto info = new KernelInfo();
         const size_t crossThreadSize = 160;
         auto pClDevice = device.getSpecializedDevice<ClDevice>();
-
-        SKernelBinaryHeaderCommon *header = new SKernelBinaryHeaderCommon;
-        header->DynamicStateHeapSize = 0;
-        header->GeneralStateHeapSize = 0;
-        header->KernelHeapSize = 0;
-        header->KernelNameSize = 0;
-        header->PatchListSize = 0;
-        header->SurfaceStateHeapSize = 0;
-        info->heapInfo.pKernelHeader = header;
 
         SPatchThreadPayload *threadPayload = new SPatchThreadPayload;
         threadPayload->LocalIDXPresent = 0;
@@ -275,14 +265,13 @@ class MockKernelWithInternals {
         executionEnvironment.NumGRFRequired = GrfConfig::DefaultGrfNumber;
         executionEnvironmentBlock.NumGRFRequired = GrfConfig::DefaultGrfNumber;
         executionEnvironment.CompiledSIMD32 = 1;
-        kernelHeader.SurfaceStateHeapSize = sizeof(sshLocal);
         threadPayload.LocalIDXPresent = 1;
         threadPayload.LocalIDYPresent = 1;
         threadPayload.LocalIDZPresent = 1;
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
         kernelInfo.heapInfo.pSsh = sshLocal;
         kernelInfo.heapInfo.pDsh = dshLocal;
-        kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+        kernelInfo.heapInfo.SurfaceStateHeapSize = sizeof(sshLocal);
         kernelInfo.patchInfo.dataParameterStream = &dataParameterStream;
         kernelInfo.patchInfo.executionEnvironment = &executionEnvironment;
         kernelInfo.patchInfo.threadPayload = &threadPayload;
@@ -375,15 +364,6 @@ class MockParentKernel : public Kernel {
         const size_t crossThreadSize = 160;
         uint32_t crossThreadOffset = 0;
         uint32_t crossThreadOffsetBlock = 0;
-
-        SKernelBinaryHeaderCommon *header = new SKernelBinaryHeaderCommon;
-        header->DynamicStateHeapSize = 0;
-        header->GeneralStateHeapSize = 0;
-        header->KernelHeapSize = 0;
-        header->KernelNameSize = 0;
-        header->PatchListSize = 0;
-        header->SurfaceStateHeapSize = 0;
-        info->heapInfo.pKernelHeader = header;
 
         SPatchThreadPayload *threadPayload = new SPatchThreadPayload;
         threadPayload->LocalIDXPresent = 0;
@@ -507,15 +487,6 @@ class MockParentKernel : public Kernel {
             crossThreadOffsetBlock += 8;
         }
 
-        SKernelBinaryHeaderCommon *headerBlock = new SKernelBinaryHeaderCommon;
-        headerBlock->DynamicStateHeapSize = 0;
-        headerBlock->GeneralStateHeapSize = 0;
-        headerBlock->KernelHeapSize = 0;
-        headerBlock->KernelNameSize = 0;
-        headerBlock->PatchListSize = 0;
-        headerBlock->SurfaceStateHeapSize = 0;
-        infoBlock->heapInfo.pKernelHeader = headerBlock;
-
         SPatchThreadPayload *threadPayloadBlock = new SPatchThreadPayload;
         threadPayloadBlock->LocalIDXPresent = 0;
         threadPayloadBlock->LocalIDYPresent = 0;
@@ -569,7 +540,6 @@ class MockParentKernel : public Kernel {
         delete kernelInfo.patchInfo.pAllocateStatelessEventPoolSurface;
         delete kernelInfo.patchInfo.pAllocateStatelessPrintfSurface;
         delete kernelInfo.patchInfo.threadPayload;
-        delete kernelInfo.heapInfo.pKernelHeader;
         delete &kernelInfo;
         BlockKernelManager *blockManager = program->getBlockKernelManager();
 
@@ -578,7 +548,6 @@ class MockParentKernel : public Kernel {
             delete blockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface;
             delete blockInfo->patchInfo.pAllocateStatelessEventPoolSurface;
             delete blockInfo->patchInfo.pAllocateStatelessPrintfSurface;
-            delete blockInfo->heapInfo.pKernelHeader;
             delete blockInfo->patchInfo.threadPayload;
             delete blockInfo->patchInfo.executionEnvironment;
             delete blockInfo->patchInfo.dataParameterStream;

@@ -759,7 +759,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     Kernel *pKernel1 = (Kernel *)kernel1;
     const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
     uint64_t gtpinKernelId1 = pKernel1->getKernelId();
-    EXPECT_EQ(kInfo1.heapInfo.pKernelHeader->ShaderHashCode, gtpinKernelId1);
+    EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
     constexpr size_t n = 256;
     auto buff10 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -793,7 +793,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     Kernel *pKernel2 = (Kernel *)kernel2;
     const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
     uint64_t gtpinKernelId2 = pKernel2->getKernelId();
-    EXPECT_EQ(kInfo2.heapInfo.pKernelHeader->ShaderHashCode, gtpinKernelId2);
+    EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
 
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff21 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -907,7 +907,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     Kernel *pKernel1 = (Kernel *)kernel1;
     const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
     uint64_t gtpinKernelId1 = pKernel1->getKernelId();
-    EXPECT_EQ(kInfo1.heapInfo.pKernelHeader->ShaderHashCode, gtpinKernelId1);
+    EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
     cl_uint workDim = 1;
     size_t localWorkSize[3] = {1, 1, 1};
@@ -941,7 +941,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     Kernel *pKernel2 = (Kernel *)kernel2;
     const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
     uint64_t gtpinKernelId2 = pKernel2->getKernelId();
-    EXPECT_EQ(kInfo2.heapInfo.pKernelHeader->ShaderHashCode, gtpinKernelId2);
+    EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
 
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff21 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -1225,7 +1225,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
     Kernel *pKernel = (Kernel *)kernel;
     const KernelInfo &kInfo = pKernel->getKernelInfo();
     uint64_t gtpinKernelId = pKernel->getKernelId();
-    EXPECT_EQ(kInfo.heapInfo.pKernelHeader->ShaderHashCode, gtpinKernelId);
+    EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
 
     constexpr size_t n = 256;
     auto buff0 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -1338,7 +1338,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
     Kernel *pKernel = (Kernel *)kernel;
     const KernelInfo &kInfo = pKernel->getKernelInfo();
     uint64_t gtpinKernelId = pKernel->getKernelId();
-    EXPECT_EQ(kInfo.heapInfo.pKernelHeader->ShaderHashCode, gtpinKernelId);
+    EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
 
     constexpr size_t n = 256;
     auto buff0 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -1462,7 +1462,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     Kernel *pKernel1 = (Kernel *)kernel1;
     const KernelInfo &kInfo1 = pKernel1->getKernelInfo();
     uint64_t gtpinKernelId1 = pKernel1->getKernelId();
-    EXPECT_EQ(kInfo1.heapInfo.pKernelHeader->ShaderHashCode, gtpinKernelId1);
+    EXPECT_EQ(kInfo1.shaderHashCode, gtpinKernelId1);
 
     constexpr size_t n = 256;
     auto buff10 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -1500,7 +1500,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     Kernel *pKernel2 = (Kernel *)kernel2;
     const KernelInfo &kInfo2 = pKernel2->getKernelInfo();
     uint64_t gtpinKernelId2 = pKernel2->getKernelId();
-    EXPECT_EQ(kInfo2.heapInfo.pKernelHeader->ShaderHashCode, gtpinKernelId2);
+    EXPECT_EQ(kInfo2.shaderHashCode, gtpinKernelId2);
 
     auto buff20 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff21 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
@@ -2323,14 +2323,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCo
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 
     char surfaceStateHeap[0x80];
-    SKernelBinaryHeaderCommon kernelHeader;
     std::unique_ptr<MockContext> context(new MockContext(pDevice));
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto pKernelInfo = std::make_unique<KernelInfo>();
-    kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
     pKernelInfo->usesSsh = true;
 
     auto pProgramm = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment(), context.get(), false, nullptr);

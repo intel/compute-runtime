@@ -25,13 +25,11 @@ class KernelArgSvmFixture : public ApiFixture<>, public DeviceFixture {
 
         // define kernel info
         pKernelInfo = std::make_unique<KernelInfo>();
-
         // setup kernel arg offsets
         KernelArgPatchInfo kernelArgPatchInfo;
 
-        kernelHeader.SurfaceStateHeapSize = sizeof(pSshLocal);
+        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(pSshLocal);
         pKernelInfo->heapInfo.pSsh = pSshLocal;
-        pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
         pKernelInfo->usesSsh = true;
         pKernelInfo->requiresSshForBuffers = true;
 
@@ -59,7 +57,6 @@ class KernelArgSvmFixture : public ApiFixture<>, public DeviceFixture {
     cl_int retVal = CL_SUCCESS;
     MockKernel *pMockKernel = nullptr;
     std::unique_ptr<KernelInfo> pKernelInfo;
-    SKernelBinaryHeaderCommon kernelHeader{};
     char pSshLocal[64]{};
     char pCrossThreadData[64]{};
 };

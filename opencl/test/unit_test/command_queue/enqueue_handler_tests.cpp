@@ -546,9 +546,6 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
     sPatchBindingTableState.Count = 1;
     sPatchBindingTableState.SurfaceStateOffset = 0;
 
-    SKernelBinaryHeaderCommon sKernelBinaryHeader{};
-    sKernelBinaryHeader.SurfaceStateHeapSize = sizeof(RENDER_SURFACE_STATE) + sizeof(BINDING_TABLE_STATE);
-
     pClDevice->allocateSyncBufferHandler();
 
     size_t offset = 0;
@@ -575,7 +572,7 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
         kernelInternals.kernelInfo.requiresSshForBuffers = true;
         kernelInternals.kernelInfo.patchInfo.pAllocateSyncBuffer = &sPatchAllocateSyncBuffer;
         kernelInternals.kernelInfo.patchInfo.bindingTableState = &sPatchBindingTableState;
-        kernelInternals.kernelInfo.heapInfo.pKernelHeader = &sKernelBinaryHeader;
+        kernelInternals.kernelInfo.heapInfo.SurfaceStateHeapSize = sizeof(RENDER_SURFACE_STATE) + sizeof(BINDING_TABLE_STATE);
         auto kernel = kernelInternals.mockKernel;
         kernel->initialize();
 
@@ -587,7 +584,7 @@ HWTEST_F(EnqueueHandlerTest, givenKernelUsingSyncBufferWhenEnqueuingKernelThenSs
         mockCmdQ->enqueueKernel(kernel, 1, &offset, &size, &size, 0, nullptr, nullptr);
 
         auto &surfaceStateHeap = mockCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0);
-        EXPECT_EQ(sshUsageWithoutSyncBuffer + sKernelBinaryHeader.SurfaceStateHeapSize, surfaceStateHeap.getUsed());
+        EXPECT_EQ(sshUsageWithoutSyncBuffer + kernelInternals.kernelInfo.heapInfo.SurfaceStateHeapSize, surfaceStateHeap.getUsed());
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(*mockCmdQ);

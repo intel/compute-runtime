@@ -145,8 +145,15 @@ void populateKernelInfoArg(KernelInfo &dstKernelInfo, KernelArgInfo &dstKernelIn
 
 void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatchtokens &src, uint32_t gpuPointerSizeInBytes) {
     UNRECOVERABLE_IF(nullptr == src.header);
-    dst.heapInfo.pKernelHeader = src.header;
+
     dst.name = std::string(src.name.begin(), src.name.end()).c_str();
+    dst.heapInfo.DynamicStateHeapSize = src.header->DynamicStateHeapSize;
+    dst.heapInfo.GeneralStateHeapSize = src.header->GeneralStateHeapSize;
+    dst.heapInfo.SurfaceStateHeapSize = src.header->SurfaceStateHeapSize;
+    dst.heapInfo.KernelHeapSize = src.header->KernelHeapSize;
+    dst.heapInfo.KernelUnpaddedSize = src.header->KernelUnpaddedSize;
+    dst.shaderHashCode = src.header->ShaderHashCode;
+
     dst.heapInfo.pKernelHeap = src.isa.begin();
     dst.heapInfo.pGsh = src.heaps.generalState.begin();
     dst.heapInfo.pDsh = src.heaps.dynamicState.begin();
@@ -217,14 +224,14 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
 
     dst.gpuPointerSize = gpuPointerSizeInBytes;
 
+    if (useKernelDescriptor) {
+        populateKernelDescriptor(dst.kernelDescriptor, src, gpuPointerSizeInBytes);
+    }
+
     if (dst.patchInfo.dataParameterStream && dst.patchInfo.dataParameterStream->DataParameterStreamSize) {
         uint32_t crossThreadDataSize = dst.patchInfo.dataParameterStream->DataParameterStreamSize;
         dst.crossThreadData = new char[crossThreadDataSize];
         memset(dst.crossThreadData, 0x00, crossThreadDataSize);
-    }
-
-    if (useKernelDescriptor) {
-        populateKernelDescriptor(dst.kernelDescriptor, src, gpuPointerSizeInBytes);
     }
 }
 

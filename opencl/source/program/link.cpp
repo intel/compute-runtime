@@ -166,7 +166,7 @@ cl_int Program::link(
                     clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
                                                                               kernelInfo->name,
                                                                               kernelInfo->heapInfo.pKernelHeap,
-                                                                              kernelInfo->heapInfo.pKernelHeader->KernelHeapSize);
+                                                                              kernelInfo->heapInfo.KernelHeapSize);
                 }
             }
         } else {

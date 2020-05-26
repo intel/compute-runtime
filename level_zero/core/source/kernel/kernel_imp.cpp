@@ -97,7 +97,7 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
     UNRECOVERABLE_IF(kernelInfo == nullptr);
     this->kernelDescriptor = &kernelInfo->kernelDescriptor;
 
-    auto kernelIsaSize = kernelInfo->heapInfo.pKernelHeader->KernelHeapSize;
+    auto kernelIsaSize = kernelInfo->heapInfo.KernelHeapSize;
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), kernelIsaSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA});
@@ -126,16 +126,16 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
                                        kernelDescriptor->payloadMappings.implicitArgs.simdSize, kernelDescriptor->kernelAttributes.simdSize);
     }
 
-    if (kernelInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize != 0) {
-        this->surfaceStateHeapSize = kernelInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize;
+    if (kernelInfo->heapInfo.SurfaceStateHeapSize != 0) {
+        this->surfaceStateHeapSize = kernelInfo->heapInfo.SurfaceStateHeapSize;
         surfaceStateHeapTemplate.reset(new uint8_t[surfaceStateHeapSize]);
 
         memcpy_s(surfaceStateHeapTemplate.get(), surfaceStateHeapSize,
                  kernelInfo->heapInfo.pSsh, surfaceStateHeapSize);
     }
 
-    if (kernelInfo->heapInfo.pKernelHeader->DynamicStateHeapSize != 0) {
-        this->dynamicStateHeapSize = kernelInfo->heapInfo.pKernelHeader->DynamicStateHeapSize;
+    if (kernelInfo->heapInfo.DynamicStateHeapSize != 0) {
+        this->dynamicStateHeapSize = kernelInfo->heapInfo.DynamicStateHeapSize;
         dynamicStateHeapTemplate.reset(new uint8_t[dynamicStateHeapSize]);
 
         memcpy_s(dynamicStateHeapTemplate.get(), dynamicStateHeapSize,

@@ -106,11 +106,8 @@ TEST(SchedulerKernelTest, getCurbeSize) {
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.DataParameterStreamSize = crossTrheadDataSize;
 
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.DynamicStateHeapSize = dshSize;
-
     info.patchInfo.dataParameterStream = &dataParameterStream;
-    info.heapInfo.pKernelHeader = &kernelHeader;
+    info.heapInfo.DynamicStateHeapSize = dshSize;
 
     MockSchedulerKernel kernel(&program, info, *device);
 
@@ -278,7 +275,6 @@ TEST(SchedulerKernelTest, getCurbeSizeWithNullKernelInfo) {
     KernelInfo info;
 
     info.patchInfo.dataParameterStream = nullptr;
-    info.heapInfo.pKernelHeader = nullptr;
 
     MockSchedulerKernel kernel(&program, info, *device);
 

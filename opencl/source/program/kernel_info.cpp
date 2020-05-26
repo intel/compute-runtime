@@ -421,7 +421,7 @@ uint32_t KernelInfo::getConstantBufferSize() const {
 
 bool KernelInfo::createKernelAllocation(uint32_t rootDeviceIndex, MemoryManager *memoryManager) {
     UNRECOVERABLE_IF(kernelAllocation);
-    auto kernelIsaSize = heapInfo.pKernelHeader->KernelHeapSize;
+    auto kernelIsaSize = heapInfo.KernelHeapSize;
     kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, kernelIsaSize, GraphicsAllocation::AllocationType::KERNEL_ISA});
     if (!kernelAllocation) {
         return false;

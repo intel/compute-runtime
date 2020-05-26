@@ -215,6 +215,7 @@ struct KernelInfo {
     bool computeMode = false;
     const gtpin::igc_info_t *igcInfoForGtpin = nullptr;
 
+    uint64_t shaderHashCode;
     KernelDescriptor kernelDescriptor;
 };
 

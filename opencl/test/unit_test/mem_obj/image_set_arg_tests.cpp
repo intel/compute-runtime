@@ -35,11 +35,7 @@ class ImageSetArgTest : public DeviceFixture,
                         public testing::Test {
 
   public:
-    ImageSetArgTest()
-
-    {
-        memset(&kernelHeader, 0, sizeof(kernelHeader));
-    }
+    ImageSetArgTest() = default;
 
   protected:
     template <typename FamilyType>
@@ -70,9 +66,8 @@ class ImageSetArgTest : public DeviceFixture,
         pKernelInfo = std::make_unique<KernelInfo>();
 
         // define kernel info
-        kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->usesSsh = true;
 
         // setup kernel arg offsets
@@ -111,7 +106,6 @@ class ImageSetArgTest : public DeviceFixture,
     MockContext *context;
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
-    SKernelBinaryHeaderCommon kernelHeader;
     std::unique_ptr<KernelInfo> pKernelInfo;
     char surfaceStateHeap[0x80];
     Image *srcImage = nullptr;
@@ -918,9 +912,8 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
         pKernelInfo = std::make_unique<KernelInfo>();
 
         // define kernel info
-        kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->usesSsh = true;
 
         // setup kernel arg offsets

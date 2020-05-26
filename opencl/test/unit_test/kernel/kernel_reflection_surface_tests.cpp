@@ -657,9 +657,6 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNoKernelArgsWhenObtainingKernelRefl
     environment.HasDeviceEnqueue = 1;
     info.patchInfo.executionEnvironment = &environment;
 
-    SKernelBinaryHeaderCommon kernelHeader;
-    info.heapInfo.pKernelHeader = &kernelHeader;
-
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Size = 0;
     dataParameterStream.DataParameterStreamSize = 0;
@@ -712,9 +709,6 @@ TEST(KernelReflectionSurfaceTestSingle, GivenDeviceQueueKernelArgWhenObtainingKe
     SPatchExecutionEnvironment environment = {};
     environment.HasDeviceEnqueue = 1;
     info.patchInfo.executionEnvironment = &environment;
-
-    SKernelBinaryHeaderCommon kernelHeader;
-    info.heapInfo.pKernelHeader = &kernelHeader;
 
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Size = 0;
@@ -2143,9 +2137,6 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelRefl
     environment.HasDeviceEnqueue = 1;
     info.patchInfo.executionEnvironment = &environment;
 
-    SKernelBinaryHeaderCommon kernelHeader;
-    info.heapInfo.pKernelHeader = &kernelHeader;
-
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Size = 0;
     dataParameterStream.DataParameterStreamSize = 0;
@@ -2198,9 +2189,6 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenDeviceQueueKernelArgWhenObtainingKe
     SPatchExecutionEnvironment environment = {};
     environment.HasDeviceEnqueue = 1;
     info.patchInfo.executionEnvironment = &environment;
-
-    SKernelBinaryHeaderCommon kernelHeader;
-    info.heapInfo.pKernelHeader = &kernelHeader;
 
     SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Size = 0;

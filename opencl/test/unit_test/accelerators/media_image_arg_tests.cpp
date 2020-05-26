@@ -23,11 +23,7 @@ using namespace NEO;
 class MediaImageSetArgTest : public DeviceFixture,
                              public testing::Test {
   public:
-    MediaImageSetArgTest()
-
-    {
-        memset(&kernelHeader, 0, sizeof(kernelHeader));
-    }
+    MediaImageSetArgTest() = default;
 
   protected:
     void SetUp() override {
@@ -36,9 +32,8 @@ class MediaImageSetArgTest : public DeviceFixture,
         pKernelInfo = std::make_unique<KernelInfo>();
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
 
-        kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
         pKernelInfo->usesSsh = true;
         pKernelInfo->isVmeWorkload = true;
 
@@ -77,7 +72,6 @@ class MediaImageSetArgTest : public DeviceFixture,
     MockContext *context;
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
-    SKernelBinaryHeaderCommon kernelHeader;
     std::unique_ptr<KernelInfo> pKernelInfo;
     char surfaceStateHeap[0x80];
     Image *srcImage = nullptr;

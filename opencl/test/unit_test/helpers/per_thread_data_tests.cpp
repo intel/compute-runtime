@@ -26,9 +26,6 @@ struct PerThreadDataTests : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::SetUp();
 
-        kernelHeader = {};
-        kernelHeader.KernelHeapSize = sizeof(kernelIsa);
-
         threadPayload = {};
         threadPayload.LocalIDXPresent = localIdX ? 1 : 0;
         threadPayload.LocalIDYPresent = localIdY ? 1 : 0;
@@ -42,7 +39,7 @@ struct PerThreadDataTests : public DeviceFixture,
         executionEnvironment.LargestCompiledSIMDSize = 32;
 
         kernelInfo.heapInfo.pKernelHeap = kernelIsa;
-        kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+        kernelInfo.heapInfo.KernelHeapSize = sizeof(kernelIsa);
         kernelInfo.patchInfo.executionEnvironment = &executionEnvironment;
         kernelInfo.patchInfo.threadPayload = &threadPayload;
 

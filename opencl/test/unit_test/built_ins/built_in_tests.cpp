@@ -2017,7 +2017,7 @@ TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompil
 
     const auto &sipKernelInfo = p->getKernelInfo(static_cast<size_t>(0));
 
-    auto compbinedKernelHeapSize = sipKernelInfo->heapInfo.pKernelHeader->KernelHeapSize;
+    auto compbinedKernelHeapSize = sipKernelInfo->heapInfo.KernelHeapSize;
     auto sipOffset = sipKernelInfo->systemKernelOffset;
     ASSERT_GT(compbinedKernelHeapSize, sipOffset);
     auto expectedMem = reinterpret_cast<const char *>(sipKernelInfo->heapInfo.pKernelHeap) + sipOffset;

@@ -319,7 +319,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
             device->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo->kernelDescriptor.external.debugData.get(),
                                                                     kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
                                                                     kernelInfo->heapInfo.pKernelHeap,
-                                                                    kernelInfo->heapInfo.pKernelHeader->KernelHeapSize);
+                                                                    kernelInfo->heapInfo.KernelHeapSize);
         }
     }
 
@@ -437,8 +437,8 @@ bool ModuleImp::linkBinary() {
         for (const auto &kernelInfo : this->translationUnit->programInfo.kernelInfos) {
             auto &kernHeapInfo = kernelInfo->heapInfo;
             const char *originalIsa = reinterpret_cast<const char *>(kernHeapInfo.pKernelHeap);
-            patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.pKernelHeader->KernelHeapSize));
-            isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.pKernelHeader->KernelHeapSize});
+            patchedIsaTempStorage.push_back(std::vector<char>(originalIsa, originalIsa + kernHeapInfo.KernelHeapSize));
+            isaSegmentsForPatching.push_back(Linker::PatchableSegment{patchedIsaTempStorage.rbegin()->data(), kernHeapInfo.KernelHeapSize});
         }
     }
 

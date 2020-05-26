@@ -101,7 +101,7 @@ TEST(KernelTest, WhenKernelIsCreatedThenCorrectMembersAreMemObjects) {
 
 TEST_P(KernelTest, WhenKernelIsCreatedThenKernelHeapIsCorrect) {
     EXPECT_EQ(pKernel->getKernelInfo().heapInfo.pKernelHeap, pKernel->getKernelHeap());
-    EXPECT_EQ(pKernel->getKernelInfo().heapInfo.pKernelHeader->KernelHeapSize, pKernel->getKernelHeapSize());
+    EXPECT_EQ(pKernel->getKernelInfo().heapInfo.KernelHeapSize, pKernel->getKernelHeapSize());
 }
 
 TEST_P(KernelTest, GivenInvalidParamNameWhenGettingInfoThenInvalidValueErrorIsReturned) {
@@ -731,11 +731,8 @@ HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPri
 
     // setup surface state heap
     char surfaceStateHeap[0x80];
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     // define stateful path
     pKernelInfo->usesSsh = true;
@@ -982,11 +979,8 @@ HWTEST_F(KernelGlobalSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenGlob
 
     // setup surface state heap
     char surfaceStateHeap[0x80];
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     // define stateful path
     pKernelInfo->usesSsh = true;
@@ -1157,11 +1151,8 @@ HWTEST_F(KernelConstantSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenCo
 
     // setup surface state heap
     char surfaceStateHeap[0x80];
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     // define stateful path
     pKernelInfo->usesSsh = true;
@@ -1242,11 +1233,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatefulKernelWhenK
 
     // setup surface state heap
     char surfaceStateHeap[0x80];
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     // define stateful path
     pKernelInfo->usesSsh = true;
@@ -1294,11 +1282,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelEventPoolSurfaceTest, givenStatefulKernelWhenE
 
     // setup surface state heap
     char surfaceStateHeap[0x80];
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     // define stateful path
     pKernelInfo->usesSsh = true;
@@ -1452,11 +1437,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatefulKe
 
     // setup surface state heap
     char surfaceStateHeap[0x80];
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     // define stateful path
     pKernelInfo->usesSsh = true;
@@ -1504,11 +1486,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatefulKe
 
     // setup surface state heap
     char surfaceStateHeap[0x80];
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     // define stateful path
     pKernelInfo->usesSsh = true;

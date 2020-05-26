@@ -148,7 +148,7 @@ size_t HardwareCommandsHelper<GfxFamily>::getSshSizeForExecutionModel(const Kern
 
     for (uint32_t i = 0; i < blockCount; i++) {
         const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
-        totalSize += pBlockInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize;
+        totalSize += pBlockInfo->heapInfo.SurfaceStateHeapSize;
         totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
         maxBindingTableCount = std::max(maxBindingTableCount, pBlockInfo->patchInfo.bindingTableState->Count);

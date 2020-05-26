@@ -553,9 +553,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     std::vector<char> kernelHeap;
     kernelHeap.resize(32, 7);
     kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
-    iOpenCL::SKernelBinaryHeaderCommon kernelHeader = {};
-    kernelHeader.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
-    kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+    kernelInfo.heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
     program.getKernelInfoArray().push_back(&kernelInfo);
     program.linkerInput = std::move(linkerInput);
 
@@ -590,9 +588,7 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
     std::vector<char> kernelHeap;
     kernelHeap.resize(32, 7);
     kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
-    iOpenCL::SKernelBinaryHeaderCommon kernelHeader = {};
-    kernelHeader.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
-    kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+    kernelInfo.heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
     MockGraphicsAllocation kernelIsa(kernelHeap.data(), kernelHeap.size());
     kernelInfo.kernelAllocation = &kernelIsa;
     program.getKernelInfoArray().push_back(&kernelInfo);
@@ -640,9 +636,7 @@ TEST_F(ProgramDataTest, whenRelocationsAreNotNeededThenIsaIsPreserved) {
     kernelHeapData.resize(32, 7);
     std::vector<char> kernelHeap(kernelHeapData.begin(), kernelHeapData.end());
     kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
-    iOpenCL::SKernelBinaryHeaderCommon kernelHeader = {};
-    kernelHeader.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
-    kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+    kernelInfo.heapInfo.KernelHeapSize = static_cast<uint32_t>(kernelHeap.size());
     MockGraphicsAllocation kernelIsa(kernelHeap.data(), kernelHeap.size());
     kernelInfo.kernelAllocation = &kernelIsa;
     program.getKernelInfoArray().push_back(&kernelInfo);

@@ -35,7 +35,7 @@ class SchedulerKernel : public Kernel {
 
     size_t getCurbeSize() {
         size_t crossTrheadDataSize = kernelInfo.patchInfo.dataParameterStream ? kernelInfo.patchInfo.dataParameterStream->DataParameterStreamSize : 0;
-        size_t dshSize = kernelInfo.heapInfo.pKernelHeader ? kernelInfo.heapInfo.pKernelHeader->DynamicStateHeapSize : 0;
+        size_t dshSize = kernelInfo.heapInfo.DynamicStateHeapSize;
 
         crossTrheadDataSize = alignUp(crossTrheadDataSize, 64);
         dshSize = alignUp(dshSize, 64);

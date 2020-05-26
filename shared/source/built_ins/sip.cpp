@@ -86,7 +86,7 @@ const char *SipKernel::getBinary() const {
 }
 size_t SipKernel::getBinarySize() const {
     auto kernelInfo = program->getKernelInfo(size_t{0});
-    return kernelInfo->heapInfo.pKernelHeader->KernelHeapSize - kernelInfo->systemKernelOffset;
+    return kernelInfo->heapInfo.KernelHeapSize - kernelInfo->systemKernelOffset;
 }
 
 SipKernelType SipKernel::getSipKernelType(GFXCORE_FAMILY family, bool debuggingActive) {

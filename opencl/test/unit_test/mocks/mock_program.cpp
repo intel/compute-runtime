@@ -40,8 +40,8 @@ cl_int GlobalMockSipProgram::processGenBinary() {
 
 cl_int GlobalMockSipProgram::processGenBinaryOnce() {
     cl_int ret = Program::processGenBinary();
-    sipAllocationStorage = alignedMalloc(this->kernelInfoArray[0]->heapInfo.pKernelHeader->KernelHeapSize, MemoryConstants::pageSize);
-    this->kernelInfoArray[0]->kernelAllocation = new MockGraphicsAllocation(sipAllocationStorage, this->kernelInfoArray[0]->heapInfo.pKernelHeader->KernelHeapSize);
+    sipAllocationStorage = alignedMalloc(this->kernelInfoArray[0]->heapInfo.KernelHeapSize, MemoryConstants::pageSize);
+    this->kernelInfoArray[0]->kernelAllocation = new MockGraphicsAllocation(sipAllocationStorage, this->kernelInfoArray[0]->heapInfo.KernelHeapSize);
     return ret;
 }
 void GlobalMockSipProgram::resetAllocationState() {

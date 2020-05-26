@@ -718,8 +718,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
     // create kernel
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
 
-    SKernelBinaryHeaderCommon kernelHeader;
-
     // setup surface state heap
     constexpr uint32_t numSurfaces = 5;
     constexpr uint32_t sshSize = numSurfaces * sizeof(typename FamilyType::RENDER_SURFACE_STATE) + numSurfaces * sizeof(typename FamilyType::BINDING_TABLE_STATE);
@@ -730,16 +728,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
     for (uint32_t i = 0; i < numSurfaces; ++i) {
         bti[i].setSurfaceStatePointer(i * sizeof(typename FamilyType::RENDER_SURFACE_STATE));
     }
-
-    kernelHeader.SurfaceStateHeapSize = sshSize;
+    pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sshSize;
 
     // setup kernel heap
     uint32_t kernelIsa[32];
-    kernelHeader.KernelHeapSize = sizeof(kernelIsa);
-
-    pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
     pKernelInfo->heapInfo.pKernelHeap = kernelIsa;
-    pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    pKernelInfo->heapInfo.KernelHeapSize = sizeof(kernelIsa);
 
     // setup binding table state
     SPatchBindingTableState bindingTableState;
@@ -843,10 +838,8 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
 
     // setup surface state heap
     char surfaceStateHeap[256];
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     // define stateful path
     pKernelInfo->usesSsh = true;
@@ -901,10 +894,8 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
 
     // setup surface state heap
     char surfaceStateHeap[256];
-    SKernelBinaryHeaderCommon kernelHeader;
-    kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-    pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
 
     // define stateful path
     pKernelInfo->usesSsh = true;
@@ -1197,7 +1188,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, getSizeRequiredF
         for (uint32_t i = 0; i < blockCount; i++) {
             const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
 
-            totalSize += pBlockInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize;
+            totalSize += pBlockInfo->heapInfo.SurfaceStateHeapSize;
             totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
             maxBindingTableCount = std::max(maxBindingTableCount, pBlockInfo->patchInfo.bindingTableState ? pBlockInfo->patchInfo.bindingTableState->Count : 0);

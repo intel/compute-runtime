@@ -24,9 +24,8 @@ class KernelTransformableTest : public ::testing::Test {
         pKernelInfo = std::make_unique<KernelInfo>();
         KernelArgPatchInfo kernelArgPatchInfo;
 
-        kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
-        pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->usesSsh = true;
 
         pKernelInfo->kernelArgInfo.resize(4);

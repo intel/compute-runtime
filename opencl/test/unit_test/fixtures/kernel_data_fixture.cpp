@@ -97,9 +97,6 @@ void KernelDataTest::buildAndDecode() {
     // extract the kernel info
     pKernelInfo = program->Program::getKernelInfo(kernelName.c_str());
 
-    // validate header
-    EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pKernelHeader, &kernelBinaryHeader, sizeof(SKernelBinaryHeaderCommon)));
-
     // validate name
     EXPECT_STREQ(pKernelInfo->name.c_str(), kernelName.c_str());
 

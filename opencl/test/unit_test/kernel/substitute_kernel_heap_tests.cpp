@@ -19,9 +19,8 @@ typedef Test<DeviceFixture> KernelSubstituteTest;
 
 TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeThenAllocatesNewKernelAllocation) {
     MockKernelWithInternals kernel(*pClDevice);
-    auto pHeader = const_cast<SKernelBinaryHeaderCommon *>(kernel.kernelInfo.heapInfo.pKernelHeader);
     const size_t initialHeapSize = 0x40;
-    pHeader->KernelHeapSize = initialHeapSize;
+    kernel.kernelInfo.heapInfo.KernelHeapSize = initialHeapSize;
 
     EXPECT_EQ(nullptr, kernel.kernelInfo.kernelAllocation);
     kernel.kernelInfo.createKernelAllocation(pDevice->getRootDeviceIndex(), pDevice->getMemoryManager());
@@ -50,9 +49,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeT
 
 TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThenDoesNotAllocateNewKernelAllocation) {
     MockKernelWithInternals kernel(*pClDevice);
-    auto pHeader = const_cast<SKernelBinaryHeaderCommon *>(kernel.kernelInfo.heapInfo.pKernelHeader);
     const size_t initialHeapSize = 0x40;
-    pHeader->KernelHeapSize = initialHeapSize;
+    kernel.kernelInfo.heapInfo.KernelHeapSize = initialHeapSize;
 
     EXPECT_EQ(nullptr, kernel.kernelInfo.kernelAllocation);
     kernel.kernelInfo.createKernelAllocation(pDevice->getRootDeviceIndex(), pDevice->getMemoryManager());
@@ -80,9 +78,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThen
 
 TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSmallerSizeThenDoesNotAllocateNewKernelAllocation) {
     MockKernelWithInternals kernel(*pClDevice);
-    auto pHeader = const_cast<SKernelBinaryHeaderCommon *>(kernel.kernelInfo.heapInfo.pKernelHeader);
     const size_t initialHeapSize = 0x40;
-    pHeader->KernelHeapSize = initialHeapSize;
+    kernel.kernelInfo.heapInfo.KernelHeapSize = initialHeapSize;
 
     EXPECT_EQ(nullptr, kernel.kernelInfo.kernelAllocation);
     kernel.kernelInfo.createKernelAllocation(pDevice->getRootDeviceIndex(), pDevice->getMemoryManager());
@@ -110,12 +107,11 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSmallerSizeT
 
 TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKernelHeapAndAllocateNewMemoryThenStoreOldAllocationOnTemporaryList) {
     MockKernelWithInternals kernel(*pClDevice);
-    auto pHeader = const_cast<SKernelBinaryHeaderCommon *>(kernel.kernelInfo.heapInfo.pKernelHeader);
     auto memoryManager = pDevice->getMemoryManager();
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
 
     const size_t initialHeapSize = 0x40;
-    pHeader->KernelHeapSize = initialHeapSize;
+    kernel.kernelInfo.heapInfo.KernelHeapSize = initialHeapSize;
 
     kernel.kernelInfo.createKernelAllocation(pDevice->getRootDeviceIndex(), memoryManager);
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;

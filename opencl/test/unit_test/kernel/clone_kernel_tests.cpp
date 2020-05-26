@@ -50,8 +50,7 @@ class CloneKernelFixture : public ContextFixture, public DeviceFixture {
         // setup kernel arg offsets
         KernelArgPatchInfo kernelArgPatchInfo;
 
-        kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
-        pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+        pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
         pKernelInfo->usesSsh = true;
         pKernelInfo->requiresSshForBuffers = true;
