@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/get_info.h"
+
 #include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
@@ -673,7 +675,7 @@ struct GetDeviceInfo : public ::testing::TestWithParam<uint32_t /*cl_device_info
 TEST_P(GetDeviceInfo, GivenValidParamsWhenGettingDeviceInfoThenSuccessIsReturned) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    size_t sizeReturned = 0;
+    size_t sizeReturned = GetInfo::invalidSourceSize;
     auto retVal = device->getDeviceInfo(
         param,
         0,
@@ -682,7 +684,7 @@ TEST_P(GetDeviceInfo, GivenValidParamsWhenGettingDeviceInfoThenSuccessIsReturned
     if (CL_SUCCESS != retVal) {
         ASSERT_EQ(CL_SUCCESS, retVal) << " param = " << param;
     }
-    ASSERT_NE(0u, sizeReturned);
+    ASSERT_NE(GetInfo::invalidSourceSize, sizeReturned);
 
     auto *object = new char[sizeReturned];
     retVal = device->getDeviceInfo(
@@ -749,6 +751,7 @@ cl_device_info deviceInfoParams[] = {
     CL_DEVICE_NATIVE_VECTOR_WIDTH_INT,
     CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG,
     CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT,
+    CL_DEVICE_OPENCL_C_FEATURES,
     CL_DEVICE_OPENCL_C_VERSION,
     CL_DEVICE_PARENT_DEVICE,
     CL_DEVICE_PARTITION_AFFINITY_DOMAIN,
@@ -769,6 +772,7 @@ cl_device_info deviceInfoParams[] = {
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT,
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG,
     CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT,
+    CL_DEVICE_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
     CL_DEVICE_PRINTF_BUFFER_SIZE,
     CL_DEVICE_PROFILE,
     CL_DEVICE_PROFILING_TIMER_RESOLUTION,

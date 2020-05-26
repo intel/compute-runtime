@@ -175,6 +175,11 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(64u, caps.preferredLocalAtomicAlignment);
     EXPECT_EQ(64u, caps.preferredPlatformAtomicAlignment);
 
+    auto expectedPreferredWorkGroupSizeMultiple = hwHelper.isFusedEuDispatchEnabled(*defaultHwInfo)
+                                                      ? CommonConstants::maximalSimdSize * 2
+                                                      : CommonConstants::maximalSimdSize;
+    EXPECT_EQ(expectedPreferredWorkGroupSizeMultiple, caps.preferredWorkGroupSizeMultiple);
+
     EXPECT_EQ(static_cast<cl_bool>(device->getHardwareInfo().capabilityTable.supportsImages), sharedCaps.imageSupport);
     EXPECT_EQ(16384u, sharedCaps.image2DMaxWidth);
     EXPECT_EQ(16384u, sharedCaps.image2DMaxHeight);
@@ -977,7 +982,7 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     EXPECT_EQ(1024u, device->getSharedDeviceInfo().maxWorkGroupSize);
-    EXPECT_EQ(device->getSharedDeviceInfo().maxWorkGroupSize / 32, device->getDeviceInfo().maxNumOfSubGroups);
+    EXPECT_EQ(device->getSharedDeviceInfo().maxWorkGroupSize / CommonConstants::maximalSimdSize, device->getDeviceInfo().maxNumOfSubGroups);
 }
 
 TEST(DeviceGetCaps, givenDebugFlagToUseCertainWorkgroupSizeWhenDeviceIsCreatedItHasCeratinWorkgroupSize) {

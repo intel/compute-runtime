@@ -585,7 +585,7 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info p
     case CL_KERNEL_WORK_GROUP_SIZE:
         maxWorkgroupSize = this->maxKernelWorkGroupSize;
         if (DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()) {
-            auto divisionSize = 32 / patchInfo.executionEnvironment->LargestCompiledSIMDSize;
+            auto divisionSize = CommonConstants::maximalSimdSize / patchInfo.executionEnvironment->LargestCompiledSIMDSize;
             maxWorkgroupSize /= divisionSize;
         }
         retVal = changeGetInfoStatusToCLResultType(info.set<size_t>(maxWorkgroupSize));

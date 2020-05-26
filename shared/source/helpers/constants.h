@@ -70,4 +70,5 @@ enum class BlitDirection : uint32_t {
 namespace CommonConstants {
 constexpr uint32_t unspecifiedDeviceIndex = std::numeric_limits<uint32_t>::max();
 constexpr NEO::DeviceBitfield allDevicesBitfield = maxNBitValue(32);
+constexpr uint32_t maximalSimdSize = 32;
 } // namespace CommonConstants

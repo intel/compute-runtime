@@ -21,12 +21,17 @@ constexpr size_t invalidSourceSize = std::numeric_limits<size_t>::max();
 inline GetInfoStatus getInfo(void *destParamValue, size_t destParamValueSize,
                              const void *srcParamValue, size_t srcParamValueSize) {
 
+    if (srcParamValueSize == 0) {
+        // Report ok if there is nothing to copy.
+        return GetInfoStatus::SUCCESS;
+    }
+
     if ((srcParamValue == nullptr) || (srcParamValueSize == invalidSourceSize)) {
         return GetInfoStatus::INVALID_VALUE;
     }
 
-    if ((srcParamValueSize == 0) || (destParamValue == nullptr)) {
-        // Report ok if there is nothing to copy or when only size is queried.
+    if (destParamValue == nullptr) {
+        // Report ok if only size is queried.
         return GetInfoStatus::SUCCESS;
     }
 

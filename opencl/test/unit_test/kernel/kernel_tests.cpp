@@ -2655,7 +2655,7 @@ TEST(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedThenMa
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     MockKernelWithInternals kernel(*device);
-    kernel.executionEnvironment.LargestCompiledSIMDSize = 32;
+    kernel.executionEnvironment.LargestCompiledSIMDSize = CommonConstants::maximalSimdSize;
 
     size_t maxKernelWkgSize;
     kernel.mockKernel->getWorkGroupInfo(device.get(), CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);

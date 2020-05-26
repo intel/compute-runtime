@@ -278,7 +278,9 @@ void ClDevice::initializeCaps() {
     deviceInfo.maxComputUnits = systemInfo.EUCount * getNumAvailableDevices();
     deviceInfo.maxConstantArgs = 8;
     deviceInfo.maxSliceCount = systemInfo.SliceCount;
-    auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() ? 32u : hwHelper.getMinimalSIMDSize();
+    auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
+                            ? CommonConstants::maximalSimdSize
+                            : hwHelper.getMinimalSIMDSize();
 
     // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
     deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(sharedDeviceInfo.maxWorkGroupSize / simdSizeUsed);
@@ -365,6 +367,10 @@ void ClDevice::initializeCaps() {
     deviceInfo.preferredGlobalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredLocalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredPlatformAtomicAlignment = MemoryConstants::cacheLineSize;
+
+    deviceInfo.preferredWorkGroupSizeMultiple = hwHelper.isFusedEuDispatchEnabled(hwInfo)
+                                                    ? CommonConstants::maximalSimdSize * 2
+                                                    : CommonConstants::maximalSimdSize;
 
     deviceInfo.hostMemCapabilities = hwInfoConfig->getHostMemCapabilities(&hwInfo);
     deviceInfo.deviceMemCapabilities = hwInfoConfig->getDeviceMemCapabilities();

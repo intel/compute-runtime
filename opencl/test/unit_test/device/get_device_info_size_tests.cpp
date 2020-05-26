@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/get_info.h"
+
 #include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
@@ -26,7 +28,7 @@ struct GetDeviceInfoSize : public ::testing::TestWithParam<std::pair<uint32_t /*
 TEST_P(GetDeviceInfoSize, sizeIsValid) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    size_t sizeReturned = 0;
+    size_t sizeReturned = GetInfo::invalidSourceSize;
     auto retVal = device->getDeviceInfo(
         param.first,
         0,
@@ -35,7 +37,7 @@ TEST_P(GetDeviceInfoSize, sizeIsValid) {
     if (CL_SUCCESS != retVal) {
         ASSERT_EQ(CL_SUCCESS, retVal) << " param = " << param.first;
     }
-    ASSERT_NE(0u, sizeReturned);
+    ASSERT_NE(GetInfo::invalidSourceSize, sizeReturned);
     EXPECT_EQ(param.second, sizeReturned);
 }
 
@@ -82,6 +84,7 @@ std::pair<uint32_t, size_t> deviceInfoParams2[] = {
     {CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT, sizeof(cl_uint)},
     {CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE, sizeof(cl_uint)},
     {CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF, sizeof(cl_uint)},
+    {CL_DEVICE_OPENCL_C_FEATURES, 0u},
     //    {CL_DEVICE_OPENCL_C_VERSION, sizeof(char[])},
     {CL_DEVICE_PARENT_DEVICE, sizeof(cl_device_id)},
     {CL_DEVICE_PARTITION_AFFINITY_DOMAIN, sizeof(cl_device_affinity_domain)},
@@ -100,6 +103,7 @@ std::pair<uint32_t, size_t> deviceInfoParams2[] = {
     {CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT, sizeof(cl_uint)},
     {CL_DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE, sizeof(cl_uint)},
     {CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF, sizeof(cl_uint)},
+    {CL_DEVICE_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(size_t)},
     {CL_DEVICE_PRINTF_BUFFER_SIZE, sizeof(size_t)},
     //    {CL_DEVICE_PROFILE, sizeof(char[])},
     {CL_DEVICE_PROFILING_TIMER_RESOLUTION, sizeof(size_t)},

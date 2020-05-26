@@ -27,6 +27,7 @@ struct ClDeviceInfo {
     cl_ulong                      maxConstantBufferSize;
     size_t                        maxGlobalVariableSize;
     size_t                        globalVariablePreferredTotalSize;
+    size_t                        preferredWorkGroupSizeMultiple;
     cl_device_exec_capabilities   executionCapabilities;
     cl_command_queue_properties   queueOnHostProperties;
     cl_command_queue_properties   queueOnDeviceProperties;

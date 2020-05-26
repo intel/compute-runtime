@@ -148,6 +148,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT:                  getCap<CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT                  >(src, srcSize, retSize); break;
     case CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG:                 getCap<CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG                 >(src, srcSize, retSize); break;
     case CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT:                getCap<CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT                >(src, srcSize, retSize); break;
+    case CL_DEVICE_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:          getCap<CL_DEVICE_PREFERRED_WORK_GROUP_SIZE_MULTIPLE          >(src, srcSize, retSize); break;
     case CL_DEVICE_PRINTF_BUFFER_SIZE:                          getCap<CL_DEVICE_PRINTF_BUFFER_SIZE                          >(src, srcSize, retSize); break;
     case CL_DEVICE_PROFILE:                                     getStr<CL_DEVICE_PROFILE                                     >(src, srcSize, retSize); break;
     case CL_DEVICE_PROFILING_TIMER_RESOLUTION:                  getCap<CL_DEVICE_PROFILING_TIMER_RESOLUTION                  >(src, srcSize, retSize); break;
@@ -203,12 +204,15 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         }
         break;
     case CL_DEVICE_ILS_WITH_VERSION:
-        src = &deviceInfo.ilsWithVersion[0];
         if (ocl21FeaturesEnabled) {
+            src = &deviceInfo.ilsWithVersion[0];
             retSize = srcSize = sizeof(deviceInfo.ilsWithVersion[0]);
         } else {
             retSize = srcSize = 0;
         }
+        break;
+    case CL_DEVICE_OPENCL_C_FEATURES:
+        retSize = srcSize = 0;
         break;
     default:
         if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !getSharedDeviceInfo().imageSupport) {
