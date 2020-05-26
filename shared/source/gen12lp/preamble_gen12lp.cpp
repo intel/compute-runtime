@@ -68,6 +68,7 @@ void PreambleHelper<TGLLPFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComm
         if (!EngineHelpers::isCcs(engineType)) {
             cmd.setRenderTargetCacheFlushEnable(true);
             cmd.setDepthCacheFlushEnable(true);
+            cmd.setDepthStallEnable(true);
         }
         cmd.setDcFlushEnable(true);
     }

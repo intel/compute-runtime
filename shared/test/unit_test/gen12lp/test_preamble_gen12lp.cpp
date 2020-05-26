@@ -70,6 +70,7 @@ TGLLPTEST_F(Gen12LpPreambleVfeState, WaOff) {
     const auto &pc = *reinterpret_cast<PIPE_CONTROL *>(*itorPC);
     EXPECT_FALSE(pc.getRenderTargetCacheFlushEnable());
     EXPECT_FALSE(pc.getDepthCacheFlushEnable());
+    EXPECT_FALSE(pc.getDepthStallEnable());
     EXPECT_FALSE(pc.getDcFlushEnable());
     EXPECT_EQ(1u, pc.getCommandStreamerStallEnable());
 }
@@ -108,6 +109,7 @@ TGLLPTEST_F(Gen12LpPreambleVfeState, givenRcsEngineWhenWaIsSetThenAppropriatePip
     const auto &pc = *reinterpret_cast<PIPE_CONTROL *>(*itorPC);
     EXPECT_TRUE(pc.getRenderTargetCacheFlushEnable());
     EXPECT_TRUE(pc.getDepthCacheFlushEnable());
+    EXPECT_TRUE(pc.getDepthStallEnable());
     EXPECT_TRUE(pc.getDcFlushEnable());
     EXPECT_EQ(1u, pc.getCommandStreamerStallEnable());
 }
