@@ -566,12 +566,12 @@ TEST(MemoryManagerTest, givenLinearStreamTypeWhenGetAllocationDataIsCalledThenSy
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 
-TEST(MemoryManagerTest, givenTimestampPacketTagBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequestedAndRequireCpuAccess) {
+TEST(MemoryManagerTest, givenTimestampPacketTagBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequestedAndRequireCpuAccess) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{0, 1, GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
-    EXPECT_FALSE(allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 
