@@ -55,4 +55,28 @@ TEST(OSMemoryLinux, givenOSMemoryLinuxWhenReserveCpuAddressRangeIsCalledThenMinu
     mockOSMemoryLinux->releaseCpuAddressRange(reservedCpuRange);
 }
 
+TEST(OSMemoryLinux, givenOSMemoryLinuxWhenReserveCpuAddressRangeIsCalledAndBaseAddressIsSpecifiedThenCorrectValueIsPassedToMmapAsAddrParam) {
+    auto mockOSMemoryLinux = MockOSMemoryLinux::create();
+
+    EXPECT_CALL(*mockOSMemoryLinux, mmapWrapper(reinterpret_cast<void *>(0x10000000), _, _, _, -1, _));
+
+    auto reservedCpuRange = mockOSMemoryLinux->reserveCpuAddressRange(reinterpret_cast<void *>(0x10000000), MemoryConstants::pageSize, MemoryConstants::pageSize64k);
+
+    EXPECT_CALL(*mockOSMemoryLinux, munmapWrapper(reservedCpuRange.originalPtr, reservedCpuRange.actualReservedSize));
+
+    mockOSMemoryLinux->releaseCpuAddressRange(reservedCpuRange);
+}
+
+TEST(OSMemoryLinux, givenOSMemoryLinuxWhenReserveCpuAddressRangeIsCalledAndBaseAddressIsNotSpecifiedThenoZeroIsPassedToMmapAsAddrParam) {
+    auto mockOSMemoryLinux = MockOSMemoryLinux::create();
+
+    EXPECT_CALL(*mockOSMemoryLinux, mmapWrapper(nullptr, _, _, _, -1, _));
+
+    auto reservedCpuRange = mockOSMemoryLinux->reserveCpuAddressRange(MemoryConstants::pageSize, MemoryConstants::pageSize64k);
+
+    EXPECT_CALL(*mockOSMemoryLinux, munmapWrapper(reservedCpuRange.originalPtr, reservedCpuRange.actualReservedSize));
+
+    mockOSMemoryLinux->releaseCpuAddressRange(reservedCpuRange);
+}
+
 }; // namespace NEO

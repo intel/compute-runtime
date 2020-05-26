@@ -13,8 +13,8 @@ std::unique_ptr<OSMemory> OSMemory::create() {
     return std::make_unique<OSMemoryWindows>();
 }
 
-void *OSMemoryWindows::osReserveCpuAddressRange(size_t sizeToReserve) {
-    return virtualAllocWrapper(0, sizeToReserve, MEM_RESERVE, PAGE_READWRITE);
+void *OSMemoryWindows::osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve) {
+    return virtualAllocWrapper(baseAddress, sizeToReserve, MEM_RESERVE, PAGE_READWRITE);
 }
 
 void OSMemoryWindows::osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t /* reservedSize */) {

@@ -13,8 +13,8 @@ std::unique_ptr<OSMemory> OSMemory::create() {
     return std::make_unique<OSMemoryLinux>();
 }
 
-void *OSMemoryLinux::osReserveCpuAddressRange(size_t sizeToReserve) {
-    return mmapWrapper(0, sizeToReserve, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
+void *OSMemoryLinux::osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve) {
+    return mmapWrapper(baseAddress, sizeToReserve, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
 }
 
 void OSMemoryLinux::osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) {

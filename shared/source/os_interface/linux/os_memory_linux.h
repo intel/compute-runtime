@@ -17,7 +17,7 @@ class OSMemoryLinux : public OSMemory {
     OSMemoryLinux() = default;
 
   protected:
-    void *osReserveCpuAddressRange(size_t sizeToReserve) override;
+    void *osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve) override;
     void osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) override;
 
     MOCKABLE_VIRTUAL void *mmapWrapper(void *, size_t, int, int, int, off_t);

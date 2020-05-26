@@ -25,10 +25,11 @@ struct OSMemory {
     virtual ~OSMemory() = default;
 
     MOCKABLE_VIRTUAL ReservedCpuAddressRange reserveCpuAddressRange(size_t sizeToReserve, size_t alignment);
+    MOCKABLE_VIRTUAL ReservedCpuAddressRange reserveCpuAddressRange(void *baseAddress, size_t sizeToReserve, size_t alignment);
     MOCKABLE_VIRTUAL void releaseCpuAddressRange(const ReservedCpuAddressRange &reservedCpuAddressRange);
 
   protected:
-    virtual void *osReserveCpuAddressRange(size_t sizeToReserve) = 0;
+    virtual void *osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve) = 0;
     virtual void osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) = 0;
 };
 

@@ -16,7 +16,7 @@ class OSMemoryWindows : public OSMemory {
     OSMemoryWindows() = default;
 
   protected:
-    void *osReserveCpuAddressRange(size_t sizeToReserve) override;
+    void *osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve) override;
     void osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) override;
 
     MOCKABLE_VIRTUAL LPVOID virtualAllocWrapper(LPVOID, SIZE_T, DWORD, DWORD);
