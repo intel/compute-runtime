@@ -30,8 +30,6 @@ static std::string spirVersions = "1.2 ";
 #define TOSTR(b) QTR(b)
 static std::string driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
 
-const char *builtInKernels = ""; // the "always available" (extension-independent) builtin kernels
-
 static constexpr cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_config>(CL_FP_ROUND_TO_NEAREST |
                                                                                        CL_FP_ROUND_TO_ZERO |
                                                                                        CL_FP_ROUND_TO_INF |
@@ -106,17 +104,21 @@ void ClDevice::initializeCaps() {
     case 30:
         deviceInfo.clVersion = "OpenCL 3.0 NEO ";
         deviceInfo.clCVersion = "OpenCL C 3.0 ";
+        deviceInfo.numericClVersion = CL_MAKE_VERSION(3, 0, 0);
         break;
     case 21:
         deviceInfo.clVersion = "OpenCL 2.1 NEO ";
         deviceInfo.clCVersion = "OpenCL C 2.0 ";
+        deviceInfo.numericClVersion = CL_MAKE_VERSION(2, 1, 0);
         break;
     case 12:
     default:
         deviceInfo.clVersion = "OpenCL 1.2 NEO ";
         deviceInfo.clCVersion = "OpenCL C 1.2 ";
+        deviceInfo.numericClVersion = CL_MAKE_VERSION(1, 2, 0);
         break;
     }
+    initializeOpenclCAllVersions();
     deviceInfo.platformLP = (hwInfo.capabilityTable.supportsOcl21Features == false);
     deviceInfo.spirVersions = spirVersions.c_str();
     auto supportsVme = hwInfo.capabilityTable.supportsVme;
@@ -196,16 +198,23 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
 
-    exposedBuiltinKernels = builtInKernels;
-
+    std::vector<std::string> exposedBuiltinKernelsVector;
     if (supportsVme) {
-        exposedBuiltinKernels.append("block_motion_estimate_intel;");
+        exposedBuiltinKernelsVector.push_back("block_motion_estimate_intel");
     }
     if (supportsAdvancedVme) {
-        auto advVmeKernels = "block_advanced_motion_estimate_check_intel;block_advanced_motion_estimate_bidirectional_check_intel;";
-        exposedBuiltinKernels.append(advVmeKernels);
+        exposedBuiltinKernelsVector.push_back("block_advanced_motion_estimate_check_intel");
+        exposedBuiltinKernelsVector.push_back("block_advanced_motion_estimate_bidirectional_check_intel");
     }
+    for (auto builtInKernel : exposedBuiltinKernelsVector) {
+        exposedBuiltinKernels.append(builtInKernel);
+        exposedBuiltinKernels.append(";");
 
+        cl_name_version kernelNameVersion;
+        kernelNameVersion.version = CL_MAKE_VERSION(1, 0, 0);
+        strcpy_s(kernelNameVersion.name, CL_NAME_VERSION_MAX_NAME_SIZE, builtInKernel.c_str());
+        deviceInfo.builtInKernelsWithVersion.push_back(kernelNameVersion);
+    }
     deviceInfo.builtInKernels = exposedBuiltinKernels.c_str();
 
     deviceInfo.deviceType = CL_DEVICE_TYPE_GPU;
@@ -386,6 +395,38 @@ void ClDevice::initializeCaps() {
     }
 
     initializeOsSpecificCaps();
+
+    std::stringstream deviceExtensionsStringStream{deviceExtensions};
+    std::vector<std::string> deviceExtensionsVector{
+        std::istream_iterator<std::string>{deviceExtensionsStringStream}, std::istream_iterator<std::string>{}};
+    for (auto deviceExtension : deviceExtensionsVector) {
+        cl_name_version deviceExtensionWithVersion;
+        deviceExtensionWithVersion.version = CL_MAKE_VERSION(1, 0, 0);
+        strcpy_s(deviceExtensionWithVersion.name, CL_NAME_VERSION_MAX_NAME_SIZE, deviceExtension.c_str());
+        deviceInfo.extensionsWithVersion.push_back(deviceExtensionWithVersion);
+    }
+}
+
+void ClDevice::initializeOpenclCAllVersions() {
+    cl_name_version openClCVersion;
+    strcpy_s(openClCVersion.name, CL_NAME_VERSION_MAX_NAME_SIZE, "OpenCL C");
+
+    openClCVersion.version = CL_MAKE_VERSION(1, 0, 0);
+    deviceInfo.openclCAllVersions.push_back(openClCVersion);
+    openClCVersion.version = CL_MAKE_VERSION(1, 1, 0);
+    deviceInfo.openclCAllVersions.push_back(openClCVersion);
+    openClCVersion.version = CL_MAKE_VERSION(1, 2, 0);
+    deviceInfo.openclCAllVersions.push_back(openClCVersion);
+
+    if (ocl21FeaturesEnabled) {
+        openClCVersion.version = CL_MAKE_VERSION(2, 0, 0);
+        deviceInfo.openclCAllVersions.push_back(openClCVersion);
+    }
+
+    if (enabledClVersion == 30) {
+        openClCVersion.version = CL_MAKE_VERSION(3, 0, 0);
+        deviceInfo.openclCAllVersions.push_back(openClCVersion);
+    }
 }
 
 } // namespace NEO

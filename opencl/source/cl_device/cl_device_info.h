@@ -9,11 +9,16 @@
 
 #include "opencl/extensions/public/cl_ext_private.h"
 
+#include <vector>
+
 namespace NEO {
 
 // clang-format off
 struct ClDeviceInfo {
     cl_name_version               ilsWithVersion[1];
+    std::vector<cl_name_version>  builtInKernelsWithVersion;
+    std::vector<cl_name_version>  openclCAllVersions;
+    std::vector<cl_name_version>  extensionsWithVersion;
     cl_device_type                deviceType;
     size_t                        maxSliceCount;
     size_t                        image3DMaxWidth;
@@ -50,6 +55,7 @@ struct ClDeviceInfo {
     double                        platformHostTimerResolution;
     size_t                        planarYuvMaxWidth;
     size_t                        planarYuvMaxHeight;
+    cl_version                    numericClVersion;
     cl_uint                       maxComputUnits;
     cl_uint                       maxWorkItemDimensions;
     cl_uint                       maxNumOfSubGroups;

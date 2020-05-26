@@ -129,6 +129,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG:                    getCap<CL_DEVICE_NATIVE_VECTOR_WIDTH_LONG                    >(src, srcSize, retSize); break;
     case CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT:                   getCap<CL_DEVICE_NATIVE_VECTOR_WIDTH_SHORT                   >(src, srcSize, retSize); break;
     case CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT:              getCap<CL_DEVICE_NON_UNIFORM_WORK_GROUP_SUPPORT              >(src, srcSize, retSize); break;
+    case CL_DEVICE_NUMERIC_VERSION:                             getCap<CL_DEVICE_NUMERIC_VERSION                             >(src, srcSize, retSize); break;
     case CL_DEVICE_OPENCL_C_VERSION:                            getStr<CL_DEVICE_OPENCL_C_VERSION                            >(src, srcSize, retSize); break;
     case CL_DEVICE_PARENT_DEVICE:                               getCap<CL_DEVICE_PARENT_DEVICE                               >(src, srcSize, retSize); break;
     case CL_DEVICE_PARTITION_AFFINITY_DOMAIN:                   getCap<CL_DEVICE_PARTITION_AFFINITY_DOMAIN                   >(src, srcSize, retSize); break;
@@ -213,6 +214,18 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         break;
     case CL_DEVICE_OPENCL_C_FEATURES:
         retSize = srcSize = 0;
+        break;
+    case CL_DEVICE_BUILT_IN_KERNELS_WITH_VERSION:
+        src = deviceInfo.builtInKernelsWithVersion.data();
+        retSize = srcSize = deviceInfo.builtInKernelsWithVersion.size() * sizeof(cl_name_version);
+        break;
+    case CL_DEVICE_OPENCL_C_ALL_VERSIONS:
+        src = deviceInfo.openclCAllVersions.data();
+        retSize = srcSize = deviceInfo.openclCAllVersions.size() * sizeof(cl_name_version);
+        break;
+    case CL_DEVICE_EXTENSIONS_WITH_VERSION:
+        src = deviceInfo.extensionsWithVersion.data();
+        retSize = srcSize = deviceInfo.extensionsWithVersion.size() * sizeof(cl_name_version);
         break;
     default:
         if (getDeviceInfoForImage(paramName, src, srcSize, retSize) && !getSharedDeviceInfo().imageSupport) {
