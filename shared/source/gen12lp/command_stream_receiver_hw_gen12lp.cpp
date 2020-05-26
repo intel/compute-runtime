@@ -127,10 +127,10 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForImages(BlitProperties &bli
 
     if (dstAllocation->getDefaultGmm()) {
         auto dstResInfo = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info;
-        dstPitch = static_cast<uint32_t>(dstAllocation->getDefaultGmm()->gmmResourceInfo->getRenderPitch());
-        dstQPitch = static_cast<uint32_t>(dstAllocation->getDefaultGmm()->gmmResourceInfo->getQPitch());
         if (dstResInfo.TiledY) {
             dstTileType = GMM_TILED_Y;
+            dstPitch = static_cast<uint32_t>(dstAllocation->getDefaultGmm()->gmmResourceInfo->getRenderPitch());
+            dstQPitch = static_cast<uint32_t>(dstAllocation->getDefaultGmm()->gmmResourceInfo->getQPitch());
             dstPitch = alignUp<uint32_t>(dstPitch, TILED_Y_PITCH_ALIGNMENT);
         } else {
             dstPitch = alignUp<uint32_t>(dstPitch, NON_TILED_PITCH_ALIGNMENT);
@@ -138,10 +138,10 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForImages(BlitProperties &bli
     }
     if (srcAllocation->getDefaultGmm()) {
         auto srcResInfo = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info;
-        srcPitch = static_cast<uint32_t>(srcAllocation->getDefaultGmm()->gmmResourceInfo->getRenderPitch());
-        srcQPitch = static_cast<uint32_t>(srcAllocation->getDefaultGmm()->gmmResourceInfo->getQPitch());
         if (srcResInfo.TiledY) {
             srcTileType = GMM_TILED_Y;
+            srcPitch = static_cast<uint32_t>(srcAllocation->getDefaultGmm()->gmmResourceInfo->getRenderPitch());
+            srcQPitch = static_cast<uint32_t>(srcAllocation->getDefaultGmm()->gmmResourceInfo->getQPitch());
             srcPitch = alignUp<uint32_t>(srcPitch, TILED_Y_PITCH_ALIGNMENT);
         } else {
             srcPitch = alignUp<uint32_t>(srcPitch, NON_TILED_PITCH_ALIGNMENT);

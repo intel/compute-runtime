@@ -160,3 +160,107 @@ HWTEST2_F(BlitTests, givenSrcAndDestinationImagesWhenAppendSliceOffsetsThenAdres
     EXPECT_EQ(bltCmd.getSourceBaseAddress(), ptrOffset(mockAllocationSrc.getGpuAddress(), expectesSrcOffset));
     EXPECT_EQ(bltCmd.getDestinationBaseAddress(), ptrOffset(mockAllocationDst.getGpuAddress(), expectesDstOffset));
 }
+
+HWTEST2_F(BlitTests, givenNotTiledSrcAndDestinationWhenAppendImageCommandsThenPitchIsValueFromProperties, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto gmm = std::make_unique<MockGmm>();
+    auto flags = gmm->gmmResourceInfo->getResourceFlags();
+    flags->Info.TiledY = false;
+    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages);
+    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages);
+    mockAllocationSrc.setGmm(gmm.get(), 0);
+    mockAllocationDst.setGmm(gmm.get(), 0);
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    properties.srcAllocation = &mockAllocationSrc;
+    properties.dstAllocation = &mockAllocationDst;
+    properties.srcRowPitch = 0x1000;
+    properties.dstRowPitch = 0x4000;
+    BlitCommandsHelper<FamilyType>::appendBlitCommandsForImages(properties, bltCmd);
+    EXPECT_EQ(bltCmd.getDestinationPitch(), properties.dstRowPitch);
+    EXPECT_EQ(bltCmd.getSourcePitch(), properties.srcRowPitch);
+}
+struct MyMockResourecInfo : public GmmResourceInfo {
+    using GmmResourceInfo::resourceInfo;
+
+    MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESCREATE_PARAMS *inputParams) : GmmResourceInfo(clientContext, inputParams){};
+    MyMockResourecInfo(GmmClientContext *clientContext, GMM_RESOURCE_INFO *inputGmmResourceInfo) : GmmResourceInfo(clientContext, inputGmmResourceInfo){};
+    size_t getRenderPitch() override {
+        return pitch;
+    }
+    uint32_t getQPitch() override {
+        return 0;
+    }
+    GMM_RESOURCE_FLAG *getResourceFlags() override {
+        return &flags;
+    }
+    uint32_t getMipTailStartLodSurfaceState() override {
+        return 0;
+    }
+    size_t pitch = 0;
+    GMM_RESOURCE_FLAG flags = {};
+};
+
+HWTEST2_F(BlitTests, givenTiledSrcAndDestinationWhenAppendImageCommandsThenPitchIsValueFromGmm, IsGen12LP) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto gmm = std::make_unique<MockGmm>();
+    GMM_RESCREATE_PARAMS gmmParams = {};
+    auto myResourecInfo = std::make_unique<MyMockResourecInfo>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams);
+    myResourecInfo->pitch = 0x100;
+    gmm->gmmResourceInfo.reset(myResourecInfo.release());
+    auto flags = gmm->gmmResourceInfo->getResourceFlags();
+    flags->Info.TiledY = true;
+    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages);
+    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages);
+    mockAllocationSrc.setGmm(gmm.get(), 0);
+    mockAllocationDst.setGmm(gmm.get(), 0);
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    properties.dstRowPitch = 0x1000;
+    properties.srcRowPitch = 0x1000;
+
+    properties.srcAllocation = &mockAllocationSrc;
+    properties.dstAllocation = &mockAllocationDst;
+    BlitCommandsHelper<FamilyType>::appendBlitCommandsForImages(properties, bltCmd);
+    EXPECT_EQ(bltCmd.getDestinationPitch(), gmm->gmmResourceInfo->getRenderPitch() / sizeof(uint32_t));
+    EXPECT_EQ(bltCmd.getSourcePitch(), gmm->gmmResourceInfo->getRenderPitch() / sizeof(uint32_t));
+}
+
+HWTEST2_F(BlitTests, givenTiledSrcAndDestinationWhenGmmReturnsNotAlignedPitchThenValuesInCommandAreAligned, IsGen12LP) {
+    constexpr uint32_t TILED_Y_PITCH_ALIGNMENT = 128;
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    auto gmm = std::make_unique<MockGmm>();
+    GMM_RESCREATE_PARAMS gmmParams = {};
+    auto myResourecInfo = std::make_unique<MyMockResourecInfo>(pDevice->getRootDeviceEnvironment().getGmmClientContext(), &gmmParams);
+    myResourecInfo->pitch = 0xFC;
+    gmm->gmmResourceInfo.reset(myResourecInfo.release());
+    auto flags = gmm->gmmResourceInfo->getResourceFlags();
+    flags->Info.TiledY = true;
+    MockGraphicsAllocation mockAllocationSrc(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages);
+    MockGraphicsAllocation mockAllocationDst(0, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                             MemoryPool::System4KBPages);
+    mockAllocationSrc.setGmm(gmm.get(), 0);
+    mockAllocationDst.setGmm(gmm.get(), 0);
+    auto bltCmd = FamilyType::cmdInitXyCopyBlt;
+    BlitProperties properties = {};
+    properties.dstRowPitch = 0x1000;
+    properties.srcRowPitch = 0x1000;
+
+    properties.srcAllocation = &mockAllocationSrc;
+    properties.dstAllocation = &mockAllocationDst;
+    auto expectedPitch = alignUp<uint32_t>(static_cast<uint32_t>(gmm->gmmResourceInfo->getRenderPitch()), TILED_Y_PITCH_ALIGNMENT);
+    BlitCommandsHelper<FamilyType>::appendBlitCommandsForImages(properties, bltCmd);
+    EXPECT_EQ(bltCmd.getDestinationPitch(), expectedPitch / sizeof(uint32_t));
+    EXPECT_EQ(bltCmd.getSourcePitch(), expectedPitch / sizeof(uint32_t));
+}
