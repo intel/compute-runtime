@@ -90,55 +90,49 @@ class Nv12ImageTest : public testing::Test {
     cl_mem_flags flags;
 };
 
-TEST_F(Nv12ImageTest, isNV12ImageReturnsTrue) {
+TEST_F(Nv12ImageTest, WhenImageIsCreatedThenIsNv12ImageIsTrue) {
     auto image = createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL);
     ASSERT_NE(nullptr, image);
     EXPECT_TRUE(IsNV12Image(&image->getImageFormat()));
     delete image;
 }
 
-TEST_F(Nv12ImageTest, validNV12ImageFormatAndDescriptor) {
+TEST_F(Nv12ImageTest, GivenValidImageWhenValidatingThenSuccessIsReturned) {
     validateImageWithFlags(flags);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(Nv12ImageTest, invalidNV12ImageFormat) {
+TEST_F(Nv12ImageTest, GivenSnormInt16ImageTypeWhenValidatingThenImageFormatNotSupportedErrorIsReturned) {
     imageFormat.image_channel_data_type = CL_SNORM_INT16;
     validateImageWithFlags(flags);
     EXPECT_EQ(CL_IMAGE_FORMAT_NOT_SUPPORTED, retVal);
 }
 
-TEST_F(Nv12ImageTest, invalidNV12ImageType) {
+TEST_F(Nv12ImageTest, Given1dImageTypeWhenValidatingThenImageFormatNotSupportedErrorIsReturned) {
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     validateImageWithFlags(flags);
     EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
 }
 
-TEST_F(Nv12ImageTest, DISABLED_invalidNV12ImageDepth) {
-    imageDesc.image_depth = 2;
-    validateImageWithFlags(flags);
-    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
-}
-
-TEST_F(Nv12ImageTest, invalidNV12ImageHeigth) {
+TEST_F(Nv12ImageTest, GivenInvalidImageHeightWhenValidatingThenInvalidImageDescriptorErrorIsReturned) {
     imageDesc.image_height = 17;
     validateImageWithFlags(flags);
     EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
 }
 
-TEST_F(Nv12ImageTest, invalidNV12ImageWidth) {
+TEST_F(Nv12ImageTest, GivenInvalidImageWidthWhenValidatingThenInvalidImageDescriptorErrorIsReturned) {
     imageDesc.image_width = 17;
     validateImageWithFlags(flags);
     EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
 }
 
-TEST_F(Nv12ImageTest, invalidNV12ImageFlag) {
+TEST_F(Nv12ImageTest, GivenInvalidImageFlagWhenValidatingThenInvalidValueErrorIsReturned) {
     flags &= ~(CL_MEM_HOST_NO_ACCESS);
     validateImageWithFlags(flags);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(Nv12ImageTest, validateNV12YPlane) {
+TEST_F(Nv12ImageTest, GivenYPlaneWhenValidatingThenSuccessIsReturned) {
     REQUIRE_IMAGES_OR_SKIP(&context);
 
     auto image = createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL);
@@ -154,7 +148,7 @@ TEST_F(Nv12ImageTest, validateNV12YPlane) {
     delete image;
 }
 
-TEST_F(Nv12ImageTest, validateNV12YUVPlane) {
+TEST_F(Nv12ImageTest, GivenUVPlaneWhenValidatingThenSuccessIsReturned) {
     REQUIRE_IMAGES_OR_SKIP(&context);
 
     auto image = createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL);
@@ -170,7 +164,7 @@ TEST_F(Nv12ImageTest, validateNV12YUVPlane) {
     delete image;
 }
 
-TEST_F(Nv12ImageTest, givenNV12ImageWhenInvalidDepthIsPassedThenValidateFails) {
+TEST_F(Nv12ImageTest, GivenInvalidImageDepthWhenValidatingThenInvalidImageDescriptorErrorIsReturned) {
     REQUIRE_IMAGES_OR_SKIP(&context);
 
     auto image = createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL);
@@ -226,7 +220,7 @@ TEST_F(Nv12ImageTest, givenBufferWhenPassedAsNV12ParentImageThenValidateImageTra
     EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
 }
 
-TEST_F(Nv12ImageTest, createNV12Image) {
+TEST_F(Nv12ImageTest, WhenImageIsCreatedThenOffsetsAreZero) {
 
     auto image = createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL);
 
@@ -246,7 +240,7 @@ TEST_F(Nv12ImageTest, createNV12Image) {
     delete image;
 }
 
-TEST_F(Nv12ImageTest, createNV12YPlaneImage) {
+TEST_F(Nv12ImageTest, WhenCreatingYPlaneImageThenDimensionsAreSetCorrectly) {
 
     // Create Parent NV12 image
     auto imageNV12 = createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL);
@@ -289,7 +283,7 @@ TEST_F(Nv12ImageTest, createNV12YPlaneImage) {
     delete imageNV12;
 }
 
-TEST_F(Nv12ImageTest, createNV12UVPlaneImage) {
+TEST_F(Nv12ImageTest, WhenCreatingUVPlaneImageThenDimensionsAreSetCorrectly) {
     // Create Parent NV12 image
     auto imageNV12 = createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL);
 
@@ -333,7 +327,7 @@ TEST_F(Nv12ImageTest, createNV12UVPlaneImage) {
     delete imageNV12;
 }
 
-TEST_F(Nv12ImageTest, createNV12UVPlaneImageWithOffsetOfUVPlane) {
+TEST_F(Nv12ImageTest, GivenOffsetOfUVPlaneWhenCreatingUVPlaneImageThenDimensionsAreSetCorrectly) {
 
     // This size returns offset of UV plane, and 0 yOffset
     imageDesc.image_height = 64; // Valid values multiple of 4
@@ -382,7 +376,7 @@ TEST_F(Nv12ImageTest, createNV12UVPlaneImageWithOffsetOfUVPlane) {
     delete imageNV12;
 }
 
-HWTEST_F(Nv12ImageTest, checkIfPlanesAreWritten) {
+HWTEST_F(Nv12ImageTest, WhenCreatingParentImageThenPlanesAreWritten) {
     KernelBinaryHelper kbHelper(KernelBinaryHelper::BUILT_INS);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -407,7 +401,7 @@ HWTEST_F(Nv12ImageTest, checkIfPlanesAreWritten) {
     delete imageNV12;
 }
 
-HWTEST_F(Nv12ImageTest, setImageArg) {
+HWTEST_F(Nv12ImageTest, WhenSettingImageArgThenSurfaceStateIsCorrect) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
     RENDER_SURFACE_STATE surfaceState;
@@ -491,7 +485,7 @@ HWTEST_F(Nv12ImageTest, setImageArgUVPlaneImageSetsOffsetedSurfaceBaseAddressAnd
     delete imageNV12;
 }
 
-HWTEST_F(Nv12ImageTest, setMediaImageArg) {
+HWTEST_F(Nv12ImageTest, WhenSettingMediaImageArgThenSurfaceStateIsCorrect) {
     using MEDIA_SURFACE_STATE = typename FamilyType::MEDIA_SURFACE_STATE;
 
     MEDIA_SURFACE_STATE surfaceState;
@@ -513,7 +507,7 @@ HWTEST_F(Nv12ImageTest, setMediaImageArg) {
     delete image;
 }
 
-TEST_F(Nv12ImageTest, redescribedNV12ImageAndUVPlaneImageHasCorrectOffsets) {
+TEST_F(Nv12ImageTest, WhenRedescribingThenNV12ImageAndUVPlaneImageHaveCorrectOffsets) {
 
     auto image = createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL);
 
@@ -563,7 +557,7 @@ TEST_F(Nv12ImageTest, redescribedNV12ImageAndUVPlaneImageHasCorrectOffsets) {
     delete image;
 }
 
-TEST_F(Nv12ImageTest, invalidPlanarYUVImageHeight) {
+TEST_F(Nv12ImageTest, GivenInvalidImageHeightWhenValidatingPlanarYuvThenInvalidImageSizeErrorIsReturned) {
 
     auto pDevice = context.getDevice(0);
     const size_t *maxHeight = nullptr;
@@ -580,7 +574,7 @@ TEST_F(Nv12ImageTest, invalidPlanarYUVImageHeight) {
     EXPECT_EQ(CL_INVALID_IMAGE_SIZE, retVal);
 }
 
-TEST_F(Nv12ImageTest, invalidPlanarYUVImageWidth) {
+TEST_F(Nv12ImageTest, GivenInvalidImageWidthWhenValidatingPlanarYuvThenInvalidImageSizeErrorIsReturned) {
 
     auto pDevice = context.getDevice(0);
     const size_t *maxWidth = nullptr;
@@ -597,12 +591,12 @@ TEST_F(Nv12ImageTest, invalidPlanarYUVImageWidth) {
     EXPECT_EQ(CL_INVALID_IMAGE_SIZE, retVal);
 }
 
-TEST_F(Nv12ImageTest, validPlanarYUVImageHeight) {
+TEST_F(Nv12ImageTest, GivenValidImageHeightWhenValidatingPlanarYuvThenSuccessIsReturned) {
     retVal = Image::validatePlanarYUV(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), &imageDesc, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(Nv12ImageTest, validPlanarYUVImageWidth) {
+TEST_F(Nv12ImageTest, GivenValidImageWidthWhenValidatingPlanarYuvThenSuccessIsReturned) {
     retVal = Image::validatePlanarYUV(&context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), &imageDesc, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
