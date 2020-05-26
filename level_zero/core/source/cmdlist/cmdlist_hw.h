@@ -172,8 +172,9 @@ struct CommandListCoreFamily : CommandListImp {
 
     ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                              const ze_group_count_t *pThreadGroupDimensions,
-                                             ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                                             ze_event_handle_t *phWaitEvents, bool isIndirect, bool isPredicate);
+                                             ze_event_handle_t hEvent,
+                                             bool isIndirect,
+                                             bool isPredicate);
 
     ze_result_t prepareIndirectParams(const ze_group_count_t *pThreadGroupDimensions);
 

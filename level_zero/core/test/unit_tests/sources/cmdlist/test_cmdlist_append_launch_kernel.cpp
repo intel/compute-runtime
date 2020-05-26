@@ -151,7 +151,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferS
 
     auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
 
-    auto result = commandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, false, false);
+    auto result = commandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, false, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
@@ -161,7 +161,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, WhenAppendingFunctionThenUsedCmdBufferS
 
     sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
 
-    result = commandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, true, false);
+    result = commandList->appendLaunchKernelWithParams(kernel->toHandle(), &groupCount, nullptr, true, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();

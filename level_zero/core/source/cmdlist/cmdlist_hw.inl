@@ -92,8 +92,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    ze_result_t ret = appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions, hEvent,
-                                                   numWaitEvents, phWaitEvents, false, false);
+    ze_result_t ret = appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions,
+                                                   hEvent, false, false);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -123,7 +123,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     }
 
     ze_result_t ret = appendLaunchKernelWithParams(hKernel, pDispatchArgumentsBuffer,
-                                                   nullptr, 0, nullptr, true, false);
+                                                   nullptr, true, false);
 
     if (hEvent) {
         appendSignalEventPostWalker(hEvent);
@@ -154,7 +154,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
 
         auto ret = appendLaunchKernelWithParams(phKernels[i],
                                                 haveLaunchArguments ? &pLaunchArgumentsBuffer[i] : nullptr,
-                                                nullptr, 0, nullptr, true, true);
+                                                nullptr, true, true);
         if (ret != ZE_RESULT_SUCCESS) {
             return ret;
         }
@@ -709,7 +709,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
     ze_group_count_t dispatchFuncArgs{groups, 1u, 1u};
 
     ze_result_t ret = appendLaunchKernelWithParams(builtinFunction->toHandle(), &dispatchFuncArgs,
-                                                   nullptr, 0, nullptr, false, false);
+                                                   nullptr, false, false);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }

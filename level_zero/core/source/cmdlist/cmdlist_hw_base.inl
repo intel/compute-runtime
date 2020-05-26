@@ -26,12 +26,14 @@ struct DeviceImp;
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                                                                const ze_group_count_t *pThreadGroupDimensions,
-                                                                               ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                                                                               ze_event_handle_t *phWaitEvents, bool isIndirect, bool isPredicate) {
+                                                                               ze_event_handle_t hEvent,
+                                                                               bool isIndirect,
+                                                                               bool isPredicate) {
     const auto kernel = Kernel::fromHandle(hKernel);
     UNRECOVERABLE_IF(kernel == nullptr);
     const auto functionImmutableData = kernel->getImmutableData();
-    commandListPerThreadScratchSize = std::max<std::uint32_t>(commandListPerThreadScratchSize, kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);
+    commandListPerThreadScratchSize = std::max<std::uint32_t>(commandListPerThreadScratchSize,
+                                                              kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);
 
     auto kernelPreemptionMode = obtainFunctionPreemptionMode(kernel);
     commandListPreemptionMode = std::min(commandListPreemptionMode, kernelPreemptionMode);
