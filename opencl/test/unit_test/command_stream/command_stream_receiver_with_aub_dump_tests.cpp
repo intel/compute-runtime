@@ -313,7 +313,7 @@ HWTEST_F(CommandStreamReceiverTagTests, givenCsrTypeWhenCreatingTimestampPacketA
 }
 
 HWTEST_F(CommandStreamReceiverTagTests, givenCsrTypeWhenAskingForTagPoolSizeThenReturnOneForAubTbxMode) {
-    EXPECT_EQ(512u, getPreferredTagPoolSize<CommandStreamReceiverHw<FamilyType>>(*executionEnvironment, 0));
+    EXPECT_EQ(2048u, getPreferredTagPoolSize<CommandStreamReceiverHw<FamilyType>>(*executionEnvironment, 0));
     EXPECT_EQ(1u, getPreferredTagPoolSize<AUBCommandStreamReceiverHw<FamilyType>>(fileName, false, *executionEnvironment, 0));
     EXPECT_EQ(1u, getPreferredTagPoolSize<AubWithHw<FamilyType>>(fileName, *executionEnvironment, 0));
     EXPECT_EQ(1u, getPreferredTagPoolSize<AubWithTbx<FamilyType>>(fileName, *executionEnvironment, 0));

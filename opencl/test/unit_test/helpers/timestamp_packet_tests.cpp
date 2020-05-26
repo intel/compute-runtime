@@ -342,7 +342,7 @@ TEST_F(TimestampPacketSimpleTests, whenObjectIsCreatedThenInitializeAllStamps) {
 
 HWTEST_F(TimestampPacketTests, givenCommandStreamReceiverHwWhenObtainingPreferredTagPoolSizeThenReturnCorrectValue) {
     CommandStreamReceiverHw<FamilyType> csr(*executionEnvironment, 0);
-    EXPECT_EQ(512u, csr.getPreferredTagPoolSize());
+    EXPECT_EQ(2048u, csr.getPreferredTagPoolSize());
 }
 
 HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAllocatorThenDisableReusingAndLimitPoolSize) {

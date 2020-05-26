@@ -523,7 +523,7 @@ size_t CommandStreamReceiver::getPreferredTagPoolSize() const {
         return 1;
     }
 
-    return 512;
+    return 2048;
 }
 
 bool CommandStreamReceiver::expectMemory(const void *gfxAddress, const void *srcAddress,
