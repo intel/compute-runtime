@@ -521,7 +521,9 @@ void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocation(GraphicsAllocatio
 
 template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::downloadAllocations() {
-    downloadAllocation(*this->getTagAllocation());
+    while (*this->getTagAddress() < this->latestFlushedTaskCount) {
+        downloadAllocation(*this->getTagAllocation());
+    }
     for (GraphicsAllocation *graphicsAllocation : this->allocationsForDownload) {
         downloadAllocation(*graphicsAllocation);
     }
