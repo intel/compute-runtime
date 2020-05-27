@@ -139,10 +139,10 @@ bool WddmInterface23::submit(uint64_t commandBuffer, size_t size, void *commandH
     submitCommand.CommandLength = static_cast<UINT>(size);
 
     submitCommand.pPrivateDriverData = commandHeader;
-    submitCommand.PrivateDriverDataSize = MemoryConstants::pageSize;
+    submitCommand.PrivateDriverDataSize = sizeof(COMMAND_BUFFER_HEADER);
 
-    if (DebugManager.flags.UseCommandBufferHeaderSizeForWddmQueueSubmission.get()) {
-        submitCommand.PrivateDriverDataSize = sizeof(COMMAND_BUFFER_HEADER);
+    if (!DebugManager.flags.UseCommandBufferHeaderSizeForWddmQueueSubmission.get()) {
+        submitCommand.PrivateDriverDataSize = MemoryConstants::pageSize;
     }
 
     auto status = wddm.getGdi()->submitCommandToHwQueue(&submitCommand);

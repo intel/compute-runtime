@@ -130,7 +130,7 @@ TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpd
     EXPECT_EQ(hwQueue.handle, getSubmitCommandToHwQueueDataFcn()->hHwQueue);
     EXPECT_EQ(osContext->getResidencyController().getMonitoredFence().lastSubmittedFence, getSubmitCommandToHwQueueDataFcn()->HwQueueProgressFenceId);
     EXPECT_EQ(&cmdBufferHeader, getSubmitCommandToHwQueueDataFcn()->pPrivateDriverData);
-    EXPECT_EQ(static_cast<UINT>(MemoryConstants::pageSize), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
+    EXPECT_EQ(static_cast<UINT>(sizeof(COMMAND_BUFFER_HEADER)), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
 
     EXPECT_EQ(0u, cmdBufferHeader.MonitorFenceVA);
     EXPECT_EQ(0u, cmdBufferHeader.MonitorFenceValue);
@@ -151,6 +151,17 @@ TEST_F(Wddm23Tests, givenDebugVariableSetWhenSubmitCalledThenUseCmdBufferHeaderS
     wddm->submit(123, 456, &cmdBufferHeader, submitArgs);
 
     EXPECT_EQ(static_cast<UINT>(sizeof(COMMAND_BUFFER_HEADER)), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
+
+    DebugManager.flags.UseCommandBufferHeaderSizeForWddmQueueSubmission.set(false);
+
+    cmdBufferHeader = {};
+    submitArgs = {};
+    submitArgs.contextHandle = osContext->getWddmContextHandle();
+    submitArgs.hwQueueHandle = osContext->getHwQueue().handle;
+    submitArgs.monitorFence = &osContext->getResidencyController().getMonitoredFence();
+    wddm->submit(123, 456, &cmdBufferHeader, submitArgs);
+
+    EXPECT_EQ(static_cast<UINT>(MemoryConstants::pageSize), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
 }
 
 TEST_F(Wddm23Tests, whenMonitoredFenceIsCreatedThenSetupAllRequiredFields) {
