@@ -14,7 +14,4 @@ set(IGDRCL_SRCS_tests_utilities
   ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator_tests.cpp
 )
 
-get_property(NEO_CORE_UTILITIES_TESTS GLOBAL PROPERTY NEO_CORE_UTILITIES_TESTS)
-list(APPEND IGDRCL_SRCS_tests_utilities ${NEO_CORE_UTILITIES_TESTS})
-
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_utilities})

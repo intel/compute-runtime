@@ -4,20 +4,22 @@
 # SPDX-License-Identifier: MIT
 #
 
-set(NEO_SHARED_DEVICE_BINARY_FORMAT_TESTS
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/ar/ar_decoder_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/ar/ar_encoder_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/elf/elf_decoder_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/elf/elf_encoder_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_ar_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_ocl_elf_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_patchtokens_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_formats_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_dumper_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_tests.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_validator_tests.cpp
-)
+if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
 
-set_property(GLOBAL PROPERTY NEO_SHARED_DEVICE_BINARY_FORMAT_TESTS ${NEO_SHARED_DEVICE_BINARY_FORMAT_TESTS})
+  target_sources(${TARGET_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/ar/ar_decoder_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ar/ar_encoder_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/elf/elf_decoder_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/elf/elf_encoder_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_ar_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_ocl_elf_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_patchtokens_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_formats_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_dumper_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_validator_tests.cpp
+  )
+
+endif()

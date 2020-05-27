@@ -4,10 +4,13 @@
 # SPDX-License-Identifier: MIT
 #
 
-set(NEO_CORE_DEBUG_SETTINGS_TESTS
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager_fixture.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager_tests.cpp
-)
+if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
 
-set_property(GLOBAL PROPERTY NEO_CORE_DEBUG_SETTINGS_TESTS ${NEO_CORE_DEBUG_SETTINGS_TESTS})
+  target_sources(${TARGET_NAME} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/debug_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager_fixture.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager_tests.cpp
+  )
+
+endif()

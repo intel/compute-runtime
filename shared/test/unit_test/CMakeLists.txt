@@ -4,8 +4,6 @@
 # SPDX-License-Identifier: MIT
 #
 
-add_subdirectories()
-
 if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
 
   set(TARGET_NAME neo_shared_tests)
@@ -56,7 +54,6 @@ if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/mocks/mock_platform.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_configuration.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_config_listener.cpp
-    ${NEO_SOURCE_DIR}/shared/offline_compiler/source/offline_compiler_helper.cpp
     ${NEO_SOURCE_DIR}/shared/source/helpers/allow_deferred_deleter.cpp
     ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.cpp
     ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_leak_listener.cpp
@@ -107,6 +104,12 @@ if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
       VS_DEBUGGER_COMMAND_ARGUMENTS "--gtest_filter=* --gtest_catch_exceptions=0 --enable_default_listener --disable_pagefaulting_tests"
     )
   endif()
+
+endif()
+
+add_subdirectories()
+
+if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
 
   create_project_source_tree(${TARGET_NAME})
 
