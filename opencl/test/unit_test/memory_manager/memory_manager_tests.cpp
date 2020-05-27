@@ -629,7 +629,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAskedFor32BitAllocationWhenL
     memoryManager.forceLimitedRangeAllocator(0, 0xFFFFFFFFF);
 
     AllocationData allocationData;
-    MockMemoryManager::getAllocationData(allocationData, {0, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER}, nullptr, StorageInfo{});
+    memoryManager.getAllocationData(allocationData, {0, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER}, nullptr, StorageInfo{});
     auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithAlignment(allocationData);
     ASSERT_NE(gfxAllocation, nullptr);
     EXPECT_NE(gfxAllocation->getGpuBaseAddress(), 0ull);
@@ -647,7 +647,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAskedForNon32BitAllocationWh
     memoryManager.forceLimitedRangeAllocator(0, 0xFFFFFFFFF);
 
     AllocationData allocationData;
-    MockMemoryManager::getAllocationData(allocationData, {0, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER}, nullptr, StorageInfo{});
+    memoryManager.getAllocationData(allocationData, {0, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER}, nullptr, StorageInfo{});
     auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithAlignment(allocationData);
     ASSERT_NE(gfxAllocation, nullptr);
     EXPECT_EQ(gfxAllocation->getGpuBaseAddress(), 0ull);
@@ -1827,7 +1827,7 @@ TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllo
     MockMemoryManager mockMemoryManager;
     for (auto allocationType : allocationTypesThatMayNeedL3Flush) {
         properties.allocationType = allocationType;
-        MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
         EXPECT_TRUE(allocData.flags.flushL3);
     }
 
@@ -1836,7 +1836,7 @@ TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllo
 
     for (auto allocationType : allocationTypesThatMayNeedL3Flush) {
         properties.allocationType = allocationType;
-        MockMemoryManager::getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+        mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
         EXPECT_FALSE(allocData.flags.flushL3);
     }
 }

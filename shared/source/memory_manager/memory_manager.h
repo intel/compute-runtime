@@ -197,7 +197,8 @@ class MemoryManager {
         uint32_t rootDeviceIndex = 0;
     };
 
-    static bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
+    bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
+    void getAllocationDataExtra(AllocationData &allocationData, const AllocationProperties &properties);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);
     static bool useInternal32BitAllocator(GraphicsAllocation::AllocationType allocationType) {
         return allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA ||

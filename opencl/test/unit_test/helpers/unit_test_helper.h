@@ -46,6 +46,8 @@ struct UnitTestHelper {
 
     static uint64_t getMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic);
 
+    static bool requiresTimestampPacketsInSystemMemory();
+
     static const bool tiledImagesSupported;
 
     static const uint32_t smallestTestableSimdSize;

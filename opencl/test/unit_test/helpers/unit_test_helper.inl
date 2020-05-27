@@ -81,6 +81,11 @@ inline uint64_t UnitTestHelper<GfxFamily>::getMemoryAddress(const typename GfxFa
 }
 
 template <typename GfxFamily>
+inline bool UnitTestHelper<GfxFamily>::requiresTimestampPacketsInSystemMemory() {
+    return true;
+}
+
+template <typename GfxFamily>
 const bool UnitTestHelper<GfxFamily>::tiledImagesSupported = true;
 
 template <typename GfxFamily>

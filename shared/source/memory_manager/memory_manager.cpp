@@ -295,6 +295,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::TAG_BUFFER:
     case GraphicsAllocation::AllocationType::GLOBAL_FENCE:
     case GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY:
+    case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
         allocationData.flags.useSystemMemory = true;
     default:
         break;
@@ -347,6 +348,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
 
     allocationData.rootDeviceIndex = properties.rootDeviceIndex;
 
+    getAllocationDataExtra(allocationData, properties);
     return true;
 }
 
