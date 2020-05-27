@@ -143,6 +143,16 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlCmd(
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programHardwareContext() {
+    programEnginePrologue(commandStream);
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdsSizeForHardwareContext() const {
+    return getCmdSizeForPrologue();
+}
+
+template <typename GfxFamily>
 CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     LinearStream &commandStreamTask,
     size_t commandStreamStartTask,
@@ -283,7 +293,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (executionEnvironment.rootDeviceEnvironments[device.getRootDeviceIndex()]->pageTableManager.get() && !pageTableManagerInitialized) {
         pageTableManagerInitialized = executionEnvironment.rootDeviceEnvironments[device.getRootDeviceIndex()]->pageTableManager->initPageTableManagerRegisters(this);
     }
-    programEnginePrologue(commandStreamCSR);
+
+    programHardwareContext();
     programComputeMode(commandStreamCSR, dispatchFlags);
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
@@ -674,7 +685,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
     size += getCmdSizeForEpilogue(dispatchFlags);
-    size += getCmdSizeForPrologue(dispatchFlags);
+    size += getCmdsSizeForHardwareContext();
 
     if (executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->workaroundTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
@@ -959,7 +970,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programEnginePrologue(LinearStre
 }
 
 template <typename GfxFamily>
-inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPrologue(const DispatchFlags &dispatchFlags) const {
+inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPrologue() const {
     return 0u;
 }
 

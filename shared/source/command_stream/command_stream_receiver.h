@@ -82,6 +82,8 @@ class CommandStreamReceiver {
 
     virtual bool flushBatchedSubmissions() = 0;
     bool submitBatchBuffer(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
+    virtual void programHardwareContext() = 0;
+    virtual size_t getCmdsSizeForHardwareContext() const = 0;
 
     MOCKABLE_VIRTUAL void makeResident(GraphicsAllocation &gfxAllocation);
     virtual void makeNonResident(GraphicsAllocation &gfxAllocation);

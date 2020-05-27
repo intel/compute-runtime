@@ -530,6 +530,10 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return CommandStreamReceiverType::CSR_HW;
     }
 
+    void programHardwareContext() override {}
+    size_t getCmdsSizeForHardwareContext() const override {
+        return 0;
+    }
     std::map<const void *, size_t> residency;
     bool passResidencyCallToBaseClass = true;
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;

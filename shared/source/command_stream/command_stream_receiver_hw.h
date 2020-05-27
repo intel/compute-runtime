@@ -40,6 +40,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                               uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
     bool flushBatchedSubmissions() override;
+    void programHardwareContext() override;
+    size_t getCmdsSizeForHardwareContext() const override;
 
     static void addBatchBufferEnd(LinearStream &commandStream, void **patchLocation);
     void programEndingCmd(LinearStream &commandStream, void **patchLocation, bool directSubmissionEnabled);
@@ -109,7 +111,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programEngineModeEpliogue(LinearStream &csr, const DispatchFlags &dispatchFlags);
 
     void programEnginePrologue(LinearStream &csr);
-    size_t getCmdSizeForPrologue(const DispatchFlags &dispatchFlags) const;
+    size_t getCmdSizeForPrologue() const;
 
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
     void addPipeControlCmd(LinearStream &commandStream, PipeControlArgs &args);

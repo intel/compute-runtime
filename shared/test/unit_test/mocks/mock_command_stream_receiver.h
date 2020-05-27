@@ -75,4 +75,9 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     void downloadAllocations() override {
         downloadAllocationsCalled = true;
     }
+
+    void programHardwareContext() override {}
+    size_t getCmdsSizeForHardwareContext() const override {
+        return 0;
+    }
 };
