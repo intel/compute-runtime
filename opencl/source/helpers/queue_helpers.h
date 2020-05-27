@@ -86,6 +86,20 @@ cl_int getQueueInfo(QueueType *queue,
         }
         retVal = CL_INVALID_VALUE;
         break;
+    case CL_QUEUE_PROPERTIES_ARRAY: {
+        const cl_queue_properties *source = nullptr;
+        size_t sourceSize = 0;
+        if (std::is_same<QueueType, class CommandQueue>::value) {
+            auto cmdQ = reinterpret_cast<CommandQueue *>(queue);
+            auto &propertiesVector = cmdQ->getPropertiesVector();
+            source = propertiesVector.data();
+            sourceSize = propertiesVector.size() * sizeof(cl_queue_properties);
+        }
+        auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, source, sourceSize);
+        retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
+        GetInfo::setParamValueReturnSize(paramValueSizeRet, sourceSize, getInfoStatus);
+        break;
+    }
     default:
         if (std::is_same<QueueType, class CommandQueue>::value) {
             auto cmdQ = reinterpret_cast<CommandQueue *>(queue);

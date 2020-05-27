@@ -74,6 +74,46 @@ TEST_F(clCreateSamplerWithPropertiesTests, GivenNullContextWhenCreatingSamplerWi
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
+TEST_F(clCreateSamplerWithPropertiesTests, GivenSamplerCreatedWithNullPropertiesWhenQueryingPropertiesThenNothingIsReturned) {
+    cl_int retVal = CL_SUCCESS;
+    auto sampler = clCreateSamplerWithProperties(pContext, nullptr, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_NE(nullptr, sampler);
+
+    size_t propertiesSize;
+    retVal = clGetSamplerInfo(sampler, CL_SAMPLER_PROPERTIES, 0, nullptr, &propertiesSize);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(0u, propertiesSize);
+
+    clReleaseSampler(sampler);
+}
+
+TEST_F(clCreateSamplerWithPropertiesTests, WhenCreatingSamplerWithPropertiesThenPropertiesAreCorrectlyStored) {
+    cl_int retVal = CL_SUCCESS;
+    cl_sampler_properties properties[7];
+    size_t propertiesSize;
+
+    std::vector<std::vector<uint64_t>> propertiesToTest{
+        {0},
+        {CL_SAMPLER_FILTER_MODE, CL_FILTER_LINEAR, 0},
+        {CL_SAMPLER_NORMALIZED_COORDS, 0, CL_SAMPLER_ADDRESSING_MODE, CL_ADDRESS_NONE, CL_SAMPLER_FILTER_MODE, CL_FILTER_LINEAR, 0}};
+
+    for (auto testProperties : propertiesToTest) {
+        auto sampler = clCreateSamplerWithProperties(pContext, testProperties.data(), &retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, sampler);
+
+        retVal = clGetSamplerInfo(sampler, CL_SAMPLER_PROPERTIES, sizeof(properties), properties, &propertiesSize);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(testProperties.size() * sizeof(cl_sampler_properties), propertiesSize);
+        for (size_t i = 0; i < testProperties.size(); i++) {
+            EXPECT_EQ(testProperties[i], properties[i]);
+        }
+
+        clReleaseSampler(sampler);
+    }
+}
+
 TEST_P(clCreateSamplerWithProperties_, GivenCorrectParametersWhenCreatingSamplerWithPropertiesThenSamplerIsCreatedAndSuccessIsReturned) {
     cl_sampler sampler = nullptr;
     cl_queue_properties properties[] =

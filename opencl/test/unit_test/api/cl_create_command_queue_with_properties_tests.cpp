@@ -208,7 +208,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNullContextWhenCreatingComman
 
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenOoqPropertiesWhenQueueIsCreatedThenSuccessIsReturned) {
     cl_int retVal = CL_SUCCESS;
-    cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0, 0};
+    cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
     auto cmdq = clCreateCommandQueueWithProperties(pContext, testedClDevice, ooq, &retVal);
     EXPECT_NE(nullptr, cmdq);
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -218,7 +218,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenOoqPropertiesWhenQueueIsCreat
 }
 
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenQueueOnDeviceWithoutOoqPropertiesWhenQueueIsCreatedThenErrorIsReturned) {
-    cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE, 0, 0};
+    cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, testedClDevice, ondevice, &retVal);
     EXPECT_EQ(nullptr, cmdqd);
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
@@ -226,7 +226,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenQueueOnDeviceWithoutOoqProper
 
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNullContextAndOoqPropertiesWhenCreatingCommandQueueWithPropertiesThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
-    cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0};
+    cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0};
     auto cmdq = clCreateCommandQueueWithProperties(nullptr, testedClDevice, ooq, &retVal);
     EXPECT_EQ(nullptr, cmdq);
     EXPECT_EQ(retVal, CL_INVALID_CONTEXT);
@@ -234,7 +234,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNullContextAndOoqPropertiesWh
 
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNullDeviceWhenCreatingCommandQueueWithPropertiesThenInvalidDeviceErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
-    cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0};
+    cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0};
     auto cmdq = clCreateCommandQueueWithProperties(pContext, nullptr, ooq, &retVal);
     EXPECT_EQ(nullptr, cmdq);
     EXPECT_EQ(retVal, CL_INVALID_DEVICE);
@@ -259,7 +259,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenSizeWhichExceedsMaxDeviceQueu
 
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenQueueOnDeviceWithoutOutOfOrderExecModePropertyWhenCreatingCommandQueueWithPropertiesThenInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
-    cl_queue_properties odq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE, 0, 0};
+    cl_queue_properties odq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE, 0};
     auto cmdq = clCreateCommandQueueWithProperties(pContext, testedClDevice, odq, &retVal);
     EXPECT_EQ(nullptr, cmdq);
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
@@ -267,7 +267,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenQueueOnDeviceWithoutOutOfOrde
 
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDefaultDeviceQueueWithoutQueueOnDevicePropertyWhenCreatingCommandQueueWithPropertiesThenInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
-    cl_queue_properties ddq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0};
+    cl_queue_properties ddq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE_DEFAULT, 0};
     auto cmdq = clCreateCommandQueueWithProperties(pContext, testedClDevice, ddq, &retVal);
     EXPECT_EQ(nullptr, cmdq);
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
@@ -277,7 +277,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenNumberOf
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pContext);
     cl_int retVal = CL_SUCCESS;
     auto pDevice = castToObject<ClDevice>(testedClDevice);
-    cl_queue_properties odq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE, 0, 0};
+    cl_queue_properties odq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE, 0};
 
     auto cmdq1 = clCreateCommandQueueWithProperties(pContext, testedClDevice, odq, &retVal);
     EXPECT_NE(nullptr, cmdq1);
@@ -301,7 +301,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenNumberOf
 HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenFailedAllocationWhenCreatingCommandQueueWithPropertiesThenOutOfHostMemoryErrorIsReturned) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pContext);
     InjectedFunction method = [this](size_t failureIndex) {
-        cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0};
+        cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0};
         auto retVal = CL_INVALID_VALUE;
 
         auto cmdq = clCreateCommandQueueWithProperties(pContext, testedClDevice, ooq, &retVal);
@@ -320,7 +320,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clCreateCommandQueueWithPropertiesApi, GivenFailedAl
 
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenHighPriorityWhenCreatingOoqCommandQueueWithPropertiesThenInvalidQueuePropertiesErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
-    cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_HIGH_KHR, 0, 0};
+    cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_HIGH_KHR, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, testedClDevice, ondevice, &retVal);
     EXPECT_EQ(nullptr, cmdqd);
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
@@ -328,14 +328,14 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenHighPriorityWhenCreatingOoqCo
 
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingOoqCommandQueueWithPropertiesThenInvalidQueuePropertiesErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
-    cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0, 0};
+    cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, testedClDevice, ondevice, &retVal);
     EXPECT_EQ(nullptr, cmdqd);
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
 }
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenMedPriorityWhenCreatingOoqCommandQueueWithPropertiesThenInvalidQueuePropertiesErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
-    cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_MED_KHR, 0, 0};
+    cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_MED_KHR, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, testedClDevice, ondevice, &retVal);
     EXPECT_EQ(nullptr, cmdqd);
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
@@ -349,7 +349,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDeviceEnqueueDisabledWhenCrea
     MockContext context{pClDevice.get()};
 
     cl_int retVal = CL_SUCCESS;
-    cl_queue_properties queueProperties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0, 0};
+    cl_queue_properties queueProperties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
     auto pCmdQ = clCreateCommandQueueWithProperties(&context, pClDevice.get(), queueProperties, &retVal);
     EXPECT_EQ(nullptr, pCmdQ);
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
@@ -363,7 +363,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDeviceEnqueueDisabledWhenCrea
     MockContext context{pClDevice.get()};
 
     cl_int retVal = CL_SUCCESS;
-    cl_queue_properties queueProperties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0, 0};
+    cl_queue_properties queueProperties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
     auto pCmdQ = clCreateCommandQueueWithProperties(&context, pClDevice.get(), queueProperties, &retVal);
     EXPECT_EQ(nullptr, pCmdQ);
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
@@ -413,6 +413,46 @@ HWTEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingComm
     EXPECT_TRUE(osContext.isLowPriority());
 
     clReleaseCommandQueue(cmdQ);
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenCommandQueueCreatedWithNullPropertiesWhenQueryingPropertiesArrayThenNothingIsReturned) {
+    cl_int retVal = CL_SUCCESS;
+    auto commandQueue = clCreateCommandQueueWithProperties(pContext, testedClDevice, nullptr, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_NE(nullptr, commandQueue);
+
+    size_t propertiesArraySize;
+    retVal = clGetCommandQueueInfo(commandQueue, CL_QUEUE_PROPERTIES_ARRAY, 0, nullptr, &propertiesArraySize);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(0u, propertiesArraySize);
+
+    clReleaseCommandQueue(commandQueue);
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenCommandQueueCreatedWithVariousPropertiesWhenQueryingPropertiesArrayThenCorrectValuesAreReturned) {
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties propertiesArray[3];
+    size_t propertiesArraySize;
+
+    std::vector<std::vector<uint64_t>> propertiesToTest{
+        {0},
+        {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0},
+        {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0}};
+
+    for (auto properties : propertiesToTest) {
+        auto commandQueue = clCreateCommandQueueWithProperties(pContext, testedClDevice, properties.data(), &retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        retVal = clGetCommandQueueInfo(commandQueue, CL_QUEUE_PROPERTIES_ARRAY,
+                                       sizeof(propertiesArray), propertiesArray, &propertiesArraySize);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(properties.size() * sizeof(cl_queue_properties), propertiesArraySize);
+        for (size_t i = 0; i < properties.size(); i++) {
+            EXPECT_EQ(properties[i], propertiesArray[i]);
+        }
+
+        clReleaseCommandQueue(commandQueue);
+    }
 }
 
 using LowPriorityCommandQueueTest = ::testing::Test;

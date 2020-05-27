@@ -353,6 +353,49 @@ TEST_F(clCreateBufferTests, WhenCreatingBufferWithPropertiesThenErrorCodeIsCorre
     }
 }
 
+TEST_F(clCreateBufferTests, GivenBufferCreatedWithNullPropertiesWhenQueryingPropertiesThenNothingIsReturned) {
+    cl_int retVal = CL_SUCCESS;
+    size_t size = 10;
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, size, nullptr, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_NE(nullptr, buffer);
+
+    size_t propertiesSize;
+    retVal = clGetMemObjectInfo(buffer, CL_MEM_PROPERTIES, 0, nullptr, &propertiesSize);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(0u, propertiesSize);
+
+    clReleaseMemObject(buffer);
+}
+
+TEST_F(clCreateBufferTests, WhenCreatingBufferWithPropertiesThenPropertiesAreCorrectlyStored) {
+    cl_int retVal = CL_SUCCESS;
+    size_t size = 10;
+    cl_mem_properties properties[5];
+    size_t propertiesSize;
+
+    std::vector<std::vector<uint64_t>> propertiesToTest{
+        {0},
+        {CL_MEM_FLAGS, CL_MEM_WRITE_ONLY, 0},
+        {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0},
+        {CL_MEM_FLAGS, CL_MEM_WRITE_ONLY, CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0}};
+
+    for (auto testProperties : propertiesToTest) {
+        auto buffer = clCreateBufferWithPropertiesINTEL(pContext, testProperties.data(), size, nullptr, &retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, buffer);
+
+        retVal = clGetMemObjectInfo(buffer, CL_MEM_PROPERTIES, sizeof(properties), properties, &propertiesSize);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(testProperties.size() * sizeof(cl_mem_properties), propertiesSize);
+        for (size_t i = 0; i < testProperties.size(); i++) {
+            EXPECT_EQ(testProperties[i], properties[i]);
+        }
+
+        retVal = clReleaseMemObject(buffer);
+    }
+}
+
 using clCreateBufferTestsWithRestrictions = api_test_using_aligned_memory_manager;
 
 TEST_F(clCreateBufferTestsWithRestrictions, GivenMemoryManagerRestrictionsWhenMinIsLessThanHostPtrThenUseZeroCopy) {

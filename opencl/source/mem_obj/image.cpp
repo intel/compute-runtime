@@ -1165,7 +1165,13 @@ cl_mem Image::validateAndCreateImage(cl_context context,
         return nullptr;
     }
 
-    return Image::create(pContext, memoryProperties, flags, flagsIntel, surfaceFormat, imageDesc, hostPtr, errcodeRet);
+    auto image = Image::create(pContext, memoryProperties, flags, flagsIntel, surfaceFormat, imageDesc, hostPtr, errcodeRet);
+
+    if (errcodeRet == CL_SUCCESS) {
+        image->storeProperties(properties);
+    }
+
+    return image;
 }
 
 bool Image::isValidSingleChannelFormat(const cl_image_format *imageFormat) {

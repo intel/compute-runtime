@@ -100,12 +100,13 @@ cl_int Pipe::getPipeInfo(cl_image_info paramName,
         srcParamSize = sizeof(cl_uint);
         srcParam = &(pipePacketSize);
         break;
-
     case CL_PIPE_MAX_PACKETS:
         srcParamSize = sizeof(cl_uint);
         srcParam = &(pipeMaxPackets);
         break;
-
+    case CL_PIPE_PROPERTIES:
+        srcParamSize = 0;
+        break;
     default:
         break;
     }

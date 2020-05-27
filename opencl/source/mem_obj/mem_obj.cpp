@@ -181,10 +181,16 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         srcParamSize = sizeof(refCnt);
         srcParam = &refCnt;
         break;
+
     case CL_MEM_ALLOCATION_HANDLE_INTEL:
         internalHandle = this->getGraphicsAllocation()->peekInternalHandle(this->memoryManager);
         srcParamSize = sizeof(internalHandle);
         srcParam = &internalHandle;
+        break;
+
+    case CL_MEM_PROPERTIES:
+        srcParamSize = propertiesVector.size() * sizeof(cl_mem_properties);
+        srcParam = propertiesVector.data();
         break;
 
     default:
@@ -364,4 +370,15 @@ bool MemObj::mappingOnCpuAllowed() const {
            !(graphicsAllocation->getDefaultGmm() && graphicsAllocation->getDefaultGmm()->isRenderCompressed) &&
            MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool());
 }
+
+void MemObj::storeProperties(const cl_mem_properties *properties) {
+    if (properties) {
+        for (size_t i = 0; properties[i] != 0; i += 2) {
+            propertiesVector.push_back(properties[i]);
+            propertiesVector.push_back(properties[i + 1]);
+        }
+        propertiesVector.push_back(0);
+    }
+}
+
 } // namespace NEO

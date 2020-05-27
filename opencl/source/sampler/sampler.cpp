@@ -103,12 +103,13 @@ Sampler *Sampler::create(Context *context,
     SetOnce<float> lodMax(std::numeric_limits<float>::max(), 0.0f, std::numeric_limits<float>::max());
 
     errcodeRet = CL_SUCCESS;
-    if (samplerProperties) {
+    auto samplerProperty = samplerProperties;
+    if (samplerProperty) {
         cl_ulong samType;
 
-        while ((samType = *samplerProperties) != 0) {
-            ++samplerProperties;
-            auto samValue = *samplerProperties;
+        while ((samType = *samplerProperty) != 0) {
+            ++samplerProperty;
+            auto samValue = *samplerProperty;
             switch (samType) {
             case CL_SAMPLER_NORMALIZED_COORDS:
                 errcodeRet = normalizedCoords.setValue(static_cast<uint32_t>(samValue));
@@ -138,7 +139,7 @@ Sampler *Sampler::create(Context *context,
                 errcodeRet = CL_INVALID_VALUE;
                 break;
             }
-            ++samplerProperties;
+            ++samplerProperty;
         }
     }
 
@@ -147,6 +148,10 @@ Sampler *Sampler::create(Context *context,
         sampler = create(context, normalizedCoords.value, addressingMode.value, filterMode.value,
                          mipFilterMode.value, lodMin.value, lodMax.value,
                          errcodeRet);
+    }
+
+    if (errcodeRet == CL_SUCCESS) {
+        sampler->storeProperties(samplerProperties);
     }
 
     return sampler;
@@ -209,6 +214,11 @@ cl_int Sampler::getInfo(cl_sampler_info paramName, size_t paramValueSize,
         pValue = &refCount;
         break;
 
+    case CL_SAMPLER_PROPERTIES:
+        valueSize = propertiesVector.size() * sizeof(cl_sampler_properties);
+        pValue = propertiesVector.data();
+        break;
+
     default:
         break;
     }
@@ -224,6 +234,16 @@ bool Sampler::isTransformable() const {
     return addressingMode == CL_ADDRESS_CLAMP_TO_EDGE &&
            filterMode == CL_FILTER_NEAREST &&
            normalizedCoordinates == CL_FALSE;
+}
+
+void Sampler::storeProperties(const cl_sampler_properties *properties) {
+    if (properties) {
+        for (size_t i = 0; properties[i] != 0; i += 2) {
+            propertiesVector.push_back(properties[i]);
+            propertiesVector.push_back(properties[i + 1]);
+        }
+        propertiesVector.push_back(0);
+    }
 }
 
 } // namespace NEO

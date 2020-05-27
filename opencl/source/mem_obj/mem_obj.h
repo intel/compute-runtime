@@ -130,6 +130,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
+    void storeProperties(const cl_mem_properties *properties);
 
     Context *context;
     cl_mem_object_type memObjectType;
@@ -155,6 +156,7 @@ class MemObj : public BaseObject<_cl_mem> {
     GraphicsAllocation *mcsAllocation = nullptr;
     GraphicsAllocation *mapAllocation = nullptr;
     std::shared_ptr<SharingHandler> sharingHandler;
+    std::vector<uint64_t> propertiesVector;
 
     class DestructorCallback {
       public:

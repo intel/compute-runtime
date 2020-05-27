@@ -9,6 +9,8 @@
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/helpers/base_object.h"
 
+#include <vector>
+
 namespace NEO {
 class Context;
 struct HardwareInfo;
@@ -75,6 +77,11 @@ class Sampler : public BaseObject<_cl_sampler> {
     cl_filter_mode mipFilterMode;
     float lodMin;
     float lodMax;
+
+  protected:
+    void storeProperties(const cl_sampler_properties *properties);
+
+    std::vector<uint64_t> propertiesVector;
 };
 
 template <typename GfxFamily>

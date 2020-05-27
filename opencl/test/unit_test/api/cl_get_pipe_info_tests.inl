@@ -152,4 +152,20 @@ TEST_F(clGetPipeInfoTests, GivenBufferInsteadOfPipeWhenGettingPipeInfoThenClInva
 
     clReleaseMemObject(buffer);
 }
+
+TEST_F(clGetPipeInfoTests, WhenQueryingPipePropertiesThenNothingIsCopied) {
+    auto pipe = clCreatePipe(pContext, CL_MEM_READ_WRITE, 1, 20, nullptr, &retVal);
+
+    EXPECT_NE(nullptr, pipe);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    size_t paramSize = 1u;
+
+    retVal = clGetPipeInfo(pipe, CL_PIPE_PROPERTIES, 0, nullptr, &paramSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, paramSize);
+
+    clReleaseMemObject(pipe);
+}
+
 } // namespace ULT

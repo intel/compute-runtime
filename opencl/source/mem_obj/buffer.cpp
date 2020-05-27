@@ -140,7 +140,13 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
     }
 
     // create the buffer
-    return create(pContext, memoryProperties, flags, flagsIntel, size, hostPtr, retVal);
+    auto buffer = create(pContext, memoryProperties, flags, flagsIntel, size, hostPtr, retVal);
+
+    if (retVal == CL_SUCCESS) {
+        buffer->storeProperties(properties);
+    }
+
+    return buffer;
 }
 
 Buffer *Buffer::create(Context *context,

@@ -77,6 +77,7 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         }
     }
 
+    storeProperties(properties);
     processProperties(properties);
 }
 
@@ -654,6 +655,16 @@ bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const Ev
     }
 
     return false;
+}
+
+void CommandQueue::storeProperties(const cl_queue_properties *properties) {
+    if (properties) {
+        for (size_t i = 0; properties[i] != 0; i += 2) {
+            propertiesVector.push_back(properties[i]);
+            propertiesVector.push_back(properties[i + 1]);
+        }
+        propertiesVector.push_back(0);
+    }
 }
 
 void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo) {

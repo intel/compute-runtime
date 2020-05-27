@@ -465,6 +465,47 @@ TEST_F(clCreateImageTest, WhenCreatingImageWithPropertiesThenErrorCodeIsCorrectl
     }
 }
 
+TEST_F(clCreateImageTest, GivenImageCreatedWithNullPropertiesWhenQueryingPropertiesThenNothingIsReturned) {
+    cl_int retVal = CL_SUCCESS;
+    auto image = clCreateImageWithProperties(pContext, nullptr, 0, &imageFormat, &imageDesc, nullptr, &retVal);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_NE(nullptr, image);
+
+    size_t propertiesSize;
+    retVal = clGetMemObjectInfo(image, CL_MEM_PROPERTIES, 0, nullptr, &propertiesSize);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(0u, propertiesSize);
+
+    clReleaseMemObject(image);
+}
+
+TEST_F(clCreateImageTest, WhenCreatingImageWithPropertiesThenPropertiesAreCorrectlyStored) {
+    cl_int retVal = CL_SUCCESS;
+    cl_mem_properties properties[5];
+    size_t propertiesSize;
+
+    std::vector<std::vector<uint64_t>> propertiesToTest{
+        {0},
+        {CL_MEM_FLAGS, CL_MEM_WRITE_ONLY, 0},
+        {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0},
+        {CL_MEM_FLAGS, CL_MEM_WRITE_ONLY, CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0}};
+
+    for (auto testProperties : propertiesToTest) {
+        auto image = clCreateImageWithProperties(pContext, testProperties.data(), 0, &imageFormat, &imageDesc, nullptr, &retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, image);
+
+        retVal = clGetMemObjectInfo(image, CL_MEM_PROPERTIES, sizeof(properties), properties, &propertiesSize);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(testProperties.size() * sizeof(cl_mem_properties), propertiesSize);
+        for (size_t i = 0; i < testProperties.size(); i++) {
+            EXPECT_EQ(testProperties[i], properties[i]);
+        }
+
+        clReleaseMemObject(image);
+    }
+}
+
 typedef clCreateImageTests<::testing::Test> clCreateImageTestYUV;
 TEST_F(clCreateImageTestYUV, GivenInvalidGlagWhenCreatingYuvImageThenInvalidValueErrorIsReturned) {
     imageFormat.image_channel_order = CL_YUYV_INTEL;
