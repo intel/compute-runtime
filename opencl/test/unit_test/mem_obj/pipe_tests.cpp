@@ -32,7 +32,7 @@ class PipeTest : public DeviceFixture, public ::testing::Test, public MemoryMana
     size_t size;
 };
 
-TEST_F(PipeTest, CreatePipe) {
+TEST_F(PipeTest, WhenCreatingPipeThenSuccessIsReturned) {
     int errCode = CL_SUCCESS;
 
     auto pipe = Pipe::create(&context, CL_MEM_READ_ONLY, 1, 20, nullptr, errCode);
@@ -43,7 +43,7 @@ TEST_F(PipeTest, CreatePipe) {
     delete pipe;
 }
 
-TEST_F(PipeTest, PipeCheckReservedHeaderSizeAddition) {
+TEST_F(PipeTest, WhenCreatingPipeThenHeaderSizeAdditionIsReserved) {
     int errCode = CL_SUCCESS;
 
     auto pipe = Pipe::create(&context, CL_MEM_READ_ONLY, 1, 20, nullptr, errCode);
@@ -55,7 +55,7 @@ TEST_F(PipeTest, PipeCheckReservedHeaderSizeAddition) {
     delete pipe;
 }
 
-TEST_F(PipeTest, PipeCheckHeaderinitialization) {
+TEST_F(PipeTest, WhenCreatingPipeThenHeaderIsInitialized) {
     int errCode = CL_SUCCESS;
 
     auto pipe = Pipe::create(&context, CL_MEM_READ_ONLY, 1, 20, nullptr, errCode);
@@ -68,7 +68,7 @@ TEST_F(PipeTest, PipeCheckHeaderinitialization) {
     delete pipe;
 }
 
-TEST_F(PipeTest, FailedAllocationInjection) {
+TEST_F(PipeTest, GivenFailedAllocationInjectionWhenCreatingPipeThenOnlyFailingAllocationsAreNull) {
     InjectedFunction method = [this](size_t failureIndex) {
         auto retVal = CL_INVALID_VALUE;
         auto pipe = Pipe::create(&context, CL_MEM_READ_ONLY, 1, 20, nullptr, retVal);
