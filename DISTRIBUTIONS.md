@@ -18,9 +18,9 @@ Starting with [release 19.43.14583](https://github.com/intel/compute-runtime/rel
 
 Docker images are provided in [intel-opencl](https://hub.docker.com/r/intelopencl/intel-opencl) repository.
 
-Example for Fedora* 30
+Example for Fedora* 31
 
 ```
-docker run -it --device /dev/dri:/dev/dri --rm docker.io/intelopencl/intel-opencl:fedora-30-copr clinfo
+docker run -it --device /dev/dri:/dev/dri --rm docker.io/intelopencl/intel-opencl:fedora-31-copr clinfo
 ```
 

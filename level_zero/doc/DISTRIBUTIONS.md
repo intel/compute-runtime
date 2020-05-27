@@ -8,7 +8,7 @@ yum copr enable jdanecki/intel-opencl
 yum install level-zero intel-level-zero-gpu
 ```
 
-## Fedora* 30, 31, 32, rawhide, Red Hat Enterprise Linux* 8, Mageia* 7
+## Fedora* 31, 32, rawhide, Red Hat Enterprise Linux* 8, Mageia* 7
 
 ```
 dnf install dnf-plugins-core
