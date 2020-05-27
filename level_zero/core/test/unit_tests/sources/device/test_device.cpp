@@ -156,6 +156,45 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     EXPECT_NE(0, memcmp(&deviceProperties.name, &devicePropertiesBefore.name, sizeof(devicePropertiesBefore.name)));
 }
 
+struct DeviceHasNoDoubleFp64Test : public ::testing::Test {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        HardwareInfo nonFp64Device = *defaultHwInfo;
+        nonFp64Device.capabilityTable.ftrSupportsFP64 = false;
+        nonFp64Device.capabilityTable.ftrSupports64BitMath = false;
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&nonFp64Device, rootDeviceIndex);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+        device = driverHandle->devices[0];
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::Device *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    const uint32_t rootDeviceIndex = 1u;
+    const uint32_t numRootDevices = 2u;
+};
+
+TEST_F(DeviceHasNoDoubleFp64Test, givenDeviceThatDoesntHaveFp64WhenDbgFlagEnablesFp64ThenReportFp64Flags) {
+    ze_device_kernel_properties_t kernelProperties;
+    memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_kernel_properties_t));
+
+    device->getKernelProperties(&kernelProperties);
+    EXPECT_EQ(ZE_FP_CAPS_NONE, kernelProperties.doubleFpCapabilities);
+    EXPECT_EQ(ZE_FP_CAPS_NONE, kernelProperties.singleFpCapabilities);
+
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.OverrideDefaultFP64Settings.set(1);
+
+    device->getKernelProperties(&kernelProperties);
+    EXPECT_EQ(true, kernelProperties.fp64Supported);
+    EXPECT_NE(ZE_FP_CAPS_NONE, kernelProperties.doubleFpCapabilities);
+    EXPECT_EQ(ZE_FP_CAPS_ROUNDED_DIVIDE_SQRT, kernelProperties.singleFpCapabilities);
+}
+
 struct MockMemoryManagerMultiDevice : public MemoryManagerMock {
     MockMemoryManagerMultiDevice(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };

@@ -42,6 +42,10 @@
 
 #include "hw_helpers.h"
 
+namespace NEO {
+bool releaseFP64Override();
+} // namespace NEO
+
 namespace L0 {
 
 uint32_t DeviceImp::getRootDeviceIndex() {
@@ -286,10 +290,17 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_kernel_properties_t *pKerne
 
     pKernelProperties->fp16Supported = true;
     pKernelProperties->int64AtomicsSupported = hardwareInfo.capabilityTable.ftrSupportsInteger64BitAtomics;
-    pKernelProperties->fp64Supported = hardwareInfo.capabilityTable.ftrSupportsFP64;
     pKernelProperties->halfFpCapabilities = defaultFpFlags;
-    pKernelProperties->singleFpCapabilities = hardwareInfo.capabilityTable.ftrSupports64BitMath ? ZE_FP_CAPS_ROUNDED_DIVIDE_SQRT : ZE_FP_CAPS_NONE;
-    pKernelProperties->doubleFpCapabilities = hardwareInfo.capabilityTable.ftrSupportsFP64 ? defaultFpFlags : ZE_FP_CAPS_NONE;
+
+    if (NEO::releaseFP64Override() || NEO::DebugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
+        pKernelProperties->fp64Supported = true;
+        pKernelProperties->singleFpCapabilities = ZE_FP_CAPS_ROUNDED_DIVIDE_SQRT;
+        pKernelProperties->doubleFpCapabilities = defaultFpFlags;
+    } else {
+        pKernelProperties->fp64Supported = hardwareInfo.capabilityTable.ftrSupportsFP64;
+        pKernelProperties->singleFpCapabilities = hardwareInfo.capabilityTable.ftrSupports64BitMath ? ZE_FP_CAPS_ROUNDED_DIVIDE_SQRT : ZE_FP_CAPS_NONE;
+        pKernelProperties->doubleFpCapabilities = hardwareInfo.capabilityTable.ftrSupportsFP64 ? defaultFpFlags : ZE_FP_CAPS_NONE;
+    }
 
     pKernelProperties->nativeKernelSupported.id[0] = 0;
 
