@@ -16,8 +16,7 @@ OSMemory::ReservedCpuAddressRange OSMemory::reserveCpuAddressRange(size_t sizeTo
 }
 
 OSMemory::ReservedCpuAddressRange OSMemory::reserveCpuAddressRange(void *baseAddress, size_t sizeToReserve, size_t alignment) {
-    UNRECOVERABLE_IF(0 == alignment);
-    UNRECOVERABLE_IF(0 != (alignment & (alignment - 1)));
+    UNRECOVERABLE_IF(alignment && 0 != (alignment & (alignment - 1)));
 
     ReservedCpuAddressRange reservedCpuAddressRange;
 
