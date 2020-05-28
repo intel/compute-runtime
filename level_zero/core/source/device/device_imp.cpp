@@ -161,7 +161,7 @@ ze_result_t DeviceImp::createModule(const ze_module_desc_t *desc, ze_module_hand
         moduleBuildLog = ModuleBuildLog::create();
         *buildLog = moduleBuildLog->toHandle();
     }
-    auto modulePtr = Module::create(this, desc, neoDevice, moduleBuildLog);
+    auto modulePtr = Module::create(this, desc, moduleBuildLog);
     if (modulePtr == nullptr) {
         return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     }

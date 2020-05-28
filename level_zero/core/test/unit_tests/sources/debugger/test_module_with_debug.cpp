@@ -27,7 +27,7 @@ TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenModuleIsCreatedTh
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(deviceL0, device, moduleBuildLog));
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(deviceL0, moduleBuildLog));
     ASSERT_NE(nullptr, module.get());
     module->initialize(&moduleDesc, device);
 

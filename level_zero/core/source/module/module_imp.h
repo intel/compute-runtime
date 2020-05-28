@@ -59,7 +59,7 @@ struct ModuleTranslationUnit {
 struct ModuleImp : public Module {
     ModuleImp() = delete;
 
-    ModuleImp(Device *device, NEO::Device *neoDevice, ModuleBuildLog *moduleBuildLog);
+    ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog);
 
     ~ModuleImp() override;
 

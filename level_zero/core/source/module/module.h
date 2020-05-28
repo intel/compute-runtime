@@ -20,7 +20,7 @@ namespace L0 {
 struct Device;
 
 struct Module : _ze_module_handle_t {
-    static Module *create(Device *device, const ze_module_desc_t *desc, NEO::Device *neoDevice,
+    static Module *create(Device *device, const ze_module_desc_t *desc,
                           ModuleBuildLog *moduleBuildLog);
 
     virtual ~Module() = default;

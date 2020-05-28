@@ -106,7 +106,7 @@ HWTEST_F(ModuleSpecConstantsTests, givenSpecializationConstantsSetInDescriptorTh
     specConstants.pConstantValues = specConstantsPointerValues.data();
     moduleDesc.pConstants = &specConstants;
 
-    auto module = new Module(device, neoDevice, nullptr);
+    auto module = new Module(device, nullptr);
     module->translationUnit.reset(mockTranslationUnit);
 
     bool success = module->initialize(&moduleDesc, neoDevice);

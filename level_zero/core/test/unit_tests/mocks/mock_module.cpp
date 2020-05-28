@@ -12,7 +12,7 @@ using ::testing::Return;
 namespace L0 {
 namespace ult {
 
-Mock<Module>::Mock(::L0::Device *device, NEO::Device *neoDevice, ModuleBuildLog *moduleBuildLog) : WhiteBox(device, neoDevice, moduleBuildLog) { EXPECT_CALL(*this, getMaxGroupSize).WillRepeatedly(Return(256u)); }
+Mock<Module>::Mock(::L0::Device *device, ModuleBuildLog *moduleBuildLog) : WhiteBox(device, moduleBuildLog) { EXPECT_CALL(*this, getMaxGroupSize).WillRepeatedly(Return(256u)); }
 
 } // namespace ult
 } // namespace L0

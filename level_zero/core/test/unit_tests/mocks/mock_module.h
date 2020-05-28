@@ -14,11 +14,6 @@
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
-
 namespace L0 {
 namespace ult {
 
@@ -35,19 +30,17 @@ using Module = WhiteBox<::L0::Module>;
 template <>
 struct Mock<Module> : public Module {
     Mock() = delete;
-    Mock(::L0::Device *device, NEO::Device *neoDevice, ModuleBuildLog *moduleBuildLog);
+    Mock(::L0::Device *device, ModuleBuildLog *moduleBuildLog);
 
-    MOCK_METHOD2(createKernel,
-                 ze_result_t(const ze_kernel_desc_t *desc, ze_kernel_handle_t *phFunction));
-    MOCK_METHOD0(destroy, ze_result_t());
-    MOCK_METHOD2(getFunctionPointer, ze_result_t(const char *pKernelName, void **pfnFunction));
-    MOCK_METHOD2(getNativeBinary, ze_result_t(size_t *pSize, uint8_t *pModuleNativeBinary));
-    MOCK_CONST_METHOD1(getKernelImmutableData, const L0::KernelImmutableData *(const char *functionName));
-    MOCK_CONST_METHOD0(getMaxGroupSize, uint32_t());
-    MOCK_METHOD2(getKernelNames, ze_result_t(uint32_t *pCount, const char **pNames));
-
-    MOCK_METHOD2(getGlobalPointer, ze_result_t(const char *pGlobalName, void **pPtr));
-    MOCK_CONST_METHOD0(isDebugEnabled, bool());
+    MOCK_METHOD(ze_result_t, createKernel, (const ze_kernel_desc_t *desc, ze_kernel_handle_t *phFunction), (override));
+    MOCK_METHOD(ze_result_t, destroy, (), (override));
+    MOCK_METHOD(ze_result_t, getFunctionPointer, (const char *pKernelName, void **pfnFunction), (override));
+    MOCK_METHOD(ze_result_t, getNativeBinary, (size_t * pSize, uint8_t *pModuleNativeBinary), (override));
+    MOCK_METHOD(const L0::KernelImmutableData *, getKernelImmutableData, (const char *functionName), (const, override));
+    MOCK_METHOD(uint32_t, getMaxGroupSize, (), (const, override));
+    MOCK_METHOD(ze_result_t, getKernelNames, (uint32_t * pCount, const char **pNames), (override));
+    MOCK_METHOD(ze_result_t, getGlobalPointer, (const char *pGlobalName, void **pPtr), (override));
+    MOCK_METHOD(bool, isDebugEnabled, (), (const, override));
 };
 
 struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
@@ -95,7 +88,3 @@ struct MockCompilerInterface : public NEO::CompilerInterface {
 
 } // namespace ult
 } // namespace L0
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

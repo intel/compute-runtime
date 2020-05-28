@@ -278,10 +278,10 @@ void ModuleTranslationUnit::processDebugData() {
     }
 }
 
-ModuleImp::ModuleImp(Device *device, NEO::Device *neoDevice, ModuleBuildLog *moduleBuildLog)
+ModuleImp::ModuleImp(Device *device, ModuleBuildLog *moduleBuildLog)
     : device(device), translationUnit(std::make_unique<ModuleTranslationUnit>(device)),
       moduleBuildLog(moduleBuildLog) {
-    productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
+    productFamily = device->getHwInfo().platform.eProductFamily;
 }
 
 ModuleImp::~ModuleImp() {
@@ -489,11 +489,11 @@ ze_result_t ModuleImp::getGlobalPointer(const char *pGlobalName, void **pPtr) {
     return ZE_RESULT_SUCCESS;
 }
 
-Module *Module::create(Device *device, const ze_module_desc_t *desc, NEO::Device *neoDevice,
+Module *Module::create(Device *device, const ze_module_desc_t *desc,
                        ModuleBuildLog *moduleBuildLog) {
-    auto module = new ModuleImp(device, neoDevice, moduleBuildLog);
+    auto module = new ModuleImp(device, moduleBuildLog);
 
-    bool success = module->initialize(desc, neoDevice);
+    bool success = module->initialize(desc, device->getNEODevice());
     if (success == false) {
         module->destroy();
         return nullptr;

@@ -42,7 +42,7 @@ struct ModuleFixture : public DeviceFixture {
 
         ModuleBuildLog *moduleBuildLog = nullptr;
 
-        module.reset(Module::create(device, &moduleDesc, neoDevice, moduleBuildLog));
+        module.reset(Module::create(device, &moduleDesc, moduleBuildLog));
     }
 
     void createKernel() {

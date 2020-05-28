@@ -24,7 +24,7 @@ using KernelImpSetGroupSizeTest = Test<DeviceFixture>;
 
 HWTEST_F(KernelImpSetGroupSizeTest, WhenCalculatingLocalIdsThenGrfSizeIsTakenFromCapabilityTable) {
     Mock<Kernel> mockKernel;
-    Mock<Module> mockModule(this->device, this->neoDevice, nullptr);
+    Mock<Module> mockModule(this->device, nullptr);
     mockKernel.descriptor.kernelAttributes.simdSize = 1;
     mockKernel.module = &mockModule;
     auto grfSize = mockModule.getDevice()->getHwInfo().capabilityTable.grfSize;
