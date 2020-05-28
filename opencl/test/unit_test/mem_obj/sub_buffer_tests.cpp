@@ -46,7 +46,7 @@ class SubBufferTest : public DeviceFixture,
     Buffer *buffer = nullptr;
 };
 
-TEST_F(SubBufferTest, createSubBuffer) {
+TEST_F(SubBufferTest, WhenCreatingSubBufferThenRefInternalCountIsIncremented) {
     cl_buffer_region region = {2, 12};
     EXPECT_EQ(1, buffer->getRefInternalCount());
 
