@@ -42,7 +42,7 @@ MemObj::MemObj(Context *context,
     : context(context), memObjectType(memObjectType), memoryProperties(memoryProperties), flags(flags), flagsIntel(flagsIntel), size(size),
       memoryStorage(memoryStorage), hostPtr(hostPtr),
       isZeroCopy(zeroCopy), isHostPtrSVM(isHostPtrSVM), isObjectRedescribed(isObjectRedescribed),
-      graphicsAllocation(gfxAllocation) {
+      graphicsAllocation(gfxAllocation), multiGraphicsAllocation(graphicsAllocation ? graphicsAllocation->getRootDeviceIndex() : 0) {
 
     if (context) {
         context->incRefInternal();
@@ -50,6 +50,9 @@ MemObj::MemObj(Context *context,
         auto device = context->getDevice(0);
         executionEnvironment = device->getExecutionEnvironment();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()].get();
+    }
+    if (graphicsAllocation) {
+        multiGraphicsAllocation.addAllocation(graphicsAllocation);
     }
 }
 

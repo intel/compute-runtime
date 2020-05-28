@@ -76,7 +76,7 @@ bool Buffer::isSubBuffer() {
 }
 
 bool Buffer::isValidSubBufferOffset(size_t offset) {
-    if (this->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+    if (multiGraphicsAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
         // From spec: "origin value is aligned to the CL_DEVICE_MEM_BASE_ADDR_ALIGN value"
         if (!isAligned(offset, this->getContext()->getDevice(0)->getDeviceInfo().memBaseAddressAlign / 8u)) {
             return false;
@@ -650,7 +650,7 @@ bool Buffer::isCompressed() const {
     if (this->getGraphicsAllocation()->getDefaultGmm()) {
         return this->getGraphicsAllocation()->getDefaultGmm()->isRenderCompressed;
     }
-    if (this->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+    if (multiGraphicsAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
         return true;
     }
 

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/cl_types.h"
@@ -127,6 +128,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     const cl_mem_flags &getFlags() const { return flags; }
     const cl_mem_flags &getFlagsIntel() const { return flagsIntel; }
+    const MultiGraphicsAllocation &getMultiGraphicsAllocation() const { return multiGraphicsAllocation; }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
@@ -153,6 +155,7 @@ class MemObj : public BaseObject<_cl_mem> {
     bool isObjectRedescribed;
     MemoryManager *memoryManager = nullptr;
     GraphicsAllocation *graphicsAllocation;
+    MultiGraphicsAllocation multiGraphicsAllocation;
     GraphicsAllocation *mcsAllocation = nullptr;
     GraphicsAllocation *mapAllocation = nullptr;
     std::shared_ptr<SharingHandler> sharingHandler;

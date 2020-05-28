@@ -1205,7 +1205,7 @@ bool Kernel::requiresCoherency() {
             if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
                 auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
                 auto memObj = castToObjectOrAbort<MemObj>(clMem);
-                if (memObj->getGraphicsAllocation()->isCoherent()) {
+                if (memObj->getMultiGraphicsAllocation().isCoherent()) {
                     return true;
                 }
             }
@@ -1303,7 +1303,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
                 forceNonAuxMode = true;
             }
             disableL3 = (argIndex == 0);
-        } else if (buffer->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
+        } else if (buffer->getMultiGraphicsAllocation().getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
                    !kernelArgInfo.pureStatefulBufferAccess) {
             forceNonAuxMode = true;
         }
@@ -2350,7 +2350,7 @@ void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsF
     for (uint32_t i = 0; i < getKernelArgsNumber(); i++) {
         if (BUFFER_OBJ == kernelArguments.at(i).type && !kernelInfo.kernelArgInfo.at(i).pureStatefulBufferAccess) {
             auto buffer = castToObject<Buffer>(getKernelArg(i));
-            if (buffer && buffer->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+            if (buffer && buffer->getMultiGraphicsAllocation().getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
                 memObjsForAuxTranslation.insert(buffer);
 
                 auto &context = this->program->getContext();

@@ -14,7 +14,7 @@ namespace NEO {
 
 class MemObjSurface : public Surface {
   public:
-    MemObjSurface(MemObj *memObj) : Surface(memObj->getGraphicsAllocation()->isCoherent()), memObj(memObj) {
+    MemObjSurface(MemObj *memObj) : Surface(memObj->getMultiGraphicsAllocation().isCoherent()), memObj(memObj) {
         memObj->incRefInternal();
     }
     ~MemObjSurface() override {

@@ -9,6 +9,7 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cpu_page_fault_manager_memory_sync.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mem_obj_surface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_banks.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.h
