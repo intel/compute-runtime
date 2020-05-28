@@ -118,6 +118,8 @@ struct TimestampPacketHelper {
         return timestampPacketNode.getGpuAddress() + offsetof(TimestampPacketStorage, implicitGpuDependenciesCount);
     }
 
+    static void overrideSupportedDevicesCount(uint32_t &numSupportedDevices);
+
     template <typename GfxFamily>
     static void programSemaphoreWithImplicitDependency(LinearStream &cmdStream, TagNode<TimestampPacketStorage> &timestampPacketNode, uint32_t numSupportedDevices) {
         using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
@@ -139,6 +141,8 @@ struct TimestampPacketHelper {
         }
 
         if (trackPostSyncDependencies) {
+            overrideSupportedDevicesCount(numSupportedDevices);
+
             for (uint32_t i = 0; i < numSupportedDevices; i++) {
                 timestampPacketNode.incImplicitCpuDependenciesCount();
             }
