@@ -22,7 +22,7 @@
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/gen_common/matchers.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"
@@ -45,10 +45,10 @@
 
 using namespace NEO;
 
-struct CommandStreamReceiverTest : public DeviceFixture,
+struct CommandStreamReceiverTest : public ClDeviceFixture,
                                    public ::testing::Test {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
 
         commandStreamReceiver = &pDevice->getGpgpuCommandStreamReceiver();
         ASSERT_NE(nullptr, commandStreamReceiver);
@@ -57,7 +57,7 @@ struct CommandStreamReceiverTest : public DeviceFixture,
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     CommandStreamReceiver *commandStreamReceiver;

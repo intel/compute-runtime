@@ -12,8 +12,8 @@
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
@@ -28,7 +28,7 @@
 using namespace NEO;
 
 struct CommandQueueHwTest
-    : public DeviceFixture,
+    : public ClDeviceFixture,
       public ContextFixture,
       public CommandQueueHwFixture,
       ::testing::Test {
@@ -36,7 +36,7 @@ struct CommandQueueHwTest
     using ContextFixture::SetUp;
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         CommandQueueHwFixture::SetUp(pClDevice, 0);
@@ -45,14 +45,14 @@ struct CommandQueueHwTest
     void TearDown() override {
         CommandQueueHwFixture::TearDown();
         ContextFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     cl_command_queue_properties properties;
     const HardwareInfo *pHwInfo = nullptr;
 };
 
-struct OOQueueHwTest : public DeviceFixture,
+struct OOQueueHwTest : public ClDeviceFixture,
                        public ContextFixture,
                        public OOQueueFixture,
                        ::testing::Test {
@@ -62,7 +62,7 @@ struct OOQueueHwTest : public DeviceFixture,
     }
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         OOQueueFixture::SetUp(pClDevice, 0);
@@ -74,7 +74,7 @@ struct OOQueueHwTest : public DeviceFixture,
     void TearDown() override {
         OOQueueFixture::TearDown();
         ContextFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 };
 

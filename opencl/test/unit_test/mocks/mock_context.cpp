@@ -15,7 +15,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/sharings/sharing.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 #include "d3d_sharing_functions.h"

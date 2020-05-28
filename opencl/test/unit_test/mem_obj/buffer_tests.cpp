@@ -30,7 +30,7 @@
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/gen_common/matchers.h"
@@ -1944,7 +1944,7 @@ TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenRenderCompressedBufferWh
     EXPECT_EQ(nullptr, buffer.get());
 }
 
-class BufferTest : public DeviceFixture,
+class BufferTest : public ClDeviceFixture,
                    public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
     BufferTest() {
@@ -1953,13 +1953,13 @@ class BufferTest : public DeviceFixture,
   protected:
     void SetUp() override {
         flags = GetParam();
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         context.reset(new MockContext(pClDevice));
     }
 
     void TearDown() override {
         context.reset();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -2960,12 +2960,12 @@ INSTANTIATE_TEST_CASE_P(
     BufferL3CacheTests,
     testing::ValuesIn(pointers));
 
-struct BufferUnmapTest : public DeviceFixture, public ::testing::Test {
+struct BufferUnmapTest : public ClDeviceFixture, public ::testing::Test {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
     }
     void TearDown() override {
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 };
 

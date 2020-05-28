@@ -24,8 +24,8 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/built_ins/built_ins_file_names.h"
 #include "opencl/test/unit_test/fixtures/built_in_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/run_kernel_fixture.h"
 #include "opencl/test/unit_test/global_environment.h"
@@ -46,7 +46,7 @@ using namespace NEO;
 
 class BuiltInTests
     : public BuiltInFixture,
-      public DeviceFixture,
+      public ClDeviceFixture,
       public ContextFixture,
       public ::testing::Test {
 
@@ -62,7 +62,7 @@ class BuiltInTests
 
     void SetUp() override {
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         BuiltInFixture::SetUp(pDevice);
@@ -72,7 +72,7 @@ class BuiltInTests
         allBuiltIns.clear();
         BuiltInFixture::TearDown();
         ContextFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     void AppendBuiltInStringFromFile(std::string builtInFile, size_t &size) {

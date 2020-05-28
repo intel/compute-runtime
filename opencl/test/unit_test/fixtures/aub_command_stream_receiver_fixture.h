@@ -7,19 +7,19 @@
 
 #pragma once
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
 namespace NEO {
-struct AubCommandStreamReceiverFixture : public DeviceFixture, MockAubCenterFixture {
+struct AubCommandStreamReceiverFixture : public ClDeviceFixture, MockAubCenterFixture {
     void SetUp() {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         MockAubCenterFixture::SetUp();
         setMockAubCenter(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     }
     void TearDown() {
         MockAubCenterFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 };
 } // namespace NEO

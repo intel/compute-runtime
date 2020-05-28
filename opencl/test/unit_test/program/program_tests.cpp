@@ -31,7 +31,7 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/create.inl"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
@@ -58,14 +58,14 @@
 using namespace NEO;
 
 void ProgramTests::SetUp() {
-    DeviceFixture::SetUp();
+    ClDeviceFixture::SetUp();
     cl_device_id device = pClDevice;
     ContextFixture::SetUp(1, &device);
 }
 
 void ProgramTests::TearDown() {
     ContextFixture::TearDown();
-    DeviceFixture::TearDown();
+    ClDeviceFixture::TearDown();
 }
 
 void CL_CALLBACK notifyFunc(

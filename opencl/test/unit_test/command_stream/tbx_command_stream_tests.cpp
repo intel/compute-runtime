@@ -23,7 +23,7 @@
 #include "opencl/source/memory_manager/memory_banks.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_aub_center.h"
@@ -54,7 +54,7 @@ extern const char *tbxLibName;
 }
 
 struct TbxFixture : public TbxCommandStreamFixture,
-                    public DeviceFixture,
+                    public ClDeviceFixture,
                     public MockAubCenterFixture {
 
     using TbxCommandStreamFixture::SetUp;
@@ -62,7 +62,7 @@ struct TbxFixture : public TbxCommandStreamFixture,
     TbxFixture() : MockAubCenterFixture(CommandStreamReceiverType::CSR_TBX) {}
 
     void SetUp() {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         setMockAubCenter(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
         TbxCommandStreamFixture::SetUp(pDevice);
         MockAubCenterFixture::SetUp();
@@ -71,7 +71,7 @@ struct TbxFixture : public TbxCommandStreamFixture,
     void TearDown() override {
         MockAubCenterFixture::TearDown();
         TbxCommandStreamFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 };
 

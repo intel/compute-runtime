@@ -11,7 +11,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
@@ -21,20 +21,20 @@
 
 using namespace NEO;
 
-class GetMemObjectInfo : public ::testing::Test, public PlatformFixture, public DeviceFixture {
-    using DeviceFixture::SetUp;
+class GetMemObjectInfo : public ::testing::Test, public PlatformFixture, public ClDeviceFixture {
+    using ClDeviceFixture::SetUp;
     using PlatformFixture::SetUp;
 
   public:
     void SetUp() override {
         PlatformFixture::SetUp();
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         BufferDefaults::context = new MockContext;
     }
 
     void TearDown() override {
         delete BufferDefaults::context;
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
         PlatformFixture::TearDown();
     }
 };

@@ -8,14 +8,14 @@
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
 
 using namespace NEO;
 
-struct MultipleMapBufferTest : public DeviceFixture, public ::testing::Test {
+struct MultipleMapBufferTest : public ClDeviceFixture, public ::testing::Test {
     template <typename T>
     struct MockBuffer : public BufferHw<T> {
         using Buffer::mapOperationsHandler;
@@ -106,13 +106,13 @@ struct MultipleMapBufferTest : public DeviceFixture, public ::testing::Test {
     }
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         context = new MockContext(pClDevice);
     }
 
     void TearDown() override {
         delete context;
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     MockContext *context = nullptr;

@@ -11,7 +11,7 @@
 #include "opencl/source/command_queue/local_id_gen.h"
 #include "opencl/source/helpers/per_thread_data.h"
 #include "opencl/source/program/kernel_info.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
@@ -20,11 +20,11 @@
 using namespace NEO;
 
 template <bool localIdX = true, bool localIdY = true, bool localIdZ = true, bool flattenedId = false>
-struct PerThreadDataTests : public DeviceFixture,
+struct PerThreadDataTests : public ClDeviceFixture,
                             ::testing::Test {
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
 
         threadPayload = {};
         threadPayload.LocalIDXPresent = localIdX ? 1 : 0;
@@ -56,7 +56,7 @@ struct PerThreadDataTests : public DeviceFixture,
 
     void TearDown() override {
         alignedFree(indirectHeapMemory);
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     const std::array<uint8_t, 3> workgroupWalkOrder = {{0, 1, 2}};

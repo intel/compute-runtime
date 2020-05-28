@@ -28,7 +28,7 @@
 using namespace NEO;
 
 void HardwareCommandsTest::SetUp() {
-    DeviceFixture::SetUp();
+    ClDeviceFixture::SetUp();
     ASSERT_NE(nullptr, pClDevice);
     cl_device_id device = pClDevice;
     ContextFixture::SetUp(1, &device);
@@ -43,7 +43,7 @@ void HardwareCommandsTest::TearDown() {
     mockKernelWithInternal.reset(nullptr);
     BuiltInFixture::TearDown();
     ContextFixture::TearDown();
-    DeviceFixture::TearDown();
+    ClDeviceFixture::TearDown();
 }
 
 void HardwareCommandsTest::addSpaceForSingleKernelArg() {

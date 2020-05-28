@@ -13,7 +13,7 @@
 #include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/source/helpers/neo_driver_version.h"
 #include "opencl/test/unit_test/fixtures/aub_command_stream_receiver_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_center.h"
 #include "opencl/test/unit_test/mocks/mock_aub_csr.h"
 #include "opencl/test/unit_test/mocks/mock_aub_file_stream.h"

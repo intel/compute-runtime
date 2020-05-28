@@ -16,7 +16,7 @@
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
@@ -31,7 +31,7 @@
 using namespace NEO;
 using namespace ::testing;
 
-class ImageSetArgTest : public DeviceFixture,
+class ImageSetArgTest : public ClDeviceFixture,
                         public testing::Test {
 
   public:
@@ -62,7 +62,7 @@ class ImageSetArgTest : public DeviceFixture,
     }
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         pKernelInfo = std::make_unique<KernelInfo>();
 
         // define kernel info
@@ -99,7 +99,7 @@ class ImageSetArgTest : public DeviceFixture,
         delete pKernel;
 
         delete context;
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -908,7 +908,7 @@ HWTEST_F(ImageSetArgTest, givenNonRenderCompressedResourceWhenSettingImgArgThenD
 class ImageMediaBlockSetArgTest : public ImageSetArgTest {
   protected:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         pKernelInfo = std::make_unique<KernelInfo>();
 
         // define kernel info

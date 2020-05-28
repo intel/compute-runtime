@@ -14,7 +14,7 @@
 #include "shared/test/unit_test/helpers/test_files.h"
 #include "shared/test/unit_test/mocks/mock_compiler_interface.h"
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/mocks/mock_cif.h"
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
@@ -33,11 +33,11 @@ const char *gCBadDompilerDllName = "libbad_compiler.so";
 #error "Unknown OS!"
 #endif
 
-class CompilerInterfaceTest : public DeviceFixture,
+class CompilerInterfaceTest : public ClDeviceFixture,
                               public ::testing::Test {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
 
         // create the compiler interface
         this->pCompilerInterface = new MockCompilerInterface();
@@ -64,7 +64,7 @@ class CompilerInterfaceTest : public DeviceFixture,
     void TearDown() override {
         pSource.reset();
 
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     MockCompilerInterface *pCompilerInterface;

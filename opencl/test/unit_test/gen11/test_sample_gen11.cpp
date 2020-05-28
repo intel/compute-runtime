@@ -5,12 +5,12 @@
  *
  */
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> Gen11OnlyTeset;
+typedef Test<ClDeviceFixture> Gen11OnlyTeset;
 
 GEN11TEST_F(Gen11OnlyTeset, shouldPassOnGen11) {
     EXPECT_NE(IGFX_GEN9_CORE, pDevice->getRenderCoreFamily());

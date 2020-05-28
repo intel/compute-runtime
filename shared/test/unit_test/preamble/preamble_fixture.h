@@ -10,23 +10,23 @@
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 
 #include "opencl/test/unit_test/command_stream/linear_stream_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 
 using namespace NEO;
 
-struct PreambleFixture : public DeviceFixture,
+struct PreambleFixture : public ClDeviceFixture,
                          public LinearStreamFixture,
                          public HardwareParse,
                          public ::testing::Test {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         HardwareParse::SetUp();
     }
 
     void TearDown() override {
         HardwareParse::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 };
 

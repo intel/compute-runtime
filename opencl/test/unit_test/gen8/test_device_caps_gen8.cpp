@@ -7,12 +7,12 @@
 
 #include "shared/source/helpers/hw_helper.h"
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> Gen8DeviceCaps;
+typedef Test<ClDeviceFixture> Gen8DeviceCaps;
 
 GEN8TEST_F(Gen8DeviceCaps, defaultPreemptionMode) {
     EXPECT_TRUE(PreemptionMode::Disabled == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);

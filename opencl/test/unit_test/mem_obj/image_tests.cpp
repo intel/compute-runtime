@@ -16,7 +16,7 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
@@ -37,7 +37,7 @@ auto channelType = CL_UNORM_INT8;
 auto channelOrder = CL_RGBA;
 auto const elementSize = 4; //sizeof CL_RGBA * CL_UNORM_INT8
 
-class CreateImageTest : public DeviceFixture,
+class CreateImageTest : public ClDeviceFixture,
                         public testing::TestWithParam<uint64_t /*cl_mem_flags*/>,
                         public CommandQueueHwFixture {
     typedef CommandQueueHwFixture CommandQueueFixture;
@@ -53,7 +53,7 @@ class CreateImageTest : public DeviceFixture,
 
   protected:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
 
         CommandQueueFixture::SetUp(pClDevice, 0);
         flags = GetParam();
@@ -77,7 +77,7 @@ class CreateImageTest : public DeviceFixture,
 
     void TearDown() override {
         CommandQueueFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     cl_image_format imageFormat;

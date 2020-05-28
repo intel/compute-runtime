@@ -9,12 +9,12 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-using EncodeBatchBufferStartOrEndTest = Test<DeviceFixture>;
+using EncodeBatchBufferStartOrEndTest = Test<ClDeviceFixture>;
 
 HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBEndThenCommandIsAdded) {
     CommandContainer cmdContainer;

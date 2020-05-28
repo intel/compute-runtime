@@ -20,7 +20,7 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_map_buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -31,7 +31,7 @@
 
 using namespace NEO;
 
-struct EnqueueSvmTest : public DeviceFixture,
+struct EnqueueSvmTest : public ClDeviceFixture,
                         public CommandQueueHwFixture,
                         public ::testing::Test {
     typedef CommandQueueHwFixture CommandQueueFixture;
@@ -41,7 +41,7 @@ struct EnqueueSvmTest : public DeviceFixture,
 
     void SetUp() override {
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         CommandQueueFixture::SetUp(pClDevice, 0);
         ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 256, {}, {});
     }
@@ -52,7 +52,7 @@ struct EnqueueSvmTest : public DeviceFixture,
         }
         context->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
         CommandQueueFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -890,14 +890,14 @@ TEST(CreateSvmAllocTests, givenVariousSvmAllocationPropertiesWhenAllocatingSvmTh
     }
 }
 
-struct EnqueueSvmTestLocalMemory : public DeviceFixture,
+struct EnqueueSvmTestLocalMemory : public ClDeviceFixture,
                                    public ::testing::Test {
     void SetUp() override {
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         dbgRestore = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnableLocalMemory.set(1);
 
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         context = std::make_unique<MockContext>(pClDevice, true);
         size = 256;
         svmPtr = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), size, {}, {});
@@ -911,7 +911,7 @@ struct EnqueueSvmTestLocalMemory : public DeviceFixture,
         }
         context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
         context.reset(nullptr);
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

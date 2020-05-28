@@ -18,7 +18,7 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -30,13 +30,13 @@
 
 using namespace NEO;
 
-struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, public ::testing::Test {
+struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, public ::testing::Test {
 
     using CommandQueueFixture::SetUp;
 
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(0);
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         context = std::make_unique<MockContext>(pClDevice);
         CommandQueueFixture::SetUp(context.get(), pClDevice, 0);
 
@@ -82,7 +82,7 @@ struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, pu
     void TearDown() override {
         CommandQueueFixture::TearDown();
         context.reset();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     std::unique_ptr<KernelOperation> createBlockedCommandsData(CommandQueue &commandQueue) {

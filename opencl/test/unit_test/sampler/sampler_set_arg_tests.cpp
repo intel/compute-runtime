@@ -11,7 +11,7 @@
 #include "opencl/source/helpers/sampler_helpers.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/sampler/sampler.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -24,7 +24,7 @@ namespace NEO {
 class Surface;
 };
 
-class SamplerSetArgFixture : public DeviceFixture {
+class SamplerSetArgFixture : public ClDeviceFixture {
   public:
     SamplerSetArgFixture()
 
@@ -34,7 +34,7 @@ class SamplerSetArgFixture : public DeviceFixture {
 
   protected:
     void SetUp() {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         pKernelInfo = std::make_unique<KernelInfo>();
 
         // define kernel info
@@ -73,7 +73,7 @@ class SamplerSetArgFixture : public DeviceFixture {
 
         delete sampler;
         delete context;
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     bool crossThreadDataUnchanged() {

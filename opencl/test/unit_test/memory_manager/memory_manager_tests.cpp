@@ -28,7 +28,7 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/printf_handler.h"
 #include "opencl/source/program/program.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_allocator_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_manager_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"

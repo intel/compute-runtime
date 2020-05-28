@@ -55,7 +55,7 @@ void KernelImageArgTest::SetUp() {
     pKernelInfo->kernelArgInfo[1].isImage = true;
     pKernelInfo->kernelArgInfo[0].isImage = true;
 
-    DeviceFixture::SetUp();
+    ClDeviceFixture::SetUp();
     program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
     pKernel.reset(new MockKernel(program.get(), *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
@@ -81,5 +81,5 @@ void KernelImageArgTest::TearDown() {
     pKernel.reset();
     program.reset();
     context.reset();
-    DeviceFixture::TearDown();
+    ClDeviceFixture::TearDown();
 }

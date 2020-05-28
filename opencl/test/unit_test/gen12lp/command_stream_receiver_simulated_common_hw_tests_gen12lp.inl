@@ -7,7 +7,7 @@
 
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_stream.h"
 #include "test.h"
 
@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-using Gen12LPCommandStreamReceiverSimulatedCommonHwTests = Test<DeviceFixture>;
+using Gen12LPCommandStreamReceiverSimulatedCommonHwTests = Test<ClDeviceFixture>;
 
 template <typename FamilyType>
 class MockSimulatedCsrHw : public CommandStreamReceiverSimulatedHw<FamilyType> {

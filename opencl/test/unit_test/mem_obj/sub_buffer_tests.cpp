@@ -9,7 +9,7 @@
 #include "shared/source/helpers/ptr_math.h"
 
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
@@ -21,7 +21,7 @@ namespace ULT {
 
 static const unsigned int sizeTestBufferInBytes = 32;
 
-class SubBufferTest : public DeviceFixture,
+class SubBufferTest : public ClDeviceFixture,
                       public ::testing::Test {
   public:
     SubBufferTest() {
@@ -37,7 +37,7 @@ class SubBufferTest : public DeviceFixture,
 
     void TearDown() override {
         delete buffer;
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

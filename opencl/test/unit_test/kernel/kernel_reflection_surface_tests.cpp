@@ -1957,14 +1957,14 @@ TEST_F(ReflectionSurfaceTestForPrintfHandler, GivenNoPrintfSurfaceWhenPatchingRe
     delete parentKernel;
 }
 
-class ReflectionSurfaceConstantValuesPatchingTest : public DeviceFixture,
+class ReflectionSurfaceConstantValuesPatchingTest : public ClDeviceFixture,
                                                     public ::testing::Test {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
     }
     void TearDown() override {
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 };
 

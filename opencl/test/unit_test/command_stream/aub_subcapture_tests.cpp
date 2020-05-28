@@ -9,7 +9,7 @@
 
 #include "opencl/source/command_stream/aub_subcapture.h"
 #include "opencl/source/helpers/dispatch_info.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_subcapture_manager.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -17,17 +17,17 @@
 
 using namespace NEO;
 
-struct AubSubCaptureTest : public DeviceFixture,
+struct AubSubCaptureTest : public ClDeviceFixture,
                            public ::testing::Test {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
         kernelInfo.name = "kernel_name";
         dbgRestore = new DebugManagerStateRestore();
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
         delete dbgRestore;
     }
 

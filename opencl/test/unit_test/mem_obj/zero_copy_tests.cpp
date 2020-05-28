@@ -9,7 +9,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-class ZeroCopyBufferTest : public DeviceFixture,
+class ZeroCopyBufferTest : public ClDeviceFixture,
                            public testing::TestWithParam<std::tuple<uint64_t /*cl_mem_flags*/, size_t, size_t, int, bool, bool>> {
   public:
     ZeroCopyBufferTest() {
@@ -32,11 +32,11 @@ class ZeroCopyBufferTest : public DeviceFixture,
         if (sizeToAlloc > 0) {
             host_ptr = (void *)alignedMalloc(sizeToAlloc, alignment);
         }
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
         alignedFree(host_ptr);
     }
 

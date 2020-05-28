@@ -37,7 +37,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
                           public FixtureFactory::CommandStreamFixture,
                           public FixtureFactory::CommandQueueFixture,
                           public FixtureFactory::KernelFixture,
-                          public DeviceFixture {
+                          public ClDeviceFixture {
     typedef typename FixtureFactory::IndirectHeapFixture IndirectHeapFixture;
     typedef typename FixtureFactory::CommandStreamFixture CommandStreamFixture;
     typedef typename FixtureFactory::CommandQueueFixture CommandQueueFixture;
@@ -52,7 +52,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
 
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         ASSERT_NE(nullptr, pClDevice);
         CommandQueueFixture::SetUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
@@ -96,7 +96,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
         IndirectHeapFixture::TearDown();
         CommandStreamFixture::TearDown();
         CommandQueueFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     int argVal = 0;

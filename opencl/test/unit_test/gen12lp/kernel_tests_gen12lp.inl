@@ -6,13 +6,13 @@
  */
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
 using namespace NEO;
 
-using Gen12LpKernelTest = Test<DeviceFixture>;
+using Gen12LpKernelTest = Test<ClDeviceFixture>;
 GEN12LPTEST_F(Gen12LpKernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturnsTrue) {
     MockKernelWithInternals mockKernel(*pClDevice);
     auto retVal = mockKernel.mockKernel->Kernel::canTransformImages();

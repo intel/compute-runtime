@@ -6,7 +6,7 @@
  */
 
 #include "opencl/source/sampler/sampler.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
 
@@ -14,7 +14,7 @@
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> Gen8SamplerTest;
+typedef Test<ClDeviceFixture> Gen8SamplerTest;
 
 GEN8TEST_F(Gen8SamplerTest, appendSamplerStateParamsDoesNothing) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;

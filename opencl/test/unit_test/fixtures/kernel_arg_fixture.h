@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 #include <cstdint>
@@ -24,7 +24,7 @@ namespace iOpenCL {
 struct SKernelBinaryHeaderCommon;
 }
 
-class KernelImageArgTest : public Test<NEO::DeviceFixture> {
+class KernelImageArgTest : public Test<NEO::ClDeviceFixture> {
   public:
     KernelImageArgTest() {
     }

@@ -11,7 +11,7 @@
 
 #include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
@@ -21,7 +21,7 @@
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> AubAllocDumpTests;
+typedef Test<ClDeviceFixture> AubAllocDumpTests;
 
 struct AubFileStreamMock : public AubMemDump::AubFileStream {
     void write(const char *data, size_t size) override {

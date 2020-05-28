@@ -19,8 +19,8 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
@@ -43,15 +43,15 @@ using namespace NEO;
 
 struct CommandQueueMemoryDevice
     : public MemoryManagementFixture,
-      public DeviceFixture {
+      public ClDeviceFixture {
 
     void SetUp() override {
         MemoryManagementFixture::SetUp();
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
         platformsImpl.clear();
         MemoryManagementFixture::TearDown();
     }
@@ -120,7 +120,7 @@ TEST(CommandQueue, WhenConstructingCommandQueueThenTaskLevelAndTaskCountAreZero)
     EXPECT_EQ(0u, cmdQ.taskCount);
 }
 
-struct GetTagTest : public DeviceFixture,
+struct GetTagTest : public ClDeviceFixture,
                     public CommandQueueFixture,
                     public CommandStreamFixture,
                     public ::testing::Test {
@@ -128,7 +128,7 @@ struct GetTagTest : public DeviceFixture,
     using CommandQueueFixture::SetUp;
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         CommandQueueFixture::SetUp(nullptr, pClDevice, 0);
         CommandStreamFixture::SetUp(pCmdQ);
     }
@@ -136,7 +136,7 @@ struct GetTagTest : public DeviceFixture,
     void TearDown() override {
         CommandStreamFixture::TearDown();
         CommandQueueFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 };
 

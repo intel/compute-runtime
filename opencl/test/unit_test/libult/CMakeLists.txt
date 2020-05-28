@@ -92,8 +92,8 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/built_in_fixture.h
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/buffer_fixture.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/buffer_fixture.h
-  ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/device_fixture.cpp
-  ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/device_fixture.h
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/cl_device_fixture.cpp
+  ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/cl_device_fixture.h
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/program_fixture.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/program_fixture.h
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper.cpp

@@ -7,7 +7,7 @@
 
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
@@ -16,7 +16,7 @@ using namespace NEO;
 
 static const unsigned int testImageDimensions = 32;
 
-class CreateImage2DTest : public DeviceFixture,
+class CreateImage2DTest : public ClDeviceFixture,
                           public testing::TestWithParam<uint32_t /*cl_mem_object_type*/> {
   public:
     CreateImage2DTest() {
@@ -24,7 +24,7 @@ class CreateImage2DTest : public DeviceFixture,
 
   protected:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         types = GetParam();
 
         // clang-format off
@@ -51,7 +51,7 @@ class CreateImage2DTest : public DeviceFixture,
 
     void TearDown() override {
         delete context;
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
     Image *createImageWithFlags(cl_mem_flags flags) {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);

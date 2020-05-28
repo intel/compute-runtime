@@ -33,7 +33,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/fixtures/built_in_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/helpers/raii_hw_helper.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
@@ -243,7 +243,7 @@ HWTEST_F(CommandStreamReceiverFlushTests, WhenAligningCommandStreamReceiverToCac
     EXPECT_EQ(0u, commandStream.getUsed() % MemoryConstants::cacheLineSize);
 }
 
-typedef Test<DeviceFixture> CommandStreamReceiverHwTest;
+typedef Test<ClDeviceFixture> CommandStreamReceiverHwTest;
 
 HWTEST_F(CommandStreamReceiverHwTest, givenCsrHwWhenTypeIsCheckedThenCsrHwIsReturned) {
     auto csr = std::unique_ptr<CommandStreamReceiver>(CommandStreamReceiverHw<FamilyType>::create(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex()));
@@ -1747,7 +1747,7 @@ struct MockScratchSpaceController : ScratchSpaceControllerBase {
     using ScratchSpaceControllerBase::ScratchSpaceControllerBase;
 };
 
-using ScratchSpaceControllerTest = Test<DeviceFixture>;
+using ScratchSpaceControllerTest = Test<ClDeviceFixture>;
 
 TEST_F(ScratchSpaceControllerTest, whenScratchSpaceControllerIsDestroyedThenItReleasePrivateScratchSpaceAllocation) {
     MockScratchSpaceController scratchSpaceController(pDevice->getRootDeviceIndex(), *pDevice->getExecutionEnvironment(), *pDevice->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());

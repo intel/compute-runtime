@@ -5,18 +5,18 @@
  *
  */
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> BroadwellOnlyTest;
+typedef Test<ClDeviceFixture> BroadwellOnlyTest;
 
 BDWTEST_F(BroadwellOnlyTest, shouldPassOnBdw) {
     EXPECT_EQ(IGFX_BROADWELL, pDevice->getHardwareInfo().platform.eProductFamily);
 }
 
-typedef Test<DeviceFixture> Gen8OnlyTest;
+typedef Test<ClDeviceFixture> Gen8OnlyTest;
 
 GEN8TEST_F(Gen8OnlyTest, shouldPassOnGen8) {
     EXPECT_EQ(IGFX_GEN8_CORE, pDevice->getRenderCoreFamily());

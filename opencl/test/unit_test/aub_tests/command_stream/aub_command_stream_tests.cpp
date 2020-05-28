@@ -12,7 +12,7 @@
 
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 #include "aub_command_stream_fixture.h"
@@ -23,13 +23,13 @@ using namespace NEO;
 
 struct AUBFixture : public AUBCommandStreamFixture,
                     public CommandQueueFixture,
-                    public DeviceFixture {
+                    public ClDeviceFixture {
 
     using AUBCommandStreamFixture::SetUp;
     using CommandQueueFixture::SetUp;
 
     void SetUp() {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         CommandQueueFixture::SetUp(nullptr, pClDevice, 0);
         AUBCommandStreamFixture::SetUp(pCmdQ);
     }
@@ -37,7 +37,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
     void TearDown() override {
         AUBCommandStreamFixture::TearDown();
         CommandQueueFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     template <typename FamilyType>

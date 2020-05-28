@@ -14,7 +14,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
@@ -64,9 +64,9 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
     }
 };
 
-struct EnqueueThreadingFixture : public DeviceFixture {
+struct EnqueueThreadingFixture : public ClDeviceFixture {
     void SetUp() {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         context = new MockContext(pClDevice);
         pCmdQ = nullptr;
     }
@@ -74,7 +74,7 @@ struct EnqueueThreadingFixture : public DeviceFixture {
     void TearDown() {
         delete pCmdQ;
         context->release();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     template <typename FamilyType>

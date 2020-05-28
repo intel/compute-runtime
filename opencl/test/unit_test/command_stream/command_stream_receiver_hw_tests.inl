@@ -8,18 +8,18 @@
 using namespace NEO;
 
 template <typename GfxFamily>
-struct CommandStreamReceiverHwTest : public DeviceFixture,
+struct CommandStreamReceiverHwTest : public ClDeviceFixture,
                                      public HardwareParse,
                                      public ::testing::Test {
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         HardwareParse::SetUp();
     }
 
     void TearDown() override {
         HardwareParse::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     void givenKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigImpl();

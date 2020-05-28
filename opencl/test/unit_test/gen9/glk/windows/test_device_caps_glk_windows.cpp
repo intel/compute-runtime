@@ -5,12 +5,12 @@
  *
  */
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> GlkDeviceCapsWindows;
+typedef Test<ClDeviceFixture> GlkDeviceCapsWindows;
 
 GLKTEST_F(GlkDeviceCapsWindows, givenHwInfoWhenAskedForKmdNotifyMechanismThenReturnCorrectValues) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);

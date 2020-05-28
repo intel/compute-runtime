@@ -5,18 +5,18 @@
  *
  */
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> TigerlakeLpOnlyTest;
+typedef Test<ClDeviceFixture> TigerlakeLpOnlyTest;
 
 TGLLPTEST_F(TigerlakeLpOnlyTest, shouldPassOnTglLp) {
     EXPECT_EQ(IGFX_TIGERLAKE_LP, pDevice->getHardwareInfo().platform.eProductFamily);
 }
 
-typedef Test<DeviceFixture> Gen12LpOnlyTeset;
+typedef Test<ClDeviceFixture> Gen12LpOnlyTeset;
 
 GEN12LPTEST_F(Gen12LpOnlyTeset, shouldPassOnGen12) {
     EXPECT_NE(IGFX_GEN9_CORE, pDevice->getRenderCoreFamily());

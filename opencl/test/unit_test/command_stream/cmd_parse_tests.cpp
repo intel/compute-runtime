@@ -7,20 +7,20 @@
 
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
 struct CommandParse
-    : public DeviceFixture,
+    : public ClDeviceFixture,
       public ::testing::Test {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 };
 

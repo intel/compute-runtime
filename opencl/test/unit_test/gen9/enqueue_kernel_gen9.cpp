@@ -9,7 +9,7 @@
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/helpers/static_size3.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -17,7 +17,7 @@
 
 namespace NEO {
 
-using Gen9EnqueueTest = Test<DeviceFixture>;
+using Gen9EnqueueTest = Test<ClDeviceFixture>;
 GEN9TEST_F(Gen9EnqueueTest, givenKernelRequiringIndependentForwardProgressWhenKernelIsSubmittedThenRoundRobinPolicyIsProgrammed) {
     MockContext mc;
     CommandQueueHw<SKLFamily> cmdQ{&mc, pClDevice, 0, false};

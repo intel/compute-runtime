@@ -8,7 +8,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "opencl/source/event/event.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -19,7 +19,7 @@
 
 using namespace NEO;
 
-class ZeroSizeEnqueueHandlerTest : public Test<DeviceFixture> {
+class ZeroSizeEnqueueHandlerTest : public Test<ClDeviceFixture> {
   public:
     MockContext context;
     cl_int retVal;

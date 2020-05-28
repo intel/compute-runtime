@@ -15,7 +15,7 @@
 
 #include "opencl/source/command_stream/tbx_command_stream_receiver.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -28,7 +28,7 @@
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> DeviceTest;
+typedef Test<ClDeviceFixture> DeviceTest;
 
 TEST_F(DeviceTest, givenDeviceWhenGetProductAbbrevThenReturnsHardwarePrefix) {
     const auto productAbbrev = pDevice->getProductAbbrev();

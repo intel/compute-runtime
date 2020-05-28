@@ -7,11 +7,11 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 namespace NEO {
 
-class DispatcherFixture : public DeviceFixture {
+class DispatcherFixture : public ClDeviceFixture {
   public:
     void SetUp();
     void TearDown();

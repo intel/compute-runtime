@@ -6,12 +6,12 @@
  */
 
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-using Gen11TbxCommandStreamReceiverTests = Test<DeviceFixture>;
+using Gen11TbxCommandStreamReceiverTests = Test<ClDeviceFixture>;
 
 GEN11TEST_F(Gen11TbxCommandStreamReceiverTests, whenAskedForPollForCompletionParametersThenReturnCorrectValues) {
     class MyMockTbxHw : public TbxCommandStreamReceiverHw<FamilyType> {

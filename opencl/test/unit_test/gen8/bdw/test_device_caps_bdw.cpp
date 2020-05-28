@@ -7,12 +7,12 @@
 
 #include "shared/source/helpers/hw_helper.h"
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> BdwDeviceCaps;
+typedef Test<ClDeviceFixture> BdwDeviceCaps;
 
 BDWTEST_F(BdwDeviceCaps, givenBdwDeviceWhenAskedForClVersionThenReport21) {
     const auto &caps = pClDevice->getDeviceInfo();
@@ -59,7 +59,7 @@ BDWTEST_F(BdwDeviceCaps, givenHwInfoWhenRequestedMaxFrontEndThreadsThenReturnVal
     EXPECT_EQ(HwHelper::getMaxThreadsForVfe(hwInfo), pDevice->getDeviceInfo().maxFrontEndThreads);
 }
 
-typedef Test<DeviceFixture> BdwUsDeviceIdTest;
+typedef Test<ClDeviceFixture> BdwUsDeviceIdTest;
 
 BDWTEST_F(BdwUsDeviceIdTest, isSimulationCap) {
     unsigned short bdwSimulationIds[6] = {

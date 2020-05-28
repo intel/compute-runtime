@@ -23,7 +23,7 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_host_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/execution_model_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
@@ -450,20 +450,20 @@ TEST(PatchInfo, Constructor) {
     EXPECT_EQ(nullptr, patchInfo.pAllocateStatelessDefaultDeviceQueueSurface);
 }
 
-typedef Test<DeviceFixture> KernelPrivateSurfaceTest;
-typedef Test<DeviceFixture> KernelGlobalSurfaceTest;
-typedef Test<DeviceFixture> KernelConstantSurfaceTest;
+typedef Test<ClDeviceFixture> KernelPrivateSurfaceTest;
+typedef Test<ClDeviceFixture> KernelGlobalSurfaceTest;
+typedef Test<ClDeviceFixture> KernelConstantSurfaceTest;
 
-struct KernelWithDeviceQueueFixture : public DeviceFixture,
+struct KernelWithDeviceQueueFixture : public ClDeviceFixture,
                                       public DeviceQueueFixture,
                                       public testing::Test {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         DeviceQueueFixture::SetUp(&context, pClDevice);
     }
     void TearDown() override {
         DeviceQueueFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     MockContext context;
@@ -1616,7 +1616,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelDefaultDeviceQueueSurfaceTest, givenStatelessK
     delete pKernel;
 }
 
-typedef Test<DeviceFixture> KernelResidencyTest;
+typedef Test<ClDeviceFixture> KernelResidencyTest;
 
 HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIsMadeResident) {
     ASSERT_NE(nullptr, pDevice);
@@ -2125,9 +2125,9 @@ HWTEST_F(KernelResidencyTest, WhenMakingArgsResidentThenImageFromImageCheckIsCor
     EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore, commandStreamReceiver.samplerCacheFlushRequired);
 }
 
-struct KernelExecutionEnvironmentTest : public Test<DeviceFixture> {
+struct KernelExecutionEnvironmentTest : public Test<ClDeviceFixture> {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
 
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
         pKernelInfo = std::make_unique<KernelInfo>();
@@ -2141,7 +2141,7 @@ struct KernelExecutionEnvironmentTest : public Test<DeviceFixture> {
     void TearDown() override {
         delete pKernel;
 
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     MockKernel *pKernel;
@@ -2260,12 +2260,12 @@ TEST_F(KernelExecutionEnvironmentTest, GivenCompiledWorkGroupSizeIsGreaterThanMa
     const_cast<SPatchExecutionEnvironment *>(this->pKernelInfo->patchInfo.executionEnvironment)->RequiredWorkGroupSizeZ = oldRequiredWorkGroupSizeZ;
 }
 
-struct KernelCrossThreadTests : Test<DeviceFixture> {
+struct KernelCrossThreadTests : Test<ClDeviceFixture> {
     KernelCrossThreadTests() {
     }
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
         patchDataParameterStream.DataParameterStreamSize = 64 * sizeof(uint8_t);
 
@@ -2278,7 +2278,7 @@ struct KernelCrossThreadTests : Test<DeviceFixture> {
 
     void TearDown() override {
 
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     std::unique_ptr<MockProgram> program;

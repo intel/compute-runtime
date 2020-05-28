@@ -35,7 +35,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
                            public FixtureFactory::CommandStreamFixture,
                            public FixtureFactory::CommandQueueFixture,
                            public FixtureFactory::KernelFixture,
-                           public DeviceFixture {
+                           public ClDeviceFixture {
 
     typedef typename FixtureFactory::IndirectHeapFixture IndirectHeapFixture;
     typedef typename FixtureFactory::CommandStreamFixture CommandStreamFixture;
@@ -52,7 +52,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
 
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         ASSERT_NE(nullptr, pClDevice);
         CommandQueueFixture::SetUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
@@ -100,7 +100,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         CommandStreamFixture::TearDown();
         CommandQueueFixture::TearDown();
         BufferDefaults::context->release();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
     Buffer *srcBuffer = nullptr;
     Buffer *destBuffer = nullptr;

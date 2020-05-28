@@ -18,11 +18,11 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
 
-using Gen12LPAubBatchBufferTests = Test<NEO::DeviceFixture>;
+using Gen12LPAubBatchBufferTests = Test<NEO::ClDeviceFixture>;
 using Gen12LPTimestampTests = Test<HelloWorldFixture<AUBHelloWorldFixtureFactory>>;
 
 static constexpr auto gpuBatchBufferAddr = 0x400400001000; // 47-bit GPU address

@@ -78,12 +78,12 @@ class ExecutionModelKernelTest : public ExecutionModelKernelFixture,
     DebugManagerStateRestore dbgRestore;
 };
 
-class ExecutionModelSchedulerTest : public DeviceFixture,
+class ExecutionModelSchedulerTest : public ClDeviceFixture,
                                     public CommandQueueHwFixture,
                                     public DeviceQueueFixture {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         CommandQueueHwFixture::SetUp(pClDevice, 0);
         DeviceQueueFixture::SetUp(context, pClDevice);
 
@@ -96,7 +96,7 @@ class ExecutionModelSchedulerTest : public DeviceFixture,
 
         DeviceQueueFixture::TearDown();
         CommandQueueHwFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     MockParentKernel *parentKernel = nullptr;

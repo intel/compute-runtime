@@ -10,7 +10,7 @@
 
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
 
@@ -26,7 +26,7 @@ static OOMSetting oomSettings[] = {
     {false, true},
     {true, true}};
 
-struct OOMCommandQueueTest : public DeviceFixture,
+struct OOMCommandQueueTest : public ClDeviceFixture,
                              public CommandQueueFixture,
                              public ::testing::TestWithParam<OOMSetting> {
 
@@ -36,7 +36,7 @@ struct OOMCommandQueueTest : public DeviceFixture,
     }
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         context = new MockContext(pClDevice);
         CommandQueueFixture::SetUp(context, pClDevice, 0);
 
@@ -62,7 +62,7 @@ struct OOMCommandQueueTest : public DeviceFixture,
     void TearDown() override {
         CommandQueueFixture::TearDown();
         context->release();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     MockContext *context;

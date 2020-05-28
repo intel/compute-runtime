@@ -7,7 +7,7 @@
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
@@ -16,11 +16,11 @@
 
 using namespace NEO;
 
-class KernelArgSvmFixture : public ApiFixture<>, public DeviceFixture {
+class KernelArgSvmFixture : public ApiFixture<>, public ClDeviceFixture {
   protected:
     void SetUp() override {
         ApiFixture::SetUp();
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
 
         // define kernel info
@@ -50,7 +50,7 @@ class KernelArgSvmFixture : public ApiFixture<>, public DeviceFixture {
             delete pMockKernel;
         }
 
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
         ApiFixture::TearDown();
     }
 

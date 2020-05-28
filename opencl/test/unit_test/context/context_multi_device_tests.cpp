@@ -12,7 +12,7 @@
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 #include "test.h"

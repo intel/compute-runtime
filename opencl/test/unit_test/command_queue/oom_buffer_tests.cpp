@@ -12,7 +12,7 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
@@ -31,7 +31,7 @@ static OOMSetting oomSettings[] = {
     {true, true}};
 
 struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
-                                   public DeviceFixture,
+                                   public ClDeviceFixture,
                                    public CommandQueueFixture,
                                    public SimpleArgKernelFixture,
                                    public HelloWorldKernelFixture,
@@ -47,7 +47,7 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
     void SetUp() override {
         MemoryManagement::breakOnAllocationEvent = 77;
         MemoryManagementFixture::SetUp();
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         context = new MockContext(pClDevice);
         BufferDefaults::context = context;
         CommandQueueFixture::SetUp(context, pClDevice, 0);
@@ -83,7 +83,7 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
         HelloWorldKernelFixture::TearDown();
         SimpleArgKernelFixture::TearDown();
         CommandQueueFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
         MemoryManagementFixture::TearDown();
     }
 

@@ -5,12 +5,12 @@
  *
  */
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> SkylakeOnlyTest;
+typedef Test<ClDeviceFixture> SkylakeOnlyTest;
 
 SKLTEST_F(SkylakeOnlyTest, shouldPassOnSkl) {
     EXPECT_EQ(IGFX_SKYLAKE, pDevice->getHardwareInfo().platform.eProductFamily);

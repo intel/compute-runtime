@@ -823,7 +823,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithBothCSCallsChainsWith
     EXPECT_EQ(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT, bbs->getAddressSpaceIndicator());
 }
 
-typedef Test<DeviceFixture> CommandStreamReceiverCQFlushTaskTests;
+typedef Test<ClDeviceFixture> CommandStreamReceiverCQFlushTaskTests;
 HWTEST_F(CommandStreamReceiverCQFlushTaskTests, getCSShouldReturnACSWithEnoughSizeCSRTraffic) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();

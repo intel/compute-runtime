@@ -13,7 +13,7 @@
 namespace NEO {
 struct HardwareInfo;
 
-struct DeviceFixture {
+struct ClDeviceFixture {
     void SetUp();
     void SetUpImpl(const NEO::HardwareInfo *hardwareInfo);
     void TearDown();

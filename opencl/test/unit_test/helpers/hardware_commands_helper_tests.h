@@ -10,8 +10,8 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/built_in_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -22,7 +22,7 @@
 
 using namespace NEO;
 
-struct HardwareCommandsTest : DeviceFixture,
+struct HardwareCommandsTest : ClDeviceFixture,
                               ContextFixture,
                               BuiltInFixture,
                               ::testing::Test {

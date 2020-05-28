@@ -5,12 +5,12 @@
  *
  */
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-using EhlTest = Test<DeviceFixture>;
+using EhlTest = Test<ClDeviceFixture>;
 
 EHLTEST_F(EhlTest, givenDeviceIdWhenAskingForSimulationThenReturnValidValue) {
     unsigned short ehlSimulationIds[2] = {

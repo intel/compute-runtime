@@ -5,12 +5,12 @@
  *
  */
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> SklDeviceCaps;
+typedef Test<ClDeviceFixture> SklDeviceCaps;
 
 SKLTEST_F(SklDeviceCaps, reportsOcl21) {
     const auto &caps = pClDevice->getDeviceInfo();
@@ -42,7 +42,7 @@ SKLTEST_F(SklDeviceCaps, SklSvmCapabilities) {
     EXPECT_EQ(expectedCaps, caps.svmCapabilities);
 }
 
-typedef Test<DeviceFixture> SklUsDeviceIdTest;
+typedef Test<ClDeviceFixture> SklUsDeviceIdTest;
 
 SKLTEST_F(SklUsDeviceIdTest, isSimulationCap) {
     unsigned short sklSimulationIds[6] = {

@@ -7,12 +7,12 @@
 
 #include "shared/source/helpers/hw_helper.h"
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> Gen12LpDeviceCaps;
+typedef Test<ClDeviceFixture> Gen12LpDeviceCaps;
 
 TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenQueryingDeviceInfoThenOcl30IsReported) {
     const auto &caps = pClDevice->getDeviceInfo();
@@ -112,7 +112,7 @@ TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenCheckingPipesSupportThenFal
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsPipes);
 }
 
-using TglLpUsDeviceIdTest = Test<DeviceFixture>;
+using TglLpUsDeviceIdTest = Test<ClDeviceFixture>;
 
 TGLLPTEST_F(TglLpUsDeviceIdTest, isSimulationCap) {
     unsigned short tglLpSimulationIds[2] = {

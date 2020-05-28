@@ -10,25 +10,25 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "test.h"
 
 using namespace NEO;
 
 class MigrateMemObjectsFixture
-    : public DeviceFixture,
+    : public ClDeviceFixture,
       public CommandQueueHwFixture {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         CommandQueueHwFixture::SetUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
     }
 
     void TearDown() override {
         CommandQueueHwFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 };
 

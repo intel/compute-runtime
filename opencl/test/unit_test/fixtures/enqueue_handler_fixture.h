@@ -6,22 +6,22 @@
  */
 
 #pragma once
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
 
-class EnqueueHandlerTest : public NEO::DeviceFixture,
+class EnqueueHandlerTest : public NEO::ClDeviceFixture,
                            public testing::Test {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         context = new NEO::MockContext(pClDevice);
     }
 
     void TearDown() override {
         context->decRefInternal();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
     NEO::MockContext *context;
 };

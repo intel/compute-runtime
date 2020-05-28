@@ -9,17 +9,17 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/kernel_info.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"
 
 using namespace NEO;
 
-struct KernelSLMAndBarrierTest : public DeviceFixture,
+struct KernelSLMAndBarrierTest : public ClDeviceFixture,
                                  public ::testing::TestWithParam<uint32_t> {
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
 
         memset(&dataParameterStream, 0, sizeof(dataParameterStream));
@@ -42,7 +42,7 @@ struct KernelSLMAndBarrierTest : public DeviceFixture,
         kernelInfo.patchInfo.threadPayload = &threadPayload;
     }
     void TearDown() override {
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     uint32_t simd;

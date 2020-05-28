@@ -11,7 +11,7 @@
 
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "test.h"
 
@@ -19,13 +19,13 @@
 
 using namespace NEO;
 
-struct FinishFixture : public DeviceFixture,
+struct FinishFixture : public ClDeviceFixture,
                        public CommandQueueHwFixture,
                        public CommandStreamFixture,
                        public HardwareParse {
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         CommandQueueHwFixture::SetUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
         CommandStreamFixture::SetUp(pCmdQ);
@@ -37,7 +37,7 @@ struct FinishFixture : public DeviceFixture,
         HardwareParse::TearDown();
         CommandStreamFixture::TearDown();
         CommandQueueHwFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 };
 

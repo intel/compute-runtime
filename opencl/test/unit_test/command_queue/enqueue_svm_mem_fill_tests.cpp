@@ -10,7 +10,7 @@
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-struct EnqueueSvmMemFillTest : public DeviceFixture,
+struct EnqueueSvmMemFillTest : public ClDeviceFixture,
                                public CommandQueueHwFixture,
                                public ::testing::TestWithParam<size_t> {
     typedef CommandQueueHwFixture CommandQueueFixture;
@@ -27,7 +27,7 @@ struct EnqueueSvmMemFillTest : public DeviceFixture,
     }
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         CommandQueueFixture::SetUp(pClDevice, 0);
         REQUIRE_SVM_OR_SKIP(pDevice);
         patternSize = (size_t)GetParam();
@@ -47,7 +47,7 @@ struct EnqueueSvmMemFillTest : public DeviceFixture,
             context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
         }
         CommandQueueFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     const uint64_t pattern[16] = {0x0011223344556677, 0x8899AABBCCDDEEFF, 0xFFEEDDCCBBAA9988, 0x7766554433221100,

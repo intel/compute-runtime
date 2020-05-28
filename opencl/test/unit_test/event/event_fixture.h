@@ -15,7 +15,7 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -25,7 +25,7 @@
 using namespace NEO;
 
 struct EventTest
-    : public DeviceFixture,
+    : public ClDeviceFixture,
       public CommandQueueFixture,
       public CommandStreamFixture,
       public ::testing::Test {
@@ -33,7 +33,7 @@ struct EventTest
     using CommandQueueFixture::SetUp;
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         CommandQueueFixture::SetUp(&mockContext, pClDevice, 0);
         CommandStreamFixture::SetUp(pCmdQ);
     }
@@ -41,26 +41,26 @@ struct EventTest
     void TearDown() override {
         CommandStreamFixture::TearDown();
         CommandQueueFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
     MockContext mockContext;
 };
 
 struct InternalsEventTest
-    : public DeviceFixture,
+    : public ClDeviceFixture,
       public ::testing::Test {
 
     InternalsEventTest() {
     }
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         mockContext = new MockContext(pClDevice);
     }
 
     void TearDown() override {
         delete mockContext;
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     MockContext *mockContext = nullptr;

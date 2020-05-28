@@ -12,8 +12,8 @@
 #include "opencl/source/helpers/sampler_helpers.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/pipe.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
@@ -31,7 +31,7 @@
 
 using namespace NEO;
 
-class CloneKernelFixture : public ContextFixture, public DeviceFixture {
+class CloneKernelFixture : public ContextFixture, public ClDeviceFixture {
     using ContextFixture::SetUp;
 
   public:
@@ -40,7 +40,7 @@ class CloneKernelFixture : public ContextFixture, public DeviceFixture {
 
   protected:
     void SetUp() {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
 
@@ -100,7 +100,7 @@ class CloneKernelFixture : public ContextFixture, public DeviceFixture {
 
         delete pProgram;
         ContextFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

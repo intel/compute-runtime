@@ -8,8 +8,8 @@
 #pragma once
 #include "shared/source/built_ins/built_ins.h"
 
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
@@ -21,7 +21,7 @@ namespace NEO {
 // ProgramFromBinaryTest Test Fixture
 //      Used to test the Program class
 ////////////////////////////////////////////////////////////////////////////////
-class ProgramFromBinaryTest : public DeviceFixture,
+class ProgramFromBinaryTest : public ClDeviceFixture,
                               public ContextFixture,
                               public ProgramFixture,
                               public testing::TestWithParam<std::tuple<const char *, const char *>> {
@@ -32,7 +32,7 @@ class ProgramFromBinaryTest : public DeviceFixture,
     void SetUp() override {
         std::tie(BinaryFileName, KernelName) = GetParam();
 
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
 
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
@@ -48,7 +48,7 @@ class ProgramFromBinaryTest : public DeviceFixture,
         knownSource.reset();
         ProgramFixture::TearDown();
         ContextFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     void setOptions(std::string &optionsIn) {
@@ -65,14 +65,14 @@ class ProgramFromBinaryTest : public DeviceFixture,
 // ProgramSimpleFixture Test Fixture
 //      Used to test the Program class, but not using parameters
 ////////////////////////////////////////////////////////////////////////////////
-class ProgramSimpleFixture : public DeviceFixture,
+class ProgramSimpleFixture : public ClDeviceFixture,
                              public ContextFixture,
                              public ProgramFixture {
     using ContextFixture::SetUp;
 
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
 
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
@@ -83,7 +83,7 @@ class ProgramSimpleFixture : public DeviceFixture,
         knownSource.reset();
         ProgramFixture::TearDown();
         ContextFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
   protected:

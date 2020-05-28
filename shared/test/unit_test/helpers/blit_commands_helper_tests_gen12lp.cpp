@@ -16,7 +16,7 @@
 
 using namespace NEO;
 
-using BlitTests = Test<DeviceFixture>;
+using BlitTests = Test<ClDeviceFixture>;
 
 HWTEST2_F(BlitTests, givenOneBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsGen12LP) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;

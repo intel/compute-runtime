@@ -5,12 +5,12 @@
  *
  */
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> BxtDeviceCaps;
+typedef Test<ClDeviceFixture> BxtDeviceCaps;
 
 BXTTEST_F(BxtDeviceCaps, reportsOcl12) {
     const auto &caps = pClDevice->getDeviceInfo();
@@ -52,7 +52,7 @@ BXTTEST_F(BxtDeviceCaps, givenBXTWhenCheckFtrSupportsInteger64BitAtomicsThenRetu
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }
 
-typedef Test<DeviceFixture> BxtUsDeviceIdTest;
+typedef Test<ClDeviceFixture> BxtUsDeviceIdTest;
 
 BXTTEST_F(BxtUsDeviceIdTest, isSimulationCap) {
     unsigned short bxtSimulationIds[3] = {

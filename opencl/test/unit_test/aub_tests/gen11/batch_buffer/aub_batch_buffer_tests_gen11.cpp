@@ -7,9 +7,9 @@
 
 #include "aub_batch_buffer_tests_gen11.h"
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
-using Gen11AubBatchBufferTests = Test<NEO::DeviceFixture>;
+using Gen11AubBatchBufferTests = Test<NEO::ClDeviceFixture>;
 
 static constexpr auto gpuBatchBufferAddr = 0x800400001000; // 48-bit GPU address
 

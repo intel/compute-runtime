@@ -14,8 +14,8 @@
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -26,7 +26,7 @@
 using namespace NEO;
 
 class BufferSetArgTest : public ContextFixture,
-                         public DeviceFixture,
+                         public ClDeviceFixture,
                          public testing::Test {
 
     using ContextFixture::SetUp;
@@ -39,7 +39,7 @@ class BufferSetArgTest : public ContextFixture,
 
   protected:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         pKernelInfo = std::make_unique<KernelInfo>();
@@ -90,7 +90,7 @@ class BufferSetArgTest : public ContextFixture,
 
         delete pProgram;
         ContextFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

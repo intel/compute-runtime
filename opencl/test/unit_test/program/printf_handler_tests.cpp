@@ -8,7 +8,7 @@
 #include "shared/test/unit_test/mocks/mock_device.h"
 
 #include "opencl/source/program/printf_handler.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"

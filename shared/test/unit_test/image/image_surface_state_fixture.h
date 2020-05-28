@@ -16,7 +16,7 @@
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
@@ -27,17 +27,17 @@
 
 namespace NEO {
 
-class ImageSurfaceStateTests : public DeviceFixture,
+class ImageSurfaceStateTests : public ClDeviceFixture,
                                public testing::Test {
   public:
     ImageSurfaceStateTests() = default;
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         gmmHelper = pDevice->getGmmHelper();
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     MockGmm mockGmm;

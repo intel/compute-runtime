@@ -10,7 +10,7 @@
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/sampler/sampler.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "test.h"
 
@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> Gen12LpSamplerTest;
+typedef Test<ClDeviceFixture> Gen12LpSamplerTest;
 
 TGLLPTEST_F(Gen12LpSamplerTest, givenTglLpSamplerWhenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter) {
     EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());

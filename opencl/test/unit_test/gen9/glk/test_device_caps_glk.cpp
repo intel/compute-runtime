@@ -5,12 +5,12 @@
  *
  */
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> Gen9DeviceCaps;
+typedef Test<ClDeviceFixture> Gen9DeviceCaps;
 
 GLKTEST_F(Gen9DeviceCaps, GlkProfilingTimerResolution) {
     const auto &caps = pDevice->getDeviceInfo();
@@ -39,7 +39,7 @@ GLKTEST_F(Gen9DeviceCaps, GlkIs32BitOsAllocatorAvailable) {
     }
 }
 
-typedef Test<DeviceFixture> GlkUsDeviceIdTest;
+typedef Test<ClDeviceFixture> GlkUsDeviceIdTest;
 
 GLKTEST_F(GlkUsDeviceIdTest, isSimulationCap) {
     unsigned short glkSimulationIds[3] = {

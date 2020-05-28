@@ -9,7 +9,7 @@
 
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
@@ -19,14 +19,14 @@ using namespace NEO;
 
 static const unsigned int testImageDimensions = 31;
 
-class CreateImage3DTest : public DeviceFixture,
+class CreateImage3DTest : public ClDeviceFixture,
                           public testing::TestWithParam<uint32_t /*cl_mem_object_type*/> {
   public:
     CreateImage3DTest() {}
 
   protected:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         context = new MockContext(pClDevice);
 
         // clang-format off
@@ -48,7 +48,7 @@ class CreateImage3DTest : public DeviceFixture,
 
     void TearDown() override {
         delete context;
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     cl_image_format imageFormat;

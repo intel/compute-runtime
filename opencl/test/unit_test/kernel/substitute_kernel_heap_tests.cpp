@@ -9,13 +9,13 @@
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
 using namespace NEO;
 
-typedef Test<DeviceFixture> KernelSubstituteTest;
+typedef Test<ClDeviceFixture> KernelSubstituteTest;
 
 TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeThenAllocatesNewKernelAllocation) {
     MockKernelWithInternals kernel(*pClDevice);

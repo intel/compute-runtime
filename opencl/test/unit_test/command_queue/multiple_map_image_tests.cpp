@@ -9,7 +9,7 @@
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -18,7 +18,7 @@
 namespace NEO {
 extern ImageFactoryFuncs imageFactory[IGFX_MAX_CORE];
 
-struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
+struct MultipleMapImageTest : public ClDeviceFixture, public ::testing::Test {
     template <typename T>
     struct MockImage : public ImageHw<T> {
         using Image::mapOperationsHandler;
@@ -127,13 +127,13 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
     }
 
     void SetUp() override {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         context = new MockContext(pClDevice);
     }
 
     void TearDown() override {
         delete context;
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     MockContext *context = nullptr;

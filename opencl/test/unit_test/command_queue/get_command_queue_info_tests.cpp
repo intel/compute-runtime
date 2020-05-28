@@ -6,14 +6,14 @@
  */
 
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
 
-struct GetCommandQueueInfoTest : public DeviceFixture,
+struct GetCommandQueueInfoTest : public ClDeviceFixture,
                                  public ContextFixture,
                                  public CommandQueueFixture,
                                  ::testing::TestWithParam<uint64_t /*cl_command_queue_properties*/> {
@@ -25,7 +25,7 @@ struct GetCommandQueueInfoTest : public DeviceFixture,
 
     void SetUp() override {
         properties = GetParam();
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
 
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
@@ -35,7 +35,7 @@ struct GetCommandQueueInfoTest : public DeviceFixture,
     void TearDown() override {
         CommandQueueFixture::TearDown();
         ContextFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     const HardwareInfo *pHwInfo = nullptr;

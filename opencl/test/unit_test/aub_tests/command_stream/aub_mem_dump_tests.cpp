@@ -11,13 +11,13 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/aub/aub_helper.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_csr.h"
 
 using NEO::AUBCommandStreamReceiver;
 using NEO::AUBCommandStreamReceiverHw;
 using NEO::AUBFamilyMapper;
-using NEO::DeviceFixture;
+using NEO::ClDeviceFixture;
 using NEO::folderAUB;
 
 std::string getAubFileName(const NEO::Device *pDevice, const std::string baseName) {
@@ -42,7 +42,7 @@ TEST(PageTableTraits, when32BitTraitsAreUsedThenPageTableAddressesAreCorrect) {
     EXPECT_EQ(BIT(36), AubMemDump::PageTableTraits<32>::pdpBaseAddress);
 }
 
-typedef Test<DeviceFixture> AubMemDumpTests;
+typedef Test<ClDeviceFixture> AubMemDumpTests;
 
 HWTEST_F(AubMemDumpTests, givenAubFileStreamWhenOpenAndCloseIsCalledThenFileNameIsReportedCorrectly) {
     AUBCommandStreamReceiver::AubFileStream aubFile;

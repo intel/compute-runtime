@@ -18,7 +18,7 @@
 #include "shared/test/unit_test/mocks/mock_direct_submission_diagnostic_collector.h"
 #include "shared/test/unit_test/mocks/mock_direct_submission_hw.h"
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_io_functions.h"
 #include "test.h"
@@ -30,9 +30,9 @@ using namespace NEO;
 
 extern std::atomic<uintptr_t> lastClFlushedPtr;
 
-struct DirectSubmissionFixture : public DeviceFixture {
+struct DirectSubmissionFixture : public ClDeviceFixture {
     void SetUp() {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
 
         osContext.reset(OsContext::create(nullptr, 0u, 0u, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                           false, false, false));

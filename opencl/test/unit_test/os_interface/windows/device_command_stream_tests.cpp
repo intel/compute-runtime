@@ -33,7 +33,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/memory_management_fixture.h"
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
@@ -169,7 +169,7 @@ class WddmCommandStreamWithMockGdiFixture {
 
 using WddmCommandStreamTest = ::Test<WddmCommandStreamFixture>;
 using WddmCommandStreamMockGdiTest = ::Test<WddmCommandStreamWithMockGdiFixture>;
-using WddmDefaultTest = ::Test<DeviceFixture>;
+using WddmDefaultTest = ::Test<ClDeviceFixture>;
 using DeviceCommandStreamTest = ::Test<MockAubCenterFixture>;
 
 TEST_F(DeviceCommandStreamTest, CreateWddmCSR) {

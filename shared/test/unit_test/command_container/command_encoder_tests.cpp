@@ -7,22 +7,22 @@
 
 #include "shared/source/command_container/command_encoder.h"
 
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "test.h"
 
 using namespace NEO;
 
-class CommandEncoderTests : public DeviceFixture,
+class CommandEncoderTests : public ClDeviceFixture,
                             public ::testing::Test {
 
   public:
     void SetUp() override {
         ::testing::Test::SetUp();
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
     }
     void TearDown() override {
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
         ::testing::Test::TearDown();
     }
 };

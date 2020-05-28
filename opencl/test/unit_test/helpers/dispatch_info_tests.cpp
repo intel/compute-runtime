@@ -6,8 +6,8 @@
  */
 
 #include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
@@ -18,7 +18,7 @@
 
 using namespace NEO;
 
-class DispatchInfoFixture : public ContextFixture, public DeviceFixture {
+class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
     using ContextFixture::SetUp;
 
   public:
@@ -26,7 +26,7 @@ class DispatchInfoFixture : public ContextFixture, public DeviceFixture {
 
   protected:
     void SetUp() {
-        DeviceFixture::SetUp();
+        ClDeviceFixture::SetUp();
         cl_device_id device = pClDevice;
         ContextFixture::SetUp(1, &device);
         pKernelInfo = std::make_unique<KernelInfo>();
@@ -49,7 +49,7 @@ class DispatchInfoFixture : public ContextFixture, public DeviceFixture {
         delete pProgram;
 
         ContextFixture::TearDown();
-        DeviceFixture::TearDown();
+        ClDeviceFixture::TearDown();
     }
 
     std::unique_ptr<KernelInfo> pKernelInfo;
