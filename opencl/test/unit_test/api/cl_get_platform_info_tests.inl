@@ -61,20 +61,33 @@ class clGetPlatformInfoParameterizedTests : public clGetPlatformInfoTests,
 
 TEST_P(clGetPlatformInfoParameterizedTests, GivenClPlatformVersionWhenGettingPlatformInfoStringThenCorrectOpenClVersionIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_VERSION);
-    std::string deviceVer;
+
+    cl_version platformNumericVersion = 0;
+    auto retVal = clGetPlatformInfo(pPlatform, CL_PLATFORM_NUMERIC_VERSION,
+                                    sizeof(platformNumericVersion), &platformNumericVersion, &retSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_version), retSize);
+
+    std::string expectedPlatformVersion;
+    cl_version expectedNumericPlatformVersion;
     switch (GetParam()) {
     case 30:
-        deviceVer = "OpenCL 3.0 ";
+        expectedPlatformVersion = "OpenCL 3.0 ";
+        expectedNumericPlatformVersion = CL_MAKE_VERSION(3, 0, 0);
         break;
     case 21:
-        deviceVer = "OpenCL 2.1 ";
+        expectedPlatformVersion = "OpenCL 2.1 ";
+        expectedNumericPlatformVersion = CL_MAKE_VERSION(2, 1, 0);
         break;
     case 12:
     default:
-        deviceVer = "OpenCL 1.2 ";
+        expectedPlatformVersion = "OpenCL 1.2 ";
+        expectedNumericPlatformVersion = CL_MAKE_VERSION(1, 2, 0);
         break;
     }
-    EXPECT_STREQ(paramValue, deviceVer.c_str());
+
+    EXPECT_STREQ(expectedPlatformVersion.c_str(), paramValue);
+    EXPECT_EQ(expectedNumericPlatformVersion, platformNumericVersion);
 }
 
 INSTANTIATE_TEST_CASE_P(OCLVersions,
@@ -174,6 +187,27 @@ TEST_F(clGetPlatformInfoTests, GivenDeviceWhenGettingIcdDispatchTableThenDeviceA
         ASSERT_NE(nullptr, device);
         EXPECT_EQ(pPlatform->dispatch.icdDispatch, device->dispatch.icdDispatch);
     }
+}
+
+TEST_F(clGetPlatformInfoTests, WhenCheckingPlatformExtensionsWithVersionThenTheyMatchPlatformExtensions) {
+
+    auto retVal = clGetPlatformInfo(pPlatform, CL_PLATFORM_EXTENSIONS_WITH_VERSION, 0, nullptr, &retSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    size_t extensionsCount = retSize / sizeof(cl_name_version);
+    auto platformExtensionsWithVersion = std::make_unique<cl_name_version[]>(extensionsCount);
+    retVal = clGetPlatformInfo(pPlatform, CL_PLATFORM_EXTENSIONS_WITH_VERSION,
+                               retSize, platformExtensionsWithVersion.get(), nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    std::string allExtensions;
+    for (size_t i = 0; i < extensionsCount; i++) {
+        EXPECT_EQ(CL_MAKE_VERSION(1u, 0u, 0u), platformExtensionsWithVersion[i].version);
+        allExtensions += platformExtensionsWithVersion[i].name;
+        allExtensions += " ";
+    }
+
+    EXPECT_STREQ(pPlatform->getPlatformInfo().extensions.c_str(), allExtensions.c_str());
 }
 
 class GetPlatformInfoTests : public PlatformFixture,
