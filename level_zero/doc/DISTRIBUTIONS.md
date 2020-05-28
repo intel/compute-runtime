@@ -23,6 +23,13 @@ zypper addrepo -r https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl/
 zypper install level-zero intel-level-zero-gpu
 ```
 
+## OpenSUSE Leap 15.2
+
+```
+zypper addrepo -r https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl/repo/opensuse-leap-15.2/jdanecki-intel-opencl-opensuse-leap-15.2.repo
+zypper install level-zero intel-level-zero-gpu
+```
+
 ## OpenSUSE tumbleweed
 
 ```
