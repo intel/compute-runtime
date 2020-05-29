@@ -99,7 +99,9 @@ ze_result_t DriverHandleImp::getMemAllocProperties(const void *ptr,
         }
         return ZE_RESULT_SUCCESS;
     }
-    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    pMemAllocProperties->type = ZE_MEMORY_TYPE_UNKNOWN;
+
+    return ZE_RESULT_SUCCESS;
 }
 
 DriverHandleImp::~DriverHandleImp() {

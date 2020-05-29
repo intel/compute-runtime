@@ -89,6 +89,21 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsNullDevice
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MemoryTest, givenSystemAllocatedPointerThenDriverGetAllocPropertiesReturnsUnknownType) {
+    size_t size = 10;
+    int *ptr = new int[size];
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    memoryProperties.version = ZE_MEMORY_ALLOCATION_PROPERTIES_VERSION_CURRENT;
+    ze_device_handle_t deviceHandle;
+    ze_result_t result = driverHandle->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_UNKNOWN);
+
+    delete[] ptr;
+}
+
 TEST_F(MemoryTest, givenSharedPointerAndDeviceHandleAsNullThenDriverReturnsSuccessAndReturnsPointerToSharedAllocation) {
     size_t size = 10;
     size_t alignment = 1u;
