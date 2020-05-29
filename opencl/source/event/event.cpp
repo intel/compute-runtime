@@ -250,6 +250,19 @@ bool Event::calcProfilingData() {
             const auto timestamps = timestampPacketContainer->peekNodes();
             auto isMultiOsContextCapable = this->getCommandQueue()->getGpgpuCommandStreamReceiver().isMultiOsContextCapable();
 
+            if (DebugManager.flags.PrintTimestampPacketContents.get()) {
+                for (auto i = 0u; i < timestamps.size(); i++) {
+                    for (auto j = 0u; j < timestamps[i]->tagForCpuAccess->packetsUsed; j++) {
+                        const auto &packet = timestamps[i]->tagForCpuAccess->packets[j];
+                        std::cout << "Timestamp " << i << ", packet " << j << ": "
+                                  << "global start: " << packet.globalStart << ", "
+                                  << "global end: " << packet.globalEnd << ", "
+                                  << "context start: " << packet.contextStart << ", "
+                                  << "context end: " << packet.contextEnd << std::endl;
+                    }
+                }
+            }
+
             if (isMultiOsContextCapable) {
                 auto globalStartTS = timestamps[0]->tagForCpuAccess->packets[0].globalStart;
                 uint64_t globalEndTS = timestamps[0]->tagForCpuAccess->packets[0].globalEnd;

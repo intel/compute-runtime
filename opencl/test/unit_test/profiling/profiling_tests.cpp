@@ -924,7 +924,7 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
         ev->timestampPacketContainer->add(node);
     }
 
-    void addTimestampNodeMultiOsContext(int globalStart[16], int globalEnd[16], uint32_t size) {
+    void addTimestampNodeMultiOsContext(int globalStart[16], int globalEnd[16], int contextStart[16], int contextEnd[16], uint32_t size) {
         auto node = new MockTagNode<TimestampPacketStorage>();
         auto timestampPacketStorage = new TimestampPacketStorage();
         timestampPacketStorage->packetsUsed = size;
@@ -932,6 +932,8 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
         for (uint32_t i = 0u; i < timestampPacketStorage->packetsUsed; ++i) {
             timestampPacketStorage->packets[i].globalStart = globalStart[i];
             timestampPacketStorage->packets[i].globalEnd = globalEnd[i];
+            timestampPacketStorage->packets[i].contextStart = contextStart[i];
+            timestampPacketStorage->packets[i].contextEnd = contextEnd[i];
         }
 
         node->tagForCpuAccess = timestampPacketStorage;
@@ -981,8 +983,10 @@ TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithOneEleme
 TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCalcProfilingDataIsCalledThenCorrectedValuesAreReturned) {
     int globalStart[16] = {0};
     int globalEnd[16] = {0};
+    int contextStart[16] = {0};
+    int contextEnd[16] = {0};
     initTimestampNodeMultiOsContextData(globalStart, globalEnd, 16u);
-    addTimestampNodeMultiOsContext(globalStart, globalEnd, 16u);
+    addTimestampNodeMultiOsContext(globalStart, globalEnd, contextStart, contextEnd, 16u);
     auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());
     auto &csr = device.getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
     csr.multiOsContextCapable = true;
@@ -990,6 +994,41 @@ TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCal
     ev->calcProfilingData();
     EXPECT_EQ(50u, ev->getStartTimeStamp());
     EXPECT_EQ(350u, ev->getEndTimeStamp());
+}
+
+TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCalcProfilingDataThenTimeStampsArePrinted) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PrintTimestampPacketContents.set(true);
+    testing::internal::CaptureStdout();
+
+    auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());
+    auto &csr = device.getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
+    csr.multiOsContextCapable = true;
+
+    int globalStart[16] = {0};
+    int globalEnd[16] = {0};
+    int contextStart[16] = {0};
+    int contextEnd[16] = {0};
+    for (int i = 0; i < 16; i++) {
+        globalStart[i] = 2 * i;
+        globalEnd[i] = 500 * i;
+        contextStart[i] = 7 * i;
+        contextEnd[i] = 94 * i;
+    }
+    addTimestampNodeMultiOsContext(globalStart, globalEnd, contextStart, contextEnd, 16u);
+
+    ev->calcProfilingData();
+
+    std::string output = testing::internal::GetCapturedStdout();
+    std::stringstream expected;
+    for (int i = 0; i < 16; i++) {
+        expected << "Timestamp 0, packet " << i << ": "
+                 << "global start: " << globalStart[i] << ", "
+                 << "global end: " << globalEnd[i] << ", "
+                 << "context start: " << contextStart[i] << ", "
+                 << "context end: " << contextEnd[i] << std::endl;
+    }
+    EXPECT_EQ(0, output.compare(expected.str().c_str()));
 }
 
 TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithThreeElementsWhenCalculatingProfilingThenTimesAreTakenFromProperPacket) {

@@ -83,6 +83,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintLWSSizes, false, "prints driver choosen local 
 DECLARE_DEBUG_VARIABLE(bool, PrintDispatchParameters, false, "prints dispatch paramters of kernels passed to clEnqueueNDRangeKernel")
 DECLARE_DEBUG_VARIABLE(bool, PrintProgramBinaryProcessingTime, false, "prints execution time of Program::processGenBinary() method during program building")
 DECLARE_DEBUG_VARIABLE(bool, PrintRelocations, false, "prints relocations debug information")
+DECLARE_DEBUG_VARIABLE(bool, PrintTimestampPacketContents, false, "prints all timestamps values during profiling data calculation")
 DECLARE_DEBUG_VARIABLE(bool, WddmResidencyLogger, false, "gather Wddm residency statistics to file")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
 DECLARE_DEBUG_VARIABLE(bool, PrintDeviceAndEngineIdOnSubmission, false, "print submissions device and engine IDs to standard output")
