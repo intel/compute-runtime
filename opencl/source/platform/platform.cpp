@@ -127,9 +127,6 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
 
     state = StateIniting;
 
-    DEBUG_BREAK_IF(this->platformInfo);
-    this->platformInfo.reset(new PlatformInfo);
-
     for (auto &inputDevice : devices) {
         ClDevice *pClDevice = nullptr;
         auto pDevice = inputDevice.release();
@@ -137,31 +134,32 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
         pClDevice = new ClDevice{*pDevice, this};
         this->clDevices.push_back(pClDevice);
 
-        this->platformInfo->extensions = pClDevice->getDeviceInfo().deviceExtensions;
-        this->platformInfo->extensionsWithVersion = pClDevice->getDeviceInfo().extensionsWithVersion;
-
-        switch (pClDevice->getEnabledClVersion()) {
-        case 30:
-            this->platformInfo->version = "OpenCL 3.0 ";
-            this->platformInfo->numericVersion = CL_MAKE_VERSION(3, 0, 0);
-            break;
-        case 21:
-            this->platformInfo->version = "OpenCL 2.1 ";
-            this->platformInfo->numericVersion = CL_MAKE_VERSION(2, 1, 0);
-            break;
-        default:
-            this->platformInfo->version = "OpenCL 1.2 ";
-            this->platformInfo->numericVersion = CL_MAKE_VERSION(1, 2, 0);
-            break;
+        auto hwInfo = pClDevice->getHardwareInfo();
+        if (pClDevice->getPreemptionMode() == PreemptionMode::MidThread || pClDevice->isDebuggerActive()) {
+            auto sipType = SipKernel::getSipKernelType(hwInfo.platform.eRenderCoreFamily, pClDevice->isDebuggerActive());
+            initSipKernel(sipType, *pDevice);
         }
     }
 
-    for (auto &clDevice : clDevices) {
-        auto hwInfo = clDevice->getHardwareInfo();
-        if (clDevice->getPreemptionMode() == PreemptionMode::MidThread || clDevice->isDebuggerActive()) {
-            auto sipType = SipKernel::getSipKernelType(hwInfo.platform.eRenderCoreFamily, clDevice->isDebuggerActive());
-            initSipKernel(sipType, clDevice->getDevice());
-        }
+    DEBUG_BREAK_IF(this->platformInfo);
+    this->platformInfo.reset(new PlatformInfo);
+
+    this->platformInfo->extensions = this->clDevices[0]->getDeviceInfo().deviceExtensions;
+    this->platformInfo->extensionsWithVersion = this->clDevices[0]->getDeviceInfo().extensionsWithVersion;
+
+    switch (this->clDevices[0]->getEnabledClVersion()) {
+    case 30:
+        this->platformInfo->version = "OpenCL 3.0 ";
+        this->platformInfo->numericVersion = CL_MAKE_VERSION(3, 0, 0);
+        break;
+    case 21:
+        this->platformInfo->version = "OpenCL 2.1 ";
+        this->platformInfo->numericVersion = CL_MAKE_VERSION(2, 1, 0);
+        break;
+    default:
+        this->platformInfo->version = "OpenCL 1.2 ";
+        this->platformInfo->numericVersion = CL_MAKE_VERSION(1, 2, 0);
+        break;
     }
 
     this->fillGlobalDispatchTable();
