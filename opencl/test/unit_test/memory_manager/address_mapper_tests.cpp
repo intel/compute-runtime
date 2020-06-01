@@ -30,7 +30,7 @@ class AddressMapperFixture {
 
 typedef Test<AddressMapperFixture> AddressMapperTests;
 
-TEST_F(AddressMapperTests, mapAlignedPointers) {
+TEST_F(AddressMapperTests, GivenAlignedPointersWhenMappingThenPointersAreAligned) {
     uint32_t m1 = mapper->map((void *)0x1000, MemoryConstants::pageSize);
     EXPECT_EQ(0x1000u, m1);
     uint32_t m2 = mapper->map((void *)0x3000, MemoryConstants::pageSize);
@@ -39,7 +39,7 @@ TEST_F(AddressMapperTests, mapAlignedPointers) {
     EXPECT_EQ(0x1000u, m3);
 }
 
-TEST_F(AddressMapperTests, mapNotAlignedPointers) {
+TEST_F(AddressMapperTests, GivenUnalignedPointersWhenMappingThenPointersAreAligned) {
     void *vm1 = (void *)(0x1100);
     void *vm2 = (void *)(0x4100);
 
@@ -51,14 +51,14 @@ TEST_F(AddressMapperTests, mapNotAlignedPointers) {
     EXPECT_EQ(0x1000u, m3);
 }
 
-TEST_F(AddressMapperTests, mapThenResize) {
+TEST_F(AddressMapperTests, WhenResizingThenPointerIsAligned) {
     uint32_t m1 = mapper->map((void *)0x1000, MemoryConstants::pageSize);
     EXPECT_EQ(0x1000u, m1);
     uint32_t m2 = mapper->map((void *)0x1000, 2 * MemoryConstants::pageSize);
     EXPECT_EQ(0x2000u, m2);
 }
 
-TEST_F(AddressMapperTests, unmapNotMapped) {
+TEST_F(AddressMapperTests, WhenUnmappingThenMappingWorksCorrectly) {
     mapper->unmap((void *)0x1000);
     uint32_t m1 = mapper->map((void *)0x2000, MemoryConstants::pageSize);
     EXPECT_EQ(0x1000u, m1);
