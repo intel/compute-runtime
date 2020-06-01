@@ -150,6 +150,11 @@ struct EncodeStoreMMIO {
     static void encode(LinearStream &csr, uint32_t offset, uint64_t address);
     static void remapOffset(MI_STORE_REGISTER_MEM *pStoreRegMem);
 };
+template <typename GfxFamily>
+struct AppendStoreMMIO {
+    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    static void appendRemap(MI_STORE_REGISTER_MEM *cmd);
+};
 
 template <typename GfxFamily>
 struct EncodeSurfaceState {

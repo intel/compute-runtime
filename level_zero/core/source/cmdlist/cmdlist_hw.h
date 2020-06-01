@@ -133,7 +133,8 @@ struct CommandListCoreFamily : CommandListImp {
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlit(NEO::GraphicsAllocation *dstPtrAlloc,
                                                       uint64_t dstOffset,
                                                       NEO::GraphicsAllocation *srcPtrAlloc,
-                                                      uint64_t srcOffset, uint32_t size);
+                                                      uint64_t srcOffset, uint32_t size,
+                                                      ze_event_handle_t hSignalEvent);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlitRegion(NEO::GraphicsAllocation *srcAlloc,
                                                             NEO::GraphicsAllocation *dstAlloc,
@@ -141,7 +142,7 @@ struct CommandListCoreFamily : CommandListImp {
                                                             ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                                             size_t srcRowPitch, size_t srcSlicePitch,
                                                             size_t dstRowPitch, size_t dstSlicePitch,
-                                                            size_t srcSize, size_t dstSize);
+                                                            size_t srcSize, size_t dstSize, ze_event_handle_t hSignalEvent);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernel2d(NEO::GraphicsAllocation *dstAlloc, NEO::GraphicsAllocation *srcAlloc,
                                                           Builtin builtin, const ze_copy_region_t *dstRegion,
@@ -168,7 +169,7 @@ struct CommandListCoreFamily : CommandListImp {
                                                      size_t srcRowPitch, size_t srcSlicePitch,
                                                      size_t dstRowPitch, size_t dstSlicePitch,
                                                      size_t bytesPerPixel, Vec3<size_t> copySize,
-                                                     Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize);
+                                                     Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent);
 
     ze_result_t appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                              const ze_group_count_t *pThreadGroupDimensions,
@@ -183,6 +184,7 @@ struct CommandListCoreFamily : CommandListImp {
 
     ze_result_t setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, uint32_t lws[3]);
     void appendEventForProfiling(ze_event_handle_t hEvent, bool beforeWalker);
+    void appendEventForProfilingCopyCommand(ze_event_handle_t hEvent, bool beforeWalker);
     void appendSignalEventPostWalker(ze_event_handle_t hEvent);
     bool useMemCopyToBlitFill(size_t patternSize);
 

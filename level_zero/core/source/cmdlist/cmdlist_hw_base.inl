@@ -60,9 +60,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
                                                  reinterpret_cast<const void *>(pThreadGroupDimensions), isIndirect, isPredicate, kernel,
                                                  0, device->getNEODevice(), commandListPreemptionMode);
 
-    if (hEvent) {
-        appendSignalEventPostWalker(hEvent);
-    }
+    appendSignalEventPostWalker(hEvent);
 
     commandContainer.addToResidencyContainer(functionImmutableData->getIsaGraphicsAllocation());
     auto &residencyContainer = kernel->getResidencyContainer();
@@ -82,32 +80,28 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
     if (!hEvent) {
         return;
     }
-
-    auto event = Event::fromHandle(hEvent);
-
-    if (!event->isTimestampEvent) {
-        return;
-    }
-
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-
-    commandContainer.addToResidencyContainer(&event->getAllocation());
-    auto baseAddr = event->getGpuAddress();
-
-    if (beforeWalker) {
-        auto contextStartAddr = baseAddr;
-        auto globalStartAddr = baseAddr + offsetof(KernelTimestampEvent, globalStart);
-
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, globalStartAddr);
-        NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddr);
+    if (isCopyOnly()) {
+        appendEventForProfilingCopyCommand(hEvent, beforeWalker);
     } else {
-        auto contextEndAddr = baseAddr + offsetof(KernelTimestampEvent, contextEnd);
-        auto globalEndAddr = baseAddr + offsetof(KernelTimestampEvent, globalEnd);
+        auto event = Event::fromHandle(hEvent);
 
-        if (isCopyOnlyCmdList) {
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), globalEndAddr, 0llu, true, true);
+        if (!event->isTimestampEvent) {
+            return;
+        }
+
+        commandContainer.addToResidencyContainer(&event->getAllocation());
+        auto baseAddr = event->getGpuAddress();
+
+        if (beforeWalker) {
+            auto contextStartAddr = baseAddr;
+            auto globalStartAddr = baseAddr + offsetof(KernelTimestampEvent, globalStart);
+
+            NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, globalStartAddr);
+            NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddr);
+
         } else {
+            auto contextEndAddr = baseAddr + offsetof(KernelTimestampEvent, contextEnd);
+            auto globalEndAddr = baseAddr + offsetof(KernelTimestampEvent, globalEnd);
             NEO::PipeControlArgs args;
             args.dcFlushEnable = false;
 

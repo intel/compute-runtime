@@ -7,15 +7,16 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
@@ -247,7 +248,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenSetBarrierThenPipeControlIsProgr
 template <GFXCORE_FAMILY gfxCoreFamily>
 class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
   public:
-    MockCommandList() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>(1) {}
+    MockCommandList() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
 
     AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize) override {
         return {0, 0, nullptr, true};
@@ -267,7 +268,7 @@ class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamil
     ze_result_t appendMemoryCopyBlit(NEO::GraphicsAllocation *dstPtrAlloc,
                                      uint64_t dstOffset,
                                      NEO::GraphicsAllocation *srcPtrAlloc,
-                                     uint64_t srcOffset, uint32_t size) override {
+                                     uint64_t srcOffset, uint32_t size, ze_event_handle_t hSignalEvent) override {
         appendMemoryCopyBlitCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -278,7 +279,7 @@ class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamil
                                            ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                            size_t srcRowPitch, size_t srcSlicePitch,
                                            size_t dstRowPitch, size_t dstSlicePitch,
-                                           size_t srcSize, size_t dstSize) override {
+                                           size_t srcSize, size_t dstSize, ze_event_handle_t hSignalEvent) override {
         appendMemoryCopyBlitRegionCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -315,7 +316,7 @@ class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamil
                                     size_t srcRowPitch, size_t srcSlicePitch,
                                     size_t dstRowPitch, size_t dstSlicePitch,
                                     size_t bytesPerPixel, Vec3<size_t> copySize,
-                                    Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize) override {
+                                    Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent) override {
         appendCopyImageBlitCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -400,7 +401,6 @@ using AppendMemoryCopy = CommandListCreate;
 template <GFXCORE_FAMILY gfxCoreFamily>
 class MockAppendMemoryCopy : public MockCommandList<gfxCoreFamily> {
   public:
-    using CommandList::hostPtrMap;
     AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize) override {
         return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocation(device, buffer, bufferSize);
     }
@@ -484,13 +484,13 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCop
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    WhiteBox<CommandListCoreFamily<gfxCoreFamily>> cmdList(1);
-    cmdList.initialize(device, true);
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, true);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
-    cmdList.appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
+    commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
 
-    auto &commandContainer = cmdList.commandContainer;
+    auto &commandContainer = commandList->commandContainer;
     GenCmdList genCmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -507,15 +507,15 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCop
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
-    WhiteBox<CommandListCoreFamily<gfxCoreFamily>> cmdList(1);
-    cmdList.initialize(device, true);
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, true);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
     ze_copy_region_t srcRegion = {4, 4, 0, 2, 2, 1};
-    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr);
+    commandList->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr);
 
-    auto &commandContainer = cmdList.commandContainer;
+    auto &commandContainer = commandList->commandContainer;
     GenCmdList genCmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -627,7 +627,7 @@ HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushTheP
 template <GFXCORE_FAMILY gfxCoreFamily>
 class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
   public:
-    MockCommandListForMemFill() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>(1) {}
+    MockCommandListForMemFill() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
 
     AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize) override {
         return {0, 0, nullptr, true};
@@ -635,7 +635,7 @@ class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gf
     ze_result_t appendMemoryCopyBlit(NEO::GraphicsAllocation *dstPtrAlloc,
                                      uint64_t dstOffset,
                                      NEO::GraphicsAllocation *srcPtrAlloc,
-                                     uint64_t srcOffset, uint32_t size) override {
+                                     uint64_t srcOffset, uint32_t size, ze_event_handle_t hSignalEvent) override {
         appendMemoryCopyBlitCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -747,6 +747,196 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyFromImagBlitThenCommand
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
     auto itor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListWhenTimestampPassedToMemoryCopyBlitThenTimeStampRegistersAreAdded, Platforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, true);
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_TIMESTAMP,
+        1};
+    ze_event_desc_t eventDesc = {
+        ZE_EVENT_DESC_VERSION_CURRENT,
+        0,
+        ZE_EVENT_SCOPE_FLAG_NONE,
+        ZE_EVENT_SCOPE_FLAG_NONE};
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    uint32_t size = 0x1000;
+
+    commandList->appendMemoryCopyBlit(&mockAllocationDst, 0, &mockAllocationSrc, 0, size, event->toHandle());
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(cmd->getRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListWhenTimestampPassedToMemoryCopyRegionBlitThenTimeStampRegistersAreAdded, Platforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, true);
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_TIMESTAMP,
+        1};
+    ze_event_desc_t eventDesc = {
+        ZE_EVENT_DESC_VERSION_CURRENT,
+        0,
+        ZE_EVENT_SCOPE_FLAG_NONE,
+        ZE_EVENT_SCOPE_FLAG_NONE};
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+
+    ze_copy_region_t srcRegion = {4, 4, 4, 2, 2, 2};
+    ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+
+    commandList->appendMemoryCopyBlitRegion(&mockAllocationDst, &mockAllocationSrc, srcRegion, dstRegion, {0, 0, 0}, 0, 0, 0, 0, 0, 0, event->toHandle());
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(cmd->getRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListWhenTimestampPassedToImageCopyBlitThenTimeStampRegistersAreAdded, Platforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, true);
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_TIMESTAMP,
+        1};
+    ze_event_desc_t eventDesc = {
+        ZE_EVENT_DESC_VERSION_CURRENT,
+        0,
+        ZE_EVENT_SCOPE_FLAG_NONE,
+        ZE_EVENT_SCOPE_FLAG_NONE};
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+
+    commandList->appendCopyImageBlit(&mockAllocationDst, &mockAllocationSrc, {0, 0, 0}, {0, 0, 0}, 0, 0, 0, 0, 1, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, event->toHandle());
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(cmd->getRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCopyOnlyThenCommandsHaveCorrectEventOffsets, Platforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, true);
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_TIMESTAMP,
+        1};
+    ze_event_desc_t eventDesc = {
+        ZE_EVENT_DESC_VERSION_CURRENT,
+        0,
+        ZE_EVENT_SCOPE_FLAG_NONE,
+        ZE_EVENT_SCOPE_FLAG_NONE};
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+
+    commandList->appendEventForProfilingCopyCommand(event->toHandle(), true);
+
+    auto contextOffset = offsetof(KernelTimestampEvent, contextStart);
+    auto globalOffset = offsetof(KernelTimestampEvent, globalStart);
+    auto baseAddr = event->getGpuAddress();
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(cmd->getRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr, globalOffset));
+    EXPECT_NE(cmdList.end(), ++itor);
+    cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(cmd->getRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr, contextOffset));
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingAfterCommandForCopyOnlyThenCommandsHaveCorrectEventOffsets, Platforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, true);
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_TIMESTAMP,
+        1};
+    ze_event_desc_t eventDesc = {
+        ZE_EVENT_DESC_VERSION_CURRENT,
+        0,
+        ZE_EVENT_SCOPE_FLAG_NONE,
+        ZE_EVENT_SCOPE_FLAG_NONE};
+    auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
+
+    commandList->appendEventForProfilingCopyCommand(event->toHandle(), false);
+
+    auto contextOffset = offsetof(KernelTimestampEvent, contextEnd);
+    auto globalOffset = offsetof(KernelTimestampEvent, globalEnd);
+    auto baseAddr = event->getGpuAddress();
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(cmd->getRegisterAddress(), REG_GLOBAL_TIMESTAMP_LDW);
+    EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr, globalOffset));
+    EXPECT_NE(cmdList.end(), ++itor);
+    cmd = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(cmd->getRegisterAddress(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
+    EXPECT_EQ(cmd->getMemoryAddress(), ptrOffset(baseAddr, contextOffset));
+}
+
+HWTEST2_F(CommandListCreate, givenNullEventWhenAppendEventAfterWalkerThenNothingAddedToStream, Platforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, true);
+
+    auto usedBefore = commandList->commandContainer.getCommandStream()->getUsed();
+
+    commandList->appendSignalEventPostWalker(nullptr);
+
+    EXPECT_EQ(commandList->commandContainer.getCommandStream()->getUsed(), usedBefore);
 }
 
 } // namespace ult

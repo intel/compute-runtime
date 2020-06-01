@@ -31,9 +31,17 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     : public ::L0::CommandListCoreFamily<gfxCoreFamily> {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = ::L0::CommandListCoreFamily<gfxCoreFamily>;
+    using BaseClass::appendBlitFill;
+    using BaseClass::appendCopyImageBlit;
+    using BaseClass::appendEventForProfiling;
+    using BaseClass::appendEventForProfilingCopyCommand;
     using BaseClass::appendLaunchKernelWithParams;
+    using BaseClass::appendMemoryCopyBlit;
+    using BaseClass::appendMemoryCopyBlitRegion;
+    using BaseClass::appendSignalEventPostWalker;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::getAlignedAllocation;
+    using BaseClass::hostPtrMap;
 
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
 };
