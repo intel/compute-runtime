@@ -338,8 +338,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     ze_group_count_t functionArgs{pDstRegion->width / groupSizeX, pDstRegion->height / groupSizeY,
                                   pDstRegion->depth / groupSizeZ};
 
-    return this->appendLaunchKernel(builtinKernel->toHandle(), &functionArgs,
-                                    hEvent, numWaitEvents, phWaitEvents);
+    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(builtinKernel->toHandle(), &functionArgs,
+                                                                    hEvent, numWaitEvents, phWaitEvents);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -556,8 +556,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
 
     appendEventForProfiling(hEvent, true);
 
-    return this->CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernel->toHandle(), &functionArgs,
-                                                                          hEvent, numWaitEvents, phWaitEvents);
+    return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(kernel->toHandle(), &functionArgs,
+                                                                    hEvent, numWaitEvents, phWaitEvents);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1127,7 +1127,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
             memcpy_s(ptrOffset(internalAlloc->getDriverAllocatedCpuPtr(), offset), (internalAlloc->getUnderlyingBufferSize() - offset), pattern, patternSize);
             offset += patternSize;
         }
-        auto ret = appendMemoryCopy(ptr, internalAlloc->getDriverAllocatedCpuPtr(), size, hEvent, 0, nullptr);
+        auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(ptr, internalAlloc->getDriverAllocatedCpuPtr(), size, hEvent, 0, nullptr);
         commandContainer.getDeallocationContainer().push_back(internalAlloc);
         return ret;
     } else {
