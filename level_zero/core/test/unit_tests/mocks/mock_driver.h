@@ -29,7 +29,7 @@ using Driver = WhiteBox<::L0::DriverImp>;
 template <>
 struct Mock<Driver> : public DriverImp {
     Mock();
-    virtual ~Mock();
+    ~Mock() override;
 
     MOCK_METHOD1(driverInit, ze_result_t(ze_init_flag_t));
     MOCK_METHOD1(initialize, void(bool *result));
