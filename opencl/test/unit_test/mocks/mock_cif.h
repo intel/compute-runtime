@@ -22,7 +22,7 @@ using CreatorFuncT = CIF::ICIF *(*)(CIF::InterfaceId_t intId, CIF::Version_t ver
 
 template <typename BaseType = CIF::ICIF>
 struct MockCIF : BaseType {
-    void Release() override {
+    void Release() override { // NOLINT(readability-identifier-naming)
         auto prev = refCount--;
         assert(prev >= 1);
         if (prev == 1) {
@@ -30,19 +30,19 @@ struct MockCIF : BaseType {
         }
     }
 
-    void Retain() override {
+    void Retain() override { // NOLINT(readability-identifier-naming)
         ++refCount;
     }
 
-    uint32_t GetRefCount() const override {
+    uint32_t GetRefCount() const override { // NOLINT(readability-identifier-naming)
         return refCount;
     }
 
-    CIF::Version_t GetEnabledVersion() const override {
+    CIF::Version_t GetEnabledVersion() const override { // NOLINT(readability-identifier-naming)
         return 1;
     }
 
-    bool GetSupportedVersions(CIF::InterfaceId_t intId, CIF::Version_t &verMin,
+    bool GetSupportedVersions(CIF::InterfaceId_t intId, CIF::Version_t &verMin, // NOLINT(readability-identifier-naming)
                               CIF::Version_t &verMax) const override {
         verMin = 1;
         verMax = CIF::MaxVersion;
@@ -91,13 +91,13 @@ struct MockCIFMain : MockCIF<CIF::CIFMain> {
 
     MockCIFMain();
 
-    CIF::Version_t GetBinaryVersion() const override {
+    CIF::Version_t GetBinaryVersion() const override { // NOLINT(readability-identifier-naming)
         return 1;
     }
 
-    CIF::ICIF *CreateInterfaceImpl(CIF::InterfaceId_t intId, CIF::Version_t version) override;
+    CIF::ICIF *CreateInterfaceImpl(CIF::InterfaceId_t intId, CIF::Version_t version) override; // NOLINT(readability-identifier-naming)
 
-    CIF::InterfaceId_t FindIncompatibleImpl(CIF::InterfaceId_t entryPointInterface, CIF::CompatibilityDataHandle handle) const override {
+    CIF::InterfaceId_t FindIncompatibleImpl(CIF::InterfaceId_t entryPointInterface, CIF::CompatibilityDataHandle handle) const override { // NOLINT(readability-identifier-naming)
         if (globalCreators.find(entryPointInterface) != globalCreators.end()) {
             return CIF::InvalidInterface;
         }
@@ -107,7 +107,7 @@ struct MockCIFMain : MockCIF<CIF::CIFMain> {
         return entryPointInterface;
     }
 
-    bool FindSupportedVersionsImpl(CIF::InterfaceId_t entryPointInterface, CIF::InterfaceId_t interfaceToFind, CIF::Version_t &verMin, CIF::Version_t &verMax) const override {
+    bool FindSupportedVersionsImpl(CIF::InterfaceId_t entryPointInterface, CIF::InterfaceId_t interfaceToFind, CIF::Version_t &verMin, CIF::Version_t &verMax) const override { // NOLINT(readability-identifier-naming)
         if (globalCreators.find(entryPointInterface) != globalCreators.end()) {
             verMin = verMax = 1;
             return true;
@@ -125,15 +125,15 @@ struct MockCIFMain : MockCIF<CIF::CIFMain> {
 
 struct MockCIFBuffer : MockCIF<CIF::Builtins::BufferSimple> {
     MockCIFBuffer();
-    static CIF::ICIF *Create(CIF::InterfaceId_t intId, CIF::Version_t version);
+    static CIF::ICIF *Create(CIF::InterfaceId_t intId, CIF::Version_t version); // NOLINT(readability-identifier-naming)
     static bool failAllocations;
 
-    void SetAllocator(CIF::Builtins::AllocatorT allocator, CIF::Builtins::DeallocatorT deallocator,
+    void SetAllocator(CIF::Builtins::AllocatorT allocator, CIF::Builtins::DeallocatorT deallocator, // NOLINT(readability-identifier-naming)
                       CIF::Builtins::ReallocatorT reallocator) override {
         // unsupported in mock
     }
 
-    void SetUnderlyingStorage(void *memory, size_t size, CIF::Builtins::DeallocatorT deallocator) override {
+    void SetUnderlyingStorage(void *memory, size_t size, CIF::Builtins::DeallocatorT deallocator) override { // NOLINT(readability-identifier-naming)
         if ((memory == nullptr) || (size == 0)) {
             data.clear();
             return;
@@ -141,7 +141,7 @@ struct MockCIFBuffer : MockCIF<CIF::Builtins::BufferSimple> {
         data.assign((char *)memory, ((char *)memory) + size);
     }
 
-    void SetUnderlyingStorage(const void *memory, size_t size) override {
+    void SetUnderlyingStorage(const void *memory, size_t size) override { // NOLINT(readability-identifier-naming)
         if ((memory == nullptr) || (size == 0)) {
             data.clear();
             return;
@@ -149,12 +149,12 @@ struct MockCIFBuffer : MockCIF<CIF::Builtins::BufferSimple> {
         data.assign((char *)memory, ((char *)memory) + size);
     }
 
-    void *DetachAllocation() override {
+    void *DetachAllocation() override { // NOLINT(readability-identifier-naming)
         // unsupported in mock
         return nullptr;
     }
 
-    const void *GetMemoryRaw() const override {
+    const void *GetMemoryRaw() const override { // NOLINT(readability-identifier-naming)
         if (data.size() > 0) {
             return data.data();
         } else {
@@ -162,7 +162,7 @@ struct MockCIFBuffer : MockCIF<CIF::Builtins::BufferSimple> {
         }
     }
 
-    void *GetMemoryRawWriteable() override {
+    void *GetMemoryRawWriteable() override { // NOLINT(readability-identifier-naming)
         if (data.size() > 0) {
             return data.data();
         } else {
@@ -170,34 +170,34 @@ struct MockCIFBuffer : MockCIF<CIF::Builtins::BufferSimple> {
         }
     }
 
-    size_t GetSizeRaw() const override {
+    size_t GetSizeRaw() const override { // NOLINT(readability-identifier-naming)
         return data.size();
     }
 
-    size_t GetCapacityRaw() const override {
+    size_t GetCapacityRaw() const override { // NOLINT(readability-identifier-naming)
         return data.capacity();
     }
 
-    bool Resize(size_t newSize) override {
+    bool Resize(size_t newSize) override { // NOLINT(readability-identifier-naming)
         data.resize(newSize);
         return true;
     }
 
-    bool Reserve(size_t newCapacity) override {
+    bool Reserve(size_t newCapacity) override { // NOLINT(readability-identifier-naming)
         data.reserve(newCapacity);
         return true;
     }
 
-    void Clear() override {
+    void Clear() override { // NOLINT(readability-identifier-naming)
         data.clear();
     }
 
-    void Deallocate() override {
+    void Deallocate() override { // NOLINT(readability-identifier-naming)
         std::vector<char> rhs;
         rhs.swap(data);
     }
 
-    bool AlignUp(uint32_t alignment) override {
+    bool AlignUp(uint32_t alignment) override { // NOLINT(readability-identifier-naming)
         auto rest = data.size() & alignment;
         if (rest != 0) {
             data.resize(data.size() + alignment - rest);
@@ -205,7 +205,7 @@ struct MockCIFBuffer : MockCIF<CIF::Builtins::BufferSimple> {
         return true;
     }
 
-    bool PushBackRawBytes(const void *newData, size_t size) override {
+    bool PushBackRawBytes(const void *newData, size_t size) override { // NOLINT(readability-identifier-naming)
         if ((newData == nullptr) || (size == 0)) {
             return true;
         }
@@ -213,7 +213,7 @@ struct MockCIFBuffer : MockCIF<CIF::Builtins::BufferSimple> {
         return true;
     }
 
-    bool IsConst() const override {
+    bool IsConst() const override { // NOLINT(readability-identifier-naming)
         return false;
     }
 
