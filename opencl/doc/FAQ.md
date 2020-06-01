@@ -10,10 +10,6 @@ see the [main FAQ](https://github.com/intel/compute-runtime/blob/master/FAQ.md).
 
 See [README.md](https://github.com/intel/compute-runtime/blob/master/README.md).
 
-### Which platforms will receive OpenCL 2.2 support?
-
-Any platforms supporting OpenCL 2.1 are eligible for move to OpenCL 2.2.
-
 ### How can I enable OpenCL 2.1 on the Apollo Lake / Broxton platform?
 
 You can enable a higher version of OpenCL using the ForceOCLVersion debug flag.

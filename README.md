@@ -30,7 +30,7 @@ You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 |Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake)| 2.1 | Y |
 |Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake)| 1.2 | - |
 |Intel Core Processors with Gen11 graphics devices (formerly Ice Lake)| 2.1 | Y |
-|Intel Core Processors with Gen12 graphics devices (formerly Tiger Lake)| 2.1 | Y |
+|Intel Core Processors with Gen12 graphics devices (formerly Tiger Lake)| 3.0 | Y |
 
 ## Release cadence
 
