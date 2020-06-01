@@ -17,16 +17,25 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::deviceName;
     using OfflineCompiler::elfBinary;
     using OfflineCompiler::fclDeviceCtx;
+    using OfflineCompiler::genBinary;
+    using OfflineCompiler::genBinarySize;
     using OfflineCompiler::generateFilePathForIr;
     using OfflineCompiler::generateOptsSuffix;
+    using OfflineCompiler::getHardwareInfo;
+    using OfflineCompiler::getStringWithinDelimiters;
     using OfflineCompiler::igcDeviceCtx;
     using OfflineCompiler::inputFileLlvm;
     using OfflineCompiler::inputFileSpirV;
+    using OfflineCompiler::internalOptions;
     using OfflineCompiler::isSpirV;
     using OfflineCompiler::options;
     using OfflineCompiler::outputDirectory;
     using OfflineCompiler::outputFile;
+    using OfflineCompiler::parseCommandLine;
+    using OfflineCompiler::parseDebugSettings;
     using OfflineCompiler::sourceCode;
+    using OfflineCompiler::storeBinary;
+    using OfflineCompiler::updateBuildLog;
     using OfflineCompiler::useLlvmText;
     using OfflineCompiler::useOptionsSuffix;
 
@@ -34,63 +43,39 @@ class MockOfflineCompiler : public OfflineCompiler {
         uniqueHelper = std::make_unique<OclocArgHelper>();
         argHelper = uniqueHelper.get();
     }
+    ~MockOfflineCompiler() override = default;
 
     int initialize(size_t numArgs, const std::vector<std::string> &argv) {
         return OfflineCompiler::initialize(numArgs, argv, true);
     }
 
-    int parseCommandLine(size_t numArgs, const std::vector<std::string> &argv) {
-        return OfflineCompiler::parseCommandLine(numArgs, argv);
-    }
 
-    void parseDebugSettings() {
-        return OfflineCompiler::parseDebugSettings();
-    }
-
-    std::string &getOptions() {
-        return options;
-    }
-
-    std::string &getInternalOptions() {
-        return internalOptions;
-    }
-
-    std::string getStringWithinDelimiters(const std::string &src) {
-        return OfflineCompiler::getStringWithinDelimiters(src);
-    }
-
-    void updateBuildLog(const char *pErrorString, const size_t errorStringSize) {
-        OfflineCompiler::updateBuildLog(pErrorString, errorStringSize);
-    }
-
-    int getHardwareInfo(const char *pDeviceName) {
-        return OfflineCompiler::getHardwareInfo(pDeviceName);
-    }
-
-    void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize) {
-        OfflineCompiler::storeBinary(pDst, dstSize, pSrc, srcSize);
-    }
 
     void storeGenBinary(const void *pSrc, const size_t srcSize) {
         OfflineCompiler::storeBinary(genBinary, genBinarySize, pSrc, srcSize);
     }
 
-    int buildSourceCode() {
+    int buildSourceCode() override {
+        if (overrideBuildSourceCodeStatus) {
+            return buildSourceCodeStatus;
+        }
         return OfflineCompiler::buildSourceCode();
     }
 
-    bool generateElfBinary() {
+    bool generateElfBinary() override {
+        generateElfBinaryCalled++;
         return OfflineCompiler::generateElfBinary();
     }
 
-    char *getGenBinary() {
-        return genBinary;
+    void writeOutAllFiles() override {
+        writeOutAllFilesCalled++;
+        OfflineCompiler::writeOutAllFiles();
     }
 
-    size_t getGenBinarySize() {
-        return genBinarySize;
-    }
-
+    int buildSourceCodeStatus = 0;
+    bool overrideBuildSourceCodeStatus = false;
+    uint32_t generateElfBinaryCalled = 0u;
+    uint32_t writeOutAllFilesCalled = 0u;
     std::unique_ptr<OclocArgHelper> uniqueHelper;
 };
 } // namespace NEO

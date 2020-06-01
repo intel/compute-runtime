@@ -187,11 +187,9 @@ int OfflineCompiler::build() {
 
     retVal = buildSourceCode();
 
-    if (retVal == SUCCESS) {
-        generateElfBinary();
-        if (dumpFiles) {
-            writeOutAllFiles();
-        }
+    generateElfBinary();
+    if (dumpFiles) {
+        writeOutAllFiles();
     }
 
     return retVal;

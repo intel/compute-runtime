@@ -50,7 +50,7 @@ class OfflineCompiler {
 
     OfflineCompiler &operator=(const OfflineCompiler &) = delete;
     OfflineCompiler(const OfflineCompiler &) = delete;
-    ~OfflineCompiler();
+    MOCKABLE_VIRTUAL ~OfflineCompiler();
 
     bool isQuiet() const {
         return quiet;
@@ -80,9 +80,9 @@ class OfflineCompiler {
     void resolveExtraSettings();
     void parseDebugSettings();
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
-    int buildSourceCode();
+    MOCKABLE_VIRTUAL int buildSourceCode();
     void updateBuildLog(const char *pErrorString, const size_t errorStringSize);
-    bool generateElfBinary();
+    MOCKABLE_VIRTUAL bool generateElfBinary();
     std::string generateFilePathForIr(const std::string &fileNameBase) {
         const char *ext = (isSpirV) ? ".spv" : ".bc";
         return generateFilePath(outputDirectory, fileNameBase, useLlvmText ? ".ll" : ext);
@@ -93,7 +93,7 @@ class OfflineCompiler {
         std::replace(suffix.begin(), suffix.end(), ' ', '_');
         return suffix;
     }
-    void writeOutAllFiles();
+    MOCKABLE_VIRTUAL void writeOutAllFiles();
     const HardwareInfo *hwInfo = nullptr;
 
     std::string deviceName;

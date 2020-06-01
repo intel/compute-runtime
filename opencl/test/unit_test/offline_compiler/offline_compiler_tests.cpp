@@ -245,7 +245,7 @@ TEST_F(OfflineCompilerTests, TestExtensions) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
-    std::string internalOptions = mockOfflineCompiler->getInternalOptions();
+    std::string internalOptions = mockOfflineCompiler->internalOptions;
     EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
 }
 TEST_F(OfflineCompilerTests, GoodBuildTest) {
@@ -543,7 +543,7 @@ TEST(OfflineCompilerTest, parseCmdLine) {
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     std::string output = testing::internal::GetCapturedStdout();
 
-    std::string internalOptions = mockOfflineCompiler->getInternalOptions();
+    std::string internalOptions = mockOfflineCompiler->internalOptions;
     size_t found = internalOptions.find(argv.begin()[1]);
     EXPECT_NE(std::string::npos, found);
 
@@ -557,7 +557,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDebugS
 
     mockOfflineCompiler.parseDebugSettings();
 
-    std::string internalOptions = mockOfflineCompiler.getInternalOptions();
+    std::string internalOptions = mockOfflineCompiler.internalOptions;
     size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg);
     EXPECT_NE(std::string::npos, found);
 }
@@ -569,7 +569,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDebugS
 
     mockOfflineCompiler.parseDebugSettings();
 
-    std::string internalOptions = mockOfflineCompiler.getInternalOptions();
+    std::string internalOptions = mockOfflineCompiler.internalOptions;
     size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg);
     EXPECT_NE(std::string::npos, found);
 }
@@ -581,7 +581,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationDisableddWhenDevi
 
     mockOfflineCompiler.parseDebugSettings();
 
-    std::string internalOptions = mockOfflineCompiler.getInternalOptions();
+    std::string internalOptions = mockOfflineCompiler.internalOptions;
     size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg);
     EXPECT_EQ(std::string::npos, found);
 }
@@ -593,7 +593,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDevice
 
     mockOfflineCompiler.parseDebugSettings();
 
-    std::string internalOptions = mockOfflineCompiler.getInternalOptions();
+    std::string internalOptions = mockOfflineCompiler.internalOptions;
     size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg);
     EXPECT_NE(std::string::npos, found);
 }
@@ -606,7 +606,7 @@ TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationDisabledWhenDevic
 
     mockOfflineCompiler.parseDebugSettings();
 
-    std::string internalOptions = mockOfflineCompiler.getInternalOptions();
+    std::string internalOptions = mockOfflineCompiler.internalOptions;
     size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg);
     EXPECT_EQ(std::string::npos, found);
 }
@@ -709,14 +709,14 @@ TEST(OfflineCompilerTest, buildSourceCode) {
     retVal = mockOfflineCompiler->initialize(argv.size(), argv);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(nullptr, mockOfflineCompiler->getGenBinary());
-    EXPECT_EQ(0u, mockOfflineCompiler->getGenBinarySize());
+    EXPECT_EQ(nullptr, mockOfflineCompiler->genBinary);
+    EXPECT_EQ(0u, mockOfflineCompiler->genBinarySize);
 
     retVal = mockOfflineCompiler->buildSourceCode();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_NE(nullptr, mockOfflineCompiler->getGenBinary());
-    EXPECT_NE(0u, mockOfflineCompiler->getGenBinarySize());
+    EXPECT_NE(nullptr, mockOfflineCompiler->genBinary);
+    EXPECT_NE(0u, mockOfflineCompiler->genBinarySize);
 }
 
 TEST(OfflineCompilerTest, GivenKernelWhenNoCharAfterKernelSourceThenBuildWithSuccess) {
@@ -983,7 +983,7 @@ TEST(OfflineCompilerTest, givenInternalOptionsWhenCmdLineParsedThenOptionsAreApp
 
     EXPECT_NE(0u, output.size());
 
-    std::string internalOptions = mockOfflineCompiler->getInternalOptions();
+    std::string internalOptions = mockOfflineCompiler->internalOptions;
     EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("myInternalOptions")));
 }
 
@@ -1005,8 +1005,8 @@ TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsFilesWhenOfflineCom
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto &options = mockOfflineCompiler->getOptions();
-    auto &internalOptions = mockOfflineCompiler->getInternalOptions();
+    auto &options = mockOfflineCompiler->options;
+    auto &internalOptions = mockOfflineCompiler->internalOptions;
     EXPECT_STREQ(options.c_str(), "-shouldfailOptions");
     EXPECT_TRUE(internalOptions.find("-shouldfailInternalOptions") != std::string::npos);
 
@@ -1035,7 +1035,7 @@ TEST(OfflineCompilerTest, givenInputOptionsAndOclockOptionsFileWithForceStosOptW
 
     mockOfflineCompiler->build();
 
-    auto &internalOptions = mockOfflineCompiler->getInternalOptions();
+    auto &internalOptions = mockOfflineCompiler->internalOptions;
     size_t found = internalOptions.find(NEO::CompilerOptions::greaterThan4gbBuffersRequired);
     EXPECT_EQ(std::string::npos, found);
 }
@@ -1109,6 +1109,22 @@ TEST(OfflineCompilerTest, givenEnabledOptsSuffixWhenGenerateOptsSuffixIsCalledTh
     compiler.useOptionsSuffix = true;
     std::string suffix = compiler.generateOptsSuffix();
     EXPECT_STREQ("A_B_C", suffix.c_str());
+}
+TEST(OfflineCompilerTest, givenCompilerWhenBuildSourceCodeFailsThenGenerateElfBinaryAndWriteOutAllFilesAreCalled) {
+    MockOfflineCompiler compiler;
+    compiler.overrideBuildSourceCodeStatus = true;
+
+    auto expectedError = BUILD_PROGRAM_FAILURE;
+    compiler.buildSourceCodeStatus = expectedError;
+
+    EXPECT_EQ(0u, compiler.generateElfBinaryCalled);
+    EXPECT_EQ(0u, compiler.writeOutAllFilesCalled);
+
+    auto status = compiler.build();
+    EXPECT_EQ(expectedError, status);
+
+    EXPECT_EQ(1u, compiler.generateElfBinaryCalled);
+    EXPECT_EQ(1u, compiler.writeOutAllFilesCalled);
 }
 
 } // namespace NEO
