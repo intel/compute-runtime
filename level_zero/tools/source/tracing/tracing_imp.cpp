@@ -320,6 +320,9 @@ void *APITracerContextImp::getActiveTracersList() {
         myThreadPrivateTracerData.allocatePerThreadPublicTracerData();
         myThreadPrivateTracerDataIsInitialized = true;
     }
+    if (myThreadPrivateTracerData.myThreadPublicTracerData == nullptr) {
+        return nullptr;
+    }
     do {
         //
         // This read of active_tracer_array DOES logically signal a transfer
@@ -339,7 +342,9 @@ void *APITracerContextImp::getActiveTracersList() {
 }
 
 void APITracerContextImp::releaseActivetracersList() {
-    myThreadPrivateTracerData.myThreadPublicTracerData->tracerArrayPointer.store(NULL, std::memory_order_relaxed);
+    if (myThreadPrivateTracerData.myThreadPublicTracerData) {
+        myThreadPrivateTracerData.myThreadPublicTracerData->tracerArrayPointer.store(NULL, std::memory_order_relaxed);
+    }
 }
 
 } // namespace L0

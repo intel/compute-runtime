@@ -161,24 +161,26 @@ class APITracerCallbackDataImp {
         callbackPtr = tracerArray->tracerArrayEntries[tracerArrayIndex].callbackType.callbackCategory.callbackFunction;         \
     } while (0)
 
-#define ZE_GEN_PER_API_CALLBACK_STATE(perApiCallbackData, tracerType, callbackCategory, callbackFunctionType)                           \
-    L0::tracer_array_t *currentTracerArray;                                                                                             \
-    currentTracerArray = (L0::tracer_array_t *)L0::PGLOBAL_APITracerContextImp->getActiveTracersList();                                 \
-    for (size_t i = 0; i < currentTracerArray->tracerArrayCount; i++) {                                                                 \
-        tracerType prologueCallbackPtr;                                                                                                 \
-        tracerType epilogue_callback_ptr;                                                                                               \
-        ZE_GEN_TRACER_ARRAY_ENTRY(prologueCallbackPtr, currentTracerArray, i, corePrologues, callbackCategory, callbackFunctionType);   \
-        ZE_GEN_TRACER_ARRAY_ENTRY(epilogue_callback_ptr, currentTracerArray, i, coreEpilogues, callbackCategory, callbackFunctionType); \
-                                                                                                                                        \
-        L0::APITracerCallbackStateImp<tracerType> prologCallback;                                                                       \
-        prologCallback.current_api_callback = prologueCallbackPtr;                                                                      \
-        prologCallback.pUserData = currentTracerArray->tracerArrayEntries[i].pUserData;                                                 \
-        perApiCallbackData.prologCallbacks.push_back(prologCallback);                                                                   \
-                                                                                                                                        \
-        L0::APITracerCallbackStateImp<tracerType> epilogCallback;                                                                       \
-        epilogCallback.current_api_callback = epilogue_callback_ptr;                                                                    \
-        epilogCallback.pUserData = currentTracerArray->tracerArrayEntries[i].pUserData;                                                 \
-        perApiCallbackData.epilogCallbacks.push_back(epilogCallback);                                                                   \
+#define ZE_GEN_PER_API_CALLBACK_STATE(perApiCallbackData, tracerType, callbackCategory, callbackFunctionType)                               \
+    L0::tracer_array_t *currentTracerArray;                                                                                                 \
+    currentTracerArray = (L0::tracer_array_t *)L0::PGLOBAL_APITracerContextImp->getActiveTracersList();                                     \
+    if (currentTracerArray) {                                                                                                               \
+        for (size_t i = 0; i < currentTracerArray->tracerArrayCount; i++) {                                                                 \
+            tracerType prologueCallbackPtr;                                                                                                 \
+            tracerType epilogue_callback_ptr;                                                                                               \
+            ZE_GEN_TRACER_ARRAY_ENTRY(prologueCallbackPtr, currentTracerArray, i, corePrologues, callbackCategory, callbackFunctionType);   \
+            ZE_GEN_TRACER_ARRAY_ENTRY(epilogue_callback_ptr, currentTracerArray, i, coreEpilogues, callbackCategory, callbackFunctionType); \
+                                                                                                                                            \
+            L0::APITracerCallbackStateImp<tracerType> prologCallback;                                                                       \
+            prologCallback.current_api_callback = prologueCallbackPtr;                                                                      \
+            prologCallback.pUserData = currentTracerArray->tracerArrayEntries[i].pUserData;                                                 \
+            perApiCallbackData.prologCallbacks.push_back(prologCallback);                                                                   \
+                                                                                                                                            \
+            L0::APITracerCallbackStateImp<tracerType> epilogCallback;                                                                       \
+            epilogCallback.current_api_callback = epilogue_callback_ptr;                                                                    \
+            epilogCallback.pUserData = currentTracerArray->tracerArrayEntries[i].pUserData;                                                 \
+            perApiCallbackData.epilogCallbacks.push_back(epilogCallback);                                                                   \
+        }                                                                                                                                   \
     }
 
 template <typename TFunction_pointer, typename TParams, typename TTracer, typename TTracerPrologCallbacks, typename TTracerEpilogCallbacks, typename... Args>
