@@ -987,6 +987,14 @@ struct IsGfxCore {
     }
 };
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct IsAtMostGfxCore {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        return NEO::ToGfxCoreFamily<productFamily>::get() <= gfxCoreFamily;
+    }
+};
+
 template <PRODUCT_FAMILY product>
 struct IsProduct {
     template <PRODUCT_FAMILY productFamily>

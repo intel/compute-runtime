@@ -885,6 +885,12 @@ HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenMinimalSIMDSizeIsQueriedThen8Is
     EXPECT_EQ(8u, helper.getMinimalSIMDSize());
 }
 
+using isAtMostGen11 = IsAtMostGfxCore<IGFX_GEN11LP_CORE>;
+HWTEST2_F(HwHelperTest, givenSingleEnginePlatformWhenGettingComputeEngineIndexByOrdinalThenZeroIndexIsReturned, isAtMostGen11) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(0u, helper.getComputeEngineIndexByOrdinal(*defaultHwInfo, 0));
+}
+
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, WhenIsFusedEuDispatchEnabledIsCalledThenFalseIsReturned) {
     if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
         GTEST_SKIP();

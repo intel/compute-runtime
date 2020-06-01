@@ -91,6 +91,33 @@ TEST_F(CommandQueueCreate, givenOrdinalThenQueueIsCreatedOnlyIfOrdinalIsLessThan
     }
 }
 
+TEST_F(CommandQueueCreate, givenOrdinalWhenQueueIsCreatedThenCorrectEngineIsSelected) {
+    ze_device_properties_t deviceProperties;
+    ze_result_t res = device->getProperties(&deviceProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto numOfComputeEngines = NEO::HwHelper::getEnginesCount(device->getNEODevice()->getHardwareInfo());
+
+    ze_command_queue_desc_t desc = {};
+    desc.version = ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT;
+
+    ze_command_queue_handle_t commandQueue = {};
+
+    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+
+    for (uint32_t i = 0; i < numOfComputeEngines; i++) {
+        desc.ordinal = i;
+        res = device->createCommandQueue(&desc, &commandQueue);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        ASSERT_NE(nullptr, commandQueue);
+
+        EXPECT_EQ(device->getNEODevice()->getEngine(hwHelper.getComputeEngineIndexByOrdinal(*defaultHwInfo, i)).commandStreamReceiver,
+                  static_cast<CommandQueue *>(commandQueue)->getCsr());
+
+        L0::CommandQueue::fromHandle(commandQueue)->destroy();
+    }
+}
+
 using CommandQueueSBASupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
 struct MockMemoryManagerCommandQueueSBA : public MemoryManagerMock {

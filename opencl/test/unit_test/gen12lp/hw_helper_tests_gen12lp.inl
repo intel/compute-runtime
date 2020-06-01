@@ -194,6 +194,21 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenTgllpWhenIsFusedEuDispatchEnabledIsCalle
     }
 }
 
+GEN12LPTEST_F(HwHelperTestGen12Lp, whenGettingComputeEngineIndexByOrdinalThenCorrectIndexIsReturned) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrCCSNode = true;
+
+    EXPECT_EQ(helper.internalUsageEngineIndex + 1, helper.getComputeEngineIndexByOrdinal(hwInfo, 0));
+    EXPECT_EQ(0u, helper.getComputeEngineIndexByOrdinal(hwInfo, 1));
+    if (helper.getEnginesCount(hwInfo) > 1) {
+        auto engine0 = helper.getGpgpuEngineInstances(hwInfo)[helper.getComputeEngineIndexByOrdinal(hwInfo, 0)];
+        auto engine1 = helper.getGpgpuEngineInstances(hwInfo)[helper.getComputeEngineIndexByOrdinal(hwInfo, 1)];
+
+        EXPECT_NE(engine0, engine1);
+    }
+}
+
 class HwHelperTestsGen12LpBuffer : public ::testing::Test {
   public:
     void SetUp() override {

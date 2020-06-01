@@ -128,13 +128,7 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        if (desc->ordinal == 0) {
-            csr = neoDevice->getEngine(0).commandStreamReceiver;
-        } else {
-            // Skip low-priority and internal engines in engines vector
-            csr = neoDevice->getEngine(desc->ordinal + hwHelper.internalUsageEngineIndex).commandStreamReceiver;
-        }
-
+        csr = neoDevice->getEngine(hwHelper.getComputeEngineIndexByOrdinal(hardwareInfo, desc->ordinal)).commandStreamReceiver;
         UNRECOVERABLE_IF(csr == nullptr);
     }
     *commandQueue = CommandQueue::create(productFamily, this, csr, desc, useBliter);

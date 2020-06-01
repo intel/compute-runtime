@@ -41,6 +41,7 @@ class HwHelper {
     virtual uint32_t getMaxNumSamplers() const = 0;
     virtual void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
+    virtual uint32_t getComputeEngineIndexByOrdinal(const HardwareInfo &hwInfo, uint32_t ordinal) const = 0;
     virtual void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) = 0;
     virtual bool isL3Configurable(const HardwareInfo &hwInfo) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) = 0;
@@ -164,6 +165,13 @@ class HwHelperHw : public HwHelper {
     void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) override;
 
     void adjustDefaultEngineType(HardwareInfo *pHwInfo) override;
+
+    uint32_t getComputeEngineIndexByOrdinal(const HardwareInfo &hwInfo, uint32_t ordinal) const override {
+        if (hwInfo.featureTable.ftrCCSNode && ordinal < hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled) {
+            return ordinal + internalUsageEngineIndex + 1;
+        }
+        return 0;
+    }
 
     void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) override;
 
