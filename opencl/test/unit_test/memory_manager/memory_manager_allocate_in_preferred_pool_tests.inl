@@ -25,7 +25,9 @@ class MemoryManagerGetAlloctionDataTest : public testing::TestWithParam<Graphics
     void TearDown() override {}
 };
 
-TEST(MemoryManagerGetAlloctionDataTest, givenHostMemoryAllocationTypeAndAllocateMemoryFlagAndNullptrWhenAllocationDataIsQueriedThenCorrectFlagsAndSizeAreSet) {
+using MemoryManagerGetAlloctionDataTests = ::testing::Test;
+
+TEST_F(MemoryManagerGetAlloctionDataTests, givenHostMemoryAllocationTypeAndAllocateMemoryFlagAndNullptrWhenAllocationDataIsQueriedThenCorrectFlagsAndSizeAreSet) {
     AllocationData allocData;
     AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, {});
     MockMemoryManager mockMemoryManager;
@@ -36,7 +38,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenHostMemoryAllocationTypeAndAllocate
     EXPECT_EQ(nullptr, allocData.hostPtr);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenNonHostMemoryAllocatoinTypeWhenAllocationDataIsQueriedThenUseSystemMemoryFlagsIsNotSet) {
+TEST_F(MemoryManagerGetAlloctionDataTests, givenNonHostMemoryAllocatoinTypeWhenAllocationDataIsQueriedThenUseSystemMemoryFlagsIsNotSet) {
     AllocationData allocData;
     AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false, {});
 
@@ -48,7 +50,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenNonHostMemoryAllocatoinTypeWhenAllo
     EXPECT_EQ(nullptr, allocData.hostPtr);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
+HWTEST_F(MemoryManagerGetAlloctionDataTests, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
     AllocationData allocData;
     AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::COMMAND_BUFFER, false, {});
 
@@ -58,7 +60,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenCommandBufferAllocationTypeWhenGetA
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenAllocateMemoryFlagTrueWhenHostPtrIsNotNullThenAllocationDataHasHostPtrNulled) {
+TEST_F(MemoryManagerGetAlloctionDataTests, givenAllocateMemoryFlagTrueWhenHostPtrIsNotNullThenAllocationDataHasHostPtrNulled) {
     AllocationData allocData;
     char memory = 0;
     AllocationProperties properties(0, true, sizeof(memory), GraphicsAllocation::AllocationType::BUFFER, false, {});
@@ -70,7 +72,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenAllocateMemoryFlagTrueWhenHostPtrIs
     EXPECT_EQ(nullptr, allocData.hostPtr);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenBufferTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
+TEST_F(MemoryManagerGetAlloctionDataTests, givenBufferTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
     AllocationData allocData;
     AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER, false, {});
 
@@ -80,7 +82,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenBufferTypeWhenAllocationDataIsQueri
     EXPECT_TRUE(allocData.flags.forcePin);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenBufferHostMemoryTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
+TEST_F(MemoryManagerGetAlloctionDataTests, givenBufferHostMemoryTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
     AllocationData allocData;
     AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, false, {});
 
@@ -90,7 +92,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenBufferHostMemoryTypeWhenAllocationD
     EXPECT_TRUE(allocData.flags.forcePin);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenBufferCompressedTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
+TEST_F(MemoryManagerGetAlloctionDataTests, givenBufferCompressedTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
     AllocationData allocData;
     AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, false, {});
 
@@ -100,7 +102,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenBufferCompressedTypeWhenAllocationD
     EXPECT_TRUE(allocData.flags.forcePin);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenWriteCombinedTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
+TEST_F(MemoryManagerGetAlloctionDataTests, givenWriteCombinedTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
     AllocationData allocData;
     AllocationProperties properties(0, true, 10, GraphicsAllocation::AllocationType::WRITE_COMBINED, false, {});
 
@@ -110,7 +112,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenWriteCombinedTypeWhenAllocationData
     EXPECT_TRUE(allocData.flags.forcePin);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenDefaultAllocationFlagsWhenAllocationDataIsQueriedThenAllocateMemoryIsFalse) {
+TEST_F(MemoryManagerGetAlloctionDataTests, givenDefaultAllocationFlagsWhenAllocationDataIsQueriedThenAllocateMemoryIsFalse) {
     AllocationData allocData;
     AllocationProperties properties(0, false, 0, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, false, {});
     char memory;
@@ -120,7 +122,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenDefaultAllocationFlagsWhenAllocatio
     EXPECT_FALSE(allocData.flags.allocateMemory);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenDebugModeWhenCertainAllocationTypesAreSelectedThenSystemPlacementIsChoosen) {
+TEST_F(MemoryManagerGetAlloctionDataTests, givenDebugModeWhenCertainAllocationTypesAreSelectedThenSystemPlacementIsChoosen) {
     DebugManagerStateRestore restorer;
     auto allocationType = GraphicsAllocation::AllocationType::BUFFER;
     auto mask = 1llu << (static_cast<int64_t>(allocationType) - 1);
