@@ -93,6 +93,8 @@ class DrmMemoryManager : public MemoryManager {
     bool forcePinEnabled = false;
     const bool validateHostPtrMemory;
     std::unique_ptr<DrmGemCloseWorker> gemCloseWorker;
+    decltype(&mmap) mmapFunction = mmap;
+    decltype(&munmap) munmapFunction = munmap;
     decltype(&lseek) lseekFunction = lseek;
     decltype(&close) closeFunction = close;
     std::vector<BufferObject *> sharingBufferObjects;

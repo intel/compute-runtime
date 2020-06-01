@@ -24,6 +24,8 @@ TestedDrmMemoryManager::TestedDrmMemoryManager(ExecutionEnvironment &executionEn
                                                                                                                  false,
                                                                                                                  false,
                                                                                                                  executionEnvironment) {
+    this->mmapFunction = &mmapMock;
+    this->munmapFunction = &munmapMock;
     this->lseekFunction = &lseekMock;
     this->closeFunction = &closeMock;
     lseekReturn = 4096;
@@ -39,6 +41,8 @@ TestedDrmMemoryManager::TestedDrmMemoryManager(bool enableLocalMemory,
                                                                                                                  allowForcePin,
                                                                                                                  validateHostPtrMemory,
                                                                                                                  executionEnvironment) {
+    this->mmapFunction = &mmapMock;
+    this->munmapFunction = &munmapMock;
     this->lseekFunction = &lseekMock;
     this->closeFunction = &closeMock;
     lseekReturn = 4096;
