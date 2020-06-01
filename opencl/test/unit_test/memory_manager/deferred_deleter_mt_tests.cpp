@@ -13,12 +13,12 @@
 
 using namespace NEO;
 
-TEST(DeferredDeleter, NonCopyable) {
+TEST(DeferredDeleter, WhenDeferredDeleterIsCreatedThenItIsNotMoveableOrCopyable) {
     EXPECT_FALSE(std::is_move_constructible<DeferredDeleter>::value);
     EXPECT_FALSE(std::is_copy_constructible<DeferredDeleter>::value);
 }
 
-TEST(DeferredDeleter, NonAssignable) {
+TEST(DeferredDeleter, WhenDeferredDeleterIsCreatedThenItIsNotAssignable) {
     EXPECT_FALSE(std::is_move_assignable<DeferredDeleter>::value);
     EXPECT_FALSE(std::is_copy_assignable<DeferredDeleter>::value);
 }
@@ -45,7 +45,7 @@ struct DeferredDeleterTest : public ::testing::Test {
     std::unique_ptr<MockDeferredDeleter> deleter;
 };
 
-TEST_F(DeferredDeleterTest, initialValues) {
+TEST_F(DeferredDeleterTest, WhenDeferredDeleterIsCreatedThenInitialValuesAreSetCorrectly) {
     EXPECT_EQ(0, deleter->getClientsNum());
     EXPECT_FALSE(deleter->isWorking());
     EXPECT_FALSE(deleter->isThreadRunning());
@@ -59,7 +59,7 @@ TEST_F(DeferredDeleterTest, initialValues) {
     EXPECT_FALSE(deleter->expectedDrainValue);
 }
 
-TEST_F(DeferredDeleterTest, clearQueueWithOnePair) {
+TEST_F(DeferredDeleterTest, WhenDrainingThenQueueIsUpdated) {
     auto deletion = createDeletion();
     deleter->DeferredDeleter::deferDeletion(deletion);
     EXPECT_FALSE(deleter->isQueueEmpty());
@@ -69,7 +69,7 @@ TEST_F(DeferredDeleterTest, clearQueueWithOnePair) {
     EXPECT_EQ(1, deleter->clearCalled);
 }
 
-TEST_F(DeferredDeleterTest, addTwoClients) {
+TEST_F(DeferredDeleterTest, GivenTwoClientsWhenProcessingDeletionsThenOperationsAreHandledCorrectly) {
     deleter->DeferredDeleter::addClient();
     waitForAsyncThread();
     EXPECT_TRUE(deleter->isThreadRunning());
@@ -87,7 +87,7 @@ TEST_F(DeferredDeleterTest, addTwoClients) {
     EXPECT_FALSE(deleter->isThreadRunning());
 }
 
-TEST_F(DeferredDeleterTest, addAndRemoveTwoClients) {
+TEST_F(DeferredDeleterTest, WhenAddingAndRemovingClientsThenOperationsAreHandledCorrectly) {
     deleter->DeferredDeleter::addClient();
     deleter->DeferredDeleter::addClient();
     waitForAsyncThread();
@@ -105,7 +105,7 @@ TEST_F(DeferredDeleterTest, addAndRemoveTwoClients) {
     EXPECT_FALSE(deleter->isThreadRunning());
 }
 
-TEST_F(DeferredDeleterTest, drainWhenNotWorking) {
+TEST_F(DeferredDeleterTest, GivenNotWorkingWhenDrainingThenOperationIsCompleted) {
     EXPECT_FALSE(deleter->isWorking());
     deleter->drain();
     EXPECT_EQ(1, deleter->drainCalled);
@@ -113,7 +113,7 @@ TEST_F(DeferredDeleterTest, drainWhenNotWorking) {
     EXPECT_EQ(2, deleter->areElementsReleasedCalled);
 }
 
-TEST_F(DeferredDeleterTest, drainWhenWorking) {
+TEST_F(DeferredDeleterTest, GivenWorkingWhenDrainingThenOperationIsCompleted) {
     deleter->DeferredDeleter::addClient();
     waitForAsyncThread();
     EXPECT_TRUE(deleter->isWorking());
@@ -123,7 +123,7 @@ TEST_F(DeferredDeleterTest, drainWhenWorking) {
     deleter->forceStop();
 }
 
-TEST_F(DeferredDeleterTest, stopWhenThreadNotRunning) {
+TEST_F(DeferredDeleterTest, GivenThreadNotRunningWhenStoppingThenQueueIsEmptied) {
     auto deletion = createDeletion();
     deleter->DeferredDeleter::deferDeletion(deletion);
     EXPECT_FALSE(deleter->isQueueEmpty());
@@ -134,7 +134,7 @@ TEST_F(DeferredDeleterTest, stopWhenThreadNotRunning) {
     EXPECT_NE(0, deleter->drainCalled);
 }
 
-TEST_F(DeferredDeleterTest, stopWhenThreadRunning) {
+TEST_F(DeferredDeleterTest, GivenThreadRunningWhenStoppingThenQueueIsEmptied) {
     deleter->DeferredDeleter::addClient();
     auto deletion = createDeletion();
     deleter->DeferredDeleter::deferDeletion(deletion);
@@ -147,7 +147,7 @@ TEST_F(DeferredDeleterTest, stopWhenThreadRunning) {
     EXPECT_NE(0, deleter->drainCalled);
 }
 
-TEST_F(DeferredDeleterTest, asyncThreadWaitsForQueueItem) {
+TEST_F(DeferredDeleterTest, GivenAsyncThreadWaitsForQueueItemWhenDeletingThenQueueIsEmptied) {
     deleter->DeferredDeleter::addClient();
 
     waitForAsyncThread();
@@ -163,7 +163,7 @@ TEST_F(DeferredDeleterTest, asyncThreadWaitsForQueueItem) {
     EXPECT_TRUE(deleter->isQueueEmpty());
 }
 
-TEST_F(DeferredDeleterTest, asyncThreadClearQueueWithoutWaitingForQueueItem) {
+TEST_F(DeferredDeleterTest, GivenAsyncThreadClearQueueWithoutWaitingForQueueItemWhenDeletingThenQueueIsEmptied) {
     auto deletion = createDeletion();
     deleter->DeferredDeleter::deferDeletion(deletion);
 
@@ -180,7 +180,7 @@ TEST_F(DeferredDeleterTest, asyncThreadClearQueueWithoutWaitingForQueueItem) {
     EXPECT_TRUE(deleter->isQueueEmpty());
 }
 
-TEST_F(DeferredDeleterTest, asyncThreadWaitsForQueueItemTwice) {
+TEST_F(DeferredDeleterTest, GivenAsyncThreadWaitsForQueueItemTwiceWhenDeletingThenQueueIsEmptied) {
     deleter->DeferredDeleter::addClient();
 
     waitForAsyncThread();
@@ -207,7 +207,7 @@ TEST_F(DeferredDeleterTest, asyncThreadWaitsForQueueItemTwice) {
     EXPECT_EQ(0, deleter->getElementsToRelease());
 }
 
-TEST_F(DeferredDeleterTest, checkIfAllElementsAreReleased) {
+TEST_F(DeferredDeleterTest, WhenReleasingAllElementsAreReleased) {
     deleter->setElementsToRelease(1);
     EXPECT_EQ(1, deleter->getElementsToRelease());
     EXPECT_FALSE(deleter->baseAreElementsReleased());
@@ -216,7 +216,7 @@ TEST_F(DeferredDeleterTest, checkIfAllElementsAreReleased) {
     EXPECT_TRUE(deleter->baseAreElementsReleased());
 }
 
-TEST_F(DeferredDeleterTest, checkIfThreadShouldStop) {
+TEST_F(DeferredDeleterTest, WhenSettingDoWorkInBackgroundThenThreadShouldStopIsSetCorrectly) {
     deleter->setDoWorkInBackgroundValue(false);
     EXPECT_TRUE(deleter->baseShouldStop());
     deleter->setDoWorkInBackgroundValue(true);
