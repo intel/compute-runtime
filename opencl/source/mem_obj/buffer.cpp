@@ -23,6 +23,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/utilities/debug_settings_reader_creator.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
@@ -30,6 +31,7 @@
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/helpers/validators.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
+#include "opencl/source/os_interface/ocl_reg_path.h"
 
 namespace NEO {
 
@@ -357,7 +359,7 @@ Buffer *Buffer::create(Context *context,
         return nullptr;
     }
 
-    if (DebugManager.flags.MakeAllBuffersResident.get()) {
+    if (isMakeAllBuffersResidentSet()) {
         auto graphicsAllocation = pBuffer->getGraphicsAllocation();
         context->getDevice(0u)->getRootDeviceEnvironment().memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1));
     }
@@ -445,6 +447,19 @@ GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const Memor
 bool Buffer::isReadOnlyMemoryPermittedByFlags(const MemoryProperties &properties) {
     // Host won't access or will only read and kernel will only read
     return (properties.flags.hostNoAccess || properties.flags.hostReadOnly) && properties.flags.readOnly;
+}
+
+bool Buffer::isMakeAllBuffersResidentSet() {
+    static std::once_flag isMakeAllBufferResidentObtained;
+
+    std::call_once(isMakeAllBufferResidentObtained, [&]() {
+        auto value = DebugManager.flags.MakeAllBuffersResident.get();
+        auto settingsReader = SettingsReaderCreator::create(oclRegPath);
+        value |= settingsReader->getSetting("MakeAllBuffersResident", false);
+        DebugManager.flags.MakeAllBuffersResident.set(value);
+    });
+
+    return DebugManager.flags.MakeAllBuffersResident.get();
 }
 
 Buffer *Buffer::createSubBuffer(cl_mem_flags flags,

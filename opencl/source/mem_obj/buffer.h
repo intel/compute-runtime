@@ -182,6 +182,7 @@ class Buffer : public MemObj {
                                                                         bool renderCompressedBuffers, bool localMemoryEnabled,
                                                                         bool preferCompression);
     static bool isReadOnlyMemoryPermittedByFlags(const MemoryProperties &properties);
+    static bool isMakeAllBuffersResidentSet();
 
     void transferData(void *dst, void *src, size_t copySize, size_t copyOffset);
 };
