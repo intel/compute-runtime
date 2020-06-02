@@ -13,6 +13,7 @@ set(CORE_SRCS_GENX_H_BASE
 set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
   command_encoder
   command_stream_receiver_hw
+  hw_helper
   preamble
   preemption
 )

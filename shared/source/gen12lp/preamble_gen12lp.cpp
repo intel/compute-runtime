@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/preamble_bdw_plus.inl"
 
-#include "opencl/source/gen12lp/helpers_gen12lp.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 
 #include "pipe_control_args.h"

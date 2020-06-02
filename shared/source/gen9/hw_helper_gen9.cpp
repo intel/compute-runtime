@@ -8,8 +8,6 @@
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/hw_helper_bdw_plus.inl"
 
-#include "opencl/source/aub/aub_helper_bdw_plus.inl"
-
 namespace NEO {
 typedef SKLFamily Family;
 
@@ -36,7 +34,6 @@ uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Gen9);
 }
 
-template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

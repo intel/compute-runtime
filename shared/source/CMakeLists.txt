@@ -65,6 +65,14 @@ else()
   list(APPEND CORE_SOURCES ${CORE_SRCS_GENX_ALL_LINUX})
 endif()
 
+macro(macro_for_each_gen)
+  append_sources_from_properties(CORE_SOURCES
+      SHARED_SRCS_ADDITIONAL_FILES_${GEN_TYPE}
+  )
+endmacro()
+
+apply_macro_for_each_gen("SUPPORTED")
+
 append_sources_from_properties(CORE_SOURCES
     NEO_CORE_BUILT_INS
     NEO_CORE_COMMAND_STREAM

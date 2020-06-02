@@ -7,10 +7,10 @@
 
 #include "hardware_commands_helper_gen12lp.inl"
 
+#include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/gen12lp/hw_cmds.h"
 
 #include "opencl/source/command_queue/command_queue.h"
-#include "opencl/source/gen12lp/helpers_gen12lp.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/hardware_commands_helper_base.inl"
 #include "opencl/source/helpers/hardware_commands_helper_bdw_plus.inl"

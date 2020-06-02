@@ -26,7 +26,6 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
   experimental_command_buffer
   gpgpu_walker
   hardware_commands_helper
-  hw_helper
   hw_info
   image
   sampler
