@@ -6,7 +6,6 @@
  */
 
 #include "opencl/source/sampler/sampler.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"

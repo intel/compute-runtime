@@ -18,7 +18,6 @@
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/event/event_fixture.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"

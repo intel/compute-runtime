@@ -13,8 +13,8 @@
 #include "shared/source/helpers/string.h"
 
 #include "opencl/source/compiler_interface/default_cl_cache_config.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/global_environment.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "test.h"

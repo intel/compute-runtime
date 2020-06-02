@@ -13,9 +13,9 @@
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/kernel_info.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
 #include "opencl/test/unit_test/libult/source_level_debugger_library.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 
