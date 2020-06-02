@@ -21,8 +21,6 @@
 
 namespace NEO {
 
-using AllocationData = TestedDrmMemoryManager::AllocationData;
-
 class DrmMemoryManagerBasic : public ::testing::Test {
   public:
     DrmMemoryManagerBasic() : executionEnvironment(defaultHwInfo.get(), false, numRootDevices){};

@@ -380,7 +380,7 @@ TEST_F(MemoryAllocatorTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocatio
     handleStorage.fragmentStorageData[1].fragmentSize = size * 2;
     handleStorage.fragmentStorageData[2].fragmentSize = size * 3;
 
-    MockMemoryManager::AllocationData allocationData;
+    AllocationData allocationData;
     allocationData.size = size;
     allocationData.hostPtr = ptr;
     auto allocation = std::unique_ptr<GraphicsAllocation>(memoryManager->createGraphicsAllocation(handleStorage, allocationData));
@@ -456,7 +456,7 @@ TEST_F(MemoryAllocatorTest, givenAllocationWithFragmentsWhenCallingFreeGraphicsM
 }
 
 TEST_F(MemoryAllocatorTest, GivenShareableEnabledAndDisabledWhenAskedToCreateGrahicsAllocationThenValidAllocationIsReturned) {
-    MockMemoryManager::AllocationData allocationData;
+    AllocationData allocationData;
     allocationData.type = GraphicsAllocation::AllocationType::BUFFER;
 
     allocationData.flags.shareable = 1u;
@@ -664,7 +664,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    MockMemoryManager::AllocationData allocationData;
+    AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
 
     auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(allocationData);
@@ -683,7 +683,7 @@ TEST(OsAgnosticMemoryManager, givenEnabledLocalMemoryWhenAllocateGraphicsMemoryF
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    MockMemoryManager::AllocationData allocationData;
+    AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
 
     auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(allocationData);
@@ -719,7 +719,7 @@ TEST(OsAgnosticMemoryManager, givenHostPointerNotRequiringCopyWhenAllocateGraphi
     bool copyRequired = MockMemoryManager::isCopyRequired(imgInfo, hostPtr);
     EXPECT_FALSE(copyRequired);
 
-    MockMemoryManager::AllocationData allocationData;
+    AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
     allocationData.hostPtr = hostPtr;
     allocationData.size = imgInfo.size;
@@ -758,7 +758,7 @@ TEST(OsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsM
     bool copyRequired = MockMemoryManager::isCopyRequired(imgInfo, hostPtr);
     EXPECT_TRUE(copyRequired);
 
-    MockMemoryManager::AllocationData allocationData;
+    AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
     allocationData.hostPtr = hostPtr;
 
@@ -1277,7 +1277,7 @@ TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAlloc
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    MockMemoryManager::AllocationData allocationData;
+    AllocationData allocationData;
     allocationData.imgInfo = &imgInfo;
     allocationData.type = GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY;
 
@@ -1291,7 +1291,7 @@ TEST(MemoryManager, givenShareableWhenAllocatingGraphicsMemoryThenAllocateSharea
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     MockMemoryManager memoryManager(false, true, *executionEnvironment);
 
-    MockMemoryManager::AllocationData allocationData;
+    AllocationData allocationData;
     allocationData.size = 4096u;
     allocationData.type = GraphicsAllocation::AllocationType::BUFFER;
     allocationData.flags.shareable = true;

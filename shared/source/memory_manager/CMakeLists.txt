@@ -32,7 +32,6 @@ set(NEO_CORE_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/local_memory_usage.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.h
-  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/memory_manager_extra.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_operations_handler.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_operations_status.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_pool.h

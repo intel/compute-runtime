@@ -75,4 +75,33 @@ struct AllocationProperties {
         flags.multiOsContextCapable = multiOsContextCapableParam;
     }
 };
+
+struct AllocationData {
+    union {
+        struct {
+            uint32_t allocateMemory : 1;
+            uint32_t allow64kbPages : 1;
+            uint32_t allow32Bit : 1;
+            uint32_t useSystemMemory : 1;
+            uint32_t forcePin : 1;
+            uint32_t uncacheable : 1;
+            uint32_t flushL3 : 1;
+            uint32_t preferRenderCompressed : 1;
+            uint32_t multiOsContextCapable : 1;
+            uint32_t requiresCpuAccess : 1;
+            uint32_t shareable : 1;
+            uint32_t resource48Bit : 1;
+            uint32_t reserved : 20;
+        } flags;
+        uint32_t allFlags = 0;
+    };
+    static_assert(sizeof(AllocationData::flags) == sizeof(AllocationData::allFlags), "");
+    GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::UNKNOWN;
+    const void *hostPtr = nullptr;
+    size_t size = 0;
+    size_t alignment = 0;
+    StorageInfo storageInfo = {};
+    ImageInfo *imgInfo = nullptr;
+    uint32_t rootDeviceIndex = 0;
+};
 } // namespace NEO
