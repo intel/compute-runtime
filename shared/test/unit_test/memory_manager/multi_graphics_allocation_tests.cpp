@@ -83,3 +83,21 @@ TEST(MultiGraphicsAllocationTest, WhenCreatingMultiGraphicsAllocationWithoutGrap
     MockMultiGraphicsAllocation multiGraphicsAllocation(1);
     EXPECT_EQ(nullptr, multiGraphicsAllocation.getDefaultGraphicsAllocation());
 }
+
+TEST(MultiGraphicsAllocationTest, givenMultiGraphicsAllocationwhenRemovingGraphicsAllocationThenTheAllocationIsNoLongerAvailable) {
+    uint32_t rootDeviceIndex = 1u;
+    GraphicsAllocation graphicsAllocation(rootDeviceIndex,
+                                          GraphicsAllocation::AllocationType::BUFFER,
+                                          nullptr, 0, 0, MemoryPool::System4KBPages);
+
+    MockMultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
+    EXPECT_EQ(2u, multiGraphicsAllocation.graphicsAllocations.size());
+
+    multiGraphicsAllocation.addAllocation(&graphicsAllocation);
+
+    EXPECT_EQ(&graphicsAllocation, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
+
+    multiGraphicsAllocation.removeAllocation(rootDeviceIndex);
+
+    EXPECT_EQ(nullptr, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex));
+}

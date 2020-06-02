@@ -166,7 +166,7 @@ HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubD
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
     ASSERT_NE(nullptr, buffer);
 
-    auto gfxAllocation = buffer->getGraphicsAllocation();
+    auto gfxAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
     auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
@@ -179,7 +179,7 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
     std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(&context));
     ASSERT_NE(nullptr, image);
 
-    auto gfxAllocation = image->getGraphicsAllocation();
+    auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
     auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
@@ -197,7 +197,7 @@ HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubD
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
     ASSERT_NE(nullptr, buffer);
 
-    auto gfxAllocation = buffer->getGraphicsAllocation();
+    auto gfxAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
     auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
@@ -224,13 +224,13 @@ HWTEST_F(AubAllocDumpTests, givenWritableBufferWhenDumpAllocationIsCalledAndAubD
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AUBDumpBufferFormat.set("TRE");
 
-    MockContext context;
+    MockContext context(pClDevice);
     size_t bufferSize = 10;
     auto retVal = CL_INVALID_VALUE;
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
     ASSERT_NE(nullptr, buffer);
 
-    auto gfxAllocation = buffer->getGraphicsAllocation();
+    auto gfxAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
     auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
@@ -266,11 +266,11 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AUBDumpImageFormat.set("BMP");
 
-    MockContext context;
+    MockContext context(pClDevice);
     std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(&context));
     ASSERT_NE(nullptr, image);
 
-    auto gfxAllocation = image->getGraphicsAllocation();
+    auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
     auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
@@ -309,11 +309,11 @@ HWTEST_F(AubAllocDumpTests, givenWritableImageWhenDumpAllocationIsCalledAndAubDu
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AUBDumpImageFormat.set("TRE");
 
-    MockContext context;
+    MockContext context(pClDevice);
     std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));
     ASSERT_NE(nullptr, image);
 
-    auto gfxAllocation = image->getGraphicsAllocation();
+    auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto handle = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(this));
     auto format = AubAllocDump::getDumpFormat(*gfxAllocation);
@@ -350,11 +350,11 @@ HWTEST_F(AubAllocDumpTests, givenCompressedImageWritableWhenDumpAllocationIsCall
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AUBDumpImageFormat.set("TRE");
 
-    MockContext context;
+    MockContext context(pClDevice);
     std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));
     ASSERT_NE(nullptr, image);
 
-    auto gfxAllocation = image->getGraphicsAllocation();
+    auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     gfxAllocation->getDefaultGmm()->isRenderCompressed = true;
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
@@ -369,11 +369,11 @@ HWTEST_F(AubAllocDumpTests, givenMultisampleImageWritableWhenDumpAllocationIsCal
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AUBDumpImageFormat.set("TRE");
 
-    MockContext context;
+    MockContext context(pClDevice);
     std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));
     ASSERT_NE(nullptr, image);
 
-    auto gfxAllocation = image->getGraphicsAllocation();
+    auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     auto mockGmmResourceInfo = reinterpret_cast<MockGmmResourceInfo *>(gfxAllocation->getDefaultGmm()->gmmResourceInfo.get());
     mockGmmResourceInfo->mockResourceCreateParams.MSAA.NumSamples = 2;
 
@@ -386,11 +386,11 @@ HWTEST_F(AubAllocDumpTests, givenMultisampleImageWritableWhenDumpAllocationIsCal
 }
 
 HWTEST_F(AubAllocDumpTests, givenMultisampleImageWritableWheGetDumpSurfaceIsCalledAndDumpFormatIsSpecifiedThenNullSurfaceInfoIsReturned) {
-    MockContext context;
+    MockContext context(pClDevice);
     std::unique_ptr<Image> image(ImageHelper<Image2dDefaults>::create(&context));
     ASSERT_NE(nullptr, image);
 
-    auto gfxAllocation = image->getGraphicsAllocation();
+    auto gfxAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     auto mockGmmResourceInfo = reinterpret_cast<MockGmmResourceInfo *>(gfxAllocation->getDefaultGmm()->gmmResourceInfo.get());
     mockGmmResourceInfo->mockResourceCreateParams.MSAA.NumSamples = 2;
 

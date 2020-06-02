@@ -759,10 +759,10 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     cl_mem clMem1 = &buffer1;
     cl_mem clMem2 = &buffer2;
     cl_mem clMem3 = &buffer3;
-    buffer0.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-    buffer1.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-    buffer2.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-    buffer3.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer0.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    buffer1.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    buffer2.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer3.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
     mockKernel.mockKernel->auxTranslationRequired = true;
@@ -821,7 +821,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueue
     MockBuffer buffer;
     cl_mem clMem = &buffer;
 
-    buffer.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     mockKernel.kernelInfo.kernelArgInfo.resize(1);
     mockKernel.kernelInfo.kernelArgInfo.at(0).kernelArgPatchInfoVector.resize(1);
     mockKernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
@@ -857,7 +857,7 @@ HWTEST_F(EnqueueAuxKernelTests, givenDebugVariableDisablingBuiltinTranslationWhe
     MockBuffer buffer;
     cl_mem clMem = &buffer;
 
-    buffer.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     mockKernel.kernelInfo.kernelArgInfo.resize(1);
     mockKernel.kernelInfo.kernelArgInfo.at(0).kernelArgPatchInfoVector.resize(1);
     mockKernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;

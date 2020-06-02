@@ -50,9 +50,9 @@ TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, 
             size[0] = *sizePtr;
             offset[0] = *offsetPtr;
             if (doTransferOnCpu &&
-                (false == MemoryPool::isSystemMemoryPool(memObj->getGraphicsAllocation()->getMemoryPool())) &&
+                (false == MemoryPool::isSystemMemoryPool(memObj->getGraphicsAllocation(rootDeviceIndex)->getMemoryPool())) &&
                 (memObj->getMemoryManager() != nullptr)) {
-                this->lockedPtr = memObj->getMemoryManager()->lockResource(memObj->getGraphicsAllocation());
+                this->lockedPtr = memObj->getMemoryManager()->lockResource(memObj->getGraphicsAllocation(rootDeviceIndex));
             }
         } else {
             size = {{sizePtr[0], sizePtr[1], sizePtr[2]}};

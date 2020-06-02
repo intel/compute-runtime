@@ -194,7 +194,7 @@ HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSe
     }
     auto imageFormat = image->getImageFormat();
     auto imageDesc = image->getImageDesc();
-    auto graphicsAllocation = image->getGraphicsAllocation();
+    auto graphicsAllocation = image->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     auto surfaceFormatInfo = image->getSurfaceFormatInfo();
 
     mockedImage<FamilyType> mockImage(context,

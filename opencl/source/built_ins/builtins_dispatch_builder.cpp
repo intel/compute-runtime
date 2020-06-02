@@ -317,7 +317,8 @@ class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
         kernelSplit1DBuilder.setArg(SplitDispatch::RegionCoordX::Right, 1, static_cast<OffsetType>(operationParams.dstOffset.x + leftSize + middleSizeBytes));
 
         // Set-up srcMemObj with pattern
-        kernelSplit1DBuilder.setArgSvm(2, operationParams.srcMemObj->getSize(), operationParams.srcMemObj->getGraphicsAllocation()->getUnderlyingBuffer(), operationParams.srcMemObj->getGraphicsAllocation(), CL_MEM_READ_ONLY);
+        auto graphicsAllocation = operationParams.srcMemObj->getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
+        kernelSplit1DBuilder.setArgSvm(2, operationParams.srcMemObj->getSize(), graphicsAllocation->getUnderlyingBuffer(), graphicsAllocation, CL_MEM_READ_ONLY);
 
         // Set-up patternSizeInEls
         kernelSplit1DBuilder.setArg(SplitDispatch::RegionCoordX::Left, 3, static_cast<OffsetType>(operationParams.srcMemObj->getSize()));

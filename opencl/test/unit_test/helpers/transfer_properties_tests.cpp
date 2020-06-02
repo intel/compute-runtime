@@ -19,7 +19,7 @@ using namespace NEO;
 
 TEST(TransferPropertiesTest, givenTransferPropertiesCreatedWhenDefaultDebugSettingThenLockPtrIsNotSet) {
     MockBuffer buffer;
-    const uint32_t rootDeviceIndex = 1;
+    const uint32_t rootDeviceIndex = buffer.mockGfxAllocation.getRootDeviceIndex();
 
     size_t offset = 0;
     size_t size = 4096u;
@@ -77,7 +77,6 @@ TEST(TransferPropertiesTest, givenAllocationInSystemPoolWhenTransferPropertiesAr
     EXPECT_EQ(nullptr, transferProperties.lockedPtr);
 }
 
-
 TEST(TransferPropertiesTest, givenTransferPropertiesWhenLockedPtrIsSetThenItIsReturnedForReadWrite) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
@@ -98,7 +97,7 @@ TEST(TransferPropertiesTest, givenTransferPropertiesWhenLockedPtrIsSetThenItIsRe
 
 TEST(TransferPropertiesTest, givenTransferPropertiesWhenLockedPtrIsNotSetThenItIsNotReturnedForReadWrite) {
     MockBuffer buffer;
-    const uint32_t rootDeviceIndex = 1;
+    const uint32_t rootDeviceIndex = buffer.mockGfxAllocation.getRootDeviceIndex();
 
     size_t offset = 0;
     size_t size = 4096u;
@@ -109,7 +108,7 @@ TEST(TransferPropertiesTest, givenTransferPropertiesWhenLockedPtrIsNotSetThenItI
 
 TEST(TransferPropertiesTest, givenTransferPropertiesWhenLockedPtrIsSetThenLockedPtrWithMemObjOffsetIsReturnedForReadWrite) {
     MockBuffer buffer;
-    const uint32_t rootDeviceIndex = 1;
+    const uint32_t rootDeviceIndex = buffer.mockGfxAllocation.getRootDeviceIndex();
 
     void *lockedPtr = reinterpret_cast<void *>(0x1000);
     auto memObjOffset = MemoryConstants::cacheLineSize;

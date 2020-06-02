@@ -18,18 +18,16 @@ using namespace NEO;
 
 //Tests for pipes
 
-class PipeTest : public ClDeviceFixture, public ::testing::Test, public MemoryManagementFixture {
+class PipeTest : public ::testing::Test, public MemoryManagementFixture {
   public:
-    PipeTest() {}
-
   protected:
     void SetUp() override {
     }
     void TearDown() override {
     }
-    cl_int retVal = CL_SUCCESS;
+    cl_int retVal = CL_INVALID_PIPE_SIZE;
     MockContext context;
-    size_t size;
+    size_t size = 0u;
 };
 
 TEST_F(PipeTest, WhenCreatingPipeThenSuccessIsReturned) {
@@ -106,7 +104,7 @@ TEST_F(PipeTest, givenPipeWithDifferentCpuAndGpuAddressesWhenSetArgPipeThenUseGp
 
     EXPECT_EQ(21u, *reinterpret_cast<unsigned int *>(pipe->getCpuAddress()));
     uint64_t gpuAddress = 0x12345;
-    auto pipeAllocation = pipe->getGraphicsAllocation();
+    auto pipeAllocation = pipe->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     pipeAllocation->setCpuPtrAndGpuAddress(pipeAllocation->getUnderlyingBuffer(), gpuAddress);
     EXPECT_NE(reinterpret_cast<uint64_t>(pipeAllocation->getUnderlyingBuffer()), pipeAllocation->getGpuAddress());
     uint64_t valueToPatch;
@@ -124,7 +122,7 @@ TEST_F(MultiRootDeviceTests, pipeGraphicsAllocationHasCorrectRootDeviceIndex) {
     std::unique_ptr<Pipe> pipe(Pipe::create(context.get(), CL_MEM_READ_ONLY, 1, 20, nullptr, errCode));
     EXPECT_EQ(CL_SUCCESS, errCode);
     ASSERT_NE(nullptr, pipe.get());
-    auto graphicsAllocation = pipe->getGraphicsAllocation();
+    auto graphicsAllocation = pipe->getGraphicsAllocation(expectedRootDeviceIndex);
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_EQ(expectedRootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
 }

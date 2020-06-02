@@ -19,6 +19,7 @@ struct ClBlitProperties {
                                               CommandStreamReceiver &commandStreamReceiver,
                                               const BuiltinOpParams &builtinOpParams) {
 
+        auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
         if (BlitterConstants::BlitDirection::BufferToBuffer == blitDirection) {
             auto dstOffset = builtinOpParams.dstOffset.x;
             auto srcOffset = builtinOpParams.srcOffset.x;
@@ -28,8 +29,8 @@ struct ClBlitProperties {
             if (!builtinOpParams.dstSvmAlloc) {
                 dstOffset += builtinOpParams.dstMemObj->getOffset();
                 srcOffset += builtinOpParams.srcMemObj->getOffset();
-                dstAllocation = builtinOpParams.dstMemObj->getGraphicsAllocation();
-                srcAllocation = builtinOpParams.srcMemObj->getGraphicsAllocation();
+                dstAllocation = builtinOpParams.dstMemObj->getGraphicsAllocation(rootDeviceIndex);
+                srcAllocation = builtinOpParams.srcMemObj->getGraphicsAllocation(rootDeviceIndex);
             } else {
                 dstAllocation = builtinOpParams.dstSvmAlloc;
                 srcAllocation = builtinOpParams.srcSvmAlloc;
@@ -76,7 +77,7 @@ struct ClBlitProperties {
                 gpuAllocation = builtinOpParams.dstSvmAlloc;
                 hostAllocation = builtinOpParams.srcSvmAlloc;
             } else {
-                gpuAllocation = builtinOpParams.dstMemObj->getGraphicsAllocation();
+                gpuAllocation = builtinOpParams.dstMemObj->getGraphicsAllocation(rootDeviceIndex);
                 memObjGpuVa = (gpuAllocation->getGpuAddress() + builtinOpParams.dstMemObj->getOffset());
             }
 
@@ -101,7 +102,7 @@ struct ClBlitProperties {
                 gpuAllocation = builtinOpParams.srcSvmAlloc;
                 hostAllocation = builtinOpParams.dstSvmAlloc;
             } else {
-                gpuAllocation = builtinOpParams.srcMemObj->getGraphicsAllocation();
+                gpuAllocation = builtinOpParams.srcMemObj->getGraphicsAllocation(rootDeviceIndex);
                 memObjGpuVa = (gpuAllocation->getGpuAddress() + builtinOpParams.srcMemObj->getOffset());
             }
 

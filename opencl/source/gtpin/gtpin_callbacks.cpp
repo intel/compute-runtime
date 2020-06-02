@@ -193,7 +193,7 @@ void gtpinNotifyMakeResident(void *pKernel, void *pCSR) {
                 CommandStreamReceiver *pCommandStreamReceiver = reinterpret_cast<CommandStreamReceiver *>(pCSR);
                 cl_mem gtpinBuffer = kernelExecQueue[n].gtpinResource;
                 auto pBuffer = castToObjectOrAbort<Buffer>(gtpinBuffer);
-                GraphicsAllocation *pGfxAlloc = pBuffer->getGraphicsAllocation();
+                GraphicsAllocation *pGfxAlloc = pBuffer->getGraphicsAllocation(pCommandStreamReceiver->getRootDeviceIndex());
                 pCommandStreamReceiver->makeResident(*pGfxAlloc);
                 kernelExecQueue[n].isResourceResident = true;
                 break;
@@ -212,7 +212,8 @@ void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResVec) {
                 std::vector<Surface *> *pResidencyVector = (std::vector<Surface *> *)pResVec;
                 cl_mem gtpinBuffer = kernelExecQueue[n].gtpinResource;
                 auto pBuffer = castToObjectOrAbort<Buffer>(gtpinBuffer);
-                GraphicsAllocation *pGfxAlloc = pBuffer->getGraphicsAllocation();
+                auto rootDeviceIndex = kernelExecQueue[n].pCommandQueue->getDevice().getRootDeviceIndex();
+                GraphicsAllocation *pGfxAlloc = pBuffer->getGraphicsAllocation(rootDeviceIndex);
                 GeneralSurface *pSurface = new GeneralSurface(pGfxAlloc);
                 pResidencyVector->push_back(pSurface);
                 kernelExecQueue[n].isResourceResident = true;

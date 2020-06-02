@@ -64,7 +64,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
               pattern(pattern), patternSize(patternSize) {
         }
         void validateInput(const BuiltinOpParams &conf) const override {
-            auto patternAllocation = conf.srcMemObj->getGraphicsAllocation();
+            auto patternAllocation = conf.srcMemObj->getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
             EXPECT_EQ(patternSize, patternAllocation->getUnderlyingBufferSize());
             EXPECT_EQ(0, memcmp(pattern, patternAllocation->getUnderlyingBuffer(), patternSize));
         };

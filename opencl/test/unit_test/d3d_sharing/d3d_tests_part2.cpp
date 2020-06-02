@@ -428,7 +428,7 @@ TYPED_TEST_P(D3DTests, GivenForced32BitAddressingWhenCreatingBufferThenBufferHas
     auto buffer = std::unique_ptr<Buffer>(D3DBuffer<TypeParam>::create(this->context, (D3DBufferObj *)&this->dummyD3DBuffer, CL_MEM_READ_WRITE, nullptr));
     ASSERT_NE(nullptr, buffer.get());
 
-    auto *allocation = buffer->getGraphicsAllocation();
+    auto *allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
     EXPECT_NE(nullptr, allocation);
 
     EXPECT_TRUE(allocation->is32BitAllocation());
@@ -442,8 +442,8 @@ TYPED_TEST_P(D3DTests, givenD3DTexture2dWhenOclImageIsCreatedThenSharedImageAllo
 
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 7, nullptr));
     ASSERT_NE(nullptr, image.get());
-    ASSERT_NE(nullptr, image->getGraphicsAllocation());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, image->getGraphicsAllocation()->getAllocationType());
+    ASSERT_NE(nullptr, image->getGraphicsAllocation(rootDeviceIndex));
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, image->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
 }
 
 TYPED_TEST_P(D3DTests, givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet) {
@@ -458,8 +458,8 @@ TYPED_TEST_P(D3DTests, givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllo
 
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
-    ASSERT_NE(nullptr, image->getGraphicsAllocation());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, image->getGraphicsAllocation()->getAllocationType());
+    ASSERT_NE(nullptr, image->getGraphicsAllocation(rootDeviceIndex));
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, image->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
 }
 
 REGISTER_TYPED_TEST_CASE_P(D3DTests,

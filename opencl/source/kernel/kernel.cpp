@@ -1083,7 +1083,7 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
                 if (image && image->isImageFromImage()) {
                     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
                 }
-                commandStreamReceiver.makeResident(*memObj->getGraphicsAllocation());
+                commandStreamReceiver.makeResident(*memObj->getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex()));
                 if (memObj->getMcsAllocation()) {
                     commandStreamReceiver.makeResident(*memObj->getMcsAllocation());
                 }
@@ -1277,6 +1277,8 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         if (!buffer)
             return CL_INVALID_MEM_OBJECT;
 
+        auto graphicsAllocation = buffer->getGraphicsAllocation(getDevice().getRootDeviceIndex());
+
         if (buffer->peekSharingHandler()) {
             usingSharedObjArgs = true;
         }
@@ -1303,7 +1305,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
                 forceNonAuxMode = true;
             }
             disableL3 = (argIndex == 0);
-        } else if (buffer->getMultiGraphicsAllocation().getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
+        } else if (graphicsAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
                    !kernelArgInfo.pureStatefulBufferAccess) {
             forceNonAuxMode = true;
         }
@@ -1315,7 +1317,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
         kernelArguments[argIndex].isStatelessUncacheable = kernelArgInfo.pureStatefulBufferAccess ? false : buffer->isMemObjUncacheable();
 
-        auto allocationForCacheFlush = buffer->getGraphicsAllocation();
+        auto allocationForCacheFlush = graphicsAllocation;
 
         //if we make object uncacheable for surface state and there are not stateless accessess , then ther is no need to flush caches
         if (buffer->isMemObjUncacheableForSurfaceState() && kernelArgInfo.pureStatefulBufferAccess) {
@@ -1380,11 +1382,13 @@ cl_int Kernel::setArgPipe(uint32_t argIndex,
 
         pipe->setPipeArg(patchLocation, patchSize);
 
+        auto graphicsAllocation = pipe->getGraphicsAllocation(getDevice().getRootDeviceIndex());
+
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
             Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState,
                                     pipe->getSize(), pipe->getCpuAddress(), 0,
-                                    pipe->getGraphicsAllocation(), 0, 0);
+                                    graphicsAllocation, 0, 0);
         }
 
         return CL_SUCCESS;
@@ -1432,6 +1436,7 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         auto crossThreadData = reinterpret_cast<uint32_t *>(getCrossThreadData());
         auto &imageDesc = pImage->getImageDesc();
         auto &imageFormat = pImage->getImageFormat();
+        auto graphicsAllocation = pImage->getGraphicsAllocation(getDevice().getRootDeviceIndex());
 
         if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE3D) {
             imageTransformer->registerImage3d(argIndex);
@@ -1448,12 +1453,12 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         patch<uint32_t, cl_uint>(imageDesc.num_mip_levels, crossThreadData, kernelArgInfo.offsetNumMipLevels);
 
         auto pixelSize = pImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-        patch<uint64_t, uint64_t>(pImage->getGraphicsAllocation()->getGpuAddress(), crossThreadData, kernelArgInfo.offsetFlatBaseOffset);
+        patch<uint64_t, uint64_t>(graphicsAllocation->getGpuAddress(), crossThreadData, kernelArgInfo.offsetFlatBaseOffset);
         patch<uint32_t, size_t>((imageDesc.image_width * pixelSize) - 1, crossThreadData, kernelArgInfo.offsetFlatWidth);
         patch<uint32_t, size_t>((imageDesc.image_height * pixelSize) - 1, crossThreadData, kernelArgInfo.offsetFlatHeight);
         patch<uint32_t, size_t>(imageDesc.image_row_pitch - 1, crossThreadData, kernelArgInfo.offsetFlatPitch);
 
-        addAllocationToCacheFlushVector(argIndex, pImage->getGraphicsAllocation());
+        addAllocationToCacheFlushVector(argIndex, graphicsAllocation);
         retVal = CL_SUCCESS;
     }
 

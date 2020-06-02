@@ -89,7 +89,7 @@ HWTEST_F(MediaImageSetArgTest, setKernelArgImage) {
     SurfaceOffsets surfaceOffsets;
     srcImage->getSurfaceOffsets(surfaceOffsets);
 
-    EXPECT_EQ(srcImage->getGraphicsAllocation()->getGpuAddress() + surfaceOffsets.offset,
+    EXPECT_EQ(srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress() + surfaceOffsets.offset,
               pSurfaceState->getSurfaceBaseAddress());
 
     std::vector<Surface *> surfaces;
@@ -113,7 +113,7 @@ HWTEST_F(MediaImageSetArgTest, clSetKernelArgImage) {
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
 
     uint64_t surfaceAddress = pSurfaceState->getSurfaceBaseAddress();
-    ASSERT_EQ(srcImage->getGraphicsAllocation()->getGpuAddress(), surfaceAddress);
+    ASSERT_EQ(srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), surfaceAddress);
     EXPECT_EQ(srcImage->getImageDesc().image_width, pSurfaceState->getWidth());
     EXPECT_EQ(srcImage->getImageDesc().image_height, pSurfaceState->getHeight());
 

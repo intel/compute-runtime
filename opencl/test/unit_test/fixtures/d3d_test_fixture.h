@@ -83,6 +83,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
 
     void SetUp() override {
         PlatformFixture::SetUp();
+        rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
         context = new MockContext(pPlatform->getClDevice(0));
         context->preferD3dSharedResources = true;
         mockMM = std::make_unique<MockMM>(*context->getDevice(0)->getExecutionEnvironment());
@@ -190,6 +191,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     std::unique_ptr<MockMM> mockMM;
 
     uint8_t d3dMode = 0;
+    uint32_t rootDeviceIndex = 0;
 };
 typedef ::testing::Types<D3DTypesHelper::D3D10, D3DTypesHelper::D3D11> D3DTypes;
 } // namespace NEO

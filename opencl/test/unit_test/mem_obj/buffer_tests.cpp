@@ -2064,7 +2064,7 @@ TEST_P(NoHostPtr, withBufferGraphicsAllocationReportsBufferType) {
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, buffer);
 
-    auto allocation = buffer->getGraphicsAllocation();
+    auto allocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     if (MemoryPool::isSystemMemoryPool(allocation->getMemoryPool())) {
         EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     } else {

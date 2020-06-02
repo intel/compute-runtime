@@ -33,7 +33,8 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
 
-    auto gmm = getGraphicsAllocation()->getDefaultGmm();
+    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
+    auto gmm = graphicsAllocation->getDefaultGmm();
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
 
     auto imageDescriptor = Image::convertDescriptor(getImageDesc());
@@ -42,7 +43,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     imgInfo.qPitch = qPitch;
     imgInfo.surfaceFormat = &getSurfaceFormatInfo().surfaceFormat;
 
-    setImageSurfaceState<GfxFamily>(surfaceState, imgInfo, getGraphicsAllocation()->getDefaultGmm(), *gmmHelper, cubeFaceIndex, getGraphicsAllocation()->getGpuAddress(), surfaceOffsets, IsNV12Image(&this->getImageFormat()));
+    setImageSurfaceState<GfxFamily>(surfaceState, imgInfo, graphicsAllocation->getDefaultGmm(), *gmmHelper, cubeFaceIndex, graphicsAllocation->getGpuAddress(), surfaceOffsets, IsNV12Image(&this->getImageFormat()));
 
     if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) {
         // image1d_buffer is image1d created from buffer. The length of buffer could be larger
@@ -133,6 +134,7 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory) {
     using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
     SURFACE_FORMAT surfaceFormat = MEDIA_SURFACE_STATE::SURFACE_FORMAT_Y8_UNORM_VA;
 
+    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
     MEDIA_SURFACE_STATE state = GfxFamily::cmdInitMediaSurfaceState;
@@ -145,7 +147,7 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory) {
     state.setHeight(static_cast<uint32_t>(getImageDesc().image_height));
     state.setPictureStructure(MEDIA_SURFACE_STATE::PICTURE_STRUCTURE_FRAME_PICTURE);
 
-    auto gmm = getGraphicsAllocation()->getDefaultGmm();
+    auto gmm = graphicsAllocation->getDefaultGmm();
     auto tileMode = static_cast<typename MEDIA_SURFACE_STATE::TILE_MODE>(gmm->gmmResourceInfo->getTileModeSurfaceState());
 
     state.setTileMode(tileMode);
@@ -172,7 +174,7 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory) {
     state.setVerticalLineStride(0);
     state.setVerticalLineStrideOffset(0);
 
-    state.setSurfaceBaseAddress(getGraphicsAllocation()->getGpuAddress() + this->surfaceOffsets.offset);
+    state.setSurfaceBaseAddress(graphicsAllocation->getGpuAddress() + this->surfaceOffsets.offset);
 
     *surfaceState = state;
 }

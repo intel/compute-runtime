@@ -19,6 +19,8 @@ class MultiGraphicsAllocation : NonCopyableOrMovableClass {
 
     void addAllocation(GraphicsAllocation *graphicsAllocation);
 
+    void removeAllocation(uint32_t rootDeviceIndex);
+
     GraphicsAllocation *getGraphicsAllocation(uint32_t rootDeviceIndex) const;
 
     GraphicsAllocation::AllocationType getAllocationType() const;

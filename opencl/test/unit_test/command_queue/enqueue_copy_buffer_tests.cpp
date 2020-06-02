@@ -273,7 +273,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentZeroMatchesSourceAd
     // Determine where the argument is
     auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 0u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0));
 
-    EXPECT_EQ((void *)((uintptr_t)srcBuffer->getGraphicsAllocation()->getGpuAddress()), *pArgument);
+    EXPECT_EQ(reinterpret_cast<void *>(srcBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()), *pArgument);
 }
 
 HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinationAddress) {
@@ -300,7 +300,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
     // Determine where the argument is
     auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 1u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0));
 
-    EXPECT_EQ((void *)((uintptr_t)dstBuffer->getGraphicsAllocation()->getGpuAddress()), *pArgument);
+    EXPECT_EQ(reinterpret_cast<void *>(dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()), *pArgument);
 }
 
 struct EnqueueCopyBufferHw : public ::testing::Test {

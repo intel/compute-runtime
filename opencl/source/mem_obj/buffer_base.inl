@@ -37,8 +37,10 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
+
+    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
     // The graphics allocation for Host Ptr surface will be created in makeResident call and GPU address is expected to be the same as CPU address
-    auto bufferAddress = (getGraphicsAllocation() != nullptr) ? getGraphicsAllocation()->getGpuAddress() : castToUint64(getHostPtr());
+    auto bufferAddress = (graphicsAllocation != nullptr) ? graphicsAllocation->getGpuAddress() : castToUint64(getHostPtr());
     bufferAddress += this->offset;
 
     auto bufferAddressAligned = alignDown(bufferAddress, 4);
@@ -81,7 +83,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
     }
 
-    appendBufferState(memory, context, getGraphicsAllocation(), isReadOnlyArgument);
+    appendBufferState(memory, context, graphicsAllocation, isReadOnlyArgument);
     appendSurfaceStateExt(memory);
 
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();

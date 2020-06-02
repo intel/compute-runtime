@@ -378,6 +378,8 @@ TEST_F(GlSharingTextureTests, givenHwCommandQueueAndGlTextureWhenAcquireIsCalled
 TEST_F(GlSharingTextureTests, verifyGlTextureBufferOffset) {
     glSharing->uploadDataToTextureInfo(textureId);
 
+    auto rootDeviceIndex = clContext->getDevice(0)->getRootDeviceIndex();
+
     auto retVal = CL_SUCCESS;
     auto commandQueue = clCreateCommandQueue(clContext.get(), clContext->getDevice(0), 0, &retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -389,7 +391,7 @@ TEST_F(GlSharingTextureTests, verifyGlTextureBufferOffset) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto memObj = castToObject<MemObj>(glImage);
     EXPECT_NE(memObj, nullptr);
-    EXPECT_EQ(memObj->getGraphicsAllocation()->getAllocationOffset(), 0u);
+    EXPECT_EQ(memObj->getGraphicsAllocation(rootDeviceIndex)->getAllocationOffset(), 0u);
 
     retVal = clEnqueueReleaseGLObjects(commandQueue, 1, &glImage, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -399,7 +401,7 @@ TEST_F(GlSharingTextureTests, verifyGlTextureBufferOffset) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     memObj = castToObject<MemObj>(glImage);
     EXPECT_NE(memObj, nullptr);
-    EXPECT_EQ(memObj->getGraphicsAllocation()->getAllocationOffset(), 0x660u);
+    EXPECT_EQ(memObj->getGraphicsAllocation(rootDeviceIndex)->getAllocationOffset(), 0x660u);
 
     retVal = clEnqueueReleaseGLObjects(commandQueue, 1, &glImage, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);

@@ -107,9 +107,9 @@ struct BlitEnqueueTests : public ::testing::Test {
     ReleaseableObjectPtr<Buffer> createBuffer(size_t size, bool compressed) {
         auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, size, nullptr, retVal));
         if (compressed) {
-            buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+            buffer->getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
         } else {
-            buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+            buffer->getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
         }
         return buffer;
     }

@@ -238,12 +238,11 @@ Image *Image::create(Context *context,
         bool transferNeeded = false;
         if (((imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) || (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) && (parentBuffer != nullptr)) {
 
-            if (!hwHelper.checkResourceCompatibility(*parentBuffer->getGraphicsAllocation())) {
+            memory = parentBuffer->getGraphicsAllocation(rootDeviceIndex);
+            if (!hwHelper.checkResourceCompatibility(*memory)) {
                 errcodeRet = CL_INVALID_MEM_OBJECT;
                 return nullptr;
             }
-
-            memory = parentBuffer->getGraphicsAllocation();
 
             // Image from buffer - we never allocate memory, we use what buffer provides
             zeroCopy = true;
@@ -265,7 +264,7 @@ Image *Image::create(Context *context,
                 }
             }
         } else if (parentImage != nullptr) {
-            memory = parentImage->getGraphicsAllocation();
+            memory = parentImage->getGraphicsAllocation(rootDeviceIndex);
             memory->getDefaultGmm()->queryImageParams(imgInfo);
         } else {
             errcodeRet = CL_OUT_OF_HOST_MEMORY;
@@ -934,7 +933,7 @@ Image *Image::redescribeFillImage() {
                                 imageFormatNew,
                                 imageDescNew,
                                 this->isMemObjZeroCopy(),
-                                this->getGraphicsAllocation(),
+                                this->multiGraphicsAllocation.getDefaultGraphicsAllocation(),
                                 true,
                                 this->baseMipLevel,
                                 this->mipCount,
@@ -991,7 +990,7 @@ Image *Image::redescribe() {
                                 imageFormatNew,
                                 this->imageDesc,
                                 this->isMemObjZeroCopy(),
-                                this->getGraphicsAllocation(),
+                                this->multiGraphicsAllocation.getDefaultGraphicsAllocation(),
                                 true,
                                 this->baseMipLevel,
                                 this->mipCount,

@@ -251,6 +251,7 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredTwiceThenAcuqireIsNotCalle
 
 TEST_F(glSharingTests, givenClGLBufferWhenItIsCreatedAndGmmIsAvailableThenItIsUsedInGraphicsAllocation) {
     void *ptr = (void *)0x1000;
+    auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
     auto gmm = new Gmm(context.getDevice(0)->getGmmClientContext(), ptr, 4096u, false);
 
     mockGlSharing->m_bufferInfoOutput.pGmmResInfo = gmm->gmmResourceInfo->peekHandle();
@@ -260,7 +261,7 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsCreatedAndGmmIsAvailableThenItIsUs
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
     auto memObject = castToObject<MemObj>(glBuffer);
 
-    auto graphicsAllocation = memObject->getGraphicsAllocation();
+    auto graphicsAllocation = memObject->getGraphicsAllocation(rootDeviceIndex);
     ASSERT_NE(nullptr, graphicsAllocation->getDefaultGmm());
     EXPECT_NE(nullptr, graphicsAllocation->getDefaultGmm()->gmmResourceInfo->peekHandle());
 
@@ -305,17 +306,18 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquireCountIsDecrementedToZeroThe
 
 TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredWithDifferentOffsetThenGraphicsAllocationContainsLatestOffsetValue) {
     auto retVal = CL_SUCCESS;
+    auto rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
     auto memObject = castToObject<MemObj>(glBuffer);
 
-    auto graphicsAddress = memObject->getGraphicsAllocation()->getGpuAddress();
+    auto graphicsAddress = memObject->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
 
     mockGlSharing->m_bufferInfoOutput.bufferOffset = 50u;
     mockGlSharing->uploadDataToBufferInfo();
 
-    memObject->peekSharingHandler()->acquire(memObject, context.getDevice(0)->getRootDeviceIndex());
+    memObject->peekSharingHandler()->acquire(memObject, rootDeviceIndex);
 
-    auto offsetedGraphicsAddress = memObject->getGraphicsAllocation()->getGpuAddress();
+    auto offsetedGraphicsAddress = memObject->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
 
     EXPECT_EQ(offsetedGraphicsAddress, graphicsAddress + mockGlSharing->m_bufferInfoOutput.bufferOffset);
 

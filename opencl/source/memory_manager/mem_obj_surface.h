@@ -24,7 +24,7 @@ class MemObjSurface : public Surface {
 
     void makeResident(CommandStreamReceiver &csr) override {
         DEBUG_BREAK_IF(!memObj);
-        csr.makeResident(*memObj->getGraphicsAllocation());
+        csr.makeResident(*memObj->getGraphicsAllocation(csr.getRootDeviceIndex()));
     }
 
     Surface *duplicate() override {

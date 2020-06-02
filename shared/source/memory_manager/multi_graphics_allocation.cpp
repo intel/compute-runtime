@@ -28,6 +28,10 @@ void MultiGraphicsAllocation::addAllocation(GraphicsAllocation *graphicsAllocati
     graphicsAllocations[graphicsAllocation->getRootDeviceIndex()] = graphicsAllocation;
 }
 
+void MultiGraphicsAllocation::removeAllocation(uint32_t rootDeviceIndex) {
+    graphicsAllocations[rootDeviceIndex] = nullptr;
+}
+
 GraphicsAllocation *MultiGraphicsAllocation::getGraphicsAllocation(uint32_t rootDeviceIndex) const {
     return graphicsAllocations[rootDeviceIndex];
 }

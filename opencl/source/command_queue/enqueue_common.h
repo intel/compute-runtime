@@ -508,6 +508,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(const Multi
                                                                      BlitPropertiesContainer &blitPropertiesContainer,
                                                                      TimestampPacketDependencies &timestampPacketDependencies,
                                                                      const EventsRequest &eventsRequest, bool queueBlocked) {
+    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
     auto nodesAllocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
     auto numBuffers = multiDispatchInfo.getMemObjsForAuxTranslation()->size();
     blitPropertiesContainer.resize(numBuffers * 2);
@@ -517,7 +518,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(const Multi
         {
             // Aux to NonAux
             blitPropertiesContainer[bufferIndex] = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::AuxToNonAux,
-                                                                                                        buffer->getGraphicsAllocation());
+                                                                                                        buffer->getGraphicsAllocation(rootDeviceIndex));
             auto auxToNonAuxNode = nodesAllocator->getTag();
             timestampPacketDependencies.auxToNonAuxNodes.add(auxToNonAuxNode);
         }
@@ -525,7 +526,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(const Multi
         {
             // NonAux to Aux
             blitPropertiesContainer[bufferIndex + numBuffers] = BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection::NonAuxToAux,
-                                                                                                                     buffer->getGraphicsAllocation());
+                                                                                                                     buffer->getGraphicsAllocation(rootDeviceIndex));
             auto nonAuxToAuxNode = nodesAllocator->getTag();
             timestampPacketDependencies.nonAuxToAuxNodes.add(nonAuxToAuxNode);
         }

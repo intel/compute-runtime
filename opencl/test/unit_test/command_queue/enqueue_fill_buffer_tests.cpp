@@ -294,7 +294,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
     // Determine where the argument is
     auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 0u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0));
 
-    EXPECT_EQ((void *)((uintptr_t)buffer->getGraphicsAllocation()->getGpuAddress()), *pArgument);
+    EXPECT_EQ((void *)((uintptr_t)buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()), *pArgument);
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }

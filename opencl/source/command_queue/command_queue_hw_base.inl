@@ -34,14 +34,14 @@ namespace NEO {
 template <typename Family>
 void CommandQueueHw<Family>::notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead) {
     if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
-        buffer->getGraphicsAllocation()->setAllocDumpable(blockingRead);
+        buffer->getGraphicsAllocation(getDevice().getRootDeviceIndex())->setAllocDumpable(blockingRead);
         buffer->forceDisallowCPUCopy = blockingRead;
     }
 }
 template <typename Family>
 void CommandQueueHw<Family>::notifyEnqueueReadImage(Image *image, bool blockingRead) {
     if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
-        image->getGraphicsAllocation()->setAllocDumpable(blockingRead);
+        image->getGraphicsAllocation(getDevice().getRootDeviceIndex())->setAllocDumpable(blockingRead);
     }
 }
 

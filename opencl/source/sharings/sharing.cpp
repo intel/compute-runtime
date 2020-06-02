@@ -18,7 +18,8 @@ namespace NEO {
 int SharingHandler::acquire(MemObj *memObj, uint32_t rootDeviceIndex) {
     if (acquireCount == 0) {
         UpdateData updateData{rootDeviceIndex};
-        auto currentSharedHandle = memObj->getGraphicsAllocation()->peekSharedHandle();
+        auto graphicsAllocation = memObj->getGraphicsAllocation(rootDeviceIndex);
+        auto currentSharedHandle = graphicsAllocation->peekSharedHandle();
         updateData.sharedHandle = currentSharedHandle;
         updateData.memObject = memObj;
         int result = synchronizeHandler(updateData);
@@ -30,7 +31,7 @@ int SharingHandler::acquire(MemObj *memObj, uint32_t rootDeviceIndex) {
             return CL_OUT_OF_RESOURCES;
         }
 
-        DEBUG_BREAK_IF(memObj->getGraphicsAllocation()->peekSharedHandle() != updateData.sharedHandle);
+        DEBUG_BREAK_IF(graphicsAllocation->peekSharedHandle() != updateData.sharedHandle);
     }
     acquireCount++;
     return CL_SUCCESS;

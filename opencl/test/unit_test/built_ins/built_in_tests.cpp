@@ -228,9 +228,9 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTrans
     multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
     std::vector<Kernel *> builtinKernels;
     MockBuffer mockBuffer[3];
-    mockBuffer[0].getGraphicsAllocation()->setSize(0x1000);
-    mockBuffer[1].getGraphicsAllocation()->setSize(0x20000);
-    mockBuffer[2].getGraphicsAllocation()->setSize(0x30000);
+    mockBuffer[0].getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setSize(0x1000);
+    mockBuffer[1].getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setSize(0x20000);
+    mockBuffer[2].getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setSize(0x30000);
 
     BuiltinOpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
@@ -275,9 +275,9 @@ HWTEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslat
     multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
     std::vector<Kernel *> builtinKernels;
     MockBuffer mockBuffer[3];
-    mockBuffer[0].getGraphicsAllocation()->setSize(0x1000);
-    mockBuffer[1].getGraphicsAllocation()->setSize(0x20000);
-    mockBuffer[2].getGraphicsAllocation()->setSize(0x30000);
+    mockBuffer[0].getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setSize(0x1000);
+    mockBuffer[1].getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setSize(0x20000);
+    mockBuffer[2].getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setSize(0x30000);
 
     BuiltinOpParams builtinOpsParams;
     builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
@@ -437,7 +437,7 @@ HWTEST_F(BuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThe
     MockBuffer buffer;
     cl_mem clMem = &buffer;
 
-    buffer.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     mockKernel.kernelInfo.kernelArgInfo.resize(1);
     mockKernel.kernelInfo.kernelArgInfo.at(0).kernelArgPatchInfoVector.resize(1);
     mockKernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
@@ -529,10 +529,10 @@ HWTEST_F(BuiltInTests, givenAuxToNonAuxTranslationWhenSettingSurfaceStateThenSet
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
-    buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     auto gmm = new Gmm(pDevice->getGmmClientContext(), nullptr, 1, false);
     gmm->isRenderCompressed = true;
-    buffer->getGraphicsAllocation()->setDefaultGmm(gmm);
+    buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm);
 
     memObjsForAuxTranslation.insert(buffer.get());
 
@@ -575,10 +575,10 @@ HWTEST_F(BuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThenSet
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(pContext, 0, MemoryConstants::pageSize, nullptr, retVal));
-    buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     auto gmm = new Gmm(pDevice->getGmmClientContext(), nullptr, 1, false);
     gmm->isRenderCompressed = true;
-    buffer->getGraphicsAllocation()->setDefaultGmm(gmm);
+    buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setDefaultGmm(gmm);
     memObjsForAuxTranslation.insert(buffer.get());
 
     mockAuxBuiltInOp.buildDispatchInfosForAuxTranslation<FamilyType>(multiDispatchInfo, builtinOpParams);

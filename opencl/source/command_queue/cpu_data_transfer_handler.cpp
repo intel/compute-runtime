@@ -154,7 +154,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
             }
         }
         if (modifySimulationFlags) {
-            auto graphicsAllocation = transferProperties.memObj->getGraphicsAllocation();
+            auto graphicsAllocation = transferProperties.memObj->getGraphicsAllocation(getDevice().getRootDeviceIndex());
             graphicsAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
             graphicsAllocation->setTbxWritable(true, GraphicsAllocation::defaultBank);
         }

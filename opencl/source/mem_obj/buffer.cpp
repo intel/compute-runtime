@@ -359,8 +359,9 @@ Buffer *Buffer::create(Context *context,
     }
 
     if (isMakeAllBuffersResidentSet()) {
-        auto graphicsAllocation = pBuffer->getGraphicsAllocation();
-        context->getDevice(0u)->getRootDeviceEnvironment().memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1));
+        auto graphicsAllocation = pBuffer->multiGraphicsAllocation.getDefaultGraphicsAllocation();
+        auto rootDeviceEnvironment = pBuffer->executionEnvironment->rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()].get();
+        rootDeviceEnvironment->memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1));
     }
 
     return pBuffer;
@@ -492,9 +493,10 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
 
 uint64_t Buffer::setArgStateless(void *memory, uint32_t patchSize, bool set32BitAddressing) {
     // Subbuffers have offset that graphicsAllocation is not aware of
+    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
     uintptr_t addressToPatch = ((set32BitAddressing) ? static_cast<uintptr_t>(graphicsAllocation->getGpuAddressToPatch()) : static_cast<uintptr_t>(graphicsAllocation->getGpuAddress())) + this->offset;
     DEBUG_BREAK_IF(!(graphicsAllocation->isLocked() || (addressToPatch != 0) || (graphicsAllocation->getGpuBaseAddress() != 0) ||
-                     (this->getCpuAddress() == nullptr && this->getGraphicsAllocation()->peekSharedHandle())));
+                     (this->getCpuAddress() == nullptr && graphicsAllocation->peekSharedHandle())));
 
     patchWithRequiredSize(memory, patchSize, addressToPatch);
 
@@ -643,9 +645,10 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
 uint32_t Buffer::getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) const {
     uint64_t bufferAddress = 0;
     size_t bufferSize = 0;
-    if (getGraphicsAllocation()) {
-        bufferAddress = getGraphicsAllocation()->getGpuAddress();
-        bufferSize = getGraphicsAllocation()->getUnderlyingBufferSize();
+    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
+    if (graphicsAllocation) {
+        bufferAddress = graphicsAllocation->getGpuAddress();
+        bufferSize = graphicsAllocation->getUnderlyingBufferSize();
     } else {
         bufferAddress = reinterpret_cast<uint64_t>(getHostPtr());
         bufferSize = getSize();
@@ -665,10 +668,11 @@ uint32_t Buffer::getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) cons
 }
 
 bool Buffer::isCompressed() const {
-    if (this->getGraphicsAllocation()->getDefaultGmm()) {
-        return this->getGraphicsAllocation()->getDefaultGmm()->isRenderCompressed;
+    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
+    if (graphicsAllocation->getDefaultGmm()) {
+        return graphicsAllocation->getDefaultGmm()->isRenderCompressed;
     }
-    if (multiGraphicsAllocation.getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+    if (graphicsAllocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
         return true;
     }
 

@@ -177,7 +177,7 @@ HWTEST_F(EnqueueFillImageTest, WhenFillingImageThenSurfaceStateIsCorrect) {
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, surfaceState.getSurfaceVerticalAlignment());
 
     const auto &srcSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 0);
-    EXPECT_EQ(image->getGraphicsAllocation()->getGpuAddress(), srcSurfaceState.getSurfaceBaseAddress());
+    EXPECT_EQ(image->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), srcSurfaceState.getSurfaceBaseAddress());
 }
 
 HWTEST_F(EnqueueFillImageTest, WhenFillingImageThenNumberOfPipelineSelectsIsOne) {

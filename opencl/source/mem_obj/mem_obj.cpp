@@ -94,7 +94,8 @@ MemObj::~MemObj() {
         }
 
         if (associatedMemObject) {
-            if (associatedMemObject->getGraphicsAllocation() != this->getGraphicsAllocation()) {
+            auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
+            if (associatedMemObject->getGraphicsAllocation(graphicsAllocation->getRootDeviceIndex()) != graphicsAllocation) {
                 destroyGraphicsAllocation(graphicsAllocation, false);
             }
             associatedMemObject->decRefInternal();
@@ -186,7 +187,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_ALLOCATION_HANDLE_INTEL:
-        internalHandle = this->getGraphicsAllocation()->peekInternalHandle(this->memoryManager);
+        internalHandle = multiGraphicsAllocation.getDefaultGraphicsAllocation()->peekInternalHandle(this->memoryManager);
         srcParamSize = sizeof(internalHandle);
         srcParam = &internalHandle;
         break;
@@ -249,18 +250,28 @@ bool MemObj::isMemObjUncacheableForSurfaceState() const {
     return isAnyBitSet(flagsIntel, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE | CL_MEM_LOCALLY_UNCACHED_RESOURCE);
 }
 
-GraphicsAllocation *MemObj::getGraphicsAllocation() const {
-    return graphicsAllocation;
+GraphicsAllocation *MemObj::getGraphicsAllocation(uint32_t rootDeviceIndex) const {
+    return multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
+}
+
+void MemObj::checkUsageAndReleaseOldAllocation(uint32_t rootDeviceIndex) {
+    auto graphicsAllocation = getGraphicsAllocation(rootDeviceIndex);
+    if (graphicsAllocation != nullptr && (peekSharingHandler() == nullptr || graphicsAllocation->peekReuseCount() == 0)) {
+        memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
+    }
 }
 
 void MemObj::resetGraphicsAllocation(GraphicsAllocation *newGraphicsAllocation) {
     TakeOwnershipWrapper<MemObj> lock(*this);
-
-    if (graphicsAllocation != nullptr && (peekSharingHandler() == nullptr || graphicsAllocation->peekReuseCount() == 0)) {
-        memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
-    }
-
+    checkUsageAndReleaseOldAllocation(newGraphicsAllocation->getRootDeviceIndex());
+    multiGraphicsAllocation.addAllocation(newGraphicsAllocation);
     graphicsAllocation = newGraphicsAllocation;
+}
+void MemObj::removeGraphicsAllocation(uint32_t rootDeviceIndex) {
+    TakeOwnershipWrapper<MemObj> lock(*this);
+    checkUsageAndReleaseOldAllocation(rootDeviceIndex);
+    multiGraphicsAllocation.removeAllocation(rootDeviceIndex);
+    graphicsAllocation = nullptr;
 }
 
 bool MemObj::readMemObjFlagsInvalid() {

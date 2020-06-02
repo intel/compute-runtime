@@ -58,7 +58,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
     }
 
     void makeMemObjUsed() {
-        memObj->getGraphicsAllocation()->updateTaskCount(taskCountReady, contextId);
+        memObj->getGraphicsAllocation(device->getRootDeviceIndex())->updateTaskCount(taskCountReady, contextId);
     }
 
     void makeMemObjNotReady() {
@@ -138,6 +138,8 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
         memObj->setDestructorCallback(emptyDestructorCallback, nullptr);
     }
 
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+
     auto mockCsr0 = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
     auto mockCsr1 = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
     device->resetCommandStreamReceiver(mockCsr0, 0);
@@ -156,8 +158,8 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     auto osContextId0 = mockCsr0->getOsContext().getContextId();
     auto osContextId1 = mockCsr1->getOsContext().getContextId();
 
-    memObj->getGraphicsAllocation()->updateTaskCount(taskCountReady, osContextId0);
-    memObj->getGraphicsAllocation()->updateTaskCount(taskCountReady, osContextId1);
+    memObj->getGraphicsAllocation(rootDeviceIndex)->updateTaskCount(taskCountReady, osContextId0);
+    memObj->getGraphicsAllocation(rootDeviceIndex)->updateTaskCount(taskCountReady, osContextId1);
 
     ON_CALL(*mockCsr0, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock0));

@@ -498,7 +498,7 @@ uint32_t DeviceImp::getMaxNumHwThreads() const { return maxNumHwThreads; }
 
 ze_result_t DeviceImp::registerCLMemory(cl_context context, cl_mem mem, void **ptr) {
     NEO::MemObj *memObj = static_cast<NEO::MemObj *>(mem);
-    NEO::GraphicsAllocation *graphicsAllocation = memObj->getGraphicsAllocation();
+    NEO::GraphicsAllocation *graphicsAllocation = memObj->getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
     DEBUG_BREAK_IF(graphicsAllocation == nullptr);
 
     auto allocation = allocateManagedMemoryFromHostPtr(

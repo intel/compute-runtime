@@ -180,10 +180,10 @@ HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenSurfaceStateIsCorrect) {
     }
 
     const auto &srcSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 0);
-    EXPECT_EQ(srcImage->getGraphicsAllocation()->getGpuAddress(), srcSurfaceState.getSurfaceBaseAddress());
+    EXPECT_EQ(srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), srcSurfaceState.getSurfaceBaseAddress());
 
     const auto &dstSurfaceState = getSurfaceState<FamilyType>(&pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0), 1);
-    EXPECT_EQ(dstImage->getGraphicsAllocation()->getGpuAddress(), dstSurfaceState.getSurfaceBaseAddress());
+    EXPECT_EQ(dstImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress(), dstSurfaceState.getSurfaceBaseAddress());
 }
 
 HWTEST_F(EnqueueCopyImageTest, WhenCopyingImageThenNumberOfPipelineSelectsIsOne) {

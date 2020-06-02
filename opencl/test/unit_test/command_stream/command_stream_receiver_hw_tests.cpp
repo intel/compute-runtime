@@ -495,7 +495,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     EXPECT_EQ(0u, csr.recursiveLockCounter.load());
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                 csr, buffer->getGraphicsAllocation(), nullptr, hostPtr,
-                                                                                buffer->getGraphicsAllocation()->getGpuAddress(), 0,
+                                                                                buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress(), 0,
                                                                                 0, 0, {bltSize, 1, 1}, 0, 0, 0, 0);
 
     blitBuffer(&csr, blitProperties, true);

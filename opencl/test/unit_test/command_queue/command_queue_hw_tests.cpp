@@ -1232,7 +1232,7 @@ HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnq
 
     BufferDefaults::context = context;
     auto buffer = clUniquePtr(BufferHelper<>::create());
-    GraphicsAllocation *bufferAllocation = buffer->getGraphicsAllocation();
+    GraphicsAllocation *bufferAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     char array[3 * MemoryConstants::cacheLineSize];
     char *ptr = &array[MemoryConstants::cacheLineSize];
     ptr = alignUp(ptr, MemoryConstants::cacheLineSize);

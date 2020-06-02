@@ -51,7 +51,7 @@ struct MySharingHandler : public SharingHandler {
 
     GraphicsAllocation *getAllocation() {
         if (memObj) {
-            return memObj->getGraphicsAllocation();
+            return memObj->getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
         }
         return allocation;
     }
@@ -405,10 +405,10 @@ TEST(MemObj, givenSharedMemObjectWithNullGfxAllocationWhenSettingGfxAllocationTh
     gfxAllocation->incReuseCount();
 
     ASSERT_EQ(1u, gfxAllocation->peekReuseCount());
-    EXPECT_EQ(gfxAllocation, memObj.getGraphicsAllocation());
+    EXPECT_EQ(gfxAllocation, memObj.getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
 }
 
-TEST(MemObj, givenSharedMemObjectAndNullGfxAllocationProvidedWhenSettingGfxAllocationThenSucceed) {
+TEST(MemObj, givenSharedMemObjectAndGfxAllocationWhenGraphicsAllocationIsRemovedThenTheAllocationIsNotAvailable) {
     MockContext context;
     MockMemoryManager memoryManager(*context.getDevice(0)->getExecutionEnvironment());
     context.memoryManager = &memoryManager;
@@ -419,9 +419,9 @@ TEST(MemObj, givenSharedMemObjectAndNullGfxAllocationProvidedWhenSettingGfxAlloc
     memObj.setSharingHandler(new MySharingHandler(&memObj));
 
     graphicsAllocation->decReuseCount();
-    memObj.resetGraphicsAllocation(nullptr);
+    memObj.removeGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
 
-    EXPECT_EQ(nullptr, memObj.getGraphicsAllocation());
+    EXPECT_EQ(nullptr, memObj.getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
 }
 
 TEST(MemObj, givenSharedMemObjectAndZeroReuseCountWhenChangingGfxAllocationThenOldAllocationIsDestroyed) {
@@ -440,7 +440,7 @@ TEST(MemObj, givenSharedMemObjectAndZeroReuseCountWhenChangingGfxAllocationThenO
     newGfxAllocation->incReuseCount();
 
     ASSERT_EQ(1u, newGfxAllocation->peekReuseCount());
-    EXPECT_EQ(newGfxAllocation, memObj.getGraphicsAllocation());
+    EXPECT_EQ(newGfxAllocation, memObj.getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
 }
 
 TEST(MemObj, givenSharedMemObjectAndNonZeroReuseCountWhenChangingGfxAllocationThenOldAllocationIsNotDestroyed) {
@@ -458,7 +458,7 @@ TEST(MemObj, givenSharedMemObjectAndNonZeroReuseCountWhenChangingGfxAllocationTh
     newGfxAllocation->incReuseCount();
 
     ASSERT_EQ(1u, newGfxAllocation->peekReuseCount());
-    EXPECT_EQ(newGfxAllocation, memObj.getGraphicsAllocation());
+    EXPECT_EQ(newGfxAllocation, memObj.getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
     memoryManager.checkGpuUsageAndDestroyGraphicsAllocations(oldGfxAllocation);
 }
 
@@ -474,7 +474,7 @@ TEST(MemObj, givenNotSharedMemObjectWhenChangingGfxAllocationThenOldAllocationIs
 
     memObj.resetGraphicsAllocation(newGfxAllocation);
 
-    EXPECT_EQ(newGfxAllocation, memObj.getGraphicsAllocation());
+    EXPECT_EQ(newGfxAllocation, memObj.getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
 }
 
 TEST(MemObj, givenGraphicsAllocationWhenCallingIsAllocDumpableThenItReturnsTheCorrectValue) {
