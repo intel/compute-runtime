@@ -7,13 +7,13 @@
 
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/test/unit_test/fixtures/device_fixture.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 namespace NEO {
 
-class CommandEncodeStatesFixture : public ClDeviceFixture {
+class CommandEncodeStatesFixture : public DeviceFixture {
   public:
     class MyMockCommandContainer : public CommandContainer {
       public:
@@ -21,13 +21,13 @@ class CommandEncodeStatesFixture : public ClDeviceFixture {
     };
 
     void SetUp() {
-        ClDeviceFixture::SetUp();
+        DeviceFixture::SetUp();
         cmdContainer = std::make_unique<MyMockCommandContainer>();
         cmdContainer->initialize(pDevice);
     }
     void TearDown() {
         cmdContainer.reset();
-        ClDeviceFixture::TearDown();
+        DeviceFixture::TearDown();
     }
     std::unique_ptr<MyMockCommandContainer> cmdContainer;
 };

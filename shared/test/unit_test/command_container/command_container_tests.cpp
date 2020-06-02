@@ -6,23 +6,23 @@
  */
 
 #include "shared/source/command_container/cmdcontainer.h"
+#include "shared/test/unit_test/fixtures/device_fixture.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
 using namespace NEO;
 
-class CommandContainerTest : public ClDeviceFixture,
+class CommandContainerTest : public DeviceFixture,
                              public ::testing::Test {
 
   public:
     void SetUp() override {
         ::testing::Test::SetUp();
-        ClDeviceFixture::SetUp();
+        DeviceFixture::SetUp();
     }
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        DeviceFixture::TearDown();
         ::testing::Test::TearDown();
     }
 };
@@ -337,15 +337,15 @@ TEST_F(CommandContainerTest, whenResettingCommandContainerThenStoredCmdBuffersAr
     EXPECT_EQ(cmdBufSize, stream->getMaxAvailableSpace());
 }
 
-class CommandContainerHeaps : public ClDeviceFixture,
+class CommandContainerHeaps : public DeviceFixture,
                               public ::testing::TestWithParam<IndirectHeap::Type> {
   public:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        DeviceFixture::SetUp();
     }
 
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        DeviceFixture::TearDown();
     }
 };
 

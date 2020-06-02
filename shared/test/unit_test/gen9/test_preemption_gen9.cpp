@@ -17,6 +17,8 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_submissions_aggregator.h"
 
+#include "preemption_test_hw_details_gen9.h"
+
 namespace NEO {
 
 template <>
@@ -35,17 +37,6 @@ using Gen9PreemptionTests = DevicePreemptionTests;
 using Gen9PreemptionEnqueueKernelTest = PreemptionEnqueueKernelTest;
 using Gen9MidThreadPreemptionEnqueueKernelTest = MidThreadPreemptionEnqueueKernelTest;
 using Gen9ThreadGroupPreemptionEnqueueKernelTest = ThreadGroupPreemptionEnqueueKernelTest;
-
-template <>
-PreemptionTestHwDetails GetPreemptionTestHwDetails<SKLFamily>() {
-    PreemptionTestHwDetails ret;
-    ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = DwordBuilder::build(1, true) | DwordBuilder::build(2, true, false);
-    ret.modeToRegValueMap[PreemptionMode::MidBatch] = DwordBuilder::build(2, true) | DwordBuilder::build(1, true, false);
-    ret.modeToRegValueMap[PreemptionMode::MidThread] = DwordBuilder::build(2, true, false) | DwordBuilder::build(1, true, false);
-    ret.defaultRegValue = ret.modeToRegValueMap[PreemptionMode::MidBatch];
-    ret.regAddress = 0x2580u;
-    return ret;
-}
 
 GEN9TEST_F(Gen9PreemptionTests, whenMidThreadPreemptionIsNotAvailableThenDoesNotProgramPreamble) {
     device->setPreemptionMode(PreemptionMode::ThreadGroup);

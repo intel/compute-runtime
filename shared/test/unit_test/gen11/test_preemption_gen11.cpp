@@ -14,20 +14,11 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 
+#include "preemption_test_hw_details_gen11.h"
+
 using namespace NEO;
 
 using Gen11PreemptionTests = DevicePreemptionTests;
-
-template <>
-PreemptionTestHwDetails GetPreemptionTestHwDetails<ICLFamily>() {
-    PreemptionTestHwDetails ret;
-    ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = DwordBuilder::build(1, true) | DwordBuilder::build(2, true, false);
-    ret.modeToRegValueMap[PreemptionMode::MidBatch] = DwordBuilder::build(2, true) | DwordBuilder::build(1, true, false);
-    ret.modeToRegValueMap[PreemptionMode::MidThread] = DwordBuilder::build(2, true, false) | DwordBuilder::build(1, true, false);
-    ret.defaultRegValue = ret.modeToRegValueMap[PreemptionMode::MidBatch];
-    ret.regAddress = 0x2580u;
-    return ret;
-}
 
 GEN11TEST_F(Gen11PreemptionTests, whenMidThreadPreemptionIsNotAvailableThenDoesNotProgramStateSip) {
     device->setPreemptionMode(PreemptionMode::ThreadGroup);

@@ -13,7 +13,7 @@
 using namespace NEO;
 
 void DispatcherFixture::SetUp() {
-    ClDeviceFixture::SetUp();
+    DeviceFixture::SetUp();
 
     bufferAllocation = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
     cmdBuffer.replaceBuffer(bufferAllocation, MemoryConstants::pageSize);
@@ -22,5 +22,5 @@ void DispatcherFixture::SetUp() {
 void DispatcherFixture::TearDown() {
     alignedFree(bufferAllocation);
 
-    ClDeviceFixture::TearDown();
+    DeviceFixture::TearDown();
 }
