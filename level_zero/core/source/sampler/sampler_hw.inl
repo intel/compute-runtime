@@ -108,6 +108,8 @@ ze_result_t SamplerCoreFamily<gfxCoreFamily>::initialize(Device *device, const z
     samplerState.setMinLod(minLodValue.getRawAccess());
     samplerState.setMaxLod(maxLodValue.getRawAccess());
 
+    appendSamplerStateParams(&samplerState);
+
     return ZE_RESULT_SUCCESS;
 }
 
