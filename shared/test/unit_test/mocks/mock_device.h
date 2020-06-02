@@ -47,6 +47,7 @@ class MockDevice : public RootDevice {
     using Device::initializeCaps;
     using RootDevice::createEngines;
     using RootDevice::defaultEngineIndex;
+    using RootDevice::getDeviceBitfield;
     using RootDevice::subdevices;
 
     void setOSTime(OSTime *osTime);

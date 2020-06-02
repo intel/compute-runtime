@@ -68,7 +68,7 @@ struct BlitEnqueueTests : public ::testing::Test {
 
         if (createBcsEngine) {
             auto &engine = device->getEngine(HwHelperHw<FamilyType>::lowPriorityEngineType, true);
-            bcsOsContext.reset(OsContext::create(nullptr, 1, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
+            bcsOsContext.reset(OsContext::create(nullptr, 1, device->getDeviceBitfield(), aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
                                                  false, false, false));
             engine.osContext = bcsOsContext.get();
             engine.commandStreamReceiver->setupContext(*bcsOsContext);
