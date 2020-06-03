@@ -7,8 +7,11 @@
 
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/utilities/tag_allocator.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/ult_device_factory.h"
 
 #include "opencl/test/unit_test/fixtures/memory_allocator_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -18,7 +21,13 @@
 using namespace NEO;
 
 struct TagAllocatorTest : public Test<MemoryAllocatorFixture> {
-    const DeviceBitfield deviceBitfield{0xef};
+    const DeviceBitfield deviceBitfield{0xf};
+    DebugManagerStateRestore restorer;
+
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleSubDevices.set(4);
+        MemoryAllocatorFixture::SetUp();
+    }
 };
 
 struct TimeStamps {
@@ -417,9 +426,9 @@ TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTags
 }
 
 TEST_F(TagAllocatorTest, givenTagAllocatorWhenGraphicsAllocationIsCreatedThenSetValidllocationType) {
-    TagAllocator<TimestampPacketStorage> timestampPacketAllocator(0, memoryManager, 1, 1, sizeof(TimestampPacketStorage), false, {});
-    TagAllocator<HwTimeStamps> hwTimeStampsAllocator(0, memoryManager, 1, 1, sizeof(HwTimeStamps), false, {});
-    TagAllocator<HwPerfCounter> hwPerfCounterAllocator(0, memoryManager, 1, 1, sizeof(HwPerfCounter), false, {});
+    TagAllocator<TimestampPacketStorage> timestampPacketAllocator(mockRootDeviceIndex, memoryManager, 1, 1, sizeof(TimestampPacketStorage), false, mockDeviceBitfield);
+    TagAllocator<HwTimeStamps> hwTimeStampsAllocator(mockRootDeviceIndex, memoryManager, 1, 1, sizeof(HwTimeStamps), false, mockDeviceBitfield);
+    TagAllocator<HwPerfCounter> hwPerfCounterAllocator(mockRootDeviceIndex, memoryManager, 1, 1, sizeof(HwPerfCounter), false, mockDeviceBitfield);
 
     auto timestampPacketTag = timestampPacketAllocator.getTag();
     auto hwTimeStampsTag = hwTimeStampsAllocator.getTag();

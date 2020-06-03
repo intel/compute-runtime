@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "opencl/test/unit_test/fixtures/memory_allocator_multi_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
 using namespace NEO;
@@ -21,7 +22,7 @@ TEST_P(MemoryManagerMultiDeviceTest, givenRootDeviceIndexSpecifiedWhenAllocateGr
                                                                     GraphicsAllocation::AllocationType::KERNEL_ISA};
     for (auto allocationType : allocationTypes) {
         for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < getNumRootDevices(); ++rootDeviceIndex) {
-            AllocationProperties properties{rootDeviceIndex, true, MemoryConstants::pageSize, allocationType, false, false, 0};
+            AllocationProperties properties{rootDeviceIndex, true, MemoryConstants::pageSize, allocationType, false, false, mockDeviceBitfield};
 
             auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
             ASSERT_NE(gfxAllocation, nullptr);

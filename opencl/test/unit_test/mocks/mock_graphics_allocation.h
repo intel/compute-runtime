@@ -11,6 +11,10 @@
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
 namespace NEO {
+
+constexpr uint32_t mockRootDeviceIndex = 0u;
+constexpr DeviceBitfield mockDeviceBitfield(0b1);
+
 class MockGraphicsAllocation : public MemoryAllocation {
   public:
     using MemoryAllocation::aubInfo;

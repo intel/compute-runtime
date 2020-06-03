@@ -13,6 +13,7 @@
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 namespace NEO {
@@ -51,7 +52,7 @@ class MockGmm : public Gmm {
         imgDesc.image_width = 5;
         imgDesc.image_height = 5;
         auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-        return memoryManager.allocateGraphicsMemoryWithProperties({0, true, imgInfo, GraphicsAllocation::AllocationType::IMAGE, {}});
+        return memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, true, imgInfo, GraphicsAllocation::AllocationType::IMAGE, mockDeviceBitfield});
     }
 };
 } // namespace NEO
