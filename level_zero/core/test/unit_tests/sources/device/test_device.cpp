@@ -265,7 +265,22 @@ TEST_F(MultipleDevicesTest, givenTheSameDeviceThenCanAccessPeerReturnsTrue) {
     EXPECT_TRUE(canAccess);
 }
 
-TEST_F(MultipleDevicesTest, givenTwoDevicesFromSameFamilyThenCanAccessPeerReturnsTrue) {
+TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsFalse) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    GFXCORE_FAMILY device0Family = device0->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    GFXCORE_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    EXPECT_EQ(device0Family, device1Family);
+
+    ze_bool_t canAccess = true;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_FALSE(canAccess);
+}
+
+TEST_F(MultipleDevicesTest, givenTwoRootDevicesFromSameFamilyThenCanAccessPeerReturnsTrueIfEnableCrossDeviceAccessIsSetToOne) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(1);
     L0::Device *device0 = driverHandle->devices[0];
     L0::Device *device1 = driverHandle->devices[1];
 
@@ -312,6 +327,40 @@ TEST_F(MultipleDevicesTest, givenTwoSubDevicesFromTheSameRootDeviceThenCanAccess
     EXPECT_TRUE(canAccess);
 }
 
+TEST_F(MultipleDevicesTest, givenTwoSubDevicesFromTheSameRootDeviceThenCanAccessPeerReturnsFalseIfEnableCrossDeviceAccessIsSetToZero) {
+    DebugManager.flags.EnableCrossDeviceAccess.set(0);
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    uint32_t subDeviceCount = 0;
+    ze_result_t res = device0->getSubDevices(&subDeviceCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(numSubDevices, subDeviceCount);
+
+    std::vector<ze_device_handle_t> subDevices0(subDeviceCount);
+    res = device0->getSubDevices(&subDeviceCount, subDevices0.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    subDeviceCount = 0;
+    res = device1->getSubDevices(&subDeviceCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(numSubDevices, subDeviceCount);
+
+    std::vector<ze_device_handle_t> subDevices1(subDeviceCount);
+    res = device1->getSubDevices(&subDeviceCount, subDevices1.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_bool_t canAccess = true;
+    L0::Device *subDevice0_0 = Device::fromHandle(subDevices0[0]);
+    subDevice0_0->canAccessPeer(subDevices0[1], &canAccess);
+    EXPECT_FALSE(canAccess);
+
+    canAccess = true;
+    L0::Device *subDevice1_0 = Device::fromHandle(subDevices1[0]);
+    subDevice1_0->canAccessPeer(subDevices1[1], &canAccess);
+    EXPECT_FALSE(canAccess);
+}
+
 struct MultipleDevicesDifferentLocalMemorySupportTest : public MultipleDevicesTest {
     void SetUp() override {
         MultipleDevicesTest::SetUp();
@@ -325,11 +374,11 @@ struct MultipleDevicesDifferentLocalMemorySupportTest : public MultipleDevicesTe
     L0::Device *deviceWithoutLocalMemory = nullptr;
 };
 
-TEST_F(MultipleDevicesDifferentLocalMemorySupportTest, givenTwoDevicesWithDifferentLocalMemorySupportThenCanAccessPeerReturnsTrue) {
-    ze_bool_t canAccess = false;
+TEST_F(MultipleDevicesDifferentLocalMemorySupportTest, givenTwoDevicesWithDifferentLocalMemorySupportThenCanAccessPeerReturnsFalse) {
+    ze_bool_t canAccess = true;
     ze_result_t res = deviceWithLocalMemory->canAccessPeer(deviceWithoutLocalMemory->toHandle(), &canAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_TRUE(canAccess);
+    EXPECT_FALSE(canAccess);
 }
 
 struct MultipleDevicesDifferentFamilyAndLocalMemorySupportTest : public MultipleDevicesTest {
@@ -362,6 +411,32 @@ TEST_F(MultipleDevicesDifferentFamilyAndLocalMemorySupportTest, givenTwoDevicesF
 
     ze_bool_t canAccess = true;
     ze_result_t res = deviceSKL->canAccessPeer(deviceKBL->toHandle(), &canAccess);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_FALSE(canAccess);
+}
+
+struct MultipleDevicesSameFamilyAndLocalMemorySupportTest : public MultipleDevicesTest {
+    void SetUp() override {
+        MultipleDevicesTest::SetUp();
+
+        memoryManager->localMemorySupported[0] = 1;
+        memoryManager->localMemorySupported[1] = 1;
+
+        device0 = driverHandle->devices[0];
+        device1 = driverHandle->devices[1];
+    }
+
+    L0::Device *device0 = nullptr;
+    L0::Device *device1 = nullptr;
+};
+
+TEST_F(MultipleDevicesSameFamilyAndLocalMemorySupportTest, givenTwoDevicesFromSameFamilyThenCanAccessPeerReturnsFalse) {
+    PRODUCT_FAMILY device0Family = device0->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+    PRODUCT_FAMILY device1Family = device1->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+    EXPECT_EQ(device0Family, device1Family);
+
+    ze_bool_t canAccess = true;
+    ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_FALSE(canAccess);
 }

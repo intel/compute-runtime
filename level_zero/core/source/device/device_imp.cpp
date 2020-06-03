@@ -24,8 +24,10 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
+#include "shared/source/utilities/debug_settings_reader_creator.h"
 
 #include "opencl/source/mem_obj/mem_obj.h"
+#include "opencl/source/os_interface/ocl_reg_path.h"
 #include "opencl/source/program/program.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -61,18 +63,21 @@ void DeviceImp::setDriverHandle(DriverHandle *driverHandle) {
 }
 
 ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) {
-    *value = true;
+    *value = false;
 
     DeviceImp *pPeerDevice = reinterpret_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
+    if (this->getNEODevice()->getRootDeviceIndex() == pPeerDevice->getNEODevice()->getRootDeviceIndex()) {
+        *value = true;
+    }
 
-    NEO::MemoryManager *memoryManager = this->getDriverHandle()->getMemoryManager();
-    bool isLocalMemorySupportedinDevice =
-        memoryManager->isLocalMemorySupported(this->getNEODevice()->getRootDeviceIndex());
-    bool isLocalMemorySupportedinPeer =
-        memoryManager->isLocalMemorySupported(pPeerDevice->getNEODevice()->getRootDeviceIndex());
-    if (isLocalMemorySupportedinDevice && isLocalMemorySupportedinPeer &&
-        (this->getNEODevice()->getHardwareInfo().platform.eProductFamily !=
-         pPeerDevice->getNEODevice()->getHardwareInfo().platform.eProductFamily)) {
+    auto settingsReader = NEO::SettingsReaderCreator::create(NEO::oclRegPath);
+    int64_t accessOverride = settingsReader->getSetting("EnableCrossDeviceAcesss", -1);
+
+    if ((accessOverride == 1) || (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() == 1)) {
+        *value = true;
+    }
+
+    if ((accessOverride == 0) || (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() == 0)) {
         *value = false;
     }
 
