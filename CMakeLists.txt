@@ -87,9 +87,11 @@ endif()
 if(NOT DEFINED BUILD_WITH_L0)
     if("${NEO_BITS}" STREQUAL "64")
         set(BUILD_WITH_L0 TRUE)
-    else()
-        set(BUILD_WITH_L0 FALSE)
     endif()
+endif()
+
+if(NOT "${NEO_BITS}" STREQUAL "64")
+    set(BUILD_WITH_L0 FALSE)
 endif()
 
 add_definitions(
