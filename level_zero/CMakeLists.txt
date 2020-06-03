@@ -4,8 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-option(BUILD_WITH_L0 "Build level zero by default" ON)
-if(BUILD_WITH_L0 AND "${NEO_BITS}" STREQUAL "64")
+if(BUILD_WITH_L0)
 
     set(TARGET_NAME_L0 ze_intel_gpu)
 
@@ -453,7 +452,4 @@ endif()
         endif()
 
     endif()
-else()
-    set(BUILD_WITH_L0 FALSE
-    PARENT_SCOPE)
 endif()

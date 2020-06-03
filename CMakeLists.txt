@@ -76,6 +76,22 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type: [Release, ReleaseInternal, Debug]" FORCE)
 endif()
 
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(NEO_BITS "64")
+  set(NEO_ARCH "x64")
+else()
+  set(NEO_BITS "32")
+  set(NEO_ARCH "x86")
+endif()
+
+if(NOT DEFINED BUILD_WITH_L0)
+    if("${NEO_BITS}" STREQUAL "64")
+        set(BUILD_WITH_L0 TRUE)
+    else()
+        set(BUILD_WITH_L0 FALSE)
+    endif()
+endif()
+
 add_definitions(
     -DCL_USE_DEPRECATED_OPENCL_1_1_APIS
     -DCL_USE_DEPRECATED_OPENCL_1_2_APIS
@@ -169,14 +185,6 @@ if(MSVC)
   string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
   string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASEINTERNAL "${CMAKE_CXX_FLAGS_RELEASEINTERNAL}")
 endif(MSVC)
-
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(NEO_BITS "64")
-  set(NEO_ARCH "x64")
-else()
-  set(NEO_BITS "32")
-  set(NEO_ARCH "x86")
-endif()
 
 if(NOT SKIP_UNIT_TESTS)
   if(NOT DEFINED GTEST_REPEAT)
