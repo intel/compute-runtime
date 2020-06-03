@@ -12,6 +12,9 @@ namespace NEO {
 
 void MemoryPropertiesHelper::addExtraMemoryProperties(MemoryProperties &properties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel) {
 }
+DeviceBitfield MemoryPropertiesHelper::adjustDeviceBitfield(const MemoryProperties &memoryProperties, DeviceBitfield deviceBitfield) {
+    return deviceBitfield;
+}
 
 bool MemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
                                                    cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
