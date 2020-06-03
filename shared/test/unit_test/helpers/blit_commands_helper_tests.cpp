@@ -277,3 +277,25 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
     auto itor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
 }
+
+HWTEST2_F(BlitTests, givenGen9AndGetBlitAllocationPropertiesThenCorrectValuesAreReturned, IsGen9) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+
+    MockGraphicsAllocation alloc;
+    uint32_t pitch = 0x10;
+    uint32_t qPitch = 0x20;
+    GMM_TILE_TYPE tileType = GMM_NOT_TILED;
+    uint32_t mipTailLod = 0;
+
+    auto expectedPitch = pitch;
+    auto expectedQPitch = qPitch;
+    auto expectedtileType = tileType;
+    auto expectedMipTailLod = mipTailLod;
+
+    NEO::BlitCommandsHelper<FamilyType>::getBlitAllocationProperties(alloc, pitch, qPitch, tileType, mipTailLod);
+
+    EXPECT_EQ(expectedPitch, pitch);
+    EXPECT_EQ(expectedQPitch, qPitch);
+    EXPECT_EQ(expectedtileType, tileType);
+    EXPECT_EQ(expectedMipTailLod, mipTailLod);
+}

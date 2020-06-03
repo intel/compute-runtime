@@ -99,66 +99,69 @@ void BlitCommandsHelper<Family>::appendSurfaceType(const BlitProperties &blitPro
 }
 
 template <>
+void BlitCommandsHelper<Family>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, GMM_TILE_TYPE &tileType, uint32_t &mipTailLod) {
+    constexpr uint32_t TILED_Y_PITCH_ALIGNMENT = 128;
+    constexpr uint32_t NON_TILED_PITCH_ALIGNMENT = 16;
+
+    if (allocation.getDefaultGmm()) {
+        auto gmmResInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
+        auto resInfo = gmmResInfo->getResourceFlags()->Info;
+        if (resInfo.TiledY) {
+            tileType = GMM_TILED_Y;
+            pitch = static_cast<uint32_t>(gmmResInfo->getRenderPitch());
+            pitch = alignUp<uint32_t>(pitch, TILED_Y_PITCH_ALIGNMENT);
+            qPitch = static_cast<uint32_t>(gmmResInfo->getQPitch());
+        } else {
+            pitch = alignUp<uint32_t>(pitch, NON_TILED_PITCH_ALIGNMENT);
+        }
+    }
+}
+
+template <>
 void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, uint32_t sliceIndex) {
     using XY_COPY_BLT = typename Family::XY_COPY_BLT;
-    auto dstAllocation = blitProperties.dstAllocation;
     auto srcAllocation = blitProperties.srcAllocation;
+    auto dstAllocation = blitProperties.dstAllocation;
+    auto srcQPitch = blitProperties.srcSize.y;
+    auto dstQPitch = blitProperties.dstSize.y;
+    auto srcPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
+    auto dstPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
+    auto tileType = GMM_NOT_TILED;
+    uint32_t mipTailLod = 0;
 
-    size_t srcOffset = blitProperties.srcSlicePitch * (sliceIndex + static_cast<uint32_t>(blitProperties.srcOffset.z));
-    size_t dstOffset = blitProperties.dstSlicePitch * (sliceIndex + static_cast<uint32_t>(blitProperties.dstOffset.z));
+    getBlitAllocationProperties(*srcAllocation, srcPitch, srcQPitch, tileType, mipTailLod);
+    getBlitAllocationProperties(*dstAllocation, dstPitch, dstQPitch, tileType, mipTailLod);
+
+    auto srcSlicePitch = srcPitch * srcQPitch;
+    auto dstSlicePitch = dstPitch * dstQPitch;
+
+    size_t srcOffset = srcSlicePitch * (sliceIndex + blitProperties.srcOffset.z);
+    size_t dstOffset = dstSlicePitch * (sliceIndex + blitProperties.dstOffset.z);
 
     blitCmd.setSourceBaseAddress(ptrOffset(srcAllocation->getGpuAddress(), srcOffset));
     blitCmd.setDestinationBaseAddress(ptrOffset(dstAllocation->getGpuAddress(), dstOffset));
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendBlitCommandsForImages(BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
-    uint32_t dstPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
-    uint32_t srcPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
-    uint32_t dstQPitch = static_cast<uint32_t>(blitProperties.dstSize.y);
-    uint32_t srcQPitch = static_cast<uint32_t>(blitProperties.srcSize.y);
-    auto dstAllocation = blitProperties.dstAllocation;
+void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
+    auto srcTileType = GMM_NOT_TILED;
+    auto dstTileType = GMM_NOT_TILED;
     auto srcAllocation = blitProperties.srcAllocation;
-    GMM_TILE_TYPE dstTileType = GMM_NOT_TILED;
-    GMM_TILE_TYPE srcTileType = GMM_NOT_TILED;
+    auto dstAllocation = blitProperties.dstAllocation;
+    auto srcQPitch = blitProperties.srcSize.y;
+    auto dstQPitch = blitProperties.dstSize.y;
+    auto srcPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
+    auto dstPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
+    uint32_t mipTailLod = 0;
 
-    constexpr uint32_t TILED_Y_PITCH_ALIGNMENT = 128;
-    constexpr uint32_t NON_TILED_PITCH_ALIGNMENT = 16;
+    getBlitAllocationProperties(*srcAllocation, srcPitch, srcQPitch, srcTileType, mipTailLod);
+    getBlitAllocationProperties(*dstAllocation, dstPitch, dstQPitch, dstTileType, mipTailLod);
 
-    if (dstAllocation->getDefaultGmm()) {
-        auto dstResInfo = dstAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info;
-        if (dstResInfo.TiledY) {
-            dstTileType = GMM_TILED_Y;
-            dstPitch = static_cast<uint32_t>(dstAllocation->getDefaultGmm()->gmmResourceInfo->getRenderPitch());
-            dstQPitch = static_cast<uint32_t>(dstAllocation->getDefaultGmm()->gmmResourceInfo->getQPitch());
-            dstPitch = alignUp<uint32_t>(dstPitch, TILED_Y_PITCH_ALIGNMENT);
-        } else {
-            dstPitch = alignUp<uint32_t>(dstPitch, NON_TILED_PITCH_ALIGNMENT);
-        }
-    }
-    if (srcAllocation->getDefaultGmm()) {
-        auto srcResInfo = srcAllocation->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info;
-        if (srcResInfo.TiledY) {
-            srcTileType = GMM_TILED_Y;
-            srcPitch = static_cast<uint32_t>(srcAllocation->getDefaultGmm()->gmmResourceInfo->getRenderPitch());
-            srcQPitch = static_cast<uint32_t>(srcAllocation->getDefaultGmm()->gmmResourceInfo->getQPitch());
-            srcPitch = alignUp<uint32_t>(srcPitch, TILED_Y_PITCH_ALIGNMENT);
-        } else {
-            srcPitch = alignUp<uint32_t>(srcPitch, NON_TILED_PITCH_ALIGNMENT);
-        }
-    }
-    blitProperties.srcSlicePitch = srcPitch * srcQPitch;
-    blitProperties.dstSlicePitch = dstPitch * dstQPitch;
-    if (dstTileType != GMM_NOT_TILED) {
-        blitCmd.setDestinationPitch(dstPitch / 4);
-    } else {
-        blitCmd.setDestinationPitch(dstPitch);
-    }
-    if (srcTileType != GMM_NOT_TILED) {
-        blitCmd.setSourcePitch(srcPitch / 4);
-    } else {
-        blitCmd.setSourcePitch(srcPitch);
-    }
+    srcPitch = (srcTileType == GMM_NOT_TILED) ? srcPitch : srcPitch / 4;
+    dstPitch = (srcTileType == GMM_NOT_TILED) ? dstPitch : dstPitch / 4;
+
+    blitCmd.setSourcePitch(srcPitch);
+    blitCmd.setDestinationPitch(dstPitch);
 
     appendTilingType(srcTileType, dstTileType, blitCmd);
 }

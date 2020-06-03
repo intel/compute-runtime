@@ -149,14 +149,22 @@ HWTEST2_F(BlitTests, givenSrcAndDestinationImagesWhenAppendSliceOffsetsThenAdres
     BlitProperties properties = {};
     properties.srcAllocation = &mockAllocationSrc;
     properties.dstAllocation = &mockAllocationDst;
-    properties.dstSlicePitch = 0x1000;
-    properties.srcSlicePitch = 0x2000;
+
+    properties.srcSize.y = 0x10;
+    properties.srcRowPitch = 0x10;
+    auto srcSlicePitch = properties.srcSize.y * properties.srcRowPitch;
+
+    properties.dstSize.y = 0x20;
+    properties.dstRowPitch = 0x20;
+    auto dstSlicePitch = properties.dstSize.y * properties.dstRowPitch;
+
     properties.srcOffset = {0x10, 0x10, 0x10};
     properties.dstOffset = {0x20, 0x20, 0x20};
     uint32_t index = 7;
     BlitCommandsHelper<FamilyType>::appendSliceOffsets(properties, bltCmd, index);
-    auto expectesSrcOffset = (index + properties.srcOffset.z) * properties.srcSlicePitch;
-    auto expectesDstOffset = (index + properties.dstOffset.z) * properties.dstSlicePitch;
+    auto expectesSrcOffset = (index + properties.srcOffset.z) * srcSlicePitch;
+    auto expectesDstOffset = (index + properties.dstOffset.z) * dstSlicePitch;
+
     EXPECT_EQ(bltCmd.getSourceBaseAddress(), ptrOffset(mockAllocationSrc.getGpuAddress(), expectesSrcOffset));
     EXPECT_EQ(bltCmd.getDestinationBaseAddress(), ptrOffset(mockAllocationDst.getGpuAddress(), expectesDstOffset));
 }
