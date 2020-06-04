@@ -10,13 +10,13 @@
 
 #include "level_zero/tools/source/sysman/power/os_power.h"
 
-#include "sysman/linux/os_sysman_imp.h"
-
 namespace L0 {
 
+class SysfsAccess;
 class LinuxPowerImp : public OsPower, public NEO::NonCopyableClass {
   public:
     ze_result_t getEnergyCounter(uint64_t &energy) override;
+    bool isPowerModuleSupported() override;
     LinuxPowerImp(OsSysman *pOsSysman);
     LinuxPowerImp() = default;
     ~LinuxPowerImp() override = default;

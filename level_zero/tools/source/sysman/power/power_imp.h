@@ -26,6 +26,6 @@ class PowerImp : public NEO::NonCopyableClass, public Power {
     ~PowerImp() override;
 
     OsPower *pOsPower = nullptr;
-    void init() {}
+    void init();
 };
 } // namespace L0

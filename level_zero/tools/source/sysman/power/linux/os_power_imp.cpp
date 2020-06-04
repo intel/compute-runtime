@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/power/linux/os_power_imp.h"
 
+#include "sysman/linux/os_sysman_imp.h"
+
 namespace L0 {
 
 ze_result_t LinuxPowerImp::getEnergyCounter(uint64_t &energy) {
@@ -17,6 +19,10 @@ ze_result_t LinuxPowerImp::getEnergyCounter(uint64_t &energy) {
 LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+}
+
+bool LinuxPowerImp::isPowerModuleSupported() {
+    return false;
 }
 
 OsPower *OsPower::create(OsSysman *pOsSysman) {

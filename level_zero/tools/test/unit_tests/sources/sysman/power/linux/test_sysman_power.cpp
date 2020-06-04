@@ -10,6 +10,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "mock_sysfs_power.h"
+#include "sysman/linux/os_sysman_imp.h"
 #include "sysman/power/power_imp.h"
 
 using ::testing::_;
@@ -23,14 +24,15 @@ class SysmanPowerFixture : public DeviceFixture, public ::testing::Test {
     std::unique_ptr<SysmanImp> sysmanImp;
     zet_sysman_handle_t hSysman;
 
-    OsPower *pOsPower = nullptr;
-    PublicLinuxPowerImp linuxPowerImp;
     PowerImp *pPowerImp = nullptr;
+    PublicLinuxPowerImp linuxPowerImp;
 
     void SetUp() override {
 
         DeviceFixture::SetUp();
         sysmanImp = std::make_unique<SysmanImp>(device->toHandle());
+        OsPower *pOsPower = nullptr;
+
         pOsPower = static_cast<OsPower *>(&linuxPowerImp);
         pPowerImp = new PowerImp();
         pPowerImp->pOsPower = pOsPower;
@@ -47,6 +49,9 @@ class SysmanPowerFixture : public DeviceFixture, public ::testing::Test {
         DeviceFixture::TearDown();
     }
 };
+TEST_F(SysmanPowerFixture, GivenValidOSPowerHandleWhenCheckingForPowerSupportThenExpectFalseToBeReturned) {
+    EXPECT_FALSE(pPowerImp->pOsPower->isPowerModuleSupported());
+}
 
 TEST_F(SysmanPowerFixture, GivenComponentCountZeroWhenCallingZetSysmanPowerGetThenZeroCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     uint32_t count = 0;

@@ -57,6 +57,10 @@ PowerImp::PowerImp(OsSysman *pOsSysman) {
     init();
 }
 
+void PowerImp::init() {
+    this->initSuccess = pOsPower->isPowerModuleSupported();
+}
+
 PowerImp::~PowerImp() {
     if (nullptr != pOsPower) {
         delete pOsPower;
