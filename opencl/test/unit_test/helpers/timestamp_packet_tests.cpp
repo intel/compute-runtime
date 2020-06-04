@@ -108,6 +108,7 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
     MockContext *context;
     std::unique_ptr<MockKernelWithInternals> kernel;
     MockCommandQueue *mockCmdQ;
+    DebugManagerStateRestore restorer;
 };
 
 HWTEST_F(TimestampPacketTests, givenTagNodeWhenSemaphoreAndAtomicAreProgrammedThenUseGpuAddress) {
@@ -883,13 +884,16 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 HWTEST_F(TimestampPacketTests, givenMultipleDevicesOnCsrWhenIncrementingCpuDependenciesCountThenIncrementByTargetCsrDeviceCountValue) {
     DeviceBitfield osContext0DeviceBitfiled = 0b011;
     DeviceBitfield osContext1DeviceBitfiled = 0b1011;
+
+    UltClDeviceFactory factory{2, 4};
+
     auto osContext0 = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, osContext0DeviceBitfiled, aub_stream::EngineType::ENGINE_RCS, PreemptionMode::Disabled, false, false, false));
     auto osContext1 = std::unique_ptr<OsContext>(OsContext::create(nullptr, 1, osContext1DeviceBitfiled, aub_stream::EngineType::ENGINE_RCS, PreemptionMode::Disabled, false, false, false));
     EXPECT_EQ(2u, osContext0->getNumSupportedDevices());
     EXPECT_EQ(3u, osContext1->getNumSupportedDevices());
 
-    auto device0 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
-    auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
+    auto device0 = std::make_unique<MockClDevice>(Device::create<MockDevice>(factory.rootDevices[0]->getExecutionEnvironment(), 0u));
+    auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(factory.rootDevices[0]->getExecutionEnvironment(), 1u));
 
     device0->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     device0->getUltCommandStreamReceiver<FamilyType>().setupContext(*osContext0);
@@ -1444,7 +1448,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingWithOmitTim
 
 HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentDevicesWhenEnqueueingThenMakeAllTimestampsResident) {
     TagAllocator<TimestampPacketStorage> tagAllocator(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1, 1,
-                                                      sizeof(TimestampPacketStorage), false, {});
+                                                      sizeof(TimestampPacketStorage), false, device->getDeviceBitfield());
     auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
     auto &ultCsr = device->getUltCommandStreamReceiver<FamilyType>();
@@ -1480,7 +1484,7 @@ HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentDevicesWhenEnqueu
 
 HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentCSRsWhenEnqueueingThenMakeAllTimestampsResident) {
     TagAllocator<TimestampPacketStorage> tagAllocator(device->getRootDeviceIndex(), executionEnvironment->memoryManager.get(), 1, 1,
-                                                      sizeof(TimestampPacketStorage), false, {});
+                                                      sizeof(TimestampPacketStorage), false, device->getDeviceBitfield());
 
     auto &ultCsr = device->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.timestampPacketWriteEnabled = true;

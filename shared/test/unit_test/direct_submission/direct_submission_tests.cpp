@@ -34,7 +34,7 @@ struct DirectSubmissionFixture : public ClDeviceFixture {
     void SetUp() {
         ClDeviceFixture::SetUp();
 
-        osContext.reset(OsContext::create(nullptr, 0u, 0u, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+        osContext.reset(OsContext::create(nullptr, 0u, pDevice->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                           false, false, false));
     }
 

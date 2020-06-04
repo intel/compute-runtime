@@ -28,10 +28,10 @@ struct WddmDirectSubmissionFixture : public WddmFixture {
         wddm->wddmInterface.reset(new WddmMockInterface20(*wddm));
         wddmMockInterface = static_cast<WddmMockInterface20 *>(wddm->wddmInterface.get());
 
-        osContext = std::make_unique<OsContextWin>(*wddm, 0u, 0u, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
-                                                   false, false, false);
         ultHwConfig.forceOsAgnosticMemoryManager = false;
         device.reset(MockDevice::create<MockDevice>(executionEnvironment.get(), 0u));
+        osContext = std::make_unique<OsContextWin>(*wddm, 0u, device->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                                   false, false, false);
         device->setPreemptionMode(PreemptionMode::ThreadGroup);
     }
 

@@ -344,6 +344,7 @@ HWTEST_F(UsmDestructionTests, givenSharedUsmAllocationWhenBlockingFreeIsCalledTh
     *mockCsr->getTagAddress() = 5u;
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY);
+    unifiedMemoryProperties.subdeviceBitfield = mockDevice.getDeviceBitfield();
 
     auto svmAllocationsManager = mockContext.getSVMAllocsManager();
     auto sharedMemory = svmAllocationsManager->createUnifiedAllocationWithDeviceStorage(0u, 4096u, {}, unifiedMemoryProperties);
@@ -383,6 +384,7 @@ HWTEST_F(UsmDestructionTests, givenUsmAllocationWhenBlockingFreeIsCalledThenWait
     *mockCsr->getTagAddress() = 5u;
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
+    unifiedMemoryProperties.subdeviceBitfield = mockClDevice.getDeviceBitfield();
 
     auto svmAllocationsManager = mockContext.getSVMAllocsManager();
     auto hostMemory = svmAllocationsManager->createUnifiedMemoryAllocation(0u, 4096u, unifiedMemoryProperties);
