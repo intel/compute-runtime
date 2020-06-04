@@ -1131,7 +1131,7 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
                    "imageDesc", imageDesc,
                    "imageRowPitch", imageRowPitch,
                    "imageSlicePitch", imageSlicePitch);
-    ClSurfaceFormatInfo *surfaceFormat = nullptr;
+    const ClSurfaceFormatInfo *surfaceFormat = nullptr;
     cl_mem_flags memFlags = CL_MEM_READ_ONLY;
     retVal = validateObjects(context);
     auto pContext = castToObject<Context>(context);
@@ -1145,8 +1145,11 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
         retVal = Image::validateImageFormat(imageFormat);
     }
     if (CL_SUCCESS == retVal) {
-        surfaceFormat = (ClSurfaceFormatInfo *)Image::getSurfaceFormatFromTable(memFlags, imageFormat, pContext->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-        retVal = Image::validate(pContext, MemoryPropertiesHelper::createMemoryProperties(memFlags, 0, 0), surfaceFormat, imageDesc, nullptr);
+        auto pClDevice = pContext->getDevice(0);
+        surfaceFormat = Image::getSurfaceFormatFromTable(memFlags, imageFormat,
+                                                         pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        retVal = Image::validate(pContext, MemoryPropertiesHelper::createMemoryProperties(memFlags, 0, 0, &pClDevice->getDevice()),
+                                 surfaceFormat, imageDesc, nullptr);
     }
     if (CL_SUCCESS == retVal) {
         retVal = Image::getImageParams(pContext, memFlags, surfaceFormat, imageDesc, imageRowPitch, imageSlicePitch);

@@ -54,8 +54,10 @@ class CreateImage2DTest : public ClDeviceFixture,
         ClDeviceFixture::TearDown();
     }
     Image *createImageWithFlags(cl_mem_flags flags) {
-        auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-        return Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(
+            flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        return Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+                             flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
     }
     cl_image_format imageFormat;
     cl_image_desc imageDesc;

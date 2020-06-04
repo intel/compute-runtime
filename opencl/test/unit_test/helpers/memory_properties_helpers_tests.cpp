@@ -5,6 +5,9 @@
  *
  */
 
+#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/ult_device_factory.h"
+
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -15,109 +18,115 @@
 using namespace NEO;
 
 TEST(MemoryProperties, givenValidPropertiesWhenCreateMemoryPropertiesThenTrueIsReturned) {
+    UltDeviceFactory deviceFactory{1, 0};
+    auto pDevice = deviceFactory.rootDevices[0];
     MemoryProperties properties;
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.readWrite);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_WRITE_ONLY, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_WRITE_ONLY, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.writeOnly);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_ONLY, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_ONLY, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.readOnly);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.useHostPtr);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_ALLOC_HOST_PTR, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_ALLOC_HOST_PTR, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.allocHostPtr);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.copyHostPtr);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_HOST_WRITE_ONLY, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_HOST_WRITE_ONLY, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.hostWriteOnly);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_HOST_READ_ONLY, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_HOST_READ_ONLY, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.hostReadOnly);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_HOST_NO_ACCESS, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_HOST_NO_ACCESS, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.hostNoAccess);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_KERNEL_READ_AND_WRITE, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_KERNEL_READ_AND_WRITE, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.kernelReadAndWrite);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.accessFlagsUnrestricted);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_NO_ACCESS_INTEL, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_NO_ACCESS_INTEL, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.noAccess);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(0, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(0, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0, pDevice);
     EXPECT_TRUE(properties.flags.locallyUncachedResource);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(0, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(0, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE, 0, pDevice);
     EXPECT_TRUE(properties.flags.locallyUncachedInSurfaceState);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL, 0, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL, 0, 0, pDevice);
     EXPECT_TRUE(properties.flags.forceSharedPhysicalMemory);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(0, 0, CL_MEM_ALLOC_WRITE_COMBINED_INTEL);
+    properties = MemoryPropertiesHelper::createMemoryProperties(0, 0, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, pDevice);
     EXPECT_TRUE(properties.allocFlags.allocWriteCombined);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(0, CL_MEM_48BIT_RESOURCE_INTEL, 0);
+    properties = MemoryPropertiesHelper::createMemoryProperties(0, CL_MEM_48BIT_RESOURCE_INTEL, 0, pDevice);
     EXPECT_TRUE(properties.flags.resource48Bit);
 }
 
 TEST(MemoryProperties, givenClMemForceLinearStorageFlagWhenCreateMemoryPropertiesThenReturnProperValue) {
+    UltDeviceFactory deviceFactory{1, 0};
+    auto pDevice = deviceFactory.rootDevices[0];
     MemoryProperties memoryProperties;
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
 
     flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
     flagsIntel = 0;
-    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
     EXPECT_TRUE(memoryProperties.flags.forceLinearStorage);
 
     flags = 0;
     flagsIntel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
     EXPECT_TRUE(memoryProperties.flags.forceLinearStorage);
 
     flags |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
     flagsIntel |= CL_MEM_FORCE_LINEAR_STORAGE_INTEL;
-    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
     EXPECT_TRUE(memoryProperties.flags.forceLinearStorage);
 
     flags = 0;
     flagsIntel = 0;
-    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
     EXPECT_FALSE(memoryProperties.flags.forceLinearStorage);
 }
 
 TEST(MemoryProperties, givenClAllowUnrestrictedSizeFlagWhenCreateMemoryPropertiesThenReturnProperValue) {
+    UltDeviceFactory deviceFactory{1, 0};
+    auto pDevice = deviceFactory.rootDevices[0];
     MemoryProperties memoryProperties;
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
 
     flags |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
     flagsIntel = 0;
-    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
     EXPECT_TRUE(memoryProperties.flags.allowUnrestrictedSize);
 
     flags = 0;
     flagsIntel |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
-    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
     EXPECT_TRUE(memoryProperties.flags.allowUnrestrictedSize);
 
     flags |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
     flagsIntel |= CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
-    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
     EXPECT_TRUE(memoryProperties.flags.allowUnrestrictedSize);
 
     flags = 0;
     flagsIntel = 0;
-    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0);
+    memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, pDevice);
     EXPECT_FALSE(memoryProperties.flags.allowUnrestrictedSize);
 }
 

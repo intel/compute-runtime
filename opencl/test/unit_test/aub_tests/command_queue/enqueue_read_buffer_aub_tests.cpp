@@ -123,17 +123,18 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
                                                                   sizeof(srcMemory),
                                                                   MemoryPool::MemoryNull);
 
-    std::unique_ptr<Buffer> srcBuffer(Buffer::createBufferHw(&context,
-                                                             MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0),
-                                                             CL_MEM_USE_HOST_PTR,
-                                                             0,
-                                                             sizeof(srcMemory),
-                                                             srcAlocation->getUnderlyingBuffer(),
-                                                             srcMemory,
-                                                             srcAlocation,
-                                                             false,
-                                                             false,
-                                                             false));
+    std::unique_ptr<Buffer> srcBuffer(Buffer::createBufferHw(
+        &context,
+        MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice()),
+        CL_MEM_USE_HOST_PTR,
+        0,
+        sizeof(srcMemory),
+        srcAlocation->getUnderlyingBuffer(),
+        srcMemory,
+        srcAlocation,
+        false,
+        false,
+        false));
     ASSERT_NE(nullptr, srcBuffer);
 
     srcBuffer->forceDisallowCPUCopy = true;

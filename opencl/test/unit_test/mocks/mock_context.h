@@ -26,6 +26,7 @@ class MockContext : public Context {
     using Context::sharingFunctions;
     using Context::svmAllocsManager;
     MockContext(ClDevice *pDevice, bool noSpecialQueue = false);
+    MockContext(const ClDeviceVector &clDeviceVector);
     MockContext(
         void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
         void *data);

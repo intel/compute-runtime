@@ -922,13 +922,14 @@ TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenRetu
     class MockImage : public Image {
       public:
         MockImage(Context *context, cl_mem_flags flags, GraphicsAllocation *allocation, const ClSurfaceFormatInfo &surfaceFormat,
-                  const cl_image_format &imageFormat, const cl_image_desc &imageDesc) : Image(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0,
-                                                                                              0, nullptr,
-                                                                                              imageFormat, imageDesc,
-                                                                                              true,
-                                                                                              allocation,
-                                                                                              false, 0, 0,
-                                                                                              surfaceFormat, nullptr) {
+                  const cl_image_format &imageFormat, const cl_image_desc &imageDesc)
+            : Image(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()), flags, 0,
+                    0, nullptr,
+                    imageFormat, imageDesc,
+                    true,
+                    allocation,
+                    false, 0, 0,
+                    surfaceFormat, nullptr) {
         }
 
         void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel) override {}

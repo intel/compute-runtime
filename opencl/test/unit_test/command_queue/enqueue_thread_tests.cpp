@@ -216,8 +216,11 @@ HWTEST_F(EnqueueThreading, enqueueCopyBufferToImage) {
     imageDesc.image_width = 1024u;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> dstImage(Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(
+        flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    std::unique_ptr<Image> dstImage(
+        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+                      flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, dstImage.get());
 
     size_t dstOrigin[3] = {1024u, 1, 0};
@@ -240,10 +243,15 @@ HWTEST_F(EnqueueThreading, enqueueCopyImage) {
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 1024u;
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> srcImage(Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(
+        flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    std::unique_ptr<Image> srcImage(
+        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+                      flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, srcImage.get());
-    std::unique_ptr<Image> dstImage(Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    std::unique_ptr<Image> dstImage(
+        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+                      flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, srcImage.get());
 
     size_t srcOrigin[3] = {1024u, 1, 0};
@@ -268,8 +276,11 @@ HWTEST_F(EnqueueThreading, enqueueCopyImageToBuffer) {
     imageDesc.image_width = 1024u;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> srcImage(Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(
+        flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    std::unique_ptr<Image> srcImage(
+        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+                      flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, srcImage.get());
 
     std::unique_ptr<Buffer> dstBuffer(Buffer::create(context, CL_MEM_READ_WRITE, 1024u, nullptr, retVal));
@@ -307,8 +318,11 @@ HWTEST_F(EnqueueThreading, enqueueFillImage) {
     imageDesc.image_width = 1024u;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> image(Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(
+        flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    std::unique_ptr<Image> image(
+        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+                      flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image.get());
 
     size_t origin[3] = {1024u, 1, 0};
@@ -353,8 +367,11 @@ HWTEST_F(EnqueueThreading, enqueueReadImage) {
     imageDesc.image_width = 1024u;
 
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> image(Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(
+        flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    std::unique_ptr<Image> image(Image::create(
+        context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+        flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image.get());
 
     void *ptr = ::alignedMalloc(1024u, 4096);
@@ -403,8 +420,11 @@ HWTEST_F(EnqueueThreading, enqueueWriteImage) {
     imageDesc.image_width = 1024u;
 
     cl_mem_flags flags = CL_MEM_READ_ONLY;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    std::unique_ptr<Image> image(Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0), flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(
+        flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+    std::unique_ptr<Image> image(
+        Image::create(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+                      flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image.get());
 
     void *ptr = ::alignedMalloc(1024u, 4096);

@@ -14,7 +14,8 @@
 
 namespace NEO {
 
-MemoryProperties MemoryPropertiesHelper::createMemoryProperties(cl_mem_flags flags, cl_mem_flags_intel flagsIntel, cl_mem_alloc_flags_intel allocflags) {
+MemoryProperties MemoryPropertiesHelper::createMemoryProperties(cl_mem_flags flags, cl_mem_flags_intel flagsIntel,
+                                                                cl_mem_alloc_flags_intel allocflags, const Device *pDevice) {
     MemoryProperties memoryProperties;
 
     if (isValueSet(flags, CL_MEM_READ_WRITE)) {
@@ -81,7 +82,7 @@ MemoryProperties MemoryPropertiesHelper::createMemoryProperties(cl_mem_flags fla
         memoryProperties.flags.resource48Bit = true;
     }
 
-    addExtraMemoryProperties(memoryProperties, flags, flagsIntel);
+    addExtraMemoryProperties(memoryProperties, flags, flagsIntel, pDevice);
 
     return memoryProperties;
 }

@@ -53,7 +53,7 @@ class ImageRedescribeTest : public testing::TestWithParam<std::tuple<size_t, uin
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
         image.reset(Image::create(
             &context,
-            MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
+            MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
             flags,
             0,
             surfaceFormat,
@@ -193,14 +193,15 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
     imageDesc.mem_object = NULL;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
-    auto bigImage = std::unique_ptr<Image>(Image::create(&context,
-                                                         MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0),
-                                                         flags,
-                                                         0,
-                                                         surfaceFormat,
-                                                         &imageDesc,
-                                                         nullptr,
-                                                         retVal));
+    auto bigImage = std::unique_ptr<Image>(Image::create(
+        &context,
+        MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+        flags,
+        0,
+        surfaceFormat,
+        &imageDesc,
+        nullptr,
+        retVal));
 
     std::unique_ptr<Image> imageNew(bigImage->redescribe());
 

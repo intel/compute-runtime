@@ -27,6 +27,10 @@ MockContext::MockContext(ClDevice *pDevice, bool noSpecialQueue) {
     initializeWithDevices(ClDeviceVector{&deviceId, 1}, noSpecialQueue);
 }
 
+MockContext::MockContext(const ClDeviceVector &clDeviceVector) {
+    initializeWithDevices(clDeviceVector, true);
+}
+
 MockContext::MockContext(
     void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
     void *data) {
@@ -115,9 +119,9 @@ MockSpecializedContext::MockSpecializedContext() : MockContext(nullptr, nullptr)
 }
 
 MockUnrestrictiveContext::MockUnrestrictiveContext() : MockContext(nullptr, nullptr) {
-    auto pRootDevice = ultClDeviceFactory.rootDevices[0];
-    auto pSubDevice0 = ultClDeviceFactory.subDevices[0];
-    auto pSubDevice1 = ultClDeviceFactory.subDevices[1];
+    pRootDevice = ultClDeviceFactory.rootDevices[0];
+    pSubDevice0 = ultClDeviceFactory.subDevices[0];
+    pSubDevice1 = ultClDeviceFactory.subDevices[1];
     cl_device_id deviceIds[] = {pRootDevice, pSubDevice0, pSubDevice1};
     initializeWithDevices(ClDeviceVector{deviceIds, 3}, true);
 }
