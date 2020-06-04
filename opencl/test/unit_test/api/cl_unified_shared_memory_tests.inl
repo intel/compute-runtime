@@ -12,6 +12,7 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 using namespace NEO;
@@ -99,11 +100,35 @@ TEST(clUnifiedSharedMemoryTests, whenUnifiedSharedMemoryAllocationCallsAreCalled
     EXPECT_EQ(nullptr, unfiedMemoryDeviceAllocation);
 }
 
+TEST(clUnifiedSharedMemoryTests, givenSharedMemAllocCallWhenAllocatingGraphicsMemoryFailsThenOutOfResourcesErrorIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto executionEnvironment = deviceFactory.rootDevices[0]->getExecutionEnvironment();
+    std::unique_ptr<MemoryManager> memoryManager = std::make_unique<FailMemoryManager>(0, *executionEnvironment);
+    std::swap(memoryManager, executionEnvironment->memoryManager);
+    MockContext context(deviceFactory.rootDevices[0]);
+
+    cl_int retVal = CL_INVALID_CONTEXT;
+
+    auto allocation = clSharedMemAllocINTEL(&context, nullptr, nullptr, MemoryConstants::pageSize, 0, &retVal);
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+    EXPECT_EQ(nullptr, allocation);
+    std::swap(memoryManager, executionEnvironment->memoryManager);
+}
+
 TEST(clUnifiedSharedMemoryTests, whenClSharedMemAllocINTELisCalledWithWrongContextThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto ptr = clSharedMemAllocINTEL(0, 0, nullptr, 0, 0, &retVal);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
+}
+
+TEST(clUnifiedSharedMemoryTests, whenClSharedMemAllocINTELisCalledWithWrongDeviceThenInvalidDeviceErrorIsReturned) {
+    cl_int retVal = CL_SUCCESS;
+    MockContext context0;
+    MockContext context1;
+    auto ptr = clSharedMemAllocINTEL(&context0, context1.getDevice(0), nullptr, 0, 0, &retVal);
+    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
 TEST(clUnifiedSharedMemoryTests, whenClSharedMemAllocIntelIsCalledThenItAllocatesSharedUnifiedMemoryAllocation) {

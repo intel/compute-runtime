@@ -3558,7 +3558,6 @@ void *clSharedMemAllocINTEL(
     cl_uint alignment,
     cl_int *errcodeRet) {
     Context *neoContext = nullptr;
-    ClDevice *neoDevice = nullptr;
 
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
@@ -3579,21 +3578,27 @@ void *clSharedMemAllocINTEL(
         err.set(CL_INVALID_VALUE);
         return nullptr;
     }
-
-    if (size > neoContext->getDevice(0u)->getSharedDeviceInfo().maxMemAllocSize && !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize) {
+    ClDevice *neoDevice = castToObject<ClDevice>(device);
+    if (neoDevice) {
+        if (!neoContext->isDeviceAssociated(*neoDevice)) {
+            err.set(CL_INVALID_DEVICE);
+            return nullptr;
+        }
+        unifiedMemoryProperties.device = device;
+        unifiedMemoryProperties.subdeviceBitfield = neoDevice->getDeviceBitfield();
+    } else {
+        neoDevice = neoContext->getDevice(0);
+        unifiedMemoryProperties.subdeviceBitfield = neoContext->getDeviceBitfieldForAllocation();
+    }
+    if (size > neoDevice->getSharedDeviceInfo().maxMemAllocSize && !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize) {
         err.set(CL_INVALID_BUFFER_SIZE);
         return nullptr;
     }
-
-    unifiedMemoryProperties.device = device;
-    if (!device) {
-        return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(neoContext->getDevice(0)->getRootDeviceIndex(), size, unifiedMemoryProperties);
+    auto ptr = neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(neoDevice->getRootDeviceIndex(), size, unifiedMemoryProperties, neoContext->getSpecialQueue());
+    if (!ptr) {
+        err.set(CL_OUT_OF_RESOURCES);
     }
-
-    validateObjects(WithCastToInternal(device, &neoDevice));
-
-    unifiedMemoryProperties.subdeviceBitfield = neoDevice->getDefaultEngine().osContext->getDeviceBitfield();
-    return neoContext->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(neoContext->getDevice(0)->getRootDeviceIndex(), size, unifiedMemoryProperties, neoContext->getSpecialQueue());
+    return ptr;
 }
 
 cl_int clMemFreeCommon(cl_context context,

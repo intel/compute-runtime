@@ -38,8 +38,6 @@ class MockContext : public Context {
     void resetSharingFunctions(SharingType sharing);
     void registerSharingWithId(SharingFunctions *sharing, SharingType sharingId);
     std::unique_ptr<AsyncEventsHandler> &getAsyncEventsHandlerUniquePtr();
-
-  protected:
     void initializeWithDevices(const ClDeviceVector &devices, bool noSpecialQueue);
 
   private:
