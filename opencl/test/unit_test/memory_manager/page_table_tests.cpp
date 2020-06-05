@@ -143,7 +143,7 @@ typedef Test<PageTableFixture> PageTableTests32;
 typedef Test<PageTableFixture> PageTableTests48;
 typedef Test<PageTableFixture> PageTableTestsGPU;
 
-TEST_F(PageTableTests48, dummy) {
+TEST_F(PageTableTests48, WhenPageTableIsCreatedThenWalkerIsDummy) {
     PageTable<void, 0, 9> pt(&allocator);
 
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
@@ -152,7 +152,7 @@ TEST_F(PageTableTests48, dummy) {
     pt.pageWalk(0, pageSize, 0, 0, walker, MemoryBanks::MainBank);
 }
 
-TEST_F(PageTableTests48, newIsEmpty) {
+TEST_F(PageTableTests48, WhenPageTableIsCreatedThenItIsEmpty) {
     std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
     EXPECT_TRUE(pageTable->isEmpty());
 }
@@ -165,7 +165,7 @@ TEST_F(PageTableTests48, DISABLED_mapSizeZero) {
     std::cerr << phys1 << std::endl;
 }
 
-TEST_F(PageTableTests48, pageWalkSimple) {
+TEST_F(PageTableTests48, WhenAssigningWalkerThenWalkIsExecutedCorrectly) {
     std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
     uintptr_t addr1 = refAddr + (510 * pageSize) + 0x10;
     size_t lSize = 8 * pageSize;
@@ -420,7 +420,7 @@ TEST_F(PageTableTests48, givenPageTableWhenMappingTheSameAddressMultipleTimesThe
     EXPECT_EQ(nextFreeAddress, allocator.mainAllocator.load());
 }
 
-TEST_F(PageTableTests48, physicalAddressesInAUBCantStartAt0) {
+TEST_F(PageTableTests48, WhenPageTableIsCreatedThenPhysicalAddressesCantStartAt0) {
     std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
     uintptr_t addr1 = refAddr;
 
@@ -428,7 +428,7 @@ TEST_F(PageTableTests48, physicalAddressesInAUBCantStartAt0) {
     EXPECT_NE(0u, phys1);
 }
 
-TEST_F(PageTableTests48, mapPageMapByteInMapped) {
+TEST_F(PageTableTests48, WhenMappingThenAddressesAreCorrect) {
     std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
     uintptr_t addr1 = refAddr;
 
@@ -441,7 +441,7 @@ TEST_F(PageTableTests48, mapPageMapByteInMapped) {
     EXPECT_EQ(allocator.initialPageAddress + pageSize, allocator.mainAllocator);
 }
 
-TEST_F(PageTableTests48, mapsCorrectlyEvenMultipleCalls) {
+TEST_F(PageTableTests48, GivenMultipleCallsWhenMappingThenAddressesAreCorrect) {
     std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
     uintptr_t addr1 = refAddr;
 
@@ -484,7 +484,7 @@ TEST_F(PageTableTests48, mapsCorrectlyEvenMultipleCalls) {
     EXPECT_EQ(phys6 + pageSize, phys7);
 }
 
-TEST_F(PageTableTests48, mapsPagesOnTableBoundary) {
+TEST_F(PageTableTests48, GivenPagesOnTableBoundaryWhenMappingThenAddressesAreCorrect) {
     std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
     uintptr_t addr1 = refAddr + pageSize * 16;
     size_t pages = (1 << 9) * 2;
@@ -494,7 +494,7 @@ TEST_F(PageTableTests48, mapsPagesOnTableBoundary) {
     EXPECT_EQ(startAddress, phys1);
 }
 
-TEST_F(PageTableTests48, mapsPagesOnTableBoundary2ndAllocation) {
+TEST_F(PageTableTests48, GivenPagesOnTableBoundary2ndAllocationWhenMappingThenAddressesAreCorrect) {
     std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
     uintptr_t addr1 = refAddr + pageSize * 16;
     size_t pages = (1 << 9) * 2;
@@ -507,7 +507,7 @@ TEST_F(PageTableTests48, mapsPagesOnTableBoundary2ndAllocation) {
     EXPECT_EQ(startAddress + pageSize, phys2);
 }
 
-TEST_F(PageTableTestsGPU, mapsPagesOnTableBoundary) {
+TEST_F(PageTableTestsGPU, GivenPagesOnTableBoundaryWhenMappingThenAddressesAreCorrect) {
     std::unique_ptr<GGTTPageTable> ggtt(new GGTTPageTable(&allocator));
     std::unique_ptr<PPGTTPageTable> ppgtt(new PPGTTPageTable(&allocator));
     uintptr_t addrGGTT = 0x70000000 + pageSize * 16;
@@ -523,7 +523,7 @@ TEST_F(PageTableTestsGPU, mapsPagesOnTableBoundary) {
     EXPECT_EQ(startAddress + size, phys48);
 }
 
-TEST_F(PageTableTestsGPU, newIsEmpty) {
+TEST_F(PageTableTestsGPU, WhenPageTableIsCreatedThenItIsEmpty) {
     std::unique_ptr<GGTTPageTable> ggtt(new GGTTPageTable(&allocator));
     EXPECT_TRUE(ggtt->isEmpty());
 
@@ -531,18 +531,18 @@ TEST_F(PageTableTestsGPU, newIsEmpty) {
     EXPECT_TRUE(ppgtt->isEmpty());
 }
 
-TEST_F(PageTableTests32, level0) {
+TEST_F(PageTableTests32, WhenMappingFirstPageIsAt0) {
     std::unique_ptr<PageTable<void, 0, 9>> pt(new PageTable<void, 0, 9>(&allocator));
     auto phys = pt->map(0x10000, pageSize, 0, MemoryBanks::MainBank);
     EXPECT_EQ(0u, phys);
 }
 
-TEST_F(PageTableTests32, newIsEmpty) {
+TEST_F(PageTableTests32, WhenPageTableIsCreatedThenItIsEmpty) {
     std::unique_ptr<GGTTPageTable> pageTable(new GGTTPageTable(&allocator));
     EXPECT_TRUE(pageTable->isEmpty());
 }
 
-TEST_F(PageTableTests32, mapsPagesOnTableBoundary) {
+TEST_F(PageTableTests32, GivenPagesOnTableBoundaryWhenMappingThenAddressesAreCorrect) {
     std::unique_ptr<GGTTPageTable> pageTable(new GGTTPageTable(&allocator));
     uintptr_t addr1 = 0x70000000 + pageSize * 16;
     size_t pages = (1 << 9) * 2;
@@ -552,7 +552,7 @@ TEST_F(PageTableTests32, mapsPagesOnTableBoundary) {
     EXPECT_EQ(startAddress, phys1);
 }
 
-TEST_F(PageTableTests32, mapsPagesOnTableBoundary2ndAllocation) {
+TEST_F(PageTableTests32, GivenPagesOnTableBoundary2ndAllocationWhenMappingThenAddressesAreCorrect) {
     std::unique_ptr<GGTTPageTable> pageTable(new GGTTPageTable(&allocator));
     uintptr_t addr1 = 0x70000000 + pageSize * 16;
     size_t pages = (1 << 9) * 2;
