@@ -284,6 +284,12 @@ size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device
 }
 
 template <typename GfxFamily>
+bool EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels, size_t *lws, std::array<uint8_t, 3> walkOrder,
+                                                                          bool requireInputWalkOrder, uint32_t &requiredWalkOrder, uint32_t simd) {
+    return true;
+}
+
+template <typename GfxFamily>
 void EncodeMiFlushDW<GfxFamily>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd) {}
 
 template <typename GfxFamily>

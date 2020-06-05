@@ -33,6 +33,9 @@ struct EncodeDispatchKernel {
     static size_t estimateEncodeDispatchKernelCmdsSize(Device *device);
 
     static void patchBindlessSurfaceStateOffsets(const size_t sshOffset, const KernelDescriptor &kernelDesc, uint8_t *crossThread);
+
+    static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels, size_t *lws, std::array<uint8_t, 3> walkOrder,
+                                                    bool requireInputWalkOrder, uint32_t &requiredWalkOrder, uint32_t simd);
 };
 
 template <typename GfxFamily>

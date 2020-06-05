@@ -67,3 +67,14 @@ HWTEST_F(CommandEncoderTests, whenEncodeMemoryPrefetchCalledThenDoNothing) {
     EXPECT_EQ(0u, linearStream.getUsed());
     EXPECT_EQ(0u, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch());
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, WhenAnyParameterIsProvidedThenRuntimeGenerationLocalIdsIsRequired) {
+    uint32_t workDim = 1;
+    uint32_t simd = 8;
+    size_t lws[3] = {16, 1, 1};
+    std::array<uint8_t, 3> walkOrder = {};
+    uint32_t requiredWalkOrder = 0u;
+
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
+        workDim, lws, walkOrder, true, requiredWalkOrder, simd));
+}
