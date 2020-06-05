@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/constants.h"
 #include <cstdint>
 
 #ifndef BIT
@@ -186,6 +187,13 @@ struct CpuInfo {
                 features |= cpuInfo[3] & BIT(27) ? featureRdtscp : featureNone;
             }
         }
+
+        if (maxExtendedId >= 0x80000008) {
+            cpuid(cpuInfo, 0x80000008);
+            {
+                virtualAddressSize = (cpuInfo[0] >> 8) & 0xFF;
+            }
+        }
     }
 
     bool isFeatureSupported(uint64_t feature) const {
@@ -194,6 +202,14 @@ struct CpuInfo {
         }
 
         return (features & feature) == feature;
+    }
+
+    uint32_t getVirtualAddressSize() const {
+        if (features == featureNone) {
+            detect();
+        }
+
+        return virtualAddressSize;
     }
 
     static const CpuInfo &getInstance() {
@@ -205,6 +221,7 @@ struct CpuInfo {
 
   protected:
     mutable uint64_t features;
+    mutable uint32_t virtualAddressSize = is32bit ? 32 : 48;
     static const CpuInfo instance;
 };
 

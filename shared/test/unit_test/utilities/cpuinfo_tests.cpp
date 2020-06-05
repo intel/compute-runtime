@@ -32,6 +32,17 @@ void mockCpuidFunctionNotAvailableDisableAll(int cpuInfo[4], int functionId) {
     cpuInfo[3] = 0;
 }
 
+void mockCpuidReport36BitVirtualAddressSize(int cpuInfo[4], int functionId) {
+    if (static_cast<uint32_t>(functionId) == 0x80000008) {
+        cpuInfo[0] = 36 << 8;
+        cpuInfo[1] = 0;
+        cpuInfo[2] = 0;
+        cpuInfo[3] = 0;
+    } else {
+        mockCpuidEnableAll(cpuInfo, functionId);
+    }
+}
+
 TEST(CpuInfoTest, giveFunctionIsNotAvailableWhenFeatureIsNotSupportedThenMaskBitIsOff) {
     void (*defaultCpuidFunc)(int[4], int) = CpuInfo::cpuidFunc;
     CpuInfo::cpuidFunc = mockCpuidFunctionNotAvailableDisableAll;
@@ -139,6 +150,18 @@ TEST(CpuInfoTest, whenFeatureIsSupportedThenMaskBitIsOn) {
 
     CpuInfo::cpuidFunc = defaultCpuidFunc;
 }
+
+TEST(CpuInfoTest, reportedVirtualAddressSizeIsCorrect) {
+    void (*defaultCpuidFunc)(int[4], int) = CpuInfo::cpuidFunc;
+    CpuInfo::cpuidFunc = mockCpuidReport36BitVirtualAddressSize;
+
+    CpuInfo testCpuInfo;
+
+    EXPECT_EQ(36u, testCpuInfo.getVirtualAddressSize());
+
+    CpuInfo::cpuidFunc = defaultCpuidFunc;
+}
+
 
 TEST(CpuInfo, cpuidex) {
     const CpuInfo &cpuInfo = CpuInfo::getInstance();
