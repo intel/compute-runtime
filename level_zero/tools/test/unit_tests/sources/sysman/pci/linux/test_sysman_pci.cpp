@@ -24,7 +24,15 @@ using ::testing::Return;
 
 namespace L0 {
 namespace ult {
-
+constexpr int mockMaxLinkWidth = 1;
+constexpr int mockMaxLinkWidthInvalid = 255;
+constexpr uint32_t expectedBus = 0u;
+constexpr uint32_t expectedDevice = 2u;
+constexpr uint32_t expectedFunction = 0u;
+constexpr uint32_t expectedWidth = 1u;
+constexpr uint32_t expectedGen = 1u; // As mockMaxLinkSpeed = 2.5, hence expectedGen should be 1
+// As mockMaxLinkSpeed = 2.5, hence, pcieSpeedWithEnc = mockMaxLinkWidth * (2.5 * 1000 * 8/10 * 125000) = 250000000
+constexpr uint64_t expectedBandwidth = 250000000u;
 class SysmanPciFixture : public DeviceFixture, public ::testing::Test {
 
   protected:
@@ -43,6 +51,7 @@ class SysmanPciFixture : public DeviceFixture, public ::testing::Test {
         pSysfsAccess = new NiceMock<Mock<PciSysfsAccess>>;
         linuxPciImp.pSysfsAccess = pSysfsAccess;
         pOsPci = static_cast<OsPci *>(&linuxPciImp);
+        pSysfsAccess->setValInt(maxLinkWidthFile, mockMaxLinkWidth);
 
         ON_CALL(*pSysfsAccess, read(_, Matcher<std::vector<std::string> &>(_)))
             .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<PciSysfsAccess>::getValVector));
@@ -78,12 +87,22 @@ TEST_F(SysmanPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropert
     ze_result_t result = zetSysmanPciGetProperties(hSysman, &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_LT(properties.address.bus, 256u);
-    EXPECT_LT(properties.address.device, 32u);
-    EXPECT_LT(properties.address.function, 8u);
-    EXPECT_LE(properties.maxSpeed.gen, 5u);
-    EXPECT_LE(properties.maxSpeed.width, 32u);
-    EXPECT_LE(properties.maxSpeed.maxBandwidth, std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(properties.address.bus, expectedBus);
+    EXPECT_EQ(properties.address.device, expectedDevice);
+    EXPECT_EQ(properties.address.function, expectedFunction);
+    EXPECT_EQ(properties.maxSpeed.gen, expectedGen);
+    EXPECT_EQ(properties.maxSpeed.width, expectedWidth);
+    EXPECT_EQ(properties.maxSpeed.maxBandwidth, expectedBandwidth);
+}
+
+TEST_F(SysmanPciFixture, GivenValidSysmanHandleWhenGettingPCIWidthThenZeroWidthIsReturnedIfSystemProvidesInvalidValue) {
+    uint32_t width = 0;
+    pSysfsAccess->setValInt(maxLinkWidthFile, mockMaxLinkWidthInvalid);
+    ON_CALL(*pSysfsAccess, read(_, Matcher<int &>(_)))
+        .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<PciSysfsAccess>::getValInt));
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pciImp.pOsPci->getMaxLinkWidth(width));
+    EXPECT_EQ(width, 0u);
 }
 
 TEST_F(SysmanPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVerifyzetSysmanPciGetBarsCallSucceeds) {

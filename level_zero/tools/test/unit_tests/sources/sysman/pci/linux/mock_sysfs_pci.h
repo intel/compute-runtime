@@ -24,7 +24,6 @@ const std::string maxLinkSpeedFile("device/max_link_speed");
 const std::string maxLinkWidthFile("device/max_link_width");
 const std::string mockBdf = "0000:00:02.0";
 constexpr double mockMaxLinkSpeed = 2.5;
-constexpr int mockMaxLinkWidth = 1;
 const std::vector<std::string> mockReadBytes =
     {
         "0x00000000bf000000 0x00000000bfffffff 0x0000000000140204",
@@ -46,6 +45,7 @@ class PciSysfsAccess : public SysfsAccess {};
 
 template <>
 struct Mock<PciSysfsAccess> : public SysfsAccess {
+    int mockMaxLinkWidth = 0;
     MOCK_METHOD(ze_result_t, read, (const std::string file, double &val), (override));
     MOCK_METHOD(ze_result_t, read, (const std::string file, int &val), (override));
     MOCK_METHOD(ze_result_t, read, (const std::string file, std::vector<std::string> &val), (override));
@@ -54,6 +54,13 @@ struct Mock<PciSysfsAccess> : public SysfsAccess {
     ze_result_t getValDouble(const std::string file, double &val) {
         if (file.compare(maxLinkSpeedFile) == 0) {
             val = mockMaxLinkSpeed;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t setValInt(const std::string file, int val) {
+        if (file.compare(maxLinkWidthFile) == 0) {
+            mockMaxLinkWidth = val;
         }
         return ZE_RESULT_SUCCESS;
     }

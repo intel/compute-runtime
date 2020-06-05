@@ -19,6 +19,8 @@ const std::string LinuxPciImp::resourceFile("device/resource");
 const std::string LinuxPciImp::maxLinkSpeedFile("device/max_link_speed");
 const std::string LinuxPciImp::maxLinkWidthFile("device/max_link_width");
 constexpr uint8_t maxPciBars = 6;
+// Linux kernel would report 255 link width, as an indication of unknown.
+constexpr uint32_t unknownPcieLinkWidth = 255u;
 
 ze_result_t LinuxPciImp::getPciBdf(std::string &bdf) {
     std::string bdfDir;
@@ -49,6 +51,9 @@ ze_result_t LinuxPciImp::getMaxLinkWidth(uint32_t &maxLinkwidth) {
     ze_result_t result = pSysfsAccess->read(maxLinkWidthFile, intVal);
     if (ZE_RESULT_SUCCESS != result) {
         return result;
+    }
+    if (intVal == static_cast<int>(unknownPcieLinkWidth)) {
+        intVal = 0;
     }
     maxLinkwidth = intVal;
     return ZE_RESULT_SUCCESS;
