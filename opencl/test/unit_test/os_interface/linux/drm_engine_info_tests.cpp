@@ -15,7 +15,9 @@ TEST(DrmTest, whenQueryingDrmThenNullIsReturnedAndNoIoctlIsCalled) {
     std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
     EXPECT_NE(nullptr, drm);
 
-    EXPECT_EQ(nullptr, drm->query(1));
+    auto length = -1;
+    EXPECT_EQ(nullptr, drm->query(1, length));
+    EXPECT_EQ(0, length);
     EXPECT_EQ(0u, drm->ioctlCallsCount);
 }
 

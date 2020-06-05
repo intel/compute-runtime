@@ -70,13 +70,6 @@ class DrmMock : public Drm {
     void setDeviceID(int deviceId) { this->deviceId = deviceId; }
     void setDeviceRevID(int revisionId) { this->revisionId = revisionId; }
 
-    inline uint32_t createMemoryRegionId(uint16_t type, uint16_t instance) const {
-        return (1u << (type + 16)) | (1u << instance);
-    }
-
-    static inline uint16_t getMemoryTypeFromRegion(uint32_t region) { return Math::log2(region >> 16); };
-    static inline uint16_t getInstanceFromRegion(uint32_t region) { return Math::log2(region & 0xFFFF); };
-
     static const int mockFd = 33;
 
     int StoredEUVal = -1;
