@@ -69,6 +69,7 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     false,                                         // supportsDeviceEnqueue
     false,                                         // supportsPipes
     false,                                         // supportsOcl21Features
+    false,                                         // supportsOnDemandPageFaults
     true,                                          // hostPtrTrackingEnabled
     false                                          // levelZeroSupported
 };

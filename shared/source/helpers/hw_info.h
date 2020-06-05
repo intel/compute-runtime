@@ -56,6 +56,7 @@ struct RuntimeCapabilityTable {
     bool supportsDeviceEnqueue;
     bool supportsPipes;
     bool supportsOcl21Features;
+    bool supportsOnDemandPageFaults;
     bool hostPtrTrackingEnabled;
     bool levelZeroSupported;
 };

@@ -74,6 +74,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     false,                                         // supportsDeviceEnqueue
     false,                                         // supportsPipes
     false,                                         // supportsOcl21Features
+    false,                                         // supportsOnDemandPageFaults
     true,                                          // hostPtrTrackingEnabled
     false                                          // levelZeroSupported
 };

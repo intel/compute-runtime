@@ -77,6 +77,7 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     true,                                          // supportsDeviceEnqueue
     true,                                          // supportsPipes
     true,                                          // supportsOcl21Features
+    false,                                         // supportsOnDemandPageFaults
     true,                                          // hostPtrTrackingEnabled
     false                                          // levelZeroSupported
 };

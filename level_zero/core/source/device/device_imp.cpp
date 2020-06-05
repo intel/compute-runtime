@@ -340,7 +340,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->eccMemorySupported = this->neoDevice->getDeviceInfo().errorCorrectionSupport;
 
-    pDeviceProperties->onDemandPageFaultsSupported = true;
+    pDeviceProperties->onDemandPageFaultsSupported = hardwareInfo.capabilityTable.supportsOnDemandPageFaults;
 
     pDeviceProperties->maxCommandQueues = 1;
 
