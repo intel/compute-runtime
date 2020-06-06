@@ -29,6 +29,7 @@ class Temperature : _zet_sysman_temp_handle_t {
     }
     inline zet_sysman_temp_handle_t toHandle() { return this; }
     bool initSuccess = false;
+    zet_temp_sensors_t sensorType;
 };
 
 struct TemperatureHandleContext {
@@ -41,6 +42,9 @@ struct TemperatureHandleContext {
 
     OsSysman *pOsSysman = nullptr;
     std::vector<Temperature *> handleList;
+
+  private:
+    void createHandle(zet_temp_sensors_t type);
 };
 
 } // namespace L0

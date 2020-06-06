@@ -18,11 +18,13 @@ class LinuxTemperatureImp : public OsTemperature, public NEO::NonCopyableClass {
   public:
     ze_result_t getSensorTemperature(double *pTemperature) override;
     bool isTempModuleSupported() override;
+    void setSensorType(zet_temp_sensors_t sensorType) override;
     LinuxTemperatureImp(OsSysman *pOsSysman);
     LinuxTemperatureImp() = default;
     ~LinuxTemperatureImp() override = default;
 
   protected:
     SysfsAccess *pSysfsAccess = nullptr;
+    zet_temp_sensors_t type;
 };
 } // namespace L0

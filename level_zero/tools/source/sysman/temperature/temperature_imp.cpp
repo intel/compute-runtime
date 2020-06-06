@@ -29,6 +29,7 @@ ze_result_t TemperatureImp::temperatureGetState(double *pTemperature) {
 
 void TemperatureImp::init() {
     this->initSuccess = pOsTemperature->isTempModuleSupported();
+    pOsTemperature->setSensorType(this->sensorType);
 }
 
 TemperatureImp::TemperatureImp(OsSysman *pOsSysman) {

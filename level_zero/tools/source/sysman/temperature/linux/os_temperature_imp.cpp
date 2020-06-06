@@ -17,6 +17,10 @@ bool LinuxTemperatureImp::isTempModuleSupported() {
     return false;
 }
 
+void LinuxTemperatureImp::setSensorType(zet_temp_sensors_t sensorType) {
+    type = sensorType;
+}
+
 LinuxTemperatureImp::LinuxTemperatureImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();

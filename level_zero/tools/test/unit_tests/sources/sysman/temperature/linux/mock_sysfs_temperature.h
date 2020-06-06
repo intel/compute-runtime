@@ -25,6 +25,7 @@ namespace ult {
 class PublicLinuxTemperatureImp : public L0::LinuxTemperatureImp {
   public:
     using LinuxTemperatureImp::pSysfsAccess;
+    using LinuxTemperatureImp::type;
 };
 } // namespace ult
 } // namespace L0

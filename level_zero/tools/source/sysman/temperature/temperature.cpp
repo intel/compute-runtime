@@ -17,13 +17,19 @@ TemperatureHandleContext::~TemperatureHandleContext() {
     }
 }
 
-void TemperatureHandleContext::init() {
+void TemperatureHandleContext::createHandle(zet_temp_sensors_t type) {
     Temperature *pTemperature = new TemperatureImp(pOsSysman);
+    pTemperature->sensorType = type;
     if (pTemperature->initSuccess == true) {
         handleList.push_back(pTemperature);
     } else {
         delete pTemperature;
     }
+}
+
+void TemperatureHandleContext::init() {
+    createHandle(ZET_TEMP_SENSORS_GLOBAL);
+    createHandle(ZET_TEMP_SENSORS_GPU);
 }
 
 ze_result_t TemperatureHandleContext::temperatureGet(uint32_t *pCount, zet_sysman_temp_handle_t *phTemperature) {
