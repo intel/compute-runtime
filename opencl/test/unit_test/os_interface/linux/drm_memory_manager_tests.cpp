@@ -60,8 +60,20 @@ typedef Test<DrmMemoryManagerFixture> DrmMemoryManagerTest;
 typedef Test<DrmMemoryManagerWithLocalMemoryFixture> DrmMemoryManagerWithLocalMemoryTest;
 typedef Test<DrmMemoryManagerFixtureWithoutQuietIoctlExpectation> DrmMemoryManagerWithExplicitExpectationsTest;
 
-TEST_F(DrmMemoryManagerTest, whenCreatingDrmMemoryManagerThenSupportsMultiStorageResourcesFlagIsSetToFalse) {
+TEST_F(DrmMemoryManagerTest, givenDebugVariableWhenCreatingDrmMemoryManagerThenSetSupportForMultiStorageResources) {
     EXPECT_TRUE(memoryManager->supportsMultiStorageResources);
+
+    {
+        DebugManager.flags.EnableMultiStorageResources.set(0);
+        TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+        EXPECT_FALSE(memoryManager.supportsMultiStorageResources);
+    }
+
+    {
+        DebugManager.flags.EnableMultiStorageResources.set(1);
+        TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
+        EXPECT_TRUE(memoryManager.supportsMultiStorageResources);
+    }
 }
 
 TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationToHostPtrManagerThenfragmentHasCorrectValues) {

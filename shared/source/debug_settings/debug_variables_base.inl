@@ -46,6 +46,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideMaxWorkgroupSize, -1, "-1: Default, !=-1
 DECLARE_DEBUG_VARIABLE(int32_t, DoCpuCopyOnReadBuffer, -1, "-1: default 0: do not use CPU copy, 1: triggers CPU copy path for Read Buffer calls, only supported for some basic use cases (no blocked user events in dependencies tree)")
 DECLARE_DEBUG_VARIABLE(int32_t, DoCpuCopyOnWriteBuffer, -1, "-1: default 0: do not use CPU copy, 1: triggers CPU copy path for Write Buffer calls, only supported for some basic use cases (no blocked user events in dependencies tree)")
 DECLARE_DEBUG_VARIABLE(int32_t, PauseOnEnqueue, -1, "-1: default x: pause on enqueue number x and ask for user confirmation before and after execution, counted from 0")
+DECLARE_DEBUG_VARIABLE(int32_t, EnableMultiStorageResources, -1, "-1: default, 0: Disable, 1: Enable")
 DECLARE_DEBUG_VARIABLE(bool, EnableDebugBreak, true, "Enable DEBUG_BREAKs")
 DECLARE_DEBUG_VARIABLE(bool, FlushAllCaches, false, "pipe controls between enqueues flush all possible caches")
 DECLARE_DEBUG_VARIABLE(bool, MakeEachEnqueueBlocking, false, "equivalent of finish after each enqueue")

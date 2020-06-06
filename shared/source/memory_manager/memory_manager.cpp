@@ -56,6 +56,10 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     if (anyLocalMemorySupported) {
         pageFaultManager = PageFaultManager::create();
     }
+
+    if (DebugManager.flags.EnableMultiStorageResources.get() != -1) {
+        supportsMultiStorageResources = !!DebugManager.flags.EnableMultiStorageResources.get();
+    }
 }
 
 MemoryManager::~MemoryManager() {

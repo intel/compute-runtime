@@ -1844,8 +1844,21 @@ TEST_F(WddmMemoryManagerSimpleTest, givenWriteCombinedAllocationThenCpuAddressIs
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest, whenCreatingWddmMemoryManagerThenSupportsMultiStorageResourcesFlagIsSetToFalse) {
+TEST_F(WddmMemoryManagerSimpleTest, givenDebugVariableWhenCreatingWddmMemoryManagerThenSetSupportForMultiStorageResources) {
+    DebugManagerStateRestore restore;
     EXPECT_TRUE(memoryManager->supportsMultiStorageResources);
+
+    {
+        DebugManager.flags.EnableMultiStorageResources.set(0);
+        MockWddmMemoryManager memoryManager(true, true, *executionEnvironment);
+        EXPECT_FALSE(memoryManager.supportsMultiStorageResources);
+    }
+
+    {
+        DebugManager.flags.EnableMultiStorageResources.set(1);
+        MockWddmMemoryManager memoryManager(true, true, *executionEnvironment);
+        EXPECT_TRUE(memoryManager.supportsMultiStorageResources);
+    }
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRangeAnd32BitThenAllocationGoesToSvmHeap) {

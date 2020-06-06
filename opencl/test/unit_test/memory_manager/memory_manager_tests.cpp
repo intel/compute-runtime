@@ -55,9 +55,25 @@ using namespace NEO;
 
 typedef Test<MemoryAllocatorFixture> MemoryAllocatorTest;
 
-TEST(MemoryManagerTest, whenCreatingOsAgnosticMemoryManagerThenSupportsMultiStorageResourcesFlagIsSetToTrue) {
-    MockMemoryManager memoryManager;
-    EXPECT_TRUE(memoryManager.supportsMultiStorageResources);
+TEST(MemoryManagerTest, givenDebugVariableWhenCreatingMemoryManagerThenSetSupportForMultiStorageResources) {
+    DebugManagerStateRestore restore;
+
+    {
+        MockMemoryManager memoryManager;
+        EXPECT_TRUE(memoryManager.supportsMultiStorageResources);
+    }
+
+    {
+        DebugManager.flags.EnableMultiStorageResources.set(0);
+        MockMemoryManager memoryManager;
+        EXPECT_FALSE(memoryManager.supportsMultiStorageResources);
+    }
+
+    {
+        DebugManager.flags.EnableMultiStorageResources.set(1);
+        MockMemoryManager memoryManager;
+        EXPECT_TRUE(memoryManager.supportsMultiStorageResources);
+    }
 }
 
 TEST(MemoryManagerTest, whenCreatingAllocPropertiesForMultiStorageResourceThenMultiStorageResourcesFlagIsSetToTrue) {
