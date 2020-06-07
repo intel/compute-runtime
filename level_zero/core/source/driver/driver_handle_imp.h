@@ -64,7 +64,8 @@ struct DriverHandleImp : public DriverHandle {
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
 
-    uint32_t affinityMask = std::numeric_limits<uint32_t>::max();
+    // Environment Variables
+    std::string affinityMaskString = "";
     bool enableProgramDebugging = false;
 };
 

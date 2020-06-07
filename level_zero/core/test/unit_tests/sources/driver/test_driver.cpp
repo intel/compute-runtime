@@ -163,7 +163,11 @@ TEST_F(DriverTestMultipleFamilyNoSupport, whenInitializingDriverWithArrayOfNotSu
     EXPECT_EQ(nullptr, driverHandle);
 }
 
-struct DriverTestMultipleDeviceWithAffinityMask : public ::testing::WithParamInterface<std::tuple<int, int>>,
+struct MaskArray {
+    const std::string masks[16] = {"0", "1", "2", "3", "4", "5", "6", "7",
+                                   "8", "9", "A", "B", "C", "D", "E", "F"};
+};
+struct DriverTestMultipleDeviceWithAffinityMask : public ::testing::WithParamInterface<std::tuple<std::string, std::string>>,
                                                   public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
@@ -194,7 +198,8 @@ struct DriverTestMultipleDeviceWithAffinityMask : public ::testing::WithParamInt
     const uint32_t numSubDevices = 4u;
 };
 
-TEST_F(DriverTestMultipleDeviceWithAffinityMask, whenNotSettingAffinityThenAllRootDevicesAndSubDevicesAreExposed) {
+TEST_F(DriverTestMultipleDeviceWithAffinityMask,
+       whenNotSettingAffinityThenAllRootDevicesAndSubDevicesAreExposed) {
     L0::DriverHandleImp *driverHandle = new DriverHandleImp;
 
     ze_result_t res = driverHandle->initialize(std::move(devices));
@@ -221,19 +226,23 @@ TEST_F(DriverTestMultipleDeviceWithAffinityMask, whenNotSettingAffinityThenAllRo
     delete driverHandle;
 }
 
-TEST_P(DriverTestMultipleDeviceWithAffinityMask, whenSettingAffinityMaskToDifferentValuesThenCorrectNumberOfDevicesIsExposed) {
+TEST_P(DriverTestMultipleDeviceWithAffinityMask,
+       whenSettingAffinityMaskToDifferentValuesThenCorrectNumberOfDevicesIsExposed) {
     L0::DriverHandleImp *driverHandle = new DriverHandleImp;
 
-    uint32_t device0Mask = std::get<0>(GetParam());
+    std::string device0MaskString = std::get<0>(GetParam());
+    std::string device1MaskString = std::get<1>(GetParam());
+
+    uint32_t device0Mask = static_cast<uint32_t>(strtoul(device0MaskString.c_str(), nullptr, 16));
     uint32_t rootDevice0Exposed = 0;
     uint32_t numOfSubDevicesExposedInDevice0 = 0;
     getNumOfExposedDevices(device0Mask, rootDevice0Exposed, numOfSubDevicesExposedInDevice0);
-    uint32_t device1Mask = std::get<1>(GetParam());
+    uint32_t device1Mask = static_cast<uint32_t>(strtoul(device1MaskString.c_str(), nullptr, 16));
     uint32_t rootDevice1Exposed = 0;
     uint32_t numOfSubDevicesExposedInDevice1 = 0;
     getNumOfExposedDevices(device1Mask, rootDevice1Exposed, numOfSubDevicesExposedInDevice1);
 
-    driverHandle->affinityMask = device0Mask | (device1Mask << numSubDevices);
+    driverHandle->affinityMaskString = device1MaskString + device0MaskString;
 
     uint32_t totalRootDevices = rootDevice0Exposed + rootDevice1Exposed;
     ze_result_t res = driverHandle->initialize(std::move(devices));
@@ -277,11 +286,11 @@ TEST_P(DriverTestMultipleDeviceWithAffinityMask, whenSettingAffinityMaskToDiffer
     delete driverHandle;
 }
 
+MaskArray maskArray;
 INSTANTIATE_TEST_SUITE_P(DriverTestMultipleDeviceWithAffinityMaskTests,
                          DriverTestMultipleDeviceWithAffinityMask,
                          ::testing::Combine(
-                             ::testing::Range(0, 15), // Masks for 1 root device with 4 sub devices
-                             ::testing::Range(0, 15)));
-
+                             ::testing::ValuesIn(maskArray.masks),
+                             ::testing::ValuesIn(maskArray.masks)));
 } // namespace ult
 } // namespace L0
