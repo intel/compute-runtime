@@ -4143,10 +4143,16 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
         TRACING_EXIT(clSVMAlloc, &pAlloc);
         return pAlloc;
     }
-    if (!hwInfo.capabilityTable.ftrSupportsCoherency &&
-        (flags & (CL_MEM_SVM_FINE_GRAIN_BUFFER | CL_MEM_SVM_ATOMICS))) {
-        TRACING_EXIT(clSVMAlloc, &pAlloc);
-        return pAlloc;
+
+    if (flags & CL_MEM_SVM_FINE_GRAIN_BUFFER) {
+        bool supportsFineGrained = hwInfo.capabilityTable.ftrSupportsCoherency;
+        if (DebugManager.flags.ForceFineGrainedSVMSupport.get() != -1) {
+            supportsFineGrained = !!DebugManager.flags.ForceFineGrainedSVMSupport.get();
+        }
+        if (!supportsFineGrained) {
+            TRACING_EXIT(clSVMAlloc, &pAlloc);
+            return pAlloc;
+        }
     }
 
     pAlloc = pContext->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), size, MemObjHelper::getSvmAllocationProperties(flags), pDevice->getDeviceBitfield());

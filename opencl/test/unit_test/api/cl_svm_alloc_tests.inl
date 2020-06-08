@@ -214,6 +214,24 @@ TEST_F(clSVMAllocTests, GivenAlignmentTooLargeWhenAllocatingSvmThenSvmIsNotAlloc
     auto SVMPtr = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 4096 /* Size */, 4096 /* alignment */);
     EXPECT_EQ(nullptr, SVMPtr);
 };
+
+TEST_F(clSVMAllocTests, GivenForcedFineGrainedSvmWhenCreatingSvmAllocThenAllocationIsCreated) {
+    REQUIRE_SVM_OR_SKIP(pDevice);
+    DebugManagerStateRestore restore{};
+    HardwareInfo *hwInfo = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[testedRootDeviceIndex]->getMutableHardwareInfo();
+    hwInfo->capabilityTable.ftrSvm = true;
+    hwInfo->capabilityTable.ftrSupportsCoherency = false;
+
+    auto allocation = clSVMAlloc(pContext, CL_MEM_READ_WRITE | CL_MEM_SVM_FINE_GRAIN_BUFFER, 4096 /* Size */, 0 /* alignment */);
+    EXPECT_EQ(nullptr, allocation);
+    clSVMFree(pContext, allocation);
+
+    DebugManager.flags.ForceFineGrainedSVMSupport.set(1);
+    allocation = clSVMAlloc(pContext, CL_MEM_READ_WRITE | CL_MEM_SVM_FINE_GRAIN_BUFFER, 4096 /* Size */, 0 /* alignment */);
+    EXPECT_NE(nullptr, allocation);
+    clSVMFree(pContext, allocation);
+}
+
 TEST(clSvmAllocTest, givenSubDeviceWhenCreatingSvmAllocThenProperDeviceBitfieldIsPassed) {
     REQUIRE_SVM_OR_SKIP(defaultHwInfo.get());
     UltClDeviceFactory deviceFactory{1, 2};
