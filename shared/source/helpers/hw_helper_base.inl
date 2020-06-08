@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -304,7 +305,23 @@ bool HwHelperHw<GfxFamily>::tilingAllowed(bool isSharedContext, bool isImage1d, 
 
 template <typename GfxFamily>
 uint32_t HwHelperHw<GfxFamily>::alignSlmSize(uint32_t slmSize) {
-    return HardwareCommandsHelper<GfxFamily>::alignSlmSize(slmSize);
+    if (slmSize == 0u) {
+        return 0u;
+    }
+    slmSize = std::max(slmSize, 1024u);
+    slmSize = Math::nextPowerOfTwo(slmSize);
+    UNRECOVERABLE_IF(slmSize > 64u * KB);
+    return slmSize;
+}
+
+template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::computeSlmValues(uint32_t slmSize) {
+    auto value = std::max(slmSize, 1024u);
+    value = Math::nextPowerOfTwo(value);
+    value = Math::getMinLsbSet(value);
+    value = value - 9;
+    DEBUG_BREAK_IF(value > 7);
+    return value * !!slmSize;
 }
 
 template <typename GfxFamily>

@@ -12,6 +12,7 @@
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -31,27 +32,6 @@ namespace NEO {
 template <typename GfxFamily>
 bool HardwareCommandsHelper<GfxFamily>::isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo) {
     return false;
-}
-
-template <typename GfxFamily>
-uint32_t HardwareCommandsHelper<GfxFamily>::alignSlmSize(uint32_t slmSize) {
-    if (slmSize == 0u) {
-        return 0u;
-    }
-    slmSize = std::max(slmSize, 1024u);
-    slmSize = Math::nextPowerOfTwo(slmSize);
-    UNRECOVERABLE_IF(slmSize > 64u * KB);
-    return slmSize;
-}
-
-template <typename GfxFamily>
-uint32_t HardwareCommandsHelper<GfxFamily>::computeSlmValues(uint32_t slmSize) {
-    auto value = std::max(slmSize, 1024u);
-    value = Math::nextPowerOfTwo(value);
-    value = Math::getMinLsbSet(value);
-    value = value - 9;
-    DEBUG_BREAK_IF(value > 7);
-    return value * !!slmSize;
 }
 
 template <typename GfxFamily>
@@ -207,7 +187,8 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     interfaceDescriptor.setBindingTableEntryCount(bindingTablePrefetchSize);
 
-    auto programmableIDSLMSize = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(computeSlmValues(kernel.slmTotalSize));
+    auto programmableIDSLMSize =
+        static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(HwHelperHw<GfxFamily>::get().computeSlmValues(kernel.slmTotalSize));
 
     interfaceDescriptor.setSharedLocalMemorySize(programmableIDSLMSize);
     programBarrierEnable(&interfaceDescriptor, kernel.getKernelInfo().patchInfo.executionEnvironment->HasBarriers,

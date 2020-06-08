@@ -85,6 +85,8 @@ class HwHelper {
     virtual uint32_t calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount,
                                                    uint32_t threadsPerEu) = 0;
     virtual uint32_t alignSlmSize(uint32_t slmSize) = 0;
+    virtual uint32_t computeSlmValues(uint32_t slmSize) = 0;
+
     virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) = 0;
     virtual uint32_t getMinimalSIMDSize() = 0;
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const = 0;
@@ -233,6 +235,8 @@ class HwHelperHw : public HwHelper {
     uint32_t calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount, uint32_t threadsPerEu) override;
 
     uint32_t alignSlmSize(uint32_t slmSize) override;
+
+    uint32_t computeSlmValues(uint32_t slmSize) override;
 
     static AuxTranslationMode getAuxTranslationMode();
 

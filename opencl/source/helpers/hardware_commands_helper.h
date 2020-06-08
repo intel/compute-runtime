@@ -34,9 +34,6 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
     using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
-    static uint32_t alignSlmSize(uint32_t slmSize);
-    static uint32_t computeSlmValues(uint32_t slmSize);
-
     static INTERFACE_DESCRIPTOR_DATA *getInterfaceDescriptor(
         const IndirectHeap &indirectHeap,
         uint64_t offsetInterfaceDescriptor,

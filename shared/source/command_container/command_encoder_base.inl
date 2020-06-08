@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
@@ -66,9 +67,11 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     idd.setNumberOfThreadsInGpgpuThreadGroup(numThreadsPerThreadGroup);
 
     idd.setBarrierEnable(kernelDescriptor.kernelAttributes.flags.usesBarriers);
+    auto slmSize = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
+        HwHelperHw<Family>::get().computeSlmValues(dispatchInterface->getSlmTotalSize()));
     idd.setSharedLocalMemorySize(
         dispatchInterface->getSlmTotalSize() > 0
-            ? static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(HardwareCommandsHelper<Family>::computeSlmValues(dispatchInterface->getSlmTotalSize()))
+            ? slmSize
             : INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K);
 
     {

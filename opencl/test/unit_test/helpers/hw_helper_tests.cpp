@@ -945,3 +945,83 @@ TEST(HwInfoConfigCommonHelperTest, givenDebugFlagSetWhenEnablingBlitterOperation
     HwInfoConfigCommonHelper::enableBlitterOperationsSupport(hardwareInfo);
     EXPECT_FALSE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
+    if (::renderCoreFamily == IGFX_GEN8_CORE) {
+        EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().alignSlmSize(0));
+        EXPECT_EQ(4096u, HwHelperHw<FamilyType>::get().alignSlmSize(1));
+        EXPECT_EQ(4096u, HwHelperHw<FamilyType>::get().alignSlmSize(1024));
+        EXPECT_EQ(4096u, HwHelperHw<FamilyType>::get().alignSlmSize(1025));
+        EXPECT_EQ(4096u, HwHelperHw<FamilyType>::get().alignSlmSize(2048));
+        EXPECT_EQ(4096u, HwHelperHw<FamilyType>::get().alignSlmSize(2049));
+        EXPECT_EQ(4096u, HwHelperHw<FamilyType>::get().alignSlmSize(4096));
+        EXPECT_EQ(8192u, HwHelperHw<FamilyType>::get().alignSlmSize(4097));
+        EXPECT_EQ(8192u, HwHelperHw<FamilyType>::get().alignSlmSize(8192));
+        EXPECT_EQ(16384u, HwHelperHw<FamilyType>::get().alignSlmSize(8193));
+        EXPECT_EQ(16384u, HwHelperHw<FamilyType>::get().alignSlmSize(12288));
+        EXPECT_EQ(16384u, HwHelperHw<FamilyType>::get().alignSlmSize(16384));
+        EXPECT_EQ(32768u, HwHelperHw<FamilyType>::get().alignSlmSize(16385));
+        EXPECT_EQ(32768u, HwHelperHw<FamilyType>::get().alignSlmSize(24576));
+        EXPECT_EQ(32768u, HwHelperHw<FamilyType>::get().alignSlmSize(32768));
+        EXPECT_EQ(65536u, HwHelperHw<FamilyType>::get().alignSlmSize(32769));
+        EXPECT_EQ(65536u, HwHelperHw<FamilyType>::get().alignSlmSize(49152));
+        EXPECT_EQ(65536u, HwHelperHw<FamilyType>::get().alignSlmSize(65535));
+        EXPECT_EQ(65536u, HwHelperHw<FamilyType>::get().alignSlmSize(65536));
+    } else {
+        EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().alignSlmSize(0));
+        EXPECT_EQ(1024u, HwHelperHw<FamilyType>::get().alignSlmSize(1));
+        EXPECT_EQ(1024u, HwHelperHw<FamilyType>::get().alignSlmSize(1024));
+        EXPECT_EQ(2048u, HwHelperHw<FamilyType>::get().alignSlmSize(1025));
+        EXPECT_EQ(2048u, HwHelperHw<FamilyType>::get().alignSlmSize(2048));
+        EXPECT_EQ(4096u, HwHelperHw<FamilyType>::get().alignSlmSize(2049));
+        EXPECT_EQ(4096u, HwHelperHw<FamilyType>::get().alignSlmSize(4096));
+        EXPECT_EQ(8192u, HwHelperHw<FamilyType>::get().alignSlmSize(4097));
+        EXPECT_EQ(8192u, HwHelperHw<FamilyType>::get().alignSlmSize(8192));
+        EXPECT_EQ(16384u, HwHelperHw<FamilyType>::get().alignSlmSize(8193));
+        EXPECT_EQ(16384u, HwHelperHw<FamilyType>::get().alignSlmSize(16384));
+        EXPECT_EQ(32768u, HwHelperHw<FamilyType>::get().alignSlmSize(16385));
+        EXPECT_EQ(32768u, HwHelperHw<FamilyType>::get().alignSlmSize(32768));
+        EXPECT_EQ(65536u, HwHelperHw<FamilyType>::get().alignSlmSize(32769));
+        EXPECT_EQ(65536u, HwHelperHw<FamilyType>::get().alignSlmSize(65536));
+    }
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
+    if (::renderCoreFamily == IGFX_GEN8_CORE) {
+        EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().computeSlmValues(0));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(1));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(1024));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(1025));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(2048));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(2049));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(4096));
+        EXPECT_EQ(2u, HwHelperHw<FamilyType>::get().computeSlmValues(4097));
+        EXPECT_EQ(2u, HwHelperHw<FamilyType>::get().computeSlmValues(8192));
+        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(8193));
+        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(12288));
+        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(16384));
+        EXPECT_EQ(8u, HwHelperHw<FamilyType>::get().computeSlmValues(16385));
+        EXPECT_EQ(8u, HwHelperHw<FamilyType>::get().computeSlmValues(24576));
+        EXPECT_EQ(8u, HwHelperHw<FamilyType>::get().computeSlmValues(32768));
+        EXPECT_EQ(16u, HwHelperHw<FamilyType>::get().computeSlmValues(32769));
+        EXPECT_EQ(16u, HwHelperHw<FamilyType>::get().computeSlmValues(49152));
+        EXPECT_EQ(16u, HwHelperHw<FamilyType>::get().computeSlmValues(65535));
+        EXPECT_EQ(16u, HwHelperHw<FamilyType>::get().computeSlmValues(65536));
+    } else {
+        EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().computeSlmValues(0));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(1));
+        EXPECT_EQ(1u, HwHelperHw<FamilyType>::get().computeSlmValues(1024));
+        EXPECT_EQ(2u, HwHelperHw<FamilyType>::get().computeSlmValues(1025));
+        EXPECT_EQ(2u, HwHelperHw<FamilyType>::get().computeSlmValues(2048));
+        EXPECT_EQ(3u, HwHelperHw<FamilyType>::get().computeSlmValues(2049));
+        EXPECT_EQ(3u, HwHelperHw<FamilyType>::get().computeSlmValues(4096));
+        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(4097));
+        EXPECT_EQ(4u, HwHelperHw<FamilyType>::get().computeSlmValues(8192));
+        EXPECT_EQ(5u, HwHelperHw<FamilyType>::get().computeSlmValues(8193));
+        EXPECT_EQ(5u, HwHelperHw<FamilyType>::get().computeSlmValues(16384));
+        EXPECT_EQ(6u, HwHelperHw<FamilyType>::get().computeSlmValues(16385));
+        EXPECT_EQ(6u, HwHelperHw<FamilyType>::get().computeSlmValues(32768));
+        EXPECT_EQ(7u, HwHelperHw<FamilyType>::get().computeSlmValues(32769));
+        EXPECT_EQ(7u, HwHelperHw<FamilyType>::get().computeSlmValues(65536));
+    }
+}
