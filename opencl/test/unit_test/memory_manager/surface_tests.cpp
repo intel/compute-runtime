@@ -99,7 +99,7 @@ class CoherentMemObjSurface : public SurfaceTest<MemObjSurface> {
     }
 };
 
-TEST_F(CoherentMemObjSurface, BufferFromCoherentSvm) {
+TEST_F(CoherentMemObjSurface, GivenCoherentMemObjWhenCreatingSurfaceFromMemObjThenSurfaceIsCoherent) {
     Surface *surface = createSurface::Create<MemObjSurface>(this->data,
                                                             &this->buffer,
                                                             &this->gfxAllocation);
