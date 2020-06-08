@@ -377,6 +377,7 @@ TEST_F(SVMMemoryAllocatorTest, givenSharedAllocationsDebugFlagWhenDeviceMemoryIs
 
     svmManager->freeSVMAlloc(ptr);
 }
+
 TEST(SvmAllocationPropertiesTests, givenDifferentMemFlagsWhenGettingSvmAllocationPropertiesThenPropertiesAreCorrectlySet) {
     SVMAllocsManager::SvmAllocationProperties allocationProperties = MemObjHelper::getSvmAllocationProperties(0);
     EXPECT_FALSE(allocationProperties.coherent);
@@ -614,7 +615,7 @@ TEST_F(ShareableUnifiedMemoryManagerPropertiesTest, givenShareableUnifiedPropert
     svmManager->freeSVMAlloc(ptr);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenHostUSMllocationWhenPointerIsUsedForTransferCallsThenUSMAllocationIsReused) {
+TEST(UnfiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPointerIsUsedForTransferCallsThenUSMAllocationIsReused) {
     MockContext mockContext;
     cl_context clContext = &mockContext;
 
@@ -653,6 +654,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostUSMllocationWhenPointerIsUsedForT
     ASSERT_EQ(CL_SUCCESS, status);
     clReleaseCommandQueue(commandQueue);
 }
+
 TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTransferCallsThenUsmAllocationIsReused) {
     MockContext mockContext;
     cl_context clContext = &mockContext;
@@ -806,7 +808,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostAllocationThatIsSmallerThenTransf
     clReleaseCommandQueue(commandQueue);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenSharedUSMllocationWithoutLocalMemoryWhenPointerIsUsedAsTranfserParameterThenUSMAllocationIsReused) {
+TEST(UnfiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithoutLocalMemoryWhenPointerIsUsedAsTranfserParameterThenUSMAllocationIsReused) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableLocalMemory.set(0);
 
@@ -848,7 +850,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenSharedUSMllocationWithoutLocalMemoryW
     clReleaseCommandQueue(commandQueue);
 }
 
-TEST(UnfiedSharedMemoryTransferCalls, givenSharedUSMllocationWithLocalMemoryWhenPointerIsUsedAsTransferParameterThenUSMAllocationIsReused) {
+TEST(UnfiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithLocalMemoryWhenPointerIsUsedAsTransferParameterThenUSMAllocationIsReused) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableLocalMemory.set(1);
 
