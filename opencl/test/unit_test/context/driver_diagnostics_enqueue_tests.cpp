@@ -804,7 +804,7 @@ TEST_F(PerformanceHintEnqueueTest, GivenKernelWithCoherentPtrWhenEnqueueKernelIs
         computeWorkgroupSize2D(maxWorkGroupSize, preferredWorkGroupSize, globalWorkGroupSize, 32);
 
     auto buffer = new MockBuffer();
-    buffer->getGraphicsAllocation()->setCoherent(true);
+    buffer->getGraphicsAllocation(mockRootDeviceIndex)->setCoherent(true);
     auto clBuffer = (cl_mem)buffer;
 
     kernelArgInfo.object = clBuffer;

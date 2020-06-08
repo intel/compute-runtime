@@ -507,7 +507,7 @@ TEST_F(InternalsEventTest, GivenSubmitCommandFalseWhenSubmittingCommandsThenRefA
 
     EXPECT_EQ(taskLevelBefore + 1, taskLevelAfter);
 
-    auto graphicsAllocation = buffer.getGraphicsAllocation();
+    auto graphicsAllocation = buffer.getGraphicsAllocation(pClDevice->getRootDeviceIndex());
 
     EXPECT_FALSE(graphicsAllocation->isResident(csr.getOsContext().getContextId()));
 }

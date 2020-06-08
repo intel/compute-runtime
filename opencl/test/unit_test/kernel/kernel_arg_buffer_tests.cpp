@@ -83,7 +83,7 @@ HWTEST_F(KernelArgBufferTest, GivenSvmPtrStatefulWhenSettingKernelArgThenArgumen
         ptrOffset(pKernel->getSurfaceStateHeap(), pKernelInfo->kernelArgInfo[0].offsetHeap));
 
     auto surfaceAddress = surfaceState->getSurfaceBaseAddress();
-    EXPECT_EQ(buffer->getGraphicsAllocation()->getGpuAddress(), surfaceAddress);
+    EXPECT_EQ(buffer->getGraphicsAllocation(mockRootDeviceIndex)->getGpuAddress(), surfaceAddress);
 
     delete buffer;
 }
@@ -91,7 +91,7 @@ HWTEST_F(KernelArgBufferTest, GivenSvmPtrStatefulWhenSettingKernelArgThenArgumen
 HWTEST_F(KernelArgBufferTest, GivenBufferFromSvmPtrWhenSettingKernelArgThenArgumentsAreSetCorrectly) {
 
     Buffer *buffer = new MockBuffer();
-    buffer->getGraphicsAllocation()->setCoherent(true);
+    buffer->getGraphicsAllocation(mockRootDeviceIndex)->setCoherent(true);
 
     auto val = (cl_mem)buffer;
     auto pVal = &val;

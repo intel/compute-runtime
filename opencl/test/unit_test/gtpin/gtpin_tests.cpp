@@ -1804,10 +1804,10 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     // Verify that correct GT-Pin resource is made resident
     cl_mem gtpinBuffer0 = kernelExecQueue[0].gtpinResource;
     auto pBuffer0 = castToObject<Buffer>(gtpinBuffer0);
-    GraphicsAllocation *pGfxAlloc0 = pBuffer0->getGraphicsAllocation();
+    GraphicsAllocation *pGfxAlloc0 = pBuffer0->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     cl_mem gtpinBuffer1 = kernelExecQueue[1].gtpinResource;
     auto pBuffer1 = castToObject<Buffer>(gtpinBuffer1);
-    GraphicsAllocation *pGfxAlloc1 = pBuffer1->getGraphicsAllocation();
+    GraphicsAllocation *pGfxAlloc1 = pBuffer1->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     CommandStreamReceiver &csr = pCmdQueue->getGpgpuCommandStreamReceiver();
     EXPECT_FALSE(pGfxAlloc0->isResident(csr.getOsContext().getContextId()));
     EXPECT_FALSE(pGfxAlloc1->isResident(csr.getOsContext().getContextId()));
@@ -1974,10 +1974,10 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     // This simulates enqueuing non-blocked kernels
     cl_mem gtpinBuffer0 = kernelExecQueue[0].gtpinResource;
     auto pBuffer0 = castToObject<Buffer>(gtpinBuffer0);
-    GraphicsAllocation *pGfxAlloc0 = pBuffer0->getGraphicsAllocation();
+    GraphicsAllocation *pGfxAlloc0 = pBuffer0->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     cl_mem gtpinBuffer1 = kernelExecQueue[1].gtpinResource;
     auto pBuffer1 = castToObject<Buffer>(gtpinBuffer1);
-    GraphicsAllocation *pGfxAlloc1 = pBuffer1->getGraphicsAllocation();
+    GraphicsAllocation *pGfxAlloc1 = pBuffer1->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     CommandStreamReceiver &csr = pCmdQueue->getGpgpuCommandStreamReceiver();
     // Make resident resource of first submitted kernel
     EXPECT_FALSE(pGfxAlloc0->isResident(csr.getOsContext().getContextId()));

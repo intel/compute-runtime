@@ -909,11 +909,11 @@ HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValid
 
     auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
 
-    memcpy(pBufferSrc->getGraphicsAllocation()->getUnderlyingBuffer(), bufferDataSrc, bufferSize);
-    memcpy(pBufferDst->getGraphicsAllocation()->getUnderlyingBuffer(), bufferDataDst, bufferSize);
+    memcpy(pBufferSrc->getGraphicsAllocation(device->getRootDeviceIndex())->getUnderlyingBuffer(), bufferDataSrc, bufferSize);
+    memcpy(pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex())->getUnderlyingBuffer(), bufferDataDst, bufferSize);
 
-    simulatedCsr->writeMemory(*pBufferSrc->getGraphicsAllocation());
-    simulatedCsr->writeMemory(*pBufferDst->getGraphicsAllocation());
+    simulatedCsr->writeMemory(*pBufferSrc->getGraphicsAllocation(device->getRootDeviceIndex()));
+    simulatedCsr->writeMemory(*pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex()));
 
     //Src
     kernel->setArg(0, pBufferSrc.get());
@@ -948,7 +948,7 @@ HWTEST2_F(AUBBindlessKernel, givenBindlessCopyKernelWhenEnqueuedThenResultsValid
     EXPECT_TRUE(this->kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
 
     this->pCmdQ->finish();
-    expectMemory<FamilyType>(reinterpret_cast<void *>(pBufferDst->getGraphicsAllocation()->getGpuAddress()),
+    expectMemory<FamilyType>(reinterpret_cast<void *>(pBufferDst->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),
                              bufferDataSrc, bufferSize);
 }
 
@@ -1012,13 +1012,13 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedTh
                                                             retVal));
     ASSERT_NE(nullptr, bufferSrc);
 
-    memcpy(image->getGraphicsAllocation()->getUnderlyingBuffer(), imageDataDst, imageSize);
-    memcpy(bufferSrc->getGraphicsAllocation()->getUnderlyingBuffer(), imageDataSrc, imageSize);
+    memcpy(image->getGraphicsAllocation(device->getRootDeviceIndex())->getUnderlyingBuffer(), imageDataDst, imageSize);
+    memcpy(bufferSrc->getGraphicsAllocation(device->getRootDeviceIndex())->getUnderlyingBuffer(), imageDataSrc, imageSize);
 
     auto simulatedCsr = AUBFixture::getSimulatedCsr<FamilyType>();
 
-    simulatedCsr->writeMemory(*bufferSrc->getGraphicsAllocation());
-    simulatedCsr->writeMemory(*image->getGraphicsAllocation());
+    simulatedCsr->writeMemory(*bufferSrc->getGraphicsAllocation(device->getRootDeviceIndex()));
+    simulatedCsr->writeMemory(*image->getGraphicsAllocation(device->getRootDeviceIndex()));
 
     kernel->setArg(0, bufferSrc.get());
     kernel->setArg(1, image.get());
@@ -1045,6 +1045,6 @@ HWTEST2_F(AUBBindlessKernel, DISABLED_givenBindlessCopyImageKernelWhenEnqueuedTh
     retVal = this->pCmdQ->finish();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    expectMemory<FamilyType>(reinterpret_cast<void *>(image->getGraphicsAllocation()->getGpuAddress()),
+    expectMemory<FamilyType>(reinterpret_cast<void *>(image->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),
                              imageDataSrc, imageSize);
 }

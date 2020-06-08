@@ -314,8 +314,8 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerNotSupportingVirtualPaddingWhenI
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     //graphics allocation for image and buffer is the same
-    auto bufferGraphicsAllocation = buffer->getGraphicsAllocation();
-    auto imageGraphicsAllocation = imageFromBuffer->getGraphicsAllocation();
+    auto bufferGraphicsAllocation = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
+    auto imageGraphicsAllocation = imageFromBuffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
 
     EXPECT_EQ(bufferGraphicsAllocation, imageGraphicsAllocation);
 }
@@ -333,8 +333,8 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhenImag
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     //graphics allocation for image and buffer is the same
-    auto bufferGraphicsAllocation = buffer->getGraphicsAllocation();
-    auto imageGraphicsAllocation = imageFromBuffer->getGraphicsAllocation();
+    auto bufferGraphicsAllocation = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
+    auto imageGraphicsAllocation = imageFromBuffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
 
     EXPECT_EQ(this->size, bufferGraphicsAllocation->getUnderlyingBufferSize());
 
@@ -370,8 +370,8 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhenImag
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     //graphics allocation for image and buffer is the same
-    auto bufferGraphicsAllocation = buffer->getGraphicsAllocation();
-    auto imageGraphicsAllocation = imageFromBuffer->getGraphicsAllocation();
+    auto bufferGraphicsAllocation = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
+    auto imageGraphicsAllocation = imageFromBuffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
 
     EXPECT_EQ(bufferSize, bufferGraphicsAllocation->getUnderlyingBufferSize());
 
@@ -381,7 +381,7 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhenImag
     EXPECT_GT(queryGmm->gmmResourceInfo->getSizeAllocation(), bufferSize);
 
     EXPECT_NE(bufferGraphicsAllocation, imageGraphicsAllocation);
-    EXPECT_EQ(queryGmm->gmmResourceInfo->getSizeAllocation(), imageFromBuffer->getGraphicsAllocation()->getUnderlyingBufferSize());
+    EXPECT_EQ(queryGmm->gmmResourceInfo->getSizeAllocation(), imageFromBuffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getUnderlyingBufferSize());
     EXPECT_EQ(bufferSize, imageFromBuffer->getSize());
     imageDesc.mem_object = storeMem;
     clReleaseMemObject(buffer2);
@@ -407,8 +407,8 @@ TEST_F(Image2dFromBufferTest, givenMemoryManagerSupportingVirtualPaddingWhen1DIm
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     //graphics allocation match
-    auto bufferGraphicsAllocation = buffer->getGraphicsAllocation();
-    auto imageGraphicsAllocation = imageFromBuffer->getGraphicsAllocation();
+    auto bufferGraphicsAllocation = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
+    auto imageGraphicsAllocation = imageFromBuffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
 
     EXPECT_EQ(bufferGraphicsAllocation, imageGraphicsAllocation);
     imageDesc.mem_object = storeMem;

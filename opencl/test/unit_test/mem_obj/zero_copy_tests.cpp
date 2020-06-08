@@ -113,8 +113,8 @@ TEST(ZeroCopyBufferTestWithSharedContext, GivenContextThatIsSharedWhenAskedForBu
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(buffer->isMemObjZeroCopy()) << "Zero Copy not handled properly";
 
-    if (buffer->getGraphicsAllocation()->is32BitAllocation() == false) {
-        EXPECT_EQ(host_ptr, buffer->getGraphicsAllocation()->getUnderlyingBuffer());
+    if (buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->is32BitAllocation() == false) {
+        EXPECT_EQ(host_ptr, buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getUnderlyingBuffer());
     }
 }
 
@@ -173,7 +173,7 @@ TEST(ZeroCopyWithDebugFlag, GivenBufferInputsThatWouldResultInZeroCopyAndDisable
     EXPECT_FALSE(buffer->mappingOnCpuAllowed());
     EXPECT_EQ(nullptr, buffer->getHostPtr());
     EXPECT_EQ(nullptr, buffer->getAllocatedMapPtr());
-    auto bufferAllocation = buffer->getGraphicsAllocation()->getUnderlyingBuffer();
+    auto bufferAllocation = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getUnderlyingBuffer();
 
     auto mapAllocation = buffer->getBasePtrForMap(0);
     EXPECT_EQ(mapAllocation, buffer->getAllocatedMapPtr());
@@ -193,7 +193,7 @@ TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingWhen
 
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
     if (is64bit) {
-        EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation());
+        EXPECT_TRUE(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->is32BitAllocation());
     }
     alignedFree(host_ptr);
 }

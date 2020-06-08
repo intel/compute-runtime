@@ -1459,23 +1459,23 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, BufferResidency) {
     std::unique_ptr<Buffer> buffer(DrmMockBuffer::create());
 
     auto osContextId = csr->getOsContext().getContextId();
-    auto graphicsAlocation = buffer->getGraphicsAllocation(rootDeviceIndex);
-    ASSERT_FALSE(graphicsAlocation->isResident(osContextId));
+    auto graphicsAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
+    ASSERT_FALSE(graphicsAllocation->isResident(osContextId));
     ASSERT_GT(buffer->getSize(), 0u);
 
     //make it resident 8 times
     for (int c = 0; c < 8; c++) {
-        csr->makeResident(*graphicsAlocation);
+        csr->makeResident(*graphicsAllocation);
         csr->processResidency(csr->getResidencyAllocations(), 0u);
-        EXPECT_TRUE(graphicsAlocation->isResident(osContextId));
-        EXPECT_EQ(graphicsAlocation->getResidencyTaskCount(osContextId), csr->peekTaskCount() + 1);
+        EXPECT_TRUE(graphicsAllocation->isResident(osContextId));
+        EXPECT_EQ(graphicsAllocation->getResidencyTaskCount(osContextId), csr->peekTaskCount() + 1);
     }
 
-    csr->makeNonResident(*graphicsAlocation);
-    EXPECT_FALSE(graphicsAlocation->isResident(osContextId));
+    csr->makeNonResident(*graphicsAllocation);
+    EXPECT_FALSE(graphicsAllocation->isResident(osContextId));
 
-    csr->makeNonResident(*graphicsAlocation);
-    EXPECT_FALSE(graphicsAlocation->isResident(osContextId));
+    csr->makeNonResident(*graphicsAllocation);
+    EXPECT_FALSE(graphicsAllocation->isResident(osContextId));
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenDrmCommandStreamReceiverWhenMemoryManagerIsCreatedThenItHasHostMemoryValidationEnabledByDefault) {

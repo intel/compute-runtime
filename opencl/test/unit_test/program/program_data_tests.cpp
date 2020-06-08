@@ -471,7 +471,7 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantB
 
     pProgram->linkerInput = std::move(programInfo.linkerInput);
     pProgram->linkBinary();
-    uint32_t expectedAddr = static_cast<uint32_t>(constantSurface.getGraphicsAllocation()->getGpuAddressToPatch());
+    uint32_t expectedAddr = static_cast<uint32_t>(constantSurface.getGraphicsAllocation(pProgram->getDevice().getRootDeviceIndex())->getGpuAddressToPatch());
     EXPECT_EQ(expectedAddr, constantSurfaceStorage[0]);
     EXPECT_EQ(sentinel, constantSurfaceStorage[1]);
     constantSurface.mockGfxAllocation.set32BitAllocation(false);
@@ -509,7 +509,7 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPoi
 
     pProgram->linkerInput = std::move(programInfo.linkerInput);
     pProgram->linkBinary();
-    uint32_t expectedAddr = static_cast<uint32_t>(globalSurface.getGraphicsAllocation()->getGpuAddressToPatch());
+    uint32_t expectedAddr = static_cast<uint32_t>(globalSurface.getGraphicsAllocation(pProgram->getDevice().getRootDeviceIndex())->getGpuAddressToPatch());
     EXPECT_EQ(expectedAddr, globalSurfaceStorage[0]);
     EXPECT_EQ(sentinel, globalSurfaceStorage[1]);
     globalSurface.mockGfxAllocation.set32BitAllocation(false);

@@ -1326,7 +1326,7 @@ TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenNonNullPointerIsReturne
 
 typedef Test<MemoryManagerWithCsrFixture> MemoryManagerWithCsrTest;
 
-TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerWhenBiggerOverllapingAllcoationIsCreatedAndNothingToCleanThenAbortExecution) {
+TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerWhenBiggerOverllapingAllocationIsCreatedAndNothingToCleanThenAbortExecution) {
     void *cpuPtr1 = (void *)0x100004;
     void *cpuPtr2 = (void *)0x101008;
     void *cpuPtr3 = (void *)0x100000;
@@ -1362,7 +1362,7 @@ TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerWhenBiggerOverl
     memoryManager->freeGraphicsMemory(graphicsAllocation3);
 }
 
-TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerReadyForCleaningWhenBiggerOverllapingAllcoationIsCreatedThenTemporaryAllocationsAreCleaned) {
+TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerReadyForCleaningWhenBiggerOverllapingAllocationIsCreatedThenTemporaryAllocationsAreCleaned) {
 
     void *cpuPtr1 = (void *)0x100004;
     void *cpuPtr2 = (void *)0x101008;

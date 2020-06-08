@@ -22,8 +22,8 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenRenderCompressedGmmWhenAskingForCpuOpe
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
     auto gmm = new Gmm(pDevice->getGmmClientContext(), nullptr, 1, false);
     gmm->isRenderCompressed = false;
-    buffer->getGraphicsAllocation()->setDefaultGmm(gmm);
-    auto allocation = buffer->getGraphicsAllocation();
+    auto allocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+    allocation->setDefaultGmm(gmm);
 
     auto alignedPtr = alignedMalloc(2, MemoryConstants::cacheLineSize);
     auto unalignedPtr = ptrOffset(alignedPtr, 1);
@@ -255,7 +255,7 @@ TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInN
 
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
-    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
     //read write on CPU is allowed, but not preffered. We can access this memory via Lock.
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
     EXPECT_FALSE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
@@ -309,7 +309,7 @@ TEST(ReadWriteBufferOnCpu, whenLocalMemoryPoolAllocationIsAskedForPreferenceThen
     cl_int retVal = 0;
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, CL_MEM_READ_WRITE, MemoryConstants::pageSize, nullptr, retVal));
     ASSERT_NE(nullptr, buffer.get());
-    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::LocalMemory);
+    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::LocalMemory);
 
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
     EXPECT_FALSE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));

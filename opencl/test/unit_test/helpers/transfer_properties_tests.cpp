@@ -35,7 +35,7 @@ TEST(TransferPropertiesTest, givenAllocationInNonSystemPoolWhenTransferPropertie
     context.memoryManager = &memoryManager;
     cl_int retVal;
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, 0, 1, nullptr, retVal));
-    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
 
     size_t offset = 0;
     size_t size = 4096u;
@@ -51,7 +51,7 @@ TEST(TransferPropertiesTest, givenAllocationInNonSystemPoolWhenTransferPropertie
     context.memoryManager = &memoryManager;
     cl_int retVal;
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, 0, 1, nullptr, retVal));
-    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
 
     size_t offset = 0;
     size_t size = 4096u;
@@ -68,7 +68,7 @@ TEST(TransferPropertiesTest, givenAllocationInSystemPoolWhenTransferPropertiesAr
     context.memoryManager = &memoryManager;
     cl_int retVal;
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, 0, 1, nullptr, retVal));
-    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::System4KBPages);
+    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::System4KBPages);
 
     size_t offset = 0;
     size_t size = 4096u;
@@ -85,7 +85,7 @@ TEST(TransferPropertiesTest, givenTransferPropertiesWhenLockedPtrIsSetThenItIsRe
     context.memoryManager = &memoryManager;
     cl_int retVal;
     std::unique_ptr<Buffer> buffer(Buffer::create(&context, 0, 1, nullptr, retVal));
-    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    static_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
 
     size_t offset = 0;
     size_t size = 4096u;

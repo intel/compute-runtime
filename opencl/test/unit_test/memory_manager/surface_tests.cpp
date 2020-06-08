@@ -95,7 +95,7 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
 class CoherentMemObjSurface : public SurfaceTest<MemObjSurface> {
   public:
     CoherentMemObjSurface() {
-        this->buffer.getGraphicsAllocation()->setCoherent(true);
+        this->buffer.getGraphicsAllocation(mockRootDeviceIndex)->setCoherent(true);
     }
 };
 

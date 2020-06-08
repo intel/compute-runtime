@@ -639,12 +639,12 @@ TEST_F(WddmCommandStreamTest, makeResidentNonResidentMemObj) {
     GraphicsAllocation *gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     Buffer *buffer = new AlignedBuffer(gfxAllocation);
 
-    csr->makeResident(*buffer->getGraphicsAllocation());
+    csr->makeResident(*buffer->getGraphicsAllocation(csr->getRootDeviceIndex()));
     EXPECT_EQ(0u, wddm->makeResidentResult.called);
     EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(gfxAllocation, csr->getResidencyAllocations()[0]);
 
-    csr->makeNonResident(*buffer->getGraphicsAllocation());
+    csr->makeNonResident(*buffer->getGraphicsAllocation(csr->getRootDeviceIndex()));
     EXPECT_EQ(gfxAllocation, csr->getEvictionAllocations()[0]);
 
     delete buffer;

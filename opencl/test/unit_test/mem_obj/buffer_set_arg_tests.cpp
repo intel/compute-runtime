@@ -111,7 +111,7 @@ TEST_F(BufferSetArgTest, WhenSettingKernelArgBufferThenGpuAddressIsSet) {
 
     buffer->setArgStateless(pKernelArg, tokenSize);
 
-    EXPECT_EQ((void *)((uintptr_t)buffer->getGraphicsAllocation()->getGpuAddress()), *pKernelArg);
+    EXPECT_EQ(reinterpret_cast<void *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()), *pKernelArg);
 }
 
 TEST_F(BufferSetArgTest, givenInvalidSizeWhenSettingKernelArgBufferThenReturnClInvalidArgSize) {
@@ -151,7 +151,7 @@ HWTEST_F(BufferSetArgTest, givenSetKernelArgOnReadOnlyBufferThatIsMisalingedWhen
     pKernelInfo->requiresSshForBuffers = true;
     pKernelInfo->kernelArgInfo[0].isReadOnly = true;
 
-    auto graphicsAllocation = castToObject<Buffer>(buffer)->getGraphicsAllocation();
+    auto graphicsAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     graphicsAllocation->setSize(graphicsAllocation->getUnderlyingBufferSize() - 1);
 
     cl_mem clMemBuffer = buffer;
@@ -187,9 +187,10 @@ HWTEST_F(BufferSetArgTest, givenNonPureStatefulArgWhenRenderCompressedBufferIsSe
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(), pKernelInfo->kernelArgInfo[0].offsetHeap));
-    buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
-    buffer->getGraphicsAllocation()->setDefaultGmm(new Gmm(pDevice->getGmmClientContext(), buffer->getGraphicsAllocation()->getUnderlyingBuffer(), buffer->getSize(), false));
-    buffer->getGraphicsAllocation()->getDefaultGmm()->isRenderCompressed = true;
+    auto graphicsAllocation = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
+    graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    graphicsAllocation->setDefaultGmm(new Gmm(pDevice->getGmmClientContext(), graphicsAllocation->getUnderlyingBuffer(), buffer->getSize(), false));
+    graphicsAllocation->getDefaultGmm()->isRenderCompressed = true;
     pKernelInfo->requiresSshForBuffers = true;
     cl_mem clMem = buffer;
 
@@ -210,11 +211,11 @@ TEST_F(BufferSetArgTest, Given32BitAddressingWhenSettingArgStatelessThenGpuAddre
 
     auto tokenSize = pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size;
 
-    uintptr_t gpuBase = (uintptr_t)buffer->getGraphicsAllocation()->getGpuAddress() >> 2;
-    buffer->getGraphicsAllocation()->setGpuBaseAddress(gpuBase);
+    auto gpuBase = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress() >> 2;
+    buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setGpuBaseAddress(gpuBase);
     buffer->setArgStateless(pKernelArg, tokenSize, true);
 
-    EXPECT_EQ((uintptr_t)buffer->getGraphicsAllocation()->getGpuAddress() - gpuBase, (uintptr_t)*pKernelArg);
+    EXPECT_EQ(reinterpret_cast<void *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress() - gpuBase), *pKernelArg);
 }
 
 TEST_F(BufferSetArgTest, givenBufferWhenOffsetedSubbufferIsPassedToSetKernelArgThenCorrectGpuVAIsPatched) {
@@ -235,7 +236,7 @@ TEST_F(BufferSetArgTest, givenBufferWhenOffsetedSubbufferIsPassedToSetKernelArgT
 
     subBuffer->setArgStateless(pKernelArg, tokenSize);
 
-    EXPECT_EQ((void *)((uintptr_t)subBuffer->getGraphicsAllocation()->getGpuAddress() + region.origin), *pKernelArg);
+    EXPECT_EQ(reinterpret_cast<void *>(subBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress() + region.origin), *pKernelArg);
     delete subBuffer;
 }
 
@@ -255,8 +256,8 @@ TEST_F(BufferSetArgTest, givenCurbeTokenThatSizeIs4BytesWhenStatelessArgIsPatche
     buffer->setArgStateless(pKernelArg, sizeOf4Bytes);
 
     //make sure only 4 bytes are patched
-    uintptr_t bufferAddress = (uintptr_t)buffer->getGraphicsAllocation()->getGpuAddress();
-    uint32_t address32bits = (uint32_t)bufferAddress;
+    auto bufferAddress = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress();
+    uint32_t address32bits = static_cast<uint32_t>(bufferAddress);
     uint64_t curbeValue = *pointer64bytes;
     uint32_t higherPart = curbeValue >> 32;
     uint32_t lowerPart = (curbeValue & 0xffffffff);
@@ -277,7 +278,7 @@ TEST_F(BufferSetArgTest, WhenSettingKernelArgThenAddressToPatchIsSetCorrectlyAnd
     auto pKernelArg = (void **)(pKernel->getCrossThreadData() +
                                 pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
 
-    EXPECT_EQ((void *)buffer->getGraphicsAllocation()->getGpuAddressToPatch(), *pKernelArg);
+    EXPECT_EQ(reinterpret_cast<void *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddressToPatch()), *pKernelArg);
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);
@@ -346,7 +347,7 @@ TEST_F(BufferSetArgTest, givenKernelArgBufferWhenAddPathInfoDataIsSetThenPatchIn
 
     EXPECT_EQ(PatchInfoAllocationType::KernelArg, pKernel->getPatchInfoDataList()[0].sourceType);
     EXPECT_EQ(PatchInfoAllocationType::IndirectObjectHeap, pKernel->getPatchInfoDataList()[0].targetType);
-    EXPECT_EQ(buffer->getGraphicsAllocation()->getGpuAddressToPatch(), pKernel->getPatchInfoDataList()[0].sourceAllocation);
+    EXPECT_EQ(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddressToPatch(), pKernel->getPatchInfoDataList()[0].sourceAllocation);
     EXPECT_EQ(reinterpret_cast<uint64_t>(pKernel->getCrossThreadData()), pKernel->getPatchInfoDataList()[0].targetAllocation);
     EXPECT_EQ(0u, pKernel->getPatchInfoDataList()[0].sourceAllocationOffset);
 }

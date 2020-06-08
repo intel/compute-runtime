@@ -285,10 +285,10 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenNoSharedContextOrRenderCompress
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    if (MemoryPool::isSystemMemoryPool(buffer->getGraphicsAllocation()->getMemoryPool())) {
-        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation()->getAllocationType());
+    if (MemoryPool::isSystemMemoryPool(buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getMemoryPool())) {
+        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
     } else {
-        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, buffer->getGraphicsAllocation()->getAllocationType());
+        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
     }
 }
 
@@ -325,7 +325,7 @@ TEST(Buffer, givenAlignedHostPtrPassedToBufferCreateWhenNoSharedContextOrRenderC
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, hostPtr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getMultiGraphicsAllocation().getAllocationType());
 }
 
 TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrRenderCompressedBuffersThenBuffersAllocationTypeIsBufferHostMemory) {
@@ -338,7 +338,7 @@ TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrRende
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation()->getAllocationType());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getMultiGraphicsAllocation().getAllocationType());
 }
 
 TEST(Buffer, givenRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturnedIn64Bit) {
@@ -2286,7 +2286,7 @@ TEST_P(ValidHostPtr, SvmHostPtr) {
         EXPECT_TRUE(bufferSvm->isMemObjWithHostPtrSVM());
         auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptr);
         ASSERT_NE(nullptr, svmData);
-        EXPECT_EQ(svmData->gpuAllocation, bufferSvm->getGraphicsAllocation());
+        EXPECT_EQ(svmData->gpuAllocation, bufferSvm->getGraphicsAllocation(pClDevice->getRootDeviceIndex()));
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         context->getSVMAllocsManager()->freeSVMAlloc(ptr);
@@ -3071,7 +3071,7 @@ TEST_F(MultiRootDeviceBufferTest, bufferGraphicsAllocationHasCorrectRootDeviceIn
 
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, MemoryConstants::pageSize, nullptr, retVal));
 
-    auto graphicsAllocation = buffer->getGraphicsAllocation();
+    auto graphicsAllocation = buffer->getGraphicsAllocation(expectedRootDeviceIndex);
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_EQ(expectedRootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
 }

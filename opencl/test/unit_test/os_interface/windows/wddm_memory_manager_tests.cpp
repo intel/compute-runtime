@@ -1118,8 +1118,8 @@ TEST_F(BufferWithWddmMemory, ValidHostPtr) {
     } else {
         EXPECT_NE(address, ptr);
     }
-    EXPECT_NE(nullptr, buffer->getGraphicsAllocation());
-    EXPECT_NE(nullptr, buffer->getGraphicsAllocation()->getUnderlyingBuffer());
+    EXPECT_NE(nullptr, buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
+    EXPECT_NE(nullptr, buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getUnderlyingBuffer());
 
     delete buffer;
     alignedFree(ptr);
@@ -1138,7 +1138,7 @@ TEST_F(BufferWithWddmMemory, NullOsHandleStorageAskedForPopulationReturnsFilledP
     memoryManager->cleanOsHandles(storage, 0);
 }
 
-TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAskedForGraphicsAllcoationThenItContainsAllFragmentsWithProperGpuAdrresses) {
+TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAskedForGraphicsAllocationThenItContainsAllFragmentsWithProperGpuAdrresses) {
     auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1001);
     auto size = MemoryConstants::pageSize * 10;
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), false, size}, ptr);

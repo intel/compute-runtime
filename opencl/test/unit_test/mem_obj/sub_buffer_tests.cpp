@@ -87,7 +87,7 @@ TEST_F(SubBufferTest, GivenAlignmentThatIsHigherThen4BytesWhenCheckedForValidity
     cl_buffer_region region3 = {8, 4};
     EXPECT_TRUE(buffer->isValidSubBufferOffset(region3.origin));
 
-    buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     EXPECT_FALSE(buffer->isValidSubBufferOffset(region.origin));
     EXPECT_FALSE(buffer->isValidSubBufferOffset(region2.origin));
     cl_buffer_region region4 = {1025, 4};

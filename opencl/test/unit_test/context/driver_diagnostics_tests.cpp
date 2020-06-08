@@ -439,7 +439,7 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
     MockBuffer buffer;
     cl_mem clMem = &buffer;
 
-    buffer.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer.getGraphicsAllocation(pDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     mockKernel.kernelInfo.kernelArgInfo.resize(1);
     mockKernel.kernelInfo.kernelArgInfo[0].metadataExtended = std::make_unique<ArgTypeMetadataExtended>();
     mockKernel.kernelInfo.kernelArgInfo[0].metadataExtended->argName = "arg0";
@@ -546,7 +546,7 @@ TEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerforma
     auto gmm = std::unique_ptr<Gmm>(new Gmm(device->getGmmClientContext(), static_cast<const void *>(nullptr), t, false, true, true, info));
     gmm->isRenderCompressed = true;
 
-    mockBuffer->getGraphicsAllocation()->setDefaultGmm(gmm.get());
+    mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->setDefaultGmm(gmm.get());
     cl_mem mem = mockBuffer.get();
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_RGBA;
@@ -666,7 +666,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     auto gmm = std::unique_ptr<Gmm>(new Gmm(device->getGmmClientContext(), (const void *)nullptr, t, false, true, true, info));
     gmm->isRenderCompressed = false;
 
-    mockBuffer->getGraphicsAllocation()->setDefaultGmm(gmm.get());
+    mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->setDefaultGmm(gmm.get());
     cl_mem mem = mockBuffer.get();
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_RGBA;

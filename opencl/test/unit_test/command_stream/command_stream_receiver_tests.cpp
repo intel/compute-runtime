@@ -98,11 +98,13 @@ TEST_F(CommandStreamReceiverTest, WhenMakingResidentThenBufferResidencyFlagIsSet
         srcMemory,
         retVal);
     ASSERT_NE(nullptr, buffer);
-    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(commandStreamReceiver->getOsContext().getContextId()));
 
-    commandStreamReceiver->makeResident(*buffer->getGraphicsAllocation());
+    auto graphicsAllocation = buffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
+    EXPECT_FALSE(graphicsAllocation->isResident(commandStreamReceiver->getOsContext().getContextId()));
 
-    EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident(commandStreamReceiver->getOsContext().getContextId()));
+    commandStreamReceiver->makeResident(*graphicsAllocation);
+
+    EXPECT_TRUE(graphicsAllocation->isResident(commandStreamReceiver->getOsContext().getContextId()));
 
     delete buffer;
 }

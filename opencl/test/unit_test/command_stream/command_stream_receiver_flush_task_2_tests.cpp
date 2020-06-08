@@ -448,7 +448,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, handleTagAndScratchAllocationsResi
     EXPECT_TRUE(commandStreamReceiver->isMadeNonResident(scratchAllocation));
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndFlushTaskIsCalledThenFenceAlocationIsMadeResident) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCommandStreamReceiverWhenFenceAllocationIsRequiredAndFlushTaskIsCalledThenFenceAllocationIsMadeResident) {
     RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 
     auto commandStreamReceiver = new MockCsrHw<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
