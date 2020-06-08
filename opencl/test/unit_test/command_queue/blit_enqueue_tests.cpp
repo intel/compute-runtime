@@ -848,3 +848,85 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithNoTimestampPacketTests, givenNoTimestampPacket
     cmdFound = expectCommand<MI_SEMAPHORE_WAIT>(cmdFound++, ccsCommands.end());
     verifySemaphore<FamilyType>(cmdFound, bcsSignalAddress);
 }
+
+using BlitEnqueueWithDebugCapabilityTests = BlitEnqueueTests<0>;
+
+HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, bdunajsk) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManager.flags.PauseOnEnqueue.set(1);
+
+    auto debugPauseStateAddress = gpgpuCsr->getDebugPauseStateGPUAddress();
+
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    commandQueue->enqueueWriteBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*commandQueue);
+    auto &cmdList = hwParser.cmdList;
+
+    auto semaphore = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    bool semaphoreBeforeWalkerFound = false;
+    bool semaphoreAfterWalkerFound = false;
+    while (semaphore != cmdList.end()) {
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*semaphore);
+        if (static_cast<uint32_t>(DebugPauseState::hasUserStartConfirmation) == semaphoreCmd->getSemaphoreDataDword()) {
+            EXPECT_EQ(debugPauseStateAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+            EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, semaphoreCmd->getWaitMode());
+
+            semaphoreBeforeWalkerFound = true;
+        }
+
+        if (static_cast<uint32_t>(DebugPauseState::hasUserEndConfirmation) == semaphoreCmd->getSemaphoreDataDword()) {
+            EXPECT_TRUE(semaphoreBeforeWalkerFound);
+            EXPECT_EQ(debugPauseStateAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+            EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+            EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, semaphoreCmd->getWaitMode());
+
+            semaphoreAfterWalkerFound = true;
+            break;
+        }
+
+        semaphore = find<MI_SEMAPHORE_WAIT *>(++semaphore, cmdList.end());
+    }
+
+    EXPECT_TRUE(semaphoreAfterWalkerFound);
+
+    auto pipeControl = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    bool pipeControlBeforeWalkerFound = false;
+    bool pipeControlAfterWalkerFound = false;
+    while (pipeControl != cmdList.end()) {
+        auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControl);
+        if (static_cast<uint32_t>(DebugPauseState::waitingForUserStartConfirmation) == pipeControlCmd->getImmediateData()) {
+            EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+            EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
+            EXPECT_EQ(static_cast<uint32_t>(debugPauseStateAddress & 0x0000FFFFFFFFULL), pipeControlCmd->getAddress());
+            EXPECT_EQ(static_cast<uint32_t>(debugPauseStateAddress >> 32), pipeControlCmd->getAddressHigh());
+            EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControlCmd->getPostSyncOperation());
+
+            pipeControlBeforeWalkerFound = true;
+        }
+
+        if (static_cast<uint32_t>(DebugPauseState::waitingForUserEndConfirmation) == pipeControlCmd->getImmediateData()) {
+            EXPECT_TRUE(pipeControlBeforeWalkerFound);
+            EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
+            EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
+            EXPECT_EQ(static_cast<uint32_t>(debugPauseStateAddress & 0x0000FFFFFFFFULL), pipeControlCmd->getAddress());
+            EXPECT_EQ(static_cast<uint32_t>(debugPauseStateAddress >> 32), pipeControlCmd->getAddressHigh());
+            EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControlCmd->getPostSyncOperation());
+
+            pipeControlAfterWalkerFound = true;
+            break;
+        }
+
+        pipeControl = find<PIPE_CONTROL *>(++pipeControl, cmdList.end());
+    }
+
+    EXPECT_TRUE(pipeControlAfterWalkerFound);
+}

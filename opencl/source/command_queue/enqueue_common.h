@@ -485,6 +485,8 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
     auto currentTimestampPacketNode = timestampPacketContainer->peekNodes().at(0);
     blitProperties.outputTimestampPacket = currentTimestampPacketNode;
 
+    HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(&commandStream, *this, DebugPauseState::waitingForUserStartConfirmation, DebugPauseState::hasUserStartConfirmation);
+
     if (isCacheFlushForBcsRequired()) {
         auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]);
         PipeControlArgs args(true);
@@ -499,6 +501,8 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
 
     TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(commandStream, *currentTimestampPacketNode,
                                                                              getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices());
+
+    HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(&commandStream, *this, DebugPauseState::waitingForUserEndConfirmation, DebugPauseState::hasUserEndConfirmation);
 
     return blitProperties;
 }
