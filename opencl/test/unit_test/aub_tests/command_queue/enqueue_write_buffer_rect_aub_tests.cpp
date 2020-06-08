@@ -66,7 +66,7 @@ HWTEST_P(AUBWriteBufferRect, simple3D) {
         retVal));
     ASSERT_NE(nullptr, dstBuffer);
 
-    uint8_t *pDestMemory = (uint8_t *)dstBuffer->getGraphicsAllocation()->getGpuAddress();
+    uint8_t *pDestMemory = reinterpret_cast<uint8_t *>(dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress());
 
     cl_bool blockingWrite = CL_TRUE;
 
@@ -145,7 +145,7 @@ struct AUBWriteBufferRectUnaligned
 
         buffer->forceDisallowCPUCopy = true;
 
-        uint8_t *pDestMemory = (uint8_t *)buffer->getGraphicsAllocation()->getGpuAddress();
+        uint8_t *pDestMemory = reinterpret_cast<uint8_t *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress());
 
         cl_bool blockingWrite = CL_TRUE;
 

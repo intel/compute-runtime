@@ -105,8 +105,8 @@ GEN9TEST_F(AUBParentKernelFixture, EnqueueParentKernel) {
     uint32_t expectedNumberOfEnqueues = 1;
     uint64_t gpuAddress = devQueue->getQueueBuffer()->getGpuAddress() + offsetof(IGIL_CommandQueue, m_controls.m_TotalNumberOfQueues);
 
-    AUBCommandStreamFixture::expectMemory<FamilyType>((void *)(uintptr_t)gpuAddress, &expectedNumberOfEnqueues, sizeof(uint32_t));
-    AUBCommandStreamFixture::expectMemory<FamilyType>((void *)(uintptr_t)buffer->getGraphicsAllocation()->getGpuAddress(), &argScalar, sizeof(size_t));
+    AUBCommandStreamFixture::expectMemory<FamilyType>(reinterpret_cast<void *>(gpuAddress), &expectedNumberOfEnqueues, sizeof(uint32_t));
+    AUBCommandStreamFixture::expectMemory<FamilyType>(reinterpret_cast<void *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()), &argScalar, sizeof(size_t));
 
     delete devQueue;
     delete image;

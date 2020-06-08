@@ -66,7 +66,7 @@ HWTEST_P(AUBFillBuffer, simple) {
 
     pCmdQ->flush();
 
-    pDestMemory = reinterpret_cast<decltype(pDestMemory)>((destBuffer->getGraphicsAllocation()->getGpuAddress()));
+    pDestMemory = reinterpret_cast<decltype(pDestMemory)>((destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()));
 
     // The memory under offset should be untouched
     if (offset) {
@@ -134,7 +134,7 @@ HWTEST_F(AUBFillBuffer, givenFillBufferWhenSeveralSubmissionsWithoutPollForCompl
 
     AUBCommandStreamFixture::pollForCompletion<FamilyType>();
 
-    pDestMemory = reinterpret_cast<decltype(pDestMemory)>((destBuffer->getGraphicsAllocation()->getGpuAddress()));
+    pDestMemory = reinterpret_cast<decltype(pDestMemory)>((destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()));
     auto pEndMemory = ptrOffset(pDestMemory, numWrites * size);
     while (pDestMemory < pEndMemory) {
         AUBCommandStreamFixture::expectMemory<FamilyType>(pDestMemory, pattern, patternSize);

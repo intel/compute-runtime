@@ -163,8 +163,8 @@ HWTEST_P(AUBHelloWorldIntegrateTest, simple) {
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
 
-    writeMemory<FamilyType>(destBuffer->getGraphicsAllocation());
-    writeMemory<FamilyType>(srcBuffer->getGraphicsAllocation());
+    writeMemory<FamilyType>(destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()));
+    writeMemory<FamilyType>(srcBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex()));
 
     auto retVal = this->pCmdQ->enqueueKernel(
         this->pKernel,
@@ -183,7 +183,7 @@ HWTEST_P(AUBHelloWorldIntegrateTest, simple) {
     auto globalWorkItems = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
     auto sizeWritten = globalWorkItems * sizeof(float);
 
-    auto pDestGpuAddress = reinterpret_cast<void *>((destBuffer->getGraphicsAllocation()->getGpuAddress()));
+    auto pDestGpuAddress = reinterpret_cast<void *>((destBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()));
 
     AUBCommandStreamFixture::expectMemory<FamilyType>(pDestGpuAddress, this->pSrcMemory, sizeWritten);
 
@@ -411,7 +411,7 @@ struct AUBSimpleArgNonUniformFixture : public KernelAUBFixture<SimpleArgNonUnifo
         *(expectedData + maxId) = maxId;
 
         outBuffer.reset(Buffer::create(context, CL_MEM_COPY_HOST_PTR, alignUp(sizeUserMemory, 4096), destMemory, retVal));
-        bufferGpuAddress = reinterpret_cast<void *>(outBuffer->getGraphicsAllocation()->getGpuAddress());
+        bufferGpuAddress = reinterpret_cast<void *>(outBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress());
         kernel->setArg(1, outBuffer.get());
 
         sizeWrittenMemory = maxId * typeSize;
@@ -514,7 +514,7 @@ HWTEST_F(AUBSimpleKernelStatelessTest, givenSimpleKernelWhenStatelessPathIsUsedT
     EXPECT_TRUE(this->kernel->getKernelInfo().patchInfo.executionEnvironment->CompiledForGreaterThan4GBBuffers);
 
     this->pCmdQ->flush();
-    expectMemory<FamilyType>(reinterpret_cast<void *>(pBuffer->getGraphicsAllocation()->getGpuAddress()),
+    expectMemory<FamilyType>(reinterpret_cast<void *>(pBuffer->getGraphicsAllocation(device->getRootDeviceIndex())->getGpuAddress()),
                              bufferExpected, bufferSize);
 }
 

@@ -213,11 +213,12 @@ class HwHelperTestsGen12LpBuffer : public ::testing::Test {
   public:
     void SetUp() override {
         ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-        device = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
+        device = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, rootDeviceIndex));
         context = std::make_unique<MockContext>(device.get(), true);
         context->contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
     }
 
+    const uint32_t rootDeviceIndex = 0u;
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<MockClDevice> device;
     std::unique_ptr<MockContext> context;
@@ -229,9 +230,9 @@ GEN12LPTEST_F(HwHelperTestsGen12LpBuffer, givenCompressedBufferThenCheckResource
 
     buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
 
-    buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer->getGraphicsAllocation(rootDeviceIndex)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
-    EXPECT_FALSE(helper.checkResourceCompatibility(*buffer->getGraphicsAllocation()));
+    EXPECT_FALSE(helper.checkResourceCompatibility(*buffer->getGraphicsAllocation(rootDeviceIndex)));
 }
 
 GEN12LPTEST_F(HwHelperTestsGen12LpBuffer, givenBufferThenCheckResourceCompatibilityReturnsTrue) {
@@ -239,9 +240,9 @@ GEN12LPTEST_F(HwHelperTestsGen12LpBuffer, givenBufferThenCheckResourceCompatibil
 
     buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
 
-    buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    buffer->getGraphicsAllocation(rootDeviceIndex)->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
 
-    EXPECT_TRUE(helper.checkResourceCompatibility(*buffer->getGraphicsAllocation()));
+    EXPECT_TRUE(helper.checkResourceCompatibility(*buffer->getGraphicsAllocation(rootDeviceIndex)));
 }
 
 using LriHelperTestsGen12Lp = ::testing::Test;

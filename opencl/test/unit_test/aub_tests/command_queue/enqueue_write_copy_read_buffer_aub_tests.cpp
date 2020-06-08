@@ -46,11 +46,11 @@ void AubWriteCopyReadBuffer::runTest() {
         retVal));
     ASSERT_NE(nullptr, dstBuffer);
 
-    simulatedCsr->writeMemory(*srcBuffer->getGraphicsAllocation());
-    simulatedCsr->writeMemory(*dstBuffer->getGraphicsAllocation());
+    simulatedCsr->writeMemory(*srcBuffer->getGraphicsAllocation(device->getRootDeviceIndex()));
+    simulatedCsr->writeMemory(*dstBuffer->getGraphicsAllocation(device->getRootDeviceIndex()));
 
-    expectMemory<FamilyType>(AUBFixture::getGpuPointer(srcBuffer->getGraphicsAllocation()), srcMemoryInitial, bufferSize);
-    expectMemory<FamilyType>(AUBFixture::getGpuPointer(dstBuffer->getGraphicsAllocation()), dstMemoryInitial, bufferSize);
+    expectMemory<FamilyType>(AUBFixture::getGpuPointer(srcBuffer->getGraphicsAllocation(device->getRootDeviceIndex())), srcMemoryInitial, bufferSize);
+    expectMemory<FamilyType>(AUBFixture::getGpuPointer(dstBuffer->getGraphicsAllocation(device->getRootDeviceIndex())), dstMemoryInitial, bufferSize);
 
     cl_uint numEventsInWaitList = 0;
     cl_event *eventWaitList = nullptr;
@@ -82,8 +82,8 @@ void AubWriteCopyReadBuffer::runTest() {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    expectMemory<FamilyType>(AUBFixture::getGpuPointer(srcBuffer->getGraphicsAllocation()), srcMemoryToWrite, bufferSize);
-    expectMemory<FamilyType>(AUBFixture::getGpuPointer(dstBuffer->getGraphicsAllocation()), dstMemoryToWrite, bufferSize);
+    expectMemory<FamilyType>(AUBFixture::getGpuPointer(srcBuffer->getGraphicsAllocation(device->getRootDeviceIndex())), srcMemoryToWrite, bufferSize);
+    expectMemory<FamilyType>(AUBFixture::getGpuPointer(dstBuffer->getGraphicsAllocation(device->getRootDeviceIndex())), dstMemoryToWrite, bufferSize);
 
     retVal = pCmdQ->enqueueCopyBuffer(
         srcBuffer.get(),
@@ -100,7 +100,7 @@ void AubWriteCopyReadBuffer::runTest() {
     pCmdQ->flush();
 
     // Destination buffer should have src buffer content
-    expectMemory<FamilyType>(AUBFixture::getGpuPointer(dstBuffer->getGraphicsAllocation()), srcMemoryToWrite, bufferSize);
+    expectMemory<FamilyType>(AUBFixture::getGpuPointer(dstBuffer->getGraphicsAllocation(device->getRootDeviceIndex())), srcMemoryToWrite, bufferSize);
 
     char hostPtrMemory[] = {0, 0, 0, 0, 0, 0, 0, 0};
     ASSERT_EQ(bufferSize, sizeof(hostPtrMemory));

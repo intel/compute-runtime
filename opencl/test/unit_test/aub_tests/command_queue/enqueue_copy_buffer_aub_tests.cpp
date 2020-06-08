@@ -62,7 +62,7 @@ HWTEST_P(AUBCopyBuffer, simple) {
     cl_event *eventWaitList = nullptr;
     cl_event *event = nullptr;
 
-    auto pDstMemory = (cl_float *)(dstBuffer->getGraphicsAllocation()->getGpuAddress());
+    auto pDstMemory = reinterpret_cast<cl_float *>(dstBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress());
 
     retVal = pCmdQ->enqueueCopyBuffer(
         srcBuffer,

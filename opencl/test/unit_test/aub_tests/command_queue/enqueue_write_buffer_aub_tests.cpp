@@ -75,7 +75,7 @@ HWTEST_P(AUBWriteBuffer, simple) {
         eventWaitList,
         event);
 
-    auto pDestMemory = reinterpret_cast<decltype(destMemory)>((dstBuffer->getGraphicsAllocation()->getGpuAddress()));
+    auto pDestMemory = reinterpret_cast<decltype(destMemory)>((dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -156,7 +156,7 @@ struct AUBWriteBufferUnaligned
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         // Check the memory
-        auto bufferGPUPtr = reinterpret_cast<char *>((buffer->getGraphicsAllocation()->getGpuAddress()));
+        auto bufferGPUPtr = reinterpret_cast<char *>((buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()));
         AUBCommandStreamFixture::expectMemory<FamilyType>(ptrOffset(bufferGPUPtr, offset), ptrOffset(srcMemory, offset), size);
     }
 };

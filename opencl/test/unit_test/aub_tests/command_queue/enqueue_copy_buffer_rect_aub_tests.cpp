@@ -76,7 +76,7 @@ HWTEST_P(AUBCopyBufferRect, simple) {
 
     auto pSrcMemory = &srcMemory[0];
 
-    auto pDestMemory = (cl_uchar *)(dstBuffer->getGraphicsAllocation()->getGpuAddress());
+    auto pDestMemory = reinterpret_cast<cl_uchar *>(dstBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress());
 
     size_t regionX = std::min(rowPitch / 2, rowPitch - std::max(srcOrigin0, dstOrigin0));
     size_t regionY = std::min(rowPitch / 2, rowPitch - std::max(srcOrigin1, dstOrigin1));

@@ -971,8 +971,8 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationThen
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    auto bufferAddress = buffer->getGraphicsAllocation()->getGpuAddress();
-    auto baseAddress = buffer->getGraphicsAllocation()->getGpuBaseAddress();
+    auto bufferAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
+    auto baseAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuBaseAddress();
 
     EXPECT_LT(ptrDiff(bufferAddress, baseAddress), MemoryConstants::max32BitAddress);
 
@@ -1004,10 +1004,10 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHos
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    auto bufferAddress = buffer->getGraphicsAllocation()->getGpuAddress();
-    auto drmAllocation = static_cast<DrmAllocation *>(buffer->getGraphicsAllocation());
+    auto bufferAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
+    auto drmAllocation = static_cast<DrmAllocation *>(buffer->getGraphicsAllocation(rootDeviceIndex));
 
-    auto baseAddress = buffer->getGraphicsAllocation()->getGpuBaseAddress();
+    auto baseAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuBaseAddress();
     EXPECT_LT(ptrDiff(bufferAddress, baseAddress), MemoryConstants::max32BitAddress);
 
     EXPECT_TRUE(drmAllocation->is32BitAllocation());
@@ -1064,12 +1064,12 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom64B
             EXPECT_EQ(CL_SUCCESS, retVal);
 
             EXPECT_TRUE(buffer->isMemObjZeroCopy());
-            auto bufferAddress = buffer->getGraphicsAllocation()->getGpuAddress();
+            auto bufferAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
 
-            auto baseAddress = buffer->getGraphicsAllocation()->getGpuBaseAddress();
+            auto baseAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuBaseAddress();
             EXPECT_LT(ptrDiff(bufferAddress, baseAddress), MemoryConstants::max32BitAddress);
 
-            auto drmAllocation = static_cast<DrmAllocation *>(buffer->getGraphicsAllocation());
+            auto drmAllocation = static_cast<DrmAllocation *>(buffer->getGraphicsAllocation(rootDeviceIndex));
 
             EXPECT_TRUE(drmAllocation->is32BitAllocation());
 
@@ -1193,10 +1193,10 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCr
     EXPECT_EQ(nullptr, buffer2);
 
     if (buffer) {
-        auto bufferPtr = buffer->getGraphicsAllocation()->getGpuAddress();
+        auto bufferPtr = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
 
-        EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation());
-        auto baseAddress = buffer->getGraphicsAllocation()->getGpuBaseAddress();
+        EXPECT_TRUE(buffer->getGraphicsAllocation(rootDeviceIndex)->is32BitAllocation());
+        auto baseAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuBaseAddress();
         EXPECT_LT(ptrDiff(bufferPtr, baseAddress), MemoryConstants::max32BitAddress);
     }
 
@@ -1234,10 +1234,10 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCr
     EXPECT_EQ(nullptr, buffer2);
 
     if (buffer) {
-        auto bufferPtr = buffer->getGraphicsAllocation()->getGpuAddress();
+        auto bufferPtr = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddress();
 
-        EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation());
-        auto baseAddress = buffer->getGraphicsAllocation()->getGpuBaseAddress();
+        EXPECT_TRUE(buffer->getGraphicsAllocation(rootDeviceIndex)->is32BitAllocation());
+        auto baseAddress = buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuBaseAddress();
         EXPECT_LT(ptrDiff(bufferPtr, baseAddress), MemoryConstants::max32BitAddress);
     }
 

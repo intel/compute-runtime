@@ -31,7 +31,6 @@ class AUBFixture : public CommandQueueHwFixture {
   public:
     void SetUp(const HardwareInfo *hardwareInfo) {
         const HardwareInfo &hwInfo = hardwareInfo ? *hardwareInfo : *defaultHwInfo;
-        uint32_t deviceIndex = 0;
 
         auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
         auto engineType = getChosenEngineType(hwInfo);
@@ -44,7 +43,7 @@ class AUBFixture : public CommandQueueHwFixture {
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
 
-        device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, deviceIndex));
+        device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
 
         if (testMode == TestMode::AubTestsWithTbx) {
             this->csr = TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0);
@@ -103,6 +102,7 @@ class AUBFixture : public CommandQueueHwFixture {
         return reinterpret_cast<void *>(allocation->getGpuAddress());
     }
 
+    const uint32_t rootDeviceIndex = 0;
     CommandStreamReceiver *csr = nullptr;
     volatile uint32_t *pTagMemory = nullptr;
     std::unique_ptr<MockClDevice> device;
