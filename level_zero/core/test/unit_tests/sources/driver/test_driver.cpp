@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
+#include "opencl/test/unit_test/mocks/mock_io_functions.h"
 #include "test.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -58,6 +59,40 @@ TEST(DriverTestFamilySupport, whenInitializingDriverOnNotSupportedFamilyThenDriv
 
     auto driverHandle = DriverHandle::create(std::move(devices));
     EXPECT_EQ(nullptr, driverHandle);
+}
+
+TEST(DriverTest, givenNullEnvVariableWhenCreatingDriverThenEnableProgramDebuggingIsFalse) {
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.levelZeroSupported = true;
+
+    NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+    auto driverHandle = whitebox_cast(DriverHandle::create(std::move(devices)));
+    EXPECT_NE(nullptr, driverHandle);
+
+    EXPECT_FALSE(driverHandle->enableProgramDebugging);
+
+    delete driverHandle;
+}
+
+TEST(DriverTest, givenEnvVariableNonZeroWhenCreatingDriverThenEnableProgramDebuggingIsSetTrue) {
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.levelZeroSupported = true;
+
+    VariableBackup<bool> mockDeviceFlagBackup(&IoFunctions::returnMockEnvValue, true);
+
+    NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+    auto driverHandle = whitebox_cast(DriverHandle::create(std::move(devices)));
+    EXPECT_NE(nullptr, driverHandle);
+
+    EXPECT_TRUE(driverHandle->enableProgramDebugging);
+
+    delete driverHandle;
 }
 
 struct DriverTestMultipleFamilySupport : public ::testing::Test {

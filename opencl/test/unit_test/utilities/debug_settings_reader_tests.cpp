@@ -19,6 +19,17 @@
 
 using namespace NEO;
 
+class MockSettingsReader : public SettingsReader {
+  public:
+    std::string getSetting(const char *settingName, const std::string &value) override {
+        return value;
+    }
+    bool getSetting(const char *settingName, bool defaultValue) override { return defaultValue; };
+    int64_t getSetting(const char *settingName, int64_t defaultValue) override { return defaultValue; };
+    int32_t getSetting(const char *settingName, int32_t defaultValue) override { return defaultValue; };
+    const char *appSpecificLocation(const std::string &name) override { return name.c_str(); };
+};
+
 TEST(SettingsReader, Create) {
     SettingsReader *reader = SettingsReader::create(oclRegPath);
     EXPECT_NE(nullptr, reader);
@@ -82,10 +93,17 @@ TEST(SettingsReader, givenPrintDebugStringWhenCalledWithTrueItPrintsToOutput) {
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
 }
+
 TEST(SettingsReader, givenPrintDebugStringWhenCalledWithFalseThenNothingIsPrinted) {
     int i = 4;
     testing::internal::CaptureStdout();
     printDebugString(false, stderr, "Error String %d", i);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ(output.c_str(), "");
+}
+
+TEST(SettingsReader, givenNonExistingEnvVarWhenGettingEnvThenNullptrIsReturned) {
+    MockSettingsReader reader;
+    auto value = reader.getenv("ThisEnvVarDoesNotExist");
+    EXPECT_EQ(nullptr, value);
 }

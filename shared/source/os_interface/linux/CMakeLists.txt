@@ -7,8 +7,6 @@
 set(NEO_CORE_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/allocator_helper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.h
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_linux.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation.cpp
@@ -50,6 +48,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time_linux.h
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table_manager_functions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/settings_reader_create.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
 )
 

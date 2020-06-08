@@ -5,13 +5,11 @@
  *
  */
 
-#include "shared/source/os_interface/linux/debug_env_reader.h"
+#include "shared/source/os_interface/debug_env_reader.h"
+
+#include "shared/source/utilities/io_functions.h"
 
 namespace NEO {
-
-SettingsReader *SettingsReader::createOsReader(bool userScope, const std::string &regKey) {
-    return new EnvironmentVariableReader;
-}
 
 const char *EnvironmentVariableReader::appSpecificLocation(const std::string &name) {
     return name.c_str();
@@ -29,7 +27,7 @@ int64_t EnvironmentVariableReader::getSetting(const char *settingName, int64_t d
     int64_t value = defaultValue;
     char *envValue;
 
-    envValue = getenv(settingName);
+    envValue = IoFunctions::getenvPtr(settingName);
     if (envValue) {
         value = atoi(envValue);
     }
@@ -41,7 +39,7 @@ std::string EnvironmentVariableReader::getSetting(const char *settingName, const
     std::string keyValue;
     keyValue.assign(value);
 
-    envValue = getenv(settingName);
+    envValue = IoFunctions::getenvPtr(settingName);
     if (envValue) {
         keyValue.assign(envValue);
     }

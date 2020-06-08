@@ -21,10 +21,11 @@ namespace L0 {
 namespace ult {
 
 template <>
-struct WhiteBox<::L0::DriverHandleImp> : public ::L0::DriverHandleImp {
+struct WhiteBox<::L0::DriverHandle> : public ::L0::DriverHandleImp {
+    using ::L0::DriverHandleImp::enableProgramDebugging;
 };
 
-using DriverHandle = WhiteBox<::L0::DriverHandleImp>;
+using DriverHandle = WhiteBox<::L0::DriverHandle>;
 
 template <>
 struct Mock<DriverHandle> : public DriverHandleImp {

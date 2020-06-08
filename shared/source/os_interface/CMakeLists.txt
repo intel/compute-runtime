@@ -8,6 +8,8 @@ set(NEO_CORE_OS_INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_memory_operations_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_memory_operations_handler.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.h
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.h
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_info.h

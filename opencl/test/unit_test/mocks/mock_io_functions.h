@@ -9,12 +9,16 @@
 #include "shared/source/utilities/io_functions.h"
 
 #include <cstdint>
+#include <string>
 
 namespace NEO {
 namespace IoFunctions {
 extern uint32_t mockFopenCalled;
 extern uint32_t mockVfptrinfCalled;
 extern uint32_t mockFcloseCalled;
+
+extern bool returnMockEnvValue;
+extern std::string mockEnvValue;
 
 inline FILE *mockFopen(const char *filename, const char *mode) {
     mockFopenCalled++;
@@ -30,5 +34,13 @@ inline int mockFclose(FILE *stream) {
     mockFcloseCalled++;
     return 0;
 }
+
+inline char *mockGetenv(const char *name) noexcept {
+    if (returnMockEnvValue) {
+        return const_cast<char *>(mockEnvValue.c_str());
+    }
+    return getenv(name);
+}
+
 } // namespace IoFunctions
 } // namespace NEO

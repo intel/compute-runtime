@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/linux/debug_env_reader.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 
 #include "test.h"
 

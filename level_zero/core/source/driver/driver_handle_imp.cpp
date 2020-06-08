@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/core/source/device/device_imp.h"
@@ -161,7 +162,9 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
     DriverHandleImp *driverHandle = new DriverHandleImp;
     UNRECOVERABLE_IF(nullptr == driverHandle);
 
-    driverHandle->getEnv("ZE_AFFINITY_MASK", driverHandle->affinityMask);
+    NEO::EnvironmentVariableReader envReader;
+    driverHandle->affinityMask = envReader.getSetting("ZE_AFFINITY_MASK", static_cast<int32_t>(driverHandle->affinityMask));
+    driverHandle->enableProgramDebugging = envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", driverHandle->enableProgramDebugging);
 
     ze_result_t res = driverHandle->initialize(std::move(devices));
     if (res != ZE_RESULT_SUCCESS) {
