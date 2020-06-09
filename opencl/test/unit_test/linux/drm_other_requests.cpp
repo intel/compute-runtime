@@ -7,4 +7,4 @@
 
 #include <stdarg.h>
 
-int drmOtherRequests(unsigned long int request, va_list vl) { return 0; }
+int drmOtherRequests(unsigned long int request, ...) { return 0; }

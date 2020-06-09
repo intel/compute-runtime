@@ -19,7 +19,7 @@ class DrmNullDevice : public Drm {
 
   public:
     int ioctl(unsigned long request, void *arg) override {
-        if (request == DRM_IOCTL_I915_GETPARAM) {
+        if (request == DRM_IOCTL_I915_GETPARAM || request == DRM_IOCTL_I915_QUERY) {
             return Drm::ioctl(request, arg);
         } else if (request == DRM_IOCTL_I915_REG_READ) {
             struct drm_i915_reg_read *regArg = static_cast<struct drm_i915_reg_read *>(arg);

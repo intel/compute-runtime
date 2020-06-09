@@ -194,6 +194,26 @@ int drmVersion(drm_version_t *version) {
     return failOnDrmVersion;
 }
 
+int drmQueryItem(drm_i915_query *query) {
+    auto queryItemArg = reinterpret_cast<drm_i915_query_item *>(query->items_ptr);
+    if (queryItemArg->length == 0) {
+        if (queryItemArg->query_id == DRM_I915_QUERY_TOPOLOGY_INFO) {
+            queryItemArg->length = sizeof(drm_i915_query_topology_info) + 1;
+            return 0;
+        }
+    } else {
+        if (queryItemArg->query_id == DRM_I915_QUERY_TOPOLOGY_INFO) {
+            auto topologyArg = reinterpret_cast<drm_i915_query_topology_info *>(queryItemArg->data_ptr);
+            topologyArg->max_slices = 1;
+            topologyArg->max_subslices = 1;
+            topologyArg->max_eus_per_subslice = 3;
+            topologyArg->data[0] = 0xFF;
+            return failOnEuTotal || failOnSubsliceTotal;
+        }
+    }
+    return drmOtherRequests(DRM_IOCTL_I915_QUERY, query);
+}
+
 int ioctl(int fd, unsigned long int request, ...) throw() {
     if (c_ioctl == nullptr)
         c_ioctl = (int (*)(int, unsigned long int, ...))dlsym(RTLD_NEXT, "ioctl");
@@ -223,6 +243,9 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
                 break;
             case DRM_IOCTL_VERSION:
                 res = drmVersion(va_arg(vl, drm_version_t *));
+                break;
+            case DRM_IOCTL_I915_QUERY:
+                res = drmQueryItem(va_arg(vl, drm_i915_query *));
                 break;
             default:
                 res = drmOtherRequests(request, vl);

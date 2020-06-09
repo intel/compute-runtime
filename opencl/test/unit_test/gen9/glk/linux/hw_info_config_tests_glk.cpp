@@ -117,6 +117,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, negative) {
     EXPECT_EQ(-1, ret);
 
     drm->StoredRetValForDeviceRevID = 0;
+    drm->failRetTopology = true;
     drm->StoredRetValForEUVal = -1;
     ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-1, ret);

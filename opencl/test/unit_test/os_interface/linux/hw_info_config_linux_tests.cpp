@@ -235,18 +235,27 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummydummyNegativeFailGetDevRevId) {
     EXPECT_EQ(-3, ret);
 }
 
-TEST_F(HwInfoConfigTestLinuxDummy, dummydummyNegativeFailGetEuCount) {
+TEST_F(HwInfoConfigTestLinuxDummy, dummyNegativeFailGetEuCount) {
     drm->StoredRetValForEUVal = -4;
+    drm->failRetTopology = true;
 
     int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-4, ret);
 }
 
-TEST_F(HwInfoConfigTestLinuxDummy, dummydummyNegativeFailGetSsCount) {
+TEST_F(HwInfoConfigTestLinuxDummy, dummyNegativeFailGetSsCount) {
     drm->StoredRetValForSSVal = -5;
+    drm->failRetTopology = true;
 
     int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-5, ret);
+}
+
+TEST_F(HwInfoConfigTestLinuxDummy, whenFailGettingTopologyThenFallbackToEuCountIoctl) {
+    drm->failRetTopology = true;
+
+    int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
+    EXPECT_NE(-1, ret);
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyNegativeFailingConfigureCustom) {
@@ -312,20 +321,14 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenDebugFlagSetWhenConfiguringHwInfoThenPri
     int ret = hwConfig.configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
 
-    std::string euCount = std::to_string(outHwInfo.gtSystemInfo.EUCount);
-    std::string subSliceCount = std::to_string(outHwInfo.gtSystemInfo.SubSliceCount);
-
     std::array<std::string, 6> expectedStrings = {{"DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CHIPSET_ID, output value: 1, retCode: 0",
                                                    "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_REVISION, output value: 0, retCode: 0",
-                                                   "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_EU_TOTAL, output value: " + euCount + ", retCode: 0",
-                                                   "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_SUBSLICE_TOTAL, output value: " + subSliceCount + ", retCode: 0",
                                                    "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_CHIPSET_ID, output value: 1, retCode: 0",
                                                    "DRM_IOCTL_I915_GETPARAM: param: I915_PARAM_HAS_SCHEDULER, output value: 7, retCode: 0"
 
     }};
 
     std::string output = testing::internal::GetCapturedStdout(); // stop capturing
-
     for (const auto &expectedString : expectedStrings) {
         EXPECT_NE(std::string::npos, output.find(expectedString));
     }

@@ -159,6 +159,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, negativeFailedIoctlDevRevId) {
 }
 
 KBLTEST_F(HwInfoConfigTestLinuxKbl, negativeFailedIoctlEuCount) {
+    drm->failRetTopology = true;
     drm->StoredRetValForEUVal = -4;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
@@ -166,6 +167,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, negativeFailedIoctlEuCount) {
 }
 
 KBLTEST_F(HwInfoConfigTestLinuxKbl, negativeFailedIoctlSsCount) {
+    drm->failRetTopology = true;
     drm->StoredRetValForSSVal = -5;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);

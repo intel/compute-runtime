@@ -29,11 +29,6 @@ int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
     return 0;
 }
 
-std::unique_ptr<uint8_t[]> Drm::query(uint32_t queryId, int32_t &length) {
-    length = 0;
-    return nullptr;
-}
-
 bool Drm::queryEngineInfo() {
     return true;
 }

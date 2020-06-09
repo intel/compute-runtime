@@ -12,6 +12,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
@@ -230,23 +231,33 @@ int Drm::getErrno() {
 int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWorkaroundTable) {
     HardwareInfo *hwInfo = const_cast<HardwareInfo *>(device->pHwInfo);
     int ret;
+    int sliceTotal;
+    int subSliceTotal;
     int euTotal;
-    int subsliceTotal;
 
-    ret = getEuTotal(euTotal);
-    if (ret != 0) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
-        return ret;
+    bool status = queryTopology(sliceTotal, subSliceTotal, euTotal);
+
+    if (!status) {
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
+
+        sliceTotal = hwInfo->gtSystemInfo.SliceCount;
+
+        ret = getEuTotal(euTotal);
+        if (ret != 0) {
+            printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
+            return ret;
+        }
+
+        ret = getSubsliceTotal(subSliceTotal);
+        if (ret != 0) {
+            printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
+            return ret;
+        }
     }
 
-    ret = getSubsliceTotal(subsliceTotal);
-    if (ret != 0) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
-        return ret;
-    }
-
+    hwInfo->gtSystemInfo.SliceCount = static_cast<uint32_t>(sliceTotal);
+    hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(subSliceTotal);
     hwInfo->gtSystemInfo.EUCount = static_cast<uint32_t>(euTotal);
-    hwInfo->gtSystemInfo.SubSliceCount = static_cast<uint32_t>(subsliceTotal);
     device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
     return 0;
 }
@@ -327,6 +338,71 @@ bool Drm::isi915Version(int fileDescriptor) {
 
     name[4] = '\0';
     return strcmp(name, "i915") == 0;
+}
+
+std::unique_ptr<uint8_t[]> Drm::query(uint32_t queryId, int32_t &length) {
+    drm_i915_query query{};
+    drm_i915_query_item queryItem{};
+    queryItem.query_id = queryId;
+    queryItem.length = 0; // query length first
+    query.items_ptr = reinterpret_cast<__u64>(&queryItem);
+    query.num_items = 1;
+    length = 0;
+
+    auto ret = this->ioctl(DRM_IOCTL_I915_QUERY, &query);
+    if (ret != 0 || queryItem.length <= 0) {
+        return nullptr;
+    }
+
+    auto data = std::make_unique<uint8_t[]>(queryItem.length);
+    memset(data.get(), 0, queryItem.length);
+    queryItem.data_ptr = castToUint64(data.get());
+
+    ret = this->ioctl(DRM_IOCTL_I915_QUERY, &query);
+    if (ret != 0 || queryItem.length <= 0) {
+        return nullptr;
+    }
+
+    length = queryItem.length;
+    return data;
+}
+
+bool Drm::queryTopology(int &sliceCount, int &subSliceCount, int &euCount) {
+    int32_t length;
+    auto dataQuery = this->query(DRM_I915_QUERY_TOPOLOGY_INFO, length);
+    auto data = reinterpret_cast<drm_i915_query_topology_info *>(dataQuery.get());
+
+    if (!data) {
+        return false;
+    }
+
+    sliceCount = 0;
+    subSliceCount = 0;
+    euCount = 0;
+
+    for (int x = 0; x < data->max_slices; x++) {
+        bool isSliceEnable = (data->data[x / 8] >> (x % 8)) & 1;
+        if (!isSliceEnable) {
+            continue;
+        }
+        sliceCount++;
+        for (int y = 0; y < data->max_subslices; y++) {
+            bool isSubSliceEnabled = (data->data[data->subslice_offset + x * data->subslice_stride + y / 8] >> (y % 8)) & 1;
+            if (!isSubSliceEnabled) {
+                continue;
+            }
+            subSliceCount++;
+            for (int z = 0; z < data->max_eus_per_subslice; z++) {
+                bool isEUEnabled = (data->data[data->eu_offset + (x * data->max_subslices + y) * data->eu_stride + z / 8] >> (z % 8)) & 1;
+                if (!isEUEnabled) {
+                    continue;
+                }
+                euCount++;
+            }
+        }
+    }
+
+    return true;
 }
 
 Drm::~Drm() = default;

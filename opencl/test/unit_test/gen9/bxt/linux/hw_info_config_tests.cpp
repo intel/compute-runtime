@@ -130,17 +130,11 @@ BXTTEST_F(HwInfoConfigTestLinuxBxt, negativeFailedIoctlDevRevId) {
 }
 
 BXTTEST_F(HwInfoConfigTestLinuxBxt, negativeFailedIoctlEuCount) {
+    drm->failRetTopology = true;
     drm->StoredRetValForEUVal = -4;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-4, ret);
-}
-
-BXTTEST_F(HwInfoConfigTestLinuxBxt, negativeFailedIoctlSsCount) {
-    drm->StoredRetValForSSVal = -5;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_EQ(-5, ret);
 }
 
 BXTTEST_F(HwInfoConfigTestLinuxBxt, configureHwInfoFailingEnabledPool) {

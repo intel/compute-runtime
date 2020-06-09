@@ -72,8 +72,10 @@ class DrmMock : public Drm {
 
     static const int mockFd = 33;
 
-    int StoredEUVal = -1;
-    int StoredSSVal = -1;
+    bool failRetTopology = false;
+    int StoredEUVal = 8;
+    int StoredSSVal = 2;
+    int StoredSVal = 1;
     int StoredDeviceID = 1;
     int StoredDeviceRevID = 1;
     int StoredHasPooledEU = 1;
@@ -95,6 +97,9 @@ class DrmMock : public Drm {
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
     int StoredExecSoftPin = 0;
+
+    bool disableSomeTopology = false;
+
     uint32_t StoredCtxId = 1;
     uint32_t receivedDestroyContextId = 0;
     uint32_t ioctlCallsCount = 0;

@@ -19,8 +19,6 @@ class DrmMockDefault : public DrmMock {
     DrmMockDefault(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
         StoredRetVal = 0;
         StoredRetValForDeviceID = 0;
-        StoredRetValForEUVal = 0;
-        StoredRetValForSSVal = 0;
         StoredRetValForDeviceRevID = 0;
         StoredRetValForPooledEU = 0;
         StoredRetValForMinEUinPool = 0;

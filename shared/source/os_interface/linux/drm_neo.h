@@ -79,6 +79,7 @@ class Drm {
     uint64_t getSliceMask(uint64_t sliceCount);
     bool queryEngineInfo();
     bool queryMemoryInfo();
+    bool queryTopology(int &sliceCount, int &subSliceCount, int &euCount);
     int setupHardwareInfo(DeviceDescriptor *, bool);
 
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }

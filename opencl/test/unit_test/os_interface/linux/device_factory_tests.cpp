@@ -15,7 +15,7 @@
 TEST_F(DeviceFactoryLinuxTest, PrepareDeviceEnvironmentsCheckEUCntSSCnt) {
     const HardwareInfo *refHwinfo = defaultHwInfo.get();
 
-    pDrm->StoredEUVal = 11;
+    pDrm->StoredEUVal = 16;
     pDrm->StoredSSVal = 8;
 
     bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
@@ -24,11 +24,30 @@ TEST_F(DeviceFactoryLinuxTest, PrepareDeviceEnvironmentsCheckEUCntSSCnt) {
     EXPECT_TRUE(success);
     EXPECT_NE(hwInfo, nullptr);
     EXPECT_EQ(refHwinfo->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
-    EXPECT_EQ((int)hwInfo->gtSystemInfo.EUCount, 11);
+    EXPECT_EQ((int)hwInfo->gtSystemInfo.EUCount, 16);
     EXPECT_EQ((int)hwInfo->gtSystemInfo.SubSliceCount, 8);
 
     //temporararily return GT2.
     EXPECT_EQ(1u, hwInfo->featureTable.ftrGT2);
+}
+
+TEST_F(DeviceFactoryLinuxTest, givenSomeDisabledSSAndEUWhenPrepareDeviceEnvironmentsThenCorrectObtainEUCntSSCnt) {
+    const HardwareInfo *refHwinfo = defaultHwInfo.get();
+
+    pDrm->StoredEUVal = 144;
+    pDrm->StoredSSVal = 12;
+    pDrm->StoredSVal = 2;
+    pDrm->disableSomeTopology = true;
+
+    bool success = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+
+    EXPECT_TRUE(success);
+    EXPECT_NE(hwInfo, nullptr);
+    EXPECT_EQ(refHwinfo->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
+    EXPECT_EQ((int)hwInfo->gtSystemInfo.SliceCount, 1);
+    EXPECT_EQ((int)hwInfo->gtSystemInfo.SubSliceCount, 2);
+    EXPECT_EQ((int)hwInfo->gtSystemInfo.EUCount, 12);
 }
 
 TEST_F(DeviceFactoryLinuxTest, PrepareDeviceEnvironmentsDrmCreateFailedConfigureHwInfo) {

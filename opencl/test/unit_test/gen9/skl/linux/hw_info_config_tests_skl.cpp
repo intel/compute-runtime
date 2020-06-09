@@ -160,6 +160,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, negativeFailedIoctlDevRevId) {
 
 SKLTEST_F(HwInfoConfigTestLinuxSkl, negativeFailedIoctlEuCount) {
     drm->StoredRetValForEUVal = -4;
+    drm->failRetTopology = true;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-4, ret);
@@ -167,6 +168,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, negativeFailedIoctlEuCount) {
 
 SKLTEST_F(HwInfoConfigTestLinuxSkl, negativeFailedIoctlSsCount) {
     drm->StoredRetValForSSVal = -5;
+    drm->failRetTopology = true;
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
     int ret = hwInfoConfig->configureHwInfo(&pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(-5, ret);
