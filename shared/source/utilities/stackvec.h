@@ -279,6 +279,13 @@ class StackVec {
         return std::numeric_limits<decltype(onStackSize)>::max() == this->onStackSize;
     }
 
+    void *data() {
+        if (usesDynamicMem()) {
+            return dynamicMem->data();
+        }
+        return onStackMemRawBytes;
+    }
+
   private:
     void setUsesDynamicMem() {
         this->onStackSize = std::numeric_limits<decltype(onStackSize)>::max();

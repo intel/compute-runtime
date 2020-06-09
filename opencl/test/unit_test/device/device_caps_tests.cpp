@@ -94,7 +94,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_NE(nullptr, caps.clCVersion);
     EXPECT_NE(0u, caps.numericClVersion);
     EXPECT_GT(caps.openclCAllVersions.size(), 0u);
-    EXPECT_GT(caps.extensionsWithVersion.size(), 0u);
+    EXPECT_EQ(caps.extensionsWithVersion.size(), 0u);
 
     EXPECT_NE(nullptr, caps.spirVersions);
     EXPECT_NE(nullptr, caps.deviceExtensions);
@@ -946,6 +946,10 @@ TEST_F(DeviceGetCapsTest, givenDefaultDeviceWhenQueriedForExtensionsWithVersionT
     UltClDeviceFactory deviceFactory{1, 0};
     auto pClDevice = deviceFactory.rootDevices[0];
     std::string allExtensions;
+
+    EXPECT_TRUE(pClDevice->getDeviceInfo().extensionsWithVersion.empty());
+    pClDevice->getDeviceInfo(CL_DEVICE_EXTENSIONS_WITH_VERSION, 0, nullptr, nullptr);
+    EXPECT_FALSE(pClDevice->getDeviceInfo().extensionsWithVersion.empty());
 
     for (auto extensionWithVersion : pClDevice->getDeviceInfo().extensionsWithVersion) {
         EXPECT_EQ(CL_MAKE_VERSION(1u, 0u, 0u), extensionWithVersion.version);

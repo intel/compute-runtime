@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/utilities/stackvec.h"
+
 #include "opencl/extensions/public/cl_ext_private.h"
 
 #include <vector>
@@ -16,8 +18,8 @@ namespace NEO {
 // clang-format off
 struct ClDeviceInfo {
     cl_name_version               ilsWithVersion[1];
-    std::vector<cl_name_version>  builtInKernelsWithVersion;
-    std::vector<cl_name_version>  openclCAllVersions;
+    StackVec<cl_name_version, 3>  builtInKernelsWithVersion;
+    StackVec<cl_name_version, 5>  openclCAllVersions;
     std::vector<cl_name_version>  extensionsWithVersion;
     cl_device_type                deviceType;
     size_t                        maxSliceCount;

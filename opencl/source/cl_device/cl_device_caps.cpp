@@ -395,10 +395,13 @@ void ClDevice::initializeCaps() {
     }
 
     initializeOsSpecificCaps();
+}
 
+void ClDevice::initializeExtensionsWithVersion() {
     std::stringstream deviceExtensionsStringStream{deviceExtensions};
     std::vector<std::string> deviceExtensionsVector{
         std::istream_iterator<std::string>{deviceExtensionsStringStream}, std::istream_iterator<std::string>{}};
+    deviceInfo.extensionsWithVersion.reserve(deviceExtensionsVector.size());
     for (auto deviceExtension : deviceExtensionsVector) {
         cl_name_version deviceExtensionWithVersion;
         deviceExtensionWithVersion.version = CL_MAKE_VERSION(1, 0, 0);

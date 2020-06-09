@@ -76,6 +76,11 @@ cl_int Platform::getInfo(cl_platform_info paramName,
         break;
     }
     case CL_PLATFORM_EXTENSIONS_WITH_VERSION: {
+        std::call_once(initializeExtensionsWithVersionOnce, [this]() {
+            this->clDevices[0]->getDeviceInfo(CL_DEVICE_EXTENSIONS_WITH_VERSION, 0, nullptr, nullptr);
+            this->platformInfo->extensionsWithVersion = this->clDevices[0]->getDeviceInfo().extensionsWithVersion;
+        });
+
         auto pVal = platformInfo->extensionsWithVersion.data();
         paramSize = platformInfo->extensionsWithVersion.size() * sizeof(cl_name_version);
         getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, pVal, paramSize);
@@ -145,7 +150,6 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
     this->platformInfo.reset(new PlatformInfo);
 
     this->platformInfo->extensions = this->clDevices[0]->getDeviceInfo().deviceExtensions;
-    this->platformInfo->extensionsWithVersion = this->clDevices[0]->getDeviceInfo().extensionsWithVersion;
 
     switch (this->clDevices[0]->getEnabledClVersion()) {
     case 30:

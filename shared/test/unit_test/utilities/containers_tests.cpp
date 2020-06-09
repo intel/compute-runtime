@@ -1537,6 +1537,24 @@ TEST(StackVec, EqualsOperatorReturnsTrueIfDataIsEqual) {
     EXPECT_FALSE(vecA != vecB);
 }
 
+TEST(StackVec, WhenCallingDataThenVectorDataIsReturned) {
+    char dataA[] = {0, 1, 3, 4, 5};
+    char dataB[] = {5, 4, 3, 2, 1};
+
+    StackVec<char, 1> stackVecA{dataA, dataA + sizeof(dataA)};
+    StackVec<char, 5> stackVecB{dataB, dataB + sizeof(dataB)};
+
+    EXPECT_TRUE(stackVecA.usesDynamicMem());
+    EXPECT_FALSE(stackVecB.usesDynamicMem());
+
+    auto stackVecAData = reinterpret_cast<char *>(stackVecA.data());
+    auto stackVecBData = reinterpret_cast<char *>(stackVecB.data());
+    for (size_t i = 0; i < 5; i++) {
+        EXPECT_EQ(dataA[i], stackVecAData[i]);
+        EXPECT_EQ(dataB[i], stackVecBData[i]);
+    }
+}
+
 int sum(ArrayRef<int> a) {
     int sum = 0;
     for (auto v : a) {

@@ -224,6 +224,9 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = deviceInfo.openclCAllVersions.size() * sizeof(cl_name_version);
         break;
     case CL_DEVICE_EXTENSIONS_WITH_VERSION:
+        std::call_once(initializeExtensionsWithVersionOnce, [this]() {
+            this->initializeExtensionsWithVersion();
+        });
         src = deviceInfo.extensionsWithVersion.data();
         retSize = srcSize = deviceInfo.extensionsWithVersion.size() * sizeof(cl_name_version);
         break;
