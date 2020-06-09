@@ -108,7 +108,7 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenCheckingDeviceEnqueueSupp
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue);
 }
 
-TGLLPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenCheckingPipesSupportThenFalseIsReturned) {
+GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenCheckingPipesSupportThenFalseIsReturned) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsPipes);
 }
 
