@@ -114,6 +114,10 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     execbuf.flags = flags;
     execbuf.rsvd1 = drmContextId;
 
+    if (DebugManager.flags.PrintExecutionBuffer.get()) {
+        printExecutionBuffer(execbuf, residencyCount, execObjectsStorage);
+    }
+
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
     if (ret == 0) {
         return 0;
@@ -122,6 +126,33 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     int err = this->drm->getErrno();
     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
     return err;
+}
+
+void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage) {
+    std::string logger = "drm_i915_gem_execbuffer2 {\n";
+    logger += "  buffers_ptr: " + std::to_string(execbuf.buffers_ptr) + ",\n";
+    logger += "  buffer_count: " + std::to_string(execbuf.buffer_count) + ",\n";
+    logger += "  batch_start_offset: " + std::to_string(execbuf.batch_start_offset) + ",\n";
+    logger += "  batch_len: " + std::to_string(execbuf.batch_len) + ",\n";
+    logger += "  flags: " + std::to_string(execbuf.flags) + ",\n";
+    logger += "  rsvd1: " + std::to_string(execbuf.rsvd1) + ",\n";
+    logger += "}\n";
+
+    for (size_t i = 0; i < residencyCount + 1; i++) {
+        std::string temp = "drm_i915_gem_exec_object2 {\n";
+        temp += "  handle: " + std::to_string(execObjectsStorage[i].handle) + ",\n";
+        temp += "  relocation_count: " + std::to_string(execObjectsStorage[i].relocation_count) + ",\n";
+        temp += "  relocs_ptr: " + std::to_string(execObjectsStorage[i].relocs_ptr) + ",\n";
+        temp += "  alignment: " + std::to_string(execObjectsStorage[i].alignment) + ",\n";
+        temp += "  offset: " + std::to_string(execObjectsStorage[i].offset) + ",\n";
+        temp += "  flags: " + std::to_string(execObjectsStorage[i].flags) + ",\n";
+        temp += "  rsvd1: " + std::to_string(execObjectsStorage[i].rsvd1) + ",\n";
+        temp += "  rsvd2: " + std::to_string(execObjectsStorage[i].rsvd2) + ",\n";
+        temp += "  pad_to_size: " + std::to_string(execObjectsStorage[i].pad_to_size) + ",\n";
+        temp += "}\n";
+        logger += temp;
+    }
+    std::cout << logger << std::endl;
 }
 
 int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t drmContextId) {

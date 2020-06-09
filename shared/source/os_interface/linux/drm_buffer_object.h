@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "drm/i915_drm.h"
+
 #include <atomic>
 #include <cstddef>
 #include <stdint.h>
@@ -30,6 +32,8 @@ class BufferObject {
     MOCKABLE_VIRTUAL int pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t drmContextId);
 
     int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId, BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage);
+
+    void printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage);
 
     int wait(int64_t timeoutNs);
     bool close();

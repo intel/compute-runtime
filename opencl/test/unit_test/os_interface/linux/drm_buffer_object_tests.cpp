@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
@@ -134,6 +135,22 @@ TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {
     BufferObject *boArray[1] = {boToPin.get()};
     auto ret = bo->pin(boArray, 1, 1);
     EXPECT_EQ(EINVAL, ret);
+}
+
+TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundInStdStream) {
+    mock->ioctl_expected.total = 1;
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintExecutionBuffer.set(true);
+    drm_i915_gem_exec_object2 execObjectsStorage = {};
+
+    testing::internal::CaptureStdout();
+    auto ret = bo->exec(0, 0, 0, false, 1, nullptr, 0u, &execObjectsStorage);
+    EXPECT_EQ(0, ret);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    auto idx = output.find("drm_i915_gem_execbuffer2 {");
+    size_t expectedValue = 0;
+    EXPECT_EQ(expectedValue, idx);
 }
 
 TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned) {
