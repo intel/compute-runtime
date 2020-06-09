@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "third_party/gtest/gtest/gtest.h"
 
@@ -54,6 +55,18 @@ TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryIsReleased
     selector.freeOnBank(bankIndex, allocationSize);
 
     EXPECT_EQ(allocationSize, selector.getOccupiedMemorySizeForBank(bankIndex));
+}
+
+TEST(localMemoryUsageTest, givenOverrideLeastOccupiedBankDebugFlagWhenGetLeastOccupiedBankIsCalledThenForcedBankIndexIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    MockLocalMemoryUsageBankSelector selector(1u);
+    auto bankIndex = selector.getLeastOccupiedBank();
+    EXPECT_EQ(0u, bankIndex);
+
+    uint32_t forcedBankIndex = 64u;
+    DebugManager.flags.OverrideLeastOccupiedBank.set(static_cast<int32_t>(forcedBankIndex));
+    bankIndex = selector.getLeastOccupiedBank();
+    EXPECT_EQ(forcedBankIndex, bankIndex);
 }
 
 TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryAllocatedSeveralTimesItIsStoredOnDifferentBanks) {

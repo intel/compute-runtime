@@ -7,6 +7,8 @@
 
 #include "shared/source/memory_manager/local_memory_usage.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 #include <algorithm>
 #include <bitset>
 #include <iterator>
@@ -23,6 +25,10 @@ LocalMemoryUsageBankSelector::LocalMemoryUsageBankSelector(uint32_t banksCount) 
 }
 
 uint32_t LocalMemoryUsageBankSelector::getLeastOccupiedBank() {
+    if (DebugManager.flags.OverrideLeastOccupiedBank.get() != -1) {
+        return static_cast<uint32_t>(DebugManager.flags.OverrideLeastOccupiedBank.get());
+    }
+
     auto leastOccupiedBankIterator = std::min_element(memorySizes.get(), memorySizes.get() + banksCount);
     return static_cast<uint32_t>(std::distance(memorySizes.get(), leastOccupiedBankIterator));
 }
