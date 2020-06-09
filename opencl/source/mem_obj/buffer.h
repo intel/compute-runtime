@@ -55,8 +55,6 @@ extern ValidateInputAndCreateBufferFunc validateInputAndCreateBuffer;
 
 class Buffer : public MemObj {
   public:
-    using MemObj::getGraphicsAllocation;
-    GraphicsAllocation *getGraphicsAllocation() const { return graphicsAllocation; }
     constexpr static size_t maxBufferSizeForReadWriteOnCpu = 10 * MB;
     constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
     constexpr static cl_ulong objectMagic = MemObj::objectMagic | 0x02;
