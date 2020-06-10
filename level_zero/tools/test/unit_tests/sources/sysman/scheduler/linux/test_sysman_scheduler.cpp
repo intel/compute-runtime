@@ -24,16 +24,22 @@ namespace L0 {
 namespace ult {
 
 constexpr uint64_t convertMilliToMicro = 1000u;
-constexpr uint64_t defaultTimeoutMilliSecs = 640u;
+constexpr uint64_t defaultTimeoutMilliSecs = 650u;
 constexpr uint64_t defaultTimesliceMilliSecs = 1u;
-constexpr uint64_t defaultHeartbeatMilliSecs = 2500u;
-constexpr uint64_t expectedHeartbeatTimeoutMicroSecs = defaultHeartbeatMilliSecs * convertMilliToMicro;
-constexpr uint64_t expectedTimeoutMicroSecs = defaultTimeoutMilliSecs * convertMilliToMicro;
-constexpr uint64_t expectedTimesliceMicroSecs = defaultTimesliceMilliSecs * convertMilliToMicro;
+constexpr uint64_t defaultHeartbeatMilliSecs = 3000u;
+constexpr uint64_t timeoutMilliSecs = 640u;
+constexpr uint64_t timesliceMilliSecs = 1u;
+constexpr uint64_t heartbeatMilliSecs = 2500u;
+constexpr uint64_t expectedDefaultHeartbeatTimeoutMicroSecs = defaultHeartbeatMilliSecs * convertMilliToMicro;
+constexpr uint64_t expectedDefaultTimeoutMicroSecs = defaultTimeoutMilliSecs * convertMilliToMicro;
+constexpr uint64_t expectedDefaultTimesliceMicroSecs = defaultTimesliceMilliSecs * convertMilliToMicro;
+constexpr uint64_t expectedHeartbeatTimeoutMicroSecs = heartbeatMilliSecs * convertMilliToMicro;
+constexpr uint64_t expectedTimeoutMicroSecs = timeoutMilliSecs * convertMilliToMicro;
+constexpr uint64_t expectedTimesliceMicroSecs = timesliceMilliSecs * convertMilliToMicro;
 
 class SysmanSchedulerFixture : public DeviceFixture, public ::testing::Test {
   protected:
-    SysmanImp *sysmanImp = nullptr;
+    std::unique_ptr<SysmanImp> sysmanImp;
     zet_sysman_handle_t hSysman;
 
     OsScheduler *pOsScheduler = nullptr;
@@ -44,13 +50,16 @@ class SysmanSchedulerFixture : public DeviceFixture, public ::testing::Test {
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        sysmanImp = new SysmanImp(device->toHandle());
+        sysmanImp = std::make_unique<SysmanImp>(device->toHandle());
         pSysfsAccess = new NiceMock<Mock<SchedulerSysfsAccess>>;
         linuxSchedulerImp.pSysfsAccess = pSysfsAccess;
         pOsScheduler = static_cast<OsScheduler *>(&linuxSchedulerImp);
-        pSysfsAccess->setVal(preemptTimeoutMilliSecs, defaultTimeoutMilliSecs);
-        pSysfsAccess->setVal(timesliceDurationMilliSecs, defaultTimesliceMilliSecs);
-        pSysfsAccess->setVal(heartbeatIntervalMilliSecs, defaultHeartbeatMilliSecs);
+        pSysfsAccess->setVal(defaultPreemptTimeoutMilliSecs, defaultTimeoutMilliSecs);
+        pSysfsAccess->setVal(defaultTimesliceDurationMilliSecs, defaultTimesliceMilliSecs);
+        pSysfsAccess->setVal(defaultHeartbeatIntervalMilliSecs, defaultHeartbeatMilliSecs);
+        pSysfsAccess->setVal(preemptTimeoutMilliSecs, timeoutMilliSecs);
+        pSysfsAccess->setVal(timesliceDurationMilliSecs, timesliceMilliSecs);
+        pSysfsAccess->setVal(heartbeatIntervalMilliSecs, heartbeatMilliSecs);
 
         ON_CALL(*pSysfsAccess, read(_, _))
             .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<SchedulerSysfsAccess>::getVal));
@@ -73,11 +82,6 @@ class SysmanSchedulerFixture : public DeviceFixture, public ::testing::Test {
             delete pSysfsAccess;
             pSysfsAccess = nullptr;
         }
-        if (sysmanImp != nullptr) {
-            delete sysmanImp;
-            sysmanImp = nullptr;
-        }
-        DeviceFixture::TearDown();
     }
 
     zet_sched_mode_t fixtureGetCurrentMode(zet_sysman_handle_t hSysman) {
@@ -87,16 +91,16 @@ class SysmanSchedulerFixture : public DeviceFixture, public ::testing::Test {
         return mode;
     }
 
-    zet_sched_timeout_properties_t fixtureGetTimeoutModeProperties(zet_sysman_handle_t hSysman) {
+    zet_sched_timeout_properties_t fixtureGetTimeoutModeProperties(zet_sysman_handle_t hSysman, ze_bool_t getDefaults) {
         zet_sched_timeout_properties_t config;
-        ze_result_t result = zetSysmanSchedulerGetTimeoutModeProperties(hSysman, false, &config);
+        ze_result_t result = zetSysmanSchedulerGetTimeoutModeProperties(hSysman, getDefaults, &config);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         return config;
     }
 
-    zet_sched_timeslice_properties_t fixtureGetTimesliceModeProperties(zet_sysman_handle_t hSysman) {
+    zet_sched_timeslice_properties_t fixtureGetTimesliceModeProperties(zet_sysman_handle_t hSysman, ze_bool_t getDefaults) {
         zet_sched_timeslice_properties_t config;
-        ze_result_t result = zetSysmanSchedulerGetTimesliceModeProperties(hSysman, false, &config);
+        ze_result_t result = zetSysmanSchedulerGetTimesliceModeProperties(hSysman, getDefaults, &config);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         return config;
     }
@@ -108,14 +112,25 @@ TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedul
 }
 
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetTimeoutModePropertiesThenVerifyzetSysmanSchedulerGetTimeoutModePropertiesCallSucceeds) {
-    auto config = fixtureGetTimeoutModeProperties(hSysman);
+    auto config = fixtureGetTimeoutModeProperties(hSysman, false);
     EXPECT_EQ(config.watchdogTimeout, expectedHeartbeatTimeoutMicroSecs);
 }
 
+TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetTimeoutModePropertiesWithDefaultsThenVerifyzetSysmanSchedulerGetTimeoutModePropertiesCallSucceeds) {
+    auto config = fixtureGetTimeoutModeProperties(hSysman, true);
+    EXPECT_EQ(config.watchdogTimeout, expectedDefaultHeartbeatTimeoutMicroSecs);
+}
+
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetTimesliceModePropertiesThenVerifyzetSysmanSchedulerGetTimesliceModePropertiesCallSucceeds) {
-    auto config = fixtureGetTimesliceModeProperties(hSysman);
+    auto config = fixtureGetTimesliceModeProperties(hSysman, false);
     EXPECT_EQ(config.interval, expectedTimesliceMicroSecs);
     EXPECT_EQ(config.yieldTimeout, expectedTimeoutMicroSecs);
+}
+
+TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetTimesliceModePropertiesWithDefaultsThenVerifyzetSysmanSchedulerGetTimesliceModePropertiesCallSucceeds) {
+    auto config = fixtureGetTimesliceModeProperties(hSysman, true);
+    EXPECT_EQ(config.interval, expectedDefaultTimesliceMicroSecs);
+    EXPECT_EQ(config.yieldTimeout, expectedDefaultTimeoutMicroSecs);
 }
 
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerSetTimeoutModeThenVerifyzetSysmanSchedulerSetTimeoutModeCallSucceeds) {
@@ -125,7 +140,7 @@ TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedul
     ze_result_t result = zetSysmanSchedulerSetTimeoutMode(hSysman, &setConfig, &needReboot);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(needReboot);
-    auto getConfig = fixtureGetTimeoutModeProperties(hSysman);
+    auto getConfig = fixtureGetTimeoutModeProperties(hSysman, false);
     EXPECT_EQ(getConfig.watchdogTimeout, setConfig.watchdogTimeout);
     auto mode = fixtureGetCurrentMode(hSysman);
     EXPECT_EQ(mode, ZET_SCHED_MODE_TIMEOUT);
@@ -139,7 +154,7 @@ TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedul
     ze_result_t result = zetSysmanSchedulerSetTimesliceMode(hSysman, &setConfig, &needReboot);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(needReboot);
-    auto getConfig = fixtureGetTimesliceModeProperties(hSysman);
+    auto getConfig = fixtureGetTimesliceModeProperties(hSysman, false);
     EXPECT_EQ(getConfig.interval, setConfig.interval);
     EXPECT_EQ(getConfig.yieldTimeout, setConfig.yieldTimeout);
     auto mode = fixtureGetCurrentMode(hSysman);
@@ -153,6 +168,30 @@ TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedul
     EXPECT_FALSE(needReboot);
     auto mode = fixtureGetCurrentMode(hSysman);
     EXPECT_EQ(mode, ZET_SCHED_MODE_EXCLUSIVE);
+}
+
+TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetCurrentModeWhenSysfsNodeIsAbsentThenFailureIsReturned) {
+    ON_CALL(*pSysfsAccess, read(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<SchedulerSysfsAccess>::getValForError));
+    zet_sched_mode_t mode;
+    ze_result_t result = zetSysmanSchedulerGetCurrentMode(hSysman, &mode);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+}
+
+TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetTimeoutModePropertiesWithDefaultsWhenSysfsNodeIsAbsentThenFailureIsReturned) {
+    ON_CALL(*pSysfsAccess, read(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<SchedulerSysfsAccess>::getValForError));
+    zet_sched_timeout_properties_t config;
+    ze_result_t result = zetSysmanSchedulerGetTimeoutModeProperties(hSysman, true, &config);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+}
+
+TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetTimesliceModePropertiesWithDefaultsWhenSysfsNodeIsAbsentThenFailureIsReturned) {
+    ON_CALL(*pSysfsAccess, read(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<SchedulerSysfsAccess>::getValForError));
+    zet_sched_timeslice_properties_t config;
+    ze_result_t result = zetSysmanSchedulerGetTimesliceModeProperties(hSysman, true, &config);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
 
 } // namespace ult

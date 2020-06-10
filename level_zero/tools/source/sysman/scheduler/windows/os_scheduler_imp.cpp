@@ -11,23 +11,23 @@ namespace L0 {
 
 class WddmSchedulerImp : public OsScheduler {
   public:
-    ze_result_t getPreemptTimeout(uint64_t &timeout) override;
-    ze_result_t getTimesliceDuration(uint64_t &timeslice) override;
-    ze_result_t getHeartbeatInterval(uint64_t &heartbeat) override;
+    ze_result_t getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) override;
+    ze_result_t getTimesliceDuration(uint64_t &timeslice, ze_bool_t getDefault) override;
+    ze_result_t getHeartbeatInterval(uint64_t &heartbeat, ze_bool_t getDefault) override;
     ze_result_t setPreemptTimeout(uint64_t timeout) override;
     ze_result_t setTimesliceDuration(uint64_t timeslice) override;
     ze_result_t setHeartbeatInterval(uint64_t heartbeat) override;
 };
 
-ze_result_t WddmSchedulerImp::getPreemptTimeout(uint64_t &timeout) {
+ze_result_t WddmSchedulerImp::getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmSchedulerImp::getTimesliceDuration(uint64_t &timeslice) {
+ze_result_t WddmSchedulerImp::getTimesliceDuration(uint64_t &timeslice, ze_bool_t getDefault) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmSchedulerImp::getHeartbeatInterval(uint64_t &heartbeat) {
+ze_result_t WddmSchedulerImp::getHeartbeatInterval(uint64_t &heartbeat, ze_bool_t getDefault) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

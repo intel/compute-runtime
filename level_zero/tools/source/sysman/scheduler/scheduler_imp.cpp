@@ -17,15 +17,15 @@ constexpr uint64_t minTimeoutInMicroSeconds = 1000u;
 ze_result_t SchedulerImp::getCurrentMode(zet_sched_mode_t *pMode) {
     uint64_t timeout = 0;
     uint64_t timeslice = 0;
-    ze_result_t result = pOsScheduler->getPreemptTimeout(timeout);
+    ze_result_t result = pOsScheduler->getPreemptTimeout(timeout, false);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
-    result = pOsScheduler->getTimesliceDuration(timeslice);
+    result = pOsScheduler->getTimesliceDuration(timeslice, false);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
-    if (timeslice != 0) {
+    if (timeslice > 0) {
         *pMode = ZET_SCHED_MODE_TIMESLICE;
     } else {
         if (timeout > 0) {
@@ -38,13 +38,8 @@ ze_result_t SchedulerImp::getCurrentMode(zet_sched_mode_t *pMode) {
 }
 
 ze_result_t SchedulerImp::getTimeoutModeProperties(ze_bool_t getDefaults, zet_sched_timeout_properties_t *pConfig) {
-    if (getDefaults) {
-        pConfig->watchdogTimeout = defaultHeartbeat;
-        return ZE_RESULT_SUCCESS;
-    }
-
     uint64_t heartbeat = 0;
-    ze_result_t result = pOsScheduler->getHeartbeatInterval(heartbeat);
+    ze_result_t result = pOsScheduler->getHeartbeatInterval(heartbeat, getDefaults);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
@@ -54,18 +49,12 @@ ze_result_t SchedulerImp::getTimeoutModeProperties(ze_bool_t getDefaults, zet_sc
 }
 
 ze_result_t SchedulerImp::getTimesliceModeProperties(ze_bool_t getDefaults, zet_sched_timeslice_properties_t *pConfig) {
-    if (getDefaults) {
-        pConfig->interval = defaultTimeslice;
-        pConfig->yieldTimeout = defaultPreemptTimeout;
-        return ZE_RESULT_SUCCESS;
-    }
-
     uint64_t timeout = 0, timeslice = 0;
-    ze_result_t result = pOsScheduler->getPreemptTimeout(timeout);
+    ze_result_t result = pOsScheduler->getPreemptTimeout(timeout, getDefaults);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
-    result = pOsScheduler->getTimesliceDuration(timeslice);
+    result = pOsScheduler->getTimesliceDuration(timeslice, getDefaults);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
@@ -146,32 +135,11 @@ ze_result_t SchedulerImp::setComputeUnitDebugMode(ze_bool_t *pNeedReboot) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t SchedulerImp::init() {
+void SchedulerImp::init() {
     if (pOsScheduler == nullptr) {
         pOsScheduler = OsScheduler::create(pOsSysman);
     }
-    if (nullptr == pOsScheduler) {
-        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-    }
-    uint64_t timeout = 0;
-    uint64_t timeslice = 0;
-    uint64_t heartbeat = 0;
-    ze_result_t result = pOsScheduler->getPreemptTimeout(timeout);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
-    }
-    result = pOsScheduler->getTimesliceDuration(timeslice);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
-    }
-    result = pOsScheduler->getHeartbeatInterval(heartbeat);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
-    }
-    defaultPreemptTimeout = timeout;
-    defaultTimeslice = timeslice;
-    defaultHeartbeat = heartbeat;
-    return result;
+    UNRECOVERABLE_IF(nullptr == pOsScheduler);
 }
 
 SchedulerImp::~SchedulerImp() {

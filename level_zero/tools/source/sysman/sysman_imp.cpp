@@ -75,9 +75,7 @@ void SysmanImp::init() {
         pPci->init();
     }
     if (pSched) {
-        if (pSched->init() != ZE_RESULT_SUCCESS) {
-            freeResource(pSched);
-        }
+        pSched->init();
     }
     if (pSysmanDevice) {
         pSysmanDevice->init();

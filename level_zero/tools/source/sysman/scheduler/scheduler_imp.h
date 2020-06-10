@@ -17,7 +17,7 @@ namespace L0 {
 
 class SchedulerImp : public NEO::NonCopyableClass, public Scheduler {
   public:
-    ze_result_t init() override;
+    void init() override;
     ze_result_t getCurrentMode(zet_sched_mode_t *pMode) override;
     ze_result_t getTimeoutModeProperties(ze_bool_t getDefaults, zet_sched_timeout_properties_t *pConfig) override;
     ze_result_t getTimesliceModeProperties(ze_bool_t getDefaults, zet_sched_timeslice_properties_t *pConfig) override;
@@ -33,9 +33,6 @@ class SchedulerImp : public NEO::NonCopyableClass, public Scheduler {
 
   private:
     OsSysman *pOsSysman = nullptr;
-    uint64_t defaultPreemptTimeout = 0;
-    uint64_t defaultTimeslice = 0;
-    uint64_t defaultHeartbeat = 0;
 };
 
 } // namespace L0
