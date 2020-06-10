@@ -162,5 +162,18 @@ HWTEST2_F(SetKernelArg, givenSamplerAndKernelWhenSetArgSamplerThenCrossThreadDat
     auto pSamplerNormalizedCoords = ptrOffset(crossThreadData, samplerArg.metadataPayload.samplerNormalizedCoords);
     EXPECT_EQ(0x08, *pSamplerNormalizedCoords);
 }
+
+using ArgSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+
+HWTEST2_F(SetKernelArg, givenBufferArgumentWhichHasNotBeenAllocatedByRuntimeThenInvalidArgumentIsReturned, ArgSupport) {
+    createKernel();
+
+    uint64_t hostAddress = 0x1234;
+
+    ze_result_t res = kernel->setArgBuffer(0, sizeof(hostAddress), &hostAddress);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+}
+
 } // namespace ult
 } // namespace L0
