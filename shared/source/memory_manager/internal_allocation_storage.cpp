@@ -9,11 +9,15 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
-InternalAllocationStorage::InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver) : commandStreamReceiver(commandStreamReceiver){};
+
+InternalAllocationStorage::InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver)
+    : commandStreamReceiver(commandStreamReceiver),
+      temporaryAllocations(TEMPORARY_ALLOCATION),
+      allocationsForReuse(REUSABLE_ALLOCATION){};
+
 void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage) {
     uint32_t taskCount = gfxAllocation->getTaskCount(commandStreamReceiver.getOsContext().getContextId());
 
@@ -79,6 +83,9 @@ struct ReusableAllocationRequirements {
     const void *requiredPtr;
 };
 
+AllocationsList::AllocationsList(AllocationUsage allocationUsage)
+    : allocationUsage(allocationUsage) {}
+
 std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver &commandStreamReceiver, GraphicsAllocation::AllocationType allocationType) {
     ReusableAllocationRequirements req;
     req.requiredMinimalSize = requiredMinimalSize;
@@ -95,11 +102,14 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
     ReusableAllocationRequirements *req = static_cast<ReusableAllocationRequirements *>(data);
     auto *curr = head;
     while (curr != nullptr) {
-        auto currentTagValue = *req->csrTagAddress;
         if ((req->allocationType == curr->getAllocationType()) &&
             (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize) &&
-            (currentTagValue >= curr->getTaskCount(req->contextId)) &&
+            (this->allocationUsage == TEMPORARY_ALLOCATION || *req->csrTagAddress >= curr->getTaskCount(req->contextId)) &&
             (req->requiredPtr == nullptr || req->requiredPtr == curr->getUnderlyingBuffer())) {
+            if (this->allocationUsage == TEMPORARY_ALLOCATION) {
+                // We may not have proper task count yet, so set levelNotReady to avoid releasing in a different thread
+                curr->updateTaskCount(CompletionStamp::levelNotReady, req->contextId);
+            }
             return removeOneImpl(curr, nullptr);
         }
         curr = curr->next;

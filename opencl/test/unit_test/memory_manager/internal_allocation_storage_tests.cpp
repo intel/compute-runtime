@@ -87,6 +87,34 @@ TEST_F(InternalAllocationStorageTest, whenAllocationIsStoredAsReusableButIsStill
     storage->cleanAllocationList(2u, REUSABLE_ALLOCATION);
 }
 
+TEST_F(InternalAllocationStorageTest, whenAllocationIsStoredAsTemporaryAndIsStillUsedThenCanBeObtained) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+
+    storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION, 2u);
+
+    auto *hwTag = csr->getTagAddress();
+
+    *hwTag = 1u;
+    auto newAllocation = storage->obtainTemporaryAllocationWithPtr(1, allocation->getUnderlyingBuffer(), GraphicsAllocation::AllocationType::BUFFER);
+    EXPECT_EQ(allocation, newAllocation.get());
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
+    memoryManager->freeGraphicsMemory(newAllocation.release());
+}
+
+TEST_F(InternalAllocationStorageTest, givenTemporaryAllocationWhenAllocationIsObtainedThenItsTaskCountIsSetToLevelNotReady) {
+    const uint32_t initialTaskCount = 37u;
+    const uint32_t contextId = csr->getOsContext().getContextId();
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(AllocationProperties{0, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION, initialTaskCount);
+    ASSERT_EQ(initialTaskCount, allocation->getTaskCount(contextId));
+
+    auto newAllocation = storage->obtainTemporaryAllocationWithPtr(1, allocation->getUnderlyingBuffer(), GraphicsAllocation::AllocationType::BUFFER);
+    EXPECT_EQ(allocation, newAllocation.get());
+    EXPECT_EQ(CompletionStamp::levelNotReady, allocation->getTaskCount(contextId));
+    memoryManager->freeGraphicsMemory(newAllocation.release());
+}
+
 TEST_F(InternalAllocationStorageTest, whenObtainAllocationFromEmptyReuseListThenReturnNullptr) {
     auto allocation2 = storage->obtainReusableAllocation(1, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_EQ(nullptr, allocation2);
