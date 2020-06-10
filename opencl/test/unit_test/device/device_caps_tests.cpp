@@ -44,31 +44,60 @@ struct DeviceGetCapsTest : public ::testing::Test {
     }
 
     void verifyOpenclCAllVersions(MockClDevice &clDevice) {
-        auto openclCWithVersion = clDevice.getDeviceInfo().openclCAllVersions.begin();
+        for (auto &openclCVersion : clDevice.getDeviceInfo().openclCAllVersions) {
+            EXPECT_STREQ("OpenCL C", openclCVersion.name);
+        }
 
-        EXPECT_STREQ("OpenCL C", openclCWithVersion->name);
-        EXPECT_EQ(CL_MAKE_VERSION(1u, 0u, 0u), openclCWithVersion->version);
-        openclCWithVersion++;
-        EXPECT_STREQ("OpenCL C", openclCWithVersion->name);
-        EXPECT_EQ(CL_MAKE_VERSION(1u, 1u, 0u), openclCWithVersion->version);
-        openclCWithVersion++;
-        EXPECT_STREQ("OpenCL C", openclCWithVersion->name);
-        EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), openclCWithVersion->version);
-        openclCWithVersion++;
+        auto openclCWithVersionIterator = clDevice.getDeviceInfo().openclCAllVersions.begin();
+
+        EXPECT_EQ(CL_MAKE_VERSION(1u, 0u, 0u), openclCWithVersionIterator->version);
+        EXPECT_EQ(CL_MAKE_VERSION(1u, 1u, 0u), (++openclCWithVersionIterator)->version);
+        EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), (++openclCWithVersionIterator)->version);
 
         if (clDevice.areOcl21FeaturesEnabled()) {
-            EXPECT_STREQ("OpenCL C", openclCWithVersion->name);
-            EXPECT_EQ(CL_MAKE_VERSION(2u, 0u, 0u), openclCWithVersion->version);
-            openclCWithVersion++;
+            EXPECT_EQ(CL_MAKE_VERSION(2u, 0u, 0u), (++openclCWithVersionIterator)->version);
         }
-
         if (clDevice.getEnabledClVersion() == 30) {
-            EXPECT_STREQ("OpenCL C", openclCWithVersion->name);
-            EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), openclCWithVersion->version);
-            openclCWithVersion++;
+            EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), (++openclCWithVersionIterator)->version);
         }
 
-        EXPECT_EQ(clDevice.getDeviceInfo().openclCAllVersions.end(), openclCWithVersion);
+        EXPECT_EQ(clDevice.getDeviceInfo().openclCAllVersions.end(), ++openclCWithVersionIterator);
+    }
+
+    void verifyOpenclCFeatures(MockClDevice &clDevice) {
+        for (auto &openclCFeature : clDevice.getDeviceInfo().openclCFeatures) {
+            EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), openclCFeature.version);
+        }
+
+        auto &hwInfo = clDevice.getHardwareInfo();
+        auto openclCFeatureIterator = clDevice.getDeviceInfo().openclCFeatures.begin();
+
+        EXPECT_STREQ("__opencl_c_atomic_order_acq_rel", openclCFeatureIterator->name);
+
+        if (hwInfo.capabilityTable.supportsImages) {
+            EXPECT_STREQ("__opencl_c_3d_image_writes", (++openclCFeatureIterator)->name);
+        }
+        if (hwInfo.capabilityTable.supportsOcl21Features) {
+            EXPECT_STREQ("__opencl_c_atomic_order_seq_cst", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_atomic_scope_all_devices", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_atomic_scope_device", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_generic_address_space", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_program_scope_global_variables", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_read_write_images", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_work_group_collective_functions", (++openclCFeatureIterator)->name);
+
+            if (clDevice.getDeviceInfo().independentForwardProgress) {
+                EXPECT_STREQ("__opencl_c_subgroups", (++openclCFeatureIterator)->name);
+            }
+        }
+        if (hwInfo.capabilityTable.supportsDeviceEnqueue) {
+            EXPECT_STREQ("__opencl_c_device_enqueue", (++openclCFeatureIterator)->name);
+        }
+        if (hwInfo.capabilityTable.supportsPipes) {
+            EXPECT_STREQ("__opencl_c_pipes", (++openclCFeatureIterator)->name);
+        }
+
+        EXPECT_EQ(clDevice.getDeviceInfo().openclCFeatures.end(), ++openclCFeatureIterator);
     }
 };
 
@@ -94,6 +123,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_NE(nullptr, caps.clCVersion);
     EXPECT_NE(0u, caps.numericClVersion);
     EXPECT_GT(caps.openclCAllVersions.size(), 0u);
+    EXPECT_GT(caps.openclCFeatures.size(), 0u);
     EXPECT_EQ(caps.extensionsWithVersion.size(), 0u);
 
     EXPECT_NE(nullptr, caps.spirVersions);
@@ -301,6 +331,7 @@ TEST_F(DeviceGetCapsTest, givenForceOclVersion30WhenCapsAreCreatedThenDeviceRepo
     EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), caps.numericClVersion);
     EXPECT_FALSE(device->ocl21FeaturesEnabled);
     verifyOpenclCAllVersions(*device);
+    verifyOpenclCFeatures(*device);
 }
 
 TEST_F(DeviceGetCapsTest, givenForceOclVersion21WhenCapsAreCreatedThenDeviceReportsOpenCL21) {
@@ -313,6 +344,7 @@ TEST_F(DeviceGetCapsTest, givenForceOclVersion21WhenCapsAreCreatedThenDeviceRepo
     EXPECT_EQ(CL_MAKE_VERSION(2u, 1u, 0u), caps.numericClVersion);
     EXPECT_TRUE(device->ocl21FeaturesEnabled);
     verifyOpenclCAllVersions(*device);
+    verifyOpenclCFeatures(*device);
 }
 
 TEST_F(DeviceGetCapsTest, givenForceOclVersion12WhenCapsAreCreatedThenDeviceReportsOpenCL12) {
@@ -325,6 +357,7 @@ TEST_F(DeviceGetCapsTest, givenForceOclVersion12WhenCapsAreCreatedThenDeviceRepo
     EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), caps.numericClVersion);
     EXPECT_FALSE(device->ocl21FeaturesEnabled);
     verifyOpenclCAllVersions(*device);
+    verifyOpenclCFeatures(*device);
 }
 
 TEST_F(DeviceGetCapsTest, givenForceOCL21FeaturesSupportEnabledWhenCapsAreCreatedThenDeviceReportsSupportOfOcl21Features) {
@@ -362,6 +395,7 @@ TEST_F(DeviceGetCapsTest, givenForceInvalidOclVersionWhenCapsAreCreatedThenDevic
     EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), caps.numericClVersion);
     EXPECT_FALSE(device->ocl21FeaturesEnabled);
     verifyOpenclCAllVersions(*device);
+    verifyOpenclCFeatures(*device);
 }
 
 TEST_F(DeviceGetCapsTest, givenForce32bitAddressingWhenCapsAreCreatedThenDeviceReports32bitAddressingOptimization) {

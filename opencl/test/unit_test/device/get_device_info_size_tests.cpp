@@ -89,7 +89,7 @@ std::pair<uint32_t, size_t> deviceInfoParams2[] = {
     {CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF, sizeof(cl_uint)},
     {CL_DEVICE_NUMERIC_VERSION, sizeof(cl_version)},
     //    {CL_DEVICE_OPENCL_C_ALL_VERSIONS, sizeof(cl_name_version[])},
-    {CL_DEVICE_OPENCL_C_FEATURES, 0u},
+    //    {CL_DEVICE_OPENCL_C_FEATURES, sizeof(cl_name_version[])},
     //    {CL_DEVICE_OPENCL_C_VERSION, sizeof(char[])},
     {CL_DEVICE_PARENT_DEVICE, sizeof(cl_device_id)},
     {CL_DEVICE_PARTITION_AFFINITY_DOMAIN, sizeof(cl_device_affinity_domain)},
@@ -270,6 +270,20 @@ TEST(DeviceInfoTests, givenDefaultDeviceWhenQueriedForOpenclCAllVersionsThenProp
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pClDevice->getDeviceInfo().openclCAllVersions.size() * sizeof(cl_name_version), sizeReturned);
+}
+
+TEST(DeviceInfoTests, givenDefaultDeviceWhenQueriedForOpenclCFeaturesThenProperSizeIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    size_t sizeReturned = 0;
+    auto retVal = pClDevice->getDeviceInfo(
+        CL_DEVICE_OPENCL_C_FEATURES,
+        0,
+        nullptr,
+        &sizeReturned);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pClDevice->getDeviceInfo().openclCFeatures.size() * sizeof(cl_name_version), sizeReturned);
 }
 
 TEST(DeviceInfoTests, givenDefaultDeviceWhenQueriedForExtensionsWithVersionThenProperSizeIsReturned) {

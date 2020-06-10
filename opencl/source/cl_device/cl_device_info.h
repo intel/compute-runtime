@@ -20,6 +20,7 @@ struct ClDeviceInfo {
     cl_name_version               ilsWithVersion[1];
     StackVec<cl_name_version, 3>  builtInKernelsWithVersion;
     StackVec<cl_name_version, 5>  openclCAllVersions;
+    StackVec<cl_name_version, 12> openclCFeatures;
     std::vector<cl_name_version>  extensionsWithVersion;
     cl_device_type                deviceType;
     size_t                        maxSliceCount;

@@ -213,7 +213,8 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         }
         break;
     case CL_DEVICE_OPENCL_C_FEATURES:
-        retSize = srcSize = 0;
+        src = deviceInfo.openclCFeatures.data();
+        retSize = srcSize = deviceInfo.openclCFeatures.size() * sizeof(cl_name_version);
         break;
     case CL_DEVICE_BUILT_IN_KERNELS_WITH_VERSION:
         src = deviceInfo.builtInKernelsWithVersion.data();

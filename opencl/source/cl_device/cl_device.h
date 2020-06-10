@@ -125,6 +125,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     void initializeCaps();
     void initializeExtensionsWithVersion();
     void initializeOpenclCAllVersions();
+    void initializeOpenclCFeatures();
     void initializeOsSpecificCaps();
     void setupFp64Flags();
 
