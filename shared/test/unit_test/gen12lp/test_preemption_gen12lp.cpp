@@ -6,27 +6,38 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
-
-#include "preemption_test_hw_details_gen12lp.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 using namespace NEO;
+
+template <>
+PreemptionTestHwDetails GetPreemptionTestHwDetails<TGLLPFamily>() {
+    PreemptionTestHwDetails ret;
+    ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = DwordBuilder::build(1, true) | DwordBuilder::build(2, true, false);
+    ret.modeToRegValueMap[PreemptionMode::MidBatch] = DwordBuilder::build(2, true) | DwordBuilder::build(1, true, false);
+    ret.modeToRegValueMap[PreemptionMode::MidThread] = DwordBuilder::build(2, true, false) | DwordBuilder::build(1, true, false);
+    ret.defaultRegValue = ret.modeToRegValueMap[PreemptionMode::MidBatch];
+    ret.regAddress = 0x2580u;
+    return ret;
+}
 
 using Gen12LpPreemptionTests = DevicePreemptionTests;
 
 GEN12LPTEST_F(Gen12LpPreemptionTests, whenProgramStateSipIsCalledThenStateSipCmdIsNotAddedToStream) {
-    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(device->getDevice());
+    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
     EXPECT_EQ(0U, requiredSize);
 
     LinearStream cmdStream{nullptr, 0};
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, device->getDevice());
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device);
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
 
 GEN12LPTEST_F(Gen12LpPreemptionTests, getRequiredCmdQSize) {
     size_t expectedSize = 0;
-    EXPECT_EQ(expectedSize, PreemptionHelper::getPreemptionWaCsSize<FamilyType>(device->getDevice()));
+    EXPECT_EQ(expectedSize, PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device));
 }
 
 GEN12LPTEST_F(Gen12LpPreemptionTests, applyPreemptionWaCmds) {
@@ -34,9 +45,9 @@ GEN12LPTEST_F(Gen12LpPreemptionTests, applyPreemptionWaCmds) {
     StackVec<char, 1024> streamStorage(1024);
     LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};
 
-    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdStream, device->getDevice());
+    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdStream, *device);
     EXPECT_EQ(usedSize, cmdStream.getUsed());
-    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdStream, device->getDevice());
+    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdStream, *device);
     EXPECT_EQ(usedSize, cmdStream.getUsed());
 }
 

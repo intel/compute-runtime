@@ -12,11 +12,11 @@
 
 #include "test.h"
 
-using RenderDispatcheTest = Test<DispatcherFixture>;
+using RenderDispatcherTest = Test<DispatcherFixture>;
 
 using namespace NEO;
 
-HWTEST_F(RenderDispatcheTest, givenRenderWhenAskingForPreemptionCmdSizeThenReturnSetMmioCmdSize) {
+HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingForPreemptionCmdSizeThenReturnSetMmioCmdSize) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     size_t expectedCmdSize = 0u;
@@ -26,7 +26,7 @@ HWTEST_F(RenderDispatcheTest, givenRenderWhenAskingForPreemptionCmdSizeThenRetur
     EXPECT_EQ(expectedCmdSize, RenderDispatcher<FamilyType>::getSizePreemption());
 }
 
-HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingPreemptionCmdThenExpectProperMmioAddress) {
+HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingPreemptionCmdThenExpectProperMmioAddress) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto preemptionDetails = GetPreemptionTestHwDetails<FamilyType>();
@@ -49,13 +49,13 @@ HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingPreemptionCmdThenExpectProper
     }
 }
 
-HWTEST_F(RenderDispatcheTest, givenRenderWhenAskingForMonitorFenceCmdSizeThenReturnRequiredPipeControlCmdSize) {
+HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingForMonitorFenceCmdSizeThenReturnRequiredPipeControlCmdSize) {
     size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hardwareInfo);
 
     EXPECT_EQ(expectedSize, RenderDispatcher<FamilyType>::getSizeMonitorFence(hardwareInfo));
 }
 
-HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPipeControlWithProperAddressAndValue) {
+HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPipeControlWithProperAddressAndValue) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename FamilyType::PIPE_CONTROL::POST_SYNC_OPERATION;
 
@@ -86,14 +86,14 @@ HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPipe
     EXPECT_TRUE(foundMonitorFence);
 }
 
-HWTEST_F(RenderDispatcheTest, givenRenderWhenAskingForCacheFlushCmdSizeThenReturnSetRequiredPipeControls) {
+HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingForCacheFlushCmdSizeThenReturnSetRequiredPipeControls) {
     size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForFullCacheFlush();
 
     size_t actualSize = RenderDispatcher<FamilyType>::getSizeCacheFlush(hardwareInfo);
     EXPECT_EQ(expectedSize, actualSize);
 }
 
-HWTEST_F(RenderDispatcheTest, givenRenderWhenAddingCacheFlushCmdThenExpectPipeControlWithProperFields) {
+HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingCacheFlushCmdThenExpectPipeControlWithProperFields) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     RenderDispatcher<FamilyType>::dispatchCacheFlush(cmdBuffer, hardwareInfo);

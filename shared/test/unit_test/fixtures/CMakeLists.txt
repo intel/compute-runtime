@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-set(NEO_CORE_tests_fixtures
+target_sources(${TARGET_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/command_container_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/device_fixture.cpp
@@ -12,5 +12,3 @@ set(NEO_CORE_tests_fixtures
   ${CMAKE_CURRENT_SOURCE_DIR}/preemption_fixture.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/preemption_fixture.h
 )
-
-set_property(GLOBAL PROPERTY NEO_CORE_tests_fixtures ${NEO_CORE_tests_fixtures})

@@ -107,8 +107,6 @@ add_executable(igdrcl_tests
   ${IGDRCL_SRCS_tests_local}
 )
 
-include(${NEO_SOURCE_DIR}/opencl/test/unit_test/core_unit_tests_files.cmake)
-
 hide_subdir(gen_common)
 add_subdirectory(gen_common)
 

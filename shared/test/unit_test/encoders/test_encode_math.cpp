@@ -8,8 +8,8 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/unit_test/fixtures/device_fixture.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
@@ -99,7 +99,7 @@ HWTEST_F(EncodeMathMMIOTest, encodeAluSubStoreCarryHasCorrectOpcodesOperands) {
     EXPECT_EQ(aluParam[4].DW0.Value, 0u);
 }
 
-using CommandEncoderMathTest = Test<ClDeviceFixture>;
+using CommandEncoderMathTest = Test<DeviceFixture>;
 
 HWTEST_F(CommandEncoderMathTest, commandReserve) {
     using MI_MATH = typename FamilyType::MI_MATH;

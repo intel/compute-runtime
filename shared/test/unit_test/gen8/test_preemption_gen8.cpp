@@ -11,119 +11,35 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
-#include "shared/test/unit_test/mocks/mock_command_stream_receiver.h"
-
-#include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
-#include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
-#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
-
-#include "preemption_test_hw_details_gen8.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
 using namespace NEO;
 
-using Gen8PreemptionTests = DevicePreemptionTests;
-using Gen8PreemptionEnqueueKernelTest = PreemptionEnqueueKernelTest;
-
-GEN8TEST_F(Gen8PreemptionTests, allowThreadGroupPreemptionReturnsTrue) {
-    PreemptionFlags flags = {};
-    PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
-    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(flags));
+template <>
+PreemptionTestHwDetails GetPreemptionTestHwDetails<BDWFamily>() {
+    PreemptionTestHwDetails ret;
+    ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = 0;
+    ret.modeToRegValueMap[PreemptionMode::MidBatch] = (1 << 2);
+    ret.defaultRegValue = ret.modeToRegValueMap[PreemptionMode::MidBatch];
+    ret.regAddress = 0x2248u;
+    return ret;
 }
 
+using Gen8PreemptionTests = DevicePreemptionTests;
+
 GEN8TEST_F(Gen8PreemptionTests, whenProgramStateSipIsCalledThenNoCmdsAreProgrammed) {
-    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(device->getDevice());
+    size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
     EXPECT_EQ(0U, requiredSize);
 
     LinearStream cmdStream{nullptr, 0};
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, device->getDevice());
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device);
     EXPECT_EQ(0U, cmdStream.getUsed());
-}
-
-GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogram) {
-    pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    csr.getMemoryManager()->setForce32BitAllocations(false);
-    csr.setMediaVFEStateDirty(false);
-    size_t off[3] = {0, 0, 0};
-    size_t gws[3] = {1, 1, 1};
-
-    MockKernelWithInternals mockKernel(*pClDevice);
-
-    HardwareParse hwParser;
-    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
-    hwParser.parseCommands<FamilyType>(csr.commandStream);
-    auto offset = csr.commandStream.getUsed();
-    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
-    pCmdQ->flush();
-    hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
-
-    size_t numMmiosFound = countMmio<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), 0x2248u);
-    EXPECT_EQ(1U, numMmiosFound);
-}
-
-GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnqueueKernelCalledThenPassDevicePreemptionMode) {
-    pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    pDevice->resetCommandStreamReceiver(mockCsr);
-
-    MockKernelWithInternals mockKernel(*pClDevice);
-    PreemptionFlags flags = {};
-    MultiDispatchInfo multiDispatch(mockKernel.mockKernel);
-    EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(*pDevice, multiDispatch));
-
-    size_t gws[3] = {1, 0, 0};
-    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    pCmdQ->flush();
-
-    EXPECT_EQ(1, mockCsr->flushCalledCount);
-    EXPECT_EQ(PreemptionMode::ThreadGroup, mockCsr->passedDispatchFlags.preemptionMode);
-}
-
-GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnqueueKernelCalledAndBlockedThenPassDevicePreemptionMode) {
-    pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    pDevice->resetCommandStreamReceiver(mockCsr);
-
-    MockKernelWithInternals mockKernel(*pClDevice);
-    PreemptionFlags flags = {};
-    PreemptionHelper::setPreemptionLevelFlags(flags, *pDevice, mockKernel.mockKernel);
-    EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(pDevice->getPreemptionMode(), flags));
-
-    UserEvent userEventObj;
-    cl_event userEvent = &userEventObj;
-    size_t gws[3] = {1, 0, 0};
-    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 1, &userEvent, nullptr);
-    pCmdQ->flush();
-    EXPECT_EQ(0, mockCsr->flushCalledCount);
-
-    userEventObj.setStatus(CL_COMPLETE);
-    pCmdQ->flush();
-    EXPECT_EQ(1, mockCsr->flushCalledCount);
-    EXPECT_EQ(PreemptionMode::ThreadGroup, mockCsr->passedDispatchFlags.preemptionMode);
-}
-
-GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenDisabledPreemptionWhenEnqueueKernelCalledThenPassDisabledPreemptionMode) {
-    pDevice->setPreemptionMode(PreemptionMode::Disabled);
-    auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
-    pDevice->resetCommandStreamReceiver(mockCsr);
-
-    MockKernelWithInternals mockKernel(*pClDevice);
-    PreemptionFlags flags = {};
-    PreemptionHelper::setPreemptionLevelFlags(flags, *pDevice, mockKernel.mockKernel);
-    EXPECT_EQ(PreemptionMode::Disabled, PreemptionHelper::taskPreemptionMode(pDevice->getPreemptionMode(), flags));
-
-    size_t gws[3] = {1, 0, 0};
-    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    pCmdQ->flush();
-
-    EXPECT_EQ(1, mockCsr->flushCalledCount);
-    EXPECT_EQ(PreemptionMode::Disabled, mockCsr->passedDispatchFlags.preemptionMode);
 }
 
 GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeMidBatch) {
     size_t expectedSize = 0;
     device->setPreemptionMode(PreemptionMode::MidBatch);
-    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(device->getDevice());
+    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
     EXPECT_EQ(expectedSize, size);
 }
 
@@ -131,7 +47,7 @@ GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeThreadGroupNoWa) {
     size_t expectedSize = 0;
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
-    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(device->getDevice());
+    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
     EXPECT_EQ(expectedSize, size);
 }
 
@@ -140,7 +56,7 @@ GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeThreadGroupWa) {
     size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM);
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
-    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(device->getDevice());
+    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
     EXPECT_EQ(expectedSize, size);
 }
 
@@ -148,7 +64,7 @@ GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeMidThreadNoWa) {
     size_t expectedSize = 0;
     device->setPreemptionMode(PreemptionMode::MidThread);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
-    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(device->getDevice());
+    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
     EXPECT_EQ(expectedSize, size);
 }
 
@@ -157,7 +73,7 @@ GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeMidThreadWa) {
     size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM);
     device->setPreemptionMode(PreemptionMode::MidThread);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
-    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(device->getDevice());
+    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
     EXPECT_EQ(expectedSize, size);
 }
 
@@ -207,27 +123,27 @@ struct Gen8PreemptionTestsLinearStream : public Gen8PreemptionTests {
 
 GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenMidBatchPreemptionWhenProgrammingWaCmdsBeginThenExpectNoCmds) {
     device->setPreemptionMode(PreemptionMode::MidBatch);
-    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, device->getDevice());
+    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, *device);
     EXPECT_EQ(0u, cmdBuffer.getUsed());
 }
 
 GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenMidBatchPreemptionWhenProgrammingWaCmdsEndThenExpectNoCmds) {
     device->setPreemptionMode(PreemptionMode::MidBatch);
-    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, device->getDevice());
+    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, *device);
     EXPECT_EQ(0u, cmdBuffer.getUsed());
 }
 
 GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenThreadGroupPreemptionNoWaSetWhenProgrammingWaCmdsBeginThenExpectNoCmd) {
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
-    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, device->getDevice());
+    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, *device);
     EXPECT_EQ(0u, cmdBuffer.getUsed());
 }
 
 GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenThreadGroupPreemptionNoWaSetWhenProgrammingWaCmdsEndThenExpectNoCmd) {
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
-    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, device->getDevice());
+    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, *device);
     EXPECT_EQ(0u, cmdBuffer.getUsed());
 }
 
@@ -235,7 +151,7 @@ GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenThreadGroupPreemptionWaSetWhenP
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
-    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, device->getDevice());
+    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, *device);
 
     cmdBufferParser.parseCommands<FamilyType>(cmdBuffer);
     cmdBufferParser.findHardwareCommands<FamilyType>();
@@ -250,7 +166,7 @@ GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenThreadGroupPreemptionWaSetWhenP
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
-    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, device->getDevice());
+    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, *device);
 
     cmdBufferParser.parseCommands<FamilyType>(cmdBuffer);
     cmdBufferParser.findHardwareCommands<FamilyType>();
@@ -264,14 +180,14 @@ GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenThreadGroupPreemptionWaSetWhenP
 GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenMidThreadPreemptionNoWaSetWhenProgrammingWaCmdsBeginThenExpectNoCmd) {
     device->setPreemptionMode(PreemptionMode::MidThread);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
-    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, device->getDevice());
+    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, *device);
     EXPECT_EQ(0u, cmdBuffer.getUsed());
 }
 
 GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenMidThreadPreemptionNoWaSetWhenProgrammingWaCmdsEndThenExpectNoCmd) {
     device->setPreemptionMode(PreemptionMode::MidThread);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
-    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, device->getDevice());
+    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, *device);
     EXPECT_EQ(0u, cmdBuffer.getUsed());
 }
 
@@ -279,7 +195,7 @@ GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenMidThreadPreemptionWaSetWhenPro
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     device->setPreemptionMode(PreemptionMode::MidThread);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
-    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, device->getDevice());
+    PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdBuffer, *device);
 
     cmdBufferParser.parseCommands<FamilyType>(cmdBuffer);
     cmdBufferParser.findHardwareCommands<FamilyType>();
@@ -294,7 +210,7 @@ GEN8TEST_F(Gen8PreemptionTestsLinearStream, givenMidThreadPreemptionWaSetWhenPro
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     device->setPreemptionMode(PreemptionMode::MidThread);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = true;
-    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, device->getDevice());
+    PreemptionHelper::applyPreemptionWaCmdsEnd<FamilyType>(&cmdBuffer, *device);
 
     cmdBufferParser.parseCommands<FamilyType>(cmdBuffer);
     cmdBufferParser.findHardwareCommands<FamilyType>();

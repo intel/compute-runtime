@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-set(NEO_CORE_ENCODERS_TESTS
+target_sources(${TARGET_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_atomic.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_command_buffer.cpp
@@ -16,5 +16,5 @@ set(NEO_CORE_ENCODERS_TESTS
   ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_set_mmio.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_states.cpp
 )
+
 add_subdirectories()
-set_property(GLOBAL PROPERTY NEO_CORE_ENCODERS_TESTS ${NEO_CORE_ENCODERS_TESTS})

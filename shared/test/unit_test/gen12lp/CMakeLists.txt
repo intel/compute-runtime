@@ -8,20 +8,17 @@ if(TESTS_GEN12LP)
 
   set(NEO_CORE_TESTS_GEN12LP
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests_gen12lp.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/preemption_test_hw_details_gen12lp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_gen12lp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_command_encoder_gen12lp.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen12lp.inl
   )
   set_property(GLOBAL PROPERTY NEO_CORE_TESTS_GEN12LP ${NEO_CORE_TESTS_GEN12LP})
   add_subdirectories()
 
   target_sources(${TARGET_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen12lp.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/preemption_test_hw_details_gen12lp.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests_gen12lp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen12lp.cpp
     ${COMPUTE_RUNTIME_ULT_GEN12LP}
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/gen12lp/special_ult_helper_gen12lp.cpp
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/gen12lp/unit_test_helper_gen12lp.cpp

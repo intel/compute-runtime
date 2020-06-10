@@ -7,22 +7,22 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/unit_test/fixtures/device_fixture.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 using namespace NEO;
 
-class CommandSetMMIOFixture : public ClDeviceFixture {
+class CommandSetMMIOFixture : public DeviceFixture {
   public:
     void SetUp() {
-        ClDeviceFixture::SetUp();
+        DeviceFixture::SetUp();
         cmdContainer = std::make_unique<CommandContainer>();
         cmdContainer->initialize(pDevice);
     }
     void TearDown() {
         cmdContainer.reset();
-        ClDeviceFixture::TearDown();
+        DeviceFixture::TearDown();
     }
     std::unique_ptr<CommandContainer> cmdContainer;
 };

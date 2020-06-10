@@ -1,0 +1,76 @@
+/*
+ * Copyright (C) 2018-2020 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#pragma once
+
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
+#include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "test.h"
+
+#include "gtest/gtest.h"
+
+#include <memory>
+
+namespace iOpenCL {
+struct SPatchExecutionEnvironment;
+}
+
+namespace NEO {
+class DispatchInfo;
+class MockCommandQueue;
+class MockContext;
+class MockDevice;
+class MockKernel;
+class MockProgram;
+struct KernelInfo;
+struct WorkaroundTable;
+
+using PreemptionEnqueueKernelFixture = HelloWorldFixture<HelloWorldFixtureFactory>;
+using PreemptionEnqueueKernelTest = Test<PreemptionEnqueueKernelFixture>;
+} // namespace NEO
+
+class DevicePreemptionTests : public ::testing::Test {
+  public:
+    void SetUp() override;
+    void TearDown() override;
+
+    DevicePreemptionTests();
+    ~DevicePreemptionTests() override;
+
+    NEO::PreemptionMode preemptionMode;
+    NEO::WorkaroundTable *waTable = nullptr;
+    std::unique_ptr<NEO::DispatchInfo> dispatchInfo;
+    std::unique_ptr<NEO::MockKernel> kernel;
+    std::unique_ptr<NEO::MockCommandQueue> cmdQ;
+    std::unique_ptr<NEO::MockClDevice> device;
+    std::unique_ptr<NEO::MockContext> context;
+    std::unique_ptr<DebugManagerStateRestore> dbgRestore;
+    std::unique_ptr<iOpenCL::SPatchExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<NEO::MockProgram> program;
+    std::unique_ptr<NEO::KernelInfo> kernelInfo;
+};
+
+struct ThreadGroupPreemptionEnqueueKernelTest : NEO::PreemptionEnqueueKernelTest {
+    void SetUp() override;
+    void TearDown() override;
+
+    NEO::HardwareInfo *globalHwInfo = nullptr;
+    NEO::PreemptionMode originalPreemptionMode = NEO::PreemptionMode::Initial;
+
+    std::unique_ptr<DebugManagerStateRestore> dbgRestore;
+};
+
+struct MidThreadPreemptionEnqueueKernelTest : NEO::PreemptionEnqueueKernelTest {
+    void SetUp() override;
+    void TearDown() override;
+
+    NEO::HardwareInfo *globalHwInfo = nullptr;
+    NEO::PreemptionMode originalPreemptionMode = NEO::PreemptionMode::Initial;
+
+    std::unique_ptr<DebugManagerStateRestore> dbgRestore;
+};

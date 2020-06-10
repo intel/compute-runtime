@@ -328,6 +328,16 @@ int main(int argc, char **argv) {
     gtSystemInfo.IsDynamicallyPopulated = false;
     // clang-format on
 
+    binaryNameSuffix.append(familyName[hwInfoForTests.platform.eRenderCoreFamily]);
+    binaryNameSuffix.append(hwInfoForTests.capabilityTable.platformType);
+
+    std::string testBinaryFiles = getRunPath(argv[0]);
+    testBinaryFiles.append("/");
+    testBinaryFiles.append(binaryNameSuffix);
+    testBinaryFiles.append("/");
+    testBinaryFiles.append(testFiles);
+    testFiles = testBinaryFiles;
+
     std::string executionDirectory(hardwarePrefix[productFamily]);
     executionDirectory += NEO::executionDirectorySuffix; // _aub for aub_tests, empty otherwise
 
@@ -417,7 +427,12 @@ int main(int argc, char **argv) {
         GmmInterface::initialize(nullptr, nullptr);
     }
 
+    GlobalMockSipProgram::initSipProgram();
+    NEO::MockSipData::mockSipKernel.reset(new NEO::MockSipKernel());
+
     retVal = RUN_ALL_TESTS();
+
+    GlobalMockSipProgram::shutDownSipProgram();
 
     return retVal;
 }

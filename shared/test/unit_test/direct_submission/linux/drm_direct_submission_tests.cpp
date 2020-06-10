@@ -8,23 +8,23 @@
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/test/unit_test/fixtures/device_fixture.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"
 
 #include <memory>
 
-struct DrmDirectSubmissionFixture : public ClDeviceFixture {
+struct DrmDirectSubmissionFixture : public DeviceFixture {
     void SetUp() {
-        ClDeviceFixture::SetUp();
+        DeviceFixture::SetUp();
 
         osContext = std::make_unique<OsContextLinux>(drmMock, 0u, 0u, aub_stream::ENGINE_RCS,
                                                      PreemptionMode::ThreadGroup, false, false, false);
     }
 
     void TearDown() {
-        ClDeviceFixture::TearDown();
+        DeviceFixture::TearDown();
     }
 
     std::unique_ptr<OsContextLinux> osContext;
