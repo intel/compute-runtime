@@ -5,12 +5,9 @@
  *
  */
 
+#include "shared/source/command_stream/preemption.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
-
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 
 #include "preemption_test_hw_details_gen12lp.h"
 
@@ -34,7 +31,8 @@ GEN12LPTEST_F(Gen12LpPreemptionTests, getRequiredCmdQSize) {
 
 GEN12LPTEST_F(Gen12LpPreemptionTests, applyPreemptionWaCmds) {
     size_t usedSize = 0;
-    auto &cmdStream = cmdQ->getCS(0);
+    StackVec<char, 1024> streamStorage(1024);
+    LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdStream, device->getDevice());
     EXPECT_EQ(usedSize, cmdStream.getUsed());

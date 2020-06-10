@@ -6,13 +6,10 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
-
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
-#include "opencl/test/unit_test/mocks/mock_command_queue.h"
-#include "opencl/test/unit_test/mocks/mock_csr.h"
 
 #include "preemption_test_hw_details_gen11.h"
 
@@ -62,7 +59,8 @@ GEN11TEST_F(Gen11PreemptionTests, getRequiredCmdQSize) {
 
 GEN11TEST_F(Gen11PreemptionTests, applyPreemptionWaCmds) {
     size_t usedSize = 0;
-    auto &cmdStream = cmdQ->getCS(0);
+    StackVec<char, 1024> streamStorage(1024);
+    LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<FamilyType>(&cmdStream, device->getDevice());
     EXPECT_EQ(usedSize, cmdStream.getUsed());
