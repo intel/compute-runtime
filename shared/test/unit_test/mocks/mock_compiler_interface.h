@@ -168,6 +168,12 @@ struct MockCompilerInterfaceCaptureBuildOptions : CompilerInterface {
         return this->MockCompilerInterfaceCaptureBuildOptions::compile(device, input, out);
     }
 
+    TranslationOutput::ErrorCode link(const NEO::Device &device,
+                                      const TranslationInput &input,
+                                      TranslationOutput &output) override {
+        return this->MockCompilerInterfaceCaptureBuildOptions::compile(device, input, output);
+    }
+
     std::string buildOptions;
     std::string buildInternalOptions;
 };
