@@ -149,6 +149,7 @@ bool APITracerContextImp::isTracingEnabled() { return tracingIsEnabled; }
 // Return 1 if a reference is found.  Otherwise return 0.
 //
 ze_bool_t APITracerContextImp::testForTracerArrayReferences(tracer_array_t *tracerArray) {
+    std::lock_guard<std::mutex> lock(perThreadTracerDataMutex);
     std::list<per_thread_tracer_data_t *>::iterator itr;
     for (itr = perThreadTracerDataList.begin();
          itr != perThreadTracerDataList.end();
