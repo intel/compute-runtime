@@ -32,9 +32,11 @@ SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
     pRasHandleContext = new RasHandleContext(pOsSysman);
     pTempHandleContext = new TemperatureHandleContext(pOsSysman);
     pPowerHandleContext = new PowerHandleContext(pOsSysman);
+    pFabricPortHandleContext = new FabricPortHandleContext(pOsSysman);
 }
 
 SysmanImp::~SysmanImp() {
+    freeResource(pFabricPortHandleContext);
     freeResource(pPowerHandleContext);
     freeResource(pTempHandleContext);
     freeResource(pRasHandleContext);
@@ -70,6 +72,9 @@ void SysmanImp::init() {
     }
     if (pPowerHandleContext) {
         pPowerHandleContext->init();
+    }
+    if (pFabricPortHandleContext) {
+        pFabricPortHandleContext->init();
     }
     if (pPci) {
         pPci->init();
@@ -188,7 +193,7 @@ ze_result_t SysmanImp::memoryGet(uint32_t *pCount, zet_sysman_mem_handle_t *phMe
 }
 
 ze_result_t SysmanImp::fabricPortGet(uint32_t *pCount, zet_sysman_fabric_port_handle_t *phPort) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pFabricPortHandleContext->fabricPortGet(pCount, phPort);
 }
 
 ze_result_t SysmanImp::temperatureGet(uint32_t *pCount, zet_sysman_temp_handle_t *phTemperature) {

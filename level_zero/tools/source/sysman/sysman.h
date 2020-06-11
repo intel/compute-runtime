@@ -7,6 +7,7 @@
 
 #pragma once
 #include "level_zero/tools/source/sysman/engine/engine.h"
+#include "level_zero/tools/source/sysman/fabric_port/fabric_port.h"
 #include "level_zero/tools/source/sysman/frequency/frequency.h"
 #include "level_zero/tools/source/sysman/memory/memory.h"
 #include "level_zero/tools/source/sysman/pci/pci.h"
