@@ -12,10 +12,22 @@ namespace L0 {
 class WddmPowerImp : public OsPower {
   public:
     ze_result_t getEnergyCounter(uint64_t &energy) override;
+    ze_result_t getEnergyThreshold(zet_energy_threshold_t *pThreshold) override;
+    ze_result_t setEnergyThreshold(double threshold) override;
     bool isPowerModuleSupported() override;
 };
 
 ze_result_t WddmPowerImp::getEnergyCounter(uint64_t &energy) {
+
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmPowerImp::getEnergyThreshold(zet_energy_threshold_t *pThreshold) {
+
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmPowerImp::setEnergyThreshold(double threshold) {
 
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

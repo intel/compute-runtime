@@ -45,10 +45,10 @@ ze_result_t PowerImp::powerSetLimits(const zet_power_sustained_limit_t *pSustain
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 ze_result_t PowerImp::powerGetEnergyThreshold(zet_energy_threshold_t *pThreshold) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return (pOsPower->getEnergyThreshold(pThreshold));
 }
 ze_result_t PowerImp::powerSetEnergyThreshold(double threshold) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return (pOsPower->setEnergyThreshold(threshold));
 }
 PowerImp::PowerImp(OsSysman *pOsSysman) {
     pOsPower = OsPower::create(pOsSysman);

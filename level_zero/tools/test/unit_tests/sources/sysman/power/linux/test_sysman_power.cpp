@@ -53,6 +53,16 @@ TEST_F(SysmanPowerFixture, GivenValidOSPowerHandleWhenCheckingForPowerSupportThe
     EXPECT_FALSE(pPowerImp->pOsPower->isPowerModuleSupported());
 }
 
+TEST_F(SysmanPowerFixture, GivenValidOSPowerHandleWhenCallingGetEnergyThresholdExpectUnsupportedFeatureReturned) {
+    zet_energy_threshold_t threshold;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPowerImp->pOsPower->getEnergyThreshold(&threshold));
+}
+
+TEST_F(SysmanPowerFixture, GivenValidOSPowerHandleWhenCallingSetEnergyThresholdExpectUnsupportedFeatureReturned) {
+    double threshold = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPowerImp->pOsPower->setEnergyThreshold(threshold));
+}
+
 TEST_F(SysmanPowerFixture, GivenComponentCountZeroWhenCallingZetSysmanPowerGetThenZeroCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
     uint32_t count = 0;
     ze_result_t result = zetSysmanPowerGet(hSysman, &count, NULL);

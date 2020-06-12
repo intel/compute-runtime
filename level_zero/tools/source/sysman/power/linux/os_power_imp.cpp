@@ -16,6 +16,16 @@ ze_result_t LinuxPowerImp::getEnergyCounter(uint64_t &energy) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t LinuxPowerImp::getEnergyThreshold(zet_energy_threshold_t *pThreshold) {
+
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxPowerImp::setEnergyThreshold(double threshold) {
+
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
