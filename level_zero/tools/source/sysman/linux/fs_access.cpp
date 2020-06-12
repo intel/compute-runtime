@@ -22,7 +22,7 @@ static ze_result_t getResult(int err) {
     if ((EPERM == err) || (EACCES == err)) {
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     } else if (ENOENT == err) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     } else {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
@@ -172,7 +172,7 @@ ze_result_t FsAccess::listDirectory(const std::string path, std::vector<std::str
     list.clear();
     ::DIR *procDir = ::opendir(path.c_str());
     if (!procDir) {
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return getResult(errno);
     }
     struct ::dirent *ent;
     while (NULL != (ent = ::readdir(procDir))) {
@@ -184,6 +184,11 @@ ze_result_t FsAccess::listDirectory(const std::string path, std::vector<std::str
         list.push_back(std::string(ent->d_name));
     }
     ::closedir(procDir);
+    // Check if in above while loop, readdir encountered any error.
+    if (errno != 0) {
+        list.clear();
+        return getResult(errno);
+    }
     return ZE_RESULT_SUCCESS;
 }
 

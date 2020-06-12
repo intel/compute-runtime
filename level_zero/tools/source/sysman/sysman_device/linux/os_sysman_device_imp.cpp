@@ -244,7 +244,11 @@ ze_result_t LinuxSysmanDeviceImp::scanProcessesState(std::vector<zet_process_sta
         uint64_t pid;
         result = pSysfsAccess->read(realClientPidPath, pid);
         if (ZE_RESULT_SUCCESS != result) {
-            return result;
+            if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
+                continue;
+            } else {
+                return result;
+            }
         }
 
         // Traverse the clients/<clientId>/busy directory to get accelerator engines used by process
@@ -252,7 +256,11 @@ ze_result_t LinuxSysmanDeviceImp::scanProcessesState(std::vector<zet_process_sta
         std::string busyDirForEngines = clientsDir + "/" + clientId + "/" + "busy";
         result = pSysfsAccess->scanDirEntries(busyDirForEngines, engineNums);
         if (ZE_RESULT_SUCCESS != result) {
-            return result;
+            if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
+                continue;
+            } else {
+                return result;
+            }
         }
         int64_t engineType = 0;
         // Scan all engine files present in /sys/class/drm/card0/clients/<ClientId>/busy and check
@@ -262,7 +270,11 @@ ze_result_t LinuxSysmanDeviceImp::scanProcessesState(std::vector<zet_process_sta
             std::string engine = busyDirForEngines + "/" + engineNum;
             result = pSysfsAccess->read(engine, timeSpent);
             if (ZE_RESULT_SUCCESS != result) {
-                return result;
+                if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
+                    continue;
+                } else {
+                    return result;
+                }
             }
             if (timeSpent > 0) {
                 int i915EnginNumber = stoi(engineNum);

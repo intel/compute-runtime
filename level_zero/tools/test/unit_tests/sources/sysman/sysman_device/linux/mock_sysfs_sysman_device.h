@@ -12,11 +12,6 @@
 #include "sysman/linux/fs_access.h"
 #include "sysman/sysman.h"
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
-
 using ::testing::_;
 
 namespace L0 {
@@ -50,12 +45,12 @@ struct Mock<SysmanDeviceSysfsAccess> : public SysfsAccess {
     ze_result_t getValString(const std::string file, std::string &val) {
         if (file.compare(subsystemVendorFile) == 0) {
             val = "0x8086";
-        }
-        if (file.compare(deviceFile) == 0) {
+        } else if (file.compare(deviceFile) == 0) {
             val = "0x3ea5";
-        }
-        if (file.compare(vendorFile) == 0) {
+        } else if (file.compare(vendorFile) == 0) {
             val = "0x8086";
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -63,12 +58,18 @@ struct Mock<SysmanDeviceSysfsAccess> : public SysfsAccess {
     ze_result_t getValUnsignedLong(const std::string file, uint64_t &val) {
         if ((file.compare("clients/4/pid") == 0) || (file.compare("clients/5/pid") == 0)) {
             val = pid1;
-        }
-        if (file.compare("clients/6/pid") == 0) {
+        } else if (file.compare("clients/6/pid") == 0) {
             val = pid2;
-        }
-        if ((file.compare("clients/4/busy/0") == 0) || (file.compare("clients/4/busy/3") == 0) || (file.compare("clients/5/busy/1") == 0) || (file.compare("clients/6/busy/0") == 0)) {
+        } else if ((file.compare("clients/4/busy/0") == 0) || (file.compare("clients/4/busy/3") == 0) ||
+                   (file.compare("clients/5/busy/1") == 0) || (file.compare("clients/6/busy/0") == 0)) {
             val = engineTimeSpent;
+        } else if ((file.compare("clients/4/busy/1") == 0) || (file.compare("clients/4/busy/2") == 0) ||
+                   (file.compare("clients/5/busy/0") == 0) || (file.compare("clients/5/busy/2") == 0) ||
+                   (file.compare("clients/5/busy/3") == 0) || (file.compare("clients/6/busy/1") == 0) ||
+                   (file.compare("clients/6/busy/2") == 0) || (file.compare("clients/6/busy/3") == 0)) {
+            val = 0;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -78,12 +79,14 @@ struct Mock<SysmanDeviceSysfsAccess> : public SysfsAccess {
             list.push_back(clientId1);
             list.push_back(clientId2);
             list.push_back(clientId3);
-        }
-        if ((path.compare("clients/4/busy") == 0) || (path.compare("clients/5/busy") == 0) || (path.compare("clients/6/busy") == 0)) {
+        } else if ((path.compare("clients/4/busy") == 0) || (path.compare("clients/5/busy") == 0) ||
+                   (path.compare("clients/6/busy") == 0)) {
             list.push_back(engine0);
             list.push_back(engine1);
             list.push_back(engine2);
             list.push_back(engine3);
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -91,9 +94,9 @@ struct Mock<SysmanDeviceSysfsAccess> : public SysfsAccess {
     Mock() = default;
     ~Mock() override = default;
 
-    MOCK_METHOD2(read, ze_result_t(const std::string file, std::string &val));
-    MOCK_METHOD2(read, ze_result_t(const std::string file, uint64_t &val));
-    MOCK_METHOD2(scanDirEntries, ze_result_t(const std::string path, std::vector<std::string> &list));
+    MOCK_METHOD(ze_result_t, read, (const std::string file, std::string &val), (override));
+    MOCK_METHOD(ze_result_t, read, (const std::string file, uint64_t &val), (override));
+    MOCK_METHOD(ze_result_t, scanDirEntries, (const std::string path, std::vector<std::string> &list), (override));
 };
 
 class PublicLinuxSysmanDeviceImp : public L0::LinuxSysmanDeviceImp {
@@ -104,7 +107,3 @@ class PublicLinuxSysmanDeviceImp : public L0::LinuxSysmanDeviceImp {
 
 } // namespace ult
 } // namespace L0
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

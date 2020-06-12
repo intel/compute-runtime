@@ -109,5 +109,10 @@ TEST_F(SysmanSysmanDeviceFixture, GivenValidSysmanHandleWhileRetrievingInformati
     EXPECT_EQ(processes[1].memSize, memSize2);
 }
 
+TEST_F(SysmanSysmanDeviceFixture, GivenValidSysmanHandleWhileReadingNonExistingFileThenErrorIsReturned) {
+    std::vector<std::string> engineEntries;
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysfsAccess->scanDirEntries("clients/7/busy", engineEntries));
+}
+
 } // namespace ult
 } // namespace L0
