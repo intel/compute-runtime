@@ -71,4 +71,16 @@ struct MockUnrestrictiveContext : MockContext {
     ClDevice *pSubDevice1 = nullptr;
 };
 
+struct MockUnrestrictiveContextMultiGPU : MockContext {
+    MockUnrestrictiveContextMultiGPU();
+
+    UltClDeviceFactory ultClDeviceFactory{2, 2};
+    MockClDevice *pRootDevice0;
+    ClDevice *pSubDevice00 = nullptr;
+    ClDevice *pSubDevice01 = nullptr;
+    MockClDevice *pRootDevice1;
+    ClDevice *pSubDevice10 = nullptr;
+    ClDevice *pSubDevice11 = nullptr;
+};
+
 } // namespace NEO

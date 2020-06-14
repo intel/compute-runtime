@@ -65,8 +65,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
     }
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer,
-                                                 reinterpret_cast<const void *>(pThreadGroupDimensions), isIndirect, isPredicate, kernel,
-                                                 0, device->getNEODevice(), commandListPreemptionMode);
+                                                 reinterpret_cast<const void *>(pThreadGroupDimensions),
+                                                 isIndirect,
+                                                 isPredicate,
+                                                 kernel,
+                                                 0,
+                                                 device->getNEODevice(),
+                                                 commandListPreemptionMode);
 
     appendSignalEventPostWalker(hEvent);
 

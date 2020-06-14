@@ -126,4 +126,16 @@ MockUnrestrictiveContext::MockUnrestrictiveContext() : MockContext(nullptr, null
     initializeWithDevices(ClDeviceVector{deviceIds, 3}, true);
 }
 
+MockUnrestrictiveContextMultiGPU::MockUnrestrictiveContextMultiGPU() : MockContext(nullptr, nullptr) {
+    pRootDevice0 = ultClDeviceFactory.rootDevices[0];
+    pSubDevice00 = ultClDeviceFactory.subDevices[0];
+    pSubDevice01 = ultClDeviceFactory.subDevices[1];
+    pRootDevice1 = ultClDeviceFactory.rootDevices[1];
+    pSubDevice10 = ultClDeviceFactory.subDevices[2];
+    pSubDevice11 = ultClDeviceFactory.subDevices[3];
+    cl_device_id deviceIds[] = {pRootDevice0, pSubDevice00, pSubDevice01,
+                                pRootDevice1, pSubDevice10, pSubDevice11};
+    initializeWithDevices(ClDeviceVector{deviceIds, 6}, true);
+}
+
 } // namespace NEO

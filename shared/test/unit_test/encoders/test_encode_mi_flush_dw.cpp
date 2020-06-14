@@ -20,7 +20,7 @@ using EncodeMiFlushDWTest = testing::Test;
 HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithNoPostSyncThenPostSyncNotWriteIsSet) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint32_t pCmdBuffer[1024];
-    MockGraphicsAllocation gfxAllocation((void *)pCmdBuffer, sizeof(pCmdBuffer));
+    MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
     LinearStream stream(&gfxAllocation);
 
     EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, 0, 0, false, false);
@@ -38,7 +38,7 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithNoPostSyncThe
 HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithPostSyncDataThenPostSyncDataIsSet) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint32_t pCmdBuffer[1024];
-    MockGraphicsAllocation gfxAllocation((void *)pCmdBuffer, sizeof(pCmdBuffer));
+    MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
     LinearStream stream(&gfxAllocation);
 
     uint64_t address = 0x1000;
@@ -68,7 +68,7 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithPostSyncDataT
 HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithTimestampFaslseThenPostSyncDataTypeIsSet) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint32_t pCmdBuffer[1024];
-    MockGraphicsAllocation gfxAllocation((void *)pCmdBuffer, sizeof(pCmdBuffer));
+    MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
     LinearStream stream(&gfxAllocation);
 
     uint64_t address = 0x1000;
@@ -97,7 +97,7 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithTimestampFasl
 HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithTimestampTrueThenPostSyncDataTypeIsSet) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint32_t pCmdBuffer[1024];
-    MockGraphicsAllocation gfxAllocation((void *)pCmdBuffer, sizeof(pCmdBuffer));
+    MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
     LinearStream stream(&gfxAllocation);
 
     uint64_t address = 0x1000;

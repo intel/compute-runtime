@@ -121,7 +121,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             UnifiedMemoryControls unifiedMemoryControls = commandList->getUnifiedMemoryControls();
 
             auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
-            svmAllocsManager->addInternalAllocationsToResidencyContainer(commandList->commandContainer.getResidencyContainer(),
+            svmAllocsManager->addInternalAllocationsToResidencyContainer(neoDevice->getRootDeviceIndex(),
+                                                                         commandList->commandContainer.getResidencyContainer(),
                                                                          unifiedMemoryControls.generateMask());
         }
 

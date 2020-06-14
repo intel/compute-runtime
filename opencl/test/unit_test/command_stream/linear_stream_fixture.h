@@ -17,7 +17,7 @@ namespace NEO {
 
 struct LinearStreamFixture {
     LinearStreamFixture(void)
-        : gfxAllocation((void *)pCmdBuffer, sizeof(pCmdBuffer)), linearStream(&gfxAllocation) {
+        : gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer)), linearStream(&gfxAllocation) {
     }
 
     virtual void SetUp(void) {

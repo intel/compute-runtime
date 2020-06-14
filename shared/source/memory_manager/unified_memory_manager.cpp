@@ -70,12 +70,20 @@ SvmMapOperation *SVMAllocsManager::MapOperationsTracker::get(const void *regionP
     return &iter->second;
 }
 
-void SVMAllocsManager::addInternalAllocationsToResidencyContainer(ResidencyContainer &residencyContainer, uint32_t requestedTypesMask) {
+void SVMAllocsManager::addInternalAllocationsToResidencyContainer(uint32_t rootDeviceIndex,
+                                                                  ResidencyContainer &residencyContainer,
+                                                                  uint32_t requestedTypesMask) {
     std::unique_lock<SpinLock> lock(mtx);
     for (auto &allocation : this->SVMAllocs.allocations) {
-        if (allocation.second.memoryType & requestedTypesMask) {
-            residencyContainer.push_back(allocation.second.gpuAllocation);
+        if (!(allocation.second.memoryType & requestedTypesMask)) {
+            continue;
         }
+        if ((allocation.second.memoryType & InternalMemoryType::DEVICE_UNIFIED_MEMORY ||
+             allocation.second.memoryType & InternalMemoryType::SHARED_UNIFIED_MEMORY) &&
+            (static_cast<Device *>(allocation.second.device)->getRootDeviceIndex() != rootDeviceIndex)) {
+            continue;
+        }
+        residencyContainer.push_back(allocation.second.gpuAllocation);
     }
 }
 

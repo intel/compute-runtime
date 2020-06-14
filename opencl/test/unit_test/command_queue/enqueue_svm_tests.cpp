@@ -11,6 +11,7 @@
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
@@ -24,6 +25,7 @@
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_svm_manager.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -1331,6 +1333,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreMadeResidentThenOnlyNonSvmAll
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     unifiedMemoryProperties.subdeviceBitfield = pDevice->getDeviceBitfield();
+    unifiedMemoryProperties.device = pDevice;
     auto allocationSize = 4096u;
     auto svmManager = this->context->getSVMAllocsManager();
     EXPECT_NE(0u, svmManager->getNumAllocs());
@@ -1356,6 +1359,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThen
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     unifiedMemoryProperties.subdeviceBitfield = pDevice->getDeviceBitfield();
+    unifiedMemoryProperties.device = pDevice;
     auto allocationSize = 4096u;
     auto svmManager = this->context->getSVMAllocsManager();
     EXPECT_NE(0u, svmManager->getNumAllocs());
@@ -1366,13 +1370,180 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThen
     ResidencyContainer residencyContainer;
     EXPECT_EQ(0u, residencyContainer.size());
 
-    svmManager->addInternalAllocationsToResidencyContainer(residencyContainer, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    svmManager->addInternalAllocationsToResidencyContainer(pDevice->getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
 
     //only unified memory allocation is added to residency container
     EXPECT_EQ(1u, residencyContainer.size());
     EXPECT_EQ(residencyContainer[0]->getGpuAddress(), castToUint64(unifiedMemoryPtr));
 
     svmManager->freeSVMAlloc(unifiedMemoryPtr);
+}
+
+struct MemoryAllocationTypeArray {
+    const InternalMemoryType allocationType[3] = {InternalMemoryType::HOST_UNIFIED_MEMORY,
+                                                  InternalMemoryType::DEVICE_UNIFIED_MEMORY,
+                                                  InternalMemoryType::SHARED_UNIFIED_MEMORY};
+};
+
+struct UpdateResidencyContainerMultipleDevicesTest : public ::testing::WithParamInterface<std::tuple<InternalMemoryType, InternalMemoryType>>,
+                                                     public ::testing::Test {
+    void SetUp() override {
+        device = context.pRootDevice0;
+        subDevice0 = context.pSubDevice00;
+        subDevice1 = context.pSubDevice01;
+
+        peerDevice = context.pRootDevice1;
+        peerSubDevice0 = context.pSubDevice10;
+        peerSubDevice1 = context.pSubDevice11;
+
+        svmManager = context.getSVMAllocsManager();
+        EXPECT_EQ(0u, svmManager->getNumAllocs());
+    }
+    MockUnrestrictiveContextMultiGPU context;
+    MockClDevice *device;
+    ClDevice *subDevice0 = nullptr;
+    ClDevice *subDevice1 = nullptr;
+    MockClDevice *peerDevice;
+    ClDevice *peerSubDevice0 = nullptr;
+    ClDevice *peerSubDevice1 = nullptr;
+    SVMAllocsManager *svmManager = nullptr;
+};
+
+HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
+         givenNoAllocationsCreatedThenNoInternalAllocationsAreAddedToResidencyContainer) {
+    ResidencyContainer residencyContainer;
+    EXPECT_EQ(0u, residencyContainer.size());
+    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(0u, residencyContainer.size());
+}
+
+HWTEST_P(UpdateResidencyContainerMultipleDevicesTest, givenAllocationItIsAddedToContainerOnlyIfMaskMatches) {
+    uint32_t pCmdBuffer[1024];
+    MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
+
+    InternalMemoryType type = std::get<0>(GetParam());
+    uint32_t mask = std::get<1>(GetParam());
+
+    SvmAllocationData allocData;
+    allocData.gpuAllocation = &gfxAllocation;
+    allocData.memoryType = type;
+    allocData.device = &device->getDevice();
+
+    svmManager->insertSVMAlloc(allocData);
+    EXPECT_EQ(1u, svmManager->getNumAllocs());
+
+    ResidencyContainer residencyContainer;
+    EXPECT_EQ(0u, residencyContainer.size());
+
+    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           mask);
+
+    if (mask == static_cast<uint32_t>(type)) {
+        EXPECT_EQ(1u, residencyContainer.size());
+        EXPECT_EQ(residencyContainer[0]->getGpuAddress(), gfxAllocation.getGpuAddress());
+    } else {
+        EXPECT_EQ(0u, residencyContainer.size());
+    }
+}
+
+MemoryAllocationTypeArray memoryTypeArray;
+INSTANTIATE_TEST_SUITE_P(UpdateResidencyContainerMultipleDevicesTests,
+                         UpdateResidencyContainerMultipleDevicesTest,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(memoryTypeArray.allocationType),
+                             ::testing::ValuesIn(memoryTypeArray.allocationType)));
+
+HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
+         whenInternalAllocationsAreAddedToResidencyContainerThenOnlyAllocationsFromSameDeviceAreAdded) {
+
+    uint32_t pCmdBuffer[1024];
+    MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
+    SvmAllocationData allocData;
+    allocData.gpuAllocation = &gfxAllocation;
+    allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData.device = &device->getDevice();
+
+    uint32_t pCmdBufferPeer[1024];
+    MockGraphicsAllocation gfxAllocationPeer((void *)pCmdBufferPeer, sizeof(pCmdBufferPeer));
+    SvmAllocationData allocDataPeer;
+    allocDataPeer.gpuAllocation = &gfxAllocationPeer;
+    allocDataPeer.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocDataPeer.device = &peerDevice->getDevice();
+
+    svmManager->insertSVMAlloc(allocData);
+    svmManager->insertSVMAlloc(allocDataPeer);
+    EXPECT_EQ(2u, svmManager->getNumAllocs());
+
+    ResidencyContainer residencyContainer;
+    EXPECT_EQ(0u, residencyContainer.size());
+    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(1u, residencyContainer.size());
+    EXPECT_EQ(residencyContainer[0]->getGpuAddress(), gfxAllocation.getGpuAddress());
+}
+
+HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
+         givenAllocationsFromSubDevicesBelongingTheTargetDeviceThenTheyAreAddedToTheResidencyContainer) {
+
+    uint32_t pCmdBuffer[1024];
+    MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
+    SvmAllocationData allocData0;
+    allocData0.gpuAllocation = &gfxAllocation;
+    allocData0.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData0.device = &subDevice0->getDevice();
+
+    uint32_t pCmdBufferPeer[1024];
+    MockGraphicsAllocation gfxAllocationPeer((void *)pCmdBufferPeer, sizeof(pCmdBufferPeer));
+    SvmAllocationData allocData1;
+    allocData1.gpuAllocation = &gfxAllocationPeer;
+    allocData1.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData1.device = &subDevice1->getDevice();
+
+    svmManager->insertSVMAlloc(allocData0);
+    svmManager->insertSVMAlloc(allocData1);
+    EXPECT_EQ(2u, svmManager->getNumAllocs());
+
+    ResidencyContainer residencyContainer;
+    EXPECT_EQ(0u, residencyContainer.size());
+    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(2u, residencyContainer.size());
+}
+
+HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
+         givenAllocationsFromSubDevicesNotBelongingTheTargetDeviceThenTheyAreNotAddedToTheResidencyContainer) {
+
+    uint32_t pCmdBuffer[1024];
+    MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
+    SvmAllocationData allocData0;
+    allocData0.gpuAllocation = &gfxAllocation;
+    allocData0.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData0.device = &subDevice0->getDevice();
+
+    uint32_t pCmdBufferPeer[1024];
+    MockGraphicsAllocation gfxAllocationPeer((void *)pCmdBufferPeer, sizeof(pCmdBufferPeer));
+    SvmAllocationData allocData1;
+    allocData1.gpuAllocation = &gfxAllocationPeer;
+    allocData1.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData1.device = &subDevice1->getDevice();
+
+    svmManager->insertSVMAlloc(allocData0);
+    svmManager->insertSVMAlloc(allocData1);
+    EXPECT_EQ(2u, svmManager->getNumAllocs());
+
+    ResidencyContainer residencyContainer;
+    EXPECT_EQ(0u, residencyContainer.size());
+    svmManager->addInternalAllocationsToResidencyContainer(peerDevice->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(0u, residencyContainer.size());
 }
 
 HWTEST_F(EnqueueSvmTest, GivenDstHostPtrWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {

@@ -126,7 +126,7 @@ HWTEST_F(DispatchWalkerTest, WhenGettingComputeDimensionsThenCorrectNumberOfDime
 
 HWTEST_F(DispatchWalkerTest, givenSimd1WhenSetGpgpuWalkerThreadDataThenSimdInWalkerIsSetTo32Value) {
     uint32_t pCmdBuffer[1024];
-    MockGraphicsAllocation gfxAllocation((void *)pCmdBuffer, sizeof(pCmdBuffer));
+    MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
     LinearStream linearStream(&gfxAllocation);
 
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
