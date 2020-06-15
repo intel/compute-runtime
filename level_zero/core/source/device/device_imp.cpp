@@ -65,7 +65,7 @@ void DeviceImp::setDriverHandle(DriverHandle *driverHandle) {
 ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) {
     *value = false;
 
-    DeviceImp *pPeerDevice = reinterpret_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
+    DeviceImp *pPeerDevice = static_cast<DeviceImp *>(Device::fromHandle(hPeerDevice));
     if (this->getNEODevice()->getRootDeviceIndex() == pPeerDevice->getNEODevice()->getRootDeviceIndex()) {
         *value = true;
     }
@@ -597,7 +597,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
             if (subDevice == nullptr) {
                 return nullptr;
             }
-            reinterpret_cast<DeviceImp *>(subDevice)->isSubdevice = true;
+            static_cast<DeviceImp *>(subDevice)->isSubdevice = true;
             device->subDevices.push_back(static_cast<Device *>(subDevice));
         }
         device->numSubDevices = static_cast<uint32_t>(device->subDevices.size());

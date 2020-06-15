@@ -253,6 +253,7 @@ TEST_F(MultipleDevicesTest, whenRetrievingNumberOfSubdevicesThenCorrectNumberIsR
     EXPECT_EQ(numSubDevices, count);
     for (auto subDevice : subDevices) {
         EXPECT_NE(nullptr, subDevice);
+        EXPECT_TRUE(static_cast<DeviceImp *>(subDevice)->isSubdevice);
     }
 }
 
