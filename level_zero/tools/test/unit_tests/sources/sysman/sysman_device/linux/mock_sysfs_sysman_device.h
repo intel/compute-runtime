@@ -8,8 +8,8 @@
 #pragma once
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/sysman_device/linux/os_sysman_device_imp.h"
+#include "level_zero/tools/source/sysman/sysman_device/sysman_device_imp.h"
 
-#include "sysman/linux/fs_access.h"
 #include "sysman/sysman.h"
 
 using ::testing::_;
@@ -91,8 +91,7 @@ struct Mock<SysmanDeviceSysfsAccess> : public SysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    Mock() = default;
-    ~Mock() override = default;
+    Mock<SysmanDeviceSysfsAccess>() = default;
 
     MOCK_METHOD(ze_result_t, read, (const std::string file, std::string &val), (override));
     MOCK_METHOD(ze_result_t, read, (const std::string file, uint64_t &val), (override));

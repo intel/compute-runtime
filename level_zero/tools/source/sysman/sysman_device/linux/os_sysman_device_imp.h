@@ -6,12 +6,12 @@
  */
 
 #pragma once
-#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/sysman_device/os_sysman_device.h"
-#include "level_zero/tools/source/sysman/sysman_device/sysman_device_imp.h"
 
 namespace L0 {
+
+class SysfsAccess;
 
 class LinuxSysmanDeviceImp : public OsSysmanDevice, public NEO::NonCopyableClass {
   public:

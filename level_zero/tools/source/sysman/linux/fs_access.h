@@ -28,18 +28,18 @@ class FsAccess {
     static FsAccess *create();
     virtual ~FsAccess() = default;
 
-    ze_result_t canRead(const std::string file);
-    ze_result_t canWrite(const std::string file);
-    ze_result_t getFileMode(const std::string file, ::mode_t &mode);
+    virtual ze_result_t canRead(const std::string file);
+    virtual ze_result_t canWrite(const std::string file);
+    virtual ze_result_t getFileMode(const std::string file, ::mode_t &mode);
 
     virtual ze_result_t read(const std::string file, uint64_t &val);
-    ze_result_t read(const std::string file, std::string &val);
-    ze_result_t read(const std::string file, std::vector<std::string> &val);
+    virtual ze_result_t read(const std::string file, std::string &val);
+    virtual ze_result_t read(const std::string file, std::vector<std::string> &val);
 
-    ze_result_t write(const std::string file, const std::string val);
+    virtual ze_result_t write(const std::string file, const std::string val);
 
-    ze_result_t readSymLink(const std::string path, std::string &buf);
-    ze_result_t getRealPath(const std::string path, std::string &buf);
+    virtual ze_result_t readSymLink(const std::string path, std::string &buf);
+    virtual ze_result_t getRealPath(const std::string path, std::string &buf);
     ze_result_t listDirectory(const std::string path, std::vector<std::string> &list);
     std::string getBaseName(const std::string path);
     std::string getDirName(const std::string path);
@@ -75,25 +75,25 @@ class SysfsAccess : private FsAccess {
     SysfsAccess() = default;
     ~SysfsAccess() override = default;
 
-    ze_result_t canRead(const std::string file);
-    ze_result_t canWrite(const std::string file);
-    ze_result_t getFileMode(const std::string file, ::mode_t &mode);
+    ze_result_t canRead(const std::string file) override;
+    ze_result_t canWrite(const std::string file) override;
+    ze_result_t getFileMode(const std::string file, ::mode_t &mode) override;
 
-    MOCKABLE_VIRTUAL ze_result_t read(const std::string file, std::string &val);
+    ze_result_t read(const std::string file, std::string &val) override;
     MOCKABLE_VIRTUAL ze_result_t read(const std::string file, int &val);
     ze_result_t read(const std::string file, uint64_t &val) override;
     MOCKABLE_VIRTUAL ze_result_t read(const std::string file, double &val);
-    MOCKABLE_VIRTUAL ze_result_t read(const std::string file, std::vector<std::string> &val);
+    ze_result_t read(const std::string file, std::vector<std::string> &val) override;
 
-    ze_result_t write(const std::string file, const std::string val);
+    ze_result_t write(const std::string file, const std::string val) override;
     MOCKABLE_VIRTUAL ze_result_t write(const std::string file, const int val);
     MOCKABLE_VIRTUAL ze_result_t write(const std::string file, const uint64_t val);
     MOCKABLE_VIRTUAL ze_result_t write(const std::string file, const double val);
     ze_result_t write(const std::string file, std::vector<std::string> val);
 
     MOCKABLE_VIRTUAL ze_result_t scanDirEntries(const std::string path, std::vector<std::string> &list);
-    MOCKABLE_VIRTUAL ze_result_t readSymLink(const std::string path, std::string &buf);
-    ze_result_t getRealPath(const std::string path, std::string &buf);
+    ze_result_t readSymLink(const std::string path, std::string &buf) override;
+    ze_result_t getRealPath(const std::string path, std::string &buf) override;
     ze_result_t bindDevice(const std::string device);
     ze_result_t unbindDevice(const std::string device);
     bool fileExists(const std::string file) override;
