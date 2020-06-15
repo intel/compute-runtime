@@ -38,8 +38,6 @@ TEST(DebugSettingsManager, WithoutDebugFunctionality) {
 
     // Should not be enabled without debug functionality
     EXPECT_TRUE(debugManager.disabled());
-    // SettingsReader not created
-    EXPECT_EQ(nullptr, debugManager.getSettingsReader());
 
 // debug variables / flags set to default
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)                                                  \
@@ -47,6 +45,8 @@ TEST(DebugSettingsManager, WithoutDebugFunctionality) {
         bool isEqual = TestDebugFlagsChecker::isEqual(debugManager.flags.variableName.get(), static_cast<dataType>(defaultValue)); \
         EXPECT_TRUE(isEqual);                                                                                                      \
     }
+#include "shared/source/debug_settings/release_variables.inl"
+
 #include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 }
@@ -144,4 +144,48 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWhenCallingDumpFlagsThe
 TEST(AllocationInfoLogging, givenBaseGraphicsAllocationWhenGettingImplementationSpecificAllocationInfoThenReturnEmptyInfoString) {
     GraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
     EXPECT_STREQ(graphicsAllocation.getAllocationInfoString().c_str(), "");
+}
+
+TEST(DebugSettingsManager, givenDisabledDebugManagerWhenCreateThenOnlyReleaseVariablesAreRead) {
+    bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
+    if (!settingsFileExists) {
+        const char data[] = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
+        writeDataToFile(SettingsReader::settingsFileName, &data, sizeof(data));
+    }
+
+    SettingsReader *reader = SettingsReader::createFileReader();
+    EXPECT_NE(nullptr, reader);
+
+    FullyDisabledTestDebugManager debugManager;
+    debugManager.setReaderImpl(reader);
+    debugManager.injectSettingsFromReader();
+
+    EXPECT_EQ(1, debugManager.flags.MakeAllBuffersResident.get());
+    EXPECT_EQ(0, debugManager.flags.LogApiCalls.get());
+
+    if (!settingsFileExists) {
+        remove(SettingsReader::settingsFileName);
+    }
+}
+
+TEST(DebugSettingsManager, givenEnabledDebugManagerWhenCreateThenAllVariablesAreRead) {
+    bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
+    if (!settingsFileExists) {
+        const char data[] = "LogApiCalls = 1\nMakeAllBuffersResident = 1";
+        writeDataToFile(SettingsReader::settingsFileName, &data, sizeof(data));
+    }
+
+    SettingsReader *reader = SettingsReader::createFileReader();
+    EXPECT_NE(nullptr, reader);
+
+    FullyEnabledTestDebugManager debugManager;
+    debugManager.setReaderImpl(reader);
+    debugManager.injectSettingsFromReader();
+
+    EXPECT_EQ(1, debugManager.flags.MakeAllBuffersResident.get());
+    EXPECT_EQ(1, debugManager.flags.LogApiCalls.get());
+
+    if (!settingsFileExists) {
+        remove(SettingsReader::settingsFileName);
+    }
 }

@@ -358,7 +358,7 @@ Buffer *Buffer::create(Context *context,
         return nullptr;
     }
 
-    if (isMakeAllBuffersResidentSet()) {
+    if (DebugManager.flags.MakeAllBuffersResident.get()) {
         auto graphicsAllocation = pBuffer->multiGraphicsAllocation.getDefaultGraphicsAllocation();
         auto rootDeviceEnvironment = pBuffer->executionEnvironment->rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()].get();
         rootDeviceEnvironment->memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1));
@@ -450,19 +450,6 @@ GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(const Memor
 bool Buffer::isReadOnlyMemoryPermittedByFlags(const MemoryProperties &properties) {
     // Host won't access or will only read and kernel will only read
     return (properties.flags.hostNoAccess || properties.flags.hostReadOnly) && properties.flags.readOnly;
-}
-
-bool Buffer::isMakeAllBuffersResidentSet() {
-    static std::once_flag isMakeAllBufferResidentObtained;
-
-    std::call_once(isMakeAllBufferResidentObtained, [&]() {
-        auto value = DebugManager.flags.MakeAllBuffersResident.get();
-        auto settingsReader = SettingsReaderCreator::create(oclRegPath);
-        value |= settingsReader->getSetting("MakeAllBuffersResident", false);
-        DebugManager.flags.MakeAllBuffersResident.set(value);
-    });
-
-    return DebugManager.flags.MakeAllBuffersResident.get();
 }
 
 Buffer *Buffer::createSubBuffer(cl_mem_flags flags,

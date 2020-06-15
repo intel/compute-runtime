@@ -67,6 +67,7 @@ struct DebugVariables {
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     DebugVarBase<dataType> variableName{defaultValue};
 #include "debug_variables.inl"
+#include "release_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 };
 

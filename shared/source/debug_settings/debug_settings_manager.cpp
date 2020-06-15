@@ -27,11 +27,9 @@ namespace NEO {
 
 template <DebugFunctionalityLevel DebugLevel>
 DebugSettingsManager<DebugLevel>::DebugSettingsManager(const char *registryPath) {
-    if (registryReadAvailable()) {
-        readerImpl = SettingsReaderCreator::create(std::string(registryPath));
-        injectSettingsFromReader();
-        dumpFlags();
-    }
+    readerImpl = SettingsReaderCreator::create(std::string(registryPath));
+    injectSettingsFromReader();
+    dumpFlags();
     translateDebugSettings(flags);
 
     while (isLoopAtDriverInitEnabled())
@@ -73,7 +71,10 @@ void DebugSettingsManager<DebugLevel>::dumpFlags() const {
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)   \
     settingsDumpFile << #variableName << " = " << flags.variableName.get() << '\n'; \
     dumpNonDefaultFlag<dataType>(#variableName, flags.variableName.get(), defaultValue);
+    if (registryReadAvailable()) {
 #include "debug_variables.inl"
+    }
+#include "release_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 }
 
@@ -85,7 +86,11 @@ void DebugSettingsManager<DebugLevel>::injectSettingsFromReader() {
         dataType tempData = readerImpl->getSetting(#variableName, flags.variableName.get()); \
         flags.variableName.set(tempData);                                                    \
     }
+
+    if (registryReadAvailable()) {
 #include "debug_variables.inl"
+    }
+#include "release_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 }
 

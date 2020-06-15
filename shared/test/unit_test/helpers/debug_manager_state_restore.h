@@ -22,6 +22,8 @@ class DebugManagerStateRestore {
         DebugManager.injectFcn = injectFcnSnapshot;
 #undef DECLARE_DEBUG_VARIABLE
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) shrink(DebugManager.flags.variableName.getRef());
+#include "shared/source/debug_settings/release_variables.inl"
+
 #include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
     }

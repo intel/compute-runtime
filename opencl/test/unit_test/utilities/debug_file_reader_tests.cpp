@@ -26,6 +26,8 @@ TEST(SettingsFileReader, givenTestFileWithDefaultValuesWhenTheyAreQueriedThenDef
     compareSuccessful = (defaultValue == reader->getSetting(#variableName, defaultValue)); \
     EXPECT_TRUE(compareSuccessful) << #variableName;                                       \
     debugVariableCount++;
+#include "shared/source/debug_settings/release_variables.inl"
+
 #include "debug_variables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 

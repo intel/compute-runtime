@@ -291,7 +291,7 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_kernel_properties_t *pKerne
     pKernelProperties->int64AtomicsSupported = hardwareInfo.capabilityTable.ftrSupportsInteger64BitAtomics;
     pKernelProperties->halfFpCapabilities = defaultFpFlags;
 
-    if (NEO::releaseFP64Override() || NEO::DebugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
+    if (NEO::DebugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
         pKernelProperties->fp64Supported = true;
         pKernelProperties->singleFpCapabilities = ZE_FP_CAPS_ROUNDED_DIVIDE_SQRT;
         pKernelProperties->doubleFpCapabilities = defaultFpFlags;

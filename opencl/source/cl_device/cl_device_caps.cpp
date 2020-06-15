@@ -37,12 +37,10 @@ static constexpr cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_c
                                                                                        CL_FP_DENORM |
                                                                                        CL_FP_FMA);
 
-bool releaseFP64Override();
-
 void ClDevice::setupFp64Flags() {
     auto &hwInfo = getHardwareInfo();
 
-    if (releaseFP64Override() || DebugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
+    if (DebugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
         deviceExtensions += "cl_khr_fp64 ";
         deviceInfo.singleFpConfig = static_cast<cl_device_fp_config>(CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
         deviceInfo.doubleFpConfig = defaultFpFlags;
