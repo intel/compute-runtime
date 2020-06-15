@@ -851,7 +851,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithNoTimestampPacketTests, givenNoTimestampPacket
 
 using BlitEnqueueWithDebugCapabilityTests = BlitEnqueueTests<0>;
 
-HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, bdunajsk) {
+HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenDebugFlagSetWhenDispatchingBlitEnqueueThenAddPausingCommands) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
