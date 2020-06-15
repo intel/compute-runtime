@@ -22,7 +22,7 @@ class RasImp : public NEO::NonCopyableClass, public Ras {
     ze_result_t rasGetState(ze_bool_t clear, uint64_t *pTotalErrors, zet_ras_details_t *pDetails) override;
 
     RasImp() = default;
-    RasImp(OsSysman *pOsSysman);
+    RasImp(OsSysman *pOsSysman, zet_ras_error_type_t type);
     ~RasImp() override;
 
     OsRas *pOsRas = nullptr;

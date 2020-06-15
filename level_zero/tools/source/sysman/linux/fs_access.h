@@ -32,7 +32,7 @@ class FsAccess {
     ze_result_t canWrite(const std::string file);
     ze_result_t getFileMode(const std::string file, ::mode_t &mode);
 
-    ze_result_t read(const std::string file, uint64_t &val);
+    virtual ze_result_t read(const std::string file, uint64_t &val);
     ze_result_t read(const std::string file, std::string &val);
     ze_result_t read(const std::string file, std::vector<std::string> &val);
 
@@ -43,7 +43,7 @@ class FsAccess {
     ze_result_t listDirectory(const std::string path, std::vector<std::string> &list);
     std::string getBaseName(const std::string path);
     std::string getDirName(const std::string path);
-    ze_bool_t fileExists(const std::string file);
+    virtual bool fileExists(const std::string file);
 
   protected:
     FsAccess();
@@ -81,7 +81,7 @@ class SysfsAccess : private FsAccess {
 
     MOCKABLE_VIRTUAL ze_result_t read(const std::string file, std::string &val);
     MOCKABLE_VIRTUAL ze_result_t read(const std::string file, int &val);
-    MOCKABLE_VIRTUAL ze_result_t read(const std::string file, uint64_t &val);
+    ze_result_t read(const std::string file, uint64_t &val) override;
     MOCKABLE_VIRTUAL ze_result_t read(const std::string file, double &val);
     MOCKABLE_VIRTUAL ze_result_t read(const std::string file, std::vector<std::string> &val);
 
@@ -96,7 +96,7 @@ class SysfsAccess : private FsAccess {
     ze_result_t getRealPath(const std::string path, std::string &buf);
     ze_result_t bindDevice(const std::string device);
     ze_result_t unbindDevice(const std::string device);
-    ze_bool_t fileExists(const std::string file);
+    bool fileExists(const std::string file) override;
     ze_bool_t isMyDeviceFile(const std::string dev);
 
   private:

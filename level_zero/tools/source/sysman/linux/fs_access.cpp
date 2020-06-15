@@ -209,7 +209,7 @@ std::string FsAccess::getDirName(const std::string path) {
     return path.substr(0, pos);
 }
 
-ze_bool_t FsAccess::fileExists(const std::string file) {
+bool FsAccess::fileExists(const std::string file) {
     struct stat sb;
     if (stat(file.c_str(), &sb) == 0) {
         return true;
@@ -463,7 +463,7 @@ ze_result_t SysfsAccess::unbindDevice(std::string device) {
     return FsAccess::write(intelGpuUnbindEntry, device);
 }
 
-ze_bool_t SysfsAccess::fileExists(const std::string file) {
+bool SysfsAccess::fileExists(const std::string file) {
     // Prepend sysfs directory path and call the base fileExists
     return FsAccess::fileExists(fullPath(file).c_str());
 }

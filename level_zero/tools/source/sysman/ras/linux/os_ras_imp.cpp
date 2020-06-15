@@ -5,26 +5,39 @@
  *
  */
 
-#include "shared/source/helpers/non_copyable_or_moveable.h"
-
-#include "level_zero/tools/source/sysman/ras/os_ras.h"
+#include "level_zero/tools/source/sysman/ras/linux/os_ras_imp.h"
 
 #include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 
-class LinuxRasImp : public OsRas, public NEO::NonCopyableClass {
-  public:
-    LinuxRasImp(OsSysman *pOsSysman);
-    ~LinuxRasImp() override = default;
-    ze_result_t getCounterValues(zet_ras_details_t *pDetails) override;
+const std::string LinuxRasImp::rasCounterDir("/var/lib/libze_intel_gpu/");
+const std::string LinuxRasImp::resetCounter("ras_reset_count");
+const std::string LinuxRasImp::resetCounterFile = rasCounterDir + resetCounter;
 
-  private:
-    FsAccess *pFsAccess = nullptr;
-};
-
+void LinuxRasImp::setRasErrorType(zet_ras_error_type_t type) {
+    osRasErrorType = type;
+}
+bool LinuxRasImp::isRasSupported(void) {
+    if (false == pFsAccess->fileExists(rasCounterDir)) {
+        return false;
+    }
+    if (osRasErrorType == ZET_RAS_ERROR_TYPE_CORRECTABLE) {
+        return false;
+    } else {
+        // i915 support for UNCORRECTABLE errors is assumed true
+        // since support for reset event is already available.
+        return true;
+    }
+}
 ze_result_t LinuxRasImp::getCounterValues(zet_ras_details_t *pDetails) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    uint64_t counterValue = 0;
+    ze_result_t result = pFsAccess->read(resetCounterFile, counterValue);
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+    pDetails->numResets = counterValue;
+    return result;
 }
 
 LinuxRasImp::LinuxRasImp(OsSysman *pOsSysman) {

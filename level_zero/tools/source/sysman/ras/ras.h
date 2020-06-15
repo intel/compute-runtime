@@ -29,6 +29,8 @@ class Ras : _zet_sysman_ras_handle_t {
         return static_cast<Ras *>(handle);
     }
     inline zet_sysman_ras_handle_t toHandle() { return this; }
+    bool isRasErrorSupported = false;
+    zet_ras_error_type_t rasErrorType;
 };
 
 struct RasHandleContext {
@@ -41,6 +43,9 @@ struct RasHandleContext {
 
     OsSysman *pOsSysman = nullptr;
     std::vector<Ras *> handleList;
+
+  private:
+    void createHandle(zet_ras_error_type_t type);
 };
 
 } // namespace L0
