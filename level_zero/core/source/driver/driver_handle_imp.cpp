@@ -149,7 +149,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
             }
         }
 
-        auto device = Device::create(this, neoDevice.release(), currentDeviceMask);
+        auto device = Device::create(this, neoDevice.release(), currentDeviceMask, false);
         this->devices.push_back(device);
     }
 

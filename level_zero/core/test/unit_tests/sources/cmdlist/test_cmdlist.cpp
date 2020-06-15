@@ -372,8 +372,6 @@ class MockDriverHandle : public L0::DriverHandleImp {
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionCalledThenAppendMemoryCopyWithappendMemoryCopyWithBliterCalled, Platforms) {
     MockCommandList<gfxCoreFamily> cmdList;
     cmdList.initialize(device, true);
-    MockDriverHandle driverHandle;
-    device->setDriverHandle(&driverHandle);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {};
@@ -385,8 +383,6 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionCalledThenAppen
 HWTEST2_F(CommandListCreate, givenCommandListAnd3DWhbufferenMemoryCopyRegionCalledThenCopyKernel3DCalled, Platforms) {
     MockCommandList<gfxCoreFamily> cmdList;
     cmdList.initialize(device, false);
-    MockDriverHandle driverHandle;
-    device->setDriverHandle(&driverHandle);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {4, 4, 4, 2, 2, 2};
@@ -468,8 +464,6 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyCalledT
 HWTEST2_F(CommandListCreate, givenCommandListAnd2DWhbufferenMemoryCopyRegionCalledThenCopyKernel2DCalled, Platforms) {
     MockCommandList<gfxCoreFamily> cmdList;
     cmdList.initialize(device, false);
-    MockDriverHandle driverHandle;
-    device->setDriverHandle(&driverHandle);
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {4, 4, 0, 2, 2, 1};
@@ -664,8 +658,8 @@ HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBl
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     MockCommandListForMemFill<gfxCoreFamily> commandList;
-    MockDriverHandle driverHandle;
-    device->setDriverHandle(&driverHandle);
+    MockDriverHandle driverHandleMock;
+    device->setDriverHandle(&driverHandleMock);
     commandList.initialize(device, true);
     uint16_t pattern = 1;
     void *ptr = reinterpret_cast<void *>(0x1234);
@@ -675,6 +669,7 @@ HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBl
         cmdList, ptrOffset(commandList.commandContainer.getCommandStream()->getCpuBase(), 0), commandList.commandContainer.getCommandStream()->getUsed()));
     auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
+    device->setDriverHandle(driverHandle.get());
 }
 
 using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
@@ -682,9 +677,6 @@ using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyFromMemoryToImageThenBlitImageCopyCalled, ImageSupport) {
     MockCommandList<gfxCoreFamily> cmdList;
     cmdList.initialize(device, true);
-    MockDriverHandle driverHandle;
-    device->setDriverHandle(&driverHandle);
-
     void *srcPtr = reinterpret_cast<void *>(0x1234);
 
     ze_image_desc_t zeDesc = {};
@@ -699,9 +691,6 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyFromMemoryToImageThenBl
 HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyFromImageToMemoryThenBlitImageCopyCalled, ImageSupport) {
     MockCommandList<gfxCoreFamily> cmdList;
     cmdList.initialize(device, true);
-    MockDriverHandle driverHandle;
-    device->setDriverHandle(&driverHandle);
-
     void *dstPtr = reinterpret_cast<void *>(0x1234);
 
     ze_image_desc_t zeDesc = {};
@@ -716,9 +705,6 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyFromImageToMemoryThenBl
 HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyFromImageToImageThenBlitImageCopyCalled, ImageSupport) {
     MockCommandList<gfxCoreFamily> cmdList;
     cmdList.initialize(device, true);
-    MockDriverHandle driverHandle;
-    device->setDriverHandle(&driverHandle);
-
     ze_image_desc_t zeDesc = {};
     auto imageHWSrc = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
     auto imageHWDst = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();

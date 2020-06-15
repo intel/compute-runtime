@@ -566,7 +566,7 @@ bool DeviceImp::isMultiDeviceCapable() const {
     return neoDevice->getNumAvailableDevices() > 1u;
 }
 
-Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint32_t currentDeviceMask) {
+Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint32_t currentDeviceMask, bool isSubDevice) {
     auto device = new DeviceImp;
     UNRECOVERABLE_IF(device == nullptr);
 
@@ -582,6 +582,20 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         device, neoDevice->getBuiltIns());
     device->maxNumHwThreads = NEO::HwHelper::getMaxThreadsForVfe(neoDevice->getHardwareInfo());
 
+    const bool allocateDebugSurface = neoDevice->getDeviceInfo().debuggerActive && !isSubDevice;
+    NEO::GraphicsAllocation *debugSurface = nullptr;
+
+    if (allocateDebugSurface) {
+        debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+            {device->getRootDeviceIndex(), true,
+             NEO::SipKernel::maxDbgSurfaceSize,
+             NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+             false,
+             false,
+             device->getNEODevice()->getDeviceBitfield()});
+        device->setDebugSurface(debugSurface);
+    }
+
     if (device->neoDevice->getNumAvailableDevices() == 1) {
         device->numSubDevices = 0;
     } else {
@@ -593,11 +607,13 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
 
             ze_device_handle_t subDevice = Device::create(driverHandle,
                                                           device->neoDevice->getDeviceById(i),
-                                                          0);
+                                                          0,
+                                                          true);
             if (subDevice == nullptr) {
                 return nullptr;
             }
             static_cast<DeviceImp *>(subDevice)->isSubdevice = true;
+            static_cast<DeviceImp *>(subDevice)->setDebugSurface(debugSurface);
             device->subDevices.push_back(static_cast<Device *>(subDevice));
         }
         device->numSubDevices = static_cast<uint32_t>(device->subDevices.size());
@@ -611,7 +627,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         }
     }
 
-    auto supportDualStorageSharedMemory = device->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(device->neoDevice->getRootDeviceIndex());
+    auto supportDualStorageSharedMemory = neoDevice->getMemoryManager()->isLocalMemorySupported(device->neoDevice->getRootDeviceIndex());
     if (NEO::DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get() != -1) {
         supportDualStorageSharedMemory = NEO::DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.get();
     }
@@ -628,13 +644,6 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
 
     if (neoDevice->getDeviceInfo().debuggerActive) {
         auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
-
-        auto debugSurface = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(
-            {device->getRootDeviceIndex(),
-             NEO::SipKernel::maxDbgSurfaceSize,
-             NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
-        device->setDebugSurface(debugSurface);
-
         device->getSourceLevelDebugger()
             ->notifyNewDevice(osInterface ? osInterface->getDeviceHandle() : 0);
     }
@@ -655,8 +664,13 @@ DeviceImp::~DeviceImp() {
 
     if (neoDevice->getDeviceInfo().debuggerActive) {
         getSourceLevelDebugger()->notifyDeviceDestruction();
-        this->driverHandle->getMemoryManager()->freeGraphicsMemory(this->debugSurface);
-        this->debugSurface = nullptr;
+    }
+
+    if (!isSubdevice) {
+        if (this->debugSurface) {
+            this->neoDevice->getMemoryManager()->freeGraphicsMemory(this->debugSurface);
+            this->debugSurface = nullptr;
+        }
     }
 
     if (neoDevice) {

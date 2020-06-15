@@ -9,6 +9,7 @@
 #include "shared/source/gen_common/reg_configs/reg_configs_common.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "test.h"
 
@@ -74,6 +75,29 @@ using DeviceWithDebuggerEnabledTest = Test<ActiveDebuggerFixture>;
 
 TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenDeviceIsCreatedThenItHasDebugSurfaceCreated) {
     EXPECT_NE(nullptr, deviceL0->getDebugSurface());
+}
+
+struct TwoSubDevicesDebuggerEnabledTest : public ActiveDebuggerFixture, public ::testing::Test {
+    void SetUp() override { // NOLINT(readability-identifier-naming)
+        DebugManager.flags.CreateMultipleSubDevices.set(2);
+        VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+        ActiveDebuggerFixture::SetUp();
+    }
+    void TearDown() override { // NOLINT(readability-identifier-naming)
+        ActiveDebuggerFixture::TearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(TwoSubDevicesDebuggerEnabledTest, givenDebuggingEnabledWhenSubDevicesAreCreatedThenDebugSurfaceFromRootDeviceIsSet) {
+    auto subDevice0 = static_cast<L0::DeviceImp *>(deviceL0)->subDevices[0];
+    auto subDevice1 = static_cast<L0::DeviceImp *>(deviceL0)->subDevices[1];
+
+    EXPECT_NE(nullptr, subDevice0->getDebugSurface());
+    EXPECT_NE(nullptr, subDevice1->getDebugSurface());
+
+    EXPECT_EQ(subDevice0->getDebugSurface(), subDevice1->getDebugSurface());
+    EXPECT_EQ(deviceL0->getDebugSurface(), subDevice0->getDebugSurface());
 }
 
 } // namespace ult

@@ -96,7 +96,7 @@ ze_result_t Mock<DriverHandle>::doFreeMem(const void *ptr) {
 void Mock<DriverHandle>::setupDevices(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
     this->numDevices = static_cast<uint32_t>(neoDevices.size());
     for (auto &neoDevice : neoDevices) {
-        auto device = Device::create(this, neoDevice.release(), std::numeric_limits<uint32_t>::max());
+        auto device = Device::create(this, neoDevice.release(), std::numeric_limits<uint32_t>::max(), false);
         this->devices.push_back(device);
     }
 }
