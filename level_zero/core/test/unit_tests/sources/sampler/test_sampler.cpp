@@ -39,10 +39,10 @@ class SamplerCreateTest
                                                       ze_sampler_filter_mode_t,
                                                       ze_bool_t>> {
   public:
-    void SetUp() {
+    void SetUp() override {
         Test<DeviceFixture>::SetUp();
     }
-    void TearDown() {
+    void TearDown() override {
         Test<DeviceFixture>::TearDown();
     }
 };
