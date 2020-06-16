@@ -402,7 +402,7 @@ bool Drm::queryTopology(int &sliceCount, int &subSliceCount, int &euCount) {
         }
     }
 
-    return true;
+    return (sliceCount && subSliceCount && euCount);
 }
 
 Drm::~Drm() = default;

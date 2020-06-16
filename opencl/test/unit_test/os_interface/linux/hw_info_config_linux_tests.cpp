@@ -258,6 +258,42 @@ TEST_F(HwInfoConfigTestLinuxDummy, whenFailGettingTopologyThenFallbackToEuCountI
     EXPECT_NE(-1, ret);
 }
 
+TEST_F(HwInfoConfigTestLinuxDummy, givenInvalidTopologyDataWhenConfiguringThenReturnError) {
+    auto storedSVal = drm->StoredSVal;
+    auto storedSSVal = drm->StoredSSVal;
+    auto storedEUVal = drm->StoredEUVal;
+
+    {
+        // 0 euCount
+        drm->StoredSVal = storedSVal;
+        drm->StoredSSVal = storedSSVal;
+        drm->StoredEUVal = 0;
+
+        int sliceCount, subSliceCount, euCount;
+        EXPECT_FALSE(drm->queryTopology(sliceCount, subSliceCount, euCount));
+    }
+
+    {
+        // 0 subSliceCount
+        drm->StoredSVal = storedSVal;
+        drm->StoredSSVal = 0;
+        drm->StoredEUVal = storedEUVal;
+
+        int sliceCount, subSliceCount, euCount;
+        EXPECT_FALSE(drm->queryTopology(sliceCount, subSliceCount, euCount));
+    }
+
+    {
+        // 0 sliceCount
+        drm->StoredSVal = 0;
+        drm->StoredSSVal = storedSSVal;
+        drm->StoredEUVal = storedEUVal;
+
+        int sliceCount, subSliceCount, euCount;
+        EXPECT_FALSE(drm->queryTopology(sliceCount, subSliceCount, euCount));
+    }
+}
+
 TEST_F(HwInfoConfigTestLinuxDummy, dummyNegativeFailingConfigureCustom) {
     drm->StoredDeviceID = 10;
 
