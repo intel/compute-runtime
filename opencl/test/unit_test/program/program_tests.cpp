@@ -863,6 +863,42 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build_Options_Duplicate) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_P(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesOptionIsAdded) {
+    auto featuresOption = static_cast<ClDevice *>(devices[0])->peekCompilerFeatures();
+    EXPECT_THAT(pProgram->getInternalOptions(), testing::Not(testing::HasSubstr(featuresOption)));
+
+    retVal = pProgram->build(1, devices, nullptr, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(featuresOption));
+}
+
+TEST_P(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesOptionIsAddedOnlyOnce) {
+    retVal = pProgram->build(1, devices, nullptr, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = pProgram->build(1, devices, nullptr, nullptr, nullptr, false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto expectedFeaturesOption = static_cast<ClDevice *>(devices[0])->peekCompilerFeatures();
+    auto &internalOptions = pProgram->getInternalOptions();
+    auto pos = internalOptions.find(expectedFeaturesOption);
+    EXPECT_NE(std::string::npos, pos);
+
+    pos = internalOptions.find(expectedFeaturesOption, pos + 1);
+    EXPECT_EQ(std::string::npos, pos);
+}
+
+TEST_P(ProgramFromSourceTest, WhenCompilingProgramThenFeaturesOptionIsAdded) {
+    auto pCompilerInterface = new MockCompilerInterfaceCaptureBuildOptions();
+    auto pClDevice = static_cast<ClDevice *>(devices[0]);
+    pClDevice->getExecutionEnvironment()->rootDeviceEnvironments[pClDevice->getRootDeviceIndex()]->compilerInterface.reset(pCompilerInterface);
+    auto featuresOption = pClDevice->peekCompilerFeatures();
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(featuresOption)));
+
+    retVal = pProgram->compile(1, devices, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::HasSubstr(featuresOption));
+}
+
 class Callback {
   public:
     Callback() {
@@ -1617,17 +1653,27 @@ TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclVersionIsInOptions) {
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
 
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
-    if (pClDevice->areOcl21FeaturesEnabled()) {
+    if (pClDevice->getEnabledClVersion() == 30) {
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=300")) << program.getInternalOptions();
+    } else if (pClDevice->getEnabledClVersion() == 21) {
         EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=210")) << program.getInternalOptions();
     } else {
         EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=120")) << program.getInternalOptions();
     }
 }
 
-TEST_F(ProgramTests, GivenOcl21FeaturesEnabledWhenProgramIsCreatedThenOcl21IsInOptions) {
-    pClDevice->ocl21FeaturesEnabled = true;
-    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
-    EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=210"));
+TEST_F(ProgramTests, GivenForcedClVersionWhenProgramIsCreatedThenCorrectOclOptionIsPresent) {
+    std::pair<unsigned int, std::string> testedValues[] = {
+        {0, "-ocl-version=120"},
+        {12, "-ocl-version=120"},
+        {21, "-ocl-version=210"},
+        {30, "-ocl-version=300"}};
+
+    for (auto &testedValue : testedValues) {
+        pClDevice->enabledClVersion = testedValue.first;
+        MockProgram program{*pDevice->getExecutionEnvironment(), pContext, false, pDevice};
+        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), testedValue.second));
+    }
 }
 
 TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenGreaterThan4gbBuffersRequiredOptionIsSet) {
@@ -1635,13 +1681,7 @@ TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenG
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
 
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
-    if (pClDevice->areOcl21FeaturesEnabled()) {
-        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=210")) << program.getInternalOptions();
-        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired));
-    } else {
-        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=120")) << program.getInternalOptions();
-        EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired));
-    }
+    EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired));
 }
 
 TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEnabled) {
@@ -1695,11 +1735,6 @@ TEST_F(ProgramTests, GivenForce32BitAddressessWhenProgramIsCreatedThenGreaterTha
     if (pDevice) {
         const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
         MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
-        if (pClDevice->areOcl21FeaturesEnabled()) {
-            EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=210")) << program.getInternalOptions();
-        } else {
-            EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), "-ocl-version=120")) << program.getInternalOptions();
-        }
         if (pDevice->areSharedSystemAllocationsAllowed()) {
             EXPECT_TRUE(CompilerOptions::contains(program.getInternalOptions(), CompilerOptions::greaterThan4gbBuffersRequired)) << program.getInternalOptions();
         } else {

@@ -105,6 +105,10 @@ cl_int Program::build(
             if (internalOptions.find(compilerExtensionsOptions) == std::string::npos) {
                 CompilerOptions::concatenateAppend(internalOptions, compilerExtensionsOptions);
             }
+            auto compilerFeaturesOptions = clDevice->peekCompilerFeatures();
+            if (internalOptions.find(compilerFeaturesOptions) == std::string::npos) {
+                CompilerOptions::concatenateAppend(internalOptions, compilerFeaturesOptions);
+            }
 
             inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
             inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());

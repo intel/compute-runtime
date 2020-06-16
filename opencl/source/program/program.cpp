@@ -63,8 +63,10 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
     bool force32BitAddressess = false;
 
     if (pClDevice) {
-        auto areOcl21FeaturesEnabled = pClDevice->areOcl21FeaturesEnabled();
-        if (areOcl21FeaturesEnabled) {
+        auto enabledClVersion = pClDevice->getEnabledClVersion();
+        if (enabledClVersion == 30) {
+            internalOptions = "-ocl-version=300 ";
+        } else if (enabledClVersion == 21) {
             internalOptions = "-ocl-version=210 ";
         } else {
             internalOptions = "-ocl-version=120 ";

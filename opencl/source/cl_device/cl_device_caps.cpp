@@ -392,7 +392,7 @@ void ClDevice::initializeCaps() {
     }
 
     initializeOsSpecificCaps();
-    initializeOpenclCFeatures();
+    getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures);
 }
 
 void ClDevice::initializeExtensionsWithVersion() {
@@ -427,58 +427,6 @@ void ClDevice::initializeOpenclCAllVersions() {
     if (enabledClVersion == 30) {
         openClCVersion.version = CL_MAKE_VERSION(3, 0, 0);
         deviceInfo.openclCAllVersions.push_back(openClCVersion);
-    }
-}
-
-void ClDevice::initializeOpenclCFeatures() {
-    auto &hwInfo = getHardwareInfo();
-    cl_name_version openClCFeature;
-    openClCFeature.version = CL_MAKE_VERSION(3, 0, 0);
-
-    strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_order_acq_rel");
-    deviceInfo.openclCFeatures.push_back(openClCFeature);
-
-    if (hwInfo.capabilityTable.supportsImages) {
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_3d_image_writes");
-        deviceInfo.openclCFeatures.push_back(openClCFeature);
-    }
-
-    if (hwInfo.capabilityTable.supportsOcl21Features) {
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_order_seq_cst");
-        deviceInfo.openclCFeatures.push_back(openClCFeature);
-
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_scope_all_devices");
-        deviceInfo.openclCFeatures.push_back(openClCFeature);
-
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_scope_device");
-        deviceInfo.openclCFeatures.push_back(openClCFeature);
-
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_generic_address_space");
-        deviceInfo.openclCFeatures.push_back(openClCFeature);
-
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_program_scope_global_variables");
-        deviceInfo.openclCFeatures.push_back(openClCFeature);
-
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_read_write_images");
-        deviceInfo.openclCFeatures.push_back(openClCFeature);
-
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_work_group_collective_functions");
-        deviceInfo.openclCFeatures.push_back(openClCFeature);
-
-        if (hwInfo.capabilityTable.supportsIndependentForwardProgress) {
-            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_subgroups");
-            deviceInfo.openclCFeatures.push_back(openClCFeature);
-        }
-    }
-
-    if (hwInfo.capabilityTable.supportsDeviceEnqueue) {
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_device_enqueue");
-        deviceInfo.openclCFeatures.push_back(openClCFeature);
-    }
-
-    if (hwInfo.capabilityTable.supportsPipes) {
-        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_pipes");
-        deviceInfo.openclCFeatures.push_back(openClCFeature);
     }
 }
 

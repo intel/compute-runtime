@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
@@ -19,10 +20,12 @@
 #include "opencl/test/unit_test/fixtures/mock_aub_center_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
+#include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -195,6 +198,38 @@ TEST(PlatformTestSimple, givenNotCsrHwTypeWhenPlatformIsInitializedThenInitAubCe
     EXPECT_TRUE(ret);
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(platform.peekExecutionEnvironment()->rootDeviceEnvironments[0].get());
     EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
+}
+
+TEST(PlatformTestSimple, WhenConvertingCustomOclCFeaturesToCompilerInternalOptionsThenResultIsCorrect) {
+    StackVec<cl_name_version, 12> customOpenclCFeatures;
+
+    cl_name_version feature;
+    strcpy_s(feature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "custom_feature");
+    customOpenclCFeatures.push_back(feature);
+    auto compilerOption = convertEnabledOclCFeaturesToCompilerInternalOptions(customOpenclCFeatures);
+    EXPECT_STREQ(" -cl-feature=+custom_feature ", compilerOption.c_str());
+
+    strcpy_s(feature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "other_extra_feature");
+    customOpenclCFeatures.push_back(feature);
+    compilerOption = convertEnabledOclCFeaturesToCompilerInternalOptions(customOpenclCFeatures);
+    EXPECT_STREQ(" -cl-feature=+custom_feature,+other_extra_feature ", compilerOption.c_str());
+}
+
+TEST(PlatformTestSimple, WhenConvertingOclCFeaturesToCompilerInternalOptionsThenResultIsCorrect) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+
+    std::string expectedCompilerOption = " -cl-feature=";
+    for (auto &openclCFeature : pClDevice->deviceInfo.openclCFeatures) {
+        expectedCompilerOption += "+";
+        expectedCompilerOption += openclCFeature.name;
+        expectedCompilerOption += ",";
+    }
+    expectedCompilerOption.erase(expectedCompilerOption.size() - 1, 1);
+    expectedCompilerOption += " ";
+
+    auto compilerOption = convertEnabledOclCFeaturesToCompilerInternalOptions(pClDevice->deviceInfo.openclCFeatures);
+    EXPECT_STREQ(expectedCompilerOption.c_str(), compilerOption.c_str());
 }
 
 namespace NEO {

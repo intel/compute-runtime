@@ -10,21 +10,27 @@ set(OCLOC_NAME "ocloc")
 set(OCLOC_FOLDER_NAME "offline_compiler")
 
 set(CLOC_LIB_SRCS_LIB
+  ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options/compiler_options_base.cpp
+  ${NEO_SHARED_DIRECTORY}/compiler_interface/create_main.cpp
   ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar.h
-  ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.h
   ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.cpp
-  ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_encoder.h
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_decoder.h
   ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_encoder.cpp
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/ar/ar_encoder.h
   ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf.h
-  ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_decoder.h
   ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_decoder.cpp
-  ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_encoder.h
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_decoder.h
   ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_encoder.cpp
+  ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_encoder.h
   ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/ocl_elf.h
   ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
   ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp
   ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
+  ${NEO_SHARED_DIRECTORY}/helpers/hw_info.cpp
+  ${NEO_SHARED_DIRECTORY}/helpers/hw_info.h
   ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
+  ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.cpp
+  ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.h
   ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.cpp
   ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.h
   ${OCLOC_DIRECTORY}/source/decoder/binary_encoder.cpp
@@ -33,24 +39,19 @@ set(CLOC_LIB_SRCS_LIB
   ${OCLOC_DIRECTORY}/source/decoder/helper.h
   ${OCLOC_DIRECTORY}/source/decoder/iga_wrapper.h
   ${OCLOC_DIRECTORY}/source/decoder/translate_platform_base.h
-  ${OCLOC_DIRECTORY}/source/ocloc_api.cpp
-  ${OCLOC_DIRECTORY}/source/ocloc_api.h
-  ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.h
-  ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.cpp
-  ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.cpp
-  ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.h
-  ${OCLOC_DIRECTORY}/source/offline_compiler_helper.cpp
-  ${OCLOC_DIRECTORY}/source/offline_compiler.cpp
-  ${OCLOC_DIRECTORY}/source/offline_compiler.h
+  ${OCLOC_DIRECTORY}/source/${BRANCH_DIR_SUFFIX}/extra_settings.cpp
   ${OCLOC_DIRECTORY}/source/multi_command.cpp
   ${OCLOC_DIRECTORY}/source/multi_command.h
+  ${OCLOC_DIRECTORY}/source/ocloc_api.cpp
+  ${OCLOC_DIRECTORY}/source/ocloc_api.h
+  ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.cpp
+  ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.h
+  ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.cpp
+  ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.h
+  ${OCLOC_DIRECTORY}/source/offline_compiler.cpp
+  ${OCLOC_DIRECTORY}/source/offline_compiler.h
+  ${OCLOC_DIRECTORY}/source/offline_compiler_helper.cpp
   ${OCLOC_DIRECTORY}/source/offline_compiler_options.cpp
-  ${OCLOC_DIRECTORY}/source/${BRANCH_DIR_SUFFIX}/extra_settings.cpp
-  ${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options/compiler_options_base.cpp
-  ${NEO_SHARED_DIRECTORY}/compiler_interface/create_main.cpp
-  ${NEO_SHARED_DIRECTORY}/helpers/hw_info.cpp
-  ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.cpp
-  ${NEO_SOURCE_DIR}/opencl/source/platform/extensions.h
 )
 
 if(${IGA_HEADERS_AVAILABLE})

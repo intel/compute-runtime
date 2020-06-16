@@ -133,6 +133,8 @@ cl_int Program::compile(
         UNRECOVERABLE_IF(clDevice == nullptr);
         auto compilerExtensionsOptions = clDevice->peekCompilerExtensions();
         CompilerOptions::concatenateAppend(internalOptions, compilerExtensionsOptions);
+        auto compilerFeaturesOptions = clDevice->peekCompilerFeatures();
+        CompilerOptions::concatenateAppend(internalOptions, compilerFeaturesOptions);
 
         if (isKernelDebugEnabled()) {
             std::string filename;

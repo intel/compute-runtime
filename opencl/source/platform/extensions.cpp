@@ -8,6 +8,7 @@
 #include "opencl/source/platform/extensions.h"
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/string.h"
 
 #include <string>
 
@@ -71,6 +72,57 @@ std::string getExtensionsList(const HardwareInfo &hwInfo) {
     return allExtensionsList;
 }
 
+void getOpenclCFeaturesList(const HardwareInfo &hwInfo, StackVec<cl_name_version, 12> &openclCFeatures) {
+    cl_name_version openClCFeature;
+    openClCFeature.version = CL_MAKE_VERSION(3, 0, 0);
+
+    strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_order_acq_rel");
+    openclCFeatures.push_back(openClCFeature);
+
+    if (hwInfo.capabilityTable.supportsImages) {
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_3d_image_writes");
+        openclCFeatures.push_back(openClCFeature);
+    }
+
+    if (hwInfo.capabilityTable.supportsOcl21Features) {
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_order_seq_cst");
+        openclCFeatures.push_back(openClCFeature);
+
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_scope_all_devices");
+        openclCFeatures.push_back(openClCFeature);
+
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_scope_device");
+        openclCFeatures.push_back(openClCFeature);
+
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_generic_address_space");
+        openclCFeatures.push_back(openClCFeature);
+
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_program_scope_global_variables");
+        openclCFeatures.push_back(openClCFeature);
+
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_read_write_images");
+        openclCFeatures.push_back(openClCFeature);
+
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_work_group_collective_functions");
+        openclCFeatures.push_back(openClCFeature);
+
+        if (hwInfo.capabilityTable.supportsIndependentForwardProgress) {
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_subgroups");
+            openclCFeatures.push_back(openClCFeature);
+        }
+    }
+
+    if (hwInfo.capabilityTable.supportsDeviceEnqueue) {
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_device_enqueue");
+        openclCFeatures.push_back(openClCFeature);
+    }
+
+    if (hwInfo.capabilityTable.supportsPipes) {
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_pipes");
+        openclCFeatures.push_back(openClCFeature);
+    }
+}
+
 std::string removeLastSpace(std::string &processedString) {
     if (processedString.size() > 0) {
         if (*processedString.rbegin() == ' ') {
@@ -91,6 +143,20 @@ std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enable
     extensionsList = " -cl-ext=-all,+" + extensionsList + ",+cl_khr_3d_image_writes ";
 
     return extensionsList;
+}
+
+std::string convertEnabledOclCFeaturesToCompilerInternalOptions(StackVec<cl_name_version, 12> &openclCFeatures) {
+    UNRECOVERABLE_IF(openclCFeatures.empty());
+    std::string featuresList;
+    featuresList.reserve(500);
+    featuresList = " -cl-feature=";
+    for (auto &feature : openclCFeatures) {
+        featuresList.append("+");
+        featuresList.append(feature.name);
+        featuresList.append(",");
+    }
+    featuresList[featuresList.size() - 1] = ' ';
+    return featuresList;
 }
 
 } // namespace NEO

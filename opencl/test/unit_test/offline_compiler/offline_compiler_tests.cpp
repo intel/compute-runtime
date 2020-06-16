@@ -13,6 +13,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
+#include "opencl/source/platform/extensions.h"
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
 
 #include "compiler_options.h"
@@ -247,6 +248,11 @@ TEST_F(OfflineCompilerTests, TestExtensions) {
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
     std::string internalOptions = mockOfflineCompiler->internalOptions;
     EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
+
+    StackVec<cl_name_version, 12> openclCFeatures;
+    getOpenclCFeaturesList(DEFAULT_PLATFORM::hwInfo, openclCFeatures);
+    auto expectedFeaturesOption = convertEnabledOclCFeaturesToCompilerInternalOptions(openclCFeatures);
+    EXPECT_THAT(internalOptions, ::testing::HasSubstr(expectedFeaturesOption));
 }
 TEST_F(OfflineCompilerTests, GoodBuildTest) {
     std::vector<std::string> argv = {
