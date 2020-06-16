@@ -33,6 +33,7 @@ class HwInfoConfig {
     virtual uint64_t getSingleDeviceSharedMemCapabilities() = 0;
     virtual uint64_t getCrossDeviceSharedMemCapabilities() = 0;
     virtual uint64_t getSharedSystemMemCapabilities() = 0;
+    virtual bool isEvenContextCountRequired() = 0;
     uint32_t threadsPerEu;
 };
 
@@ -50,6 +51,7 @@ class HwInfoConfigHw : public HwInfoConfig {
     uint64_t getSingleDeviceSharedMemCapabilities() override;
     uint64_t getCrossDeviceSharedMemCapabilities() override;
     uint64_t getSharedSystemMemCapabilities() override;
+    bool isEvenContextCountRequired() override;
 
   protected:
     HwInfoConfigHw() {}

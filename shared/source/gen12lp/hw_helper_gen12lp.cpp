@@ -13,6 +13,7 @@ using Family = NEO::TGLLPFamily;
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/hw_helper_bdw_plus.inl"
 #include "shared/source/helpers/hw_helper_tgllp_plus.inl"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include "engine_node.h"
 
@@ -130,6 +131,11 @@ const HwHelper::EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInsta
 
     if (hwInfo.featureTable.ftrBcsInfo.test(0)) {
         engines.push_back(aub_stream::ENGINE_BCS);
+    }
+
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    if (hwInfoConfig->isEvenContextCountRequired() && engines.size() & 1) {
+        engines.push_back(aub_stream::ENGINE_RCS);
     }
 
     return engines;

@@ -72,6 +72,11 @@ cl_unified_shared_memory_capabilities_intel HwInfoConfigHw<IGFX_UNKNOWN>::getSha
     return 0;
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvenContextCountRequired() {
+    return false;
+}
+
 } // namespace NEO
 
 struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {

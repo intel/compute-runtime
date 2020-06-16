@@ -52,6 +52,11 @@ template <>
 void HwInfoConfigHw<IGFX_UNKNOWN>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
 }
 
+template <>
+bool HwInfoConfigHw<IGFX_UNKNOWN>::isEvenContextCountRequired() {
+    return false;
+}
+
 HwInfoConfigTestWindows::HwInfoConfigTestWindows() {
     this->executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     this->rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
