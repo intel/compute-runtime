@@ -52,7 +52,7 @@ GEN12LPTEST_F(ImageClearColorFixture, givenImageForGen12LpWhenClearColorParamete
     EXPECT_EQ(0u, surfaceState.getClearColorAddressHigh());
 
     std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelper<Image2dDefaults>::create(&context)));
-    auto gmm = imageHw->getGraphicsAllocation()->getDefaultGmm();
+    auto gmm = imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm();
     gmm->gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor = 1;
     setClearColorParams<FamilyType>(&surfaceState, gmm);
 
@@ -71,7 +71,7 @@ GEN12LPTEST_F(ImageClearColorFixture, givenImageForGen12LpWhenCanonicalAddresFor
     surfaceState.setSurfaceBaseAddress(canonicalAddress);
 
     std::unique_ptr<ImageHw<FamilyType>> imageHw(static_cast<ImageHw<FamilyType> *>(ImageHelper<Image2dDefaults>::create(&context)));
-    auto gmm = imageHw->getGraphicsAllocation()->getDefaultGmm();
+    auto gmm = imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm();
     gmm->gmmResourceInfo->getResourceFlags()->Gpu.IndirectClearColor = 1;
     EXPECT_NO_THROW(setClearColorParams<FamilyType>(&surfaceState, gmm));
 
@@ -119,8 +119,8 @@ GEN12LPTEST_F(gen12LpImageTests, givenRenderCompressionSurfaceStateParamsAreSetF
     std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
-    imageHw->getGraphicsAllocation()->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = true;
-    setAuxParamsForCCS<FamilyType>(&surfaceState, imageHw->getGraphicsAllocation()->getDefaultGmm());
+    imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = true;
+    setAuxParamsForCCS<FamilyType>(&surfaceState, imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
 
     EXPECT_FALSE(surfaceState.getMemoryCompressionEnable());
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
@@ -134,9 +134,9 @@ GEN12LPTEST_F(gen12LpImageTests, givenMediaCompressionSurfaceStateParamsAreSetFo
     std::unique_ptr<Image> image(Image2dHelper<>::create(&context, &imgDesc));
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
-    imageHw->getGraphicsAllocation()->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
+    imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed = true;
     surfaceState.setAuxiliarySurfaceMode(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    setAuxParamsForCCS<FamilyType>(&surfaceState, imageHw->getGraphicsAllocation()->getDefaultGmm());
+    setAuxParamsForCCS<FamilyType>(&surfaceState, imageHw->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm());
 
     EXPECT_TRUE(surfaceState.getMemoryCompressionEnable());
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);

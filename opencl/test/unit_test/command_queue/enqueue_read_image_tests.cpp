@@ -181,7 +181,7 @@ HWTEST_F(EnqueueReadImageTest, WhenReadingImageThenSurfaceStateIsCorrect) {
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_FORMAT_R32_UINT, surfaceState.getSurfaceFormat());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4, surfaceState.getSurfaceHorizontalAlignment());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4, surfaceState.getSurfaceVerticalAlignment());
-    EXPECT_EQ(srcImage->getGraphicsAllocation()->getGpuAddress(), surfaceState.getSurfaceBaseAddress());
+    EXPECT_EQ(srcAllocation->getGpuAddress(), surfaceState.getSurfaceBaseAddress());
 }
 
 HWTEST_F(EnqueueReadImageTest, WhenReadingImageThenPipelineSelectIsProgrammed) {
@@ -458,15 +458,16 @@ HWTEST_F(EnqueueReadImageTest, givenEnqueueReadImageBlockingWhenAUBDumpAllocsOnE
     DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
 
     std::unique_ptr<Image> srcImage(Image2dArrayHelper<>::create(context));
+    srcAllocation = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     auto imageDesc = srcImage->getImageDesc();
     size_t origin[] = {0, 0, 0};
     size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
 
-    ASSERT_FALSE(srcImage->getGraphicsAllocation()->isAllocDumpable());
+    ASSERT_FALSE(srcAllocation->isAllocDumpable());
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, srcImage.get(), CL_TRUE, origin, region);
 
-    EXPECT_TRUE(srcImage->getGraphicsAllocation()->isAllocDumpable());
+    EXPECT_TRUE(srcAllocation->isAllocDumpable());
 }
 
 HWTEST_F(EnqueueReadImageTest, givenEnqueueReadImageNonBlockingWhenAUBDumpAllocsOnEnqueueReadOnlyIsOnThenImageShouldntBeSetDumpable) {
@@ -474,15 +475,16 @@ HWTEST_F(EnqueueReadImageTest, givenEnqueueReadImageNonBlockingWhenAUBDumpAllocs
     DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
 
     std::unique_ptr<Image> srcImage(Image2dArrayHelper<>::create(context));
+    srcAllocation = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex());
     auto imageDesc = srcImage->getImageDesc();
     size_t origin[] = {0, 0, 0};
     size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
 
-    ASSERT_FALSE(srcImage->getGraphicsAllocation()->isAllocDumpable());
+    ASSERT_FALSE(srcAllocation->isAllocDumpable());
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, srcImage.get(), CL_FALSE, origin, region);
 
-    EXPECT_FALSE(srcImage->getGraphicsAllocation()->isAllocDumpable());
+    EXPECT_FALSE(srcAllocation->isAllocDumpable());
 }
 
 typedef EnqueueReadImageMipMapTest MipMapReadImageTest;

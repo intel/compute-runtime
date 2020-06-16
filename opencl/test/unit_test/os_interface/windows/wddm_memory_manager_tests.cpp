@@ -650,7 +650,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCount
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
 
-    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
+    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage);
 }
@@ -682,7 +682,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountNo
     ASSERT_NE(nullptr, dstImage);
     EXPECT_EQ(static_cast<int>(imageDesc.num_mip_levels), dstImage->peekMipCount());
 
-    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
+    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage);
 }
@@ -719,7 +719,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreat
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
 
-    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
+    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage);
 }
@@ -750,7 +750,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountZ
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
 
-    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
+    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_BUFFER, imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage);
 }
@@ -781,7 +781,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountN
     ASSERT_NE(nullptr, dstImage);
     EXPECT_EQ(static_cast<int>(imageDesc.num_mip_levels), dstImage->peekMipCount());
 
-    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
+    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage);
 }

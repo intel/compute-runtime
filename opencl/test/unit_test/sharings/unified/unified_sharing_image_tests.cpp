@@ -138,7 +138,7 @@ HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndNoPag
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
                                                                                &format, &imageDesc, &retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_TRUE(image->getGraphicsAllocation()->getDefaultGmm()->isRenderCompressed);
+    EXPECT_TRUE(image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isRenderCompressed);
     EXPECT_EQ(0u, memoryManager.calledMapAuxGpuVA);
 }
 
@@ -157,13 +157,13 @@ HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndPageT
     auto image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
                                                                                &format, &imageDesc, &retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(memoryManager.resultOfMapAuxGpuVA, image->getGraphicsAllocation()->getDefaultGmm()->isRenderCompressed);
+    EXPECT_EQ(memoryManager.resultOfMapAuxGpuVA, image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isRenderCompressed);
     EXPECT_EQ(1u, memoryManager.calledMapAuxGpuVA);
 
     memoryManager.resultOfMapAuxGpuVA = false;
     image = std::unique_ptr<Image>(UnifiedImage::createSharedUnifiedImage(context.get(), flags, getValidUnifiedSharingDesc(),
                                                                           &format, &imageDesc, &retVal));
     ASSERT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(memoryManager.resultOfMapAuxGpuVA, image->getGraphicsAllocation()->getDefaultGmm()->isRenderCompressed);
+    EXPECT_EQ(memoryManager.resultOfMapAuxGpuVA, image->getGraphicsAllocation(device->getRootDeviceIndex())->getDefaultGmm()->isRenderCompressed);
     EXPECT_EQ(2u, memoryManager.calledMapAuxGpuVA);
 }

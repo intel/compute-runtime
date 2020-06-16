@@ -34,7 +34,7 @@ class Nv12ImageTest : public testing::Test {
         GMM_REQ_OFFSET_INFO reqOffsetInfo = {};
         SurfaceOffsets requestedOffsets = {0};
 
-        auto mockResInfo = reinterpret_cast<::testing::NiceMock<MockGmmResourceInfo> *>(image->getGraphicsAllocation()->getDefaultGmm()->gmmResourceInfo.get());
+        auto mockResInfo = reinterpret_cast<::testing::NiceMock<MockGmmResourceInfo> *>(image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo.get());
         mockResInfo->getOffset(reqOffsetInfo);
 
         if (image->getImageDesc().mem_object) {
@@ -270,7 +270,8 @@ TEST_F(Nv12ImageTest, WhenCreatingYPlaneImageThenDimensionsAreSetCorrectly) {
 
     ASSERT_NE(nullptr, imageYPlane);
     EXPECT_EQ(true, imageYPlane->isImageFromImage());
-    EXPECT_EQ(imageNV12->getGraphicsAllocation(), imageYPlane->getGraphicsAllocation());
+    EXPECT_EQ(imageNV12->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()),
+              imageYPlane->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
 
     cl_image_desc parentDimensions, planeDimensions;
     parentDimensions = imageNV12->getImageDesc();
@@ -313,7 +314,8 @@ TEST_F(Nv12ImageTest, WhenCreatingUVPlaneImageThenDimensionsAreSetCorrectly) {
     ASSERT_NE(nullptr, imageUVPlane);
 
     EXPECT_EQ(true, imageUVPlane->isImageFromImage());
-    EXPECT_EQ(imageNV12->getGraphicsAllocation(), imageUVPlane->getGraphicsAllocation());
+    EXPECT_EQ(imageNV12->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()),
+              imageUVPlane->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
 
     cl_image_desc parentDimensions, planeDimensions;
     parentDimensions = imageNV12->getImageDesc();
@@ -362,7 +364,8 @@ TEST_F(Nv12ImageTest, GivenOffsetOfUVPlaneWhenCreatingUVPlaneImageThenDimensions
     ASSERT_NE(nullptr, imageUVPlane);
 
     EXPECT_EQ(true, imageUVPlane->isImageFromImage());
-    EXPECT_EQ(imageNV12->getGraphicsAllocation(), imageUVPlane->getGraphicsAllocation());
+    EXPECT_EQ(imageNV12->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()),
+              imageUVPlane->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
 
     cl_image_desc parentDimensions, planeDimensions;
     parentDimensions = imageNV12->getImageDesc();
@@ -475,14 +478,15 @@ HWTEST_F(Nv12ImageTest, setImageArgUVPlaneImageSetsOffsetedSurfaceBaseAddressAnd
 
     ASSERT_NE(nullptr, imageUVPlane);
 
-    EXPECT_EQ(imageNV12->getGraphicsAllocation(), imageUVPlane->getGraphicsAllocation());
+    EXPECT_EQ(imageNV12->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()),
+              imageUVPlane->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex()));
 
     SurfaceOffsets surfaceOffsets;
     imageUVPlane->getSurfaceOffsets(surfaceOffsets);
 
     imageUVPlane->setImageArg(&surfaceState, false, 0);
 
-    EXPECT_EQ(imageUVPlane->getGraphicsAllocation()->getGpuAddress() + surfaceOffsets.offset, surfaceState.getSurfaceBaseAddress());
+    EXPECT_EQ(imageUVPlane->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getGpuAddress() + surfaceOffsets.offset, surfaceState.getSurfaceBaseAddress());
 
     auto tileMode = RENDER_SURFACE_STATE::TILE_MODE_LINEAR;
     if (imageNV12->isTiledAllocation()) {
@@ -511,7 +515,7 @@ HWTEST_F(Nv12ImageTest, WhenSettingMediaImageArgThenSurfaceStateIsCorrect) {
     EXPECT_EQ(surfaceOffsets.xOffset, surfaceState.getXOffsetForUCb());
     EXPECT_EQ(surfaceOffsets.yOffset, surfaceState.getXOffsetForUCb());
     EXPECT_EQ(surfaceOffsets.yOffsetForUVplane, surfaceState.getYOffsetForUCb());
-    EXPECT_EQ(image->getGraphicsAllocation()->getGpuAddress() + surfaceOffsets.offset,
+    EXPECT_EQ(image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getGpuAddress() + surfaceOffsets.offset,
               surfaceState.getSurfaceBaseAddress());
 
     delete image;

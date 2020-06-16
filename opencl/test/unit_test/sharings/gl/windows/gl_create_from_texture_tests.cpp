@@ -340,7 +340,8 @@ TEST_F(CreateFromGlTextureTests, GivenGlTextureWhenCreateIsCalledThenAllocationT
     auto glImage = std::unique_ptr<Image>(GlTexture::createSharedGlTexture(&clContext, 0u, target, miplevel, 0, &retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    ASSERT_NE(nullptr, glImage->getGraphicsAllocation());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, glImage->getGraphicsAllocation()->getAllocationType());
+    auto graphicsAllocation = glImage->getGraphicsAllocation(clContext.getDevice(0)->getRootDeviceIndex());
+    ASSERT_NE(nullptr, graphicsAllocation);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, graphicsAllocation->getAllocationType());
 }
 } // namespace NEO

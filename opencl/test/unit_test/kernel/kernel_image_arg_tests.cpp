@@ -58,7 +58,7 @@ TEST_F(KernelImageArgTest, givenKernelWithFlatImageTokensWhenArgIsSetThenPatchAl
     size_t imageWidth = image->getImageDesc().image_width;
     size_t imageHeight = image->getImageDesc().image_height;
     size_t imageRowPitch = image->getImageDesc().image_row_pitch;
-    uint64_t imageBaseAddress = image->getGraphicsAllocation()->getGpuAddress();
+    uint64_t imageBaseAddress = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex())->getGpuAddress();
 
     cl_mem memObj = image.get();
 

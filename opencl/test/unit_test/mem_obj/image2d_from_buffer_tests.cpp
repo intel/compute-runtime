@@ -437,8 +437,9 @@ TEST_F(Image2dFromBufferTest, givenBufferWhenImageFromBufferThenIsImageFromBuffe
     std::unique_ptr<Image> imageFromBuffer(createImage());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_TRUE(imageFromBuffer.get()->isImageFromBuffer());
-    EXPECT_TRUE(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY == imageFromBuffer.get()->getGraphicsAllocation()->getAllocationType());
+    EXPECT_TRUE(imageFromBuffer->isImageFromBuffer());
+    auto graphicsAllocation = imageFromBuffer->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
+    EXPECT_TRUE(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY == graphicsAllocation->getAllocationType());
 
     buffer->release();
     imageDesc.mem_object = memObj;

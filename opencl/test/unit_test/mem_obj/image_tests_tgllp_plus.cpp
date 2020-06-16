@@ -34,7 +34,7 @@ using TgllpPlusMatcher = IsAtLeastProduct<IGFX_TIGERLAKE_LP>;
 HWTEST2_F(ImageTestsTgllPlus, givenDepthResourceWhenSettingImageArgThenSetDepthStencilResourceField, TgllpPlusMatcher) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState{};
-    auto &gpuFlags = srcImage->getGraphicsAllocation()->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Gpu;
+    auto &gpuFlags = srcImage->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getDefaultGmm()->gmmResourceInfo->getResourceFlags()->Gpu;
 
     gpuFlags.Depth = 0;
     srcImage->setImageArg(&surfaceState, false, 0);

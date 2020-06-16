@@ -188,7 +188,7 @@ struct AUBImageUnaligned
         ASSERT_NE(nullptr, image);
         EXPECT_FALSE(image->isMemObjZeroCopy());
 
-        auto dstMemoryGPUPtr = reinterpret_cast<char *>(image->getGraphicsAllocation()->getGpuAddress());
+        auto dstMemoryGPUPtr = reinterpret_cast<char *>(image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex())->getGpuAddress());
 
         const size_t origin[3] = {0, 1, 0};    // write first row
         const size_t region[3] = {size, 1, 1}; // write only "size" number of pixels
