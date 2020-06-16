@@ -31,9 +31,10 @@ ze_result_t DriverHandleImp::openIpcMemHandle(ze_device_handle_t hDevice, ze_ipc
                                               ze_ipc_memory_flag_t flags, void **ptr) {
     uint64_t handle = *(pIpcHandle.data);
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(handle);
-    NEO::AllocationProperties unifiedMemoryProperties{Device::fromHandle(hDevice)->getRootDeviceIndex(),
+    NEO::AllocationProperties unifiedMemoryProperties{Device::fromHandle(hDevice)->getNEODevice()->getRootDeviceIndex(),
                                                       MemoryConstants::pageSize,
                                                       NEO::GraphicsAllocation::AllocationType::BUFFER};
+    unifiedMemoryProperties.subDevicesBitfield = Device::fromHandle(hDevice)->getNEODevice()->getDeviceBitfield();
     NEO::GraphicsAllocation *alloc =
         this->getMemoryManager()->createGraphicsAllocationFromSharedHandle(osHandle,
                                                                            unifiedMemoryProperties,
@@ -106,6 +107,7 @@ ze_result_t DriverHandleImp::allocHostMem(ze_host_mem_alloc_flag_t flags, size_t
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
+    unifiedMemoryProperties.subdeviceBitfield = this->devices[0]->getNEODevice()->getDeviceBitfield();
 
     auto usmPtr = svmAllocsManager->createUnifiedMemoryAllocation(0u, size, unifiedMemoryProperties);
 
@@ -127,6 +129,7 @@ ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, ze_devic
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY);
     unifiedMemoryProperties.allocationFlags.flags.shareable = 1u;
     unifiedMemoryProperties.device = Device::fromHandle(hDevice)->getNEODevice();
+    unifiedMemoryProperties.subdeviceBitfield = Device::fromHandle(hDevice)->getNEODevice()->getDeviceBitfield();
     void *usmPtr =
         svmAllocsManager->createUnifiedMemoryAllocation(Device::fromHandle(hDevice)->getRootDeviceIndex(),
                                                         size, unifiedMemoryProperties);
@@ -141,21 +144,26 @@ ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, ze_devic
 ze_result_t DriverHandleImp::allocSharedMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flag_t deviceFlags,
                                             ze_host_mem_alloc_flag_t hostFlags, size_t size, size_t alignment,
                                             void **ptr) {
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY);
+    ze_device_handle_t device;
     if (hDevice == nullptr) {
-        hDevice = this->devices[0];
+        device = this->devices[0];
+        unifiedMemoryProperties.device = nullptr;
+    } else {
+        device = hDevice;
+        unifiedMemoryProperties.device = Device::fromHandle(device)->getNEODevice();
     }
     if (size > this->devices[0]->getDeviceInfo().maxMemAllocSize) {
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY);
-    unifiedMemoryProperties.device = Device::fromHandle(hDevice)->getNEODevice();
+    unifiedMemoryProperties.subdeviceBitfield = Device::fromHandle(device)->getNEODevice()->getDeviceBitfield();
 
     auto usmPtr =
-        svmAllocsManager->createSharedUnifiedMemoryAllocation(Device::fromHandle(hDevice)->getRootDeviceIndex(),
+        svmAllocsManager->createSharedUnifiedMemoryAllocation(Device::fromHandle(device)->getRootDeviceIndex(),
                                                               size,
                                                               unifiedMemoryProperties,
-                                                              static_cast<void *>(L0::Device::fromHandle(hDevice)));
+                                                              static_cast<void *>(L0::Device::fromHandle(device)));
 
     if (usmPtr == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
