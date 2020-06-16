@@ -32,5 +32,27 @@ void HwInfoConfigHw<IGFX_TIGERLAKE_LP>::adjustPlatformForProductFamily(HardwareI
 
 template class HwInfoConfigHw<IGFX_TIGERLAKE_LP>;
 #endif
+#ifdef SUPPORT_DG1
+template <>
+int HwInfoConfigHw<IGFX_DG1>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+    hwInfo->capabilityTable.ftrRenderCompressedImages = hwInfo->featureTable.ftrE2ECompression;
+    hwInfo->capabilityTable.ftrRenderCompressedBuffers = hwInfo->featureTable.ftrE2ECompression;
+    HwInfoConfigCommonHelper::enableBlitterOperationsSupport(*hwInfo);
+    return 0;
+}
 
+template <>
+void HwInfoConfigHw<IGFX_DG1>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
+    PLATFORM *platform = &hwInfo->platform;
+    platform->eRenderCoreFamily = IGFX_GEN12LP_CORE;
+    platform->eDisplayCoreFamily = IGFX_GEN12LP_CORE;
+}
+
+template <>
+uint64_t HwInfoConfigHw<IGFX_DG1>::getSharedSystemMemCapabilities() {
+    return 0;
+}
+
+template class HwInfoConfigHw<IGFX_DG1>;
+#endif
 } // namespace NEO

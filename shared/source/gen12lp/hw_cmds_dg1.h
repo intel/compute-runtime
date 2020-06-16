@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,7 @@
 #pragma once
 #include "shared/source/gen12lp/hw_cmds_base.h"
 namespace NEO {
-
-struct TGLLP : public TGLLPFamily {
+struct DG1 : public TGLLPFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
     static const uint64_t defaultHardwareInfoConfig;
@@ -24,17 +23,7 @@ struct TGLLP : public TGLLPFamily {
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
 };
-
-class TGLLP_1x6x16 : public TGLLP {
-  public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
-    static const HardwareInfo hwInfo;
-
-  private:
-    static GT_SYSTEM_INFO gtSystemInfo;
-};
-
-class TGLLP_1x2x16 : public TGLLP {
+class DG1_CONFIG : public DG1 {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
     static const HardwareInfo hwInfo;

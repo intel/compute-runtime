@@ -9,3 +9,6 @@
 #ifdef SUPPORT_TGLLP
 #include "hw_info_tgllp.h"
 #endif
+#ifdef SUPPORT_DG1
+#include "hw_info_dg1.h"
+#endif

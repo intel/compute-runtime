@@ -11,3 +11,6 @@
 #ifdef SUPPORT_TGLLP
 #include "hw_info_config_tgllp.inl"
 #endif
+#ifdef SUPPORT_DG1
+#include "hw_info_config_dg1.inl"
+#endif

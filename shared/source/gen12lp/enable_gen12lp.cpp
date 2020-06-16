@@ -15,5 +15,8 @@ namespace NEO {
 #ifdef SUPPORT_TGLLP
 static EnableGfxProductHw<IGFX_TIGERLAKE_LP> enableGfxProductHwTGLLP;
 #endif
+#ifdef SUPPORT_DG1
+static EnableGfxProductHw<IGFX_DG1> enableGfxProductHwDG1;
+#endif
 
 } // namespace NEO

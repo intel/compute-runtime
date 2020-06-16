@@ -100,6 +100,7 @@ struct CmdServicesMemTraceVersion {
             Cfl = 24,
             Lkf = 25,
             Ehl = 28,
+            Dg1 = 30,
             Tgllp = 22
         };
     };

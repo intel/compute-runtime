@@ -8,6 +8,9 @@
 #ifdef SUPPORT_TGLLP
 #include "hw_info_tgllp.inl"
 #endif
+#ifdef SUPPORT_DG1
+#include "hw_info_dg1.inl"
+#endif
 
 namespace NEO {
 const char *GfxFamilyMapper<IGFX_GEN12LP_CORE>::name = "Gen12LP";
