@@ -16,7 +16,6 @@ set(RUNTIME_SRCS_DLL_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/create_deferred_deleter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/create_tbx_sockets.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_manager.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/debugger.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger_dll.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_devices.cpp
   ${NEO_SHARED_DIRECTORY}/dll/options_dll.cpp

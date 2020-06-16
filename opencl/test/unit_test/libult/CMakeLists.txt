@@ -26,7 +26,6 @@ set(IGDRCL_SRCS_LIB_ULT
   ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
   ${NEO_SHARED_TEST_DIRECTORY}/unit_test/utilities/cpuintrinsics.cpp
   ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
-  ${NEO_SOURCE_DIR}/opencl/source/dll/debugger.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/abort.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/built_ins_helper.cpp
   ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/debug_helpers.cpp
