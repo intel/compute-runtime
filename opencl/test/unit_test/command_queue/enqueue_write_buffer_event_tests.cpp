@@ -149,7 +149,7 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBuffe
     uint32_t taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
-    Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, 4);
+    Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, 4);
 
     cl_bool blockingWrite = CL_FALSE;
     size_t size = sizeof(cl_float);
@@ -173,8 +173,8 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBuffe
     ASSERT_NE(nullptr, event);
 
     auto pEvent = (Event *)event;
-    EXPECT_EQ(CompletionStamp::levelNotReady, pEvent->taskLevel);
-    EXPECT_EQ(CompletionStamp::levelNotReady, pCmdQ->taskLevel);
+    EXPECT_EQ(CompletionStamp::notReady, pEvent->taskLevel);
+    EXPECT_EQ(CompletionStamp::notReady, pCmdQ->taskLevel);
     event1.taskLevel = 20;
     event1.setStatus(CL_COMPLETE);
     pEvent->updateExecutionStatus();

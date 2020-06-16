@@ -32,6 +32,6 @@ enum CommandStreamReceiverType {
 extern const char *folderAUB;
 
 // Initial value for HW tag
-// Set to 0 if using HW or simulator, otherwise 0xFFFFFF00, needs to be lower then CompletionStamp::levelNotReady.
+// Set to 0 if using HW or simulator, otherwise 0xFFFFFF00, needs to be lower then CompletionStamp::notReady.
 extern uint32_t initialHardwareTag;
 } // namespace NEO

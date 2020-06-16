@@ -241,7 +241,7 @@ HWTEST_F(BarrierTest, givenBlockedCommandQueueAndEnqueueBarrierWithWaitlistRetur
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto pEvent = (Event *)event;
-    EXPECT_EQ(pEvent->peekTaskCount(), CompletionStamp::levelNotReady);
+    EXPECT_EQ(pEvent->peekTaskCount(), CompletionStamp::notReady);
     event2.setStatus(CL_COMPLETE);
     clReleaseEvent(event);
 }

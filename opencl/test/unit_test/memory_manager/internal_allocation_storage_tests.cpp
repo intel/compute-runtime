@@ -101,7 +101,7 @@ TEST_F(InternalAllocationStorageTest, whenAllocationIsStoredAsTemporaryAndIsStil
     memoryManager->freeGraphicsMemory(newAllocation.release());
 }
 
-TEST_F(InternalAllocationStorageTest, givenTemporaryAllocationWhenAllocationIsObtainedThenItsTaskCountIsSetToLevelNotReady) {
+TEST_F(InternalAllocationStorageTest, givenTemporaryAllocationWhenAllocationIsObtainedThenItsTaskCountIsSetToNotReady) {
     const uint32_t initialTaskCount = 37u;
     const uint32_t contextId = csr->getOsContext().getContextId();
 
@@ -111,7 +111,7 @@ TEST_F(InternalAllocationStorageTest, givenTemporaryAllocationWhenAllocationIsOb
 
     auto newAllocation = storage->obtainTemporaryAllocationWithPtr(1, allocation->getUnderlyingBuffer(), GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_EQ(allocation, newAllocation.get());
-    EXPECT_EQ(CompletionStamp::levelNotReady, allocation->getTaskCount(contextId));
+    EXPECT_EQ(CompletionStamp::notReady, allocation->getTaskCount(contextId));
     memoryManager->freeGraphicsMemory(newAllocation.release());
 }
 

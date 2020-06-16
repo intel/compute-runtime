@@ -143,13 +143,13 @@ TEST(UserEvent, givenUserEventWhenStatusIsCompletedThenReturnZeroTaskLevel) {
     UserEvent uEvent;
 
     uEvent.setStatus(CL_QUEUED);
-    EXPECT_EQ(CompletionStamp::levelNotReady, uEvent.getTaskLevel());
+    EXPECT_EQ(CompletionStamp::notReady, uEvent.getTaskLevel());
 
     uEvent.setStatus(CL_SUBMITTED);
-    EXPECT_EQ(CompletionStamp::levelNotReady, uEvent.getTaskLevel());
+    EXPECT_EQ(CompletionStamp::notReady, uEvent.getTaskLevel());
 
     uEvent.setStatus(CL_RUNNING);
-    EXPECT_EQ(CompletionStamp::levelNotReady, uEvent.getTaskLevel());
+    EXPECT_EQ(CompletionStamp::notReady, uEvent.getTaskLevel());
 
     uEvent.setStatus(CL_COMPLETE);
     EXPECT_EQ(0u, uEvent.getTaskLevel());
@@ -172,10 +172,10 @@ TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithoutReturnEv
     auto taskCountAfter = csr.peekTaskCount();
 
     //queue should be in blocked state at this moment, task level should be inherited from user event
-    EXPECT_EQ(CompletionStamp::levelNotReady, pCmdQ->taskLevel);
+    EXPECT_EQ(CompletionStamp::notReady, pCmdQ->taskLevel);
 
     //queue should be in blocked state at this moment, task count should be inherited from user event
-    EXPECT_EQ(CompletionStamp::levelNotReady, pCmdQ->taskCount);
+    EXPECT_EQ(CompletionStamp::notReady, pCmdQ->taskCount);
 
     //queue should be in blocked state
     EXPECT_EQ(pCmdQ->isQueueBlocked(), true);
@@ -205,10 +205,10 @@ TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithReturnEvent
     auto taskCountAfter = csr.peekTaskCount();
 
     //queue should be in blocked state at this moment, task level should be inherited from user event
-    EXPECT_EQ(CompletionStamp::levelNotReady, pCmdQ->taskLevel);
+    EXPECT_EQ(CompletionStamp::notReady, pCmdQ->taskLevel);
 
     //queue should be in blocked state at this moment, task count should be inherited from user event
-    EXPECT_EQ(CompletionStamp::levelNotReady, pCmdQ->taskCount);
+    EXPECT_EQ(CompletionStamp::notReady, pCmdQ->taskCount);
 
     //queue should be in blocked state
     EXPECT_EQ(pCmdQ->isQueueBlocked(), true);
@@ -224,7 +224,7 @@ TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithReturnEvent
 
     //and if normal event inherited status from user event
     Event *returnEvent = castToObject<Event>(retEvent);
-    EXPECT_EQ(returnEvent->taskLevel, CompletionStamp::levelNotReady);
+    EXPECT_EQ(returnEvent->taskLevel, CompletionStamp::notReady);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -376,7 +376,7 @@ TEST_F(EventTests, givenQueueThatIsBlockedByUserEventWhenIsQueueBlockedIsCalledT
         }
         bool updateExecutionStatusCalled = false;
     };
-    mockEvent mockedVirtualEvent(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, 0);
+    mockEvent mockedVirtualEvent(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, 0);
     pCmdQ->virtualEvent = &mockedVirtualEvent;
 
     EXPECT_TRUE(pCmdQ->isQueueBlocked());
@@ -454,8 +454,8 @@ TEST_F(MockEventTests, GivenUserEventWhenSettingStatusCompleteThenTaskLevelIsUpd
 
     //check if dependency count is increased
     Event *returnEvent = castToObject<Event>(retEvent);
-    EXPECT_EQ(CompletionStamp::levelNotReady, returnEvent->taskLevel);
-    EXPECT_EQ(CompletionStamp::levelNotReady, returnEvent->peekTaskCount());
+    EXPECT_EQ(CompletionStamp::notReady, returnEvent->taskLevel);
+    EXPECT_EQ(CompletionStamp::notReady, returnEvent->peekTaskCount());
 
     //now set user event for complete status, this triggers update of childs.
     uEvent->setStatus(CL_COMPLETE);
@@ -481,7 +481,7 @@ TEST_F(MockEventTests, GivenCompleteParentWhenWaitingForEventsThenChildrenAreCom
 
     //check if dependency count is increased
     Event *returnEvent = castToObject<Event>(retEvent);
-    EXPECT_EQ(CompletionStamp::levelNotReady, returnEvent->taskLevel);
+    EXPECT_EQ(CompletionStamp::notReady, returnEvent->taskLevel);
 
     //now set user event for complete status, this triggers update of childs.
     uEvent->setStatus(CL_COMPLETE);
@@ -527,7 +527,7 @@ TEST_F(MockEventTests, GivenAbortedUserEventWhenEnqueingNdrThenDoNotFlushToCsr) 
     EXPECT_EQ(taskCount, taskCountAfter);
 
     Event *pChildEvent = (Event *)retEvent;
-    EXPECT_EQ(CompletionStamp::levelNotReady, pChildEvent->getTaskLevel());
+    EXPECT_EQ(CompletionStamp::notReady, pChildEvent->getTaskLevel());
 
     cl_int eventStatus = 0;
     retVal = clGetEventInfo(retEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), &eventStatus, NULL);
@@ -564,7 +564,7 @@ TEST_F(MockEventTests, GivenAbortedParentWhenDestroyingChildEventThenDoNotProces
     EXPECT_EQ(taskCount, taskCountAfter);
 
     Event *pChildEvent = (Event *)retEvent;
-    EXPECT_EQ(CompletionStamp::levelNotReady, pChildEvent->taskLevel);
+    EXPECT_EQ(CompletionStamp::notReady, pChildEvent->taskLevel);
 
     cl_int eventStatus = 0;
     retVal = clGetEventInfo(retEvent, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), &eventStatus, NULL);

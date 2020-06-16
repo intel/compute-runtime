@@ -16,7 +16,7 @@
 namespace NEO {
 
 UserEvent::UserEvent(Context *ctx)
-    : Event(ctx, nullptr, CL_COMMAND_USER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady) {
+    : Event(ctx, nullptr, CL_COMMAND_USER, CompletionStamp::notReady, CompletionStamp::notReady) {
     transitionExecutionStatus(CL_QUEUED);
 }
 
@@ -37,7 +37,7 @@ uint32_t UserEvent::getTaskLevel() {
     if (peekExecutionStatus() == CL_COMPLETE) {
         return 0;
     }
-    return CompletionStamp::levelNotReady;
+    return CompletionStamp::notReady;
 }
 
 bool UserEvent::isInitialEventStatus() const {
@@ -45,7 +45,7 @@ bool UserEvent::isInitialEventStatus() const {
 }
 
 VirtualEvent::VirtualEvent(CommandQueue *cmdQ, Context *ctx)
-    : Event(ctx, cmdQ, -1, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady) {
+    : Event(ctx, cmdQ, -1, CompletionStamp::notReady, CompletionStamp::notReady) {
     transitionExecutionStatus(CL_QUEUED);
 
     // internal object - no need for API refcount

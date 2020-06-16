@@ -79,7 +79,7 @@ HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEna
     std::unique_ptr<GeneralSurface> surface(new GeneralSurface(allocation.get()));
     EventsRequest eventsRequest(0, nullptr, nullptr);
     EventBuilder eventBuilder;
-    eventBuilder.create<MockEvent<Event>>(mockCmdQ.get(), CL_COMMAND_USER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    eventBuilder.create<MockEvent<Event>>(mockCmdQ.get(), CL_COMMAND_USER, CompletionStamp::notReady, CompletionStamp::notReady);
     auto ev = static_cast<MockEvent<UserEvent> *>(eventBuilder.getEvent());
     Surface *surfaces[] = {surface.get()};
     auto blocking = true;
@@ -109,7 +109,7 @@ HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacke
     std::unique_ptr<GeneralSurface> surface(new GeneralSurface(allocation.get()));
     EventsRequest eventsRequest(0, nullptr, nullptr);
     EventBuilder eventBuilder;
-    eventBuilder.create<MockEvent<Event>>(mockCmdQ.get(), CL_COMMAND_USER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    eventBuilder.create<MockEvent<Event>>(mockCmdQ.get(), CL_COMMAND_USER, CompletionStamp::notReady, CompletionStamp::notReady);
     auto ev = static_cast<MockEvent<UserEvent> *>(eventBuilder.getEvent());
     Surface *surfaces[] = {surface.get()};
     auto blocking = true;

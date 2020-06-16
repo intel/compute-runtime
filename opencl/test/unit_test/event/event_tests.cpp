@@ -52,7 +52,7 @@ TEST(Event, WhenPeekIsCalledThenExecutionIsNotUpdated) {
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx;
     MockCommandQueue cmdQ(&ctx, mockDevice.get(), 0);
-    Event event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, 0);
+    Event event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, 0);
 
     EXPECT_FALSE(event.peekIsBlocked());
     EXPECT_EQ(CL_QUEUED, event.peekExecutionStatus());
@@ -73,7 +73,7 @@ TEST(Event, givenEventThatStatusChangeWhenPeekIsCalledThenEventIsNotUpdated) {
         uint32_t callCount = 0u;
     };
 
-    mockEvent event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, 0);
+    mockEvent event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, 0);
     EXPECT_EQ(0u, event.callCount);
     event.peekExecutionStatus();
     EXPECT_EQ(0u, event.callCount);
@@ -212,7 +212,7 @@ TEST(Event, GivenNotReadyEventWhenWaitingForEventsThenQueueIsNotFlushed) {
     MockContext context;
 
     std::unique_ptr<MockCommandQueueWithFlushCheck> cmdQ1(new MockCommandQueueWithFlushCheck(context, device.get()));
-    std::unique_ptr<Event> event1(new Event(cmdQ1.get(), CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, 0));
+    std::unique_ptr<Event> event1(new Event(cmdQ1.get(), CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, 0));
     cl_event eventWaitlist[] = {event1.get()};
 
     Event::waitForEvents(1, eventWaitlist);
@@ -221,7 +221,7 @@ TEST(Event, GivenNotReadyEventWhenWaitingForEventsThenQueueIsNotFlushed) {
 }
 
 TEST(Event, givenNotReadyEventOnWaitlistWhenCheckingUserEventDependeciesThenTrueIsReturned) {
-    auto event1 = std::make_unique<Event>(nullptr, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, 0);
+    auto event1 = std::make_unique<Event>(nullptr, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, 0);
     cl_event eventWaitlist[] = {event1.get()};
 
     bool userEventDependencies = Event::checkUserEventDependencies(1, eventWaitlist);
@@ -294,7 +294,7 @@ TEST_F(EventTest, GivenTagCsGreaterThanTaskCountWhenGettingClEventCommandExecuti
 }
 
 TEST_F(EventTest, WhenGettingClEventCommandExecutionStatusThenEventStatusIsReturned) {
-    Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
     cl_int eventStatus = -1;
 
     event.setStatus(-1);
@@ -387,7 +387,7 @@ TEST_F(EventTest, GivenInvalidEventWhenGettingEventInfoThenInvalidValueErrorIsRe
 }
 
 TEST_F(EventTest, GivenNonBlockingEventWhenWaitingThenFalseIsReturned) {
-    Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, CompletionStamp::levelNotReady);
+    Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, CompletionStamp::notReady);
     auto result = event.wait(false, false);
     EXPECT_FALSE(result);
 }
@@ -931,7 +931,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCsrOccurs) {
 
     std::unique_ptr<MockCommandComputeKernel> command = std::make_unique<MockCommandComputeKernel>(*pCmdQ, kernelOperation, surfaces, kernel);
 
-    auto virtualEvent = make_releaseable<MockEvent>(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    auto virtualEvent = make_releaseable<MockEvent>(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
 
     virtualEvent->setCommand(std::move(command));
 
@@ -949,7 +949,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenSubmitCommandEventNotReadyAndEventWitho
                                                                   taskLevel, taskCount) {}
     };
 
-    auto virtualEvent = make_releaseable<MockEvent>(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    auto virtualEvent = make_releaseable<MockEvent>(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
 
     virtualEvent->submitCommand(false);
 
@@ -1206,23 +1206,23 @@ TEST_F(EventTest, GivenCompletedEventWhenQueryingExecutionStatusAfterFlushThenCs
 }
 
 HWTEST_F(EventTest, GivenEventCreatedOnMapBufferWithoutCommandWhenSubmittingCommandThenTaskCountIsNotUpdated) {
-    MockEvent<Event> ev(this->pCmdQ, CL_COMMAND_MAP_BUFFER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    MockEvent<Event> ev(this->pCmdQ, CL_COMMAND_MAP_BUFFER, CompletionStamp::notReady, CompletionStamp::notReady);
 
-    EXPECT_EQ(CompletionStamp::levelNotReady, ev.peekTaskCount());
+    EXPECT_EQ(CompletionStamp::notReady, ev.peekTaskCount());
     ev.submitCommand(false);
     EXPECT_EQ(0u, ev.peekTaskCount());
 }
 
 HWTEST_F(EventTest, GivenEventCreatedOnMapImageWithoutCommandWhenSubmittingCommandThenTaskCountIsNotUpdated) {
-    MockEvent<Event> ev(this->pCmdQ, CL_COMMAND_MAP_IMAGE, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    MockEvent<Event> ev(this->pCmdQ, CL_COMMAND_MAP_IMAGE, CompletionStamp::notReady, CompletionStamp::notReady);
 
-    EXPECT_EQ(CompletionStamp::levelNotReady, ev.peekTaskCount());
+    EXPECT_EQ(CompletionStamp::notReady, ev.peekTaskCount());
     ev.submitCommand(false);
     EXPECT_EQ(0u, ev.peekTaskCount());
 }
 
 TEST_F(EventTest, givenCmdQueueWithoutProfilingWhenIsCpuProfilingIsCalledThenFalseIsReturned) {
-    MockEvent<Event> ev(this->pCmdQ, CL_COMMAND_MAP_IMAGE, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    MockEvent<Event> ev(this->pCmdQ, CL_COMMAND_MAP_IMAGE, CompletionStamp::notReady, CompletionStamp::notReady);
     bool cpuProfiling = ev.isCPUProfilingPath() != 0;
     EXPECT_FALSE(cpuProfiling);
 }
@@ -1251,7 +1251,7 @@ TEST_F(EventTest, givenCmdQueueWithProfilingWhenIsCpuProfilingIsCalledThenTrueIs
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     std::unique_ptr<MockCommandQueue> pCmdQ(new MockCommandQueue(&mockContext, pClDevice, props));
 
-    MockEvent<Event> ev(pCmdQ.get(), CL_COMMAND_MAP_IMAGE, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    MockEvent<Event> ev(pCmdQ.get(), CL_COMMAND_MAP_IMAGE, CompletionStamp::notReady, CompletionStamp::notReady);
     bool cpuProfiling = ev.isCPUProfilingPath() != 0;
     EXPECT_TRUE(cpuProfiling);
 }
@@ -1355,8 +1355,8 @@ HWTEST_F(EventTest, givenEventWithNotReadyTaskLevelWhenUnblockedThenGetTaskLevel
     Event parentEventWithGreaterTaskLevel(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, initialTaskLevel + 5, 0);
     Event parentEventWithLowerTaskLevel(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, initialTaskLevel - 5, 0);
 
-    Event childEvent0(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
-    Event childEvent1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    Event childEvent0(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
+    Event childEvent1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
 
     auto &csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ->getGpgpuCommandStreamReceiver());
     csr.taskLevel = initialTaskLevel;

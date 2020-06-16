@@ -159,7 +159,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
     EventBuilder eventBuilder;
     if (event) {
-        eventBuilder.create<Event>(this, commandType, CompletionStamp::levelNotReady, 0);
+        eventBuilder.create<Event>(this, commandType, CompletionStamp::notReady, 0);
         *event = eventBuilder.getEvent();
         if (eventBuilder.getEvent()->isProfilingEnabled()) {
             eventBuilder.getEvent()->setQueueTimeStamp(&queueTimeStamp);
@@ -271,7 +271,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
     }
 
-    CompletionStamp completionStamp = {CompletionStamp::levelNotReady, taskLevel, 0};
+    CompletionStamp completionStamp = {CompletionStamp::notReady, taskLevel, 0};
 
     const EnqueueProperties enqueueProperties(blitEnqueue, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
                                               flushDependenciesForNonKernelCommand, &blitPropertiesContainer);
@@ -617,7 +617,7 @@ template <typename GfxFamily>
 void CommandQueueHw<GfxFamily>::obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) {
     auto isQueueBlockedStatus = isQueueBlocked();
     taskLevel = getTaskLevelFromWaitList(this->taskLevel, numEventsInWaitList, eventWaitList);
-    blockQueueStatus = (taskLevel == CompletionStamp::levelNotReady) || isQueueBlockedStatus;
+    blockQueueStatus = (taskLevel == CompletionStamp::notReady) || isQueueBlockedStatus;
 
     auto taskLevelUpdateRequired = isTaskLevelUpdateRequired(taskLevel, eventWaitList, numEventsInWaitList, commandType);
     if (taskLevelUpdateRequired) {
@@ -630,7 +630,7 @@ template <typename GfxFamily>
 bool CommandQueueHw<GfxFamily>::isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType) {
     bool updateTaskLevel = true;
     //if we are blocked by user event then no update
-    if (taskLevel == CompletionStamp::levelNotReady) {
+    if (taskLevel == CompletionStamp::notReady) {
         updateTaskLevel = false;
     }
     //if we are executing command without kernel then it will inherit state from
@@ -796,7 +796,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         dispatchFlags.csrDependencies.makeResident(getGpgpuCommandStreamReceiver());
     }
 
-    DEBUG_BREAK_IF(taskLevel >= CompletionStamp::levelNotReady);
+    DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
     if (anyUncacheableArgs) {
         dispatchFlags.l3CacheSettings = L3CachingSettings::l3CacheOff;

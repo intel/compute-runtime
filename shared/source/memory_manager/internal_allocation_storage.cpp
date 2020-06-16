@@ -107,8 +107,8 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
             (this->allocationUsage == TEMPORARY_ALLOCATION || *req->csrTagAddress >= curr->getTaskCount(req->contextId)) &&
             (req->requiredPtr == nullptr || req->requiredPtr == curr->getUnderlyingBuffer())) {
             if (this->allocationUsage == TEMPORARY_ALLOCATION) {
-                // We may not have proper task count yet, so set levelNotReady to avoid releasing in a different thread
-                curr->updateTaskCount(CompletionStamp::levelNotReady, req->contextId);
+                // We may not have proper task count yet, so set notReady to avoid releasing in a different thread
+                curr->updateTaskCount(CompletionStamp::notReady, req->contextId);
             }
             return removeOneImpl(curr, nullptr);
         }

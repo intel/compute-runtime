@@ -37,7 +37,7 @@ void AsyncEventsHandler::registerEvent(Event *event) {
 }
 
 Event *AsyncEventsHandler::processList() {
-    uint32_t lowestTaskCount = CompletionStamp::levelNotReady;
+    uint32_t lowestTaskCount = CompletionStamp::notReady;
     Event *sleepCandidate = nullptr;
     pendingList.clear();
 

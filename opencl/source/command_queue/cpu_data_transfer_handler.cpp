@@ -45,7 +45,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     }
 
     if (eventsRequest.outEvent) {
-        eventBuilder.create<Event>(this, transferProperties.cmdType, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+        eventBuilder.create<Event>(this, transferProperties.cmdType, CompletionStamp::notReady, CompletionStamp::notReady);
         outEventObj = eventBuilder.getEvent();
         outEventObj->setQueueTimeStamp();
         outEventObj->setCPUProfilingPath(true);

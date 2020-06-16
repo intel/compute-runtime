@@ -688,12 +688,12 @@ HWTEST_F(CommandQueueHwTest, GivenEventThatIsNotCompletedWhenFinishIsCalledAndIt
     };
     auto Value = 0u;
 
-    auto ev = new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, CompletionStamp::levelNotReady + 1);
+    auto ev = new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, CompletionStamp::notReady + 1);
     clSetEventCallback(ev, CL_COMPLETE, ClbFuncTempStruct::ClbFuncT, &Value);
 
     auto &csr = this->pCmdQ->getGpgpuCommandStreamReceiver();
     EXPECT_GT(3u, csr.peekTaskCount());
-    *csr.getTagAddress() = CompletionStamp::levelNotReady + 1;
+    *csr.getTagAddress() = CompletionStamp::notReady + 1;
     ret = clFinish(this->pCmdQ);
     ASSERT_EQ(CL_SUCCESS, ret);
 
@@ -923,14 +923,14 @@ HWTEST_F(CommandQueueHwTest, givenCommandQueueThatIsBlockedAndUsesCpuCopyWhenEve
     MockBuffer buffer;
     cl_event returnEvent = nullptr;
     auto retVal = CL_SUCCESS;
-    cmdQHw->taskLevel = CompletionStamp::levelNotReady;
+    cmdQHw->taskLevel = CompletionStamp::notReady;
     size_t offset = 0;
     size_t size = 4096u;
     TransferProperties transferProperties(&buffer, CL_COMMAND_READ_BUFFER, 0, false, &offset, &size, nullptr, false, pDevice->getRootDeviceIndex());
     EventsRequest eventsRequest(0, nullptr, &returnEvent);
     cmdQHw->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(CompletionStamp::levelNotReady, castToObject<Event>(returnEvent)->peekTaskCount());
+    EXPECT_EQ(CompletionStamp::notReady, castToObject<Event>(returnEvent)->peekTaskCount());
     clReleaseEvent(returnEvent);
 }
 
@@ -949,12 +949,12 @@ HWTEST_F(CommandQueueHwTest, givenEventWithRecordedCommandWhenSubmitCommandIsCal
         std::atomic_bool *atomicFence = nullptr;
     };
 
-    mockEvent neoEvent(this->pCmdQ, CL_COMMAND_MAP_BUFFER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    mockEvent neoEvent(this->pCmdQ, CL_COMMAND_MAP_BUFFER, CompletionStamp::notReady, CompletionStamp::notReady);
     neoEvent.atomicFence = &go;
     EXPECT_TRUE(neoEvent.eventWithoutCommand);
     neoEvent.eventWithoutCommand = false;
 
-    EXPECT_EQ(CompletionStamp::levelNotReady, neoEvent.peekTaskCount());
+    EXPECT_EQ(CompletionStamp::notReady, neoEvent.peekTaskCount());
 
     std::thread t([&]() {
         while (!go)
@@ -1119,7 +1119,7 @@ HWTEST_F(CommandQueueHwTest, givenBlockedOutOfOrderQueueWhenUserEventIsSubmitted
     neoEvent->updateExecutionStatus();
 
     EXPECT_EQ(neoEvent->peekExecutionStatus(), CL_QUEUED);
-    EXPECT_EQ(neoEvent->peekTaskCount(), CompletionStamp::levelNotReady);
+    EXPECT_EQ(neoEvent->peekTaskCount(), CompletionStamp::notReady);
 
     clSetUserEventStatus(userEvent, 0u);
 

@@ -9,6 +9,6 @@
 
 namespace NEO {
 
-const uint32_t CompletionStamp::levelNotReady = 0xFFFFFFF0;
+const uint32_t CompletionStamp::notReady = 0xFFFFFFF0;
 
 } // namespace NEO

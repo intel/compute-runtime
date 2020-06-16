@@ -74,7 +74,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         false                                                                        //usePerDssBackedBuffer
     );
 
-    DEBUG_BREAK_IF(taskLevel >= CompletionStamp::levelNotReady);
+    DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
     gtpinNotifyPreFlushTask(&commandQueue);
 
@@ -248,7 +248,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         dispatchFlags.epilogueRequired = true;
     }
 
-    DEBUG_BREAK_IF(taskLevel >= CompletionStamp::levelNotReady);
+    DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
     gtpinNotifyPreFlushTask(&commandQueue);
 

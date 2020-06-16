@@ -244,13 +244,13 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     virtual void unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus);
 
     void updateTaskCount(uint32_t taskCount) {
-        if (taskCount == CompletionStamp::levelNotReady) {
+        if (taskCount == CompletionStamp::notReady) {
             DEBUG_BREAK_IF(true);
             return;
         }
 
         uint32_t prevTaskCount = this->taskCount.exchange(taskCount);
-        if ((prevTaskCount != CompletionStamp::levelNotReady) && (prevTaskCount > taskCount)) {
+        if ((prevTaskCount != CompletionStamp::notReady) && (prevTaskCount > taskCount)) {
             this->taskCount = prevTaskCount;
             DEBUG_BREAK_IF(true);
         }
@@ -322,7 +322,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     bool calcProfilingData();
     MOCKABLE_VIRTUAL void calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t contextEndTS, uint64_t *contextCompleteTS, uint64_t globalStartTS);
     MOCKABLE_VIRTUAL void synchronizeTaskCount() {
-        while (this->taskCount == CompletionStamp::levelNotReady)
+        while (this->taskCount == CompletionStamp::notReady)
             ;
     };
 

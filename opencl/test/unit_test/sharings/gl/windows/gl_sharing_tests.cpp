@@ -1102,8 +1102,8 @@ HWTEST_F(glSharingTests, givenSyncObjectWhenCreateEventIsCalledThenCreateGLSyncO
     auto eventObj = castToObject<Event>(event);
     EXPECT_TRUE(eventObj->getCommandType() == CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR);
     EXPECT_TRUE(eventObj->peekExecutionStatus() == CL_SUBMITTED);
-    EXPECT_EQ(CompletionStamp::levelNotReady, eventObj->taskLevel);
-    EXPECT_EQ(CompletionStamp::levelNotReady, eventObj->getTaskLevel());
+    EXPECT_EQ(CompletionStamp::notReady, eventObj->taskLevel);
+    EXPECT_EQ(CompletionStamp::notReady, eventObj->getTaskLevel());
     EXPECT_EQ(1, mockGlSharing->dllParam->getParam("GLRetainSyncCalled"));
 
     eventObj->setStatus(CL_COMPLETE);

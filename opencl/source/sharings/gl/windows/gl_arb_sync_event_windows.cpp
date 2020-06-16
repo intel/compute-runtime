@@ -156,7 +156,7 @@ void serverWaitForArbSyncObject(OSInterface &osInterface, CL_GL_SYNC_INFO &glSyn
 }
 
 GlArbSyncEvent::GlArbSyncEvent(Context &context)
-    : Event(&context, nullptr, CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady),
+    : Event(&context, nullptr, CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR, CompletionStamp::notReady, CompletionStamp::notReady),
       glSyncInfo(std::make_unique<CL_GL_SYNC_INFO>()) {
 }
 

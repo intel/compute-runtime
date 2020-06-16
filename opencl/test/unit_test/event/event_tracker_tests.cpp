@@ -111,8 +111,8 @@ TEST(EventsTracker, givenAlreadyDumpedCmdqThenNotDumping) {
 
 TEST(EventsTracker, givenCmqdWithTaskCountAndLevelNotReadyThenDumpingCmdqWithNotReadyLabels) {
     MockCommandQueue cmdq;
-    cmdq.taskCount = CompletionStamp::levelNotReady;
-    cmdq.taskLevel = CompletionStamp::levelNotReady;
+    cmdq.taskCount = CompletionStamp::notReady;
+    cmdq.taskLevel = CompletionStamp::notReady;
 
     std::stringstream stream;
     std::set<CommandQueue *> dumped;
@@ -157,8 +157,8 @@ TEST(EventsTracker, whenCallDumpEdgeThenGetStringWithProperLabelOfDumpedEdge) {
 
 TEST(EventsTracker, givenEventWithTaskLevelAndCountNotReadyThenDumpingNodeWithNotReadyLabels) {
     UserEvent uEvent;
-    uEvent.taskLevel = CompletionStamp::levelNotReady;
-    uEvent.updateTaskCount(CompletionStamp::levelNotReady);
+    uEvent.taskLevel = CompletionStamp::notReady;
+    uEvent.updateTaskCount(CompletionStamp::notReady);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -203,7 +203,7 @@ TEST(EventsTracker, givenNullptrEventThenNotDumpingNode) {
 
 TEST(EventsTracker, givenEventAndUserEventThenDumpingNodeWithProperLabels) {
     UserEvent uEvent;
-    Event event(nullptr, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    Event event(nullptr, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -266,7 +266,7 @@ TEST(EventsTracker, givenEventWithCallbackThenDumpingWithProperLabel) {
 }
 
 TEST(EventsTracker, givenSubmittedEventThenDumpingWithProperLabel) {
-    Event event(nullptr, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    Event event(nullptr, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -484,7 +484,7 @@ TEST(EventsTracker, givenTwoEventsWithSamePtrWhenFirstOneIsDeletedThenDumpingFir
 }
 
 TEST(EventsTracker, whenNotifyCreationOfEventThenEventIsDumped) {
-    Event event(nullptr, CL_COMMAND_USER, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    Event event(nullptr, CL_COMMAND_USER, CompletionStamp::notReady, CompletionStamp::notReady);
     EventsTrackerMock evTrackerMock;
 
     std::stringstream expected;
@@ -626,7 +626,7 @@ TEST(EventsTracker, whenEventsDebugEnableFlagIsTrueAndCreateOrChangeStatusOrDest
     EventsTrackerMock evTrackerMock;
     evTrackerMock.overrideGlobal();
 
-    Event *ev = new Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::levelNotReady, CompletionStamp::levelNotReady);
+    Event *ev = new Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, CompletionStamp::notReady, CompletionStamp::notReady);
 
     std::stringstream expected;
     expected << "digraph events_registry_" << &EventsTracker::getEventsTracker() << " {\nnode [shape=record]\n//pragma: somePragmaData\n\n}\n";
