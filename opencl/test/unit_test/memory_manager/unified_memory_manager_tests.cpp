@@ -8,6 +8,8 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/ult_device_factory.h"
 #include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
 #include "opencl/source/api/api.h"
@@ -15,6 +17,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_svm_manager.h"
@@ -65,7 +68,7 @@ TEST_F(SVMMemoryAllocatorTest, whenRequestSVMAllocsThenReturnNonNullptr) {
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenSVMAllocationIsFreedThenCannotBeGotAgain) {
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
+    auto ptr = svmManager->createSVMAlloc(mockRootDeviceIndex, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_NE(nullptr, ptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
@@ -111,7 +114,7 @@ TEST_F(SVMMemoryAllocatorTest, givenSvmManagerWhenOperatedOnThenCorrectAllocatio
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromReturnedPointerAreaThenReturnSameAllocation) {
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
+    auto ptr = svmManager->createSVMAlloc(mockRootDeviceIndex, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_NE(ptr, nullptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
@@ -130,7 +133,7 @@ TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromReturnedPointerAreaThenRe
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromOutsideOfReturnedPointerAreaThenDontReturnThisAllocation) {
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
+    auto ptr = svmManager->createSVMAlloc(mockRootDeviceIndex, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_NE(ptr, nullptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
@@ -151,7 +154,7 @@ TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromOutsideOfReturnedPointerA
 TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenReturnsNullAndDoesNotChangeAllocsMap) {
     FailMemoryManager failMemoryManager(executionEnvironment);
     svmManager->memoryManager = &failMemoryManager;
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
+    auto ptr = svmManager->createSVMAlloc(mockRootDeviceIndex, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
     svmManager->freeSVMAlloc(ptr);
@@ -163,6 +166,7 @@ TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenCreateUnif
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
@@ -172,7 +176,7 @@ TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenCreateUnif
 TEST_F(SVMMemoryAllocatorTest, given64kbAllowedWhenAllocatingSvmMemoryThenDontPreferRenderCompression) {
     MockMemoryManager memoryManager64Kb(true, false, executionEnvironment);
     svmManager->memoryManager = &memoryManager64Kb;
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
+    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_FALSE(memoryManager64Kb.preferRenderCompressedFlagPassed);
     svmManager->freeSVMAlloc(ptr);
 }
@@ -180,13 +184,13 @@ TEST_F(SVMMemoryAllocatorTest, given64kbAllowedWhenAllocatingSvmMemoryThenDontPr
 TEST_F(SVMMemoryAllocatorTest, given64kbAllowedwhenAllocatingSvmMemoryThenAllocationIsIn64kbPagePool) {
     MockMemoryManager memoryManager64Kb(true, false, executionEnvironment);
     svmManager->memoryManager = &memoryManager64Kb;
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
+    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_EQ(MemoryPool::System64KBPages, svmManager->getSVMAlloc(ptr)->gpuAllocation->getMemoryPool());
     svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, given64kbDisallowedWhenAllocatingSvmMemoryThenAllocationIsIn4kbPagePool) {
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
+    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_EQ(MemoryPool::System4KBPages, svmManager->getSVMAlloc(ptr)->gpuAllocation->getMemoryPool());
     svmManager->freeSVMAlloc(ptr);
 }
@@ -194,7 +198,7 @@ TEST_F(SVMMemoryAllocatorTest, given64kbDisallowedWhenAllocatingSvmMemoryThenAll
 TEST_F(SVMMemoryAllocatorTest, whenCoherentFlagIsPassedThenAllocationIsCoherent) {
     SVMAllocsManager::SvmAllocationProperties svmProperties;
     svmProperties.coherent = true;
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, svmProperties, {});
+    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, svmProperties, mockDeviceBitfield);
     EXPECT_TRUE(svmManager->getSVMAlloc(ptr)->gpuAllocation->isCoherent());
     svmManager->freeSVMAlloc(ptr);
 }
@@ -203,6 +207,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredW
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined = true;
+    unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     auto allocationSize = 4000u;
     auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4000u, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
@@ -226,8 +231,9 @@ TEST_F(SVMMemoryAllocatorTest, givenNoWriteCombinedFlagwhenDeviceAllocationIsCre
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined = false;
+    unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(mockRootDeviceIndex, 4096u, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
@@ -244,6 +250,7 @@ TEST_F(SVMMemoryAllocatorTest, givenNoWriteCombinedFlagwhenDeviceAllocationIsCre
 TEST_F(SVMMemoryAllocatorTest, whenHostAllocationIsCreatedThenItIsStoredWithProperTypeInAllocationMap) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::HOST_UNIFIED_MEMORY;
+    unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     auto allocationSize = 4096u;
     auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
@@ -269,6 +276,7 @@ TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenCreateShar
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
@@ -278,6 +286,7 @@ TEST_F(SVMMemoryAllocatorTest, whenCouldNotAllocateInMemoryManagerThenCreateShar
 TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithProperTypeInAllocationMap) {
     MockCommandQueue cmdQ;
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
+    unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
 
@@ -305,6 +314,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     unifiedMemoryProperties.device = mockContext.getDevice(0u);
+    unifiedMemoryProperties.subdeviceBitfield = mockContext.getDevice(0)->getDeviceBitfield();
     auto allocationSize = 4096u;
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_NE(nullptr, ptr);
@@ -335,6 +345,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
+    unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     auto allocationSize = 4096u;
     auto ptr = svmManager->createSharedUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_NE(nullptr, ptr);
@@ -363,6 +374,7 @@ TEST_F(SVMMemoryAllocatorTest, givenSharedAllocationsDebugFlagWhenDeviceMemoryIs
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     auto allocationSize = 4096u;
     auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
@@ -418,7 +430,7 @@ TEST(SvmAllocationPropertiesTests, givenDifferentMemFlagsWhenGettingSvmAllocatio
 TEST_F(SVMMemoryAllocatorTest, whenReadOnlySvmAllocationCreatedThenGraphicsAllocationHasWriteableFlagFalse) {
     SVMAllocsManager::SvmAllocationProperties svmProperties;
     svmProperties.readOnly = true;
-    void *svm = svmManager->createSVMAlloc(0, 4096, svmProperties, {});
+    void *svm = svmManager->createSVMAlloc(0, 4096, svmProperties, mockDeviceBitfield);
     EXPECT_NE(nullptr, svm);
 
     auto svmData = svmManager->getSVMAlloc(svm);
@@ -431,7 +443,7 @@ TEST_F(SVMMemoryAllocatorTest, whenReadOnlySvmAllocationCreatedThenGraphicsAlloc
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenAllocatingSvmThenExpectCpuAllocationWithPointerAndGpuAllocationWithSameGpuAddress) {
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
+    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_NE(ptr, nullptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
@@ -447,7 +459,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenAllocatingSvmThenExpectCpuAllocationWith
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenGetSVMAllocationFromOutsideOfReturnedPointerAreaThenDontReturnThisAllocation) {
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
+    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_NE(ptr, nullptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
@@ -468,7 +480,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenGetSVMAllocationFromOutsideOfReturnedPoi
 TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotAllocateCpuAllocationInMemoryManagerThenReturnsNullAndDoesNotChangeAllocsMap) {
     FailMemoryManager failMemoryManager(false, true, executionEnvironment);
     svmManager->memoryManager = &failMemoryManager;
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
+    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
     svmManager->freeSVMAlloc(ptr);
@@ -477,7 +489,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotAllocateCpuAllocationInMemoryMan
 TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotAllocateGpuAllocationInMemoryManagerThenReturnsNullAndDoesNotChangeAllocsMap) {
     FailMemoryManager failMemoryManager(1, executionEnvironment, true);
     svmManager->memoryManager = &failMemoryManager;
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
+    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
     svmManager->freeSVMAlloc(ptr);
@@ -485,7 +497,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotAllocateGpuAllocationInMemoryMan
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenCouldNotReserveCpuAddressRangeInMemoryManagerThenReturnsNullAndDoesNotChangeAllocsMap) {
     memoryManager->failReserveAddress = true;
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, {});
+    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_EQ(nullptr, ptr);
     EXPECT_EQ(0u, svmManager->SVMAllocs.getNumAllocs());
 }
@@ -527,8 +539,14 @@ struct UnifiedMemoryManagerPropertiesTest : public ::testing::Test {
     std::unique_ptr<MockSVMAllocsManager> svmManager;
 };
 
-TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithMultipleBitsSetWhenSharedUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
+TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenSharedUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
     MockCommandQueue cmdQ;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    MockExecutionEnvironment executionEnvironment;
+    auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
+    memoryManager->pageFaultManager.reset(new MockPageFaultManager);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
@@ -559,7 +577,12 @@ TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithSingleBitSetWh
     svmManager->freeSVMAlloc(ptr);
 }
 
-TEST_F(UnifiedMemoryManagerPropertiesTest, givenDeviceBitfieldWithMultipleBitsSetWhenDeviceUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
+TEST(UnifiedMemoryTest, givenDeviceBitfieldWithMultipleBitsSetWhenDeviceUnifiedMemoryAllocationIsCreatedThenProperPropertiesArePassedToMemoryManager) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.CreateMultipleSubDevices.set(4);
+    MockExecutionEnvironment executionEnvironment;
+    auto memoryManager = std::make_unique<MemoryManagerPropertiesCheck>(false, true, executionEnvironment);
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     unifiedMemoryProperties.subdeviceBitfield = DeviceBitfield(0xf);
@@ -607,6 +630,7 @@ struct ShareableUnifiedMemoryManagerPropertiesTest : public ::testing::Test {
 TEST_F(ShareableUnifiedMemoryManagerPropertiesTest, givenShareableUnifiedPropertyFlagThenShareableAllocationPropertyFlagIsSet) {
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     unifiedMemoryProperties.allocationFlags.flags.shareable = 1;
 
     auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties);

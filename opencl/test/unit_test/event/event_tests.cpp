@@ -417,7 +417,7 @@ struct UpdateEventTest : public ::testing::Test {
 TEST_F(UpdateEventTest, givenEventContainingCommandQueueWhenItsStatusIsUpdatedToCompletedThenTemporaryAllocationsAreDeleted) {
     void *ptr = (void *)0x1000;
     size_t size = 4096;
-    auto temporary = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), false, size}, ptr);
+    auto temporary = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), false, size, device->getDeviceBitfield()}, ptr);
     temporary->updateTaskCount(3, commandQueue->getGpgpuCommandStreamReceiver().getOsContext().getContextId());
     commandQueue->getGpgpuCommandStreamReceiver().getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporary), TEMPORARY_ALLOCATION);
     Event event(commandQueue.get(), CL_COMMAND_NDRANGE_KERNEL, 3, 3);
@@ -464,7 +464,7 @@ TEST_F(InternalsEventTest, GivenSubmitCommandFalseWhenSubmittingCommandsThenRefA
     MockCommandQueue cmdQ(mockContext, pClDevice, nullptr);
     MockEvent<Event> event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
-    auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
+    auto cmdStream = new LinearStream(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), true, 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER, false, pDevice->getDeviceBitfield()}));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
     cmdQ.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
     cmdQ.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);

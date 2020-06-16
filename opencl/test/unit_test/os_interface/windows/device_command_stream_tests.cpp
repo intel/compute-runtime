@@ -71,12 +71,12 @@ class WddmCommandStreamFixture {
         memoryManager = new MockWddmMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         wddm = static_cast<WddmMock *>(executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->getWddm());
+        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
         osContext.reset(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
-                                          0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                          0, device->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                           false, false, false));
         osContext->setDefaultContext(true);
         csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment, 0);
-        device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0u));
 
         device->resetCommandStreamReceiver(csr);
         ASSERT_NE(nullptr, device);
@@ -252,7 +252,7 @@ TEST_F(WddmCommandStreamTest, givenGraphicsAllocationWithDifferentGpuAddressThen
 }
 TEST_F(WddmCommandStreamTest, FlushWithOffset) {
     auto offset = 128u;
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize, mockDeviceBitfield});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1032,7 +1032,7 @@ TEST_F(WddmCommandStreamTest, whenDirectSubmissionEnabledOnBcsThenExpectFeatureA
     DebugManager.flags.EnableDirectSubmission.set(1);
 
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_BCS, PreemptionMode::ThreadGroup,
+                                      0, device->getDeviceBitfield(), aub_stream::ENGINE_BCS, PreemptionMode::ThreadGroup,
                                       false, false, false));
     osContext->setDefaultContext(true);
 
@@ -1049,7 +1049,7 @@ TEST_F(WddmCommandStreamTest, givenDirectSubmissionEnabledWhenPlatformNotSupport
     DebugManager.flags.EnableDirectSubmission.set(1);
 
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_BCS, PreemptionMode::ThreadGroup,
+                                      0, device->getDeviceBitfield(), aub_stream::ENGINE_BCS, PreemptionMode::ThreadGroup,
                                       false, false, false));
     osContext->setDefaultContext(true);
 
@@ -1066,7 +1066,7 @@ TEST_F(WddmCommandStreamTest, givenLowPriorityContextWhenDirectSubmissionDisable
     DebugManager.flags.EnableDirectSubmission.set(1);
 
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      0, device->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                       true, false, false));
     osContext->setDefaultContext(true);
 
@@ -1083,7 +1083,7 @@ TEST_F(WddmCommandStreamTest, givenLowPriorityContextWhenDirectSubmissionEnabled
     DebugManager.flags.EnableDirectSubmission.set(1);
 
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      0, device->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                       true, false, false));
 
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -1098,7 +1098,7 @@ TEST_F(WddmCommandStreamTest, givenInternalContextWhenDirectSubmissionDisabledOn
     DebugManager.flags.EnableDirectSubmission.set(1);
 
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      0, device->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                       false, true, false));
     osContext->setDefaultContext(true);
 
@@ -1115,7 +1115,7 @@ TEST_F(WddmCommandStreamTest, givenInternalContextWhenDirectSubmissionEnabledOnI
     DebugManager.flags.EnableDirectSubmission.set(1);
 
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      0, device->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                       false, true, false));
 
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -1131,7 +1131,7 @@ TEST_F(WddmCommandStreamTest, givenRootDeviceContextWhenDirectSubmissionDisabled
     DebugManager.flags.EnableDirectSubmission.set(1);
 
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      0, device->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                       false, false, true));
     osContext->setDefaultContext(true);
 
@@ -1148,7 +1148,7 @@ TEST_F(WddmCommandStreamTest, givenRootDeviceContextWhenDirectSubmissionEnabledO
     DebugManager.flags.EnableDirectSubmission.set(1);
 
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      0, device->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                       false, false, true));
 
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
@@ -1164,7 +1164,7 @@ TEST_F(WddmCommandStreamTest, givenNonDefaultContextWhenDirectSubmissionDisabled
     DebugManager.flags.EnableDirectSubmission.set(1);
 
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      0, device->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                       false, false, false));
     osContext->setDefaultContext(false);
 
@@ -1181,7 +1181,7 @@ TEST_F(WddmCommandStreamTest, givenNonDefaultContextContextWhenDirectSubmissionE
     DebugManager.flags.EnableDirectSubmission.set(1);
 
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      0, device->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                       false, false, false));
     osContext->setDefaultContext(false);
 
@@ -1206,7 +1206,7 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushi
 
     std::unique_ptr<OsContext> osContext;
     osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
-                                      0, 0, aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
+                                      0, device->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                       false, false, false));
     osContext->setDefaultContext(true);
     csr->callParentInitDirectSubmission = false;
