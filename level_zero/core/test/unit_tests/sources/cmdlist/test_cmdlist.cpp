@@ -924,6 +924,20 @@ HWTEST2_F(CommandListCreate, givenNullEventWhenAppendEventAfterWalkerThenNothing
 
     EXPECT_EQ(commandList->commandContainer.getCommandStream()->getUsed(), usedBefore);
 }
+HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenInternalAllocHasPattern, Platforms) {
+    MockCommandListForMemFill<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    uint64_t pattern[4] = {1, 2, 3, 4};
+    void *ptr = reinterpret_cast<void *>(0x1234);
+    uint32_t fillElements = 0x101;
+    auto size = fillElements * sizeof(uint64_t);
+    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), size, nullptr);
+    auto internalAlloc = cmdList.commandContainer.getDeallocationContainer()[0];
+    for (uint32_t i = 0; i < fillElements; i++) {
+        auto allocValue = reinterpret_cast<uint64_t *>(internalAlloc->getUnderlyingBuffer())[i];
+        EXPECT_EQ(allocValue, pattern[i % 4]);
+    }
+}
 
 } // namespace ult
 } // namespace L0
