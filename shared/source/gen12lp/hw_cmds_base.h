@@ -54,6 +54,7 @@ struct TGLLPFamily : public GEN12LP {
     using WALKER_TYPE = GPGPU_WALKER;
     using VFE_STATE_TYPE = MEDIA_VFE_STATE;
     using XY_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
+    using XY_COLOR_BLT = typename GfxFamily::XY_FAST_COLOR_BLT;
     using MI_STORE_REGISTER_MEM_CMD = typename GfxFamily::MI_STORE_REGISTER_MEM;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
@@ -85,7 +86,7 @@ struct TGLLPFamily : public GEN12LP {
     static const MI_USER_INTERRUPT cmdInitUserInterrupt;
     static const XY_COPY_BLT cmdInitXyCopyBlt;
     static const MI_FLUSH_DW cmdInitMiFlushDw;
-    static const XY_COLOR_BLT cmdInitXyColorBlt;
+    static const XY_FAST_COLOR_BLT cmdInitXyColorBlt;
 
     static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
         return cmdSetBaseFamily == IGFX_GEN8_CORE;

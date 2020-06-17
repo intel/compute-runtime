@@ -182,9 +182,9 @@ HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBli
     }
 }
 
-using BlitPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using BlitColor = IsWithinProducts<IGFX_SKYLAKE, IGFX_ICELAKE_LP>;
 
-HWTEST2_F(BlitTests, givenMemoryWhenFillPatternSizeIs4BytesThen32BitMaskISSetCorrectly, BlitPlatforms) {
+HWTEST2_F(BlitTests, givenMemoryWhenFillPatternSizeIs4BytesThen32BitMaskISSetCorrectly, BlitColor) {
     using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
     using COLOR_DEPTH = typename XY_COLOR_BLT::COLOR_DEPTH;
     uint32_t pattern = 1;
@@ -223,26 +223,66 @@ typename FamilyType::XY_COLOR_BLT::COLOR_DEPTH getColorDepth(size_t patternSize)
     return depth;
 }
 
-HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualOneWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, BlitPlatforms) {
+HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualOneWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, BlitColor) {
     size_t patternSize = 1;
     auto expecttedDepth = getColorDepth<FamilyType>(patternSize);
     GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> test(pDevice);
     test.TestBodyImpl(patternSize, expecttedDepth);
 }
-HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualTwoWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, BlitPlatforms) {
+HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualTwoWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, BlitColor) {
     size_t patternSize = 2;
     auto expecttedDepth = getColorDepth<FamilyType>(patternSize);
     GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> test(pDevice);
     test.TestBodyImpl(patternSize, expecttedDepth);
 }
-HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualFourWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, BlitPlatforms) {
+HWTEST2_F(BlitColorTests, givenCommandStreamAndPaternSizeEqualFourWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, BlitColor) {
     size_t patternSize = 4;
     auto expecttedDepth = getColorDepth<FamilyType>(patternSize);
     GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> test(pDevice);
     test.TestBodyImpl(patternSize, expecttedDepth);
 }
 
-using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+using BlitPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+template <typename FamilyType>
+typename FamilyType::XY_COLOR_BLT::COLOR_DEPTH getFastColorDepth(size_t patternSize) {
+    using COLOR_DEPTH = typename FamilyType::XY_COLOR_BLT::COLOR_DEPTH;
+    COLOR_DEPTH depth = {};
+    switch (patternSize) {
+    case 1:
+        depth = COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR;
+        break;
+    case 2:
+        depth = COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR;
+        break;
+    case 4:
+        depth = COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR;
+        break;
+    case 8:
+        depth = COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR;
+        break;
+    case 16:
+        depth = COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR;
+        break;
+    }
+    return depth;
+}
+
+using BlitFastColorTest = BlitColorTests;
+
+HWTEST2_P(BlitFastColorTest, givenCommandStreamWhenCallToDispatchMemoryFillThenColorDepthAreProgrammedCorrectly, IsGen12LP) {
+    auto patternSize = GetParam();
+    auto expecttedDepth = getFastColorDepth<FamilyType>(patternSize);
+    GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProgrammed<FamilyType> test(pDevice);
+    test.TestBodyImpl(patternSize, expecttedDepth);
+}
+
+INSTANTIATE_TEST_CASE_P(size_t,
+                        BlitFastColorTest,
+                        testing::Values(1,
+                                        2,
+                                        4,
+                                        8,
+                                        16));
 
 HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAddedToStream, BlitPlatforms) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;

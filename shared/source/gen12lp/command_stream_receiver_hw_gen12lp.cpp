@@ -166,6 +166,32 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitPropertie
     appendTilingType(srcTileType, dstTileType, blitCmd);
 }
 
+template <>
+void BlitCommandsHelper<Family>::dispatchBlitMemoryColorFill(NEO::GraphicsAllocation *dstAlloc, uint32_t *pattern, size_t patternSize, LinearStream &linearStream, size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    switch (patternSize) {
+    case 1:
+        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<1>(dstAlloc, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_8_BIT_COLOR);
+        break;
+    case 2:
+        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<2>(dstAlloc, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_16_BIT_COLOR);
+        break;
+    case 4:
+        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<4>(dstAlloc, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_32_BIT_COLOR);
+        break;
+    case 8:
+        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<8>(dstAlloc, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
+        break;
+    default:
+        NEO::BlitCommandsHelper<Family>::dispatchBlitMemoryFill<16>(dstAlloc, pattern, linearStream, size, rootDeviceEnvironment, COLOR_DEPTH::COLOR_DEPTH_128_BIT_COLOR);
+    }
+}
+
+template <>
+void BlitCommandsHelper<Family>::appendBlitCommandsForFillBuffer(NEO::GraphicsAllocation *dstAlloc, typename Family::XY_COLOR_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {
+}
+template <>
+void BlitCommandsHelper<Family>::appendTilingEnable(typename Family::XY_COLOR_BLT &blitCmd) {}
+
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;
 
@@ -199,5 +225,5 @@ const Family::BINDING_TABLE_STATE Family::cmdInitBindingTableState = Family::BIN
 const Family::MI_USER_INTERRUPT Family::cmdInitUserInterrupt = Family::MI_USER_INTERRUPT::sInit();
 const Family::XY_COPY_BLT Family::cmdInitXyCopyBlt = Family::XY_COPY_BLT::sInit();
 const Family::MI_FLUSH_DW Family::cmdInitMiFlushDw = Family::MI_FLUSH_DW::sInit();
-const Family::XY_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_COLOR_BLT::sInit();
+const Family::XY_FAST_COLOR_BLT Family::cmdInitXyColorBlt = Family::XY_FAST_COLOR_BLT::sInit();
 } // namespace NEO
