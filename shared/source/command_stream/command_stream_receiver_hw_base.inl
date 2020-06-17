@@ -860,10 +860,16 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
 
     auto lock = obtainUniqueOwnership();
 
-    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, peekHwInfo(), profilingEnabled));
+    bool pauseOnBlitCopyAllowed = (DebugManager.flags.PauseOnBlitCopy.get() == static_cast<int32_t>(taskCount));
+
+    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, peekHwInfo(), profilingEnabled, pauseOnBlitCopyAllowed));
     auto commandStreamStart = commandStream.getUsed();
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;
+
+    if (pauseOnBlitCopyAllowed) {
+        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(), DebugPauseState::waitingForUserStartConfirmation, DebugPauseState::hasUserStartConfirmation);
+    }
 
     programEnginePrologue(commandStream);
 
@@ -905,6 +911,10 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount, false, true);
 
     MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
+
+    if (pauseOnBlitCopyAllowed) {
+        BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(), DebugPauseState::waitingForUserEndConfirmation, DebugPauseState::hasUserEndConfirmation);
+    }
 
     auto batchBufferEnd = reinterpret_cast<MI_BATCH_BUFFER_END *>(commandStream.getSpace(sizeof(MI_BATCH_BUFFER_END)));
     *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;

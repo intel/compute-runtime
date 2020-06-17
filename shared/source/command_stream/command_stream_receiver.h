@@ -53,16 +53,6 @@ enum class DispatchMode {
     BatchedDispatch             // dispatching is batched, explicit clFlush is required
 };
 
-enum class DebugPauseState : uint32_t {
-    disabled,
-    waitingForFirstSemaphore,
-    waitingForUserStartConfirmation,
-    hasUserStartConfirmation,
-    waitingForUserEndConfirmation,
-    hasUserEndConfirmation,
-    terminate
-};
-
 class CommandStreamReceiver {
   public:
     enum class SamplerCacheFlushState {

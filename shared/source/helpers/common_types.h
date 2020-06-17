@@ -13,4 +13,14 @@ namespace NEO {
 struct EngineControl;
 using EngineControlContainer = std::vector<EngineControl>;
 using DeviceBitfield = std::bitset<32>;
+
+enum class DebugPauseState : uint32_t {
+    disabled,
+    waitingForFirstSemaphore,
+    waitingForUserStartConfirmation,
+    hasUserStartConfirmation,
+    waitingForUserEndConfirmation,
+    hasUserEndConfirmation,
+    terminate
+};
 } // namespace NEO

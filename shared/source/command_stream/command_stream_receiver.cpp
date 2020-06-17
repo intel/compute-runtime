@@ -431,7 +431,7 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     *this->tagAddress = DebugManager.flags.EnableNullHardware.get() ? -1 : initialHardwareTag;
     *this->debugPauseStateAddress = DebugManager.flags.EnableNullHardware.get() ? DebugPauseState::disabled : DebugPauseState::waitingForFirstSemaphore;
 
-    if (DebugManager.flags.PauseOnEnqueue.get() != -1) {
+    if (DebugManager.flags.PauseOnEnqueue.get() != -1 || DebugManager.flags.PauseOnBlitCopy.get() != -1) {
         userPauseConfirmation = Thread::create(CommandStreamReceiver::asyncDebugBreakConfirmation, reinterpret_cast<void *>(this));
     }
 

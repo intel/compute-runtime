@@ -101,7 +101,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(Vec3<size_t> copy
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, const HardwareInfo &hwInfo, bool profilingEnabled) {
+size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, const HardwareInfo &hwInfo, bool profilingEnabled, bool debugPauseEnabled) {
     size_t size = 0;
     for (auto &blitProperties : blitPropertiesContainer) {
         size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitProperties.copySize, blitProperties.csrDependencies,
@@ -109,6 +109,10 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
     }
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(hwInfo);
     size += EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
+
+    if (debugPauseEnabled) {
+        size += BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands();
+    }
 
     return alignUp(size, MemoryConstants::cacheLineSize);
 }
@@ -248,6 +252,21 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImages(const BlitProp
         auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
         *cmd = bltCmd;
     }
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress, DebugPauseState confirmationTrigger, DebugPauseState waitCondition) {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(confirmationTrigger), false, true);
+
+    auto miSemaphoreCmd = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+    EncodeSempahore<GfxFamily>::programMiSemaphoreWait(miSemaphoreCmd, debugPauseStateGPUAddress, static_cast<uint32_t>(waitCondition), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
+}
+
+template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands() {
+    return (EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() + EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait()) * 2;
 }
 
 } // namespace NEO
