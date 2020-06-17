@@ -185,6 +185,9 @@ int main(int argc, char **argv) {
             useDefaultListener = true;
         }
     }
+    productFamily = hwInfoForTests.platform.eProductFamily;
+    renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
+
     // Platforms with uninitialized factory are not supported
     if (L0::commandListFactory[productFamily] == nullptr) {
         std::cout << "unsupported product family has been set: " << NEO::hardwarePrefix[::productFamily] << std::endl;
@@ -226,9 +229,6 @@ int main(int argc, char **argv) {
 
     // set Gt and FeatureTable to initial state
     NEO::hardwareInfoSetup[productFamily](&hwInfoForTests, false, hwInfoConfig);
-
-    productFamily = hwInfoForTests.platform.eProductFamily;
-    renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
 
     NEO::defaultHwInfo = std::make_unique<NEO::HardwareInfo>();
     *NEO::defaultHwInfo = hwInfoForTests;
