@@ -14,6 +14,8 @@
 
 #include <level_zero/ze_api.h>
 
+#include "third_party/level_zero/ze_api_ext.h"
+
 #include <memory>
 #include <vector>
 
@@ -93,6 +95,7 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     virtual ze_result_t getAttribute(ze_kernel_attribute_t attr, uint32_t *pSize, void *pValue) = 0;
     virtual ze_result_t setIntermediateCacheConfig(ze_cache_config_t cacheConfig) = 0;
     virtual ze_result_t getProperties(ze_kernel_properties_t *pKernelProperties) = 0;
+    virtual ze_result_t getPropertiesExt(ze_kernel_propertiesExt_t *pKernelProperties) = 0;
     virtual ze_result_t setArgumentValue(uint32_t argIndex, size_t argSize, const void *pArgValue) = 0;
     virtual void setGroupCount(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) = 0;
 

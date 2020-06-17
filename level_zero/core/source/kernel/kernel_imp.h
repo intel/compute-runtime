@@ -34,6 +34,8 @@ struct KernelImp : Kernel {
 
     ze_result_t getProperties(ze_kernel_properties_t *pKernelProperties) override;
 
+    ze_result_t getPropertiesExt(ze_kernel_propertiesExt_t *pKernelProperties) override;
+
     ze_result_t setIntermediateCacheConfig(ze_cache_config_t cacheConfig) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }

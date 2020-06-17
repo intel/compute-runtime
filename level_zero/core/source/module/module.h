@@ -35,6 +35,9 @@ struct Module : _ze_module_handle_t {
     virtual ze_result_t getGlobalPointer(const char *pGlobalName, void **pPtr) = 0;
     virtual ze_result_t getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData) = 0;
     virtual ze_result_t getKernelNames(uint32_t *pCount, const char **pNames) = 0;
+    virtual ze_result_t performDynamicLink(uint32_t numModules,
+                                           ze_module_handle_t *phModules,
+                                           ze_module_build_log_handle_t *phLinkLog) = 0;
 
     virtual const KernelImmutableData *getKernelImmutableData(const char *functionName) const = 0;
     virtual const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const = 0;

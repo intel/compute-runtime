@@ -8,6 +8,8 @@
 #include "level_zero/core/source/module/module.h"
 #include <level_zero/ze_api.h>
 
+#include "third_party/level_zero/ze_api_ext.h"
+
 extern "C" {
 
 __zedllexport ze_result_t __zecall
@@ -198,6 +200,21 @@ zeCommandListAppendLaunchMultipleKernelsIndirect(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     return L0::CommandList::fromHandle(hCommandList)->appendLaunchMultipleKernelsIndirect(numKernels, phKernels, pCountBuffer, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeKernelGetPropertiesExt(
+    ze_kernel_handle_t hKernel,
+    ze_kernel_propertiesExt_t *pKernelProperties) {
+    return L0::Kernel::fromHandle(hKernel)->getPropertiesExt(pKernelProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeModuleDynamicLinkExt(
+    uint32_t numModules,
+    ze_module_handle_t *phModules,
+    ze_module_build_log_handle_t *phLinkLog) {
+    return L0::Module::fromHandle(phModules[0])->performDynamicLink(numModules, phModules, phLinkLog);
 }
 
 } // extern "C"

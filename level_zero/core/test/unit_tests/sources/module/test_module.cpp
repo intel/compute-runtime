@@ -114,5 +114,19 @@ HWTEST_F(ModuleSpecConstantsTests, givenSpecializationConstantsSetInDescriptorTh
     module->destroy();
 }
 
+using ModuleDynamicLinkTests = Test<ModuleFixture>;
+
+HWTEST_F(ModuleDynamicLinkTests, givenCallToDynamicLinkThenUnsupportedFeatureIsReturned) {
+    auto module0 = new Module(device, nullptr);
+    auto module1 = new Module(device, nullptr);
+
+    std::vector<ze_module_handle_t> hModules = {module0->toHandle(), module1->toHandle()};
+    ze_result_t res = module0->performDynamicLink(2, hModules.data(), nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
+
+    delete module0;
+    delete module1;
+}
+
 } // namespace ult
 } // namespace L0

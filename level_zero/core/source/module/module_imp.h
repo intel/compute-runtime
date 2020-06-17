@@ -79,6 +79,10 @@ struct ModuleImp : public Module {
 
     ze_result_t getKernelNames(uint32_t *pCount, const char **pNames) override;
 
+    ze_result_t performDynamicLink(uint32_t numModules,
+                                   ze_module_handle_t *phModules,
+                                   ze_module_build_log_handle_t *phLinkLog) override;
+
     ze_result_t getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData) override;
 
     const KernelImmutableData *getKernelImmutableData(const char *functionName) const override;

@@ -175,5 +175,64 @@ HWTEST2_F(SetKernelArg, givenBufferArgumentWhichHasNotBeenAllocatedByRuntimeThen
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 }
 
+using KernelPropertiesTest = Test<ModuleFixture>;
+
+HWTEST_F(KernelPropertiesTest, givenKernelThenPropertiesAreRetrieved) {
+    ze_kernel_handle_t kernelHandle;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.version = ZE_KERNEL_DESC_VERSION_CURRENT;
+    kernelDesc.flags = ZE_KERNEL_FLAG_NONE;
+    kernelDesc.pKernelName = kernelName.c_str();
+
+    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto kernel = L0::Kernel::fromHandle(kernelHandle);
+
+    ze_kernel_propertiesExt_t kernelProperties = {};
+
+    kernelProperties.requiredNumSubGroups = std::numeric_limits<uint32_t>::max();
+    kernelProperties.requiredSubgroupSize = std::numeric_limits<uint32_t>::max();
+    kernelProperties.maxSubgroupSize = std::numeric_limits<uint32_t>::max();
+    kernelProperties.maxNumSubgroups = std::numeric_limits<uint32_t>::max();
+    kernelProperties.localMemSize = std::numeric_limits<uint32_t>::max();
+    kernelProperties.privateMemSize = std::numeric_limits<uint32_t>::max();
+    kernelProperties.spillMemSize = std::numeric_limits<uint32_t>::max();
+    kernelProperties.numKernelArgs = std::numeric_limits<uint32_t>::max();
+    memset(&kernelProperties.uuid.kid, std::numeric_limits<int>::max(),
+           sizeof(kernelProperties.uuid.kid));
+    memset(&kernelProperties.uuid.mid, std::numeric_limits<int>::max(),
+           sizeof(kernelProperties.uuid.mid));
+
+    ze_kernel_propertiesExt_t kernelPropertiesBefore = {};
+    kernelPropertiesBefore = kernelProperties;
+
+    kernel->getPropertiesExt(&kernelProperties);
+
+    EXPECT_EQ(0, strncmp(kernelName.c_str(), kernelProperties.name,
+                         sizeof(kernelProperties.name)));
+    EXPECT_EQ(numKernelArguments, kernelProperties.numKernelArgs);
+
+    EXPECT_EQ(0u, kernelProperties.requiredNumSubGroups);
+    EXPECT_EQ(0u, kernelProperties.requiredSubgroupSize);
+    EXPECT_EQ(0u, kernelProperties.maxSubgroupSize);
+    EXPECT_EQ(0u, kernelProperties.maxNumSubgroups);
+    EXPECT_EQ(0u, kernelProperties.localMemSize);
+    EXPECT_EQ(0u, kernelProperties.privateMemSize);
+    EXPECT_EQ(0u, kernelProperties.spillMemSize);
+
+    uint8_t zeroKid[ZE_MAX_KERNEL_UUID_SIZE];
+    uint8_t zeroMid[ZE_MAX_MODULE_UUID_SIZE];
+    memset(&zeroKid, 0, ZE_MAX_KERNEL_UUID_SIZE);
+    memset(&zeroMid, 0, ZE_MAX_MODULE_UUID_SIZE);
+    EXPECT_EQ(0, memcmp(&kernelProperties.uuid.kid, &zeroKid,
+                        sizeof(kernelProperties.uuid.kid)));
+    EXPECT_EQ(0, memcmp(&kernelProperties.uuid.mid, &zeroMid,
+                        sizeof(kernelProperties.uuid.mid)));
+
+    Kernel::fromHandle(kernelHandle)->destroy();
+}
+
 } // namespace ult
 } // namespace L0

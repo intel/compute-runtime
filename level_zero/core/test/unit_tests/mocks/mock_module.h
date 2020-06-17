@@ -39,6 +39,9 @@ struct Mock<Module> : public Module {
     MOCK_METHOD(const L0::KernelImmutableData *, getKernelImmutableData, (const char *functionName), (const, override));
     MOCK_METHOD(uint32_t, getMaxGroupSize, (), (const, override));
     MOCK_METHOD(ze_result_t, getKernelNames, (uint32_t * pCount, const char **pNames), (override));
+    MOCK_METHOD(ze_result_t, performDynamicLink,
+                (uint32_t numModules, ze_module_handle_t *phModules, ze_module_build_log_handle_t *phLinkLog),
+                (override));
     MOCK_METHOD(ze_result_t, getGlobalPointer, (const char *pGlobalName, void **pPtr), (override));
     MOCK_METHOD(bool, isDebugEnabled, (), (const, override));
 };

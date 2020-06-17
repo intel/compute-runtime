@@ -539,10 +539,10 @@ ze_result_t KernelImp::setArgSampler(uint32_t argIndex, size_t argSize, const vo
 }
 
 ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) {
-    size_t kernel_name_size = std::min(this->kernelImmData->getDescriptor().kernelMetadata.kernelName.size(),
-                                       static_cast<size_t>(ZE_MAX_KERNEL_NAME));
+    size_t kernelNameSize = std::min(this->kernelImmData->getDescriptor().kernelMetadata.kernelName.size(),
+                                     static_cast<size_t>(ZE_MAX_KERNEL_NAME));
     strncpy_s(pKernelProperties->name, ZE_MAX_KERNEL_NAME,
-              this->kernelImmData->getDescriptor().kernelMetadata.kernelName.c_str(), kernel_name_size);
+              this->kernelImmData->getDescriptor().kernelMetadata.kernelName.c_str(), kernelNameSize);
 
     pKernelProperties->requiredGroupSizeX = this->groupSize[0];
     pKernelProperties->requiredGroupSizeY = this->groupSize[1];
@@ -550,6 +550,32 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
 
     pKernelProperties->numKernelArgs =
         static_cast<uint32_t>(this->kernelImmData->getDescriptor().payloadMappings.explicitArgs.size());
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t KernelImp::getPropertiesExt(ze_kernel_propertiesExt_t *pKernelProperties) {
+    size_t kernelNameSize = std::min(this->kernelImmData->getDescriptor().kernelMetadata.kernelName.size(),
+                                     static_cast<size_t>(ZE_MAX_KERNEL_NAME));
+    strncpy_s(pKernelProperties->name, ZE_MAX_KERNEL_NAME,
+              this->kernelImmData->getDescriptor().kernelMetadata.kernelName.c_str(), kernelNameSize);
+
+    pKernelProperties->requiredGroupSizeX = this->groupSize[0];
+    pKernelProperties->requiredGroupSizeY = this->groupSize[1];
+    pKernelProperties->requiredGroupSizeZ = this->groupSize[2];
+
+    pKernelProperties->numKernelArgs =
+        static_cast<uint32_t>(this->kernelImmData->getDescriptor().payloadMappings.explicitArgs.size());
+
+    pKernelProperties->requiredNumSubGroups = 0;
+    pKernelProperties->requiredSubgroupSize = 0;
+    pKernelProperties->maxSubgroupSize = 0;
+    pKernelProperties->maxNumSubgroups = 0;
+    pKernelProperties->localMemSize = 0;
+    pKernelProperties->privateMemSize = 0;
+    pKernelProperties->spillMemSize = 0;
+    memset(pKernelProperties->uuid.kid, 0, ZE_MAX_KERNEL_UUID_SIZE);
+    memset(pKernelProperties->uuid.mid, 0, ZE_MAX_MODULE_UUID_SIZE);
 
     return ZE_RESULT_SUCCESS;
 }

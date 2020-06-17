@@ -544,6 +544,12 @@ void ModuleImp::verifyDebugCapabilities() {
     debugEnabled = debugCapabilities;
 }
 
+ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
+                                          ze_module_handle_t *phModules,
+                                          ze_module_build_log_handle_t *phLinkLog) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, ConstStringRef dstOptionName, ConstStringRef srcOptionName) {
     auto optInSrcPos = srcOptionSet.find(srcOptionName.begin());
     if (std::string::npos == optInSrcPos) {

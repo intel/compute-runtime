@@ -60,6 +60,7 @@ struct ModuleFixture : public DeviceFixture {
 
     const std::string binaryFilename = "test_kernel";
     const std::string kernelName = "test";
+    const uint32_t numKernelArguments = 6;
     std::unique_ptr<L0::Module> module;
     std::unique_ptr<WhiteBox<::L0::Kernel>> kernel;
 };
