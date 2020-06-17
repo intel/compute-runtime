@@ -49,7 +49,11 @@ macro(macro_for_each_platform)
   endforeach()
 
   foreach(PLATFORM_FILE "hw_info_${PLATFORM_IT_LOWER}.inl")
-    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${GENX_PREFIX}/${PLATFORM_FILE})
+    foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
+      if(EXISTS ${GENX_PREFIX}${BRANCH_DIR}${PLATFORM_FILE})
+        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${GENX_PREFIX}${BRANCH_DIR}${PLATFORM_FILE})
+      endif()
+    endforeach()
   endforeach()
 
   list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_LINUX ${GENX_PREFIX}/linux/hw_info_config_${PLATFORM_IT_LOWER}.inl)
