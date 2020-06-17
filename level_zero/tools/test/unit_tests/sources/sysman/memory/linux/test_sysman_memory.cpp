@@ -7,10 +7,8 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
-#include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mock_sysfs_memory.h"
-#include "sysman/memory/memory_imp.h"
+#include "sysman/linux/os_sysman_imp.h"
 
 using ::testing::_;
 

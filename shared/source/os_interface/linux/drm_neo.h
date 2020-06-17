@@ -78,7 +78,7 @@ class Drm {
     void checkQueueSliceSupport();
     uint64_t getSliceMask(uint64_t sliceCount);
     bool queryEngineInfo();
-    bool queryMemoryInfo();
+    MOCKABLE_VIRTUAL bool queryMemoryInfo();
     bool queryTopology(int &sliceCount, int &subSliceCount, int &euCount);
     int setupHardwareInfo(DeviceDescriptor *, bool);
 

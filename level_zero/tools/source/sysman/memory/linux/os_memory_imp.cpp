@@ -9,13 +9,10 @@
 
 namespace L0 {
 
-ze_result_t LinuxMemoryImp::getAllocSize(uint64_t &allocSize) {
+ze_result_t LinuxMemoryImp::getMemorySize(uint64_t &maxSize, uint64_t &allocSize) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t LinuxMemoryImp::getMaxSize(uint64_t &maxSize) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
 ze_result_t LinuxMemoryImp::getMemHealth(zet_mem_health_t &memHealth) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }

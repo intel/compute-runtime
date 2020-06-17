@@ -12,16 +12,11 @@ namespace L0 {
 class WddmMemoryImp : public OsMemory {
 
   public:
-    ze_result_t getAllocSize(uint64_t &allocSize) override;
-    ze_result_t getMaxSize(uint64_t &maxSize) override;
+    ze_result_t getMemorySize(uint64_t &maxSize, uint64_t &allocSize) override;
     ze_result_t getMemHealth(zet_mem_health_t &memHealth) override;
 };
 
-ze_result_t WddmMemoryImp::getAllocSize(uint64_t &allocSize) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t WddmMemoryImp::getMaxSize(uint64_t &maxSize) {
+ze_result_t WddmMemoryImp::getMemorySize(uint64_t &maxSize, uint64_t &allocSize) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

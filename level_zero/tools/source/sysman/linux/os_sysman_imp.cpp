@@ -20,7 +20,7 @@ ze_result_t LinuxSysmanImp::init() {
 
     Device *pDevice = Device::fromHandle(pParentSysmanImp->hCoreDevice);
     NEO::OSInterface &OsInterface = pDevice->getOsInterface();
-    NEO::Drm *pDrm = OsInterface.get()->getDrm();
+    pDrm = OsInterface.get()->getDrm();
     int myDeviceFd = pDrm->getFileDescriptor();
     std::string myDeviceName;
     ze_result_t result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), myDeviceFd, myDeviceName);
@@ -47,6 +47,11 @@ ProcfsAccess &LinuxSysmanImp::getProcfsAccess() {
 SysfsAccess &LinuxSysmanImp::getSysfsAccess() {
     UNRECOVERABLE_IF(nullptr == pSysfsAccess);
     return *pSysfsAccess;
+}
+
+NEO::Drm &LinuxSysmanImp::getDrm() {
+    UNRECOVERABLE_IF(nullptr == pDrm);
+    return *pDrm;
 }
 
 LinuxSysmanImp::LinuxSysmanImp(SysmanImp *pParentSysmanImp) {

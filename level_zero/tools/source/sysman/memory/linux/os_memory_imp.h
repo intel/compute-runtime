@@ -16,14 +16,10 @@ class SysfsAccess;
 
 class LinuxMemoryImp : public OsMemory, public NEO::NonCopyableClass {
   public:
-    ze_result_t getAllocSize(uint64_t &allocSize) override;
-    ze_result_t getMaxSize(uint64_t &maxSize) override;
+    ze_result_t getMemorySize(uint64_t &maxSize, uint64_t &allocSize) override;
     ze_result_t getMemHealth(zet_mem_health_t &memHealth) override;
     LinuxMemoryImp(OsSysman *pOsSysman);
     LinuxMemoryImp() = default;
     ~LinuxMemoryImp() override = default;
-
-  protected:
-    SysfsAccess *pSysfsAccess = nullptr;
 };
 } // namespace L0

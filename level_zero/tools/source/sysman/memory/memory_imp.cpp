@@ -16,22 +16,11 @@ ze_result_t MemoryImp::memoryGetBandwidth(zet_mem_bandwidth_t *pBandwidth) {
 }
 
 ze_result_t MemoryImp::memoryGetState(zet_mem_state_t *pState) {
-
-    ze_result_t result;
-
-    result = pOsMemory->getAllocSize(pState->allocatedSize);
+    ze_result_t result = pOsMemory->getMemorySize(pState->maxSize, pState->allocatedSize);
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
-
-    result = pOsMemory->getMaxSize(pState->maxSize);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-
-    result = pOsMemory->getMemHealth(pState->health);
-
-    return result;
+    return pOsMemory->getMemHealth(pState->health);
 }
 
 ze_result_t MemoryImp::memoryGetProperties(zet_mem_properties_t *pProperties) {

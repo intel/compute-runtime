@@ -25,6 +25,7 @@ class LinuxSysmanImp : public OsSysman, public NEO::NonCopyableClass {
     FsAccess &getFsAccess();
     ProcfsAccess &getProcfsAccess();
     SysfsAccess &getSysfsAccess();
+    NEO::Drm &getDrm();
 
   private:
     LinuxSysmanImp() = delete;
@@ -32,6 +33,7 @@ class LinuxSysmanImp : public OsSysman, public NEO::NonCopyableClass {
     FsAccess *pFsAccess = nullptr;
     ProcfsAccess *pProcfsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
+    NEO::Drm *pDrm = nullptr;
 };
 
 } // namespace L0
