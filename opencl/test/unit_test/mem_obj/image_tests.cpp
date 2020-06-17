@@ -643,10 +643,11 @@ TEST(TestCreateImageUseHostPtr, givenZeroCopyImageValuesWhenUsingHostPtrThenZero
         hostPtr,
         retVal));
 
+    auto allocation = image->getGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
     EXPECT_NE(nullptr, image);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(image->isMemObjZeroCopy());
-    EXPECT_EQ(hostPtr, image->getGraphicsAllocation()->getUnderlyingBuffer());
+    EXPECT_EQ(hostPtr, allocation->getUnderlyingBuffer());
     EXPECT_NE(nullptr, image->getMapAllocation());
 
     alignedFree(hostPtr);
@@ -693,7 +694,7 @@ TEST_P(CreateImageNoHostPtr, whenImageIsCreatedThenItHasProperAccessAndCacheProp
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, image);
 
-    auto allocation = image->getGraphicsAllocation();
+    auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     EXPECT_TRUE(allocation->getAllocationType() == GraphicsAllocation::AllocationType::IMAGE);
 
     auto isImageWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
@@ -762,11 +763,13 @@ TEST_P(CreateImageHostPtr, WhenImageIsCreatedThenResidencyIsFalse) {
     image = createImage(retVal);
     ASSERT_NE(nullptr, image);
 
-    EXPECT_FALSE(image->getGraphicsAllocation()->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
+    auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+    EXPECT_FALSE(allocation->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
 }
 
 TEST_P(CreateImageHostPtr, WhenCheckingAddressThenAlllocationDependsOnSizeRelativeToPage) {
     image = createImage(retVal);
+    auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     ASSERT_NE(nullptr, image);
 
     auto address = image->getBasePtrForMap(0);
@@ -803,13 +806,14 @@ TEST_P(CreateImageHostPtr, WhenCheckingAddressThenAlllocationDependsOnSizeRelati
 
     if (flags & CL_MEM_COPY_HOST_PTR && image->isMemObjZeroCopy()) {
         // Buffer should contain a copy of host memory
-        EXPECT_EQ(0, memcmp(pHostPtr, image->getGraphicsAllocation()->getUnderlyingBuffer(), sizeof(testImageDimensions)));
+        EXPECT_EQ(0, memcmp(pHostPtr, allocation->getUnderlyingBuffer(), sizeof(testImageDimensions)));
     }
 }
 
 TEST_P(CreateImageHostPtr, WhenGettingImageDescThenCorrectValuesAreReturned) {
     image = createImage(retVal);
     ASSERT_NE(nullptr, image);
+    auto allocation = image->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
 
     const auto &imageDesc = image->getImageDesc();
     // clang-format off
@@ -838,7 +842,7 @@ TEST_P(CreateImageHostPtr, WhenGettingImageDescThenCorrectValuesAreReturned) {
     EXPECT_EQ(image->getHostPtrSlicePitch(), static_cast<size_t>(imageDesc.image_width * elementSize * imageDesc.image_height) * isArrayOr3DType);
     EXPECT_EQ(image->getImageCount(), 1u);
     EXPECT_NE(0u, image->getSize());
-    EXPECT_NE(nullptr, image->getGraphicsAllocation());
+    EXPECT_NE(nullptr, allocation);
 }
 
 TEST_P(CreateImageHostPtr, GivenFailedAllocationInjectionWhenCheckingAllocationThenOnlyFailedAllocationReturnsNull) {
@@ -892,9 +896,10 @@ TEST_P(CreateImageHostPtr, WhenWritingOutsideAllocatedMemoryWhileCreatingImageTh
     imageDesc.image_height = 1;
     imageDesc.image_row_pitch = elementSize * imageDesc.image_width + 1;
     image = createImage(retVal);
+    auto allocation = image->getGraphicsAllocation(pDevice->getRootDeviceIndex());
 
-    char *memory = (char *)image->getGraphicsAllocation()->getUnderlyingBuffer();
-    auto memorySize = image->getGraphicsAllocation()->getUnderlyingBufferSize() / 2;
+    char *memory = reinterpret_cast<char *>(allocation->getUnderlyingBuffer());
+    auto memorySize = allocation->getUnderlyingBufferSize() / 2;
     for (size_t i = 0; i < image->getHostPtrSlicePitch(); ++i) {
         if (i < imageDesc.image_width * elementSize) {
             EXPECT_EQ(1, memory[i]);
@@ -1652,7 +1657,7 @@ using ImageMultiRootDeviceTests = MultiRootDeviceFixture;
 TEST_F(ImageMultiRootDeviceTests, WhenImageIsCreatedThenImageAllocationHasCorrectRootDeviceIndex) {
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(context.get()));
 
-    auto graphicsAllocation = image->getGraphicsAllocation();
+    auto graphicsAllocation = image->getGraphicsAllocation(expectedRootDeviceIndex);
     ASSERT_NE(nullptr, graphicsAllocation);
     EXPECT_EQ(expectedRootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
 }

@@ -31,6 +31,7 @@ using namespace NEO;
 class VaSharingTests : public ::testing::Test, public PlatformFixture {
   public:
     void SetUp() override {
+        rootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
         PlatformFixture::SetUp();
         vaSharing = new MockVaSharing;
         context.setSharingFunctions(&vaSharing->sharingFunctions);
@@ -62,13 +63,14 @@ class VaSharingTests : public ::testing::Test, public PlatformFixture {
         ASSERT_NE(sharedImg, nullptr);
     }
 
-    Image *sharedImg;
-    cl_mem sharedClMem;
-    MockContext context;
-    MockVaSharing *vaSharing;
+    uint32_t rootDeviceIndex = 0;
+    Image *sharedImg = nullptr;
+    cl_mem sharedClMem = nullptr;
+    MockContext context{};
+    MockVaSharing *vaSharing = nullptr;
     VASurfaceID vaSurfaceId = 0u;
     VAImage vaImage = {};
-    cl_int errCode;
+    cl_int errCode = -1;
     unsigned int sharingHandle = 1u;
 };
 
@@ -231,7 +233,7 @@ TEST_F(VaSharingTests, givenMockVaWithExportSurfaceHandlerWhenVaSurfaceIsCreated
         }
 
         EXPECT_TRUE(vaSurface->isTiledAllocation());
-        EXPECT_EQ(8u, vaSurface->getGraphicsAllocation()->peekSharedHandle());
+        EXPECT_EQ(8u, vaSurface->getGraphicsAllocation(rootDeviceIndex)->peekSharedHandle());
     }
 }
 
@@ -239,9 +241,10 @@ TEST_F(VaSharingTests, givenMockVaWhenVaSurfaceIsCreatedThenMemObjectHasVaHandle
     auto vaSurface = VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
                                                       CL_MEM_READ_WRITE, 0, &vaSurfaceId, 0, &errCode);
     EXPECT_NE(nullptr, vaSurface);
-    EXPECT_NE(nullptr, vaSurface->getGraphicsAllocation());
-    EXPECT_EQ(4096u, vaSurface->getGraphicsAllocation()->getUnderlyingBufferSize());
-    EXPECT_EQ(1u, vaSurface->getGraphicsAllocation()->peekSharedHandle());
+    auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
+    EXPECT_NE(nullptr, graphicsAllocation);
+    EXPECT_EQ(4096u, graphicsAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(1u, graphicsAllocation->peekSharedHandle());
 
     EXPECT_EQ(4096u, vaSurface->getSize());
 
@@ -291,9 +294,10 @@ TEST_F(VaSharingTests, givenMockVaWhenVaSurfaceIsCreatedWithNotAlignedWidthAndHe
     auto vaSurface = VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
                                                       CL_MEM_READ_WRITE, 0, &vaSurfaceId, 1, &errCode);
     EXPECT_NE(nullptr, vaSurface);
-    EXPECT_NE(nullptr, vaSurface->getGraphicsAllocation());
-    EXPECT_EQ(4096u, vaSurface->getGraphicsAllocation()->getUnderlyingBufferSize());
-    EXPECT_EQ(1u, vaSurface->getGraphicsAllocation()->peekSharedHandle());
+    auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
+    EXPECT_NE(nullptr, graphicsAllocation);
+    EXPECT_EQ(4096u, graphicsAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(1u, graphicsAllocation->peekSharedHandle());
 
     EXPECT_EQ(4096u, vaSurface->getSize());
 
@@ -466,7 +470,7 @@ TEST_F(VaSharingTests, givenSimpleParamsWhenCreateSurfaceIsCalledThenSetImgObjec
     EXPECT_TRUE(sharedImg->getFlags() == CL_MEM_READ_WRITE);
     EXPECT_TRUE(sharedImg->getCubeFaceIndex() == __GMM_NO_CUBE_MAP);
 
-    EXPECT_EQ(vaSharing->sharingHandle, sharedImg->getGraphicsAllocation()->peekSharedHandle());
+    EXPECT_EQ(vaSharing->sharingHandle, sharedImg->getGraphicsAllocation(rootDeviceIndex)->peekSharedHandle());
 }
 
 TEST_F(VaSharingTests, givenNonInteropUserSyncContextWhenAcquireIsCalledThenSyncSurface) {
@@ -562,10 +566,11 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndP010FormatWhenCreatingSha
 
     auto vaSurface = std::unique_ptr<Image>(VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
                                                                              CL_MEM_READ_WRITE, 0, &vaSurfaceId, 0, &errCode));
+    auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT16), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R16_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P010, vaSurface->getGraphicsAllocation()->getDefaultGmm()->resourceParams.Format);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P010, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -578,10 +583,11 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndP010FormatWhenCreatingSha
 
     auto vaSurface = std::unique_ptr<Image>(VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
                                                                              CL_MEM_READ_WRITE, 0, &vaSurfaceId, 1, &errCode));
+    auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT16), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_RG), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R16G16_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P010, vaSurface->getGraphicsAllocation()->getDefaultGmm()->resourceParams.Format);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_P010, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -601,10 +607,11 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndRGBPFormatWhenCreatingSha
 
     auto vaSurface = std::unique_ptr<Image>(VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
                                                                              CL_MEM_READ_WRITE, 0, &vaSurfaceId, 0, &errCode));
+    auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT8), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP, vaSurface->getGraphicsAllocation()->getDefaultGmm()->resourceParams.Format);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -624,10 +631,11 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndRGBPFormatWhenCreatingSha
 
     auto vaSurface = std::unique_ptr<Image>(VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
                                                                              CL_MEM_READ_WRITE, 0, &vaSurfaceId, 1, &errCode));
+    auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT8), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP, vaSurface->getGraphicsAllocation()->getDefaultGmm()->resourceParams.Format);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -647,10 +655,11 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndRGBPFormatWhenCreatingSha
 
     auto vaSurface = std::unique_ptr<Image>(VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
                                                                              CL_MEM_READ_WRITE, 0, &vaSurfaceId, 2, &errCode));
+    auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT8), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP, vaSurface->getGraphicsAllocation()->getDefaultGmm()->resourceParams.Format);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_RGBP, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
@@ -673,6 +682,7 @@ TEST_F(VaSharingTests, givenMockVaWithExportSurfaceHandlerAndRGBPWhenVaSurfaceIs
         auto vaSurface = std::unique_ptr<Image>(VASurface::createSharedVaSurface(
             &context, &vaSharing->sharingFunctions, CL_MEM_READ_WRITE, 0, &vaSurfaceId, plane, &errCode));
         ASSERT_NE(nullptr, vaSurface);
+        auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
 
         auto handler = vaSurface->peekSharingHandler();
         ASSERT_NE(nullptr, handler);
@@ -702,7 +712,7 @@ TEST_F(VaSharingTests, givenMockVaWithExportSurfaceHandlerAndRGBPWhenVaSurfaceIs
         }
 
         EXPECT_TRUE(vaSurface->isTiledAllocation());
-        EXPECT_EQ(8u, vaSurface->getGraphicsAllocation()->peekSharedHandle());
+        EXPECT_EQ(8u, graphicsAllocation->peekSharedHandle());
     }
 }
 
@@ -715,10 +725,11 @@ TEST_F(VaSharingTests, givenEnabledExtendedVaFormatsAndNV12FormatWhenCreatingSha
 
     auto vaSurface = std::unique_ptr<Image>(VASurface::createSharedVaSurface(&context, &vaSharing->sharingFunctions,
                                                                              CL_MEM_READ_WRITE, 0, &vaSurfaceId, 0, &errCode));
+    auto graphicsAllocation = vaSurface->getGraphicsAllocation(rootDeviceIndex);
     EXPECT_EQ(static_cast<cl_channel_type>(CL_UNORM_INT8), vaSurface->getImageFormat().image_channel_data_type);
     EXPECT_EQ(static_cast<cl_channel_order>(CL_R), vaSurface->getImageFormat().image_channel_order);
     EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_R8_UNORM, vaSurface->getSurfaceFormatInfo().surfaceFormat.GMMSurfaceFormat);
-    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12, vaSurface->getGraphicsAllocation()->getDefaultGmm()->resourceParams.Format);
+    EXPECT_EQ(GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12, graphicsAllocation->getDefaultGmm()->resourceParams.Format);
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 

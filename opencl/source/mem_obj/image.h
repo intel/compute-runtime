@@ -53,8 +53,6 @@ extern ValidateAndCreateImageFunc validateAndCreateImage;
 
 class Image : public MemObj {
   public:
-    using MemObj::getGraphicsAllocation;
-    GraphicsAllocation *getGraphicsAllocation() const { return graphicsAllocation; }
     const static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
     static const cl_ulong objectMagic = MemObj::objectMagic | 0x01;
 
