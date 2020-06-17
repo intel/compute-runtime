@@ -701,8 +701,6 @@ HWTEST_F(CommandStreamReceiverTest, givenDebugPauseThreadWhenSettingFlagProgress
     while (*mockCSR->debugPauseStateAddress != DebugPauseState::hasUserEndConfirmation)
         ;
 
-    mockCSR->userPauseConfirmation.join();
-
     EXPECT_EQ(2u, confirmationCounter);
 
     auto output = testing::internal::GetCapturedStdout();
@@ -726,7 +724,6 @@ HWTEST_F(CommandStreamReceiverTest, givenDebugPauseThreadWhenTerminatingAtFirstS
     pDevice->resetCommandStreamReceiver(mockCSR);
 
     *mockCSR->debugPauseStateAddress = DebugPauseState::terminate;
-    mockCSR->userPauseConfirmation.join();
 
     EXPECT_EQ(0u, confirmationCounter);
     auto output = testing::internal::GetCapturedStdout();
@@ -754,7 +751,6 @@ HWTEST_F(CommandStreamReceiverTest, givenDebugPauseThreadWhenTerminatingAtSecond
         ;
 
     *mockCSR->debugPauseStateAddress = DebugPauseState::terminate;
-    mockCSR->userPauseConfirmation.join();
 
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr(std::string("Debug break: Press enter to start workload")));

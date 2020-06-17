@@ -18,6 +18,7 @@
 #include "shared/source/helpers/options.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/source/os_interface/os_thread.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -251,7 +252,8 @@ class CommandStreamReceiver {
     // offset for debug state must be 8 bytes, if only 4 bytes are used tag writes overwrite it
     const uint64_t debugPauseStateAddressOffset = 8;
 
-    std::thread userPauseConfirmation;
+    static void *asyncDebugBreakConfirmation(void *arg);
+    std::unique_ptr<Thread> userPauseConfirmation;
     std::function<void()> debugConfirmationFunction = []() { std::cin.get(); };
 
     GraphicsAllocation *tagAllocation = nullptr;
