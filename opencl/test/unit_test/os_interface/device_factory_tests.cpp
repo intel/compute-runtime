@@ -43,7 +43,7 @@ struct DeviceFactoryTest : public ::testing::Test {
     ExecutionEnvironment *executionEnvironment;
 };
 
-TEST_F(DeviceFactoryTest, PrepareDeviceEnvironments_Check_HwInfo_Platform) {
+TEST_F(DeviceFactoryTest, WhenDeviceEnvironemntIsPreparedThenItIsInitializedCorrectly) {
     const HardwareInfo *refHwinfo = defaultHwInfo.get();
 
     bool success = DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
@@ -52,7 +52,7 @@ TEST_F(DeviceFactoryTest, PrepareDeviceEnvironments_Check_HwInfo_Platform) {
     EXPECT_EQ(refHwinfo->platform.eDisplayCoreFamily, hwInfo->platform.eDisplayCoreFamily);
 }
 
-TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
+TEST_F(DeviceFactoryTest, WhenOverridingUsingDebugManagerThenOverridesAreAppliedCorrectly) {
     DebugManagerStateRestore stateRestore;
 
     bool success = DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
@@ -92,7 +92,7 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
               hwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
 }
 
-TEST_F(DeviceFactoryTest, getEngineTypeDebugOverride) {
+TEST_F(DeviceFactoryTest, WhenOverridingEngineTypeThenDebugEngineIsReported) {
     DebugManagerStateRestore dbgRestorer;
     int32_t debugEngineType = 2;
     DebugManager.flags.NodeOrdinal.set(debugEngineType);
