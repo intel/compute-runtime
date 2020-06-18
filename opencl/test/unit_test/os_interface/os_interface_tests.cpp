@@ -11,12 +11,12 @@
 
 #include <type_traits>
 
-TEST(OSInterface, NonCopyable) {
+TEST(OSInterface, WhenInterfaceIsCreatedThenItIsNonCopyable) {
     EXPECT_FALSE(std::is_move_constructible<NEO::OSInterface>::value);
     EXPECT_FALSE(std::is_copy_constructible<NEO::OSInterface>::value);
 }
 
-TEST(OSInterface, NonAssignable) {
+TEST(OSInterface, WhenInterfaceIsCreatedThenItIsNonAssignable) {
     EXPECT_FALSE(std::is_move_assignable<NEO::OSInterface>::value);
     EXPECT_FALSE(std::is_copy_assignable<NEO::OSInterface>::value);
 }

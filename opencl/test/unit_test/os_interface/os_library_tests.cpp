@@ -36,12 +36,12 @@ TEST(OSLibraryTest, whenLibraryNameIsEmptyThenCurrentProcesIsUsedAsLibrary) {
     EXPECT_NE(nullptr, ptr);
 }
 
-TEST(OSLibraryTest, CreateFake) {
+TEST(OSLibraryTest, GivenFakeLibNameWhenLoadingLibraryThenNullIsReturned) {
     OsLibrary *library = OsLibrary::load(fakeLibName);
     EXPECT_EQ(nullptr, library);
 }
 
-TEST(OSLibraryTest, whenLibraryNameIsValidThenLibraryIsLoadedCorrectly) {
+TEST(OSLibraryTest, GivenValidLibNameWhenLoadingLibraryThenLibraryIsLoaded) {
     std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
     EXPECT_NE(nullptr, library);
 }
@@ -62,7 +62,7 @@ TEST(OSLibraryTest, whenSymbolNameIsInvalidThenGetProcAddressReturnsNullPointer)
 
 using OsLibraryTestWithFailureInjection = Test<MemoryManagementFixture>;
 
-TEST_F(OsLibraryTestWithFailureInjection, testFailNew) {
+TEST_F(OsLibraryTestWithFailureInjection, GivenFailureInjectionWhenLibraryIsLoadedThenOnlyFailedAllocationIsNull) {
     InjectedFunction method = [](size_t failureIndex) {
         std::string libName(Os::testDllName);
 
