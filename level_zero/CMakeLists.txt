@@ -322,6 +322,15 @@ function(generate_l0_lib LIB_NAME MOCKABLE)
         L0_SRCS_DEBUGGER
         L0_SRCS_OCLOC_SHARED
     )
+    if(WIN32)
+      append_sources_from_properties(L0_RUNTIME_SOURCES
+        L0_SRCS_DEBUGGER_WINDOWS
+      )
+    else()
+      append_sources_from_properties(L0_RUNTIME_SOURCES
+        L0_SRCS_DEBUGGER_LINUX
+      )
+    endif()
 
     target_sources(${LIB_NAME} PRIVATE ${L0_RUNTIME_SOURCES})
 

@@ -43,6 +43,14 @@ class DebuggerLibraryRestorer {
     bool restoreAvailableState = false;
 };
 
+TEST(SourceLevelDebugger, whenSourceLevelDebuggerIsCreatedThenLegacyModeIsTrue) {
+    DebuggerLibraryRestorer restorer;
+    DebuggerLibrary::setLibraryAvailable(true);
+
+    MockSourceLevelDebugger debugger;
+    EXPECT_TRUE(debugger.isLegacy());
+}
+
 TEST(SourceLevelDebugger, givenPlatformWhenItIsCreatedThenSourceLevelDebuggerIsCreatedInExecutionEnvironment) {
     DebuggerLibraryRestorer restorer;
 
@@ -519,6 +527,19 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenDeviceIsCreated
     EXPECT_EQ(nullptr, device->getDebugger());
     EXPECT_FALSE(interceptor.initCalled);
     EXPECT_FALSE(interceptor.newDeviceCalled);
+}
+
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenGettingSourceLevelDebuggerThenNullptrIsReturned) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(false);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+
+    EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
 }
 
 TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenCreatingNewSourceLevelDebugger) {

@@ -10,4 +10,5 @@ set(L0_SRCS_DEBUGGER
   ${CMAKE_CURRENT_SOURCE_DIR}/debugger_l0.h
 )
 
+add_subdirectories()
 set_property(GLOBAL PROPERTY L0_SRCS_DEBUGGER ${L0_SRCS_DEBUGGER})

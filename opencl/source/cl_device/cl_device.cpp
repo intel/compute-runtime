@@ -144,7 +144,7 @@ PerformanceCounters *ClDevice::getPerformanceCounters() { return device.getPerfo
 PreemptionMode ClDevice::getPreemptionMode() const { return device.getPreemptionMode(); }
 bool ClDevice::isDebuggerActive() const { return device.isDebuggerActive(); }
 Debugger *ClDevice::getDebugger() { return device.getDebugger(); }
-SourceLevelDebugger *ClDevice::getSourceLevelDebugger() { return reinterpret_cast<SourceLevelDebugger *>(device.getDebugger()); }
+SourceLevelDebugger *ClDevice::getSourceLevelDebugger() { return device.getSourceLevelDebugger(); }
 ExecutionEnvironment *ClDevice::getExecutionEnvironment() const { return device.getExecutionEnvironment(); }
 const RootDeviceEnvironment &ClDevice::getRootDeviceEnvironment() const { return device.getRootDeviceEnvironment(); }
 const HardwareCapabilities &ClDevice::getHardwareCapabilities() const { return device.getHardwareCapabilities(); }

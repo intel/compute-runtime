@@ -106,10 +106,8 @@ struct Device : _ze_device_handle_t {
     virtual NEO::PreemptionMode getDevicePreemptionMode() const = 0;
     virtual const NEO::DeviceInfo &getDeviceInfo() const = 0;
     virtual NEO::Device *getNEODevice() = 0;
+    NEO::SourceLevelDebugger *getSourceLevelDebugger() { return getNEODevice()->getSourceLevelDebugger(); }
 
-    NEO::SourceLevelDebugger *getSourceLevelDebugger() {
-        return getNEODevice() ? reinterpret_cast<NEO::SourceLevelDebugger *>(getNEODevice()->getDebugger()) : nullptr;
-    }
     virtual NEO::GraphicsAllocation *getDebugSurface() const = 0;
 
     virtual NEO::GraphicsAllocation *allocateManagedMemoryFromHostPtr(void *buffer,

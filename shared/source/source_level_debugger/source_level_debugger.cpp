@@ -65,6 +65,7 @@ SourceLevelDebugger *SourceLevelDebugger::create() {
 }
 SourceLevelDebugger::SourceLevelDebugger(OsLibrary *library) {
     debuggerLibrary.reset(library);
+    isLegacyMode = true;
 
     if (debuggerLibrary.get() == nullptr) {
         return;

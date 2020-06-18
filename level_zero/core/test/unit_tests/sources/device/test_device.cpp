@@ -488,5 +488,9 @@ TEST_F(DeviceTest, givenBlitterSupportAndCopyOnlyFlagWhenCopyOnlyDebugFlagIsSetT
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST_F(DeviceTest, givenNoActiveSourceLevelDebuggerWhenGetIsCalledThenNullptrIsReturned) {
+    EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
+}
+
 } // namespace ult
 } // namespace L0

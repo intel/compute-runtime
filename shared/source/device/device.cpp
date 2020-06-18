@@ -245,4 +245,12 @@ uint64_t Device::getGlobalMemorySize() const {
     return globalMemorySize;
 }
 
+NEO::SourceLevelDebugger *Device::getSourceLevelDebugger() {
+    auto debugger = getDebugger();
+    if (debugger) {
+        return debugger->isLegacy() ? static_cast<NEO::SourceLevelDebugger *>(debugger) : nullptr;
+    }
+    return nullptr;
+}
+
 } // namespace NEO

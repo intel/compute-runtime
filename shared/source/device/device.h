@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/debugger/debugger.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -17,6 +18,7 @@
 
 namespace NEO {
 class OSTime;
+class SourceLevelDebugger;
 
 class Device : public ReferenceTrackedObject<Device> {
   public:
@@ -58,6 +60,8 @@ class Device : public ReferenceTrackedObject<Device> {
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
     MOCKABLE_VIRTUAL bool isDebuggerActive() const;
     Debugger *getDebugger() { return getRootDeviceEnvironment().debugger.get(); }
+    NEO::SourceLevelDebugger *getSourceLevelDebugger();
+
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const RootDeviceEnvironment &getRootDeviceEnvironment() const { return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]; }
     const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
