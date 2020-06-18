@@ -120,7 +120,7 @@ ze_result_t DriverHandleImp::allocHostMem(ze_host_mem_alloc_flag_t flags, size_t
 
 ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flag_t flags,
                                             size_t size, size_t alignment, void **ptr) {
-    if (size > this->devices[0]->getDeviceInfo().maxMemAllocSize) {
+    if (size > this->devices[0]->getNEODevice()->getHardwareCapabilities().maxMemAllocSize) {
         *ptr = nullptr;
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }

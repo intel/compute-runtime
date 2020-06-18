@@ -3542,7 +3542,8 @@ void *clDeviceMemAllocINTEL(
         return nullptr;
     }
 
-    if (size > neoContext->getDevice(0u)->getSharedDeviceInfo().maxMemAllocSize && !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize) {
+    if (size > neoContext->getDevice(0u)->getHardwareCapabilities().maxMemAllocSize &&
+        !unifiedMemoryProperties.allocationFlags.flags.allowUnrestrictedSize) {
         err.set(CL_INVALID_BUFFER_SIZE);
         return nullptr;
     }

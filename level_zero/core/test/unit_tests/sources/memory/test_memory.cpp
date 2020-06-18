@@ -19,9 +19,9 @@ TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsDeviceHa
     size_t alignment = 1u;
     void *ptr = nullptr;
 
-    auto result = driverHandle->allocDeviceMem(device->toHandle(),
-                                               ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
-                                               size, alignment, &ptr);
+    ze_result_t result = driverHandle->allocDeviceMem(device->toHandle(),
+                                                      ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                                      size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
@@ -39,15 +39,28 @@ TEST_F(MemoryTest, givenDevicePointerThenDriverGetAllocPropertiesReturnsDeviceHa
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+using DeviceMemorySizeTest = Test<DeviceFixture>;
+
+TEST_F(DeviceMemorySizeTest, givenSizeGreaterThanLimitThenDeviceAllocationFails) {
+    size_t size = neoDevice->getHardwareCapabilities().maxMemAllocSize + 1;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_result_t result = driverHandle->allocDeviceMem(nullptr,
+                                                      ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                                      size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_SIZE, result);
+}
+
 TEST_F(MemoryTest, givenSharedPointerThenDriverGetAllocPropertiesReturnsDeviceHandle) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = nullptr;
 
-    auto result = driverHandle->allocSharedMem(device->toHandle(),
-                                               ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
-                                               ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
-                                               size, alignment, &ptr);
+    ze_result_t result = driverHandle->allocSharedMem(device->toHandle(),
+                                                      ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                                      ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
+                                                      size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
@@ -70,8 +83,8 @@ TEST_F(MemoryTest, givenHostPointerThenDriverGetAllocPropertiesReturnsNullDevice
     size_t alignment = 1u;
     void *ptr = nullptr;
 
-    auto result = driverHandle->allocHostMem(ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
-                                             size, alignment, &ptr);
+    ze_result_t result = driverHandle->allocHostMem(ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
+                                                    size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
@@ -110,10 +123,10 @@ TEST_F(MemoryTest, givenSharedPointerAndDeviceHandleAsNullThenDriverReturnsSucce
     void *ptr = nullptr;
 
     ASSERT_NE(nullptr, device->toHandle());
-    auto result = driverHandle->allocSharedMem(nullptr,
-                                               ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
-                                               ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
-                                               size, alignment, &ptr);
+    ze_result_t result = driverHandle->allocSharedMem(nullptr,
+                                                      ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                                      ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
+                                                      size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 
