@@ -21,6 +21,7 @@ int HwInfoConfigHw<IGFX_DG1>::configureHardwareCustom(HardwareInfo *hwInfo, OSIn
     gtSystemInfo->SliceCount = 1;
 
     HwInfoConfigCommonHelper::enableBlitterOperationsSupport(*hwInfo);
+    hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt = false;
     return 0;
 }
 

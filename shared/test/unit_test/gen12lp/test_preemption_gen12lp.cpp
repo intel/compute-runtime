@@ -26,13 +26,14 @@ PreemptionTestHwDetails GetPreemptionTestHwDetails<TGLLPFamily>() {
 
 using Gen12LpPreemptionTests = DevicePreemptionTests;
 
-GEN12LPTEST_F(Gen12LpPreemptionTests, whenProgramStateSipIsCalledThenStateSipCmdIsNotAddedToStream) {
+GEN12LPTEST_F(Gen12LpPreemptionTests, whenProgramStateSipIsCalledThenStateSipCmdIsAddedToStream) {
     size_t requiredSize = PreemptionHelper::getRequiredStateSipCmdSize<FamilyType>(*device);
-    EXPECT_EQ(0U, requiredSize);
+    StackVec<char, 1024> streamStorage(1024);
+    LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};
 
-    LinearStream cmdStream{nullptr, 0};
+    EXPECT_NE(0U, requiredSize);
     PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device);
-    EXPECT_EQ(0U, cmdStream.getUsed());
+    EXPECT_NE(0U, cmdStream.getUsed());
 }
 
 GEN12LPTEST_F(Gen12LpPreemptionTests, getRequiredCmdQSize) {

@@ -18,6 +18,7 @@ int HwInfoConfigHw<IGFX_ROCKETLAKE>::configureHardwareCustom(HardwareInfo *hwInf
 
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
+    hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt = false;
     return 0;
 }
 

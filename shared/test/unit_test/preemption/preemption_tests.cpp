@@ -372,6 +372,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MidThreadPreemptionTests, givenDirtyCsrStateWhenStat
         EXPECT_NE(hwParser.cmdList.end(), stateSipItor);
 
         auto stateSipAfterSBA = ++stateBaseAddressItor;
+        while ((stateSipAfterSBA != hwParser.cmdList.end()) && (*stateSipAfterSBA != *stateSipItor)) {
+            stateSipAfterSBA = ++stateBaseAddressItor;
+        }
         EXPECT_EQ(*stateSipAfterSBA, *stateSipItor);
 
         alignedFree(buffer);

@@ -16,6 +16,8 @@ using namespace NEO;
 typedef PreambleFixture TglLpSlm;
 
 HWTEST2_F(TglLpSlm, givenTglLpWhenPreambleIsBeingProgrammedThenThreadArbitrationPolicyIsIgnored, IsTGLLP) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
     typedef TGLLPFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<TGLLPFamily>::getL3Config(pDevice->getHardwareInfo(), true);

@@ -197,6 +197,40 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetWhenGetGpgpuEnginesThenRetu
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[3]);
 }
 
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetFtrGpGpuMidThreadLevelPreemptSetWhenGetGpgpuEnginesThenReturn2RcsAndCcsEngines) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    size_t retDeivices = 3u + hwInfoConfig->isEvenContextCountRequired();
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    EXPECT_EQ(retDeivices, device->engines.size());
+    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    EXPECT_EQ(retDeivices, engines.size());
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0]);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[1]);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[2]);
+}
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetFtrGpGpuMidThreadLevelPreemptNotSetWhenGetGpgpuEnginesThenReturn2RcsAnd2CcsEngines) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.featureTable.ftrBcsInfo = 0;
+    hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt = false;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
+    EXPECT_EQ(4u, device->engines.size());
+    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    EXPECT_EQ(4u, engines.size());
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0]);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, engines[1]);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[2]);
+    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[3]);
+}
+
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetAndDefaultRcsWhenGetGpgpuEnginesThenReturnAppropriateNumberOfRcsEngines) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrCCSNode = true;

@@ -45,7 +45,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     83.333,                                          // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                       // requiredPreemptionSurfaceSize
     &isSimulationTGLLP,                              // isSimulation
-    PreemptionMode::ThreadGroup,                     // defaultPreemptionMode
+    PreemptionMode::MidThread,                       // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                          // defaultEngineType
     0,                                               // maxRenderFrequency
     30,                                              // clVersionSupport

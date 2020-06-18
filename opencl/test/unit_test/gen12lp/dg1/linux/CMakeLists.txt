@@ -5,6 +5,7 @@
 #
 
 set(IGDRCL_SRCS_tests_gen12_dg1_linux
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests_dg1.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 if(UNIX)

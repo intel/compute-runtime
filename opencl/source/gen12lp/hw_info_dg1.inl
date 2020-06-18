@@ -47,7 +47,7 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationDG1,                              // isSimulation
-    PreemptionMode::ThreadGroup,                   // defaultPreemptionMode
+    PreemptionMode::MidThread,                     // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
     30,                                            // clVersionSupport

@@ -19,6 +19,7 @@ int HwInfoConfigHw<IGFX_TIGERLAKE_LP>::configureHardwareCustom(HardwareInfo *hwI
 
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
+    hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt = false;
     return 0;
 }
 

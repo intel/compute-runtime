@@ -52,7 +52,7 @@ HWTEST2_F(Gen12LpDeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt, IsTGLLP) 
 }
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, defaultPreemptionMode) {
-    EXPECT_EQ(PreemptionMode::ThreadGroup, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
+    EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, profilingTimerResolution) {

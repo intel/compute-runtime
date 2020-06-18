@@ -41,7 +41,7 @@ const RuntimeCapabilityTable RKL::capabilityTable{
     83.333,                                          // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                       // requiredPreemptionSurfaceSize
     &isSimulationRKL,                                // isSimulation
-    PreemptionMode::ThreadGroup,                     // defaultPreemptionMode
+    PreemptionMode::MidThread,                       // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                          // defaultEngineType
     0,                                               // maxRenderFrequency
     30,                                              // clVersionSupport

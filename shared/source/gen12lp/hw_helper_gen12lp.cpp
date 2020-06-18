@@ -163,7 +163,7 @@ const HwHelper::EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInsta
         defaultEngine           // internal usage
     };
 
-    if (defaultEngine == aub_stream::EngineType::ENGINE_CCS && hwInfo.featureTable.ftrCCSNode) {
+    if (defaultEngine == aub_stream::EngineType::ENGINE_CCS && hwInfo.featureTable.ftrCCSNode && !hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt) {
         engines.push_back(aub_stream::ENGINE_CCS);
     }
 
