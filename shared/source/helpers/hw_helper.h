@@ -92,7 +92,6 @@ class HwHelper {
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isIndependentForwardProgressSupported() = 0;
     virtual uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const = 0;
     virtual uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const = 0;
     virtual void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties) const = 0;
@@ -253,8 +252,6 @@ class HwHelperHw : public HwHelper {
     bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) override;
 
     uint32_t getMinimalSIMDSize() override;
-
-    bool isIndependentForwardProgressSupported() override;
 
     uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const override;
 

@@ -78,6 +78,7 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     true,                                          // supportsPipes
     true,                                          // supportsOcl21Features
     false,                                         // supportsOnDemandPageFaults
+    true,                                          // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
     true                                           // levelZeroSupported
 };

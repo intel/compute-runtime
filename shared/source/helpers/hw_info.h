@@ -57,6 +57,7 @@ struct RuntimeCapabilityTable {
     bool supportsPipes;
     bool supportsOcl21Features;
     bool supportsOnDemandPageFaults;
+    bool supportsIndependentForwardProgress;
     bool hostPtrTrackingEnabled;
     bool levelZeroSupported;
 };

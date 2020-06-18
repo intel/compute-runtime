@@ -122,13 +122,12 @@ void ClDevice::initializeCaps() {
     auto supportsVme = hwInfo.capabilityTable.supportsVme;
     auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
 
-    deviceInfo.independentForwardProgress = false;
+    deviceInfo.independentForwardProgress = hwInfo.capabilityTable.supportsIndependentForwardProgress;
     deviceInfo.ilsWithVersion[0].name[0] = 0;
     deviceInfo.ilsWithVersion[0].version = 0;
 
     if (ocl21FeaturesEnabled) {
-        if (hwHelper.isIndependentForwardProgressSupported()) {
-            deviceInfo.independentForwardProgress = true;
+        if (deviceInfo.independentForwardProgress) {
             deviceExtensions += "cl_khr_subgroups ";
         }
 
@@ -466,7 +465,7 @@ void ClDevice::initializeOpenclCFeatures() {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_work_group_collective_functions");
         deviceInfo.openclCFeatures.push_back(openClCFeature);
 
-        if (deviceInfo.independentForwardProgress) {
+        if (hwInfo.capabilityTable.supportsIndependentForwardProgress) {
             strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_subgroups");
             deviceInfo.openclCFeatures.push_back(openClCFeature);
         }

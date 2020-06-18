@@ -161,11 +161,6 @@ std::string HwHelperHw<Family>::getExtensions() const {
 }
 
 template <>
-bool HwHelperHw<Family>::isIndependentForwardProgressSupported() {
-    return false;
-}
-
-template <>
 inline void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
     pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
 }

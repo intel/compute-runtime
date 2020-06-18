@@ -74,6 +74,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     true,                                            // supportsPipes
     true,                                            // supportsOcl21Features
     false,                                           // supportsOnDemandPageFaults
+    true,                                            // supportsIndependentForwardProgress
     true,                                            // hostPtrTrackingEnabled
     true                                             // levelZeroSupported
 };

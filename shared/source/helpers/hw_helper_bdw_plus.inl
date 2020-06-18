@@ -77,10 +77,6 @@ uint32_t HwHelperHw<GfxFamily>::calculateAvailableThreadCount(PRODUCT_FAMILY fam
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isIndependentForwardProgressSupported() {
-    return true;
-}
-template <typename GfxFamily>
 uint64_t HwHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const {
     return static_cast<uint64_t>(timeStamp * frequency);
 }

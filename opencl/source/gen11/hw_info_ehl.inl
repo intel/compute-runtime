@@ -73,6 +73,7 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     false,                                         // supportsPipes
     false,                                         // supportsOcl21Features
     false,                                         // supportsOnDemandPageFaults
+    false,                                         // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
     false                                          // levelZeroSupported
 };

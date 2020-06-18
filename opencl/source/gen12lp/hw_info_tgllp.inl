@@ -75,6 +75,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     false,                                           // supportsPipes
     true,                                            // supportsOcl21Features
     false,                                           // supportsOnDemandPageFaults
+    false,                                           // supportsIndependentForwardProgress
     false,                                           // hostPtrTrackingEnabled
     true                                             // levelZeroSupported
 };

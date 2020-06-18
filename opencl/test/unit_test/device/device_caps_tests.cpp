@@ -86,7 +86,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
             EXPECT_STREQ("__opencl_c_read_write_images", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_work_group_collective_functions", (++openclCFeatureIterator)->name);
 
-            if (clDevice.getDeviceInfo().independentForwardProgress) {
+            if (hwInfo.capabilityTable.supportsIndependentForwardProgress) {
                 EXPECT_STREQ("__opencl_c_subgroups", (++openclCFeatureIterator)->name);
             }
         }
@@ -150,6 +150,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_LT(0u, sharedCaps.globalMemSize);
     EXPECT_EQ(sharedCaps.maxMemAllocSize, caps.maxConstantBufferSize);
     EXPECT_NE(nullptr, sharedCaps.ilVersion);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsIndependentForwardProgress, caps.independentForwardProgress);
 
     EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), caps.deviceAvailable);
     EXPECT_EQ(static_cast<cl_device_mem_cache_type>(CL_READ_WRITE_CACHE), caps.globalMemCacheType);
