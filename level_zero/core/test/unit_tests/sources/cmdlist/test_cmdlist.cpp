@@ -924,7 +924,7 @@ HWTEST2_F(CommandListCreate, givenNullEventWhenAppendEventAfterWalkerThenNothing
 
     EXPECT_EQ(commandList->commandContainer.getCommandStream()->getUsed(), usedBefore);
 }
-HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenInternalAllocHasPattern, Platforms) {
+HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendBlitFillCalledWithLargePatternSizeThenInternalAllocHasPattern, Platforms) {
     MockCommandListForMemFill<gfxCoreFamily> cmdList;
     cmdList.initialize(device, true);
     uint64_t pattern[4] = {1, 2, 3, 4};

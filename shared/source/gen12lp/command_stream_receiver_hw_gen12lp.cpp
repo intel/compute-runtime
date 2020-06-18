@@ -158,7 +158,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitPropertie
     getBlitAllocationProperties(*dstAllocation, dstPitch, dstQPitch, dstTileType, mipTailLod);
 
     srcPitch = (srcTileType == GMM_NOT_TILED) ? srcPitch : srcPitch / 4;
-    dstPitch = (srcTileType == GMM_NOT_TILED) ? dstPitch : dstPitch / 4;
+    dstPitch = (dstTileType == GMM_NOT_TILED) ? dstPitch : dstPitch / 4;
 
     blitCmd.setSourcePitch(srcPitch);
     blitCmd.setDestinationPitch(dstPitch);
