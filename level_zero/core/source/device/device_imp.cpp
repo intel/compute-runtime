@@ -70,14 +70,11 @@ ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *
         *value = true;
     }
 
-    auto settingsReader = NEO::SettingsReaderCreator::create(NEO::oclRegPath);
-    int64_t accessOverride = settingsReader->getSetting("EnableCrossDeviceAcesss", -1);
-
-    if ((accessOverride == 1) || (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() == 1)) {
+    if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() == 1) {
         *value = true;
     }
 
-    if ((accessOverride == 0) || (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() == 0)) {
+    if (NEO::DebugManager.flags.EnableCrossDeviceAccess.get() == 0) {
         *value = false;
     }
 
