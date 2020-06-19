@@ -9,11 +9,18 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 
+#include "opencl/source/helpers/hardware_commands_helper.h"
+
 namespace NEO {
 namespace Gen12LPHelpers {
 
 bool pipeControlWaRequired(PRODUCT_FAMILY productFamily) {
     return (productFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP);
+}
+
+bool workaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) {
+    DEBUG_BREAK_IF(true);
+    return false;
 }
 
 bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily) {
@@ -39,7 +46,7 @@ void setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
                                        const HardwareInfo &hwInfo) {}
 
 bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) {
-    return (hwInfo.platform.usRevId == REVISION_A0);
+    return HardwareCommandsHelper<TGLLPFamily>::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 bool isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo) {
@@ -47,7 +54,7 @@ bool isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo) {
 }
 
 bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
-    return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & (hwInfo.platform.usRevId == REVISION_A0));
+    return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & HardwareCommandsHelper<TGLLPFamily>::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo));
 }
 
 bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) {

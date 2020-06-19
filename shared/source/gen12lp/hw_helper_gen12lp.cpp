@@ -90,8 +90,8 @@ bool HwHelperHw<Family>::checkResourceCompatibility(GraphicsAllocation &graphics
 template <>
 void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
     coherencyFlag = true;
-    if (pHwInfo->platform.eProductFamily == IGFX_TIGERLAKE_LP && pHwInfo->platform.usRevId == 0x0) {
-        //stepping A0 devices - turn off coherency
+    if (pHwInfo->platform.eProductFamily == IGFX_TIGERLAKE_LP && HardwareCommandsHelper<Family>::isWorkaroundRequired(REVISION_A0, REVISION_B, *pHwInfo)) {
+        //stepping A devices - turn off coherency
         coherencyFlag = false;
     }
 
@@ -101,8 +101,7 @@ void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo,
 template <>
 uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const HardwareInfo *hwInfo) {
     if (Gen12LPHelpers::imagePitchAlignmentWaRequired(hwInfo->platform.eProductFamily)) {
-        auto stepping = hwInfo->platform.usRevId;
-        if (stepping == 0) {
+        if (HardwareCommandsHelper<Family>::isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo)) {
             return 64u;
         }
         return 4u;
@@ -145,8 +144,7 @@ template <>
 void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
     if (Gen12LPHelpers::pipeControlWaRequired(hwInfo.platform.eProductFamily)) {
-        auto stepping = hwInfo.platform.usRevId;
-        if (stepping == 0) {
+        if (HardwareCommandsHelper<Family>::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
             PIPE_CONTROL cmd = Family::cmdInitPipeControl;
             cmd.setCommandStreamerStallEnable(true);
             auto pipeControl = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));

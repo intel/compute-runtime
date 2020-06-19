@@ -314,3 +314,34 @@ GEN12LPTEST_F(MemorySynchronizatiopCommandsTests, whenSettingCacheFlushExtraFiel
     EXPECT_TRUE(pipeControl.getHdcPipelineFlush());
     EXPECT_FALSE(pipeControl.getConstantCacheInvalidationEnable());
 }
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
+    std::vector<unsigned short> steppings;
+    PRODUCT_FAMILY productFamilies[] = {IGFX_TIGERLAKE_LP, IGFX_UNKNOWN};
+
+    for (auto productFamily : productFamilies) {
+        hardwareInfo.platform.eProductFamily = productFamily;
+        steppings.push_back(0x0); //A0
+        steppings.push_back(0x1); //B0
+        steppings.push_back(0x3); //C0
+        steppings.push_back(0x4); //undefined
+
+        for (auto stepping : steppings) {
+            hardwareInfo.platform.usRevId = stepping;
+
+            if (hardwareInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) {
+                if (stepping == 0x0) {
+                    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+                    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+                } else if (stepping == 0x1) {
+                    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
+                } else if (stepping == 0x3) {
+                    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+                }
+            } else {
+                EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+            }
+        }
+        steppings.clear();
+    }
+}

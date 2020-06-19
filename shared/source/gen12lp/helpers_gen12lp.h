@@ -22,6 +22,7 @@ class Image;
 
 namespace Gen12LPHelpers {
 bool pipeControlWaRequired(PRODUCT_FAMILY productFamily);
+bool workaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo);
 bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily);
 void adjustCoherencyFlag(PRODUCT_FAMILY productFamily, bool &coherencyFlag);
 bool isLocalMemoryEnabled(const HardwareInfo &hwInfo);
