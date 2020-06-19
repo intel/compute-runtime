@@ -129,9 +129,31 @@ HWTEST_F(EnqueueDebugKernelSimpleTest, givenKernelFromProgramWithDebugEnabledWhe
     program.enableKernelDebug();
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*pDevice, &program));
     kernel->setContext(context);
+    kernel->initialize();
     std::unique_ptr<GMockCommandQueueHw<FamilyType>> mockCmdQ(new GMockCommandQueueHw<FamilyType>(context, pClDevice, 0));
 
+    EXPECT_NE(nullptr, kernel->getKernelInfo().patchInfo.pAllocateSystemThreadSurface);
+
     EXPECT_CALL(*mockCmdQ.get(), setupDebugSurface(kernel.get())).Times(1).RetiresOnSaturation();
+
+    size_t gws[] = {1, 1, 1};
+    mockCmdQ->enqueueKernel(kernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    ::testing::Mock::VerifyAndClearExpectations(mockCmdQ.get());
+}
+
+HWTEST_F(EnqueueDebugKernelSimpleTest, givenKernelWithoutSystemThreadSurfaceWhenEnqueuedThenDebugSurfaceIsNotSetup) {
+    MockProgram program(*pDevice->getExecutionEnvironment());
+    program.enableKernelDebug();
+    std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(*pDevice, &program));
+    kernel->setContext(context);
+    kernel->initialize();
+
+    EXPECT_EQ(nullptr, kernel->getKernelInfo().patchInfo.pAllocateSystemThreadSurface);
+
+    std::unique_ptr<GMockCommandQueueHw<FamilyType>> mockCmdQ(new GMockCommandQueueHw<FamilyType>(context, pClDevice, 0));
+
+    EXPECT_CALL(*mockCmdQ.get(), setupDebugSurface(kernel.get())).Times(0).RetiresOnSaturation();
 
     size_t gws[] = {1, 1, 1};
     mockCmdQ->enqueueKernel(kernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);

@@ -415,6 +415,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     bool requiresPerDssBackedBuffer() const;
     bool requiresLimitedWorkgroupSize() const;
+    bool isKernelDebugEnabled() const { return debugEnabled; }
 
   protected:
     struct ObjectCounts {
@@ -548,5 +549,6 @@ class Kernel : public BaseObject<_cl_kernel> {
     std::vector<GraphicsAllocation *> kernelArgRequiresCacheFlush;
     UnifiedMemoryControls unifiedMemoryControls;
     bool isUnifiedMemorySyncRequired = true;
+    bool debugEnabled = false;
 };
 } // namespace NEO

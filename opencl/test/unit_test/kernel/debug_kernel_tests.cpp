@@ -34,6 +34,26 @@ TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetPerThreadSystemThrea
     EXPECT_EQ(MockDebugKernel::perThreadSystemThreadSurfaceSize, kernel->getPerThreadSystemThreadSurfaceSize());
 }
 
+TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenQueryingIsKernelDebugEnabledThenTrueIsReturned) {
+    auto device = std::make_unique<MockClDevice>(new MockDevice);
+    MockProgram program(*device->getExecutionEnvironment());
+    program.enableKernelDebug();
+    std::unique_ptr<MockKernel> kernel(MockKernel::create<MockDebugKernel>(device->getDevice(), &program));
+    kernel->initialize();
+
+    EXPECT_TRUE(kernel->isKernelDebugEnabled());
+}
+
+TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenQueryingIsKernelDebugEnabledThenFalseIsReturned) {
+    auto device = std::make_unique<MockClDevice>(new MockDevice);
+    MockProgram program(*device->getExecutionEnvironment());
+    program.enableKernelDebug();
+    std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(device->getDevice(), &program));
+    kernel->initialize();
+
+    EXPECT_FALSE(kernel->isKernelDebugEnabled());
+}
+
 TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetDebugSurfaceBtiIsCalledThenInvalidIndexValueIsReturned) {
     auto device = std::make_unique<MockClDevice>(new MockDevice);
     MockProgram program(*device->getExecutionEnvironment());

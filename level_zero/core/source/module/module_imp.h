@@ -100,6 +100,7 @@ struct ModuleImp : public Module {
     bool isDebugEnabled() const override;
 
   protected:
+    void verifyDebugCapabilities();
     Device *device = nullptr;
     PRODUCT_FAMILY productFamily{};
     std::unique_ptr<ModuleTranslationUnit> translationUnit;

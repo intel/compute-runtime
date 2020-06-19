@@ -310,11 +310,11 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
         return false;
     }
 
-    debugEnabled = this->translationUnit->debugDataSize > 0;
+    verifyDebugCapabilities();
 
     this->updateBuildLog(neoDevice);
 
-    if (debugEnabled && device->getNEODevice()->isDebuggerActive()) {
+    if (debugEnabled) {
         for (auto kernelInfo : this->translationUnit->programInfo.kernelInfos) {
             device->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo->kernelDescriptor.external.debugData.get(),
                                                                     kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
@@ -526,7 +526,22 @@ ze_result_t ModuleImp::getKernelNames(uint32_t *pCount, const char **pNames) {
 }
 
 bool ModuleImp::isDebugEnabled() const {
-    return this->translationUnit->debugDataSize > 0;
+    return debugEnabled;
+}
+
+void ModuleImp::verifyDebugCapabilities() {
+    bool debugCapabilities = device->getNEODevice()->isDebuggerActive();
+
+    if (debugCapabilities) {
+        //verify all kernels are debuggable
+        for (auto kernelInfo : this->translationUnit->programInfo.kernelInfos) {
+            bool systemThreadSurfaceAvailable = NEO::isValidOffset(kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful) ||
+                                                NEO::isValidOffset(kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindless);
+
+            debugCapabilities &= systemThreadSurfaceAvailable;
+        }
+    }
+    debugEnabled = debugCapabilities;
 }
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, ConstStringRef dstOptionName, ConstStringRef srcOptionName) {

@@ -415,7 +415,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
     }
 
     if (commandType == CL_COMMAND_NDRANGE_KERNEL) {
-        if (multiDispatchInfo.peekMainKernel()->getProgram()->isKernelDebugEnabled()) {
+        if (multiDispatchInfo.peekMainKernel()->isKernelDebugEnabled()) {
             setupDebugSurface(multiDispatchInfo.peekMainKernel());
         }
     }

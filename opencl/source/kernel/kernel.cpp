@@ -389,6 +389,10 @@ cl_int Kernel::initialize() {
             program->allocateBlockPrivateSurfaces(device.getRootDeviceIndex());
         }
 
+        if (program->isKernelDebugEnabled() && getKernelInfo().patchInfo.pAllocateSystemThreadSurface) {
+            debugEnabled = true;
+        }
+
         retVal = CL_SUCCESS;
 
     } while (false);
