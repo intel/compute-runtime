@@ -55,6 +55,18 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenForceCsrFlushingDebugVariable
     EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissionsCalled);
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenForceImplicitFlushDebugVariableSetWhenFlushingThenFlushBatchedSubmissionsShouldBeCalled) {
+    DebugManagerStateRestore restore;
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.dispatchMode = DispatchMode::BatchedDispatch;
+
+    DebugManager.flags.ForceImplicitFlush.set(true);
+
+    flushTask(commandStreamReceiver);
+
+    EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissionsCalled);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetWhenFlushingThenRequestRequiredMode) {
     DebugManagerStateRestore restore;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();

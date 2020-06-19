@@ -180,6 +180,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (DebugManager.flags.ForceCsrFlushing.get()) {
         flushBatchedSubmissions();
     }
+
+    if (DebugManager.flags.ForceImplicitFlush.get()) {
+        dispatchFlags.implicitFlush = true;
+    }
+
     if (detectInitProgrammingFlagsRequired(dispatchFlags)) {
         initProgrammingFlags();
     }
