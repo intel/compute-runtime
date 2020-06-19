@@ -404,6 +404,11 @@ const StackVec<size_t, 3> HwHelperHw<GfxFamily>::getDeviceSubGroupSizes() const 
 }
 
 template <typename GfxFamily>
+const StackVec<uint32_t, 6> HwHelperHw<GfxFamily>::getThreadsPerEUConfigs() const {
+    return {};
+}
+
+template <typename GfxFamily>
 void HwHelperHw<GfxFamily>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties) const {}
 
 } // namespace NEO

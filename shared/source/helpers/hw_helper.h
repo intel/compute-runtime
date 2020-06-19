@@ -74,6 +74,7 @@ class HwHelper {
                                                 bool useL1Cache) = 0;
     virtual const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const = 0;
     virtual const StackVec<size_t, 3> getDeviceSubGroupSizes() const = 0;
+    virtual const StackVec<uint32_t, 6> getThreadsPerEUConfigs() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
     virtual std::string getExtensions() const = 0;
     static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
@@ -217,6 +218,8 @@ class HwHelperHw : public HwHelper {
     const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override;
 
     const StackVec<size_t, 3> getDeviceSubGroupSizes() const override;
+
+    const StackVec<uint32_t, 6> getThreadsPerEUConfigs() const override;
 
     bool getEnableLocalMemory(const HardwareInfo &hwInfo) const override;
 

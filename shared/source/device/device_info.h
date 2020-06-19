@@ -41,6 +41,7 @@ struct DeviceInfo {
     uint32_t maxSamplers;
     uint32_t maxWriteImageArgs;
     uint32_t numThreadsPerEU;
+    StackVec<uint32_t, 6> threadsPerEUConfigs;
     uint32_t vendorId;
     uint32_t vmeAvcSupportsPreemption;
     bool debuggerActive;
