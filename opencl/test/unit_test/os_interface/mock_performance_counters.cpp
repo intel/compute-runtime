@@ -193,8 +193,11 @@ StatusCode MockMetricsLibraryValidInterface::QueryCreate(const QueryCreateData_1
 // MockMetricsLibraryValidInterface::QueryDelete
 //////////////////////////////////////////////////////
 StatusCode MockMetricsLibraryValidInterface::QueryDelete(const QueryHandle_1_0 handle) {
-    EXPECT_TRUE(handle.IsValid());
-    delete (uint32_t *)handle.data;
+
+    if (handle.IsValid()) {
+        delete (uint32_t *)handle.data;
+    }
+
     return StatusCode::Success;
 }
 

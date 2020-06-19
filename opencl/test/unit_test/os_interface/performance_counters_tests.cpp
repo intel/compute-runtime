@@ -92,7 +92,14 @@ struct PerformanceCountersProcessEventTest : public PerformanceCountersTest,
 
 TEST_P(PerformanceCountersProcessEventTest, givenNullptrInputParamWhenProcessEventPerfCountersIsCalledThenReturnsFalse) {
     eventComplete = GetParam();
-    auto retVal = performanceCountersBase->getApiReport(inputParamSize, nullptr, &outputParamSize, eventComplete);
+
+    HwPerfCounter counters = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &counters;
+
+    performanceCountersBase->getQueryHandle(counters.query.handle);
+    auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize, nullptr, &outputParamSize, eventComplete);
+    performanceCountersBase->deleteQuery(counters.query.handle);
 
     EXPECT_FALSE(retVal);
 }
@@ -100,7 +107,13 @@ TEST_P(PerformanceCountersProcessEventTest, givenNullptrInputParamWhenProcessEve
 TEST_P(PerformanceCountersProcessEventTest, givenCorrectInputParamWhenProcessEventPerfCountersIsCalledAndEventIsCompletedThenReturnsTrue) {
     eventComplete = GetParam();
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->getApiReport(inputParamSize, inputParam.get(), &outputParamSize, eventComplete);
+    HwPerfCounter counters = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &counters;
+
+    performanceCountersBase->getQueryHandle(counters.query.handle);
+    auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize, inputParam.get(), &outputParamSize, eventComplete);
+    performanceCountersBase->deleteQuery(counters.query.handle);
 
     if (eventComplete) {
         EXPECT_TRUE(retVal);
@@ -111,9 +124,26 @@ TEST_P(PerformanceCountersProcessEventTest, givenCorrectInputParamWhenProcessEve
     }
 }
 
+TEST_P(PerformanceCountersProcessEventTest, givenCorrectInputParamWhenProcessEventPerfCountersIsNotCalledThenReturnsFalse) {
+    eventComplete = GetParam();
+    EXPECT_EQ(0ull, outputParamSize);
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = nullptr;
+
+    auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize, inputParam.get(), &outputParamSize, eventComplete);
+    EXPECT_FALSE(retVal);
+}
+
 TEST_F(PerformanceCountersProcessEventTest, givenInvalidInputParamSizeWhenProcessEventPerfCountersIsCalledThenReturnsFalse) {
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->getApiReport(inputParamSize - 1, inputParam.get(), &outputParamSize, eventComplete);
+
+    HwPerfCounter counters = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &counters;
+
+    performanceCountersBase->getQueryHandle(counters.query.handle);
+    auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize - 1, inputParam.get(), &outputParamSize, eventComplete);
+    performanceCountersBase->deleteQuery(counters.query.handle);
 
     EXPECT_FALSE(retVal);
     EXPECT_EQ(outputParamSize, inputParamSize);
@@ -121,7 +151,14 @@ TEST_F(PerformanceCountersProcessEventTest, givenInvalidInputParamSizeWhenProces
 
 TEST_F(PerformanceCountersProcessEventTest, givenNullptrOutputParamSizeWhenProcessEventPerfCountersIsCalledThenDoesNotReturnsOutputSize) {
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->getApiReport(inputParamSize, inputParam.get(), nullptr, eventComplete);
+
+    HwPerfCounter counters = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &counters;
+
+    performanceCountersBase->getQueryHandle(counters.query.handle);
+    auto retVal = performanceCountersBase->getApiReport(&query, inputParamSize, inputParam.get(), nullptr, eventComplete);
+    performanceCountersBase->deleteQuery(counters.query.handle);
 
     EXPECT_TRUE(retVal);
     EXPECT_EQ(0ull, outputParamSize);
@@ -129,7 +166,14 @@ TEST_F(PerformanceCountersProcessEventTest, givenNullptrOutputParamSizeWhenProce
 
 TEST_F(PerformanceCountersProcessEventTest, givenNullptrInputZeroSizeWhenProcessEventPerfCountersIsCalledThenQueryProperSize) {
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->getApiReport(0, nullptr, &outputParamSize, eventComplete);
+
+    HwPerfCounter counters = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &counters;
+
+    performanceCountersBase->getQueryHandle(counters.query.handle);
+    auto retVal = performanceCountersBase->getApiReport(&query, 0, nullptr, &outputParamSize, eventComplete);
+    performanceCountersBase->deleteQuery(counters.query.handle);
 
     EXPECT_TRUE(retVal);
     EXPECT_EQ(inputParamSize, outputParamSize);
@@ -137,10 +181,24 @@ TEST_F(PerformanceCountersProcessEventTest, givenNullptrInputZeroSizeWhenProcess
 
 TEST_F(PerformanceCountersProcessEventTest, givenNullptrInputZeroSizeAndNullptrOutputSizeWhenProcessEventPerfCountersIsCalledThenReturnFalse) {
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->getApiReport(0, nullptr, nullptr, eventComplete);
+
+    HwPerfCounter counters = {};
+    TagNode<HwPerfCounter> query = {};
+    query.tagForCpuAccess = &counters;
+
+    performanceCountersBase->getQueryHandle(counters.query.handle);
+    auto retVal = performanceCountersBase->getApiReport(&query, 0, nullptr, nullptr, eventComplete);
+    performanceCountersBase->deleteQuery(counters.query.handle);
 
     EXPECT_FALSE(retVal);
     EXPECT_EQ(0ull, outputParamSize);
+}
+
+TEST_F(PerformanceCountersProcessEventTest, givenNullptrQueryWhenProcessEventPerfCountersIsCalledThenReturnFalse) {
+    EXPECT_EQ(0ull, outputParamSize);
+
+    auto retVal = performanceCountersBase->getApiReport(nullptr, 0, nullptr, nullptr, eventComplete);
+    EXPECT_FALSE(retVal);
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -202,6 +260,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     EXPECT_TRUE(performanceCountersBase->getGpuCommands(MetricsLibraryApi::GpuCommandBufferType::Render, query, true, sizeof(buffer), buffer));
 
     // Close library.
+    performanceCountersBase->deleteQuery(perfCounter.query.handle);
     performanceCountersBase->shutdown();
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
@@ -392,12 +451,13 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     EXPECT_NE(apiReport, nullptr);
 
     // Obtain api report.
-    EXPECT_TRUE(performanceCountersBase->getApiReport(apiReportSize, apiReport, nullptr, true));
+    EXPECT_TRUE(performanceCountersBase->getApiReport(&query, apiReportSize, apiReport, nullptr, true));
 
     delete[] apiReport;
     apiReport = nullptr;
 
     // Close library.
+    performanceCountersBase->deleteQuery(perfCounter.query.handle);
     performanceCountersBase->shutdown();
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
@@ -422,11 +482,15 @@ TEST_F(PerformanceCountersMetricsLibraryTest, givenPerformanceCountersWhenMetric
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
 
+    MetricsLibraryApi::QueryHandle_1_0 query = {};
+
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
     EXPECT_TRUE(performanceCountersBase->enable(false));
-    EXPECT_TRUE(performanceCountersBase->getQueryHandle().IsValid());
-    EXPECT_TRUE(performanceCountersBase->getQueryHandle().IsValid());
 
+    performanceCountersBase->getQueryHandle(query);
+    EXPECT_TRUE(query.IsValid());
+
+    performanceCountersBase->deleteQuery(query);
     performanceCountersBase->shutdown();
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }

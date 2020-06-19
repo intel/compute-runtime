@@ -129,6 +129,8 @@ Event::~Event() {
             timeStampNode->returnTag();
         }
         if (perfCounterNode != nullptr) {
+            cmdQueue->getPerfCounters()->deleteQuery(perfCounterNode->tagForCpuAccess->query.handle);
+            perfCounterNode->tagForCpuAccess->query.handle = {};
             perfCounterNode->returnTag();
         }
         cmdQueue->decRefInternal();
@@ -198,7 +200,9 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
         if (!perfCountersEnabled) {
             return CL_INVALID_VALUE;
         }
-        if (!cmdQueue->getPerfCounters()->getApiReport(paramValueSize,
+
+        if (!cmdQueue->getPerfCounters()->getApiReport(perfCounterNode,
+                                                       paramValueSize,
                                                        paramValue,
                                                        paramValueSizeRet,
                                                        updateStatusAndCheckCompletion())) {
@@ -741,7 +745,7 @@ TagNode<HwTimeStamps> *Event::getHwTimeStampNode() {
 TagNode<HwPerfCounter> *Event::getHwPerfCounterNode() {
 
     if (!perfCounterNode && cmdQueue->getPerfCounters()) {
-        const uint32_t gpuReportSize = cmdQueue->getPerfCounters()->getGpuReportSize();
+        const uint32_t gpuReportSize = HwPerfCounter::getSize(*(cmdQueue->getPerfCounters()));
         perfCounterNode = cmdQueue->getGpgpuCommandStreamReceiver().getEventPerfCountAllocator(gpuReportSize)->getTag();
     }
     return perfCounterNode;

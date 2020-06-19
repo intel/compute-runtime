@@ -42,14 +42,6 @@ bool PerformanceCountersWin::enableCountersConfiguration() {
     // can change configuration between kernels.
     releaseCountersConfiguration();
 
-    // Create mmio user configuration.
-    if (!metricsLibrary->userConfigurationCreate(
-            context,
-            userConfiguration)) {
-        DEBUG_BREAK_IF(true);
-        return false;
-    }
-
     // Create oa configuration.
     if (!metricsLibrary->oaConfigurationCreate(
             context,
@@ -72,11 +64,6 @@ bool PerformanceCountersWin::enableCountersConfiguration() {
 // PerformanceCountersWin::releaseCountersConfiguration
 //////////////////////////////////////////////////////
 void PerformanceCountersWin::releaseCountersConfiguration() {
-    // Mmio user configuration.
-    if (userConfiguration.IsValid()) {
-        metricsLibrary->userConfigurationDelete(userConfiguration);
-        userConfiguration.data = nullptr;
-    }
 
     // Oa configuration.
     if (oaConfiguration.IsValid()) {

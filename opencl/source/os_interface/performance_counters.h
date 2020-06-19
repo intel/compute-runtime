@@ -18,6 +18,7 @@ namespace NEO {
 //////////////////////////////////////////////////////
 template <typename Node>
 struct TagNode;
+class CommandQueue;
 
 //////////////////////////////////////////////////////
 // Performance counters implementation.
@@ -47,6 +48,7 @@ class PerformanceCounters {
     //////////////////////////////////////////////////////
     // Gpu commands.
     //////////////////////////////////////////////////////
+    static uint32_t getGpuCommandsSize(CommandQueue &commandQueue, const bool reservePerfCounters);
     uint32_t getGpuCommandsSize(const MetricsLibraryApi::GpuCommandBufferType commandBufferType, const bool begin);
     bool getGpuCommands(const MetricsLibraryApi::GpuCommandBufferType commandBufferType, TagNode<HwPerfCounter> &performanceCounters, const bool begin, const uint32_t bufferSize, void *pBuffer);
 
@@ -55,7 +57,7 @@ class PerformanceCounters {
     /////////////////////////////////////////////////////
     uint32_t getApiReportSize();
     uint32_t getGpuReportSize();
-    bool getApiReport(const size_t inputParamSize, void *pClientData, size_t *pOutputSize, bool isEventComplete);
+    bool getApiReport(const TagNode<HwPerfCounter> *performanceCounters, const size_t inputParamSize, void *pClientData, size_t *pOutputSize, bool isEventComplete);
 
     /////////////////////////////////////////////////////
     // Metrics Library interface.
@@ -69,7 +71,8 @@ class PerformanceCounters {
     // Metrics Library context/query handles.
     /////////////////////////////////////////////////////
     ContextHandle_1_0 getMetricsLibraryContext();
-    QueryHandle_1_0 getQueryHandle();
+    void getQueryHandle(QueryHandle_1_0 &handle);
+    void deleteQuery(QueryHandle_1_0 &handle);
 
   protected:
     /////////////////////////////////////////////////////
@@ -98,10 +101,9 @@ class PerformanceCounters {
     ContextHandle_1_0 context = {};
 
     /////////////////////////////////////////////////////
-    // Metrics Library oa/mmio counters configuration.
+    // Metrics Library oa counters configuration.
     /////////////////////////////////////////////////////
     ConfigurationHandle_1_0 oaConfiguration = {};
-    ConfigurationHandle_1_0 userConfiguration = {};
 
     /////////////////////////////////////////////////////
     // Metrics Library query object.

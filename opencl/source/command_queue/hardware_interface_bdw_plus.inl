@@ -52,38 +52,6 @@ inline void HardwareInterface<GfxFamily>::dispatchWorkarounds(
 }
 
 template <typename GfxFamily>
-inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfStartCommands(
-    TagNode<HwTimeStamps> *hwTimeStamps,
-    TagNode<HwPerfCounter> *hwPerfCounter,
-    LinearStream *commandStream,
-    CommandQueue &commandQueue) {
-
-    // If hwTimeStampAlloc is passed (not nullptr), then we know that profiling is enabled
-    if (hwTimeStamps != nullptr) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(*hwTimeStamps, commandStream, commandQueue.getDevice().getHardwareInfo());
-    }
-    if (hwPerfCounter != nullptr) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(commandQueue, *hwPerfCounter, commandStream);
-    }
-}
-
-template <typename GfxFamily>
-inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfEndCommands(
-    TagNode<HwTimeStamps> *hwTimeStamps,
-    TagNode<HwPerfCounter> *hwPerfCounter,
-    LinearStream *commandStream,
-    CommandQueue &commandQueue) {
-
-    // If hwTimeStamps is passed (not nullptr), then we know that profiling is enabled
-    if (hwTimeStamps != nullptr) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(*hwTimeStamps, commandStream);
-    }
-    if (hwPerfCounter != nullptr) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(commandQueue, *hwPerfCounter, commandStream);
-    }
-}
-
-template <typename GfxFamily>
 inline void HardwareInterface<GfxFamily>::programWalker(
     LinearStream &commandStream,
     Kernel &kernel,

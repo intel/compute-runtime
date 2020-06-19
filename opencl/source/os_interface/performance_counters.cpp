@@ -7,7 +7,11 @@
 
 #include "opencl/source/os_interface/performance_counters.h"
 
+#include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/tag_allocator.h"
+
+#include "opencl/source/command_queue/command_queue.h"
 
 using namespace MetricsLibraryApi;
 
@@ -114,7 +118,7 @@ bool PerformanceCounters::openMetricsLibrary() {
 // PerformanceCounters::closeMetricsLibrary
 //////////////////////////////////////////////////////
 void PerformanceCounters::closeMetricsLibrary() {
-    // Destroy oa/user mmio configuration.
+    // Destroy oa configuration.
     releaseCountersConfiguration();
 
     // Destroy hw counters query.
@@ -131,17 +135,44 @@ void PerformanceCounters::closeMetricsLibrary() {
 //////////////////////////////////////////////////////
 // PerformanceCounters::getQueryHandle
 //////////////////////////////////////////////////////
-QueryHandle_1_0 PerformanceCounters::getQueryHandle() {
-    if (!query.IsValid()) {
+void PerformanceCounters::getQueryHandle(QueryHandle_1_0 &handle) {
+    if (!handle.IsValid()) {
         metricsLibrary->hwCountersCreate(
             context,
             1,
-            userConfiguration,
-            query);
+            nullptr,
+            handle);
     }
 
-    DEBUG_BREAK_IF(!query.IsValid());
-    return query;
+    DEBUG_BREAK_IF(!handle.IsValid());
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::getQueryHandle
+//////////////////////////////////////////////////////
+void PerformanceCounters::deleteQuery(QueryHandle_1_0 &handle) {
+    metricsLibrary->hwCountersDelete(handle);
+}
+
+//////////////////////////////////////////////////////
+// PerformanceCounters::getGpuCommandsSize
+//////////////////////////////////////////////////////
+uint32_t PerformanceCounters::getGpuCommandsSize(CommandQueue &commandQueue, const bool reservePerfCounters) {
+
+    uint32_t size = 0;
+
+    if (reservePerfCounters) {
+
+        const auto performanceCounters = commandQueue.getPerfCounters();
+        const auto commandBufferType = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType())
+                                           ? MetricsLibraryApi::GpuCommandBufferType::Compute
+                                           : MetricsLibraryApi::GpuCommandBufferType::Render;
+
+        size += performanceCounters->getGpuCommandsSize(commandBufferType, true);
+        size += performanceCounters->getGpuCommandsSize(commandBufferType, false);
+    }
+
+    return size;
 }
 
 //////////////////////////////////////////////////////
@@ -154,7 +185,7 @@ uint32_t PerformanceCounters::getGpuCommandsSize(
     CommandBufferSize_1_0 bufferSize = {};
 
     if (begin) {
-        // Load currently activated (through metrics discovery) oa/user mmio configuration and use it.
+        // Load currently activated (through metrics discovery) oa configuration and use it.
         // It will allow to change counters configuration between subsequent clEnqueueNDCommandRange calls.
         if (!enableCountersConfiguration()) {
             return 0;
@@ -165,9 +196,10 @@ uint32_t PerformanceCounters::getGpuCommandsSize(
     bufferData.CommandsType = ObjectType::QueryHwCounters;
     bufferData.Type = commandBufferType;
 
+    getQueryHandle(query);
+
     bufferData.QueryHwCounters.Begin = begin;
-    bufferData.QueryHwCounters.Handle = getQueryHandle();
-    bufferData.QueryHwCounters.HandleUserConfiguration = userConfiguration;
+    bufferData.QueryHwCounters.Handle = query;
 
     return metricsLibrary->commandBufferGetSize(bufferData, bufferSize)
                ? bufferSize.GpuMemorySize
@@ -193,13 +225,16 @@ bool PerformanceCounters::getGpuCommands(
     bufferData.Type = commandBufferType;
 
     // Gpu memory allocation for query hw counters.
-    bufferData.Allocation.CpuAddress = reinterpret_cast<uint8_t *>(performanceCounters.tagForCpuAccess);
-    bufferData.Allocation.GpuAddress = performanceCounters.getGpuAddress();
+    const uint32_t allocationOffset = offsetof(HwPerfCounter, report);
+    bufferData.Allocation.CpuAddress = reinterpret_cast<uint8_t *>(performanceCounters.tagForCpuAccess) + allocationOffset;
+    bufferData.Allocation.GpuAddress = performanceCounters.getGpuAddress() + allocationOffset;
+
+    // Allocate query handle for cl_event if not exists.
+    getQueryHandle(performanceCounters.tagForCpuAccess->query.handle);
 
     // Query hw counters specific data.
     bufferData.QueryHwCounters.Begin = begin;
-    bufferData.QueryHwCounters.Handle = getQueryHandle();
-    bufferData.QueryHwCounters.HandleUserConfiguration = userConfiguration;
+    bufferData.QueryHwCounters.Handle = performanceCounters.tagForCpuAccess->query.handle;
 
     return metricsLibrary->commandBufferGet(bufferData);
 }
@@ -221,11 +256,19 @@ uint32_t PerformanceCounters::getGpuReportSize() {
 //////////////////////////////////////////////////////
 // PerformanceCounters::getApiReport
 //////////////////////////////////////////////////////
-bool PerformanceCounters::getApiReport(const size_t inputParamSize, void *pInputParam, size_t *pOutputParamSize, bool isEventComplete) {
+bool PerformanceCounters::getApiReport(const TagNode<HwPerfCounter> *performanceCounters, const size_t inputParamSize, void *pInputParam, size_t *pOutputParamSize, bool isEventComplete) {
     const uint32_t outputSize = metricsLibrary->hwCountersGetApiReportSize();
 
     if (pOutputParamSize) {
         *pOutputParamSize = outputSize;
+    }
+
+    if (!performanceCounters) {
+        return false;
+    }
+
+    if (!performanceCounters->tagForCpuAccess) {
+        return false;
     }
 
     if (pInputParam == nullptr && inputParamSize == 0 && pOutputParamSize) {
@@ -240,6 +283,6 @@ bool PerformanceCounters::getApiReport(const size_t inputParamSize, void *pInput
         return false;
     }
 
-    return metricsLibrary->hwCountersGetReport(query, 0, 1, outputSize, pInputParam);
+    return metricsLibrary->hwCountersGetReport(performanceCounters->tagForCpuAccess->query.handle, 0, 1, outputSize, pInputParam);
 }
 } // namespace NEO

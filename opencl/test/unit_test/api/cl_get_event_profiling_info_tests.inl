@@ -283,8 +283,8 @@ class clEventProfilingWithPerfCountersTests : public DeviceInstrumentationFixtur
         commandQueue = std::make_unique<MockCommandQueue>(context.get(), device.get(), nullptr);
         event = std::make_unique<Event>(commandQueue.get(), 0, 0, 0);
         event->setStatus(CL_COMPLETE);
-        commandQueue->getPerfCounters()->getApiReport(0, nullptr, &param_value_size, true);
         event->setProfilingEnabled(true);
+        commandQueue->getPerfCounters()->getApiReport(event->getHwPerfCounterNode(), 0, nullptr, &param_value_size, true);
 
         eventCl = static_cast<cl_event>(event.get());
     }
