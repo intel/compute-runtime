@@ -495,6 +495,31 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, whenAllocationCreatedFromSharedHandleIsDestroyedThenNullAllocationHandleAndZeroAllocationCountArePassedTodestroyAllocation) {
+    gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
+    std::unique_ptr<Gmm> gmm(new Gmm(rootDeviceEnvironment->getGmmClientContext(), nullptr, 0, false));
+
+    D3DDDI_OPENALLOCATIONINFO allocationInfo;
+    allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
+    allocationInfo.hAllocation = ALLOCATION_HANDLE;
+    allocationInfo.PrivateDriverDataSize = sizeof(GMM_RESOURCE_INFO);
+
+    gdi->getOpenResourceArgOut().pOpenAllocationInfo = &allocationInfo;
+
+    AllocationProperties properties(0, false, 0, GraphicsAllocation::AllocationType::SHARED_BUFFER, false, false, 0);
+
+    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(1, properties, false);
+    EXPECT_NE(nullptr, allocation);
+
+    memoryManager->setDeferredDeleter(nullptr);
+    memoryManager->freeGraphicsMemory(allocation);
+    EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryImplCalled);
+
+    auto destroyArg = gdi->getDestroyArg();
+    EXPECT_EQ(nullptr, destroyArg.phAllocationList);
+    EXPECT_EQ(0, destroyArg.AllocationCount);
+}
+
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCalledThenNonNullGraphicsAllocationIsReturned) {
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 

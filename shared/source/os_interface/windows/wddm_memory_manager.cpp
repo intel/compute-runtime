@@ -411,7 +411,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         cleanGraphicsMemoryCreatedFromHostPtr(gfxAllocation);
     } else {
         if (input->peekSharedHandle()) {
-            auto status = tryDeferDeletions(&input->getHandles()[0], input->getNumGmms(), input->resourceHandle, gfxAllocation->getRootDeviceIndex());
+            auto status = tryDeferDeletions(nullptr, 0, input->resourceHandle, gfxAllocation->getRootDeviceIndex());
             DEBUG_BREAK_IF(!status);
         } else {
             for (auto handle : input->getHandles()) {
