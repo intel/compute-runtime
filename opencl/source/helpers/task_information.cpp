@@ -203,9 +203,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         BlitProperties::setupDependenciesForAuxTranslation(kernelOperation->blitPropertiesContainer, *timestampPacketDependencies,
                                                            *currentTimestampPacketNodes, csrDeps,
                                                            commandQueue.getGpgpuCommandStreamReceiver(), bcsCsr);
-
-        auto bcsTaskCount = bcsCsr.blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled());
-        commandQueue.updateBcsTaskCount(bcsTaskCount);
     }
 
     DispatchFlags dispatchFlags(
@@ -260,6 +257,11 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                       taskLevel,
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
+
+    if (kernelOperation->blitPropertiesContainer.size() > 0) {
+        auto bcsTaskCount = commandQueue.getBcsCommandStreamReceiver()->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled());
+        commandQueue.updateBcsTaskCount(bcsTaskCount);
+    }
 
     if (gtpinIsGTPinInitialized()) {
         gtpinNotifyFlushTask(completionStamp.taskCount);
@@ -316,7 +318,6 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         if (commandStreamReceiver.isStallingPipeControlOnNextFlushRequired()) {
             timestampPacketDependencies->barrierNodes.add(commandStreamReceiver.getTimestampPacketAllocator()->getTag());
         }
-        dispatchBlitOperation();
     }
 
     DispatchFlags dispatchFlags(
@@ -358,6 +359,10 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
                                                       taskLevel,
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
+
+    if (kernelOperation->blitEnqueue) {
+        dispatchBlitOperation();
+    }
 
     return completionStamp;
 }

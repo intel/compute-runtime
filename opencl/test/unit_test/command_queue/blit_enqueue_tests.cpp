@@ -8,6 +8,7 @@
 #include "shared/source/helpers/vec.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/helpers/variable_backup.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
@@ -20,7 +21,9 @@
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 #include "test.h"
 
-using namespace NEO;
+namespace NEO {
+
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
 template <int timestampPacketEnabled>
 struct BlitEnqueueTests : public ::testing::Test {
@@ -938,3 +941,77 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenDebugFlagSetWhenCre
 
     EXPECT_NE(nullptr, ultCsr->userPauseConfirmation.get());
 }
+
+struct BlitEnqueueFlushTests : public BlitEnqueueTests<1> {
+    template <typename FamilyType>
+    class MyUltCsr : public UltCommandStreamReceiver<FamilyType> {
+      public:
+        using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
+
+        bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override {
+            latestFlushedCounter = ++(*flushCounter);
+            return UltCommandStreamReceiver<FamilyType>::flush(batchBuffer, allocationsForResidency);
+        }
+
+        static CommandStreamReceiver *create(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) {
+            return new MyUltCsr<FamilyType>(executionEnvironment, rootDeviceIndex);
+        }
+
+        uint32_t *flushCounter = nullptr;
+        uint32_t latestFlushedCounter = 0;
+    };
+
+    template <typename T>
+    void SetUpT() {
+        auto csrCreateFcn = &commandStreamReceiverFactory[IGFX_MAX_CORE + defaultHwInfo->platform.eRenderCoreFamily];
+        variableBackup = std::make_unique<VariableBackup<CommandStreamReceiverCreateFunc>>(csrCreateFcn);
+        *csrCreateFcn = MyUltCsr<T>::create;
+
+        BlitEnqueueTests<1>::SetUpT<T>();
+    }
+
+    std::unique_ptr<VariableBackup<CommandStreamReceiverCreateFunc>> variableBackup;
+};
+
+HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenNonBlockedQueueWhenBlitEnqueuedThenFlushGpgpuCsrFirst) {
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    uint32_t flushCounter = 0;
+
+    auto myUltGpgpuCsr = static_cast<MyUltCsr<FamilyType> *>(gpgpuCsr);
+    myUltGpgpuCsr->flushCounter = &flushCounter;
+    auto myUltBcsCsr = static_cast<MyUltCsr<FamilyType> *>(bcsCsr);
+    myUltBcsCsr->flushCounter = &flushCounter;
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_EQ(1u, myUltGpgpuCsr->latestFlushedCounter);
+    EXPECT_EQ(2u, myUltBcsCsr->latestFlushedCounter);
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenBlockedQueueWhenBlitEnqueuedThenFlushGpgpuCsrFirst) {
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    uint32_t flushCounter = 0;
+
+    auto myUltGpgpuCsr = static_cast<MyUltCsr<FamilyType> *>(gpgpuCsr);
+    myUltGpgpuCsr->flushCounter = &flushCounter;
+    auto myUltBcsCsr = static_cast<MyUltCsr<FamilyType> *>(bcsCsr);
+    myUltBcsCsr->flushCounter = &flushCounter;
+
+    UserEvent userEvent;
+    cl_event waitlist[] = {&userEvent};
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 1, waitlist, nullptr);
+    userEvent.setStatus(CL_COMPLETE);
+
+    EXPECT_EQ(1u, myUltGpgpuCsr->latestFlushedCounter);
+    EXPECT_EQ(2u, myUltBcsCsr->latestFlushedCounter);
+
+    EXPECT_FALSE(commandQueue->isQueueBlocked());
+}
+} // namespace NEO

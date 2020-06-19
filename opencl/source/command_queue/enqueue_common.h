@@ -964,11 +964,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         eventBuilder.getEvent()->getTimestampPacketNodes()->makeResident(getGpgpuCommandStreamReceiver());
     }
 
-    if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
-        UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);
-        this->bcsTaskCount = getBcsCommandStreamReceiver()->blitBuffer(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled());
-    }
-
     DispatchFlags dispatchFlags(
         {},                                                                  //csrDependencies
         &timestampPacketDependencies.barrierNodes,                           //barrierTimestampPacketNodes
@@ -1006,6 +1001,11 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         taskLevel,
         dispatchFlags,
         getDevice());
+
+    if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
+        UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);
+        this->bcsTaskCount = getBcsCommandStreamReceiver()->blitBuffer(*enqueueProperties.blitPropertiesContainer, false, this->isProfilingEnabled());
+    }
 
     return completionStamp;
 }
