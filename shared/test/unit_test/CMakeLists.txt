@@ -91,7 +91,7 @@ if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
   )
 
   if (UNIX)
-    target_link_libraries(${TARGET_NAME} pthread rt)
+    target_link_libraries(${TARGET_NAME} pthread rt execinfo)
   else()
     target_link_libraries(${TARGET_NAME} dbghelp)
   endif()
