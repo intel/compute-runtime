@@ -94,7 +94,7 @@ if(WIN32)
 endif()
 
 if(UNIX)
-  target_link_libraries(ocloc_tests dl pthread)
+  target_link_libraries(ocloc_tests dl pthread execinfo)
 endif()
 
 get_property(CLOC_LIB_FOLDER TARGET ocloc_lib PROPERTY FOLDER)
