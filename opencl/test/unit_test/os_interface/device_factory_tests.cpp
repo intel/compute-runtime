@@ -144,6 +144,26 @@ TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsForProdu
     EXPECT_EQ(maxNBitValue(12), executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.gpuAddressSpace);
 }
 
+TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsIsCalledThenOverrideRevision) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.OverrideRevision.set(3);
+
+    bool success = DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(3u, executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.usRevId);
+}
+
+TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenPrepareDeviceEnvironmentsForProductFamilyOverrideIsCalledThenOverrideRevision) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.OverrideRevision.set(3);
+
+    bool success = DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(*executionEnvironment);
+
+    EXPECT_TRUE(success);
+    EXPECT_EQ(3u, executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.usRevId);
+}
+
 TEST_F(DeviceFactoryTest, whenPrepareDeviceEnvironmentsIsCalledThenAllRootDeviceEnvironmentMembersAreInitialized) {
     DebugManagerStateRestore stateRestore;
     auto requiredDeviceCount = 2u;

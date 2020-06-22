@@ -56,6 +56,11 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
         }
 
+        if (DebugManager.flags.OverrideRevision.get() != -1) {
+            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->platform.usRevId =
+                static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
+        }
+
         auto csrType = DebugManager.flags.SetCommandStreamReceiver.get();
         if (csrType > 0) {
             auto &hwHelper = HwHelper::get(hardwareInfo->platform.eRenderCoreFamily);
@@ -102,6 +107,11 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
         if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
             executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->capabilityTable.gpuAddressSpace =
                 maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
+        }
+
+        if (DebugManager.flags.OverrideRevision.get() != -1) {
+            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->platform.usRevId =
+                static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
         }
 
         rootDeviceIndex++;
