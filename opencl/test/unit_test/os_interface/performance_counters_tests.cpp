@@ -33,12 +33,12 @@ struct PerformanceCountersDeviceTest : public PerformanceCountersDeviceFixture,
     }
 };
 
-TEST_F(PerformanceCountersDeviceTest, createDeviceWithPerformanceCounters) {
+TEST_F(PerformanceCountersDeviceTest, GivenEnabledInstrumentationWhenGettingPerformanceCountersThenNonNullPtrIsReturned) {
     DeviceInstrumentationFixture::SetUp(true);
     EXPECT_NE(nullptr, device->getPerformanceCounters());
 }
 
-TEST_F(PerformanceCountersDeviceTest, createDeviceWithoutPerformanceCounters) {
+TEST_F(PerformanceCountersDeviceTest, GivenDisabledInstrumentationWhenGettingPerformanceCountersThenNullPtrIsReturned) {
     DeviceInstrumentationFixture::SetUp(false);
     EXPECT_EQ(nullptr, device->getPerformanceCounters());
 }
@@ -55,7 +55,7 @@ struct PerformanceCountersTest : public PerformanceCountersFixture,
     }
 };
 
-TEST_F(PerformanceCountersTest, createPerformanceCounters) {
+TEST_F(PerformanceCountersTest, WhenCreatingPerformanceCountersThenObjectIsNotNull) {
     auto performanceCounters = PerformanceCounters::create(&device->getDevice());
     EXPECT_NE(nullptr, performanceCounters);
     EXPECT_NE(nullptr, performanceCounters.get());
@@ -536,7 +536,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterReturnsValidPointe
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
 
-TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterAllocationReturnsValidPointer) {
+TEST_F(PerformanceCountersMetricsLibraryTest, WhenGettingHwPerfCounterAllocationThenValidPointerIsReturned) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
     EXPECT_TRUE(performanceCountersBase->enable(false));
@@ -559,7 +559,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, getHwPerfCounterAllocationReturnsV
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
 
-TEST_F(PerformanceCountersMetricsLibraryTest, hwPerfCounterMemoryIsPlacedInGraphicsAllocation) {
+TEST_F(PerformanceCountersMetricsLibraryTest, WhenCreatingEventThenHwPerfCounterMemoryIsPlacedInGraphicsAllocation) {
     createPerformanceCounters(true, false);
     EXPECT_NE(nullptr, performanceCountersBase);
     EXPECT_TRUE(performanceCountersBase->enable(false));
@@ -585,7 +585,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, hwPerfCounterMemoryIsPlacedInGraph
     EXPECT_EQ(0u, performanceCountersBase->getReferenceNumber());
 }
 
-TEST_F(PerformanceCountersMetricsLibraryTest, hwPerfCounterNodeWhenPerformanceCountersObjectIsNotPresentThenNodeisNull) {
+TEST_F(PerformanceCountersMetricsLibraryTest, GivenPerformanceCountersObjectIsNotPresentWhenCreatingEventThenNodeisNull) {
     std::unique_ptr<Event> event(new Event(queue.get(), CL_COMMAND_COPY_BUFFER, 0, 0));
     ASSERT_NE(nullptr, event);
 
@@ -593,7 +593,7 @@ TEST_F(PerformanceCountersMetricsLibraryTest, hwPerfCounterNodeWhenPerformanceCo
     ASSERT_EQ(nullptr, node);
 }
 
-TEST_F(PerformanceCountersTest, givenRenderCoreFamilyThenMetricsLibraryGenIdentifierAreValid) {
+TEST_F(PerformanceCountersTest, givenRenderCoreFamilyWhenGettingGenIdThenMetricsLibraryGenIdentifierAreValid) {
     const auto &hwInfo = device->getHardwareInfo();
     const auto gen = hwInfo.platform.eRenderCoreFamily;
     EXPECT_NE(ClientGen::Unknown, static_cast<ClientGen>(HwHelper::get(gen).getMetricsLibraryGenId()));
