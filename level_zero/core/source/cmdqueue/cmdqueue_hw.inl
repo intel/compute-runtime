@@ -230,7 +230,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             residencyContainer.push_back(sipIsa);
         }
 
-        if (neoDevice->isDebuggerActive()) {
+        if (neoDevice->getDebugger() &&
+            device->getDebugSurface() != nullptr) {
             residencyContainer.push_back(device->getDebugSurface());
         }
     }

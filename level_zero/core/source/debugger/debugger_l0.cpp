@@ -9,6 +9,6 @@
 
 namespace L0 {
 bool DebuggerL0::isDebuggerActive() {
-    return false;
+    return true;
 }
 } // namespace L0

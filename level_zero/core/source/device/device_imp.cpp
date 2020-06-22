@@ -639,7 +639,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
                 device->neoDevice->getHardwareInfo().platform.eProductFamily, device, &cmdQueueDesc, true, false);
     }
 
-    if (neoDevice->getDeviceInfo().debuggerActive) {
+    if (device->getSourceLevelDebugger()) {
         auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
         device->getSourceLevelDebugger()
             ->notifyNewDevice(osInterface ? osInterface->getDeviceHandle() : 0);
@@ -659,7 +659,7 @@ DeviceImp::~DeviceImp() {
     metricContext.reset();
     builtins.reset();
 
-    if (neoDevice->getDeviceInfo().debuggerActive) {
+    if (getSourceLevelDebugger()) {
         getSourceLevelDebugger()->notifyDeviceDestruction();
     }
 

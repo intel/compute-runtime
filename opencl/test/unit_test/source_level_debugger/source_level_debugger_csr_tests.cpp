@@ -9,6 +9,7 @@
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/helpers/dispatch_flags_helper.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/mock_os_library.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/helpers/execution_environment_helper.h"
@@ -17,6 +18,7 @@
 #include "opencl/test/unit_test/mocks/mock_csr.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 #include "test.h"
 
 #include <memory>
@@ -34,6 +36,8 @@ class CommandStreamReceiverWithActiveDebuggerTest : public ::testing::Test {
 
         auto mockMemoryManager = new MockMemoryManager(*executionEnvironment);
         executionEnvironment->memoryManager.reset(mockMemoryManager);
+
+        executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockActiveSourceLevelDebugger(new MockOsLibrary));
 
         device = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0));
         device->setSourceLevelDebuggerActive(true);
