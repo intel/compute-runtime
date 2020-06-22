@@ -14,7 +14,7 @@
 
 namespace NEO {
 
-static const char *spirvVersion = "SPIR-V_1.2 ";
+static const char *spirvWithVersion = "SPIR-V_1.2 ";
 
 void Device::initializeCaps() {
     auto &hwInfo = getHardwareInfo();
@@ -32,7 +32,7 @@ void Device::initializeCaps() {
         ocl21FeaturesEnabled = DebugManager.flags.ForceOCL21FeaturesSupport.get();
     }
     if (ocl21FeaturesEnabled) {
-        deviceInfo.ilVersion = spirvVersion;
+        deviceInfo.ilVersion = spirvWithVersion;
         addressing32bitAllowed = false;
     }
 

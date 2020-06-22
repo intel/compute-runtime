@@ -549,7 +549,7 @@ TEST(GetDeviceInfo, WhenQueryingIlsWithVersionThenProperValueIsReturned) {
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(sizeof(cl_name_version), paramRetSize);
         EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), ilsWithVersion->version);
-        EXPECT_STREQ("SPIR-V_1.2 ", ilsWithVersion->name);
+        EXPECT_STREQ("SPIR-V", ilsWithVersion->name);
     } else {
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(0u, paramRetSize);

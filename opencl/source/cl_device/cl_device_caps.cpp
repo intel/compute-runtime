@@ -26,6 +26,7 @@ extern const char *familyName[];
 static std::string vendor = "Intel(R) Corporation";
 static std::string profile = "FULL_PROFILE";
 static std::string spirVersions = "1.2 ";
+static std::string spirvName = "SPIR-V";
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
 static std::string driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
@@ -133,7 +134,7 @@ void ClDevice::initializeCaps() {
 
         deviceExtensions += "cl_khr_il_program ";
         deviceInfo.ilsWithVersion[0].version = CL_MAKE_VERSION(1, 2, 0);
-        strcpy_s(deviceInfo.ilsWithVersion[0].name, CL_NAME_VERSION_MAX_NAME_SIZE, sharedDeviceInfo.ilVersion);
+        strcpy_s(deviceInfo.ilsWithVersion[0].name, CL_NAME_VERSION_MAX_NAME_SIZE, spirvName.c_str());
 
         if (supportsVme) {
             deviceExtensions += "cl_intel_spirv_device_side_avc_motion_estimation ";
