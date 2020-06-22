@@ -255,7 +255,11 @@ else()
     message(FATAL_ERROR "Metrics Discovery headers not available!")
 endif()
 
-get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}/uapi" ABSOLUTE)
+if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
+    get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party/uapi/dg1" ABSOLUTE)
+else()
+    get_filename_component(I915_INCLUDES_DIR "${NEO_SOURCE_DIR}/third_party${BRANCH_DIR_SUFFIX}/uapi" ABSOLUTE)
+endif()
 message(STATUS "i915 includes dir: ${I915_INCLUDES_DIR}")
 
 if(NOT DEFINED KHRONOS_HEADERS_DIR)
