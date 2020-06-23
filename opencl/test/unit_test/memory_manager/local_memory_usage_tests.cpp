@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
@@ -19,7 +20,12 @@ struct MockLocalMemoryUsageBankSelector : public LocalMemoryUsageBankSelector {
     using LocalMemoryUsageBankSelector::LocalMemoryUsageBankSelector;
     using LocalMemoryUsageBankSelector::reserveOnBank;
     using LocalMemoryUsageBankSelector::updateUsageInfo;
+    DeviceBitfield bitfield;
     std::atomic<uint64_t> *getMemorySizes() { return memorySizes.get(); }
+
+    MockLocalMemoryUsageBankSelector(uint32_t banksCount) : LocalMemoryUsageBankSelector(banksCount) {
+        bitfield = maxNBitValue(banksCount);
+    }
 };
 
 TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenItsCreatedAllValuesAreZero) {
@@ -34,7 +40,7 @@ TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryIsReserved
     MockLocalMemoryUsageBankSelector selector(4u);
 
     uint64_t allocationSize = 1024u;
-    auto bankIndex = selector.getLeastOccupiedBank();
+    auto bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     selector.reserveOnBank(bankIndex, allocationSize);
 
     EXPECT_EQ(allocationSize, selector.getOccupiedMemorySizeForBank(bankIndex));
@@ -44,11 +50,11 @@ TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryIsReleased
     MockLocalMemoryUsageBankSelector selector(1u);
 
     uint64_t allocationSize = 1024u;
-    auto bankIndex = selector.getLeastOccupiedBank();
+    auto bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     EXPECT_EQ(0u, bankIndex);
     selector.reserveOnBank(bankIndex, allocationSize);
 
-    bankIndex = selector.getLeastOccupiedBank();
+    bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     EXPECT_EQ(0u, bankIndex);
     selector.reserveOnBank(bankIndex, allocationSize);
 
@@ -60,12 +66,12 @@ TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryIsReleased
 TEST(localMemoryUsageTest, givenOverrideLeastOccupiedBankDebugFlagWhenGetLeastOccupiedBankIsCalledThenForcedBankIndexIsReturned) {
     DebugManagerStateRestore dbgRestore;
     MockLocalMemoryUsageBankSelector selector(1u);
-    auto bankIndex = selector.getLeastOccupiedBank();
+    auto bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     EXPECT_EQ(0u, bankIndex);
 
     uint32_t forcedBankIndex = 64u;
     DebugManager.flags.OverrideLeastOccupiedBank.set(static_cast<int32_t>(forcedBankIndex));
-    bankIndex = selector.getLeastOccupiedBank();
+    bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     EXPECT_EQ(forcedBankIndex, bankIndex);
 }
 
@@ -74,15 +80,15 @@ TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryAllocatedS
 
     uint64_t allocationSize = 1024u;
 
-    auto bankIndex = selector.getLeastOccupiedBank();
+    auto bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     selector.reserveOnBank(bankIndex, allocationSize);
-    bankIndex = selector.getLeastOccupiedBank();
+    bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     selector.reserveOnBank(bankIndex, allocationSize);
-    bankIndex = selector.getLeastOccupiedBank();
+    bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     selector.reserveOnBank(bankIndex, allocationSize);
-    bankIndex = selector.getLeastOccupiedBank();
+    bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     selector.reserveOnBank(bankIndex, allocationSize);
-    bankIndex = selector.getLeastOccupiedBank();
+    bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     selector.reserveOnBank(bankIndex, allocationSize);
 
     for (uint32_t i = 0; i < selector.banksCount; i++) {
@@ -146,6 +152,14 @@ TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenThereAreMoreThan
 
     selector.reserveOnBanks(banks, allocationSize);
     EXPECT_EQ(0u, selector.getOccupiedMemorySizeForBank(32));
+}
+
+TEST(localMemoryUsageTest, givenBitfieldWhenGettingLeastOccupiedBankThenReturnTheProperOne) {
+    MockLocalMemoryUsageBankSelector selector(2u);
+    DeviceBitfield bitfield(0b10);
+    auto bank = selector.getLeastOccupiedBank(bitfield);
+
+    EXPECT_EQ(bank, 1u);
 }
 
 } // namespace NEO

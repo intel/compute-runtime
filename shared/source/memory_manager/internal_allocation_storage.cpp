@@ -117,4 +117,8 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
     return nullptr;
 }
 
+DeviceBitfield InternalAllocationStorage::getDeviceBitfield() const {
+    return commandStreamReceiver.getOsContext().getDeviceBitfield();
+}
+
 } // namespace NEO

@@ -56,7 +56,7 @@ bool CommandContainer::initialize(Device *device) {
                                     GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
                                     (device->getNumAvailableDevices() > 1u) /* multiOsContextCapable */,
                                     false,
-                                    {}};
+                                    device->getDeviceBitfield()};
 
     auto cmdBufferAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     UNRECOVERABLE_IF(!cmdBufferAllocation);
@@ -188,7 +188,7 @@ void CommandContainer::allocateNextCommandBuffer() {
                                     GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
                                     (device->getNumAvailableDevices() > 1u) /* multiOsContextCapable */,
                                     false,
-                                    {}};
+                                    device->getDeviceBitfield()};
 
     auto cmdBufferAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
     UNRECOVERABLE_IF(!cmdBufferAllocation);

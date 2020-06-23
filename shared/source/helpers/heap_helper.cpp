@@ -24,7 +24,7 @@ GraphicsAllocation *HeapHelper::getHeapAllocation(uint32_t heapType, size_t heap
     if (allocation) {
         return allocation.release();
     }
-    NEO::AllocationProperties properties{rootDeviceIndex, true, heapSize, allocationType, isMultiOsContextCapable, false, {}};
+    NEO::AllocationProperties properties{rootDeviceIndex, true, heapSize, allocationType, isMultiOsContextCapable, false, storageForReuse->getDeviceBitfield()};
     properties.alignment = alignment;
 
     return this->memManager->allocateGraphicsMemoryWithProperties(properties);

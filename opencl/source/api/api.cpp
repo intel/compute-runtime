@@ -3521,6 +3521,7 @@ void *clHostMemAllocINTEL(
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
+    unifiedMemoryProperties.subdeviceBitfield = neoContext->getDeviceBitfieldForAllocation();
     if (!MemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
                                                        allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
                                                        *neoContext)) {
@@ -3559,6 +3560,7 @@ void *clDeviceMemAllocINTEL(
     cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
+    unifiedMemoryProperties.subdeviceBitfield = neoDevice->getDeviceBitfield();
     if (!MemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
                                                        allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
                                                        *neoContext)) {
@@ -3573,7 +3575,6 @@ void *clDeviceMemAllocINTEL(
     }
 
     unifiedMemoryProperties.device = device;
-    unifiedMemoryProperties.subdeviceBitfield = neoDevice->getDefaultEngine().osContext->getDeviceBitfield();
 
     return neoContext->getSVMAllocsManager()->createUnifiedMemoryAllocation(neoDevice->getRootDeviceIndex(), size, unifiedMemoryProperties);
 }
@@ -3626,6 +3627,7 @@ void *clSharedMemAllocINTEL(
     if (!ptr) {
         err.set(CL_OUT_OF_RESOURCES);
     }
+
     return ptr;
 }
 
