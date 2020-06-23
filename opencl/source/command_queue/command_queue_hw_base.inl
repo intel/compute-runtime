@@ -125,6 +125,9 @@ bool CommandQueueHw<Family>::forceStateless(size_t size) {
 
 template <typename Family>
 bool CommandQueueHw<Family>::isCacheFlushForBcsRequired() const {
+    if (DebugManager.flags.ForceCacheFlushForBcs.get() != -1) {
+        return !!DebugManager.flags.ForceCacheFlushForBcs.get();
+    }
     return true;
 }
 

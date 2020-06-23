@@ -1014,4 +1014,14 @@ HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenBlockedQueueWhenBlitEnqueuedThenF
 
     EXPECT_FALSE(commandQueue->isQueueBlocked());
 }
+
+HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenDebugFlagSetWhenCheckingBcsCacheFlushRequirementThenReturnCorrectValue) {
+    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+
+    DebugManager.flags.ForceCacheFlushForBcs.set(0);
+    EXPECT_FALSE(mockCommandQueue->isCacheFlushForBcsRequired());
+
+    DebugManager.flags.ForceCacheFlushForBcs.set(1);
+    EXPECT_TRUE(mockCommandQueue->isCacheFlushForBcsRequired());
+}
 } // namespace NEO
