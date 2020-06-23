@@ -47,6 +47,27 @@ TEST_F(DeviceTest, WhenDeviceIsCreatedThenEnabledClVersionMatchesHardwareInfo) {
     EXPECT_EQ(version, version2);
 }
 
+TEST_F(DeviceTest, WhenDeviceIsCheckedForOcl21ConformanceThenCorrectValueIsReturned) {
+    auto hwInfo = pClDevice->getHardwareInfo();
+    for (auto supportsOcl21Features : ::testing::Bool()) {
+        hwInfo.capabilityTable.supportsOcl21Features = supportsOcl21Features;
+        for (auto supportsIfp : ::testing::Bool()) {
+            hwInfo.capabilityTable.supportsIndependentForwardProgress = supportsIfp;
+            for (auto supportsDeviceEnqueue : ::testing::Bool()) {
+                hwInfo.capabilityTable.supportsDeviceEnqueue = supportsDeviceEnqueue;
+                for (auto supportsPipes : ::testing::Bool()) {
+                    hwInfo.capabilityTable.supportsPipes = supportsPipes;
+
+                    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+                    auto expectedOcl21Conformance = (supportsOcl21Features && supportsIfp && supportsDeviceEnqueue && supportsPipes);
+                    EXPECT_EQ(expectedOcl21Conformance, pClDevice->isOcl21Conformant());
+                }
+            }
+        }
+    }
+}
+
 TEST_F(DeviceTest, givenDeviceWhenEngineIsCreatedThenSetInitialValueForTag) {
     for (auto &engine : pDevice->engines) {
         auto tagAddress = engine.commandStreamReceiver->getTagAddress();

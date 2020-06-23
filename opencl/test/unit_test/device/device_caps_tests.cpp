@@ -55,7 +55,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
         EXPECT_EQ(CL_MAKE_VERSION(1u, 1u, 0u), (++openclCWithVersionIterator)->version);
         EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), (++openclCWithVersionIterator)->version);
 
-        if (clDevice.areOcl21FeaturesEnabled()) {
+        if (clDevice.isOcl21Conformant()) {
             EXPECT_EQ(CL_MAKE_VERSION(2u, 0u, 0u), (++openclCWithVersionIterator)->version);
         }
         if (clDevice.getEnabledClVersion() == 30) {
@@ -250,6 +250,10 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(2048u, sharedCaps.imageMaxArraySize);
     if (device->getHardwareInfo().capabilityTable.supportsOcl21Features == false && is64bit) {
         EXPECT_TRUE(sharedCaps.force32BitAddressess);
+    }
+
+    if (caps.numericClVersion == 21) {
+        EXPECT_TRUE(device->isOcl21Conformant());
     }
 }
 

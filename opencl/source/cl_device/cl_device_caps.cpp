@@ -420,7 +420,7 @@ void ClDevice::initializeOpenclCAllVersions() {
     openClCVersion.version = CL_MAKE_VERSION(1, 2, 0);
     deviceInfo.openclCAllVersions.push_back(openClCVersion);
 
-    if (ocl21FeaturesEnabled) {
+    if (isOcl21Conformant()) {
         openClCVersion.version = CL_MAKE_VERSION(2, 0, 0);
         deviceInfo.openclCAllVersions.push_back(openClCVersion);
     }

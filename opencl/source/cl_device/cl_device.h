@@ -57,6 +57,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
 
     unsigned int getEnabledClVersion() const { return enabledClVersion; };
     bool areOcl21FeaturesEnabled() const { return ocl21FeaturesEnabled; };
+    bool isOcl21Conformant() const;
 
     void retainApi();
     unique_ptr_if_unused<ClDevice> releaseApi();
