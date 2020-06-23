@@ -656,6 +656,23 @@ uint32_t Buffer::getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) cons
     }
 }
 
+uint32_t Buffer::getSurfaceSize(bool alignSizeForAuxTranslation) const {
+    auto bufferAddress = getBufferAddress();
+    auto bufferAddressAligned = alignDown(bufferAddress, 4);
+    auto bufferOffset = ptrDiff(bufferAddress, bufferAddressAligned);
+
+    uint32_t surfaceSize = static_cast<uint32_t>(alignUp(getSize() + bufferOffset, alignSizeForAuxTranslation ? 512 : 4));
+    return surfaceSize;
+}
+
+uint64_t Buffer::getBufferAddress() const {
+    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
+    // The graphics allocation for Host Ptr surface will be created in makeResident call and GPU address is expected to be the same as CPU address
+    auto bufferAddress = (graphicsAllocation != nullptr) ? graphicsAllocation->getGpuAddress() : castToUint64(getHostPtr());
+    bufferAddress += this->offset;
+    return bufferAddress;
+}
+
 bool Buffer::isCompressed(uint32_t rootDeviceIndex) const {
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     if (graphicsAllocation->getDefaultGmm()) {

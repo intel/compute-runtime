@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
@@ -32,64 +33,10 @@ union SURFACE_STATE_BUFFER_LENGTH {
 
 template <typename GfxFamily>
 void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument) {
-    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
-    using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
-    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
-
-    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
-
-    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
-    // The graphics allocation for Host Ptr surface will be created in makeResident call and GPU address is expected to be the same as CPU address
-    auto bufferAddress = (graphicsAllocation != nullptr) ? graphicsAllocation->getGpuAddress() : castToUint64(getHostPtr());
-    bufferAddress += this->offset;
-
-    auto bufferAddressAligned = alignDown(bufferAddress, 4);
-    auto bufferOffset = ptrDiff(bufferAddress, bufferAddressAligned);
-
-    auto surfaceSize = alignUp(getSize() + bufferOffset, alignSizeForAuxTranslation ? 512 : 4);
-
-    SURFACE_STATE_BUFFER_LENGTH Length = {0};
-    Length.Length = static_cast<uint32_t>(surfaceSize - 1);
-
-    surfaceState->setWidth(Length.SurfaceState.Width + 1);
-    surfaceState->setHeight(Length.SurfaceState.Height + 1);
-    surfaceState->setDepth(Length.SurfaceState.Depth + 1);
-
-    if (bufferAddress != 0) {
-        surfaceState->setSurfaceType(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER);
-    } else {
-        surfaceState->setSurfaceType(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
-    }
-    surfaceState->setSurfaceFormat(SURFACE_FORMAT::SURFACE_FORMAT_RAW);
-    surfaceState->setSurfaceVerticalAlignment(RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
-    surfaceState->setSurfaceHorizontalAlignment(RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4);
-
-    surfaceState->setTileMode(RENDER_SURFACE_STATE::TILE_MODE_LINEAR);
-    surfaceState->setVerticalLineStride(0);
-    surfaceState->setVerticalLineStrideOffset(0);
-
-    surfaceState->setMemoryObjectControlState(getMocsValue(disableL3, isReadOnlyArgument));
-    surfaceState->setSurfaceBaseAddress(bufferAddressAligned);
-
-    Gmm *gmm = graphicsAllocation ? graphicsAllocation->getDefaultGmm() : nullptr;
-
-    if (gmm && gmm->isRenderCompressed && !forceNonAuxMode &&
-        GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == graphicsAllocation->getAllocationType()) {
-        // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
-        surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
-        surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    } else {
-        surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
-        surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
-    }
+    EncodeSurfaceState<GfxFamily>::encodeBuffer(memory, getBufferAddress(), getSurfaceSize(alignSizeForAuxTranslation), getMocsValue(disableL3, isReadOnlyArgument), true);
+    EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(multiGraphicsAllocation.getDefaultGraphicsAllocation(), rootDeviceEnvironment->getGmmHelper(), memory, forceNonAuxMode, isReadOnlyArgument);
 
     appendBufferState(memory, context, graphicsAllocation, isReadOnlyArgument);
     appendSurfaceStateExt(memory);
-
-    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
-    if (DebugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
-        surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
-    }
 }
-
 } // namespace NEO

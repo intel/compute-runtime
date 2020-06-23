@@ -46,7 +46,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationPr
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
     GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull);
-    EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, reinterpret_cast<void *>(gpuAddr), allocSize, 1,
+    EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, gpuAddr, allocSize, 1,
                                                  RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
     EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
     EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
@@ -72,7 +72,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationNo
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
 
-    EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, reinterpret_cast<void *>(gpuAddr), allocSize, 1,
+    EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, gpuAddr, allocSize, 1,
                                                  RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, state->getSurfaceType());
@@ -96,7 +96,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherency
     size_t allocSize = size;
     length.Length = static_cast<uint32_t>(allocSize - 1);
 
-    EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, reinterpret_cast<void *>(gpuAddr), allocSize, 1,
+    EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, gpuAddr, allocSize, 1,
                                                  RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
 
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, state->getCoherencyType());

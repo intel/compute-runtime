@@ -44,9 +44,9 @@ struct KernelHw : public KernelImp {
         }
 
         auto surfaceStateAddress = ptrOffset(surfaceStateHeapData.get(), argInfo.bindful);
-        void *bufferAddressForSsh = reinterpret_cast<void *>(baseAddress);
+        uint64_t bufferAddressForSsh = baseAddress;
         auto alignment = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment();
-        size_t bufferSizeForSsh = ptrDiff(reinterpret_cast<void *>(alloc->getGpuAddress()), bufferAddressForSsh);
+        size_t bufferSizeForSsh = ptrDiff(alloc->getGpuAddress(), bufferAddressForSsh);
         bufferSizeForSsh += sizeTillEndOfSurface; // take address alignment offset into account
         bufferSizeForSsh = alignUp(bufferSizeForSsh, alignment);
 

@@ -18,6 +18,8 @@
 
 namespace NEO {
 
+class GmmHelper;
+
 template <typename GfxFamily>
 struct EncodeDispatchKernel {
     using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
@@ -165,8 +167,9 @@ struct EncodeSurfaceState {
     using SURFACE_FORMAT = typename R_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename R_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-    static void encodeBuffer(void *dst, void *address, size_t size, uint32_t mocs,
+    static void encodeBuffer(void *dst, uint64_t address, size_t size, uint32_t mocs,
                              bool cpuCoherent);
+    static void encodeExtraBufferParams(GraphicsAllocation *allocation, GmmHelper *gmmHelper, void *memory, bool forceNonAuxMode, bool isReadOnlyArgument);
 
     static constexpr uintptr_t getSurfaceBaseAddressAlignmentMask() {
         return ~(getSurfaceBaseAddressAlignment() - 1);

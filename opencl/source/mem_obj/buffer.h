@@ -152,6 +152,8 @@ class Buffer : public MemObj {
     bool isReadWriteOnCpuPreffered(void *ptr, size_t size);
 
     uint32_t getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) const;
+    uint32_t getSurfaceSize(bool alignSizeForAuxTranslation) const;
+    uint64_t getBufferAddress() const;
 
     bool isCompressed(uint32_t rootDeviceIndex) const;
 

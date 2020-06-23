@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -265,7 +266,7 @@ void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_
 }
 
 template <typename Family>
-void EncodeSurfaceState<Family>::encodeBuffer(void *dst, void *address, size_t size, uint32_t mocs,
+void EncodeSurfaceState<Family>::encodeBuffer(void *dst, uint64_t address, size_t size, uint32_t mocs,
                                               bool cpuCoherent) {
     auto ss = reinterpret_cast<R_SURFACE_STATE *>(dst);
     UNRECOVERABLE_IF(!isAligned<getSurfaceBaseAddressAlignment()>(size));
@@ -277,8 +278,8 @@ void EncodeSurfaceState<Family>::encodeBuffer(void *dst, void *address, size_t s
     ss->setHeight(Length.SurfaceState.Height + 1);
     ss->setDepth(Length.SurfaceState.Depth + 1);
 
-    ss->setSurfaceType((address != nullptr) ? R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER
-                                            : R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
+    ss->setSurfaceType((address != 0) ? R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER
+                                      : R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
     ss->setSurfaceFormat(SURFACE_FORMAT::SURFACE_FORMAT_RAW);
     ss->setSurfaceVerticalAlignment(R_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
     ss->setSurfaceHorizontalAlignment(R_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4);
@@ -287,13 +288,31 @@ void EncodeSurfaceState<Family>::encodeBuffer(void *dst, void *address, size_t s
     ss->setVerticalLineStride(0);
     ss->setVerticalLineStrideOffset(0);
     ss->setMemoryObjectControlState(mocs);
-    ss->setSurfaceBaseAddress(reinterpret_cast<uintptr_t>(address));
+    ss->setSurfaceBaseAddress(address);
 
     ss->setCoherencyType(cpuCoherent ? R_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT
                                      : R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
     ss->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
 }
+template <typename Family>
+void EncodeSurfaceState<Family>::encodeExtraBufferParams(GraphicsAllocation *allocation, GmmHelper *gmmHelper, void *memory, bool forceNonAuxMode, bool isReadOnlyArgument) {
+    using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
+    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
+    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
+    Gmm *gmm = allocation ? allocation->getDefaultGmm() : nullptr;
+
+    if (gmm && gmm->isRenderCompressed && !forceNonAuxMode &&
+        GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == allocation->getAllocationType()) {
+        // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
+        surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+        surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+    }
+
+    if (DebugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
+        surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+    }
+}
 template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset) {
 
