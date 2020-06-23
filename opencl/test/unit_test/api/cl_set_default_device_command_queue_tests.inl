@@ -90,7 +90,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clSetDefaultDeviceCommandQueueApiTest, GivenNullDevi
 
 TEST_F(clSetDefaultDeviceCommandQueueApiTest, GivenDeviceNotSupportingDeviceEnqueueWhenSettingDefaultDeviceQueueThenClInvalidOperationErrorIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DisableDeviceEnqueue.set(true);
+    DebugManager.flags.ForceDeviceEnqueueSupport.set(0);
 
     retVal = clSetDefaultDeviceCommandQueue(pContext, testedClDevice, nullptr);
     ASSERT_EQ(CL_INVALID_OPERATION, retVal);

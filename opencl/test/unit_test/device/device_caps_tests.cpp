@@ -1152,7 +1152,7 @@ TEST(DeviceGetCaps, givenDebugFlagToDisableDeviceEnqueuesWhenCreatingDeviceThenD
     }
 
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.DisableDeviceEnqueue.set(true);
+    DebugManager.flags.ForceDeviceEnqueueSupport.set(0);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     const auto &caps = device->getDeviceInfo();
@@ -1296,6 +1296,88 @@ TEST_F(DeviceGetCapsTest, givenOcl21DeviceWhenCheckingPipesSupportThenPipesAreSu
 
     if (device->getEnabledClVersion() == 21) {
         EXPECT_EQ(1u, device->getHardwareInfo().capabilityTable.supportsPipes);
+    }
+}
+
+TEST_F(DeviceGetCapsTest, givenDeviceEnqueueSupportForcedWhenCheckingDeviceEnqueueSupportThenDeviceEnqueueIsCorrectlyReported) {
+    DebugManagerStateRestore dbgRestorer;
+    int32_t forceDeviceEnqueueSupportValues[] = {-1, 0, 1};
+    auto hwInfo = *defaultHwInfo;
+
+    for (auto isDeviceEnqueueSupportedByHw : ::testing::Bool()) {
+        hwInfo.capabilityTable.supportsDeviceEnqueue = isDeviceEnqueueSupportedByHw;
+
+        for (auto forceDeviceEnqueueSupport : forceDeviceEnqueueSupportValues) {
+            DebugManager.flags.ForceDeviceEnqueueSupport.set(forceDeviceEnqueueSupport);
+            auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+            auto &caps = pClDevice->getDeviceInfo();
+
+            size_t deviceEnqueueFeaturesCount = 0;
+            for (auto &openclCFeature : caps.openclCFeatures) {
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_device_enqueue")) {
+                    deviceEnqueueFeaturesCount++;
+                }
+            }
+
+            bool expectedDeviceEnqueueSupport =
+                ((forceDeviceEnqueueSupport == -1) ? isDeviceEnqueueSupportedByHw : forceDeviceEnqueueSupport);
+            if (expectedDeviceEnqueueSupport) {
+                EXPECT_TRUE(pClDevice->isDeviceEnqueueSupported());
+                EXPECT_EQ(1024u, caps.maxOnDeviceEvents);
+                EXPECT_EQ(1u, caps.maxOnDeviceQueues);
+                EXPECT_EQ(64u * MB, caps.queueOnDeviceMaxSize);
+                EXPECT_EQ(128 * KB, caps.queueOnDevicePreferredSize);
+                EXPECT_EQ(static_cast<cl_command_queue_properties>(CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE),
+                          caps.queueOnDeviceProperties);
+                EXPECT_EQ(1u, deviceEnqueueFeaturesCount);
+            } else {
+                EXPECT_FALSE(pClDevice->isDeviceEnqueueSupported());
+                EXPECT_EQ(0u, caps.maxOnDeviceEvents);
+                EXPECT_EQ(0u, caps.maxOnDeviceQueues);
+                EXPECT_EQ(0u, caps.queueOnDeviceMaxSize);
+                EXPECT_EQ(0u, caps.queueOnDevicePreferredSize);
+                EXPECT_EQ(static_cast<cl_command_queue_properties>(0), caps.queueOnDeviceProperties);
+                EXPECT_EQ(0u, deviceEnqueueFeaturesCount);
+            }
+        }
+    }
+}
+
+TEST_F(DeviceGetCapsTest, givenPipeSupportForcedWhenCheckingPipeSupportThenPipeIsCorrectlyReported) {
+    DebugManagerStateRestore dbgRestorer;
+    int32_t forcePipeSupportValues[] = {-1, 0, 1};
+    auto hwInfo = *defaultHwInfo;
+
+    for (auto isPipeSupportedByHw : ::testing::Bool()) {
+        hwInfo.capabilityTable.supportsPipes = isPipeSupportedByHw;
+
+        for (auto forcePipeSupport : forcePipeSupportValues) {
+            DebugManager.flags.ForcePipeSupport.set(forcePipeSupport);
+            auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+            auto &caps = pClDevice->getDeviceInfo();
+
+            size_t pipeFeaturesCount = 0;
+            for (auto &openclCFeature : caps.openclCFeatures) {
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_pipes")) {
+                    pipeFeaturesCount++;
+                }
+            }
+
+            bool expectedPipeSupport = ((forcePipeSupport == -1) ? isPipeSupportedByHw : forcePipeSupport);
+            if (expectedPipeSupport) {
+                EXPECT_TRUE(pClDevice->arePipesSupported());
+                EXPECT_EQ(16u, caps.maxPipeArgs);
+                EXPECT_EQ(1024u, caps.pipeMaxPacketSize);
+                EXPECT_EQ(1u, caps.pipeMaxActiveReservations);
+                EXPECT_EQ(1u, pipeFeaturesCount);
+            } else {
+                EXPECT_FALSE(pClDevice->arePipesSupported());
+                EXPECT_EQ(0u, caps.maxPipeArgs);
+                EXPECT_EQ(0u, caps.pipeMaxPacketSize);
+                EXPECT_EQ(0u, caps.pipeMaxActiveReservations);
+                EXPECT_EQ(0u, pipeFeaturesCount);
+            }
+        }
     }
 }
 

@@ -260,7 +260,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.minDataTypeAlignSize = 128;
 
     deviceInfo.deviceEnqueueSupport = isDeviceEnqueueSupported();
-    if (isDeviceEnqueueSupported() || (enabledClVersion == 21)) {
+    if (isDeviceEnqueueSupported()) {
         deviceInfo.maxOnDeviceQueues = 1;
         deviceInfo.maxOnDeviceEvents = 1024;
         deviceInfo.queueOnDeviceMaxSize = 64 * MB;

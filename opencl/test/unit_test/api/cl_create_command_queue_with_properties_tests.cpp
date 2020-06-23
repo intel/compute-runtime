@@ -343,7 +343,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenMedPriorityWhenCreatingOoqCom
 
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDeviceEnqueueDisabledWhenCreatingDeviceQueueThenNullQueueAndInvalidQueuePropertiesErrorIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableDeviceEnqueue.set(true);
+    DebugManager.flags.ForceDeviceEnqueueSupport.set(0);
 
     auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context{pClDevice.get()};
@@ -357,7 +357,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDeviceEnqueueDisabledWhenCrea
 
 TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDeviceEnqueueDisabledWhenCreatingDefaultDeviceQueueThenNullQueueAndInvalidQueuePropertiesErrorIsReturned) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableDeviceEnqueue.set(true);
+    DebugManager.flags.ForceDeviceEnqueueSupport.set(0);
 
     auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context{pClDevice.get()};

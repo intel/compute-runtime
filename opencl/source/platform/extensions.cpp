@@ -7,6 +7,7 @@
 
 #include "opencl/source/platform/extensions.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 
@@ -112,12 +113,16 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, StackVec<cl_name_version
         }
     }
 
-    if (hwInfo.capabilityTable.supportsDeviceEnqueue) {
+    auto forceDeviceEnqueueSupport = DebugManager.flags.ForceDeviceEnqueueSupport.get();
+    if ((hwInfo.capabilityTable.supportsDeviceEnqueue && (forceDeviceEnqueueSupport == -1)) ||
+        (forceDeviceEnqueueSupport == 1)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_device_enqueue");
         openclCFeatures.push_back(openClCFeature);
     }
 
-    if (hwInfo.capabilityTable.supportsPipes) {
+    auto forcePipeSupport = DebugManager.flags.ForcePipeSupport.get();
+    if ((hwInfo.capabilityTable.supportsPipes && (forcePipeSupport == -1)) ||
+        (forcePipeSupport == 1)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_pipes");
         openclCFeatures.push_back(openClCFeature);
     }

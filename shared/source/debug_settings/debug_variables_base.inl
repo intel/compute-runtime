@@ -152,6 +152,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, RenderCompressedBuffersEnabled, -1, "-1: default
 DECLARE_DEBUG_VARIABLE(int32_t, EnableSharedSystemUsmSupport, -1, "-1: default, 0: shared system memory disabled, 1: shared system memory enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, EnablePassInlineData, -1, "-1: default, 0: Do not allow to pass inline data 1: Enable passing of inline data")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceFineGrainedSVMSupport, -1, "-1: default, 0: Do not report Fine Grained SVM capabilties 1: Report SVM Fine Grained capabilities if device supports SVM")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceDeviceEnqueueSupport, -1, "-1: default, 0: disabled, 1: enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, ForcePipeSupport, -1, "-1: default, 0: disabled, 1: enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, UseAsyncDrmExec, -1, "-1: default, 0: Disabled 1: Enabled. If enabled, pass EXEC_OBJECT_ASYNC to exec ioctl.")
 DECLARE_DEBUG_VARIABLE(bool, EnablePackedYuv, true, "Enables cl_packed_yuv extension")
 DECLARE_DEBUG_VARIABLE(bool, EnableDeferredDeleter, true, "Enables async deleter")
@@ -169,7 +171,6 @@ DECLARE_DEBUG_VARIABLE(bool, EnableFreeMemory, false, "Enable freeMemory in memo
 DECLARE_DEBUG_VARIABLE(bool, ForceSamplerLowFilteringPrecision, false, "Force Low Filtering Precision Sampler mode")
 DECLARE_DEBUG_VARIABLE(bool, UseBindlessBuffers, false, "Force compiler to use bindless buffer addressing instead of stateful one")
 DECLARE_DEBUG_VARIABLE(bool, UseBindlessImages, false, "Force compiler to use bindless image addressing instead of stateful one")
-DECLARE_DEBUG_VARIABLE(bool, DisableDeviceEnqueue, false, "Disable support for device enqueue")
 
 /*DRIVER TOGGLES*/
 DECLARE_DEBUG_VARIABLE(bool, ForcePerDssBackedBufferProgramming, false, "Always program per-DSS memory backed buffer in preamble")

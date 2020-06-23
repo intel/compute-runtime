@@ -181,13 +181,16 @@ DeviceBitfield ClDevice::getDeviceBitfield() const {
 }
 
 bool ClDevice::isDeviceEnqueueSupported() const {
-    if (DebugManager.flags.DisableDeviceEnqueue.get()) {
-        return false;
+    if (DebugManager.flags.ForceDeviceEnqueueSupport.get() != -1) {
+        return DebugManager.flags.ForceDeviceEnqueueSupport.get();
     }
     return device.getHardwareInfo().capabilityTable.supportsDeviceEnqueue;
 }
 
 bool ClDevice::arePipesSupported() const {
+    if (DebugManager.flags.ForcePipeSupport.get() != -1) {
+        return DebugManager.flags.ForcePipeSupport.get();
+    }
     return device.getHardwareInfo().capabilityTable.supportsPipes;
 }
 
