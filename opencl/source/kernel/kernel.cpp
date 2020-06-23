@@ -1292,7 +1292,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
         auto patchSize = kernelArgInfo.kernelArgPatchInfoVector[0].size;
 
-        uint64_t addressToPatch = buffer->setArgStateless(patchLocation, patchSize, !this->isBuiltIn);
+        uint64_t addressToPatch = buffer->setArgStateless(patchLocation, patchSize, getDevice().getRootDeviceIndex(), !this->isBuiltIn);
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             PatchInfoData patchInfoData(addressToPatch - buffer->getOffset(), static_cast<uint64_t>(buffer->getOffset()), PatchInfoAllocationType::KernelArg, reinterpret_cast<uint64_t>(getCrossThreadData()), static_cast<uint64_t>(kernelArgInfo.kernelArgPatchInfoVector[0].crossthreadOffset), PatchInfoAllocationType::IndirectObjectHeap, patchSize);

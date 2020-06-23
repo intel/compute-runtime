@@ -359,8 +359,8 @@ Buffer *Buffer::create(Context *context,
     }
 
     if (DebugManager.flags.MakeAllBuffersResident.get()) {
-        auto graphicsAllocation = pBuffer->multiGraphicsAllocation.getDefaultGraphicsAllocation();
-        auto rootDeviceEnvironment = pBuffer->executionEnvironment->rootDeviceEnvironments[graphicsAllocation->getRootDeviceIndex()].get();
+        auto graphicsAllocation = pBuffer->getGraphicsAllocation(rootDeviceIndex);
+        auto rootDeviceEnvironment = pBuffer->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get();
         rootDeviceEnvironment->memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1));
     }
 
@@ -478,9 +478,9 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
     return buffer;
 }
 
-uint64_t Buffer::setArgStateless(void *memory, uint32_t patchSize, bool set32BitAddressing) {
+uint64_t Buffer::setArgStateless(void *memory, uint32_t patchSize, uint32_t rootDeviceIndex, bool set32BitAddressing) {
     // Subbuffers have offset that graphicsAllocation is not aware of
-    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
+    auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     uintptr_t addressToPatch = ((set32BitAddressing) ? static_cast<uintptr_t>(graphicsAllocation->getGpuAddressToPatch()) : static_cast<uintptr_t>(graphicsAllocation->getGpuAddress())) + this->offset;
     DEBUG_BREAK_IF(!(graphicsAllocation->isLocked() || (addressToPatch != 0) || (graphicsAllocation->getGpuBaseAddress() != 0) ||
                      (this->getCpuAddress() == nullptr && graphicsAllocation->peekSharedHandle())));

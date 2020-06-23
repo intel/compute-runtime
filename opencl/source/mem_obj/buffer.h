@@ -134,8 +134,7 @@ class Buffer : public MemObj {
     BufferCreatFunc createFunction = nullptr;
     bool isSubBuffer();
     bool isValidSubBufferOffset(size_t offset);
-    uint64_t setArgStateless(void *memory, uint32_t patchSize) { return setArgStateless(memory, patchSize, false); }
-    uint64_t setArgStateless(void *memory, uint32_t patchSize, bool set32BitAddressing);
+    uint64_t setArgStateless(void *memory, uint32_t patchSize, uint32_t rootDeviceIndex, bool set32BitAddressing);
     virtual void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly) = 0;
     bool bufferRectPitchSet(const size_t *bufferOrigin,
                             const size_t *region,

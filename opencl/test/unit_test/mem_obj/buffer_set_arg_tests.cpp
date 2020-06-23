@@ -109,7 +109,7 @@ TEST_F(BufferSetArgTest, WhenSettingKernelArgBufferThenGpuAddressIsSet) {
 
     auto tokenSize = pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size;
 
-    buffer->setArgStateless(pKernelArg, tokenSize);
+    buffer->setArgStateless(pKernelArg, tokenSize, pClDevice->getRootDeviceIndex(), false);
 
     EXPECT_EQ(reinterpret_cast<void *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()), *pKernelArg);
 }
@@ -213,7 +213,7 @@ TEST_F(BufferSetArgTest, Given32BitAddressingWhenSettingArgStatelessThenGpuAddre
 
     auto gpuBase = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress() >> 2;
     buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setGpuBaseAddress(gpuBase);
-    buffer->setArgStateless(pKernelArg, tokenSize, true);
+    buffer->setArgStateless(pKernelArg, tokenSize, pClDevice->getRootDeviceIndex(), true);
 
     EXPECT_EQ(reinterpret_cast<void *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress() - gpuBase), *pKernelArg);
 }
@@ -234,7 +234,7 @@ TEST_F(BufferSetArgTest, givenBufferWhenOffsetedSubbufferIsPassedToSetKernelArgT
 
     auto tokenSize = pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size;
 
-    subBuffer->setArgStateless(pKernelArg, tokenSize);
+    subBuffer->setArgStateless(pKernelArg, tokenSize, pClDevice->getRootDeviceIndex(), false);
 
     EXPECT_EQ(reinterpret_cast<void *>(subBuffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress() + region.origin), *pKernelArg);
     delete subBuffer;
@@ -253,7 +253,7 @@ TEST_F(BufferSetArgTest, givenCurbeTokenThatSizeIs4BytesWhenStatelessArgIsPatche
 
     pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeOf4Bytes;
 
-    buffer->setArgStateless(pKernelArg, sizeOf4Bytes);
+    buffer->setArgStateless(pKernelArg, sizeOf4Bytes, pClDevice->getRootDeviceIndex(), false);
 
     //make sure only 4 bytes are patched
     auto bufferAddress = buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress();
