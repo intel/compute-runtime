@@ -215,7 +215,7 @@ TEST_F(glSharingTests, givenClGLBufferWhenItIsAcquiredThenAcuqireCountIsIncremen
     auto memObject = castToObject<Buffer>(glBuffer);
     EXPECT_FALSE(memObject->isMemObjZeroCopy());
 
-    EXPECT_FALSE(memObject->isReadWriteOnCpuAllowed());
+    EXPECT_FALSE(memObject->isReadWriteOnCpuAllowed(rootDeviceIndex));
     auto currentGraphicsAllocation = memObject->getGraphicsAllocation(rootDeviceIndex);
 
     memObject->peekSharingHandler()->acquire(memObject, rootDeviceIndex);

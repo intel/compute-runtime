@@ -149,12 +149,12 @@ class Buffer : public MemObj {
     void transferDataToHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) override;
     void transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) override;
 
-    bool isReadWriteOnCpuAllowed();
+    bool isReadWriteOnCpuAllowed(uint32_t rootDeviceIndex);
     bool isReadWriteOnCpuPreffered(void *ptr, size_t size);
 
     uint32_t getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) const;
 
-    bool isCompressed() const;
+    bool isCompressed(uint32_t rootDeviceIndex) const;
 
   protected:
     Buffer(Context *context,

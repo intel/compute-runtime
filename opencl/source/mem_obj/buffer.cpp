@@ -543,14 +543,16 @@ size_t Buffer::calculateHostPtrSize(const size_t *origin, const size_t *region, 
     return hostPtrSize;
 }
 
-bool Buffer::isReadWriteOnCpuAllowed() {
+bool Buffer::isReadWriteOnCpuAllowed(uint32_t rootDeviceIndex) {
     if (forceDisallowCPUCopy) {
         return false;
     }
 
-    if (this->isCompressed()) {
+    if (this->isCompressed(rootDeviceIndex)) {
         return false;
     }
+
+    auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
 
     if (graphicsAllocation->peekSharedHandle() != 0) {
         return false;
@@ -654,8 +656,8 @@ uint32_t Buffer::getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) cons
     }
 }
 
-bool Buffer::isCompressed() const {
-    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
+bool Buffer::isCompressed(uint32_t rootDeviceIndex) const {
+    auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     if (graphicsAllocation->getDefaultGmm()) {
         return graphicsAllocation->getDefaultGmm()->isRenderCompressed;
     }

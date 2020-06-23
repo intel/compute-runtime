@@ -19,20 +19,21 @@ typedef EnqueueReadBufferTypeTest ReadWriteBufferCpuCopyTest;
 
 HWTEST_F(ReadWriteBufferCpuCopyTest, givenRenderCompressedGmmWhenAskingForCpuOperationThenDisallow) {
     cl_int retVal;
+    auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
     auto gmm = new Gmm(pDevice->getGmmClientContext(), nullptr, 1, false);
     gmm->isRenderCompressed = false;
-    auto allocation = buffer->getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+    auto allocation = buffer->getGraphicsAllocation(rootDeviceIndex);
     allocation->setDefaultGmm(gmm);
 
     auto alignedPtr = alignedMalloc(2, MemoryConstants::cacheLineSize);
     auto unalignedPtr = ptrOffset(alignedPtr, 1);
     EXPECT_EQ(1u, allocation->storageInfo.getNumBanks());
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(rootDeviceIndex));
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(unalignedPtr, 1));
 
     gmm->isRenderCompressed = true;
-    EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed());
+    EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(rootDeviceIndex));
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(unalignedPtr, 1));
 
     alignedFree(alignedPtr);
@@ -56,7 +57,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedReadPtrWhenReadingBufferThenM
 
     bool aligned = (reinterpret_cast<uintptr_t>(unalignedReadPtr) & (MemoryConstants::cacheLineSize - 1)) == 0;
     EXPECT_TRUE(!aligned || buffer->isMemObjZeroCopy());
-    ASSERT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    ASSERT_TRUE(buffer->isReadWriteOnCpuAllowed(pCmdQ->getDevice().getRootDeviceIndex()));
     ASSERT_TRUE(buffer->isReadWriteOnCpuPreffered(unalignedReadPtr, size));
 
     retVal = EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ,
@@ -97,7 +98,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenUnalignedSrcPtrWhenWritingBufferThenMe
 
     bool aligned = (reinterpret_cast<uintptr_t>(unalignedWritePtr) & (MemoryConstants::cacheLineSize - 1)) == 0;
     EXPECT_TRUE(!aligned || buffer->isMemObjZeroCopy());
-    ASSERT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    ASSERT_TRUE(buffer->isReadWriteOnCpuAllowed(pCmdQ->getDevice().getRootDeviceIndex()));
     ASSERT_TRUE(buffer->isReadWriteOnCpuPreffered(unalignedWritePtr, size));
 
     retVal = EnqueueWriteBufferHelper<>::enqueueWriteBuffer(pCmdQ,
@@ -184,8 +185,8 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, GivenSpecificMemoryStructuresWhenReadingWri
     size_t largeBufferSize = 11u * MemoryConstants::megaByte;
 
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto mockContext = std::unique_ptr<MockContext>(new MockContext(mockDevice.get()));
-    auto mockCommandQueue = std::unique_ptr<MockCommandQueue>(new MockCommandQueue);
+    auto mockContext = std::make_unique<MockContext>(mockDevice.get());
+    auto mockCommandQueue = std::make_unique<MockCommandQueue>(*mockContext);
 
     auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockDevice->getMemoryManager());
     memoryManager->turnOnFakingBigAllocations();
@@ -221,8 +222,8 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, givenDebugVariableToDisableCpuCopiesWhenBuf
     cl_int retVal;
 
     auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto mockContext = std::unique_ptr<MockContext>(new MockContext(mockDevice.get()));
-    auto mockCommandQueue = std::unique_ptr<MockCommandQueue>(new MockCommandQueue);
+    auto mockContext = std::make_unique<MockContext>(mockDevice.get());
+    auto mockCommandQueue = std::make_unique<MockCommandQueue>(*mockContext);
 
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_ALLOC_HOST_PTR, MemoryConstants::pageSize, nullptr, retVal));
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -253,11 +254,11 @@ TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInN
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
     ASSERT_NE(nullptr, buffer.get());
 
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(device->getRootDeviceIndex()));
     EXPECT_TRUE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
     reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
     //read write on CPU is allowed, but not preffered. We can access this memory via Lock.
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(device->getRootDeviceIndex()));
     EXPECT_FALSE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
 }
 
@@ -266,15 +267,15 @@ TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyWhenCpuCopyIsEvaluated
     auto memoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
 
     device->injectMemoryManager(memoryManager);
-    MockContext ctx(device.get());
+    MockContext context(device.get());
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
-    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    auto mockCommandQueue = std::unique_ptr<MockCommandQueue>(new MockCommandQueue);
+    auto mockCommandQueue = std::make_unique<MockCommandQueue>(context);
 
     EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, false, MemoryConstants::pageSize, nullptr, 0u, nullptr));
     memoryManager->cpuCopyRequired = true;
@@ -286,15 +287,15 @@ TEST(ReadWriteBufferOnCpu, givenPointerThatRequiresCpuCopyButItIsNotPossibleWhen
     auto memoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
 
     device->injectMemoryManager(memoryManager);
-    MockContext ctx(device.get());
+    MockContext context(device.get());
 
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
-    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     ASSERT_NE(nullptr, buffer.get());
-    auto mockCommandQueue = std::unique_ptr<MockCommandQueue>(new MockCommandQueue);
+    auto mockCommandQueue = std::make_unique<MockCommandQueue>(context);
 
     buffer->forceDisallowCPUCopy = true;
     EXPECT_FALSE(mockCommandQueue->bufferCpuCopyAllowed(buffer.get(), CL_COMMAND_READ_BUFFER, true, MemoryConstants::pageSize, nullptr, 0u, nullptr));
@@ -311,6 +312,6 @@ TEST(ReadWriteBufferOnCpu, whenLocalMemoryPoolAllocationIsAskedForPreferenceThen
     ASSERT_NE(nullptr, buffer.get());
     reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation(device->getRootDeviceIndex()))->overrideMemoryPool(MemoryPool::LocalMemory);
 
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed());
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(device->getRootDeviceIndex()));
     EXPECT_FALSE(buffer->isReadWriteOnCpuPreffered(reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
 }
