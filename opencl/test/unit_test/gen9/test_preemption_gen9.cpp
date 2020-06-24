@@ -253,7 +253,7 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     hwCsrParser.parseCommands<FamilyType>(csr.commandStream, offsetCsr);
     hwCsrParser.findHardwareCommands<FamilyType>();
-    hwCmdQParser.parseCommands<FamilyType>(csr.commandStream, offsetCmdQ);
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS(1024), offsetCmdQ);
     hwCmdQParser.findHardwareCommands<FamilyType>();
 
     for (auto it : hwCsrParser.lriList) {

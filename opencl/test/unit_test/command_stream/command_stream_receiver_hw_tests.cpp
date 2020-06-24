@@ -173,6 +173,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentWhenEstimatingPreambleCm
 
     auto actualDifference = preambleNotSent - preambleSent;
     auto expectedDifference = PreambleHelper<FamilyType>::getThreadArbitrationCommandsSize() + PreambleHelper<FamilyType>::getAdditionalCommandsSize(*pDevice);
+
     EXPECT_EQ(expectedDifference, actualDifference);
 }
 
@@ -191,6 +192,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPerDssBackBufferProgrammingEnabledWh
 
     auto actualDifference = preambleNotSent - preambleSent;
     auto expectedDifference = PreambleHelper<FamilyType>::getThreadArbitrationCommandsSize() + PreambleHelper<FamilyType>::getAdditionalCommandsSize(*pDevice) + PreambleHelper<FamilyType>::getPerDssBackedBufferCommandsSize(pDevice->getHardwareInfo());
+
     EXPECT_EQ(expectedDifference, actualDifference);
 }
 
@@ -220,6 +222,35 @@ HWTEST_F(UltCommandStreamReceiverTest, givenCommandStreamReceiverInInitialStateW
     EXPECT_TRUE(commandStreamReceiver.dshState.updateAndCheck(&dsh));
     EXPECT_TRUE(commandStreamReceiver.iohState.updateAndCheck(&ioh));
     EXPECT_TRUE(commandStreamReceiver.sshState.updateAndCheck(&ssh));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndForceSemaphoreDelayBetweenWaitsFlagWhenEstimatingPreambleCmdSizeThenResultIsExpected) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy;
+    DebugManagerStateRestore debugManagerStateRestore;
+
+    DebugManager.flags.ForceSemaphoreDelayBetweenWaits.set(-1);
+    commandStreamReceiver.isPreambleSent = false;
+
+    auto preambleNotSentAndSemaphoreDelayNotReprogrammed = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
+
+    DebugManager.flags.ForceSemaphoreDelayBetweenWaits.set(0);
+    commandStreamReceiver.isPreambleSent = false;
+
+    auto preambleNotSentAndSemaphoreDelayReprogrammed = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
+
+    commandStreamReceiver.isPreambleSent = true;
+    auto preambleSent = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
+
+    auto actualDifferenceWhenSemaphoreDelayNotReprogrammed = preambleNotSentAndSemaphoreDelayNotReprogrammed - preambleSent;
+    auto expectedDifference = PreambleHelper<FamilyType>::getThreadArbitrationCommandsSize() + PreambleHelper<FamilyType>::getAdditionalCommandsSize(*pDevice);
+
+    EXPECT_EQ(expectedDifference, actualDifferenceWhenSemaphoreDelayNotReprogrammed);
+
+    auto actualDifferenceWhenSemaphoreDelayReprogrammed = preambleNotSentAndSemaphoreDelayReprogrammed - preambleSent;
+    expectedDifference = PreambleHelper<FamilyType>::getThreadArbitrationCommandsSize() + PreambleHelper<FamilyType>::getAdditionalCommandsSize(*pDevice) + PreambleHelper<FamilyType>::getSemaphoreDelayCommandSize();
+
+    EXPECT_EQ(expectedDifference, actualDifferenceWhenSemaphoreDelayReprogrammed);
 }
 
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTests;

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/helpers/register_offsets.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
@@ -49,6 +50,22 @@ size_t PreambleHelper<GfxFamily>::getPerDssBackedBufferCommandsSize(const Hardwa
 }
 
 template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::programSemaphoreDelay(LinearStream *pCommandStream) {
+    if (DebugManager.flags.ForceSemaphoreDelayBetweenWaits.get() > -1) {
+        uint32_t valueOfNewSemaphoreDelay = DebugManager.flags.ForceSemaphoreDelayBetweenWaits.get();
+        LriHelper<GfxFamily>::program(pCommandStream,
+                                      SEMA_WAIT_POLL,
+                                      valueOfNewSemaphoreDelay,
+                                      true);
+    };
+}
+
+template <typename GfxFamily>
+size_t PreambleHelper<GfxFamily>::getSemaphoreDelayCommandSize() {
+    return sizeof(MI_LOAD_REGISTER_IMM);
+}
+
+template <typename GfxFamily>
 size_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device) {
     size_t totalSize = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
     totalSize += getKernelDebuggingCommandsSize(device.isDebuggerActive());
@@ -79,6 +96,7 @@ void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, De
     if (perDssBackedBuffer != nullptr) {
         programPerDssBackedBuffer(pCommandStream, device.getHardwareInfo(), perDssBackedBuffer);
     }
+    programSemaphoreDelay(pCommandStream);
 }
 
 template <typename GfxFamily>

@@ -132,6 +132,11 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble(
             size += PreambleHelper<GfxFamily>::getPerDssBackedBufferCommandsSize(device.getHardwareInfo());
         }
     }
+    if (!this->isPreambleSent) {
+        if (DebugManager.flags.ForceSemaphoreDelayBetweenWaits.get() > -1) {
+            size += PreambleHelper<GfxFamily>::getSemaphoreDelayCommandSize();
+        }
+    }
     return size;
 }
 

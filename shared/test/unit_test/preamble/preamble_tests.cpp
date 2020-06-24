@@ -225,3 +225,46 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, givenPreambleHelperWhenMediaVfeStateIs
     auto offset = PreambleHelper<FamilyType>::programVFEState(&preambleStream, mockDevice->getHardwareInfo(), 1024u, addressToPatch, 10u, aub_stream::EngineType::ENGINE_RCS);
     EXPECT_NE(0u, offset);
 }
+
+HWTEST_F(PreambleTest, givenSetForceSemaphoreDelayBetweenWaitsWhenProgramSemaphoreDelayThenSemaWaitPollRegisterIsProgrammed) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    DebugManagerStateRestore debugManagerStateRestore;
+    uint32_t newDelay = 10u;
+    DebugManager.flags.ForceSemaphoreDelayBetweenWaits.set(newDelay);
+
+    auto bufferSize = PreambleHelper<FamilyType>::getSemaphoreDelayCommandSize();
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), bufferSize);
+    auto buffer = std::unique_ptr<char[]>(new char[bufferSize]);
+
+    LinearStream stream(buffer.get(), bufferSize);
+    PreambleHelper<FamilyType>::programSemaphoreDelay(&stream);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream);
+    auto cmdList = hwParser.getCommandsList<MI_LOAD_REGISTER_IMM>();
+    ASSERT_EQ(1u, cmdList.size());
+
+    auto it = cmdList.begin();
+
+    MI_LOAD_REGISTER_IMM *pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
+    EXPECT_EQ(static_cast<uint32_t>(0x224c), pCmd->getRegisterOffset());
+    EXPECT_EQ(newDelay, pCmd->getDataDword());
+}
+
+HWTEST_F(PreambleTest, givenNotSetForceSemaphoreDelayBetweenWaitsWhenProgramSemaphoreDelayThenSemaWaitPollRegisterIsNotProgrammed) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    DebugManagerStateRestore debugManagerStateRestore;
+    DebugManager.flags.ForceSemaphoreDelayBetweenWaits.set(-1);
+
+    auto bufferSize = PreambleHelper<FamilyType>::getSemaphoreDelayCommandSize();
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), bufferSize);
+    auto buffer = std::unique_ptr<char[]>(new char[bufferSize]);
+
+    LinearStream stream(buffer.get(), bufferSize);
+    PreambleHelper<FamilyType>::programSemaphoreDelay(&stream);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(stream);
+    auto cmdList = hwParser.getCommandsList<MI_LOAD_REGISTER_IMM>();
+    ASSERT_EQ(0u, cmdList.size());
+}
