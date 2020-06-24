@@ -818,7 +818,7 @@ HWTEST_F(DispatchWalkerTest, givenThereAreAllocationsForReuseWhenDispatchWalkerI
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto allocation = csr.getMemoryManager()->allocateGraphicsMemoryWithProperties({csr.getRootDeviceIndex(), MemoryConstants::pageSize64k + CSRequirements::csOverfetchSize,
-                                                                                    GraphicsAllocation::AllocationType::COMMAND_BUFFER});
+                                                                                    GraphicsAllocation::AllocationType::COMMAND_BUFFER, csr.getOsContext().getDeviceBitfield()});
     csr.getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>{allocation}, REUSABLE_ALLOCATION);
     ASSERT_FALSE(csr.getInternalAllocationStorage()->getAllocationsForReuse().peekIsEmpty());
 
@@ -867,8 +867,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatch
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     auto memoryManager = this->pDevice->getMemoryManager();
-    auto kernelIsaAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::KERNEL_ISA});
-    auto kernelIsaWithSamplerAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::KERNEL_ISA});
+    auto kernelIsaAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::KERNEL_ISA, pDevice->getDeviceBitfield()});
+    auto kernelIsaWithSamplerAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::KERNEL_ISA, pDevice->getDeviceBitfield()});
     kernelInfo.kernelAllocation = kernelIsaAllocation;
     kernelInfoWithSampler.kernelAllocation = kernelIsaWithSamplerAllocation;
     auto gpuAddress1 = kernelIsaAllocation->getGpuAddressToPatch();
