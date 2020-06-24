@@ -686,4 +686,12 @@ void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, co
         }
     }
 }
+
+bool CommandQueue::isGpgpuSubmissionForBcsRequired() const {
+    if (DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.get() == 0) {
+        return (latestSentEnqueueType != EnqueueProperties::Operation::Blit) && (latestSentEnqueueType != EnqueueProperties::Operation::None);
+    }
+
+    return true;
+}
 } // namespace NEO

@@ -58,6 +58,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverridePreemptionSurfaceSizeInMb, -1, "-1: defa
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideLeastOccupiedBank, -1, "-1: default,  >=0 Override least occupied bank with value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideRevision, -1, "-1: default,  >=0: Revision id")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceCacheFlushForBcs, -1, "Force cache flush from gpgpu engine before dispatching BCS copy. -1: default,  1: enabled, 0: disabled")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceGpgpuSubmissionForBcsEnqueue, -1, "-1: Default, 1: Submit gpgpu command buffer with cache flushing and completion synchronization, 0: Do nothing, if possible")
 DECLARE_DEBUG_VARIABLE(bool, EnableDebugBreak, true, "Enable DEBUG_BREAKs")
 DECLARE_DEBUG_VARIABLE(bool, FlushAllCaches, false, "pipe controls between enqueues flush all possible caches")
 DECLARE_DEBUG_VARIABLE(bool, MakeEachEnqueueBlocking, false, "equivalent of finish after each enqueue")

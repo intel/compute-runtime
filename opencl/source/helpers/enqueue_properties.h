@@ -12,6 +12,7 @@ namespace NEO {
 
 struct EnqueueProperties {
     enum class Operation {
+        None,
         Blit,
         ExplicitCacheFlush,
         EnqueueWithoutSubmission,

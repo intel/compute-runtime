@@ -213,8 +213,11 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);
         }
 
-        if (isCacheFlushForBcsRequired() && (blitEnqueue || enqueueWithBlitAuxTranslation)) {
-            timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
+        if (isCacheFlushForBcsRequired()) {
+            // Cache flush for aux translation is always required (if supported)
+            if ((blitEnqueue && isGpgpuSubmissionForBcsRequired()) || (enqueueWithBlitAuxTranslation)) {
+                timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
+            }
         }
 
         if (blitEnqueue && !blockQueue && getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired()) {
@@ -344,6 +347,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         if (eventBuilder.getEvent()) {
             eventBuilder.getEvent()->flushStamp->replaceStampObject(this->flushStamp->getStampReference());
         }
+
+        this->latestSentEnqueueType = enqueueProperties.operation;
     }
     updateFromCompletionStamp(completionStamp);
 
@@ -485,21 +490,22 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
     auto currentTimestampPacketNode = timestampPacketContainer->peekNodes().at(0);
     blitProperties.outputTimestampPacket = currentTimestampPacketNode;
 
-    if (isCacheFlushForBcsRequired()) {
-        auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]);
-        PipeControlArgs args(true);
-        MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-            commandStream,
-            GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-            cacheFlushTimestampPacketGpuAddress,
-            0,
-            device->getHardwareInfo(),
-            args);
+    if (isGpgpuSubmissionForBcsRequired()) {
+        if (isCacheFlushForBcsRequired()) {
+            auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]);
+            PipeControlArgs args(true);
+            MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+                commandStream,
+                GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                cacheFlushTimestampPacketGpuAddress,
+                0,
+                device->getHardwareInfo(),
+                args);
+        }
+
+        TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(commandStream, *currentTimestampPacketNode,
+                                                                                 getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices());
     }
-
-    TimestampPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(commandStream, *currentTimestampPacketNode,
-                                                                             getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices());
-
     return blitProperties;
 }
 
@@ -947,60 +953,70 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     EventBuilder &eventBuilder,
     uint32_t taskLevel) {
 
-    if (timestampPacketContainer) {
-        timestampPacketContainer->makeResident(getGpgpuCommandStreamReceiver());
-        timestampPacketDependencies.previousEnqueueNodes.makeResident(getGpgpuCommandStreamReceiver());
-        timestampPacketDependencies.cacheFlushNodes.makeResident(getGpgpuCommandStreamReceiver());
+    CompletionStamp completionStamp = {this->taskCount, this->taskLevel, this->flushStamp->peekStamp()};
+    bool flushGpgpuCsr = true;
+
+    if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) && !isGpgpuSubmissionForBcsRequired()) {
+        flushGpgpuCsr = false;
     }
 
-    for (auto surface : CreateRange(surfaces, surfaceCount)) {
-        surface->makeResident(getGpgpuCommandStreamReceiver());
-    }
+    if (flushGpgpuCsr) {
+        if (timestampPacketContainer) {
+            timestampPacketContainer->makeResident(getGpgpuCommandStreamReceiver());
+            timestampPacketDependencies.previousEnqueueNodes.makeResident(getGpgpuCommandStreamReceiver());
+            timestampPacketDependencies.cacheFlushNodes.makeResident(getGpgpuCommandStreamReceiver());
+        }
 
-    TimeStampData submitTimeStamp;
-    if (eventBuilder.getEvent() && isProfilingEnabled() && getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        this->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
-        eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
-        eventBuilder.getEvent()->getTimestampPacketNodes()->makeResident(getGpgpuCommandStreamReceiver());
-    }
+        for (auto surface : CreateRange(surfaces, surfaceCount)) {
+            surface->makeResident(getGpgpuCommandStreamReceiver());
+        }
 
-    DispatchFlags dispatchFlags(
-        {},                                                                  //csrDependencies
-        &timestampPacketDependencies.barrierNodes,                           //barrierTimestampPacketNodes
-        {},                                                                  //pipelineSelectArgs
-        flushStamp->getStampReference(),                                     //flushStampReference
-        getThrottle(),                                                       //throttle
-        device->getPreemptionMode(),                                         //preemptionMode
-        GrfConfig::DefaultGrfNumber,                                         //numGrfRequired
-        L3CachingSettings::l3CacheOn,                                        //l3CacheSettings
-        ThreadArbitrationPolicy::NotPresent,                                 //threadArbitrationPolicy
-        getSliceCount(),                                                     //sliceCount
-        blocking,                                                            //blocking
-        false,                                                               //dcFlush
-        false,                                                               //useSLM
-        true,                                                                //guardCommandBufferWithPipeControl
-        false,                                                               //GSBA32BitRequired
-        false,                                                               //requiresCoherency
-        false,                                                               //lowPriority
-        (enqueueProperties.operation == EnqueueProperties::Operation::Blit), //implicitFlush
-        getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      //outOfOrderExecutionAllowed
-        false,                                                               //epilogueRequired
-        false                                                                //usePerDssBackedBuffer
-    );
+        TimeStampData submitTimeStamp;
+        if (eventBuilder.getEvent() && isProfilingEnabled() && getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+            this->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
+            eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
+            eventBuilder.getEvent()->getTimestampPacketNodes()->makeResident(getGpgpuCommandStreamReceiver());
+        }
 
-    if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        eventsRequest.fillCsrDependencies(dispatchFlags.csrDependencies, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
-        dispatchFlags.csrDependencies.makeResident(getGpgpuCommandStreamReceiver());
+        DispatchFlags dispatchFlags(
+            {},                                                                  //csrDependencies
+            &timestampPacketDependencies.barrierNodes,                           //barrierTimestampPacketNodes
+            {},                                                                  //pipelineSelectArgs
+            flushStamp->getStampReference(),                                     //flushStampReference
+            getThrottle(),                                                       //throttle
+            device->getPreemptionMode(),                                         //preemptionMode
+            GrfConfig::DefaultGrfNumber,                                         //numGrfRequired
+            L3CachingSettings::l3CacheOn,                                        //l3CacheSettings
+            ThreadArbitrationPolicy::NotPresent,                                 //threadArbitrationPolicy
+            getSliceCount(),                                                     //sliceCount
+            blocking,                                                            //blocking
+            false,                                                               //dcFlush
+            false,                                                               //useSLM
+            true,                                                                //guardCommandBufferWithPipeControl
+            false,                                                               //GSBA32BitRequired
+            false,                                                               //requiresCoherency
+            false,                                                               //lowPriority
+            (enqueueProperties.operation == EnqueueProperties::Operation::Blit), //implicitFlush
+            getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      //outOfOrderExecutionAllowed
+            false,                                                               //epilogueRequired
+            false                                                                //usePerDssBackedBuffer
+        );
+
+        if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+            eventsRequest.fillCsrDependencies(dispatchFlags.csrDependencies, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
+            dispatchFlags.csrDependencies.makeResident(getGpgpuCommandStreamReceiver());
+        }
+
+        completionStamp = getGpgpuCommandStreamReceiver().flushTask(
+            commandStream,
+            commandStreamStart,
+            getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
+            getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
+            getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
+            taskLevel,
+            dispatchFlags,
+            getDevice());
     }
-    CompletionStamp completionStamp = getGpgpuCommandStreamReceiver().flushTask(
-        commandStream,
-        commandStreamStart,
-        getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
-        getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
-        getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
-        taskLevel,
-        dispatchFlags,
-        getDevice());
 
     if (enqueueProperties.operation == EnqueueProperties::Operation::Blit) {
         UNRECOVERABLE_IF(!enqueueProperties.blitPropertiesContainer);

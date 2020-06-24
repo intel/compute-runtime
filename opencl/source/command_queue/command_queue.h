@@ -11,6 +11,7 @@
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/dispatch_info.h"
+#include "opencl/source/helpers/enqueue_properties.h"
 #include "opencl/source/helpers/task_information.h"
 
 #include <atomic>
@@ -336,6 +337,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool blitEnqueueAllowed(cl_command_type cmdType) const;
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
     virtual bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const = 0;
+    bool isGpgpuSubmissionForBcsRequired() const;
 
     Context *context = nullptr;
     ClDevice *device = nullptr;
@@ -347,6 +349,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     QueuePriority priority = QueuePriority::MEDIUM;
     QueueThrottle throttle = QueueThrottle::MEDIUM;
+    EnqueueProperties::Operation latestSentEnqueueType = EnqueueProperties::Operation::None;
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
     uint32_t bcsTaskCount = 0;
 
