@@ -108,7 +108,7 @@ TEST_F(PipeTest, givenPipeWithDifferentCpuAndGpuAddressesWhenSetArgPipeThenUseGp
     pipeAllocation->setCpuPtrAndGpuAddress(pipeAllocation->getUnderlyingBuffer(), gpuAddress);
     EXPECT_NE(reinterpret_cast<uint64_t>(pipeAllocation->getUnderlyingBuffer()), pipeAllocation->getGpuAddress());
     uint64_t valueToPatch;
-    pipe->setPipeArg(&valueToPatch, sizeof(valueToPatch));
+    pipe->setPipeArg(&valueToPatch, sizeof(valueToPatch), context.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(valueToPatch, pipeAllocation->getGpuAddressToPatch());
 
     delete pipe;

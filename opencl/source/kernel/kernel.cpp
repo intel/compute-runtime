@@ -1384,7 +1384,7 @@ cl_int Kernel::setArgPipe(uint32_t argIndex,
 
         auto patchSize = kernelArgInfo.kernelArgPatchInfoVector[0].size;
 
-        pipe->setPipeArg(patchLocation, patchSize);
+        pipe->setPipeArg(patchLocation, patchSize, getDevice().getRootDeviceIndex());
 
         auto graphicsAllocation = pipe->getGraphicsAllocation(getDevice().getRootDeviceIndex());
 

@@ -29,7 +29,7 @@ class Pipe : public MemObj {
                        void *paramValue,
                        size_t *paramValueSizeRet);
 
-    void setPipeArg(void *memory, uint32_t patchSize);
+    void setPipeArg(void *memory, uint32_t patchSize, uint32_t rootDeviceIndex);
 
   protected:
     Pipe(Context *context,

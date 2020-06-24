@@ -119,8 +119,8 @@ cl_int Pipe::getPipeInfo(cl_image_info paramName,
     return retVal;
 }
 
-void Pipe::setPipeArg(void *memory, uint32_t patchSize) {
-    patchWithRequiredSize(memory, patchSize, static_cast<uintptr_t>(multiGraphicsAllocation.getDefaultGraphicsAllocation()->getGpuAddressToPatch()));
+void Pipe::setPipeArg(void *memory, uint32_t patchSize, uint32_t rootDeviceIndex) {
+    patchWithRequiredSize(memory, patchSize, static_cast<uintptr_t>(multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->getGpuAddressToPatch()));
 }
 
 Pipe::~Pipe() = default;
