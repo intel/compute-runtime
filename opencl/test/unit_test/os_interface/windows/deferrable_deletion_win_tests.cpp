@@ -17,12 +17,12 @@
 
 using namespace NEO;
 
-TEST(DeferrableDeletionImpl, NonCopyable) {
+TEST(DeferrableDeletionImpl, WhenCreatedThenItIsNonCopyable) {
     EXPECT_FALSE(std::is_move_constructible<DeferrableDeletionImpl>::value);
     EXPECT_FALSE(std::is_copy_constructible<DeferrableDeletionImpl>::value);
 }
 
-TEST(DeferrableDeletionImpl, NonAssignable) {
+TEST(DeferrableDeletionImpl, WhenCreatedThenItIsNonAssignable) {
     EXPECT_FALSE(std::is_move_assignable<DeferrableDeletionImpl>::value);
     EXPECT_FALSE(std::is_copy_assignable<DeferrableDeletionImpl>::value);
 }
