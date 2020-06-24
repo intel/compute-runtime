@@ -130,17 +130,16 @@ void getQueueInfo(cl_command_queue commandQueue,
 template <typename returnType>
 returnType getCmdQueueProperties(const cl_queue_properties *properties,
                                  cl_queue_properties propertyName = CL_QUEUE_PROPERTIES) {
-    returnType retVal = 0;
-
-    while (properties != nullptr && *properties != 0) {
-        if (*properties == propertyName) {
-            ++properties;
-            retVal = static_cast<returnType>(*properties);
-            return retVal;
+    if (properties != nullptr) {
+        while (*properties != 0) {
+            if (*properties == propertyName) {
+                return static_cast<returnType>(*(properties + 1));
+            }
+            properties += 2;
         }
-        ++properties;
     }
-    return retVal;
+
+    return 0;
 }
 bool isExtraToken(const cl_queue_properties *property);
 bool verifyExtraTokens(ClDevice *&device, Context &context, const cl_queue_properties *properties);
