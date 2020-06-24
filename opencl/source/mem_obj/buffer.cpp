@@ -564,7 +564,8 @@ bool Buffer::isReadWriteOnCpuAllowed(uint32_t rootDeviceIndex) {
     return true;
 }
 
-bool Buffer::isReadWriteOnCpuPreffered(void *ptr, size_t size) {
+bool Buffer::isReadWriteOnCpuPreffered(void *ptr, size_t size, const Device &device) {
+    auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(device.getRootDeviceIndex());
     if (MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
         //if buffer is not zero copy and pointer is aligned it will be more beneficial to do the transfer on GPU
         if (!isMemObjZeroCopy() && (reinterpret_cast<uintptr_t>(ptr) & (MemoryConstants::cacheLineSize - 1)) == 0) {
@@ -572,7 +573,7 @@ bool Buffer::isReadWriteOnCpuPreffered(void *ptr, size_t size) {
         }
 
         //on low power devices larger transfers are better on the GPU
-        if (context->getDevice(0)->getDeviceInfo().platformLP && size > maxBufferSizeForReadWriteOnCpu) {
+        if (device.getSpecializedDevice<ClDevice>()->getDeviceInfo().platformLP && size > maxBufferSizeForReadWriteOnCpu) {
             return false;
         }
         return true;

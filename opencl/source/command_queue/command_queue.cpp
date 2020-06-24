@@ -603,7 +603,7 @@ bool CommandQueue::bufferCpuCopyAllowed(Buffer *buffer, cl_command_type commandT
     }
 
     //check if it is beneficial to do transfer on CPU
-    if (!buffer->isReadWriteOnCpuPreffered(ptr, size)) {
+    if (!buffer->isReadWriteOnCpuPreffered(ptr, size, getDevice())) {
         return false;
     }
 
