@@ -77,6 +77,8 @@ if(DEFINED NEO_EXTRA_DEFINES)
     endforeach()
 endif()
 
+include("${BRANCH_TYPE}.cmake" OPTIONAL)
+
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "CMAKE_BUILD_TYPE not specified, using Release")
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type: [Release, ReleaseInternal, Debug]" FORCE)
