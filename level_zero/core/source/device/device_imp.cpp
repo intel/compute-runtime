@@ -586,7 +586,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
             {device->getRootDeviceIndex(), true,
              NEO::SipKernel::maxDbgSurfaceSize,
-             NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+             NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
              false,
              false,
              device->getNEODevice()->getDeviceBitfield()});

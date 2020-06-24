@@ -73,8 +73,9 @@ HWTEST_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsEx
 
 using DeviceWithDebuggerEnabledTest = Test<ActiveDebuggerFixture>;
 
-TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenDeviceIsCreatedThenItHasDebugSurfaceCreated) {
-    EXPECT_NE(nullptr, deviceL0->getDebugSurface());
+TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenDeviceIsCreatedThenItHasDebugSurfaceCreatedWithCorrectAllocationType) {
+    ASSERT_NE(nullptr, deviceL0->getDebugSurface());
+    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, deviceL0->getDebugSurface()->getAllocationType());
 }
 
 struct TwoSubDevicesDebuggerEnabledTest : public ActiveDebuggerFixture, public ::testing::Test {

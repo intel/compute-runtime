@@ -930,7 +930,8 @@ AllocationTypeTestCase allocationTypeValues[] = {
     {GraphicsAllocation::AllocationType::GLOBAL_FENCE, "GLOBAL_FENCE"},
     {GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, "TIMESTAMP_PACKET_TAG_BUFFER"},
     {GraphicsAllocation::AllocationType::UNKNOWN, "UNKNOWN"},
-    {GraphicsAllocation::AllocationType::WRITE_COMBINED, "WRITE_COMBINED"}};
+    {GraphicsAllocation::AllocationType::WRITE_COMBINED, "WRITE_COMBINED"},
+    {GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, "DEBUG_CONTEXT_SAVE_AREA"}};
 
 class AllocationTypeLogging : public ::testing::TestWithParam<AllocationTypeTestCase> {};
 

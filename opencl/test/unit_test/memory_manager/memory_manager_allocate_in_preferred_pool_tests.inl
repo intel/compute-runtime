@@ -891,6 +891,14 @@ TEST(MemoryManagerTest, givenForceNonSystemMaskWhenAllocationTypeNotMatchesMaskT
     EXPECT_EQ(1u, allocationData.flags.useSystemMemory);
 }
 
+TEST(MemoryManagerTest, givenDebugContextSaveAreaTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{0, 1, GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA};
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_TRUE(allocData.flags.useSystemMemory);
+}
+
 using MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest = testing::TestWithParam<std::tuple<GraphicsAllocation::AllocationType, bool>>;
 
 TEST_P(MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest, givenAllocationTypesHaveToBeForcedTo48BitThenAllocationDataResource48BitIsSet) {
@@ -967,6 +975,7 @@ static const GraphicsAllocation::AllocationType allocationHaveNotToBeForcedTo48B
     GraphicsAllocation::AllocationType::WRITE_COMBINED,
     GraphicsAllocation::AllocationType::RING_BUFFER,
     GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER,
+    GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
 };
 
 INSTANTIATE_TEST_CASE_P(ForceTo48Bit,

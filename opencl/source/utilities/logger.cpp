@@ -324,6 +324,8 @@ const char *FileLogger<DebugLevel>::getAllocationTypeString(GraphicsAllocation c
         return "UNKNOWN";
     case GraphicsAllocation::AllocationType::WRITE_COMBINED:
         return "WRITE_COMBINED";
+    case GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA:
+        return "DEBUG_CONTEXT_SAVE_AREA";
     default:
         return "ILLEGAL_VALUE";
     }

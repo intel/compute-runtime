@@ -83,7 +83,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         TIMESTAMP_PACKET_TAG_BUFFER,
         WRITE_COMBINED,
         RING_BUFFER,
-        SEMAPHORE_BUFFER
+        SEMAPHORE_BUFFER,
+        DEBUG_CONTEXT_SAVE_AREA
     };
 
     ~GraphicsAllocation() override;
