@@ -29,11 +29,11 @@ union SURFACE_STATE_BUFFER_LENGTH {
 };
 
 template <typename GfxFamily>
-void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel) {
+void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex) {
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
 
-    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
+    auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     auto gmm = graphicsAllocation->getDefaultGmm();
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
 
@@ -89,7 +89,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     } else if (gmm && gmm->isRenderCompressed) {
         setAuxParamsForCCS<GfxFamily>(surfaceState, gmm);
     }
-    appendSurfaceStateDepthParams(surfaceState);
+    appendSurfaceStateDepthParams(surfaceState, gmm);
     appendSurfaceStateParams(surfaceState);
     appendSurfaceStateExt(surfaceState);
 }
@@ -125,16 +125,16 @@ void ImageHw<GfxFamily>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceS
 }
 
 template <typename GfxFamily>
-inline void ImageHw<GfxFamily>::appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState) {
+inline void ImageHw<GfxFamily>::appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
 }
 
 template <typename GfxFamily>
-void ImageHw<GfxFamily>::setMediaImageArg(void *memory) {
+void ImageHw<GfxFamily>::setMediaImageArg(void *memory, uint32_t rootDeviceIndex) {
     using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
     using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
     SURFACE_FORMAT surfaceFormat = MEDIA_SURFACE_STATE::SURFACE_FORMAT_Y8_UNORM_VA;
 
-    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
+    auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
     auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
     MEDIA_SURFACE_STATE state = GfxFamily::cmdInitMediaSurfaceState;

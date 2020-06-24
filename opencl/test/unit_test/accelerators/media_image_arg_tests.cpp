@@ -84,7 +84,7 @@ HWTEST_F(MediaImageSetArgTest, setKernelArgImage) {
         ptrOffset(pKernel->getSurfaceStateHeap(),
                   pKernelInfo->kernelArgInfo[0].offsetHeap));
 
-    srcImage->setMediaImageArg(const_cast<MEDIA_SURFACE_STATE *>(pSurfaceState));
+    srcImage->setMediaImageArg(const_cast<MEDIA_SURFACE_STATE *>(pSurfaceState), pClDevice->getRootDeviceIndex());
 
     SurfaceOffsets surfaceOffsets;
     srcImage->getSurfaceOffsets(surfaceOffsets);

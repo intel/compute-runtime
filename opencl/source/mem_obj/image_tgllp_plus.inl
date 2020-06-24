@@ -11,8 +11,7 @@ void ImageHw<Family>::setAuxParamsForMCSCCS(RENDER_SURFACE_STATE *surfaceState, 
 }
 
 template <>
-void ImageHw<Family>::appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState) {
-    const auto gmm = this->graphicsAllocation->getDefaultGmm();
+void ImageHw<Family>::appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
     if (gmm) {
         const bool isDepthResource = gmm->gmmResourceInfo->getResourceFlags()->Gpu.Depth;
         surfaceState->setDepthStencilResource(isDepthResource);

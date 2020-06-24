@@ -1432,9 +1432,9 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         // Sets SS structure
         if (kernelArgInfo.isMediaImage) {
             DEBUG_BREAK_IF(!kernelInfo.isVmeWorkload);
-            pImage->setMediaImageArg(surfaceState);
+            pImage->setMediaImageArg(surfaceState, getDevice().getRootDeviceIndex());
         } else {
-            pImage->setImageArg(surfaceState, kernelArgInfo.isMediaBlockImage, mipLevel);
+            pImage->setImageArg(surfaceState, kernelArgInfo.isMediaBlockImage, mipLevel, getDevice().getRootDeviceIndex());
         }
 
         auto crossThreadData = reinterpret_cast<uint32_t *>(getCrossThreadData());

@@ -1004,7 +1004,7 @@ Image *Image::redescribe() {
 
 void Image::transferDataToHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) {
     transferData(hostPtr, hostPtrRowPitch, hostPtrSlicePitch,
-                 graphicsAllocation->getUnderlyingBuffer(), imageDesc.image_row_pitch, imageDesc.image_slice_pitch,
+                 memoryStorage, imageDesc.image_row_pitch, imageDesc.image_slice_pitch,
                  copySize, copyOffset);
 }
 
