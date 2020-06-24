@@ -82,6 +82,7 @@ class OfflineCompiler {
     void parseDebugSettings();
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
     MOCKABLE_VIRTUAL int buildSourceCode();
+    int buildIrBinary();
     void updateBuildLog(const char *pErrorString, const size_t errorStringSize);
     MOCKABLE_VIRTUAL bool generateElfBinary();
     std::string generateFilePathForIr(const std::string &fileNameBase) {
@@ -126,7 +127,8 @@ class OfflineCompiler {
     bool isSpirV = false;
     char *debugDataBinary = nullptr;
     size_t debugDataBinarySize = 0;
-
+    struct buildInfo;
+    std::unique_ptr<buildInfo> pBuildInfo;
     std::unique_ptr<OsLibrary> igcLib = nullptr;
     CIF::RAII::UPtr_t<CIF::CIFMain> igcMain = nullptr;
     CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> igcDeviceCtx = nullptr;

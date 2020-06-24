@@ -71,6 +71,7 @@ std::string convertToPascalCase(const std::string &inString) {
 
 OfflineCompiler::OfflineCompiler() = default;
 OfflineCompiler::~OfflineCompiler() {
+    pBuildInfo.reset();
     delete[] irBinary;
     delete[] genBinary;
     delete[] debugDataBinary;
@@ -93,6 +94,64 @@ OfflineCompiler *OfflineCompiler::create(size_t numArgs, const std::vector<std::
     return pOffCompiler;
 }
 
+struct OfflineCompiler::buildInfo {
+    std::unique_ptr<CIF::Builtins::BufferLatest, CIF::RAII::ReleaseHelper<CIF::Builtins::BufferLatest>> fclOptions;
+    std::unique_ptr<CIF::Builtins::BufferLatest, CIF::RAII::ReleaseHelper<CIF::Builtins::BufferLatest>> fclInternalOptions;
+    std::unique_ptr<IGC::OclTranslationOutputTagOCL, CIF::RAII::ReleaseHelper<IGC::OclTranslationOutputTagOCL>> fclOutput;
+    IGC::CodeType::CodeType_t intermediateRepresentation;
+};
+
+int OfflineCompiler::buildIrBinary() {
+    int retVal = SUCCESS;
+    UNRECOVERABLE_IF(fclDeviceCtx == nullptr);
+    pBuildInfo->intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl
+                                                         : (useLlvmBc ? IGC::CodeType::llvmBc : preferredIntermediateRepresentation);
+
+    //sourceCode.size() returns the number of characters without null terminated char
+    auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), sourceCode.c_str(), sourceCode.size() + 1);
+    pBuildInfo->fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), options.c_str(), options.size());
+    pBuildInfo->fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), internalOptions.c_str(), internalOptions.size());
+    auto err = CIF::Builtins::CreateConstBuffer(fclMain.get(), nullptr, 0);
+
+    auto fclTranslationCtx = fclDeviceCtx->CreateTranslationCtx(IGC::CodeType::oclC, pBuildInfo->intermediateRepresentation, err.get());
+
+    if (true == NEO::areNotNullptr(err->GetMemory<char>())) {
+        updateBuildLog(err->GetMemory<char>(), err->GetSizeRaw());
+        retVal = CL_BUILD_PROGRAM_FAILURE;
+        return retVal;
+    }
+
+    if (false == NEO::areNotNullptr(fclSrc.get(), pBuildInfo->fclOptions.get(), pBuildInfo->fclInternalOptions.get(),
+                                    fclTranslationCtx.get())) {
+        retVal = OUT_OF_HOST_MEMORY;
+        return retVal;
+    }
+
+    pBuildInfo->fclOutput = fclTranslationCtx->Translate(fclSrc.get(), pBuildInfo->fclOptions.get(),
+                                                         pBuildInfo->fclInternalOptions.get(), nullptr, 0);
+
+    if (pBuildInfo->fclOutput == nullptr) {
+        retVal = OUT_OF_HOST_MEMORY;
+        return retVal;
+    }
+
+    UNRECOVERABLE_IF(pBuildInfo->fclOutput->GetBuildLog() == nullptr);
+    UNRECOVERABLE_IF(pBuildInfo->fclOutput->GetOutput() == nullptr);
+
+    if (pBuildInfo->fclOutput->Successful() == false) {
+        updateBuildLog(pBuildInfo->fclOutput->GetBuildLog()->GetMemory<char>(), pBuildInfo->fclOutput->GetBuildLog()->GetSizeRaw());
+        retVal = BUILD_PROGRAM_FAILURE;
+        return retVal;
+    }
+
+    storeBinary(irBinary, irBinarySize, pBuildInfo->fclOutput->GetOutput()->GetMemory<char>(), pBuildInfo->fclOutput->GetOutput()->GetSizeRaw());
+    isSpirV = pBuildInfo->intermediateRepresentation == IGC::CodeType::spirV;
+
+    updateBuildLog(pBuildInfo->fclOutput->GetBuildLog()->GetMemory<char>(), pBuildInfo->fclOutput->GetBuildLog()->GetSizeRaw());
+
+    return retVal;
+}
+
 int OfflineCompiler::buildSourceCode() {
     int retVal = SUCCESS;
 
@@ -106,53 +165,13 @@ int OfflineCompiler::buildSourceCode() {
         CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> igcOutput;
         bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
         if (false == inputIsIntermediateRepresentation) {
-            UNRECOVERABLE_IF(fclDeviceCtx == nullptr);
-            IGC::CodeType::CodeType_t intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl
-                                                                               : (useLlvmBc ? IGC::CodeType::llvmBc : preferredIntermediateRepresentation);
-            // sourceCode.size() returns the number of characters without null terminated char
-            auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), sourceCode.c_str(), sourceCode.size() + 1);
-            auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), options.c_str(), options.size());
-            auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), internalOptions.c_str(), internalOptions.size());
-            auto err = CIF::Builtins::CreateConstBuffer(fclMain.get(), nullptr, 0);
-
-            auto fclTranslationCtx = fclDeviceCtx->CreateTranslationCtx(IGC::CodeType::oclC, intermediateRepresentation, err.get());
-            auto igcTranslationCtx = igcDeviceCtx->CreateTranslationCtx(intermediateRepresentation, IGC::CodeType::oclGenBin);
-
-            if (true == NEO::areNotNullptr(err->GetMemory<char>())) {
-                updateBuildLog(err->GetMemory<char>(), err->GetSizeRaw());
-                retVal = CL_BUILD_PROGRAM_FAILURE;
+            retVal = buildIrBinary();
+            if (retVal != SUCCESS)
                 break;
-            }
 
-            if (false == NEO::areNotNullptr(fclSrc.get(), fclOptions.get(), fclInternalOptions.get(),
-                                            fclTranslationCtx.get(), igcTranslationCtx.get())) {
-                retVal = OUT_OF_HOST_MEMORY;
-                break;
-            }
-
-            auto fclOutput = fclTranslationCtx->Translate(fclSrc.get(), fclOptions.get(),
-                                                          fclInternalOptions.get(), nullptr, 0);
-
-            if (fclOutput == nullptr) {
-                retVal = OUT_OF_HOST_MEMORY;
-                break;
-            }
-
-            UNRECOVERABLE_IF(fclOutput->GetBuildLog() == nullptr);
-            UNRECOVERABLE_IF(fclOutput->GetOutput() == nullptr);
-
-            if (fclOutput->Successful() == false) {
-                updateBuildLog(fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
-                retVal = BUILD_PROGRAM_FAILURE;
-                break;
-            }
-
-            storeBinary(irBinary, irBinarySize, fclOutput->GetOutput()->GetMemory<char>(), fclOutput->GetOutput()->GetSizeRaw());
-            isSpirV = intermediateRepresentation == IGC::CodeType::spirV;
-            updateBuildLog(fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
-
-            igcOutput = igcTranslationCtx->Translate(fclOutput->GetOutput(), fclOptions.get(),
-                                                     fclInternalOptions.get(),
+            auto igcTranslationCtx = igcDeviceCtx->CreateTranslationCtx(pBuildInfo->intermediateRepresentation, IGC::CodeType::oclGenBin);
+            igcOutput = igcTranslationCtx->Translate(pBuildInfo->fclOutput->GetOutput(), pBuildInfo->fclOptions.get(),
+                                                     pBuildInfo->fclInternalOptions.get(),
                                                      nullptr, 0);
 
         } else {
@@ -186,7 +205,6 @@ int OfflineCompiler::build() {
     int retVal = SUCCESS;
 
     retVal = buildSourceCode();
-
     generateElfBinary();
     if (dumpFiles) {
         writeOutAllFiles();
@@ -252,7 +270,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     const char *source = nullptr;
     std::unique_ptr<char[]> sourceFromFile;
     size_t sourceFromFileSize = 0;
-
+    this->pBuildInfo = std::make_unique<buildInfo>();
     retVal = parseCommandLine(numArgs, allArgs);
     if (retVal != SUCCESS) {
         return retVal;
