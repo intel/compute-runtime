@@ -76,49 +76,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_handle_t hEvent, bool beforeWalker) {
-    if (!hEvent) {
-        return;
-    }
-    if (isCopyOnly()) {
-        appendEventForProfilingCopyCommand(hEvent, beforeWalker);
-    } else {
-        auto event = Event::fromHandle(hEvent);
-
-        if (!event->isTimestampEvent) {
-            return;
-        }
-
-        commandContainer.addToResidencyContainer(&event->getAllocation());
-        auto baseAddr = event->getGpuAddress();
-
-        if (beforeWalker) {
-            auto contextStartAddr = baseAddr;
-            auto globalStartAddr = baseAddr + offsetof(KernelTimestampEvent, globalStart);
-
-            NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, globalStartAddr);
-            NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextStartAddr);
-
-        } else {
-            auto contextEndAddr = baseAddr + offsetof(KernelTimestampEvent, contextEnd);
-            auto globalEndAddr = baseAddr + offsetof(KernelTimestampEvent, globalEnd);
-            NEO::PipeControlArgs args;
-            args.dcFlushEnable = false;
-
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
-
-            NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), REG_GLOBAL_TIMESTAMP_LDW, globalEndAddr);
-            NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddr);
-
-            args.dcFlushEnable = (event->signalScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
-            if (args.dcFlushEnable) {
-                NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
-            }
-        }
-    }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::useMemCopyToBlitFill(size_t patternSize) {
     return patternSize > sizeof(uint32_t);
 }
