@@ -21,7 +21,7 @@ class TemperatureImp : public NEO::NonCopyableClass, public Temperature {
     ze_result_t temperatureGetState(double *pTemperature) override;
 
     TemperatureImp() = default;
-    TemperatureImp(OsSysman *pOsSysman);
+    TemperatureImp(OsSysman *pOsSysman, zet_temp_sensors_t type);
     ~TemperatureImp() override;
 
     OsTemperature *pOsTemperature = nullptr;

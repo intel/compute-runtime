@@ -185,7 +185,7 @@ ze_result_t FsAccess::listDirectory(const std::string path, std::vector<std::str
     }
     ::closedir(procDir);
     // Check if in above while loop, readdir encountered any error.
-    if (errno != 0) {
+    if ((errno != 0) && (errno != ENOENT)) {
         list.clear();
         return getResult(errno);
     }

@@ -32,9 +32,9 @@ void TemperatureImp::init() {
     pOsTemperature->setSensorType(this->sensorType);
 }
 
-TemperatureImp::TemperatureImp(OsSysman *pOsSysman) {
+TemperatureImp::TemperatureImp(OsSysman *pOsSysman, zet_temp_sensors_t type) {
     pOsTemperature = OsTemperature::create(pOsSysman);
-
+    this->sensorType = type;
     init();
 }
 

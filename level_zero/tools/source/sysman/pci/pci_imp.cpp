@@ -78,9 +78,9 @@ void PciImp::init() {
                &pciProperties.address.device, &pciProperties.address.function);
     }
 
-    uint32_t maxLinkWidth, gen;
-    uint64_t maxBandWidth;
-    double maxLinkSpeed;
+    uint32_t maxLinkWidth = 0, gen = 0;
+    uint64_t maxBandWidth = 0;
+    double maxLinkSpeed = 0;
     pOsPci->getMaxLinkSpeed(maxLinkSpeed);
     pOsPci->getMaxLinkWidth(maxLinkWidth);
     maxBandWidth = maxLinkWidth * convertPcieSpeedFromGTsToBs(maxLinkSpeed);

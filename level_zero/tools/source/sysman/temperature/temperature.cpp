@@ -18,8 +18,7 @@ TemperatureHandleContext::~TemperatureHandleContext() {
 }
 
 void TemperatureHandleContext::createHandle(zet_temp_sensors_t type) {
-    Temperature *pTemperature = new TemperatureImp(pOsSysman);
-    pTemperature->sensorType = type;
+    Temperature *pTemperature = new TemperatureImp(pOsSysman, type);
     if (pTemperature->initSuccess == true) {
         handleList.push_back(pTemperature);
     } else {
