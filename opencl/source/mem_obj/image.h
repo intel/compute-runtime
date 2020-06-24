@@ -304,7 +304,7 @@ class ImageHw : public Image {
     void setMediaImageArg(void *memory, uint32_t rootDeviceIndex) override;
     void setMediaSurfaceRotation(void *memory) override;
     void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override;
-    void appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState);
+    void appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState, uint32_t rootDeviceIndex);
     void appendSurfaceStateDepthParams(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
     void appendSurfaceStateExt(void *memory);
     void transformImage2dArrayTo3d(void *memory) override;

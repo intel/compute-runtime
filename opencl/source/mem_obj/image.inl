@@ -90,7 +90,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         setAuxParamsForCCS<GfxFamily>(surfaceState, gmm);
     }
     appendSurfaceStateDepthParams(surfaceState, gmm);
-    appendSurfaceStateParams(surfaceState);
+    appendSurfaceStateParams(surfaceState, rootDeviceIndex);
     appendSurfaceStateExt(surfaceState);
 }
 
@@ -121,7 +121,7 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
 }
 
 template <typename GfxFamily>
-void ImageHw<GfxFamily>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState) {
+void ImageHw<GfxFamily>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState, uint32_t rootDeviceIndex) {
 }
 
 template <typename GfxFamily>
