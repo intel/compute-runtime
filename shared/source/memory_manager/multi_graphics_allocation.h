@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-class MultiGraphicsAllocation : NonCopyableOrMovableClass {
+class MultiGraphicsAllocation : NonCopyableClass {
   public:
     MultiGraphicsAllocation(uint32_t maxRootDeviceIndex);
 

@@ -32,9 +32,11 @@ union SURFACE_STATE_BUFFER_LENGTH {
 };
 
 template <typename GfxFamily>
-void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument) {
-    EncodeSurfaceState<GfxFamily>::encodeBuffer(memory, getBufferAddress(), getSurfaceSize(alignSizeForAuxTranslation), getMocsValue(disableL3, isReadOnlyArgument), true);
-    EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(multiGraphicsAllocation.getDefaultGraphicsAllocation(), rootDeviceEnvironment->getGmmHelper(), memory, forceNonAuxMode, isReadOnlyArgument);
+void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument, uint32_t rootDeviceIndex) {
+    auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
+    EncodeSurfaceState<GfxFamily>::encodeBuffer(memory, getBufferAddress(rootDeviceIndex), getSurfaceSize(alignSizeForAuxTranslation, rootDeviceIndex), getMocsValue(disableL3, isReadOnlyArgument, rootDeviceIndex), true);
+    EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex),
+                                                           executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper(), memory, forceNonAuxMode, isReadOnlyArgument);
 
     appendBufferState(memory, context, graphicsAllocation, isReadOnlyArgument);
     appendSurfaceStateExt(memory);

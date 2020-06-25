@@ -79,7 +79,7 @@ class MockObject : public MockObjectBase<BaseType> {};
 template <>
 class MockObject<Buffer> : public MockObjectBase<Buffer> {
   public:
-    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly) override {}
+    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, uint32_t rootDeviceIndex) override {}
 };
 
 template <>
@@ -293,7 +293,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
                           CL_MEM_USE_HOST_PTR, 0, sizeof(data), &data, &data, &mockGfxAllocation, true, false, false) {
     }
 
-    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly) override {
+    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, uint32_t rootDeviceIndex) override {
     }
 };
 

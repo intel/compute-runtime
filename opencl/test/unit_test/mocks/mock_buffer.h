@@ -48,7 +48,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
             this->graphicsAllocation = &this->mockGfxAllocation;
         }
     }
-    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly) override {
+    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, uint32_t rootDeviceIndex) override {
         Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), 0, (externalAlloc != nullptr) ? externalAlloc : &mockGfxAllocation, 0, 0);
     }
     GraphicsAllocation *externalAlloc = nullptr;
@@ -61,7 +61,7 @@ class AlignedBuffer : public MockBufferStorage, public Buffer {
     }
     AlignedBuffer(GraphicsAllocation *gfxAllocation) : MockBufferStorage(), Buffer(nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, nullptr), CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64), gfxAllocation, true, false, false) {
     }
-    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly) override {
+    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, uint32_t rootDeviceIndex) override {
         Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0);
     }
 };
@@ -73,7 +73,7 @@ class UnalignedBuffer : public MockBufferStorage, public Buffer {
     }
     UnalignedBuffer(GraphicsAllocation *gfxAllocation) : MockBufferStorage(true), Buffer(nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, nullptr), CL_MEM_USE_HOST_PTR, 0, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4), gfxAllocation, false, false, false) {
     }
-    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly) override {
+    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, uint32_t rootDeviceIndex) override {
         Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), 0, &mockGfxAllocation, 0, 0);
     }
 };

@@ -135,7 +135,7 @@ class Buffer : public MemObj {
     bool isSubBuffer();
     bool isValidSubBufferOffset(size_t offset);
     uint64_t setArgStateless(void *memory, uint32_t patchSize, uint32_t rootDeviceIndex, bool set32BitAddressing);
-    virtual void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly) = 0;
+    virtual void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, uint32_t rootDeviceIndex) = 0;
     bool bufferRectPitchSet(const size_t *bufferOrigin,
                             const size_t *region,
                             size_t &bufferRowPitch,
@@ -151,9 +151,9 @@ class Buffer : public MemObj {
     bool isReadWriteOnCpuAllowed(uint32_t rootDeviceIndex);
     bool isReadWriteOnCpuPreferred(void *ptr, size_t size, const Device &device);
 
-    uint32_t getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) const;
-    uint32_t getSurfaceSize(bool alignSizeForAuxTranslation) const;
-    uint64_t getBufferAddress() const;
+    uint32_t getMocsValue(bool disableL3Cache, bool isReadOnlyArgument, uint32_t rootDeviceIndex) const;
+    uint32_t getSurfaceSize(bool alignSizeForAuxTranslation, uint32_t rootDeviceIndex) const;
+    uint64_t getBufferAddress(uint32_t rootDeviceIndex) const;
 
     bool isCompressed(uint32_t rootDeviceIndex) const;
 
@@ -204,7 +204,7 @@ class BufferHw : public Buffer {
         : Buffer(context, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
                  zeroCopy, isHostPtrSVM, isObjectRedescribed) {}
 
-    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument) override;
+    void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument, uint32_t rootDeviceIndex) override;
     void appendBufferState(void *memory, Context *context, GraphicsAllocation *gfxAllocation, bool isReadOnlyArgument);
     void appendSurfaceStateExt(void *memory);
 
