@@ -564,7 +564,7 @@ bool Buffer::isReadWriteOnCpuAllowed(uint32_t rootDeviceIndex) {
     return true;
 }
 
-bool Buffer::isReadWriteOnCpuPreffered(void *ptr, size_t size, const Device &device) {
+bool Buffer::isReadWriteOnCpuPreferred(void *ptr, size_t size, const Device &device) {
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(device.getRootDeviceIndex());
     if (MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
         //if buffer is not zero copy and pointer is aligned it will be more beneficial to do the transfer on GPU

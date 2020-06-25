@@ -585,7 +585,7 @@ TEST_F(KernelPrivateSurfaceTest, WhenChangingResidencyThenCsrResidencySizeIsUpda
     delete pKernel;
 }
 
-TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWhenKernelIsBeingDestroyedThenAllocationIsAddedToDefferedFreeList) {
+TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWhenKernelIsBeingDestroyedThenAllocationIsAddedToDeferredFreeList) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
     SPatchAllocateStatelessPrivateSurface tokenSPS;
     tokenSPS.SurfaceStateHeapOffset = 64;

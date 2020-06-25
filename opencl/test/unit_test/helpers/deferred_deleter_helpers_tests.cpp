@@ -12,12 +12,12 @@
 
 using namespace NEO;
 
-TEST(deferredDeleterHelper, DefferedDeleterIsDisabledWhenCheckIFDeferrDeleterIsEnabledThenCorrectValueReturned) {
+TEST(deferredDeleterHelper, DeferredDeleterIsDisabledWhenCheckIFDeferrDeleterIsEnabledThenCorrectValueReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableDeferredDeleter.set(false);
     EXPECT_FALSE(isDeferredDeleterEnabled());
 }
-TEST(deferredDeleterHelper, DefferedDeleterIsEnabledWhenCheckIFDeferrDeleterIsEnabledThenCorrectValueReturned) {
+TEST(deferredDeleterHelper, DeferredDeleterIsEnabledWhenCheckIFDeferrDeleterIsEnabledThenCorrectValueReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableDeferredDeleter.set(true);
     EXPECT_TRUE(isDeferredDeleterEnabled());

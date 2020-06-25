@@ -151,7 +151,7 @@ TEST_F(CompilerInterfaceTest, WhenCompilingToIsaThenSuccessIsReturned) {
     EXPECT_EQ(TranslationOutput::ErrorCode::Success, err);
 }
 
-TEST_F(CompilerInterfaceTest, WhenPrefferedIntermediateRepresentationSpecifiedThenPreserveIt) {
+TEST_F(CompilerInterfaceTest, WhenPreferredIntermediateRepresentationSpecifiedThenPreserveIt) {
     TranslationOutput translationOutput;
     inputArgs.preferredIntermediateType = IGC::CodeType::llvmLl;
     auto err = pCompilerInterface->build(*pDevice, inputArgs, translationOutput);

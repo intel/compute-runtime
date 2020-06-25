@@ -149,7 +149,7 @@ class Buffer : public MemObj {
     void transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) override;
 
     bool isReadWriteOnCpuAllowed(uint32_t rootDeviceIndex);
-    bool isReadWriteOnCpuPreffered(void *ptr, size_t size, const Device &device);
+    bool isReadWriteOnCpuPreferred(void *ptr, size_t size, const Device &device);
 
     uint32_t getMocsValue(bool disableL3Cache, bool isReadOnlyArgument) const;
     uint32_t getSurfaceSize(bool alignSizeForAuxTranslation) const;

@@ -680,7 +680,7 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelA
     EXPECT_EQ(0u, pProgram->getNumKernels());
 }
 
-HWTEST_P(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledButGpuIsNotYetDoneThenKernelAllocationIsPutOnDefferedFreeListAndCsrRegistersCacheFlush) {
+HWTEST_P(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledButGpuIsNotYetDoneThenKernelAllocationIsPutOnDeferredFreeListAndCsrRegistersCacheFlush) {
     cl_device_id device = pClDevice;
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());

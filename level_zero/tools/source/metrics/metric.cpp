@@ -31,7 +31,7 @@ struct MetricGroupDomains {
     bool isActivated(const zet_metric_group_handle_t hMetricGroup);
 
   protected:
-    bool activateMetricGroupDeffered(const zet_metric_group_handle_t hMetricGroup);
+    bool activateMetricGroupDeferred(const zet_metric_group_handle_t hMetricGroup);
     bool activateEventMetricGroup(const zet_metric_group_handle_t hMetricGroup);
 
   protected:
@@ -229,7 +229,7 @@ ze_result_t MetricGroupDomains::activateDeferred(const uint32_t count,
         DEBUG_BREAK_IF(!phMetricGroups[i]);
 
         // Try to associate it with a domain (oa, ...).
-        if (!activateMetricGroupDeffered(phMetricGroups[i])) {
+        if (!activateMetricGroupDeferred(phMetricGroups[i])) {
             return ZE_RESULT_ERROR_UNKNOWN;
         }
     }
@@ -237,7 +237,7 @@ ze_result_t MetricGroupDomains::activateDeferred(const uint32_t count,
     return ZE_RESULT_SUCCESS;
 }
 
-bool MetricGroupDomains::activateMetricGroupDeffered(const zet_metric_group_handle_t hMetricGroup) {
+bool MetricGroupDomains::activateMetricGroupDeferred(const zet_metric_group_handle_t hMetricGroup) {
 
     const auto properites = MetricGroup::getProperties(hMetricGroup);
     const auto domain = properites.domain;
