@@ -144,11 +144,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchMultipleKernelsInd
     }
 
     const bool haveLaunchArguments = pLaunchArgumentsBuffer != nullptr;
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(pNumLaunchArguments);
+    auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    commandContainer.addToResidencyContainer(alloc);
 
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     for (uint32_t i = 0; i < numKernels; i++) {
-        NEO::EncodeMathMMIO<GfxFamily>::encodeGreaterThanPredicate(commandContainer,
-                                                                   reinterpret_cast<uint64_t>(pNumLaunchArguments), i);
+        NEO::EncodeMathMMIO<GfxFamily>::encodeGreaterThanPredicate(commandContainer, alloc->getGpuAddress(), i);
 
         auto ret = appendLaunchKernelWithParams(phKernels[i],
                                                 haveLaunchArguments ? &pLaunchArgumentsBuffer[i] : nullptr,
@@ -1429,12 +1431,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
         auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         commandContainer.addToResidencyContainer(alloc);
 
+        auto groupCountOffset = ptrDiff(pThreadGroupDimensions, alloc->getUnderlyingBuffer());
+        auto groupCount = ptrOffset(alloc->getGpuAddress(), groupCountOffset);
+
         NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMX,
-                                                 ptrOffset(alloc->getGpuAddress(), offsetof(ze_group_count_t, groupCountX)));
+                                                 ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountX)));
         NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMY,
-                                                 ptrOffset(alloc->getGpuAddress(), offsetof(ze_group_count_t, groupCountY)));
+                                                 ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountY)));
         NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMZ,
-                                                 ptrOffset(alloc->getGpuAddress(), offsetof(ze_group_count_t, groupCountZ)));
+                                                 ptrOffset(groupCount, offsetof(ze_group_count_t, groupCountZ)));
     }
 
     return ZE_RESULT_SUCCESS;

@@ -622,5 +622,65 @@ HWTEST_F(CommandListAppendLaunchKernel, givenMultipleValidWaitEventsAddsSemaphor
     ASSERT_EQ(2, static_cast<int>(itor.size()));
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMultipleKernelsIndirectThenEnablesPredicate) {
+    createKernel();
+
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+    auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, false));
+    const ze_kernel_handle_t launchFn = kernel->toHandle();
+    uint32_t *numLaunchArgs;
+    auto result = device->getDriverHandle()->allocDeviceMem(
+        device->toHandle(), ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
+    result = commandList->appendLaunchMultipleKernelsIndirect(1, &launchFn, numLaunchArgs, nullptr, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    *numLaunchArgs = 0;
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+    auto itorWalker = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorWalker);
+
+    auto cmd = genCmdCast<GPGPU_WALKER *>(*itorWalker);
+    EXPECT_TRUE(cmd->getPredicateEnable());
+    device->getDriverHandle()->freeMem(reinterpret_cast<void *>(numLaunchArgs));
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMultipleKernelsThenUsesMathAndWalker) {
+    createKernel();
+
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+    using MI_MATH = typename FamilyType::MI_MATH;
+    auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, false));
+    const ze_kernel_handle_t launchFn[3] = {kernel->toHandle(), kernel->toHandle(), kernel->toHandle()};
+    uint32_t *numLaunchArgs;
+    const uint32_t numKernels = 3;
+    auto result = device->getDriverHandle()->allocDeviceMem(
+        device->toHandle(), ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
+    result = commandList->appendLaunchMultipleKernelsIndirect(numKernels, launchFn, numLaunchArgs, nullptr, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    *numLaunchArgs = 2;
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+
+    auto itor = cmdList.begin();
+
+    for (uint32_t i = 0; i < numKernels; i++) {
+        itor = find<MI_MATH *>(itor, cmdList.end());
+        ASSERT_NE(cmdList.end(), itor);
+
+        itor = find<GPGPU_WALKER *>(itor, cmdList.end());
+        ASSERT_NE(cmdList.end(), itor);
+    }
+
+    itor = find<MI_MATH *>(itor, cmdList.end());
+    ASSERT_EQ(cmdList.end(), itor);
+    device->getDriverHandle()->freeMem(reinterpret_cast<void *>(numLaunchArgs));
+}
+
 } // namespace ult
 } // namespace L0
