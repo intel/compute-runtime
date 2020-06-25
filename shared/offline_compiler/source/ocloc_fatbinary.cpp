@@ -56,18 +56,32 @@ PRODUCT_FAMILY asProductId(ConstStringRef product, const std::vector<PRODUCT_FAM
     return IGFX_UNKNOWN;
 }
 
-GFXCORE_FAMILY asGfxCoreId(ConstStringRef core) {
-    ConstStringRef coreIgnoreG(core.begin() + 1, core.size() - 1);
+std::vector<GFXCORE_FAMILY> asGfxCoreIdList(ConstStringRef core) {
+    std::vector<GFXCORE_FAMILY> result;
+
+    constexpr size_t genPrefixLength = 3;
+    auto coreSuffixBeg = core.begin() + genPrefixLength;
+    size_t coreSuffixLength = core.end() - coreSuffixBeg;
+    ConstStringRef coreSuffix(coreSuffixBeg, coreSuffixLength);
+
     for (unsigned int coreId = 0; coreId < IGFX_MAX_CORE; ++coreId) {
-        if (nullptr == familyName[coreId]) {
+        auto name = familyName[coreId];
+        if (name == nullptr)
             continue;
-        }
-        if (ConstStringRef(familyName[coreId] + 1, strlen(familyName[coreId]) - 1) == coreIgnoreG) {
-            return static_cast<GFXCORE_FAMILY>(coreId);
-        }
+
+        auto nameSuffix = name + genPrefixLength;
+        auto nameNumberEnd = nameSuffix;
+        for (; *nameNumberEnd != '\0' && isdigit(*nameNumberEnd); ++nameNumberEnd)
+            ;
+        size_t nameNumberLength = nameNumberEnd - nameSuffix;
+        if (nameNumberLength > coreSuffixLength)
+            continue;
+
+        if (ConstStringRef(nameSuffix, std::min(coreSuffixLength, strlen(nameSuffix))) == coreSuffix)
+            result.push_back(static_cast<GFXCORE_FAMILY>(coreId));
     }
 
-    return IGFX_UNKNOWN_CORE;
+    return result;
 }
 
 void appendPlatformsForGfxCore(GFXCORE_FAMILY core, const std::vector<PRODUCT_FAMILY> &allSupportedPlatforms, std::vector<PRODUCT_FAMILY> &out) {
@@ -99,13 +113,14 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
             if (range.size() == 1) {
                 // open range , from-max or min-to
                 if (range[0].contains("gen")) {
-                    auto coreId = asGfxCoreId(range[0]);
-                    if (IGFX_UNKNOWN_CORE == coreId) {
+                    auto coreIdList = asGfxCoreIdList(range[0]);
+                    if (coreIdList.empty()) {
                         argHelper->printf("Unknown device : %s\n", set.str().c_str());
                         return {};
                     }
                     if ('-' == set[0]) {
                         // to
+                        auto coreId = coreIdList.back();
                         unsigned int coreIt = IGFX_UNKNOWN_CORE;
                         ++coreIt;
                         while (coreIt <= static_cast<unsigned int>(coreId)) {
@@ -114,7 +129,7 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
                         }
                     } else {
                         // from
-                        unsigned int coreIt = coreId;
+                        unsigned int coreIt = coreIdList.front();
                         while (coreIt < static_cast<unsigned int>(IGFX_MAX_CORE)) {
                             appendPlatformsForGfxCore(static_cast<GFXCORE_FAMILY>(coreIt), allSupportedPlatforms, requestedPlatforms);
                             ++coreIt;
@@ -142,16 +157,19 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
                         argHelper->printf("Ranges mixing platforms and gfxCores is not supported : %s - should be genFrom-genTo or platformFrom-platformTo\n", set.str().c_str());
                         return {};
                     }
-                    auto coreFrom = asGfxCoreId(range[0]);
-                    auto coreTo = asGfxCoreId(range[1]);
-                    if (IGFX_UNKNOWN_CORE == coreFrom) {
+                    auto coreFromList = asGfxCoreIdList(range[0]);
+                    auto coreToList = asGfxCoreIdList(range[1]);
+                    if (coreFromList.empty()) {
                         argHelper->printf("Unknown device : %s\n", set.str().c_str());
                         return {};
                     }
-                    if (IGFX_UNKNOWN_CORE == coreTo) {
+                    if (coreToList.empty()) {
                         argHelper->printf("Unknown device : %s\n", set.str().c_str());
                         return {};
                     }
+
+                    auto coreFrom = coreFromList.front();
+                    auto coreTo = coreToList.back();
                     if (coreFrom > coreTo) {
                         std::swap(coreFrom, coreTo);
                     }
@@ -183,12 +201,13 @@ std::vector<ConstStringRef> getTargetPlatformsForFatbinary(ConstStringRef device
             if (set.size() == genArg.size()) {
                 argHelper->printf("Invalid gen-based device : %s - gen should be followed by a number\n", set.str().c_str());
             } else {
-                auto coreId = asGfxCoreId(set);
-                if (IGFX_UNKNOWN_CORE == coreId) {
+                auto coreIdList = asGfxCoreIdList(set);
+                if (coreIdList.empty()) {
                     argHelper->printf("Unknown device : %s\n", set.str().c_str());
                     return {};
                 }
-                appendPlatformsForGfxCore(coreId, allSupportedPlatforms, requestedPlatforms);
+                for (auto coreId : coreIdList)
+                    appendPlatformsForGfxCore(coreId, allSupportedPlatforms, requestedPlatforms);
             }
         } else {
             auto prodId = asProductId(set, allSupportedPlatforms);

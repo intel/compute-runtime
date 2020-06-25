@@ -646,7 +646,25 @@ std::string getDevicesTypes() {
     std::ostringstream os;
     for (auto it = prefixes.begin(); it != prefixes.end(); it++) {
         if (it != prefixes.begin())
-            os << ",";
+            os << ", ";
+        os << *it;
+    }
+
+    return os.str();
+}
+
+std::string getDevicesFamilies() {
+    std::list<std::string> prefixes;
+    for (unsigned int i = 0; i < IGFX_MAX_CORE; ++i) {
+        if (familyName[i] == nullptr)
+            continue;
+        prefixes.push_back(familyName[i]);
+    }
+
+    std::ostringstream os;
+    for (auto it = prefixes.begin(); it != prefixes.end(); it++) {
+        if (it != prefixes.begin())
+            os << ", ";
         os << *it;
     }
 
@@ -665,12 +683,12 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                 OpenCL C kernel language).
 
   -device <device_type>         Target device.
-                                <device_type> can be: %s
+                                <device_type> can be: %s, %s - can be single or multiple target devices.
                                 If multiple target devices are provided, ocloc
                                 will compile for each of these targets and will
                                 create a fatbinary archive that contains all of
                                 device binaries produced this way.
-                                Supported -device patterns examples :
+                                Supported -device patterns examples:
                                 -device skl        ; will compile 1 target
                                 -device skl,icllp  ; will compile 2 targets
                                 -device skl-icllp  ; will compile all targets
@@ -763,7 +781,8 @@ Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
     ocloc -file source_file.cl -device skl
 )===",
-                      NEO::getDevicesTypes().c_str());
+                      NEO::getDevicesTypes().c_str(),
+                      NEO::getDevicesFamilies().c_str());
 }
 
 void OfflineCompiler::storeBinary(
