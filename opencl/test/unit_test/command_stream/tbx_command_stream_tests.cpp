@@ -820,7 +820,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenProcessResidencyIsCalledWithDumpT
     memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
     tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
     tbxCsr->setTbxWritable(false, *gfxAllocation);
 
     tbxCsr->dumpTbxNonWritable = true;
@@ -840,7 +840,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenProcessResidencyIsCalledWithoutDu
     memoryManager.reset(new OsAgnosticMemoryManager(*pDevice->executionEnvironment));
     tbxCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
     tbxCsr->setTbxWritable(false, *gfxAllocation);
 
     EXPECT_FALSE(tbxCsr->dumpTbxNonWritable);
@@ -978,7 +978,7 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalle
     auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
 
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
 
     tbxCsr.dumpAllocation(*gfxAllocation);
     EXPECT_FALSE(mockHardwareContext->dumpSurfaceCalled);
@@ -994,7 +994,7 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWritableWhenDumpAllocatio
     auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
 
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
 
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
@@ -1016,7 +1016,7 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWritableWhenDumpAllocatio
     auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
 
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
     EXPECT_TRUE(AubAllocDump::isWritableBuffer(*gfxAllocation));
 
@@ -1038,7 +1038,7 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalle
     auto mockHardwareContext = static_cast<MockHardwareContext *>(tbxCsr.hardwareContextController->hardwareContexts[0].get());
 
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
 
     for (bool dumpable : {false, true}) {
         gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
@@ -1064,7 +1064,7 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalle
     EXPECT_EQ(nullptr, executionEnvironment.rootDeviceEnvironments[0]->aubCenter->getAubManager());
 
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
 
     tbxCsr.dumpAllocation(*gfxAllocation);
     EXPECT_TRUE(tbxCsr.dumpAllocationCalled);

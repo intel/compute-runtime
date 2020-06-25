@@ -132,7 +132,7 @@ HWTEST_F(AubAllocDumpTests, givenNonWritableBufferWhenDumpAllocationIsCalledAndD
     DebugManager.flags.AUBDumpBufferFormat.set("BIN");
 
     auto memoryManager = pDevice->getMemoryManager();
-    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
 
     std::unique_ptr<AubFileStreamMock> mockAubFileStream(new AubFileStreamMock());
     auto format = AubAllocDump::getDumpFormat(*gfxAllocation);

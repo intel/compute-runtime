@@ -461,7 +461,7 @@ TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationWithPtr
 TEST_F(MemoryAllocatorTest, givenAllocationWithFragmentsWhenCallingFreeGraphicsMemoryThenDoNotCallHandleFenceCompletion) {
     auto size = 3u * MemoryConstants::pageSize;
     auto *ptr = reinterpret_cast<void *>(0xbeef1);
-    AllocationProperties properties{mockRootDeviceIndex, false, size, GraphicsAllocation::AllocationType::BUFFER, false, mockDeviceBitfield};
+    AllocationProperties properties{device->getRootDeviceIndex(), false, size, GraphicsAllocation::AllocationType::BUFFER, false, device->getDeviceBitfield()};
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, ptr);
     EXPECT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
@@ -488,7 +488,7 @@ TEST_F(MemoryAllocatorTest, GivenShareableEnabledAndDisabledWhenAskedToCreateGra
 }
 
 TEST_F(MemoryAllocatorTest, givenAllocationWithoutFragmentsWhenCallingFreeGraphicsMemoryThenCallHandleFenceCompletion) {
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({0, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, device->getDeviceBitfield()});
     EXPECT_EQ(0u, allocation->fragmentsStorage.fragmentCount);
 
     EXPECT_EQ(0u, memoryManager->handleFenceCompletionCalled);
@@ -645,7 +645,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAskedFor32BitAllocationWhenL
     memoryManager.forceLimitedRangeAllocator(0, 0xFFFFFFFFF);
 
     AllocationData allocationData;
-    memoryManager.getAllocationData(allocationData, {0, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER}, nullptr, StorageInfo{});
+    memoryManager.getAllocationData(allocationData, {mockRootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield}, nullptr, StorageInfo{});
     auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithAlignment(allocationData);
     ASSERT_NE(gfxAllocation, nullptr);
     EXPECT_NE(gfxAllocation->getGpuBaseAddress(), 0ull);
@@ -663,7 +663,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAskedForNon32BitAllocationWh
     memoryManager.forceLimitedRangeAllocator(0, 0xFFFFFFFFF);
 
     AllocationData allocationData;
-    memoryManager.getAllocationData(allocationData, {0, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER}, nullptr, StorageInfo{});
+    memoryManager.getAllocationData(allocationData, {mockRootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield}, nullptr, StorageInfo{});
     auto gfxAllocation = memoryManager.allocateGraphicsMemoryWithAlignment(allocationData);
     ASSERT_NE(gfxAllocation, nullptr);
     EXPECT_EQ(gfxAllocation->getGpuBaseAddress(), 0ull);
@@ -887,7 +887,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryThenMemoryPoolIsSystem64KBPages) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(true, false, executionEnvironment);
-    auto svmAllocation = memoryManager.allocateGraphicsMemoryWithProperties({0, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SVM_ZERO_COPY});
+    auto svmAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SVM_ZERO_COPY, mockDeviceBitfield});
     EXPECT_NE(nullptr, svmAllocation);
     EXPECT_EQ(MemoryPool::System64KBPages, svmAllocation->getMemoryPool());
     memoryManager.freeGraphicsMemory(svmAllocation);
@@ -896,7 +896,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryThen4KBGraphicsAllocationIsReturned) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
-    auto svmAllocation = memoryManager.allocateGraphicsMemoryWithProperties({0, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SVM_ZERO_COPY});
+    auto svmAllocation = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::SVM_ZERO_COPY, mockDeviceBitfield});
     EXPECT_EQ(MemoryPool::System4KBPages, svmAllocation->getMemoryPool());
     memoryManager.freeGraphicsMemory(svmAllocation);
 }
@@ -1143,11 +1143,11 @@ TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenHostMemoryAllocationIsCre
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(true, false, executionEnvironment);
 
-    GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryWithProperties({0, MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY});
+    GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield});
     EXPECT_NE(nullptr, galloc);
     memoryManager.freeGraphicsMemory(galloc);
 
-    galloc = memoryManager.allocateGraphicsMemoryWithProperties({0, MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY});
+    galloc = memoryManager.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, MemoryConstants::pageSize64k, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield});
     EXPECT_NE(nullptr, galloc);
     EXPECT_NE(nullptr, galloc->getUnderlyingBuffer());
     EXPECT_EQ(0u, (uintptr_t)galloc->getUnderlyingBuffer() % MemoryConstants::pageSize64k);

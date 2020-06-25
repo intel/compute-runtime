@@ -88,7 +88,7 @@ TEST_F(SVMMemoryAllocatorTest, whenSVMAllocationIsFreedThenCannotBeGotAgain) {
 TEST_F(SVMMemoryAllocatorTest, givenSvmManagerWhenOperatedOnThenCorrectAllocationIsInsertedReturnedAndRemoved) {
     int data;
     size_t size = sizeof(data);
-    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({0, size, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, size, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield});
 
     NEO::SvmAllocationData svmData;
     svmData.gpuAllocation = allocation;

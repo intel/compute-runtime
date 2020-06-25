@@ -438,7 +438,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafDisabledWhenFlushIsCalledWithAll
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr};
 
-    auto linearStreamAllocation = memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::LINEAR_STREAM});
+    auto linearStreamAllocation = memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::LINEAR_STREAM, device->getDeviceBitfield()});
     ASSERT_NE(nullptr, linearStreamAllocation);
     ResidencyContainer allocationsForResidency = {linearStreamAllocation};
 
@@ -473,7 +473,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithResi
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr};
 
-    auto linearStreamAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::LINEAR_STREAM}));
+    auto linearStreamAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::LINEAR_STREAM, device->getDeviceBitfield()}));
     ASSERT_NE(nullptr, linearStreamAllocation);
 
     csr->makeResident(*linearStreamAllocation);
@@ -497,7 +497,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr};
 
-    auto linearStreamAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::LINEAR_STREAM}));
+    auto linearStreamAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::LINEAR_STREAM, device->getDeviceBitfield()}));
     ASSERT_NE(nullptr, linearStreamAllocation);
     ResidencyContainer allocationsForResidency = {linearStreamAllocation};
 
@@ -518,7 +518,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr};
 
-    auto fillPatternAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::FILL_PATTERN}));
+    auto fillPatternAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::FILL_PATTERN, device->getDeviceBitfield()}));
     ASSERT_NE(nullptr, fillPatternAllocation);
     ResidencyContainer allocationsForResidency = {fillPatternAllocation};
 
@@ -539,7 +539,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr};
 
-    auto commandBufferAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::COMMAND_BUFFER}));
+    auto commandBufferAllocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties({csr->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
     ASSERT_NE(nullptr, commandBufferAllocation);
     ResidencyContainer allocationsForResidency = {commandBufferAllocation};
 
