@@ -200,7 +200,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         createPerDssBackedBufferCalled++;
         bool result = BaseClass::createPerDssBackedBuffer(device);
         if (!perDssBackedBuffer) {
-            AllocationProperties properties{device.getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HEAP};
+            AllocationProperties properties{device.getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HEAP, device.getDeviceBitfield()};
             perDssBackedBuffer = executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(properties);
         }
         return result;

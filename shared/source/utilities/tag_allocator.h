@@ -154,8 +154,7 @@ class TagAllocator {
         size_t allocationSizeRequired = tagCount * tagSize;
 
         auto allocationType = TagType::getAllocationType();
-        AllocationProperties allocationProperties{rootDeviceIndex, allocationSizeRequired, allocationType};
-        allocationProperties.subDevicesBitfield = deviceBitfield;
+        AllocationProperties allocationProperties{rootDeviceIndex, allocationSizeRequired, allocationType, deviceBitfield};
         GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
         gfxAllocations.push_back(graphicsAllocation);
 
