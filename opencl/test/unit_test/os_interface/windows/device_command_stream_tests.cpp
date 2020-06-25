@@ -172,7 +172,7 @@ using WddmCommandStreamMockGdiTest = ::Test<WddmCommandStreamWithMockGdiFixture>
 using WddmDefaultTest = ::Test<ClDeviceFixture>;
 using DeviceCommandStreamTest = ::Test<MockAubCenterFixture>;
 
-TEST_F(DeviceCommandStreamTest, CreateWddmCSR) {
+TEST_F(DeviceCommandStreamTest, WhenCreatingWddmCsrThenWddmPointerIsSetCorrectly) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto wddm = Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get());
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
@@ -184,7 +184,7 @@ TEST_F(DeviceCommandStreamTest, CreateWddmCSR) {
     EXPECT_NE(nullptr, wddmFromCsr);
 }
 
-TEST_F(DeviceCommandStreamTest, CreateWddmCSRWithAubDump) {
+TEST_F(DeviceCommandStreamTest, WhenCreatingWddmCsrWithAubDumpThenAubCsrIsCreated) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto wddm = Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get());
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
@@ -207,7 +207,7 @@ TEST_F(WddmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedM
     EXPECT_EQ(stampToWait, wddm->waitFromCpuResult.uint64ParamPassed);
 }
 
-TEST_F(WddmCommandStreamTest, Flush) {
+TEST_F(WddmCommandStreamTest, WhenFlushingThenFlushIsSubmitted) {
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
@@ -250,7 +250,8 @@ TEST_F(WddmCommandStreamTest, givenGraphicsAllocationWithDifferentGpuAddressThen
     EXPECT_EQ(mockGpuAddres, wddm->submitResult.commandBufferSubmitted);
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
-TEST_F(WddmCommandStreamTest, FlushWithOffset) {
+
+TEST_F(WddmCommandStreamTest, GivenOffsetWhenFlushingThenFlushIsSubmittedCorrectly) {
     auto offset = 128u;
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize, mockDeviceBitfield});
     ASSERT_NE(nullptr, commandBuffer);
@@ -573,7 +574,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     memoryManager->freeGraphicsMemory(nonLinearStreamAllocation);
 }
 
-TEST_F(WddmCommandStreamTest, makeResident) {
+TEST_F(WddmCommandStreamTest, WhenMakingResidentThenAllocationIsCorrectlySet) {
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
@@ -587,7 +588,7 @@ TEST_F(WddmCommandStreamTest, makeResident) {
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-TEST_F(WddmCommandStreamTest, makeNonResidentPutsAllocationInEvictionAllocations) {
+TEST_F(WddmCommandStreamTest, WhenMakingNonResidentThenAllocationIsPlacedInEvictionAllocations) {
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
@@ -601,7 +602,7 @@ TEST_F(WddmCommandStreamTest, makeNonResidentPutsAllocationInEvictionAllocations
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidateList) {
+TEST_F(WddmCommandStreamTest, WhenProcessingEvictionThenAllAllocationsArePlacedOnTrimCandidateList) {
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     GraphicsAllocation *allocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
@@ -620,7 +621,7 @@ TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidate
     memoryManager->freeGraphicsMemory(allocation2);
 }
 
-TEST_F(WddmCommandStreamTest, processEvictionClearsEvictionAllocations) {
+TEST_F(WddmCommandStreamTest, WhenProcesssingEvictionThenEvictionAllocationsListIsCleared) {
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, allocation);
 
@@ -635,7 +636,7 @@ TEST_F(WddmCommandStreamTest, processEvictionClearsEvictionAllocations) {
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(WddmCommandStreamTest, makeResidentNonResidentMemObj) {
+TEST_F(WddmCommandStreamTest, WhenMakingResidentAndNonResidentThenAllocationIsMovedCorrectly) {
     GraphicsAllocation *gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     Buffer *buffer = new AlignedBuffer(gfxAllocation);
 
@@ -753,7 +754,7 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
     csr->waitForTaskCountAndCleanAllocationList(100, TEMPORARY_ALLOCATION);
 }
 
-TEST_F(WddmCommandStreamMockGdiTest, FlushCallsWddmMakeResidentForResidencyAllocations) {
+TEST_F(WddmCommandStreamMockGdiTest, WhenFlushingThenWddmMakeResidentIsCalledForResidencyAllocations) {
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
@@ -772,7 +773,7 @@ TEST_F(WddmCommandStreamMockGdiTest, FlushCallsWddmMakeResidentForResidencyAlloc
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
+TEST_F(WddmCommandStreamMockGdiTest, WhenMakingResidentThenResidencyAllocationsListIsCleared) {
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
