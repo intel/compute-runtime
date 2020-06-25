@@ -89,7 +89,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     ~Event() override;
 
     uint32_t getCompletionStamp(void) const;
-    void updateCompletionStamp(uint32_t taskCount, uint32_t tasklevel, FlushStamp flushStamp);
+    void updateCompletionStamp(uint32_t taskCount, uint32_t bcsTaskCount, uint32_t tasklevel, FlushStamp flushStamp);
     cl_ulong getDelta(cl_ulong startTime,
                       cl_ulong endTime);
     void setCPUProfilingPath(bool isCPUPath) { this->profilingCpuPath = isCPUPath; }
@@ -243,14 +243,15 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     virtual void unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus);
 
-    void updateTaskCount(uint32_t taskCount) {
-        if (taskCount == CompletionStamp::notReady) {
+    void updateTaskCount(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount) {
+        if (gpgpuTaskCount == CompletionStamp::notReady) {
             DEBUG_BREAK_IF(true);
             return;
         }
 
-        uint32_t prevTaskCount = this->taskCount.exchange(taskCount);
-        if ((prevTaskCount != CompletionStamp::notReady) && (prevTaskCount > taskCount)) {
+        this->bcsTaskCount = bcsTaskCount;
+        uint32_t prevTaskCount = this->taskCount.exchange(gpgpuTaskCount);
+        if ((prevTaskCount != CompletionStamp::notReady) && (prevTaskCount > gpgpuTaskCount)) {
             this->taskCount = prevTaskCount;
             DEBUG_BREAK_IF(true);
         }
@@ -363,6 +364,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     uint64_t startTimeStamp;
     uint64_t endTimeStamp;
     uint64_t completeTimeStamp;
+    uint32_t bcsTaskCount = 0;
     bool perfCountersEnabled;
     TagNode<HwTimeStamps> *timeStampNode = nullptr;
     TagNode<HwPerfCounter> *perfCounterNode = nullptr;

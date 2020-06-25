@@ -224,8 +224,9 @@ uint32_t Event::getCompletionStamp() const {
     return this->taskCount;
 }
 
-void Event::updateCompletionStamp(uint32_t taskCount, uint32_t tasklevel, FlushStamp flushStamp) {
-    this->taskCount = taskCount;
+void Event::updateCompletionStamp(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount, uint32_t tasklevel, FlushStamp flushStamp) {
+    this->taskCount = gpgpuTaskCount;
+    this->bcsTaskCount = bcsTaskCount;
     this->taskLevel = tasklevel;
     this->flushStamp->setStamp(flushStamp);
 }
@@ -370,7 +371,7 @@ inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {
         }
     }
 
-    cmdQueue->waitUntilComplete(taskCount.load(), flushStamp->peekStamp(), useQuickKmdSleep);
+    cmdQueue->waitUntilComplete(taskCount.load(), this->bcsTaskCount, flushStamp->peekStamp(), useQuickKmdSleep);
     updateExecutionStatus();
 
     DEBUG_BREAK_IF(this->taskLevel == CompletionStamp::notReady && this->executionStatus >= 0);
@@ -510,11 +511,9 @@ void Event::transitionExecutionStatus(int32_t newExecutionStatus) const {
 void Event::submitCommand(bool abortTasks) {
     std::unique_ptr<Command> cmdToProcess(cmdToSubmit.exchange(nullptr));
     if (cmdToProcess.get() != nullptr) {
-        std::unique_lock<CommandStreamReceiver::MutexType> lockCSR;
-        if (this->cmdQueue) {
-            lockCSR = this->getCommandQueue()->getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
-        }
-        if ((this->isProfilingEnabled()) && (this->cmdQueue != nullptr)) {
+        auto lockCSR = getCommandQueue()->getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+
+        if (this->isProfilingEnabled()) {
             if (timeStampNode) {
                 this->cmdQueue->getGpgpuCommandStreamReceiver().makeResident(*timeStampNode->getBaseGraphicsAllocation());
                 cmdToProcess->timestamp = timeStampNode;
@@ -530,10 +529,10 @@ void Event::submitCommand(bool abortTasks) {
             }
         }
         auto &complStamp = cmdToProcess->submit(taskLevel, abortTasks);
-        if (profilingCpuPath && this->isProfilingEnabled() && (this->cmdQueue != nullptr)) {
+        if (profilingCpuPath && this->isProfilingEnabled()) {
             setEndTimeStamp();
         }
-        updateTaskCount(complStamp.taskCount);
+        updateTaskCount(complStamp.taskCount, cmdQueue->peekBcsTaskCount());
         flushStamp->setStamp(complStamp.flushStamp);
         submittedCmd.exchange(cmdToProcess.release());
     } else if (profilingCpuPath && endTimeStamp == 0) {
@@ -543,7 +542,7 @@ void Event::submitCommand(bool abortTasks) {
         if (!this->isUserEvent() && this->eventWithoutCommand) {
             if (this->cmdQueue) {
                 auto lockCSR = this->getCommandQueue()->getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
-                updateTaskCount(this->cmdQueue->getGpgpuCommandStreamReceiver().peekTaskCount());
+                updateTaskCount(this->cmdQueue->getGpgpuCommandStreamReceiver().peekTaskCount(), cmdQueue->peekBcsTaskCount());
             }
         }
         //make sure that task count is synchronized for events with kernels

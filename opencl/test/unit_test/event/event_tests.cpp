@@ -87,7 +87,7 @@ TEST(Event, givenEventWithHigherTaskCountWhenLowerTaskCountIsBeingSetThenTaskCou
     Event *event = new Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 4, 10);
 
     EXPECT_EQ(10u, event->peekTaskCount());
-    event->updateTaskCount(8);
+    event->updateTaskCount(8, 0);
     EXPECT_EQ(10u, event->peekTaskCount());
     delete event;
 }
@@ -601,7 +601,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
 TEST_F(InternalsEventTest, GivenMapOperationWhenSubmittingCommandsThenTaskLevelIsIncremented) {
     auto pCmdQ = make_releaseable<MockCommandQueue>(mockContext, pClDevice, nullptr);
-    MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    MockEvent<Event> event(pCmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto buffer = new MockBuffer;
@@ -622,7 +622,7 @@ TEST_F(InternalsEventTest, GivenMapOperationWhenSubmittingCommandsThenTaskLevelI
 
 TEST_F(InternalsEventTest, GivenMapOperationNonZeroCopyBufferWhenSubmittingCommandsThenTaskLevelIsIncremented) {
     auto pCmdQ = make_releaseable<MockCommandQueue>(mockContext, pClDevice, nullptr);
-    MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    MockEvent<Event> event(pCmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto buffer = new UnalignedBuffer;
@@ -734,7 +734,7 @@ TEST_F(InternalsEventTest, GivenProfilingWHENMapOperationTHENTimesSet) {
 TEST_F(InternalsEventTest, GivenUnMapOperationWhenSubmittingCommandsThenTaskLevelIsIncremented) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     auto pCmdQ = make_releaseable<MockCommandQueue>(mockContext, pClDevice, props);
-    MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    MockEvent<Event> event(pCmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto buffer = new UnalignedBuffer;
@@ -756,7 +756,7 @@ TEST_F(InternalsEventTest, GivenUnMapOperationWhenSubmittingCommandsThenTaskLeve
 TEST_F(InternalsEventTest, givenBlockedMapCommandWhenSubmitIsCalledItReleasesMemObjectReference) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     auto pCmdQ = std::make_unique<MockCommandQueue>(mockContext, pClDevice, props);
-    MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    MockEvent<Event> event(pCmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto buffer = new UnalignedBuffer;
 
@@ -775,7 +775,7 @@ TEST_F(InternalsEventTest, givenBlockedMapCommandWhenSubmitIsCalledItReleasesMem
 TEST_F(InternalsEventTest, GivenUnMapOperationNonZeroCopyBufferWhenSubmittingCommandsThenTaskLevelIsIncremented) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     auto pCmdQ = std::make_unique<MockCommandQueue>(mockContext, pClDevice, props);
-    MockEvent<Event> event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    MockEvent<Event> event(pCmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 0, 0);
 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto buffer = new UnalignedBuffer;
@@ -1398,7 +1398,7 @@ HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWa
     pDevice->resetCommandStreamReceiver(csr);
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
-    event.updateCompletionStamp(1u, 1u, 1u);
+    event.updateCompletionStamp(1u, 0, 1u, 1u);
 
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_,
                                                    localHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds, ::testing::_))
@@ -1426,7 +1426,7 @@ HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestT
     pDevice->resetCommandStreamReceiver(csr);
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
-    event.updateCompletionStamp(1u, 1u, 1u);
+    event.updateCompletionStamp(1u, 0, 1u, 1u);
 
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_,
                                                    localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, ::testing::_))

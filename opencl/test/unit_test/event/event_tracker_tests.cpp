@@ -158,7 +158,7 @@ TEST(EventsTracker, whenCallDumpEdgeThenGetStringWithProperLabelOfDumpedEdge) {
 TEST(EventsTracker, givenEventWithTaskLevelAndCountNotReadyThenDumpingNodeWithNotReadyLabels) {
     UserEvent uEvent;
     uEvent.taskLevel = CompletionStamp::notReady;
-    uEvent.updateTaskCount(CompletionStamp::notReady);
+    uEvent.updateTaskCount(CompletionStamp::notReady, 0);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -175,7 +175,7 @@ TEST(EventsTracker, givenEventWithTaskLevelAndCountNotReadyThenDumpingNodeWithNo
 TEST(EventsTracker, whenCallDumpNodeFunctionThenDumpingNodeWithProperTaskLevelAndCountValues) {
     UserEvent uEvent;
     uEvent.taskLevel = 1;
-    uEvent.updateTaskCount(1);
+    uEvent.updateTaskCount(1, 0);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -232,7 +232,7 @@ TEST(EventsTracker, givenCmdqAndItsVirtualEventThenDumpingWithProperLabels) {
     MockCommandQueue cmdq;
     VirtualEvent vEvent(&cmdq, &ctx);
     vEvent.setCurrentCmdQVirtualEvent(true);
-    vEvent.updateTaskCount(1);
+    vEvent.updateTaskCount(1, 0);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -395,7 +395,7 @@ TEST(EventsTracker, givenCmdqAndItsVirtualEventThenDumpingProperGraph) {
     MockCommandQueue cmdq;
     VirtualEvent vEvent(&cmdq, &ctx);
     vEvent.setCurrentCmdQVirtualEvent(true);
-    vEvent.updateTaskCount(1);
+    vEvent.updateTaskCount(1, 0);
 
     std::stringstream stream;
     std::unordered_map<Event *, int64_t> map;
@@ -434,9 +434,9 @@ TEST(EventsTracker, givenTwoEventsWithCommonParentEventThenDumpingProperGraph) {
 
     EXPECT_STREQ(expected.str().c_str(), stream.str().c_str());
 
-    uEventChild1.updateCompletionStamp(0, 0, 0);
-    uEventChild2.updateCompletionStamp(0, 0, 0);
-    uEvent.updateCompletionStamp(0, 0, 0);
+    uEventChild1.updateCompletionStamp(0, 0, 0, 0);
+    uEventChild2.updateCompletionStamp(0, 0, 0, 0);
+    uEvent.updateCompletionStamp(0, 0, 0, 0);
     uEvent.setStatus(0);
 }
 
@@ -611,10 +611,10 @@ TEST(EventsTracker, givenEventsWithDependenciesBetweenThemThenDumpingProperGraph
 
     EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock.c_str());
 
-    uEventChild1.updateCompletionStamp(0, 0, 0);
-    uEventChild2.updateCompletionStamp(0, 0, 0);
-    uEvent2.updateCompletionStamp(0, 0, 0);
-    uEvent1.updateCompletionStamp(0, 0, 0);
+    uEventChild1.updateCompletionStamp(0, 0, 0, 0);
+    uEventChild2.updateCompletionStamp(0, 0, 0, 0);
+    uEvent2.updateCompletionStamp(0, 0, 0, 0);
+    uEvent1.updateCompletionStamp(0, 0, 0, 0);
     uEvent2.setStatus(0);
     uEvent1.setStatus(0);
 }

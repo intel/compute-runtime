@@ -1025,6 +1025,132 @@ HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenDebugFlagSetWhenCheckingBcsCacheF
     EXPECT_TRUE(mockCommandQueue->isCacheFlushForBcsRequired());
 }
 
+using BlitEnqueueTaskCountTests = BlitEnqueueTests<1>;
+
+HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, whenWaitUntilCompletionCalledThenWaitForSpecificBcsTaskCount) {
+    uint32_t gpgpuTaskCount = 123;
+    uint32_t bcsTaskCount = 123;
+
+    commandQueue->waitUntilComplete(gpgpuTaskCount, bcsTaskCount, 0, false);
+
+    EXPECT_EQ(gpgpuTaskCount, static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr)->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(bcsTaskCount, static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr)->latestWaitForCompletionWithTimeoutTaskCount.load());
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenEventWhenWaitingForCompletionThenWaitForCurrentBcsTaskCount) {
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    auto ultGpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
+    auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
+
+    cl_event outEvent1, outEvent2;
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, &outEvent1);
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, &outEvent2);
+
+    clWaitForEvents(1, &outEvent2);
+    EXPECT_EQ(2u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(2u, ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+    clWaitForEvents(1, &outEvent1);
+    EXPECT_EQ(1u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(1u, ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+    clReleaseEvent(outEvent1);
+    clReleaseEvent(outEvent2);
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenBlockedEventWhenWaitingForCompletionThenWaitForCurrentBcsTaskCount) {
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    auto ultGpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
+    auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
+
+    cl_event outEvent1, outEvent2;
+    UserEvent userEvent;
+    cl_event waitlist1 = &userEvent;
+    cl_event *waitlist2 = &outEvent1;
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 1, &waitlist1, &outEvent1);
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 1, waitlist2, &outEvent2);
+
+    userEvent.setStatus(CL_COMPLETE);
+
+    clWaitForEvents(1, &outEvent2);
+    EXPECT_EQ(2u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(2u, ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+    clWaitForEvents(1, &outEvent1);
+    EXPECT_EQ(1u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(1u, ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+    clReleaseEvent(outEvent1);
+    clReleaseEvent(outEvent2);
+
+    EXPECT_FALSE(commandQueue->isQueueBlocked());
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenBlockedEnqueueWithoutKernelWhenWaitingForCompletionThenWaitForCurrentBcsTaskCount) {
+    auto ultGpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
+    auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
+
+    cl_event outEvent1, outEvent2;
+    UserEvent userEvent;
+    cl_event waitlist1 = &userEvent;
+    cl_event *waitlist2 = &outEvent1;
+
+    commandQueue->enqueueMarkerWithWaitList(1, &waitlist1, &outEvent1);
+    commandQueue->enqueueMarkerWithWaitList(1, waitlist2, &outEvent2);
+
+    userEvent.setStatus(CL_COMPLETE);
+
+    clWaitForEvents(1, &outEvent2);
+    EXPECT_EQ(1u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(0u, ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+    clWaitForEvents(1, &outEvent1);
+    EXPECT_EQ(0u, ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(0u, ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+    clReleaseEvent(outEvent1);
+    clReleaseEvent(outEvent2);
+
+    EXPECT_FALSE(commandQueue->isQueueBlocked());
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenEventFromCpuCopyWhenWaitingForCompletionThenWaitForCurrentBcsTaskCount) {
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(1);
+    auto buffer = createBuffer(1, false);
+    int hostPtr = 0;
+
+    auto ultGpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
+    auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
+
+    ultGpgpuCsr->taskCount = 1;
+    commandQueue->taskCount = 1;
+
+    ultBcsCsr->taskCount = 2;
+    commandQueue->updateBcsTaskCount(2);
+
+    cl_event outEvent1, outEvent2;
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, &outEvent1);
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, &outEvent2);
+
+    clWaitForEvents(1, &outEvent2);
+    EXPECT_EQ(1u, static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr)->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(2u, static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr)->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+    clWaitForEvents(1, &outEvent1);
+    EXPECT_EQ(1u, static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr)->latestWaitForCompletionWithTimeoutTaskCount.load());
+    EXPECT_EQ(2u, static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr)->latestWaitForCompletionWithTimeoutTaskCount.load());
+
+    clReleaseEvent(outEvent1);
+    clReleaseEvent(outEvent2);
+}
+
 using BlitEnqueueWithDisabledGpgpuSubmissionTests = BlitEnqueueTests<1>;
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenDebugFlagSetWhenDoingBcsCopyThenSubmitToGpgpuOnlyIfPreviousEnqueueWasGpgpu) {

@@ -305,7 +305,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 getGpgpuCommandStreamReceiver().setMediaVFEStateDirty(true);
 
                 if (devQueueHw->getSchedulerReturnInstance() > 0) {
-                    waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
+                    waitUntilComplete(completionStamp.taskCount, bcsTaskCount, completionStamp.flushStamp, false);
                     this->runSchedulerSimulation(*devQueueHw, *parentKernel);
                 }
             }
@@ -353,7 +353,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     updateFromCompletionStamp(completionStamp);
 
     if (eventBuilder.getEvent()) {
-        eventBuilder.getEvent()->updateCompletionStamp(completionStamp.taskCount, completionStamp.taskLevel, completionStamp.flushStamp);
+        eventBuilder.getEvent()->updateCompletionStamp(completionStamp.taskCount, bcsTaskCount, completionStamp.taskLevel, completionStamp.flushStamp);
         FileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "updateCompletionStamp Event", eventBuilder.getEvent(), "taskLevel", eventBuilder.getEvent()->taskLevel.load());
     }
 
@@ -382,9 +382,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         if (blockQueue) {
             while (isQueueBlocked()) {
             }
-            waitUntilComplete(taskCount, flushStamp->peekStamp(), false);
+            waitUntilComplete(taskCount, bcsTaskCount, flushStamp->peekStamp(), false);
         } else {
-            waitUntilComplete(taskCount, flushStamp->peekStamp(), false);
+            waitUntilComplete(taskCount, bcsTaskCount, flushStamp->peekStamp(), false);
             if (printfHandler) {
                 printfHandler->printEnqueueOutput();
             }

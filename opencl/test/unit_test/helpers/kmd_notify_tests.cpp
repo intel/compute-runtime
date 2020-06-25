@@ -98,7 +98,7 @@ HWTEST_F(KmdNotifyTests, givenTaskCountWhenWaitUntilCompletionCalledThenAlwaysTr
 
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 2, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
 
-    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, false);
+    cmdQ->waitUntilComplete(taskCountToWait, 0, flushStampToWait, false);
 }
 
 HWTEST_F(KmdNotifyTests, givenTaskCountAndKmdNotifyDisabledWhenWaitUntilCompletionCalledThenTryCpuPollingWithoutTimeout) {
@@ -108,7 +108,7 @@ HWTEST_F(KmdNotifyTests, givenTaskCountAndKmdNotifyDisabledWhenWaitUntilCompleti
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, 0, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
     EXPECT_CALL(*csr, waitForFlushStamp(::testing::_)).Times(0);
 
-    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, false);
+    cmdQ->waitUntilComplete(taskCountToWait, 0, flushStampToWait, false);
 }
 
 HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThenTryCpuPollingAndKmdWait) {
@@ -121,7 +121,7 @@ HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThen
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, 0, taskCountToWait)).Times(1).WillOnce(::testing::Return(false));
 
     //we have unrecoverable for this case, this will throw.
-    EXPECT_THROW(cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, false), std::exception);
+    EXPECT_THROW(cmdQ->waitUntilComplete(taskCountToWait, 0, flushStampToWait, false), std::exception);
 }
 
 HWTEST_F(KmdNotifyTests, givenReadyTaskCountWhenWaitUntilCompletionCalledThenTryCpuPollingAndDontCallKmdWait) {
@@ -131,7 +131,7 @@ HWTEST_F(KmdNotifyTests, givenReadyTaskCountWhenWaitUntilCompletionCalledThenTry
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 2, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
     EXPECT_CALL(*csr, waitForFlushStamp(::testing::_)).Times(0);
 
-    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, false);
+    cmdQ->waitUntilComplete(taskCountToWait, 0, flushStampToWait, false);
 }
 
 HWTEST_F(KmdNotifyTests, givenDefaultArgumentWhenWaitUntilCompleteIsCalledThenDisableQuickKmdSleep) {
@@ -140,7 +140,7 @@ HWTEST_F(KmdNotifyTests, givenDefaultArgumentWhenWaitUntilCompleteIsCalledThenDi
 
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
 
-    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, false);
+    cmdQ->waitUntilComplete(taskCountToWait, 0, flushStampToWait, false);
 }
 
 HWTEST_F(KmdNotifyTests, givenEnabledQuickSleepWhenWaitUntilCompleteIsCalledThenChangeDelayValue) {
@@ -149,7 +149,7 @@ HWTEST_F(KmdNotifyTests, givenEnabledQuickSleepWhenWaitUntilCompleteIsCalledThen
 
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
 
-    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, true);
+    cmdQ->waitUntilComplete(taskCountToWait, 0, flushStampToWait, true);
 }
 
 HWTEST_F(KmdNotifyTests, givenDisabledQuickSleepWhenWaitUntilCompleteWithQuickSleepRequestIsCalledThenUseBaseDelayValue) {
@@ -159,7 +159,7 @@ HWTEST_F(KmdNotifyTests, givenDisabledQuickSleepWhenWaitUntilCompleteWithQuickSl
 
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
 
-    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, true);
+    cmdQ->waitUntilComplete(taskCountToWait, 0, flushStampToWait, true);
 }
 
 HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenPollForCompletionCalledThenTimeout) {
@@ -213,7 +213,7 @@ HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModeAndCal
     auto csr = createMockCsr<FamilyType>();
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 1, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
     cmdQ->throttle = QueueThrottle::LOW;
-    cmdQ->waitUntilComplete(1, 1, false);
+    cmdQ->waitUntilComplete(1, 0, 1, false);
 }
 
 HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModButThereIsNoFlushStampeAndCallWaitThenTimeoutIsDisabled) {
@@ -222,7 +222,7 @@ HWTEST_F(KmdNotifyTests, givenKmdNotifyDisabledWhenQueueHasPowerSavingModButTher
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, 0, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
 
     cmdQ->throttle = QueueThrottle::LOW;
-    cmdQ->waitUntilComplete(1, 0, false);
+    cmdQ->waitUntilComplete(1, 0, 0, false);
 }
 
 HWTEST_F(KmdNotifyTests, givenQuickSleepRequestWhenItsSporadicWaitOptimizationIsDisabledThenDontOverrideQuickSleepRequest) {
@@ -408,4 +408,3 @@ TEST_F(KmdNotifyTests, givenEnabledKmdNotifyMechanismWhenPowerSavingModeIsSetAnd
     EXPECT_FALSE(timeoutEnabled);
     EXPECT_EQ(0, timeout);
 }
-

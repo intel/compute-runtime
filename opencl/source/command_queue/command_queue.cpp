@@ -147,28 +147,28 @@ bool CommandQueue::isCompleted(uint32_t taskCount) const {
     return tag >= taskCount;
 }
 
-void CommandQueue::waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
+void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
     WAIT_ENTER()
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Waiting for taskCount:", taskCountToWait);
+    DBG_LOG(LogTaskCounts, __FUNCTION__, "Waiting for taskCount:", gpgpuTaskCountToWait);
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", getHwTag());
 
     bool forcePowerSavingMode = this->throttle == QueueThrottle::LOW;
 
-    getGpgpuCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait,
+    getGpgpuCommandStreamReceiver().waitForTaskCountWithKmdNotifyFallback(gpgpuTaskCountToWait, flushStampToWait,
                                                                           useQuickKmdSleep, forcePowerSavingMode);
-    DEBUG_BREAK_IF(getHwTag() < taskCountToWait);
+    DEBUG_BREAK_IF(getHwTag() < gpgpuTaskCountToWait);
 
     if (gtpinIsGTPinInitialized()) {
-        gtpinNotifyTaskCompletion(taskCountToWait);
+        gtpinNotifyTaskCompletion(gpgpuTaskCountToWait);
     }
 
     if (auto bcsCsr = getBcsCommandStreamReceiver()) {
-        bcsCsr->waitForTaskCountWithKmdNotifyFallback(bcsTaskCount, 0, false, false);
-        bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(bcsTaskCount);
+        bcsCsr->waitForTaskCountWithKmdNotifyFallback(bcsTaskCountToWait, 0, false, false);
+        bcsCsr->waitForTaskCountAndCleanTemporaryAllocationList(bcsTaskCountToWait);
     }
 
-    getGpgpuCommandStreamReceiver().waitForTaskCountAndCleanTemporaryAllocationList(taskCountToWait);
+    getGpgpuCommandStreamReceiver().waitForTaskCountAndCleanTemporaryAllocationList(gpgpuTaskCountToWait);
 
     WAIT_LEAVE()
 }

@@ -329,7 +329,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventsWaitlistOnBlockingMapBufferWillWaitForEv
         MockEvent(Context *ctx, uint32_t updateCountBeforeCompleted)
             : UserEvent(ctx),
               updateCount(0), updateCountBeforeCompleted(updateCountBeforeCompleted) {
-            this->updateTaskCount(0);
+            this->updateTaskCount(0, 0);
             this->taskLevel = 0;
         }
 
@@ -959,7 +959,7 @@ HWTEST_F(CommandQueueHwTest, givenEventWithRecordedCommandWhenSubmitCommandIsCal
     std::thread t([&]() {
         while (!go)
             ;
-        neoEvent.updateTaskCount(77u);
+        neoEvent.updateTaskCount(77u, 0);
     });
 
     neoEvent.submitCommand(false);

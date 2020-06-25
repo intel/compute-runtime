@@ -27,7 +27,7 @@ cl_int CommandQueueHw<GfxFamily>::finish() {
     auto flushStampToWaitFor = this->flushStamp->peekStamp();
 
     // Stall until HW reaches CQ taskCount
-    waitUntilComplete(taskCountToWaitFor, flushStampToWaitFor, false);
+    waitUntilComplete(taskCountToWaitFor, this->bcsTaskCount, flushStampToWaitFor, false);
 
     return CL_SUCCESS;
 }

@@ -105,9 +105,9 @@ struct EnqueueHandlerWithAubSubCaptureTests : public EnqueueHandlerTest {
       public:
         MockCmdQWithAubSubCapture(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false) {}
 
-        void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+        void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
             waitUntilCompleteCalled = true;
-            CommandQueueHw<FamilyType>::waitUntilComplete(taskCountToWait, flushStampToWait, useQuickKmdSleep);
+            CommandQueueHw<FamilyType>::waitUntilComplete(gpgpuTaskCountToWait, bcsTaskCountToWait, flushStampToWait, useQuickKmdSleep);
         }
 
         void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies) override {
@@ -420,10 +420,10 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDu
 }
 
 HWTEST_F(EnqueueHandlerTest, givenExternallySynchronizedParentEventWhenRequestingEnqueueWithoutGpuSubmissionThenTaskCountIsNotInherited) {
-    struct ExternallySynchEvent : VirtualEvent {
-        ExternallySynchEvent(CommandQueue *cmdQueue) {
+    struct ExternallySynchEvent : UserEvent {
+        ExternallySynchEvent() : UserEvent() {
             setStatus(CL_COMPLETE);
-            this->updateTaskCount(7);
+            this->updateTaskCount(7, 0);
         }
         bool isExternallySynchronized() const override {
             return true;
@@ -432,7 +432,7 @@ HWTEST_F(EnqueueHandlerTest, givenExternallySynchronizedParentEventWhenRequestin
 
     auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pClDevice, 0);
 
-    ExternallySynchEvent synchEvent(mockCmdQ);
+    ExternallySynchEvent synchEvent;
     cl_event inEv = &synchEvent;
     cl_event outEv = nullptr;
 
