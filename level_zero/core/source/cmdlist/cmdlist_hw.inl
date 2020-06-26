@@ -239,9 +239,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     auto image = Image::fromHandle(hDstImage);
     auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
 
-    Vec3<uint32_t> imgSize = {static_cast<uint32_t>(image->getImageInfo().imgDesc.imageWidth),
-                              static_cast<uint32_t>(image->getImageInfo().imgDesc.imageHeight),
-                              static_cast<uint32_t>(image->getImageInfo().imgDesc.imageDepth)};
+    Vec3<uint32_t> imgSize = {static_cast<uint32_t>(image->getImageDesc().width),
+                              static_cast<uint32_t>(image->getImageDesc().height),
+                              static_cast<uint32_t>(image->getImageDesc().depth)};
 
     ze_image_region_t tmpRegion;
     if (pDstRegion == nullptr) {
@@ -345,9 +345,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     auto image = Image::fromHandle(hSrcImage);
     auto bytesPerPixel = static_cast<uint32_t>(image->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
 
-    Vec3<uint32_t> imgSize = {static_cast<uint32_t>(image->getImageInfo().imgDesc.imageWidth),
-                              static_cast<uint32_t>(image->getImageInfo().imgDesc.imageHeight),
-                              static_cast<uint32_t>(image->getImageInfo().imgDesc.imageDepth)};
+    Vec3<uint32_t> imgSize = {static_cast<uint32_t>(image->getImageDesc().width),
+                              static_cast<uint32_t>(image->getImageDesc().height),
+                              static_cast<uint32_t>(image->getImageDesc().depth)};
 
     ze_image_region_t tmpRegion;
     if (pSrcRegion == nullptr) {
