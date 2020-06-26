@@ -229,6 +229,7 @@ HWTEST_F(DispatchFlagsTests, whenEnqueueCommandWithoutKernelThenPassCorrectThrot
 
 HWTEST_F(DispatchFlagsTests, givenBlitEnqueueWhenDispatchingCommandsWithoutKernelThenDoImplicitFlush) {
     using CsrType = MockCsrHw2<FamilyType>;
+    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
     DebugManager.flags.EnableTimestampPacket.set(1);
     SetUpImpl<CsrType>();
 
@@ -269,6 +270,7 @@ HWTEST_F(DispatchFlagsTests, givenBlitEnqueueWhenDispatchingCommandsWithoutKerne
 HWTEST_F(DispatchFlagsTests, givenN1EnabledWhenDispatchingWithoutKernelTheAllowOutOfOrderExecution) {
     using CsrType = MockCsrHw2<FamilyType>;
     DebugManager.flags.EnableTimestampPacket.set(1);
+    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
 
     SetUpImpl<CsrType>();
 

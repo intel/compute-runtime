@@ -215,7 +215,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
         if (isCacheFlushForBcsRequired()) {
             // Cache flush for aux translation is always required (if supported)
-            if ((blitEnqueue && isGpgpuSubmissionForBcsRequired()) || (enqueueWithBlitAuxTranslation)) {
+            if ((blitEnqueue && isGpgpuSubmissionForBcsRequired(blockQueue)) || (enqueueWithBlitAuxTranslation)) {
                 timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
             }
         }
@@ -490,7 +490,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
     auto currentTimestampPacketNode = timestampPacketContainer->peekNodes().at(0);
     blitProperties.outputTimestampPacket = currentTimestampPacketNode;
 
-    if (isGpgpuSubmissionForBcsRequired()) {
+    if (isGpgpuSubmissionForBcsRequired(queueBlocked)) {
         if (isCacheFlushForBcsRequired()) {
             auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]);
             PipeControlArgs args(true);
@@ -956,7 +956,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     CompletionStamp completionStamp = {this->taskCount, this->taskLevel, this->flushStamp->peekStamp()};
     bool flushGpgpuCsr = true;
 
-    if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) && !isGpgpuSubmissionForBcsRequired()) {
+    if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) && !isGpgpuSubmissionForBcsRequired(false)) {
         flushGpgpuCsr = false;
     }
 

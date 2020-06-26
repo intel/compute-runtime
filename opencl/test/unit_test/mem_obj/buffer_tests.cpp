@@ -745,6 +745,7 @@ struct BcsBufferTests : public ::testing::Test {
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         DebugManager.flags.EnableTimestampPacket.set(1);
         DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
+        DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
         auto &capabilityTable = device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
         bool createBcsEngine = !capabilityTable.blitterOperationsSupported;

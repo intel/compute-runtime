@@ -408,7 +408,7 @@ void Event::updateExecutionStatus() {
         // Note : Intentional fallthrough (no return) to check for CL_COMPLETE
     }
 
-    if ((cmdQueue != nullptr) && (cmdQueue->isCompleted(getCompletionStamp()))) {
+    if ((cmdQueue != nullptr) && (cmdQueue->isCompleted(getCompletionStamp(), this->bcsTaskCount))) {
         transitionExecutionStatus(CL_COMPLETE);
         executeCallbacks(CL_COMPLETE);
         unblockEventsBlockedByThis(CL_COMPLETE);

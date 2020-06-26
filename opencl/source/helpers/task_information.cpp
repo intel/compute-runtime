@@ -87,6 +87,8 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
 
+    commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::DependencyResolveOnGpu);
+
     if (!memObj.isMemObjZeroCopy()) {
         commandQueue.waitUntilComplete(completionStamp.taskCount, commandQueue.peekBcsTaskCount(), completionStamp.flushStamp, false);
         if (operationType == MAP) {
@@ -262,6 +264,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         auto bcsTaskCount = commandQueue.getBcsCommandStreamReceiver()->blitBuffer(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled());
         commandQueue.updateBcsTaskCount(bcsTaskCount);
     }
+    commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::GpuKernel);
 
     if (gtpinIsGTPinInitialized()) {
         gtpinNotifyFlushTask(completionStamp.taskCount);
@@ -314,7 +317,11 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
 
     auto lockCSR = commandStreamReceiver.obtainUniqueOwnership();
 
+    auto enqueueOperationType = EnqueueProperties::Operation::DependencyResolveOnGpu;
+
     if (kernelOperation->blitEnqueue) {
+        enqueueOperationType = EnqueueProperties::Operation::Blit;
+
         if (commandStreamReceiver.isStallingPipeControlOnNextFlushRequired()) {
             timestampPacketDependencies->barrierNodes.add(commandStreamReceiver.getTimestampPacketAllocator()->getTag());
         }
@@ -363,6 +370,8 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
     if (kernelOperation->blitEnqueue) {
         dispatchBlitOperation();
     }
+
+    commandQueue.updateLatestSentEnqueueType(enqueueOperationType);
 
     return completionStamp;
 }

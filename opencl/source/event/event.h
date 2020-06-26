@@ -88,7 +88,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     ~Event() override;
 
-    uint32_t getCompletionStamp(void) const;
+    uint32_t getCompletionStamp() const;
     void updateCompletionStamp(uint32_t taskCount, uint32_t bcsTaskCount, uint32_t tasklevel, FlushStamp flushStamp);
     cl_ulong getDelta(cl_ulong startTime,
                       cl_ulong endTime);

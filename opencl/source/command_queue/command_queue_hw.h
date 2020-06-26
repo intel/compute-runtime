@@ -474,5 +474,7 @@ class CommandQueueHw : public CommandQueue {
                                    CsrDependencies &csrDeps,
                                    KernelOperation *blockedCommandsData,
                                    TimestampPacketDependencies &timestampPacketDependencies);
+
+    bool isGpgpuSubmissionForBcsRequired(bool queueBlocked) const;
 };
 } // namespace NEO

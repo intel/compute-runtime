@@ -211,7 +211,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     volatile uint32_t *getHwTagAddress() const;
 
-    bool isCompleted(uint32_t taskCount) const;
+    bool isCompleted(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount) const;
 
     MOCKABLE_VIRTUAL bool isQueueBlocked();
 
@@ -301,6 +301,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void updateBcsTaskCount(uint32_t newBcsTaskCount) { this->bcsTaskCount = newBcsTaskCount; }
     uint32_t peekBcsTaskCount() const { return bcsTaskCount; }
 
+    void updateLatestSentEnqueueType(EnqueueProperties::Operation newEnqueueType) { this->latestSentEnqueueType = newEnqueueType; }
+
     // taskCount of last task
     uint32_t taskCount = 0;
 
@@ -338,7 +340,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool blitEnqueueAllowed(cl_command_type cmdType) const;
     void aubCaptureHook(bool &blocking, bool &clearAllDependencies, const MultiDispatchInfo &multiDispatchInfo);
     virtual bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const = 0;
-    bool isGpgpuSubmissionForBcsRequired() const;
 
     Context *context = nullptr;
     ClDevice *device = nullptr;

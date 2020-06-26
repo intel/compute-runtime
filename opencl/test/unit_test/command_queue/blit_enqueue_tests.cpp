@@ -63,6 +63,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         DebugManager.flags.EnableTimestampPacket.set(timestampPacketEnabled);
         DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
         DebugManager.flags.ForceAuxTranslationMode.set(1);
+        DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
         DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
         auto &capabilityTable = device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
@@ -1037,6 +1038,25 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, whenWaitUntilCompletionCalledThenW
     EXPECT_EQ(bcsTaskCount, static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr)->latestWaitForCompletionWithTimeoutTaskCount.load());
 }
 
+HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenEventWithNotreadyBcsTaskCountThenDontReportCompletion) {
+    const uint32_t gpgpuTaskCount = 123;
+    const uint32_t bcsTaskCount = 123;
+
+    *gpgpuCsr->getTagAddress() = gpgpuTaskCount;
+    *bcsCsr->getTagAddress() = bcsTaskCount - 1;
+    commandQueue->updateBcsTaskCount(bcsTaskCount);
+
+    Event event(commandQueue.get(), CL_COMMAND_WRITE_BUFFER, 1, gpgpuTaskCount);
+    event.updateCompletionStamp(gpgpuTaskCount, bcsTaskCount, 1, 0);
+
+    event.updateExecutionStatus();
+    EXPECT_EQ(static_cast<cl_int>(CL_SUBMITTED), event.peekExecutionStatus());
+
+    *bcsCsr->getTagAddress() = bcsTaskCount;
+    event.updateExecutionStatus();
+    EXPECT_EQ(static_cast<cl_int>(CL_COMPLETE), event.peekExecutionStatus());
+}
+
 HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenEventWhenWaitingForCompletionThenWaitForCurrentBcsTaskCount) {
     auto buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;
@@ -1153,10 +1173,14 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenEventFromCpuCopyWhenWaitingFo
 
 using BlitEnqueueWithDisabledGpgpuSubmissionTests = BlitEnqueueTests<1>;
 
-HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenDebugFlagSetWhenDoingBcsCopyThenSubmitToGpgpuOnlyIfPreviousEnqueueWasGpgpu) {
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(0);
+HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushRequiredWhenDoingBcsCopyThenSubmitToGpgpuOnlyIfPreviousEnqueueWasGpgpu) {
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+
+    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+
+    mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
+    mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = true;
 
     auto buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;
@@ -1183,12 +1207,101 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenDebugFlagSe
     EXPECT_EQ(2u, gpgpuCsr->peekTaskCount());
 }
 
-HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenDebugFlagSetWhenDoingBcsCopyThatRequiresCacheFlushThenSubmitToGpgpu) {
+HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushNotRequiredWhenDoingBcsCopyThenDontSubmitToGpgpu) {
+    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+
+    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+
+    mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
+    mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = false;
+
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
+
+    commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(EnqueueProperties::Operation::GpuKernel, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushNotRequiredWhenDoingBcsCopyOnBlockedQueueThenSubmitToGpgpu) {
+    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+
+    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+
+    mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
+    mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = false;
+
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    UserEvent userEvent;
+    cl_event waitlist = &userEvent;
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 1, &waitlist, nullptr);
+    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+
+    userEvent.setStatus(CL_COMPLETE);
+    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+
+    EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
+
+    EXPECT_FALSE(commandQueue->isQueueBlocked());
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushRequiredWhenDoingBcsCopyOnBlockedQueueThenSubmitToGpgpu) {
+    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+
+    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+
+    mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
+    mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = true;
+
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    UserEvent userEvent;
+    cl_event waitlist = &userEvent;
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 1, &waitlist, nullptr);
+    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+
+    userEvent.setStatus(CL_COMPLETE);
+    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+
+    EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
+
+    EXPECT_FALSE(commandQueue->isQueueBlocked());
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushRequiredWhenDoingBcsCopyThatRequiresCacheFlushThenSubmitToGpgpu) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
 
-    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(0);
+    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = true;

@@ -141,10 +141,19 @@ volatile uint32_t *CommandQueue::getHwTagAddress() const {
     return getGpgpuCommandStreamReceiver().getTagAddress();
 }
 
-bool CommandQueue::isCompleted(uint32_t taskCount) const {
-    uint32_t tag = getHwTag();
-    DEBUG_BREAK_IF(tag == CompletionStamp::notReady);
-    return tag >= taskCount;
+bool CommandQueue::isCompleted(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount) const {
+    uint32_t gpgpuHwTag = getHwTag();
+    DEBUG_BREAK_IF(gpgpuHwTag == CompletionStamp::notReady);
+
+    if (gpgpuHwTag >= gpgpuTaskCount) {
+        if (auto bcsCsr = getBcsCommandStreamReceiver()) {
+            return (*bcsCsr->getTagAddress()) >= bcsTaskCount;
+        }
+
+        return true;
+    }
+
+    return false;
 }
 
 void CommandQueue::waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
@@ -687,11 +696,4 @@ void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, co
     }
 }
 
-bool CommandQueue::isGpgpuSubmissionForBcsRequired() const {
-    if (DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.get() == 0) {
-        return (latestSentEnqueueType != EnqueueProperties::Operation::Blit) && (latestSentEnqueueType != EnqueueProperties::Operation::None);
-    }
-
-    return true;
-}
 } // namespace NEO
