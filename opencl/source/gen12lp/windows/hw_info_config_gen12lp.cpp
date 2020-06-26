@@ -55,4 +55,5 @@ uint64_t HwInfoConfigHw<IGFX_DG1>::getSharedSystemMemCapabilities() {
 
 template class HwInfoConfigHw<IGFX_DG1>;
 #endif
+
 } // namespace NEO
