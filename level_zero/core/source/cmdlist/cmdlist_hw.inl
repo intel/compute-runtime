@@ -1209,10 +1209,9 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
     bool hostPointerNeedsFlush = false;
 
     if (srcAllocFound == false) {
-        alloc = device->allocateMemoryFromHostPtr(buffer, bufferSize);
-        hostPtrMap.insert(std::make_pair(buffer, alloc));
+        alloc = getHostPtrAlloc(buffer, bufferSize, &offset);
 
-        alignedPtr = static_cast<uintptr_t>(alloc->getGpuAddress() - offset);
+        alignedPtr = static_cast<uintptr_t>(alignDown(alloc->getGpuAddress(), NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment()));
         hostPointerNeedsFlush = true;
     } else {
         alloc = allocData->gpuAllocation;

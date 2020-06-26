@@ -41,6 +41,8 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendSignalEventPostWalker;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::getAlignedAllocation;
+    using BaseClass::getAllocationFromHostPtrMap;
+    using BaseClass::getHostPtrAlloc;
     using BaseClass::hostPtrMap;
 
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}

@@ -38,6 +38,33 @@ void CommandList::removeHostPtrAllocations() {
     hostPtrMap.clear();
 }
 
+NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize) {
+    auto allocation = hostPtrMap.lower_bound(buffer);
+    if (allocation != hostPtrMap.end()) {
+        if (buffer == allocation->first && ptrOffset(allocation->first, allocation->second->getUnderlyingBufferSize()) >= ptrOffset(buffer, bufferSize)) {
+            return allocation->second;
+        }
+    }
+    if (allocation != hostPtrMap.begin()) {
+        allocation--;
+        if (ptrOffset(allocation->first, allocation->second->getUnderlyingBufferSize()) >= ptrOffset(buffer, bufferSize)) {
+            return allocation->second;
+        }
+    }
+    return nullptr;
+}
+
+NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64_t bufferSize, size_t *offset) {
+    NEO::GraphicsAllocation *alloc = getAllocationFromHostPtrMap(buffer, bufferSize);
+    if (alloc) {
+        *offset += ptrDiff(buffer, alloc->getUnderlyingBuffer());
+        return alloc;
+    }
+    alloc = device->allocateMemoryFromHostPtr(buffer, bufferSize);
+    hostPtrMap.insert(std::make_pair(buffer, alloc));
+    return alloc;
+}
+
 void CommandList::removeDeallocationContainerData() {
     auto memoryManager = device ? device->getNEODevice()->getMemoryManager() : nullptr;
 

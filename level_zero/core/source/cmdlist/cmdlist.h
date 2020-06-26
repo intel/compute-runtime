@@ -181,6 +181,8 @@ struct CommandList : _ze_command_list_handle_t {
     bool isCopyOnlyCmdList = false;
     UnifiedMemoryControls unifiedMemoryControls;
     bool indirectAllocationsAllowed = false;
+    NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
+    NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, size_t *offset);
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);
