@@ -10,11 +10,6 @@
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
 
 namespace NEO {
-template <typename GfxFamily>
-void DrmCommandStreamReceiver<GfxFamily>::makeResidentBufferObjects(const DrmAllocation *drmAllocation, uint32_t handleId) {
-    auto bo = drmAllocation->getBO();
-    makeResident(bo);
-}
 
 template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {

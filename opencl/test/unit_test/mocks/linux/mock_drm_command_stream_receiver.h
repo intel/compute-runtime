@@ -16,7 +16,6 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::makeResident;
-    using DrmCommandStreamReceiver<GfxFamily>::makeResidentBufferObjects;
     using DrmCommandStreamReceiver<GfxFamily>::residency;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::lastSentSliceCount;
 

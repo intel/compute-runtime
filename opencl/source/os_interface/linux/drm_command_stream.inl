@@ -117,35 +117,10 @@ void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, u
 }
 
 template <typename GfxFamily>
-void DrmCommandStreamReceiver<GfxFamily>::makeResident(BufferObject *bo) {
-    if (bo) {
-        if (bo->peekIsReusableAllocation()) {
-            for (auto bufferObject : this->residency) {
-                if (bufferObject == bo) {
-                    return;
-                }
-            }
-        }
-
-        residency.push_back(bo);
-    }
-}
-
-template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
     for (auto &alloc : inputAllocationsForResidency) {
-        auto drmAlloc = static_cast<const DrmAllocation *>(alloc);
-        if (drmAlloc->fragmentsStorage.fragmentCount) {
-            for (unsigned int f = 0; f < drmAlloc->fragmentsStorage.fragmentCount; f++) {
-                const auto osContextId = osContext->getContextId();
-                if (!drmAlloc->fragmentsStorage.fragmentStorageData[f].residency->resident[osContextId]) {
-                    makeResident(drmAlloc->fragmentsStorage.fragmentStorageData[f].osHandleStorage->bo);
-                    drmAlloc->fragmentsStorage.fragmentStorageData[f].residency->resident[osContextId] = true;
-                }
-            }
-        } else {
-            makeResidentBufferObjects(drmAlloc, handleId);
-        }
+        auto drmAlloc = static_cast<DrmAllocation *>(alloc);
+        drmAlloc->getBOsForResidency(osContext->getContextId(), handleId, this->residency);
     }
 }
 

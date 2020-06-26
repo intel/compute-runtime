@@ -125,8 +125,8 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
     }
 
     template <typename GfxFamily>
-    void makeResidentBufferObjects(const DrmAllocation *drmAllocation) {
-        static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->makeResidentBufferObjects(drmAllocation, 0u);
+    void makeResidentBufferObjects(DrmAllocation *drmAllocation) {
+        drmAllocation->appendBOs(0u, static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->residency);
     }
 
     template <typename GfxFamily>
