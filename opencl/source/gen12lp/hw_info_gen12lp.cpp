@@ -12,6 +12,8 @@
 #include "hw_info_dg1.inl"
 #endif
 
+#include "shared/source/gen12lp/hw_info_gen12lp.h"
+
 namespace NEO {
 const char *GfxFamilyMapper<IGFX_GEN12LP_CORE>::name = "Gen12LP";
 } // namespace NEO
