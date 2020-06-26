@@ -526,3 +526,82 @@ HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatching
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dims, false, false, dispatchInterface.get(), 0, pDevice, NEO::PreemptionMode::Disabled);
     EXPECT_THAT(ptrOffset(ioh->getCpuBase(), iohOffset), MemoryZeroed(ioh->getMaxAvailableSpace() - iohOffset));
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenStartWorkGroupWhenIndirectIsFalseThenExpectStartGroupAndThreadDimensionsProgramming) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    startWorkGroup[1] = 2u;
+    startWorkGroup[2] = 3u;
+
+    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, simd, localIdDimensions,
+                                                       true, false, false, requiredWorkGroupOrder);
+    EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
+    EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
+    EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
+    EXPECT_EQ(1u, walkerCmd.getThreadGroupIdZDimension());
+
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingX());
+    EXPECT_EQ(2u, walkerCmd.getThreadGroupIdStartingY());
+    EXPECT_EQ(3u, walkerCmd.getThreadGroupIdStartingResumeZ());
+
+    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
+    EXPECT_EQ(1u, walkerCmd.getThreadWidthCounterMaximum());
+
+    EXPECT_EQ(0xffffffffu, walkerCmd.getRightExecutionMask());
+    EXPECT_EQ(0xffffffffu, walkerCmd.getBottomExecutionMask());
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenNoStartWorkGroupWhenIndirectIsTrueThenExpectNoStartGroupAndThreadDimensionsProgramming) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    startWorkGroup[1] = 2u;
+    startWorkGroup[2] = 3u;
+
+    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, nullptr, numWorkGroups, workGroupSizes, simd, localIdDimensions,
+                                                       true, false, true, requiredWorkGroupOrder);
+    EXPECT_TRUE(walkerCmd.getIndirectParameterEnable());
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdXDimension());
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdYDimension());
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdZDimension());
+
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingX());
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingY());
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingResumeZ());
+
+    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
+    EXPECT_EQ(1u, walkerCmd.getThreadWidthCounterMaximum());
+
+    EXPECT_EQ(0xffffffffu, walkerCmd.getRightExecutionMask());
+    EXPECT_EQ(0xffffffffu, walkerCmd.getBottomExecutionMask());
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenStartWorkGroupWhenWorkGroupSmallerThanSimdThenExpectStartGroupAndRightExecutionMaskNotFull) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+    startWorkGroup[1] = 2u;
+    startWorkGroup[2] = 3u;
+    workGroupSizes[0] = 30u;
+
+    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, simd, localIdDimensions,
+                                                       true, false, false, requiredWorkGroupOrder);
+    EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
+    EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
+    EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
+    EXPECT_EQ(1u, walkerCmd.getThreadGroupIdZDimension());
+
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingX());
+    EXPECT_EQ(2u, walkerCmd.getThreadGroupIdStartingY());
+    EXPECT_EQ(3u, walkerCmd.getThreadGroupIdStartingResumeZ());
+
+    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
+    EXPECT_EQ(1u, walkerCmd.getThreadWidthCounterMaximum());
+
+    EXPECT_EQ(0x3fffffffu, walkerCmd.getRightExecutionMask());
+    EXPECT_EQ(0xffffffffu, walkerCmd.getBottomExecutionMask());
+}

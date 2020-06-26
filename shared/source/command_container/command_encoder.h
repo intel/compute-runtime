@@ -38,6 +38,17 @@ struct EncodeDispatchKernel {
 
     static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels, size_t *lws, std::array<uint8_t, 3> walkOrder,
                                                     bool requireInputWalkOrder, uint32_t &requiredWalkOrder, uint32_t simd);
+
+    static void encodeThreadData(WALKER_TYPE &walkerCmd,
+                                 const size_t *startWorkGroup,
+                                 const size_t *numWorkGroups,
+                                 const size_t *workGroupSizes,
+                                 uint32_t simd,
+                                 uint32_t localIdDimensions,
+                                 bool localIdsGenerationByRuntime,
+                                 bool inlineDataProgrammingRequired,
+                                 bool isIndirect,
+                                 uint32_t requiredWorkGroupOrder);
 };
 
 template <typename GfxFamily>

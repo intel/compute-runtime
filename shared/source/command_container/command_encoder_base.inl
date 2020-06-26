@@ -293,6 +293,47 @@ bool EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32
 }
 
 template <typename GfxFamily>
+void EncodeDispatchKernel<GfxFamily>::encodeThreadData(WALKER_TYPE &walkerCmd,
+                                                       const size_t *startWorkGroup,
+                                                       const size_t *numWorkGroups,
+                                                       const size_t *workGroupSizes,
+                                                       uint32_t simd,
+                                                       uint32_t localIdDimensions,
+                                                       bool localIdsGenerationByRuntime,
+                                                       bool inlineDataProgrammingRequired,
+                                                       bool isIndirect,
+                                                       uint32_t requiredWorkGroupOrder) {
+
+    if (isIndirect) {
+        walkerCmd.setIndirectParameterEnable(true);
+    } else {
+        walkerCmd.setThreadGroupIdXDimension(static_cast<uint32_t>(numWorkGroups[0]));
+        walkerCmd.setThreadGroupIdYDimension(static_cast<uint32_t>(numWorkGroups[1]));
+        walkerCmd.setThreadGroupIdZDimension(static_cast<uint32_t>(numWorkGroups[2]));
+    }
+
+    if (startWorkGroup) {
+        walkerCmd.setThreadGroupIdStartingX(static_cast<uint32_t>(startWorkGroup[0]));
+        walkerCmd.setThreadGroupIdStartingY(static_cast<uint32_t>(startWorkGroup[1]));
+        walkerCmd.setThreadGroupIdStartingResumeZ(static_cast<uint32_t>(startWorkGroup[2]));
+    }
+
+    walkerCmd.setSimdSize(getSimdConfig<WALKER_TYPE>(simd));
+
+    auto localWorkSize = workGroupSizes[0] * workGroupSizes[1] * workGroupSizes[2];
+    auto threadsPerWorkGroup = getThreadsPerWG(simd, localWorkSize);
+    walkerCmd.setThreadWidthCounterMaximum(static_cast<uint32_t>(threadsPerWorkGroup));
+
+    auto remainderSimdLanes = localWorkSize & (simd - 1);
+    uint64_t executionMask = maxNBitValue(remainderSimdLanes);
+    if (!executionMask)
+        executionMask = ~executionMask;
+
+    walkerCmd.setRightExecutionMask(static_cast<uint32_t>(executionMask));
+    walkerCmd.setBottomExecutionMask(static_cast<uint32_t>(0xffffffff));
+}
+
+template <typename GfxFamily>
 void EncodeMiFlushDW<GfxFamily>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd) {}
 
 template <typename GfxFamily>
