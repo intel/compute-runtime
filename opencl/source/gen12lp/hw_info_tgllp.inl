@@ -46,7 +46,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     MemoryConstants::pageSize,                       // requiredPreemptionSurfaceSize
     &isSimulationTGLLP,                              // isSimulation
     PreemptionMode::ThreadGroup,                     // defaultPreemptionMode
-    aub_stream::ENGINE_CCS,                          // defaultEngineType
+    aub_stream::ENGINE_RCS,                          // defaultEngineType
     0,                                               // maxRenderFrequency
     30,                                              // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Tgllp, // aubDeviceId

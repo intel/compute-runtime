@@ -17,6 +17,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_engine_mapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_mapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.cpp
@@ -51,13 +52,11 @@ set(NEO_CORE_OS_INTERFACE_LINUX
 
 if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
 list(APPEND NEO_CORE_OS_INTERFACE_LINUX
-  ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_mapper_dg1.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_allocate_in_device_pool_dg1.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_query_dg1.cpp
 )
 else()
 list(APPEND NEO_CORE_OS_INTERFACE_LINUX
-  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_engine_mapper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_memory_manager_allocate_in_device_pool.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_query.cpp
 )

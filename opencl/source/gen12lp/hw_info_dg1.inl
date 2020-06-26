@@ -48,7 +48,7 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
     &isSimulationDG1,                              // isSimulation
     PreemptionMode::ThreadGroup,                   // defaultPreemptionMode
-    aub_stream::ENGINE_CCS,                        // defaultEngineType
+    aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
     30,                                            // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Dg1, // aubDeviceId

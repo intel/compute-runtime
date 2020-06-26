@@ -98,3 +98,47 @@ TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestFlagsWithoutSharedHandlesWhe
     getCsrHw<FamilyType>()->programComputeMode(stream, flags);
     EXPECT_EQ(cmdsSize, stream.getUsed());
 }
+
+TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestOnEngineCCSWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+
+    SetUpImpl<FamilyType>(&hwInfo);
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+
+    auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
+    char buff[1024];
+    LinearStream stream(buff, 1024);
+
+    overrideComputeModeRequest<FamilyType>(false, false, false);
+
+    auto retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    EXPECT_EQ(0u, retSize);
+    getCsrHw<FamilyType>()->programComputeMode(stream, flags);
+    EXPECT_EQ(0u, stream.getUsed());
+
+    stream.replaceBuffer(buff, 1024);
+    overrideComputeModeRequest<FamilyType>(true, true, false);
+
+    retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    EXPECT_EQ(cmdsSize, retSize);
+    getCsrHw<FamilyType>()->programComputeMode(stream, flags);
+    EXPECT_EQ(cmdsSize, stream.getUsed());
+
+    stream.replaceBuffer(buff, 1024);
+    overrideComputeModeRequest<FamilyType>(true, false, false);
+
+    retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    EXPECT_EQ(cmdsSize, retSize);
+    getCsrHw<FamilyType>()->programComputeMode(stream, flags);
+    EXPECT_EQ(cmdsSize, stream.getUsed());
+
+    stream.replaceBuffer(buff, 1024);
+    overrideComputeModeRequest<FamilyType>(false, false, false, true, 127u);
+
+    retSize = getCsrHw<FamilyType>()->getCmdSizeForComputeMode();
+    EXPECT_EQ(cmdsSize, retSize);
+    getCsrHw<FamilyType>()->programComputeMode(stream, flags);
+    EXPECT_EQ(cmdsSize, stream.getUsed());
+}

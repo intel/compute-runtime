@@ -562,10 +562,14 @@ TEST(EventProfilingTest, givenRawTimestampsDebugModeWhenStartTimeStampLTQueueTim
 
 struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::testing::Test {
     void SetUp() override {
+        SetUp(defaultHwInfo.get());
+    }
+
+    void SetUp(const NEO::HardwareInfo *hardwareInfo) {
         PerformanceCountersFixture::SetUp();
         createPerfCounters();
 
-        HardwareInfo hwInfo = *defaultHwInfo;
+        HardwareInfo hwInfo = *hardwareInfo;
         if (hwInfo.capabilityTable.defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {
             hwInfo.featureTable.ftrCCSNode = true;
         }
@@ -606,6 +610,18 @@ struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::tes
     std::unique_ptr<MockContext> context;
     std::unique_ptr<CommandQueue> pCmdQ;
     std::unique_ptr<MockKernelWithInternals> kernel;
+};
+
+struct ProfilingWithPerfCountersOnCCSTests : ProfilingWithPerfCountersTests {
+    void SetUp() override {
+        auto hwInfo = *defaultHwInfo;
+        hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+        ProfilingWithPerfCountersTests::SetUp(&hwInfo);
+    }
+
+    void TearDown() override {
+        ProfilingWithPerfCountersTests::TearDown();
+    }
 };
 
 HWTEST_F(ProfilingWithPerfCountersTests,
@@ -890,6 +906,114 @@ HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCount
     itor = expectStoreRegister<FamilyType>(cmdList, itor, timeStampGpuAddress + offsetof(HwTimeStamps, ContextEndTS), GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
 
     EXPECT_TRUE(pEvent->calcProfilingData());
+
+    clReleaseEvent(event);
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersOnCCSTests, givenCommandQueueBlockedWithProfilingPerfCountersWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+    using MI_REPORT_PERF_COUNT = typename FamilyType::MI_REPORT_PERF_COUNT;
+
+    pCmdQ->setPerfCountersEnabled();
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    uint32_t dimensions = 1;
+    cl_event event;
+    cl_event userEvent = clCreateUserEvent(context.get(), nullptr);
+    cl_kernel clKernel = kernel->mockKernel;
+    CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get());
+
+    cmdQHw->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr, 1, &userEvent, &event);
+    ASSERT_NE(nullptr, pCmdQ->virtualEvent);
+    ASSERT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
+    NEO::LinearStream *eventCommandStream = pCmdQ->virtualEvent->peekCommand()->getCommandStream();
+    ASSERT_NE(nullptr, eventCommandStream);
+
+    HardwareParse parse;
+    auto &cmdList = parse.cmdList;
+    parse.parseCommands<FamilyType>(*eventCommandStream);
+
+    // expect MI_REPORT_PERF_COUNT before WALKER
+    auto itorBeforeReportPerf = find<MI_REPORT_PERF_COUNT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorBeforeReportPerf);
+
+    // find GPGPU_WALKER
+    auto itorGPGPUWalkerCmd = find<GPGPU_WALKER *>(itorBeforeReportPerf, cmdList.end());
+    GenCmdList::reverse_iterator rItorGPGPUWalkerCmd(itorGPGPUWalkerCmd);
+    ASSERT_NE(cmdList.end(), itorGPGPUWalkerCmd);
+
+    // check PIPE_CONTROLs
+    auto itorBeforePC = reverse_find<PIPE_CONTROL *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
+    ASSERT_NE(cmdList.rbegin(), itorBeforePC);
+    auto pBeforePC = genCmdCast<PIPE_CONTROL *>(*itorBeforePC);
+    ASSERT_NE(nullptr, pBeforePC);
+
+    auto itorAfterPC = find<PIPE_CONTROL *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterPC);
+    auto pAfterPC = genCmdCast<PIPE_CONTROL *>(*itorAfterPC);
+    ASSERT_NE(nullptr, pAfterPC);
+
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pBeforePC->getPostSyncOperation());
+
+    // expect MI_REPORT_PERF_COUNT after WALKER
+    auto itorAfterReportPerf = find<MI_REPORT_PERF_COUNT *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterReportPerf);
+
+    clReleaseEvent(event);
+    clReleaseEvent(userEvent);
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersOnCCSTests, givenCommandQueueWithProfilingPerfCountersWhenWalkerIsDispatchedThenPipeControlWithTimeStampIsPresentInCS) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+    using MI_REPORT_PERF_COUNT = typename FamilyType::MI_REPORT_PERF_COUNT;
+
+    pCmdQ->setPerfCountersEnabled();
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    uint32_t dimensions = 1;
+    cl_event event;
+    cl_kernel clKernel = kernel->mockKernel;
+    CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(pCmdQ.get());
+
+    cmdQHw->enqueueKernel(clKernel, dimensions, globalOffsets, workItems, nullptr, 0, nullptr, &event);
+
+    HardwareParse parse;
+    auto &cmdList = parse.cmdList;
+    parse.parseCommands<FamilyType>(*pCmdQ);
+
+    // expect MI_REPORT_PERF_COUNT before WALKER
+    auto itorBeforeReportPerf = find<MI_REPORT_PERF_COUNT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorBeforeReportPerf);
+
+    // find GPGPU_WALKER
+    auto itorGPGPUWalkerCmd = find<GPGPU_WALKER *>(itorBeforeReportPerf, cmdList.end());
+    GenCmdList::reverse_iterator rItorGPGPUWalkerCmd(itorGPGPUWalkerCmd);
+    ASSERT_NE(cmdList.end(), itorGPGPUWalkerCmd);
+
+    // check PIPE_CONTROLs
+    auto itorBeforePC = reverse_find<PIPE_CONTROL *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
+    ASSERT_NE(cmdList.rbegin(), itorBeforePC);
+    auto pBeforePC = genCmdCast<PIPE_CONTROL *>(*itorBeforePC);
+    ASSERT_NE(nullptr, pBeforePC);
+    EXPECT_EQ(1u, pBeforePC->getCommandStreamerStallEnable());
+
+    auto itorAfterPC = find<PIPE_CONTROL *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterPC);
+    auto pAfterPC = genCmdCast<PIPE_CONTROL *>(*itorAfterPC);
+    ASSERT_NE(nullptr, pAfterPC);
+    EXPECT_EQ(1u, pAfterPC->getCommandStreamerStallEnable());
+
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pBeforePC->getPostSyncOperation());
+
+    // expect MI_REPORT_PERF_COUNT after WALKER
+    auto itorAfterReportPerf = find<MI_REPORT_PERF_COUNT *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterReportPerf);
+
+    EXPECT_TRUE(static_cast<MockEvent<Event> *>(event)->calcProfilingData());
 
     clReleaseEvent(event);
 }
