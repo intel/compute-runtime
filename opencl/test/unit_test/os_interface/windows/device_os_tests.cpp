@@ -38,7 +38,7 @@ TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenCo
     delete pClDevice;
 }
 
-TEST(DeviceOsTest, supportedSimultaneousInterops) {
+TEST(DeviceOsTest, WhenCreatingDeviceThenSimultaneousInteropsIsSupported) {
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
     std::vector<unsigned int> expected = {CL_GL_CONTEXT_KHR,
@@ -56,14 +56,14 @@ TEST(DeviceOsTest, supportedSimultaneousInterops) {
     EXPECT_TRUE(pDevice->simultaneousInterops == expected);
 }
 
-TEST(DeviceOsTest, DeviceCreationFail) {
+TEST(DeviceOsTest, GivenFailedDeviceWhenCreatingWithNewExecutionEnvironmentThenNullIsReturned) {
     auto hwInfo = defaultHwInfo.get();
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDevice>(hwInfo);
 
     EXPECT_THAT(pDevice, nullptr);
 }
 
-TEST(DeviceOsTest, DeviceCreationFailMidThreadPreemption) {
+TEST(DeviceOsTest, GivenMidThreadPreemptionAndFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDeviceAfterOne>(defaultHwInfo.get());

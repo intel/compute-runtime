@@ -41,7 +41,7 @@ TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenCo
     delete pClDevice;
 }
 
-TEST(DeviceOsTest, supportedSimultaneousInterops) {
+TEST(DeviceOsTest, WhenDeviceIsCreatedThenSimultaneousInteropsIsSupported) {
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
 
     std::vector<unsigned int> expected = {0};
@@ -49,14 +49,14 @@ TEST(DeviceOsTest, supportedSimultaneousInterops) {
     EXPECT_TRUE(pDevice->simultaneousInterops == expected);
 }
 
-TEST(DeviceOsTest, DeviceCreationFail) {
+TEST(DeviceOsTest, GivenFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
     auto hwInfo = defaultHwInfo.get();
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDevice>(hwInfo);
 
     EXPECT_THAT(pDevice, nullptr);
 }
 
-TEST(ApiOsTest, notSupportedApiTokens) {
+TEST(ApiOsTest, GivenUnupportedApiTokensWhenGettingInfoThenInvalidValueErrorIsReturned) {
     MockContext context;
     MockBuffer buffer;
 
@@ -70,7 +70,7 @@ TEST(ApiOsTest, notSupportedApiTokens) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST(ApiOsTest, notSupportedApiList) {
+TEST(ApiOsTest, GivenUnsupportedApiWhenGettingDispatchThenNullIsReturned) {
     MockContext context;
 
     EXPECT_EQ(nullptr, context.dispatch.crtDispatch->clGetDeviceIDsFromDX9INTEL);
@@ -98,7 +98,7 @@ TEST(ApiOsTest, notSupportedApiList) {
     EXPECT_EQ(nullptr, context.dispatch.icdDispatch->clEnqueueReleaseD3D11ObjectsKHR);
 }
 
-TEST(DeviceOsTest, DeviceCreationFailMidThreadPreemption) {
+TEST(DeviceOsTest, GivenMidThreadPreemptionAndFailedDeviceWhenCreatingDeviceThenNullIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDeviceAfterOne>(defaultHwInfo.get());
