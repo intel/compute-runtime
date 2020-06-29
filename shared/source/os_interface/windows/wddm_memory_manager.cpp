@@ -595,31 +595,40 @@ bool WddmMemoryManager::mapGpuVaForOneHandleAllocation(WddmAllocation *allocatio
     return true;
 }
 
-bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *allocation, Wddm *wddm, DeferredDeleter *deferredDeleter, GfxPartition &gfxPartition) {
+bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *allocation, const void *preferredGpuVirtualAddress) {
+    Wddm &wddm = getWddm(allocation->getRootDeviceIndex());
+    auto gfxPartition = getGfxPartition(allocation->getRootDeviceIndex());
+
     auto alignedSize = allocation->getAlignedSize();
-    allocation->reservedSizeForGpuVirtualAddress = alignUp(alignedSize, MemoryConstants::pageSize64k);
-    allocation->reservedGpuVirtualAddress = wddm->reserveGpuVirtualAddress(gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB),
-                                                                           gfxPartition.getHeapLimit(HeapIndex::HEAP_STANDARD64KB),
-                                                                           allocation->reservedSizeForGpuVirtualAddress);
-    allocation->getGpuAddressToModify() = allocation->reservedGpuVirtualAddress;
-    auto addressToMap = allocation->reservedGpuVirtualAddress;
+    uint64_t addressToMap = 0;
+    HeapIndex heapIndex = preferredGpuVirtualAddress ? HeapIndex::HEAP_SVM : HeapIndex::HEAP_STANDARD64KB;
+
+    if (preferredGpuVirtualAddress) {
+        addressToMap = castToUint64(preferredGpuVirtualAddress);
+        allocation->getGpuAddressToModify() = addressToMap;
+    } else {
+        allocation->reservedSizeForGpuVirtualAddress = alignUp(alignedSize, MemoryConstants::pageSize64k);
+        allocation->reservedGpuVirtualAddress = wddm.reserveGpuVirtualAddress(gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex),
+                                                                              allocation->reservedSizeForGpuVirtualAddress);
+        allocation->getGpuAddressToModify() = allocation->reservedGpuVirtualAddress;
+        addressToMap = allocation->reservedGpuVirtualAddress;
+    }
+
     for (auto currentHandle = 0u; currentHandle < allocation->getNumGmms(); currentHandle++) {
         uint64_t gpuAddress = 0;
-        auto status = wddm->mapGpuVirtualAddress(allocation->getGmm(currentHandle), allocation->getHandles()[currentHandle],
-                                                 gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition.getHeapLimit(HeapIndex::HEAP_STANDARD64KB),
-                                                 addressToMap, gpuAddress);
+        auto status = wddm.mapGpuVirtualAddress(allocation->getGmm(currentHandle), allocation->getHandles()[currentHandle],
+                                                gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex), addressToMap, gpuAddress);
 
         if (!status && deferredDeleter) {
             deferredDeleter->drain(true);
-            status = wddm->mapGpuVirtualAddress(allocation->getGmm(currentHandle), allocation->getHandles()[currentHandle],
-                                                gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition.getHeapLimit(HeapIndex::HEAP_STANDARD64KB),
-                                                addressToMap, gpuAddress);
+            status = wddm.mapGpuVirtualAddress(allocation->getGmm(currentHandle), allocation->getHandles()[currentHandle],
+                                               gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex), addressToMap, gpuAddress);
         }
         if (!status) {
             if (allocation->reservedGpuVirtualAddress) {
-                wddm->freeGpuVirtualAddress(allocation->reservedGpuVirtualAddress, allocation->reservedSizeForGpuVirtualAddress);
+                wddm.freeGpuVirtualAddress(allocation->reservedGpuVirtualAddress, allocation->reservedSizeForGpuVirtualAddress);
             }
-            wddm->destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->resourceHandle);
+            wddm.destroyAllocations(&allocation->getHandles()[0], allocation->getNumGmms(), allocation->resourceHandle);
             return false;
         }
         gpuAddress = GmmHelper::decanonize(gpuAddress);

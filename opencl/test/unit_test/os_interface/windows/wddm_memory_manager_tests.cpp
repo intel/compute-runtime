@@ -1882,6 +1882,31 @@ TEST_F(WddmMemoryManagerSimpleTest, givenAllocationWithReservedGpuVirtualAddress
     EXPECT_EQ(sizeForFree, wddm->freeGpuVirtualAddressResult.sizePassed);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenMultiHandleAllocationAndPreferredGpuVaIsSpecifiedWhenCreateAllocationIsCalledThenAllocationHasProperGpuAddressAndHeapSvmIsUsed) {
+    if (memoryManager->isLimitedRange(0)) {
+        GTEST_SKIP();
+    }
+
+    uint32_t numGmms = 10;
+    MockWddmAllocation allocation(numGmms);
+    allocation.setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    allocation.storageInfo.multiStorage = true;
+
+    wddm->callBaseMapGpuVa = true;
+
+    uint64_t gpuPreferredVa = 0x20000ull;
+
+    memoryManager->createWddmAllocation(&allocation, reinterpret_cast<void *>(gpuPreferredVa));
+    EXPECT_EQ(gpuPreferredVa, allocation.getGpuAddress());
+    EXPECT_EQ(numGmms, wddm->mapGpuVirtualAddressResult.called);
+
+    auto gmmSize = allocation.getDefaultGmm()->gmmResourceInfo->getSizeAllocation();
+    auto lastRequiredAddress = (numGmms - 1) * gmmSize + gpuPreferredVa;
+    EXPECT_EQ(lastRequiredAddress, wddm->mapGpuVirtualAddressResult.uint64ParamPassed);
+    EXPECT_GT(lastRequiredAddress, memoryManager->getGfxPartition(0)->getHeapMinimalAddress(HeapIndex::HEAP_SVM));
+    EXPECT_LT(lastRequiredAddress, memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_SVM));
+}
+
 TEST_F(WddmMemoryManagerSimpleTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedThenAllocateMemoryReserveGpuVa) {
     size_t size = 2 * MemoryConstants::megaByte;
     MockAllocationProperties properties{csr->getRootDeviceIndex(), true, size, GraphicsAllocation::AllocationType::SVM_CPU, mockDeviceBitfield};

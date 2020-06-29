@@ -18,7 +18,7 @@ bool WddmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAlloc
 }
 bool WddmMemoryManager::mapGpuVirtualAddress(WddmAllocation *allocation, const void *requiredPtr) {
     if (allocation->getNumGmms() > 1) {
-        return mapMultiHandleAllocationWithRetry(allocation, &getWddm(allocation->getRootDeviceIndex()), this->getDeferredDeleter(), *getGfxPartition(allocation->getRootDeviceIndex()));
+        return mapMultiHandleAllocationWithRetry(allocation, requiredPtr);
     }
     return mapGpuVaForOneHandleAllocation(allocation, requiredPtr);
 }
