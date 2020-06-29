@@ -139,7 +139,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMap(cl_bool blockingMap,
         if (event) {
             castToObjectOrAbort<Event>(*event)->setCmdType(CL_COMMAND_SVM_MAP);
         }
-        bool readOnlyMap = isValueSet(mapFlags, CL_MAP_READ);
+        bool readOnlyMap = (mapFlags == CL_MAP_READ);
         context->getSVMAllocsManager()->insertSvmMapOperation(svmPtr, size, svmBasePtr, svmOffset, readOnlyMap);
         dispatchInfo.backupUnifiedMemorySyncRequirement();
 

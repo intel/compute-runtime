@@ -980,6 +980,25 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenMapReadFlagWhenMappingSvmThenMapIsSucce
     EXPECT_TRUE(svmMap->readOnlyMap);
 }
 
+HWTEST_F(EnqueueSvmTestLocalMemory, givenMapReadAndWriteFlagWhenMappingSvmThenDontSetReadOnlyProperty) {
+    MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
+    uintptr_t offset = 64;
+    void *regionSvmPtr = ptrOffset(svmPtr, offset);
+    size_t regionSize = 64;
+    retVal = queue.enqueueSVMMap(
+        CL_TRUE,
+        CL_MAP_READ | CL_MAP_WRITE,
+        regionSvmPtr,
+        regionSize,
+        0,
+        nullptr,
+        nullptr,
+        false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto svmMap = mockSvmManager->svmMapOperations.get(regionSvmPtr);
+    EXPECT_FALSE(svmMap->readOnlyMap);
+}
+
 HWTEST_F(EnqueueSvmTestLocalMemory, givenSvmAllocWithoutFlagsWhenMappingSvmThenMapIsSuccessfulAndReadOnlyFlagIsTrue) {
     MockCommandQueueHw<FamilyType> queue(context.get(), pClDevice, nullptr);
     uintptr_t offset = 64;
