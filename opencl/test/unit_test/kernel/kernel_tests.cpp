@@ -1818,7 +1818,7 @@ HWTEST_F(KernelResidencyTest, givenDeviceUnifiedMemoryAndPageFaultManagerWhenMak
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
 
     EXPECT_EQ(0u, mockKernel.mockKernel->kernelUnifiedMemoryGfxAllocations.size());
-    mockKernel.mockKernel->setUnifiedMemoryExecInfo(unifiedMemoryGraphicsAllocation->gpuAllocation);
+    mockKernel.mockKernel->setUnifiedMemoryExecInfo(unifiedMemoryGraphicsAllocation->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex()));
     EXPECT_EQ(1u, mockKernel.mockKernel->kernelUnifiedMemoryGfxAllocations.size());
 
     mockKernel.mockKernel->makeResident(commandStreamReceiver);
@@ -1849,7 +1849,7 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAndPageFaultManagerWhenMak
     EXPECT_EQ(mockPageFaultManager->transferToCpuCalled, 1);
 
     EXPECT_EQ(0u, mockKernel.mockKernel->kernelUnifiedMemoryGfxAllocations.size());
-    mockKernel.mockKernel->setUnifiedMemoryExecInfo(unifiedMemoryGraphicsAllocation->gpuAllocation);
+    mockKernel.mockKernel->setUnifiedMemoryExecInfo(unifiedMemoryGraphicsAllocation->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex()));
     EXPECT_EQ(1u, mockKernel.mockKernel->kernelUnifiedMemoryGfxAllocations.size());
 
     mockKernel.mockKernel->makeResident(commandStreamReceiver);
@@ -1882,7 +1882,8 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryAndNotRequiredMemSyncWhenM
     mockPageFaultManager->insertAllocation(unifiedMemoryAllocation, 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue());
 
     EXPECT_EQ(mockPageFaultManager->transferToCpuCalled, 1);
-    mockKernel.mockKernel->kernelArguments[0] = {Kernel::kernelArgType::SVM_ALLOC_OBJ, unifiedMemoryGraphicsAllocation->gpuAllocation, unifiedMemoryAllocation, 4096u, unifiedMemoryGraphicsAllocation->gpuAllocation, sizeof(uintptr_t)};
+    auto gpuAllocation = unifiedMemoryGraphicsAllocation->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
+    mockKernel.mockKernel->kernelArguments[0] = {Kernel::kernelArgType::SVM_ALLOC_OBJ, gpuAllocation, unifiedMemoryAllocation, 4096u, gpuAllocation, sizeof(uintptr_t)};
     mockKernel.mockKernel->setUnifiedMemorySyncRequirement(false);
 
     mockKernel.mockKernel->makeResident(commandStreamReceiver);
@@ -1909,8 +1910,9 @@ HWTEST_F(KernelResidencyTest, givenSharedUnifiedMemoryRequiredMemSyncWhenMakeRes
     auto unifiedMemoryGraphicsAllocation = svmAllocationsManager->getSVMAlloc(unifiedMemoryAllocation);
     mockPageFaultManager->insertAllocation(unifiedMemoryAllocation, 4096u, svmAllocationsManager, mockKernel.mockContext->getSpecialQueue());
 
+    auto gpuAllocation = unifiedMemoryGraphicsAllocation->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
     EXPECT_EQ(mockPageFaultManager->transferToCpuCalled, 1);
-    mockKernel.mockKernel->kernelArguments[0] = {Kernel::kernelArgType::SVM_ALLOC_OBJ, unifiedMemoryGraphicsAllocation->gpuAllocation, unifiedMemoryAllocation, 4096u, unifiedMemoryGraphicsAllocation->gpuAllocation, sizeof(uintptr_t)};
+    mockKernel.mockKernel->kernelArguments[0] = {Kernel::kernelArgType::SVM_ALLOC_OBJ, gpuAllocation, unifiedMemoryAllocation, 4096u, gpuAllocation, sizeof(uintptr_t)};
     mockKernel.mockKernel->setUnifiedMemorySyncRequirement(true);
 
     mockKernel.mockKernel->makeResident(commandStreamReceiver);
@@ -1967,7 +1969,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenSetKernelExecInfoWithUnifiedMemoryI
 
     EXPECT_EQ(0u, mockKernel.mockKernel->kernelUnifiedMemoryGfxAllocations.size());
 
-    mockKernel.mockKernel->setUnifiedMemoryExecInfo(unifiedMemoryGraphicsAllocation->gpuAllocation);
+    mockKernel.mockKernel->setUnifiedMemoryExecInfo(unifiedMemoryGraphicsAllocation->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex()));
 
     EXPECT_EQ(1u, mockKernel.mockKernel->kernelUnifiedMemoryGfxAllocations.size());
     EXPECT_EQ(mockKernel.mockKernel->kernelUnifiedMemoryGfxAllocations[0]->getGpuAddress(), castToUint64(unifiedMemoryAllocation));

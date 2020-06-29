@@ -111,7 +111,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, GivenNonZeroSizeIsNotContainedWithinAllocati
 
         auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSvm);
         ASSERT_NE(nullptr, svmData);
-        auto svmAlloc = svmData->gpuAllocation;
+        auto svmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
         EXPECT_NE(nullptr, svmAlloc);
         size_t allocSize = svmAlloc->getUnderlyingBufferSize();
 

@@ -1108,15 +1108,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
                                                                  size_t patternSize,
                                                                  size_t size,
                                                                  ze_event_handle_t hEvent) {
+    auto neoDevice = device->getNEODevice();
     if (useMemCopyToBlitFill(patternSize)) {
-        NEO::AllocationProperties properties = {device->getNEODevice()->getRootDeviceIndex(),
+        NEO::AllocationProperties properties = {neoDevice->getRootDeviceIndex(),
                                                 false,
                                                 size,
                                                 NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
                                                 false,
-                                                device->getNEODevice()->getDeviceBitfield()};
+                                                neoDevice->getDeviceBitfield()};
         properties.flags.allocateMemory = 1;
-        auto internalAlloc = device->getNEODevice()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+        auto internalAlloc = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
         size_t offset = 0;
         for (uint32_t i = 0; i < size / patternSize; i++) {
             memcpy_s(ptrOffset(internalAlloc->getUnderlyingBuffer(), offset), (internalAlloc->getUnderlyingBufferSize() - offset), pattern, patternSize);
@@ -1133,10 +1134,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
         if (dstAllocFound == false) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-        commandContainer.addToResidencyContainer(allocData->gpuAllocation);
+        auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+        commandContainer.addToResidencyContainer(gpuAllocation);
         uint32_t patternToCommand[4] = {};
         memcpy_s(&patternToCommand, sizeof(patternToCommand), pattern, patternSize);
-        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(allocData->gpuAllocation, patternToCommand, patternSize, *commandContainer.getCommandStream(), size, *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryColorFill(gpuAllocation, patternToCommand, patternSize,
+                                                                        *commandContainer.getCommandStream(),
+                                                                        size,
+                                                                        *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
         appendSignalEventPostWalker(hEvent);
     }
     return ZE_RESULT_SUCCESS;
@@ -1214,7 +1219,7 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
         alignedPtr = static_cast<uintptr_t>(alignDown(alloc->getGpuAddress(), NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignment()));
         hostPointerNeedsFlush = true;
     } else {
-        alloc = allocData->gpuAllocation;
+        alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
 
         alignedPtr = reinterpret_cast<uintptr_t>(buffer) - offset;
 
@@ -1381,7 +1386,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(pThreadGroupDimensions);
     if (allocData) {
-        auto alloc = allocData->gpuAllocation;
+        auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         commandContainer.addToResidencyContainer(alloc);
 
         NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMX,

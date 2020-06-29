@@ -357,7 +357,7 @@ HWTEST_F(UsmDestructionTests, givenSharedUsmAllocationWhenBlockingFreeIsCalledTh
     auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return true; };
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
-    svmEntry->gpuAllocation->updateTaskCount(6u, 0u);
+    svmEntry->gpuAllocations.getGraphicsAllocation(mockDevice.getRootDeviceIndex())->updateTaskCount(6u, 0u);
     svmEntry->cpuAllocation->updateTaskCount(6u, 0u);
     EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, 6u))
         .Times(2);
@@ -397,7 +397,7 @@ HWTEST_F(UsmDestructionTests, givenUsmAllocationWhenBlockingFreeIsCalledThenWait
     auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return true; };
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
-    svmEntry->gpuAllocation->updateTaskCount(6u, 0u);
+    svmEntry->gpuAllocations.getGraphicsAllocation(mockDevice.getRootDeviceIndex())->updateTaskCount(6u, 0u);
     EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, 6u))
         .Times(1);
 

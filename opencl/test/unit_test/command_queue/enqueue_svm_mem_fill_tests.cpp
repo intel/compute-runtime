@@ -38,7 +38,7 @@ struct EnqueueSvmMemFillTest : public ClDeviceFixture,
         ASSERT_NE(nullptr, svmPtr);
         auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
         ASSERT_NE(nullptr, svmData);
-        svmAlloc = svmData->gpuAllocation;
+        svmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
         ASSERT_NE(nullptr, svmAlloc);
     }
 

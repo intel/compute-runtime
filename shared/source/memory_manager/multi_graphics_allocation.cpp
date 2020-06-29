@@ -44,4 +44,8 @@ bool MultiGraphicsAllocation::isCoherent() const {
     return getDefaultGraphicsAllocation()->isCoherent();
 }
 
+std::vector<GraphicsAllocation *> const &MultiGraphicsAllocation::getGraphicsAllocations() const {
+    return graphicsAllocations;
+}
+
 } // namespace NEO

@@ -296,7 +296,7 @@ TEST_F(BufferSetArgTest, GivenSvmPointerWhenSettingKernelArgThenAddressToPatchIs
 
     auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     ASSERT_NE(nullptr, svmData);
-    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocation;
+    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
     EXPECT_NE(nullptr, pSvmAlloc);
 
     retVal = pKernel->setArgSvmAlloc(

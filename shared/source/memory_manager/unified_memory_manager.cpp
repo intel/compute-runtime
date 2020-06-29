@@ -16,12 +16,12 @@
 namespace NEO {
 
 void SVMAllocsManager::MapBasedAllocationTracker::insert(SvmAllocationData allocationsPair) {
-    allocations.insert(std::make_pair(reinterpret_cast<void *>(allocationsPair.gpuAllocation->getGpuAddress()), allocationsPair));
+    allocations.insert(std::make_pair(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()), allocationsPair));
 }
 
 void SVMAllocsManager::MapBasedAllocationTracker::remove(SvmAllocationData allocationsPair) {
     SvmAllocationContainer::iterator iter;
-    iter = allocations.find(reinterpret_cast<void *>(allocationsPair.gpuAllocation->getGpuAddress()));
+    iter = allocations.find(reinterpret_cast<void *>(allocationsPair.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
     allocations.erase(iter);
 }
 
@@ -43,7 +43,7 @@ SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *
     }
     if (Iter != End) {
         svmAllocData = &Iter->second;
-        char *charPtr = reinterpret_cast<char *>(svmAllocData->gpuAllocation->getGpuAddress());
+        char *charPtr = reinterpret_cast<char *>(svmAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
         if (ptr < (charPtr + svmAllocData->size)) {
             return svmAllocData;
         }
@@ -83,7 +83,7 @@ void SVMAllocsManager::addInternalAllocationsToResidencyContainer(uint32_t rootD
             (static_cast<Device *>(allocation.second.device)->getRootDeviceIndex() != rootDeviceIndex)) {
             continue;
         }
-        residencyContainer.push_back(allocation.second.gpuAllocation);
+        residencyContainer.push_back(allocation.second.gpuAllocations.getGraphicsAllocation(rootDeviceIndex));
     }
 }
 
@@ -91,7 +91,9 @@ void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &co
     std::unique_lock<SpinLock> lock(mtx);
     for (auto &allocation : this->SVMAllocs.allocations) {
         if (allocation.second.memoryType & requestedTypesMask) {
-            commandStreamReceiver.makeResident(*allocation.second.gpuAllocation);
+            auto gpuAllocation = allocation.second.gpuAllocations.getGraphicsAllocation(commandStreamReceiver.getRootDeviceIndex());
+            UNRECOVERABLE_IF(nullptr == gpuAllocation);
+            commandStreamReceiver.makeResident(*gpuAllocation);
         }
     }
 }
@@ -139,8 +141,8 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(uint32_t rootDeviceIndex, 
         return nullptr;
     }
 
-    SvmAllocationData allocData;
-    allocData.gpuAllocation = unifiedMemoryAllocation;
+    SvmAllocationData allocData(rootDeviceIndex);
+    allocData.gpuAllocations.addAllocation(unifiedMemoryAllocation);
     allocData.cpuAllocation = nullptr;
     allocData.size = size;
     allocData.memoryType = memoryProperties.memoryType;
@@ -199,7 +201,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
             if (svmData->cpuAllocation) {
                 this->memoryManager->waitForEnginesCompletion(*svmData->cpuAllocation);
             }
-            this->memoryManager->waitForEnginesCompletion(*svmData->gpuAllocation);
+            this->memoryManager->waitForEnginesCompletion(*svmData->gpuAllocations.getDefaultGraphicsAllocation());
         }
 
         auto pageFaultManager = this->memoryManager->getPageFaultManager();
@@ -207,7 +209,7 @@ bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
             pageFaultManager->removeAllocation(ptr);
         }
         std::unique_lock<SpinLock> lock(mtx);
-        if (svmData->gpuAllocation->getAllocationType() == GraphicsAllocation::AllocationType::SVM_ZERO_COPY) {
+        if (svmData->gpuAllocations.getAllocationType() == GraphicsAllocation::AllocationType::SVM_ZERO_COPY) {
             freeZeroCopySvmAllocation(svmData);
         } else {
             freeSvmAllocationWithDeviceStorage(svmData);
@@ -232,8 +234,8 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(uint32_t rootDeviceIndex, si
     allocation->setMemObjectsAllocationWithWritableFlags(!svmProperties.readOnly && !svmProperties.hostPtrReadOnly);
     allocation->setCoherent(svmProperties.coherent);
 
-    SvmAllocationData allocData;
-    allocData.gpuAllocation = allocation;
+    SvmAllocationData allocData(rootDeviceIndex);
+    allocData.gpuAllocations.addAllocation(allocation);
     allocData.size = size;
 
     this->SVMAllocs.insert(allocData);
@@ -275,8 +277,8 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(uint32_t rootDe
     allocationGpu->setMemObjectsAllocationWithWritableFlags(!svmProperties.readOnly && !svmProperties.hostPtrReadOnly);
     allocationGpu->setCoherent(svmProperties.coherent);
 
-    SvmAllocationData allocData;
-    allocData.gpuAllocation = allocationGpu;
+    SvmAllocationData allocData(rootDeviceIndex);
+    allocData.gpuAllocations.addAllocation(allocationGpu);
     allocData.cpuAllocation = allocationCpu;
     allocData.device = unifiedMemoryProperties.device;
     allocData.size = size;
@@ -286,14 +288,14 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(uint32_t rootDe
 }
 
 void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
-    GraphicsAllocation *gpuAllocation = svmData->gpuAllocation;
+    GraphicsAllocation *gpuAllocation = svmData->gpuAllocations.getDefaultGraphicsAllocation();
     SVMAllocs.remove(*svmData);
 
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData) {
-    GraphicsAllocation *gpuAllocation = svmData->gpuAllocation;
+    GraphicsAllocation *gpuAllocation = svmData->gpuAllocations.getDefaultGraphicsAllocation();
     GraphicsAllocation *cpuAllocation = svmData->cpuAllocation;
     SVMAllocs.remove(*svmData);
 

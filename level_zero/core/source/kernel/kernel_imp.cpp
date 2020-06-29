@@ -490,7 +490,7 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
     if (nullptr == svmAllocsManager->getSVMAlloc(requestedAddress)) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    NEO::GraphicsAllocation *alloc = svmAllocsManager->getSVMAlloc(requestedAddress)->gpuAllocation;
+    NEO::GraphicsAllocation *alloc = svmAllocsManager->getSVMAlloc(requestedAddress)->gpuAllocations.getDefaultGraphicsAllocation();
     auto gpuAddress = reinterpret_cast<uintptr_t>(requestedAddress);
     return setArgBufferWithAlloc(argIndex, gpuAddress, alloc);
 }

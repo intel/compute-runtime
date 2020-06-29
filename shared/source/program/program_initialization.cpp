@@ -10,7 +10,6 @@
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/program_info.h"
@@ -35,10 +34,10 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         }
         auto svmAlloc = svmAllocManager->getSVMAlloc(ptr);
         UNRECOVERABLE_IF(svmAlloc == nullptr);
-        auto gpuAlloc = svmAlloc->gpuAllocation;
+        auto gpuAlloc = svmAlloc->gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
         UNRECOVERABLE_IF(gpuAlloc == nullptr);
         device.getMemoryManager()->copyMemoryToAllocation(gpuAlloc, initData, static_cast<uint32_t>(size));
-        return svmAllocManager->getSVMAlloc(ptr)->gpuAllocation;
+        return gpuAlloc;
     } else {
         auto allocationType = constant ? GraphicsAllocation::AllocationType::CONSTANT_SURFACE : GraphicsAllocation::AllocationType::GLOBAL_SURFACE;
         auto gpuAlloc = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(),

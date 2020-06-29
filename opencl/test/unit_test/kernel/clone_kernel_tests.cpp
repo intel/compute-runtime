@@ -518,7 +518,7 @@ TEST_F(CloneKernelTest, GivenExecInfoWhenCloningKernelThenSvmAllocationIsCorrect
 
     auto svmData = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     ASSERT_NE(nullptr, svmData);
-    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocation;
+    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
     ASSERT_NE(nullptr, pSvmAlloc);
 
     pSourceKernel->setSvmKernelExecInfo(pSvmAlloc);

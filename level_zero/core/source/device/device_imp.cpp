@@ -184,7 +184,7 @@ ze_result_t DeviceImp::evictMemory(void *ptr, size_t size) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto success = memoryOperationsIface->evict(*alloc->gpuAllocation);
+    auto success = memoryOperationsIface->evict(*alloc->gpuAllocations.getGraphicsAllocation(getRootDeviceIndex()));
     return changeMemoryOperationStatusToL0ResultType(success);
 }
 
@@ -402,7 +402,8 @@ ze_result_t DeviceImp::makeMemoryResident(void *ptr, size_t size) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto success = memoryOperationsIface->makeResident(ArrayRef<NEO::GraphicsAllocation *>(&alloc->gpuAllocation, 1));
+    auto gpuAllocation = alloc->gpuAllocations.getGraphicsAllocation(getRootDeviceIndex());
+    auto success = memoryOperationsIface->makeResident(ArrayRef<NEO::GraphicsAllocation *>(&gpuAllocation, 1));
     return changeMemoryOperationStatusToL0ResultType(success);
 }
 
@@ -693,13 +694,13 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
     bool allocFound = false;
     std::vector<NEO::SvmAllocationData *> allocDataArray = driverHandle->findAllocationsWithinRange(buffer, size, &allocFound);
     if (allocFound) {
-        return allocDataArray[0]->gpuAllocation;
+        return allocDataArray[0]->gpuAllocations.getGraphicsAllocation(getRootDeviceIndex());
     }
 
     if (!allocDataArray.empty()) {
         UNRECOVERABLE_IF(commandList == nullptr);
         for (auto allocData : allocDataArray) {
-            allocation = allocData->gpuAllocation;
+            allocation = allocData->gpuAllocations.getGraphicsAllocation(getRootDeviceIndex());
             char *allocAddress = reinterpret_cast<char *>(allocation->getGpuAddress());
             size_t allocSize = allocData->size;
 
@@ -734,8 +735,8 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
         return allocation;
     }
 
-    NEO::SvmAllocationData allocData;
-    allocData.gpuAllocation = allocation;
+    NEO::SvmAllocationData allocData(getRootDeviceIndex());
+    allocData.gpuAllocations.addAllocation(allocation);
     allocData.cpuAllocation = nullptr;
     allocData.size = size;
     allocData.memoryType = InternalMemoryType::NOT_SPECIFIED;

@@ -220,7 +220,7 @@ Buffer *Buffer::create(Context *context,
         if (svmManager) {
             auto svmData = svmManager->getSVMAlloc(hostPtr);
             if (svmData) {
-                memory = svmData->gpuAllocation;
+                memory = svmData->gpuAllocations.getDefaultGraphicsAllocation();
                 allocationType = memory->getAllocationType();
                 isHostPtrSVM = true;
                 zeroCopyAllowed = memory->getAllocationType() == GraphicsAllocation::AllocationType::SVM_ZERO_COPY;

@@ -216,7 +216,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSetAubWritableIsCalledTh
 
     pageFaultManager->baseAubWritable(false, alloc1, unifiedMemoryManager.get());
 
-    auto gpuAlloc = unifiedMemoryManager->getSVMAlloc(alloc1)->gpuAllocation;
+    auto gpuAlloc = unifiedMemoryManager->getSVMAlloc(alloc1)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
     EXPECT_FALSE(gpuAlloc->isAubWritable(GraphicsAllocation::allBanks));
 
     unifiedMemoryManager->freeSVMAlloc(alloc1);

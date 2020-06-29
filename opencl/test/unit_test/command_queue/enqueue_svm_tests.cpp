@@ -733,7 +733,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThen
 TEST_F(EnqueueSvmTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned) {
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     ASSERT_NE(nullptr, svmData);
-    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocation;
+    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     EXPECT_NE(nullptr, ptrSVM);
 
     std::unique_ptr<Program> program(Program::create("FillBufferBytes", context, *pClDevice, true, &retVal));
@@ -762,7 +762,7 @@ TEST_F(EnqueueSvmTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned
 TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSurfacesAreMadeResident) {
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     ASSERT_NE(nullptr, svmData);
-    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocation;
+    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     EXPECT_NE(nullptr, ptrSVM);
 
     auto program = clUniquePtr(Program::create("FillBufferBytes", context, *pClDevice, true, &retVal));
@@ -811,7 +811,7 @@ TEST_F(EnqueueSvmTest, GivenMultipleThreasWhenAllocatingSvmThenOnlyOneAllocation
             svmPtrs[i] = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 1, {}, pDevice->getDeviceBitfield());
             auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtrs[i]);
             ASSERT_NE(nullptr, svmData);
-            auto ga = svmData->gpuAllocation;
+            auto ga = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
             EXPECT_NE(nullptr, ga);
             EXPECT_EQ(ga->getUnderlyingBuffer(), svmPtrs[i]);
         }
@@ -1209,7 +1209,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenNonReadOnlyMapWhenUnmappingThenSetAubTb
     retVal = myQueue.enqueueSVMMap(CL_TRUE, CL_MAP_WRITE, svmPtr, size, 0, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto gpuAllocation = mockSvmManager->getSVMAlloc(svmPtr)->gpuAllocation;
+    auto gpuAllocation = mockSvmManager->getSVMAlloc(svmPtr)->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     myQueue.allocationToVerify = gpuAllocation;
 
     gpuAllocation->setAubWritable(false, GraphicsAllocation::defaultBank);
@@ -1227,7 +1227,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenReadOnlyMapWhenUnmappingThenDontResetAu
     retVal = queue.enqueueSVMMap(CL_TRUE, CL_MAP_READ, svmPtr, size, 0, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto gpuAllocation = mockSvmManager->getSVMAlloc(svmPtr)->gpuAllocation;
+    auto gpuAllocation = mockSvmManager->getSVMAlloc(svmPtr)->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
 
     gpuAllocation->setAubWritable(false, GraphicsAllocation::defaultBank);
     gpuAllocation->setTbxWritable(false, GraphicsAllocation::defaultBank);
@@ -1428,8 +1428,8 @@ HWTEST_P(UpdateResidencyContainerMultipleDevicesTest, givenAllocationItIsAddedTo
     InternalMemoryType type = std::get<0>(GetParam());
     uint32_t mask = std::get<1>(GetParam());
 
-    SvmAllocationData allocData;
-    allocData.gpuAllocation = &gfxAllocation;
+    SvmAllocationData allocData(gfxAllocation.getRootDeviceIndex());
+    allocData.gpuAllocations.addAllocation(&gfxAllocation);
     allocData.memoryType = type;
     allocData.device = &device->getDevice();
 
@@ -1463,15 +1463,15 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
 
     uint32_t pCmdBuffer[1024];
     MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
-    SvmAllocationData allocData;
-    allocData.gpuAllocation = &gfxAllocation;
+    SvmAllocationData allocData(gfxAllocation.getRootDeviceIndex());
+    allocData.gpuAllocations.addAllocation(&gfxAllocation);
     allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocData.device = &device->getDevice();
 
     uint32_t pCmdBufferPeer[1024];
     MockGraphicsAllocation gfxAllocationPeer((void *)pCmdBufferPeer, sizeof(pCmdBufferPeer));
-    SvmAllocationData allocDataPeer;
-    allocDataPeer.gpuAllocation = &gfxAllocationPeer;
+    SvmAllocationData allocDataPeer(gfxAllocationPeer.getRootDeviceIndex());
+    allocDataPeer.gpuAllocations.addAllocation(&gfxAllocationPeer);
     allocDataPeer.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocDataPeer.device = &peerDevice->getDevice();
 
@@ -1493,15 +1493,15 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
 
     uint32_t pCmdBuffer[1024];
     MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
-    SvmAllocationData allocData0;
-    allocData0.gpuAllocation = &gfxAllocation;
+    SvmAllocationData allocData0(gfxAllocation.getRootDeviceIndex());
+    allocData0.gpuAllocations.addAllocation(&gfxAllocation);
     allocData0.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocData0.device = &subDevice0->getDevice();
 
     uint32_t pCmdBufferPeer[1024];
     MockGraphicsAllocation gfxAllocationPeer((void *)pCmdBufferPeer, sizeof(pCmdBufferPeer));
-    SvmAllocationData allocData1;
-    allocData1.gpuAllocation = &gfxAllocationPeer;
+    SvmAllocationData allocData1(gfxAllocationPeer.getRootDeviceIndex());
+    allocData1.gpuAllocations.addAllocation(&gfxAllocationPeer);
     allocData1.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocData1.device = &subDevice1->getDevice();
 
@@ -1522,15 +1522,15 @@ HWTEST_F(UpdateResidencyContainerMultipleDevicesTest,
 
     uint32_t pCmdBuffer[1024];
     MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
-    SvmAllocationData allocData0;
-    allocData0.gpuAllocation = &gfxAllocation;
+    SvmAllocationData allocData0(gfxAllocation.getRootDeviceIndex());
+    allocData0.gpuAllocations.addAllocation(&gfxAllocation);
     allocData0.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocData0.device = &subDevice0->getDevice();
 
     uint32_t pCmdBufferPeer[1024];
     MockGraphicsAllocation gfxAllocationPeer((void *)pCmdBufferPeer, sizeof(pCmdBufferPeer));
-    SvmAllocationData allocData1;
-    allocData1.gpuAllocation = &gfxAllocationPeer;
+    SvmAllocationData allocData1(gfxAllocationPeer.getRootDeviceIndex());
+    allocData1.gpuAllocations.addAllocation(&gfxAllocationPeer);
     allocData1.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     allocData1.device = &subDevice1->getDevice();
 

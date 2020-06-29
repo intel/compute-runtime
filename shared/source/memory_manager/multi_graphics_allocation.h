@@ -27,6 +27,8 @@ class MultiGraphicsAllocation : NonCopyableClass {
 
     bool isCoherent() const;
 
+    std::vector<GraphicsAllocation *> const &getGraphicsAllocations() const;
+
   protected:
     std::vector<GraphicsAllocation *> graphicsAllocations;
 };

@@ -3708,7 +3708,7 @@ cl_int clGetMemAllocInfoINTEL(
         if (!unifiedMemoryAllocation) {
             return changeGetInfoStatusToCLResultType(info.set<void *>(nullptr));
         }
-        return changeGetInfoStatusToCLResultType(info.set<uint64_t>(unifiedMemoryAllocation->gpuAllocation->getGpuAddress()));
+        return changeGetInfoStatusToCLResultType(info.set<uint64_t>(unifiedMemoryAllocation->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress()));
     }
     case CL_MEM_ALLOC_SIZE_INTEL: {
         if (!unifiedMemoryAllocation) {
@@ -4545,7 +4545,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
                 return retVal;
             }
         } else {
-            pSvmAlloc = svmData->gpuAllocation;
+            pSvmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pKernel->getDevice().getRootDeviceIndex());
         }
     }
 
@@ -4612,7 +4612,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
                 TRACING_EXIT(clSetKernelExecInfo, &retVal);
                 return retVal;
             }
-            GraphicsAllocation *svmAlloc = svmData->gpuAllocation;
+            GraphicsAllocation *svmAlloc = svmData->gpuAllocations.getGraphicsAllocation(pKernel->getDevice().getRootDeviceIndex());
 
             if (paramName == CL_KERNEL_EXEC_INFO_SVM_PTRS) {
                 pKernel->setSvmKernelExecInfo(svmAlloc);

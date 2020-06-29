@@ -628,7 +628,7 @@ TEST_F(RenderCompressedBuffersSvmTests, givenSvmAllocationWhenCreatingBufferThen
     hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
 
     auto svmPtr = context->getSVMAllocsManager()->createSVMAlloc(device->getRootDeviceIndex(), sizeof(uint32_t), {}, device->getDeviceBitfield());
-    auto expectedAllocationType = context->getSVMAllocsManager()->getSVMAlloc(svmPtr)->gpuAllocation->getAllocationType();
+    auto expectedAllocationType = context->getSVMAllocsManager()->getSVMAlloc(svmPtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType();
     buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, sizeof(uint32_t), svmPtr, retVal));
     EXPECT_EQ(expectedAllocationType, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
 
@@ -1878,13 +1878,16 @@ HWTEST_TEMPLATED_F(BcsSvmTests, givenSVMMAllocationWithOffsetWhenUsingBcsThenPro
                     auto dstSvmData = bcsMockContext.get()->getSVMAllocsManager()->getSVMAlloc(pDstPtr);
                     auto srcSvmData = bcsMockContext.get()->getSVMAllocsManager()->getSVMAlloc(pSrcPtr);
 
+                    auto srcGpuAllocation = srcSvmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+                    auto dstGpuAllocation = dstSvmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+
                     BuiltinOpParams builtinOpParams = {};
                     builtinOpParams.size = {allocSize, 0, 0};
                     builtinOpParams.srcPtr = const_cast<void *>(alignDown(pSrcPtr, 4));
-                    builtinOpParams.srcSvmAlloc = srcSvmData->gpuAllocation;
+                    builtinOpParams.srcSvmAlloc = srcGpuAllocation;
                     builtinOpParams.srcOffset = {ptrDiff(pSrcPtr, builtinOpParams.srcPtr), 0, 0};
                     builtinOpParams.dstPtr = alignDown(pDstPtr, 4);
-                    builtinOpParams.dstSvmAlloc = dstSvmData->gpuAllocation;
+                    builtinOpParams.dstSvmAlloc = dstGpuAllocation;
                     builtinOpParams.dstOffset = {ptrDiff(pDstPtr, builtinOpParams.dstPtr), 0, 0};
 
                     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
@@ -1894,10 +1897,10 @@ HWTEST_TEMPLATED_F(BcsSvmTests, givenSVMMAllocationWithOffsetWhenUsingBcsThenPro
 
                     EXPECT_EQ(srcOffset, blitProperties.srcOffset.x);
                     EXPECT_EQ(dstOffset, blitProperties.dstOffset.x);
-                    EXPECT_EQ(dstSvmData->gpuAllocation, blitProperties.dstAllocation);
-                    EXPECT_EQ(srcSvmData->gpuAllocation, blitProperties.srcAllocation);
-                    EXPECT_EQ(dstSvmData->gpuAllocation->getGpuAddress(), blitProperties.dstGpuAddress);
-                    EXPECT_EQ(srcSvmData->gpuAllocation->getGpuAddress(), blitProperties.srcGpuAddress);
+                    EXPECT_EQ(dstGpuAllocation, blitProperties.dstAllocation);
+                    EXPECT_EQ(srcGpuAllocation, blitProperties.srcAllocation);
+                    EXPECT_EQ(dstGpuAllocation->getGpuAddress(), blitProperties.dstGpuAddress);
+                    EXPECT_EQ(srcGpuAllocation->getGpuAddress(), blitProperties.srcGpuAddress);
                     EXPECT_EQ(pDstPtr, reinterpret_cast<void *>(blitProperties.dstGpuAddress + blitProperties.dstOffset.x));
                     EXPECT_EQ(pSrcPtr, reinterpret_cast<void *>(blitProperties.srcGpuAddress + blitProperties.srcOffset.x));
                 }
@@ -2296,7 +2299,7 @@ TEST_P(ValidHostPtr, SvmHostPtr) {
         EXPECT_TRUE(bufferSvm->isMemObjWithHostPtrSVM());
         auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptr);
         ASSERT_NE(nullptr, svmData);
-        EXPECT_EQ(svmData->gpuAllocation, bufferSvm->getGraphicsAllocation(pClDevice->getRootDeviceIndex()));
+        EXPECT_EQ(svmData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex()), bufferSvm->getGraphicsAllocation(pDevice->getRootDeviceIndex()));
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         context->getSVMAllocsManager()->freeSVMAlloc(ptr);

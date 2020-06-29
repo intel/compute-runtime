@@ -41,11 +41,11 @@ struct EnqueueSvmMemCopyTest : public ClDeviceFixture,
         ASSERT_NE(nullptr, dstSvmPtr);
         auto srcSvmData = context->getSVMAllocsManager()->getSVMAlloc(srcSvmPtr);
         ASSERT_NE(nullptr, srcSvmData);
-        srcSvmAlloc = srcSvmData->gpuAllocation;
+        srcSvmAlloc = srcSvmData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
         ASSERT_NE(nullptr, srcSvmAlloc);
         auto dstSvmData = context->getSVMAllocsManager()->getSVMAlloc(dstSvmPtr);
         ASSERT_NE(nullptr, dstSvmData);
-        dstSvmAlloc = dstSvmData->gpuAllocation;
+        dstSvmAlloc = dstSvmData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex());
         ASSERT_NE(nullptr, dstSvmAlloc);
     }
 

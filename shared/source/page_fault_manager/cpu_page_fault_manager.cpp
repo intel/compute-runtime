@@ -9,7 +9,6 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include <mutex>
@@ -79,7 +78,7 @@ bool PageFaultManager::verifyPageFault(void *ptr) {
 
 void PageFaultManager::setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) {
     UNRECOVERABLE_IF(ptr == nullptr);
-    auto gpuAlloc = unifiedMemoryManager->getSVMAlloc(ptr)->gpuAllocation;
+    auto gpuAlloc = unifiedMemoryManager->getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
     gpuAlloc->setAubWritable(writable, GraphicsAllocation::allBanks);
 }
 } // namespace NEO

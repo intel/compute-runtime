@@ -362,17 +362,18 @@ class MockDriverHandle : public L0::DriverHandleImp {
     bool findAllocationDataForRange(const void *buffer,
                                     size_t size,
                                     NEO::SvmAllocationData **allocData) override {
-        mockAllocation.reset(new NEO::MockGraphicsAllocation(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+        mockAllocation.reset(new NEO::MockGraphicsAllocation(rootDeviceIndex, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
                                                              reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                                              MemoryPool::System4KBPages));
-        data.gpuAllocation = mockAllocation.get();
+        data.gpuAllocations.addAllocation(mockAllocation.get());
         if (allocData) {
             *allocData = &data;
         }
         return true;
     }
+    const uint32_t rootDeviceIndex = 0u;
     std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
-    NEO::SvmAllocationData data = {};
+    NEO::SvmAllocationData data{rootDeviceIndex};
 };
 
 HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionCalledThenAppendMemoryCopyWithappendMemoryCopyWithBliterCalled, Platforms) {

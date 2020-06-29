@@ -91,7 +91,7 @@ ze_result_t DriverHandleImp::getMemAllocProperties(const void *ptr,
     auto alloc = svmAllocsManager->getSVMAlloc(ptr);
     if (alloc) {
         pMemAllocProperties->type = parseUSMType(alloc->memoryType);
-        pMemAllocProperties->id = alloc->gpuAllocation->getGpuAddress();
+        pMemAllocProperties->id = alloc->gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress();
 
         if (phDevice != nullptr) {
             if (alloc->device == nullptr) {
@@ -234,7 +234,7 @@ bool DriverHandleImp::findAllocationDataForRange(const void *buffer,
 
     // Return true if the whole range requested is covered by the same allocation
     if (beginAllocData && endAllocData &&
-        (beginAllocData->gpuAllocation == endAllocData->gpuAllocation)) {
+        (beginAllocData->gpuAllocations.getDefaultGraphicsAllocation() == endAllocData->gpuAllocations.getDefaultGraphicsAllocation())) {
         return true;
     }
     return false;
@@ -256,7 +256,7 @@ std::vector<NEO::SvmAllocationData *> DriverHandleImp::findAllocationsWithinRang
     // Add the allocation that matches the end address range if there was no beginning allocation
     // or the beginning allocation does not match the ending allocation
     if (endAllocData) {
-        if ((beginAllocData && (beginAllocData->gpuAllocation != endAllocData->gpuAllocation)) ||
+        if ((beginAllocData && (beginAllocData->gpuAllocations.getDefaultGraphicsAllocation() != endAllocData->gpuAllocations.getDefaultGraphicsAllocation())) ||
             !beginAllocData) {
             allocDataArray.push_back(endAllocData);
         }
@@ -264,7 +264,7 @@ std::vector<NEO::SvmAllocationData *> DriverHandleImp::findAllocationsWithinRang
 
     // Return true if the whole range requested is covered by the same allocation
     if (beginAllocData && endAllocData &&
-        (beginAllocData->gpuAllocation == endAllocData->gpuAllocation)) {
+        (beginAllocData->gpuAllocations.getDefaultGraphicsAllocation() == endAllocData->gpuAllocations.getDefaultGraphicsAllocation())) {
         *allocationRangeCovered = true;
     } else {
         *allocationRangeCovered = false;

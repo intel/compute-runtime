@@ -37,6 +37,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
         notifyEnqueueReadBuffer(buffer, !!blockingRead);
     }
 
+    auto rootDeviceIndex = getDevice().getRootDeviceIndex();
     const cl_command_type cmdType = CL_COMMAND_READ_BUFFER;
     bool isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, cmdType) : true;
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingRead, size, ptr,
@@ -46,11 +47,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     if (!mapAllocation && this->getContext().getSVMAllocsManager()) {
         auto svmEntry = this->getContext().getSVMAllocsManager()->getSVMAlloc(ptr);
         if (svmEntry) {
-            if ((svmEntry->gpuAllocation->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
+            if ((svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
                 return CL_INVALID_OPERATION;
             }
 
-            mapAllocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocation;
+            mapAllocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
             if (isCpuCopyAllowed) {
                 if (svmEntry->memoryType == DEVICE_UNIFIED_MEMORY) {
                     isCpuCopyAllowed = false;

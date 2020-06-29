@@ -39,9 +39,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
 
     //check if we are dealing with SVM pointer here for which we already have an allocation
     if (!mapAllocation && this->getContext().getSVMAllocsManager()) {
+        auto rootDeviceIndex = getDevice().getRootDeviceIndex();
         auto svmEntry = this->getContext().getSVMAllocsManager()->getSVMAlloc(ptr);
         if (svmEntry) {
-            if ((svmEntry->gpuAllocation->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
+            if ((svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex)->getGpuAddress() + svmEntry->size) < (castToUint64(ptr) + size)) {
                 return CL_INVALID_OPERATION;
             }
 
@@ -51,7 +52,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
                 }
             }
 
-            mapAllocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocation;
+            mapAllocation = svmEntry->cpuAllocation ? svmEntry->cpuAllocation : svmEntry->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
         }
     }
 

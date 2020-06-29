@@ -36,7 +36,8 @@ TEST(clUnifiedSharedMemoryTests, whenClHostMemAllocIntelIsCalledThenItAllocatesH
     auto graphicsAllocation = allocationsManager->getSVMAlloc(unifiedMemoryHostAllocation);
     EXPECT_EQ(graphicsAllocation->size, 4u);
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::HOST_UNIFIED_MEMORY);
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), castToUint64(unifiedMemoryHostAllocation));
+    EXPECT_EQ(graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex())->getGpuAddress(),
+              castToUint64(unifiedMemoryHostAllocation));
 
     retVal = clMemFreeINTEL(&mockContext, unifiedMemoryHostAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -77,7 +78,8 @@ TEST(clUnifiedSharedMemoryTests, whenClDeviceMemAllocIntelIsCalledThenItAllocate
     auto graphicsAllocation = allocationsManager->getSVMAlloc(unfiedMemoryDeviceAllocation);
     EXPECT_EQ(graphicsAllocation->size, 4u);
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), castToUint64(unfiedMemoryDeviceAllocation));
+    EXPECT_EQ(graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex())->getGpuAddress(),
+              castToUint64(unfiedMemoryDeviceAllocation));
 
     retVal = clMemFreeINTEL(&mockContext, unfiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -143,7 +145,8 @@ TEST(clUnifiedSharedMemoryTests, whenClSharedMemAllocIntelIsCalledThenItAllocate
     auto graphicsAllocation = allocationsManager->getSVMAlloc(unfiedMemorySharedAllocation);
     EXPECT_EQ(graphicsAllocation->size, 4u);
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::SHARED_UNIFIED_MEMORY);
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), castToUint64(unfiedMemorySharedAllocation));
+    EXPECT_EQ(graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex())->getGpuAddress(),
+              castToUint64(unfiedMemorySharedAllocation));
 
     retVal = clMemFreeINTEL(&mockContext, unfiedMemorySharedAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -559,7 +562,7 @@ TEST(clUnifiedSharedMemoryTests, whenClGetMemAllocInfoINTELisCalledWithAllocatio
     retVal = clGetMemAllocInfoINTEL(&mockContext, unifiedMemorySharedAllocation, CL_MEM_ALLOC_BASE_PTR_INTEL, paramValueSize, &paramValue, &paramValueSizeRet);
 
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::SHARED_UNIFIED_MEMORY);
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), paramValue);
+    EXPECT_EQ(graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex())->getGpuAddress(), paramValue);
     EXPECT_EQ(sizeof(uint64_t), paramValueSizeRet);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -643,7 +646,8 @@ TEST(clUnifiedSharedMemoryTests, whenClSetKernelArgMemPointerINTELisCalledWithVa
     retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockKernel, 0, unfiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto svmAlloc = mockContext->getSVMAllocsManager()->getSVMAlloc(unfiedMemoryDeviceAllocation);
-    EXPECT_EQ(mockKernel.mockKernel->kernelArguments[0].object, svmAlloc->gpuAllocation);
+    EXPECT_EQ(mockKernel.mockKernel->kernelArguments[0].object,
+              svmAlloc->gpuAllocations.getGraphicsAllocation(mockContext->getDevice(0)->getRootDeviceIndex()));
 
     retVal = clMemFreeINTEL(mockContext.get(), unfiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -922,11 +926,12 @@ TEST(clUnifiedSharedMemoryTests, givenDefaulMemPropertiesWhenClDeviceMemAllocInt
     auto allocationsManager = mockContext.getSVMAllocsManager();
     EXPECT_EQ(1u, allocationsManager->getNumAllocs());
     auto graphicsAllocation = allocationsManager->getSVMAlloc(unfiedMemoryDeviceAllocation);
+    auto gpuAllocation = graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(graphicsAllocation->size, allocationSize);
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, graphicsAllocation->gpuAllocation->getAllocationType());
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), castToUint64(unfiedMemoryDeviceAllocation));
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), graphicsAllocation->gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, gpuAllocation->getAllocationType());
+    EXPECT_EQ(gpuAllocation->getGpuAddress(), castToUint64(unfiedMemoryDeviceAllocation));
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
 
     retVal = clMemFreeINTEL(&mockContext, unfiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -944,11 +949,12 @@ TEST(clUnifiedSharedMemoryTests, givenValidMemPropertiesWhenClDeviceMemAllocInte
     auto allocationsManager = mockContext.getSVMAllocsManager();
     EXPECT_EQ(1u, allocationsManager->getNumAllocs());
     auto graphicsAllocation = allocationsManager->getSVMAlloc(unfiedMemoryDeviceAllocation);
+    auto gpuAllocation = graphicsAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
     EXPECT_EQ(graphicsAllocation->size, allocationSize);
     EXPECT_EQ(graphicsAllocation->memoryType, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getAllocationType(), GraphicsAllocation::AllocationType::WRITE_COMBINED);
-    EXPECT_EQ(graphicsAllocation->gpuAllocation->getGpuAddress(), castToUint64(unfiedMemoryDeviceAllocation));
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), graphicsAllocation->gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(gpuAllocation->getAllocationType(), GraphicsAllocation::AllocationType::WRITE_COMBINED);
+    EXPECT_EQ(gpuAllocation->getGpuAddress(), castToUint64(unfiedMemoryDeviceAllocation));
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
 
     retVal = clMemFreeINTEL(&mockContext, unfiedMemoryDeviceAllocation);
     EXPECT_EQ(CL_SUCCESS, retVal);

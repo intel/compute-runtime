@@ -312,7 +312,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandL
     auto result = device->getDriverHandle()->allocDeviceMem(device->toHandle(), ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT, 16384u, 4096u, &deviceAlloc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(deviceAlloc)->gpuAllocation;
+    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(deviceAlloc)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     ASSERT_NE(nullptr, gpuAlloc);
 
     createKernel();

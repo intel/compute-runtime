@@ -21,7 +21,7 @@ void PageFaultManager::transferToCpu(void *ptr, size_t size, void *device) {
 
     auto ret =
         deviceImp->pageFaultCommandList->appendPageFaultCopy(allocData->cpuAllocation,
-                                                             allocData->gpuAllocation,
+                                                             allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex()),
                                                              allocData->size, true);
     UNRECOVERABLE_IF(ret);
 }
@@ -32,7 +32,7 @@ void PageFaultManager::transferToGpu(void *ptr, void *device) {
     UNRECOVERABLE_IF(allocData == nullptr);
 
     auto ret =
-        deviceImp->pageFaultCommandList->appendPageFaultCopy(allocData->gpuAllocation,
+        deviceImp->pageFaultCommandList->appendPageFaultCopy(allocData->gpuAllocations.getGraphicsAllocation(deviceImp->getRootDeviceIndex()),
                                                              allocData->cpuAllocation,
                                                              allocData->size, false);
     UNRECOVERABLE_IF(ret);

@@ -72,12 +72,12 @@ TEST_F(SVMMemoryAllocatorTest, whenSVMAllocationIsFreedThenCannotBeGotAgain) {
     EXPECT_NE(nullptr, ptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
-    EXPECT_NE(nullptr, svmData->gpuAllocation);
+    EXPECT_NE(nullptr, svmData->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex));
     svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
-    EXPECT_NE(nullptr, svmData->gpuAllocation);
+    EXPECT_NE(nullptr, svmData->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex));
     EXPECT_EQ(1u, svmManager->SVMAllocs.getNumAllocs());
-    auto svmAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocation;
+    auto svmAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
     EXPECT_FALSE(svmAllocation->isCoherent());
 
     svmManager->freeSVMAlloc(ptr);
@@ -90,8 +90,8 @@ TEST_F(SVMMemoryAllocatorTest, givenSvmManagerWhenOperatedOnThenCorrectAllocatio
     size_t size = sizeof(data);
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, size, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield});
 
-    NEO::SvmAllocationData svmData;
-    svmData.gpuAllocation = allocation;
+    NEO::SvmAllocationData svmData(mockRootDeviceIndex);
+    svmData.gpuAllocations.addAllocation(allocation);
     svmData.cpuAllocation = nullptr;
     svmData.size = size;
     svmData.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
@@ -101,9 +101,9 @@ TEST_F(SVMMemoryAllocatorTest, givenSvmManagerWhenOperatedOnThenCorrectAllocatio
     svmManager->insertSVMAlloc(svmData);
     auto svmDataTemp = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmDataTemp);
-    EXPECT_NE(nullptr, svmDataTemp->gpuAllocation);
+    EXPECT_NE(nullptr, svmDataTemp->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex));
     EXPECT_EQ(1u, svmManager->SVMAllocs.getNumAllocs());
-    auto svmAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocation;
+    auto svmAllocation = svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
     EXPECT_FALSE(svmAllocation->isCoherent());
 
     svmManager->removeSVMAlloc(svmData);
@@ -118,13 +118,13 @@ TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromReturnedPointerAreaThenRe
     EXPECT_NE(ptr, nullptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
-    GraphicsAllocation *graphicsAllocation = svmData->gpuAllocation;
+    GraphicsAllocation *graphicsAllocation = svmData->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
     EXPECT_NE(nullptr, graphicsAllocation);
 
     auto ptrInRange = ptrOffset(ptr, MemoryConstants::pageSize - 4);
     svmData = svmManager->getSVMAlloc(ptrInRange);
     ASSERT_NE(nullptr, svmData);
-    GraphicsAllocation *graphicsAllocationInRange = svmData->gpuAllocation;
+    GraphicsAllocation *graphicsAllocationInRange = svmData->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
     EXPECT_NE(nullptr, graphicsAllocationInRange);
 
     EXPECT_EQ(graphicsAllocation, graphicsAllocationInRange);
@@ -137,7 +137,7 @@ TEST_F(SVMMemoryAllocatorTest, whenGetSVMAllocationFromOutsideOfReturnedPointerA
     EXPECT_NE(ptr, nullptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
-    GraphicsAllocation *graphicsAllocation = svmData->gpuAllocation;
+    GraphicsAllocation *graphicsAllocation = svmData->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
     EXPECT_NE(nullptr, graphicsAllocation);
 
     auto ptrBefore = ptrOffset(ptr, -4);
@@ -184,22 +184,24 @@ TEST_F(SVMMemoryAllocatorTest, given64kbAllowedWhenAllocatingSvmMemoryThenDontPr
 TEST_F(SVMMemoryAllocatorTest, given64kbAllowedwhenAllocatingSvmMemoryThenAllocationIsIn64kbPagePool) {
     MockMemoryManager memoryManager64Kb(true, false, executionEnvironment);
     svmManager->memoryManager = &memoryManager64Kb;
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, mockDeviceBitfield);
-    EXPECT_EQ(MemoryPool::System64KBPages, svmManager->getSVMAlloc(ptr)->gpuAllocation->getMemoryPool());
+    auto ptr = svmManager->createSVMAlloc(mockRootDeviceIndex, MemoryConstants::pageSize, {}, mockDeviceBitfield);
+    EXPECT_EQ(MemoryPool::System64KBPages,
+              svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)->getMemoryPool());
     svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, given64kbDisallowedWhenAllocatingSvmMemoryThenAllocationIsIn4kbPagePool) {
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, mockDeviceBitfield);
-    EXPECT_EQ(MemoryPool::System4KBPages, svmManager->getSVMAlloc(ptr)->gpuAllocation->getMemoryPool());
+    auto ptr = svmManager->createSVMAlloc(mockRootDeviceIndex, MemoryConstants::pageSize, {}, mockDeviceBitfield);
+    EXPECT_EQ(MemoryPool::System4KBPages,
+              svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)->getMemoryPool());
     svmManager->freeSVMAlloc(ptr);
 }
 
 TEST_F(SVMMemoryAllocatorTest, whenCoherentFlagIsPassedThenAllocationIsCoherent) {
     SVMAllocsManager::SvmAllocationProperties svmProperties;
     svmProperties.coherent = true;
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, svmProperties, mockDeviceBitfield);
-    EXPECT_TRUE(svmManager->getSVMAlloc(ptr)->gpuAllocation->isCoherent());
+    auto ptr = svmManager->createSVMAlloc(mockRootDeviceIndex, MemoryConstants::pageSize, svmProperties, mockDeviceBitfield);
+    EXPECT_TRUE(svmManager->getSVMAlloc(ptr)->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex)->isCoherent());
     svmManager->freeSVMAlloc(ptr);
 }
 
@@ -209,17 +211,18 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenDeviceAllocationIsCreatedThenItIsStoredW
     unifiedMemoryProperties.allocationFlags.allocFlags.allocWriteCombined = true;
     unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     auto allocationSize = 4000u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4000u, unifiedMemoryProperties);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(mockRootDeviceIndex, 4000u, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
-    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
+    EXPECT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(InternalMemoryType::DEVICE_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
-    EXPECT_EQ(allocation->gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::WRITE_COMBINED, allocation->gpuAllocation->getAllocationType());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::WRITE_COMBINED, gpuAllocation->getAllocationType());
 
     svmManager->freeSVMAlloc(ptr);
 }
@@ -237,12 +240,13 @@ TEST_F(SVMMemoryAllocatorTest, givenNoWriteCombinedFlagwhenDeviceAllocationIsCre
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
-    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
+    EXPECT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(InternalMemoryType::DEVICE_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
 
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, allocation->gpuAllocation->getAllocationType());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, gpuAllocation->getAllocationType());
 
     svmManager->freeSVMAlloc(ptr);
 }
@@ -252,18 +256,19 @@ TEST_F(SVMMemoryAllocatorTest, whenHostAllocationIsCreatedThenItIsStoredWithProp
     unifiedMemoryProperties.memoryType = InternalMemoryType::HOST_UNIFIED_MEMORY;
     unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(mockRootDeviceIndex, 4096u, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
-    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
+    EXPECT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(InternalMemoryType::HOST_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
 
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, allocation->gpuAllocation->getAllocationType());
-    EXPECT_NE(allocation->gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
-    EXPECT_NE(nullptr, allocation->gpuAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, gpuAllocation->getAllocationType());
+    EXPECT_NE(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_NE(nullptr, gpuAllocation->getUnderlyingBuffer());
     svmManager->freeSVMAlloc(ptr);
 }
 
@@ -290,18 +295,19 @@ TEST_F(SVMMemoryAllocatorTest, whenSharedAllocationIsCreatedThenItIsStoredWithPr
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     auto allocationSize = 4096u;
 
-    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties, &cmdQ);
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(mockRootDeviceIndex, 4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
-    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
+    EXPECT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(InternalMemoryType::SHARED_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
 
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, allocation->gpuAllocation->getAllocationType());
-    EXPECT_NE(allocation->gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
-    EXPECT_NE(nullptr, allocation->gpuAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, gpuAllocation->getAllocationType());
+    EXPECT_NE(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_NE(nullptr, gpuAllocation->getUnderlyingBuffer());
     svmManager->freeSVMAlloc(ptr);
 }
 
@@ -310,31 +316,33 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     MockContext mockContext;
     DebugManagerStateRestore restore;
     DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
+    auto device = mockContext.getDevice(0u);
 
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
-    unifiedMemoryProperties.device = mockContext.getDevice(0u);
-    unifiedMemoryProperties.subdeviceBitfield = mockContext.getDevice(0)->getDeviceBitfield();
+    unifiedMemoryProperties.device = device;
+    unifiedMemoryProperties.subdeviceBitfield = device->getDeviceBitfield();
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties, &cmdQ);
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(device->getRootDeviceIndex(), 4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
+    auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_NE(nullptr, allocation->cpuAllocation);
-    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    EXPECT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(InternalMemoryType::SHARED_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
     EXPECT_EQ(mockContext.getDevice(0u), allocation->device);
 
-    EXPECT_EQ(alignUp(allocationSize, 2u * MB), allocation->gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, 2u * MB), gpuAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(alignUp(allocationSize, 2u * MB), allocation->cpuAllocation->getUnderlyingBufferSize());
 
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_GPU, allocation->gpuAllocation->getAllocationType());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_GPU, gpuAllocation->getAllocationType());
     EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());
 
-    EXPECT_EQ(allocation->gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
     EXPECT_NE(allocation->cpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 
-    EXPECT_NE(nullptr, allocation->gpuAllocation->getUnderlyingBuffer());
+    EXPECT_NE(nullptr, gpuAllocation->getUnderlyingBuffer());
     svmManager->freeSVMAlloc(ptr);
 }
 
@@ -347,24 +355,26 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
     unifiedMemoryProperties.memoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties, &cmdQ);
+    auto rootDeviceIndex = 0u;
+    auto ptr = svmManager->createSharedUnifiedMemoryAllocation(rootDeviceIndex, 4096u, unifiedMemoryProperties, &cmdQ);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
+    auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
     EXPECT_NE(nullptr, allocation->cpuAllocation);
-    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    EXPECT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(InternalMemoryType::SHARED_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
 
-    EXPECT_EQ(alignUp(allocationSize, 2u * MB), allocation->gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, 2u * MB), gpuAllocation->getUnderlyingBufferSize());
     EXPECT_EQ(alignUp(allocationSize, 2u * MB), allocation->cpuAllocation->getUnderlyingBufferSize());
 
-    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_GPU, allocation->gpuAllocation->getAllocationType());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_GPU, gpuAllocation->getAllocationType());
     EXPECT_EQ(GraphicsAllocation::AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());
 
-    EXPECT_EQ(allocation->gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
+    EXPECT_EQ(gpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
     EXPECT_NE(allocation->cpuAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 
-    EXPECT_NE(nullptr, allocation->gpuAllocation->getUnderlyingBuffer());
+    EXPECT_NE(nullptr, gpuAllocation->getUnderlyingBuffer());
     svmManager->freeSVMAlloc(ptr);
 }
 
@@ -376,16 +386,17 @@ TEST_F(SVMMemoryAllocatorTest, givenSharedAllocationsDebugFlagWhenDeviceMemoryIs
     unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
     unifiedMemoryProperties.subdeviceBitfield = mockDeviceBitfield;
     auto allocationSize = 4096u;
-    auto ptr = svmManager->createUnifiedMemoryAllocation(0, 4096u, unifiedMemoryProperties);
+    auto ptr = svmManager->createUnifiedMemoryAllocation(mockRootDeviceIndex, 4096u, unifiedMemoryProperties);
     EXPECT_NE(nullptr, ptr);
     auto allocation = svmManager->getSVMAlloc(ptr);
     EXPECT_EQ(nullptr, allocation->cpuAllocation);
-    EXPECT_NE(nullptr, allocation->gpuAllocation);
+    auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
+    EXPECT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(InternalMemoryType::DEVICE_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
 
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, allocation->gpuAllocation->getAllocationType());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, gpuAllocation->getAllocationType());
 
     svmManager->freeSVMAlloc(ptr);
 }
@@ -430,12 +441,12 @@ TEST(SvmAllocationPropertiesTests, givenDifferentMemFlagsWhenGettingSvmAllocatio
 TEST_F(SVMMemoryAllocatorTest, whenReadOnlySvmAllocationCreatedThenGraphicsAllocationHasWriteableFlagFalse) {
     SVMAllocsManager::SvmAllocationProperties svmProperties;
     svmProperties.readOnly = true;
-    void *svm = svmManager->createSVMAlloc(0, 4096, svmProperties, mockDeviceBitfield);
+    void *svm = svmManager->createSVMAlloc(mockRootDeviceIndex, 4096, svmProperties, mockDeviceBitfield);
     EXPECT_NE(nullptr, svm);
 
     auto svmData = svmManager->getSVMAlloc(svm);
     ASSERT_NE(nullptr, svmData);
-    GraphicsAllocation *svmAllocation = svmData->gpuAllocation;
+    GraphicsAllocation *svmAllocation = svmData->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
     EXPECT_NE(nullptr, svmAllocation);
     EXPECT_FALSE(svmAllocation->isMemObjectsAllocationWithWritableFlags());
 
@@ -443,7 +454,7 @@ TEST_F(SVMMemoryAllocatorTest, whenReadOnlySvmAllocationCreatedThenGraphicsAlloc
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenAllocatingSvmThenExpectCpuAllocationWithPointerAndGpuAllocationWithSameGpuAddress) {
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, mockDeviceBitfield);
+    auto ptr = svmManager->createSVMAlloc(mockRootDeviceIndex, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_NE(ptr, nullptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
@@ -451,7 +462,7 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenAllocatingSvmThenExpectCpuAllocationWith
     EXPECT_NE(nullptr, cpuAllocation);
     EXPECT_EQ(ptr, cpuAllocation->getUnderlyingBuffer());
 
-    GraphicsAllocation *gpuAllocation = svmData->gpuAllocation;
+    GraphicsAllocation *gpuAllocation = svmData->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
     EXPECT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), gpuAllocation->getGpuAddress());
 
@@ -459,11 +470,11 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenAllocatingSvmThenExpectCpuAllocationWith
 }
 
 TEST_F(SVMLocalMemoryAllocatorTest, whenGetSVMAllocationFromOutsideOfReturnedPointerAreaThenDontReturnThisAllocation) {
-    auto ptr = svmManager->createSVMAlloc(0, MemoryConstants::pageSize, {}, mockDeviceBitfield);
+    auto ptr = svmManager->createSVMAlloc(mockRootDeviceIndex, MemoryConstants::pageSize, {}, mockDeviceBitfield);
     EXPECT_NE(ptr, nullptr);
     auto svmData = svmManager->getSVMAlloc(ptr);
     ASSERT_NE(nullptr, svmData);
-    GraphicsAllocation *graphicsAllocation = svmData->gpuAllocation;
+    GraphicsAllocation *graphicsAllocation = svmData->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
     EXPECT_NE(nullptr, graphicsAllocation);
 
     auto ptrBefore = ptrOffset(ptr, -4);
@@ -643,12 +654,13 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPointerIsUsedFor
     MockContext mockContext;
     cl_context clContext = &mockContext;
 
-    auto status = CL_SUCCESS;
+    auto status = CL_INVALID_PLATFORM;
 
     auto hostMemory = clHostMemAllocINTEL(clContext, nullptr, 4096u, 0u, &status);
-    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(hostMemory);
-
     ASSERT_EQ(CL_SUCCESS, status);
+    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(hostMemory);
+    auto gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
+
     auto buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE, 4096u, nullptr, &status);
     ASSERT_EQ(CL_SUCCESS, status);
 
@@ -665,12 +677,12 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPointerIsUsedFor
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
     auto osContextId = neoQueue->getGpgpuCommandStreamReceiver().getOsContext().getContextId();
 
-    EXPECT_EQ(1u, svmAllocation->gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(1u, gpuAllocation->getTaskCount(osContextId));
 
     status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, hostMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
-    EXPECT_EQ(2u, svmAllocation->gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(2u, gpuAllocation->getTaskCount(osContextId));
 
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
@@ -683,13 +695,14 @@ TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTr
     MockContext mockContext;
     cl_context clContext = &mockContext;
 
-    auto status = CL_SUCCESS;
+    auto status = CL_INVALID_PLATFORM;
     cl_device_id clDevice = mockContext.getDevice(0u);
 
     auto deviceMemory = clDeviceMemAllocINTEL(clContext, clDevice, nullptr, 4096u, 0u, &status);
-    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(deviceMemory);
-
     ASSERT_EQ(CL_SUCCESS, status);
+    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(deviceMemory);
+    auto gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
+
     auto buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE, 4096u, nullptr, &status);
     ASSERT_EQ(CL_SUCCESS, status);
 
@@ -704,12 +717,12 @@ TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTr
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
     auto osContextId = neoQueue->getGpgpuCommandStreamReceiver().getOsContext().getContextId();
 
-    EXPECT_EQ(1u, svmAllocation->gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(1u, gpuAllocation->getTaskCount(osContextId));
 
     status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, deviceMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
 
-    EXPECT_EQ(2u, svmAllocation->gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(2u, gpuAllocation->getTaskCount(osContextId));
 
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
@@ -722,13 +735,14 @@ TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTr
     MockContext mockContext;
     cl_context clContext = &mockContext;
 
-    auto status = CL_SUCCESS;
+    auto status = CL_INVALID_PLATFORM;
     cl_device_id clDevice = mockContext.getDevice(0u);
 
     auto deviceMemory = clDeviceMemAllocINTEL(clContext, clDevice, nullptr, 4096u, 0u, &status);
-    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(deviceMemory);
-
     ASSERT_EQ(CL_SUCCESS, status);
+    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(deviceMemory);
+    auto gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
+
     auto buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE, 4096u, nullptr, &status);
     ASSERT_EQ(CL_SUCCESS, status);
 
@@ -743,12 +757,12 @@ TEST(UnfiedSharedMemoryTransferCalls, givenDeviceUsmAllocationWhenPtrIsUsedForTr
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
     auto osContextId = neoQueue->getGpgpuCommandStreamReceiver().getOsContext().getContextId();
 
-    EXPECT_EQ(1u, svmAllocation->gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(1u, gpuAllocation->getTaskCount(osContextId));
 
     status = clEnqueueReadBuffer(commandQueue, buffer, true, 0u, 4096u, deviceMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
 
-    EXPECT_EQ(2u, svmAllocation->gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(2u, gpuAllocation->getTaskCount(osContextId));
 
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
@@ -767,13 +781,14 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTran
         GTEST_SKIP();
     }
 
-    auto status = CL_SUCCESS;
+    auto status = CL_INVALID_PLATFORM;
     cl_device_id clDevice = mockContext.getDevice(0u);
 
     auto sharedMemory = clSharedMemAllocINTEL(clContext, clDevice, nullptr, 4096u, 0u, &status);
-    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(sharedMemory);
-
     ASSERT_EQ(CL_SUCCESS, status);
+    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(sharedMemory);
+    auto gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
+
     auto buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE, 4096u, nullptr, &status);
     ASSERT_EQ(CL_SUCCESS, status);
 
@@ -788,12 +803,12 @@ TEST(UnfiedSharedMemoryTransferCalls, givenHostUsmAllocationWhenPtrIsUsedForTran
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
     auto osContextId = neoQueue->getGpgpuCommandStreamReceiver().getOsContext().getContextId();
 
-    EXPECT_EQ(GraphicsAllocation::objectNotUsed, svmAllocation->gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(GraphicsAllocation::objectNotUsed, gpuAllocation->getTaskCount(osContextId));
 
     status = clEnqueueReadBuffer(commandQueue, buffer, true, 0u, 4096u, sharedMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
 
-    EXPECT_EQ(GraphicsAllocation::objectNotUsed, svmAllocation->gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(GraphicsAllocation::objectNotUsed, gpuAllocation->getTaskCount(osContextId));
 
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
@@ -840,12 +855,13 @@ TEST(UnfiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithoutLocalMemory
     cl_context clContext = &mockContext;
     cl_device_id clDevice = mockContext.getDevice(0u);
 
-    auto status = CL_SUCCESS;
+    auto status = CL_INVALID_PLATFORM;
 
     auto sharedMemory = clSharedMemAllocINTEL(clContext, clDevice, nullptr, 4096u, 0u, &status);
-    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(sharedMemory);
-
     ASSERT_EQ(CL_SUCCESS, status);
+    auto svmAllocation = mockContext.getSVMAllocsManager()->getSVMAlloc(sharedMemory);
+    auto gpuAllocation = svmAllocation->gpuAllocations.getGraphicsAllocation(mockContext.getDevice(0)->getRootDeviceIndex());
+
     auto buffer = clCreateBuffer(clContext, CL_MEM_READ_WRITE, 4096u, nullptr, &status);
     ASSERT_EQ(CL_SUCCESS, status);
 
@@ -860,12 +876,12 @@ TEST(UnfiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithoutLocalMemory
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
     auto osContextId = neoQueue->getGpgpuCommandStreamReceiver().getOsContext().getContextId();
 
-    EXPECT_EQ(1u, svmAllocation->gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(1u, gpuAllocation->getTaskCount(osContextId));
 
     status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, sharedMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
-    EXPECT_EQ(2u, svmAllocation->gpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(2u, gpuAllocation->getTaskCount(osContextId));
 
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);
