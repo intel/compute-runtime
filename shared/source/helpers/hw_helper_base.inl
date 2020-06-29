@@ -335,6 +335,11 @@ inline bool HwHelperHw<GfxFamily>::isOffsetToSkipSetFFIDGPWARequired(const Hardw
 }
 
 template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) const {
     return false;
 }

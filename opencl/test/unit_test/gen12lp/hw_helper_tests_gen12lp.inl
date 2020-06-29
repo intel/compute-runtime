@@ -317,7 +317,7 @@ GEN12LPTEST_F(MemorySynchronizatiopCommandsTests, whenSettingCacheFlushExtraFiel
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
     std::vector<unsigned short> steppings;
-    PRODUCT_FAMILY productFamilies[] = {IGFX_TIGERLAKE_LP, IGFX_UNKNOWN};
+    PRODUCT_FAMILY productFamilies[] = {IGFX_TIGERLAKE_LP, IGFX_DG1, IGFX_UNKNOWN};
 
     for (auto productFamily : productFamilies) {
         hardwareInfo.platform.eProductFamily = productFamily;
@@ -328,18 +328,26 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenRevisionEnumAndPlatformFamilyTypeThenPro
 
         for (auto stepping : steppings) {
             hardwareInfo.platform.usRevId = stepping;
+            HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
             if (hardwareInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) {
                 if (stepping == 0x0) {
-                    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-                    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+                    EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+                    EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
                 } else if (stepping == 0x1) {
-                    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
+                    EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
                 } else if (stepping == 0x3) {
-                    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+                    EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+                }
+            } else if (hardwareInfo.platform.eProductFamily == IGFX_DG1) {
+                if (stepping == 0x0) {
+                    EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+                    EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+                } else if (stepping == 0x1 || stepping == 0x4) {
+                    EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
                 }
             } else {
-                EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
             }
         }
         steppings.clear();

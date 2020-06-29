@@ -30,32 +30,9 @@ bool HardwareCommandsHelper<TGLLPFamily>::doBindingTablePrefetch() {
 }
 
 template <>
-bool HardwareCommandsHelper<TGLLPFamily>::isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) {
-    if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP) {
-        for (auto stepping : {&lowestSteppingWithBug, &steppingWithFix}) {
-            switch (*stepping) {
-            case REVISION_A0:
-                *stepping = 0x0;
-                break;
-            case REVISION_B:
-                *stepping = 0x1;
-                break;
-            case REVISION_C:
-                *stepping = 0x3;
-                break;
-            default:
-                DEBUG_BREAK_IF(true);
-                return false;
-            }
-        }
-        return (lowestSteppingWithBug <= hwInfo.platform.usRevId && hwInfo.platform.usRevId < steppingWithFix);
-    }
-    return Gen12LPHelpers::workaroundRequired(lowestSteppingWithBug, steppingWithFix, hwInfo);
-}
-
-template <>
 bool HardwareCommandsHelper<TGLLPFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
-    return (Gen12LPHelpers::pipeControlWaRequired(hwInfo.platform.eProductFamily)) && HardwareCommandsHelper<TGLLPFamily>::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    return (Gen12LPHelpers::pipeControlWaRequired(hwInfo.platform.eProductFamily)) && hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 template <>

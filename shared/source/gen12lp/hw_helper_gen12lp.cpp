@@ -75,6 +75,46 @@ bool HwHelperHw<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo)
 }
 
 template <>
+bool HwHelperHw<Family>::isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const {
+    if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP) {
+        for (auto stepping : {&lowestSteppingWithBug, &steppingWithFix}) {
+            switch (*stepping) {
+            case REVISION_A0:
+                *stepping = 0x0;
+                break;
+            case REVISION_B:
+                *stepping = 0x1;
+                break;
+            case REVISION_C:
+                *stepping = 0x3;
+                break;
+            default:
+                DEBUG_BREAK_IF(true);
+                return false;
+            }
+        }
+        return (lowestSteppingWithBug >= hwInfo.platform.usRevId && hwInfo.platform.usRevId < steppingWithFix);
+    } else if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_DG1) {
+        for (auto stepping : {&lowestSteppingWithBug, &steppingWithFix}) {
+            switch (*stepping) {
+            case REVISION_A0:
+                *stepping = 0x0;
+                break;
+            case REVISION_B:
+                *stepping = 0x1;
+                break;
+            default:
+                DEBUG_BREAK_IF(true);
+                return false;
+            }
+        }
+        return (lowestSteppingWithBug >= hwInfo.platform.usRevId && hwInfo.platform.usRevId < steppingWithFix);
+    }
+
+    return Gen12LPHelpers::workaroundRequired(lowestSteppingWithBug, steppingWithFix, hwInfo);
+}
+
+template <>
 bool HwHelperHw<Family>::obtainRenderBufferCompressionPreference(const HardwareInfo &hwInfo, const size_t size) const {
     return false;
 }
@@ -90,7 +130,8 @@ bool HwHelperHw<Family>::checkResourceCompatibility(GraphicsAllocation &graphics
 template <>
 void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
     coherencyFlag = true;
-    if (pHwInfo->platform.eProductFamily == IGFX_TIGERLAKE_LP && HardwareCommandsHelper<Family>::isWorkaroundRequired(REVISION_A0, REVISION_B, *pHwInfo)) {
+    HwHelper &hwHelper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
+    if (pHwInfo->platform.eProductFamily == IGFX_TIGERLAKE_LP && hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *pHwInfo)) {
         //stepping A devices - turn off coherency
         coherencyFlag = false;
     }
@@ -101,7 +142,8 @@ void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo,
 template <>
 uint32_t HwHelperHw<Family>::getPitchAlignmentForImage(const HardwareInfo *hwInfo) {
     if (Gen12LPHelpers::imagePitchAlignmentWaRequired(hwInfo->platform.eProductFamily)) {
-        if (HardwareCommandsHelper<Family>::isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo)) {
+        HwHelper &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+        if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo)) {
             return 64u;
         }
         return 4u;
@@ -144,7 +186,8 @@ template <>
 void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
     if (Gen12LPHelpers::pipeControlWaRequired(hwInfo.platform.eProductFamily)) {
-        if (HardwareCommandsHelper<Family>::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
+        HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
             PIPE_CONTROL cmd = Family::cmdInitPipeControl;
             cmd.setCommandStreamerStallEnable(true);
             auto pipeControl = static_cast<Family::PIPE_CONTROL *>(commandStream.getSpace(sizeof(PIPE_CONTROL)));

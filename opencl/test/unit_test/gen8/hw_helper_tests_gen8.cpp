@@ -28,10 +28,6 @@ GEN8TEST_F(HwHelperTestGen8, setCapabilityCoherencyFlag) {
     EXPECT_TRUE(coherency);
 }
 
-GEN8TEST_F(HwHelperTestGen8, givenRevisionEnumThenWorkaroundIsNotRequired) {
-    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-}
-
 GEN8TEST_F(HwHelperTestGen8, getPitchAlignmentForImage) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(4u, helper.getPitchAlignmentForImage(&hardwareInfo));
