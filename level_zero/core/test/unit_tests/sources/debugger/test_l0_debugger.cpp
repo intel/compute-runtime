@@ -27,8 +27,19 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingSourceLevelDebuggerThenNullptrR
     EXPECT_EQ(nullptr, neoDevice->getSourceLevelDebugger());
 }
 
+TEST_F(L0DebuggerTest, givenL0DebuggerWhenGettingL0DebuggerThenValidDebuggerInstanceIsReturned) {
+    EXPECT_NE(nullptr, device->getL0Debugger());
+}
+
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenCallingIsDebuggerActiveThenTrueIsReturned) {
     EXPECT_TRUE(neoDevice->getDebugger()->isDebuggerActive());
+}
+
+TEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenSbaTrackingBufferIsAllocated) {
+    auto debugger = device->getL0Debugger();
+    ASSERT_NE(nullptr, debugger);
+    ASSERT_NE(nullptr, debugger->getSbaTrackingBuffer());
+    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER, debugger->getSbaTrackingBuffer()->getAllocationType());
 }
 
 HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenKernelDebugCommandsAreAdded) {

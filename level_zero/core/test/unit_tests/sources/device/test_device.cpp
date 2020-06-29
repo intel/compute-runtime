@@ -492,5 +492,9 @@ TEST_F(DeviceTest, givenNoActiveSourceLevelDebuggerWhenGetIsCalledThenNullptrIsR
     EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
 }
 
+TEST_F(DeviceTest, givenNoL0DebuggerWhenGettingL0DebuggerThenNullptrReturned) {
+    EXPECT_EQ(nullptr, device->getL0Debugger());
+}
+
 } // namespace ult
 } // namespace L0

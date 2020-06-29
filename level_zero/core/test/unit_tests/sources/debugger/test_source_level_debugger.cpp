@@ -78,6 +78,10 @@ TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenDeviceIsCreatedTh
     EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, deviceL0->getDebugSurface()->getAllocationType());
 }
 
+TEST_F(DeviceWithDebuggerEnabledTest, givenSldDebuggerWhenGettingL0DebuggerThenNullptrIsReturned) {
+    EXPECT_EQ(nullptr, deviceL0->getL0Debugger());
+}
+
 struct TwoSubDevicesDebuggerEnabledTest : public ActiveDebuggerFixture, public ::testing::Test {
     void SetUp() override { // NOLINT(readability-identifier-naming)
         DebugManager.flags.CreateMultipleSubDevices.set(2);
