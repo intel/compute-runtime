@@ -24,7 +24,6 @@
 
 namespace NEO {
 class ExecutionEnvironment;
-struct RootDeviceEnvironment;
 class GraphicsAllocation;
 struct KernelInfo;
 class MemoryManager;
@@ -151,7 +150,6 @@ class MemObj : public BaseObject<_cl_mem> {
     MemObj *associatedMemObject = nullptr;
     cl_uint refCount = 0;
     ExecutionEnvironment *executionEnvironment = nullptr;
-    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
     bool isZeroCopy;
     bool isHostPtrSVM;
     bool isObjectRedescribed;

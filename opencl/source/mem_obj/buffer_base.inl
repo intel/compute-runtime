@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
@@ -32,13 +33,16 @@ union SURFACE_STATE_BUFFER_LENGTH {
 };
 
 template <typename GfxFamily>
-void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument, uint32_t rootDeviceIndex) {
+void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument, const Device &device) {
+    auto rootDeviceIndex = device.getRootDeviceIndex();
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
-    EncodeSurfaceState<GfxFamily>::encodeBuffer(memory, getBufferAddress(rootDeviceIndex), getSurfaceSize(alignSizeForAuxTranslation, rootDeviceIndex), getMocsValue(disableL3, isReadOnlyArgument, rootDeviceIndex), true);
-    EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex),
-                                                           executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper(), memory, forceNonAuxMode, isReadOnlyArgument);
+    EncodeSurfaceState<GfxFamily>::encodeBuffer(memory, getBufferAddress(rootDeviceIndex),
+                                                getSurfaceSize(alignSizeForAuxTranslation, rootDeviceIndex),
+                                                getMocsValue(disableL3, isReadOnlyArgument, rootDeviceIndex), true);
+    EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(graphicsAllocation,
+                                                           device.getGmmHelper(), memory, forceNonAuxMode, isReadOnlyArgument);
 
-    appendBufferState(memory, context, graphicsAllocation, isReadOnlyArgument);
+    appendBufferState(memory, device, isReadOnlyArgument);
     appendSurfaceStateExt(memory);
 }
 } // namespace NEO

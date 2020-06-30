@@ -10,7 +10,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void BufferHw<GfxFamily>::appendBufferState(void *memory, Context *context, GraphicsAllocation *gfxAllocation, bool isReadOnly) {
+void BufferHw<GfxFamily>::appendBufferState(void *memory, const Device &device, bool isReadOnly) {
 }
 
 } // namespace NEO

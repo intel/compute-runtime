@@ -35,7 +35,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
 
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     auto gmm = graphicsAllocation->getDefaultGmm();
-    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
 
     auto imageDescriptor = Image::convertDescriptor(getImageDesc());
     ImageInfo imgInfo;
@@ -135,7 +135,7 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory, uint32_t rootDeviceIndex
     SURFACE_FORMAT surfaceFormat = MEDIA_SURFACE_STATE::SURFACE_FORMAT_Y8_UNORM_VA;
 
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
-    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
     auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
     MEDIA_SURFACE_STATE state = GfxFamily::cmdInitMediaSurfaceState;
 

@@ -49,7 +49,6 @@ MemObj::MemObj(Context *context,
         memoryManager = context->getMemoryManager();
         auto device = context->getDevice(0);
         executionEnvironment = device->getExecutionEnvironment();
-        rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()].get();
     }
     if (graphicsAllocation) {
         multiGraphicsAllocation.addAllocation(graphicsAllocation);

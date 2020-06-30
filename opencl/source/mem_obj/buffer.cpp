@@ -633,7 +633,6 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
     }
     pBuffer->offset = offset;
     pBuffer->executionEnvironment = device->getExecutionEnvironment();
-    pBuffer->rootDeviceEnvironment = pBuffer->executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()].get();
     return pBuffer;
 }
 
@@ -654,7 +653,7 @@ uint32_t Buffer::getMocsValue(bool disableL3Cache, bool isReadOnlyArgument, uint
     bool alignedMemObj = isAligned<MemoryConstants::cacheLineSize>(bufferAddress) &&
                          isAligned<MemoryConstants::cacheLineSize>(bufferSize);
 
-    auto gmmHelper = rootDeviceEnvironment->getGmmHelper();
+    auto gmmHelper = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
     if (!disableL3Cache && !isMemObjUncacheableForSurfaceState() && (alignedMemObj || readOnlyMemObj || !isMemObjZeroCopy())) {
         return gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     } else {
@@ -700,7 +699,7 @@ void Buffer::setSurfaceState(const Device *device,
                              cl_mem_flags flags,
                              cl_mem_flags_intel flagsIntel) {
     auto buffer = Buffer::createBufferHwFromDevice(device, flags, flagsIntel, svmSize, svmPtr, svmPtr, gfxAlloc, offset, true, false, false);
-    buffer->setArgStateful(surfaceState, false, false, false, false, device->getRootDeviceIndex());
+    buffer->setArgStateful(surfaceState, false, false, false, false, *device);
     buffer->graphicsAllocation = nullptr;
     delete buffer;
 }
