@@ -60,7 +60,7 @@ GMM_RESOURCE_INFO *GmmClientContextBase::copyResInfoObject(GMM_RESOURCE_INFO *pS
 }
 
 void GmmClientContextBase::destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) {
-    return clientContext->DestroyResInfoObject(pResInfo);
+    clientContext->DestroyResInfoObject(pResInfo);
 }
 
 GMM_CLIENT_CONTEXT *GmmClientContextBase::getHandle() const {
