@@ -499,7 +499,7 @@ bool Wddm::createAllocation64k(const Gmm *gmm, D3DKMT_HANDLE &outHandle) {
     CreateAllocation.NumAllocations = 1;
     CreateAllocation.pPrivateRuntimeData = NULL;
     CreateAllocation.pPrivateDriverData = NULL;
-    CreateAllocation.Flags.CreateResource = TRUE;
+    CreateAllocation.Flags.CreateResource = FALSE;
     CreateAllocation.pAllocationInfo = &AllocationInfo;
     CreateAllocation.hDevice = device;
 
