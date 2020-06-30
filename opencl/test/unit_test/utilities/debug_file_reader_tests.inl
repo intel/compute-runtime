@@ -155,3 +155,105 @@ TEST(SettingsFileReader, given64bitKeyValueWhenGetSettingThenValueIsCorrect) {
 
     EXPECT_EQ(-18764712120594, returnedValue);
 }
+
+TEST(SettingsFileReader, givenKeyValueWithoutSpacesWhenGetSettingThenValueIsCorrect) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader);
+    EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+    std::stringstream inputLine("SomeKey=12");
+    reader->parseStream(inputLine);
+
+    int64_t returnedValue = reader->getSetting("SomeKey", 0);
+    EXPECT_EQ(1u, reader->getStringSettingsCount());
+    EXPECT_EQ(12, returnedValue);
+}
+
+TEST(SettingsFileReader, givenKeyValueWithAdditionalWhitespaceCharactersWhenGetSettingThenValueIsCorrect) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader);
+    EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+    std::stringstream inputLine("\t \t SomeKey\t \t =\t \t 12\t \t ");
+    reader->parseStream(inputLine);
+
+    int64_t returnedValue = reader->getSetting("SomeKey", 0);
+    EXPECT_EQ(1u, reader->getStringSettingsCount());
+    EXPECT_EQ(12, returnedValue);
+}
+
+TEST(SettingsFileReader, givenKeyValueWithAdditionalCharactersWhenGetSettingThenValueIsIncorrect) {
+    {
+        auto reader = std::make_unique<TestSettingsFileReader>();
+        ASSERT_NE(nullptr, reader);
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+        std::stringstream inputLine("Some Key = 12");
+        reader->parseStream(inputLine);
+
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+    }
+    {
+        auto reader = std::make_unique<TestSettingsFileReader>();
+        ASSERT_NE(nullptr, reader);
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+        std::stringstream inputLine("SomeKey = 1 2");
+        reader->parseStream(inputLine);
+
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+    }
+}
+
+TEST(SettingsFileReader, givenMultipleKeysWhenGetSettingThenInvalidKeysAreSkipped) {
+    auto reader = std::make_unique<TestSettingsFileReader>();
+    ASSERT_NE(nullptr, reader);
+    EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+    std::string testFile;
+    testFile.append("InvalidKey1 = 1 2\n");
+    testFile.append("ValidKey1 = 12\n");
+    testFile.append("InvalidKey2 = - 1\n");
+    testFile.append("ValidKey2 = 128\n");
+    std::stringstream inputFile(testFile);
+    reader->parseStream(inputFile);
+
+    EXPECT_EQ(2u, reader->getStringSettingsCount());
+    EXPECT_EQ(0, reader->getSetting("InvalidKey1", 0));
+    EXPECT_EQ(0, reader->getSetting("InvalidKey2", 0));
+    EXPECT_EQ(12, reader->getSetting("ValidKey1", 0));
+    EXPECT_EQ(128, reader->getSetting("ValidKey2", 0));
+}
+
+TEST(SettingsFileReader, givenNoKeyOrNoValueWhenGetSettingThenExceptionIsNotThrown) {
+    {
+        auto reader = std::make_unique<TestSettingsFileReader>();
+        ASSERT_NE(nullptr, reader);
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+        std::stringstream inputLine("= 12");
+        EXPECT_NO_THROW(reader->parseStream(inputLine));
+
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+    }
+    {
+        auto reader = std::make_unique<TestSettingsFileReader>();
+        ASSERT_NE(nullptr, reader);
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+        std::stringstream inputLine("SomeKey =");
+        EXPECT_NO_THROW(reader->parseStream(inputLine));
+
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+    }
+    {
+        auto reader = std::make_unique<TestSettingsFileReader>();
+        ASSERT_NE(nullptr, reader);
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+
+        std::stringstream inputLine("=");
+        EXPECT_NO_THROW(reader->parseStream(inputLine));
+
+        EXPECT_EQ(0u, reader->getStringSettingsCount());
+    }
+}

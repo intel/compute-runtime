@@ -60,28 +60,39 @@ const char *SettingsFileReader::appSpecificLocation(const std::string &name) {
 }
 
 void SettingsFileReader::parseStream(std::istream &inputStream) {
-    std::stringstream ss;
     std::string key;
     std::string value;
-    char temp = 0;
+    std::string line;
+    std::string tmp;
 
     while (!inputStream.eof()) {
-        std::string tempString;
-        std::string tempStringValue;
-        getline(inputStream, tempString);
+        getline(inputStream, line);
 
-        ss << tempString;
-        ss >> key;
-        ss >> temp;
-        ss >> value;
-
-        if (!ss.fail()) {
-            settingStringMap.insert(std::pair<std::string, std::string>(key, value));
+        auto equalsSignPosition = line.find('=');
+        if (equalsSignPosition == std::string::npos) {
+            continue;
         }
 
-        ss.str(std::string()); // for reset string inside stringstream
-        ss.clear();
-        key.clear();
+        {
+            std::stringstream ss;
+            auto linePartWithKey = line.substr(0, equalsSignPosition);
+            ss << linePartWithKey;
+            ss >> key;
+            if (ss.fail() || (ss >> tmp)) {
+                continue;
+            }
+        }
+        {
+            std::stringstream ss;
+            auto linePartWithValue = line.substr(equalsSignPosition + 1);
+            ss << linePartWithValue;
+            ss >> value;
+            if (ss.fail() || (ss >> tmp)) {
+                continue;
+            }
+        }
+
+        settingStringMap.insert(std::pair<std::string, std::string>(key, value));
     }
 }
 }; // namespace NEO
