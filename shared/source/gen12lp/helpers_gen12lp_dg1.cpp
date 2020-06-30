@@ -18,6 +18,27 @@ bool pipeControlWaRequired(PRODUCT_FAMILY productFamily) {
     return (productFamily == IGFX_TIGERLAKE_LP) || (productFamily == IGFX_DG1);
 }
 
+bool workaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) {
+    if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_DG1) {
+        for (auto stepping : {&lowestSteppingWithBug, &steppingWithFix}) {
+            switch (*stepping) {
+            case REVISION_A0:
+                *stepping = 0x0;
+                break;
+            case REVISION_B:
+                *stepping = 0x1;
+                break;
+            default:
+                DEBUG_BREAK_IF(true);
+                return false;
+            }
+        }
+        return (lowestSteppingWithBug >= hwInfo.platform.usRevId && hwInfo.platform.usRevId < steppingWithFix);
+    }
+    DEBUG_BREAK_IF(true);
+    return false;
+}
+
 bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily) {
     return (productFamily == IGFX_TIGERLAKE_LP) || (productFamily == IGFX_DG1);
 }
