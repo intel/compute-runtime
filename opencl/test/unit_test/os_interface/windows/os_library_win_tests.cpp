@@ -69,14 +69,14 @@ HMODULE WINAPI LoadLibraryExAMock(LPCSTR lpFileName, HANDLE hFile, DWORD dwFlags
     return (HMODULE)1;
 }
 
-TEST(OSLibraryWinTest, gitOsLibraryWinWhenLoadDependencyFailsThenFallbackToNonDriverStore) {
+TEST(OSLibraryWinTest, WhenLoadDependencyFailsThenFallbackToNonDriverStore) {
     auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock);
 
     std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
     EXPECT_NE(nullptr, library);
 }
 
-TEST(OSLibraryWinTest, gitOsLibraryWinWhenLoadDependencyThenProperPathIsConstructed) {
+TEST(OSLibraryWinTest, WhenDependencyLoadsThenProperPathIsConstructed) {
     auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock);
     VariableBackup<bool> bkpM(&mockWillFail, false);
 
