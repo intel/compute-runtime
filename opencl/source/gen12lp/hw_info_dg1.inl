@@ -77,6 +77,7 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     false,                                         // supportsPipes
     true,                                          // supportsOcl21Features
     false,                                         // supportsOnDemandPageFaults
+    false,                                         // supportsIndependentForwardProgress
     false,                                         // hostPtrTrackingEnabled
     true                                           // levelZeroSupported
 };
