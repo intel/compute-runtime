@@ -29,7 +29,7 @@ add_executable(${TARGET_NAME}
 
 target_sources(${TARGET_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/main.cpp
     ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mock.h
     ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/test_mode.h
     ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/ult_configuration.cpp
