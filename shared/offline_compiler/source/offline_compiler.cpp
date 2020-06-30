@@ -216,10 +216,11 @@ int OfflineCompiler::getHardwareInfo(const char *pDeviceName) {
     for (unsigned int productId = 0; productId < IGFX_MAX_PRODUCT; ++productId) {
         if (hardwarePrefix[productId] && (0 == strcmp(pDeviceName, hardwarePrefix[productId]))) {
             if (hardwareInfoTable[productId]) {
-                hwInfo = hardwareInfoTable[productId];
+                hwInfo = *hardwareInfoTable[productId];
+                hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0x0);
                 familyNameWithType.clear();
-                familyNameWithType.append(familyName[hwInfo->platform.eRenderCoreFamily]);
-                familyNameWithType.append(hwInfo->capabilityTable.platformType);
+                familyNameWithType.append(familyName[hwInfo.platform.eRenderCoreFamily]);
+                familyNameWithType.append(hwInfo.capabilityTable.platformType);
                 retVal = SUCCESS;
                 break;
             }
@@ -352,7 +353,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             return OUT_OF_HOST_MEMORY;
         }
 
-        fclDeviceCtx->SetOclApiVersion(hwInfo->capabilityTable.clVersionSupport * 10);
+        fclDeviceCtx->SetOclApiVersion(hwInfo.capabilityTable.clVersionSupport * 10);
         preferredIntermediateRepresentation = fclDeviceCtx->GetPreferredIntermediateRepresentation();
     } else {
         if (!isQuiet()) {
@@ -393,46 +394,46 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     if (this->igcDeviceCtx == nullptr) {
         return OUT_OF_HOST_MEMORY;
     }
-    this->igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(hwInfo->capabilityTable.defaultProfilingTimerResolution));
+    this->igcDeviceCtx->SetProfilingTimerResolution(static_cast<float>(hwInfo.capabilityTable.defaultProfilingTimerResolution));
     auto igcPlatform = this->igcDeviceCtx->GetPlatformHandle();
     auto igcGtSystemInfo = this->igcDeviceCtx->GetGTSystemInfoHandle();
     auto igcFeWa = this->igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
     if ((igcPlatform == nullptr) || (igcGtSystemInfo == nullptr) || (igcFeWa == nullptr)) {
         return OUT_OF_HOST_MEMORY;
     }
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), hwInfo->platform);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo->gtSystemInfo);
+    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), hwInfo.platform);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
     // populate with features
-    igcFeWa.get()->SetFtrDesktop(hwInfo->featureTable.ftrDesktop);
-    igcFeWa.get()->SetFtrChannelSwizzlingXOREnabled(hwInfo->featureTable.ftrChannelSwizzlingXOREnabled);
+    igcFeWa.get()->SetFtrDesktop(hwInfo.featureTable.ftrDesktop);
+    igcFeWa.get()->SetFtrChannelSwizzlingXOREnabled(hwInfo.featureTable.ftrChannelSwizzlingXOREnabled);
 
-    igcFeWa.get()->SetFtrGtBigDie(hwInfo->featureTable.ftrGtBigDie);
-    igcFeWa.get()->SetFtrGtMediumDie(hwInfo->featureTable.ftrGtMediumDie);
-    igcFeWa.get()->SetFtrGtSmallDie(hwInfo->featureTable.ftrGtSmallDie);
+    igcFeWa.get()->SetFtrGtBigDie(hwInfo.featureTable.ftrGtBigDie);
+    igcFeWa.get()->SetFtrGtMediumDie(hwInfo.featureTable.ftrGtMediumDie);
+    igcFeWa.get()->SetFtrGtSmallDie(hwInfo.featureTable.ftrGtSmallDie);
 
-    igcFeWa.get()->SetFtrGT1(hwInfo->featureTable.ftrGT1);
-    igcFeWa.get()->SetFtrGT1_5(hwInfo->featureTable.ftrGT1_5);
-    igcFeWa.get()->SetFtrGT2(hwInfo->featureTable.ftrGT2);
-    igcFeWa.get()->SetFtrGT3(hwInfo->featureTable.ftrGT3);
-    igcFeWa.get()->SetFtrGT4(hwInfo->featureTable.ftrGT4);
+    igcFeWa.get()->SetFtrGT1(hwInfo.featureTable.ftrGT1);
+    igcFeWa.get()->SetFtrGT1_5(hwInfo.featureTable.ftrGT1_5);
+    igcFeWa.get()->SetFtrGT2(hwInfo.featureTable.ftrGT2);
+    igcFeWa.get()->SetFtrGT3(hwInfo.featureTable.ftrGT3);
+    igcFeWa.get()->SetFtrGT4(hwInfo.featureTable.ftrGT4);
 
-    igcFeWa.get()->SetFtrIVBM0M1Platform(hwInfo->featureTable.ftrIVBM0M1Platform);
-    igcFeWa.get()->SetFtrGTL(hwInfo->featureTable.ftrGT1);
-    igcFeWa.get()->SetFtrGTM(hwInfo->featureTable.ftrGT2);
-    igcFeWa.get()->SetFtrGTH(hwInfo->featureTable.ftrGT3);
+    igcFeWa.get()->SetFtrIVBM0M1Platform(hwInfo.featureTable.ftrIVBM0M1Platform);
+    igcFeWa.get()->SetFtrGTL(hwInfo.featureTable.ftrGT1);
+    igcFeWa.get()->SetFtrGTM(hwInfo.featureTable.ftrGT2);
+    igcFeWa.get()->SetFtrGTH(hwInfo.featureTable.ftrGT3);
 
-    igcFeWa.get()->SetFtrSGTPVSKUStrapPresent(hwInfo->featureTable.ftrSGTPVSKUStrapPresent);
-    igcFeWa.get()->SetFtrGTA(hwInfo->featureTable.ftrGTA);
-    igcFeWa.get()->SetFtrGTC(hwInfo->featureTable.ftrGTC);
-    igcFeWa.get()->SetFtrGTX(hwInfo->featureTable.ftrGTX);
-    igcFeWa.get()->SetFtr5Slice(hwInfo->featureTable.ftr5Slice);
+    igcFeWa.get()->SetFtrSGTPVSKUStrapPresent(hwInfo.featureTable.ftrSGTPVSKUStrapPresent);
+    igcFeWa.get()->SetFtrGTA(hwInfo.featureTable.ftrGTA);
+    igcFeWa.get()->SetFtrGTC(hwInfo.featureTable.ftrGTC);
+    igcFeWa.get()->SetFtrGTX(hwInfo.featureTable.ftrGTX);
+    igcFeWa.get()->SetFtr5Slice(hwInfo.featureTable.ftr5Slice);
 
-    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(hwInfo->featureTable.ftrGpGpuMidThreadLevelPreempt);
-    igcFeWa.get()->SetFtrIoMmuPageFaulting(hwInfo->featureTable.ftrIoMmuPageFaulting);
-    igcFeWa.get()->SetFtrWddm2Svm(hwInfo->featureTable.ftrWddm2Svm);
-    igcFeWa.get()->SetFtrPooledEuEnabled(hwInfo->featureTable.ftrPooledEuEnabled);
+    igcFeWa.get()->SetFtrGpGpuMidThreadLevelPreempt(hwInfo.featureTable.ftrGpGpuMidThreadLevelPreempt);
+    igcFeWa.get()->SetFtrIoMmuPageFaulting(hwInfo.featureTable.ftrIoMmuPageFaulting);
+    igcFeWa.get()->SetFtrWddm2Svm(hwInfo.featureTable.ftrWddm2Svm);
+    igcFeWa.get()->SetFtrPooledEuEnabled(hwInfo.featureTable.ftrPooledEuEnabled);
 
-    igcFeWa.get()->SetFtrResourceStreamer(hwInfo->featureTable.ftrResourceStreamer);
+    igcFeWa.get()->SetFtrResourceStreamer(hwInfo.featureTable.ftrResourceStreamer);
 
     return retVal;
 }
@@ -525,11 +526,11 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
             if (retVal != SUCCESS) {
                 argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
             } else {
-                std::string extensionsList = getExtensionsList(*hwInfo);
+                std::string extensionsList = getExtensionsList(hwInfo);
                 CompilerOptions::concatenateAppend(internalOptions, convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str()));
 
                 StackVec<cl_name_version, 12> openclCFeatures;
-                getOpenclCFeaturesList(*hwInfo, openclCFeatures);
+                getOpenclCFeaturesList(hwInfo, openclCFeatures);
                 CompilerOptions::concatenateAppend(internalOptions, convertEnabledOclCFeaturesToCompilerInternalOptions(openclCFeatures));
             }
         }

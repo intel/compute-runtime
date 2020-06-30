@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
@@ -66,7 +67,7 @@ class OfflineCompiler {
 
     static std::string getFileNameTrunk(std::string &filePath);
     const HardwareInfo &getHardwareInfo() const {
-        return *hwInfo;
+        return hwInfo;
     }
 
   protected:
@@ -94,7 +95,7 @@ class OfflineCompiler {
         return suffix;
     }
     MOCKABLE_VIRTUAL void writeOutAllFiles();
-    const HardwareInfo *hwInfo = nullptr;
+    HardwareInfo hwInfo;
 
     std::string deviceName;
     std::string familyNameWithType;

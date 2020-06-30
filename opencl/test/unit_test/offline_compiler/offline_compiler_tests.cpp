@@ -667,7 +667,9 @@ TEST(OfflineCompilerTest, getHardwareInfo) {
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
     EXPECT_EQ(CL_INVALID_DEVICE, mockOfflineCompiler->getHardwareInfo("invalid"));
+    EXPECT_EQ(0u, mockOfflineCompiler->getHardwareInfo().gtSystemInfo.SliceCount);
     EXPECT_EQ(CL_SUCCESS, mockOfflineCompiler->getHardwareInfo(gEnvironment->devicePrefix.c_str()));
+    EXPECT_NE(0u, mockOfflineCompiler->getHardwareInfo().gtSystemInfo.SliceCount);
 }
 
 TEST(OfflineCompilerTest, storeBinary) {
