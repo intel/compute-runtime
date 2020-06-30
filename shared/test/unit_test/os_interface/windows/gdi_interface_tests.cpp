@@ -14,12 +14,12 @@
 
 #include "gtest/gtest.h"
 
-TEST(GdiInterface, creation) {
+TEST(GdiInterface, WhenGdiIsCreatedThenItIsInitialized) {
     NEO::Gdi gdi;
     ASSERT_TRUE(gdi.isInitialized());
 }
 
-TEST(GdiInterface, failLoad) {
+TEST(GdiInterface, GivenInvalidGdiDllNameWhenCreatingGdiThenGdiIsNotInitialized) {
     const char *oldName = Os::gdiDllName;
     Os::gdiDllName = "surely_not_exists_.dll";
 
