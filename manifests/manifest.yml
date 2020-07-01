@@ -42,6 +42,6 @@ components:
     dest_dir: wdk
     type: git
     branch: wdk
-    revision: b32fd8b47e88a0f63acd0064d61dbff86e26af0b-1438
-converter: M-1438
+    revision: d2a333820eafc7a85f8e203609327ba10fa934ce-1442
+converter: M-1442
 version: '1'
