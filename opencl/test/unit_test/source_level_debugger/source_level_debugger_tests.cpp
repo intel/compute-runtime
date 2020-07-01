@@ -542,6 +542,22 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenGettingSourceLe
     EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
 }
 
+TEST(SourceLevelDebugger, givenDeviceWithDebuggerActiveSetWhenSourceLevelDebuggerIsNotCreatedThenNotificationsAreNotCalled) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(false);
+    DebuggerLibrary::setDebuggerActive(false);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDeviceWithDebuggerActive>(nullptr));
+
+    EXPECT_TRUE(device->isDebuggerActive());
+    EXPECT_EQ(nullptr, device->getDebugger());
+    EXPECT_FALSE(interceptor.newDeviceCalled);
+    EXPECT_FALSE(interceptor.deviceDestructionCalled);
+}
+
 TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenCreatingNewSourceLevelDebugger) {
     DebuggerLibraryRestorer restorer;
 

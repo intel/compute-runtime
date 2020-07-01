@@ -18,15 +18,6 @@
 using PreambleTest = ::testing::Test;
 using namespace NEO;
 
-class MockDeviceWithDebuggerActive : public MockDevice {
-  public:
-    MockDeviceWithDebuggerActive(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(executionEnvironment, deviceIndex) {}
-    void initializeCaps() override {
-        MockDevice::initializeCaps();
-        this->setDebuggerActive(true);
-    }
-};
-
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsDestructedThenSourceLevelDebuggerIsNotified) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     auto gmock = new ::testing::NiceMock<GMockSourceLevelDebugger>(new MockOsLibrary);

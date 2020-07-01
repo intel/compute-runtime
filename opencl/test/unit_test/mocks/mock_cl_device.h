@@ -87,4 +87,13 @@ class MockClDevice : public ClDevice {
     std::vector<EngineControl> &engines;
 };
 
+class MockDeviceWithDebuggerActive : public MockDevice {
+  public:
+    MockDeviceWithDebuggerActive(ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(executionEnvironment, deviceIndex) {}
+    void initializeCaps() override {
+        MockDevice::initializeCaps();
+        this->setDebuggerActive(true);
+    }
+};
+
 } // namespace NEO
