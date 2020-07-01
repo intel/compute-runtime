@@ -414,6 +414,6 @@ const StackVec<uint32_t, 6> HwHelperHw<GfxFamily>::getThreadsPerEUConfigs() cons
 }
 
 template <typename GfxFamily>
-void HwHelperHw<GfxFamily>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties) const {}
+void HwHelperHw<GfxFamily>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {}
 
 } // namespace NEO

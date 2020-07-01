@@ -18,8 +18,6 @@
 #include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "test.h"
 
-#include "gtest/gtest.h"
-
 using namespace NEO;
 class MemoryManagerGetAlloctionDataTest : public testing::TestWithParam<GraphicsAllocation::AllocationType> {
   public:
@@ -562,7 +560,9 @@ TEST(MemoryManagerTest, givenFillPatternTypeWhenGetAllocationDataIsCalledThenSys
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }
 
-TEST(MemoryManagerTest, givenLinearStreamTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
+using GetAllocationDataTestHw = ::testing::Test;
+
+HWTEST_F(GetAllocationDataTestHw, givenLinearStreamTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::LINEAR_STREAM, mockDeviceBitfield};
@@ -571,7 +571,6 @@ TEST(MemoryManagerTest, givenLinearStreamTypeWhenGetAllocationDataIsCalledThenSy
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 
-using GetAllocationDataTestHw = ::testing::Test;
 HWTEST_F(GetAllocationDataTestHw, givenTimestampPacketTagBufferTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequestedAndRequireCpuAccess) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
@@ -624,7 +623,7 @@ TEST(MemoryManagerTest, givenInternalHeapTypeThenUseInternal32BitAllocator) {
     EXPECT_TRUE(MockMemoryManager::useInternal32BitAllocator(GraphicsAllocation::AllocationType::INTERNAL_HEAP));
 }
 
-TEST(MemoryManagerTest, givenInternalHeapTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
+HWTEST_F(GetAllocationDataTestHw, givenInternalHeapTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::INTERNAL_HEAP, mockDeviceBitfield};
@@ -633,7 +632,7 @@ TEST(MemoryManagerTest, givenInternalHeapTypeWhenGetAllocationDataIsCalledThenSy
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 
-TEST(MemoryManagerTest, givenKernelIsaTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
+HWTEST_F(GetAllocationDataTestHw, givenKernelIsaTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::KERNEL_ISA, mockDeviceBitfield};
@@ -641,7 +640,7 @@ TEST(MemoryManagerTest, givenKernelIsaTypeWhenGetAllocationDataIsCalledThenSyste
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
-TEST(MemoryManagerTest, givenLinearStreamWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
+HWTEST_F(GetAllocationDataTestHw, givenLinearStreamWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::LINEAR_STREAM, mockDeviceBitfield};

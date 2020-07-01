@@ -356,7 +356,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.rootDeviceIndex = properties.rootDeviceIndex;
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo();
-    HwHelper::get(hwInfo->platform.eRenderCoreFamily).setExtraAllocationData(allocationData, properties);
+    HwHelper::get(hwInfo->platform.eRenderCoreFamily).setExtraAllocationData(allocationData, properties, *hwInfo);
 
     return true;
 }
