@@ -64,12 +64,12 @@ TEST(ResidencyData, givenNewlyConstructedResidencyDataThenItIsNotResidentOnAnyOs
     }
 }
 
-TEST(WddmMemoryManager, NonCopyable) {
+TEST(WddmMemoryManager, WhenWddmMemoryManagerIsCreatedThenItIsNonCopyable) {
     EXPECT_FALSE(std::is_move_constructible<WddmMemoryManager>::value);
     EXPECT_FALSE(std::is_copy_constructible<WddmMemoryManager>::value);
 }
 
-TEST(WddmMemoryManager, NonAssignable) {
+TEST(WddmMemoryManager, WhenWddmMemoryManagerIsCreatedThenItIsNonAssignable) {
     EXPECT_FALSE(std::is_move_assignable<WddmMemoryManager>::value);
     EXPECT_FALSE(std::is_copy_assignable<WddmMemoryManager>::value);
 }
@@ -110,7 +110,7 @@ TEST(WddmAllocationTest, givenMemoryPoolWhenPassedToWddmAllocationConstructorThe
     EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation2.getMemoryPool());
 }
 
-TEST(WddmMemoryManagerExternalHeapTest, externalHeapIsCreatedWithCorrectBase) {
+TEST(WddmMemoryManagerExternalHeapTest, WhenExternalHeapIsCreatedThenItHasCorrectBase) {
     HardwareInfo *hwInfo;
     auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     std::unique_ptr<WddmMock> wddm(static_cast<WddmMock *>(Wddm::createWddm(nullptr, *executionEnvironment->rootDeviceEnvironments[0].get())));
@@ -125,7 +125,7 @@ TEST(WddmMemoryManagerExternalHeapTest, externalHeapIsCreatedWithCorrectBase) {
     EXPECT_EQ(base, memoryManager->getExternalHeapBaseAddress(0));
 }
 
-TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWMMWhenAsyncDeleterIsEnabledAndWaitForDeletionsIsCalledThenDeleterInWddmIsSetToNullptr) {
+TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWmmWhenAsyncDeleterIsEnabledAndWaitForDeletionsIsCalledThenDeleterInWddmIsSetToNullptr) {
     HardwareInfo *hwInfo;
     auto executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     auto wddm = std::make_unique<WddmMock>(*executionEnvironment->rootDeviceEnvironments[0].get());
@@ -278,8 +278,7 @@ TEST_F(WddmMemoryManagerSimpleTest, whenCreateAllocationFromHandleAndMapCallFail
     EXPECT_EQ(1u, memoryManager->freeGraphicsMemoryImplCalled);
 }
 
-TEST_F(WddmMemoryManagerSimpleTest,
-       givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhenNotAlignedPtrIsPassedThenAlignedGraphicsAllocationIsCreated) {
+TEST_F(WddmMemoryManagerSimpleTest, givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhenNotAlignedPtrIsPassedThenAlignedGraphicsAllocationIsCreated) {
     memoryManager.reset(new MockWddmMemoryManager(false, false, *executionEnvironment));
     auto size = 13u;
     auto hostPtr = reinterpret_cast<const void *>(0x10001);
@@ -411,7 +410,7 @@ TEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForVirtualPa
     EXPECT_FALSE(memoryManager->peekVirtualPaddingSupport());
 }
 
-TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationToHostPtrManagerThenfragmentHasCorrectValues) {
+TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationToHostPtrManagerThenFragmentHasCorrectValues) {
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
     uint64_t gpuPtr = 0x123;
@@ -454,7 +453,7 @@ TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationT
     EXPECT_EQ(fragment, nullptr);
 }
 
-TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtr) {
+TEST_F(WddmMemoryManagerTest, WhenAllocatingGpuMemHostPtrThenCpuPtrAndGpuPtrAreSame) {
     // three pages
     void *ptr = alignedMalloc(3 * 4096, 4096);
     ASSERT_NE(nullptr, ptr);
@@ -551,7 +550,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenLockUnlockIsCalledThenRe
     memoryManager->freeGraphicsMemory(alloc);
 }
 
-TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllocWhenForce32bitAddressingIsSetAndRequireSpecificBitnessIsTrue) {
+TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndRequireSpecificBitnessWhenCreatingAllocationFromSharedHandleThen32BitAllocationIsReturned) {
     auto osHandle = 1u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
@@ -574,7 +573,7 @@ TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllocW
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
-TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleDoesNotReturn32BitAllocWhenForce32bitAddressingIsSetAndRequireSpecificBitnessIsFalse) {
+TEST_F(WddmMemoryManagerTest, GivenForce32bitAddressingAndNotRequiredSpecificBitnessWhenCreatingAllocationFromSharedHandleThenNon32BitAllocationIsReturned) {
     auto osHandle = 1u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
@@ -811,7 +810,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountN
     EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->getDefaultGmm()->resourceParams.Usage);
 }
 
-TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {
+TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedOnlyIfInBounds) {
     MockWddmAllocation alloc, allocOffseted;
     // three pages
     void *ptr = alignedMalloc(4 * 4096, 4096);
@@ -830,18 +829,18 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {
     EXPECT_TRUE(fragment->refCount == 1);
     EXPECT_NE(fragment->osInternalStorage, nullptr);
 
-    // offseted by 3 pages, not in boundary
+    // offset by 3 pages, not in boundary
     auto fragment2 = hostPtrManager->getFragment((char *)ptr + 3 * 4096);
 
     EXPECT_EQ(nullptr, fragment2);
 
-    // offseted by one page, still in boundary
-    void *offsetedPtr = ptrOffset(ptr, 4096);
-    auto *gpuAllocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, MemoryConstants::pageSize}, offsetedPtr);
+    // offset by one page, still in boundary
+    void *offsetPtr = ptrOffset(ptr, 4096);
+    auto *gpuAllocation2 = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, false, MemoryConstants::pageSize}, offsetPtr);
     // Should be same cpu ptr and gpu ptr
-    EXPECT_EQ(offsetedPtr, gpuAllocation2->getUnderlyingBuffer());
+    EXPECT_EQ(offsetPtr, gpuAllocation2->getUnderlyingBuffer());
 
-    auto fragment3 = hostPtrManager->getFragment(offsetedPtr);
+    auto fragment3 = hostPtrManager->getFragment(offsetPtr);
     ASSERT_NE(nullptr, fragment3);
 
     EXPECT_TRUE(fragment3->refCount == 2);
@@ -864,7 +863,7 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {
     alignedFree(ptr);
 }
 
-TEST_F(WddmMemoryManagerTest, AllocateGpuMemCheckGmm) {
+TEST_F(WddmMemoryManagerTest, WhenAllocatingGpuMemThenOsInternalStorageIsPopulatedCorrectly) {
     MockWddmAllocation allocation;
     // three pages
     void *ptr = alignedMalloc(3 * 4096, 4096);
@@ -902,7 +901,7 @@ TEST_F(WddmMemoryManagerTest, GivenUnAlignedPointerAndSizeWhenAllocate32BitMemor
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
-TEST_F(WddmMemoryManagerTest, getSystemSharedMemory) {
+TEST_F(WddmMemoryManagerTest, WhenInitializingWddmThenSystemSharedMemoryIsCorrect) {
     executionEnvironment->prepareRootDeviceEnvironments(4u);
     for (auto i = 0u; i < 4u; i++) {
         executionEnvironment->rootDeviceEnvironments[i]->osInterface.reset();
@@ -914,7 +913,7 @@ TEST_F(WddmMemoryManagerTest, getSystemSharedMemory) {
     }
 }
 
-TEST_F(WddmMemoryManagerTest, getMaxApplicationAddress) {
+TEST_F(WddmMemoryManagerTest, GivenBitnessWhenGettingMaxAddressThenCorrectAddressIsReturned) {
     uint64_t maxAddr = memoryManager->getMaxApplicationAddress();
     if (is32bit) {
         EXPECT_EQ(maxAddr, MemoryConstants::max32BitAppAddress);
@@ -923,7 +922,7 @@ TEST_F(WddmMemoryManagerTest, getMaxApplicationAddress) {
     }
 }
 
-TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithNullptr) {
+TEST_F(WddmMemoryManagerTest, GivenNullptrWhenAllocating32BitMemoryThenAddressIsCorrect) {
     auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, 3 * MemoryConstants::pageSize, nullptr, GraphicsAllocation::AllocationType::BUFFER);
 
     ASSERT_NE(nullptr, gpuAllocation);
@@ -944,7 +943,7 @@ TEST_F(WddmMemoryManagerTest, given32BitAllocationWhenItIsCreatedThenItHasNonZer
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
-TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotDoTripleAlloc) {
+TEST_F(WddmMemoryManagerTest, GivenMisalignedHostPtrWhenAllocating32BitMemoryThenTripleAllocationDoesNotOccur) {
     size_t misalignedSize = 0x2500;
     void *misalignedPtr = reinterpret_cast<void *>(0x12500);
 
@@ -966,7 +965,7 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotDoT
     memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
-TEST_F(WddmMemoryManagerTest, Allocate32BitMemorySetsCannonizedGpuBaseAddress) {
+TEST_F(WddmMemoryManagerTest, WhenAllocating32BitMemoryThenGpuBaseAddressIsCannonized) {
     auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(rootDeviceIndex, 3 * MemoryConstants::pageSize, nullptr, GraphicsAllocation::AllocationType::BUFFER);
 
     ASSERT_NE(nullptr, gpuAllocation);
@@ -1016,7 +1015,7 @@ TEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsT
     delete storage.fragmentStorageData[1].residency;
 }
 
-TEST_F(WddmMemoryManagerTest, freeNullAllocationNoCrash) {
+TEST_F(WddmMemoryManagerTest, GivenNullptrWhenFreeingAllocationThenCrashDoesNotOccur) {
     EXPECT_NO_THROW(memoryManager->freeGraphicsMemory(nullptr));
 }
 
@@ -1122,7 +1121,7 @@ TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhe
     memoryManager->freeGraphicsMemory(wddmAllocation);
 }
 
-TEST_F(BufferWithWddmMemory, ValidHostPtr) {
+TEST_F(BufferWithWddmMemory, WhenCreatingBufferThenBufferIsCreatedCorrectly) {
     flags = CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL;
 
     auto ptr = alignedMalloc(MemoryConstants::preferredAlignment, MemoryConstants::preferredAlignment);
@@ -1150,7 +1149,7 @@ TEST_F(BufferWithWddmMemory, ValidHostPtr) {
     alignedFree(ptr);
 }
 
-TEST_F(BufferWithWddmMemory, NullOsHandleStorageAskedForPopulationReturnsFilledPointer) {
+TEST_F(BufferWithWddmMemory, GivenNullOsHandleStorageWhenPopulatingThenFilledPointerIsReturned) {
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     storage.fragmentStorageData[0].fragmentSize = MemoryConstants::pageSize;
