@@ -91,6 +91,12 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHost
     return memoryAllocation;
 }
 
+GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) {
+    auto memoryAllocation = static_cast<MemoryAllocation *>(allocateGraphicsMemoryWithAlignment(allocationData));
+    memoryAllocation->setCpuPtrAndGpuAddress(memoryAllocation->getUnderlyingBuffer(), allocationData.gpuAddress);
+    return memoryAllocation;
+}
+
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
     AllocationData allocationData64kb = allocationData;
     allocationData64kb.size = alignUp(allocationData.size, MemoryConstants::pageSize64k);
@@ -355,4 +361,18 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(GraphicsAlloca
 
     return memoryAllocation;
 }
+
+AddressRange OsAgnosticMemoryManager::reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) {
+    auto gfxPartition = getGfxPartition(rootDeviceIndex);
+    auto gpuVa = GmmHelper::canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size));
+    return AddressRange{gpuVa, size};
+}
+
+void OsAgnosticMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) {
+    uint64_t graphicsAddress = addressRange.address;
+    graphicsAddress = GmmHelper::decanonize(graphicsAddress);
+    auto gfxPartition = getGfxPartition(rootDeviceIndex);
+    gfxPartition->freeGpuAddressRange(graphicsAddress, addressRange.size);
+}
+
 } // namespace NEO

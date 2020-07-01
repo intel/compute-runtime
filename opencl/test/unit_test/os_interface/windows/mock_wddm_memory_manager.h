@@ -21,6 +21,7 @@ class MockWddmMemoryManager : public MemoryManagerCreate<WddmMemoryManager> {
     using BaseClass::allocateGraphicsMemory64kb;
     using BaseClass::allocateGraphicsMemoryForNonSvmHostPtr;
     using BaseClass::allocateGraphicsMemoryInDevicePool;
+    using BaseClass::allocateGraphicsMemoryWithGpuVa;
     using BaseClass::allocateGraphicsMemoryWithProperties;
     using BaseClass::allocateShareableMemory;
     using BaseClass::createGraphicsAllocation;

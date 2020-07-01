@@ -15,6 +15,7 @@
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
+#include "opencl/test/unit_test/mocks/mock_os_context.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -897,6 +898,32 @@ TEST(MemoryManagerTest, givenDebugContextSaveAreaTypeWhenGetAllocationDataIsCall
     AllocationProperties properties{mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_TRUE(allocData.flags.useSystemMemory);
+}
+
+TEST(MemoryManagerTest, givenPropertiesWithOsContextWhenGetAllocationDataIsCalledThenOsContextIsSet) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{0, 1, GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA};
+
+    MockOsContext osContext(0u, 1,
+                            HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                            PreemptionMode::Disabled, false, false, false);
+
+    properties.osContext = &osContext;
+
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_EQ(&osContext, allocData.osContext);
+}
+
+TEST(MemoryManagerTest, givenPropertiesWithGpuAddressWhenGetAllocationDataIsCalledThenGpuAddressIsSet) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{0, 1, GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA};
+
+    properties.gpuAddress = 0x4000;
+
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_EQ(properties.gpuAddress, allocData.gpuAddress);
 }
 
 using MemoryManagerGetAlloctionDataHaveToBeForcedTo48BitTest = testing::TestWithParam<std::tuple<GraphicsAllocation::AllocationType, bool>>;

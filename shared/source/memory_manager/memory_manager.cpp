@@ -351,6 +351,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         allocationData.hostPtr = nullptr;
     }
 
+    allocationData.gpuAddress = properties.gpuAddress;
+    allocationData.osContext = properties.osContext;
     allocationData.rootDeviceIndex = properties.rootDeviceIndex;
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo();
@@ -405,6 +407,9 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     }
     if (allocationData.hostPtr) {
         return allocateGraphicsMemoryWithHostPtr(allocationData);
+    }
+    if (allocationData.gpuAddress) {
+        return allocateGraphicsMemoryWithGpuVa(allocationData);
     }
     if (peek64kbPagesEnabled(allocationData.rootDeviceIndex) && allocationData.flags.allow64kbPages) {
         return allocateGraphicsMemory64kb(allocationData);

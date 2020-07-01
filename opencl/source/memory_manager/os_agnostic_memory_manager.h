@@ -79,6 +79,9 @@ class OsAgnosticMemoryManager : public MemoryManager {
     void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) override;
     void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex) override;
 
+    AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) override;
+    void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
+
   protected:
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;
@@ -86,6 +89,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateShareableMemory(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
+    GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override;
 
     void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override { return graphicsAllocation.getUnderlyingBuffer(); }
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override {}

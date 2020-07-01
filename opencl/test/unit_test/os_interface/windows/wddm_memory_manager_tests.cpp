@@ -406,6 +406,24 @@ TEST_F(WddmMemoryManagerSimpleTest, givenNonZeroFenceValueOnSomeOfMultipleEngine
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGpuAddressIsReservedAndFreedThenAddressRangeIsZero) {
+    auto addressRange = memoryManager->reserveGpuAddress(MemoryConstants::pageSize, 0);
+    EXPECT_EQ(0u, GmmHelper::decanonize(addressRange.address));
+    EXPECT_EQ(0u, addressRange.size);
+    memoryManager->freeGpuAddress(addressRange, 0);
+}
+
+TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenAllocatingWithGpuVaThenNullptrIsReturned) {
+    AllocationData allocationData;
+
+    allocationData.size = 0x1000;
+    allocationData.gpuAddress = 0x2000;
+    allocationData.osContext = osContext;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithGpuVa(allocationData);
+    EXPECT_EQ(nullptr, allocation);
+}
+
 TEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForVirtualPaddingSupportThenFalseIsReturned) {
     EXPECT_FALSE(memoryManager->peekVirtualPaddingSupport());
 }

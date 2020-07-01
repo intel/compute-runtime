@@ -1292,6 +1292,39 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerAndFreeMemoryDisabledW
     EXPECT_FALSE(mockManager->freeMemoryCalled);
 }
 
+TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenGpuAddressIsReservedAndFreedThenAddressFromGfxPartitionIsUsed) {
+    MockExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+
+    auto addressRange = memoryManager.reserveGpuAddress(MemoryConstants::pageSize, 0);
+    EXPECT_LE(memoryManager.getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD), GmmHelper::decanonize(addressRange.address));
+    EXPECT_GT(memoryManager.getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD), GmmHelper::decanonize(addressRange.address));
+    memoryManager.freeGpuAddress(addressRange, 0);
+}
+
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenGpuAddressIsSetThenAllocationWithSpecifiedGpuAddressInSystemMemoryIsCreated) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    auto memoryManager = new OsAgnosticMemoryManager(executionEnvironment);
+
+    std::unique_ptr<CommandStreamReceiver> csr(createCommandStream(executionEnvironment, 0u));
+    executionEnvironment.memoryManager.reset(memoryManager);
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(),
+                                                               HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                                               1, PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
+                                                               false, false, false);
+
+    MockAllocationProperties properties = {0, MemoryConstants::pageSize};
+    properties.osContext = osContext;
+    properties.gpuAddress = 0x2000;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(0x2000u, allocation->getGpuAddress());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST(MemoryManager, givenSharedResourceCopyWhenAllocatingGraphicsMemoryThenAllocateGraphicsMemoryForImageIsCalled) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     MockMemoryManager memoryManager(false, true, *executionEnvironment);

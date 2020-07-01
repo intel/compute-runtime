@@ -55,6 +55,8 @@ class DrmMemoryManager : public MemoryManager {
     bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy) override;
 
     int obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex);
+    AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) override;
+    void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
 
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
@@ -75,6 +77,7 @@ class DrmMemoryManager : public MemoryManager {
     DrmAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateShareableMemory(const AllocationData &allocationData) override;
     GraphicsAllocation *allocateGraphicsMemoryForImageImpl(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm) override;
+    GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) override;
 
     void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
     void *lockResourceInLocalMemoryImpl(GraphicsAllocation &graphicsAllocation);

@@ -114,6 +114,120 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
     EXPECT_EQ(fragment, nullptr);
 }
 
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenGpuAddressIsReservedAndFreedThenAddressFromGfxPartitionIsUsed) {
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    auto addressRange = memoryManager->reserveGpuAddress(MemoryConstants::pageSize, 0);
+    EXPECT_LE(memoryManager->getGfxPartition(0)->getHeapBase(HeapIndex::HEAP_STANDARD), GmmHelper::decanonize(addressRange.address));
+    EXPECT_GT(memoryManager->getGfxPartition(0)->getHeapLimit(HeapIndex::HEAP_STANDARD), GmmHelper::decanonize(addressRange.address));
+    memoryManager->freeGpuAddress(addressRange, 0);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSmallSizeAndGpuAddressSetWhenGraphicsMemoryIsAllocatedThenAllocationWithSpecifiedGpuAddressInSystemMemoryIsCreated) {
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    auto osContext = device->getDefaultEngine().osContext;
+
+    MockAllocationProperties properties = {rootDeviceIndex, MemoryConstants::pageSize};
+    properties.gpuAddress = 0x2000;
+    properties.osContext = osContext;
+
+    mock->reset();
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.execbuffer2 = 0; //pinBB not called
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(0x2000u, allocation->getGpuAddress());
+
+    mock->testIoctls();
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenInjectedFailuresWhenGraphicsMemoryWithGpuVaIsAllocatedThenNullptrIsReturned) {
+    mock->ioctl_expected.total = -1; //don't care
+
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    auto osContext = device->getDefaultEngine().osContext;
+
+    MockAllocationProperties properties = {rootDeviceIndex, MemoryConstants::pageSize};
+    properties.gpuAddress = 0x2000;
+    properties.osContext = osContext;
+
+    InjectedFunction method = [&](size_t failureIndex) {
+        auto ptr = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+        if (MemoryManagement::nonfailingAllocation != failureIndex) {
+            EXPECT_EQ(nullptr, ptr);
+        } else {
+            EXPECT_NE(nullptr, ptr);
+            memoryManager->freeGraphicsMemory(ptr);
+        }
+    };
+    injectFailures(method);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenSizeExceedingThresholdAndGpuAddressSetWhenGraphicsMemoryIsAllocatedThenAllocationWithSpecifiedGpuAddressInSystemMemoryIsCreated) {
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
+    auto osContext = device->getDefaultEngine().osContext;
+
+    MockAllocationProperties properties = {rootDeviceIndex, memoryManager->pinThreshold + MemoryConstants::pageSize};
+    properties.gpuAddress = 0x2000;
+    properties.osContext = osContext;
+
+    mock->reset();
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.execbuffer2 = 1; //pinBB called
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(0x2000u, allocation->getGpuAddress());
+
+    mock->testIoctls();
+
+    memoryManager->freeGraphicsMemory(allocation);
+
+    memoryManager->injectPinBB(nullptr, rootDeviceIndex); // pinBB not available
+
+    mock->reset();
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.execbuffer2 = 0; //pinBB not called
+
+    properties.gpuAddress = 0x5000;
+
+    allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(0x5000u, allocation->getGpuAddress());
+
+    mock->testIoctls();
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndSizeExceedingThresholdAndGpuAddressSetWhenGraphicsMemoryIsAllocatedThenBufferIsNotPinned) {
+    auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, false, false, *executionEnvironment);
+    auto osContext = device->getDefaultEngine().osContext;
+
+    MockAllocationProperties properties = {rootDeviceIndex, memoryManager->pinThreshold + MemoryConstants::pageSize};
+    properties.gpuAddress = 0x2000;
+    properties.osContext = osContext;
+
+    mock->reset();
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.execbuffer2 = 0; //pinBB not called
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_EQ(0x2000u, allocation->getGpuAddress());
+
+    mock->testIoctls();
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenforcePinAllowedWhenMemoryManagerIsCreatedThenPinBbIsCreated) {
     auto memoryManager = std::make_unique<TestedDrmMemoryManager>(false, true, false, *executionEnvironment);
     EXPECT_NE(nullptr, memoryManager->pinBBs[device->getRootDeviceIndex()]);

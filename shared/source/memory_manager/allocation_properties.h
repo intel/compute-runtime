@@ -35,6 +35,8 @@ struct AllocationProperties {
     ImageInfo *imgInfo = nullptr;
     bool multiStorageResource = false;
     DeviceBitfield subDevicesBitfield{};
+    uint64_t gpuAddress = 0;
+    OsContext *osContext = nullptr;
 
     AllocationProperties(uint32_t rootDeviceIndex, size_t size,
                          GraphicsAllocation::AllocationType allocationType)
@@ -102,10 +104,12 @@ struct AllocationData {
     static_assert(sizeof(AllocationData::flags) == sizeof(AllocationData::allFlags), "");
     GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::UNKNOWN;
     const void *hostPtr = nullptr;
+    uint64_t gpuAddress = 0;
     size_t size = 0;
     size_t alignment = 0;
     StorageInfo storageInfo = {};
     ImageInfo *imgInfo = nullptr;
     uint32_t rootDeviceIndex = 0;
+    OsContext *osContext = nullptr;
 };
 } // namespace NEO

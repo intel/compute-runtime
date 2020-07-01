@@ -254,6 +254,35 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithHostPtr(const Allocat
     return res;
 }
 
+GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) {
+    auto osContextLinux = static_cast<OsContextLinux *>(allocationData.osContext);
+
+    const size_t minAlignment = MemoryConstants::allocationAlignment;
+    size_t alignedSize = alignUp(allocationData.size, minAlignment);
+
+    auto res = alignedMallocWrapper(alignedSize, minAlignment);
+    if (!res)
+        return nullptr;
+
+    BufferObject *bo = allocUserptr(reinterpret_cast<uintptr_t>(res), alignedSize, 0, allocationData.rootDeviceIndex);
+    if (!bo) {
+        alignedFreeWrapper(res);
+        return nullptr;
+    }
+
+    UNRECOVERABLE_IF(allocationData.gpuAddress == 0);
+    bo->gpuAddress = allocationData.gpuAddress;
+
+    if (forcePinEnabled && pinBBs.at(allocationData.rootDeviceIndex) != nullptr && alignedSize >= this->pinThreshold) {
+        pinBBs.at(allocationData.rootDeviceIndex)->pin(&bo, 1, osContextLinux->getContextId());
+    }
+
+    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo, res, bo->gpuAddress, alignedSize, MemoryPool::System4KBPages);
+    allocation->setDriverAllocatedCpuPtr(res);
+
+    return allocation;
+}
+
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) {
     if (allocationData.size == 0 || !allocationData.hostPtr)
         return nullptr;
@@ -760,6 +789,15 @@ uint32_t DrmMemoryManager::getRootDeviceIndex(const Drm *drm) {
         }
     }
     return CommonConstants::unspecifiedDeviceIndex;
+}
+
+AddressRange DrmMemoryManager::reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) {
+    auto gpuVa = acquireGpuRange(size, false, rootDeviceIndex, false);
+    return AddressRange{gpuVa, size};
+}
+
+void DrmMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) {
+    releaseGpuRange(reinterpret_cast<void *>(addressRange.address), addressRange.size, rootDeviceIndex);
 }
 
 } // namespace NEO
