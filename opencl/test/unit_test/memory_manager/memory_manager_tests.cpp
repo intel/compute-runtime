@@ -1835,7 +1835,7 @@ TEST(MemoryManagerTest, givenExecutionEnvrionmentWithCleanedRootDeviceExecutions
 
 TEST(MemoryManagerTest, givenAllocationTypesThatMayNeedL3FlushWhenCallingGetAllocationDataThenFlushL3FlagIsCorrectlySet) {
     AllocationData allocData;
-    AllocationProperties properties(0, 1, GraphicsAllocation::AllocationType::UNKNOWN);
+    AllocationProperties properties(mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::UNKNOWN, mockDeviceBitfield);
     properties.flags.flushL3RequiredForRead = 1;
     properties.flags.flushL3RequiredForWrite = 1;
 

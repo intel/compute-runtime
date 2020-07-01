@@ -11,6 +11,7 @@
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "CL/cl_ext_intel.h"
 #include "gtest/gtest.h"
@@ -279,7 +280,7 @@ TEST_F(MemoryPropertiesHelperTests, givenInvalidFlagsIntelWhenParsingMemoryPrope
 }
 
 TEST_F(MemoryPropertiesHelperTests, givenDifferentParametersWhenCallingFillCachePolicyInPropertiesThenFlushL3FlagsAreCorrectlySet) {
-    AllocationProperties allocationProperties{0, 0, GraphicsAllocation::AllocationType::BUFFER};
+    AllocationProperties allocationProperties{mockRootDeviceIndex, 0, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield};
 
     for (auto uncached : ::testing::Bool()) {
         for (auto readOnly : ::testing::Bool()) {

@@ -238,7 +238,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCa
     MemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pCommandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pCommandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
     ASSERT_NE(nullptr, graphicsAllocation);
 
     EXPECT_TRUE(tbxCsr->isTbxWritable(*graphicsAllocation));
@@ -253,7 +253,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCa
     MemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pCommandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER});
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pCommandStreamReceiver->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
     ASSERT_NE(nullptr, graphicsAllocation);
 
     tbxCsr->setTbxWritable(false, *graphicsAllocation);
