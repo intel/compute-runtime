@@ -16,17 +16,25 @@
 namespace NEO {
 
 template <typename GfxFamily>
-uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitWidth() {
+uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitWidth(const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (DebugManager.flags.LimitBlitterMaxWidth.get() != -1) {
         return static_cast<uint64_t>(DebugManager.flags.LimitBlitterMaxWidth.get());
+    }
+    auto maxBlitWidthOverride = getMaxBlitWidthOverride(rootDeviceEnvironment);
+    if (maxBlitWidthOverride > 0) {
+        return maxBlitWidthOverride;
     }
     return BlitterConstants::maxBlitWidth;
 }
 
 template <typename GfxFamily>
-uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeight() {
+uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (DebugManager.flags.LimitBlitterMaxHeight.get() != -1) {
         return static_cast<uint64_t>(DebugManager.flags.LimitBlitterMaxHeight.get());
+    }
+    auto maxBlitHeightOverride = getMaxBlitHeightOverride(rootDeviceEnvironment);
+    if (maxBlitHeightOverride > 0) {
+        return maxBlitHeightOverride;
     }
     return BlitterConstants::maxBlitHeight;
 }
@@ -60,7 +68,9 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize() {
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(Vec3<size_t> copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket, bool profilingEnabled) {
+size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(Vec3<size_t> copySize, const CsrDependencies &csrDependencies,
+                                                               bool updateTimestampPacket, bool profilingEnabled,
+                                                               const RootDeviceEnvironment &rootDeviceEnvironment) {
     size_t numberOfBlits = 0;
     uint64_t width = 1;
     uint64_t height = 1;
@@ -69,10 +79,10 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(Vec3<size_t> copy
         for (uint64_t row = 0; row < copySize.y; row++) {
             uint64_t sizeToBlit = copySize.x;
             while (sizeToBlit != 0) {
-                if (sizeToBlit > getMaxBlitWidth()) {
+                if (sizeToBlit > getMaxBlitWidth(rootDeviceEnvironment)) {
                     // dispatch 2D blit: maxBlitWidth x (1 .. maxBlitHeight)
-                    width = getMaxBlitWidth();
-                    height = std::min((sizeToBlit / width), getMaxBlitHeight());
+                    width = getMaxBlitWidth(rootDeviceEnvironment);
+                    height = std::min((sizeToBlit / width), getMaxBlitHeight(rootDeviceEnvironment));
 
                 } else {
                     // dispatch 1D blt: (1 .. maxBlitWidth) x 1
@@ -101,13 +111,16 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(Vec3<size_t> copy
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, const HardwareInfo &hwInfo, bool profilingEnabled, bool debugPauseEnabled) {
+size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer,
+                                                               bool profilingEnabled, bool debugPauseEnabled,
+                                                               const RootDeviceEnvironment &rootDeviceEnvironment) {
     size_t size = 0;
     for (auto &blitProperties : blitPropertiesContainer) {
         size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitProperties.copySize, blitProperties.csrDependencies,
-                                                                        blitProperties.outputTimestampPacket != nullptr, profilingEnabled);
+                                                                        blitProperties.outputTimestampPacket != nullptr, profilingEnabled,
+                                                                        rootDeviceEnvironment);
     }
-    size += MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(hwInfo);
+    size += MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(*rootDeviceEnvironment.getHardwareInfo());
     size += EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
 
     if (debugPauseEnabled) {
@@ -145,10 +158,10 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProp
             uint64_t offset = 0;
             uint64_t sizeToBlit = blitProperties.copySize.x;
             while (sizeToBlit != 0) {
-                if (sizeToBlit > getMaxBlitWidth()) {
+                if (sizeToBlit > getMaxBlitWidth(rootDeviceEnvironment)) {
                     // dispatch 2D blit: maxBlitWidth x (1 .. maxBlitHeight)
-                    width = getMaxBlitWidth();
-                    height = std::min((sizeToBlit / width), getMaxBlitHeight());
+                    width = getMaxBlitWidth(rootDeviceEnvironment);
+                    height = std::min((sizeToBlit / width), getMaxBlitHeight(rootDeviceEnvironment));
                 } else {
                     // dispatch 1D blt: (1 .. maxBlitWidth) x 1
                     width = sizeToBlit;
@@ -200,12 +213,12 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
         tmpCmd.setDestinationBaseAddress(ptrOffset(dstAlloc->getGpuAddress(), static_cast<size_t>(offset)));
         uint64_t height = 0;
         uint64_t width = 0;
-        if (sizeToFill <= getMaxBlitWidth()) {
+        if (sizeToFill <= getMaxBlitWidth(rootDeviceEnvironment)) {
             width = sizeToFill;
             height = 1;
         } else {
-            width = getMaxBlitWidth();
-            height = std::min((sizeToFill / width), getMaxBlitHeight());
+            width = getMaxBlitWidth(rootDeviceEnvironment);
+            height = std::min((sizeToFill / width), getMaxBlitHeight(rootDeviceEnvironment));
             if (height > 1) {
                 appendTilingEnable(tmpCmd);
             }

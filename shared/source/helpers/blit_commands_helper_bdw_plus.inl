@@ -10,6 +10,16 @@
 namespace NEO {
 
 template <typename GfxFamily>
+uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitWidthOverride(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    return 0;
+}
+
+template <typename GfxFamily>
+uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    return 0;
+}
+
+template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendBlitCommandsForBuffer(const BlitProperties &blitProperties, typename GfxFamily::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
 template <typename GfxFamily>

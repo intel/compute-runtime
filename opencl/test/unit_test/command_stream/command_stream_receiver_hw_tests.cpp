@@ -381,8 +381,10 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredComman
     auto expectedAlignedSize = cmdsSizePerBlit * alignedNumberOfBlts;
     auto expectedNotAlignedSize = cmdsSizePerBlit * notAlignedNumberOfBlts;
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({alignedBltSize, 1, 1}, csrDependencies, false, false);
-    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({notAlignedBltSize, 1, 1}, csrDependencies, false, false);
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        {alignedBltSize, 1, 1}, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
+    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        {notAlignedBltSize, 1, 1}, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
@@ -405,7 +407,8 @@ HWTEST_F(BcsTests, givenDebugCapabilityWhenEstimatingCommandSizeThenAddAllRequir
     BlitPropertiesContainer blitPropertiesContainer;
     blitPropertiesContainer.push_back(blitProperties);
 
-    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(blitPropertiesContainer, pDevice->getHardwareInfo(), false, true);
+    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        blitPropertiesContainer, false, true, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedSize, estimatedSize);
 }
@@ -421,8 +424,10 @@ HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeForReadBufferRectThenAdd
     auto expectedAlignedSize = cmdsSizePerBlit * alignedNumberOfBlts;
     auto expectedNotAlignedSize = cmdsSizePerBlit * notAlignedNumberOfBlts;
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(alignedBltSize, csrDependencies, false, false);
-    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(notAlignedBltSize, csrDependencies, false, false);
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        alignedBltSize, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
+    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        notAlignedBltSize, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
@@ -462,7 +467,8 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeThenCa
 
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(blitPropertiesContainer, pDevice->getHardwareInfo(), false, false);
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        blitPropertiesContainer, false, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
@@ -490,7 +496,8 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenExstimatingCommandsSizeForWri
 
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
 
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(blitPropertiesContainer, pDevice->getHardwareInfo(), false, false);
+    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        blitPropertiesContainer, false, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
@@ -501,8 +508,10 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     auto expectedSizeWithTimestampPacketWrite = expectedBaseSize + EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
     auto expectedSizeWithoutTimestampPacketWrite = expectedBaseSize;
 
-    auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({1, 1, 1}, csrDependencies, true, false);
-    auto estimatedSizeWithoutTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({1, 1, 1}, csrDependencies, false, false);
+    auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        {1, 1, 1}, csrDependencies, true, false, pClDevice->getRootDeviceEnvironment());
+    auto estimatedSizeWithoutTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        {1, 1, 1}, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedSizeWithTimestampPacketWrite, estimatedSizeWithTimestampPacketWrite);
     EXPECT_EQ(expectedSizeWithoutTimestampPacketWrite, estimatedSizeWithoutTimestampPacketWrite);
@@ -522,7 +531,8 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
     size_t expectedSize = (cmdsSizePerBlit * numberOfBlts) +
                           TimestampPacketHelper::getRequiredCmdStreamSize<FamilyType>(csrDependencies);
 
-    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize({1, 1, 1}, csrDependencies, false, false);
+    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        {1, 1, 1}, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedSize, estimatedSize);
 }

@@ -874,7 +874,8 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
 
     bool pauseOnBlitCopyAllowed = (DebugManager.flags.PauseOnBlitCopy.get() == static_cast<int32_t>(taskCount));
 
-    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, peekHwInfo(), profilingEnabled, pauseOnBlitCopyAllowed));
+    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, profilingEnabled, pauseOnBlitCopyAllowed,
+                                                                                        *this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]));
     auto commandStreamStart = commandStream.getUsed();
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;

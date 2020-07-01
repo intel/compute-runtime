@@ -80,14 +80,14 @@ using BlitTests = Test<ClDeviceFixture>;
 HWTEST_F(BlitTests, givenDebugVariablesWhenGettingMaxBlitSizeThenHonorUseProvidedValues) {
     DebugManagerStateRestore restore{};
 
-    ASSERT_EQ(BlitterConstants::maxBlitWidth, BlitCommandsHelper<FamilyType>::getMaxBlitWidth());
-    ASSERT_EQ(BlitterConstants::maxBlitHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeight());
+    ASSERT_EQ(BlitterConstants::maxBlitWidth, BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pClDevice->getRootDeviceEnvironment()));
+    ASSERT_EQ(BlitterConstants::maxBlitHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pClDevice->getRootDeviceEnvironment()));
 
     DebugManager.flags.LimitBlitterMaxWidth.set(50);
-    EXPECT_EQ(50u, BlitCommandsHelper<FamilyType>::getMaxBlitWidth());
+    EXPECT_EQ(50u, BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pClDevice->getRootDeviceEnvironment()));
 
     DebugManager.flags.LimitBlitterMaxHeight.set(60);
-    EXPECT_EQ(60u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight());
+    EXPECT_EQ(60u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pClDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenReturnCorrectResult) {

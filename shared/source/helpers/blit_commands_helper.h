@@ -80,12 +80,16 @@ struct BlitProperties {
 template <typename GfxFamily>
 struct BlitCommandsHelper {
     using COLOR_DEPTH = typename GfxFamily::XY_COLOR_BLT::COLOR_DEPTH;
-    static uint64_t getMaxBlitWidth();
-    static uint64_t getMaxBlitHeight();
+    static uint64_t getMaxBlitWidth(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static uint64_t getMaxBlitWidthOverride(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static uint64_t getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static uint64_t getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment);
     static void dispatchPostBlitCommand(LinearStream &linearStream);
     static size_t estimatePostBlitCommandSize();
-    static size_t estimateBlitCommandsSize(Vec3<size_t> copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket, bool profilingEnabled);
-    static size_t estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, const HardwareInfo &hwInfo, bool profilingEnabled, bool debugPauseEnabled);
+    static size_t estimateBlitCommandsSize(Vec3<size_t> copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket,
+                                           bool profilingEnabled, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer, bool profilingEnabled,
+                                           bool debugPauseEnabled, const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint64_t calculateBlitCommandDestinationBaseAddress(const BlitProperties &blitProperties, uint64_t offset, uint64_t row, uint64_t slice);
     static uint64_t calculateBlitCommandSourceBaseAddress(const BlitProperties &blitProperties, uint64_t offset, uint64_t row, uint64_t slice);
     static void dispatchBlitCommandsForBuffer(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment);
