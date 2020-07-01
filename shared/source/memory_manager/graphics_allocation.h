@@ -233,6 +233,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     uint32_t getUsedPageSize() const;
 
+    bool isAllocatedInLocalMemoryPool() const { return (this->memoryPool == MemoryPool::LocalMemory); }
+
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
 

@@ -81,7 +81,7 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL void *lockResourceInLocalMemoryImpl(BufferObject *bo);
     MOCKABLE_VIRTUAL void unlockResourceInLocalMemoryImpl(BufferObject *bo);
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
-    DrmAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData) override;
+    DrmAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
 
     Drm &getDrm(uint32_t rootDeviceIndex) const;

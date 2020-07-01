@@ -401,7 +401,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     }
     if (useInternal32BitAllocator(allocationData.type) ||
         (force32bitAllocations && allocationData.flags.allow32Bit && is64bit)) {
-        return allocate32BitGraphicsMemoryImpl(allocationData);
+        return allocate32BitGraphicsMemoryImpl(allocationData, false);
     }
     if (allocationData.hostPtr) {
         return allocateGraphicsMemoryWithHostPtr(allocationData);
@@ -480,10 +480,10 @@ void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
 HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM) {
     if (allocation) {
         if (useInternal32BitAllocator(allocation->getAllocationType())) {
-            return HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY;
+            return selectInternalHeap(allocation->isAllocatedInLocalMemoryPool());
         }
         if (allocation->is32BitAllocation()) {
-            return HeapIndex::HEAP_EXTERNAL;
+            return selectExternalHeap(allocation->isAllocatedInLocalMemoryPool());
         }
     }
     if (isFullRangeSVM) {

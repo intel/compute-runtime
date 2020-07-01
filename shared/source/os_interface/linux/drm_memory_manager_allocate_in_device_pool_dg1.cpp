@@ -170,7 +170,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         allocation->setCpuPtrAndGpuAddress(cpuAddress, gpuAddress);
     }
     if (useInternal32BitAllocator(allocationData.type)) {
-        allocation->setGpuBaseAddress(GmmHelper::canonize(getInternalHeapBaseAddress(allocationData.rootDeviceIndex)));
+        allocation->setGpuBaseAddress(GmmHelper::canonize(getInternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));
     }
 
     status = AllocationStatus::Success;
