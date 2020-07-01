@@ -13,6 +13,7 @@
 namespace L0 {
 
 class SysfsAccess;
+class PlatformMonitoringTech;
 class LinuxPowerImp : public OsPower, public NEO::NonCopyableClass {
   public:
     ze_result_t getEnergyCounter(uint64_t &energy) override;
@@ -25,5 +26,6 @@ class LinuxPowerImp : public OsPower, public NEO::NonCopyableClass {
 
   protected:
     SysfsAccess *pSysfsAccess = nullptr;
+    PlatformMonitoringTech *pPmt = nullptr;
 };
 } // namespace L0

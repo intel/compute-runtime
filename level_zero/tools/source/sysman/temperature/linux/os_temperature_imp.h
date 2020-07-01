@@ -10,10 +10,10 @@
 
 #include "level_zero/tools/source/sysman/temperature/os_temperature.h"
 
-#include "sysman/linux/os_sysman_imp.h"
-
 namespace L0 {
 
+class SysfsAccess;
+class PlatformMonitoringTech;
 class LinuxTemperatureImp : public OsTemperature, public NEO::NonCopyableClass {
   public:
     ze_result_t getSensorTemperature(double *pTemperature) override;
@@ -25,6 +25,7 @@ class LinuxTemperatureImp : public OsTemperature, public NEO::NonCopyableClass {
 
   protected:
     SysfsAccess *pSysfsAccess = nullptr;
+    PlatformMonitoringTech *pPmt = nullptr;
     zet_temp_sensors_t type;
 };
 } // namespace L0

@@ -11,6 +11,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/linux/pmt.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 namespace L0 {
@@ -26,6 +27,7 @@ class LinuxSysmanImp : public OsSysman, public NEO::NonCopyableClass {
     ProcfsAccess &getProcfsAccess();
     SysfsAccess &getSysfsAccess();
     NEO::Drm &getDrm();
+    PlatformMonitoringTech &getPlatformMonitoringTechAccess();
 
   private:
     LinuxSysmanImp() = delete;
@@ -34,6 +36,7 @@ class LinuxSysmanImp : public OsSysman, public NEO::NonCopyableClass {
     ProcfsAccess *pProcfsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
     NEO::Drm *pDrm = nullptr;
+    PlatformMonitoringTech *pPmt = nullptr;
 };
 
 } // namespace L0

@@ -31,6 +31,10 @@ ze_result_t LinuxSysmanImp::init() {
     pSysfsAccess = SysfsAccess::create(myDeviceName);
     UNRECOVERABLE_IF(nullptr == pSysfsAccess);
 
+    pPmt = new PlatformMonitoringTech();
+    UNRECOVERABLE_IF(nullptr == pPmt);
+    pPmt->init(myDeviceName, pFsAccess);
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -54,6 +58,11 @@ NEO::Drm &LinuxSysmanImp::getDrm() {
     return *pDrm;
 }
 
+PlatformMonitoringTech &LinuxSysmanImp::getPlatformMonitoringTechAccess() {
+    UNRECOVERABLE_IF(nullptr == pPmt);
+    return *pPmt;
+}
+
 LinuxSysmanImp::LinuxSysmanImp(SysmanImp *pParentSysmanImp) {
     this->pParentSysmanImp = pParentSysmanImp;
 }
@@ -70,6 +79,10 @@ LinuxSysmanImp::~LinuxSysmanImp() {
     if (nullptr != pFsAccess) {
         delete pFsAccess;
         pFsAccess = nullptr;
+    }
+    if (nullptr != pPmt) {
+        delete pPmt;
+        pPmt = nullptr;
     }
 }
 
