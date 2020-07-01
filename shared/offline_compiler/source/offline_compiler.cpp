@@ -278,7 +278,7 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
 
     if (options.empty()) {
         // try to read options from file if not provided by commandline
-        size_t ext_start = inputFile.find(".cl");
+        size_t ext_start = inputFile.find_last_of(".");
         if (ext_start != std::string::npos) {
             std::string oclocOptionsFileName = inputFile.substr(0, ext_start);
             oclocOptionsFileName.append("_ocloc_options.txt");

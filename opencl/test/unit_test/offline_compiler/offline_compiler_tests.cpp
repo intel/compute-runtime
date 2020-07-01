@@ -1135,4 +1135,25 @@ TEST(OfflineCompilerTest, givenCompilerWhenBuildSourceCodeFailsThenGenerateElfBi
     EXPECT_EQ(1u, compiler.writeOutAllFilesCalled);
 }
 
+TEST(OfflineCompilerTest, givenDeviceSpecificKernelFileWhenCompilerIsInitializedThenOptionsAreReadFromFile) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+    const char *kernelFileName = "test_files/kernel_for_specific_device.skl";
+    const char *optionsFileName = "test_files/kernel_for_specific_device_options.txt";
+
+    ASSERT_TRUE(fileExists(kernelFileName));
+    ASSERT_TRUE(fileExists(optionsFileName));
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        kernelFileName,
+        "-device",
+        "skl"};
+
+    int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
+    EXPECT_EQ(SUCCESS, retVal);
+    EXPECT_STREQ("-cl-opt-disable", mockOfflineCompiler->options.c_str());
+}
 } // namespace NEO
