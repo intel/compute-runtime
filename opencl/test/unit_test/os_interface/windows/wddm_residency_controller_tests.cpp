@@ -276,7 +276,7 @@ TEST_F(WddmResidencyControllerTest, givenUnusedAllocationWhenCallingRemoveFromTr
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContextId));
 }
 
-TEST_F(WddmResidencyControllerTest, addToTrimCandidateListPlacesAllocationInContainerAndAssignsPosition) {
+TEST_F(WddmResidencyControllerTest, WhenAddingToTrimCandidateListThenAllocationIsPlacedInContainerAndAssignedPosition) {
     MockWddmAllocation allocation;
     residencyController->addToTrimCandidateList(&allocation);
 
@@ -289,7 +289,7 @@ TEST_F(WddmResidencyControllerTest, addToTrimCandidateListPlacesAllocationInCont
     EXPECT_EQ(&allocation, residencyController->trimCandidateList[position]);
 }
 
-TEST_F(WddmResidencyControllerTest, addToTrimCandidateListDoesNotInsertAllocationAlreadyOnTheList) {
+TEST_F(WddmResidencyControllerTest, WhenAddingToTrimCandidateListThenDoNotInsertAllocationAlreadyOnTheList) {
     MockWddmAllocation allocation;
 
     residencyController->trimCandidateList.resize(0);
@@ -310,7 +310,7 @@ TEST_F(WddmResidencyControllerTest, addToTrimCandidateListDoesNotInsertAllocatio
     EXPECT_EQ(position, allocation.getTrimCandidateListPosition(osContextId));
 }
 
-TEST_F(WddmResidencyControllerTest, removeFromTrimCandidateListAssignsUnusedPosition) {
+TEST_F(WddmResidencyControllerTest, WhenRemovingFromTrimCandidateListThenUnusedPositionIsAssigned) {
     MockWddmAllocation allocation;
 
     residencyController->addToTrimCandidateList(&allocation);
@@ -319,7 +319,7 @@ TEST_F(WddmResidencyControllerTest, removeFromTrimCandidateListAssignsUnusedPosi
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(osContextId));
 }
 
-TEST_F(WddmResidencyControllerTest, removeFromTrimCandidateListRemovesAllocationInAssignedPosition) {
+TEST_F(WddmResidencyControllerTest, WhenRemovingFromTrimCandidateListThenAllocationInAssignedPositionIsRemoved) {
     MockWddmAllocation allocation;
 
     residencyController->addToTrimCandidateList(&allocation);
@@ -332,7 +332,7 @@ TEST_F(WddmResidencyControllerTest, removeFromTrimCandidateListRemovesAllocation
     }
 }
 
-TEST_F(WddmResidencyControllerTest, removeFromTrimCandidateListRemovesLastAllocation) {
+TEST_F(WddmResidencyControllerTest, GivenOneAllocationWhenRemovingFromTrimCandidateListThenTrimCandidateListIsEmpty) {
     MockWddmAllocation allocation;
 
     residencyController->trimCandidateList.resize(0);
@@ -344,7 +344,7 @@ TEST_F(WddmResidencyControllerTest, removeFromTrimCandidateListRemovesLastAlloca
     EXPECT_EQ(0u, residencyController->trimCandidateList.size());
 }
 
-TEST_F(WddmResidencyControllerTest, removeFromTrimCandidateListRemovesLastAllocationAndAllPreviousEmptyEntries) {
+TEST_F(WddmResidencyControllerTest, WhenRemovingFromTrimCandidateListThenLastAllocationAndAllPreviousEmptyEntriesAreRemoved) {
     MockWddmAllocation allocation1, allocation2;
 
     residencyController->trimCandidateList.resize(0);
@@ -364,7 +364,7 @@ TEST_F(WddmResidencyControllerTest, removeFromTrimCandidateListRemovesLastAlloca
     EXPECT_EQ(1u, residencyController->trimCandidateList.size());
 }
 
-TEST_F(WddmResidencyControllerTest, successiveAddingToTrimCandidateListAssignsNewPositions) {
+TEST_F(WddmResidencyControllerTest, WhenAddingToTrimCandidateListThenSuccessivePositionIsAssigned) {
     MockWddmAllocation allocation1, allocation2, allocation3;
 
     residencyController->addToTrimCandidateList(&allocation1);
@@ -391,7 +391,7 @@ TEST_F(WddmResidencyControllerTest, DISABLED_removingNotLastAllocationFromTrimCa
     EXPECT_NE(allocation2.getTrimCandidateListPosition(osContextId), allocation3.getTrimCandidateListPosition(osContextId));
 }
 
-TEST_F(WddmResidencyControllerTest, removingNotLastAllocationFromTrimCandidateListPutsNullEntry) {
+TEST_F(WddmResidencyControllerTest, GivenAllocationThatIsNotLastWhenRemovingFromTrimCandidateListThenReplaceWithNullEntry) {
     MockWddmAllocation allocation1, allocation2, allocation3;
 
     residencyController->addToTrimCandidateList(&allocation1);
@@ -407,7 +407,7 @@ TEST_F(WddmResidencyControllerTest, removingNotLastAllocationFromTrimCandidateLi
     EXPECT_EQ(nullptr, residencyController->trimCandidateList[position2]);
 }
 
-TEST_F(WddmResidencyControllerTest, compactTrimCandidateListRemovesInitialNullEntriesAndUpdatesPositions) {
+TEST_F(WddmResidencyControllerTest, WhenCompactingTrimCandidateListThenInitialNullEntriesAreRemovedAndPositionsAreUpdated) {
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
 
     residencyController->addToTrimCandidateList(&allocation1);
@@ -434,7 +434,7 @@ TEST_F(WddmResidencyControllerTest, compactTrimCandidateListRemovesInitialNullEn
     EXPECT_EQ(1u, allocation4.getTrimCandidateListPosition(osContextId));
 }
 
-TEST_F(WddmResidencyControllerTest, compactTrimCandidateListWithNonNullEntries) {
+TEST_F(WddmResidencyControllerTest, WhenCompactingTrimCandidateListThenNonNullEntriesAreNotRemoved) {
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
 
     residencyController->addToTrimCandidateList(&allocation1);
@@ -449,7 +449,7 @@ TEST_F(WddmResidencyControllerTest, compactTrimCandidateListWithNonNullEntries) 
     EXPECT_EQ(4u, residencyController->trimCandidateList.size());
 }
 
-TEST_F(WddmResidencyControllerTest, checkTrimCandidateListCompaction) {
+TEST_F(WddmResidencyControllerTest, GivenListSizeLessThenDoubleCandidateCountWhenCheckingTrimCandidateListCompactionThenCompactionIsRequired) {
     bool comapactionRequired;
 
     residencyController->trimCandidatesCount = 10;
@@ -613,13 +613,13 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenRestartPeriodicTrimWhenTrimCallb
     EXPECT_EQ(20u, residencyController->lastTrimFenceValue);
 }
 
-TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetWithZeroSizeReturnsTrue) {
+TEST_F(WddmResidencyControllerWithGdiTest, GivenZeroWhenTrimmingToBudgetThenTrueIsReturned) {
     bool status = residencyController->trimResidencyToBudget(0);
 
     EXPECT_TRUE(status);
 }
 
-TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetAllDoneAllocations) {
+TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenAllDoneAllocationsAreTrimmed) {
     gdi->setNonZeroNumBytesToTrimInEvict();
 
     MockWddmAllocation allocation1, allocation2, allocation3;
@@ -656,7 +656,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetAllDoneAllocations) {
     EXPECT_NE(trimListUnusedPosition, allocation3.getTrimCandidateListPosition(osContextId));
 }
 
-TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetReturnsFalseWhenNumBytesToTrimIsNotZero) {
+TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsNotZeroWhenTrimmingToBudgetThenFalseIsReturned) {
     gdi->setNonZeroNumBytesToTrimInEvict();
 
     MockWddmAllocation allocation1;
@@ -679,7 +679,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetReturnsFalseWhenNumBytesT
     EXPECT_FALSE(status);
 }
 
-TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetStopsEvictingWhenNumBytesToTrimIsZero) {
+TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsZeroWhenTrimmingToBudgetThenEvictingStops) {
     WddmAllocation allocation1(0, GraphicsAllocation::AllocationType::UNKNOWN, reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull);
     WddmAllocation allocation2(0, GraphicsAllocation::AllocationType::UNKNOWN, reinterpret_cast<void *>(0x1000), 0x3000, nullptr, MemoryPool::MemoryNull);
     WddmAllocation allocation3(0, GraphicsAllocation::AllocationType::UNKNOWN, reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull);
@@ -714,7 +714,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetStopsEvictingWhenNumBytes
     EXPECT_NE(trimListUnusedPosition, allocation3.getTrimCandidateListPosition(osContextId));
 }
 
-TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetMarksEvictedAllocationNonResident) {
+TEST_F(WddmResidencyControllerWithGdiTest, WhenTrimmingToBudgetThenEvictedAllocationIsMarkedNonResident) {
     gdi->setNonZeroNumBytesToTrimInEvict();
 
     MockWddmAllocation allocation1, allocation2, allocation3;
@@ -745,7 +745,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetMarksEvictedAllocationNon
     EXPECT_TRUE(allocation3.getResidencyData().resident[osContextId]);
 }
 
-TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetWaitsFromCpuWhenLastFenceIsGreaterThanMonitored) {
+TEST_F(WddmResidencyControllerWithGdiTest, GivenLastFenceIsGreaterThanMonitoredWhenTrimmingToBudgetThenWaitForCpu) {
     gdi->setNonZeroNumBytesToTrimInEvict();
 
     MockWddmAllocation allocation1;
@@ -772,7 +772,7 @@ TEST_F(WddmResidencyControllerWithGdiTest, trimToBudgetWaitsFromCpuWhenLastFence
     EXPECT_EQ(wddm->getDevice(), gdi->getWaitFromCpuArg().hDevice);
 }
 
-TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, trimToBudgetEvictsDoneFragmentsOnly) {
+TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenTrimmingToBudgetThenOnlyDoneFragmentsAreEvicted) {
     gdi->setNonZeroNumBytesToTrimInEvict();
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
     WddmAllocation allocation1(0, GraphicsAllocation::AllocationType::UNKNOWN, ptr, 0x1000, nullptr, MemoryPool::MemoryNull);
@@ -895,7 +895,7 @@ TEST_F(WddmResidencyControllerLockTest, givenPeriodicTrimAndTrimToBudgetWhenTrim
     EXPECT_EQ(2, residencyController->acquireLockCallCount);
 }
 
-TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidencyAllocationsMarksAllocationsResident) {
+TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenMakingResidentResidencyAllocationsThenAllAllocationsAreMarked) {
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
     ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
 
@@ -907,7 +907,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidency
     EXPECT_TRUE(allocation4.getResidencyData().resident[osContextId]);
 }
 
-TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidencyAllocationsUpdatesLastFence) {
+TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenMakingResidentResidencyAllocationsThenLastFenceIsUpdated) {
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
     ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
 
@@ -921,7 +921,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidency
     EXPECT_EQ(20u, allocation4.getResidencyData().getFenceValueForContextId(osContext->getContextId()));
 }
 
-TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidencyAllocationsMarksTripleAllocationsResident) {
+TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, GivenTripleAllocationsWhenMakingResidentResidencyAllocationsThenAllAllocationsAreMarkedResident) {
     MockWddmAllocation allocation1, allocation2;
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1500);
 
@@ -939,7 +939,7 @@ TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidency
     memoryManager->freeGraphicsMemory(allocationTriple);
 }
 
-TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, makeResidentResidencyAllocationsSetsLastFencePLusOneForTripleAllocations) {
+TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, GivenTripleAllocationsWhenMakingResidentResidencyAllocationsThenLastFencePlusOneIsSet) {
     MockWddmAllocation allocation1, allocation2;
 
     WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), false, 2 * MemoryConstants::pageSize}, reinterpret_cast<void *>(0x1500)));
