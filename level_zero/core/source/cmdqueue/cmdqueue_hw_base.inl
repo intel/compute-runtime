@@ -53,7 +53,7 @@ void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba
                                                                     gsba,
                                                                     true,
                                                                     (device->getMOCS(true, false) >> 1),
-                                                                    neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), false),
+                                                                    neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), true),
                                                                     true,
                                                                     neoDevice->getGmmHelper(),
                                                                     false);

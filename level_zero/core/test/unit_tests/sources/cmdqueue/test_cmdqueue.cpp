@@ -169,7 +169,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
     uint32_t alignedSize = 4096u;
     NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
 
-    EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
+    EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, true))
         .Times(1);
 
     commandQueue->programGeneralStateBaseAddress(0u, child);
