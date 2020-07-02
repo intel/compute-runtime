@@ -375,10 +375,10 @@ cl_int Kernel::initialize() {
             }
         }
 
-        auxTranslationRequired &= hwHelper.requiresAuxResolves();
-
-        if (DebugManager.flags.DisableAuxTranslation.get()) {
-            auxTranslationRequired = false;
+        if (DebugManager.flags.ForceAuxTranslationEnabled.get() != -1) {
+            auxTranslationRequired &= !!DebugManager.flags.ForceAuxTranslationEnabled.get();
+        } else {
+            auxTranslationRequired &= hwHelper.requiresAuxResolves();
         }
 
         if (usingImages && !usingBuffers) {

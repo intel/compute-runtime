@@ -2707,7 +2707,7 @@ TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
 
 TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonStatefulAccessThenMarkKernelForAuxTranslation) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.DisableAuxTranslation.set(false);
+    DebugManager.flags.ForceAuxTranslationEnabled.set(1);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &capabilityTable = hwInfo->capabilityTable;
@@ -2730,14 +2730,13 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
 
     capabilityTable.ftrRenderCompressedBuffers = true;
     kernel.mockKernel->initialize();
+    EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
 
-    if (HwHelper::get(hwInfo->platform.eRenderCoreFamily).requiresAuxResolves()) {
-        EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
-    } else {
-        EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
-    }
+    DebugManager.flags.ForceAuxTranslationEnabled.set(-1);
+    kernel.mockKernel->initialize();
+    EXPECT_EQ(HwHelper::get(hwInfo->platform.eRenderCoreFamily).requiresAuxResolves(), kernel.mockKernel->isAuxTranslationRequired());
 
-    DebugManager.flags.DisableAuxTranslation.set(true);
+    DebugManager.flags.ForceAuxTranslationEnabled.set(0);
     kernel.mockKernel->initialize();
     EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
 }
