@@ -17,6 +17,7 @@ const char *libvaDllName = "libva.so.2";
 
 const char *sysFsPciPathPrefix = "/sys/bus/pci/devices/0000:";
 const char *pciDevicesDirectory = "/dev/dri/by-path";
+const char *sysFsProcPathPrefix = "/proc";
 const char *tbxLibName = "libtbxAccess.so";
 
 // Metrics Library name

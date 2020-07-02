@@ -13,4 +13,6 @@ namespace Os {
 // Pci Path
 extern const char *sysFsPciPathPrefix;
 extern const char *pciDevicesDirectory;
+// Proc Path
+extern const char *sysFsProcPathPrefix;
 } // namespace Os

@@ -15,6 +15,8 @@ class OSMemoryWindows : public OSMemory {
   public:
     OSMemoryWindows() = default;
 
+    void getMemoryMaps(MemoryMaps &memoryMaps) override {}
+
   protected:
     void *osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve) override;
     void osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) override;

@@ -7,6 +7,10 @@
 
 #include "shared/source/os_interface/linux/os_memory_linux.h"
 
+#include "shared/source/os_interface/linux/os_inc.h"
+
+#include <fstream>
+
 namespace NEO {
 
 std::unique_ptr<OSMemory> OSMemory::create() {
@@ -27,6 +31,31 @@ void *OSMemoryLinux::mmapWrapper(void *addr, size_t size, int prot, int flags, i
 
 int OSMemoryLinux::munmapWrapper(void *addr, size_t size) {
     return munmap(addr, size);
+}
+
+void OSMemoryLinux::getMemoryMaps(MemoryMaps &memoryMaps) {
+
+    /*
+     ============ ===============================================================
+
+     The /proc/PID/maps file contains the currently mapped memory regions and
+     their access permissions.
+
+     The format is::
+
+     address           perms offset  dev   inode      pathname
+
+     08048000-08049000 r-xp 00000000 03:00 8312       /opt/test
+
+    */
+
+    std::ifstream ifs(std::string(Os::sysFsProcPathPrefix) + "/self/maps");
+    std::string line;
+    while (std::getline(ifs, line)) {
+        uint64_t start = 0, end = 0;
+        sscanf(line.c_str(), "%lx-%lx", &start, &end);
+        memoryMaps.push_back({start, end});
+    }
 }
 
 } // namespace NEO
