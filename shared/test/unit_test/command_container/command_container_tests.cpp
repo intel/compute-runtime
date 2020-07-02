@@ -115,7 +115,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
         EXPECT_EQ(indirectHeap->getGraphicsAllocation(), heapAllocation);
     }
     EXPECT_EQ(cmdContainer.getInstructionHeapBaseAddress(),
-              pDevice->getMemoryManager()->getInternalHeapBaseAddress(0, true));
+              pDevice->getMemoryManager()->getInternalHeapBaseAddress(0, cmdContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->isAllocatedInLocalMemoryPool()));
 }
 
 TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeWithoutDeviceThenReturnedFalse) {
@@ -446,14 +446,14 @@ TEST_F(CommandContainerHeaps, givenCommandContainerForDifferentRootDevicesThenIn
 
     CommandContainer cmdContainer0;
     cmdContainer0.initialize(device0.get());
-
-    uint64_t baseAddressHeapDevice0 = device0.get()->getMemoryManager()->getInternalHeapBaseAddress(device0->getRootDeviceIndex(), true);
+    bool useLocalMemory0 = cmdContainer0.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->isAllocatedInLocalMemoryPool();
+    uint64_t baseAddressHeapDevice0 = device0.get()->getMemoryManager()->getInternalHeapBaseAddress(device0->getRootDeviceIndex(), useLocalMemory0);
     EXPECT_EQ(cmdContainer0.getInstructionHeapBaseAddress(), baseAddressHeapDevice0);
 
     CommandContainer cmdContainer1;
     cmdContainer1.initialize(device1.get());
-
-    uint64_t baseAddressHeapDevice1 = device1.get()->getMemoryManager()->getInternalHeapBaseAddress(device1->getRootDeviceIndex(), true);
+    bool useLocalMemory1 = cmdContainer0.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->isAllocatedInLocalMemoryPool();
+    uint64_t baseAddressHeapDevice1 = device1.get()->getMemoryManager()->getInternalHeapBaseAddress(device1->getRootDeviceIndex(), useLocalMemory1);
     EXPECT_EQ(cmdContainer1.getInstructionHeapBaseAddress(), baseAddressHeapDevice1);
 }
 

@@ -210,7 +210,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             programFrontEnd(scratchSpaceController->getScratchPatchAddress(), child);
         }
         if (gsbaStateDirty) {
-            programGeneralStateBaseAddress(scratchSpaceController->calculateNewGSH(), child);
+            auto indirectHeap = CommandList::fromHandle(phCommandLists[0])->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+            programGeneralStateBaseAddress(scratchSpaceController->calculateNewGSH(), indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(), child);
         }
 
         if (commandQueuePreemptionMode == NEO::PreemptionMode::Initial) {

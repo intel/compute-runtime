@@ -82,7 +82,7 @@ bool CommandContainer::initialize(Device *device) {
         indirectHeaps[i] = std::make_unique<IndirectHeap>(allocationIndirectHeaps[i], requireInternalHeap);
     }
 
-    instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), true);
+    instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), allocationIndirectHeaps[IndirectHeap::Type::INDIRECT_OBJECT]->isAllocatedInLocalMemoryPool());
 
     iddBlock = nullptr;
     nextIddInBlock = this->getNumIddPerBlock();

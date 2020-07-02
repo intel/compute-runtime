@@ -172,7 +172,12 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
     EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, true))
         .Times(1);
 
-    commandQueue->programGeneralStateBaseAddress(0u, child);
+    commandQueue->programGeneralStateBaseAddress(0u, true, child);
+
+    EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
+        .Times(1);
+
+    commandQueue->programGeneralStateBaseAddress(0u, false, child);
 
     commandQueue->destroy();
 }

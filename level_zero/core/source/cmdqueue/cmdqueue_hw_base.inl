@@ -29,7 +29,7 @@
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba, NEO::LinearStream &commandStream) {
+void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
@@ -53,7 +53,7 @@ void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba
                                                                     gsba,
                                                                     true,
                                                                     (device->getMOCS(true, false) >> 1),
-                                                                    neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), true),
+                                                                    neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), useLocalMemoryForIndirectHeap),
                                                                     true,
                                                                     neoDevice->getGmmHelper(),
                                                                     false);
