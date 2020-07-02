@@ -279,7 +279,7 @@ class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamil
                                            ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                            size_t srcRowPitch, size_t srcSlicePitch,
                                            size_t dstRowPitch, size_t dstSlicePitch,
-                                           size_t srcSize, size_t dstSize, ze_event_handle_t hSignalEvent) override {
+                                           Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent) override {
         appendMemoryCopyBlitRegionCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -1183,6 +1183,159 @@ HWTEST2_F(CommandListCreate, givenHostAllocInMapWhenPtrLowerThanAnyInMapThenNull
     EXPECT_EQ(newAlloc, nullptr);
     commandList->hostPtrMap.clear();
 }
+using BlitBlockCopyPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSizeThenOneBlitCommandHasBeenSpown, BlitBlockCopyPlatforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
 
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, true);
+    uint32_t offsetX = 0x10;
+    uint32_t offsetY = 0x10;
+    Vec3<size_t> copySize = {0x100, 0x10, 1};
+    ze_copy_region_t srcRegion = {offsetX, offsetY, 0, static_cast<uint32_t>(copySize.x), static_cast<uint32_t>(copySize.y), static_cast<uint32_t>(copySize.z)};
+    ze_copy_region_t dstRegion = srcRegion;
+    Vec3<uint32_t> srcSize = {0x1000, 0x100, 1};
+    Vec3<uint32_t> dstSize = {0x100, 0x100, 1};
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    size_t rowPitch = copySize.x;
+    size_t slicePitch = copySize.x * copySize.y;
+    commandList->appendMemoryCopyBlitRegion(&mockAllocationDst, &mockAllocationSrc, srcRegion, dstRegion, copySize, rowPitch, slicePitch, rowPitch, slicePitch, srcSize, dstSize, nullptr);
+    GenCmdList cmdList;
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor++;
+    EXPECT_EQ(cmdList.end(), itor);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionWithinMaxBlitSizeThenOffsetAndSizeAreInPixels, BlitBlockCopyPlatforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, true);
+    uint32_t offsetX = 0x10;
+    uint32_t offsetY = 0x10;
+    Vec3<size_t> copySize = {0x100, 0x10, 1};
+    ze_copy_region_t srcRegion = {offsetX, offsetY, 0, static_cast<uint32_t>(copySize.x), static_cast<uint32_t>(copySize.y), static_cast<uint32_t>(copySize.z)};
+    ze_copy_region_t dstRegion = srcRegion;
+    Vec3<uint32_t> srcSize = {0x1000, 0x100, 1};
+    Vec3<uint32_t> dstSize = {0x100, 0x100, 1};
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    size_t rowPitch = copySize.x;
+    size_t slicePitch = copySize.x * copySize.y;
+    commandList->appendMemoryCopyBlitRegion(&mockAllocationDst, &mockAllocationSrc, srcRegion, dstRegion, copySize, rowPitch, slicePitch, rowPitch, slicePitch, srcSize, dstSize, nullptr);
+    uint32_t bytesPerPixel = NEO::BlitCommandsHelper<FamilyType>::getAvailableBytesPerPixel(copySize.x, srcRegion.originX, dstRegion.originY, srcSize.x, dstSize.x);
+    GenCmdList cmdList;
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    auto cmd = genCmdCast<XY_COPY_BLT *>(*itor);
+    EXPECT_EQ(cmd->getDestinationX1CoordinateLeft(), offsetX / bytesPerPixel);
+    EXPECT_EQ(cmd->getTransferWidth(), (offsetX + static_cast<uint32_t>(copySize.x)) / bytesPerPixel);
+}
+HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyRegionGreaterThanMaxBlitSizeThenMoreThanOneBlitCommandHasBeenSpown, BlitBlockCopyPlatforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, true);
+    uint32_t offsetX = 0x1;
+    uint32_t offsetY = 0x1;
+    Vec3<size_t> copySize = {BlitterConstants::maxBlitWidth + 0x100, 0x10, 1};
+    ze_copy_region_t srcRegion = {offsetX, offsetY, 0, static_cast<uint32_t>(copySize.x), static_cast<uint32_t>(copySize.y), static_cast<uint32_t>(copySize.z)};
+    ze_copy_region_t dstRegion = srcRegion;
+    Vec3<uint32_t> srcSize = {2 * BlitterConstants::maxBlitWidth, 2 * BlitterConstants::maxBlitHeight, 1};
+    Vec3<uint32_t> dstSize = srcSize;
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    size_t rowPitch = copySize.x;
+    size_t slicePitch = copySize.x * copySize.y;
+    commandList->appendMemoryCopyBlitRegion(&mockAllocationDst, &mockAllocationSrc, srcRegion, dstRegion, copySize, rowPitch, slicePitch, rowPitch, slicePitch, srcSize, dstSize, nullptr);
+    GenCmdList cmdList;
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor++;
+    EXPECT_NE(cmdList.end(), itor);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandListForRegionSize : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+  public:
+    MockCommandListForRegionSize() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
+
+    AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize) override {
+        return {0, 0, nullptr, true};
+    }
+    ze_result_t appendMemoryCopyBlitRegion(NEO::GraphicsAllocation *srcptr,
+                                           NEO::GraphicsAllocation *dstptr,
+                                           ze_copy_region_t srcRegion,
+                                           ze_copy_region_t dstRegion, Vec3<size_t> copySize,
+                                           size_t srcRowPitch, size_t srcSlicePitch,
+                                           size_t dstRowPitch, size_t dstSlicePitch,
+                                           Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent) override {
+        this->srcSize = srcSize;
+        this->dstSize = dstSize;
+        return ZE_RESULT_SUCCESS;
+    }
+    Vec3<uint32_t> srcSize = {0, 0, 0};
+    Vec3<uint32_t> dstSize = {0, 0, 0};
+};
+HWTEST2_F(CommandListCreate, givenZeroAsPitchAndSlicePitchWhenMemoryCopyRegionCalledSizesEqualOffsetPlusCopySize, Platforms) {
+    MockCommandListForRegionSize<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {0x10, 0x10, 0, 0x100, 0x100, 1};
+    ze_copy_region_t srcRegion = dstRegion;
+    uint32_t pitch = 0;
+    uint32_t slicePitch = 0;
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, pitch, slicePitch, srcPtr, &srcRegion, pitch, slicePitch, nullptr);
+    EXPECT_EQ(cmdList.dstSize.x, dstRegion.width + dstRegion.originX);
+    EXPECT_EQ(cmdList.dstSize.y, dstRegion.height + dstRegion.originY);
+    EXPECT_EQ(cmdList.dstSize.z, dstRegion.depth + dstRegion.originZ);
+
+    EXPECT_EQ(cmdList.srcSize.x, srcRegion.width + srcRegion.originX);
+    EXPECT_EQ(cmdList.srcSize.y, srcRegion.height + srcRegion.originY);
+    EXPECT_EQ(cmdList.srcSize.z, srcRegion.depth + srcRegion.originZ);
+}
+
+HWTEST2_F(CommandListCreate, givenPitchAndSlicePitchWhenMemoryCopyRegionCalledSizesAreBasedOnPitch, Platforms) {
+    MockCommandListForRegionSize<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    ze_copy_region_t dstRegion = {0x10, 0x10, 0, 0x100, 0x100, 1};
+    ze_copy_region_t srcRegion = dstRegion;
+    uint32_t pitch = 0x1000;
+    uint32_t slicePitch = 0x100000;
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, pitch, slicePitch, srcPtr, &srcRegion, pitch, slicePitch, nullptr);
+    EXPECT_EQ(cmdList.dstSize.x, pitch);
+    EXPECT_EQ(cmdList.dstSize.y, slicePitch / pitch);
+
+    EXPECT_EQ(cmdList.srcSize.x, pitch);
+    EXPECT_EQ(cmdList.srcSize.y, slicePitch / pitch);
+}
 } // namespace ult
 } // namespace L0

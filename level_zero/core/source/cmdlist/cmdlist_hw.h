@@ -142,7 +142,7 @@ struct CommandListCoreFamily : CommandListImp {
                                                             ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                                             size_t srcRowPitch, size_t srcSlicePitch,
                                                             size_t dstRowPitch, size_t dstSlicePitch,
-                                                            size_t srcSize, size_t dstSize, ze_event_handle_t hSignalEvent);
+                                                            Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyKernel2d(NEO::GraphicsAllocation *dstAlloc, NEO::GraphicsAllocation *srcAlloc,
                                                           Builtin builtin, const ze_copy_region_t *dstRegion,

@@ -149,7 +149,7 @@ uint64_t BlitCommandsHelper<GfxFamily>::calculateBlitCommandSourceBaseAddress(co
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
     uint64_t width = 1;
     uint64_t height = 1;
 
@@ -238,7 +238,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImages(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsRegion(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto dstAllocation = blitProperties.dstAllocation;
     auto srcAllocation = blitProperties.srcAllocation;
 
@@ -280,6 +280,25 @@ void BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(LinearStream &com
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands() {
     return (EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() + EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait()) * 2;
+}
+
+template <typename GfxFamily>
+bool BlitCommandsHelper<GfxFamily>::useOneBlitCopyCommand(Vec3<size_t> copySize, uint32_t bytesPerPixel) {
+    return (copySize.x / bytesPerPixel <= BlitterConstants::maxBlitWidth && copySize.y <= BlitterConstants::maxBlitHeight);
+}
+
+template <typename GfxFamily>
+uint32_t BlitCommandsHelper<GfxFamily>::getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, uint32_t srcSize, uint32_t dstSize) {
+    uint32_t bytesPerPixel = BlitterConstants::maxBytesPerPixel;
+    while (bytesPerPixel > 1) {
+        if (copySize % bytesPerPixel == 0 && srcSize % bytesPerPixel == 0 && dstSize % bytesPerPixel == 0) {
+            if ((srcOrigin ? (srcOrigin % bytesPerPixel == 0) : true) && (dstOrigin ? (dstOrigin % bytesPerPixel == 0) : true)) {
+                break;
+            }
+        }
+        bytesPerPixel >>= 1;
+    }
+    return bytesPerPixel;
 }
 
 } // namespace NEO

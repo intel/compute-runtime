@@ -898,7 +898,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
             EncodeStoreMMIO<GfxFamily>::encode(commandStream, REG_GLOBAL_TIMESTAMP_LDW, timestampGlobalStartAddress);
         }
 
-        BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, commandStream, *this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]);
+        BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, commandStream, *this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]);
 
         if (blitProperties.outputTimestampPacket) {
             if (profilingEnabled) {

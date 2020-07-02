@@ -626,7 +626,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(NEO::Grap
     commandContainer.addToResidencyContainer(dstPtrAlloc);
     commandContainer.addToResidencyContainer(srcPtrAlloc);
 
-    NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -638,19 +638,28 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(NEO
                                                                              ze_copy_region_t dstRegion, Vec3<size_t> copySize,
                                                                              size_t srcRowPitch, size_t srcSlicePitch,
                                                                              size_t dstRowPitch, size_t dstSlicePitch,
-                                                                             size_t srcSize, size_t dstSize, ze_event_handle_t hSignalEvent) {
+                                                                             Vec3<uint32_t> srcSize, Vec3<uint32_t> dstSize, ze_event_handle_t hSignalEvent) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
-    Vec3<size_t> srcPtrOffset = {srcRegion.originX, srcRegion.originY, srcRegion.originZ};
-    Vec3<size_t> dstPtrOffset = {dstRegion.originX, dstRegion.originY, dstRegion.originZ};
-
+    uint32_t bytesPerPixel = NEO::BlitCommandsHelper<GfxFamily>::getAvailableBytesPerPixel(copySize.x, srcRegion.originX, dstRegion.originX, srcSize.x, dstSize.x);
+    bool copyOneCommand = NEO::BlitCommandsHelper<GfxFamily>::useOneBlitCopyCommand(copySize, bytesPerPixel);
+    Vec3<size_t> srcPtrOffset = {(copyOneCommand ? (srcRegion.originX / bytesPerPixel) : srcRegion.originX), srcRegion.originY, srcRegion.originZ};
+    Vec3<size_t> dstPtrOffset = {(copyOneCommand ? (dstRegion.originX / bytesPerPixel) : dstRegion.originX), dstRegion.originY, dstRegion.originZ};
+    copySize.x = copyOneCommand ? copySize.x / bytesPerPixel : copySize.x;
     auto blitProperties = NEO::BlitProperties::constructPropertiesForCopyBuffer(dstAlloc, srcAlloc,
                                                                                 dstPtrOffset, srcPtrOffset, copySize, srcRowPitch, srcSlicePitch,
                                                                                 dstRowPitch, dstSlicePitch);
     commandContainer.addToResidencyContainer(dstAlloc);
     commandContainer.addToResidencyContainer(srcAlloc);
+    blitProperties.bytesPerPixel = bytesPerPixel;
+    blitProperties.srcSize = srcSize;
+    blitProperties.dstSize = dstSize;
     appendEventForProfiling(hSignalEvent, true);
-    NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBuffer(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    if (copyOneCommand) {
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsRegion(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    } else {
+        NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    }
     appendSignalEventPostWalker(hSignalEvent);
     return ZE_RESULT_SUCCESS;
 }
@@ -674,7 +683,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendCopyImageBlit(NEO::Graph
     commandContainer.addToResidencyContainer(dst);
     commandContainer.addToResidencyContainer(src);
     appendEventForProfiling(hSignalEvent, true);
-    NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImages(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+    NEO::BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsRegion(blitProperties, *commandContainer.getCommandStream(), *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
     appendSignalEventPostWalker(hSignalEvent);
     return ZE_RESULT_SUCCESS;
 }
@@ -833,16 +842,23 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     dstSize += dstAllocationStruct.offset;
     srcSize += srcAllocationStruct.offset;
 
+    Vec3<uint32_t> srcSize3 = {srcPitch ? srcPitch : srcRegion->width + srcRegion->originX,
+                               srcSlicePitch ? srcSlicePitch / srcPitch : srcRegion->height + srcRegion->originY,
+                               srcRegion->depth + srcRegion->originZ};
+    Vec3<uint32_t> dstSize3 = {dstPitch ? dstPitch : dstRegion->width + dstRegion->originX,
+                               dstSlicePitch ? dstSlicePitch / dstPitch : dstRegion->height + dstRegion->originY,
+                               dstRegion->depth + dstRegion->originZ};
+
     ze_result_t result = ZE_RESULT_SUCCESS;
     if (srcRegion->depth > 1) {
         result = isCopyOnlyCmdList ? appendMemoryCopyBlitRegion(srcAllocationStruct.alloc, dstAllocationStruct.alloc, *srcRegion, *dstRegion, {srcRegion->width, srcRegion->height, srcRegion->depth},
-                                                                srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize, dstSize, hSignalEvent)
+                                                                srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3, hSignalEvent)
                                    : this->appendMemoryCopyKernel3d(dstAllocationStruct.alloc, srcAllocationStruct.alloc,
                                                                     Builtin::CopyBufferRectBytes3d, dstRegion, dstPitch, dstSlicePitch, dstAllocationStruct.offset,
                                                                     srcRegion, srcPitch, srcSlicePitch, srcAllocationStruct.offset, hSignalEvent, 0, nullptr);
     } else {
         result = isCopyOnlyCmdList ? appendMemoryCopyBlitRegion(srcAllocationStruct.alloc, dstAllocationStruct.alloc, *srcRegion, *dstRegion, {srcRegion->width, srcRegion->height, srcRegion->depth},
-                                                                srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize, dstSize, hSignalEvent)
+                                                                srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3, hSignalEvent)
                                    : this->appendMemoryCopyKernel2d(dstAllocationStruct.alloc, srcAllocationStruct.alloc,
                                                                     Builtin::CopyBufferRectBytes2d, dstRegion, dstPitch, dstAllocationStruct.offset,
                                                                     srcRegion, srcPitch, srcAllocationStruct.offset, hSignalEvent, 0, nullptr);
@@ -1408,4 +1424,5 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::setGlobalWorkSizeIndirect(NEO:
 
     return ZE_RESULT_SUCCESS;
 }
+
 } // namespace L0
