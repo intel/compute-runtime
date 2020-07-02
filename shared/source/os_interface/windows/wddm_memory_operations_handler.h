@@ -20,9 +20,9 @@ class WddmMemoryOperationsHandler : public MemoryOperationsHandler {
     WddmMemoryOperationsHandler(Wddm *wddm);
     ~WddmMemoryOperationsHandler() override = default;
 
-    MemoryOperationsStatus makeResident(ArrayRef<GraphicsAllocation *> gfxAllocations) override;
-    MemoryOperationsStatus evict(GraphicsAllocation &gfxAllocation) override;
-    MemoryOperationsStatus isResident(GraphicsAllocation &gfxAllocation) override;
+    MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
+    MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;
+    MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;
 
   protected:
     Wddm *wddm;

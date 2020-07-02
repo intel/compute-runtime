@@ -24,6 +24,7 @@ class OsContextLinux : public OsContext {
 
     unsigned int getEngineFlag() const { return engineFlag; }
     const std::vector<uint32_t> &getDrmContextIds() const { return drmContextIds; }
+    Drm &getDrm() const;
 
   protected:
     unsigned int engineFlag = 0;

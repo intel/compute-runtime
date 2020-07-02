@@ -29,6 +29,7 @@ struct GT_SYSTEM_INFO;
 namespace NEO {
 #define I915_CONTEXT_PRIVATE_PARAM_BOOST 0x80000000
 
+class BufferObject;
 class DeviceFactory;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
@@ -86,6 +87,8 @@ class Drm {
     bool createVirtualMemoryAddressSpace(uint32_t vmCount);
     void destroyVirtualMemoryAddressSpace();
     uint32_t getVirtualMemoryAddressSpace(uint32_t vmId);
+    int bindBufferObject(uint32_t drmContextId, BufferObject *bo);
+    int unbindBufferObject(uint32_t drmContextId, BufferObject *bo);
     int setupHardwareInfo(DeviceDescriptor *, bool);
 
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }

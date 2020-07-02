@@ -46,7 +46,7 @@ bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDevi
         return false;
     }
 
-    memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
+    memoryOperationsInterface = DrmMemoryOperationsHandler::create();
     osInterface.reset(new OSInterface());
     osInterface->get()->setDrm(drm);
     auto hardwareInfo = getMutableHardwareInfo();

@@ -69,12 +69,8 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
 
     auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]->memoryOperationsInterface.get());
 
-    std::unique_lock<std::mutex> lock;
-    if (DebugManager.flags.MakeAllBuffersResident.get()) {
-        lock = memoryOperationsInterface->acquireLock();
-    }
-
-    memoryOperationsInterface->mergeWithResidencyContainer(allocationsForResidency);
+    auto lock = memoryOperationsInterface->lockHandlerForExecWA();
+    memoryOperationsInterface->mergeWithResidencyContainer(this->osContext, allocationsForResidency);
 
     this->flushStamp->setStamp(bb->peekHandle());
     this->flushInternal(batchBuffer, allocationsForResidency);
@@ -120,7 +116,7 @@ template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
     for (auto &alloc : inputAllocationsForResidency) {
         auto drmAlloc = static_cast<DrmAllocation *>(alloc);
-        drmAlloc->getBOsForResidency(osContext->getContextId(), handleId, this->residency);
+        drmAlloc->makeBOsResident(osContext->getContextId(), 0u, handleId, &this->residency, false);
     }
 }
 

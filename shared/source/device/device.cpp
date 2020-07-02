@@ -253,4 +253,8 @@ NEO::SourceLevelDebugger *Device::getSourceLevelDebugger() {
     return nullptr;
 }
 
+const std::vector<EngineControl> &Device::getEngines() const {
+    return this->engines;
+}
+
 } // namespace NEO

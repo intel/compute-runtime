@@ -181,7 +181,7 @@ ze_result_t DeviceImp::createModule(const ze_module_desc_t *desc, ze_module_hand
 ze_result_t DeviceImp::evictImage(ze_image_handle_t hImage) {
     auto alloc = Image::fromHandle(hImage)->getAllocation();
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto success = memoryOperationsIface->evict(*alloc);
+    auto success = memoryOperationsIface->evict(neoDevice, *alloc);
     return changeMemoryOperationStatusToL0ResultType(success);
 }
 
@@ -191,7 +191,7 @@ ze_result_t DeviceImp::evictMemory(void *ptr, size_t size) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto success = memoryOperationsIface->evict(*alloc->gpuAllocations.getGraphicsAllocation(getRootDeviceIndex()));
+    auto success = memoryOperationsIface->evict(neoDevice, *alloc->gpuAllocations.getGraphicsAllocation(getRootDeviceIndex()));
     return changeMemoryOperationStatusToL0ResultType(success);
 }
 
@@ -399,7 +399,7 @@ ze_result_t DeviceImp::getSubDevices(uint32_t *pCount, ze_device_handle_t *phSub
 ze_result_t DeviceImp::makeImageResident(ze_image_handle_t hImage) {
     auto alloc = Image::fromHandle(hImage)->getAllocation();
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto success = memoryOperationsIface->makeResident(ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1));
+    auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1));
     return changeMemoryOperationStatusToL0ResultType(success);
 }
 
@@ -410,7 +410,7 @@ ze_result_t DeviceImp::makeMemoryResident(void *ptr, size_t size) {
     }
     NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
     auto gpuAllocation = alloc->gpuAllocations.getGraphicsAllocation(getRootDeviceIndex());
-    auto success = memoryOperationsIface->makeResident(ArrayRef<NEO::GraphicsAllocation *>(&gpuAllocation, 1));
+    auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&gpuAllocation, 1));
     return changeMemoryOperationStatusToL0ResultType(success);
 }
 

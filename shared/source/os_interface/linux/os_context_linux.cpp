@@ -45,6 +45,10 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield devi
     }
 }
 
+Drm &OsContextLinux::getDrm() const {
+    return this->drm;
+}
+
 OsContextLinux::~OsContextLinux() {
     for (auto drmContextId : drmContextIds) {
         drm.destroyDrmContext(drmContextId);

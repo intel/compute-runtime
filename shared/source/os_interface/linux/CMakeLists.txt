@@ -23,8 +23,12 @@ set(NEO_CORE_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.h
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_null_device.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_bind.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_bind.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_memory_operations_handler_create.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_linux.cpp

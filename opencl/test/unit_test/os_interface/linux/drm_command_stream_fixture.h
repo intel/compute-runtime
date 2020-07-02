@@ -35,7 +35,7 @@ class DrmCommandStreamTest : public ::testing::Test {
 
         executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(mock);
-        executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
+        executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create();
 
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
         mock->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(hwInfo));
@@ -82,11 +82,12 @@ class DrmCommandStreamTest : public ::testing::Test {
     std::unique_ptr<OsContextLinux> osContext;
 };
 
-class DrmCommandStreamEnhancedTest : public ::testing::Test {
+template <typename T>
+class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
   public:
     std::unique_ptr<DebugManagerStateRestore> dbgState;
     MockExecutionEnvironment *executionEnvironment;
-    DrmMockCustom *mock;
+    T *mock;
     CommandStreamReceiver *csr = nullptr;
     const uint32_t rootDeviceIndex = 0u;
 
@@ -102,10 +103,10 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
         //make sure this is disabled, we don't want to test this now
         DebugManager.flags.EnableForcePin.set(false);
 
-        mock = new DrmMockCustom();
+        mock = new T();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(mock);
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create();
 
         csr = new TestedDrmCommandStreamReceiver<GfxFamily>(*executionEnvironment, rootDeviceIndex);
         ASSERT_NE(nullptr, csr);
@@ -127,7 +128,7 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
 
     template <typename GfxFamily>
     void makeResidentBufferObjects(DrmAllocation *drmAllocation) {
-        drmAllocation->appendBOs(0u, static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->residency);
+        drmAllocation->bindBOs(0u, 0u, &static_cast<TestedDrmCommandStreamReceiver<GfxFamily> *>(csr)->residency, false);
     }
 
     template <typename GfxFamily>
@@ -143,7 +144,7 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
 
   protected:
     class MockBufferObject : public BufferObject {
-        friend DrmCommandStreamEnhancedTest;
+        friend DrmCommandStreamEnhancedTemplate<T>;
 
       protected:
         MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, 1, 0) {
@@ -155,3 +156,5 @@ class DrmCommandStreamEnhancedTest : public ::testing::Test {
         return new MockBufferObject(this->mock, size);
     }
 };
+
+using DrmCommandStreamEnhancedTest = DrmCommandStreamEnhancedTemplate<DrmMockCustom>;

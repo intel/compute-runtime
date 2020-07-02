@@ -2467,23 +2467,6 @@ TEST(SharedBuffersTest, whenBuffersIsCreatedWithSharingHandlerThenItIsSharedBuff
     buffer->release();
 }
 
-TEST(ResidencyTests, whenBuffersIsCreatedWithMakeResidentFlagThenItSuccessfulyCreates) {
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-    ultHwConfig.forceOsAgnosticMemoryManager = false;
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.MakeAllBuffersResident.set(true);
-
-    initPlatform();
-    auto device = platform()->getClDevice(0u);
-
-    MockContext context(device, false);
-    auto retValue = CL_SUCCESS;
-    auto clBuffer = clCreateBuffer(&context, 0u, 4096u, nullptr, &retValue);
-    ASSERT_EQ(retValue, CL_SUCCESS);
-    clReleaseMemObject(clBuffer);
-}
-
 class BufferTests : public ::testing::Test {
   protected:
     void SetUp() override {

@@ -28,30 +28,39 @@ uint64_t DrmAllocation::peekInternalHandle(MemoryManager *memoryManager) {
     return static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBO()->peekHandle(), this->rootDeviceIndex));
 }
 
-void DrmAllocation::getBOsForResidency(uint32_t osContextId, uint32_t handleId, std::vector<BufferObject *> &bufferObjects) {
+void DrmAllocation::makeBOsResident(uint32_t osContextId, uint32_t drmContextId, uint32_t handleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
     if (this->fragmentsStorage.fragmentCount) {
         for (unsigned int f = 0; f < this->fragmentsStorage.fragmentCount; f++) {
             if (!this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContextId]) {
-                appendBO(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage->bo, bufferObjects);
+                bindBO(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage->bo, drmContextId, bufferObjects, bind);
                 this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContextId] = true;
             }
         }
     } else {
-        appendBOs(handleId, bufferObjects);
+        bindBOs(handleId, drmContextId, bufferObjects, bind);
     }
 }
 
-void DrmAllocation::appendBO(BufferObject *bo, std::vector<BufferObject *> &bufferObjects) {
+void DrmAllocation::bindBO(BufferObject *bo, uint32_t drmContextId, std::vector<BufferObject *> *bufferObjects, bool bind) {
     if (bo) {
-        if (bo->peekIsReusableAllocation()) {
-            for (auto bufferObject : bufferObjects) {
-                if (bufferObject == bo) {
-                    return;
+        if (bufferObjects) {
+            if (bo->peekIsReusableAllocation()) {
+                for (auto bufferObject : *bufferObjects) {
+                    if (bufferObject == bo) {
+                        return;
+                    }
                 }
             }
-        }
 
-        bufferObjects.push_back(bo);
+            bufferObjects->push_back(bo);
+
+        } else {
+            if (bind) {
+                bo->bind(drmContextId);
+            } else {
+                bo->unbind(drmContextId);
+            }
+        }
     }
 }
 

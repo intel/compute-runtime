@@ -60,9 +60,9 @@ class DrmAllocation : public GraphicsAllocation {
 
     uint64_t peekInternalHandle(MemoryManager *memoryManager) override;
 
-    void getBOsForResidency(uint32_t osContextId, uint32_t handleId, std::vector<BufferObject *> &bufferObjects);
-    void appendBO(BufferObject *bo, std::vector<BufferObject *> &bufferObjects);
-    void appendBOs(uint32_t handleId, std::vector<BufferObject *> &bufferObjects);
+    void makeBOsResident(uint32_t osContextId, uint32_t drmContextId, uint32_t handleId, std::vector<BufferObject *> *bufferObjects, bool bind);
+    void bindBO(BufferObject *bo, uint32_t drmContextId, std::vector<BufferObject *> *bufferObjects, bool bind);
+    void bindBOs(uint32_t handleId, uint32_t drmContextId, std::vector<BufferObject *> *bufferObjects, bool bind);
 
   protected:
     BufferObjects bufferObjects{};

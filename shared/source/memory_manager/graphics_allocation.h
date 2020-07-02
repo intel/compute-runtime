@@ -183,7 +183,12 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void setInspectionId(uint32_t newInspectionId, uint32_t contextId) { usageInfos[contextId].inspectionId = newInspectionId; }
 
     bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
-    void updateResidencyTaskCount(uint32_t newTaskCount, uint32_t contextId) { usageInfos[contextId].residencyTaskCount = newTaskCount; }
+    bool isAlwaysResident(uint32_t contextId) const { return GraphicsAllocation::objectAlwaysResident == getResidencyTaskCount(contextId); }
+    void updateResidencyTaskCount(uint32_t newTaskCount, uint32_t contextId) {
+        if (usageInfos[contextId].residencyTaskCount != GraphicsAllocation::objectAlwaysResident || newTaskCount == GraphicsAllocation::objectNotResident) {
+            usageInfos[contextId].residencyTaskCount = newTaskCount;
+        }
+    }
     uint32_t getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
     void releaseResidencyInOsContext(uint32_t contextId) { updateResidencyTaskCount(objectNotResident, contextId); }
     bool isResidencyTaskCountBelow(uint32_t taskCount, uint32_t contextId) const { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
@@ -242,6 +247,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     static constexpr uint32_t allBanks = 0xffffffff;
     constexpr static uint32_t objectNotResident = std::numeric_limits<uint32_t>::max();
     constexpr static uint32_t objectNotUsed = std::numeric_limits<uint32_t>::max();
+    constexpr static uint32_t objectAlwaysResident = std::numeric_limits<uint32_t>::max() - 1;
 
   protected:
     struct UsageInfo {

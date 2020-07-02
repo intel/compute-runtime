@@ -18,7 +18,7 @@ WddmMemoryOperationsHandler::WddmMemoryOperationsHandler(Wddm *wddm) : wddm(wddm
     residentAllocations = std::make_unique<WddmResidentAllocationsContainer>(wddm);
 }
 
-MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(ArrayRef<GraphicsAllocation *> gfxAllocations) {
+MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     uint32_t totalHandlesCount = 0;
     constexpr uint32_t stackAllocations = 64;
     constexpr uint32_t stackHandlesCount = NEO::maxFragmentsCount * EngineLimits::maxHandleCount * stackAllocations;
@@ -44,7 +44,7 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::makeResident(ArrayRef<Graphi
     return residentAllocations->makeResidentResources(handlesForResidency.begin(), totalHandlesCount, totalSize);
 }
 
-MemoryOperationsStatus WddmMemoryOperationsHandler::evict(GraphicsAllocation &gfxAllocation) {
+MemoryOperationsStatus WddmMemoryOperationsHandler::evict(Device *device, GraphicsAllocation &gfxAllocation) {
     constexpr uint32_t stackHandlesCount = NEO::maxFragmentsCount * EngineLimits::maxHandleCount;
     StackVec<D3DKMT_HANDLE, stackHandlesCount> handlesForEviction;
     WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
@@ -67,7 +67,7 @@ MemoryOperationsStatus WddmMemoryOperationsHandler::evict(GraphicsAllocation &gf
     return residentAllocations->evictResources(handlesForEviction.begin(), totalHandleCount);
 }
 
-MemoryOperationsStatus WddmMemoryOperationsHandler::isResident(GraphicsAllocation &gfxAllocation) {
+MemoryOperationsStatus WddmMemoryOperationsHandler::isResident(Device *device, GraphicsAllocation &gfxAllocation) {
     WddmAllocation &wddmAllocation = reinterpret_cast<WddmAllocation &>(gfxAllocation);
     D3DKMT_HANDLE defaultHandle = 0u;
     if (wddmAllocation.fragmentsStorage.fragmentCount > 0) {

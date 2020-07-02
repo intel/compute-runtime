@@ -59,7 +59,7 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources(DirectSubm
     bool ret = wddm->getWddmInterface()->createMonitoredFence(ringFence);
     ringFence.currentFenceValue = 1;
     if (ret) {
-        ret = memoryInterface->makeResident(ArrayRef<GraphicsAllocation *>(allocations)) == MemoryOperationsStatus::SUCCESS;
+        ret = memoryInterface->makeResident(&device, ArrayRef<GraphicsAllocation *>(allocations)) == MemoryOperationsStatus::SUCCESS;
     }
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "ULLS resource allocation finished with: %d\n", ret);
     return ret;

@@ -73,4 +73,5 @@ uint32_t GraphicsAllocation::getUsedPageSize() const {
 
 constexpr uint32_t GraphicsAllocation::objectNotUsed;
 constexpr uint32_t GraphicsAllocation::objectNotResident;
+constexpr uint32_t GraphicsAllocation::objectAlwaysResident;
 } // namespace NEO

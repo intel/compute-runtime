@@ -359,9 +359,12 @@ Buffer *Buffer::create(Context *context,
     }
 
     if (DebugManager.flags.MakeAllBuffersResident.get()) {
-        auto graphicsAllocation = pBuffer->getGraphicsAllocation(rootDeviceIndex);
-        auto rootDeviceEnvironment = pBuffer->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get();
-        rootDeviceEnvironment->memoryOperationsInterface->makeResident(ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1));
+        for (size_t deviceNum = 0u; deviceNum < context->getNumDevices(); deviceNum++) {
+            auto device = context->getDevice(deviceNum);
+            auto graphicsAllocation = pBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
+            auto rootDeviceEnvironment = pBuffer->executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()].get();
+            rootDeviceEnvironment->memoryOperationsInterface->makeResident(&device->getDevice(), ArrayRef<GraphicsAllocation *>(&graphicsAllocation, 1));
+        }
     }
 
     return pBuffer;

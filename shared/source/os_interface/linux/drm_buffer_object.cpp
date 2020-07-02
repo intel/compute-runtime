@@ -128,6 +128,20 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     return err;
 }
 
+void BufferObject::bind(uint32_t drmContextId) {
+    auto ret = this->drm->bindBufferObject(drmContextId, this);
+    auto err = this->drm->getErrno();
+    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "bind buffer object returned with %d. errno=%d(%s)\n", ret, err, strerror(err));
+    UNRECOVERABLE_IF(ret != 0);
+}
+
+void BufferObject::unbind(uint32_t drmContextId) {
+    auto ret = this->drm->unbindBufferObject(drmContextId, this);
+    auto err = this->drm->getErrno();
+    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "unbind buffer object returned with %d. errno=%d(%s)\n", ret, err, strerror(err));
+    UNRECOVERABLE_IF(ret != 0);
+}
+
 void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage) {
     std::string logger = "drm_i915_gem_execbuffer2 {\n";
     logger += "  buffers_ptr: " + std::to_string(execbuf.buffers_ptr) + ",\n";

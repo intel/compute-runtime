@@ -214,7 +214,7 @@ void EventImp::makeAllocationResident() {
 
     if (memoryOperationsIface) {
         auto alloc = &(this->eventPool->getAllocation());
-        memoryOperationsIface->makeResident(ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1));
+        memoryOperationsIface->makeResident(deviceImp->neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1));
     }
 }
 

@@ -9,25 +9,23 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/residency_container.h"
 
+#include <memory>
 #include <mutex>
-#include <unordered_set>
 
 namespace NEO {
+class OsContext;
 class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
-    DrmMemoryOperationsHandler();
-    ~DrmMemoryOperationsHandler() override;
+    DrmMemoryOperationsHandler() = default;
+    ~DrmMemoryOperationsHandler() override = default;
 
-    MemoryOperationsStatus makeResident(ArrayRef<GraphicsAllocation *> gfxAllocations) override;
-    MemoryOperationsStatus evict(GraphicsAllocation &gfxAllocation) override;
-    MemoryOperationsStatus isResident(GraphicsAllocation &gfxAllocation) override;
+    virtual MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) = 0;
+    virtual void mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) = 0;
+    virtual std::unique_lock<std::mutex> lockHandlerForExecWA() = 0;
 
-    void mergeWithResidencyContainer(ResidencyContainer &residencyContainer);
-
-    std::unique_lock<std::mutex> acquireLock();
+    static std::unique_ptr<DrmMemoryOperationsHandler> create();
 
   protected:
-    std::unordered_set<GraphicsAllocation *> residency;
     std::mutex mutex;
 };
 } // namespace NEO

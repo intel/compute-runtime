@@ -28,7 +28,7 @@ class DrmMemoryManagerBasic : public ::testing::Test {
         for (auto i = 0u; i < numRootDevices; i++) {
             executionEnvironment.rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
             executionEnvironment.rootDeviceEnvironments[i]->osInterface->get()->setDrm(Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[i]));
-            executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
+            executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create();
         }
     }
     const uint32_t rootDeviceIndex = 1u;
@@ -59,7 +59,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
             auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[i].get();
             rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
             rootDeviceEnvironment->osInterface->get()->setDrm(new DrmMockCustom());
-            rootDeviceEnvironment->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
+            rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create();
         }
 
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get();
@@ -132,7 +132,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
             rootDeviceEnvironment->setHwInfo(defaultHwInfo.get());
             rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
             rootDeviceEnvironment->osInterface->get()->setDrm(new DrmMockCustom);
-            rootDeviceEnvironment->memoryOperationsInterface = std::make_unique<DrmMemoryOperationsHandler>();
+            rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create();
         }
         mock = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm());
         memoryManager.reset(new TestedDrmMemoryManager(*executionEnvironment));
