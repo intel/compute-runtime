@@ -1232,6 +1232,13 @@ TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionTh
     EXPECT_STREQ(expectedVersion.c_str(), caps.driverVersion);
 }
 
+TEST_F(DeviceGetCapsTest, WhenDeviceIsCreatedThenMaxParameterSizeIsSetCorrectly) {
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    const auto &caps = device->getSharedDeviceInfo();
+    EXPECT_EQ(2048u, caps.maxParameterSize);
+}
+
 TEST_F(DeviceGetCapsTest, GivenFlagEnabled64kbPagesWhenSetThenReturnCorrectValue) {
     DebugManagerStateRestore dbgRestore;
     VariableBackup<bool> OsEnabled64kbPagesBackup(&OSInterface::osEnabled64kbPages);
