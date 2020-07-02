@@ -22,6 +22,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/source/printf_handler/printf_handler.h"
@@ -513,11 +514,15 @@ ze_result_t KernelImp::setArgImage(uint32_t argIndex, size_t argSize, const void
 
     auto imageInfo = image->getImageInfo();
 
+    auto clChannelType = getClChannelDataType(image->getImageDesc().format);
+    auto clChannelOrder = getClChannelOrder(image->getImageDesc().format);
     NEO::patchNonPointer<size_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.imgWidth, imageInfo.imgDesc.imageWidth);
     NEO::patchNonPointer<size_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.imgHeight, imageInfo.imgDesc.imageHeight);
     NEO::patchNonPointer<size_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.imgDepth, imageInfo.imgDesc.imageDepth);
     NEO::patchNonPointer<uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.numSamples, imageInfo.imgDesc.numSamples);
     NEO::patchNonPointer<size_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.arraySize, imageInfo.imgDesc.imageArraySize);
+    NEO::patchNonPointer<cl_channel_type>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.channelDataType, clChannelType);
+    NEO::patchNonPointer<cl_channel_order>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.channelOrder, clChannelOrder);
     NEO::patchNonPointer<uint32_t>(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg.metadataPayload.numMipLevels, imageInfo.imgDesc.numMipLevels);
 
     auto pixelSize = imageInfo.surfaceFormat->ImageElementSizeInBytes;

@@ -9,6 +9,7 @@
 
 #include "test.h"
 
+#include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/source/sampler/sampler_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -80,12 +81,14 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
 
     imageArg.metadataPayload.arraySize = 0x18;
     imageArg.metadataPayload.numSamples = 0x1c;
-    imageArg.metadataPayload.numMipLevels = 0x20;
+    imageArg.metadataPayload.channelDataType = 0x20;
+    imageArg.metadataPayload.channelOrder = 0x24;
+    imageArg.metadataPayload.numMipLevels = 0x28;
 
-    imageArg.metadataPayload.flatWidth = 0x28;
-    imageArg.metadataPayload.flatHeight = 0x30;
-    imageArg.metadataPayload.flatPitch = 0x38;
-    imageArg.metadataPayload.flatBaseOffset = 0x40;
+    imageArg.metadataPayload.flatWidth = 0x30;
+    imageArg.metadataPayload.flatHeight = 0x38;
+    imageArg.metadataPayload.flatPitch = 0x40;
+    imageArg.metadataPayload.flatBaseOffset = 0x48;
 
     ze_image_desc_t desc = {};
 
@@ -142,6 +145,12 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
 
     auto pFlatPitch = ptrOffset(crossThreadData, imageArg.metadataPayload.flatPitch);
     EXPECT_EQ(imgInfo.imgDesc.imageRowPitch - 1u, *pFlatPitch);
+
+    auto pChannelDataType = ptrOffset(crossThreadData, imageArg.metadataPayload.channelDataType);
+    EXPECT_EQ(getClChannelDataType(desc.format), *reinterpret_cast<const cl_channel_type *>(pChannelDataType));
+
+    auto pChannelOrder = ptrOffset(crossThreadData, imageArg.metadataPayload.channelOrder);
+    EXPECT_EQ(getClChannelOrder(desc.format), *reinterpret_cast<const cl_channel_order *>(pChannelOrder));
 }
 
 HWTEST2_F(SetKernelArg, givenSamplerAndKernelWhenSetArgSamplerThenCrossThreadDataIsSet, ImageSupport) {

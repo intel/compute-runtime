@@ -50,6 +50,8 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image/image.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/image/image_format_desc_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/image/image_format_desc_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image/image_formats.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image/image_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/image/image_hw.inl
