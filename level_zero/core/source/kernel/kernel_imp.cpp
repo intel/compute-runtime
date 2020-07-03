@@ -540,7 +540,7 @@ ze_result_t KernelImp::setArgSampler(uint32_t argIndex, size_t argSize, const vo
 
 ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) {
     size_t kernelNameSize = std::min(this->kernelImmData->getDescriptor().kernelMetadata.kernelName.size(),
-                                     static_cast<size_t>(ZE_MAX_KERNEL_NAME));
+                                     (static_cast<size_t>(ZE_MAX_KERNEL_NAME) - 1));
     strncpy_s(pKernelProperties->name, ZE_MAX_KERNEL_NAME,
               this->kernelImmData->getDescriptor().kernelMetadata.kernelName.c_str(), kernelNameSize);
 
@@ -556,7 +556,7 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
 
 ze_result_t KernelImp::getPropertiesExt(ze_kernel_propertiesExt_t *pKernelProperties) {
     size_t kernelNameSize = std::min(this->kernelImmData->getDescriptor().kernelMetadata.kernelName.size(),
-                                     static_cast<size_t>(ZE_MAX_KERNEL_NAME));
+                                     (static_cast<size_t>(ZE_MAX_KERNEL_NAME) - 1));
     strncpy_s(pKernelProperties->name, ZE_MAX_KERNEL_NAME,
               this->kernelImmData->getDescriptor().kernelMetadata.kernelName.c_str(), kernelNameSize);
 
