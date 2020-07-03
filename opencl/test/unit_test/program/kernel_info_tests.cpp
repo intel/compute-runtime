@@ -6,12 +6,14 @@
  */
 
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/test/unit_test/mocks/ult_device_factory.h"
 
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/program/kernel_arg_info.h"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "gtest/gtest.h"
 
@@ -106,8 +108,8 @@ TEST(KernelInfo, decodeImageKernelArgument) {
 
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKernelHeapToKernelAllocation) {
     KernelInfo kernelInfo;
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    auto factory = UltDeviceFactory{1, 0};
+    auto device = factory.rootDevices[0];
     const size_t heapSize = 0x40;
     char heap[heapSize];
     kernelInfo.heapInfo.KernelHeapSize = heapSize;
@@ -117,12 +119,12 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKerne
         heap[i] = static_cast<char>(i);
     }
 
-    auto retVal = kernelInfo.createKernelAllocation(0, &memoryManager);
+    auto retVal = kernelInfo.createKernelAllocation(*device);
     EXPECT_TRUE(retVal);
     auto allocation = kernelInfo.kernelAllocation;
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), heap, heapSize));
     EXPECT_EQ(heapSize, allocation->getUnderlyingBufferSize());
-    memoryManager.checkGpuUsageAndDestroyGraphicsAllocations(allocation);
+    device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
 }
 
 class MyMemoryManager : public OsAgnosticMemoryManager {
@@ -133,9 +135,10 @@ class MyMemoryManager : public OsAgnosticMemoryManager {
 
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateMemoryThenReturnsFalse) {
     KernelInfo kernelInfo;
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    MyMemoryManager memoryManager(executionEnvironment);
-    auto retVal = kernelInfo.createKernelAllocation(0, &memoryManager);
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get());
+    executionEnvironment->memoryManager.reset(new MyMemoryManager(*executionEnvironment));
+    auto device = std::unique_ptr<Device>(Device::create<RootDevice>(executionEnvironment, mockRootDeviceIndex));
+    auto retVal = kernelInfo.createKernelAllocation(*device);
     EXPECT_FALSE(retVal);
 }
 
@@ -234,7 +237,7 @@ TEST_F(KernelInfoMultiRootDeviceTests, kernelAllocationHasCorrectRootDeviceIndex
     kernelInfo.heapInfo.KernelHeapSize = heapSize;
     kernelInfo.heapInfo.pKernelHeap = &heap;
 
-    auto retVal = kernelInfo.createKernelAllocation(expectedRootDeviceIndex, mockMemoryManager);
+    auto retVal = kernelInfo.createKernelAllocation(device->getDevice());
     EXPECT_TRUE(retVal);
     auto allocation = kernelInfo.kernelAllocation;
     ASSERT_NE(nullptr, allocation);

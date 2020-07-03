@@ -761,7 +761,7 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
     } else {
         memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(pKernelInfo->kernelAllocation);
         pKernelInfo->kernelAllocation = nullptr;
-        status = pKernelInfo->createKernelAllocation(device.getRootDeviceIndex(), memoryManager);
+        status = pKernelInfo->createKernelAllocation(device.getDevice());
     }
     UNRECOVERABLE_IF(!status);
 }

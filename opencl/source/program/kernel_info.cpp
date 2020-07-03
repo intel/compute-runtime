@@ -419,14 +419,14 @@ uint32_t KernelInfo::getConstantBufferSize() const {
     return patchInfo.dataParameterStream ? patchInfo.dataParameterStream->DataParameterStreamSize : 0;
 }
 
-bool KernelInfo::createKernelAllocation(uint32_t rootDeviceIndex, MemoryManager *memoryManager) {
+bool KernelInfo::createKernelAllocation(const Device &device) {
     UNRECOVERABLE_IF(kernelAllocation);
     auto kernelIsaSize = heapInfo.KernelHeapSize;
-    kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, kernelIsaSize, GraphicsAllocation::AllocationType::KERNEL_ISA});
+    kernelAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(), kernelIsaSize, GraphicsAllocation::AllocationType::KERNEL_ISA, device.getDeviceBitfield()});
     if (!kernelAllocation) {
         return false;
     }
-    return memoryManager->copyMemoryToAllocation(kernelAllocation, heapInfo.pKernelHeap, kernelIsaSize);
+    return device.getMemoryManager()->copyMemoryToAllocation(kernelAllocation, heapInfo.pKernelHeap, kernelIsaSize);
 }
 
 void KernelInfo::apply(const DeviceInfoKernelPayloadConstants &constants) {

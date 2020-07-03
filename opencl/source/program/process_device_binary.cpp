@@ -194,7 +194,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
     for (auto &kernelInfo : this->kernelInfoArray) {
         cl_int retVal = CL_SUCCESS;
         if (kernelInfo->heapInfo.KernelHeapSize && this->pDevice) {
-            retVal = kernelInfo->createKernelAllocation(this->pDevice->getRootDeviceIndex(), this->pDevice->getMemoryManager()) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
+            retVal = kernelInfo->createKernelAllocation(*this->pDevice) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
         }
 
         DEBUG_BREAK_IF(kernelInfo->heapInfo.KernelHeapSize && !this->pDevice);

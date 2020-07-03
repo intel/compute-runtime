@@ -3039,7 +3039,7 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseWhenGettingStartOffse
     threadPayload.OffsetToSkipPerThreadDataLoad = 128u;
     mockKernel.kernelInfo.patchInfo.threadPayload = &threadPayload;
 
-    mockKernel.kernelInfo.createKernelAllocation(device->getRootDeviceIndex(), device->getMemoryManager());
+    mockKernel.kernelInfo.createKernelAllocation(device->getDevice());
     auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
 
     mockKernel.mockKernel->setStartOffset(128);
@@ -3057,7 +3057,7 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeTrueAndLocalIdsUsedWhenGet
     threadPayload.OffsetToSkipPerThreadDataLoad = 128u;
     mockKernel.kernelInfo.patchInfo.threadPayload = &threadPayload;
 
-    mockKernel.kernelInfo.createKernelAllocation(device->getRootDeviceIndex(), device->getMemoryManager());
+    mockKernel.kernelInfo.createKernelAllocation(device->getDevice());
     auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
 
     mockKernel.mockKernel->setStartOffset(128);
@@ -3075,7 +3075,7 @@ TEST(KernelTest, givenKernelLocalIdGenerationByRuntimeFalseAndLocalIdsNotUsedWhe
     threadPayload.OffsetToSkipPerThreadDataLoad = 128u;
     mockKernel.kernelInfo.patchInfo.threadPayload = &threadPayload;
 
-    mockKernel.kernelInfo.createKernelAllocation(device->getRootDeviceIndex(), device->getMemoryManager());
+    mockKernel.kernelInfo.createKernelAllocation(device->getDevice());
     auto allocationOffset = mockKernel.kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
 
     mockKernel.mockKernel->setStartOffset(128);

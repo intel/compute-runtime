@@ -19,7 +19,7 @@ GEN12LPTEST_F(DeviceQueueHwTest, givenDeviceQueueWhenRunningOnCCsThenFfidSkipOff
     auto device = pContext->getDevice(0);
     std::unique_ptr<MockParentKernel> mockParentKernel(MockParentKernel::create(*pContext));
     KernelInfo *blockInfo = const_cast<KernelInfo *>(mockParentKernel->mockProgram->blockKernelManager->getBlockKernelInfo(0));
-    blockInfo->createKernelAllocation(device->getRootDeviceIndex(), device->getMemoryManager());
+    blockInfo->createKernelAllocation(device->getDevice());
     ASSERT_NE(nullptr, blockInfo->getGraphicsAllocation());
     const_cast<SPatchThreadPayload *>(blockInfo->patchInfo.threadPayload)->OffsetToSkipSetFFIDGP = 0x1234;
 

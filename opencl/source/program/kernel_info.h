@@ -184,7 +184,7 @@ struct KernelInfo {
         return -1;
     }
 
-    bool createKernelAllocation(uint32_t rootDeviceIndex, MemoryManager *memoryManager);
+    bool createKernelAllocation(const Device &device);
     void apply(const DeviceInfoKernelPayloadConstants &constants);
 
     std::string name;
