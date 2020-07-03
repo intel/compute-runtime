@@ -36,7 +36,7 @@ SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
     hCoreDevice = hDevice;
     pOsSysman = OsSysman::create(this);
     UNRECOVERABLE_IF(nullptr == pOsSysman);
-    pPci = new PciImp(pOsSysman);
+    pPci = new PciImp(pOsSysman, hCoreDevice);
     pSched = new SchedulerImp(pOsSysman);
     pGlobalOperations = new GlobalOperationsImp(pOsSysman, hCoreDevice);
     pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);

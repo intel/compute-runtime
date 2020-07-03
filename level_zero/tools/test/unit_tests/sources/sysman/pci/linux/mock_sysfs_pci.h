@@ -23,7 +23,11 @@ const std::string resourceFile("device/resource");
 const std::string maxLinkSpeedFile("device/max_link_speed");
 const std::string maxLinkWidthFile("device/max_link_width");
 const std::string mockBdf = "0000:00:02.0";
+const std::string mockRealPath = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/" + mockBdf;
+const std::string mockRealPath2LevelsUp = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0";
+
 constexpr double mockMaxLinkSpeed = 2.5;
+
 const std::vector<std::string> mockReadBytes =
     {
         "0x00000000bf000000 0x00000000bfffffff 0x0000000000140204",
@@ -42,48 +46,92 @@ const std::vector<std::string> mockReadBytes =
 };
 
 class PciSysfsAccess : public SysfsAccess {};
+class PcifsAccess : public FsAccess {};
 
 template <>
-struct Mock<PciSysfsAccess> : public SysfsAccess {
-    int mockMaxLinkWidth = 0;
+struct Mock<PcifsAccess> : public PcifsAccess {
+    uint32_t mockMaxLinkWidth = 0;
     MOCK_METHOD(ze_result_t, read, (const std::string file, double &val), (override));
-    MOCK_METHOD(ze_result_t, read, (const std::string file, int &val), (override));
-    MOCK_METHOD(ze_result_t, read, (const std::string file, std::vector<std::string> &val), (override));
-    MOCK_METHOD(ze_result_t, readSymLink, (const std::string file, std::string &buf), (override));
+    MOCK_METHOD(ze_result_t, read, (const std::string file, uint32_t &val), (override));
 
     ze_result_t getValDouble(const std::string file, double &val) {
-        if (file.compare(maxLinkSpeedFile) == 0) {
+        if (file.compare(mockRealPath2LevelsUp + '/' + "max_link_speed") == 0) {
             val = mockMaxLinkSpeed;
+            return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_SUCCESS;
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    ze_result_t setValInt(const std::string file, int val) {
+    ze_result_t getValInt(const std::string file, uint32_t &val) {
+        if (file.compare(mockRealPath2LevelsUp + '/' + "max_link_width") == 0) {
+            val = mockMaxLinkWidth;
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t setValInt(const std::string file, uint32_t val) {
         if (file.compare(maxLinkWidthFile) == 0) {
             mockMaxLinkWidth = val;
         }
         return ZE_RESULT_SUCCESS;
     }
+};
 
-    ze_result_t getValInt(const std::string file, int &val) {
-        if (file.compare(maxLinkWidthFile) == 0) {
-            val = mockMaxLinkWidth;
+template <>
+struct Mock<PciSysfsAccess> : public PciSysfsAccess {
+    uint32_t mockMaxLinkWidth = 0;
+    MOCK_METHOD(ze_result_t, read, (const std::string file, double &val), (override));
+    MOCK_METHOD(ze_result_t, read, (const std::string file, uint32_t &val), (override));
+    MOCK_METHOD(ze_result_t, read, (const std::string file, std::vector<std::string> &val), (override));
+    MOCK_METHOD(ze_result_t, readSymLink, (const std::string file, std::string &buf), (override));
+    MOCK_METHOD(ze_result_t, getRealPath, (const std::string file, std::string &buf), (override));
+
+    ze_result_t getValDouble(const std::string file, double &val) {
+        if (file.compare(maxLinkSpeedFile) == 0) {
+            val = mockMaxLinkSpeed;
+            return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_SUCCESS;
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    ze_result_t getValString(const std::string file, std::string &val) {
+    ze_result_t setValInt(const std::string file, uint32_t val) {
+        if (file.compare(maxLinkWidthFile) == 0) {
+            mockMaxLinkWidth = val;
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t getValInt(const std::string file, uint32_t &val) {
+        if (file.compare(maxLinkWidthFile) == 0) {
+            val = mockMaxLinkWidth;
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t getValStringSymLink(const std::string file, std::string &val) {
         if (file.compare(deviceDir) == 0) {
             val = mockBdf;
+            return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_SUCCESS;
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    ze_result_t getValStringRealPath(const std::string file, std::string &val) {
+        if (file.compare(deviceDir) == 0) {
+            val = mockRealPath;
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     ze_result_t getValVector(const std::string file, std::vector<std::string> &val) {
         if (file.compare(resourceFile) == 0) {
             val = mockReadBytes;
+            return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_SUCCESS;
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     Mock<PciSysfsAccess>() = default;
@@ -91,6 +139,7 @@ struct Mock<PciSysfsAccess> : public SysfsAccess {
 
 class PublicLinuxPciImp : public L0::LinuxPciImp {
   public:
+    using LinuxPciImp::pfsAccess;
     using LinuxPciImp::pSysfsAccess;
 };
 

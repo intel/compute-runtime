@@ -65,6 +65,8 @@ void PciImp::init() {
         pOsPci = OsPci::create(pOsSysman);
     }
     UNRECOVERABLE_IF(nullptr == pOsPci);
+    Device *device = L0::Device::fromHandle(hCoreDevice);
+    pOsPci->setLmemSupport(device->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(device->getRootDeviceIndex()));
     std::string bdf;
     pOsPci->getPciBdf(bdf);
     if (bdf.empty()) {

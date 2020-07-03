@@ -35,6 +35,8 @@ class FsAccess {
     virtual ze_result_t read(const std::string file, uint64_t &val);
     virtual ze_result_t read(const std::string file, std::string &val);
     virtual ze_result_t read(const std::string file, std::vector<std::string> &val);
+    virtual ze_result_t read(const std::string file, double &val);
+    virtual ze_result_t read(const std::string file, uint32_t &val);
 
     virtual ze_result_t write(const std::string file, const std::string val);
 
@@ -81,8 +83,9 @@ class SysfsAccess : private FsAccess {
 
     ze_result_t read(const std::string file, std::string &val) override;
     MOCKABLE_VIRTUAL ze_result_t read(const std::string file, int &val);
+    ze_result_t read(const std::string file, uint32_t &val) override;
     ze_result_t read(const std::string file, uint64_t &val) override;
-    MOCKABLE_VIRTUAL ze_result_t read(const std::string file, double &val);
+    ze_result_t read(const std::string file, double &val) override;
     ze_result_t read(const std::string file, std::vector<std::string> &val) override;
 
     ze_result_t write(const std::string file, const std::string val) override;

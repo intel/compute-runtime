@@ -22,6 +22,18 @@ constexpr uint8_t maxPciBars = 6;
 // Linux kernel would report 255 link width, as an indication of unknown.
 constexpr uint32_t unknownPcieLinkWidth = 255u;
 
+std::string changeDirNLevelsUp(std::string realRootPath, uint8_t nLevel) {
+    size_t loc;
+    while (nLevel > 0) {
+        loc = realRootPath.find_last_of('/');
+        realRootPath = realRootPath.substr(0, loc);
+        nLevel--;
+    }
+    return realRootPath;
+}
+void LinuxPciImp::setLmemSupport(bool val) {
+    isLmemSupported = val;
+}
 ze_result_t LinuxPciImp::getPciBdf(std::string &bdf) {
     std::string bdfDir;
     ze_result_t result = pSysfsAccess->readSymLink(deviceDir, bdfDir);
@@ -34,28 +46,65 @@ ze_result_t LinuxPciImp::getPciBdf(std::string &bdf) {
 }
 
 ze_result_t LinuxPciImp::getMaxLinkSpeed(double &maxLinkSpeed) {
-    double val;
-    ze_result_t result = pSysfsAccess->read(maxLinkSpeedFile, val);
-    if (ZE_RESULT_SUCCESS != result) {
-        maxLinkSpeed = 0;
-        return result;
+    ze_result_t result;
+    if (isLmemSupported) {
+        std::string rootPortPath;
+        std::string realRootPath;
+        result = pSysfsAccess->getRealPath(deviceDir, realRootPath);
+        // we need to change the absolute path to two levels up to get actual
+        // values of speed and width at the Discrete card's root port.
+        // the root port is always at a fixed distance as defined in HW
+        rootPortPath = changeDirNLevelsUp(realRootPath, 2);
+        if (ZE_RESULT_SUCCESS != result) {
+            maxLinkSpeed = 0;
+            return result;
+        }
+        result = pfsAccess->read(rootPortPath + '/' + "max_link_speed", maxLinkSpeed);
+        if (ZE_RESULT_SUCCESS != result) {
+            maxLinkSpeed = 0;
+            return result;
+        }
+    } else {
+        result = pSysfsAccess->read(maxLinkSpeedFile, maxLinkSpeed);
+        if (ZE_RESULT_SUCCESS != result) {
+            maxLinkSpeed = 0;
+            return result;
+        }
     }
-
-    maxLinkSpeed = val;
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxPciImp::getMaxLinkWidth(uint32_t &maxLinkwidth) {
-    int intVal;
-
-    ze_result_t result = pSysfsAccess->read(maxLinkWidthFile, intVal);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
+    ze_result_t result;
+    if (isLmemSupported) {
+        std::string rootPortPath;
+        std::string realRootPath;
+        result = pSysfsAccess->getRealPath(deviceDir, realRootPath);
+        // we need to change the absolute path to two levels up to get actual
+        // values of speed and width at the Discrete card's root port.
+        // the root port is always at a fixed distance as defined in HW
+        rootPortPath = changeDirNLevelsUp(realRootPath, 2);
+        if (ZE_RESULT_SUCCESS != result) {
+            maxLinkwidth = 0;
+            return result;
+        }
+        result = pfsAccess->read(rootPortPath + '/' + "max_link_width", maxLinkwidth);
+        if (ZE_RESULT_SUCCESS != result) {
+            maxLinkwidth = 0;
+            return result;
+        }
+        if (maxLinkwidth == static_cast<uint32_t>(unknownPcieLinkWidth)) {
+            maxLinkwidth = 0;
+        }
+    } else {
+        result = pSysfsAccess->read(maxLinkWidthFile, maxLinkwidth);
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+        if (maxLinkwidth == static_cast<uint32_t>(unknownPcieLinkWidth)) {
+            maxLinkwidth = 0;
+        }
     }
-    if (intVal == static_cast<int>(unknownPcieLinkWidth)) {
-        intVal = 0;
-    }
-    maxLinkwidth = intVal;
     return ZE_RESULT_SUCCESS;
 }
 
@@ -129,8 +178,8 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zet_pci_bar_propert
 
 LinuxPciImp::LinuxPciImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    pfsAccess = &pLinuxSysmanImp->getFsAccess();
 }
 
 OsPci *OsPci::create(OsSysman *pOsSysman) {
