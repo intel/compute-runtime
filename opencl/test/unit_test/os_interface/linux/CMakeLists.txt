@@ -19,7 +19,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_engine_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_mapper_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_memory_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_memory_manager_allocate_in_device_pool_tests.cpp
@@ -39,6 +38,15 @@ set(IGDRCL_SRCS_tests_os_interface_linux
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
 )
+if(SUPPORT_DG1 AND "${BRANCH_TYPE}" STREQUAL "")
+list(APPEND IGDRCL_SRCS_tests_os_interface_linux
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_info_tests.cpp
+)
+else()
+list(APPEND IGDRCL_SRCS_tests_os_interface_linux
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/drm_memory_info_tests.cpp
+)
+endif()
 if(UNIX)
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_os_interface_linux})
 endif()
