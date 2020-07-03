@@ -15,13 +15,15 @@ namespace L0 {
 class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:
     WddmSysmanImp(SysmanImp *pParentSysmanImp) : pParentSysmanImp(pParentSysmanImp){};
+    WddmSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) : pParentSysmanDeviceImp(pParentSysmanDeviceImp){};
     ~WddmSysmanImp() override = default;
 
     ze_result_t init() override;
 
   private:
     WddmSysmanImp() = delete;
-    SysmanImp *pParentSysmanImp;
+    SysmanImp *pParentSysmanImp = nullptr;
+    SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
 };
 
 } // namespace L0

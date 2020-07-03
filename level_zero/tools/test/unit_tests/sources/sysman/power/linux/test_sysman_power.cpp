@@ -5,22 +5,34 @@
  *
  */
 
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/sysman/power/linux/os_power_imp.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/mock_sysman_fixture.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "mock_sysfs_power.h"
-#include "sysman/linux/os_sysman_imp.h"
 #include "sysman/power/power_imp.h"
-
-using ::testing::_;
-using ::testing::NiceMock;
 
 namespace L0 {
 namespace ult {
 
 constexpr uint64_t convertJouleToMicroJoule = 1000000u;
+
+class SysmanDevicePowerGetTest : public SysmanDeviceFixture {
+  protected:
+    void SetUp() override {
+        SysmanDeviceFixture::SetUp();
+    }
+    void TearDown() override {
+        SysmanDeviceFixture::TearDown();
+    }
+};
+TEST_F(SysmanDevicePowerGetTest, GivenValidSysmanHandleWhenPowerGetNotImplementedThenErrorIsReturned) {
+    zes_device_handle_t hSysman = device->toHandle();
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumPowerDomains(hSysman, &count, nullptr), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+}
+
 class SysmanPowerFixture : public DeviceFixture, public ::testing::Test {
 
   protected:

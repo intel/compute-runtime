@@ -8,7 +8,7 @@ if(UNIX)
     target_sources(${TARGET_NAME}
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-            ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/test_sysman_device.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_sysfs_sysman_device.h
+            ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/test_global_operations.cpp
+            ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_global_operations.h
     )
 endif()

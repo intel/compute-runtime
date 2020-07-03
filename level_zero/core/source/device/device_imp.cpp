@@ -41,6 +41,7 @@
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/sampler/sampler.h"
 #include "level_zero/tools/source/metrics/metric.h"
+#include "level_zero/tools/source/sysman/sysman.h"
 
 #include "hw_helpers.h"
 
@@ -653,6 +654,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
             ->notifyNewDevice(osInterface ? osInterface->getDeviceHandle() : 0);
     }
 
+    device->setSysmanHandle(L0::SysmanDeviceHandleContext::init(device->toHandle()));
     return device;
 }
 
@@ -676,6 +678,11 @@ DeviceImp::~DeviceImp() {
             this->neoDevice->getMemoryManager()->freeGraphicsMemory(this->debugSurface);
             this->debugSurface = nullptr;
         }
+    }
+
+    if (pSysmanDevice != nullptr) {
+        delete pSysmanDevice;
+        pSysmanDevice = nullptr;
     }
 
     if (neoDevice) {

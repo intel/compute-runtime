@@ -32,6 +32,7 @@ struct DriverHandle;
 struct BuiltinFunctionsLib;
 struct ExecutionEnvironment;
 struct MetricContext;
+struct SysmanDevice;
 
 struct Device : _ze_device_handle_t {
     virtual uint32_t getRootDeviceIndex() = 0;
@@ -122,6 +123,8 @@ struct Device : _ze_device_handle_t {
                                                                       size_t size, struct CommandList *commandList) = 0;
 
     virtual NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size) = 0;
+    virtual void setSysmanHandle(SysmanDevice *pSysmanDevice) = 0;
+    virtual SysmanDevice *getSysmanHandle() = 0;
 };
 
 } // namespace L0

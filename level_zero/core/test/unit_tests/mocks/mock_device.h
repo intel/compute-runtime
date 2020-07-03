@@ -109,6 +109,8 @@ struct Mock<Device> : public Device {
     MOCK_CONST_METHOD0(getDebugSurface, NEO::GraphicsAllocation *());
     MOCK_METHOD3(allocateManagedMemoryFromHostPtr, NEO::GraphicsAllocation *(void *buffer, size_t size, struct L0::CommandList *commandList));
     MOCK_METHOD2(allocateMemoryFromHostPtr, NEO::GraphicsAllocation *(const void *buffer, size_t size));
+    MOCK_METHOD1(setSysmanHandle, void(SysmanDevice *));
+    MOCK_METHOD0(getSysmanHandle, SysmanDevice *());
 };
 
 template <>

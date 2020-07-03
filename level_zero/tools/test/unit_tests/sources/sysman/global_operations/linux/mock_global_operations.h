@@ -7,8 +7,8 @@
 
 #pragma once
 #include "level_zero/core/test/unit_tests/mock.h"
-#include "level_zero/tools/source/sysman/sysman_device/linux/os_sysman_device_imp.h"
-#include "level_zero/tools/source/sysman/sysman_device/sysman_device_imp.h"
+#include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
+#include "level_zero/tools/source/sysman/global_operations/linux/os_global_operations_imp.h"
 
 #include "sysman/sysman.h"
 
@@ -38,10 +38,10 @@ const std::string engine1("1");
 const std::string engine2("2");
 const std::string engine3("3");
 
-class SysmanDeviceSysfsAccess : public SysfsAccess {};
+class GlobalOperationsSysfsAccess : public SysfsAccess {};
 
 template <>
-struct Mock<SysmanDeviceSysfsAccess> : public SysfsAccess {
+struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
     ze_result_t getValString(const std::string file, std::string &val) {
         if (file.compare(subsystemVendorFile) == 0) {
             val = "0x8086";
@@ -91,17 +91,17 @@ struct Mock<SysmanDeviceSysfsAccess> : public SysfsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
-    Mock<SysmanDeviceSysfsAccess>() = default;
+    Mock<GlobalOperationsSysfsAccess>() = default;
 
     MOCK_METHOD(ze_result_t, read, (const std::string file, std::string &val), (override));
     MOCK_METHOD(ze_result_t, read, (const std::string file, uint64_t &val), (override));
     MOCK_METHOD(ze_result_t, scanDirEntries, (const std::string path, std::vector<std::string> &list), (override));
 };
 
-class PublicLinuxSysmanDeviceImp : public L0::LinuxSysmanDeviceImp {
+class PublicLinuxGlobalOperationsImp : public L0::LinuxGlobalOperationsImp {
   public:
-    using LinuxSysmanDeviceImp::pLinuxSysmanImp;
-    using LinuxSysmanDeviceImp::pSysfsAccess;
+    using LinuxGlobalOperationsImp::pLinuxSysmanImp;
+    using LinuxGlobalOperationsImp::pSysfsAccess;
 };
 
 } // namespace ult

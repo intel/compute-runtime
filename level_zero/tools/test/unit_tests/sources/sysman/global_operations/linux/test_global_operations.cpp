@@ -9,7 +9,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mock_sysfs_sysman_device.h"
+#include "mock_global_operations.h"
 
 using ::testing::_;
 using ::testing::DoAll;
@@ -34,43 +34,43 @@ constexpr int64_t engines1 = 28u;
 constexpr int64_t engines2 = 4u;
 constexpr uint32_t totalProcessStates = 2u; // Two process States for two pids
 const std::string expectedModelName("0x3ea5");
-class SysmanSysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
+class SysmanGlobalOperationsFixture : public DeviceFixture, public ::testing::Test {
   protected:
     std::unique_ptr<SysmanImp> sysmanImp;
     zet_sysman_handle_t hSysman;
 
-    OsSysmanDevice *pOsSysmanDevice = nullptr;
-    Mock<SysmanDeviceSysfsAccess> *pSysfsAccess = nullptr;
-    L0::SysmanDevice *pSysmanDevicePrev = nullptr;
-    L0::SysmanDeviceImp sysmanDeviceImp;
-    PublicLinuxSysmanDeviceImp linuxSysmanDeviceImp;
+    OsGlobalOperations *pOsGlobalOperations = nullptr;
+    Mock<GlobalOperationsSysfsAccess> *pSysfsAccess = nullptr;
+    L0::GlobalOperations *pGlobalOperationsPrev = nullptr;
+    L0::GlobalOperationsImp globalOperationsImp;
+    PublicLinuxGlobalOperationsImp linuxGlobalOperationsImp;
 
     void SetUp() override {
         DeviceFixture::SetUp();
         sysmanImp = std::make_unique<SysmanImp>(device->toHandle());
-        pSysfsAccess = new NiceMock<Mock<SysmanDeviceSysfsAccess>>;
-        linuxSysmanDeviceImp.pSysfsAccess = pSysfsAccess;
-        pOsSysmanDevice = static_cast<OsSysmanDevice *>(&linuxSysmanDeviceImp);
+        pSysfsAccess = new NiceMock<Mock<GlobalOperationsSysfsAccess>>;
+        linuxGlobalOperationsImp.pSysfsAccess = pSysfsAccess;
+        pOsGlobalOperations = static_cast<OsGlobalOperations *>(&linuxGlobalOperationsImp);
 
         ON_CALL(*pSysfsAccess, read(_, Matcher<std::string &>(_)))
-            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<SysmanDeviceSysfsAccess>::getValString));
+            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<GlobalOperationsSysfsAccess>::getValString));
         ON_CALL(*pSysfsAccess, read(_, Matcher<uint64_t &>(_)))
-            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<SysmanDeviceSysfsAccess>::getValUnsignedLong));
+            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<GlobalOperationsSysfsAccess>::getValUnsignedLong));
         ON_CALL(*pSysfsAccess, scanDirEntries(_, _))
-            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<SysmanDeviceSysfsAccess>::getScannedDirEntries));
+            .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<GlobalOperationsSysfsAccess>::getScannedDirEntries));
 
-        pSysmanDevicePrev = sysmanImp->pSysmanDevice;
-        sysmanImp->pSysmanDevice = static_cast<SysmanDevice *>(&sysmanDeviceImp);
-        sysmanDeviceImp.pOsSysmanDevice = pOsSysmanDevice;
-        sysmanDeviceImp.hCoreDevice = sysmanImp->hCoreDevice;
-        sysmanDeviceImp.init();
+        pGlobalOperationsPrev = sysmanImp->pGlobalOperations;
+        sysmanImp->pGlobalOperations = static_cast<GlobalOperations *>(&globalOperationsImp);
+        globalOperationsImp.pOsGlobalOperations = pOsGlobalOperations;
+        globalOperationsImp.hCoreDevice = sysmanImp->hCoreDevice;
+        globalOperationsImp.init();
         hSysman = sysmanImp->toHandle();
     }
 
     void TearDown() override {
         // restore state
-        sysmanImp->pSysmanDevice = pSysmanDevicePrev;
-        sysmanDeviceImp.pOsSysmanDevice = nullptr;
+        sysmanImp->pGlobalOperations = pGlobalOperationsPrev;
+        globalOperationsImp.pOsGlobalOperations = nullptr;
 
         // cleanup
         if (pSysfsAccess != nullptr) {
@@ -81,7 +81,7 @@ class SysmanSysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
     }
 };
 
-TEST_F(SysmanSysmanDeviceFixture, GivenValidSysmanHandleWhenCallingzetSysmanDeviceGetPropertiesThenVerifyzetSysmanDeviceGetPropertiesCallSucceeds) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidSysmanHandleWhenCallingzetGlobalOperationsGetPropertiesThenVerifyzetGlobalOperationsGetPropertiesCallSucceeds) {
     zet_sysman_properties_t properties;
     ze_result_t result = zetSysmanDeviceGetProperties(hSysman, &properties);
 
@@ -95,7 +95,7 @@ TEST_F(SysmanSysmanDeviceFixture, GivenValidSysmanHandleWhenCallingzetSysmanDevi
     EXPECT_TRUE(0 == std::memcmp(properties.vendorName, vendorIntel.c_str(), vendorIntel.size()));
 }
 
-TEST_F(SysmanSysmanDeviceFixture, GivenValidSysmanHandleWhileRetrievingInformationAboutHostProcessesUsingDeviceThenSuccessIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidSysmanHandleWhileRetrievingInformationAboutHostProcessesUsingDeviceThenSuccessIsReturned) {
     uint32_t count = 0;
     ASSERT_EQ(ZE_RESULT_SUCCESS, zetSysmanProcessesGetState(hSysman, &count, nullptr));
     EXPECT_EQ(count, totalProcessStates);
@@ -109,7 +109,7 @@ TEST_F(SysmanSysmanDeviceFixture, GivenValidSysmanHandleWhileRetrievingInformati
     EXPECT_EQ(processes[1].memSize, memSize2);
 }
 
-TEST_F(SysmanSysmanDeviceFixture, GivenValidSysmanHandleWhileReadingNonExistingFileThenErrorIsReturned) {
+TEST_F(SysmanGlobalOperationsFixture, GivenValidSysmanHandleWhileReadingNonExistingFileThenErrorIsReturned) {
     std::vector<std::string> engineEntries;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysfsAccess->scanDirEntries("clients/7/busy", engineEntries));
 }

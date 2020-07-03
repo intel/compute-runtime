@@ -18,4 +18,9 @@ OsSysman *OsSysman::create(SysmanImp *pParentSysmanImp) {
     return static_cast<OsSysman *>(pWddmSysmanImp);
 }
 
+OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {
+    WddmSysmanImp *pWddmSysmanImp = new WddmSysmanImp(pParentSysmanDeviceImp);
+    return static_cast<OsSysman *>(pWddmSysmanImp);
+}
+
 } // namespace L0

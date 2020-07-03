@@ -15,7 +15,7 @@
 #include "level_zero/tools/source/tracing/tracing.h"
 
 namespace L0 {
-
+struct SysmanDevice;
 struct DeviceImp : public Device {
     uint32_t getRootDeviceIndex() override;
     ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) override;
@@ -78,6 +78,8 @@ struct DeviceImp : public Device {
     ~DeviceImp() override;
     NEO::GraphicsAllocation *allocateManagedMemoryFromHostPtr(void *buffer, size_t size, struct CommandList *commandList) override;
     NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size) override;
+    void setSysmanHandle(SysmanDevice *pSysman) override;
+    SysmanDevice *getSysmanHandle() override;
 
     NEO::Device *neoDevice = nullptr;
     bool isSubdevice = false;
@@ -110,6 +112,7 @@ struct DeviceImp : public Device {
         return ZE_RESULT_SUCCESS;
     }
     NEO::GraphicsAllocation *debugSurface = nullptr;
+    SysmanDevice *pSysmanDevice = nullptr;
 };
 
 } // namespace L0

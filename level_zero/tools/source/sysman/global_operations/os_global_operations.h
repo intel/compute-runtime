@@ -15,7 +15,7 @@
 
 namespace L0 {
 
-class OsSysmanDevice {
+class OsGlobalOperations {
   public:
     virtual void getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) = 0;
     virtual void getBoardNumber(int8_t (&boardNumber)[ZET_STRING_PROPERTY_SIZE]) = 0;
@@ -25,8 +25,8 @@ class OsSysmanDevice {
     virtual void getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) = 0;
     virtual ze_result_t reset() = 0;
     virtual ze_result_t scanProcessesState(std::vector<zet_process_state_t> &pProcessList) = 0;
-    static OsSysmanDevice *create(OsSysman *pOsSysman);
-    virtual ~OsSysmanDevice() {}
+    static OsGlobalOperations *create(OsSysman *pOsSysman);
+    virtual ~OsGlobalOperations() {}
 };
 
 } // namespace L0

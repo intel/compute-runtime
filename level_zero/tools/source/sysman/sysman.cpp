@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/sysman.h"
 
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
@@ -49,6 +50,29 @@ ze_result_t SysmanHandleContext::sysmanGet(zet_device_handle_t hDevice, zet_sysm
     }
     *phSysman = got->second;
     return ZE_RESULT_SUCCESS;
+}
+
+SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t device) {
+    auto isSysmanEnabled = getenv("ZES_ENABLE_SYSMAN");
+    if (isSysmanEnabled == nullptr) {
+        return nullptr;
+    }
+    auto isSysmanEnabledAsInt = atoi(isSysmanEnabled);
+    if (isSysmanEnabledAsInt == 1) {
+        SysmanDeviceImp *sysman = new SysmanDeviceImp(device);
+        UNRECOVERABLE_IF(!sysman);
+        sysman->init();
+        return sysman;
+    }
+    return nullptr;
+}
+
+void DeviceImp::setSysmanHandle(SysmanDevice *pSysman) {
+    pSysmanDevice = pSysman;
+}
+
+SysmanDevice *DeviceImp::getSysmanHandle() {
+    return pSysmanDevice;
 }
 
 } // namespace L0

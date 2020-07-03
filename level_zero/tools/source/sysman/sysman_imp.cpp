@@ -9,14 +9,28 @@
 
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/pci/pci_imp.h"
 #include "level_zero/tools/source/sysman/scheduler/scheduler_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
-#include "level_zero/tools/source/sysman/sysman_device/sysman_device_imp.h"
 
 #include <vector>
 
 namespace L0 {
+
+SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
+    hCoreDevice = hDevice;
+    pOsSysman = OsSysman::create(this);
+    UNRECOVERABLE_IF(nullptr == pOsSysman);
+}
+
+SysmanDeviceImp::~SysmanDeviceImp() {
+    freeResource(pOsSysman);
+}
+
+void SysmanDeviceImp::init() {
+    pOsSysman->init();
+}
 
 SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
     hCoreDevice = hDevice;
@@ -24,7 +38,7 @@ SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
     UNRECOVERABLE_IF(nullptr == pOsSysman);
     pPci = new PciImp(pOsSysman);
     pSched = new SchedulerImp(pOsSysman);
-    pSysmanDevice = new SysmanDeviceImp(pOsSysman, hCoreDevice);
+    pGlobalOperations = new GlobalOperationsImp(pOsSysman, hCoreDevice);
     pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
     pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
     pMemoryHandleContext = new MemoryHandleContext(pOsSysman, hCoreDevice);
@@ -44,7 +58,7 @@ SysmanImp::~SysmanImp() {
     freeResource(pMemoryHandleContext);
     freeResource(pStandbyHandleContext);
     freeResource(pFrequencyHandleContext);
-    freeResource(pSysmanDevice);
+    freeResource(pGlobalOperations);
     freeResource(pPci);
     freeResource(pSched);
     freeResource(pOsSysman);
@@ -82,13 +96,13 @@ void SysmanImp::init() {
     if (pSched) {
         pSched->init();
     }
-    if (pSysmanDevice) {
-        pSysmanDevice->init();
+    if (pGlobalOperations) {
+        pGlobalOperations->init();
     }
 }
 
 ze_result_t SysmanImp::deviceGetProperties(zet_sysman_properties_t *pProperties) {
-    return pSysmanDevice->deviceGetProperties(pProperties);
+    return pGlobalOperations->deviceGetProperties(pProperties);
 }
 
 ze_result_t SysmanImp::schedulerGetCurrentMode(zet_sched_mode_t *pMode) {
@@ -141,11 +155,11 @@ ze_result_t SysmanImp::schedulerSetComputeUnitDebugMode(ze_bool_t *pNeedReboot) 
 }
 
 ze_result_t SysmanImp::processesGetState(uint32_t *pCount, zet_process_state_t *pProcesses) {
-    return pSysmanDevice->processesGetState(pCount, pProcesses);
+    return pGlobalOperations->processesGetState(pCount, pProcesses);
 }
 
 ze_result_t SysmanImp::deviceReset() {
-    return pSysmanDevice->reset();
+    return pGlobalOperations->reset();
 }
 
 ze_result_t SysmanImp::deviceGetRepairStatus(zet_repair_status_t *pRepairStatus) {
@@ -170,6 +184,10 @@ ze_result_t SysmanImp::pciGetStats(zet_pci_stats_t *pStats) {
 
 ze_result_t SysmanImp::powerGet(uint32_t *pCount, zet_sysman_pwr_handle_t *phPower) {
     return pPowerHandleContext->powerGet(pCount, phPower);
+}
+
+ze_result_t SysmanDeviceImp::powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t SysmanImp::frequencyGet(uint32_t *pCount, zet_sysman_freq_handle_t *phFrequency) {

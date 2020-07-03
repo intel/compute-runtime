@@ -19,6 +19,7 @@ namespace L0 {
 class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:
     LinuxSysmanImp(SysmanImp *pParentSysmanImp);
+    LinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp);
     ~LinuxSysmanImp() override;
 
     ze_result_t init() override;
@@ -29,14 +30,17 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     NEO::Drm &getDrm();
     PlatformMonitoringTech &getPlatformMonitoringTechAccess();
 
-  private:
-    LinuxSysmanImp() = delete;
-    SysmanImp *pParentSysmanImp = nullptr;
+  protected:
     FsAccess *pFsAccess = nullptr;
     ProcfsAccess *pProcfsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
-    NEO::Drm *pDrm = nullptr;
     PlatformMonitoringTech *pPmt = nullptr;
+
+  private:
+    LinuxSysmanImp() = delete;
+    SysmanImp *pParentSysmanImp = nullptr;
+    SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
+    NEO::Drm *pDrm = nullptr;
 };
 
 } // namespace L0

@@ -8,6 +8,7 @@
 #include <level_zero/zet_api.h>
 
 #include "sysman/sysman.h"
+#include "third_party/level_zero/zes_api_ext.h"
 
 extern "C" {
 
@@ -127,6 +128,14 @@ zetSysmanPciGetStats(
     zet_sysman_handle_t hSysman,
     zet_pci_stats_t *pStats) {
     return L0::Sysman::fromHandle(hSysman)->pciGetStats(pStats);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesDeviceEnumPowerDomains(
+    zes_device_handle_t hDevice,
+    uint32_t *pCount,
+    zes_pwr_handle_t *phPower) {
+    return L0::SysmanDevice::fromHandle(hDevice)->powerGet(pCount, phPower);
 }
 
 __zedllexport ze_result_t __zecall

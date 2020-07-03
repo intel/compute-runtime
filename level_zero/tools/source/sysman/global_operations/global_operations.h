@@ -10,9 +10,9 @@
 
 namespace L0 {
 
-class SysmanDevice {
+class GlobalOperations {
   public:
-    virtual ~SysmanDevice(){};
+    virtual ~GlobalOperations(){};
     virtual ze_result_t deviceGetProperties(zet_sysman_properties_t *pProperties) = 0;
     virtual ze_result_t reset() = 0;
     virtual ze_result_t processesGetState(uint32_t *pCount, zet_process_state_t *pProcesses) = 0;

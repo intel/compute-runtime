@@ -5,11 +5,11 @@
  *
  */
 
-#include "level_zero/tools/source/sysman/sysman_device/linux/os_sysman_device_imp.h"
+#include "level_zero/tools/source/sysman/global_operations/linux/os_global_operations_imp.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
-#include "level_zero/tools/source/sysman/sysman_device/sysman_device_imp.h"
 #include <level_zero/zet_api.h>
 
 #include <csignal>
@@ -19,13 +19,13 @@ namespace L0 {
 const std::string vendorIntel("Intel(R) Corporation");
 const std::string unknown("Unknown");
 const std::string intelPciId("0x8086");
-const std::string LinuxSysmanDeviceImp::deviceDir("device");
-const std::string LinuxSysmanDeviceImp::vendorFile("device/vendor");
-const std::string LinuxSysmanDeviceImp::deviceFile("device/device");
-const std::string LinuxSysmanDeviceImp::subsystemVendorFile("device/subsystem_vendor");
-const std::string LinuxSysmanDeviceImp::driverFile("device/driver");
-const std::string LinuxSysmanDeviceImp::functionLevelReset("device/reset");
-const std::string LinuxSysmanDeviceImp::clientsDir("clients");
+const std::string LinuxGlobalOperationsImp::deviceDir("device");
+const std::string LinuxGlobalOperationsImp::vendorFile("device/vendor");
+const std::string LinuxGlobalOperationsImp::deviceFile("device/device");
+const std::string LinuxGlobalOperationsImp::subsystemVendorFile("device/subsystem_vendor");
+const std::string LinuxGlobalOperationsImp::driverFile("device/driver");
+const std::string LinuxGlobalOperationsImp::functionLevelReset("device/reset");
+const std::string LinuxGlobalOperationsImp::clientsDir("clients");
 
 // Map engine entries(numeric values) present in /sys/class/drm/card<n>/clients/<client_n>/busy,
 // with engine enum defined in leve-zero spec
@@ -38,17 +38,17 @@ const std::map<int, zet_engine_type_t> engineMap = {
     {3, ZET_ENGINE_TYPE_MEDIA},
     {4, ZET_ENGINE_TYPE_COMPUTE}};
 
-void LinuxSysmanDeviceImp::getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) {
     std::copy(unknown.begin(), unknown.end(), serialNumber);
     serialNumber[unknown.size()] = '\0';
 }
 
-void LinuxSysmanDeviceImp::getBoardNumber(int8_t (&boardNumber)[ZET_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getBoardNumber(int8_t (&boardNumber)[ZET_STRING_PROPERTY_SIZE]) {
     std::copy(unknown.begin(), unknown.end(), boardNumber);
     boardNumber[unknown.size()] = '\0';
 }
 
-void LinuxSysmanDeviceImp::getBrandName(int8_t (&brandName)[ZET_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getBrandName(int8_t (&brandName)[ZET_STRING_PROPERTY_SIZE]) {
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(subsystemVendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
@@ -65,7 +65,7 @@ void LinuxSysmanDeviceImp::getBrandName(int8_t (&brandName)[ZET_STRING_PROPERTY_
     brandName[unknown.size()] = '\0';
 }
 
-void LinuxSysmanDeviceImp::getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_SIZE]) {
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(deviceFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
@@ -78,7 +78,7 @@ void LinuxSysmanDeviceImp::getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_
     modelName[strVal.size()] = '\0';
 }
 
-void LinuxSysmanDeviceImp::getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]) {
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(vendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
@@ -95,7 +95,7 @@ void LinuxSysmanDeviceImp::getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERT
     vendorName[unknown.size()] = '\0';
 }
 
-void LinuxSysmanDeviceImp::getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) {
     std::copy(unknown.begin(), unknown.end(), driverVersion);
     driverVersion[unknown.size()] = '\0';
 }
@@ -120,7 +120,7 @@ static void getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAccess *pSy
     }
 }
 
-ze_result_t LinuxSysmanDeviceImp::reset() {
+ze_result_t LinuxGlobalOperationsImp::reset() {
     FsAccess *pFsAccess = &pLinuxSysmanImp->getFsAccess();
     ProcfsAccess *pProcfsAccess = &pLinuxSysmanImp->getProcfsAccess();
     SysfsAccess *pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
@@ -228,7 +228,7 @@ ze_result_t LinuxSysmanDeviceImp::reset() {
 // accumulated nanoseconds each client spent on engines.
 // Thus we traverse each file in busy dir for non-zero time and if we find that file say 0,then we could say that
 // this engine 0 is used by process.
-ze_result_t LinuxSysmanDeviceImp::scanProcessesState(std::vector<zet_process_state_t> &pProcessList) {
+ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zet_process_state_t> &pProcessList) {
     std::vector<std::string> clientIds;
     ze_result_t result = pSysfsAccess->scanDirEntries(clientsDir, clientIds);
     if (ZE_RESULT_SUCCESS != result) {
@@ -311,15 +311,15 @@ ze_result_t LinuxSysmanDeviceImp::scanProcessesState(std::vector<zet_process_sta
     return result;
 }
 
-LinuxSysmanDeviceImp::LinuxSysmanDeviceImp(OsSysman *pOsSysman) {
+LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
 
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
 }
 
-OsSysmanDevice *OsSysmanDevice::create(OsSysman *pOsSysman) {
-    LinuxSysmanDeviceImp *pLinuxSysmanDeviceImp = new LinuxSysmanDeviceImp(pOsSysman);
-    return static_cast<OsSysmanDevice *>(pLinuxSysmanDeviceImp);
+OsGlobalOperations *OsGlobalOperations::create(OsSysman *pOsSysman) {
+    LinuxGlobalOperationsImp *pLinuxGlobalOperationsImp = new LinuxGlobalOperationsImp(pOsSysman);
+    return static_cast<OsGlobalOperations *>(pLinuxGlobalOperationsImp);
 }
 
 } // namespace L0

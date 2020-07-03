@@ -31,7 +31,7 @@ struct SysmanImp : Sysman, NEO::NonCopyableOrMovableClass {
     OsSysman *pOsSysman = nullptr;
     Pci *pPci = nullptr;
     Scheduler *pSched = nullptr;
-    SysmanDevice *pSysmanDevice = nullptr;
+    GlobalOperations *pGlobalOperations = nullptr;
     FrequencyHandleContext *pFrequencyHandleContext = nullptr;
     StandbyHandleContext *pStandbyHandleContext = nullptr;
     MemoryHandleContext *pMemoryHandleContext = nullptr;
@@ -70,6 +70,31 @@ struct SysmanImp : Sysman, NEO::NonCopyableOrMovableClass {
     ze_result_t rasGet(uint32_t *pCount, zet_sysman_ras_handle_t *phRas) override;
     ze_result_t eventGet(zet_sysman_event_handle_t *phEvent) override;
     ze_result_t diagnosticsGet(uint32_t *pCount, zet_sysman_diag_handle_t *phDiagnostics) override;
+
+  private:
+    template <typename T>
+    void inline freeResource(T *&resource) {
+        if (resource) {
+            delete resource;
+            resource = nullptr;
+        }
+    }
+};
+
+struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
+
+    SysmanDeviceImp(ze_device_handle_t hDevice);
+    ~SysmanDeviceImp() override;
+
+    SysmanDeviceImp() = delete;
+    void init();
+
+    ze_device_handle_t hCoreDevice;
+
+    OsSysman *pOsSysman = nullptr;
+    PowerHandleContext *pPowerHandleContext = nullptr;
+
+    ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
 
   private:
     template <typename T>

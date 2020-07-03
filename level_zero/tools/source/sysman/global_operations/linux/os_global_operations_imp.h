@@ -6,14 +6,13 @@
  */
 
 #pragma once
+#include "level_zero/tools/source/sysman/global_operations/os_global_operations.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
-#include "level_zero/tools/source/sysman/sysman_device/os_sysman_device.h"
 
 namespace L0 {
-
 class SysfsAccess;
 
-class LinuxSysmanDeviceImp : public OsSysmanDevice, NEO::NonCopyableOrMovableClass {
+class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMovableClass {
   public:
     void getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) override;
     void getBoardNumber(int8_t (&boardNumber)[ZET_STRING_PROPERTY_SIZE]) override;
@@ -23,9 +22,9 @@ class LinuxSysmanDeviceImp : public OsSysmanDevice, NEO::NonCopyableOrMovableCla
     void getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) override;
     ze_result_t reset() override;
     ze_result_t scanProcessesState(std::vector<zet_process_state_t> &pProcessList) override;
-    LinuxSysmanDeviceImp() = default;
-    LinuxSysmanDeviceImp(OsSysman *pOsSysman);
-    ~LinuxSysmanDeviceImp() override = default;
+    LinuxGlobalOperationsImp() = default;
+    LinuxGlobalOperationsImp(OsSysman *pOsSysman);
+    ~LinuxGlobalOperationsImp() override = default;
 
   protected:
     SysfsAccess *pSysfsAccess = nullptr;

@@ -5,7 +5,7 @@
  *
  */
 
-#include "sysman_device_imp.h"
+#include "global_operations_imp.h"
 
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -14,9 +14,9 @@
 
 namespace L0 {
 
-ze_result_t SysmanDeviceImp::processesGetState(uint32_t *pCount, zet_process_state_t *pProcesses) {
+ze_result_t GlobalOperationsImp::processesGetState(uint32_t *pCount, zet_process_state_t *pProcesses) {
     std::vector<zet_process_state_t> pProcessList;
-    ze_result_t result = pOsSysmanDevice->scanProcessesState(pProcessList);
+    ze_result_t result = pOsGlobalOperations->scanProcessesState(pProcessList);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
@@ -37,7 +37,7 @@ ze_result_t SysmanDeviceImp::processesGetState(uint32_t *pCount, zet_process_sta
     return result;
 }
 
-ze_result_t SysmanDeviceImp::deviceGetProperties(zet_sysman_properties_t *pProperties) {
+ze_result_t GlobalOperationsImp::deviceGetProperties(zet_sysman_properties_t *pProperties) {
     Device *device = L0::Device::fromHandle(hCoreDevice);
     ze_device_properties_t deviceProperties;
     device->getProperties(&deviceProperties);
@@ -50,26 +50,26 @@ ze_result_t SysmanDeviceImp::deviceGetProperties(zet_sysman_properties_t *pPrope
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t SysmanDeviceImp::reset() {
-    return pOsSysmanDevice->reset();
+ze_result_t GlobalOperationsImp::reset() {
+    return pOsGlobalOperations->reset();
 }
 
-void SysmanDeviceImp::init() {
-    if (pOsSysmanDevice == nullptr) {
-        pOsSysmanDevice = OsSysmanDevice::create(pOsSysman);
+void GlobalOperationsImp::init() {
+    if (pOsGlobalOperations == nullptr) {
+        pOsGlobalOperations = OsGlobalOperations::create(pOsSysman);
     }
-    UNRECOVERABLE_IF(nullptr == pOsSysmanDevice);
-    pOsSysmanDevice->getVendorName(sysmanProperties.vendorName);
-    pOsSysmanDevice->getDriverVersion(sysmanProperties.driverVersion);
-    pOsSysmanDevice->getModelName(sysmanProperties.modelName);
-    pOsSysmanDevice->getBrandName(sysmanProperties.brandName);
-    pOsSysmanDevice->getBoardNumber(sysmanProperties.boardNumber);
-    pOsSysmanDevice->getSerialNumber(sysmanProperties.serialNumber);
+    UNRECOVERABLE_IF(nullptr == pOsGlobalOperations);
+    pOsGlobalOperations->getVendorName(sysmanProperties.vendorName);
+    pOsGlobalOperations->getDriverVersion(sysmanProperties.driverVersion);
+    pOsGlobalOperations->getModelName(sysmanProperties.modelName);
+    pOsGlobalOperations->getBrandName(sysmanProperties.brandName);
+    pOsGlobalOperations->getBoardNumber(sysmanProperties.boardNumber);
+    pOsGlobalOperations->getSerialNumber(sysmanProperties.serialNumber);
 }
 
-SysmanDeviceImp::~SysmanDeviceImp() {
-    if (nullptr != pOsSysmanDevice) {
-        delete pOsSysmanDevice;
+GlobalOperationsImp::~GlobalOperationsImp() {
+    if (nullptr != pOsGlobalOperations) {
+        delete pOsGlobalOperations;
     }
 }
 
