@@ -15,7 +15,7 @@
 using namespace NEO;
 
 TEST(MemoryInfo, whenQueryingEngineInfoThenEngineInfoIsNotCreatedAndNoIoctlsAreCalled) {
-    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
+    auto drm = std::make_unique<DrmMockDg1>();
     EXPECT_NE(nullptr, drm);
 
     EXPECT_TRUE(drm->queryEngineInfo());
@@ -25,7 +25,7 @@ TEST(MemoryInfo, whenQueryingEngineInfoThenEngineInfoIsNotCreatedAndNoIoctlsAreC
 }
 
 TEST(MemoryInfo, givenMemoryRegionQuerySupportedWhenQueryingMemoryInfoThenMemoryInfoIsCreatedWithRegions) {
-    auto drm = std::make_unique<DrmMock>();
+    auto drm = std::make_unique<DrmMockDg1>();
     ASSERT_NE(nullptr, drm);
 
     drm->queryMemoryInfo();
@@ -38,7 +38,7 @@ TEST(MemoryInfo, givenMemoryRegionQuerySupportedWhenQueryingMemoryInfoThenMemory
 }
 
 TEST(MemoryInfo, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoThenMemoryInfoIsNotCreated) {
-    auto drm = std::make_unique<DrmMock>();
+    auto drm = std::make_unique<DrmMockDg1>();
     ASSERT_NE(nullptr, drm);
 
     drm->i915QuerySuccessCount = 0;
@@ -49,7 +49,7 @@ TEST(MemoryInfo, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoThenMem
 }
 
 TEST(MemoryInfo, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNotCreated) {
-    auto drm = std::make_unique<DrmMock>();
+    auto drm = std::make_unique<DrmMockDg1>();
     ASSERT_NE(nullptr, drm);
 
     drm->queryMemoryRegionInfoSuccessCount = 0;
@@ -57,14 +57,14 @@ TEST(MemoryInfo, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNotCreat
     EXPECT_EQ(nullptr, drm->getMemoryInfo());
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
-    drm = std::make_unique<DrmMock>();
+    drm = std::make_unique<DrmMockDg1>();
     ASSERT_NE(nullptr, drm);
     drm->i915QuerySuccessCount = 1;
     drm->queryMemoryInfo();
     EXPECT_EQ(nullptr, drm->getMemoryInfo());
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 
-    drm = std::make_unique<DrmMock>();
+    drm = std::make_unique<DrmMockDg1>();
     ASSERT_NE(nullptr, drm);
     drm->queryMemoryRegionInfoSuccessCount = 1;
     drm->queryMemoryInfo();
@@ -109,7 +109,7 @@ TEST(MemoryInfo, givenMemoryInfoWithoutRegionsWhenGettingMemoryRegionClassAndIns
 }
 
 TEST(MemoryInfo, givenMemoryRegionIdWhenGetMemoryTypeFromRegionAndGetInstanceFromRegionAreCalledThenMemoryTypeAndInstanceAreReturned) {
-    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
+    auto drm = std::make_unique<DrmMockDg1>();
     EXPECT_NE(nullptr, drm);
 
     auto regionSmem = drm->createMemoryRegionId(0, 0);
