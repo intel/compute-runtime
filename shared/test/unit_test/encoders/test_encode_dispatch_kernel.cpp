@@ -8,10 +8,12 @@
 #include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/kernel/kernel_descriptor_from_patchtokens.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
@@ -535,7 +537,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenStartWorkGroupWhenIndirectIsF
     startWorkGroup[2] = 3u;
 
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, simd, localIdDimensions,
-                                                       true, false, false, requiredWorkGroupOrder);
+                                                       0, 0, true, false, false, requiredWorkGroupOrder);
     EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
@@ -561,7 +563,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenNoStartWorkGroupWhenIndirectI
     startWorkGroup[2] = 3u;
 
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, nullptr, numWorkGroups, workGroupSizes, simd, localIdDimensions,
-                                                       true, false, true, requiredWorkGroupOrder);
+                                                       0, 0, true, false, true, requiredWorkGroupOrder);
     EXPECT_TRUE(walkerCmd.getIndirectParameterEnable());
     EXPECT_EQ(0u, walkerCmd.getThreadGroupIdXDimension());
     EXPECT_EQ(0u, walkerCmd.getThreadGroupIdYDimension());
@@ -588,7 +590,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenStartWorkGroupWhenWorkGroupSm
     workGroupSizes[0] = 30u;
 
     EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, simd, localIdDimensions,
-                                                       true, false, false, requiredWorkGroupOrder);
+                                                       0, 0, true, false, false, requiredWorkGroupOrder);
     EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
     EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
@@ -604,4 +606,98 @@ HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, givenStartWorkGroupWhenWorkGroupSm
 
     EXPECT_EQ(0x3fffffffu, walkerCmd.getRightExecutionMask());
     EXPECT_EQ(0xffffffffu, walkerCmd.getBottomExecutionMask());
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, WhenThreadPerThreadGroupNotZeroThenExpectOverrideThreadGroupCalculation) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+
+    uint32_t expectedThreadPerThreadGroup = 5u;
+    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, simd, localIdDimensions,
+                                                       expectedThreadPerThreadGroup, 0, true, false, false, requiredWorkGroupOrder);
+    EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
+    EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
+    EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
+    EXPECT_EQ(1u, walkerCmd.getThreadGroupIdZDimension());
+
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingX());
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingY());
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingResumeZ());
+
+    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
+    EXPECT_EQ(expectedThreadPerThreadGroup, walkerCmd.getThreadWidthCounterMaximum());
+
+    EXPECT_EQ(0xffffffffu, walkerCmd.getRightExecutionMask());
+    EXPECT_EQ(0xffffffffu, walkerCmd.getBottomExecutionMask());
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, WalkerThreadTest, WhenExecutionMaskNotZeroThenExpectOverrideExecutionMaskCalculation) {
+    using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
+
+    WALKER_TYPE walkerCmd = FamilyType::cmdInitGpgpuWalker;
+
+    uint32_t expectedExecutionMask = 0xFFFFu;
+    EncodeDispatchKernel<FamilyType>::encodeThreadData(walkerCmd, startWorkGroup, numWorkGroups, workGroupSizes, simd, localIdDimensions,
+                                                       0, expectedExecutionMask, true, false, false, requiredWorkGroupOrder);
+    EXPECT_FALSE(walkerCmd.getIndirectParameterEnable());
+    EXPECT_EQ(1u, walkerCmd.getThreadGroupIdXDimension());
+    EXPECT_EQ(1u, walkerCmd.getThreadGroupIdYDimension());
+    EXPECT_EQ(1u, walkerCmd.getThreadGroupIdZDimension());
+
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingX());
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingY());
+    EXPECT_EQ(0u, walkerCmd.getThreadGroupIdStartingResumeZ());
+
+    auto expectedSimd = getSimdConfig<WALKER_TYPE>(simd);
+    EXPECT_EQ(expectedSimd, walkerCmd.getSimdSize());
+    EXPECT_EQ(1u, walkerCmd.getThreadWidthCounterMaximum());
+
+    EXPECT_EQ(expectedExecutionMask, walkerCmd.getRightExecutionMask());
+    EXPECT_EQ(0xffffffffu, walkerCmd.getBottomExecutionMask());
+}
+
+HWTEST_F(WalkerThreadTest, givenDefaultDebugFlagWhenKernelDescriptorInlineDataDisabledThenReturnInlineNotRequired) {
+    NEO::KernelDescriptor kernelDesc;
+    kernelDesc.kernelAttributes.flags.passInlineData = false;
+
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernelDesc));
+}
+
+HWTEST_F(WalkerThreadTest, givenDefaultDebugFlagWhenKernelDescriptorInlineDataEnabledThenReturnInlineRequired) {
+    NEO::KernelDescriptor kernelDesc;
+    kernelDesc.kernelAttributes.flags.passInlineData = true;
+
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernelDesc));
+}
+
+HWTEST_F(WalkerThreadTest, givenDebugFlagDisabledWhenKernelDescriptorInlineDataEnabledThenReturnInlineNotRequired) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnablePassInlineData.set(0);
+
+    NEO::KernelDescriptor kernelDesc;
+    kernelDesc.kernelAttributes.flags.passInlineData = true;
+
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernelDesc));
+}
+
+HWTEST_F(WalkerThreadTest, givenDebugFlagEnabledWhenKernelDescriptorInlineDataEnabledThenReturnInlineRequired) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnablePassInlineData.set(1);
+
+    NEO::KernelDescriptor kernelDesc;
+    kernelDesc.kernelAttributes.flags.passInlineData = true;
+
+    EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernelDesc));
+}
+
+HWTEST_F(WalkerThreadTest, givenDebugFlagEnabledWhenKernelDescriptorInlineDataDisabledThenReturnInlineNotRequired) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnablePassInlineData.set(1);
+
+    NEO::KernelDescriptor kernelDesc;
+    kernelDesc.kernelAttributes.flags.passInlineData = false;
+
+    EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernelDesc));
 }

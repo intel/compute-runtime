@@ -33,5 +33,8 @@ struct DispatchKernelEncoderI {
 
     virtual GraphicsAllocation *getIsaAllocation() const = 0;
     virtual const uint8_t *getDynamicStateHeapData() const = 0;
+
+    virtual uint32_t getRequiredWorkgroupOrder() const = 0;
+    virtual bool requiresGenerationOfLocalIdsByRuntime() const = 0;
 };
 } // namespace NEO

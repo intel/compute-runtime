@@ -36,15 +36,23 @@ struct EncodeDispatchKernel {
 
     static void patchBindlessSurfaceStateOffsets(const size_t sshOffset, const KernelDescriptor &kernelDesc, uint8_t *crossThread);
 
-    static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels, size_t *lws, std::array<uint8_t, 3> walkOrder,
-                                                    bool requireInputWalkOrder, uint32_t &requiredWalkOrder, uint32_t simd);
+    static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
+                                                    size_t *lws,
+                                                    std::array<uint8_t, 3> walkOrder,
+                                                    bool requireInputWalkOrder,
+                                                    uint32_t &requiredWalkOrder,
+                                                    uint32_t simd);
+
+    static bool inlineDataProgrammingRequired(const KernelDescriptor &kernelDesc);
 
     static void encodeThreadData(WALKER_TYPE &walkerCmd,
-                                 const size_t *startWorkGroup,
-                                 const size_t *numWorkGroups,
-                                 const size_t *workGroupSizes,
+                                 const uint32_t *startWorkGroup,
+                                 const uint32_t *numWorkGroups,
+                                 const uint32_t *workGroupSizes,
                                  uint32_t simd,
                                  uint32_t localIdDimensions,
+                                 uint32_t threadsPerThreadGroup,
+                                 uint32_t threadExecutionMask,
                                  bool localIdsGenerationByRuntime,
                                  bool inlineDataProgrammingRequired,
                                  bool isIndirect,

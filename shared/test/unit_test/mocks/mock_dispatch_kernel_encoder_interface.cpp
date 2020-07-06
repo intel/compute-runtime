@@ -21,11 +21,16 @@ MockDispatchKernelEncoder::MockDispatchKernelEncoder() {
     EXPECT_CALL(*this, getCrossThreadData).WillRepeatedly(Return(dataCrossThread));
     EXPECT_CALL(*this, getPerThreadData).WillRepeatedly(Return(dataPerThread));
 
+    groupSizes[0] = 32u;
+    groupSizes[1] = groupSizes[2] = 1;
+    EXPECT_CALL(*this, getGroupSize()).WillRepeatedly(Return(groupSizes));
+
+    EXPECT_CALL(*this, requiresGenerationOfLocalIdsByRuntime).WillRepeatedly(Return(localIdGenerationByRuntime));
+
     expectAnyMockFunctionCall();
 }
 
 void MockDispatchKernelEncoder::expectAnyMockFunctionCall() {
-    EXPECT_CALL(*this, getGroupSize()).Times(::testing::AnyNumber());
     EXPECT_CALL(*this, getSlmTotalSize()).Times(::testing::AnyNumber());
 
     EXPECT_CALL(*this, getThreadExecutionMask()).Times(::testing::AnyNumber());

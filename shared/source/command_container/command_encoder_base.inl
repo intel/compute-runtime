@@ -184,24 +184,18 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     cmd.setIndirectDataLength(sizeThreadData);
     cmd.setInterfaceDescriptorOffset(numIDD);
 
-    if (isIndirect) {
-        cmd.setIndirectParameterEnable(true);
-    } else {
-        UNRECOVERABLE_IF(!pThreadGroupDimensions);
-        auto threadDims = static_cast<const uint32_t *>(pThreadGroupDimensions);
-        cmd.setThreadGroupIdXDimension(threadDims[0]);
-        cmd.setThreadGroupIdYDimension(threadDims[1]);
-        cmd.setThreadGroupIdZDimension(threadDims[2]);
-    }
-
-    auto simdSize = kernelDescriptor.kernelAttributes.simdSize;
-    auto simdSizeOp = getSimdConfig<WALKER_TYPE>(simdSize);
-
-    cmd.setSimdSize(simdSizeOp);
-
-    cmd.setRightExecutionMask(dispatchInterface->getThreadExecutionMask());
-    cmd.setBottomExecutionMask(0xffffffff);
-    cmd.setThreadWidthCounterMaximum(numThreadsPerThreadGroup);
+    EncodeDispatchKernel<Family>::encodeThreadData(cmd,
+                                                   nullptr,
+                                                   static_cast<const uint32_t *>(pThreadGroupDimensions),
+                                                   dispatchInterface->getGroupSize(),
+                                                   kernelDescriptor.kernelAttributes.simdSize,
+                                                   kernelDescriptor.kernelAttributes.numLocalIdChannels,
+                                                   dispatchInterface->getNumThreadsPerThreadGroup(),
+                                                   dispatchInterface->getThreadExecutionMask(),
+                                                   true,
+                                                   false,
+                                                   isIndirect,
+                                                   dispatchInterface->getRequiredWorkgroupOrder());
 
     cmd.setPredicateEnable(isPredicate);
 
@@ -211,7 +205,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     *(decltype(cmd) *)buffer = cmd;
 
     PreemptionHelper::applyPreemptionWaCmdsEnd<Family>(listCmdBufferStream, *device);
-
     {
         auto mediaStateFlush = listCmdBufferStream->getSpace(sizeof(MEDIA_STATE_FLUSH));
         *reinterpret_cast<MEDIA_STATE_FLUSH *>(mediaStateFlush) = Family::cmdInitMediaStateFlush;
@@ -287,18 +280,25 @@ size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device
 }
 
 template <typename GfxFamily>
-bool EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels, size_t *lws, std::array<uint8_t, 3> walkOrder,
-                                                                          bool requireInputWalkOrder, uint32_t &requiredWalkOrder, uint32_t simd) {
+bool EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
+                                                                          size_t *lws,
+                                                                          std::array<uint8_t, 3> walkOrder,
+                                                                          bool requireInputWalkOrder,
+                                                                          uint32_t &requiredWalkOrder,
+                                                                          uint32_t simd) {
+    requiredWalkOrder = 0u;
     return true;
 }
 
 template <typename GfxFamily>
 void EncodeDispatchKernel<GfxFamily>::encodeThreadData(WALKER_TYPE &walkerCmd,
-                                                       const size_t *startWorkGroup,
-                                                       const size_t *numWorkGroups,
-                                                       const size_t *workGroupSizes,
+                                                       const uint32_t *startWorkGroup,
+                                                       const uint32_t *numWorkGroups,
+                                                       const uint32_t *workGroupSizes,
                                                        uint32_t simd,
                                                        uint32_t localIdDimensions,
+                                                       uint32_t threadsPerThreadGroup,
+                                                       uint32_t threadExecutionMask,
                                                        bool localIdsGenerationByRuntime,
                                                        bool inlineDataProgrammingRequired,
                                                        bool isIndirect,
@@ -321,16 +321,22 @@ void EncodeDispatchKernel<GfxFamily>::encodeThreadData(WALKER_TYPE &walkerCmd,
     walkerCmd.setSimdSize(getSimdConfig<WALKER_TYPE>(simd));
 
     auto localWorkSize = workGroupSizes[0] * workGroupSizes[1] * workGroupSizes[2];
-    auto threadsPerWorkGroup = getThreadsPerWG(simd, localWorkSize);
-    walkerCmd.setThreadWidthCounterMaximum(static_cast<uint32_t>(threadsPerWorkGroup));
+    if (threadsPerThreadGroup == 0) {
+        threadsPerThreadGroup = static_cast<uint32_t>(getThreadsPerWG(simd, localWorkSize));
+    }
+    walkerCmd.setThreadWidthCounterMaximum(threadsPerThreadGroup);
 
-    auto remainderSimdLanes = localWorkSize & (simd - 1);
-    uint64_t executionMask = maxNBitValue(remainderSimdLanes);
-    if (!executionMask)
-        executionMask = ~executionMask;
+    uint64_t executionMask = threadExecutionMask;
+    if (executionMask == 0) {
+        auto remainderSimdLanes = localWorkSize & (simd - 1);
+        executionMask = maxNBitValue(remainderSimdLanes);
+        if (!executionMask)
+            executionMask = ~executionMask;
+    }
 
+    constexpr uint32_t maxDword = std::numeric_limits<uint32_t>::max();
     walkerCmd.setRightExecutionMask(static_cast<uint32_t>(executionMask));
-    walkerCmd.setBottomExecutionMask(static_cast<uint32_t>(0xffffffff));
+    walkerCmd.setBottomExecutionMask(maxDword);
 }
 
 template <typename GfxFamily>

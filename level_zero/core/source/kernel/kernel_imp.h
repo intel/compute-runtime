@@ -105,6 +105,9 @@ struct KernelImp : Kernel {
     uint32_t getSlmTotalSize() const override;
     NEO::GraphicsAllocation *getIsaAllocation() const override;
 
+    uint32_t getRequiredWorkgroupOrder() const override { return requiredWorkgroupOrder; }
+    bool requiresGenerationOfLocalIdsByRuntime() const override { return kernelRequiresGenerationOfLocalIdsByRuntime; }
+
   protected:
     KernelImp() = default;
 
@@ -112,6 +115,7 @@ struct KernelImp : Kernel {
 
     void createPrintfBuffer();
     void setDebugSurface();
+    virtual void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) = 0;
 
     const KernelImmutableData *kernelImmData = nullptr;
     Module *module = nullptr;
@@ -143,6 +147,9 @@ struct KernelImp : Kernel {
     UnifiedMemoryControls unifiedMemoryControls;
     std::vector<uint32_t> slmArgSizes;
     uint32_t slmArgsTotalSize = 0U;
+    uint32_t requiredWorkgroupOrder = 0u;
+
+    bool kernelRequiresGenerationOfLocalIdsByRuntime = true;
 };
 
 } // namespace L0

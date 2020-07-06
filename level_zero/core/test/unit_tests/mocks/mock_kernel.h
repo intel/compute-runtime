@@ -40,17 +40,21 @@ struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
     using ::L0::KernelImp::crossThreadDataSize;
     using ::L0::KernelImp::groupSize;
     using ::L0::KernelImp::kernelImmData;
+    using ::L0::KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
     using ::L0::KernelImp::module;
     using ::L0::KernelImp::numThreadsPerThreadGroup;
     using ::L0::KernelImp::perThreadDataForWholeThreadGroup;
     using ::L0::KernelImp::perThreadDataSize;
     using ::L0::KernelImp::perThreadDataSizeForWholeThreadGroup;
     using ::L0::KernelImp::printfBuffer;
+    using ::L0::KernelImp::requiredWorkgroupOrder;
     using ::L0::KernelImp::residencyContainer;
     using ::L0::KernelImp::unifiedMemoryControls;
 
     void setBufferSurfaceState(uint32_t argIndex, void *address,
                                NEO::GraphicsAllocation *alloc) override {}
+
+    void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {}
 
     std::unique_ptr<Kernel> clone() const override { return nullptr; }
 
@@ -85,6 +89,7 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
     }
 
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {}
+    void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {}
     std::unique_ptr<Kernel> clone() const override {
         return nullptr;
     }

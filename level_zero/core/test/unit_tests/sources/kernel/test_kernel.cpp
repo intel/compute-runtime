@@ -51,6 +51,22 @@ HWTEST_F(KernelImpSetGroupSizeTest, WhenCalculatingLocalIdsThenGrfSizeIsTakenFro
     }
 }
 
+HWTEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeDisabledWhenSettingGroupSizeThenLocalIdsAreNotGenerated) {
+    Mock<Kernel> mockKernel;
+    Mock<Module> mockModule(this->device, nullptr);
+    mockKernel.descriptor.kernelAttributes.simdSize = 1;
+    mockKernel.module = &mockModule;
+    mockKernel.kernelRequiresGenerationOfLocalIdsByRuntime = false;
+
+    uint32_t groupSize[3] = {2, 3, 5};
+    auto ret = mockKernel.setGroupSize(groupSize[0], groupSize[1], groupSize[2]);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
+    EXPECT_EQ(groupSize[0] * groupSize[1] * groupSize[2], mockKernel.numThreadsPerThreadGroup);
+    EXPECT_EQ(0u, mockKernel.perThreadDataSizeForWholeThreadGroup);
+    EXPECT_EQ(0u, mockKernel.perThreadDataSize);
+    EXPECT_EQ(nullptr, mockKernel.perThreadDataForWholeThreadGroup);
+}
+
 using SetKernelArg = Test<ModuleFixture>;
 using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
@@ -232,6 +248,12 @@ HWTEST_F(KernelPropertiesTest, givenKernelThenPropertiesAreRetrieved) {
                         sizeof(kernelProperties.uuid.mid)));
 
     Kernel::fromHandle(kernelHandle)->destroy();
+}
+
+HWTEST_F(KernelPropertiesTest, WhenKernelIsCreatedThenDefaultLocalIdGenerationbyRuntimeIsTrue) {
+    createKernel();
+
+    EXPECT_TRUE(kernel->requiresGenerationOfLocalIdsByRuntime());
 }
 
 } // namespace ult

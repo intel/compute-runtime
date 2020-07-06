@@ -119,6 +119,24 @@ struct KernelHw : public KernelImp {
 
         return ret;
     }
+
+    void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
+        size_t localWorkSizes[3];
+        localWorkSizes[0] = this->groupSize[0];
+        localWorkSizes[1] = this->groupSize[1];
+        localWorkSizes[2] = this->groupSize[2];
+
+        kernelRequiresGenerationOfLocalIdsByRuntime = NEO::EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
+            kernelDescriptor.kernelAttributes.numLocalIdChannels,
+            localWorkSizes,
+            std::array<uint8_t, 3>{
+                {kernelDescriptor.kernelAttributes.workgroupWalkOrder[0],
+                 kernelDescriptor.kernelAttributes.workgroupWalkOrder[1],
+                 kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]}},
+            kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder,
+            requiredWorkgroupOrder,
+            kernelDescriptor.kernelAttributes.simdSize);
+    }
 };
 
 } // namespace L0

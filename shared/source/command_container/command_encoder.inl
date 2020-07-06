@@ -365,6 +365,18 @@ void EncodeDispatchKernel<Family>::patchBindlessSurfaceStateOffsets(const size_t
 }
 
 template <typename Family>
+bool EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(const KernelDescriptor &kernelDesc) {
+    auto checkKernelForInlineData = true;
+    if (DebugManager.flags.EnablePassInlineData.get() != -1) {
+        checkKernelForInlineData = !!DebugManager.flags.EnablePassInlineData.get();
+    }
+    if (checkKernelForInlineData) {
+        return kernelDesc.kernelAttributes.flags.passInlineData;
+    }
+    return false;
+}
+
+template <typename Family>
 size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
     return 0;
 }

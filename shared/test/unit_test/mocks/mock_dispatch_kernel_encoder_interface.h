@@ -21,24 +21,34 @@ class GraphicsAllocation;
 struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
   public:
     MockDispatchKernelEncoder();
-    MOCK_CONST_METHOD0(getKernelDescriptor, const KernelDescriptor &());
-    MOCK_CONST_METHOD0(getGroupSize, const uint32_t *());
-    MOCK_CONST_METHOD0(getSlmTotalSize, uint32_t());
 
-    MOCK_CONST_METHOD0(getCrossThreadData, const uint8_t *());
-    MOCK_CONST_METHOD0(getCrossThreadDataSize, uint32_t());
+    MOCK_METHOD(const KernelDescriptor &, getKernelDescriptor, (), (const, override));
 
-    MOCK_CONST_METHOD0(getThreadExecutionMask, uint32_t());
-    MOCK_CONST_METHOD0(getNumThreadsPerThreadGroup, uint32_t());
-    MOCK_CONST_METHOD0(getPerThreadData, const uint8_t *());
-    MOCK_CONST_METHOD0(getPerThreadDataSize, uint32_t());
-    MOCK_CONST_METHOD0(getPerThreadDataSizeForWholeThreadGroup, uint32_t());
+    MOCK_METHOD(const uint32_t *, getGroupSize, (), (const, override));
+    MOCK_METHOD(uint32_t, getSlmTotalSize, (), (const, override));
 
-    MOCK_CONST_METHOD0(getSurfaceStateHeapData, const uint8_t *());
-    MOCK_CONST_METHOD0(getSurfaceStateHeapDataSize, uint32_t());
+    MOCK_METHOD(const uint8_t *, getCrossThreadData, (), (const, override));
+    MOCK_METHOD(uint32_t, getCrossThreadDataSize, (), (const, override));
 
-    MOCK_CONST_METHOD0(getIsaAllocation, GraphicsAllocation *());
-    MOCK_CONST_METHOD0(getDynamicStateHeapData, const uint8_t *());
+    MOCK_METHOD(uint32_t, getThreadExecutionMask, (), (const, override));
+    MOCK_METHOD(uint32_t, getNumThreadsPerThreadGroup, (), (const, override));
+
+    MOCK_METHOD(const uint8_t *, getPerThreadData, (), (const, override));
+    MOCK_METHOD(uint32_t, getPerThreadDataSize, (), (const, override));
+
+    MOCK_METHOD(uint32_t, getPerThreadDataSizeForWholeThreadGroup, (), (const, override));
+
+    MOCK_METHOD(const uint8_t *, getSurfaceStateHeapData, (), (const, override));
+    MOCK_METHOD(uint32_t, getSurfaceStateHeapDataSize, (), (const, override));
+
+    MOCK_METHOD(GraphicsAllocation *, getIsaAllocation, (), (const, override));
+    MOCK_METHOD(const uint8_t *, getDynamicStateHeapData, (), (const, override));
+
+    MOCK_METHOD(bool, requiresGenerationOfLocalIdsByRuntime, (), (const, override));
+
+    uint32_t getRequiredWorkgroupOrder() const override {
+        return requiredWalkGroupOrder;
+    }
 
     void expectAnyMockFunctionCall();
 
@@ -48,5 +58,9 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
     uint8_t dataCrossThread[crossThreadSize];
     uint8_t dataPerThread[perThreadSize];
     KernelDescriptor kernelDescriptor;
+
+    uint32_t groupSizes[3];
+    bool localIdGenerationByRuntime = true;
+    uint32_t requiredWalkGroupOrder = 0x0u;
 };
 } // namespace NEO

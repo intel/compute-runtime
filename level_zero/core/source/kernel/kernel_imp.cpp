@@ -237,37 +237,14 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION;
     }
-    auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
-    uint32_t perThreadDataSizeForWholeThreadGroupNeeded =
-        static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
-            kernelImmData->getDescriptor().kernelAttributes.simdSize, grfSize, numChannels, itemsInGroup));
-    if (perThreadDataSizeForWholeThreadGroupNeeded >
-        perThreadDataSizeForWholeThreadGroupAllocated) {
-        alignedFree(perThreadDataForWholeThreadGroup);
-        perThreadDataForWholeThreadGroup = static_cast<uint8_t *>(alignedMalloc(perThreadDataSizeForWholeThreadGroupNeeded, 32));
-        perThreadDataSizeForWholeThreadGroupAllocated = perThreadDataSizeForWholeThreadGroupNeeded;
-    }
-    perThreadDataSizeForWholeThreadGroup = perThreadDataSizeForWholeThreadGroupNeeded;
-
-    if (numChannels > 0) {
-        UNRECOVERABLE_IF(3 != numChannels);
-        NEO::generateLocalIDs(
-            perThreadDataForWholeThreadGroup,
-            static_cast<uint16_t>(kernelImmData->getDescriptor().kernelAttributes.simdSize),
-            std::array<uint16_t, 3>{{static_cast<uint16_t>(groupSizeX),
-                                     static_cast<uint16_t>(groupSizeY),
-                                     static_cast<uint16_t>(groupSizeZ)}},
-            std::array<uint8_t, 3>{{0, 1, 2}},
-            false, grfSize);
-    }
 
     this->groupSize[0] = groupSizeX;
     this->groupSize[1] = groupSizeY;
     this->groupSize[2] = groupSizeZ;
+    const NEO::KernelDescriptor &kernelDescriptor = kernelImmData->getDescriptor();
 
-    auto simdSize = kernelImmData->getDescriptor().kernelAttributes.simdSize;
+    auto simdSize = kernelDescriptor.kernelAttributes.simdSize;
     this->numThreadsPerThreadGroup = static_cast<uint32_t>((itemsInGroup + simdSize - 1u) / simdSize);
-    this->perThreadDataSize = perThreadDataSizeForWholeThreadGroup / numThreadsPerThreadGroup;
     patchWorkgroupSizeInCrossThreadData(groupSizeX, groupSizeY, groupSizeZ);
 
     auto remainderSimdLanes = itemsInGroup & (simdSize - 1u);
@@ -275,7 +252,35 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     if (!threadExecutionMask) {
         threadExecutionMask = static_cast<uint32_t>(maxNBitValue((simdSize == 1) ? 32 : simdSize));
     }
+    evaluateIfRequiresGenerationOfLocalIdsByRuntime(kernelDescriptor);
 
+    if (kernelRequiresGenerationOfLocalIdsByRuntime) {
+        auto grfSize = this->module->getDevice()->getHwInfo().capabilityTable.grfSize;
+        uint32_t perThreadDataSizeForWholeThreadGroupNeeded =
+            static_cast<uint32_t>(NEO::PerThreadDataHelper::getPerThreadDataSizeTotal(
+                simdSize, grfSize, numChannels, itemsInGroup));
+        if (perThreadDataSizeForWholeThreadGroupNeeded >
+            perThreadDataSizeForWholeThreadGroupAllocated) {
+            alignedFree(perThreadDataForWholeThreadGroup);
+            perThreadDataForWholeThreadGroup = static_cast<uint8_t *>(alignedMalloc(perThreadDataSizeForWholeThreadGroupNeeded, 32));
+            perThreadDataSizeForWholeThreadGroupAllocated = perThreadDataSizeForWholeThreadGroupNeeded;
+        }
+        perThreadDataSizeForWholeThreadGroup = perThreadDataSizeForWholeThreadGroupNeeded;
+
+        if (numChannels > 0) {
+            UNRECOVERABLE_IF(3 != numChannels);
+            NEO::generateLocalIDs(
+                perThreadDataForWholeThreadGroup,
+                static_cast<uint16_t>(simdSize),
+                std::array<uint16_t, 3>{{static_cast<uint16_t>(groupSizeX),
+                                         static_cast<uint16_t>(groupSizeY),
+                                         static_cast<uint16_t>(groupSizeZ)}},
+                std::array<uint8_t, 3>{{0, 1, 2}},
+                false, grfSize);
+        }
+
+        this->perThreadDataSize = perThreadDataSizeForWholeThreadGroup / numThreadsPerThreadGroup;
+    }
     return ZE_RESULT_SUCCESS;
 }
 

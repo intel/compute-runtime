@@ -46,9 +46,9 @@ struct WalkerThreadFixture {
     }
     void TearDown() {}
 
-    size_t startWorkGroup[3];
-    size_t numWorkGroups[3];
-    size_t workGroupSizes[3];
+    uint32_t startWorkGroup[3];
+    uint32_t numWorkGroups[3];
+    uint32_t workGroupSizes[3];
     uint32_t simd;
     uint32_t localIdDimensions;
     uint32_t requiredWorkGroupOrder;
