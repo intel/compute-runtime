@@ -39,6 +39,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                               const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
                               uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
+    void forcePipeControl(NEO::LinearStream &commandStreamCSR);
+
     bool flushBatchedSubmissions() override;
     void programHardwareContext(LinearStream &cmdStream) override;
     size_t getCmdsSizeForHardwareContext() const override;

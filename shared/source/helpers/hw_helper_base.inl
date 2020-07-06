@@ -234,7 +234,6 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily
     pipeControl.setStateCacheInvalidationEnable(args.stateCacheInvalidationEnable);
     pipeControl.setTextureCacheInvalidationEnable(args.textureCacheInvalidationEnable);
     pipeControl.setVfCacheInvalidationEnable(args.vfCacheInvalidationEnable);
-    pipeControl.setVfCacheInvalidationEnable(args.vfCacheInvalidationEnable);
     pipeControl.setGenericMediaStateClear(args.genericMediaStateClear);
 
     setPipeControlExtraProperties(pipeControl, args);
@@ -256,6 +255,15 @@ void MemorySynchronizationCommands<GfxFamily>::addPipeControl(LinearStream &comm
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
     MemorySynchronizationCommands<GfxFamily>::setPipeControl(cmd, args);
+    auto pipeControl = commandStream.getSpaceForCmd<PIPE_CONTROL>();
+    *pipeControl = cmd;
+}
+
+template <typename GfxFamily>
+void MemorySynchronizationCommands<GfxFamily>::addPipeControlWithCSStallOnly(LinearStream &commandStream, PipeControlArgs &args) {
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+    PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
     auto pipeControl = commandStream.getSpaceForCmd<PIPE_CONTROL>();
     *pipeControl = cmd;
 }

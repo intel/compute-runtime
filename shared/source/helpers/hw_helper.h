@@ -315,6 +315,7 @@ struct MemorySynchronizationCommands {
     static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
 
     static void addPipeControl(LinearStream &commandStream, PipeControlArgs &args);
+    static void addPipeControlWithCSStallOnly(LinearStream &commandStream, PipeControlArgs &args);
 
     static void addFullCacheFlush(LinearStream &commandStream);
     static void setCacheFlushExtraProperties(PIPE_CONTROL &pipeControl);

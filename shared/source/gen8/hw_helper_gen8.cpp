@@ -55,6 +55,16 @@ void MemorySynchronizationCommands<Family>::addPipeControl(LinearStream &command
     *cmdBuffer = cmd;
 }
 
+template <>
+void MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(LinearStream &commandStream, PipeControlArgs &args) {
+    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
+    PIPE_CONTROL cmd = Family::cmdInitPipeControl;
+    cmd.setCommandStreamerStallEnable(true);
+    cmd.setDcFlushEnable(true);
+    auto pipeControl = commandStream.getSpaceForCmd<PIPE_CONTROL>();
+    *pipeControl = cmd;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

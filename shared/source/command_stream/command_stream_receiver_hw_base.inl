@@ -424,6 +424,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskCount", this->taskCount);
     }
 
+    if (DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
+        forcePipeControl(commandStreamCSR);
+    }
+
     auto dshAllocation = dsh.getGraphicsAllocation();
     auto iohAllocation = ioh.getGraphicsAllocation();
     auto sshAllocation = ssh.getGraphicsAllocation();
@@ -552,6 +556,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     this->taskLevel += levelClosed ? 1 : 0;
 
     return completionStamp;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::forcePipeControl(NEO::LinearStream &commandStreamCSR) {
+    PipeControlArgs args;
+    MemorySynchronizationCommands<GfxFamily>::addPipeControlWithCSStallOnly(commandStreamCSR, args);
+    MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStreamCSR, args);
 }
 
 template <typename GfxFamily>
@@ -722,6 +733,10 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
 
     if (requiresInstructionCacheFlush) {
         size += sizeof(typename GfxFamily::PIPE_CONTROL);
+    }
+
+    if (DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
+        size += 2 * sizeof(PIPE_CONTROL);
     }
 
     return size;
