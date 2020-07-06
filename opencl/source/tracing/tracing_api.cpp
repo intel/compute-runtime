@@ -14,7 +14,7 @@ namespace HostSideTracing {
 
 // [XYZZ..Z] - { X - enabled/disabled bit, Y - locked/unlocked bit, ZZ..Z - client count bits }
 std::atomic<uint32_t> tracingState(0);
-std::vector<TracingHandle *> tracingHandle;
+TracingHandle *tracingHandle[TRACING_MAX_HANDLE_COUNT] = {nullptr};
 std::atomic<uint32_t> tracingCorrelationId(0);
 
 bool addTracingClient() {
@@ -123,21 +123,24 @@ cl_int CL_API_CALL clEnableTracingINTEL(cl_tracing_handle handle) {
 
     LockTracingState();
 
+    size_t i = 0;
     DEBUG_BREAK_IF(handle->handle == nullptr);
-    for (size_t i = 0; i < tracingHandle.size(); ++i) {
+    while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
         if (tracingHandle[i] == handle->handle) {
             UnlockTracingState();
             return CL_INVALID_VALUE;
         }
+        ++i;
     }
 
-    if (tracingHandle.size() == TRACING_MAX_HANDLE_COUNT) {
+    if (i == TRACING_MAX_HANDLE_COUNT) {
         UnlockTracingState();
         return CL_OUT_OF_RESOURCES;
     }
 
-    tracingHandle.push_back(handle->handle);
-    if (tracingHandle.size() == 1) {
+    DEBUG_BREAK_IF(tracingHandle[i] != nullptr);
+    tracingHandle[i] = handle->handle;
+    if (i == 0) {
         tracingState.fetch_or(TRACING_STATE_ENABLED_BIT, std::memory_order_acq_rel);
     }
 
@@ -152,19 +155,27 @@ cl_int CL_API_CALL clDisableTracingINTEL(cl_tracing_handle handle) {
 
     LockTracingState();
 
+    size_t size = 0;
+    while (size < TRACING_MAX_HANDLE_COUNT && tracingHandle[size] != nullptr) {
+        ++size;
+    }
+
+    size_t i = 0;
     DEBUG_BREAK_IF(handle->handle == nullptr);
-    for (size_t i = 0; i < tracingHandle.size(); ++i) {
+    while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
         if (tracingHandle[i] == handle->handle) {
-            if (tracingHandle.size() == 1) {
+            if (size == 1) {
+                DEBUG_BREAK_IF(i != 0);
                 tracingState.fetch_and(~TRACING_STATE_ENABLED_BIT, std::memory_order_acq_rel);
-                std::vector<TracingHandle *>().swap(tracingHandle);
+                tracingHandle[i] = nullptr;
             } else {
-                tracingHandle[i] = tracingHandle[tracingHandle.size() - 1];
-                tracingHandle.pop_back();
+                tracingHandle[i] = tracingHandle[size - 1];
+                tracingHandle[size - 1] = nullptr;
             }
             UnlockTracingState();
             return CL_SUCCESS;
         }
+        ++i;
     }
 
     UnlockTracingState();
@@ -180,12 +191,14 @@ cl_int CL_API_CALL clGetTracingStateINTEL(cl_tracing_handle handle, cl_bool *ena
 
     *enable = CL_FALSE;
 
+    size_t i = 0;
     DEBUG_BREAK_IF(handle->handle == nullptr);
-    for (size_t i = 0; i < tracingHandle.size(); ++i) {
+    while (i < TRACING_MAX_HANDLE_COUNT && tracingHandle[i] != nullptr) {
         if (tracingHandle[i] == handle->handle) {
             *enable = CL_TRUE;
             break;
         }
+        ++i;
     }
 
     UnlockTracingState();

@@ -115,6 +115,38 @@ TEST_F(IntelTracingTest, GivenTooManyHandlesExpectFail) {
     }
 }
 
+TEST_F(IntelTracingTest, GivenInactiveHandleToDisableWithMaxHandlesExpectFail) {
+    cl_tracing_handle handle[HostSideTracing::TRACING_MAX_HANDLE_COUNT + 1] = {nullptr};
+
+    for (uint32_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT + 1; ++i) {
+        status = clCreateTracingHandleINTEL(testedClDevice, callback, nullptr, &(handle[i]));
+        EXPECT_EQ(CL_SUCCESS, status);
+    }
+
+    for (uint32_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT; ++i) {
+        status = clEnableTracingINTEL(handle[i]);
+        EXPECT_EQ(CL_SUCCESS, status);
+    }
+
+    status = clDisableTracingINTEL(handle[HostSideTracing::TRACING_MAX_HANDLE_COUNT]);
+    EXPECT_EQ(CL_INVALID_VALUE, status);
+
+    cl_bool enable = CL_TRUE;
+    status = clGetTracingStateINTEL(handle[HostSideTracing::TRACING_MAX_HANDLE_COUNT], &enable);
+    EXPECT_EQ(CL_SUCCESS, status);
+    EXPECT_EQ(static_cast<cl_bool>(CL_FALSE), enable);
+
+    for (uint32_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT; ++i) {
+        status = clDisableTracingINTEL(handle[i]);
+        EXPECT_EQ(CL_SUCCESS, status);
+    }
+
+    for (uint32_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT + 1; ++i) {
+        status = clDestroyTracingHandleINTEL(handle[i]);
+        EXPECT_EQ(CL_SUCCESS, status);
+    }
+}
+
 TEST_F(IntelTracingTest, EnableTracingExpectPass) {
     status = clCreateTracingHandleINTEL(testedClDevice, callback, this, &handle);
     EXPECT_EQ(CL_SUCCESS, status);
@@ -691,6 +723,54 @@ TEST_F(IntelAllTracingTest, GivenNoFunctionsToTraceExpectPass) {
     EXPECT_EQ(0, exitCount);
 }
 
+struct IntelAllTracingWithMaxHandlesTest : public IntelAllTracingTest {
+  public:
+    IntelAllTracingWithMaxHandlesTest() {}
+
+    void SetUp() override {
+        IntelTracingTest::SetUp();
+
+        for (size_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT; ++i) {
+            status = clCreateTracingHandleINTEL(testedClDevice, callback, this, handleList + i);
+            ASSERT_NE(nullptr, handleList[i]);
+            ASSERT_EQ(CL_SUCCESS, status);
+        }
+
+        for (size_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT; ++i) {
+            for (uint32_t j = 0; j < CL_FUNCTION_COUNT; ++j) {
+                status = clSetTracingPointINTEL(handleList[i], static_cast<cl_function_id>(j), CL_TRUE);
+                ASSERT_EQ(CL_SUCCESS, status);
+            }
+        }
+
+        for (size_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT; ++i) {
+            status = clEnableTracingINTEL(handleList[i]);
+            ASSERT_EQ(CL_SUCCESS, status);
+        }
+    }
+
+    void TearDown() override {
+        for (size_t i = 0; i < HostSideTracing::TRACING_MAX_HANDLE_COUNT; ++i) {
+            status = clDisableTracingINTEL(handleList[i]);
+            ASSERT_EQ(CL_SUCCESS, status);
+
+            status = clDestroyTracingHandleINTEL(handleList[i]);
+            ASSERT_EQ(CL_SUCCESS, status);
+        }
+
+        IntelTracingTest::TearDown();
+    }
+
+  protected:
+    cl_tracing_handle handleList[HostSideTracing::TRACING_MAX_HANDLE_COUNT] = {nullptr};
+};
+
+TEST_F(IntelAllTracingWithMaxHandlesTest, GivenAllFunctionsToTraceWithMaxHandlesExpectPass) {
+    uint16_t count = callFunctions();
+    EXPECT_EQ(count * HostSideTracing::TRACING_MAX_HANDLE_COUNT, enterCount);
+    EXPECT_EQ(count * HostSideTracing::TRACING_MAX_HANDLE_COUNT, exitCount);
+}
+
 struct IntelClGetDeviceInfoTracingCollectTest : public IntelAllTracingTest {
   public:
     IntelClGetDeviceInfoTracingCollectTest() {}
@@ -780,7 +860,7 @@ struct IntelClGetDeviceInfoTracingChangeParamsTest : public IntelAllTracingTest 
     cl_device_id device = nullptr;
     size_t paramValueSizeRet = 0;
     static const size_t paramValueSize = 256;
-    char paramValue[paramValueSize];
+    char paramValue[paramValueSize] = {'\0'};
 };
 
 TEST_F(IntelClGetDeviceInfoTracingChangeParamsTest, GeneralTracingWithParamsChangeExpectPass) {
