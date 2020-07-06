@@ -213,6 +213,8 @@ if(DEFAULT_TESTED_PLATFORM)
   if(VALID_DEFAULT_TESTED_PLATFORM LESS 0)
     message(FATAL_ERROR "Not a valid tested platform: ${DEFAULT_TESTED_PLATFORM}")
   endif()
+else()
+  set(SKIP_UNIT_TESTS TRUE)
 endif()
 
 if(NOT DEFAULT_TESTED_FAMILY_NAME)
