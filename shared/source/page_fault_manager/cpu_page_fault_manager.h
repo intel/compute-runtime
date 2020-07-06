@@ -38,6 +38,9 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     virtual void allowCPUMemoryAccess(void *ptr, size_t size) = 0;
     virtual void protectCPUMemoryAccess(void *ptr, size_t size) = 0;
 
+    virtual void broadcastWaitSignal() = 0;
+    MOCKABLE_VIRTUAL void waitForCopy();
+
     MOCKABLE_VIRTUAL bool verifyPageFault(void *ptr);
     MOCKABLE_VIRTUAL void transferToCpu(void *ptr, size_t size, void *cmdQ);
     MOCKABLE_VIRTUAL void transferToGpu(void *ptr, void *cmdQ);

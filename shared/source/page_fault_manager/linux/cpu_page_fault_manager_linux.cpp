@@ -9,7 +9,11 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include <dirent.h>
 #include <sys/mman.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace NEO {
 std::unique_ptr<PageFaultManager> PageFaultManager::create() {
@@ -20,7 +24,9 @@ std::function<void(int signal, siginfo_t *info, void *context)> PageFaultManager
 
 PageFaultManagerLinux::PageFaultManagerLinux() {
     pageFaultHandler = [&](int signal, siginfo_t *info, void *context) {
-        if (!this->verifyPageFault(info->si_addr)) {
+        if (signal == SIGUSR1) {
+            this->waitForCopy();
+        } else if (!this->verifyPageFault(info->si_addr)) {
             callPreviousHandler(signal, info, context);
         }
     };
@@ -28,13 +34,20 @@ PageFaultManagerLinux::PageFaultManagerLinux() {
     struct sigaction pageFaultManagerHandler = {};
     pageFaultManagerHandler.sa_flags = SA_SIGINFO;
     pageFaultManagerHandler.sa_sigaction = pageFaultHandlerWrapper;
-    auto retVal = sigaction(SIGSEGV, &pageFaultManagerHandler, &previousHandler);
+
+    auto retVal = sigaction(SIGSEGV, &pageFaultManagerHandler, &previousPageFaultHandler);
+    UNRECOVERABLE_IF(retVal != 0);
+
+    retVal = sigaction(SIGUSR1, &pageFaultManagerHandler, &previousUserSignalHandler);
     UNRECOVERABLE_IF(retVal != 0);
 }
 
 PageFaultManagerLinux::~PageFaultManagerLinux() {
     if (!previousHandlerRestored) {
-        auto retVal = sigaction(SIGSEGV, &previousHandler, nullptr);
+        auto retVal = sigaction(SIGSEGV, &previousPageFaultHandler, nullptr);
+        UNRECOVERABLE_IF(retVal != 0);
+
+        retVal = sigaction(SIGUSR1, &previousUserSignalHandler, nullptr);
         UNRECOVERABLE_IF(retVal != 0);
     }
 }
@@ -54,18 +67,50 @@ void PageFaultManagerLinux::protectCPUMemoryAccess(void *ptr, size_t size) {
 }
 
 void PageFaultManagerLinux::callPreviousHandler(int signal, siginfo_t *info, void *context) {
-    if (previousHandler.sa_flags & SA_SIGINFO) {
-        previousHandler.sa_sigaction(signal, info, context);
+    if (previousPageFaultHandler.sa_flags & SA_SIGINFO) {
+        previousPageFaultHandler.sa_sigaction(signal, info, context);
     } else {
-        if (previousHandler.sa_handler == SIG_DFL) {
-            auto retVal = sigaction(SIGSEGV, &previousHandler, nullptr);
+        if (previousPageFaultHandler.sa_handler == SIG_DFL) {
+            auto retVal = sigaction(SIGSEGV, &previousPageFaultHandler, nullptr);
             UNRECOVERABLE_IF(retVal != 0);
             previousHandlerRestored = true;
-        } else if (previousHandler.sa_handler == SIG_IGN) {
+        } else if (previousPageFaultHandler.sa_handler == SIG_IGN) {
             return;
         } else {
-            previousHandler.sa_handler(signal);
+            previousPageFaultHandler.sa_handler(signal);
         }
     }
 }
+
+/* This function is a WA for USM issue in multithreaded environment
+   While handling page fault, before copy starts, user signal (SIGUSR1)
+   is broadcasted to ensure that every thread received signal and is
+   stucked on PageFaultHandler's mutex before copy from GPU to CPU proceeds. */
+void PageFaultManagerLinux::broadcastWaitSignal() {
+    auto selfThreadId = syscall(__NR_gettid);
+
+    auto procDir = opendir("/proc/self/task");
+    UNRECOVERABLE_IF(!procDir);
+
+    struct dirent *dirEntry;
+    while ((dirEntry = readdir(procDir)) != NULL) {
+        if (dirEntry->d_name[0] == '.') {
+            continue;
+        }
+
+        int threadId = atoi(dirEntry->d_name);
+        if (threadId == selfThreadId) {
+            continue;
+        }
+
+        sendSignalToThread(threadId);
+    }
+
+    closedir(procDir);
+}
+
+void PageFaultManagerLinux::sendSignalToThread(int threadId) {
+    syscall(SYS_tkill, threadId, SIGUSR1);
+}
+
 } // namespace NEO

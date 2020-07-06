@@ -66,6 +66,7 @@ bool PageFaultManager::verifyPageFault(void *ptr) {
         auto allocPtr = alloc.first;
         auto &pageFaultData = alloc.second;
         if (ptr >= allocPtr && ptr < ptrOffset(allocPtr, pageFaultData.size)) {
+            this->broadcastWaitSignal();
             this->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
             this->setAubWritable(true, allocPtr, pageFaultData.unifiedMemoryManager);
             this->transferToCpu(allocPtr, pageFaultData.size, pageFaultData.cmdQ);
@@ -81,4 +82,9 @@ void PageFaultManager::setAubWritable(bool writable, void *ptr, SVMAllocsManager
     auto gpuAlloc = unifiedMemoryManager->getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
     gpuAlloc->setAubWritable(writable, GraphicsAllocation::allBanks);
 }
+
+void PageFaultManager::waitForCopy() {
+    std::unique_lock<SpinLock> lock{mtx};
+}
+
 } // namespace NEO

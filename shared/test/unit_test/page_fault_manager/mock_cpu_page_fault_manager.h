@@ -49,6 +49,7 @@ class MockPageFaultManager : public PageFaultManager {
     void baseGpuTransfer(void *ptr, void *cmdQ) {
         PageFaultManager::transferToGpu(ptr, cmdQ);
     }
+    void broadcastWaitSignal() override {}
 
     int allowMemoryAccessCalled = 0;
     int protectMemoryCalled = 0;

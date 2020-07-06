@@ -25,6 +25,8 @@ class PageFaultManagerWindows : public PageFaultManager {
     void allowCPUMemoryAccess(void *ptr, size_t size) override;
     void protectCPUMemoryAccess(void *ptr, size_t size) override;
 
+    void broadcastWaitSignal() override;
+
     static std::function<LONG(struct _EXCEPTION_POINTERS *exceptionInfo)> pageFaultHandler;
     PVOID previousHandler;
 };

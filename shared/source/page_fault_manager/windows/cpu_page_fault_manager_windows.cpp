@@ -50,4 +50,7 @@ void PageFaultManagerWindows::protectCPUMemoryAccess(void *ptr, size_t size) {
     auto retVal = VirtualProtect(ptr, size, PAGE_NOACCESS, &previousState);
     UNRECOVERABLE_IF(!retVal);
 }
+
+void PageFaultManagerWindows::broadcastWaitSignal() {}
+
 } // namespace NEO
