@@ -37,6 +37,7 @@ struct SvmAllocationData {
             }
         }
     }
+    SvmAllocationData &operator=(const SvmAllocationData &) = delete;
     GraphicsAllocation *cpuAllocation = nullptr;
     MultiGraphicsAllocation gpuAllocations;
     size_t size = 0;
