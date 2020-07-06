@@ -95,7 +95,7 @@ TEST_F(PlatformTest, WhenGetClDevicesIsCalledThenExpectedValuesAreReturned) {
     EXPECT_NE(nullptr, pPlatform->getClDevices());
 }
 
-TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
+TEST_F(PlatformTest, givenSupportingCl21WhenGettingExtensionsStringThenSubgroupsIsEnabled) {
     pPlatform->initializeWithNewDevices();
     auto compilerExtensions = pPlatform->getClDevice(0)->peekCompilerExtensions();
 
@@ -362,7 +362,7 @@ TEST_F(PlatformTest, givenNotSupporteImagesAndClVersion21WhenCreateExtentionsLis
     EXPECT_THAT(compilerExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_spirv_media_block_io"))));
 }
 
-TEST_F(PlatformTest, testRemoveLastSpace) {
+TEST_F(PlatformTest, WhenRemovingLastSpaceThenStringDoesNotEndWithSpace) {
     std::string emptyString = "";
     removeLastSpace(emptyString);
     EXPECT_EQ(std::string(""), emptyString);
