@@ -1000,7 +1000,7 @@ bool Wddm::configureDeviceAddressSpace() {
                        ? maximumApplicationAddress + 1u
                        : 0u;
 
-    bool obtainMinAddress = gfxPlatform->eRenderCoreFamily == IGFX_GEN12LP_CORE;
+    bool obtainMinAddress = rootDeviceEnvironment.getHardwareInfo()->platform.eRenderCoreFamily == IGFX_GEN12LP_CORE;
     return gmmMemory->configureDevice(getAdapter(), device, getGdi()->escape, svmSize, featureTable->ftrL3IACoherency, minAddress, obtainMinAddress);
 }
 

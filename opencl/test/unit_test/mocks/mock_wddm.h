@@ -41,6 +41,7 @@ class WddmMock : public Wddm {
     using Wddm::pagingFenceAddress;
     using Wddm::pagingQueue;
     using Wddm::residencyLogger;
+    using Wddm::rootDeviceEnvironment;
     using Wddm::temporaryResources;
     using Wddm::wddmInterface;
 

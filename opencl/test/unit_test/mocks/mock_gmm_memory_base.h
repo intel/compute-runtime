@@ -27,8 +27,12 @@ class MockGmmMemoryBase : public GmmMemory {
         return true;
     }
 
+    void overrideInternalGpuVaRangeLimit(uintptr_t value) {
+        this->internalGpuVaRangeLimit = value;
+    }
+
     uintptr_t getInternalGpuVaRangeLimit() override {
-        return NEO::windowsMinAddress;
+        return internalGpuVaRangeLimit;
     }
 
     bool setDeviceInfo(GMM_DEVICE_INFO *deviceInfo) override {
@@ -39,6 +43,7 @@ class MockGmmMemoryBase : public GmmMemory {
 
     GMM_GFX_PARTITIONING *partition = nullptr;
     bool setDeviceInfoValue = true;
+    uintptr_t internalGpuVaRangeLimit = NEO::windowsMinAddress;
     GMM_DEVICE_CALLBACKS_INT deviceCallbacks{};
 };
 
