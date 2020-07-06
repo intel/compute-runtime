@@ -57,6 +57,10 @@ class OfflineCompiler {
         return quiet;
     }
 
+    bool isOnlySpirV() const {
+        return onlySpirV;
+    }
+
     std::string parseBinAsCharArray(uint8_t *binary, size_t size, std::string &fileName);
 
     static bool readOptionsFromFile(std::string &optionsOut, const std::string &file, OclocArgHelper *helper);
@@ -114,6 +118,7 @@ class OfflineCompiler {
     bool useCppFile = false;
     bool useOptionsSuffix = false;
     bool quiet = false;
+    bool onlySpirV = false;
     bool inputFileLlvm = false;
     bool inputFileSpirV = false;
     bool outputNoSuffix = false;

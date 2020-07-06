@@ -203,8 +203,11 @@ int OfflineCompiler::buildSourceCode() {
 
 int OfflineCompiler::build() {
     int retVal = SUCCESS;
-
-    retVal = buildSourceCode();
+    if (isOnlySpirV()) {
+        retVal = buildIrBinary();
+    } else {
+        retVal = buildSourceCode();
+    }
     generateElfBinary();
     if (dumpFiles) {
         writeOutAllFiles();
@@ -514,6 +517,8 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("-q" == currArg) {
             argHelper->getPrinterRef() = MessagePrinter(true);
             quiet = true;
+        } else if ("-spv_only" == currArg) {
+            onlySpirV = true;
         } else if ("-output_no_suffix" == currArg) {
             outputNoSuffix = true;
         } else if ("--help" == currArg) {
@@ -769,6 +774,8 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                 i.e. skip "-cl-intel-greater-than-4GB-buffer-required".
 
   -q                            Will silence most of output messages.
+
+  -spv_only                     Will generate only spirV file.
 
   -cpp_file                     Will generate c++ file with C-array
                                 containing Intel Compute device binary.

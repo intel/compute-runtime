@@ -727,6 +727,38 @@ TEST(OfflineCompilerTest, buildSourceCode) {
     EXPECT_NE(0u, mockOfflineCompiler->genBinarySize);
 }
 
+TEST(OfflineCompilerTest, givenSpvOnlyOptionPassedWhenCmdLineParsedThenGenerateOnlySpvFile) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-output",
+        "myOutputFileName",
+        "-spv_only",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto retVal = mockOfflineCompiler->initialize(argv.size(), argv);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bc") || compilerOutputExists("myOutputFileName", "spv"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bin"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "gen"));
+
+    retVal = mockOfflineCompiler->build();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bc") || compilerOutputExists("myOutputFileName", "spv"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bin"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "gen"));
+
+    compilerOutputRemove("myOutputFileName", "bc");
+    compilerOutputRemove("myOutputFileName", "spv");
+}
+
 TEST(OfflineCompilerTest, GivenKernelWhenNoCharAfterKernelSourceThenBuildWithSuccess) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
