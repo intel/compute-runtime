@@ -90,6 +90,28 @@ TEST_F(EventCreate, givenAnEventCreatedThenTheEventHasTheDeviceCommandStreamRece
     ASSERT_EQ(static_cast<DeviceImp *>(device)->neoDevice->getDefaultEngine().commandStreamReceiver, event.get()->csr);
 }
 
+TEST_F(EventCreate, givenAnEventCreateWithInvalidIndexUsingThisEventPoolThenErrorIsReturned) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        1};
+    const ze_event_desc_t eventDesc = {
+        ZE_EVENT_DESC_VERSION_CURRENT,
+        1,
+        ZE_EVENT_SCOPE_FLAG_DEVICE,
+        ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_result_t value = eventPool->createEvent(&eventDesc, &event);
+
+    ASSERT_EQ(nullptr, event);
+    ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, value);
+}
+
 TEST_F(EventPoolCreate, returnsSuccessFromCreateEventPoolWithNoDevice) {
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_EVENT_POOL_DESC_VERSION_CURRENT,

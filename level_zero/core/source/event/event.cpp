@@ -74,18 +74,10 @@ struct EventImp : public Event {
 };
 
 struct EventPoolImp : public EventPool {
-    EventPoolImp(DriverHandle *driver, uint32_t numDevices, ze_device_handle_t *phDevices, uint32_t count, ze_event_pool_flag_t flags) : count(count) {
-
-        pool = std::vector<int>(this->count);
-        eventPoolUsedCount = 0;
-        for (uint32_t i = 0; i < count; i++) {
-            pool[i] = EventPool::EVENT_STATE_INITIAL;
-        }
-
+    EventPoolImp(DriverHandle *driver, uint32_t numDevices, ze_device_handle_t *phDevices, uint32_t numEvents, ze_event_pool_flag_t flags) : numEvents(numEvents) {
         if (flags & ZE_EVENT_POOL_FLAG_TIMESTAMP) {
             isEventPoolUsedForTimestamp = true;
         }
-
         ze_device_handle_t hDevice;
         if (numDevices > 0) {
             hDevice = phDevices[0];
@@ -98,7 +90,7 @@ struct EventPoolImp : public EventPool {
         device = Device::fromHandle(hDevice);
 
         NEO::AllocationProperties properties(
-            device->getRootDeviceIndex(), count * eventSize,
+            device->getRootDeviceIndex(), numEvents * eventSize,
             isEventPoolUsedForTimestamp ? NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
                                         : NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
             device->getNEODevice()->getDeviceBitfield());
@@ -111,57 +103,30 @@ struct EventPoolImp : public EventPool {
     ~EventPoolImp() override {
         device->getDriverHandle()->getMemoryManager()->freeGraphicsMemory(eventPoolAllocation);
         eventPoolAllocation = nullptr;
-
-        eventTracker.clear();
     }
 
     ze_result_t destroy() override;
-
-    size_t getPoolSize() override { return this->pool.size(); }
-    uint32_t getPoolUsedCount() override { return eventPoolUsedCount; }
 
     ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) override;
 
     ze_result_t closeIpcHandle() override;
 
     ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *phEvent) override {
-        if (desc->index > (this->getPoolSize() - 1)) {
+        if (desc->index > (getNumEvents() - 1)) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-
-        if ((this->getPoolUsedCount() + 1) > this->getPoolSize()) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
-
         *phEvent = Event::create(this, desc, this->getDevice());
 
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t reserveEventFromPool(int index, Event *event) override;
-
-    ze_result_t releaseEventToPool(Event *event) override;
-
     uint32_t getEventSize() override { return eventSize; }
-
-    ze_result_t destroyPool() {
-        if (eventPoolUsedCount != 0) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
-
-        pool.clear();
-        return ZE_RESULT_SUCCESS;
-    }
+    size_t getNumEvents() { return numEvents; }
 
     Device *getDevice() override { return device; }
 
     Device *device;
-    uint32_t count;
-    uint32_t eventPoolUsedCount;
-    std::vector<int> pool;
-    std::unordered_map<Event *, int> eventTracker;
-
-    std::queue<int> lastEventPoolOffsetUsed;
+    size_t numEvents;
 
   protected:
     const uint32_t eventSize = static_cast<uint32_t>(alignUp(sizeof(struct KernelTimestampEvent),
@@ -172,11 +137,14 @@ struct EventPoolImp : public EventPool {
 Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *device) {
     auto event = new EventImp(eventPool, desc->index, device);
     UNRECOVERABLE_IF(event == nullptr);
-    eventPool->reserveEventFromPool(desc->index, static_cast<Event *>(event));
 
     if (eventPool->isEventPoolUsedForTimestamp) {
         event->isTimestampEvent = true;
     }
+
+    uint64_t baseHostAddr = reinterpret_cast<uint64_t>(eventPool->getAllocation().getUnderlyingBuffer());
+    event->hostAddress = reinterpret_cast<void *>(baseHostAddr + (desc->index * eventPool->getEventSize()));
+    event->gpuAddress = eventPool->getAllocation().getGpuAddress() + (desc->index * eventPool->getEventSize());
 
     event->signalScope = desc->signal;
     event->waitScope = desc->wait;
@@ -200,11 +168,6 @@ uint64_t Event::getOffsetOfEventTimestampRegister(uint32_t eventTimestampReg) {
 }
 
 ze_result_t Event::destroy() {
-    auto eventImp = static_cast<EventImp *>(this);
-    if (eventImp->eventPool->releaseEventToPool(this)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
     delete this;
     return ZE_RESULT_SUCCESS;
 }
@@ -345,51 +308,6 @@ EventPool *EventPool::create(DriverHandle *driver, uint32_t numDevices,
     return new EventPoolImp(driver, numDevices, phDevices, desc->count, desc->flags);
 }
 
-ze_result_t EventPoolImp::reserveEventFromPool(int index, Event *event) {
-    if (pool[index] == EventPool::EVENT_STATE_CREATED) {
-        return ZE_RESULT_SUCCESS;
-    }
-
-    pool[index] = EventPool::EVENT_STATE_CREATED;
-    eventTracker.insert(std::pair<Event *, int>(event, index));
-
-    if (lastEventPoolOffsetUsed.empty()) {
-        event->offsetUsed = index;
-    } else {
-        event->offsetUsed = lastEventPoolOffsetUsed.front();
-        lastEventPoolOffsetUsed.pop();
-    }
-
-    uint64_t baseHostAddr = reinterpret_cast<uint64_t>(eventPoolAllocation->getUnderlyingBuffer());
-    event->hostAddress = reinterpret_cast<void *>(baseHostAddr + (event->offsetUsed * eventSize));
-    event->gpuAddress = eventPoolAllocation->getGpuAddress() + (event->offsetUsed * eventSize);
-
-    eventPoolUsedCount++;
-
-    return ZE_RESULT_SUCCESS;
-}
-
-ze_result_t EventPoolImp::releaseEventToPool(Event *event) {
-    UNRECOVERABLE_IF(event == nullptr);
-    if (eventTracker.find(event) == eventTracker.end()) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    int index = eventTracker[event];
-    pool[index] = EventPool::EVENT_STATE_DESTROYED;
-    eventTracker.erase(event);
-
-    event->hostAddress = nullptr;
-    event->gpuAddress = 0;
-
-    lastEventPoolOffsetUsed.push(event->offsetUsed);
-    event->offsetUsed = -1;
-
-    eventPoolUsedCount--;
-
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -397,10 +315,6 @@ ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) {
 ze_result_t EventPoolImp::closeIpcHandle() { return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE; }
 
 ze_result_t EventPoolImp::destroy() {
-    if (this->destroyPool()) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
     delete this;
 
     return ZE_RESULT_SUCCESS;

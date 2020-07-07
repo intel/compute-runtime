@@ -49,7 +49,6 @@ struct Event : _ze_event_handle_t {
 
     void *hostAddress = nullptr;
     uint64_t gpuAddress;
-    int offsetUsed = -1;
 
     ze_event_scope_flag_t signalScope; // Saving scope for use later
     ze_event_scope_flag_t waitScope;
@@ -76,20 +75,10 @@ struct EventPool : _ze_event_pool_handle_t {
     static EventPool *create(DriverHandle *driver, uint32_t numDevices, ze_device_handle_t *phDevices, const ze_event_pool_desc_t *desc);
     virtual ~EventPool() = default;
     virtual ze_result_t destroy() = 0;
-    virtual size_t getPoolSize() = 0;
-    virtual uint32_t getPoolUsedCount() = 0;
     virtual ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) = 0;
     virtual ze_result_t closeIpcHandle() = 0;
     virtual ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *phEvent) = 0;
-    virtual ze_result_t reserveEventFromPool(int index, Event *event) = 0;
-    virtual ze_result_t releaseEventToPool(Event *event) = 0;
     virtual Device *getDevice() = 0;
-
-    enum EventCreationState : int {
-        EVENT_STATE_INITIAL = 0,
-        EVENT_STATE_DESTROYED = EVENT_STATE_INITIAL,
-        EVENT_STATE_CREATED = 1
-    };
 
     static EventPool *fromHandle(ze_event_pool_handle_t handle) {
         return static_cast<EventPool *>(handle);
