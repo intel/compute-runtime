@@ -167,8 +167,8 @@ class MemoryManager {
     virtual void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex){};
     void *getReservedMemory(size_t size, size_t alignment);
     GfxPartition *getGfxPartition(uint32_t rootDeviceIndex) { return gfxPartitions.at(rootDeviceIndex).get(); }
-    virtual AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) { return AddressRange{0, 0}; };
-    virtual void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) { return; };
+    virtual AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) = 0;
+    virtual void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) = 0;
     static HeapIndex selectInternalHeap(bool useLocalMemory) { return useLocalMemory ? HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_INTERNAL; }
     static HeapIndex selectExternalHeap(bool useLocalMemory) { return useLocalMemory ? HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_EXTERNAL; }
 
@@ -197,7 +197,7 @@ class MemoryManager {
     virtual GraphicsAllocation *allocateGraphicsMemory64kb(const AllocationData &allocationData) = 0;
     virtual GraphicsAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) = 0;
     virtual GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) = 0;
-    virtual GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) { return nullptr; }
+    virtual GraphicsAllocation *allocateGraphicsMemoryWithGpuVa(const AllocationData &allocationData) = 0;
 
     GraphicsAllocation *allocateGraphicsMemoryForImageFromHostPtr(const AllocationData &allocationData);
     MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData);
