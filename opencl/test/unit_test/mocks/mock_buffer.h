@@ -45,7 +45,7 @@ class MockBuffer : public MockBufferStorage, public Buffer {
         if (externalAlloc != nullptr) {
             // no ownership over graphics allocation
             // return to mock allocations
-            this->graphicsAllocation = &this->mockGfxAllocation;
+            this->multiGraphicsAllocation.addAllocation(&this->mockGfxAllocation);
         }
     }
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device) override {

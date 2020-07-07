@@ -768,7 +768,7 @@ struct NullImage : public Image {
                         0, 0, ClSurfaceFormatInfo{}, nullptr) {
     }
     ~NullImage() override {
-        delete this->graphicsAllocation;
+        delete this->multiGraphicsAllocation.getGraphicsAllocation(0);
     }
     void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel, uint32_t rootDeviceIndex) override {}
     void setMediaImageArg(void *memory, uint32_t rootDeviceIndex) override {}

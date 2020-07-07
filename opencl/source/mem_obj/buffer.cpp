@@ -462,7 +462,7 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
     auto buffer = createFunction(this->context, memoryProperties, flags, 0, region->size,
                                  ptrOffset(this->memoryStorage, region->origin),
                                  this->hostPtr ? ptrOffset(this->hostPtr, region->origin) : nullptr,
-                                 this->graphicsAllocation,
+                                 this->multiGraphicsAllocation.getDefaultGraphicsAllocation(),
                                  this->isZeroCopy, this->isHostPtrSVM, false);
 
     if (this->context->isProvidingPerformanceHints()) {
@@ -700,7 +700,6 @@ void Buffer::setSurfaceState(const Device *device,
                              cl_mem_flags_intel flagsIntel) {
     auto buffer = Buffer::createBufferHwFromDevice(device, flags, flagsIntel, svmSize, svmPtr, svmPtr, gfxAlloc, offset, true, false, false);
     buffer->setArgStateful(surfaceState, false, false, false, false, *device);
-    buffer->graphicsAllocation = nullptr;
     delete buffer;
 }
 

@@ -42,7 +42,7 @@ MemObj::MemObj(Context *context,
     : context(context), memObjectType(memObjectType), memoryProperties(memoryProperties), flags(flags), flagsIntel(flagsIntel), size(size),
       memoryStorage(memoryStorage), hostPtr(hostPtr),
       isZeroCopy(zeroCopy), isHostPtrSVM(isHostPtrSVM), isObjectRedescribed(isObjectRedescribed),
-      graphicsAllocation(gfxAllocation), multiGraphicsAllocation(graphicsAllocation ? graphicsAllocation->getRootDeviceIndex() : 0) {
+      multiGraphicsAllocation(gfxAllocation ? gfxAllocation->getRootDeviceIndex() : 0) {
 
     if (context) {
         context->incRefInternal();
@@ -50,12 +50,16 @@ MemObj::MemObj(Context *context,
         auto device = context->getDevice(0);
         executionEnvironment = device->getExecutionEnvironment();
     }
-    if (graphicsAllocation) {
-        multiGraphicsAllocation.addAllocation(graphicsAllocation);
+    if (gfxAllocation) {
+        multiGraphicsAllocation.addAllocation(gfxAllocation);
     }
 }
 
 MemObj::~MemObj() {
+    if (!context) {
+        return;
+    }
+
     bool needWait = false;
     if (allocatedMapPtr != nullptr) {
         needWait = true;
@@ -67,10 +71,11 @@ MemObj::~MemObj() {
         needWait = true;
     }
 
-    if (memoryManager && !isObjectRedescribed) {
+    if (!isObjectRedescribed) {
         if (peekSharingHandler()) {
             peekSharingHandler()->releaseReusedGraphicsAllocation();
         }
+        auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
         if (graphicsAllocation && !associatedMemObject && !isHostPtrSVM && graphicsAllocation->peekReuseCount() == 0) {
             memoryManager->removeAllocationFromHostPtrManager(graphicsAllocation);
             bool doAsyncDestructions = DebugManager.flags.EnableAsyncDestroyAllocations.get();
@@ -93,7 +98,7 @@ MemObj::~MemObj() {
         }
 
         if (associatedMemObject) {
-            auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
+            UNRECOVERABLE_IF(!graphicsAllocation);
             if (associatedMemObject->getGraphicsAllocation(graphicsAllocation->getRootDeviceIndex()) != graphicsAllocation) {
                 destroyGraphicsAllocation(graphicsAllocation, false);
             }
@@ -107,9 +112,7 @@ MemObj::~MemObj() {
         }
     }
 
-    if (context) {
-        context->decRefInternal();
-    }
+    context->decRefInternal();
 }
 
 void MemObj::DestructorCallback::invoke(cl_mem memObj) {
@@ -264,13 +267,12 @@ void MemObj::resetGraphicsAllocation(GraphicsAllocation *newGraphicsAllocation) 
     TakeOwnershipWrapper<MemObj> lock(*this);
     checkUsageAndReleaseOldAllocation(newGraphicsAllocation->getRootDeviceIndex());
     multiGraphicsAllocation.addAllocation(newGraphicsAllocation);
-    graphicsAllocation = newGraphicsAllocation;
 }
+
 void MemObj::removeGraphicsAllocation(uint32_t rootDeviceIndex) {
     TakeOwnershipWrapper<MemObj> lock(*this);
     checkUsageAndReleaseOldAllocation(rootDeviceIndex);
     multiGraphicsAllocation.removeAllocation(rootDeviceIndex);
-    graphicsAllocation = nullptr;
 }
 
 bool MemObj::readMemObjFlagsInvalid() {
@@ -374,11 +376,13 @@ bool MemObj::addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags,
 }
 
 bool MemObj::isTiledAllocation() const {
+    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
     auto gmm = graphicsAllocation->getDefaultGmm();
     return gmm && (gmm->gmmResourceInfo->getTileModeSurfaceState() != 0);
 }
 
 bool MemObj::mappingOnCpuAllowed() const {
+    auto graphicsAllocation = multiGraphicsAllocation.getDefaultGraphicsAllocation();
     return !isTiledAllocation() && !peekSharingHandler() && !isMipMapped(this) && !DebugManager.flags.DisableZeroCopyForBuffers.get() &&
            !(graphicsAllocation->getDefaultGmm() && graphicsAllocation->getDefaultGmm()->isRenderCompressed) &&
            MemoryPool::isSystemMemoryPool(graphicsAllocation->getMemoryPool());

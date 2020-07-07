@@ -154,7 +154,6 @@ class MemObj : public BaseObject<_cl_mem> {
     bool isHostPtrSVM;
     bool isObjectRedescribed;
     MemoryManager *memoryManager = nullptr;
-    GraphicsAllocation *graphicsAllocation;
     MultiGraphicsAllocation multiGraphicsAllocation;
     GraphicsAllocation *mcsAllocation = nullptr;
     GraphicsAllocation *mapAllocation = nullptr;
