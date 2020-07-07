@@ -103,6 +103,8 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
         }
     }
 
+    drmObject->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+
     return drmObject.release();
 }
 } // namespace NEO

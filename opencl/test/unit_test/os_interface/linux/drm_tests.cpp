@@ -113,43 +113,39 @@ TEST(DrmTest, GivenDrmWhenAskedForPreemptionCorrectValueReturned) {
 TEST(DrmTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
     DrmMock *pDrm = new DrmMock;
     pDrm->StoredRetVal = -1;
-    EXPECT_THROW(pDrm->createDrmContext(), std::exception);
+    EXPECT_THROW(pDrm->createDrmContext(1), std::exception);
     pDrm->StoredRetVal = 0;
     delete pDrm;
 }
 
 TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext) {
     DrmMock drmMock;
-    uint32_t drmContextId1 = 123;
-    uint32_t drmContextId2 = 456;
 
     {
-        drmMock.StoredCtxId = drmContextId1;
         OsContextLinux osContext1(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
 
         EXPECT_EQ(1u, osContext1.getDrmContextIds().size());
-        EXPECT_EQ(drmContextId1, osContext1.getDrmContextIds()[0]);
+        EXPECT_EQ(drmMock.receivedCreateContextId, osContext1.getDrmContextIds()[0]);
+        EXPECT_EQ(drmMock.receivedCreateContextId, drmMock.getVirtualMemoryAddressSpace(0));
         EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
 
         {
-            drmMock.StoredCtxId = drmContextId2;
             OsContextLinux osContext2(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
             EXPECT_EQ(1u, osContext2.getDrmContextIds().size());
-            EXPECT_EQ(drmContextId2, osContext2.getDrmContextIds()[0]);
+            EXPECT_EQ(drmMock.receivedCreateContextId, osContext2.getDrmContextIds()[0]);
+            EXPECT_EQ(drmMock.receivedCreateContextId, drmMock.getVirtualMemoryAddressSpace(0));
             EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
         }
-        EXPECT_EQ(drmContextId2, drmMock.receivedDestroyContextId);
+        EXPECT_EQ(drmMock.getVirtualMemoryAddressSpace(0), drmMock.receivedDestroyContextId);
     }
 
-    EXPECT_EQ(drmContextId1, drmMock.receivedDestroyContextId);
+    EXPECT_EQ(drmMock.getVirtualMemoryAddressSpace(0), drmMock.receivedDestroyContextId);
     EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
 }
 
 TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextIsCreatedThenReceivedContextParamRequestCountReturnsCorrectValue) {
 
     DrmMock drmMock;
-    uint32_t drmContextId1 = 123;
-    drmMock.StoredCtxId = drmContextId1;
     auto expectedCount = 0u;
 
     {
@@ -171,7 +167,6 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
 
 TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContextThenCallSetContextPriorityIoctl) {
     DrmMock drmMock;
-    drmMock.StoredCtxId = 123;
     drmMock.preemptionSupported = false;
 
     OsContextLinux osContext1(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
@@ -186,7 +181,7 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
 
     OsContextLinux osContext4(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, true, false, false);
     EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
-    EXPECT_EQ(drmMock.StoredCtxId, drmMock.receivedContextParamRequest.ctx_id);
+    EXPECT_EQ(drmMock.receivedCreateContextId, drmMock.receivedContextParamRequest.ctx_id);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);
     EXPECT_EQ(static_cast<uint64_t>(-1023), drmMock.receivedContextParamRequest.value);
     EXPECT_EQ(0u, drmMock.receivedContextParamRequest.size);
@@ -340,6 +335,7 @@ namespace NEO {
 namespace SysCalls {
 extern uint32_t closeFuncCalled;
 extern int closeFuncArgPassed;
+extern uint32_t vmId;
 } // namespace SysCalls
 } // namespace NEO
 
@@ -351,4 +347,15 @@ TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenFileDescriptorIsClosed) {
     }
     EXPECT_EQ(1u, SysCalls::closeFuncCalled);
     EXPECT_EQ(fileDescriptor, SysCalls::closeFuncArgPassed);
+}
+
+TEST(DrmTest, givenDrmWhenCreatingOsContextThenCreateDrmContextWithVmId) {
+    DrmMock drmMock;
+    OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+
+    EXPECT_EQ(SysCalls::vmId, drmMock.getVirtualMemoryAddressSpace(0));
+
+    auto &contextIds = osContext.getDrmContextIds();
+    EXPECT_EQ(1u, contextIds.size());
+    EXPECT_EQ(SysCalls::vmId, contextIds[0]);
 }

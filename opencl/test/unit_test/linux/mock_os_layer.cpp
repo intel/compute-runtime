@@ -22,6 +22,7 @@ int haveSoftPin = 1;
 int havePreemption = I915_SCHEDULER_CAP_ENABLED |
                      I915_SCHEDULER_CAP_PRIORITY |
                      I915_SCHEDULER_CAP_PREEMPTION;
+int vmId = 0;
 int failOnDeviceId = 0;
 int failOnEuTotal = 0;
 int failOnSubsliceTotal = 0;
@@ -31,6 +32,7 @@ int failOnParamBoost = 0;
 int failOnSetParamSseu = 0;
 int failOnGetParamSseu = 0;
 int failOnContextCreate = 0;
+int failOnVirtualMemoryCreate = 0;
 int failOnSetPriority = 0;
 int failOnPreemption = 0;
 int failOnDrmVersion = 0;
@@ -188,6 +190,20 @@ int drmContextDestroy(drm_i915_gem_context_destroy *destroy) {
         return -1;
 }
 
+int drmVirtualMemoryCreate(drm_i915_gem_vm_control *control) {
+    assert(control);
+
+    control->vm_id = ++vmId;
+    return failOnVirtualMemoryCreate;
+}
+
+int drmVirtualMemoryDestroy(drm_i915_gem_vm_control *control) {
+    assert(control);
+
+    vmId--;
+    return (control->vm_id > 0) ? 0 : -1;
+}
+
 int drmVersion(drm_version_t *version) {
     strcpy(version->name, providedDrmVersion);
 
@@ -240,6 +256,12 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
                 break;
             case DRM_IOCTL_I915_GEM_CONTEXT_DESTROY:
                 res = drmContextDestroy(va_arg(vl, drm_i915_gem_context_destroy *));
+                break;
+            case DRM_IOCTL_I915_GEM_VM_CREATE:
+                res = drmVirtualMemoryCreate(va_arg(vl, drm_i915_gem_vm_control *));
+                break;
+            case DRM_IOCTL_I915_GEM_VM_DESTROY:
+                res = drmVirtualMemoryDestroy(va_arg(vl, drm_i915_gem_vm_control *));
                 break;
             case DRM_IOCTL_VERSION:
                 res = drmVersion(va_arg(vl, drm_version_t *));

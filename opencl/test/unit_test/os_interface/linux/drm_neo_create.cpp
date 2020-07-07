@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 
 #include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
@@ -33,6 +34,8 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
     if (pDrmToReturnFromCreateFunc) {
         return *pDrmToReturnFromCreateFunc;
     }
-    return new DrmMockDefault(rootDeviceEnvironment);
+    auto drm = new DrmMockDefault(rootDeviceEnvironment);
+    drm->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+    return drm;
 }
 } // namespace NEO

@@ -354,7 +354,7 @@ TEST_F(DrmTests, failOnContextCreate) {
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
     failOnContextCreate = -1;
-    EXPECT_THROW(drm->createDrmContext(), std::exception);
+    EXPECT_THROW(drm->createDrmContext(1), std::exception);
     EXPECT_FALSE(drm->isPreemptionSupported());
     failOnContextCreate = 0;
 }
@@ -365,7 +365,7 @@ TEST_F(DrmTests, failOnSetPriority) {
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
     failOnSetPriority = -1;
-    auto drmContext = drm->createDrmContext();
+    auto drmContext = drm->createDrmContext(1);
     EXPECT_THROW(drm->setLowPriorityContextParam(drmContext), std::exception);
     EXPECT_FALSE(drm->isPreemptionSupported());
     failOnSetPriority = 0;
@@ -404,7 +404,7 @@ TEST(AllocatorHelper, givenExpectedSizeToReserveWhenGetSizeToReserveCalledThenEx
 
 TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCreated) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-    auto drm = new DrmMockSuccess(*executionEnvironment.rootDeviceEnvironments[0]);
+    auto drm = new DrmMockSuccess(fakeFd, *executionEnvironment.rootDeviceEnvironments[0]);
 
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
@@ -415,6 +415,26 @@ TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCr
 
 TEST(OsInterfaceTests, givenOsInterfaceWhenEnableLocalMemoryIsSpecifiedThenItIsSetToTrueOn64Bit) {
     EXPECT_TRUE(OSInterface::osEnableLocalMemory);
+}
+
+TEST_F(DrmTests, whenDrmIsCreatedWithMultipleSubDevicesThenCreateMultipleVirtualMemoryAddressSpaces) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+
+    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    EXPECT_NE(drm, nullptr);
+
+    auto numSubDevices = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+    for (auto id = 0u; id < numSubDevices; id++) {
+        EXPECT_EQ(id + 1, drm->getVirtualMemoryAddressSpace(id));
+    }
+}
+
+TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenCallAbort) {
+    VariableBackup<decltype(failOnVirtualMemoryCreate)> backupFailOnVirtaualMemoryCreate(&failOnVirtualMemoryCreate);
+
+    failOnVirtualMemoryCreate = -1;
+    EXPECT_THROW(DrmWrap::createDrm(*rootDeviceEnvironment), std::exception);
 }
 
 int main(int argc, char **argv) {

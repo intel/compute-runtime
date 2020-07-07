@@ -33,6 +33,7 @@ extern int fakeFd;
 extern int haveDri;  // index of dri to serve, -1 - none
 extern int deviceId; // known DeviceID
 extern int haveSoftPin;
+extern int vmId;
 extern int failOnDeviceId;
 extern int failOnEuTotal;
 extern int failOnSubsliceTotal;
@@ -40,6 +41,7 @@ extern int failOnRevisionId;
 extern int failOnSoftPin;
 extern int failOnParamBoost;
 extern int failOnContextCreate;
+extern int failOnVirtualMemoryCreate;
 extern int failOnSetPriority;
 extern int failOnPreemption;
 extern int havePreemption;

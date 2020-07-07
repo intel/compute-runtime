@@ -8,10 +8,13 @@
 #pragma once
 
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "opencl/source/platform/platform.h"
+#include "opencl/test/unit_test/linux/mock_os_layer.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "drm/i915_drm.h"
@@ -33,10 +36,13 @@ class DrmMock : public Drm {
     using Drm::preemptionSupported;
     using Drm::query;
     using Drm::sliceCountChangeSupported;
+    using Drm::virtualMemoryIds;
 
-    DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(mockFd, ""), rootDeviceEnvironment) {
+    DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(fd, ""), rootDeviceEnvironment) {
         sliceCountChangeSupported = true;
+        createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
     }
+    DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(mockFd, rootDeviceEnvironment) {}
     DrmMock() : DrmMock(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {}
 
     int ioctl(unsigned long request, void *arg) override;
@@ -100,7 +106,7 @@ class DrmMock : public Drm {
 
     bool disableSomeTopology = false;
 
-    uint32_t StoredCtxId = 1;
+    uint32_t receivedCreateContextId = 0;
     uint32_t receivedDestroyContextId = 0;
     uint32_t ioctlCallsCount = 0;
 

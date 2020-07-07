@@ -24,7 +24,7 @@ TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenProperFileDescriptorI
     auto osInterface = new OSInterface();
     rootDeviceEnvironment->osInterface.reset(osInterface);
 
-    auto drm = new DrmMock(*rootDeviceEnvironment);
+    auto drm = new DrmMock(fakeFd, *rootDeviceEnvironment);
     osInterface->get()->setDrm(drm);
 
     GMM_INIT_IN_ARGS gmmInputArgs = {};

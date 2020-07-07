@@ -22,6 +22,7 @@
 #include <string>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <vector>
 
 struct GT_SYSTEM_INFO;
 
@@ -65,7 +66,9 @@ class Drm {
 
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
     inline int getFileDescriptor() const { return hwDeviceId->getFileDescriptor(); }
-    uint32_t createDrmContext();
+    uint32_t createDrmVirtualMemory();
+    void destroyDrmVirtualMemory(uint32_t drmVmId);
+    uint32_t createDrmContext(uint32_t drmVmId);
     void destroyDrmContext(uint32_t drmContextId);
     void setLowPriorityContextParam(uint32_t drmContextId);
 
@@ -80,6 +83,9 @@ class Drm {
     bool queryEngineInfo();
     MOCKABLE_VIRTUAL bool queryMemoryInfo();
     bool queryTopology(int &sliceCount, int &subSliceCount, int &euCount);
+    bool createVirtualMemoryAddressSpace(uint32_t vmCount);
+    void destroyVirtualMemoryAddressSpace();
+    uint32_t getVirtualMemoryAddressSpace(uint32_t vmId);
     int setupHardwareInfo(DeviceDescriptor *, bool);
 
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }
@@ -114,6 +120,7 @@ class Drm {
     Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {}
     std::unique_ptr<EngineInfo> engineInfo;
     std::unique_ptr<MemoryInfo> memoryInfo;
+    std::vector<uint32_t> virtualMemoryIds;
 
     std::string getSysFsPciPath();
     std::unique_ptr<uint8_t[]> query(uint32_t queryId, int32_t &length);
