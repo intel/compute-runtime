@@ -180,16 +180,17 @@ void OsAgnosticMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *
     fragment.fragmentSize = alignUp(gfxAllocation->getUnderlyingBufferSize(), MemoryConstants::pageSize);
     fragment.osInternalStorage = new OsHandle();
     fragment.residency = new ResidencyData();
-    hostPtrManager->storeFragment(fragment);
+    hostPtrManager->storeFragment(gfxAllocation->getRootDeviceIndex(), fragment);
 }
 
 void OsAgnosticMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) {
     auto buffer = gfxAllocation->getUnderlyingBuffer();
-    auto fragment = hostPtrManager->getFragment(buffer);
+    auto rootDeviceIndex = gfxAllocation->getRootDeviceIndex();
+    auto fragment = hostPtrManager->getFragment({buffer, rootDeviceIndex});
     if (fragment && fragment->driverAllocation) {
         OsHandle *osStorageToRelease = fragment->osInternalStorage;
         ResidencyData *residencyDataToRelease = fragment->residency;
-        if (hostPtrManager->releaseHostPtr(buffer)) {
+        if (hostPtrManager->releaseHostPtr(rootDeviceIndex, buffer)) {
             delete osStorageToRelease;
             delete residencyDataToRelease;
         }
@@ -265,7 +266,7 @@ MemoryManager::AllocationStatus OsAgnosticMemoryManager::populateOsHandles(OsHan
             newFragment.fragmentSize = handleStorage.fragmentStorageData[i].fragmentSize;
             newFragment.osInternalStorage = handleStorage.fragmentStorageData[i].osHandleStorage;
             newFragment.residency = handleStorage.fragmentStorageData[i].residency;
-            hostPtrManager->storeFragment(newFragment);
+            hostPtrManager->storeFragment(rootDeviceIndex, newFragment);
         }
     }
     return AllocationStatus::Success;

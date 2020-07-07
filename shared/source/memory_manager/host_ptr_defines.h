@@ -9,6 +9,7 @@
 
 #include <cinttypes>
 #include <cstdlib>
+#include <limits>
 
 namespace NEO {
 
@@ -49,6 +50,7 @@ struct AllocationRequirements {
     PartialAllocation allocationFragments[maxFragmentsCount];
     uint64_t totalRequiredSize = 0u;
     uint32_t requiredFragmentsCount = 0u;
+    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
 };
 
 struct FragmentStorage {

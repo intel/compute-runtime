@@ -434,11 +434,12 @@ TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationT
     uint64_t gpuPtr = 0x123;
 
     MockWddmAllocation gfxAllocation;
+    HostPtrEntryKey key{cpuPtr, gfxAllocation.getRootDeviceIndex()};
     gfxAllocation.cpuPtr = cpuPtr;
     gfxAllocation.size = size;
     gfxAllocation.gpuPtr = gpuPtr;
     memoryManager->addAllocationToHostPtrManager(&gfxAllocation);
-    auto fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
+    auto fragment = memoryManager->getHostPtrManager()->getFragment(key);
     EXPECT_NE(fragment, nullptr);
     EXPECT_TRUE(fragment->driverAllocation);
     EXPECT_EQ(fragment->refCount, 1);
@@ -452,22 +453,22 @@ TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationT
 
     FragmentStorage fragmentStorage = {};
     fragmentStorage.fragmentCpuPointer = cpuPtr;
-    memoryManager->getHostPtrManager()->storeFragment(fragmentStorage);
-    fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
+    memoryManager->getHostPtrManager()->storeFragment(gfxAllocation.getRootDeviceIndex(), fragmentStorage);
+    fragment = memoryManager->getHostPtrManager()->getFragment(key);
     EXPECT_EQ(fragment->refCount, 2);
 
     fragment->driverAllocation = false;
     memoryManager->removeAllocationFromHostPtrManager(&gfxAllocation);
-    fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
+    fragment = memoryManager->getHostPtrManager()->getFragment(key);
     EXPECT_EQ(fragment->refCount, 2);
     fragment->driverAllocation = true;
 
     memoryManager->removeAllocationFromHostPtrManager(&gfxAllocation);
-    fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
+    fragment = memoryManager->getHostPtrManager()->getFragment(key);
     EXPECT_EQ(fragment->refCount, 1);
 
     memoryManager->removeAllocationFromHostPtrManager(&gfxAllocation);
-    fragment = memoryManager->getHostPtrManager()->getFragment(gfxAllocation.getUnderlyingBuffer());
+    fragment = memoryManager->getHostPtrManager()->getFragment(key);
     EXPECT_EQ(fragment, nullptr);
 }
 
@@ -842,13 +843,13 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
 
     auto hostPtrManager = memoryManager->getHostPtrManager();
 
-    auto fragment = hostPtrManager->getFragment(ptr);
+    auto fragment = hostPtrManager->getFragment({ptr, rootDeviceIndex});
     ASSERT_NE(nullptr, fragment);
     EXPECT_TRUE(fragment->refCount == 1);
     EXPECT_NE(fragment->osInternalStorage, nullptr);
 
     // offset by 3 pages, not in boundary
-    auto fragment2 = hostPtrManager->getFragment((char *)ptr + 3 * 4096);
+    auto fragment2 = hostPtrManager->getFragment({reinterpret_cast<char *>(ptr) + 3 * 4096, rootDeviceIndex});
 
     EXPECT_EQ(nullptr, fragment2);
 
@@ -858,7 +859,7 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
     // Should be same cpu ptr and gpu ptr
     EXPECT_EQ(offsetPtr, gpuAllocation2->getUnderlyingBuffer());
 
-    auto fragment3 = hostPtrManager->getFragment(offsetPtr);
+    auto fragment3 = hostPtrManager->getFragment({offsetPtr, rootDeviceIndex});
     ASSERT_NE(nullptr, fragment3);
 
     EXPECT_TRUE(fragment3->refCount == 2);
@@ -868,14 +869,14 @@ TEST_F(WddmMemoryManagerTest, GivenOffsetsWhenAllocatingGpuMemHostThenAllocatedO
 
     memoryManager->freeGraphicsMemory(gpuAllocation2);
 
-    auto fragment4 = hostPtrManager->getFragment(ptr);
+    auto fragment4 = hostPtrManager->getFragment({ptr, rootDeviceIndex});
     ASSERT_NE(nullptr, fragment4);
 
     EXPECT_TRUE(fragment4->refCount == 1);
 
     memoryManager->freeGraphicsMemory(gpuAllocation);
 
-    fragment4 = hostPtrManager->getFragment(ptr);
+    fragment4 = hostPtrManager->getFragment({ptr, rootDeviceIndex});
     EXPECT_EQ(nullptr, fragment4);
 
     alignedFree(ptr);
@@ -890,7 +891,7 @@ TEST_F(WddmMemoryManagerTest, WhenAllocatingGpuMemThenOsInternalStorageIsPopulat
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(ptr, gpuAllocation->getUnderlyingBuffer());
 
-    auto fragment = memoryManager->getHostPtrManager()->getFragment(ptr);
+    auto fragment = memoryManager->getHostPtrManager()->getFragment({ptr, rootDeviceIndex});
     ASSERT_NE(nullptr, fragment);
     EXPECT_TRUE(fragment->refCount == 1);
     EXPECT_NE(fragment->osInternalStorage->handle, 0);
@@ -1189,7 +1190,7 @@ TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
 
     ASSERT_EQ(3u, hostPtrManager->getFragmentCount());
 
-    auto reqs = MockHostPtrManager::getAllocationRequirements(ptr, size);
+    auto reqs = MockHostPtrManager::getAllocationRequirements(context.getDevice(0)->getRootDeviceIndex(), ptr, size);
 
     for (int i = 0; i < maxFragmentsCount; i++) {
         EXPECT_NE((D3DKMT_HANDLE) nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->handle);
@@ -1261,7 +1262,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     fragment.fragmentSize = size;
     fragment.osInternalStorage = handleStorage.fragmentStorageData[0].osHandleStorage;
     fragment.osInternalStorage->gpuPtr = gpuAdress;
-    memoryManager->getHostPtrManager()->storeFragment(fragment);
+    memoryManager->getHostPtrManager()->storeFragment(rootDeviceIndex, fragment);
 
     AllocationData allocationData;
     allocationData.size = size;
@@ -1296,7 +1297,7 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     fragment.fragmentSize = size;
     fragment.osInternalStorage = handleStorage.fragmentStorageData[0].osHandleStorage;
     fragment.osInternalStorage->gpuPtr = gpuAdress;
-    memoryManager->getHostPtrManager()->storeFragment(fragment);
+    memoryManager->getHostPtrManager()->storeFragment(rootDeviceIndex, fragment);
 
     auto offset = 80;
     auto allocationPtr = ptrOffset(ptr, offset);
@@ -1811,16 +1812,16 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
 
     EXPECT_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillOnce(::testing::Return(STATUS_GRAPHICS_NO_VIDEO_MEMORY));
 
-    auto result = memoryManager->populateOsHandles(handleStorage, 0);
+    auto result = memoryManager->populateOsHandles(handleStorage, mockRootDeviceIndex);
     auto hostPtrManager = static_cast<MockHostPtrManager *>(memoryManager->getHostPtrManager());
 
     EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, result);
     auto numberOfStoredFragments = hostPtrManager->getFragmentCount();
     EXPECT_EQ(0u, numberOfStoredFragments);
-    EXPECT_EQ(nullptr, hostPtrManager->getFragment(handleStorage.fragmentStorageData[1].cpuPtr));
+    EXPECT_EQ(nullptr, hostPtrManager->getFragment({handleStorage.fragmentStorageData[1].cpuPtr, mockRootDeviceIndex}));
 
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
-    memoryManager->cleanOsHandles(handleStorage, 0);
+    memoryManager->cleanOsHandles(handleStorage, mockRootDeviceIndex);
 }
 
 TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhenCleanupMemoryManagerThenDontAccessCsr) {

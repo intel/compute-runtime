@@ -347,15 +347,15 @@ void WddmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAll
     fragment.osInternalStorage->handle = wddmMemory->getDefaultHandle();
     fragment.osInternalStorage->gmm = gfxAllocation->getDefaultGmm();
     fragment.residency = &wddmMemory->getResidencyData();
-    hostPtrManager->storeFragment(fragment);
+    hostPtrManager->storeFragment(gfxAllocation->getRootDeviceIndex(), fragment);
 }
 
 void WddmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) {
     auto buffer = gfxAllocation->getUnderlyingBuffer();
-    auto fragment = hostPtrManager->getFragment(buffer);
+    auto fragment = hostPtrManager->getFragment({buffer, gfxAllocation->getRootDeviceIndex()});
     if (fragment && fragment->driverAllocation) {
         OsHandle *osStorageToRelease = fragment->osInternalStorage;
-        if (hostPtrManager->releaseHostPtr(buffer)) {
+        if (hostPtrManager->releaseHostPtr(gfxAllocation->getRootDeviceIndex(), buffer)) {
             delete osStorageToRelease;
         }
     }
@@ -497,7 +497,7 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
     UNRECOVERABLE_IF(result != STATUS_SUCCESS);
 
     for (uint32_t i = 0; i < allocatedFragmentsCounter; i++) {
-        hostPtrManager->storeFragment(handleStorage.fragmentStorageData[allocatedFragmentIndexes[i]]);
+        hostPtrManager->storeFragment(rootDeviceIndex, handleStorage.fragmentStorageData[allocatedFragmentIndexes[i]]);
     }
 
     return AllocationStatus::Success;
@@ -532,7 +532,7 @@ void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage, uint32_t 
 void WddmMemoryManager::obtainGpuAddressFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage) {
     if (this->force32bitAllocations && (handleStorage.fragmentCount > 0)) {
         auto hostPtr = allocation->getUnderlyingBuffer();
-        auto fragment = hostPtrManager->getFragment(hostPtr);
+        auto fragment = hostPtrManager->getFragment({hostPtr, allocation->getRootDeviceIndex()});
         if (fragment && fragment->driverAllocation) {
             auto gpuPtr = handleStorage.fragmentStorageData[0].osHandleStorage->gpuPtr;
             for (uint32_t i = 1; i < handleStorage.fragmentCount; i++) {

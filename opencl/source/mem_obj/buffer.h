@@ -178,7 +178,8 @@ class Buffer : public MemObj {
                             cl_int &errcodeRet,
                             bool &isZeroCopy,
                             bool &copyMemoryFromHostPtr,
-                            MemoryManager *memMngr);
+                            MemoryManager *memMngr,
+                            uint32_t rootDeviceIndex);
     static GraphicsAllocation::AllocationType getGraphicsAllocationType(const MemoryProperties &properties, Context &context,
                                                                         bool renderCompressedBuffers, bool localMemoryEnabled,
                                                                         bool preferCompression);

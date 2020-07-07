@@ -187,7 +187,7 @@ Buffer *Buffer::create(Context *context,
         memoryManager->isLocalMemorySupported(rootDeviceIndex),
         HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(context->getDevice(0)->getHardwareInfo(), size));
 
-    checkMemory(memoryProperties, size, hostPtr, errcodeRet, alignementSatisfied, copyMemoryFromHostPtr, memoryManager);
+    checkMemory(memoryProperties, size, hostPtr, errcodeRet, alignementSatisfied, copyMemoryFromHostPtr, memoryManager, rootDeviceIndex);
 
     if (errcodeRet != CL_SUCCESS) {
         return nullptr;
@@ -384,7 +384,8 @@ void Buffer::checkMemory(MemoryProperties memoryProperties,
                          cl_int &errcodeRet,
                          bool &alignementSatisfied,
                          bool &copyMemoryFromHostPtr,
-                         MemoryManager *memoryManager) {
+                         MemoryManager *memoryManager,
+                         uint32_t rootDeviceIndex) {
     errcodeRet = CL_SUCCESS;
     alignementSatisfied = true;
     copyMemoryFromHostPtr = false;
@@ -403,7 +404,7 @@ void Buffer::checkMemory(MemoryProperties memoryProperties,
 
     if (memoryProperties.flags.useHostPtr) {
         if (hostPtr) {
-            auto fragment = memoryManager->getHostPtrManager()->getFragment(hostPtr);
+            auto fragment = memoryManager->getHostPtrManager()->getFragment({hostPtr, rootDeviceIndex});
             if (fragment && fragment->driverAllocation) {
                 errcodeRet = CL_INVALID_HOST_PTR;
                 return;

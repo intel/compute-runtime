@@ -743,12 +743,12 @@ TEST_F(WddmCommandStreamTest, givenTwoTemporaryAllocationsWhenCleanTemporaryAllo
     auto alignedPtr = alignDown(host_ptr, MemoryConstants::pageSize);
     auto alignedPtr2 = alignDown(host_ptr2, MemoryConstants::pageSize);
 
-    auto fragment = hostPtrManager->getFragment(alignedPtr2);
+    auto fragment = hostPtrManager->getFragment({alignedPtr2, csr->getRootDeviceIndex()});
     ASSERT_NE(nullptr, fragment);
 
     EXPECT_EQ(alignedPtr2, fragment->fragmentCpuPointer);
 
-    auto fragment2 = hostPtrManager->getFragment(alignedPtr);
+    auto fragment2 = hostPtrManager->getFragment({alignedPtr, csr->getRootDeviceIndex()});
     EXPECT_EQ(nullptr, fragment2);
     // destroy remaining allocation
     csr->waitForTaskCountAndCleanAllocationList(100, TEMPORARY_ALLOCATION);
