@@ -243,7 +243,7 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
     EXPECT_EQ(expectedOsContextCount, MemoryManager::maxOsContextCount);
 }
 
-TEST(ClExecutionEnvironment, shutdownClosesAsyncEventHandlerThread) {
+TEST(ClExecutionEnvironment, WhenExecutionEnvironmentIsDeletedThenAsyncEventHandlerThreadIsDestroyed) {
     auto executionEnvironment = new MockClExecutionEnvironment();
     MockHandler *mockAsyncHandler = new MockHandler();
 
@@ -255,7 +255,7 @@ TEST(ClExecutionEnvironment, shutdownClosesAsyncEventHandlerThread) {
     EXPECT_TRUE(MockAsyncEventHandlerGlobals::destructorCalled);
 }
 
-TEST(ClExecutionEnvironment, hasAsyncEventHandler) {
+TEST(ClExecutionEnvironment, WhenExecutionEnvironmentIsCreatedThenAsyncEventHandlerIsCreated) {
     auto executionEnvironment = std::make_unique<ClExecutionEnvironment>();
     EXPECT_NE(nullptr, executionEnvironment->getAsyncEventsHandler());
 }
