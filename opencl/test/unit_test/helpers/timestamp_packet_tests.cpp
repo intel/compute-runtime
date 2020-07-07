@@ -1280,7 +1280,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedT
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
     TimestampPacketContainer previousNodes;
-    cmdQ->obtainNewTimestampPacketNodes(1, previousNodes, false);
+    cmdQ->obtainNewTimestampPacketNodes(1, previousNodes, false, false);
     auto firstNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     csr.storeMakeResidentAllocations = true;
@@ -1302,7 +1302,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThen
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
     TimestampPacketContainer previousNodes;
-    cmdQ->obtainNewTimestampPacketNodes(1, previousNodes, false);
+    cmdQ->obtainNewTimestampPacketNodes(1, previousNodes, false, false);
     auto firstNode = cmdQ->timestampPacketContainer->peekNodes().at(0);
 
     csr.storeMakeResidentAllocations = true;
@@ -1325,7 +1325,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenDontKee
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     TimestampPacketContainer previousNodes;
-    cmdQ.obtainNewTimestampPacketNodes(1, previousNodes, false);
+    cmdQ.obtainNewTimestampPacketNodes(1, previousNodes, false, false);
     auto firstNode = cmdQ.timestampPacketContainer->peekNodes().at(0);
     setTagToReadyState(firstNode);
 
@@ -1357,7 +1357,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenKeepDep
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     TimestampPacketContainer previousNodes;
-    cmdQ.obtainNewTimestampPacketNodes(2, previousNodes, false);
+    cmdQ.obtainNewTimestampPacketNodes(2, previousNodes, false, false);
     firstNode.add(cmdQ.timestampPacketContainer->peekNodes().at(0));
     firstNode.add(cmdQ.timestampPacketContainer->peekNodes().at(1));
     auto firstTag0 = firstNode.getNode(0);
@@ -1393,7 +1393,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingToOoqThenDo
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), properties);
     TimestampPacketContainer previousNodes;
-    cmdQ.obtainNewTimestampPacketNodes(1, previousNodes, false);
+    cmdQ.obtainNewTimestampPacketNodes(1, previousNodes, false, false);
 
     cmdQ.enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
@@ -1424,7 +1424,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingWithOmitTim
 
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     TimestampPacketContainer previousNodes;
-    cmdQ.obtainNewTimestampPacketNodes(1, previousNodes, false);
+    cmdQ.obtainNewTimestampPacketNodes(1, previousNodes, false, false);
 
     cmdQ.enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
@@ -1580,7 +1580,7 @@ TEST_F(TimestampPacketTests, givenDispatchSizeWhenAskingForNewTimestampsThenObta
     EXPECT_EQ(0u, mockCmdQ->timestampPacketContainer->peekNodes().size());
 
     TimestampPacketContainer previousNodes;
-    mockCmdQ->obtainNewTimestampPacketNodes(dispatchSize, previousNodes, false);
+    mockCmdQ->obtainNewTimestampPacketNodes(dispatchSize, previousNodes, false, false);
     EXPECT_EQ(dispatchSize, mockCmdQ->timestampPacketContainer->peekNodes().size());
 }
 

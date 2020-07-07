@@ -55,6 +55,8 @@ struct TagNode : public IDNode<TagNode<TagType>>, NonCopyableOrMovableClass {
 
     uint32_t getImplicitCpuDependenciesCount() const { return implicitCpuDependenciesCount.load(); }
 
+    const TagAllocator<TagType> *getAllocator() const { return allocator; }
+
   protected:
     TagAllocator<TagType> *allocator = nullptr;
     GraphicsAllocation *gfxAllocation = nullptr;
