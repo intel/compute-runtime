@@ -1150,7 +1150,7 @@ TEST(OfflineCompilerTest, givenDeviceSpecificKernelFileWhenCompilerIsInitialized
         "-file",
         kernelFileName,
         "-device",
-        "skl"};
+        gEnvironment->devicePrefix.c_str()};
 
     int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
     EXPECT_EQ(SUCCESS, retVal);
