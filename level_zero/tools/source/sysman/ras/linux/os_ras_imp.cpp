@@ -43,6 +43,7 @@ ze_result_t LinuxRasImp::getCounterValues(zet_ras_details_t *pDetails) {
 LinuxRasImp::LinuxRasImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pFsAccess = &pLinuxSysmanImp->getFsAccess();
+    osRasErrorType = ZET_RAS_ERROR_TYPE_UNCORRECTABLE;
 }
 
 OsRas *OsRas::create(OsSysman *pOsSysman) {
