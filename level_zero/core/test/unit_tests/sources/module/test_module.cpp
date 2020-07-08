@@ -7,6 +7,7 @@
 
 #include "test.h"
 
+#include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
@@ -41,6 +42,47 @@ HWTEST_F(ModuleTest, givenKernelCreateReturnsSuccess) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     Kernel::fromHandle(kernelHandle)->destroy();
+}
+
+using ModuleTestSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+
+HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, ModuleTestSupport) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    ze_kernel_handle_t kernelHandle;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.version = ZE_KERNEL_DESC_VERSION_CURRENT;
+    kernelDesc.flags = ZE_KERNEL_FLAG_NONE;
+    kernelDesc.pKernelName = kernelName.c_str();
+
+    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto kernelImp = reinterpret_cast<L0::KernelImp *>(L0::Kernel::fromHandle(kernelHandle));
+
+    void *devicePtr = nullptr;
+    res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
+                                                    ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                                    16384u,
+                                                    0u,
+                                                    &devicePtr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto gpuAlloc = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(devicePtr)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gpuAlloc);
+
+    uint32_t argIndex = 0u;
+    kernelImp->setBufferSurfaceState(argIndex, devicePtr, gpuAlloc);
+
+    auto argInfo = kernelImp->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+    auto surfaceStateAddressRaw = ptrOffset(kernelImp->getSurfaceStateHeapData(), argInfo.bindful);
+    auto surfaceStateAddress = reinterpret_cast<RENDER_SURFACE_STATE *>(const_cast<unsigned char *>(surfaceStateAddressRaw));
+    EXPECT_EQ(reinterpret_cast<void *>(surfaceStateAddress->getSurfaceBaseAddress()), devicePtr);
+
+    Kernel::fromHandle(kernelHandle)->destroy();
+
+    device->getDriverHandle()->freeMem(devicePtr);
 }
 
 HWTEST_F(ModuleTest, givenKernelCreateWithIncorrectKernelNameReturnsFailure) {

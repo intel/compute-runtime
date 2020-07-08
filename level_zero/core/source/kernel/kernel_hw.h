@@ -25,7 +25,7 @@ struct KernelHw : public KernelImp {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
-        uintptr_t baseAddress = static_cast<uintptr_t>(alloc->getGpuAddress());
+        uint64_t baseAddress = castToUint64(address);
         auto sshAlignmentMask = NEO::EncodeSurfaceState<GfxFamily>::getSurfaceBaseAddressAlignmentMask();
 
         // Remove misalligned bytes, accounted for in in bufferOffset patch token
