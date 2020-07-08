@@ -35,7 +35,7 @@ class MidThreadPreemptionTests : public DevicePreemptionTests {
     }
 };
 
-TEST_F(DevicePreemptionTests, setDefaultMidThreadPreemption) {
+TEST_F(DevicePreemptionTests, GivenMidThreadPreemptionWhenSettingDefaultPreemptionThenPreemptionLevelIsSetCorrectly) {
     RuntimeCapabilityTable devCapabilities = {};
 
     devCapabilities.defaultPreemptionMode = PreemptionMode::MidThread;
@@ -44,7 +44,7 @@ TEST_F(DevicePreemptionTests, setDefaultMidThreadPreemption) {
     EXPECT_EQ(PreemptionMode::MidThread, devCapabilities.defaultPreemptionMode);
 }
 
-TEST_F(DevicePreemptionTests, setDefaultThreadGroupPreemptionNoMidThreadDefault) {
+TEST_F(DevicePreemptionTests, GivenThreadGroupPreemptionWhenSettingDefaultPreemptionThenPreemptionLevelIsSetCorrectly) {
     RuntimeCapabilityTable devCapabilities = {};
 
     devCapabilities.defaultPreemptionMode = PreemptionMode::ThreadGroup;
@@ -53,7 +53,7 @@ TEST_F(DevicePreemptionTests, setDefaultThreadGroupPreemptionNoMidThreadDefault)
     EXPECT_EQ(PreemptionMode::ThreadGroup, devCapabilities.defaultPreemptionMode);
 }
 
-TEST_F(DevicePreemptionTests, setDefaultThreadGroupPreemptionNoMidThreadSupport) {
+TEST_F(DevicePreemptionTests, GivenNoMidThreadSupportWhenSettingDefaultPreemptionThenThreadGroupPreemptionIsSet) {
     RuntimeCapabilityTable devCapabilities = {};
 
     devCapabilities.defaultPreemptionMode = PreemptionMode::MidThread;
@@ -62,7 +62,7 @@ TEST_F(DevicePreemptionTests, setDefaultThreadGroupPreemptionNoMidThreadSupport)
     EXPECT_EQ(PreemptionMode::ThreadGroup, devCapabilities.defaultPreemptionMode);
 }
 
-TEST_F(DevicePreemptionTests, setDefaultMidBatchPreemptionNoThreadGroupDefault) {
+TEST_F(DevicePreemptionTests, GivenMidBatchPreemptionWhenSettingDefaultPreemptionThenPreemptionLevelIsSetCorrectly) {
     RuntimeCapabilityTable devCapabilities = {};
 
     devCapabilities.defaultPreemptionMode = PreemptionMode::MidBatch;
@@ -71,7 +71,7 @@ TEST_F(DevicePreemptionTests, setDefaultMidBatchPreemptionNoThreadGroupDefault) 
     EXPECT_EQ(PreemptionMode::MidBatch, devCapabilities.defaultPreemptionMode);
 }
 
-TEST_F(DevicePreemptionTests, setDefaultMidBatchPreemptionNoThreadGroupSupport) {
+TEST_F(DevicePreemptionTests, GivenNoThreadGroupSupportWhenSettingDefaultPreemptionThenMidBatchPreemptionIsSet) {
     RuntimeCapabilityTable devCapabilities = {};
 
     devCapabilities.defaultPreemptionMode = PreemptionMode::MidThread;
@@ -80,7 +80,7 @@ TEST_F(DevicePreemptionTests, setDefaultMidBatchPreemptionNoThreadGroupSupport) 
     EXPECT_EQ(PreemptionMode::MidBatch, devCapabilities.defaultPreemptionMode);
 }
 
-TEST_F(DevicePreemptionTests, setDefaultDisabledPreemptionNoMidBatchDefault) {
+TEST_F(DevicePreemptionTests, GivenDisabledPreemptionWhenSettingDefaultPreemptionThenPreemptionLevelIsDisabled) {
     RuntimeCapabilityTable devCapabilities = {};
 
     devCapabilities.defaultPreemptionMode = PreemptionMode::Disabled;
@@ -89,7 +89,7 @@ TEST_F(DevicePreemptionTests, setDefaultDisabledPreemptionNoMidBatchDefault) {
     EXPECT_EQ(PreemptionMode::Disabled, devCapabilities.defaultPreemptionMode);
 }
 
-TEST_F(DevicePreemptionTests, setDefaultDisabledPreemptionNoMidBatchSupport) {
+TEST_F(DevicePreemptionTests, GivenNoPreemptionSupportWhenSettingDefaultPreemptionThenDisabledIsSet) {
     RuntimeCapabilityTable devCapabilities = {};
 
     devCapabilities.defaultPreemptionMode = PreemptionMode::MidThread;
@@ -101,7 +101,7 @@ TEST_F(DevicePreemptionTests, setDefaultDisabledPreemptionNoMidBatchSupport) {
 struct PreemptionHwTest : ::testing::Test, ::testing::WithParamInterface<PreemptionMode> {
 };
 
-HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturns0WhenPreemptionModeIsNotChanging) {
+HWTEST_P(PreemptionHwTest, GivenPreemptionModeIsNotChangingWhenGettingRequiredCmdStreamSizeThenZeroIsReturned) {
     PreemptionMode mode = GetParam();
     size_t requiredSize = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode, mode);
     EXPECT_EQ(0U, requiredSize);
@@ -120,7 +120,7 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturns0WhenPreemptionModeIsN
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
 
-HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturnsSizeOfMiLoadRegisterImmWhenPreemptionModeIsChanging) {
+HWTEST_P(PreemptionHwTest, GivenPreemptionModeIsChangingWhenGettingRequiredCmdStreamSizeThenCorrectSizeIsReturned) {
     PreemptionMode mode = GetParam();
     PreemptionMode differentPreemptionMode = static_cast<PreemptionMode>(0);
 
@@ -147,7 +147,7 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturnsSizeOfMiLoadRegisterIm
     EXPECT_EQ(requiredSize, cmdStream.getUsed());
 }
 
-HWTEST_P(PreemptionHwTest, programCmdStreamAddsProperMiLoadRegisterImmCommandToTheStream) {
+HWTEST_P(PreemptionHwTest, WhenProgrammingCmdStreamThenProperMiLoadRegisterImmCommandIsAddedToStream) {
     PreemptionMode mode = GetParam();
     PreemptionMode differentPreemptionMode = static_cast<PreemptionMode>(0);
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -275,7 +275,7 @@ INSTANTIATE_TEST_CASE_P(
     PreemptionTest,
     ::testing::Values(PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup));
 
-HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceNoWa) {
+HWTEST_F(MidThreadPreemptionTests, GivenNoWaWhenCreatingCsrSurfaceThenSurfaceIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.workaroundTable.waCSRUncachable = false;
 
@@ -314,7 +314,7 @@ HWTEST_F(MidThreadPreemptionTests, givenMidThreadPreemptionWhenFailingOnCsrSurfa
     EXPECT_EQ(nullptr, mockDevice.get());
 }
 
-HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceWa) {
+HWTEST_F(MidThreadPreemptionTests, GivenWaWhenCreatingCsrSurfaceThenSurfaceIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.workaroundTable.waCSRUncachable = true;
 
