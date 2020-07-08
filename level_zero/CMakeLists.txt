@@ -23,6 +23,7 @@ if(BUILD_WITH_L0)
             file(GLOB LEVEL_ZERO_SOURCE_HEADERS
                 "${LEVEL_ZERO_ROOT_tmp}/include/core/*"
                 "${LEVEL_ZERO_ROOT_tmp}/include/tools/*"
+                "${LEVEL_ZERO_ROOT_tmp}/include/experimental/*"
             )
             file(MAKE_DIRECTORY ${CUSTOM_L0_INCLUDE_PATH})
             file(COPY ${LEVEL_ZERO_SOURCE_HEADERS} DESTINATION ${CUSTOM_L0_INCLUDE_PATH})
@@ -170,6 +171,7 @@ if(BUILD_WITH_L0)
     include_directories(ddi${BRANCH_DIR_SUFFIX})
     include_directories(tools/source)
     include_directories(experimental${BRANCH_DIR_SUFFIX}/source)
+    include_directories(experimental/source/tracing)
 
     # Create our shared library/DLL
     add_library(${TARGET_NAME_L0}
@@ -313,8 +315,9 @@ function(generate_l0_lib LIB_NAME MOCKABLE)
     )
 
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/core/source "${NEO_BUILD_DIR}/${LIB_NAME}/core/source")
-    add_subdirectory(experimental${BRANCH_DIR_SUFFIX}/source "${NEO_BUILD_DIR}/${LIB_NAME}/experimental${BRANCH_DIR_SUFFIX}/source")
-    add_subdirectory(tools/source "${NEO_BUILD_DIR}/${LIB_NAME}tools/source")
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/experimental${BRANCH_DIR_SUFFIX}/source "${NEO_BUILD_DIR}/${LIB_NAME}/experimental${BRANCH_DIR_SUFFIX}/source")
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/experimental/source/tracing "${NEO_BUILD_DIR}/${LIB_NAME}/experimental/tracing")
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/source "${NEO_BUILD_DIR}/${LIB_NAME}tools/source")
 
     append_sources_from_properties(L0_RUNTIME_SOURCES
         L0_API

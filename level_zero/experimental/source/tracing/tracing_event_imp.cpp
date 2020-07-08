@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/tools/source/tracing/tracing_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_imp.h"
 
 __zedllexport ze_result_t __zecall
 zeEventPoolCreate_Tracing(ze_driver_handle_t hDriver,

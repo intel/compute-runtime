@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/tools/source/tracing/tracing.h"
+#include "level_zero/experimental/source/tracing/tracing.h"
 #include <level_zero/zet_api.h>
 
 extern "C" {

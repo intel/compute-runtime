@@ -11,7 +11,6 @@
 
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/core/source/get_extension_function_lookup_map.h"
-#include "level_zero/tools/source/tracing/tracing.h"
 
 namespace L0 {
 

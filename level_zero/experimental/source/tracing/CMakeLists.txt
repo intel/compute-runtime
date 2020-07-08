@@ -4,9 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-# DO NOT EDIT: Generated from "scripts/templates/CMakeLists.cpp.mako"
-
-set(L0_SRCS_TOOLS_TRACING
+set(L0_SRCS_EXPERIMENTAL_TRACING
     ${CMAKE_CURRENT_SOURCE_DIR}/tracing.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tracing_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tracing_imp.cpp
@@ -44,9 +42,9 @@ set(L0_SRCS_TOOLS_TRACING
 
 target_sources(${L0_STATIC_LIB_NAME}
     PRIVATE
-        ${L0_SRCS_TOOLS_TRACING}
+        ${L0_SRCS_EXPERIMENTAL_TRACING}
         ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 
 # Make our source files visible to parent
-set_property(GLOBAL PROPERTY L0_SRCS_TOOLS_TRACING ${L0_SRCS_TOOLS_TRACING})
+set_property(GLOBAL PROPERTY L0_SRCS_EXPERIMENTAL_TRACING ${L0_SRCS_EXPERIMENTAL_TRACING})

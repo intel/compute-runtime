@@ -12,7 +12,6 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/tools/source/metrics/metric.h"
-#include "level_zero/tools/source/tracing/tracing.h"
 
 namespace L0 {
 struct SysmanDevice;

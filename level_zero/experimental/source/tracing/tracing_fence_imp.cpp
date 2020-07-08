@@ -5,7 +5,8 @@
  *
  */
 
-#include "level_zero/tools/source/tracing/tracing_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_imp.h"
+
 __zedllexport ze_result_t __zecall
 zeFenceCreate_Tracing(ze_command_queue_handle_t hCommandQueue,
                       const ze_fence_desc_t *desc,

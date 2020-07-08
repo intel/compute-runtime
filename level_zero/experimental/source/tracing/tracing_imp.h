@@ -7,22 +7,22 @@
 
 #pragma once
 
-#include "level_zero/tools/source/tracing/tracing.h"
-#include "level_zero/tools/source/tracing/tracing_barrier_imp.h"
-#include "level_zero/tools/source/tracing/tracing_cl_interop_imp.h"
-#include "level_zero/tools/source/tracing/tracing_cmdlist_imp.h"
-#include "level_zero/tools/source/tracing/tracing_cmdqueue_imp.h"
-#include "level_zero/tools/source/tracing/tracing_copy_imp.h"
-#include "level_zero/tools/source/tracing/tracing_device_imp.h"
-#include "level_zero/tools/source/tracing/tracing_driver_imp.h"
-#include "level_zero/tools/source/tracing/tracing_event_imp.h"
-#include "level_zero/tools/source/tracing/tracing_fence_imp.h"
-#include "level_zero/tools/source/tracing/tracing_global_imp.h"
-#include "level_zero/tools/source/tracing/tracing_image_imp.h"
-#include "level_zero/tools/source/tracing/tracing_memory_imp.h"
-#include "level_zero/tools/source/tracing/tracing_module_imp.h"
-#include "level_zero/tools/source/tracing/tracing_residency_imp.h"
-#include "level_zero/tools/source/tracing/tracing_sampler_imp.h"
+#include "level_zero/experimental/source/tracing/tracing.h"
+#include "level_zero/experimental/source/tracing/tracing_barrier_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_cl_interop_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_cmdlist_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_cmdqueue_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_copy_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_device_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_driver_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_event_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_fence_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_global_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_image_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_memory_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_module_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_residency_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_sampler_imp.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
 
@@ -108,8 +108,6 @@ struct APITracerContextImp : APITracerContext {
     ze_result_t enableTracingImp(struct APITracerImp *newTracer, ze_bool_t enable);
     ze_result_t finalizeDisableImpTracingWait(struct APITracerImp *oldTracer);
 
-    void enableTracing();
-    void disableTracing();
     bool isTracingEnabled();
 
   private:

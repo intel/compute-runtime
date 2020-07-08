@@ -11,8 +11,6 @@
 #include "level_zero/tools/source/pin/pin.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/source/tools_init.h"
-#include "level_zero/tools/source/tracing/tracing.h"
-#include "level_zero/tools/source/tracing/tracing_imp.h"
 
 #include <mutex>
 #include <thread>
@@ -29,7 +27,6 @@ static void enableTools(ze_result_t &result, ze_init_flag_t flag, bool *ptoolsAr
     if (result != ZE_RESULT_SUCCESS) {
         return;
     }
-    APITracerContextImp::apiTracingEnable(flag);
     *ptoolsAreEnabled = true;
 }
 

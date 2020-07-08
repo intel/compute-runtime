@@ -5,14 +5,13 @@
  *
  */
 
-#include "level_zero/tools/source/tracing/tracing_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
 
 namespace L0 {
 
 thread_local ze_bool_t tracingInProgress = 0;
-bool tracingIsEnabled = false;
 
 struct APITracerContextImp GLOBAL_APITracerContextImp;
 struct APITracerContextImp *PGLOBAL_APITracerContextImp = &GLOBAL_APITracerContextImp;
@@ -132,15 +131,7 @@ thread_local ThreadPrivateTracerData myThreadPrivateTracerData;
 //
 static thread_local bool myThreadPrivateTracerDataIsInitialized = false;
 
-void APITracerContextImp::apiTracingEnable(ze_init_flag_t flag) {
-    if (driver_ddiTable.enableTracing) {
-        tracingIsEnabled = true;
-    }
-}
-
-void APITracerContextImp::enableTracing() { tracingIsEnabled = true; }
-void APITracerContextImp::disableTracing() { tracingIsEnabled = false; }
-bool APITracerContextImp::isTracingEnabled() { return tracingIsEnabled; }
+bool APITracerContextImp::isTracingEnabled() { return driver_ddiTable.enableTracing; }
 
 //
 // Walk the list of per-thread private data structures, testing

@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/tools/source/tracing/tracing_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_imp.h"
 
 __zedllexport ze_result_t __zecall
 zeCommandQueueCreate_Tracing(ze_device_handle_t hDevice,

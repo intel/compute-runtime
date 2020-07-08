@@ -4,6 +4,8 @@
 # SPDX-License-Identifier: MIT
 #
 
+add_subdirectory(tracing)
+
 set(L0_EXPERIMENTAL_SOURCES
 	${CMAKE_CURRENT_SOURCE_DIR}/experimental.cpp
 )
