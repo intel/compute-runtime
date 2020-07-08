@@ -956,7 +956,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     CompletionStamp completionStamp = {this->taskCount, this->taskLevel, this->flushStamp->peekStamp()};
     bool flushGpgpuCsr = true;
 
-    if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) && !isGpgpuSubmissionForBcsRequired(false)) {
+    if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) &&
+        !isGpgpuSubmissionForBcsRequired(false) &&
+        timestampPacketDependencies.barrierNodes.peekNodes().size() == 0) {
         flushGpgpuCsr = false;
     }
 
