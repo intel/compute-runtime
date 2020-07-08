@@ -32,7 +32,8 @@ const char *deviceExtensionsList = "cl_khr_byte_addressable_store "
                                    "cl_khr_throttle_hints "
                                    "cl_khr_create_command_queue "
                                    "cl_intel_subgroups_char "
-                                   "cl_intel_subgroups_long ";
+                                   "cl_intel_subgroups_long "
+                                   "cl_khr_il_program ";
 
 std::string getExtensionsList(const HardwareInfo &hwInfo) {
     std::string allExtensionsList;
@@ -42,7 +43,6 @@ std::string getExtensionsList(const HardwareInfo &hwInfo) {
 
     if (hwInfo.capabilityTable.supportsOcl21Features) {
         allExtensionsList += "cl_khr_subgroups ";
-        allExtensionsList += "cl_khr_il_program ";
         if (hwInfo.capabilityTable.supportsVme) {
             allExtensionsList += "cl_intel_spirv_device_side_avc_motion_estimation ";
         }

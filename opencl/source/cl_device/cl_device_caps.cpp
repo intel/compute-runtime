@@ -132,7 +132,6 @@ void ClDevice::initializeCaps() {
             deviceExtensions += "cl_khr_subgroups ";
         }
 
-        deviceExtensions += "cl_khr_il_program ";
         deviceInfo.ilsWithVersion[0].version = CL_MAKE_VERSION(1, 2, 0);
         strcpy_s(deviceInfo.ilsWithVersion[0].name, CL_NAME_VERSION_MAX_NAME_SIZE, spirvName.c_str());
 
