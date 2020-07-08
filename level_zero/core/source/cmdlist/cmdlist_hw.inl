@@ -245,6 +245,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
 
     ze_image_region_t tmpRegion;
     if (pDstRegion == nullptr) {
+        // If this is a 1D or 2D image, then the height or depth is ignored and must be set to 1.
+        // Internally, all dimensions must be >= 1.
+        if (image->getImageDesc().type == ZE_IMAGE_TYPE_1D || image->getImageDesc().type == ZE_IMAGE_TYPE_1DARRAY) {
+            imgSize.y = 1;
+        }
+        if (image->getImageDesc().type != ZE_IMAGE_TYPE_3D) {
+            imgSize.z = 1;
+        }
         tmpRegion = {0,
                      0,
                      0,
@@ -351,6 +359,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
 
     ze_image_region_t tmpRegion;
     if (pSrcRegion == nullptr) {
+        // If this is a 1D or 2D image, then the height or depth is ignored and must be set to 1.
+        // Internally, all dimensions must be >= 1.
+        if (image->getImageDesc().type == ZE_IMAGE_TYPE_1D || image->getImageDesc().type == ZE_IMAGE_TYPE_1DARRAY) {
+            imgSize.y = 1;
+        }
+        if (image->getImageDesc().type != ZE_IMAGE_TYPE_3D) {
+            imgSize.z = 1;
+        }
         tmpRegion = {0,
                      0,
                      0,

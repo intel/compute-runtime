@@ -757,6 +757,9 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListAndNullDestinationRegionWhenIma
     auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
     imageHW->initialize(device, &zeDesc);
 
+    zeDesc.height = 1;
+    zeDesc.depth = 1;
+
     Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
     Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
     cmdList.appendImageCopyFromMemory(imageHW->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr);
@@ -773,11 +776,225 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListAndNullDestinationRegionWhenIma
     auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
     imageHW->initialize(device, &zeDesc);
 
+    zeDesc.height = 1;
+    zeDesc.depth = 1;
+
     Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
     Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
     cmdList.appendImageCopyToMemory(dstPtr, imageHW->toHandle(), nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
     EXPECT_EQ(cmdList.appendImageRegionSrcOrigin, expectedRegionOrigin);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListAndNullDestinationRegionWhen1DImageCopyFromMemoryWithInvalidHeightAndDepthThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {
+    MockCommandList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.type = ZE_IMAGE_TYPE_1D;
+    zeDesc.height = 9;
+    zeDesc.depth = 9;
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+
+    zeDesc.height = 1;
+    zeDesc.depth = 1;
+
+    Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
+    Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
+    cmdList.appendImageCopyFromMemory(imageHW->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+    EXPECT_EQ(cmdList.appendImageRegionDstOrigin, expectedRegionOrigin);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListAndNullDestinationRegionWhen1DImageCopyToMemoryWithInvalidHeightAndDepthThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {
+    MockCommandList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.type = ZE_IMAGE_TYPE_1D;
+    zeDesc.height = 9;
+    zeDesc.depth = 9;
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+
+    zeDesc.height = 1;
+    zeDesc.depth = 1;
+
+    Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
+    Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
+    cmdList.appendImageCopyToMemory(dstPtr, imageHW->toHandle(), nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+    EXPECT_EQ(cmdList.appendImageRegionSrcOrigin, expectedRegionOrigin);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListAndNullDestinationRegionWhen1DArrayImageCopyFromMemoryWithInvalidHeightAndDepthThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {
+    MockCommandList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.type = ZE_IMAGE_TYPE_1DARRAY;
+    zeDesc.height = 9;
+    zeDesc.depth = 9;
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+
+    zeDesc.height = 1;
+    zeDesc.depth = 1;
+
+    Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
+    Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
+    cmdList.appendImageCopyFromMemory(imageHW->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+    EXPECT_EQ(cmdList.appendImageRegionDstOrigin, expectedRegionOrigin);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListAndNullDestinationRegionWhen1DArrayImageCopyToMemoryWithInvalidHeightAndDepthThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {
+    MockCommandList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.type = ZE_IMAGE_TYPE_1DARRAY;
+    zeDesc.height = 9;
+    zeDesc.depth = 9;
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+
+    zeDesc.height = 1;
+    zeDesc.depth = 1;
+
+    Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
+    Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
+    cmdList.appendImageCopyToMemory(dstPtr, imageHW->toHandle(), nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+    EXPECT_EQ(cmdList.appendImageRegionSrcOrigin, expectedRegionOrigin);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListAndNullDestinationRegionWhen2DImageCopyToMemoryThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {
+    MockCommandList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.height = 2;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+
+    zeDesc.depth = 1;
+
+    Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
+    Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
+    cmdList.appendImageCopyToMemory(dstPtr, imageHW->toHandle(), nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+    EXPECT_EQ(cmdList.appendImageRegionSrcOrigin, expectedRegionOrigin);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListAndNullDestinationRegionWhen2DImageCopyFromMemoryThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {
+    MockCommandList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.height = 2;
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+
+    zeDesc.depth = 1;
+
+    Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
+    Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
+    cmdList.appendImageCopyFromMemory(imageHW->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+    EXPECT_EQ(cmdList.appendImageRegionDstOrigin, expectedRegionOrigin);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListAndNullDestinationRegionWhen2DImageCopyToMemoryWithInvalidDepthThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {
+    MockCommandList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.height = 2;
+    zeDesc.depth = 9;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+
+    zeDesc.depth = 1;
+
+    Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
+    Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
+    cmdList.appendImageCopyToMemory(dstPtr, imageHW->toHandle(), nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+    EXPECT_EQ(cmdList.appendImageRegionSrcOrigin, expectedRegionOrigin);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListAndNullDestinationRegionWhen2DImageCopyFromMemoryWithInvalidDepthThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {
+    MockCommandList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.type = ZE_IMAGE_TYPE_2D;
+    zeDesc.height = 2;
+    zeDesc.depth = 9;
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+
+    zeDesc.depth = 1;
+
+    Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
+    Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
+    cmdList.appendImageCopyFromMemory(imageHW->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+    EXPECT_EQ(cmdList.appendImageRegionDstOrigin, expectedRegionOrigin);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListAndNullDestinationRegionWhen3DImageCopyToMemoryThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {
+    MockCommandList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *dstPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+
+    Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
+    Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
+    cmdList.appendImageCopyToMemory(dstPtr, imageHW->toHandle(), nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+    EXPECT_EQ(cmdList.appendImageRegionSrcOrigin, expectedRegionOrigin);
+}
+
+HWTEST2_F(CommandListCreate, givenCopyCommandListAndNullDestinationRegionWhen3DImageCopyFromMemoryThenBlitImageCopyCalledWithCorrectImageSize, ImageSupport) {
+    MockCommandList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, true);
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.type = ZE_IMAGE_TYPE_3D;
+    zeDesc.height = 2;
+    zeDesc.depth = 2;
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    imageHW->initialize(device, &zeDesc);
+
+    Vec3<size_t> expectedRegionCopySize = {zeDesc.width, zeDesc.height, zeDesc.depth};
+    Vec3<size_t> expectedRegionOrigin = {0, 0, 0};
+    cmdList.appendImageCopyFromMemory(imageHW->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr);
+    EXPECT_EQ(cmdList.appendImageRegionCopySize, expectedRegionCopySize);
+    EXPECT_EQ(cmdList.appendImageRegionDstOrigin, expectedRegionOrigin);
 }
 
 HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyFromImageToMemoryThenBlitImageCopyCalled, ImageSupport) {
