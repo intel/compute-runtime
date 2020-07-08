@@ -141,6 +141,6 @@ class MockFlatBatchBufferHelper : public FlatBatchBufferHelperHw<GfxFamily> {
     MOCK_METHOD(bool, registerBatchBufferStartAddress, (uint64_t, uint64_t), (override));
     MOCK_METHOD(GraphicsAllocation *,
                 flattenBatchBuffer,
-                (uint32_t rootDeviceIndex, BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode),
+                (uint32_t rootDeviceIndex, BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode, DeviceBitfield deviceBitfield),
                 (override));
 };
