@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/state_base_address.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 #include "shared/test/unit_test/mocks/mock_command_stream_receiver.h"
@@ -117,6 +118,75 @@ TEST_F(CommandQueueCreate, givenOrdinalWhenQueueIsCreatedThenCorrectEngineIsSele
                   static_cast<CommandQueue *>(commandQueue)->getCsr());
 
         L0::CommandQueue::fromHandle(commandQueue)->destroy();
+    }
+}
+
+struct MultiDeviceCommandQueueCreateTest : public ::testing::Test {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        auto executionEnvironment = new NEO::ExecutionEnvironment;
+        auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    const uint32_t numSubDevices = 2u;
+
+    void verifyCreationOfAllCommandQueuesAvailable(L0::Device *device) {
+        ze_device_properties_t deviceProperties;
+        ze_result_t res = device->getProperties(&deviceProperties);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        uint32_t numOfComputeEngines = NEO::HwHelper::getEnginesCount(device->getNEODevice()->getHardwareInfo());
+        EXPECT_EQ(numOfComputeEngines, deviceProperties.numAsyncComputeEngines);
+
+        ze_command_queue_desc_t desc = {};
+        desc.version = ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT;
+
+        ze_command_queue_handle_t commandQueue = {};
+
+        auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+
+        for (uint32_t i = 0; i < numOfComputeEngines; i++) {
+            desc.ordinal = i;
+            res = device->createCommandQueue(&desc, &commandQueue);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+            ASSERT_NE(nullptr, commandQueue);
+
+            uint32_t engineIndex = hwHelper.getComputeEngineIndexByOrdinal(*defaultHwInfo,
+                                                                           desc.ordinal);
+
+            if (device->getNEODevice()->getNumAvailableDevices() > 1) {
+                EXPECT_EQ(device->getNEODevice()->getDeviceById(0)->getEngine(engineIndex).commandStreamReceiver,
+                          static_cast<CommandQueue *>(commandQueue)->getCsr());
+            } else {
+                EXPECT_EQ(device->getNEODevice()->getEngine(engineIndex).commandStreamReceiver,
+                          static_cast<CommandQueue *>(commandQueue)->getCsr());
+            }
+
+            L0::CommandQueue::fromHandle(commandQueue)->destroy();
+        }
+    }
+};
+
+TEST_F(MultiDeviceCommandQueueCreateTest, givenOrdinalWhenQueueIsCreatedThenCorrectEngineIsSelected) {
+    L0::Device *device = driverHandle->devices[0];
+
+    verifyCreationOfAllCommandQueuesAvailable(device);
+
+    uint32_t count = 0;
+    ze_result_t result = device->getSubDevices(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numSubDevices, count);
+
+    std::vector<ze_device_handle_t> subDevices(count);
+    result = device->getSubDevices(&count, subDevices.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    for (auto subDevice : subDevices) {
+        verifyCreationOfAllCommandQueuesAvailable(Device::fromHandle(subDevice));
     }
 }
 

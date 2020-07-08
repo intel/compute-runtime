@@ -126,11 +126,18 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
         const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
         auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
-        if (desc->ordinal >= NEO::HwHelper::getEnginesCount(hardwareInfo)) {
+        if (desc->ordinal >= NEO::HwHelper::getEnginesCount(this->getNEODevice()->getHardwareInfo())) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
 
-        csr = neoDevice->getEngine(hwHelper.getComputeEngineIndexByOrdinal(hardwareInfo, desc->ordinal)).commandStreamReceiver;
+        uint32_t engineIndex = hwHelper.getComputeEngineIndexByOrdinal(hardwareInfo, desc->ordinal);
+
+        if (this->getNEODevice()->getNumAvailableDevices() > 1) {
+            csr = this->neoDevice->getDeviceById(0)->getEngine(engineIndex).commandStreamReceiver;
+        } else {
+            csr = this->neoDevice->getEngine(engineIndex).commandStreamReceiver;
+        }
+
         UNRECOVERABLE_IF(csr == nullptr);
     }
     *commandQueue = CommandQueue::create(productFamily, this, csr, desc, useBliter);
