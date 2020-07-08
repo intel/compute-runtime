@@ -130,7 +130,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenExpectRin
     const auto allocationSize = MemoryConstants::pageSize;
     const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(),
                                                                  allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER};
+                                                                 GraphicsAllocation::AllocationType::RING_BUFFER, device->getDeviceBitfield()};
     GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     ASSERT_NE(nullptr, ringBuffer);
 
@@ -154,7 +154,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesFenceCreation
     MemoryManager *memoryManager = device->getExecutionEnvironment()->memoryManager.get();
     const auto allocationSize = MemoryConstants::pageSize;
     const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(), allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER};
+                                                                 GraphicsAllocation::AllocationType::RING_BUFFER, device->getDeviceBitfield()};
     GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     ASSERT_NE(nullptr, ringBuffer);
 
@@ -181,7 +181,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFail
     const auto allocationSize = MemoryConstants::pageSize;
     const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(),
                                                                  allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER};
+                                                                 GraphicsAllocation::AllocationType::RING_BUFFER, device->getDeviceBitfield()};
     GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     ASSERT_NE(nullptr, ringBuffer);
 
@@ -410,7 +410,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenAllocatingResour
     const auto allocationSize = MemoryConstants::pageSize;
     const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(),
                                                                  allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER};
+                                                                 GraphicsAllocation::AllocationType::RING_BUFFER, device->getDeviceBitfield()};
     GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
     ASSERT_NE(nullptr, ringBuffer);
 

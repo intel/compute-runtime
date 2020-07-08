@@ -15,6 +15,8 @@
 constexpr bool is32bit = (sizeof(void *) == 4);
 constexpr bool is64bit = (sizeof(void *) == 8);
 
+constexpr NEO::DeviceBitfield systemMemoryBitfield(0b0);
+
 constexpr uint64_t maxNBitValue(uint64_t n) {
     return ((1ULL << n) - 1);
 }

@@ -381,6 +381,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenFenceAllocatio
     RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 
     MockCsrHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    csr.setupContext(*pDevice->getDefaultEngine().osContext);
     EXPECT_EQ(nullptr, csr.globalFenceAllocation);
 
     EXPECT_TRUE(csr.createGlobalFenceAllocation());
@@ -393,6 +394,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenGettingFenceAl
     RAIIHwHelperFactory<MockHwHelperWithFenceAllocation<FamilyType>> hwHelperBackup{pDevice->getHardwareInfo().platform.eRenderCoreFamily};
 
     CommandStreamReceiverHw<FamilyType> csr(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    csr.setupContext(*pDevice->getDefaultEngine().osContext);
     EXPECT_EQ(nullptr, csr.getGlobalFenceAllocation());
 
     EXPECT_TRUE(csr.createGlobalFenceAllocation());

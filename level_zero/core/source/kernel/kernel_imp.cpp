@@ -100,7 +100,7 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
     auto kernelIsaSize = kernelInfo->heapInfo.KernelHeapSize;
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), kernelIsaSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA});
+        {device->getRootDeviceIndex(), kernelIsaSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, device->getDeviceBitfield()});
     UNRECOVERABLE_IF(allocation == nullptr);
     if (kernelInfo->heapInfo.pKernelHeap != nullptr) {
         memoryManager.copyMemoryToAllocation(allocation, kernelInfo->heapInfo.pKernelHeap, kernelIsaSize);
@@ -149,7 +149,7 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
         privateSurfaceSize *= computeUnitsUsedForSratch * kernelDescriptor->kernelAttributes.simdSize;
         UNRECOVERABLE_IF(privateSurfaceSize == 0);
         this->privateMemoryGraphicsAllocation.reset(memoryManager.allocateGraphicsMemoryWithProperties(
-            {device->getRootDeviceIndex(), privateSurfaceSize, NEO::GraphicsAllocation::AllocationType::PRIVATE_SURFACE}));
+            {device->getRootDeviceIndex(), privateSurfaceSize, NEO::GraphicsAllocation::AllocationType::PRIVATE_SURFACE, device->getDeviceBitfield()}));
 
         UNRECOVERABLE_IF(this->privateMemoryGraphicsAllocation == nullptr);
         patchWithImplicitSurface(crossThredDataArrayRef, surfaceStateHeapArrayRef,

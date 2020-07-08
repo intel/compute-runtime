@@ -183,16 +183,17 @@ std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation
 
     executionEnvironment->initializeMemoryManager();
     auto commandStreamReceiver = std::make_unique<CsrType>("", standalone, *executionEnvironment, rootDeviceIndex);
-    if (createTagAllocation) {
-        commandStreamReceiver->initializeTagAllocation();
-    }
-    commandStreamReceiver->createGlobalFenceAllocation();
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(),
                                                                                      getChosenEngineType(*defaultHwInfo), 1,
                                                                                      PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo),
                                                                                      false, false, false);
     commandStreamReceiver->setupContext(*osContext);
+
+    if (createTagAllocation) {
+        commandStreamReceiver->initializeTagAllocation();
+    }
+    commandStreamReceiver->createGlobalFenceAllocation();
 
     std::unique_ptr<AubExecutionEnvironment> aubExecutionEnvironment(new AubExecutionEnvironment);
     if (allocateCommandBuffer) {

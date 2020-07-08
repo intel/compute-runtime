@@ -303,7 +303,7 @@ void CommandStreamReceiver::addAubComment(const char *comment) {}
 
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);
-    debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
+    debugSurface = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, size, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, getOsContext().getDeviceBitfield()});
     return debugSurface;
 }
 
@@ -422,7 +422,7 @@ void *CommandStreamReceiver::asyncDebugBreakConfirmation(void *arg) {
 }
 
 bool CommandStreamReceiver::initializeTagAllocation() {
-    auto tagAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::TAG_BUFFER});
+    auto tagAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::TAG_BUFFER, systemMemoryBitfield});
     if (!tagAllocation) {
         return false;
     }
@@ -445,13 +445,13 @@ bool CommandStreamReceiver::createGlobalFenceAllocation() {
     }
 
     DEBUG_BREAK_IF(this->globalFenceAllocation != nullptr);
-    this->globalFenceAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::GLOBAL_FENCE});
+    this->globalFenceAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::GLOBAL_FENCE, osContext->getDeviceBitfield()});
     return this->globalFenceAllocation != nullptr;
 }
 
 bool CommandStreamReceiver::createPreemptionAllocation() {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    AllocationProperties properties{rootDeviceIndex, hwInfo->capabilityTable.requiredPreemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION};
+    AllocationProperties properties{rootDeviceIndex, hwInfo->capabilityTable.requiredPreemptionSurfaceSize, GraphicsAllocation::AllocationType::PREEMPTION, osContext->getDeviceBitfield()};
     properties.flags.uncacheable = hwInfo->workaroundTable.waCSRUncachable;
     properties.alignment = 256 * MemoryConstants::kiloByte;
     this->preemptionAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
@@ -478,7 +478,7 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
         allocation.reset(memoryManager->allocateGraphicsMemoryWithProperties(properties, surface.getMemoryPointer()));
         if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
             // Try with no host pointer allocation and copy
-            AllocationProperties copyProperties{rootDeviceIndex, surface.getSurfaceSize(), GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY};
+            AllocationProperties copyProperties{rootDeviceIndex, surface.getSurfaceSize(), GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, internalAllocationStorage->getDeviceBitfield()};
             copyProperties.alignment = MemoryConstants::pageSize;
             allocation.reset(memoryManager->allocateGraphicsMemoryWithProperties(copyProperties));
             if (allocation) {

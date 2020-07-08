@@ -302,6 +302,7 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenScratchAl
 
 HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsRequiredThenCorrectAddressIsReturned) {
     auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    commandStreamReceiver->setupContext(*pDevice->getDefaultEngine().osContext);
     auto scratchController = commandStreamReceiver->getScratchSpaceController();
 
     bool cfeStateDirty = false;

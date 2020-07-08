@@ -798,11 +798,10 @@ struct CommandStreamReceiverHwLog : public UltCommandStreamReceiver<FamilyType> 
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithBothCSCallsFlushOnce) {
     CommandStreamReceiverHwLog<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    commandStreamReceiver.setupContext(*pDevice->getDefaultEngine().osContext);
     commandStreamReceiver.initializeTagAllocation();
     commandStreamReceiver.createPreemptionAllocation();
     commandStream.getSpace(sizeof(typename FamilyType::MI_NOOP));
-
-    commandStreamReceiver.setupContext(*pDevice->getDefaultEngine().osContext);
 
     flushTask(commandStreamReceiver);
     EXPECT_EQ(1, commandStreamReceiver.flushCount);

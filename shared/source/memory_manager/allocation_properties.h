@@ -39,10 +39,6 @@ struct AllocationProperties {
     OsContext *osContext = nullptr;
 
     AllocationProperties(uint32_t rootDeviceIndex, size_t size,
-                         GraphicsAllocation::AllocationType allocationType)
-        : AllocationProperties(rootDeviceIndex, size, allocationType, 0b1) {}
-
-    AllocationProperties(uint32_t rootDeviceIndex, size_t size,
                          GraphicsAllocation::AllocationType allocationType, DeviceBitfield subDevicesBitfieldParam)
         : AllocationProperties(rootDeviceIndex, true, size, allocationType, false, subDevicesBitfieldParam) {}
 

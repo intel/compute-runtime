@@ -678,6 +678,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
     auto mockedMemoryManager = new MockedMemoryManager(*executionEnvironment);
     executionEnvironment->memoryManager.reset(mockedMemoryManager);
     auto mockCsr = std::make_unique<MockCsrHw2<FamilyType>>(*executionEnvironment, 0);
+    mockCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
     if (pDevice->getPreemptionMode() == PreemptionMode::MidThread || pDevice->isDebuggerActive()) {
         mockCsr->createPreemptionAllocation();
@@ -685,7 +686,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
 
     mockCsr->initializeTagAllocation();
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-    mockCsr->setupContext(*pDevice->getDefaultEngine().osContext);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);

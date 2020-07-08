@@ -68,7 +68,7 @@ bool MetricsLibrary::createMetricQuery(const uint32_t slotsCount, QueryHandle_1_
 
     // Allocate gpu memory.
     NEO::AllocationProperties properties(
-        metricContext.getDevice().getRootDeviceIndex(), gpuReportSize.ValueUInt32 * slotsCount, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+        metricContext.getDevice().getRootDeviceIndex(), gpuReportSize.ValueUInt32 * slotsCount, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, metricContext.getDevice().getNEODevice()->getDeviceBitfield());
     properties.alignment = 64u;
     pAllocation = metricContext.getDevice().getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 

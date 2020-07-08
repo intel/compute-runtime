@@ -12,6 +12,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include <cstring>
 #include <type_traits>
@@ -25,9 +26,9 @@ ExperimentalCommandBuffer::ExperimentalCommandBuffer(CommandStreamReceiver *csr,
                                                                                                                     defaultPrint(true),
                                                                                                                     timerResolution(profilingTimerResolution) {
     auto rootDeviceIndex = csr->getRootDeviceIndex();
-    timestamps = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
+    timestamps = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, csr->getOsContext().getDeviceBitfield()});
     memset(timestamps->getUnderlyingBuffer(), 0, timestamps->getUnderlyingBufferSize());
-    experimentalAllocation = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY});
+    experimentalAllocation = csr->getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, csr->getOsContext().getDeviceBitfield()});
     memset(experimentalAllocation->getUnderlyingBuffer(), 0, experimentalAllocation->getUnderlyingBufferSize());
 }
 
