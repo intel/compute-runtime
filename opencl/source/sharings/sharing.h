@@ -22,8 +22,8 @@ enum SynchronizeStatus {
 struct UpdateData {
     UpdateData(uint32_t inRootDeviceIndex) : rootDeviceIndex(inRootDeviceIndex){};
     const uint32_t rootDeviceIndex;
-    SynchronizeStatus synchronizationStatus;
-    osHandle sharedHandle;
+    SynchronizeStatus synchronizationStatus = SHARED_OBJECT_NOT_CHANGED;
+    osHandle sharedHandle = 0;
     MemObj *memObject = nullptr;
     void *updateData = nullptr;
 };
