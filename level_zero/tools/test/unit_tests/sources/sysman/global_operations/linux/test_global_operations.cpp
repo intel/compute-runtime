@@ -21,8 +21,8 @@ using ::testing::NiceMock;
 namespace L0 {
 namespace ult {
 
-constexpr int64_t memSize1 = 0;
-constexpr int64_t memSize2 = 0;
+constexpr int64_t memSize1 = 2048;
+constexpr int64_t memSize2 = 1024;
 // In mock function getValUnsignedLong, we have set the engines used as 0, 3 and 1.
 // Hence, expecting 28 as engine field because 28 in binary would be 00011100
 // This indicates bit number 2, 3 and 4 are set, thus this indicates, this process
@@ -107,6 +107,19 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidSysmanHandleWhileRetrievingInfor
     EXPECT_EQ(processes[1].processId, pid2);
     EXPECT_EQ(processes[1].engines, engines2);
     EXPECT_EQ(processes[1].memSize, memSize2);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidSysmanHandleWhileRetrievingInformationAboutHostProcessesUsingFaultyClientFileThenFailureIsReturned) {
+    uint32_t count = 0;
+    ON_CALL(*pSysfsAccess, scanDirEntries(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<GlobalOperationsSysfsAccess>::getScannedDir4Entries));
+    ASSERT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetSysmanProcessesGetState(hSysman, &count, nullptr));
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidSysmanHandleWhileReadingExistingMemoryFileThenCorrectValueIsReturned) {
+    uint64_t memSize = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pSysfsAccess->read("clients/6/total_device_memory_buffer_objects/created_bytes", memSize));
+    EXPECT_EQ(memSize2, static_cast<int64_t>(memSize));
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenValidSysmanHandleWhileReadingNonExistingFileThenErrorIsReturned) {
