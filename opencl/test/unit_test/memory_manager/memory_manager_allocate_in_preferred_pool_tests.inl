@@ -703,7 +703,7 @@ TEST(MemoryManagerTest, givenMapAllocationWhenGetAllocationDataIsCalledThenItHas
     EXPECT_EQ(allocData.hostPtr, hostPtr);
 }
 
-TEST(MemoryManagerTest, givenRingBufferAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet) {
+HWTEST_F(GetAllocationDataTestHw, givenRingBufferAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 0x10000u, GraphicsAllocation::AllocationType::RING_BUFFER, mockDeviceBitfield};
@@ -717,7 +717,7 @@ TEST(MemoryManagerTest, givenRingBufferAllocationWhenGetAllocationDataIsCalledTh
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 
-TEST(MemoryManagerTest, givenSemaphoreBufferAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet) {
+HWTEST_F(GetAllocationDataTestHw, givenSemaphoreBufferAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
     AllocationProperties properties{mockRootDeviceIndex, 0x1000u, GraphicsAllocation::AllocationType::SEMAPHORE_BUFFER, mockDeviceBitfield};
