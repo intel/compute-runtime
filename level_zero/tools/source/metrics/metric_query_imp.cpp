@@ -112,7 +112,7 @@ bool MetricsLibrary::destroyMetricQuery(QueryHandle_1_0 &query) {
     }
 
     // Unload metrics library if there are no active queries.
-    // It will allow to open metric tracer. Query and tracer cannot be used
+    // It will allow to open metric streamer. Query and streamer cannot be used
     // simultaneously since they use the same exclusive resource (oa buffer).
     if (queries.size() == 0) {
         release();
@@ -231,7 +231,7 @@ bool MetricsLibrary::createContext() {
     clientOptions[0].Compute.Asynchronous = asyncComputeEngine != asyncComputeEngines.end();
 
     clientOptions[1].Type = ClientOptionsType::Tbs;
-    clientOptions[1].Tbs.Enabled = metricContext.getMetricTracer() != nullptr;
+    clientOptions[1].Tbs.Enabled = metricContext.getMetricStreamer() != nullptr;
 
     clientData.Linux.Adapter = &adapter;
     clientData.ClientOptions = clientOptions;
@@ -382,9 +382,9 @@ ze_result_t metricQueryPoolCreate(zet_device_handle_t hDevice, zet_metric_group_
     auto device = Device::fromHandle(hDevice);
     auto &metricContext = device->getMetricContext();
 
-    // Metric query cannot be used with tracer simultaneously
+    // Metric query cannot be used with streamer simultaneously
     // (due to oa buffer usage constraints).
-    if (metricContext.getMetricTracer() != nullptr) {
+    if (metricContext.getMetricStreamer() != nullptr) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -574,9 +574,9 @@ ze_result_t MetricQuery::appendMemoryBarrier(CommandList &commandList) {
                                                                      : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-ze_result_t MetricQuery::appendTracerMarker(CommandList &commandList,
-                                            zet_metric_tracer_handle_t hMetricTracer,
-                                            uint32_t value) {
+ze_result_t MetricQuery::appendStreamerMarker(CommandList &commandList,
+                                              zet_metric_streamer_handle_t hMetricStreamer,
+                                              uint32_t value) {
 
     auto &metricContext = commandList.device->getMetricContext();
     auto &metricsLibrary = metricContext.getMetricsLibrary();

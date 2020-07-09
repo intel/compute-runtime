@@ -35,9 +35,17 @@ ze_result_t CommandListImp::appendMetricMemoryBarrier() {
     return MetricQuery::appendMemoryBarrier(*this);
 }
 
+ze_result_t CommandListImp::appendMetricStreamerMarker(zet_metric_streamer_handle_t hMetricStreamer,
+                                                       uint32_t value) {
+    return MetricQuery::appendStreamerMarker(*this, hMetricStreamer, value);
+}
+
 ze_result_t CommandListImp::appendMetricTracerMarker(zet_metric_tracer_handle_t hMetricTracer,
                                                      uint32_t value) {
-    return MetricQuery::appendTracerMarker(*this, hMetricTracer, value);
+
+    zet_metric_streamer_handle_t hMetricStreamer = reinterpret_cast<zet_metric_streamer_handle_t>(hMetricTracer);
+
+    return MetricQuery::appendStreamerMarker(*this, hMetricStreamer, value);
 }
 
 ze_result_t CommandListImp::appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) {

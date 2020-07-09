@@ -10,6 +10,8 @@
 #include "level_zero/tools/source/metrics/metric.h"
 #include <level_zero/zet_api.h>
 
+#include "third_party/level_zero/zet_api_ext.h"
+
 extern "C" {
 
 __zedllexport ze_result_t __zecall
@@ -91,6 +93,39 @@ zetMetricTracerReadData(
     size_t *pRawDataSize,
     uint8_t *pRawData) {
     return L0::MetricTracer::fromHandle(hMetricTracer)->readData(maxReportCount, pRawDataSize, pRawData);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetMetricStreamerOpen(
+    zet_device_handle_t hDevice,
+    zet_metric_group_handle_t hMetricGroup,
+    zet_metric_streamer_desc_t *pDesc,
+    ze_event_handle_t hNotificationEvent,
+    zet_metric_streamer_handle_t *phMetricStreamer) {
+    return L0::metricStreamerOpen(hDevice, hMetricGroup, pDesc, hNotificationEvent, phMetricStreamer);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetCommandListAppendMetricStreamerMarker(
+    ze_command_list_handle_t hCommandList,
+    zet_metric_streamer_handle_t hMetricStreamer,
+    uint32_t value) {
+    return L0::CommandList::fromHandle(hCommandList)->appendMetricStreamerMarker(hMetricStreamer, value);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetMetricStreamerClose(
+    zet_metric_streamer_handle_t hMetricStreamer) {
+    return L0::MetricStreamer::fromHandle(hMetricStreamer)->close();
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetMetricStreamerReadData(
+    zet_metric_streamer_handle_t hMetricStreamer,
+    uint32_t maxReportCount,
+    size_t *pRawDataSize,
+    uint8_t *pRawData) {
+    return L0::MetricStreamer::fromHandle(hMetricStreamer)->readData(maxReportCount, pRawDataSize, pRawData);
 }
 
 __zedllexport ze_result_t __zecall

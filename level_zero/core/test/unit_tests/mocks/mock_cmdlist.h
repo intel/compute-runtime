@@ -239,6 +239,10 @@ struct MockCommandList : public CommandList {
 
     ADDMETHOD_NOBASE(appendMetricMemoryBarrier, ze_result_t, ZE_RESULT_SUCCESS, ());
 
+    ADDMETHOD_NOBASE(appendMetricStreamerMarker, ze_result_t, ZE_RESULT_SUCCESS,
+                     (zet_metric_streamer_handle_t hMetricStreamer,
+                      uint32_t value));
+
     ADDMETHOD_NOBASE(appendMetricTracerMarker, ze_result_t, ZE_RESULT_SUCCESS,
                      (zet_metric_tracer_handle_t hMetricTracer,
                       uint32_t value));

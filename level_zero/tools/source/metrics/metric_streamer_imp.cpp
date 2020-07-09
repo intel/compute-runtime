@@ -5,7 +5,7 @@
  *
  */
 
-#include "level_zero/tools/source/metrics/metric_tracer_imp.h"
+#include "level_zero/tools/source/metrics/metric_streamer_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
 
@@ -14,8 +14,8 @@
 
 namespace L0 {
 
-ze_result_t MetricTracerImp::readData(uint32_t maxReportCount, size_t *pRawDataSize,
-                                      uint8_t *pRawData) {
+ze_result_t MetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawDataSize,
+                                        uint8_t *pRawData) {
     DEBUG_BREAK_IF(rawReportSize == 0);
 
     auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
@@ -34,7 +34,7 @@ ze_result_t MetricTracerImp::readData(uint32_t maxReportCount, size_t *pRawDataS
     // Retrieve the number of reports that fit into the buffer.
     uint32_t reportCount = static_cast<uint32_t>(*pRawDataSize / rawReportSize);
 
-    // Read tracer data.
+    // Read streamer data.
     const ze_result_t result = metricGroup->readIoStream(reportCount, *pRawData);
     if (result == ZE_RESULT_SUCCESS) {
         *pRawDataSize = reportCount * rawReportSize;
@@ -43,7 +43,7 @@ ze_result_t MetricTracerImp::readData(uint32_t maxReportCount, size_t *pRawDataS
     return result;
 }
 
-ze_result_t MetricTracerImp::close() {
+ze_result_t MetricStreamerImp::close() {
     const auto result = stopMeasurements();
     if (result == ZE_RESULT_SUCCESS) {
 
@@ -51,28 +51,28 @@ ze_result_t MetricTracerImp::close() {
         auto &metricContext = device->getMetricContext();
         auto &metricsLibrary = metricContext.getMetricsLibrary();
 
-        // Clear metric tracer reference in context.
-        // Another metric tracer instance or query can be used.
-        metricContext.setMetricTracer(nullptr);
+        // Clear metric streamer reference in context.
+        // Another metric streamer instance or query can be used.
+        metricContext.setMetricStreamer(nullptr);
 
-        // Close metrics library (if was used to generate tracer's marker gpu commands).
+        // Close metrics library (if was used to generate streamer's marker gpu commands).
         // It will allow metric query to use Linux Tbs stream exclusively
         // (to activate metric sets and to read context switch reports).
         metricsLibrary.release();
 
         // Release notification event.
         if (pNotificationEvent != nullptr) {
-            pNotificationEvent->metricTracer = nullptr;
+            pNotificationEvent->metricStreamer = nullptr;
         }
 
-        // Delete metric tracer.
+        // Delete metric streamer.
         delete this;
     }
     return result;
 }
 
-ze_result_t MetricTracerImp::initialize(ze_device_handle_t hDevice,
-                                        zet_metric_group_handle_t hMetricGroup) {
+ze_result_t MetricStreamerImp::initialize(ze_device_handle_t hDevice,
+                                          zet_metric_group_handle_t hMetricGroup) {
     this->hDevice = hDevice;
     this->hMetricGroup = hMetricGroup;
 
@@ -82,9 +82,9 @@ ze_result_t MetricTracerImp::initialize(ze_device_handle_t hDevice,
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MetricTracerImp::startMeasurements(uint32_t &notifyEveryNReports,
-                                               uint32_t &samplingPeriodNs,
-                                               ze_event_handle_t hNotificationEvent) {
+ze_result_t MetricStreamerImp::startMeasurements(uint32_t &notifyEveryNReports,
+                                                 uint32_t &samplingPeriodNs,
+                                                 ze_event_handle_t hNotificationEvent) {
     auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
     uint32_t requestedOaBufferSize = getOaBufferSize(notifyEveryNReports);
 
@@ -96,16 +96,16 @@ ze_result_t MetricTracerImp::startMeasurements(uint32_t &notifyEveryNReports,
         notifyEveryNReports = getNotifyEveryNReports(requestedOaBufferSize);
     }
 
-    // Associate notification event with metric tracer.
+    // Associate notification event with metric streamer.
     pNotificationEvent = Event::fromHandle(hNotificationEvent);
     if (pNotificationEvent != nullptr) {
-        pNotificationEvent->metricTracer = this;
+        pNotificationEvent->metricStreamer = this;
     }
 
     return result;
 }
 
-ze_result_t MetricTracerImp::stopMeasurements() {
+ze_result_t MetricStreamerImp::stopMeasurements() {
     auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
 
     const ze_result_t result = metricGroup->closeIoStream();
@@ -116,19 +116,19 @@ ze_result_t MetricTracerImp::stopMeasurements() {
     return result;
 }
 
-uint32_t MetricTracerImp::getOaBufferSize(const uint32_t notifyEveryNReports) const {
+uint32_t MetricStreamerImp::getOaBufferSize(const uint32_t notifyEveryNReports) const {
     // Notification is on half full buffer, hence multiplication by 2.
     return notifyEveryNReports * rawReportSize * 2;
 }
 
-uint32_t MetricTracerImp::getNotifyEveryNReports(const uint32_t oaBufferSize) const {
+uint32_t MetricStreamerImp::getNotifyEveryNReports(const uint32_t oaBufferSize) const {
     // Notification is on half full buffer, hence division by 2.
     return rawReportSize
                ? oaBufferSize / (rawReportSize * 2)
                : 0;
 }
 
-Event::State MetricTracerImp::getNotificationState() {
+Event::State MetricStreamerImp::getNotificationState() {
 
     auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
     bool reportsReady = metricGroup->waitForReports(0) == ZE_RESULT_SUCCESS;
@@ -138,7 +138,7 @@ Event::State MetricTracerImp::getNotificationState() {
                : Event::State::STATE_INITIAL;
 }
 
-uint32_t MetricTracerImp::getRequiredBufferSize(const uint32_t maxReportCount) const {
+uint32_t MetricStreamerImp::getRequiredBufferSize(const uint32_t maxReportCount) const {
     DEBUG_BREAK_IF(rawReportSize == 0);
     uint32_t maxOaBufferReportCount = oaBufferSize / rawReportSize;
 
@@ -147,20 +147,20 @@ uint32_t MetricTracerImp::getRequiredBufferSize(const uint32_t maxReportCount) c
                                                    : maxReportCount * rawReportSize;
 }
 
-ze_result_t MetricTracer::open(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
-                               zet_metric_tracer_desc_t &desc, ze_event_handle_t hNotificationEvent,
-                               zet_metric_tracer_handle_t *phMetricTracer) {
+ze_result_t MetricStreamer::open(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+                                 zet_metric_streamer_desc_t &desc, ze_event_handle_t hNotificationEvent,
+                                 zet_metric_streamer_handle_t *phMetricStreamer) {
     auto pDevice = Device::fromHandle(hDevice);
     auto &metricContext = pDevice->getMetricContext();
 
-    *phMetricTracer = nullptr;
+    *phMetricStreamer = nullptr;
 
-    // Check whether metric tracer is already open.
-    if (metricContext.getMetricTracer() != nullptr) {
+    // Check whether metric streamer is already open.
+    if (metricContext.getMetricStreamer() != nullptr) {
         return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
     }
 
-    // Metric tracer cannot be used with query simultaneously
+    // metric streamer cannot be used with query simultaneously
     // (oa buffer cannot be shared).
     if (metricContext.getMetricsLibrary().getMetricQueryCount() > 0) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -177,21 +177,21 @@ ze_result_t MetricTracer::open(zet_device_handle_t hDevice, zet_metric_group_han
         return ZE_RESULT_NOT_READY;
     }
 
-    auto pMetricTracer = new MetricTracerImp();
-    UNRECOVERABLE_IF(pMetricTracer == nullptr);
-    pMetricTracer->initialize(hDevice, hMetricGroup);
+    auto pMetricStreamer = new MetricStreamerImp();
+    UNRECOVERABLE_IF(pMetricStreamer == nullptr);
+    pMetricStreamer->initialize(hDevice, hMetricGroup);
 
-    const ze_result_t result = pMetricTracer->startMeasurements(
+    const ze_result_t result = pMetricStreamer->startMeasurements(
         desc.notifyEveryNReports, desc.samplingPeriod, hNotificationEvent);
     if (result == ZE_RESULT_SUCCESS) {
-        metricContext.setMetricTracer(pMetricTracer);
+        metricContext.setMetricStreamer(pMetricStreamer);
     } else {
-        delete pMetricTracer;
-        pMetricTracer = nullptr;
+        delete pMetricStreamer;
+        pMetricStreamer = nullptr;
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    *phMetricTracer = pMetricTracer->toHandle();
+    *phMetricStreamer = pMetricStreamer->toHandle();
     return ZE_RESULT_SUCCESS;
 }
 

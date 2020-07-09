@@ -13,8 +13,8 @@ struct Event;
 
 namespace L0 {
 
-struct MetricTracerImp : MetricTracer {
-    ~MetricTracerImp() override{};
+struct MetricStreamerImp : MetricStreamer {
+    ~MetricStreamerImp() override{};
 
     ze_result_t readData(uint32_t maxReportCount, size_t *pRawDataSize, uint8_t *pRawData) override;
     ze_result_t close() override;

@@ -42,8 +42,8 @@ struct EventImp : public Event {
         uint64_t *hostAddr = static_cast<uint64_t *>(hostAddress);
         uint32_t queryVal = Event::STATE_CLEARED;
 
-        if (metricTracer != nullptr) {
-            *hostAddr = metricTracer->getNotificationState();
+        if (metricStreamer != nullptr) {
+            *hostAddr = metricStreamer->getNotificationState();
         }
 
         this->csr->downloadAllocations();

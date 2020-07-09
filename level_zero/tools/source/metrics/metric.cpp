@@ -53,8 +53,8 @@ struct MetricContextImp : public MetricContext {
     Device &getDevice() override;
     MetricsLibrary &getMetricsLibrary() override;
     MetricEnumeration &getMetricEnumeration() override;
-    MetricTracer *getMetricTracer() override;
-    void setMetricTracer(MetricTracer *pMetricTracer) override;
+    MetricStreamer *getMetricStreamer() override;
+    void setMetricStreamer(MetricStreamer *pMetricStreamer) override;
     void setMetricsLibrary(MetricsLibrary &metricsLibrary) override;
     void setMetricEnumeration(MetricEnumeration &metricEnumeration) override;
 
@@ -72,7 +72,7 @@ struct MetricContextImp : public MetricContext {
     std::unique_ptr<MetricEnumeration> metricEnumeration = nullptr;
     std::unique_ptr<MetricsLibrary> metricsLibrary = nullptr;
     MetricGroupDomains metricGroupDomains;
-    MetricTracer *pMetricTracer = nullptr;
+    MetricStreamer *pMetricStreamer = nullptr;
     bool useCompute = false;
 };
 
@@ -118,10 +118,10 @@ MetricsLibrary &MetricContextImp::getMetricsLibrary() { return *metricsLibrary; 
 
 MetricEnumeration &MetricContextImp::getMetricEnumeration() { return *metricEnumeration; }
 
-MetricTracer *MetricContextImp::getMetricTracer() { return pMetricTracer; }
+MetricStreamer *MetricContextImp::getMetricStreamer() { return pMetricStreamer; }
 
-void MetricContextImp::setMetricTracer(MetricTracer *pMetricTracer) {
-    this->pMetricTracer = pMetricTracer;
+void MetricContextImp::setMetricStreamer(MetricStreamer *pMetricStreamer) {
+    this->pMetricStreamer = pMetricStreamer;
 }
 
 void MetricContextImp::setMetricsLibrary(MetricsLibrary &metricsLibrary) {
@@ -146,7 +146,7 @@ ze_result_t
 MetricContextImp::activateMetricGroupsDeferred(const uint32_t count,
                                                zet_metric_group_handle_t *phMetricGroups) {
 
-    // Activation: postpone until zetMetricTracerOpen or zeCommandQueueExecuteCommandLists
+    // Activation: postpone until zetMetricStreamerOpen or zeCommandQueueExecuteCommandLists
     // Deactivation: execute immediately.
     return phMetricGroups ? metricGroupDomains.activateDeferred(count, phMetricGroups)
                           : metricGroupDomains.deactivate();
@@ -250,7 +250,7 @@ bool MetricGroupDomains::activateMetricGroupDeferred(const zet_metric_group_hand
 
     // Associate metric group with domain and mark it as not active.
     // Activation will be performed during zeCommandQueueExecuteCommandLists (query)
-    // or zetMetricTracerOpen (time based sampling).
+    // or zetMetricStreamerOpen (time based sampling).
     domains[domain].first = hMetricGroup;
     domains[domain].second = false;
 
@@ -269,7 +269,7 @@ ze_result_t MetricGroupDomains::activate() {
                                 ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
         // Activate only event based metric groups.
-        // Time based metric group will be activated during zetMetricTracerOpen.
+        // Time based metric group will be activated during zetMetricStreamerOpen.
         if (metricGroupEventBased && !metricGroupActive) {
 
             metricGroupActive = activateEventMetricGroup(hMetricGroup);
@@ -347,11 +347,26 @@ ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_me
                                                                             phMetricGroups);
 }
 
+ze_result_t metricStreamerOpen(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+                               zet_metric_streamer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
+                               zet_metric_streamer_handle_t *phMetricStreamer) {
+
+    return MetricStreamer::open(hDevice, hMetricGroup, *pDesc, hNotificationEvent, phMetricStreamer);
+}
+
 ze_result_t metricTracerOpen(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                              zet_metric_tracer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
                              zet_metric_tracer_handle_t *phMetricTracer) {
 
-    return MetricTracer::open(hDevice, hMetricGroup, *pDesc, hNotificationEvent, phMetricTracer);
+    zet_metric_streamer_handle_t *phMetricStreamer = reinterpret_cast<zet_metric_streamer_handle_t *>(phMetricTracer);
+    zet_metric_streamer_desc_t metricStreamerDesc = {};
+
+    metricStreamerDesc.notifyEveryNReports = pDesc->notifyEveryNReports;
+    metricStreamerDesc.samplingPeriod = pDesc->samplingPeriod;
+    metricStreamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
+    metricStreamerDesc.pNext = nullptr;
+
+    return MetricStreamer::open(hDevice, hMetricGroup, metricStreamerDesc, hNotificationEvent, phMetricStreamer);
 }
 
 } // namespace L0

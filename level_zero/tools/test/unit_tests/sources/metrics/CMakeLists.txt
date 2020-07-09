@@ -12,7 +12,7 @@ target_sources(${TARGET_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_metric_enumeration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_enumeration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_query_pool.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_tracer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_metric_streamer.cpp
 )
 
 if(UNIX)

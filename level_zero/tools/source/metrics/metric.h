@@ -9,10 +9,13 @@
 #include "level_zero/core/source/event/event.h"
 #include <level_zero/zet_api.h>
 
+#include "third_party/level_zero/zet_api_ext.h"
+
 #include <vector>
 
 struct _zet_metric_group_handle_t {};
 struct _zet_metric_handle_t {};
+struct _zet_metric_streamer_handle_t {};
 struct _zet_metric_tracer_handle_t {};
 struct _zet_metric_query_pool_handle_t {};
 struct _zet_metric_query_handle_t {};
@@ -26,7 +29,7 @@ namespace L0 {
 struct MetricsLibrary;
 struct CommandList;
 struct MetricEnumeration;
-struct MetricTracer;
+struct MetricStreamer;
 
 struct MetricContext {
     virtual ~MetricContext() = default;
@@ -38,8 +41,8 @@ struct MetricContext {
     virtual Device &getDevice() = 0;
     virtual MetricsLibrary &getMetricsLibrary() = 0;
     virtual MetricEnumeration &getMetricEnumeration() = 0;
-    virtual MetricTracer *getMetricTracer() = 0;
-    virtual void setMetricTracer(MetricTracer *pMetricTracer) = 0;
+    virtual MetricStreamer *getMetricStreamer() = 0;
+    virtual void setMetricStreamer(MetricStreamer *pMetricStreamer) = 0;
     virtual void setMetricsLibrary(MetricsLibrary &metricsLibrary) = 0;
     virtual void setMetricEnumeration(MetricEnumeration &metricEnumeration) = 0;
 
@@ -97,21 +100,29 @@ struct MetricGroup : _zet_metric_group_handle_t {
     virtual ze_result_t closeIoStream() = 0;
 };
 
-struct MetricTracer : _zet_metric_tracer_handle_t {
-    virtual ~MetricTracer() = default;
+struct MetricStreamer : _zet_metric_streamer_handle_t {
+    virtual ~MetricStreamer() = default;
 
     virtual ze_result_t readData(uint32_t maxReportCount, size_t *pRawDataSize,
                                  uint8_t *pRawData) = 0;
     virtual ze_result_t close() = 0;
 
     static ze_result_t open(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
-                            zet_metric_tracer_desc_t &desc, ze_event_handle_t hNotificationEvent, zet_metric_tracer_handle_t *phMetricTracer);
-    static MetricTracer *fromHandle(zet_metric_tracer_handle_t handle) {
-        return static_cast<MetricTracer *>(handle);
+                            zet_metric_streamer_desc_t &desc, ze_event_handle_t hNotificationEvent, zet_metric_streamer_handle_t *phMetricStreamer);
+    static MetricStreamer *fromHandle(zet_metric_streamer_handle_t handle) {
+        return static_cast<MetricStreamer *>(handle);
     }
 
     virtual Event::State getNotificationState() = 0;
-    inline zet_metric_tracer_handle_t toHandle() { return this; }
+    inline zet_metric_streamer_handle_t toHandle() { return this; }
+};
+
+struct MetricTracer : _zet_metric_tracer_handle_t {
+    virtual ~MetricTracer() = default;
+
+    static MetricStreamer *fromHandle(zet_metric_tracer_handle_t handle) {
+        return MetricStreamer::fromHandle(reinterpret_cast<zet_metric_streamer_handle_t>(handle));
+    }
 };
 
 struct MetricQueryPool : _zet_metric_query_pool_handle_t {
@@ -134,8 +145,8 @@ struct MetricQuery : _zet_metric_query_handle_t {
     virtual ze_result_t appendEnd(CommandList &commandList, ze_event_handle_t hCompletionEvent) = 0;
 
     static ze_result_t appendMemoryBarrier(CommandList &commandList);
-    static ze_result_t appendTracerMarker(CommandList &commandList,
-                                          zet_metric_tracer_handle_t hMetricTracer, uint32_t value);
+    static ze_result_t appendStreamerMarker(CommandList &commandList,
+                                            zet_metric_streamer_handle_t hMetricStreamer, uint32_t value);
 
     virtual ze_result_t getData(size_t *pRawDataSize, uint8_t *pRawData) = 0;
 
@@ -150,7 +161,11 @@ struct MetricQuery : _zet_metric_query_handle_t {
 // MetricGroup.
 ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups);
 
-// MetricTracer.
+// MetricStreamer.
+ze_result_t metricStreamerOpen(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+                               zet_metric_streamer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
+                               zet_metric_streamer_handle_t *phMetricStreamer);
+
 ze_result_t metricTracerOpen(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                              zet_metric_tracer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
                              zet_metric_tracer_handle_t *phMetricTracer);

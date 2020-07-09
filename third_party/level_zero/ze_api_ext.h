@@ -921,6 +921,8 @@ zeCommandListCreateImmediateExt(
     ze_command_list_handle_t *phCommandList ///< [out] pointer to handle of command list object created
 );
 
-} //extern C
+#if defined(__cplusplus)
+} // extern "C"
+#endif
 
 #endif // _ZE_API_EXT_H

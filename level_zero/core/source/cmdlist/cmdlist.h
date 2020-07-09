@@ -16,6 +16,8 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
+#include "third_party/level_zero/zet_api_ext.h"
+
 #include <vector>
 
 struct _ze_command_list_handle_t {};
@@ -104,6 +106,8 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t reset() = 0;
 
     virtual ze_result_t appendMetricMemoryBarrier() = 0;
+    virtual ze_result_t appendMetricStreamerMarker(zet_metric_streamer_handle_t hMetricStreamer,
+                                                   uint32_t value) = 0;
     virtual ze_result_t appendMetricTracerMarker(zet_metric_tracer_handle_t hMetricTracer,
                                                  uint32_t value) = 0;
     virtual ze_result_t appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) = 0;

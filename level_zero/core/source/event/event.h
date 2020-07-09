@@ -19,7 +19,7 @@ struct _ze_event_pool_handle_t {};
 namespace L0 {
 typedef uint64_t FlushStamp;
 struct EventPool;
-struct MetricTracer;
+struct MetricStreamer;
 
 struct Event : _ze_event_handle_t {
     virtual ~Event() = default;
@@ -55,8 +55,8 @@ struct Event : _ze_event_handle_t {
 
     bool isTimestampEvent = false;
 
-    // Metric tracer instance associated with the event.
-    MetricTracer *metricTracer = nullptr;
+    // Metric streamer instance associated with the event.
+    MetricStreamer *metricStreamer = nullptr;
 
     NEO::CommandStreamReceiver *csr = nullptr;
 
