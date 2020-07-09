@@ -15,7 +15,7 @@
 
 namespace L0 {
 
-class LinuxFrequencyImp : public NEO::NonCopyableClass, public OsFrequency {
+class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getMin(double &min) override;
     ze_result_t setMin(double min) override;

@@ -13,7 +13,7 @@
 #include "level_zero/tools/source/sysman/temperature/temperature.h"
 #include <level_zero/zet_api.h>
 namespace L0 {
-class TemperatureImp : public NEO::NonCopyableClass, public Temperature {
+class TemperatureImp : public Temperature, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t temperatureGetProperties(zet_temp_properties_t *pProperties) override;
     ze_result_t temperatureGetConfig(zet_temp_config_t *pConfig) override;

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/memory/memory.h"
 #include "level_zero/tools/source/sysman/memory/os_memory.h"
@@ -13,7 +14,7 @@
 
 namespace L0 {
 
-class MemoryImp : public Memory {
+class MemoryImp : public Memory, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t memoryGetProperties(zet_mem_properties_t *pProperties) override;
     ze_result_t memoryGetBandwidth(zet_mem_bandwidth_t *pBandwidth) override;
@@ -22,8 +23,6 @@ class MemoryImp : public Memory {
     MemoryImp(OsSysman *pOsSysman, ze_device_handle_t hDevice);
     ~MemoryImp() override;
 
-    MemoryImp(const MemoryImp &obj) = delete;
-    MemoryImp &operator=(const MemoryImp &obj) = delete;
     MemoryImp() = default;
     void init();
     OsMemory *pOsMemory = nullptr;

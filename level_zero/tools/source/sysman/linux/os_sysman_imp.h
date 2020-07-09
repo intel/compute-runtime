@@ -16,7 +16,7 @@
 
 namespace L0 {
 
-class LinuxSysmanImp : public OsSysman, public NEO::NonCopyableClass {
+class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:
     LinuxSysmanImp(SysmanImp *pParentSysmanImp);
     ~LinuxSysmanImp() override;

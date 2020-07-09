@@ -13,7 +13,7 @@
 #include "level_zero/tools/source/sysman/engine/os_engine.h"
 #include <level_zero/zet_api.h>
 namespace L0 {
-class EngineImp : public NEO::NonCopyableClass, public Engine {
+class EngineImp : public Engine, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t engineGetProperties(zet_engine_properties_t *pProperties) override;
     ze_result_t engineGetActivity(zet_engine_stats_t *pStats) override;

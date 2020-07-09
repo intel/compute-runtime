@@ -15,7 +15,7 @@
 
 namespace L0 {
 
-class FabricPortImp : public FabricPort, public NEO::NonCopyableClass {
+class FabricPortImp : public FabricPort, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t fabricPortGetProperties(zet_fabric_port_properties_t *pProperties) override;
     ze_result_t fabricPortGetLinkType(ze_bool_t verbose, zet_fabric_link_type_t *pLinkType) override;

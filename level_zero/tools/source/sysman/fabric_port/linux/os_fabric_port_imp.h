@@ -14,7 +14,7 @@
 
 namespace L0 {
 
-class LinuxFabricPortImp : public NEO::NonCopyableClass, public OsFabricPort {
+class LinuxFabricPortImp : public OsFabricPort, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getLinkType(ze_bool_t verbose, zet_fabric_link_type_t *pLinkType) override;
     ze_result_t getConfig(zet_fabric_port_config_t *pConfig) override;

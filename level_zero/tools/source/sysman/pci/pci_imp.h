@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include <level_zero/zet_api.h>
 
 #include "os_pci.h"
@@ -15,7 +17,7 @@
 
 namespace L0 {
 
-class PciImp : public Pci {
+class PciImp : public Pci, NEO::NonCopyableOrMovableClass {
   public:
     void init() override;
     ze_result_t pciStaticProperties(zet_pci_properties_t *pProperties) override;
@@ -25,10 +27,6 @@ class PciImp : public Pci {
     PciImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman) { pOsPci = nullptr; };
     ~PciImp() override;
     OsPci *pOsPci = nullptr;
-
-    // Don't allow copies of the PciImp object
-    PciImp(const PciImp &obj) = delete;
-    PciImp &operator=(const PciImp &obj) = delete;
 
   private:
     OsSysman *pOsSysman = nullptr;

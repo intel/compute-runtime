@@ -13,7 +13,7 @@
 #include "level_zero/tools/source/sysman/power/power.h"
 #include <level_zero/zet_api.h>
 namespace L0 {
-class PowerImp : public NEO::NonCopyableClass, public Power {
+class PowerImp : public Power, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t powerGetProperties(zet_power_properties_t *pProperties) override;
     ze_result_t powerGetEnergyCounter(zet_power_energy_counter_t *pEnergy) override;

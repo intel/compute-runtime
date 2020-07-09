@@ -17,7 +17,7 @@
 
 namespace L0 {
 
-class SysmanDeviceImp : public SysmanDevice, public NEO::NonCopyableClass {
+class SysmanDeviceImp : public SysmanDevice, NEO::NonCopyableOrMovableClass {
   public:
     void init() override;
     ze_result_t deviceGetProperties(zet_sysman_properties_t *pProperties) override;

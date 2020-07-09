@@ -14,7 +14,7 @@ namespace L0 {
 
 class SysfsAccess;
 class PlatformMonitoringTech;
-class LinuxPowerImp : public OsPower, public NEO::NonCopyableClass {
+class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getEnergyCounter(uint64_t &energy) override;
     ze_result_t getEnergyThreshold(zet_energy_threshold_t *pThreshold) override;

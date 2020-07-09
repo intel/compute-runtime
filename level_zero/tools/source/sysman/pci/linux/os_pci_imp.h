@@ -14,7 +14,7 @@ namespace L0 {
 
 class SysfsAccess;
 
-class LinuxPciImp : public NEO::NonCopyableClass, public OsPci {
+class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getPciBdf(std::string &bdf) override;
     ze_result_t getMaxLinkSpeed(double &maxLinkSpeed) override;

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include <level_zero/zet_api.h>
 
@@ -14,7 +15,7 @@
 
 namespace L0 {
 
-class StandbyImp : public Standby {
+class StandbyImp : public Standby, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t standbyGetProperties(zet_standby_properties_t *pProperties) override;
     ze_result_t standbyGetMode(zet_standby_promo_mode_t *pMode) override;
@@ -26,10 +27,6 @@ class StandbyImp : public Standby {
     OsStandby *pOsStandby = nullptr;
 
     void init();
-
-    // Don't allow copies of the StandbyImp object
-    StandbyImp(const StandbyImp &obj) = delete;
-    StandbyImp &operator=(const StandbyImp &obj) = delete;
 
   private:
     zet_standby_properties_t standbyProperties = {};

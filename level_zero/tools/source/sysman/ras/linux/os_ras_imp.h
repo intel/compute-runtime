@@ -16,7 +16,7 @@
 namespace L0 {
 
 class FsAccess;
-class LinuxRasImp : public OsRas, public NEO::NonCopyableClass {
+class LinuxRasImp : public OsRas, NEO::NonCopyableOrMovableClass {
   public:
     LinuxRasImp(OsSysman *pOsSysman);
     LinuxRasImp() = default;

@@ -5,12 +5,15 @@
  *
  */
 
+#pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include "level_zero/tools/source/sysman/sysman_device/os_sysman_device.h"
 #include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
 namespace L0 {
 
-class WddmSysmanDeviceImp : public OsSysmanDevice {
+class WddmSysmanDeviceImp : public OsSysmanDevice, NEO::NonCopyableOrMovableClass {
   public:
     void getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) override;
     void getBoardNumber(int8_t (&boardNumber)[ZET_STRING_PROPERTY_SIZE]) override;
@@ -23,10 +26,6 @@ class WddmSysmanDeviceImp : public OsSysmanDevice {
 
     WddmSysmanDeviceImp(OsSysman *pOsSysman);
     ~WddmSysmanDeviceImp() = default;
-
-    // Don't allow copies of the WddmSysmanDeviceImp object
-    WddmSysmanDeviceImp(const WddmSysmanDeviceImp &obj) = delete;
-    WddmSysmanDeviceImp &operator=(const WddmSysmanDeviceImp &obj) = delete;
 };
 
 void WddmSysmanDeviceImp::getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) {

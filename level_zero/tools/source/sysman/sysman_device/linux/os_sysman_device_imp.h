@@ -13,7 +13,7 @@ namespace L0 {
 
 class SysfsAccess;
 
-class LinuxSysmanDeviceImp : public OsSysmanDevice, public NEO::NonCopyableClass {
+class LinuxSysmanDeviceImp : public OsSysmanDevice, NEO::NonCopyableOrMovableClass {
   public:
     void getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) override;
     void getBoardNumber(int8_t (&boardNumber)[ZET_STRING_PROPERTY_SIZE]) override;

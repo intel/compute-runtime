@@ -15,7 +15,7 @@
 
 namespace L0 {
 
-class SchedulerImp : public NEO::NonCopyableClass, public Scheduler {
+class SchedulerImp : public Scheduler, NEO::NonCopyableOrMovableClass {
   public:
     void init() override;
     ze_result_t getCurrentMode(zet_sched_mode_t *pMode) override;

@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include "level_zero/tools/source/sysman/os_sysman.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 #include <level_zero/zet_api.h>
@@ -15,14 +17,12 @@
 
 namespace L0 {
 
-struct SysmanImp : Sysman {
+struct SysmanImp : Sysman, NEO::NonCopyableOrMovableClass {
 
     SysmanImp(ze_device_handle_t hDevice);
     ~SysmanImp() override;
 
     SysmanImp() = delete;
-    SysmanImp(const SysmanImp &obj) = delete;
-    SysmanImp &operator=(const SysmanImp &obj) = delete;
 
     void init();
 

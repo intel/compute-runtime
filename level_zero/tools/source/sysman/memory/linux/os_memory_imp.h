@@ -14,7 +14,7 @@ namespace L0 {
 
 class SysfsAccess;
 
-class LinuxMemoryImp : public OsMemory, public NEO::NonCopyableClass {
+class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getMemorySize(uint64_t &maxSize, uint64_t &allocSize) override;
     ze_result_t getMemHealth(zet_mem_health_t &memHealth) override;

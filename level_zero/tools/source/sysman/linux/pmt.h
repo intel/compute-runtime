@@ -14,7 +14,7 @@
 
 namespace L0 {
 
-class PlatformMonitoringTech : public NEO::NonCopyableClass {
+class PlatformMonitoringTech : NEO::NonCopyableOrMovableClass {
   public:
     PlatformMonitoringTech() = default;
     virtual ~PlatformMonitoringTech();

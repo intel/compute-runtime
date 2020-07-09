@@ -14,7 +14,7 @@ namespace L0 {
 
 class SysfsAccess;
 class PlatformMonitoringTech;
-class LinuxTemperatureImp : public OsTemperature, public NEO::NonCopyableClass {
+class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getSensorTemperature(double *pTemperature) override;
     bool isTempModuleSupported() override;

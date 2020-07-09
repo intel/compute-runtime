@@ -7,13 +7,15 @@
 
 #pragma once
 
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include "level_zero/tools/source/sysman/frequency/frequency.h"
 #include "level_zero/tools/source/sysman/frequency/os_frequency.h"
 #include <level_zero/zet_api.h>
 
 namespace L0 {
 
-class FrequencyImp : public Frequency {
+class FrequencyImp : public Frequency, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t frequencyGetProperties(zet_freq_properties_t *pProperties) override;
     ze_result_t frequencyGetAvailableClocks(uint32_t *pCount, double *phFrequency) override;
@@ -26,10 +28,6 @@ class FrequencyImp : public Frequency {
     ~FrequencyImp() override;
     OsFrequency *pOsFrequency = nullptr;
     void init();
-
-    // Don't allow copies of the FrequencyImp object
-    FrequencyImp(const FrequencyImp &obj) = delete;
-    FrequencyImp &operator=(const FrequencyImp &obj) = delete;
 
   private:
     static const double step;

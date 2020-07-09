@@ -14,7 +14,7 @@
 
 namespace L0 {
 
-class RasImp : public NEO::NonCopyableClass, public Ras {
+class RasImp : public Ras, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t rasGetProperties(zet_ras_properties_t *pProperties) override;
     ze_result_t rasGetConfig(zet_ras_config_t *pConfig) override;
