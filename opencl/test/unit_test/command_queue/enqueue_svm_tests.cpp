@@ -1380,6 +1380,44 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThen
 
     svmManager->freeSVMAlloc(unifiedMemoryPtr);
 }
+struct createHostUnifiedMemoryAllocationTest : public ::testing::Test {
+    void SetUp() override {
+        device0 = context.pRootDevice0;
+        device1 = context.pRootDevice1;
+        svmManager = context.getSVMAllocsManager();
+        EXPECT_EQ(0u, svmManager->getNumAllocs());
+    }
+    const size_t allocationSize = 4096u;
+    const uint32_t numDevices = 2u;
+    MockDefaultContext context;
+    MockClDevice *device1;
+    MockClDevice *device0;
+    SVMAllocsManager *svmManager = nullptr;
+};
+
+HWTEST_F(createHostUnifiedMemoryAllocationTest,
+         whenCreatingHostUnifiedMemoryAllocationThenOneAllocDataIsCreatedWithOneGraphicsAllocationPerDevice) {
+
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
+    unifiedMemoryProperties.subdeviceBitfield = device0->getDevice().getDeviceBitfield();
+
+    EXPECT_EQ(0u, svmManager->getNumAllocs());
+    auto unifiedMemoryPtr = svmManager->createHostUnifiedMemoryAllocation(numDevices - 1,
+                                                                          allocationSize,
+                                                                          unifiedMemoryProperties);
+    EXPECT_NE(nullptr, unifiedMemoryPtr);
+    EXPECT_EQ(1u, svmManager->getNumAllocs());
+
+    auto allocData = svmManager->getSVMAlloc(unifiedMemoryPtr);
+    EXPECT_EQ(numDevices, allocData->gpuAllocations.getGraphicsAllocations().size());
+
+    for (uint32_t i = 0; i < allocData->gpuAllocations.getGraphicsAllocations().size(); i++) {
+        auto alloc = allocData->gpuAllocations.getGraphicsAllocation(i);
+        EXPECT_EQ(i, alloc->getRootDeviceIndex());
+    }
+
+    svmManager->freeSVMAlloc(unifiedMemoryPtr);
+}
 
 struct MemoryAllocationTypeArray {
     const InternalMemoryType allocationType[3] = {InternalMemoryType::HOST_UNIFIED_MEMORY,

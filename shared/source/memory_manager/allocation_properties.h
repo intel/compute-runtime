@@ -28,7 +28,7 @@ struct AllocationProperties {
         uint32_t allFlags = 0;
     };
     static_assert(sizeof(AllocationProperties::flags) == sizeof(AllocationProperties::allFlags), "");
-    const uint32_t rootDeviceIndex;
+    uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
     size_t size = 0;
     size_t alignment = 0;
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;

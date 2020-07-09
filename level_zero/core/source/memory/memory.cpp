@@ -108,8 +108,9 @@ ze_result_t DriverHandleImp::allocHostMem(ze_host_mem_alloc_flag_t flags, size_t
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
     unifiedMemoryProperties.subdeviceBitfield = this->devices[0]->getNEODevice()->getDeviceBitfield();
 
-    auto usmPtr = svmAllocsManager->createUnifiedMemoryAllocation(0u, size, unifiedMemoryProperties);
-
+    auto usmPtr = svmAllocsManager->createHostUnifiedMemoryAllocation(static_cast<uint32_t>(this->devices.size() - 1),
+                                                                      size,
+                                                                      unifiedMemoryProperties);
     if (usmPtr == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
     }

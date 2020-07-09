@@ -201,15 +201,6 @@ TEST_F(MemoryBitfieldTest, givenDeviceWithValidBitfieldWhenAllocatingDeviceMemor
     EXPECT_NE(nullptr, ptr);
 }
 
-TEST_F(MemoryBitfieldTest, givenDeviceWithValidBitfieldWhenAllocatingHostMemoryThenPassProperBitfield) {
-    auto result = driverHandle->allocHostMem(ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
-                                             size, alignment, &ptr);
-    EXPECT_EQ(neoDevice->getDeviceBitfield(), memoryManager->recentlyPassedDeviceBitfield);
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-}
-
 TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemoryThenPassProperBitfield) {
     DebugManagerStateRestore restorer;
     size_t size = 10;
@@ -260,6 +251,100 @@ TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemory
     EXPECT_NE(nullptr, ptr);
     result = driverHandle->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+class MockHostMemoryManager : public NEO::MockMemoryManager {
+  public:
+    MockHostMemoryManager(const NEO::ExecutionEnvironment &executionEnvironment) : NEO::MockMemoryManager(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)){};
+
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+        allocateGraphicsMemoryWithPropertiesCount++;
+        if (forceFailureInPrimaryAllocation) {
+            return nullptr;
+        }
+        return NEO::MemoryManager::allocateGraphicsMemoryWithProperties(properties);
+    }
+
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties,
+                                                             const void *ptr) override {
+        allocateGraphicsMemoryWithPropertiesCount++;
+        if (forceFailureInAllocationWithHostPointer) {
+            return nullptr;
+        }
+        return NEO::MemoryManager::allocateGraphicsMemoryWithProperties(properties, ptr);
+    }
+
+    uint32_t allocateGraphicsMemoryWithPropertiesCount = 0;
+    bool forceFailureInPrimaryAllocation = false;
+    bool forceFailureInAllocationWithHostPointer = false;
+};
+
+struct AllocHostMemoryTest : public ::testing::Test {
+    void SetUp() override {
+        std::vector<std::unique_ptr<NEO::Device>> devices;
+        NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+        }
+
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            devices.push_back(std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(),
+                                                                                                                                executionEnvironment, i)));
+        }
+
+        memoryManager = new MockHostMemoryManager(*devices[0].get()->getExecutionEnvironment());
+        devices[0].get()->getExecutionEnvironment()->memoryManager.reset(memoryManager);
+
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+    }
+
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    MockHostMemoryManager *memoryManager = nullptr;
+    const uint32_t numRootDevices = 2u;
+};
+
+TEST_F(AllocHostMemoryTest,
+       whenCallingAllocHostMemThenAllocateGraphicsMemoryWithPropertiesIsCalledTheNumberOfTimesOfRootDevices) {
+    void *ptr = nullptr;
+
+    ze_result_t result = driverHandle->allocHostMem(ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
+                                                    4096u, 0u, &ptr);
+    EXPECT_EQ(memoryManager->allocateGraphicsMemoryWithPropertiesCount, numRootDevices);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    driverHandle->freeMem(ptr);
+}
+
+TEST_F(AllocHostMemoryTest,
+       whenCallingAllocHostMemAndFailingOnCreatingGraphicsAllocationThenNullIsReturned) {
+
+    memoryManager->forceFailureInPrimaryAllocation = true;
+
+    void *ptr = nullptr;
+
+    ze_result_t result = driverHandle->allocHostMem(ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
+                                                    4096u, 0u, &ptr);
+    EXPECT_EQ(memoryManager->allocateGraphicsMemoryWithPropertiesCount, 1u);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+    EXPECT_EQ(nullptr, ptr);
+}
+
+TEST_F(AllocHostMemoryTest,
+       whenCallingAllocHostMemAndFailingOnCreatingGraphicsAllocationWithHostPointerThenNullIsReturned) {
+
+    memoryManager->forceFailureInAllocationWithHostPointer = true;
+
+    void *ptr = nullptr;
+
+    ze_result_t result = driverHandle->allocHostMem(ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
+                                                    4096u, 0u, &ptr);
+    EXPECT_EQ(memoryManager->allocateGraphicsMemoryWithPropertiesCount, numRootDevices);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, result);
+    EXPECT_EQ(nullptr, ptr);
 }
 
 } // namespace ult
