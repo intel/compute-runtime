@@ -15,9 +15,11 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include <cstdint>
+#include <functional>
 
 namespace NEO {
 class CommandStreamReceiver;
+class Device;
 class GraphicsAllocation;
 class LinearStream;
 struct TimestampPacketStorage;
@@ -36,7 +38,7 @@ struct BlitProperties {
                                                                 CommandStreamReceiver &commandStreamReceiver,
                                                                 GraphicsAllocation *memObjAllocation,
                                                                 GraphicsAllocation *preallocatedHostAllocation,
-                                                                void *hostPtr, uint64_t memObjGpuVa,
+                                                                const void *hostPtr, uint64_t memObjGpuVa,
                                                                 uint64_t hostAllocGpuVa, Vec3<size_t> hostPtrOffset,
                                                                 Vec3<size_t> copyOffset, Vec3<size_t> copySize,
                                                                 size_t hostRowPitch, size_t hostSlicePitch,
@@ -75,6 +77,26 @@ struct BlitProperties {
     size_t bytesPerPixel = 0;
     Vec3<uint32_t> dstSize = 0;
     Vec3<uint32_t> srcSize = 0;
+};
+
+enum class BlitOperationResult {
+    Unsupported,
+    Fail,
+    Success
+};
+
+namespace BlitHelperFunctions {
+using BlitMemoryToAllocationFunc = std::function<BlitOperationResult(Device &device,
+                                                                     GraphicsAllocation *memory,
+                                                                     size_t offset,
+                                                                     const void *hostPtr,
+                                                                     Vec3<size_t> size)>;
+extern BlitMemoryToAllocationFunc blitMemoryToAllocation;
+} // namespace BlitHelperFunctions
+
+struct BlitHelper {
+    static BlitOperationResult blitMemoryToAllocation(Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                                      Vec3<size_t> size);
 };
 
 template <typename GfxFamily>

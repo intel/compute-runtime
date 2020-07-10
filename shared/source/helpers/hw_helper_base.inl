@@ -380,6 +380,11 @@ inline bool HwHelperHw<GfxFamily>::allowRenderCompression(const HardwareInfo &hw
 }
 
 template <typename GfxFamily>
+inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush() {
     return sizeof(typename GfxFamily::PIPE_CONTROL);
 }

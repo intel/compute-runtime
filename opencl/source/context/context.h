@@ -28,12 +28,6 @@ class SharingFunctions;
 class SVMAllocsManager;
 class SchedulerKernel;
 
-enum class BlitOperationResult {
-    Unsupported,
-    Fail,
-    Success
-};
-
 template <>
 struct OpenCLObjectMapper<_cl_context> {
     typedef class Context DerivedType;
@@ -135,8 +129,6 @@ class Context : public BaseObject<_cl_context> {
     bool areMultiStorageAllocationsPreferred();
 
     ContextType peekContextType() const { return contextType; }
-
-    MOCKABLE_VIRTUAL BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, Vec3<size_t> size) const;
 
     SchedulerKernel &getSchedulerKernel();
 

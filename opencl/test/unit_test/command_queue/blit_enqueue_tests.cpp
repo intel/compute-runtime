@@ -35,23 +35,28 @@ struct BlitEnqueueTests : public ::testing::Test {
             bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment(), device->getRootDeviceIndex()));
             bcsCsr->setupContext(*bcsOsContext);
             bcsCsr->initializeTagAllocation();
+
+            auto mockBlitMemoryToAllocation = [this](Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                                     Vec3<size_t> size) -> BlitOperationResult {
+                auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                                            *bcsCsr, memory, nullptr,
+                                                                                            hostPtr,
+                                                                                            memory->getGpuAddress(), 0,
+                                                                                            0, 0, size, 0, 0, 0, 0);
+
+                BlitPropertiesContainer container;
+                container.push_back(blitProperties);
+                bcsCsr->blitBuffer(container, true, false);
+
+                return BlitOperationResult::Success;
+            };
+            blitMemoryToAllocationFuncBackup = mockBlitMemoryToAllocation;
         }
 
-        BlitOperationResult blitMemoryToAllocation(MemObj &memObj, GraphicsAllocation *memory, void *hostPtr, Vec3<size_t> size) const override {
-            auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
-                                                                                        *bcsCsr, memory, nullptr,
-                                                                                        hostPtr,
-                                                                                        memory->getGpuAddress(), 0,
-                                                                                        0, 0, size, 0, 0, 0, 0);
-
-            BlitPropertiesContainer container;
-            container.push_back(blitProperties);
-            bcsCsr->blitBuffer(container, true, false);
-
-            return BlitOperationResult::Success;
-        }
         std::unique_ptr<OsContext> bcsOsContext;
         std::unique_ptr<CommandStreamReceiver> bcsCsr;
+        VariableBackup<BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup{
+            &BlitHelperFunctions::blitMemoryToAllocation};
     };
 
     template <typename FamilyType>

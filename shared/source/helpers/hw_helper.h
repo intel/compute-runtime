@@ -56,6 +56,7 @@ class HwHelper {
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
     virtual bool allowRenderCompression(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo) const = 0;
     static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
     static bool renderCompressedImagesSupported(const HardwareInfo &hwInfo);
     static bool cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo);
@@ -269,6 +270,8 @@ class HwHelperHw : public HwHelper {
     void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const override;
 
     bool allowRenderCompression(const HardwareInfo &hwInfo) const override;
+
+    bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo) const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

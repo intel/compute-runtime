@@ -243,6 +243,11 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, whenGettingComputeEngineIndexByOrdinalThenCor
     }
 }
 
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenDefaultHwHelperHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo));
+}
+
 class HwHelperTestsGen12LpBuffer : public ::testing::Test {
   public:
     void SetUp() override {
@@ -335,7 +340,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenRevisionEnumAndPlatformFamilyTypeThenPro
                     EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
                     EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
                 } else if (stepping == 0x1) {
-                    EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
+                    EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hardwareInfo));
                 } else if (stepping == 0x3) {
                     EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
                 }

@@ -9,6 +9,8 @@
 
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -16,7 +18,8 @@
 
 namespace NEO {
 
-GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAllocManager, NEO::Device &device, size_t size, bool constant, LinkerInput *const linkerInput, const void *const initData) {
+GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAllocManager, NEO::Device &device, size_t size, bool constant,
+                                           LinkerInput *const linkerInput, const void *initData) {
     bool globalsAreExported = false;
     if (linkerInput != nullptr) {
         globalsAreExported = constant ? linkerInput->getTraits().exportsGlobalConstants : linkerInput->getTraits().exportsGlobalVariables;
@@ -49,7 +52,13 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         if (gpuAlloc == nullptr) {
             return nullptr;
         }
-        memcpy_s(gpuAlloc->getUnderlyingBuffer(), gpuAlloc->getUnderlyingBufferSize(), initData, size);
+        auto &hwInfo = device.getHardwareInfo();
+        auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        if (gpuAlloc->isAllocatedInLocalMemoryPool() && helper.isBlitCopyRequiredForLocalMemory(hwInfo)) {
+            BlitHelperFunctions::blitMemoryToAllocation(device, gpuAlloc, 0, initData, {size, 1, 1});
+        } else {
+            memcpy_s(gpuAlloc->getUnderlyingBuffer(), gpuAlloc->getUnderlyingBufferSize(), initData, size);
+        }
         return gpuAlloc;
     }
 }

@@ -11,11 +11,16 @@
 #include "shared/source/memory_manager/surface.h"
 
 namespace NEO {
+
+namespace BlitHelperFunctions {
+BlitMemoryToAllocationFunc blitMemoryToAllocation = BlitHelper::blitMemoryToAllocation;
+} // namespace BlitHelperFunctions
+
 BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,
                                                                      CommandStreamReceiver &commandStreamReceiver,
                                                                      GraphicsAllocation *memObjAllocation,
                                                                      GraphicsAllocation *preallocatedHostAllocation,
-                                                                     void *hostPtr, uint64_t memObjGpuVa,
+                                                                     const void *hostPtr, uint64_t memObjGpuVa,
                                                                      uint64_t hostAllocGpuVa, Vec3<size_t> hostPtrOffset,
                                                                      Vec3<size_t> copyOffset, Vec3<size_t> copySize,
                                                                      size_t hostRowPitch, size_t hostSlicePitch,

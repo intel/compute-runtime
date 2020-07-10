@@ -1038,6 +1038,8 @@ using IsGen11HP = IsGfxCore<IGFX_GEN11_CORE>;
 using IsGen11LP = IsGfxCore<IGFX_GEN11LP_CORE>;
 using IsGen12LP = IsGfxCore<IGFX_GEN12LP_CORE>;
 
+using IsAtMostGen11 = IsAtMostGfxCore<IGFX_GEN11LP_CORE>;
+
 using IsBXT = IsProduct<IGFX_BROXTON>;
 using IsCFL = IsProduct<IGFX_COFFEELAKE>;
 using IsEHL = IsProduct<IGFX_ELKHARTLAKE>;

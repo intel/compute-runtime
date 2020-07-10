@@ -18,6 +18,6 @@ struct LinkerInput;
 
 GraphicsAllocation *allocateGlobalsSurface(SVMAllocsManager *const svmAllocManager, Device &device,
                                            size_t size, bool constant,
-                                           LinkerInput *const linkerInput, const void *const initData);
+                                           LinkerInput *const linkerInput, const void *initData);
 
 } // namespace NEO

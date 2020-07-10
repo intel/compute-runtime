@@ -15,6 +15,7 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/bit_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_bdw_plus.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/blit_commands_helper_extra.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp

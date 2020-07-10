@@ -2198,6 +2198,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenGetReservedMemoryIsCalledManyTimes
 
 class MemoryManagerWithFailure : public MockMemoryManager {
   public:
+    using MockMemoryManager::MockMemoryManager;
     GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
         recentlyPassedDeviceBitfield = properties.subDevicesBitfield;
         return nullptr;
@@ -2207,7 +2208,7 @@ class MemoryManagerWithFailure : public MockMemoryManager {
 TEST(MemoryManagerTest, whenMemoryManagerReturnsNullptrThenAllocateGlobalsSurfaceAlsoReturnsNullptr) {
     MockClDevice device{new MockDevice};
     auto deviceBitfield = device.getDeviceBitfield();
-    auto memoryManager = new MemoryManagerWithFailure();
+    auto memoryManager = new MemoryManagerWithFailure{*device.getExecutionEnvironment()};
     device.injectMemoryManager(memoryManager);
 
     WhiteBox<NEO::LinkerInput> linkerInput;

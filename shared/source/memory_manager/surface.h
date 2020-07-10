@@ -33,16 +33,16 @@ class NullSurface : public Surface {
 
 class HostPtrSurface : public Surface {
   public:
-    HostPtrSurface(void *ptr, size_t size) : memoryPointer(ptr), surfaceSize(size) {
+    HostPtrSurface(const void *ptr, size_t size) : memoryPointer(ptr), surfaceSize(size) {
         UNRECOVERABLE_IF(!ptr);
         gfxAllocation = nullptr;
     }
 
-    HostPtrSurface(void *ptr, size_t size, bool copyAllowed) : HostPtrSurface(ptr, size) {
+    HostPtrSurface(const void *ptr, size_t size, bool copyAllowed) : HostPtrSurface(ptr, size) {
         isPtrCopyAllowed = copyAllowed;
     }
 
-    HostPtrSurface(void *ptr, size_t size, GraphicsAllocation *allocation) : memoryPointer(ptr), surfaceSize(size), gfxAllocation(allocation) {
+    HostPtrSurface(const void *ptr, size_t size, GraphicsAllocation *allocation) : memoryPointer(ptr), surfaceSize(size), gfxAllocation(allocation) {
         DEBUG_BREAK_IF(!ptr);
     }
     ~HostPtrSurface() override = default;
@@ -55,7 +55,7 @@ class HostPtrSurface : public Surface {
         return new HostPtrSurface(this->memoryPointer, this->surfaceSize, this->gfxAllocation);
     };
 
-    void *getMemoryPointer() const {
+    const void *getMemoryPointer() const {
         return memoryPointer;
     }
     size_t getSurfaceSize() const {
@@ -79,7 +79,7 @@ class HostPtrSurface : public Surface {
     }
 
   protected:
-    void *memoryPointer;
+    const void *memoryPointer;
     size_t surfaceSize;
     GraphicsAllocation *gfxAllocation;
     bool isPtrCopyAllowed = false;

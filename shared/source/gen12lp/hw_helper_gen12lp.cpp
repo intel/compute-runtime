@@ -93,7 +93,7 @@ bool HwHelperHw<Family>::isWorkaroundRequired(uint32_t lowestSteppingWithBug, ui
                 return false;
             }
         }
-        return (lowestSteppingWithBug >= hwInfo.platform.usRevId && hwInfo.platform.usRevId < steppingWithFix);
+        return (lowestSteppingWithBug <= hwInfo.platform.usRevId && hwInfo.platform.usRevId < steppingWithFix);
     } else if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_DG1) {
         for (auto stepping : {&lowestSteppingWithBug, &steppingWithFix}) {
             switch (*stepping) {
@@ -108,7 +108,7 @@ bool HwHelperHw<Family>::isWorkaroundRequired(uint32_t lowestSteppingWithBug, ui
                 return false;
             }
         }
-        return (lowestSteppingWithBug >= hwInfo.platform.usRevId && hwInfo.platform.usRevId < steppingWithFix);
+        return (lowestSteppingWithBug <= hwInfo.platform.usRevId && hwInfo.platform.usRevId < steppingWithFix);
     }
 
     return Gen12LPHelpers::workaroundRequired(lowestSteppingWithBug, steppingWithFix, hwInfo);

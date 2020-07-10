@@ -906,10 +906,14 @@ HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenMinimalSIMDSizeIsQueriedThen8Is
     EXPECT_EQ(8u, helper.getMinimalSIMDSize());
 }
 
-using isAtMostGen11 = IsAtMostGfxCore<IGFX_GEN11LP_CORE>;
-HWTEST2_F(HwHelperTest, givenSingleEnginePlatformWhenGettingComputeEngineIndexByOrdinalThenZeroIndexIsReturned, isAtMostGen11) {
+HWTEST2_F(HwHelperTest, givenSingleEnginePlatformWhenGettingComputeEngineIndexByOrdinalThenZeroIndexIsReturned, IsAtMostGen11) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(0u, helper.getComputeEngineIndexByOrdinal(*defaultHwInfo, 0));
+}
+
+HWTEST2_F(HwHelperTest, givenDefaultHwHelperHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned, IsAtMostGen11) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, WhenIsFusedEuDispatchEnabledIsCalledThenFalseIsReturned) {
