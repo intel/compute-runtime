@@ -1376,9 +1376,12 @@ class DrmMockBuffer : public Buffer {
         delete gfxAllocation;
     }
 
-    DrmMockBuffer(char *data, size_t size, DrmAllocation *alloc) : Buffer(nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, nullptr), CL_MEM_USE_HOST_PTR, 0, size, data, data, alloc, true, false, false),
-                                                                   data(data),
-                                                                   gfxAllocation(alloc) {
+    DrmMockBuffer(char *data, size_t size, DrmAllocation *alloc)
+        : Buffer(
+              nullptr, MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, nullptr), CL_MEM_USE_HOST_PTR, 0, size, data, data,
+              GraphicsAllocationHelper::toMultiGraphicsAllocation(alloc), true, false, false),
+          data(data),
+          gfxAllocation(alloc) {
     }
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnly, const Device &device) override {

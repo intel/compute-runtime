@@ -31,7 +31,7 @@ using BufferCreatFunc = Buffer *(*)(Context *context,
                                     size_t size,
                                     void *memoryStorage,
                                     void *hostPtr,
-                                    GraphicsAllocation *gfxAllocation,
+                                    MultiGraphicsAllocation multiGraphicsAllocation,
                                     bool zeroCopy,
                                     bool isHostPtrSVM,
                                     bool isImageRedescribed);
@@ -96,7 +96,7 @@ class Buffer : public MemObj {
                                   size_t size,
                                   void *memoryStorage,
                                   void *hostPtr,
-                                  GraphicsAllocation *gfxAllocation,
+                                  MultiGraphicsAllocation multiGraphicsAllocation,
                                   bool zeroCopy,
                                   bool isHostPtrSVM,
                                   bool isImageRedescribed);
@@ -165,7 +165,7 @@ class Buffer : public MemObj {
            size_t size,
            void *memoryStorage,
            void *hostPtr,
-           GraphicsAllocation *gfxAllocation,
+           MultiGraphicsAllocation multiGraphicsAllocation,
            bool zeroCopy,
            bool isHostPtrSVM,
            bool isObjectRedescribed);
@@ -198,11 +198,11 @@ class BufferHw : public Buffer {
              size_t size,
              void *memoryStorage,
              void *hostPtr,
-             GraphicsAllocation *gfxAllocation,
+             MultiGraphicsAllocation multiGraphicsAllocation,
              bool zeroCopy,
              bool isHostPtrSVM,
              bool isObjectRedescribed)
-        : Buffer(context, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
+        : Buffer(context, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, multiGraphicsAllocation,
                  zeroCopy, isHostPtrSVM, isObjectRedescribed) {}
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument, const Device &device) override;
@@ -216,7 +216,7 @@ class BufferHw : public Buffer {
                           size_t size,
                           void *memoryStorage,
                           void *hostPtr,
-                          GraphicsAllocation *gfxAllocation,
+                          MultiGraphicsAllocation multiGraphicsAllocation,
                           bool zeroCopy,
                           bool isHostPtrSVM,
                           bool isObjectRedescribed) {
@@ -227,7 +227,7 @@ class BufferHw : public Buffer {
                                               size,
                                               memoryStorage,
                                               hostPtr,
-                                              gfxAllocation,
+                                              multiGraphicsAllocation,
                                               zeroCopy,
                                               isHostPtrSVM,
                                               isObjectRedescribed);

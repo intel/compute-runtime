@@ -2024,7 +2024,7 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
                size_t,
                void *,
                void *,
-               GraphicsAllocation *,
+               MultiGraphicsAllocation,
                bool,
                bool,
                bool)

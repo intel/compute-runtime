@@ -6,12 +6,11 @@
  */
 
 #pragma once
-#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
 
-class MultiGraphicsAllocation : NonCopyableClass {
+class MultiGraphicsAllocation {
   public:
     MultiGraphicsAllocation(uint32_t maxRootDeviceIndex);
 

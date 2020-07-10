@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
@@ -42,4 +43,15 @@ class MockGraphicsAllocation : public MemoryAllocation {
         this->memoryPool = pool;
     }
 };
+
+namespace GraphicsAllocationHelper {
+
+static inline MultiGraphicsAllocation toMultiGraphicsAllocation(GraphicsAllocation *graphicsAllocation) {
+    MultiGraphicsAllocation multiGraphicsAllocation(graphicsAllocation->getRootDeviceIndex());
+    multiGraphicsAllocation.addAllocation(graphicsAllocation);
+    return multiGraphicsAllocation;
+}
+
+} // namespace GraphicsAllocationHelper
+
 } // namespace NEO

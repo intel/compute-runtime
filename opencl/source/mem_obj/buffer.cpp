@@ -48,7 +48,7 @@ Buffer::Buffer(Context *context,
                size_t size,
                void *memoryStorage,
                void *hostPtr,
-               GraphicsAllocation *gfxAllocation,
+               MultiGraphicsAllocation multiGraphicsAllocation,
                bool zeroCopy,
                bool isHostPtrSVM,
                bool isObjectRedescribed)
@@ -60,7 +60,7 @@ Buffer::Buffer(Context *context,
              size,
              memoryStorage,
              hostPtr,
-             gfxAllocation,
+             multiGraphicsAllocation.getDefaultGraphicsAllocation(),
              zeroCopy,
              isHostPtrSVM,
              isObjectRedescribed) {
@@ -295,6 +295,9 @@ Buffer *Buffer::create(Context *context,
     memory->setAllocationType(allocationType);
     memory->setMemObjectsAllocationWithWritableFlags(!(memoryProperties.flags.readOnly || memoryProperties.flags.hostReadOnly || memoryProperties.flags.hostNoAccess));
 
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
+    multiGraphicsAllocation.addAllocation(memory);
+
     pBuffer = createBufferHw(context,
                              memoryProperties,
                              flags,
@@ -302,7 +305,7 @@ Buffer *Buffer::create(Context *context,
                              size,
                              memory->getUnderlyingBuffer(),
                              (memoryProperties.flags.useHostPtr) ? hostPtr : nullptr,
-                             memory,
+                             multiGraphicsAllocation,
                              zeroCopyAllowed,
                              isHostPtrSVM,
                              false);
@@ -372,9 +375,13 @@ Buffer *Buffer::create(Context *context,
 
 Buffer *Buffer::createSharedBuffer(Context *context, cl_mem_flags flags, SharingHandler *sharingHandler,
                                    GraphicsAllocation *graphicsAllocation) {
+    auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
+    multiGraphicsAllocation.addAllocation(graphicsAllocation);
+
     auto sharedBuffer = createBufferHw(
         context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
-        flags, 0, graphicsAllocation->getUnderlyingBufferSize(), nullptr, nullptr, graphicsAllocation,
+        flags, 0, graphicsAllocation->getUnderlyingBufferSize(), nullptr, nullptr, multiGraphicsAllocation,
         false, false, false);
 
     sharedBuffer->setSharingHandler(sharingHandler);
@@ -466,7 +473,7 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
     auto buffer = createFunction(this->context, memoryProperties, flags, 0, region->size,
                                  ptrOffset(this->memoryStorage, region->origin),
                                  this->hostPtr ? ptrOffset(this->hostPtr, region->origin) : nullptr,
-                                 this->multiGraphicsAllocation.getDefaultGraphicsAllocation(),
+                                 this->multiGraphicsAllocation,
                                  this->isZeroCopy, this->isHostPtrSVM, false);
 
     if (this->context->isProvidingPerformanceHints()) {
@@ -593,7 +600,7 @@ Buffer *Buffer::createBufferHw(Context *context,
                                size_t size,
                                void *memoryStorage,
                                void *hostPtr,
-                               GraphicsAllocation *gfxAllocation,
+                               MultiGraphicsAllocation multiGraphicsAllocation,
                                bool zeroCopy,
                                bool isHostPtrSVM,
                                bool isImageRedescribed) {
@@ -602,7 +609,7 @@ Buffer *Buffer::createBufferHw(Context *context,
 
     auto funcCreate = bufferFactory[hwInfo.platform.eRenderCoreFamily].createBufferFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
-    auto pBuffer = funcCreate(context, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
+    auto pBuffer = funcCreate(context, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, multiGraphicsAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
     DEBUG_BREAK_IF(nullptr == pBuffer);
     if (pBuffer) {
@@ -627,8 +634,14 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
 
     auto funcCreate = bufferFactory[hwInfo.platform.eRenderCoreFamily].createBufferFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
+
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(device->getRootDeviceIndex());
+    if (gfxAllocation) {
+        multiGraphicsAllocation.addAllocation(gfxAllocation);
+    }
+
     MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, device);
-    auto pBuffer = funcCreate(nullptr, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, gfxAllocation,
+    auto pBuffer = funcCreate(nullptr, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, multiGraphicsAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
 
     if (!gfxAllocation) {

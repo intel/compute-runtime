@@ -92,8 +92,11 @@ struct MultipleMapBufferTest : public ClDeviceFixture, public ::testing::Test {
     std::unique_ptr<MockBuffer<FamilyType>> createMockBuffer(bool mapOnGpu) {
         MemoryProperties memoryProperties;
         auto mockAlloc = pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
+        auto multiGraphicsAllocation = MultiGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+        multiGraphicsAllocation.addAllocation(mockAlloc);
+
         auto buffer = new MockBuffer<FamilyType>(context, memoryProperties, 0, 0, 1024, mockAlloc->getUnderlyingBuffer(), mockAlloc->getUnderlyingBuffer(),
-                                                 mockAlloc, false, false, false);
+                                                 multiGraphicsAllocation, false, false, false);
         if (mapOnGpu) {
             buffer->setSharingHandler(new SharingHandler());
         }
