@@ -20,7 +20,7 @@ struct Gen12LpPlatformCaps : public PlatformFixture, public ::testing::Test {
     }
 };
 
-TGLLPTEST_F(Gen12LpPlatformCaps, lpSkusDontSupportFP64) {
+HWTEST2_F(Gen12LpPlatformCaps, lpSkusDontSupportFP64, IsTGLLP) {
     const auto &caps = pPlatform->getPlatformInfo();
 
     EXPECT_EQ(std::string::npos, caps.extensions.find(std::string("cl_khr_fp64")));

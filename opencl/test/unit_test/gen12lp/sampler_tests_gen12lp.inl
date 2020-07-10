@@ -20,7 +20,7 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> Gen12LpSamplerTest;
 
-TGLLPTEST_F(Gen12LpSamplerTest, givenTglLpSamplerWhenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter) {
+HWTEST2_F(Gen12LpSamplerTest, givenTglLpSamplerWhenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter, IsTGLLP) {
     EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     auto context = clUniquePtr(new MockContext());
@@ -31,7 +31,7 @@ TGLLPTEST_F(Gen12LpSamplerTest, givenTglLpSamplerWhenUsingDefaultFilteringAndApp
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
 }
 
-TGLLPTEST_F(Gen12LpSamplerTest, givenTglLpSamplerWhenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter) {
+HWTEST2_F(Gen12LpSamplerTest, givenTglLpSamplerWhenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter, IsTGLLP) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForceSamplerLowFilteringPrecision.set(true);
     EXPECT_TRUE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());

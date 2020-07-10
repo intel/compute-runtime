@@ -7,7 +7,7 @@
 
 #include "opencl/test/unit_test/command_stream/compute_mode_tests.h"
 
-TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
+HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned, IsTGLLP) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -57,7 +57,7 @@ TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestFlagsWithSharedHandlesWhenCo
     EXPECT_EQ(cmdsSize, stream.getUsed());
 }
 
-TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestFlagsWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
+HWTEST2_F(ComputeModeRequirements, givenCsrRequestFlagsWithoutSharedHandlesWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned, IsTGLLP) {
     SetUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -99,7 +99,7 @@ TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestFlagsWithoutSharedHandlesWhe
     EXPECT_EQ(cmdsSize, stream.getUsed());
 }
 
-TGLLPTEST_F(ComputeModeRequirements, givenCsrRequestOnEngineCCSWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned) {
+HWTEST2_F(ComputeModeRequirements, givenCsrRequestOnEngineCCSWhenCommandSizeIsCalculatedThenCorrectCommandSizeIsReturned, IsTGLLP) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrCCSNode = true;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;

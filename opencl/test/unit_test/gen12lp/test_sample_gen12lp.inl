@@ -12,7 +12,7 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> TigerlakeLpOnlyTest;
 
-TGLLPTEST_F(TigerlakeLpOnlyTest, shouldPassOnTglLp) {
+HWTEST2_F(TigerlakeLpOnlyTest, shouldPassOnTglLp, IsTGLLP) {
     EXPECT_EQ(IGFX_TIGERLAKE_LP, pDevice->getHardwareInfo().platform.eProductFamily);
 }
 
