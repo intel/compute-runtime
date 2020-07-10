@@ -9,7 +9,9 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/enqueue_common.h"
@@ -33,12 +35,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     const cl_event *eventWaitList,
     cl_event *event) {
 
+    const cl_command_type cmdType = CL_COMMAND_READ_BUFFER;
+    auto &csr = getCommandStreamReceiverByCommandType(cmdType);
+
     if (nullptr == mapAllocation) {
-        notifyEnqueueReadBuffer(buffer, !!blockingRead);
+        notifyEnqueueReadBuffer(buffer, !!blockingRead, EngineHelpers::isBcs(csr.getOsContext().getEngineType()));
     }
 
     auto rootDeviceIndex = getDevice().getRootDeviceIndex();
-    const cl_command_type cmdType = CL_COMMAND_READ_BUFFER;
     bool isMemTransferNeeded = buffer->isMemObjZeroCopy() ? buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, cmdType) : true;
     bool isCpuCopyAllowed = bufferCpuCopyAllowed(buffer, cmdType, blockingRead, size, ptr,
                                                  numEventsInWaitList, eventWaitList);
@@ -97,7 +101,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     } else {
         surfaces[1] = &hostPtrSurf;
         if (size != 0) {
-            auto &csr = getCommandStreamReceiverByCommandType(cmdType);
             bool status = csr.createAllocationForHostSurface(hostPtrSurf, true);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;

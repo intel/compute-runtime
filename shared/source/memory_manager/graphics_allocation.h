@@ -42,6 +42,14 @@ constexpr auto nonSharedResource = 0u;
 class Gmm;
 class MemoryManager;
 
+struct AubInfo {
+    uint32_t aubWritable = std::numeric_limits<uint32_t>::max();
+    uint32_t tbxWritable = std::numeric_limits<uint32_t>::max();
+    bool allocDumpable = false;
+    bool bcsDumpOnly = false;
+    bool memObjectsAllocationWithWritableFlags = false;
+};
+
 class GraphicsAllocation : public IDNode<GraphicsAllocation> {
   public:
     enum class AllocationType {
@@ -158,7 +166,10 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool isAubWritable(uint32_t banks) const;
     void setTbxWritable(bool writable, uint32_t banks);
     bool isTbxWritable(uint32_t banks) const;
-    void setAllocDumpable(bool dumpable) { aubInfo.allocDumpable = dumpable; }
+    void setAllocDumpable(bool dumpable, bool bcsDumpOnly) {
+        aubInfo.allocDumpable = dumpable;
+        aubInfo.bcsDumpOnly = bcsDumpOnly;
+    }
     bool isAllocDumpable() const { return aubInfo.allocDumpable; }
     bool isMemObjectsAllocationWithWritableFlags() const { return aubInfo.memObjectsAllocationWithWritableFlags; }
     void setMemObjectsAllocationWithWritableFlags(bool newValue) { aubInfo.memObjectsAllocationWithWritableFlags = newValue; }
@@ -240,6 +251,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     bool isAllocatedInLocalMemoryPool() const { return (this->memoryPool == MemoryPool::LocalMemory); }
 
+    const AubInfo &getAubInfo() const { return aubInfo; }
+
     OsHandleStorage fragmentsStorage;
     StorageInfo storageInfo = {};
 
@@ -255,12 +268,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         uint32_t residencyTaskCount = objectNotResident;
         uint32_t inspectionId = 0u;
     };
-    struct AubInfo {
-        uint32_t aubWritable = std::numeric_limits<uint32_t>::max();
-        uint32_t tbxWritable = std::numeric_limits<uint32_t>::max();
-        bool allocDumpable = false;
-        bool memObjectsAllocationWithWritableFlags = false;
-    };
+
     struct SharingInfo {
         uint32_t reuseCount = 0;
         osHandle sharedHandle = Sharing::nonSharedResource;

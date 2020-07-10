@@ -265,11 +265,13 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         }
     }
 
-    void notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead) override {
+    void notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead, bool notifyBcsCsr) override {
         notifyEnqueueReadBufferCalled = true;
+        useBcsCsrOnNotifyEnabled = notifyBcsCsr;
     }
-    void notifyEnqueueReadImage(Image *image, bool blockingRead) override {
+    void notifyEnqueueReadImage(Image *image, bool blockingRead, bool notifyBcsCsr) override {
         notifyEnqueueReadImageCalled = true;
+        useBcsCsrOnNotifyEnabled = notifyBcsCsr;
     }
 
     void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
@@ -295,6 +297,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     bool notifyEnqueueReadBufferCalled = false;
     bool notifyEnqueueReadImageCalled = false;
     bool cpuDataTransferHandlerCalled = false;
+    bool useBcsCsrOnNotifyEnabled = false;
     struct OverrideReturnValue {
         bool enabled = false;
         bool returnValue = false;

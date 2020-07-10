@@ -729,7 +729,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(const ResidencyCont
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &gfxAllocation) {
-    if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+    bool isBcsCsr = EngineHelpers::isBcs(this->osContext->getEngineType());
+
+    if (isBcsCsr != gfxAllocation.getAubInfo().bcsDumpOnly) {
         return;
     }
 
@@ -737,7 +739,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         if (!gfxAllocation.isAllocDumpable()) {
             return;
         }
-        gfxAllocation.setAllocDumpable(false);
+        gfxAllocation.setAllocDumpable(false, isBcsCsr);
     }
 
     auto dumpFormat = AubAllocDump::getDumpFormat(gfxAllocation);

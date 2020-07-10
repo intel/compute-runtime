@@ -5,7 +5,9 @@
  *
  */
 
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
@@ -1011,7 +1013,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationNotDumpableWhenDu
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
 
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
-    gfxAllocation->setAllocDumpable(false);
+    gfxAllocation->setAllocDumpable(false, false);
 
     aubCsr.dumpAllocation(*gfxAllocation);
 
@@ -1037,12 +1039,55 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationDumpableWhenDumpA
     auto gfxAllocation = memoryManager->allocateGraphicsMemoryWithProperties({pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER, pDevice->getDeviceBitfield()});
 
     gfxAllocation->setMemObjectsAllocationWithWritableFlags(true);
-    gfxAllocation->setAllocDumpable(true);
 
-    aubCsr.dumpAllocation(*gfxAllocation);
+    auto &csrOsContext = aubCsr.getOsContext();
 
-    EXPECT_FALSE(gfxAllocation->isAllocDumpable());
-    EXPECT_TRUE(mockHardwareContext->dumpSurfaceCalled);
+    {
+        // Non-BCS engine, BCS dump
+        EXPECT_FALSE(EngineHelpers::isBcs(csrOsContext.getEngineType()));
+        gfxAllocation->setAllocDumpable(true, true);
+
+        aubCsr.dumpAllocation(*gfxAllocation);
+
+        EXPECT_TRUE(gfxAllocation->isAllocDumpable());
+        EXPECT_FALSE(mockHardwareContext->dumpSurfaceCalled);
+    }
+
+    {
+        // Non-BCS engine, Non-BCS dump
+        EXPECT_FALSE(EngineHelpers::isBcs(csrOsContext.getEngineType()));
+        gfxAllocation->setAllocDumpable(true, false);
+
+        aubCsr.dumpAllocation(*gfxAllocation);
+
+        EXPECT_FALSE(gfxAllocation->isAllocDumpable());
+        EXPECT_TRUE(mockHardwareContext->dumpSurfaceCalled);
+        mockHardwareContext->dumpSurfaceCalled = false;
+    }
+
+    {
+        // BCS engine, Non-BCS dump
+        csrOsContext.getEngineType() = aub_stream::EngineType::ENGINE_BCS;
+        EXPECT_TRUE(EngineHelpers::isBcs(csrOsContext.getEngineType()));
+        gfxAllocation->setAllocDumpable(true, false);
+
+        aubCsr.dumpAllocation(*gfxAllocation);
+
+        EXPECT_TRUE(gfxAllocation->isAllocDumpable());
+        EXPECT_FALSE(mockHardwareContext->dumpSurfaceCalled);
+    }
+
+    {
+        // BCS engine, BCS dump
+        csrOsContext.getEngineType() = aub_stream::EngineType::ENGINE_BCS;
+        EXPECT_TRUE(EngineHelpers::isBcs(csrOsContext.getEngineType()));
+        gfxAllocation->setAllocDumpable(true, true);
+
+        aubCsr.dumpAllocation(*gfxAllocation);
+
+        EXPECT_FALSE(gfxAllocation->isAllocDumpable());
+        EXPECT_TRUE(mockHardwareContext->dumpSurfaceCalled);
+    }
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }

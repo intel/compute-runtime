@@ -1081,6 +1081,37 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenEventWhenWaitingForCompletion
     clReleaseEvent(outEvent2);
 }
 
+HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenBufferDumpingEnabledWhenEnqueueingThenSetCorrectDumpOption) {
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.set(true);
+    DebugManager.flags.AUBDumpBufferFormat.set("BIN");
+
+    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+
+    {
+        // BCS enqueue
+        commandQueue->enqueueReadBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+
+        EXPECT_TRUE(mockCommandQueue->notifyEnqueueReadBufferCalled);
+        EXPECT_TRUE(mockCommandQueue->useBcsCsrOnNotifyEnabled);
+
+        mockCommandQueue->notifyEnqueueReadBufferCalled = false;
+    }
+
+    {
+        // Non-BCS enqueue
+        DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
+
+        commandQueue->enqueueReadBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+
+        EXPECT_TRUE(mockCommandQueue->notifyEnqueueReadBufferCalled);
+        EXPECT_FALSE(mockCommandQueue->useBcsCsrOnNotifyEnabled);
+    }
+}
+
 HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenBlockedEventWhenWaitingForCompletionThenWaitForCurrentBcsTaskCount) {
     auto buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;

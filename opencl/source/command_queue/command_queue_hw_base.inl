@@ -32,16 +32,16 @@
 
 namespace NEO {
 template <typename Family>
-void CommandQueueHw<Family>::notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead) {
+void CommandQueueHw<Family>::notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead, bool notifyBcsCsr) {
     if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
-        buffer->getGraphicsAllocation(getDevice().getRootDeviceIndex())->setAllocDumpable(blockingRead);
+        buffer->getGraphicsAllocation(getDevice().getRootDeviceIndex())->setAllocDumpable(blockingRead, notifyBcsCsr);
         buffer->forceDisallowCPUCopy = blockingRead;
     }
 }
 template <typename Family>
-void CommandQueueHw<Family>::notifyEnqueueReadImage(Image *image, bool blockingRead) {
+void CommandQueueHw<Family>::notifyEnqueueReadImage(Image *image, bool blockingRead, bool notifyBcsCsr) {
     if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
-        image->getGraphicsAllocation(getDevice().getRootDeviceIndex())->setAllocDumpable(blockingRead);
+        image->getGraphicsAllocation(getDevice().getRootDeviceIndex())->setAllocDumpable(blockingRead, notifyBcsCsr);
     }
 }
 

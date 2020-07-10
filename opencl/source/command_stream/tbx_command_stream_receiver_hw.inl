@@ -559,7 +559,9 @@ void TbxCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         return;
     }
 
-    if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+    bool isBcsCsr = EngineHelpers::isBcs(this->osContext->getEngineType());
+
+    if (isBcsCsr != gfxAllocation.getAubInfo().bcsDumpOnly) {
         return;
     }
 
@@ -567,7 +569,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         if (!gfxAllocation.isAllocDumpable()) {
             return;
         }
-        gfxAllocation.setAllocDumpable(false);
+        gfxAllocation.setAllocDumpable(false, isBcsCsr);
     }
 
     auto dumpFormat = AubAllocDump::getDumpFormat(gfxAllocation);
