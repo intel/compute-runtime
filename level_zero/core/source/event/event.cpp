@@ -168,17 +168,30 @@ uint64_t Event::getOffsetOfEventTimestampRegister(uint32_t eventTimestampReg) {
 }
 
 ze_result_t Event::destroy() {
+    auto eventImp = static_cast<EventImp *>(this);
+    auto deviceImp = static_cast<DeviceImp *>(eventImp->device);
+
+    NEO::MemoryOperationsHandler *memoryOperationsIface =
+        deviceImp->neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
+
+    if (memoryOperationsIface) {
+        memoryOperationsIface->evict(deviceImp->getNEODevice(),
+                                     eventImp->eventPool->getAllocation());
+    }
+
     delete this;
     return ZE_RESULT_SUCCESS;
 }
 
 void EventImp::makeAllocationResident() {
     auto deviceImp = static_cast<DeviceImp *>(this->device);
-    NEO::MemoryOperationsHandler *memoryOperationsIface = deviceImp->neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    NEO::MemoryOperationsHandler *memoryOperationsIface =
+        deviceImp->neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
 
     if (memoryOperationsIface) {
         auto alloc = &(this->eventPool->getAllocation());
-        memoryOperationsIface->makeResident(deviceImp->neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1));
+        memoryOperationsIface->makeResident(deviceImp->neoDevice,
+                                            ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1));
     }
 }
 

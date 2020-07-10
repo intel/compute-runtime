@@ -5,6 +5,7 @@
  *
  */
 
+#include "opencl/test/unit_test/mocks/mock_memory_operations_handler.h"
 #include "test.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -137,6 +138,59 @@ TEST_F(EventPoolCreate, returnsSuccessFromCreateEventPoolWithDevice) {
     eventPool->destroy();
 }
 
+struct EventCreateAllocationResidencyTest : public ::testing::Test {
+    void SetUp() override {
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+        mockMemoryOperationsHandler = new NEO::MockMemoryOperationsHandlerTests;
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface.reset(
+            mockMemoryOperationsHandler);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+        device = driverHandle->devices[0];
+    }
+
+    void TearDown() override {
+    }
+
+    NEO::MockMemoryOperationsHandlerTests *mockMemoryOperationsHandler;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+};
+
+TEST_F(EventCreateAllocationResidencyTest,
+       givenEventCreateAndEventDestroyCallsThenMakeResidentAndEvictAreCalled) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
+        1};
+
+    auto deviceHandle = device->toHandle();
+    auto eventPool = EventPool::create(driverHandle.get(), 1, &deviceHandle, &eventPoolDesc);
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_event_desc_t eventDesc = {
+        ZE_EVENT_DESC_VERSION_CURRENT,
+        0,
+        ZE_EVENT_SCOPE_FLAG_NONE,
+        ZE_EVENT_SCOPE_FLAG_NONE};
+
+    EXPECT_CALL(*mockMemoryOperationsHandler, makeResident).Times(1);
+    auto event = L0::Event::create(eventPool, &eventDesc, device);
+    ASSERT_NE(nullptr, event);
+
+    NEO::MemoryOperationsHandler *memoryOperationsIface =
+        neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    EXPECT_NE(nullptr, memoryOperationsIface);
+
+    EXPECT_CALL(*mockMemoryOperationsHandler, evict).Times(1);
+    event->destroy();
+
+    eventPool->destroy();
+}
+
 class TimestampEventCreate : public Test<DeviceFixture> {
   public:
     void SetUp() override {
@@ -155,7 +209,7 @@ class TimestampEventCreate : public Test<DeviceFixture> {
         eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
         ASSERT_NE(nullptr, eventPool);
         event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
-        ASSERT_NE(nullptr, eventPool);
+        ASSERT_NE(nullptr, event);
     }
 
     void TearDown() override {
