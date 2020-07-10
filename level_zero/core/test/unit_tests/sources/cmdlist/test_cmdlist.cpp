@@ -265,10 +265,13 @@ class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamil
         appendMemoryCopyKernelWithGACalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t appendMemoryCopyBlit(NEO::GraphicsAllocation *dstPtrAlloc,
-                                     uint64_t dstOffset,
+    ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
+                                     NEO::GraphicsAllocation *dstPtrAlloc,
+                                     uint64_t dstOffset, uintptr_t srcPtr,
                                      NEO::GraphicsAllocation *srcPtrAlloc,
-                                     uint64_t srcOffset, uint32_t size, ze_event_handle_t hSignalEvent) override {
+                                     uint64_t srcOffset,
+                                     uint32_t size,
+                                     ze_event_handle_t hSignalEvent) override {
         appendMemoryCopyBlitCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -686,10 +689,13 @@ class MockCommandListForMemFill : public WhiteBox<::L0::CommandListCoreFamily<gf
     AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize) override {
         return {0, 0, nullptr, true};
     }
-    ze_result_t appendMemoryCopyBlit(NEO::GraphicsAllocation *dstPtrAlloc,
-                                     uint64_t dstOffset,
+    ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
+                                     NEO::GraphicsAllocation *dstPtrAlloc,
+                                     uint64_t dstOffset, uintptr_t srcPtr,
                                      NEO::GraphicsAllocation *srcPtrAlloc,
-                                     uint64_t srcOffset, uint32_t size, ze_event_handle_t hSignalEvent) override {
+                                     uint64_t srcOffset,
+                                     uint32_t size,
+                                     ze_event_handle_t hSignalEvent) override {
         appendMemoryCopyBlitCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -1554,5 +1560,36 @@ HWTEST2_F(CommandListCreate, givenPitchAndSlicePitchWhenMemoryCopyRegionCalledSi
     EXPECT_EQ(cmdList.srcSize.x, pitch);
     EXPECT_EQ(cmdList.srcSize.y, slicePitch / pitch);
 }
+HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenWithDcFlushAddedIsNotAddedAfterBlitCopy, Platforms) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, true);
+    uintptr_t srcPtr = 0x5001;
+    uintptr_t dstPtr = 0x7001;
+    uint64_t srcOffset = 0x101;
+    uint64_t dstOffset = 0x201;
+    uint32_t copySize = 0x301;
+    NEO::MockGraphicsAllocation mockAllocationSrc(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(srcPtr), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    NEO::MockGraphicsAllocation mockAllocationDst(0, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                  reinterpret_cast<void *>(dstPtr), 0x1000, 0, sizeof(uint32_t),
+                                                  MemoryPool::System4KBPages);
+    commandList->appendMemoryCopyBlit(ptrOffset(dstPtr, dstOffset), &mockAllocationDst, 0, ptrOffset(srcPtr, srcOffset), &mockAllocationSrc, 0, copySize, nullptr);
+
+    auto &commandContainer = commandList->commandContainer;
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        genCmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_NE(genCmdList.end(), itor);
+    auto cmd = genCmdCast<XY_COPY_BLT *>(*itor);
+    EXPECT_EQ(cmd->getDestinationBaseAddress(), ptrOffset(dstPtr, dstOffset));
+    EXPECT_EQ(cmd->getSourceBaseAddress(), ptrOffset(srcPtr, srcOffset));
+}
+
 } // namespace ult
 } // namespace L0
