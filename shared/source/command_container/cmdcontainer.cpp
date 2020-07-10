@@ -53,7 +53,7 @@ bool CommandContainer::initialize(Device *device) {
     AllocationProperties properties{device->getRootDeviceIndex(),
                                     true /* allocateMemory*/,
                                     alignedSize,
-                                    GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                    GraphicsAllocation::AllocationType::COMMAND_BUFFER,
                                     (device->getNumAvailableDevices() > 1u) /* multiOsContextCapable */,
                                     false,
                                     device->getDeviceBitfield()};
@@ -185,7 +185,7 @@ void CommandContainer::allocateNextCommandBuffer() {
     AllocationProperties properties{0u,
                                     true /* allocateMemory*/,
                                     alignedSize,
-                                    GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                    GraphicsAllocation::AllocationType::COMMAND_BUFFER,
                                     (device->getNumAvailableDevices() > 1u) /* multiOsContextCapable */,
                                     false,
                                     device->getDeviceBitfield()};

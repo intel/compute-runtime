@@ -81,6 +81,19 @@ TEST_F(CommandContainerHeapStateTests, givenDirtyHeapsWhenSettingStateForSingleH
     }
 }
 
+TEST_F(CommandContainerTest, givenCmdContainerWhenCreatingCommandBufferThenCorrectAllocationTypeIsSet) {
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice);
+
+    ASSERT_NE(0u, cmdContainer.getCmdBufferAllocations().size());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, cmdContainer.getCmdBufferAllocations()[0]->getAllocationType());
+
+    cmdContainer.allocateNextCommandBuffer();
+
+    ASSERT_LE(2u, cmdContainer.getCmdBufferAllocations().size());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, cmdContainer.getCmdBufferAllocations()[1]->getAllocationType());
+}
+
 TEST_F(CommandContainerTest, givenCmdContainerWhenAllocatingHeapsThenSetCorrectAllocationTypes) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice);
