@@ -114,6 +114,7 @@ struct ModuleImp : public Module {
     std::vector<std::unique_ptr<KernelImmutableData>> kernelImmDatas;
     NEO::Linker::RelocatedSymbolsMap symbols;
     bool debugEnabled = false;
+    bool isFullyLinked = false;
 };
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, ConstStringRef dstOptionName, ConstStringRef srcOptionName);

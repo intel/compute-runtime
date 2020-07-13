@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/unit_test/compiler_interface/linker_mock.h"
+
 #include "test.h"
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -103,7 +105,7 @@ struct ModuleSpecConstantsTests : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::SetUp();
 
-        mockCompiler = new MockCompilerInterface(moduleNumSpecConstants);
+        mockCompiler = new MockCompilerInterfaceWithSpecConstants(moduleNumSpecConstants);
         auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
         rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
 
@@ -120,7 +122,7 @@ struct ModuleSpecConstantsTests : public DeviceFixture,
 
     const std::string binaryFilename = "test_kernel";
     const std::string kernelName = "test";
-    MockCompilerInterface *mockCompiler;
+    MockCompilerInterfaceWithSpecConstants *mockCompiler;
     MockModuleTranslationUnit *mockTranslationUnit;
 };
 
@@ -156,6 +158,70 @@ HWTEST_F(ModuleSpecConstantsTests, givenSpecializationConstantsSetInDescriptorTh
     module->destroy();
 }
 
+using ModuleLinkingTest = Test<DeviceFixture>;
+
+HWTEST_F(ModuleLinkingTest, givenFailureDuringLinkingWhenCreatingModuleThenModuleInitialiationFails) {
+    auto mockCompiler = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+    linkerInput->valid = false;
+
+    mockTranslationUnit->programInfo.linkerInput = std::move(linkerInput);
+    uint8_t spirvData{};
+
+    ze_module_desc_t moduleDesc = {ZE_MODULE_DESC_VERSION_CURRENT};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = &spirvData;
+    moduleDesc.inputSize = sizeof(spirvData);
+
+    Module module(device, nullptr);
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_FALSE(success);
+}
+
+HWTEST_F(ModuleLinkingTest, givenRemainingUnresolvedSymbolsDuringLinkingWhenCreatingModuleThenModuleIsNotLinkedFully) {
+    auto mockCompiler = new MockCompilerInterface();
+    auto rootDeviceEnvironment = neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0].get();
+    rootDeviceEnvironment->compilerInterface.reset(mockCompiler);
+
+    auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+
+    auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
+
+    NEO::LinkerInput::RelocationInfo relocation;
+    relocation.symbolName = "unresolved";
+    linkerInput->dataRelocations.push_back(relocation);
+    linkerInput->traits.requiresPatchingOfGlobalVariablesBuffer = true;
+
+    mockTranslationUnit->programInfo.linkerInput = std::move(linkerInput);
+    uint8_t spirvData{};
+
+    ze_module_desc_t moduleDesc = {ZE_MODULE_DESC_VERSION_CURRENT};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = &spirvData;
+    moduleDesc.inputSize = sizeof(spirvData);
+
+    Module module(device, nullptr);
+    module.translationUnit.reset(mockTranslationUnit);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_TRUE(success);
+    EXPECT_FALSE(module.isFullyLinked);
+}
+HWTEST_F(ModuleLinkingTest, givenNotFullyLinkedModuleWhenCreatingKernelThenErrorIsReturned) {
+    Module module(device, nullptr);
+    module.isFullyLinked = false;
+
+    auto retVal = module.createKernel(nullptr, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, retVal);
+}
 using ModuleDynamicLinkTests = Test<ModuleFixture>;
 
 HWTEST_F(ModuleDynamicLinkTests, givenCallToDynamicLinkThenUnsupportedFeatureIsReturned) {

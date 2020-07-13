@@ -22,6 +22,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass = ::L0::ModuleImp;
     using BaseClass::BaseClass;
     using BaseClass::device;
+    using BaseClass::isFullyLinked;
     using BaseClass::translationUnit;
 };
 
@@ -56,7 +57,16 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
 };
 
 struct MockCompilerInterface : public NEO::CompilerInterface {
-    MockCompilerInterface(uint32_t moduleNumSpecConstants) : moduleNumSpecConstants(moduleNumSpecConstants) {
+    NEO::TranslationOutput::ErrorCode build(const NEO::Device &device,
+                                            const NEO::TranslationInput &input,
+                                            NEO::TranslationOutput &output) override {
+
+        return NEO::TranslationOutput::ErrorCode::Success;
+    }
+};
+
+struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {
+    MockCompilerInterfaceWithSpecConstants(uint32_t moduleNumSpecConstants) : moduleNumSpecConstants(moduleNumSpecConstants) {
     }
     NEO::TranslationOutput::ErrorCode build(const NEO::Device &device,
                                             const NEO::TranslationInput &input,

@@ -159,12 +159,11 @@ uint32_t addressSizeInBytes(LinkerInput::RelocationInfo::Type relocationtype) {
     return (relocationtype == LinkerInput::RelocationInfo::Type::Address) ? sizeof(uintptr_t) : sizeof(uint32_t);
 }
 
-bool Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals) {
+void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals) {
     if (false == data.getTraits().requiresPatchingOfInstructionSegments) {
-        return true;
+        return;
     }
     UNRECOVERABLE_IF(data.getRelocationsInInstructionSegments().size() > instructionsSegments.size());
-    auto unresolvedExternalsPrev = outUnresolvedExternals.size();
     auto segIt = instructionsSegments.begin();
     for (auto relocsIt = data.getRelocationsInInstructionSegments().begin(), relocsEnd = data.getRelocationsInInstructionSegments().end();
          relocsIt != relocsEnd; ++relocsIt, ++segIt) {
@@ -200,18 +199,16 @@ bool Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
             }
         }
     }
-    return outUnresolvedExternals.size() == unresolvedExternalsPrev;
 }
 
-bool Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo,
+void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo,
                                GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
                                std::vector<UnresolvedExternal> &outUnresolvedExternals, Device *pDevice,
                                const void *constantsInitData, const void *variablesInitData) {
     if (false == (data.getTraits().requiresPatchingOfGlobalConstantsBuffer || data.getTraits().requiresPatchingOfGlobalVariablesBuffer)) {
-        return true;
+        return;
     }
 
-    auto unresolvedExternalsPrev = outUnresolvedExternals.size();
     for (const auto &relocation : data.getDataRelocations()) {
         const SegmentInfo *src = nullptr;
         GraphicsAllocation *dst = nullptr;
@@ -288,7 +285,6 @@ bool Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
             patchIncrement(relocAddress, patchSize, incrementValue);
         }
     }
-    return outUnresolvedExternals.size() == unresolvedExternalsPrev;
 }
 
 std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unresolvedExternals, const std::vector<std::string> &instructionsSegmentsNames) {

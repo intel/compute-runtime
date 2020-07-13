@@ -89,10 +89,10 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     }
 
     Linker::UnresolvedExternals unresolvedExternalsInfo;
-    bool linkSuccess = linker.link(globals, constants, exportedFunctions,
-                                   globalsForPatching, constantsForPatching,
-                                   isaSegmentsForPatching, unresolvedExternalsInfo,
-                                   pDevice, constantsInitData, variablesInitData);
+    bool linkSuccess = LinkingStatus::LinkedFully == linker.link(globals, constants, exportedFunctions,
+                                                                 globalsForPatching, constantsForPatching,
+                                                                 isaSegmentsForPatching, unresolvedExternalsInfo,
+                                                                 pDevice, constantsInitData, variablesInitData);
     this->symbols = linker.extractRelocatedSymbols();
     if (false == linkSuccess) {
         std::vector<std::string> kernelNames;

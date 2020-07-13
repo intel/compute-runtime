@@ -370,6 +370,9 @@ void ModuleImp::updateBuildLog(NEO::Device *neoDevice) {
 ze_result_t ModuleImp::createKernel(const ze_kernel_desc_t *desc,
                                     ze_kernel_handle_t *phFunction) {
     ze_result_t res;
+    if (!isFullyLinked) {
+        return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+    }
     auto kernel = Kernel::create(productFamily, this, desc, &res);
 
     if (res == ZE_RESULT_SUCCESS) {
@@ -404,6 +407,7 @@ ze_result_t ModuleImp::getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData)
 bool ModuleImp::linkBinary() {
     using namespace NEO;
     if (this->translationUnit->programInfo.linkerInput == nullptr) {
+        isFullyLinked = true;
         return true;
     }
     Linker linker(*this->translationUnit->programInfo.linkerInput);
@@ -439,20 +443,22 @@ bool ModuleImp::linkBinary() {
     }
 
     Linker::UnresolvedExternals unresolvedExternalsInfo;
-    bool linkSuccess = linker.link(globals, constants, exportedFunctions,
-                                   globalsForPatching, constantsForPatching,
-                                   isaSegmentsForPatching, unresolvedExternalsInfo, this->device->getNEODevice(),
-                                   translationUnit->programInfo.globalConstants.initData,
-                                   translationUnit->programInfo.globalVariables.initData);
+    auto linkStatus = linker.link(globals, constants, exportedFunctions,
+                                  globalsForPatching, constantsForPatching,
+                                  isaSegmentsForPatching, unresolvedExternalsInfo, this->device->getNEODevice(),
+                                  translationUnit->programInfo.globalConstants.initData,
+                                  translationUnit->programInfo.globalVariables.initData);
     this->symbols = linker.extractRelocatedSymbols();
-    if (false == linkSuccess) {
-        std::vector<std::string> kernelNames;
-        for (const auto &kernelInfo : this->translationUnit->programInfo.kernelInfos) {
-            kernelNames.push_back("kernel : " + kernelInfo->name);
+    if (LinkingStatus::LinkedFully != linkStatus) {
+        if (moduleBuildLog) {
+            std::vector<std::string> kernelNames;
+            for (const auto &kernelInfo : this->translationUnit->programInfo.kernelInfos) {
+                kernelNames.push_back("kernel : " + kernelInfo->name);
+            }
+            auto error = constructLinkerErrorMessage(unresolvedExternalsInfo, kernelNames);
+            moduleBuildLog->appendString(error.c_str(), error.size());
         }
-        auto error = constructLinkerErrorMessage(unresolvedExternalsInfo, kernelNames);
-        moduleBuildLog->appendString(error.c_str(), error.size());
-        return false;
+        return LinkingStatus::LinkedPartially == linkStatus;
     } else if (this->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
         for (const auto &kernelImmData : this->kernelImmDatas) {
             if (nullptr == kernelImmData->getIsaGraphicsAllocation()) {
@@ -465,6 +471,7 @@ bool ModuleImp::linkBinary() {
         }
     }
     DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->symbols));
+    isFullyLinked = true;
     return true;
 }
 
