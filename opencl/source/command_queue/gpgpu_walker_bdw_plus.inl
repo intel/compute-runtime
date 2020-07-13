@@ -219,4 +219,8 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite() {
     return sizeof(PIPE_CONTROL);
 }
 
+template <typename GfxFamily>
+void GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxFamily> *storeCmd) {
+}
+
 } // namespace NEO
