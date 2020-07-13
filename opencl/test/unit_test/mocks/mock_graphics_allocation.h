@@ -33,6 +33,9 @@ class MockGraphicsAllocation : public MemoryAllocation {
     MockGraphicsAllocation(void *buffer, uint64_t gpuAddr, size_t sizeIn)
         : MemoryAllocation(0, AllocationType::UNKNOWN, buffer, gpuAddr, 0llu, sizeIn, MemoryPool::MemoryNull) {}
 
+    MockGraphicsAllocation(uint32_t rootDeviceIndex, void *buffer, size_t sizeIn)
+        : MemoryAllocation(rootDeviceIndex, AllocationType::UNKNOWN, buffer, castToUint64(buffer), 0llu, sizeIn, MemoryPool::MemoryNull) {}
+
     void resetInspectionIds() {
         for (auto &usageInfo : usageInfos) {
             usageInfo.inspectionId = 0u;
