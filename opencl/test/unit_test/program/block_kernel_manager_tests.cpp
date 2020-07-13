@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-TEST(BlockKernelManagerTest, pushPrivateSurfaceResizesArray) {
+TEST(BlockKernelManagerTest, WhenPushingPrivateSurfaceThenPrivateSurfaceArrayIsResized) {
     MockGraphicsAllocation allocation(0, 0);
     KernelInfo *blockInfo = new KernelInfo;
     MockBlockKernelManager blockManager;
@@ -29,7 +29,7 @@ TEST(BlockKernelManagerTest, pushPrivateSurfaceResizesArray) {
     EXPECT_EQ(1u, blockManager.blockPrivateSurfaceArray.size());
 }
 
-TEST(BlockKernelManagerTest, pushPrivateSurfacePlacesAllocationInCorrectPosition) {
+TEST(BlockKernelManagerTest, WhenPushingPrivateSurfaceThenAllocationsArePlacedInCorrectPosition) {
     MockGraphicsAllocation allocation1(0, 0);
     MockGraphicsAllocation allocation2(0, 0);
     KernelInfo *blockInfo = new KernelInfo;
@@ -48,7 +48,7 @@ TEST(BlockKernelManagerTest, pushPrivateSurfacePlacesAllocationInCorrectPosition
     EXPECT_EQ(&allocation2, blockManager.blockPrivateSurfaceArray[1]);
 }
 
-TEST(BlockKernelManagerTest, pushPrivateSurfaceSetsPrivateSurfaceArrayToNullptrOnFirstCall) {
+TEST(BlockKernelManagerTest, WhenPushingPrivateSurfaceThenPrivateSurfaceArrayIsSetToNullptrOnFirstCall) {
     MockGraphicsAllocation allocation(0, 0);
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo *blockInfo2 = new KernelInfo;
@@ -67,7 +67,7 @@ TEST(BlockKernelManagerTest, pushPrivateSurfaceSetsPrivateSurfaceArrayToNullptrO
     EXPECT_EQ(nullptr, blockManager.blockPrivateSurfaceArray[2]);
 }
 
-TEST(BlockKernelManagerTest, getPrivateSurface) {
+TEST(BlockKernelManagerTest, WhenGettingPrivateSurfaceThenValidAllocationIsReturned) {
     MockGraphicsAllocation allocation(0, 0);
     KernelInfo *blockInfo = new KernelInfo;
 
@@ -82,7 +82,7 @@ TEST(BlockKernelManagerTest, getPrivateSurface) {
     EXPECT_EQ(&allocation, blockManager.getPrivateSurface(0));
 }
 
-TEST(BlockKernelManagerTest, getPrivateSurfaceWithOutOfBoundOrdinalRetunrsNullptr) {
+TEST(BlockKernelManagerTest, GivenOutOfBoundIndexWhenGettingPrivateSurfaceThenNullptrIsReturned) {
     MockBlockKernelManager blockManager;
     EXPECT_EQ(nullptr, blockManager.getPrivateSurface(0));
     EXPECT_EQ(nullptr, blockManager.getPrivateSurface(10));
