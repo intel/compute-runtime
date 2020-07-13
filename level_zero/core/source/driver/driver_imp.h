@@ -10,6 +10,7 @@
 #include "level_zero/core/source/driver/driver.h"
 
 #include <mutex>
+#include <string>
 
 namespace L0 {
 
@@ -23,4 +24,10 @@ class DriverImp : public Driver {
     std::once_flag initDriverOnce;
     static bool initStatus;
 };
+
+struct L0EnvVariables {
+    std::string affinityMask;
+    bool programDebugging;
+};
+
 } // namespace L0

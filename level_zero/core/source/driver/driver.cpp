@@ -9,6 +9,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -26,14 +27,25 @@ uint32_t driverCount = 1;
 void DriverImp::initialize(bool *result) {
     *result = false;
 
+    NEO::EnvironmentVariableReader envReader;
+    L0EnvVariables envVariables = {};
+    envVariables.affinityMask =
+        envReader.getSetting("ZE_AFFINITY_MASK", std::string(""));
+    envVariables.programDebugging =
+        envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", false);
+
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
+
+    if (envVariables.programDebugging) {
+        executionEnvironment->setPerContextMemorySpace();
+    }
 
     executionEnvironment->incRefInternal();
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     executionEnvironment->decRefInternal();
     if (!neoDevices.empty()) {
-        GlobalDriverHandle = DriverHandle::create(std::move(neoDevices));
+        GlobalDriverHandle = DriverHandle::create(std::move(neoDevices), envVariables);
         if (GlobalDriverHandle != nullptr) {
             *result = true;
         }

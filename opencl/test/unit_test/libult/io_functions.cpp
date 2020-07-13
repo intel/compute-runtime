@@ -17,6 +17,8 @@ getenvFuncPtr getenvPtr = &mockGetenv;
 uint32_t mockFopenCalled = 0;
 uint32_t mockVfptrinfCalled = 0;
 uint32_t mockFcloseCalled = 0;
+uint32_t mockGetenvCalled = 0;
+
 bool returnMockEnvValue = false;
 std::string mockEnvValue = "1";
 

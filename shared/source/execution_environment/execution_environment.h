@@ -24,9 +24,16 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void initializeMemoryManager();
     void calculateMaxOsContextCount();
     void prepareRootDeviceEnvironments(uint32_t numRootDevices);
+    void setPerContextMemorySpace() {
+        requirePerContextMemorySpace = true;
+    }
+    bool isPerContextMemorySpaceRequired() { return requirePerContextMemorySpace; }
 
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<OsEnvironment> osEnvironment;
     std::vector<std::unique_ptr<RootDeviceEnvironment>> rootDeviceEnvironments;
+
+  protected:
+    bool requirePerContextMemorySpace = false;
 };
 } // namespace NEO

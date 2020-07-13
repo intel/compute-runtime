@@ -18,6 +18,7 @@ struct _ze_driver_handle_t {
 
 namespace L0 {
 struct Device;
+struct L0EnvVariables;
 
 struct DriverHandle : _ze_driver_handle_t {
     virtual ze_result_t getDevice(uint32_t *pCount, ze_device_handle_t *phDevices) = 0;
@@ -65,7 +66,7 @@ struct DriverHandle : _ze_driver_handle_t {
     DriverHandle &operator=(const DriverHandle &) = delete;
     DriverHandle &operator=(DriverHandle &&) = delete;
 
-    static DriverHandle *create(std::vector<std::unique_ptr<NEO::Device>> devices);
+    static DriverHandle *create(std::vector<std::unique_ptr<NEO::Device>> devices, const L0EnvVariables &envVariables);
 };
 
 } // namespace L0

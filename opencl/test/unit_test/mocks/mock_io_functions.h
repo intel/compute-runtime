@@ -16,6 +16,7 @@ namespace IoFunctions {
 extern uint32_t mockFopenCalled;
 extern uint32_t mockVfptrinfCalled;
 extern uint32_t mockFcloseCalled;
+extern uint32_t mockGetenvCalled;
 
 extern bool returnMockEnvValue;
 extern std::string mockEnvValue;
@@ -36,6 +37,7 @@ inline int mockFclose(FILE *stream) {
 }
 
 inline char *mockGetenv(const char *name) noexcept {
+    mockGetenvCalled++;
     if (returnMockEnvValue) {
         return const_cast<char *>(mockEnvValue.c_str());
     }
