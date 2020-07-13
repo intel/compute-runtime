@@ -52,7 +52,7 @@ struct MetricsLibrary {
     bool createMetricQuery(const uint32_t slotsCount, QueryHandle_1_0 &query,
                            NEO::GraphicsAllocation *&pAllocation);
     uint32_t getMetricQueryCount();
-    bool getMetricQueryReport(QueryHandle_1_0 &query, const size_t rawDataSize, uint8_t *pData);
+    bool getMetricQueryReport(QueryHandle_1_0 &query, const uint32_t slot, const size_t rawDataSize, uint8_t *pData);
     virtual bool getMetricQueryReportSize(size_t &rawDataSize);
     bool destroyMetricQuery(QueryHandle_1_0 &query);
 

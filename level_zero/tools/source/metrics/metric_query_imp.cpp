@@ -131,13 +131,13 @@ bool MetricsLibrary::getMetricQueryReportSize(size_t &rawDataSize) {
     return result;
 }
 
-bool MetricsLibrary::getMetricQueryReport(QueryHandle_1_0 &query, const size_t rawDataSize,
-                                          uint8_t *pData) {
+bool MetricsLibrary::getMetricQueryReport(QueryHandle_1_0 &query, const uint32_t slot,
+                                          const size_t rawDataSize, uint8_t *pData) {
 
     GetReportData_1_0 report = {};
     report.Type = ObjectType::QueryHwCounters;
     report.Query.Handle = query;
-    report.Query.Slot = 0;
+    report.Query.Slot = slot;
     report.Query.SlotsCount = 1;
     report.Query.Data = pData;
     report.Query.DataSize = static_cast<uint32_t>(rawDataSize);
@@ -511,7 +511,7 @@ ze_result_t MetricQueryImp::getData(size_t *pRawDataSize, uint8_t *pRawData) {
     const bool calculateSizeOnly = *pRawDataSize == 0;
     const bool result = calculateSizeOnly
                             ? metricsLibrary.getMetricQueryReportSize(*pRawDataSize)
-                            : metricsLibrary.getMetricQueryReport(pool.query, *pRawDataSize, pRawData);
+                            : metricsLibrary.getMetricQueryReport(pool.query, slot, *pRawDataSize, pRawData);
 
     return result
                ? ZE_RESULT_SUCCESS
