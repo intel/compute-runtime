@@ -42,7 +42,7 @@ struct RasHandleContext {
     ze_result_t rasGet(uint32_t *pCount, zet_sysman_ras_handle_t *phRas);
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<Ras *> handleList;
+    std::vector<Ras *> handleList = {};
 
   private:
     void createHandle(zet_ras_error_type_t type);

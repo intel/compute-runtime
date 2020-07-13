@@ -41,7 +41,7 @@ struct FabricPortHandleContext {
     ze_result_t fabricPortGet(uint32_t *pCount, zet_sysman_fabric_port_handle_t *phPort);
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<FabricPort *> handleList;
+    std::vector<FabricPort *> handleList = {};
 };
 
 } // namespace L0

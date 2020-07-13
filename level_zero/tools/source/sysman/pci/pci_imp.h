@@ -31,7 +31,7 @@ class PciImp : public Pci, NEO::NonCopyableOrMovableClass {
   private:
     OsSysman *pOsSysman = nullptr;
     zet_pci_properties_t pciProperties = {};
-    std::vector<zet_pci_bar_properties_t *> pciBarProperties;
+    std::vector<zet_pci_bar_properties_t *> pciBarProperties = {};
 };
 
 } // namespace L0

@@ -28,6 +28,13 @@ TEST_F(MockDeviceSysmanGetTest, GivenValidSysmanHandleSetInDeviceStructWhenGetTh
     EXPECT_EQ(sysman, device->getSysmanHandle());
 }
 
+TEST_F(MockDeviceSysmanGetTest, GivenNULLDeviceHandleWhenCreatingSymanHandleThenNullSysmanHandleIsReturned) {
+    ze_device_handle_t handle = nullptr;
+    setenv("ZES_ENABLE_SYSMAN", "1", 1);
+    EXPECT_EQ(nullptr, L0::SysmanDeviceHandleContext::init(handle));
+    unsetenv("ZES_ENABLE_SYSMAN");
+}
+
 TEST_F(SysmanDeviceFixture, GivenSysmanEnvironmentSetWhenEnumertatingSysmanHandlesThenValidSysmanHandleReceived) {
     zes_device_handle_t hSysman = device->toHandle();
     auto pSysmanDevice = L0::SysmanDeviceHandleContext::init(hSysman);

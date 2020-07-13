@@ -38,7 +38,7 @@ struct StandbyHandleContext {
     ze_result_t standbyGet(uint32_t *pCount, zet_sysman_standby_handle_t *phStandby);
 
     OsSysman *pOsSysman;
-    std::vector<Standby *> handle_list;
+    std::vector<Standby *> handle_list = {};
 };
 
 } // namespace L0

@@ -54,7 +54,7 @@ ze_result_t SysmanHandleContext::sysmanGet(zet_device_handle_t hDevice, zet_sysm
 
 SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t device) {
     auto isSysmanEnabled = getenv("ZES_ENABLE_SYSMAN");
-    if (isSysmanEnabled == nullptr) {
+    if ((isSysmanEnabled == nullptr) || (device == nullptr)) {
         return nullptr;
     }
     auto isSysmanEnabledAsInt = atoi(isSysmanEnabled);

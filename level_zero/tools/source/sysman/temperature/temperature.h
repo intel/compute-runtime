@@ -41,7 +41,7 @@ struct TemperatureHandleContext {
     ze_result_t temperatureGet(uint32_t *pCount, zet_sysman_temp_handle_t *phTemperature);
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<Temperature *> handleList;
+    std::vector<Temperature *> handleList = {};
 
   private:
     void createHandle(zet_temp_sensors_t type);

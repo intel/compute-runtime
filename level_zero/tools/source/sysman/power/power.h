@@ -41,7 +41,7 @@ struct PowerHandleContext {
     ze_result_t powerGet(uint32_t *pCount, zet_sysman_pwr_handle_t *phPower);
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<Power *> handleList;
+    std::vector<Power *> handleList = {};
 };
 
 } // namespace L0
