@@ -18,8 +18,10 @@ EventsTracker &EventsTracker::getEventsTracker() {
     static std::mutex initMutex;
     std::lock_guard<std::mutex> autolock(initMutex);
 
-    if (!EventsTracker::globalEvTracker)
+    if (!EventsTracker::globalEvTracker) {
         EventsTracker::globalEvTracker = std::unique_ptr<EventsTracker>{new EventsTracker()};
+    }
+    UNRECOVERABLE_IF(EventsTracker::globalEvTracker == nullptr);
     return *EventsTracker::globalEvTracker;
 }
 
