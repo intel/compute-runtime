@@ -430,11 +430,23 @@ TEST_F(DrmTests, whenDrmIsCreatedWithMultipleSubDevicesThenCreateMultipleVirtual
     }
 }
 
-TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenCallAbort) {
-    VariableBackup<decltype(failOnVirtualMemoryCreate)> backupFailOnVirtaualMemoryCreate(&failOnVirtualMemoryCreate);
+TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualMemoryIdZeroAndPrintDebugMessage) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
+    VariableBackup<decltype(failOnVirtualMemoryCreate)> backupFailOnVirtualMemoryCreate(&failOnVirtualMemoryCreate);
 
     failOnVirtualMemoryCreate = -1;
-    EXPECT_THROW(DrmWrap::createDrm(*rootDeviceEnvironment), std::exception);
+
+    ::testing::internal::CaptureStderr();
+    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    EXPECT_NE(drm, nullptr);
+
+    EXPECT_EQ(0u, drm->getVirtualMemoryAddressSpace(0));
+    EXPECT_EQ(0u, static_cast<DrmWrap *>(drm.get())->virtualMemoryIds.size());
+
+    std::string errStr = ::testing::internal::GetCapturedStderr();
+    EXPECT_THAT(errStr, ::testing::HasSubstr(std::string("INFO: Device doesn't support GEM Virtual Memory")));
 }
 
 int main(int argc, char **argv) {

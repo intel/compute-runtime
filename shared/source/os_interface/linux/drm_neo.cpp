@@ -215,11 +215,13 @@ void Drm::destroyDrmContext(uint32_t drmContextId) {
     UNRECOVERABLE_IF(retVal != 0);
 }
 
-uint32_t Drm::createDrmVirtualMemory() {
+int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
     drm_i915_gem_vm_control ctl = {};
     auto ret = SysCalls::ioctl(getFileDescriptor(), DRM_IOCTL_I915_GEM_VM_CREATE, &ctl);
-    UNRECOVERABLE_IF(ret != 0);
-    return ctl.vm_id;
+    if (ret == 0) {
+        drmVmId = ctl.vm_id;
+    }
+    return ret;
 }
 
 void Drm::destroyDrmVirtualMemory(uint32_t drmVmId) {
@@ -424,7 +426,10 @@ bool Drm::queryTopology(int &sliceCount, int &subSliceCount, int &euCount) {
 
 bool Drm::createVirtualMemoryAddressSpace(uint32_t vmCount) {
     for (auto i = 0u; i < vmCount; i++) {
-        auto id = createDrmVirtualMemory();
+        uint32_t id = 0;
+        if (0 != createDrmVirtualMemory(id)) {
+            return false;
+        }
         virtualMemoryIds.push_back(id);
     }
     return true;
@@ -437,8 +442,10 @@ void Drm::destroyVirtualMemoryAddressSpace() {
 }
 
 uint32_t Drm::getVirtualMemoryAddressSpace(uint32_t vmId) {
-    UNRECOVERABLE_IF(vmId >= virtualMemoryIds.size())
-    return virtualMemoryIds[vmId];
+    if (vmId < virtualMemoryIds.size()) {
+        return virtualMemoryIds[vmId];
+    }
+    return 0;
 }
 
 Drm::~Drm() {

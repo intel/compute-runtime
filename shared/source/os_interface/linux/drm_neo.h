@@ -67,7 +67,7 @@ class Drm {
 
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
     inline int getFileDescriptor() const { return hwDeviceId->getFileDescriptor(); }
-    uint32_t createDrmVirtualMemory();
+    int createDrmVirtualMemory(uint32_t &drmVmId);
     void destroyDrmVirtualMemory(uint32_t drmVmId);
     uint32_t createDrmContext(uint32_t drmVmId);
     void destroyDrmContext(uint32_t drmContextId);
