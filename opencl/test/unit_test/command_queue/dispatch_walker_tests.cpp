@@ -1356,7 +1356,7 @@ struct ProfilingCommandsTest : public DispatchWalkerTest, ::testing::WithParamIn
     }
 };
 
-HWTEST_P(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenTimeStampAddressIsProgrammedCorrectly) {
+HWCMDTEST_P(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenTimeStampAddressIsProgrammedCorrectly) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     bool checkForStart = GetParam();

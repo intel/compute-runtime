@@ -873,7 +873,7 @@ struct FixedGpuAddressTagAllocator : TagAllocator<TagType> {
     }
 };
 
-HWTEST_F(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCountersWhenWalkerIsDispatchedThenRegisterStoresArePresentInCS) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCountersWhenWalkerIsDispatchedThenRegisterStoresArePresentInCS) {
     uint64_t timeStampGpuAddress = 0x123456000;
     uint64_t perfCountersGpuAddress = 0xabcdef000;
 
