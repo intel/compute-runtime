@@ -12,14 +12,14 @@
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
 
-TEST_F(KernelDataTest, KernelInfo_Name) {
+TEST_F(KernelDataTest, GivenKernelNameWhenBuildingThenProgramIsCorrect) {
     kernelName = "myTestKernel";
     kernelNameSize = (uint32_t)alignUp(strlen(kernelName.c_str()) + 1, sizeof(uint32_t));
 
     buildAndDecode();
 }
 
-TEST_F(KernelDataTest, KernelInfo_Heaps) {
+TEST_F(KernelDataTest, GivenHeapsWhenBuildingThenProgramIsCorrect) {
     char gshData[8] = "a";
     char dshData[8] = "bb";
     char sshData[8] = "ccc";
@@ -38,7 +38,7 @@ TEST_F(KernelDataTest, KernelInfo_Heaps) {
     buildAndDecode();
 }
 
-TEST_F(KernelDataTest, MediaIDLoad) {
+TEST_F(KernelDataTest, GivenMediaInterfaceDescriptorLoadWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchMediaInterfaceDescriptorLoad mediaIdLoad;
     mediaIdLoad.Token = PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     mediaIdLoad.Size = sizeof(SPatchMediaInterfaceDescriptorLoad);
@@ -52,7 +52,7 @@ TEST_F(KernelDataTest, MediaIDLoad) {
     EXPECT_EQ_CONST(PATCH_TOKEN_MEDIA_INTERFACE_DESCRIPTOR_LOAD, pKernelInfo->patchInfo.interfaceDescriptorDataLoad->Token);
 }
 
-TEST_F(KernelDataTest, AllocateLocalSurface) {
+TEST_F(KernelDataTest, GivenAllocateLocalSurfaceWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchAllocateLocalSurface allocateLocalSurface;
     allocateLocalSurface.Token = PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE;
     allocateLocalSurface.Size = sizeof(SPatchAllocateLocalSurface);
@@ -68,7 +68,7 @@ TEST_F(KernelDataTest, AllocateLocalSurface) {
     EXPECT_EQ_VAL(allocateLocalSurface.TotalInlineLocalMemorySize, pKernelInfo->patchInfo.localsurface->TotalInlineLocalMemorySize);
 }
 
-TEST_F(KernelDataTest, AllocateStatelessConstantMemoryWithInit) {
+TEST_F(KernelDataTest, GivenAllocateStatelessConstantMemoryWithInitWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchAllocateStatelessConstantMemorySurfaceWithInitialization allocateStatelessConstantMemoryWithInit;
     allocateStatelessConstantMemoryWithInit.Token = PATCH_TOKEN_ALLOCATE_STATELESS_CONSTANT_MEMORY_SURFACE_WITH_INITIALIZATION;
     allocateStatelessConstantMemoryWithInit.Size = sizeof(SPatchAllocateStatelessConstantMemorySurfaceWithInitialization);
@@ -85,7 +85,7 @@ TEST_F(KernelDataTest, AllocateStatelessConstantMemoryWithInit) {
     EXPECT_EQ_VAL(0xddu, pKernelInfo->patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization->SurfaceStateHeapOffset);
 }
 
-TEST_F(KernelDataTest, AllocateStatelessGlobalMemoryWithInit) {
+TEST_F(KernelDataTest, GivenAllocateStatelessGlobalMemoryWithInitWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization allocateStatelessGlobalMemoryWithInit;
     allocateStatelessGlobalMemoryWithInit.Token = PATCH_TOKEN_ALLOCATE_STATELESS_GLOBAL_MEMORY_SURFACE_WITH_INITIALIZATION;
     allocateStatelessGlobalMemoryWithInit.Size = sizeof(SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization);
@@ -102,7 +102,7 @@ TEST_F(KernelDataTest, AllocateStatelessGlobalMemoryWithInit) {
     EXPECT_EQ_VAL(0xddu, pKernelInfo->patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization->SurfaceStateHeapOffset);
 }
 
-TEST_F(KernelDataTest, PrintfString) {
+TEST_F(KernelDataTest, GivenPrintfStringWhenBuildingThenProgramIsCorrect) {
     char stringValue[] = "%d\n";
     size_t strSize = strlen(stringValue) + 1;
 
@@ -134,7 +134,7 @@ TEST_F(KernelDataTest, PrintfString) {
     delete[] pPrintfString;
 }
 
-TEST_F(KernelDataTest, MediaVFEState) {
+TEST_F(KernelDataTest, GivenMediaVfeStateWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchMediaVFEState MediaVFEState;
     MediaVFEState.Token = PATCH_TOKEN_MEDIA_VFE_STATE;
     MediaVFEState.Size = sizeof(SPatchMediaVFEState);
@@ -151,7 +151,7 @@ TEST_F(KernelDataTest, MediaVFEState) {
     EXPECT_EQ_VAL(MediaVFEState.ScratchSpaceOffset, pKernelInfo->patchInfo.mediavfestate->ScratchSpaceOffset);
 }
 
-TEST_F(KernelDataTest, WhenMediaVFEStateSlot1TokenIsParsedThenCorrectValuesAreSet) {
+TEST_F(KernelDataTest, WhenMediaVfeStateSlot1TokenIsParsedThenCorrectValuesAreSet) {
     iOpenCL::SPatchMediaVFEState MediaVFEState;
     MediaVFEState.Token = PATCH_TOKEN_MEDIA_VFE_STATE_SLOT1;
     MediaVFEState.Size = sizeof(SPatchMediaVFEState);
@@ -187,7 +187,7 @@ TEST_F(KernelDataTest, GivenSyncBufferTokenWhenParsingProgramThenTokenIsFound) {
     EXPECT_EQ(token.DataParamSize, pKernelInfo->patchInfo.pAllocateSyncBuffer->DataParamSize);
 }
 
-TEST_F(KernelDataTest, MediaIDData) {
+TEST_F(KernelDataTest, GivenMediaInterfaceDescriptorDataWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchInterfaceDescriptorData idData;
     idData.Token = PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA;
     idData.Size = sizeof(SPatchInterfaceDescriptorData);
@@ -204,7 +204,7 @@ TEST_F(KernelDataTest, MediaIDData) {
     EXPECT_EQ_CONST(PATCH_TOKEN_INTERFACE_DESCRIPTOR_DATA, pKernelInfo->patchInfo.interfaceDescriptorData->Token);
 }
 
-TEST_F(KernelDataTest, SamplerArgument) {
+TEST_F(KernelDataTest, GivenSamplerArgumentWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchSamplerKernelArgument samplerData;
     samplerData.Token = PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT;
     samplerData.ArgumentNumber = 3;
@@ -221,7 +221,7 @@ TEST_F(KernelDataTest, SamplerArgument) {
     EXPECT_EQ_VAL(samplerData.Offset, pKernelInfo->kernelArgInfo[3].offsetHeap);
 }
 
-TEST_F(KernelDataTest, AcceleratorArgument) {
+TEST_F(KernelDataTest, GivenAcceleratorArgumentWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchSamplerKernelArgument samplerData;
     samplerData.Token = PATCH_TOKEN_SAMPLER_KERNEL_ARGUMENT;
     samplerData.ArgumentNumber = 3;
@@ -238,7 +238,7 @@ TEST_F(KernelDataTest, AcceleratorArgument) {
     EXPECT_EQ_VAL(samplerData.Offset, pKernelInfo->kernelArgInfo[3].offsetHeap);
 }
 
-TEST_F(KernelDataTest, BindingTableState) {
+TEST_F(KernelDataTest, GivenBindingTableStateWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchBindingTableState bindingTableState;
     bindingTableState.Token = PATCH_TOKEN_BINDING_TABLE_STATE;
     bindingTableState.Size = sizeof(SPatchBindingTableState);
@@ -254,7 +254,7 @@ TEST_F(KernelDataTest, BindingTableState) {
     EXPECT_EQ_CONST(PATCH_TOKEN_BINDING_TABLE_STATE, pKernelInfo->patchInfo.bindingTableState->Token);
 }
 
-TEST_F(KernelDataTest, DataParameterStream) {
+TEST_F(KernelDataTest, GivenDataParameterStreamWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchDataParameterStream dataParameterStream;
     dataParameterStream.Token = PATCH_TOKEN_DATA_PARAMETER_STREAM;
     dataParameterStream.Size = sizeof(SPatchDataParameterStream);
@@ -268,7 +268,7 @@ TEST_F(KernelDataTest, DataParameterStream) {
     EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_STREAM, pKernelInfo->patchInfo.dataParameterStream->Token);
 }
 
-TEST_F(KernelDataTest, ThreadPayload) {
+TEST_F(KernelDataTest, GivenThreadPayloadWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchThreadPayload threadPayload;
     threadPayload.Token = PATCH_TOKEN_THREAD_PAYLOAD;
     threadPayload.Size = sizeof(SPatchThreadPayload);
@@ -292,7 +292,7 @@ TEST_F(KernelDataTest, ThreadPayload) {
     EXPECT_EQ_CONST(PATCH_TOKEN_THREAD_PAYLOAD, pKernelInfo->patchInfo.threadPayload->Token);
 }
 
-TEST_F(KernelDataTest, ExecutionEnvironmentNoReqdWorkGroupSize) {
+TEST_F(KernelDataTest, GivenExecutionEnvironmentNoReqdWorkGroupSizeWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
     executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
@@ -327,7 +327,7 @@ TEST_F(KernelDataTest, ExecutionEnvironmentNoReqdWorkGroupSize) {
     EXPECT_EQ_VAL(WorkloadInfo::undefinedOffset, pKernelInfo->reqdWorkGroupSize[2]);
 }
 
-TEST_F(KernelDataTest, ExecutionEnvironment) {
+TEST_F(KernelDataTest, GivenExecutionEnvironmentWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
     executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
@@ -363,7 +363,7 @@ TEST_F(KernelDataTest, ExecutionEnvironment) {
     EXPECT_TRUE(pKernelInfo->requiresSshForBuffers);
 }
 
-TEST_F(KernelDataTest, ExecutionEnvironmentCompiledForGreaterThan4GBBuffers) {
+TEST_F(KernelDataTest, GivenExecutionEnvironmentCompiledForGreaterThan4gbBuffersWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
     executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
@@ -396,7 +396,7 @@ TEST_F(KernelDataTest, ExecutionEnvironmentCompiledForGreaterThan4GBBuffers) {
     EXPECT_FALSE(pKernelInfo->requiresSshForBuffers);
 }
 
-TEST_F(KernelDataTest, ExecutionEnvironmentDoesntHaveDeviceEnqueue) {
+TEST_F(KernelDataTest, GivenExecutionEnvironmentDoesntHaveDeviceEnqueueWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
     executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
@@ -411,7 +411,7 @@ TEST_F(KernelDataTest, ExecutionEnvironmentDoesntHaveDeviceEnqueue) {
     EXPECT_EQ_VAL(0u, program->getParentKernelInfoArray().size());
 }
 
-TEST_F(KernelDataTest, ExecutionEnvironmentHasDeviceEnqueue) {
+TEST_F(KernelDataTest, GivenExecutionEnvironmentHasDeviceEnqueueWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
     executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
@@ -426,7 +426,7 @@ TEST_F(KernelDataTest, ExecutionEnvironmentHasDeviceEnqueue) {
     EXPECT_EQ_VAL(1u, program->getParentKernelInfoArray().size());
 }
 
-TEST_F(KernelDataTest, ExecutionEnvironmentDoesntRequireSubgroupIndependentForwardProgress) {
+TEST_F(KernelDataTest, GivenExecutionEnvironmentDoesntRequireSubgroupIndependentForwardProgressWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
     executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
@@ -441,7 +441,7 @@ TEST_F(KernelDataTest, ExecutionEnvironmentDoesntRequireSubgroupIndependentForwa
     EXPECT_EQ_VAL(0u, program->getSubgroupKernelInfoArray().size());
 }
 
-TEST_F(KernelDataTest, ExecutionEnvironmentRequiresSubgroupIndependentForwardProgress) {
+TEST_F(KernelDataTest, GivenExecutionEnvironmentRequiresSubgroupIndependentForwardProgressWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
     executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
@@ -456,7 +456,7 @@ TEST_F(KernelDataTest, ExecutionEnvironmentRequiresSubgroupIndependentForwardPro
     EXPECT_EQ_VAL(1u, program->getSubgroupKernelInfoArray().size());
 }
 
-TEST_F(KernelDataTest, KernelAttributesInfo) {
+TEST_F(KernelDataTest, GivenKernelAttributesInfoWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchKernelAttributesInfo kernelAttributesInfo;
     kernelAttributesInfo.Token = PATCH_TOKEN_KERNEL_ATTRIBUTES_INFO;
     kernelAttributesInfo.Size = sizeof(SPatchKernelAttributesInfo);
@@ -528,7 +528,7 @@ TEST_F(KernelDataTest, whenWorkgroupOrderIsSpecifiedViaPatchToken2ThenProperWork
 // Test all the different data parameters with the same "made up" data
 class DataParameterTest : public KernelDataTest, public testing::WithParamInterface<uint32_t> {};
 
-TEST_P(DataParameterTest, DataParameterTests) {
+TEST_P(DataParameterTest, GivenTokenTypeWhenBuildingThenProgramIsCorrect) {
     SPatchDataParameterBuffer dataParameterToken;
     dataParameterToken.Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
     dataParameterToken.Size = sizeof(SPatchDataParameterBuffer);
@@ -564,7 +564,7 @@ INSTANTIATE_TEST_CASE_P(DataParameterTests,
                         testing::Range(2u, static_cast<uint32_t>(NUM_DATA_PARAMETER_TOKENS)));
 
 class KernelDataParameterTest : public KernelDataTest {};
-TEST_F(KernelDataParameterTest, DataParameterTestsDataPatameterBufferOffset) {
+TEST_F(KernelDataParameterTest, GivenDataParameterBufferOffsetWhenBuildingThenProgramIsCorrect) {
     SPatchDataParameterBuffer dataParameterToken;
     dataParameterToken.Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
     dataParameterToken.Size = sizeof(SPatchDataParameterBuffer);
@@ -623,7 +623,7 @@ TEST_F(KernelDataParameterTest, givenUnknownDataParameterWhenDecodedThenParamete
     EXPECT_EQ_VAL(0u, pKernelInfo->patchInfo.dataParameterBuffersKernelArgs.size());
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES) {
+TEST_F(KernelDataTest, GivenDataParameterSumOfLocalMemoryObjectArgumentSizesWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 16;
     uint32_t offsetCrossThread = 4;
@@ -651,7 +651,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES)
     EXPECT_EQ(offsetCrossThread, pKernelInfo->kernelArgInfo[argumentNumber].kernelArgPatchInfoVector[0].crossthreadOffset);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_WIDTH) {
+TEST_F(KernelDataTest, GivenDataParameterImageWidthWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 16;
     uint32_t offsetImgWidth = 4;
@@ -677,7 +677,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_WIDTH) {
     EXPECT_EQ(offsetImgWidth, pKernelInfo->kernelArgInfo[argumentNumber].offsetImgWidth);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_HEIGHT) {
+TEST_F(KernelDataTest, GivenDataParameterImageHeightWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 16;
     uint32_t offsetImgHeight = 8;
@@ -704,7 +704,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_HEIGHT) {
     EXPECT_EQ(offsetImgHeight, pKernelInfo->kernelArgInfo[argumentNumber].offsetImgHeight);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_DEPTH) {
+TEST_F(KernelDataTest, GivenDataParameterImageDepthWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 16;
     uint32_t offsetImgDepth = 12;
@@ -731,7 +731,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_DEPTH) {
     EXPECT_EQ(offsetImgDepth, pKernelInfo->kernelArgInfo[argumentNumber].offsetImgDepth);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_NUM_SAMPLES) {
+TEST_F(KernelDataTest, GivenDataParameterImageNumSamplersWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 16;
     uint32_t offsetNumSamples = 60;
@@ -758,7 +758,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_NUM_SAMPLES) {
     EXPECT_EQ(offsetNumSamples, pKernelInfo->kernelArgInfo[argumentNumber].offsetNumSamples);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_NUM_MIP_LEVELS) {
+TEST_F(KernelDataTest, GivenDataParameterImageNumMipLevelsWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 16;
     uint32_t offsetNumMipLevels = 60;
@@ -831,7 +831,7 @@ TEST_F(KernelDataTest, givenFlatImageDataParamTokenWhenDecodingThenSetAllOffsets
     EXPECT_EQ(18u, pKernelInfo->kernelArgInfo[argumentNumber].offsetFlatPitch);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_DATA_TYPE) {
+TEST_F(KernelDataTest, GivenDataParameterImageDataTypeWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 16;
     uint32_t offsetChannelDataType = 52;
@@ -858,7 +858,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_DATA_TYPE) {
     EXPECT_EQ(offsetChannelDataType, pKernelInfo->kernelArgInfo[argumentNumber].offsetChannelDataType);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_CHANNEL_ORDER) {
+TEST_F(KernelDataTest, GivenDataParameterImageChannelOrderWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 16;
     uint32_t offsetChannelOrder = 56;
@@ -885,7 +885,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_CHANNEL_ORDER) {
     EXPECT_EQ(offsetChannelOrder, pKernelInfo->kernelArgInfo[argumentNumber].offsetChannelOrder);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_ARRAY_SIZE) {
+TEST_F(KernelDataTest, GivenDataParameterImageArraySizeWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 16;
     uint32_t offsetImageArraySize = 60;
@@ -912,7 +912,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_ARRAY_SIZE) {
     EXPECT_EQ(offsetImageArraySize, pKernelInfo->kernelArgInfo[argumentNumber].offsetArraySize);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_WORK_DIMENSIONS) {
+TEST_F(KernelDataTest, GivenDataParameterWorkDimensionsWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 16;
     uint32_t offsetWorkDim = 12;
@@ -939,7 +939,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_WORK_DIMENSIONS) {
     EXPECT_EQ(offsetWorkDim, pKernelInfo->workloadInfo.workDimOffset);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_SIMD_SIZE) {
+TEST_F(KernelDataTest, GivenDataParameterSimdSizeWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 17;
     uint32_t alignment = 16;
     uint32_t offsetSimdSize = 16;
@@ -966,7 +966,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_SIMD_SIZE) {
     EXPECT_EQ(offsetSimdSize, pKernelInfo->workloadInfo.simdSizeOffset);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_PRIVATE_MEMORY_STATELESS_SIZE) {
+TEST_F(KernelDataTest, GivenParameterPrivateMemoryStatelessSizeWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 17;
     uint32_t alignment = 16;
     uint32_t offset = 16;
@@ -991,7 +991,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_PRIVATE_MEMORY_STATELESS_SIZE) {
     EXPECT_EQ(0u, pKernelInfo->kernelArgInfo.size());
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_SIZE) {
+TEST_F(KernelDataTest, GivenDataParameterLocalMemoryStatelessWindowSizeWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 17;
     uint32_t alignment = 16;
     uint32_t offset = 16;
@@ -1016,7 +1016,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_SIZE) {
     EXPECT_EQ(0u, pKernelInfo->kernelArgInfo.size());
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_START_ADDRESS) {
+TEST_F(KernelDataTest, GivenDataParameterLocalMemoryStatelessWindowStartAddressWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 17;
     uint32_t alignment = 16;
     uint32_t offset = 16;
@@ -1041,7 +1041,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_START_ADDRES
     EXPECT_EQ(0u, pKernelInfo->kernelArgInfo.size());
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_NUM_WORK_GROUPS) {
+TEST_F(KernelDataTest, GivenDataParameterNumWorkGroupsWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 4;
     uint32_t offsetNumWorkGroups[3] = {0, 4, 8};
@@ -1068,7 +1068,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_NUM_WORK_GROUPS) {
     EXPECT_EQ(offsetNumWorkGroups[argumentNumber], pKernelInfo->workloadInfo.numWorkGroupsOffset[argumentNumber]);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_MAX_WORKGROUP_SIZE) {
+TEST_F(KernelDataTest, GivenDataParameterMaxWorkgroupSizeWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 4;
     uint32_t offsetMaxWorkGroupSize = 4;
@@ -1095,7 +1095,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_MAX_WORKGROUP_SIZE) {
     EXPECT_EQ(offsetMaxWorkGroupSize, pKernelInfo->workloadInfo.maxWorkGroupSizeOffset);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_SAMPLER_ADDRESS_MODE) {
+TEST_F(KernelDataTest, GivenDataParameterSamplerAddressModeWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 0;
     uint32_t dataOffset = 20;
     uint32_t dataSize = sizeof(uint32_t);
@@ -1123,7 +1123,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_SAMPLER_ADDRESS_MODE) {
     EXPECT_EQ(dataOffset, pKernelInfo->kernelArgInfo[0].offsetSamplerAddressingMode);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_SAMPLER_COORDINATE_SNAP_WA_REQUIRED) {
+TEST_F(KernelDataTest, GivenDataParameterSamplerCoordinateSnapWaRequired) {
     uint32_t argumentNumber = 1;
     uint32_t dataOffset = 20;
     uint32_t dataSize = sizeof(uint32_t);
@@ -1151,7 +1151,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_SAMPLER_COORDINATE_SNAP_WA_REQUIRED) {
     EXPECT_EQ(dataOffset, pKernelInfo->kernelArgInfo[1].offsetSamplerSnapWa);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_SAMPLER_NORMALIZED_COORDS) {
+TEST_F(KernelDataTest, GivenDataParameterSamplerNormalizedCoords) {
     uint32_t argumentNumber = 1;
     uint32_t dataOffset = 20;
     uint32_t dataSize = sizeof(uint32_t);
@@ -1179,7 +1179,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_SAMPLER_NORMALIZED_COORDS) {
     EXPECT_EQ(dataOffset, pKernelInfo->kernelArgInfo[1].offsetSamplerNormalizedCoords);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_KERNEL_ARGUMENT) {
+TEST_F(KernelDataTest, GivenDataParameterKernelArgumentWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 0;
     uint32_t dataOffset = 20;
     uint32_t dataSize = sizeof(uint32_t);
@@ -1224,7 +1224,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_KERNEL_ARGUMENT) {
     EXPECT_EQ(dataOffset + dataSize * 1, pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[1].crossthreadOffset);
 }
 
-TEST_F(KernelDataTest, PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE) {
+TEST_F(KernelDataTest, GivenPatchTokenAllocateLocalSurfaceWhenBuildingThenProgramIsCorrect) {
 
     SPatchAllocateLocalSurface slmToken;
     slmToken.TotalInlineLocalMemorySize = 1024;
@@ -1239,7 +1239,7 @@ TEST_F(KernelDataTest, PATCH_TOKEN_ALLOCATE_LOCAL_SURFACE) {
     EXPECT_EQ(1024u, pKernelInfo->workloadInfo.slmStaticSize);
 }
 
-TEST_F(KernelDataTest, PATCH_TOKEN_ALLOCATE_STATELESS_PRINTF_SURFACE) {
+TEST_F(KernelDataTest, GivenPatchTokenAllocateStatelessPrintfSurfaceWhenBuildingThenProgramIsCorrect) {
     SPatchAllocateStatelessPrintfSurface printfSurface;
     printfSurface.Token = PATCH_TOKEN_ALLOCATE_STATELESS_PRINTF_SURFACE;
     printfSurface.Size = static_cast<uint32_t>(sizeof(SPatchAllocateStatelessPrintfSurface));
@@ -1262,7 +1262,7 @@ TEST_F(KernelDataTest, PATCH_TOKEN_ALLOCATE_STATELESS_PRINTF_SURFACE) {
     EXPECT_EQ(printfSurface.DataParamSize, pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface->DataParamSize);
 }
 
-TEST_F(KernelDataTest, PATCH_TOKEN_SAMPLER_STATE_ARRAY) {
+TEST_F(KernelDataTest, GivenPatchTokenSamplerStateArrayWhenBuildingThenProgramIsCorrect) {
     SPatchSamplerStateArray token;
     token.Token = PATCH_TOKEN_SAMPLER_STATE_ARRAY;
     token.Size = static_cast<uint32_t>(sizeof(SPatchSamplerStateArray));
@@ -1283,7 +1283,7 @@ TEST_F(KernelDataTest, PATCH_TOKEN_SAMPLER_STATE_ARRAY) {
     EXPECT_EQ_VAL(token.BorderColorOffset, pKernelInfo->patchInfo.samplerStateArray->BorderColorOffset);
 }
 
-TEST_F(KernelDataTest, PATCH_TOKEN_ALLOCATE_STATELESS_PRIVATE_MEMORY) {
+TEST_F(KernelDataTest, GivenPatchTokenAllocateStatelessPrivateMemoryWhenBuildingThenProgramIsCorrect) {
     SPatchAllocateStatelessPrivateSurface token;
     token.Token = PATCH_TOKEN_ALLOCATE_STATELESS_PRIVATE_MEMORY;
     token.Size = static_cast<uint32_t>(sizeof(SPatchAllocateStatelessPrivateSurface));
@@ -1306,7 +1306,7 @@ TEST_F(KernelDataTest, PATCH_TOKEN_ALLOCATE_STATELESS_PRIVATE_MEMORY) {
     EXPECT_EQ_VAL(token.PerThreadPrivateMemorySize, pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_VME_MB_BLOCK_TYPE) {
+TEST_F(KernelDataTest, GivenDataParameterVmeMbBlockTypeWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 16;
     uint32_t offsetVmeMbBlockType = 0xaa;
@@ -1333,7 +1333,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_VME_MB_BLOCK_TYPE) {
     EXPECT_EQ(offsetVmeMbBlockType, pKernelInfo->kernelArgInfo[argumentNumber].offsetVmeMbBlockType);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_VME_SUBPIXEL_MODE) {
+TEST_F(KernelDataTest, GivenDataParameterDataVmeSubpixelModeWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 17;
     uint32_t offsetVmeSubpixelMode = 0xab;
@@ -1360,7 +1360,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_VME_SUBPIXEL_MODE) {
     EXPECT_EQ(offsetVmeSubpixelMode, pKernelInfo->kernelArgInfo[argumentNumber].offsetVmeSubpixelMode);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_VME_SAD_ADJUST_MODE) {
+TEST_F(KernelDataTest, GivenDataParameterVmeSadAdjustModeWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 18;
     uint32_t offsetVmeSadAdjustMode = 0xac;
@@ -1387,7 +1387,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_VME_SAD_ADJUST_MODE) {
     EXPECT_EQ(offsetVmeSadAdjustMode, pKernelInfo->kernelArgInfo[argumentNumber].offsetVmeSadAdjustMode);
 }
 
-TEST_F(KernelDataTest, DATA_PARAMETER_VME_SEARCH_PATH_TYPE) {
+TEST_F(KernelDataTest, GivenDataParameterVmeSearchPathTypeWhenBuildingThenProgramIsCorrect) {
     uint32_t argumentNumber = 1;
     uint32_t alignment = 19;
     uint32_t offsetVmeSearchPathType = 0xad;
@@ -1414,7 +1414,7 @@ TEST_F(KernelDataTest, DATA_PARAMETER_VME_SEARCH_PATH_TYPE) {
     EXPECT_EQ(offsetVmeSearchPathType, pKernelInfo->kernelArgInfo[argumentNumber].offsetVmeSearchPathType);
 }
 
-TEST_F(KernelDataTest, PATCH_TOKEN_STATE_SIP) {
+TEST_F(KernelDataTest, GivenPatchTokenStateSipWhenBuildingThenProgramIsCorrect) {
     SPatchStateSIP token;
     token.Token = PATCH_TOKEN_STATE_SIP;
     token.Size = static_cast<uint32_t>(sizeof(SPatchStateSIP));
@@ -1431,7 +1431,7 @@ TEST_F(KernelDataTest, PATCH_TOKEN_STATE_SIP) {
     EXPECT_EQ_VAL(token.SystemKernelOffset, pKernelInfo->systemKernelOffset);
 }
 
-TEST_F(KernelDataTest, PATCH_TOKEN_ALLOCATE_SIP_SURFACE) {
+TEST_F(KernelDataTest, GivenPatchTokenAllocateSipSurfaceWhenBuildingThenProgramIsCorrect) {
     SPatchAllocateSystemThreadSurface token;
     token.Token = PATCH_TOKEN_ALLOCATE_SIP_SURFACE;
     token.Size = static_cast<uint32_t>(sizeof(SPatchAllocateSystemThreadSurface));
