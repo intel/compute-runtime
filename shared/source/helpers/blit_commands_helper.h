@@ -92,10 +92,13 @@ using BlitMemoryToAllocationFunc = std::function<BlitOperationResult(Device &dev
                                                                      const void *hostPtr,
                                                                      Vec3<size_t> size)>;
 extern BlitMemoryToAllocationFunc blitMemoryToAllocation;
+extern BlitMemoryToAllocationFunc blitAllocationToMemory;
 } // namespace BlitHelperFunctions
 
 struct BlitHelper {
     static BlitOperationResult blitMemoryToAllocation(Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                                      Vec3<size_t> size);
+    static BlitOperationResult blitAllocationToMemory(Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                                       Vec3<size_t> size);
 };
 

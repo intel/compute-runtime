@@ -16,6 +16,9 @@
 
 namespace NEO {
 
+class Device;
+class GraphicsAllocation;
+
 enum class SegmentType : uint32_t {
     Unknown,
     GlobalConstants,
@@ -160,12 +163,13 @@ struct Linker {
     }
 
     bool link(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo, const SegmentInfo &exportedFunctionsSegInfo,
-              PatchableSegment &globalVariablesSeg, PatchableSegment &globalConstantsSeg, const PatchableSegments &instructionsSegments,
-              UnresolvedExternals &outUnresolvedExternals) {
+              GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg, const PatchableSegments &instructionsSegments,
+              UnresolvedExternals &outUnresolvedExternals, Device *pDevice, const void *constantsInitData, const void *variablesInitData) {
         bool success = data.isValid();
         success = success && processRelocations(globalVariablesSegInfo, globalConstantsSegInfo, exportedFunctionsSegInfo);
         success = success && patchInstructionsSegments(instructionsSegments, outUnresolvedExternals);
-        success = success && patchDataSegments(globalVariablesSegInfo, globalConstantsSegInfo, globalVariablesSeg, globalConstantsSeg, outUnresolvedExternals);
+        success = success && patchDataSegments(globalVariablesSegInfo, globalConstantsSegInfo, globalVariablesSeg, globalConstantsSeg,
+                                               outUnresolvedExternals, pDevice, constantsInitData, variablesInitData);
 
         return success;
     }
@@ -183,8 +187,9 @@ struct Linker {
     bool patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals);
 
     bool patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo,
-                           PatchableSegment &globalVariablesSeg, PatchableSegment &globalConstantsSeg,
-                           std::vector<UnresolvedExternal> &outUnresolvedExternals);
+                           GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
+                           std::vector<UnresolvedExternal> &outUnresolvedExternals, Device *pDevice,
+                           const void *constantsInitData, const void *variablesInitData);
 };
 
 std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unresolvedExternals, const std::vector<std::string> &instructionsSegmentsNames);

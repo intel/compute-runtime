@@ -51,7 +51,7 @@ const KernelInfo *Program::getKernelInfo(size_t ordinal) const {
     return kernelInfoArray[ordinal];
 }
 
-cl_int Program::linkBinary() {
+cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData) {
     if (linkerInput == nullptr) {
         return CL_SUCCESS;
     }
@@ -59,19 +59,15 @@ cl_int Program::linkBinary() {
     Linker::SegmentInfo globals;
     Linker::SegmentInfo constants;
     Linker::SegmentInfo exportedFunctions;
-    Linker::PatchableSegment globalsForPatching;
-    Linker::PatchableSegment constantsForPatching;
-    if (this->globalSurface != nullptr) {
-        globals.gpuAddress = static_cast<uintptr_t>(this->globalSurface->getGpuAddress());
-        globals.segmentSize = this->globalSurface->getUnderlyingBufferSize();
-        globalsForPatching.hostPointer = this->globalSurface->getUnderlyingBuffer();
-        globalsForPatching.segmentSize = this->globalSurface->getUnderlyingBufferSize();
+    GraphicsAllocation *globalsForPatching = this->globalSurface;
+    GraphicsAllocation *constantsForPatching = this->constantSurface;
+    if (globalsForPatching != nullptr) {
+        globals.gpuAddress = static_cast<uintptr_t>(globalsForPatching->getGpuAddress());
+        globals.segmentSize = globalsForPatching->getUnderlyingBufferSize();
     }
-    if (this->constantSurface != nullptr) {
-        constants.gpuAddress = static_cast<uintptr_t>(this->constantSurface->getGpuAddress());
-        constants.segmentSize = this->constantSurface->getUnderlyingBufferSize();
-        constantsForPatching.hostPointer = this->constantSurface->getUnderlyingBuffer();
-        constantsForPatching.segmentSize = this->constantSurface->getUnderlyingBufferSize();
+    if (constantsForPatching != nullptr) {
+        constants.gpuAddress = static_cast<uintptr_t>(constantsForPatching->getGpuAddress());
+        constants.segmentSize = constantsForPatching->getUnderlyingBufferSize();
     }
     if (this->linkerInput->getExportedFunctionsSegmentId() >= 0) {
         // Exported functions reside in instruction heap of one of kernels
@@ -95,7 +91,8 @@ cl_int Program::linkBinary() {
     Linker::UnresolvedExternals unresolvedExternalsInfo;
     bool linkSuccess = linker.link(globals, constants, exportedFunctions,
                                    globalsForPatching, constantsForPatching,
-                                   isaSegmentsForPatching, unresolvedExternalsInfo);
+                                   isaSegmentsForPatching, unresolvedExternalsInfo,
+                                   pDevice, constantsInitData, variablesInitData);
     this->symbols = linker.extractRelocatedSymbols();
     if (false == linkSuccess) {
         std::vector<std::string> kernelNames;
@@ -212,7 +209,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
         kernelInfo->apply(deviceInfoConstants);
     }
 
-    return linkBinary();
+    return linkBinary(this->pDevice, src.globalConstants.initData, src.globalVariables.initData);
 }
 
 void Program::processDebugData() {

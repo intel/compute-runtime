@@ -266,7 +266,7 @@ class Program : public BaseObject<_cl_program> {
 
     cl_int packDeviceBinary();
 
-    MOCKABLE_VIRTUAL cl_int linkBinary();
+    MOCKABLE_VIRTUAL cl_int linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData);
 
     void separateBlockKernels();
 

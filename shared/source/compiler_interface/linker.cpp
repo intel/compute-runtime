@@ -7,8 +7,13 @@
 
 #include "linker.h"
 
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/compiler_support.h"
 
 #include "RelocationInfo.h"
@@ -199,8 +204,9 @@ bool Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
 }
 
 bool Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const SegmentInfo &globalConstantsSegInfo,
-                               PatchableSegment &globalVariablesSeg, PatchableSegment &globalConstantsSeg,
-                               std::vector<UnresolvedExternal> &outUnresolvedExternals) {
+                               GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
+                               std::vector<UnresolvedExternal> &outUnresolvedExternals, Device *pDevice,
+                               const void *constantsInitData, const void *variablesInitData) {
     if (false == (data.getTraits().requiresPatchingOfGlobalConstantsBuffer || data.getTraits().requiresPatchingOfGlobalVariablesBuffer)) {
         return true;
     }
@@ -208,7 +214,8 @@ bool Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
     auto unresolvedExternalsPrev = outUnresolvedExternals.size();
     for (const auto &relocation : data.getDataRelocations()) {
         const SegmentInfo *src = nullptr;
-        const PatchableSegment *dst = nullptr;
+        GraphicsAllocation *dst = nullptr;
+        const void *initData = nullptr;
         switch (relocation.symbolSegment) {
         default:
             outUnresolvedExternals.push_back(UnresolvedExternal{relocation});
@@ -225,14 +232,16 @@ bool Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
             outUnresolvedExternals.push_back(UnresolvedExternal{relocation});
             continue;
         case SegmentType::GlobalVariables:
-            dst = &globalVariablesSeg;
+            dst = globalVariablesSeg;
+            initData = variablesInitData;
             break;
         case SegmentType::GlobalConstants:
-            dst = &globalConstantsSeg;
+            dst = globalConstantsSeg;
+            initData = constantsInitData;
             break;
         }
 
-        UNRECOVERABLE_IF(nullptr == dst->hostPointer);
+        UNRECOVERABLE_IF(nullptr == dst);
 
         if (RelocationInfo::Type::AddressHigh == relocation.type) {
             outUnresolvedExternals.push_back(UnresolvedExternal{relocation});
@@ -240,23 +249,43 @@ bool Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
         }
 
         auto relocType = (LinkerInput::Traits::PointerSize::Ptr32bit == data.getTraits().pointerSize) ? RelocationInfo::Type::AddressLow : relocation.type;
-        bool invalidOffset = relocation.offset + addressSizeInBytes(relocType) > dst->segmentSize;
+        bool invalidOffset = relocation.offset + addressSizeInBytes(relocType) > dst->getUnderlyingBufferSize();
         DEBUG_BREAK_IF(invalidOffset);
         if (invalidOffset) {
             outUnresolvedExternals.push_back(UnresolvedExternal{relocation});
             continue;
         }
 
+        UNRECOVERABLE_IF((RelocationInfo::Type::Address != relocType) && (RelocationInfo::Type::AddressLow != relocType));
         uint64_t gpuAddressAs64bit = src->gpuAddress;
-        auto relocAddress = ptrOffset(dst->hostPointer, static_cast<uintptr_t>(relocation.offset));
-        switch (relocType) {
-        default:
-            UNRECOVERABLE_IF(RelocationInfo::Type::Address != relocType);
-            patchIncrement(relocAddress, sizeof(uintptr_t), gpuAddressAs64bit);
-            break;
-        case RelocationInfo::Type::AddressLow:
-            patchIncrement(relocAddress, 4, static_cast<uint32_t>(gpuAddressAs64bit & 0xffffffff));
-            break;
+        uint32_t patchSize = (RelocationInfo::Type::AddressLow == relocType) ? 4 : sizeof(uintptr_t);
+        uint64_t incrementValue = (RelocationInfo::Type::AddressLow == relocType)
+                                      ? static_cast<uint32_t>(gpuAddressAs64bit & 0xffffffff)
+                                      : gpuAddressAs64bit;
+
+        bool useBlitter = false;
+        if (pDevice && initData) {
+            auto &hwInfo = pDevice->getHardwareInfo();
+            auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+            if (dst->isAllocatedInLocalMemoryPool() && helper.isBlitCopyRequiredForLocalMemory(hwInfo)) {
+                useBlitter = true;
+            }
+        }
+
+        if (useBlitter) {
+            auto initValue = ptrOffset(initData, static_cast<uintptr_t>(relocation.offset));
+            if (patchSize == sizeof(uint64_t)) {
+                uint64_t value = *reinterpret_cast<const uint64_t *>(initValue) + incrementValue;
+                BlitHelperFunctions::blitMemoryToAllocation(*pDevice, dst, static_cast<size_t>(relocation.offset),
+                                                            &value, {sizeof(value), 1, 1});
+            } else {
+                uint32_t value = *reinterpret_cast<const uint32_t *>(initValue) + static_cast<uint32_t>(incrementValue);
+                BlitHelperFunctions::blitMemoryToAllocation(*pDevice, dst, static_cast<size_t>(relocation.offset),
+                                                            &value, {sizeof(value), 1, 1});
+            }
+        } else {
+            auto relocAddress = ptrOffset(dst->getUnderlyingBuffer(), static_cast<uintptr_t>(relocation.offset));
+            patchIncrement(relocAddress, patchSize, incrementValue);
         }
     }
     return outUnresolvedExternals.size() == unresolvedExternalsPrev;

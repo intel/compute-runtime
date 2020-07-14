@@ -470,7 +470,7 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeConstantB
     constantSurfaceStorage[1] = sentinel;
 
     pProgram->linkerInput = std::move(programInfo.linkerInput);
-    pProgram->linkBinary();
+    pProgram->linkBinary(pProgram->pDevice, programInfo.globalConstants.initData, programInfo.globalVariables.initData);
     uint32_t expectedAddr = static_cast<uint32_t>(constantSurface.getGraphicsAllocation(pProgram->getDevice().getRootDeviceIndex())->getGpuAddressToPatch());
     EXPECT_EQ(expectedAddr, constantSurfaceStorage[0]);
     EXPECT_EQ(sentinel, constantSurfaceStorage[1]);
@@ -508,7 +508,7 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPoi
     globalSurfaceStorage[1] = sentinel;
 
     pProgram->linkerInput = std::move(programInfo.linkerInput);
-    pProgram->linkBinary();
+    pProgram->linkBinary(pProgram->pDevice, programInfo.globalConstants.initData, programInfo.globalVariables.initData);
     uint32_t expectedAddr = static_cast<uint32_t>(globalSurface.getGraphicsAllocation(pProgram->getDevice().getRootDeviceIndex())->getGpuAddressToPatch());
     EXPECT_EQ(expectedAddr, globalSurfaceStorage[0]);
     EXPECT_EQ(sentinel, globalSurfaceStorage[1]);
@@ -535,7 +535,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerInputEmptyThenLinkSuccessful) {
     NEO::ExecutionEnvironment env;
     MockProgram program{env};
     program.linkerInput = std::move(linkerInput);
-    auto ret = program.linkBinary();
+    auto ret = program.linkBinary(program.pDevice, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, ret);
 }
 
@@ -558,7 +558,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     program.linkerInput = std::move(linkerInput);
 
     EXPECT_EQ(nullptr, program.getBuildLog(nullptr));
-    auto ret = program.linkBinary();
+    auto ret = program.linkBinary(program.pDevice, nullptr, nullptr);
     EXPECT_NE(CL_SUCCESS, ret);
     program.getKernelInfoArray().clear();
     auto buildLog = program.getBuildLog(nullptr);
@@ -599,12 +599,14 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
     globalVariablesBuffer.resize(32, 7);
     std::vector<char> globalConstantsBuffer;
     globalConstantsBuffer.resize(32, 7);
+    std::vector<char> globalVariablesInitData{32, 0};
+    std::vector<char> globalConstantsInitData{32, 0};
     program.globalSurface = new MockGraphicsAllocation(globalVariablesBuffer.data(), globalVariablesBuffer.size());
     program.constantSurface = new MockGraphicsAllocation(globalConstantsBuffer.data(), globalConstantsBuffer.size());
 
     program.pDevice = &this->pContext->getDevice(0)->getDevice();
 
-    auto ret = program.linkBinary();
+    auto ret = program.linkBinary(pProgram->pDevice, globalConstantsInitData.data(), globalVariablesInitData.data());
     EXPECT_EQ(CL_SUCCESS, ret);
 
     linkerInput.reset(static_cast<WhiteBox<LinkerInput> *>(program.linkerInput.release()));
@@ -646,12 +648,14 @@ TEST_F(ProgramDataTest, whenRelocationsAreNotNeededThenIsaIsPreserved) {
     globalVariablesBuffer.resize(32, 7);
     std::vector<char> globalConstantsBuffer;
     globalConstantsBuffer.resize(32, 7);
+    std::vector<char> globalVariablesInitData{32, 0};
+    std::vector<char> globalConstantsInitData{32, 0};
     program.globalSurface = new MockGraphicsAllocation(globalVariablesBuffer.data(), globalVariablesBuffer.size());
     program.constantSurface = new MockGraphicsAllocation(globalConstantsBuffer.data(), globalConstantsBuffer.size());
 
     program.pDevice = &this->pContext->getDevice(0)->getDevice();
 
-    auto ret = program.linkBinary();
+    auto ret = program.linkBinary(pProgram->pDevice, globalConstantsInitData.data(), globalVariablesInitData.data());
     EXPECT_EQ(CL_SUCCESS, ret);
     EXPECT_EQ(kernelHeapData, kernelHeap);
 

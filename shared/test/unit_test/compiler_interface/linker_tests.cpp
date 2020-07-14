@@ -6,6 +6,9 @@
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
+
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "RelocationInfo.h"
 #include "gmock/gmock.h"
@@ -260,12 +263,13 @@ TEST(LinkerTests, givenEmptyLinkerInputThenLinkerOutputIsEmpty) {
     NEO::LinkerInput linkerInput;
     NEO::Linker linker(linkerInput);
     NEO::Linker::SegmentInfo globalVar, globalConst, exportedFunc;
-    NEO::Linker::PatchableSegment patchableGlobalVarSeg, patchableConstVarSeg;
+    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::PatchableSegments patchableInstructionSegments;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
     bool linkResult = linker.link(globalVar, globalConst, exportedFunc,
                                   patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                                  unresolvedExternals);
+                                  unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_TRUE(linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
     auto relocatedSymbols = linker.extractRelocatedSymbols();
@@ -277,12 +281,13 @@ TEST(LinkerTests, givenInvalidLinkerInputThenLinkerFails) {
     mockLinkerInput.valid = false;
     NEO::Linker linker(mockLinkerInput);
     NEO::Linker::SegmentInfo globalVar, globalConst, exportedFunc;
-    NEO::Linker::PatchableSegment patchableGlobalVarSeg, patchableConstVarSeg;
+    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::PatchableSegments patchableInstructionSegments;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
     bool linkResult = linker.link(globalVar, globalConst, exportedFunc,
                                   patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                                  unresolvedExternals);
+                                  unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_FALSE(linkResult);
 }
 
@@ -304,12 +309,13 @@ TEST(LinkerTests, givenUnresolvedExternalWhenPatchingInstructionsThenLinkerFails
     NEO::Linker::PatchableSegment seg0;
     seg0.hostPointer = instructionSegment.data();
     seg0.segmentSize = instructionSegment.size();
-    NEO::Linker::PatchableSegment patchableGlobalVarSeg, patchableConstVarSeg;
+    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
 
     bool linkResult = linker.link(globalVar, globalConst, exportedFunc,
                                   patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                                  unresolvedExternals);
+                                  unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_FALSE(linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, relocatedSymbols.size());
@@ -392,10 +398,12 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsThenInstructionSegmentsArePrope
     seg0.hostPointer = instructionSegment.data();
     seg0.segmentSize = instructionSegment.size();
     NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
-    NEO::Linker::PatchableSegment patchableGlobalVarSeg, patchableConstVarSeg;
+    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
 
     bool linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
-                                  patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments, unresolvedExternals);
+                                  patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments, unresolvedExternals,
+                                  nullptr, nullptr, nullptr);
     EXPECT_TRUE(linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());
@@ -448,11 +456,12 @@ TEST(LinkerTests, givenInvalidSymbolOffsetWhenPatchingInstructionsThenRelocation
     seg0.hostPointer = instructionSegment.data();
     seg0.segmentSize = instructionSegment.size();
     NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
-    NEO::Linker::PatchableSegment patchableGlobalVarSeg, patchableConstVarSeg;
+    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
 
     bool linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
                                   patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                                  unresolvedExternals);
+                                  unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_FALSE(linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, unresolvedExternals.size());
@@ -460,7 +469,8 @@ TEST(LinkerTests, givenInvalidSymbolOffsetWhenPatchingInstructionsThenRelocation
 
     globalVarSegment.segmentSize = symGlobalVariable.s_offset + symGlobalVariable.s_size;
     linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
-                             patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments, unresolvedExternals);
+                             patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments, unresolvedExternals,
+                             nullptr, nullptr, nullptr);
     EXPECT_TRUE(linkResult);
 }
 
@@ -494,11 +504,12 @@ TEST(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfInstructionsFails) {
     seg0.hostPointer = instructionSegment.data();
     seg0.segmentSize = relocA.r_offset;
     NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
-    NEO::Linker::PatchableSegment patchableGlobalVarSeg, patchableConstVarSeg;
+    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
 
     bool linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
                                   patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                                  unresolvedExternals);
+                                  unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_FALSE(linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(1U, relocatedSymbols.size());
@@ -508,7 +519,7 @@ TEST(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfInstructionsFails) {
     patchableInstructionSegments[0].segmentSize = relocA.r_offset + sizeof(uintptr_t);
     linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
                              patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                             unresolvedExternals);
+                             unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_TRUE(linkResult);
 }
 
@@ -542,13 +553,14 @@ TEST(LinkerTests, givenUnknownSymbolTypeWhenPatchingInstructionsThenRelocationFa
     seg0.hostPointer = instructionSegment.data();
     seg0.segmentSize = instructionSegment.size();
     NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
-    NEO::Linker::PatchableSegment patchableGlobalVarSeg, patchableConstVarSeg;
+    NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
+    NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
 
     ASSERT_EQ(1U, linkerInput.symbols.count("A"));
     linkerInput.symbols["A"].segment = NEO::SegmentType::Unknown;
     bool linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
                                   patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                                  unresolvedExternals);
+                                  unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_FALSE(linkResult);
     auto relocatedSymbols = linker.extractRelocatedSymbols();
     EXPECT_EQ(0U, relocatedSymbols.size());
@@ -557,7 +569,7 @@ TEST(LinkerTests, givenUnknownSymbolTypeWhenPatchingInstructionsThenRelocationFa
     linkerInput.symbols["A"].segment = NEO::SegmentType::GlobalVariables;
     linkResult = linker.link(globalVarSegment, globalConstSegment, exportedFuncSegment,
                              patchableGlobalVarSeg, patchableConstVarSeg, patchableInstructionSegments,
-                             unresolvedExternals);
+                             unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_TRUE(linkResult);
 }
 
@@ -566,14 +578,12 @@ TEST(LinkerTests, givenInvalidSourceSegmentWhenPatchingDataSegmentsThenLinkerFai
     NEO::Linker linker(linkerInput);
 
     NEO::Linker::SegmentInfo emptySegmentInfo;
-    NEO::Linker::PatchableSegment emptyPatchableSegment;
+    NEO::MockGraphicsAllocation emptyPatchableSegment;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
 
     std::vector<char> nonEmptypatchableSegmentData;
     nonEmptypatchableSegmentData.resize(64, 8U);
-    NEO::Linker::PatchableSegment nonEmptypatchableSegment;
-    nonEmptypatchableSegment.hostPointer = nonEmptypatchableSegmentData.data();
-    nonEmptypatchableSegment.segmentSize = nonEmptypatchableSegmentData.size();
+    NEO::MockGraphicsAllocation nonEmptypatchableSegment{nonEmptypatchableSegmentData.data(), nonEmptypatchableSegmentData.size()};
 
     NEO::LinkerInput::RelocationInfo relocInfo;
     relocInfo.offset = 0U;
@@ -587,8 +597,8 @@ TEST(LinkerTests, givenInvalidSourceSegmentWhenPatchingDataSegmentsThenLinkerFai
         linkerInput.dataRelocations[0].relocationSegment = NEO::SegmentType::GlobalVariables;
         linkerInput.dataRelocations[0].symbolSegment = NEO::SegmentType::Unknown;
         bool linkResult = linker.link(emptySegmentInfo, emptySegmentInfo, emptySegmentInfo,
-                                      nonEmptypatchableSegment, emptyPatchableSegment, {},
-                                      unresolvedExternals);
+                                      &nonEmptypatchableSegment, &emptyPatchableSegment, {},
+                                      unresolvedExternals, nullptr, nullptr, nullptr);
 
         EXPECT_FALSE(linkResult);
         EXPECT_EQ(1U, unresolvedExternals.size());
@@ -596,8 +606,8 @@ TEST(LinkerTests, givenInvalidSourceSegmentWhenPatchingDataSegmentsThenLinkerFai
         linkerInput.dataRelocations[0].symbolSegment = NEO::SegmentType::GlobalVariables;
         unresolvedExternals.clear();
         linkResult = linker.link(emptySegmentInfo, emptySegmentInfo, emptySegmentInfo,
-                                 nonEmptypatchableSegment, emptyPatchableSegment, {},
-                                 unresolvedExternals);
+                                 &nonEmptypatchableSegment, &emptyPatchableSegment, {},
+                                 unresolvedExternals, nullptr, nullptr, nullptr);
 
         EXPECT_TRUE(linkResult);
         EXPECT_EQ(0U, unresolvedExternals.size());
@@ -610,8 +620,8 @@ TEST(LinkerTests, givenInvalidSourceSegmentWhenPatchingDataSegmentsThenLinkerFai
         linkerInput.dataRelocations[0].symbolSegment = NEO::SegmentType::Unknown;
         unresolvedExternals.clear();
         bool linkResult = linker.link(emptySegmentInfo, emptySegmentInfo, emptySegmentInfo,
-                                      emptyPatchableSegment, nonEmptypatchableSegment, {},
-                                      unresolvedExternals);
+                                      &emptyPatchableSegment, &nonEmptypatchableSegment, {},
+                                      unresolvedExternals, nullptr, nullptr, nullptr);
 
         EXPECT_FALSE(linkResult);
         EXPECT_EQ(1U, unresolvedExternals.size());
@@ -619,8 +629,8 @@ TEST(LinkerTests, givenInvalidSourceSegmentWhenPatchingDataSegmentsThenLinkerFai
         linkerInput.dataRelocations[0].symbolSegment = NEO::SegmentType::GlobalVariables;
         unresolvedExternals.clear();
         linkResult = linker.link(emptySegmentInfo, emptySegmentInfo, emptySegmentInfo,
-                                 emptyPatchableSegment, nonEmptypatchableSegment, {},
-                                 unresolvedExternals);
+                                 &emptyPatchableSegment, &nonEmptypatchableSegment, {},
+                                 unresolvedExternals, nullptr, nullptr, nullptr);
 
         EXPECT_TRUE(linkResult);
         EXPECT_EQ(0U, unresolvedExternals.size());
@@ -632,14 +642,12 @@ TEST(LinkerTests, givenUnknownRelocationSegmentWhenPatchingDataSegmentsThenLinke
     NEO::Linker linker(linkerInput);
 
     NEO::Linker::SegmentInfo emptySegmentInfo;
-    NEO::Linker::PatchableSegment emptyPatchableSegment;
+    NEO::MockGraphicsAllocation emptyPatchableSegment;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
 
     std::vector<char> nonEmptypatchableSegmentData;
     nonEmptypatchableSegmentData.resize(64, 8U);
-    NEO::Linker::PatchableSegment nonEmptypatchableSegment;
-    nonEmptypatchableSegment.hostPointer = nonEmptypatchableSegmentData.data();
-    nonEmptypatchableSegment.segmentSize = nonEmptypatchableSegmentData.size();
+    NEO::MockGraphicsAllocation nonEmptypatchableSegment{nonEmptypatchableSegmentData.data(), nonEmptypatchableSegmentData.size()};
 
     NEO::LinkerInput::RelocationInfo relocInfo;
     relocInfo.offset = 0U;
@@ -651,8 +659,8 @@ TEST(LinkerTests, givenUnknownRelocationSegmentWhenPatchingDataSegmentsThenLinke
     linkerInput.traits.requiresPatchingOfGlobalVariablesBuffer = true;
 
     bool linkResult = linker.link(emptySegmentInfo, emptySegmentInfo, emptySegmentInfo,
-                                  nonEmptypatchableSegment, emptyPatchableSegment, {},
-                                  unresolvedExternals);
+                                  &nonEmptypatchableSegment, &emptyPatchableSegment, {},
+                                  unresolvedExternals, nullptr, nullptr, nullptr);
 
     EXPECT_FALSE(linkResult);
     EXPECT_EQ(1U, unresolvedExternals.size());
@@ -660,8 +668,8 @@ TEST(LinkerTests, givenUnknownRelocationSegmentWhenPatchingDataSegmentsThenLinke
     linkerInput.dataRelocations[0].relocationSegment = NEO::SegmentType::GlobalVariables;
     unresolvedExternals.clear();
     linkResult = linker.link(emptySegmentInfo, emptySegmentInfo, emptySegmentInfo,
-                             nonEmptypatchableSegment, emptyPatchableSegment, {},
-                             unresolvedExternals);
+                             &nonEmptypatchableSegment, &emptyPatchableSegment, {},
+                             unresolvedExternals, nullptr, nullptr, nullptr);
 
     EXPECT_TRUE(linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
@@ -672,14 +680,12 @@ TEST(LinkerTests, givenRelocationTypeWithHighPartOfAddressWhenPatchingDataSegmen
     NEO::Linker linker(linkerInput);
 
     NEO::Linker::SegmentInfo emptySegmentInfo;
-    NEO::Linker::PatchableSegment emptyPatchableSegment;
+    NEO::MockGraphicsAllocation emptyPatchableSegment;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
 
     std::vector<char> nonEmptypatchableSegmentData;
     nonEmptypatchableSegmentData.resize(64, 8U);
-    NEO::Linker::PatchableSegment nonEmptypatchableSegment;
-    nonEmptypatchableSegment.hostPointer = nonEmptypatchableSegmentData.data();
-    nonEmptypatchableSegment.segmentSize = nonEmptypatchableSegmentData.size();
+    NEO::MockGraphicsAllocation nonEmptypatchableSegment{nonEmptypatchableSegmentData.data(), nonEmptypatchableSegmentData.size()};
 
     NEO::LinkerInput::RelocationInfo relocInfo;
     relocInfo.offset = 0U;
@@ -691,8 +697,8 @@ TEST(LinkerTests, givenRelocationTypeWithHighPartOfAddressWhenPatchingDataSegmen
     linkerInput.traits.requiresPatchingOfGlobalVariablesBuffer = true;
 
     bool linkResult = linker.link(emptySegmentInfo, emptySegmentInfo, emptySegmentInfo,
-                                  nonEmptypatchableSegment, emptyPatchableSegment, {},
-                                  unresolvedExternals);
+                                  &nonEmptypatchableSegment, &emptyPatchableSegment, {},
+                                  unresolvedExternals, nullptr, nullptr, nullptr);
 
     EXPECT_FALSE(linkResult);
     EXPECT_EQ(1U, unresolvedExternals.size());
@@ -700,8 +706,8 @@ TEST(LinkerTests, givenRelocationTypeWithHighPartOfAddressWhenPatchingDataSegmen
     linkerInput.dataRelocations[0].type = NEO::LinkerInput::RelocationInfo::Type::AddressLow;
     unresolvedExternals.clear();
     linkResult = linker.link(emptySegmentInfo, emptySegmentInfo, emptySegmentInfo,
-                             nonEmptypatchableSegment, emptyPatchableSegment, {},
-                             unresolvedExternals);
+                             &nonEmptypatchableSegment, &emptyPatchableSegment, {},
+                             unresolvedExternals, nullptr, nullptr, nullptr);
 
     EXPECT_TRUE(linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
@@ -720,16 +726,13 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsThenDataSegmentsAreProperlyPatc
     NEO::Linker::SegmentInfo globalConstantsSegmentInfo, globalVariablesSegmentInfo;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
 
-    NEO::Linker::PatchableSegment globalConstantsPatchableSegment, globalVariablesPatchableSegment;
     globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsSegmentData.data());
     globalConstantsSegmentInfo.segmentSize = globalConstantsSegmentData.size();
-    globalConstantsPatchableSegment.hostPointer = globalConstantsSegmentData.data();
-    globalConstantsPatchableSegment.segmentSize = globalConstantsSegmentData.size();
+    NEO::MockGraphicsAllocation globalConstantsPatchableSegment{globalConstantsSegmentData.data(), globalConstantsSegmentData.size()};
 
     globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesSegmentData.data());
     globalVariablesSegmentInfo.segmentSize = globalVariablesSegmentData.size();
-    globalVariablesPatchableSegment.hostPointer = globalVariablesSegmentData.data();
-    globalVariablesPatchableSegment.segmentSize = globalVariablesSegmentData.size();
+    NEO::MockGraphicsAllocation globalVariablesPatchableSegment{globalVariablesSegmentData.data(), globalVariablesSegmentData.size()};
 
     NEO::LinkerInput::RelocationInfo relocationInfo[5];
     // GlobalVar -> GlobalVar
@@ -765,7 +768,9 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsThenDataSegmentsAreProperlyPatc
     uint32_t initValue = 0;
     for (const auto &reloc : relocationInfo) {
         linkerInput.addDataRelocationInfo(reloc);
-        void *dstRaw = (reloc.relocationSegment == NEO::SegmentType::GlobalVariables) ? globalVariablesPatchableSegment.hostPointer : globalConstantsPatchableSegment.hostPointer;
+        void *dstRaw = (reloc.relocationSegment == NEO::SegmentType::GlobalVariables)
+                           ? globalVariablesPatchableSegment.getUnderlyingBuffer()
+                           : globalConstantsPatchableSegment.getUnderlyingBuffer();
         if (reloc.type == NEO::LinkerInput::RelocationInfo::Type::Address) {
             *reinterpret_cast<uintptr_t *>(ptrOffset(dstRaw, static_cast<size_t>(reloc.offset))) = initValue * 4; // relocations to global data are currently based on patchIncrement, simulate init data
         } else {
@@ -775,17 +780,21 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsThenDataSegmentsAreProperlyPatc
     }
 
     auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {},
-                                  globalVariablesPatchableSegment, globalConstantsPatchableSegment, {},
-                                  unresolvedExternals);
+                                  &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
+                                  unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_TRUE(linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
-    EXPECT_EQ(7U, *reinterpret_cast<uint8_t *>(globalConstantsPatchableSegment.hostPointer));
-    EXPECT_EQ(13U, *reinterpret_cast<uint8_t *>(globalVariablesPatchableSegment.hostPointer));
+    EXPECT_EQ(7U, *reinterpret_cast<uint8_t *>(globalConstantsPatchableSegment.getUnderlyingBuffer()));
+    EXPECT_EQ(13U, *reinterpret_cast<uint8_t *>(globalVariablesPatchableSegment.getUnderlyingBuffer()));
 
     initValue = 0;
     for (const auto &reloc : relocationInfo) {
-        void *srcRaw = (reloc.symbolSegment == NEO::SegmentType::GlobalVariables) ? globalVariablesPatchableSegment.hostPointer : globalConstantsPatchableSegment.hostPointer;
-        void *dstRaw = (reloc.relocationSegment == NEO::SegmentType::GlobalVariables) ? globalVariablesPatchableSegment.hostPointer : globalConstantsPatchableSegment.hostPointer;
+        void *srcRaw = (reloc.symbolSegment == NEO::SegmentType::GlobalVariables)
+                           ? globalVariablesPatchableSegment.getUnderlyingBuffer()
+                           : globalConstantsPatchableSegment.getUnderlyingBuffer();
+        void *dstRaw = (reloc.relocationSegment == NEO::SegmentType::GlobalVariables)
+                           ? globalVariablesPatchableSegment.getUnderlyingBuffer()
+                           : globalConstantsPatchableSegment.getUnderlyingBuffer();
         uint8_t *src = reinterpret_cast<uint8_t *>(srcRaw);
         uint8_t *dst = reinterpret_cast<uint8_t *>(dstRaw);
 
@@ -820,16 +829,13 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchin32bitBinaryThenDataS
     NEO::Linker::SegmentInfo globalConstantsSegmentInfo, globalVariablesSegmentInfo;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
 
-    NEO::Linker::PatchableSegment globalConstantsPatchableSegment, globalVariablesPatchableSegment;
     globalConstantsSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalConstantsSegmentData.data());
     globalConstantsSegmentInfo.segmentSize = globalConstantsSegmentData.size();
-    globalConstantsPatchableSegment.hostPointer = globalConstantsSegmentData.data();
-    globalConstantsPatchableSegment.segmentSize = globalConstantsSegmentData.size();
+    NEO::MockGraphicsAllocation globalConstantsPatchableSegment{globalConstantsSegmentData.data(), globalConstantsSegmentData.size()};
 
     globalVariablesSegmentInfo.gpuAddress = reinterpret_cast<uintptr_t>(globalVariablesSegmentData.data());
     globalVariablesSegmentInfo.segmentSize = globalVariablesSegmentData.size();
-    globalVariablesPatchableSegment.hostPointer = globalVariablesSegmentData.data();
-    globalVariablesPatchableSegment.segmentSize = globalVariablesSegmentData.size();
+    NEO::MockGraphicsAllocation globalVariablesPatchableSegment{globalVariablesSegmentData.data(), globalVariablesSegmentData.size()};
 
     NEO::LinkerInput::RelocationInfo relocationInfo[5];
     // GlobalVar -> GlobalVar
@@ -865,23 +871,29 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchin32bitBinaryThenDataS
     uint32_t initValue = 0;
     for (const auto &reloc : relocationInfo) {
         linkerInput.addDataRelocationInfo(reloc);
-        void *dstRaw = (reloc.relocationSegment == NEO::SegmentType::GlobalVariables) ? globalVariablesPatchableSegment.hostPointer : globalConstantsPatchableSegment.hostPointer;
+        void *dstRaw = (reloc.relocationSegment == NEO::SegmentType::GlobalVariables)
+                           ? globalVariablesPatchableSegment.getUnderlyingBuffer()
+                           : globalConstantsPatchableSegment.getUnderlyingBuffer();
         *reinterpret_cast<uint32_t *>(ptrOffset(dstRaw, static_cast<size_t>(reloc.offset))) = initValue * 4; // relocations to global data are currently based on patchIncrement, simulate init data
         ++initValue;
     }
 
     auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {},
-                                  globalVariablesPatchableSegment, globalConstantsPatchableSegment, {},
-                                  unresolvedExternals);
+                                  &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
+                                  unresolvedExternals, nullptr, nullptr, nullptr);
     EXPECT_TRUE(linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
-    EXPECT_EQ(7U, *reinterpret_cast<uint8_t *>(globalConstantsPatchableSegment.hostPointer));
-    EXPECT_EQ(13U, *reinterpret_cast<uint8_t *>(globalVariablesPatchableSegment.hostPointer));
+    EXPECT_EQ(7U, *reinterpret_cast<uint8_t *>(globalConstantsPatchableSegment.getUnderlyingBuffer()));
+    EXPECT_EQ(13U, *reinterpret_cast<uint8_t *>(globalVariablesPatchableSegment.getUnderlyingBuffer()));
 
     initValue = 0;
     for (const auto &reloc : relocationInfo) {
-        void *srcRaw = (reloc.symbolSegment == NEO::SegmentType::GlobalVariables) ? globalVariablesPatchableSegment.hostPointer : globalConstantsPatchableSegment.hostPointer;
-        void *dstRaw = (reloc.relocationSegment == NEO::SegmentType::GlobalVariables) ? globalVariablesPatchableSegment.hostPointer : globalConstantsPatchableSegment.hostPointer;
+        void *srcRaw = (reloc.symbolSegment == NEO::SegmentType::GlobalVariables)
+                           ? globalVariablesPatchableSegment.getUnderlyingBuffer()
+                           : globalConstantsPatchableSegment.getUnderlyingBuffer();
+        void *dstRaw = (reloc.relocationSegment == NEO::SegmentType::GlobalVariables)
+                           ? globalVariablesPatchableSegment.getUnderlyingBuffer()
+                           : globalConstantsPatchableSegment.getUnderlyingBuffer();
         uint8_t *src = reinterpret_cast<uint8_t *>(srcRaw);
         uint8_t *dst = reinterpret_cast<uint8_t *>(dstRaw);
 
@@ -900,14 +912,12 @@ TEST(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfDataSegmentsFails) {
     NEO::Linker linker(linkerInput);
 
     NEO::Linker::SegmentInfo emptySegmentInfo;
-    NEO::Linker::PatchableSegment emptyPatchableSegment;
+    NEO::MockGraphicsAllocation emptyPatchableSegment;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
 
     std::vector<char> nonEmptypatchableSegmentData;
     nonEmptypatchableSegmentData.resize(64, 8U);
-    NEO::Linker::PatchableSegment nonEmptypatchableSegment;
-    nonEmptypatchableSegment.hostPointer = nonEmptypatchableSegmentData.data();
-    nonEmptypatchableSegment.segmentSize = nonEmptypatchableSegmentData.size();
+    NEO::MockGraphicsAllocation nonEmptypatchableSegment{nonEmptypatchableSegmentData.data(), nonEmptypatchableSegmentData.size()};
 
     NEO::LinkerInput::RelocationInfo relocInfo;
     relocInfo.offset = 64U;
@@ -919,8 +929,8 @@ TEST(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfDataSegmentsFails) {
     linkerInput.traits.requiresPatchingOfGlobalVariablesBuffer = true;
 
     bool linkResult = linker.link(emptySegmentInfo, emptySegmentInfo, emptySegmentInfo,
-                                  nonEmptypatchableSegment, emptyPatchableSegment, {},
-                                  unresolvedExternals);
+                                  &nonEmptypatchableSegment, &emptyPatchableSegment, {},
+                                  unresolvedExternals, nullptr, nullptr, nullptr);
 
     EXPECT_FALSE(linkResult);
     EXPECT_EQ(1U, unresolvedExternals.size());
@@ -928,8 +938,8 @@ TEST(LinkerTests, givenInvalidRelocationOffsetThenPatchingOfDataSegmentsFails) {
     linkerInput.dataRelocations[0].offset = 32;
     unresolvedExternals.clear();
     linkResult = linker.link(emptySegmentInfo, emptySegmentInfo, emptySegmentInfo,
-                             nonEmptypatchableSegment, emptyPatchableSegment, {},
-                             unresolvedExternals);
+                             &nonEmptypatchableSegment, &emptyPatchableSegment, {},
+                             unresolvedExternals, nullptr, nullptr, nullptr);
 
     EXPECT_TRUE(linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());

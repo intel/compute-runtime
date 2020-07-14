@@ -410,19 +410,15 @@ bool ModuleImp::linkBinary() {
     Linker::SegmentInfo globals;
     Linker::SegmentInfo constants;
     Linker::SegmentInfo exportedFunctions;
-    Linker::PatchableSegment globalsForPatching;
-    Linker::PatchableSegment constantsForPatching;
-    if (translationUnit->globalVarBuffer != nullptr) {
-        globals.gpuAddress = static_cast<uintptr_t>(translationUnit->globalVarBuffer->getGpuAddress());
-        globals.segmentSize = translationUnit->globalVarBuffer->getUnderlyingBufferSize();
-        globalsForPatching.hostPointer = translationUnit->globalVarBuffer->getUnderlyingBuffer();
-        globalsForPatching.segmentSize = translationUnit->globalVarBuffer->getUnderlyingBufferSize();
+    GraphicsAllocation *globalsForPatching = translationUnit->globalVarBuffer;
+    GraphicsAllocation *constantsForPatching = translationUnit->globalConstBuffer;
+    if (globalsForPatching != nullptr) {
+        globals.gpuAddress = static_cast<uintptr_t>(globalsForPatching->getGpuAddress());
+        globals.segmentSize = globalsForPatching->getUnderlyingBufferSize();
     }
-    if (translationUnit->globalConstBuffer != nullptr) {
-        constants.gpuAddress = static_cast<uintptr_t>(translationUnit->globalConstBuffer->getGpuAddress());
-        constants.segmentSize = translationUnit->globalConstBuffer->getUnderlyingBufferSize();
-        constantsForPatching.hostPointer = translationUnit->globalConstBuffer->getUnderlyingBuffer();
-        constantsForPatching.segmentSize = translationUnit->globalConstBuffer->getUnderlyingBufferSize();
+    if (constantsForPatching != nullptr) {
+        constants.gpuAddress = static_cast<uintptr_t>(constantsForPatching->getGpuAddress());
+        constants.segmentSize = constantsForPatching->getUnderlyingBufferSize();
     }
     if (this->translationUnit->programInfo.linkerInput->getExportedFunctionsSegmentId() >= 0) {
         auto exportedFunctionHeapId = this->translationUnit->programInfo.linkerInput->getExportedFunctionsSegmentId();
@@ -445,7 +441,9 @@ bool ModuleImp::linkBinary() {
     Linker::UnresolvedExternals unresolvedExternalsInfo;
     bool linkSuccess = linker.link(globals, constants, exportedFunctions,
                                    globalsForPatching, constantsForPatching,
-                                   isaSegmentsForPatching, unresolvedExternalsInfo);
+                                   isaSegmentsForPatching, unresolvedExternalsInfo, this->device->getNEODevice(),
+                                   translationUnit->programInfo.globalConstants.initData,
+                                   translationUnit->programInfo.globalVariables.initData);
     this->symbols = linker.extractRelocatedSymbols();
     if (false == linkSuccess) {
         std::vector<std::string> kernelNames;
