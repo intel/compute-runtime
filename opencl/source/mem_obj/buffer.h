@@ -107,7 +107,7 @@ class Buffer : public MemObj {
                                             size_t size,
                                             void *memoryStorage,
                                             void *hostPtr,
-                                            GraphicsAllocation *gfxAllocation,
+                                            MultiGraphicsAllocation multiGraphicsAllocation,
                                             size_t offset,
                                             bool zeroCopy,
                                             bool isHostPtrSVM,

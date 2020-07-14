@@ -621,7 +621,7 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
                                          size_t size,
                                          void *memoryStorage,
                                          void *hostPtr,
-                                         GraphicsAllocation *gfxAllocation,
+                                         MultiGraphicsAllocation multiGraphicsAllocation,
                                          size_t offset,
                                          bool zeroCopy,
                                          bool isHostPtrSVM,
@@ -632,17 +632,11 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
     auto funcCreate = bufferFactory[hwInfo.platform.eRenderCoreFamily].createBufferFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
 
-    auto multiGraphicsAllocation = MultiGraphicsAllocation(device->getRootDeviceIndex());
-    if (gfxAllocation) {
-        multiGraphicsAllocation.addAllocation(gfxAllocation);
-    }
-
     MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, device);
     auto pBuffer = funcCreate(nullptr, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, multiGraphicsAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
 
-    if (!gfxAllocation) {
-        auto multiGraphicsAllocation = MultiGraphicsAllocation(device->getRootDeviceIndex());
+    if (!multiGraphicsAllocation.getDefaultGraphicsAllocation()) {
         std::swap(pBuffer->multiGraphicsAllocation, multiGraphicsAllocation);
     }
     pBuffer->offset = offset;
@@ -712,7 +706,11 @@ void Buffer::setSurfaceState(const Device *device,
                              GraphicsAllocation *gfxAlloc,
                              cl_mem_flags flags,
                              cl_mem_flags_intel flagsIntel) {
-    auto buffer = Buffer::createBufferHwFromDevice(device, flags, flagsIntel, svmSize, svmPtr, svmPtr, gfxAlloc, offset, true, false, false);
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(device->getRootDeviceIndex());
+    if (gfxAlloc) {
+        multiGraphicsAllocation.addAllocation(gfxAlloc);
+    }
+    auto buffer = Buffer::createBufferHwFromDevice(device, flags, flagsIntel, svmSize, svmPtr, svmPtr, multiGraphicsAllocation, offset, true, false, false);
     buffer->setArgStateful(surfaceState, false, false, false, false, *device);
     delete buffer;
 }
