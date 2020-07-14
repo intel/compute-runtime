@@ -12,6 +12,7 @@
 
 #include "os_standby.h"
 #include "standby.h"
+#include "third_party/level_zero/zes_api_ext.h"
 
 namespace L0 {
 
@@ -20,6 +21,10 @@ class StandbyImp : public Standby, NEO::NonCopyableOrMovableClass {
     ze_result_t standbyGetProperties(zet_standby_properties_t *pProperties) override;
     ze_result_t standbyGetMode(zet_standby_promo_mode_t *pMode) override;
     ze_result_t standbySetMode(const zet_standby_promo_mode_t mode) override;
+
+    ze_result_t standbyGetProperties(zes_standby_properties_t *pProperties) override;
+    ze_result_t standbyGetMode(zes_standby_promo_mode_t *pMode) override;
+    ze_result_t standbySetMode(const zes_standby_promo_mode_t mode) override;
 
     StandbyImp() = default;
     StandbyImp(OsSysman *pOsSysman);
@@ -30,6 +35,7 @@ class StandbyImp : public Standby, NEO::NonCopyableOrMovableClass {
 
   private:
     zet_standby_properties_t standbyProperties = {};
+    zes_standby_properties_t zesStandbyProperties = {};
 };
 
 } // namespace L0

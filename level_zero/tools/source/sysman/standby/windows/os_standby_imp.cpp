@@ -13,6 +13,9 @@ class WddmStandbyImp : public OsStandby {
   public:
     ze_result_t getMode(zet_standby_promo_mode_t &mode) override;
     ze_result_t setMode(zet_standby_promo_mode_t mode) override;
+    ze_result_t getMode(zes_standby_promo_mode_t &mode) override;
+    ze_result_t setMode(zes_standby_promo_mode_t mode) override;
+    bool isStandbySupported(void) override;
 };
 
 ze_result_t WddmStandbyImp::getMode(zet_standby_promo_mode_t &mode) {
@@ -21,6 +24,18 @@ ze_result_t WddmStandbyImp::getMode(zet_standby_promo_mode_t &mode) {
 
 ze_result_t WddmStandbyImp::setMode(zet_standby_promo_mode_t mode) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmStandbyImp::setMode(zes_standby_promo_mode_t mode) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+bool WddmStandbyImp::isStandbySupported(void) {
+    return false;
 }
 
 OsStandby *OsStandby::create(OsSysman *pOsSysman) {

@@ -644,7 +644,7 @@ zesDeviceEnumStandbyDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_standby_handle_t *phStandby) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->standbyGet(pCount, phStandby);
 }
 
 __zedllexport ze_result_t __zecall
@@ -659,7 +659,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesStandbyGetProperties(
     zes_standby_handle_t hStandby,
     zes_standby_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Standby::fromHandle(hStandby)->standbyGetProperties(pProperties);
 }
 
 __zedllexport ze_result_t __zecall
@@ -673,7 +673,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesStandbyGetMode(
     zes_standby_handle_t hStandby,
     zes_standby_promo_mode_t *pMode) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Standby::fromHandle(hStandby)->standbyGetMode(pMode);
 }
 
 __zedllexport ze_result_t __zecall
@@ -687,7 +687,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesStandbySetMode(
     zes_standby_handle_t hStandby,
     zes_standby_promo_mode_t mode) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Standby::fromHandle(hStandby)->standbySetMode(mode);
 }
 
 __zedllexport ze_result_t __zecall

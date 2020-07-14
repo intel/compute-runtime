@@ -10,5 +10,7 @@ if(UNIX)
            ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
            ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_standby.cpp
            ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysfs_standby.h
+           ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_sysman_standby.cpp
+
     )
 endif()

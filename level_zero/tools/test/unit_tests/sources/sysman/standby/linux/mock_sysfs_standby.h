@@ -6,19 +6,8 @@
  */
 
 #pragma once
-#include "level_zero/core/test/unit_tests/mock.h"
+
 #include "level_zero/tools/source/sysman/standby/linux/os_standby_imp.h"
-
-#include "sysman/linux/fs_access.h"
-#include "sysman/standby/os_standby.h"
-#include "sysman/standby/standby_imp.h"
-
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
-
-using ::testing::_;
 
 namespace L0 {
 namespace ult {
@@ -30,21 +19,36 @@ class StandbySysfsAccess : public SysfsAccess {};
 template <>
 struct Mock<StandbySysfsAccess> : public StandbySysfsAccess {
     int mockStandbyMode = -1;
-    MOCK_METHOD2(read, ze_result_t(const std::string file, int &val));
-    MOCK_METHOD2(write, ze_result_t(const std::string file, const int val));
+    MOCK_METHOD(ze_result_t, read, (const std::string file, int &val), (override));
+    MOCK_METHOD(ze_result_t, canRead, (const std::string file), (override));
 
+    ze_result_t getCanReadStatus(const std::string file) {
+        if (file.compare(standbyModeFile) == 0) {
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
     ze_result_t getVal(const std::string file, int &val) {
         if (file.compare(standbyModeFile) == 0) {
             val = mockStandbyMode;
+            return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_SUCCESS;
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     ze_result_t setVal(const std::string file, const int val) {
         if (file.compare(standbyModeFile) == 0) {
             mockStandbyMode = val;
+            return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_SUCCESS;
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t setValReturnError(const std::string file, const int val) {
+        if (file.compare(standbyModeFile) == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     Mock() = default;
@@ -57,7 +61,3 @@ class PublicLinuxStandbyImp : public L0::LinuxStandbyImp {
 };
 } // namespace ult
 } // namespace L0
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
