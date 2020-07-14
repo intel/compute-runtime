@@ -186,7 +186,7 @@ struct Linker {
         }
         return LinkingStatus::LinkedFully;
     }
-
+    static void patchAddress(void *relocAddress, const RelocatedSymbol &symbol, const RelocationInfo &relocation);
     RelocatedSymbolsMap extractRelocatedSymbols() {
         return RelocatedSymbolsMap(std::move(relocatedSymbols));
     }

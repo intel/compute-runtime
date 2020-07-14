@@ -107,7 +107,10 @@ struct ModuleImp : public Module {
         return this->translationUnit.get();
     }
 
+    const std::set<NEO::GraphicsAllocation *> &getImportedSymbolAllocations() const override { return importedSymbolAllocations; }
+
   protected:
+    void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);
     void verifyDebugCapabilities();
     Device *device = nullptr;
     PRODUCT_FAMILY productFamily{};
@@ -119,6 +122,8 @@ struct ModuleImp : public Module {
     NEO::Linker::RelocatedSymbolsMap symbols;
     bool debugEnabled = false;
     bool isFullyLinked = false;
+    NEO::Linker::UnresolvedExternals unresolvedExternalsInfo{};
+    std::set<NEO::GraphicsAllocation *> importedSymbolAllocations{};
 };
 
 bool moveBuildOption(std::string &dstOptionsSet, std::string &srcOptionSet, NEO::ConstStringRef dstOptionName, NEO::ConstStringRef srcOptionName);

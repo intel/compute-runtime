@@ -13,6 +13,7 @@
 #include "level_zero/core/source/module/module_build_log.h"
 #include <level_zero/ze_api.h>
 
+#include <set>
 #include <vector>
 
 struct _ze_module_handle_t {};
@@ -44,6 +45,7 @@ struct Module : _ze_module_handle_t {
     virtual const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const = 0;
     virtual uint32_t getMaxGroupSize() const = 0;
     virtual bool isDebugEnabled() const = 0;
+    virtual const std::set<NEO::GraphicsAllocation *> &getImportedSymbolAllocations() const = 0;
 
     Module() = default;
     Module(const Module &) = delete;

@@ -158,6 +158,21 @@ bool Linker::processRelocations(const SegmentInfo &globalVariables, const Segmen
 uint32_t addressSizeInBytes(LinkerInput::RelocationInfo::Type relocationtype) {
     return (relocationtype == LinkerInput::RelocationInfo::Type::Address) ? sizeof(uintptr_t) : sizeof(uint32_t);
 }
+void Linker::patchAddress(void *relocAddress, const Linker::RelocatedSymbol &symbol, const Linker::RelocationInfo &relocation) {
+    uint64_t gpuAddressAs64bit = static_cast<uint64_t>(symbol.gpuAddress);
+    switch (relocation.type) {
+    default:
+        UNRECOVERABLE_IF(RelocationInfo::Type::Address != relocation.type);
+        *reinterpret_cast<uintptr_t *>(relocAddress) = symbol.gpuAddress;
+        break;
+    case RelocationInfo::Type::AddressLow:
+        *reinterpret_cast<uint32_t *>(relocAddress) = static_cast<uint32_t>(gpuAddressAs64bit & 0xffffffff);
+        break;
+    case RelocationInfo::Type::AddressHigh:
+        *reinterpret_cast<uint32_t *>(relocAddress) = static_cast<uint32_t>((gpuAddressAs64bit >> 32) & 0xffffffff);
+        break;
+    }
+}
 
 void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals) {
     if (false == data.getTraits().requiresPatchingOfInstructionSegments) {
@@ -184,19 +199,7 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
                 continue;
             }
 
-            uint64_t gpuAddressAs64bit = static_cast<uint64_t>(symbolIt->second.gpuAddress);
-            switch (relocation.type) {
-            default:
-                UNRECOVERABLE_IF(RelocationInfo::Type::Address != relocation.type);
-                *reinterpret_cast<uintptr_t *>(relocAddress) = symbolIt->second.gpuAddress;
-                break;
-            case RelocationInfo::Type::AddressLow:
-                *reinterpret_cast<uint32_t *>(relocAddress) = static_cast<uint32_t>(gpuAddressAs64bit & 0xffffffff);
-                break;
-            case RelocationInfo::Type::AddressHigh:
-                *reinterpret_cast<uint32_t *>(relocAddress) = static_cast<uint32_t>((gpuAddressAs64bit >> 32) & 0xffffffff);
-                break;
-            }
+            patchAddress(relocAddress, symbolIt->second, relocation);
         }
     }
 }

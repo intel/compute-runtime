@@ -24,7 +24,10 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::BaseClass;
     using BaseClass::device;
     using BaseClass::isFullyLinked;
+    using BaseClass::kernelImmDatas;
+    using BaseClass::symbols;
     using BaseClass::translationUnit;
+    using BaseClass::unresolvedExternalsInfo;
 };
 
 using Module = WhiteBox<::L0::Module>;

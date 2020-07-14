@@ -678,6 +678,9 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     for (auto &alloc : kernelImmData->getResidencyContainer()) {
         residencyContainer.push_back(alloc);
     }
+    for (auto &alloc : module->getImportedSymbolAllocations()) {
+        residencyContainer.push_back(alloc);
+    }
 
     return ZE_RESULT_SUCCESS;
 }
