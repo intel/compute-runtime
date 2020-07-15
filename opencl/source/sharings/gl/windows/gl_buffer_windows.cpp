@@ -38,7 +38,11 @@ Buffer *GlBuffer::createSharedGlBuffer(Context *context, cl_mem_flags flags, uns
     }
 
     auto glHandler = new GlBuffer(sharingFunctions, bufferId);
-    return Buffer::createSharedBuffer(context, flags, glHandler, graphicsAllocation);
+    auto rootDeviceIndex = graphicsAllocation->getRootDeviceIndex();
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
+    multiGraphicsAllocation.addAllocation(graphicsAllocation);
+
+    return Buffer::createSharedBuffer(context, flags, glHandler, multiGraphicsAllocation);
 }
 
 void GlBuffer::synchronizeObject(UpdateData &updateData) {

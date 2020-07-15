@@ -49,7 +49,11 @@ class D3DBuffer : public D3DSharing<D3D> {
 
         auto d3dBufferObj = new D3DBuffer<D3D>(context, d3dBuffer, bufferStaging, sharedResource);
 
-        return Buffer::createSharedBuffer(context, flags, d3dBufferObj, alloc);
+        auto rootDeviceIndex = alloc->getRootDeviceIndex();
+        auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
+        multiGraphicsAllocation.addAllocation(alloc);
+
+        return Buffer::createSharedBuffer(context, flags, d3dBufferObj, multiGraphicsAllocation);
     }
     ~D3DBuffer() override = default;
 

@@ -2466,7 +2466,7 @@ TEST(SharedBuffersTest, whenBuffersIsCreatedWithSharingHandlerThenItIsSharedBuff
     auto memoryManager = context.getDevice(0)->getMemoryManager();
     auto handler = new SharingHandler();
     auto graphicsAlloaction = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
-    auto buffer = Buffer::createSharedBuffer(&context, CL_MEM_READ_ONLY, handler, graphicsAlloaction);
+    auto buffer = Buffer::createSharedBuffer(&context, CL_MEM_READ_ONLY, handler, GraphicsAllocationHelper::toMultiGraphicsAllocation(graphicsAlloaction));
     ASSERT_NE(nullptr, buffer);
     EXPECT_EQ(handler, buffer->peekSharingHandler());
     buffer->release();

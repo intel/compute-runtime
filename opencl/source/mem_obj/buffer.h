@@ -87,7 +87,7 @@ class Buffer : public MemObj {
     static Buffer *createSharedBuffer(Context *context,
                                       cl_mem_flags flags,
                                       SharingHandler *sharingHandler,
-                                      GraphicsAllocation *graphicsAllocation);
+                                      MultiGraphicsAllocation multiGraphicsAllocation);
 
     static Buffer *createBufferHw(Context *context,
                                   MemoryProperties memoryProperties,

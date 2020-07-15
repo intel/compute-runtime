@@ -29,5 +29,9 @@ Buffer *UnifiedBuffer::createSharedUnifiedBuffer(Context *context, cl_mem_flags 
 
     UnifiedSharingFunctions *sharingFunctions = context->getSharing<UnifiedSharingFunctions>();
     auto sharingHandler = new UnifiedBuffer(sharingFunctions, extMem.type);
-    return Buffer::createSharedBuffer(context, flags, sharingHandler, graphicsAllocation);
+    auto rootDeviceIndex = graphicsAllocation->getRootDeviceIndex();
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
+    multiGraphicsAllocation.addAllocation(graphicsAllocation);
+
+    return Buffer::createSharedBuffer(context, flags, sharingHandler, multiGraphicsAllocation);
 }

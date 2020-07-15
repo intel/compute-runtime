@@ -374,14 +374,11 @@ Buffer *Buffer::create(Context *context,
 }
 
 Buffer *Buffer::createSharedBuffer(Context *context, cl_mem_flags flags, SharingHandler *sharingHandler,
-                                   GraphicsAllocation *graphicsAllocation) {
+                                   MultiGraphicsAllocation multiGraphicsAllocation) {
     auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
-    auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
-    multiGraphicsAllocation.addAllocation(graphicsAllocation);
-
     auto sharedBuffer = createBufferHw(
         context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
-        flags, 0, graphicsAllocation->getUnderlyingBufferSize(), nullptr, nullptr, multiGraphicsAllocation,
+        flags, 0, multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->getUnderlyingBufferSize(), nullptr, nullptr, multiGraphicsAllocation,
         false, false, false);
 
     sharedBuffer->setSharingHandler(sharingHandler);
