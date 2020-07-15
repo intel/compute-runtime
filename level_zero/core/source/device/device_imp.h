@@ -46,6 +46,8 @@ struct DeviceImp : public Device {
     ze_result_t getCacheProperties(ze_device_cache_properties_t *pCacheProperties) override;
     ze_result_t imageGetProperties(const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) override;
     ze_result_t getDeviceImageProperties(ze_device_image_properties_t *pDeviceImageProperties) override;
+    ze_result_t getCommandQueueGroupProperties(uint32_t *pCount,
+                                               ze_command_queue_group_properties_t *pCommandQueueGroupProperties) override;
     ze_result_t systemBarrier() override;
     void *getExecEnvironment() override;
     BuiltinFunctionsLib *getBuiltinFunctionsLib() override;

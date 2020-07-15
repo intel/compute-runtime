@@ -146,6 +146,11 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
+                                                      ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t DeviceImp::createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) {
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     *phImage = Image::create(productFamily, this, desc);

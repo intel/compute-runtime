@@ -75,6 +75,11 @@ struct Mock<Device> : public Device {
 
     MOCK_METHOD2(imageGetProperties,
                  ze_result_t(const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties));
+    MOCK_METHOD(ze_result_t,
+                getCommandQueueGroupProperties,
+                (uint32_t * pCount,
+                 ze_command_queue_group_properties_t *pCommandQueueGroupProperties),
+                (override));
     MOCK_METHOD1(getDeviceImageProperties,
                  ze_result_t(ze_device_image_properties_t *pDeviceImageProperties));
     MOCK_METHOD0(systemBarrier, ze_result_t());

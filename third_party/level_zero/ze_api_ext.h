@@ -175,6 +175,72 @@ zeModuleDynamicLinkExt(
     ze_module_build_log_handle_t *phLinkLog ///< [out][optional] pointer to handle of dynamic link log.
 );
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supported command queue group property flags
+typedef uint32_t ze_command_queue_group_property_flags_t;
+typedef enum _ze_command_queue_group_property_flag_t {
+    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE = ZE_BIT(0),             ///< Command queue group supports enqueing compute commands.
+    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY = ZE_BIT(1),                ///< Command queue group supports enqueing copy commands.
+    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS = ZE_BIT(2), ///< Command queue group supports cooperative kernels.
+                                                                          ///< See ::zeCommandListAppendLaunchCooperativeKernel for more details.
+    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS = ZE_BIT(3),             ///< Command queue groups supports metric streamers and queries.
+    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_FORCE_UINT32 = 0x7fffffff
+
+} ze_command_queue_group_property_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Command queue group properties queried using
+///        ::zeDeviceGetCommandQueueGroupProperties
+typedef struct _ze_command_queue_group_properties_t {
+    void *pNext;                                   ///< [in,out][optional] pointer to extension-specific structure
+    ze_command_queue_group_property_flags_t flags; ///< [out] 0 (none) or a valid combination of
+                                                   ///< ::ze_command_queue_group_property_flag_t
+    size_t maxMemoryFillPatternSize;               ///< [out] maximum `pattern_size` supported by command queue group.
+                                                   ///< See ::zeCommandListAppendMemoryFill for more details.
+    uint32_t numQueues;                            ///< [out] the number of physical command queues within the group.
+
+} ze_command_queue_group_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieves command queue group properties of the device.
+///
+/// @details
+///     - Properties are reported for each physical command queue type supported
+///       by the device.
+///     - Multiple calls to this function will return properties in the same
+///       order.
+///     - The order in which the properties are returned defines the command
+///       queue group's ordinal.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///
+/// @remarks
+///   _Analogues_
+///     - **vkGetPhysicalDeviceQueueFamilyProperties**
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pCount`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDeviceGetCommandQueueGroupProperties(
+    ze_device_handle_t hDevice,                                       ///< [in] handle of the device
+    uint32_t *pCount,                                                 ///< [in,out] pointer to the number of command queue group properties.
+                                                                      ///< if count is zero, then the driver will update the value with the total
+                                                                      ///< number of command queue group properties available.
+                                                                      ///< if count is non-zero, then driver will only retrieve that number of
+                                                                      ///< command queue group properties.
+                                                                      ///< if count is larger than the number of command queue group properties
+                                                                      ///< available, then the driver will update the value with the correct
+                                                                      ///< number of command queue group properties available.
+    ze_command_queue_group_properties_t *pCommandQueueGroupProperties ///< [in,out][optional][range(0, *pCount)] array of query results for
+                                                                      ///< command queue group properties
+);
+
 } //extern C
 
 #endif // _ZE_API_EXT_H

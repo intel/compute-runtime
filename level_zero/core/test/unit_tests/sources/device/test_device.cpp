@@ -156,6 +156,14 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     EXPECT_NE(0, memcmp(&deviceProperties.name, &devicePropertiesBefore.name, sizeof(devicePropertiesBefore.name)));
 }
 
+TEST_F(DeviceTest, givenCommandQueuePropertiesCallThenUnsupportedIsReturned) {
+    uint32_t count;
+    ze_command_queue_group_properties_t queueProperties = {};
+
+    ze_result_t res = device->getCommandQueueGroupProperties(&count, &queueProperties);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
+}
+
 struct DeviceHasNoDoubleFp64Test : public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);

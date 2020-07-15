@@ -102,4 +102,12 @@ zeDeviceSetLastLevelCacheConfig(
     return L0::Device::fromHandle(hDevice)->setLastLevelCacheConfig(cacheConfig);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDeviceGetCommandQueueGroupProperties(
+    ze_device_handle_t hDevice,
+    uint32_t *pCount,
+    ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
+    return L0::Device::fromHandle(hDevice)->getCommandQueueGroupProperties(pCount, pCommandQueueGroupProperties);
+}
+
 } // extern "C"

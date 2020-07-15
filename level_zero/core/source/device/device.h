@@ -19,6 +19,8 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
+#include "third_party/level_zero/ze_api_ext.h"
+
 struct _ze_device_handle_t {};
 namespace NEO {
 class Device;
@@ -54,8 +56,7 @@ struct Device : _ze_device_handle_t {
                                       ze_sampler_handle_t *phSampler) = 0;
     virtual ze_result_t evictImage(ze_image_handle_t hImage) = 0;
     virtual ze_result_t evictMemory(void *ptr, size_t size) = 0;
-    virtual ze_result_t
-    getComputeProperties(ze_device_compute_properties_t *pComputeProperties) = 0;
+    virtual ze_result_t getComputeProperties(ze_device_compute_properties_t *pComputeProperties) = 0;
     virtual ze_result_t getP2PProperties(ze_device_handle_t hPeerDevice,
                                          ze_device_p2p_properties_t *pP2PProperties) = 0;
     virtual ze_result_t getKernelProperties(ze_device_kernel_properties_t *pKernelProperties) = 0;
@@ -71,6 +72,8 @@ struct Device : _ze_device_handle_t {
     virtual ze_result_t imageGetProperties(const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) = 0;
     virtual ze_result_t getDeviceImageProperties(ze_device_image_properties_t *pDeviceImageProperties) = 0;
 
+    virtual ze_result_t getCommandQueueGroupProperties(uint32_t *pCount,
+                                                       ze_command_queue_group_properties_t *pCommandQueueGroupProperties) = 0;
     virtual ze_result_t systemBarrier() = 0;
 
     virtual ze_result_t registerCLMemory(cl_context context, cl_mem mem, void **ptr) = 0;
