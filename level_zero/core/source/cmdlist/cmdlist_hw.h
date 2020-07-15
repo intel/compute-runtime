@@ -130,10 +130,12 @@ struct CommandListCoreFamily : CommandListImp {
                                                               uint64_t srcOffset, uint32_t size,
                                                               uint32_t elementSize, Builtin builtin);
 
-    MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlit(NEO::GraphicsAllocation *dstPtrAlloc,
-                                                      uint64_t dstOffset,
+    MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
+                                                      NEO::GraphicsAllocation *dstPtrAlloc,
+                                                      uint64_t dstOffset, uintptr_t srcPtr,
                                                       NEO::GraphicsAllocation *srcPtrAlloc,
-                                                      uint64_t srcOffset, uint32_t size,
+                                                      uint64_t srcOffset,
+                                                      uint32_t size,
                                                       ze_event_handle_t hSignalEvent);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlitRegion(NEO::GraphicsAllocation *srcAlloc,

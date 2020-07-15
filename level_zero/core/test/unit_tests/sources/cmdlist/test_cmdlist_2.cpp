@@ -44,10 +44,13 @@ class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamil
         appendMemoryCopyKernelWithGACalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
-    ze_result_t appendMemoryCopyBlit(NEO::GraphicsAllocation *dstPtrAlloc,
-                                     uint64_t dstOffset,
+    ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
+                                     NEO::GraphicsAllocation *dstPtrAlloc,
+                                     uint64_t dstOffset, uintptr_t srcPtr,
                                      NEO::GraphicsAllocation *srcPtrAlloc,
-                                     uint64_t srcOffset, uint32_t size, ze_event_handle_t hSignalEvent) override {
+                                     uint64_t srcOffset,
+                                     uint32_t size,
+                                     ze_event_handle_t hSignalEvent) override {
         appendMemoryCopyBlitCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
