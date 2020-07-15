@@ -50,10 +50,6 @@ bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) {
     return hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
-bool isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo) {
-    return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP));
-}
-
 bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
     HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo));

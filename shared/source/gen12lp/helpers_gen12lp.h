@@ -33,7 +33,6 @@ void setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
                                        const PipelineSelectArgs &pipelineSelectArgs,
                                        const HardwareInfo &hwInfo);
 bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo);
-bool isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo);
 bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo);
 bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo);
 

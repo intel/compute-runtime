@@ -170,6 +170,15 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenEvenContextCountRequiredWhenGetGpgpuEngi
     hwInfo.featureTable.ftrCCSNode = true;
     engines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(4u, engines.size());
+
+    hwInfo.featureTable.ftrCCSNode = true;
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
+    engines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+    EXPECT_EQ(4u, engines.size());
+
+    hwInfo.featureTable.ftrCCSNode = false;
+    engines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+    EXPECT_EQ(4u, engines.size());
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetWhenGetGpgpuEnginesThenReturnTwoRcsAndCcsEngines) {
@@ -188,20 +197,23 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetWhenGetGpgpuEnginesThenRetu
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[3]);
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetAndDefaultRcsWhenGetGpgpuEnginesThenReturnThreeRcsAndCcsEngines) {
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeSetAndDefaultRcsWhenGetGpgpuEnginesThenReturnAppropriateNumberOfRcsEngines) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 0;
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
 
+    const auto expectedEnginesCount = HwInfoConfig::get(hwInfo.platform.eProductFamily)->isEvenContextCountRequired() ? 4u : 3u;
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
-    EXPECT_EQ(4u, device->engines.size());
+    EXPECT_EQ(expectedEnginesCount, device->engines.size());
     auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
-    EXPECT_EQ(4u, engines.size());
+    EXPECT_EQ(expectedEnginesCount, engines.size());
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[0]);
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[1]);
     EXPECT_EQ(aub_stream::ENGINE_RCS, engines[2]);
-    EXPECT_EQ(aub_stream::ENGINE_CCS, engines[3]);
+    if (expectedEnginesCount == 4) {
+        EXPECT_EQ(aub_stream::ENGINE_RCS, engines[3]);
+    }
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenTgllpWhenIsFusedEuDispatchEnabledIsCalledThenResultIsCorrect) {

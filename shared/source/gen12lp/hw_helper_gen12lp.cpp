@@ -40,20 +40,8 @@ bool HwHelperHw<Family>::is3DPipelineSelectWARequired(const HardwareInfo &hwInfo
 }
 
 template <>
-bool HwHelperHw<Family>::isForceDefaultRCSEngineWARequired(const HardwareInfo &hwInfo) {
-    return Gen12LPHelpers::isForceDefaultRCSEngineWARequired(hwInfo);
-}
-
-template <>
 bool HwHelperHw<Family>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
     return Gen12LPHelpers::isForceEmuInt32DivRemSPWARequired(hwInfo);
-}
-
-template <>
-void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
-    if (!pHwInfo->featureTable.ftrCCSNode || isForceDefaultRCSEngineWARequired(*pHwInfo)) {
-        pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
-    }
 }
 
 template <>
@@ -166,7 +154,7 @@ const HwHelper::EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInsta
         defaultEngine           // internal usage
     };
 
-    if (hwInfo.featureTable.ftrCCSNode) {
+    if (defaultEngine == aub_stream::EngineType::ENGINE_CCS && hwInfo.featureTable.ftrCCSNode) {
         engines.push_back(aub_stream::ENGINE_CCS);
     }
 
