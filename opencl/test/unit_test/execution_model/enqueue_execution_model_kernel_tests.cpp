@@ -282,6 +282,25 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
     }
 }
 
+HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelAndNotUsedSSHWhenEnqueuedThenSSHIsNotReallocated) {
+    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+
+        const size_t globalOffsets[3] = {0, 0, 0};
+        const size_t workItems[3] = {1, 1, 1};
+
+        pKernel->createReflectionSurface();
+        MockMultiDispatchInfo multiDispatchInfo(pKernel);
+
+        auto ssh = &getIndirectHeap<FamilyType, IndirectHeap::SURFACE_STATE>(*pCmdQ, multiDispatchInfo);
+        ssh->replaceBuffer(ssh->getCpuBase(), ssh->getMaxAvailableSpace());
+
+        pCmdQ->enqueueKernel(pKernel, 1, globalOffsets, workItems, workItems, 0, nullptr, nullptr);
+        auto ssh2 = &getIndirectHeap<FamilyType, IndirectHeap::SURFACE_STATE>(*pCmdQ, multiDispatchInfo);
+        EXPECT_EQ(ssh, ssh2);
+        EXPECT_EQ(ssh->getGraphicsAllocation(), ssh2->getGraphicsAllocation());
+    }
+}
+
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenBlocksSurfaceStatesAreCopied) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
@@ -307,10 +326,10 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueu
         // will be coies
         ssh->align(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
-        // mark the assumed place for surface states
-        size_t parentSshOffset = ssh->getUsed();
-
         pCmdQ->enqueueKernel(pKernel, 1, globalOffsets, workItems, workItems, 0, nullptr, nullptr);
+        // mark the assumed place for surface states
+        size_t parentSshOffset = 0;
+        ssh = &getIndirectHeap<FamilyType, IndirectHeap::SURFACE_STATE>(*pCmdQ, multiDispatchInfo);
 
         void *blockSSH = ptrOffset(ssh->getCpuBase(), parentSshOffset + parentKernelSSHSize); // note : unaligned at this point
 

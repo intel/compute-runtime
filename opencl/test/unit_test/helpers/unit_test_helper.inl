@@ -37,7 +37,7 @@ bool UnitTestHelper<GfxFamily>::isExpectMemoryNotEqualSupported() {
 
 template <typename GfxFamily>
 uint32_t UnitTestHelper<GfxFamily>::getDefaultSshUsage() {
-    return 0;
+    return sizeof(typename GfxFamily::RENDER_SURFACE_STATE);
 }
 
 template <typename GfxFamily>

@@ -371,7 +371,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenUsedSSHHeapWhenParent
             nullptr,
             CL_COMMAND_NDRANGE_KERNEL);
 
-        EXPECT_EQ(UnitTestHelper<FamilyType>::getDefaultSshUsage(), ssh.getUsed());
+        EXPECT_EQ(0u, ssh.getUsed());
 
         delete mockParentKernel;
     }

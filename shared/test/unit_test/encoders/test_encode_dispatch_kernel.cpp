@@ -107,8 +107,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenOneBindingTableEntryWh
     bindingTableState.sInit();
 
     auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
-    uint32_t sizeUsed = 0x20;
+    size_t sizeUsed = 0x20;
     ssh->getSpace(sizeUsed);
+    sizeUsed = ssh->getUsed();
+
     auto expectedOffset = alignUp(sizeUsed, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
     uint32_t dims[] = {2, 1, 1};
@@ -134,8 +136,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumBindingTableZeroWhen
     bindingTableState.sInit();
 
     auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
-    uint32_t sizeUsed = 0x20;
+    size_t sizeUsed = 0x20;
     ssh->getSpace(sizeUsed);
+    sizeUsed = ssh->getUsed();
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -347,8 +350,9 @@ HWTEST_F(EncodeDispatchKernelTest, givenBindlessBufferArgWhenDispatchingKernelTh
     auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
     auto ioh = cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT);
 
-    uint32_t sizeUsed = 0x20;
+    size_t sizeUsed = 0x20;
     ssh->getSpace(sizeUsed);
+    sizeUsed = ssh->getUsed();
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -367,7 +371,7 @@ HWTEST_F(EncodeDispatchKernelTest, givenBindlessBufferArgWhenDispatchingKernelTh
     globalMemArg.DataParamSize = 4;
     globalMemArg.SurfaceStateHeapOffset = surfaceStateOffset;
 
-    auto surfaceStateOffsetOnHeap = alignUp(sizeUsed, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE) + surfaceStateOffset;
+    auto surfaceStateOffsetOnHeap = static_cast<uint32_t>(alignUp(sizeUsed, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE)) + surfaceStateOffset;
     auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(ioh->getCpuBase(), iohOffset));
     *patchLocation = 0xdead;
 
@@ -405,8 +409,9 @@ HWTEST_F(EncodeDispatchKernelTest, givenBindlessImageArgWhenDispatchingKernelThe
     auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
     auto ioh = cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT);
 
-    uint32_t sizeUsed = 0x20;
+    size_t sizeUsed = 0x20;
     ssh->getSpace(sizeUsed);
+    sizeUsed = ssh->getUsed();
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -424,7 +429,7 @@ HWTEST_F(EncodeDispatchKernelTest, givenBindlessImageArgWhenDispatchingKernelThe
     imageArg.ArgumentNumber = 0;
     imageArg.Offset = surfaceStateOffset;
 
-    auto surfaceStateOffsetOnHeap = alignUp(sizeUsed, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE) + surfaceStateOffset;
+    auto surfaceStateOffsetOnHeap = static_cast<uint32_t>(alignUp(sizeUsed, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE)) + surfaceStateOffset;
     auto patchLocation = reinterpret_cast<uint32_t *>(ptrOffset(ioh->getCpuBase(), iohOffset));
     *patchLocation = 0xdead;
 
@@ -462,8 +467,9 @@ HWTEST_F(EncodeDispatchKernelTest, givenNonBindlessOrStatelessArgWhenDispatching
     auto ssh = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
     auto ioh = cmdContainer->getIndirectHeap(HeapType::INDIRECT_OBJECT);
 
-    uint32_t sizeUsed = 0x20;
+    size_t sizeUsed = 0x20;
     ssh->getSpace(sizeUsed);
+    sizeUsed = ssh->getUsed();
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());

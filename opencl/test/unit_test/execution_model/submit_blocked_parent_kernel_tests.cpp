@@ -297,7 +297,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenParentKernelWh
     delete parentKernel;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQueueHeapshenParentKernelIsSubmittedThenQueueHeapsAreNotUsed) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQueueHeapsWhenParentKernelIsSubmittedThenQueueHeapsAreNotUsed) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     cl_queue_properties properties[3] = {0};
@@ -330,6 +330,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQue
     queueDsh.getSpace(usedSize);
     queueIoh.getSpace(usedSize);
 
+    auto intialSshUsed = queueSsh.getUsed();
+
     auto cmdStreamAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()});
     auto blockedCommandData = std::make_unique<KernelOperation>(new LinearStream(cmdStreamAllocation),
                                                                 *pCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
@@ -345,7 +347,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQue
     EXPECT_FALSE(cmdQ.releaseIndirectHeapCalled);
     EXPECT_EQ(usedSize, queueDsh.getUsed());
     EXPECT_EQ(usedSize, queueIoh.getUsed());
-    EXPECT_EQ(usedSize, queueSsh.getUsed());
+    EXPECT_EQ(intialSshUsed, queueSsh.getUsed());
 
     delete cmdComputeKernel;
     delete parentKernel;
@@ -371,8 +373,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhen
     pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
     pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, sshSize, ssh);
     dsh->getSpace(mockDevQueue.getDshOffset());
-
-    EXPECT_EQ(0u, ssh->getUsed());
 
     pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, sshSize);
 

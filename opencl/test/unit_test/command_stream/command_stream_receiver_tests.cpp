@@ -251,6 +251,20 @@ HWTEST_F(CommandStreamReceiverTest, givenCsrWhenAllocateHeapMemoryIsCalledThenHe
     delete dsh;
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenSurfaceStateHeapTypeWhenAllocateHeapMemoryIsCalledThenSSHHasInitialSpaceReserevedForBindlessOffsets) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    IndirectHeap *ssh = nullptr;
+    csr.allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
+    EXPECT_NE(nullptr, ssh);
+    ASSERT_NE(nullptr, ssh->getGraphicsAllocation());
+
+    auto sshReservedSize = UnitTestHelper<FamilyType>::getDefaultSshUsage();
+    EXPECT_EQ(sshReservedSize, ssh->getUsed());
+
+    csr.getMemoryManager()->freeGraphicsMemory(ssh->getGraphicsAllocation());
+    delete ssh;
+}
+
 TEST(CommandStreamReceiverSimpleTest, givenCsrWithoutTagAllocationWhenGetTagAllocationIsCalledThenNullptrIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);

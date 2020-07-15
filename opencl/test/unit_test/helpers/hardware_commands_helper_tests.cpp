@@ -614,6 +614,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
+    auto sshUsed = ssh.getUsed();
+
     // Obtain where the pointers will be stored
     const auto &kernelInfo = kernel->getKernelInfo();
     auto numSurfaceStates = kernelInfo.patchInfo.statelessGlobalMemObjKernelArgs.size() +
@@ -648,8 +650,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
         nullptr,
         true);
 
-    EXPECT_EQ(0x00000000u, *(&bindingTableStatesPointers[0]));
-    EXPECT_EQ(0x00000040u, *(&bindingTableStatesPointers[1]));
+    EXPECT_EQ(sshUsed + 0x00000000u, *(&bindingTableStatesPointers[0]));
+    EXPECT_EQ(sshUsed + 0x00000040u, *(&bindingTableStatesPointers[1]));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateThenSurfaceStatePointersAreCorrect) {

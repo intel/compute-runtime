@@ -257,6 +257,9 @@ void HardwareInterface<GfxFamily>::obtainIndirectHeaps(CommandQueue &commandQueu
     } else {
         if (parentKernel && (commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getUsed() > 0)) {
             commandQueue.releaseIndirectHeap(IndirectHeap::SURFACE_STATE);
+            // clean reserved bindless offsets
+            ssh = &getIndirectHeap<GfxFamily, IndirectHeap::SURFACE_STATE>(commandQueue, multiDispatchInfo);
+            ssh->replaceBuffer(ssh->getCpuBase(), ssh->getMaxAvailableSpace());
         }
         dsh = &getIndirectHeap<GfxFamily, IndirectHeap::DYNAMIC_STATE>(commandQueue, multiDispatchInfo);
         ioh = &getIndirectHeap<GfxFamily, IndirectHeap::INDIRECT_OBJECT>(commandQueue, multiDispatchInfo);
