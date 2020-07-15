@@ -231,7 +231,7 @@ if(BUILD_WITH_L0)
         )
     endif()
 
-if(DEFINED AUB_STREAM_DIR)
+if(DEFINED AUB_STREAM_PROJECT_NAME)
     target_sources(${TARGET_NAME_L0}
         PRIVATE
             $<TARGET_OBJECTS:aub_stream_all_hw>

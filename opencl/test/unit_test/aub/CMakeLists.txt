@@ -11,7 +11,7 @@ set(IGDRCL_SRCS_aub_helper_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper_tests.inl
 )
 
-if(NOT DEFINED AUB_STREAM_DIR)
+if(NOT DEFINED AUB_STREAM_PROJECT_NAME)
   list(APPEND IGDRCL_SRCS_aub_helper_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_center_using_aubstream_stubs_tests.cpp
   )

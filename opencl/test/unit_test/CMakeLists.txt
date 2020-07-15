@@ -90,7 +90,7 @@ set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
   $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
 )
 
-if(DEFINED AUB_STREAM_DIR)
+if(DEFINED AUB_STREAM_PROJECT_NAME)
   add_library (aub_stream_mock_lib OBJECT EXCLUDE_FROM_ALL
     ${NEO_SOURCE_DIR}/opencl/test/unit_test/aub_stream_mocks/aub_stream_interface_mock.cpp
   )
