@@ -35,12 +35,15 @@ class DrmMock : public Drm {
     using Drm::nonPersistentContextsSupported;
     using Drm::preemptionSupported;
     using Drm::query;
+    using Drm::requirePerContextVM;
     using Drm::sliceCountChangeSupported;
     using Drm::virtualMemoryIds;
 
     DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(fd, ""), rootDeviceEnvironment) {
         sliceCountChangeSupported = true;
-        createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+        if (!rootDeviceEnvironment.executionEnvironment.isPerContextMemorySpaceRequired()) {
+            createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+        }
     }
     DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(mockFd, rootDeviceEnvironment) {}
     DrmMock() : DrmMock(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {}

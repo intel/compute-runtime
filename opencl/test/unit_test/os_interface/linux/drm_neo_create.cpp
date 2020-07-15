@@ -35,7 +35,9 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
         return *pDrmToReturnFromCreateFunc;
     }
     auto drm = new DrmMockDefault(rootDeviceEnvironment);
-    drm->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+    if (!rootDeviceEnvironment.executionEnvironment.isPerContextMemorySpaceRequired()) {
+        drm->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+    }
     return drm;
 }
 } // namespace NEO

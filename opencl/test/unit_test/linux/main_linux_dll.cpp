@@ -430,6 +430,23 @@ TEST_F(DrmTests, whenDrmIsCreatedWithMultipleSubDevicesThenCreateMultipleVirtual
     }
 }
 
+TEST_F(DrmTests, givenRequiredPerContextMemorySpaceWhenDrmIsCreatedThenGetVirtualMemoryAddressSpaceReturnsZeroAndVMsAreNotCreated) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+
+    rootDeviceEnvironment->executionEnvironment.setPerContextMemorySpace();
+
+    auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
+    EXPECT_NE(drm, nullptr);
+    EXPECT_TRUE(drm->isPerContextVMRequired());
+
+    auto numSubDevices = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+    for (auto id = 0u; id < numSubDevices; id++) {
+        EXPECT_EQ(0u, drm->getVirtualMemoryAddressSpace(id));
+    }
+    EXPECT_EQ(0u, static_cast<DrmWrap *>(drm.get())->virtualMemoryIds.size());
+}
+
 TEST_F(DrmTests, givenDrmIsCreatedWhenCreateVirtualMemoryFailsThenReturnVirtualMemoryIdZeroAndPrintDebugMessage) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.PrintDebugMessages.set(true);

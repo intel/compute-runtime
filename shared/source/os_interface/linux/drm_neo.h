@@ -94,6 +94,9 @@ class Drm {
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }
     void checkNonPersistentContextsSupport();
     void setNonPersistentContext(uint32_t drmContextId);
+    bool isPerContextVMRequired() {
+        return requirePerContextVM;
+    }
 
     MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();
@@ -115,12 +118,14 @@ class Drm {
     drm_i915_gem_context_param_sseu sseu{};
     bool preemptionSupported = false;
     bool nonPersistentContextsSupported = false;
+    bool requirePerContextVM = false;
     std::unique_ptr<HwDeviceId> hwDeviceId;
     int deviceId = 0;
     int revisionId = 0;
     GTTYPE eGtType = GTTYPE_UNDEFINED;
     RootDeviceEnvironment &rootDeviceEnvironment;
-    Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {}
+
+    Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
     std::unique_ptr<EngineInfo> engineInfo;
     std::unique_ptr<MemoryInfo> memoryInfo;
     std::vector<uint32_t> virtualMemoryIds;

@@ -359,3 +359,17 @@ TEST(DrmTest, givenDrmWhenCreatingOsContextThenCreateDrmContextWithVmId) {
     EXPECT_EQ(1u, contextIds.size());
     EXPECT_EQ(SysCalls::vmId, contextIds[0]);
 }
+
+TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPerContextIsUsed) {
+    auto &rootEnv = *platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0];
+    rootEnv.executionEnvironment.setPerContextMemorySpace();
+
+    DrmMock drmMock;
+    EXPECT_TRUE(drmMock.requirePerContextVM);
+
+    OsContextLinux osContext1(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    EXPECT_EQ(0u, drmMock.receivedCreateContextId);
+
+    OsContextLinux osContext2(drmMock, 5u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    EXPECT_EQ(0u, drmMock.receivedCreateContextId);
+}

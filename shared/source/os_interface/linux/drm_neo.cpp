@@ -56,6 +56,10 @@ constexpr const char *getIoctlParamString(int param) {
 
 } // namespace IoctlHelper
 
+Drm::Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
+    requirePerContextVM = rootDeviceEnvironment.executionEnvironment.isPerContextMemorySpaceRequired();
+}
+
 int Drm::ioctl(unsigned long request, void *arg) {
     int ret;
     SYSTEM_ENTER();
