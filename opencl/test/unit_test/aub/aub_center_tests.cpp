@@ -40,6 +40,7 @@ TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenCreat
     EXPECT_EQ(8 * MB, mockAubManager->mockAubManagerParams.memoryBankSize);
     EXPECT_EQ(true, mockAubManager->mockAubManagerParams.localMemorySupported);
     EXPECT_EQ(aub_stream::mode::aubFile, mockAubManager->mockAubManagerParams.streamMode);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.gpuAddressSpace, mockAubManager->mockAubManagerParams.gpuAddressSpace);
 }
 
 TEST(AubCenter, GivenDefaultSetCommandStreamReceiverFlagAndAubFileNameWhenGettingAubStreamModeThenModeAubFileIsReturned) {
