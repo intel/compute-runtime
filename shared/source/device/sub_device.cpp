@@ -43,6 +43,10 @@ Device *SubDevice::getDeviceById(uint32_t deviceId) const {
     return const_cast<SubDevice *>(this);
 }
 
+Device *SubDevice::getParentDevice() const {
+    return &rootDevice;
+}
+
 uint64_t SubDevice::getGlobalMemorySize() const {
     auto globalMemorySize = Device::getGlobalMemorySize();
     return globalMemorySize / rootDevice.getNumAvailableDevices();

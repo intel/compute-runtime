@@ -12,6 +12,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
+#include "shared/test/unit_test/mocks/ult_device_factory.h"
 
 #include "opencl/source/command_stream/tbx_command_stream_receiver.h"
 #include "opencl/source/platform/platform.h"
@@ -327,6 +328,18 @@ TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsAre
 TEST(DeviceCreation, givenDeviceWhenCheckingEnginesCountThenNumberGreaterThanZeroIsReturned) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     EXPECT_GT(HwHelper::getEnginesCount(device->getHardwareInfo()), 0u);
+}
+
+TEST(DeviceCreation, givenDeviceWhenCheckingParentDeviceThenCorrectValueIsReturned) {
+    UltDeviceFactory deviceFactory{2, 2};
+
+    EXPECT_EQ(nullptr, deviceFactory.rootDevices[0]->getParentDevice());
+    EXPECT_EQ(deviceFactory.rootDevices[0], deviceFactory.subDevices[0]->getParentDevice());
+    EXPECT_EQ(deviceFactory.rootDevices[0], deviceFactory.subDevices[1]->getParentDevice());
+
+    EXPECT_EQ(nullptr, deviceFactory.rootDevices[1]->getParentDevice());
+    EXPECT_EQ(deviceFactory.rootDevices[1], deviceFactory.subDevices[2]->getParentDevice());
+    EXPECT_EQ(deviceFactory.rootDevices[1], deviceFactory.subDevices[3]->getParentDevice());
 }
 
 using DeviceHwTest = ::testing::Test;

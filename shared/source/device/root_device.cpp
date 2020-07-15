@@ -48,7 +48,11 @@ Device *RootDevice::getDeviceById(uint32_t deviceId) const {
         return const_cast<RootDevice *>(this);
     }
     return subdevices[deviceId];
-};
+}
+
+Device *RootDevice::getParentDevice() const {
+    return nullptr;
+}
 
 SubDevice *RootDevice::createSubDevice(uint32_t subDeviceIndex) {
     return Device::create<SubDevice>(executionEnvironment, subDeviceIndex, *this);
