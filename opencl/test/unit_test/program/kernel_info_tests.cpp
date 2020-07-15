@@ -22,7 +22,7 @@
 
 using namespace NEO;
 
-TEST(KernelInfo, KernelInfoHasCopyMoveAssingmentDisabled) {
+TEST(KernelInfo, WhenKernelInfoIsCreatedThenItIsNotMoveableAndNotCopyable) {
     static_assert(false == std::is_move_constructible<KernelInfo>::value, "");
     static_assert(false == std::is_copy_constructible<KernelInfo>::value, "");
     static_assert(false == std::is_move_assignable<KernelInfo>::value, "");
@@ -34,7 +34,7 @@ TEST(KernelInfo, whenDefaultConstructedThenUsesSshFlagIsNotSet) {
     EXPECT_FALSE(kernelInfo.usesSsh);
 }
 
-TEST(KernelInfo, decodeConstantMemoryKernelArgument) {
+TEST(KernelInfo, GivenConstantMemoryKernelArgumentWhenDecodingThenArgInfoIsCorrect) {
     uint32_t argumentNumber = 0;
     auto pKernelInfo = std::make_unique<KernelInfo>();
     SPatchStatelessConstantMemoryObjectKernelArgument arg;
@@ -58,7 +58,7 @@ TEST(KernelInfo, decodeConstantMemoryKernelArgument) {
     EXPECT_EQ(1u, patchInfo.statelessGlobalMemObjKernelArgs.size());
 }
 
-TEST(KernelInfo, decodeGlobalMemoryKernelArgument) {
+TEST(KernelInfo, GivenGlobalMemoryKernelArgumentWhenDecodingThenArgInfoIsCorrect) {
     uint32_t argumentNumber = 1;
     auto pKernelInfo = std::make_unique<KernelInfo>();
     SPatchStatelessGlobalMemoryObjectKernelArgument arg;
@@ -82,7 +82,7 @@ TEST(KernelInfo, decodeGlobalMemoryKernelArgument) {
     EXPECT_EQ(1u, patchInfo.statelessGlobalMemObjKernelArgs.size());
 }
 
-TEST(KernelInfo, decodeImageKernelArgument) {
+TEST(KernelInfo, GivenImageKernelArgumentWhenDecodingThenArgInfoIsCorrect) {
     uint32_t argumentNumber = 1;
     auto pKernelInfo = std::make_unique<KernelInfo>();
     SPatchImageMemoryObjectKernelArgument arg;
@@ -142,7 +142,7 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateM
     EXPECT_FALSE(retVal);
 }
 
-TEST(KernelInfo, decodeGlobalMemObjectKernelArgument) {
+TEST(KernelInfo, GivenGlobalMemObjectKernelArgumentWhenDecodingThenArgInfoIsCorrect) {
     uint32_t argumentNumber = 1;
     auto pKernelInfo = std::make_unique<KernelInfo>();
     SPatchGlobalMemoryObjectKernelArgument arg;
@@ -161,7 +161,7 @@ TEST(KernelInfo, decodeGlobalMemObjectKernelArgument) {
     EXPECT_TRUE(argInfo.isBuffer);
 }
 
-TEST(KernelInfo, decodeSamplerKernelArgument) {
+TEST(KernelInfo, GivenSamplerKernelArgumentWhenDecodingThenArgInfoIsCorrect) {
     uint32_t argumentNumber = 1;
     auto pKernelInfo = std::make_unique<KernelInfo>();
     SPatchSamplerKernelArgument arg;
