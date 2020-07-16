@@ -8,6 +8,8 @@
 #include "printf_handler.h"
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/print_formatter.h"
@@ -18,6 +20,8 @@
 #include "opencl/source/mem_obj/buffer.h"
 
 namespace NEO {
+
+const uint32_t PrintfHandler::printfSurfaceInitialDataSize;
 
 PrintfHandler::PrintfHandler(ClDevice &deviceArg) : device(deviceArg) {}
 
@@ -44,7 +48,15 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     }
     kernel = multiDispatchInfo.peekMainKernel();
     printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(), printfSurfaceSize, GraphicsAllocation::AllocationType::PRINTF_SURFACE, device.getDeviceBitfield()});
-    *reinterpret_cast<uint32_t *>(printfSurface->getUnderlyingBuffer()) = printfSurfaceInitialDataSize;
+
+    auto &hwInfo = device.getHardwareInfo();
+    auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (printfSurface->isAllocatedInLocalMemoryPool() && helper.isBlitCopyRequiredForLocalMemory(hwInfo)) {
+        BlitHelperFunctions::blitMemoryToAllocation(device.getDevice(), printfSurface, 0,
+                                                    &printfSurfaceInitialDataSize, {sizeof(printfSurfaceInitialDataSize), 1, 1});
+    } else {
+        *reinterpret_cast<uint32_t *>(printfSurface->getUnderlyingBuffer()) = printfSurfaceInitialDataSize;
+    }
 
     auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getCrossThreadData()),
                                         kernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset);
