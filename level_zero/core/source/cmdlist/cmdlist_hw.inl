@@ -1400,6 +1400,39 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
+    uint64_t *dstptr, ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    if (numWaitEvents > 0) {
+        if (phWaitEvents) {
+            CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(numWaitEvents, phWaitEvents);
+        } else {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+    }
+
+    NEO::PipeControlArgs args(false);
+
+    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+        *commandContainer.getCommandStream(),
+        POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
+        reinterpret_cast<uint64_t>(dstptr),
+        0,
+        commandContainer.getDevice()->getHardwareInfo(),
+        args);
+
+    if (hSignalEvent) {
+        CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent);
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::reserveSpace(size_t size, void **ptr) {
     auto availableSpace = commandContainer.getCommandStream()->getAvailableSpace();
     if (availableSpace < size) {

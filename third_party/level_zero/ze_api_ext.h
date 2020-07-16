@@ -241,6 +241,48 @@ zeDeviceGetCommandQueueGroupProperties(
                                                                       ///< command queue group properties
 );
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Appends a memory write of the device's global timestamp value into a
+///        command list.
+///
+/// @details
+///     - The application must ensure the events are accessible by the device on
+///       which the command list was created.
+///     - The timestamp frequency can be queried from
+///       ::ze_device_properties_t.timerResolution.
+///     - The number of valid bits in the timestamp value can be queried from
+///       ::ze_device_properties_t.timestampValidBits.
+///     - The application must ensure the memory pointed to by dstptr is
+///       accessible by the device on which the command list was created.
+///     - The application must ensure the command list and events were created,
+///       and the memory was allocated, on the same context.
+///     - The application must **not** call this function from simultaneous
+///       threads with the same command list handle.
+///     - The implementation of this function should be lock-free.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hCommandList`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == dstptr`
+///     - ::ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT
+///     - ::ZE_RESULT_ERROR_INVALID_SIZE
+///         + `(nullptr == phWaitEvents) && (0 < numWaitEvents)`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListAppendWriteGlobalTimestampExt(
+    ze_command_list_handle_t hCommandList, ///< [in] handle of the command list
+    uint64_t *dstptr,                      ///< [in,out] pointer to memory where timestamp value will be written; must
+                                           ///< be 8byte-aligned.
+    ze_event_handle_t hSignalEvent,        ///< [in][optional] handle of the event to signal on completion
+    uint32_t numWaitEvents,                ///< [in][optional] number of events to wait on before executing query;
+                                           ///< must be 0 if `nullptr == phWaitEvents`
+    ze_event_handle_t *phWaitEvents        ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait
+                                           ///< on before executing query
+);
+
 } //extern C
 
 #endif // _ZE_API_EXT_H

@@ -326,7 +326,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendSignalEventThe
     EXPECT_NE(cmdList.end(), itor);
 }
 
-HWTEST_F(CommandListCreate, givenCommandListyWhenAppendSignalEventThePipeControlIsProgrammed) {
+HWTEST_F(CommandListCreate, givenCommandListWhenAppendSignalEventThePipeControlIsProgrammed) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
     auto &commandContainer = commandList->commandContainer;

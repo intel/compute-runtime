@@ -130,5 +130,56 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenEventWithWaitScopeFlagDeviceWhenAppe
     }
 }
 
+using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
+HWTEST2_F(CommandListAppendWaitOnEvent, givenCommandListWhenAppendWriteGlobalTimestampCalledWithWaitOnEventsThenSemaphoreWaitAndPipeControlForTimestampEncoded, Platforms) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+
+    uint64_t timestampAddress = 0x12345678555500;
+    uint32_t timestampAddressLow = (uint32_t)(timestampAddress & 0xFFFFFFFF);
+    uint32_t timestampAddressHigh = (uint32_t)(timestampAddress >> 32);
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
+    ze_event_handle_t hEventHandle = event->toHandle();
+
+    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 1, &hEventHandle);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList->commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itor);
+
+    auto cmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*itor);
+    EXPECT_EQ(cmd->getCompareOperation(),
+              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+    EXPECT_EQ(static_cast<uint32_t>(-1), cmd->getSemaphoreDataDword());
+
+    auto addressSpace = device->getHwInfo().capabilityTable.gpuAddressSpace;
+
+    EXPECT_EQ(cmd->getSemaphoreGraphicsAddress() & addressSpace, event->getGpuAddress() & addressSpace);
+    EXPECT_EQ(cmd->getWaitMode(),
+              MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+
+    itor++;
+
+    auto itorPC = findAll<PIPE_CONTROL *>(itor, cmdList.end());
+    ASSERT_NE(0u, itorPC.size());
+    bool postSyncFound = false;
+    for (auto it : itorPC) {
+        auto cmdPC = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmdPC->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP) {
+            EXPECT_TRUE(cmdPC->getCommandStreamerStallEnable());
+            EXPECT_FALSE(cmdPC->getDcFlushEnable());
+            EXPECT_EQ(cmdPC->getAddressHigh(), timestampAddressHigh);
+            EXPECT_EQ(cmdPC->getAddress(), timestampAddressLow);
+            postSyncFound = true;
+        }
+    }
+    ASSERT_TRUE(postSyncFound);
+}
+
 } // namespace ult
 } // namespace L0

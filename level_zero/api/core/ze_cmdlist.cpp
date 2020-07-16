@@ -8,6 +8,8 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include <level_zero/ze_api.h>
 
+#include "third_party/level_zero/ze_api_ext.h"
+
 extern "C" {
 
 __zedllexport ze_result_t __zecall
@@ -42,6 +44,16 @@ __zedllexport ze_result_t __zecall
 zeCommandListReset(
     ze_command_list_handle_t hCommandList) {
     return L0::CommandList::fromHandle(hCommandList)->reset();
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListAppendWriteGlobalTimestampExt(
+    ze_command_list_handle_t hCommandList,
+    uint64_t *dstptr,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::CommandList::fromHandle(hCommandList)->appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 } // extern "C"

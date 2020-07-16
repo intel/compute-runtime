@@ -17,6 +17,7 @@
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
@@ -160,6 +161,63 @@ HWTEST2_F(CommandListCreate, givenCommandListAnd3DWhbufferenMemoryCopyRegionCall
     cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr);
     EXPECT_EQ(cmdList.appendMemoryCopyBlitRegionCalledTimes, 0u);
     EXPECT_GT(cmdList.appendMemoryCopyKernel3dCalledTimes, 0u);
+}
+
+HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalledThenPipeControlWithTimestampWriteEncoded, Platforms) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    auto &commandContainer = commandList->commandContainer;
+
+    uint64_t timestampAddress = 0x12345678555500;
+    uint32_t timestampAddressLow = (uint32_t)(timestampAddress & 0xFFFFFFFF);
+    uint32_t timestampAddressHigh = (uint32_t)(timestampAddress >> 32);
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
+
+    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(0u, itorPC.size());
+    bool postSyncFound = false;
+    for (auto it : itorPC) {
+        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
+        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP) {
+            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+            EXPECT_FALSE(cmd->getDcFlushEnable());
+            EXPECT_EQ(cmd->getAddressHigh(), timestampAddressHigh);
+            EXPECT_EQ(cmd->getAddress(), timestampAddressLow);
+            postSyncFound = true;
+        }
+    }
+    EXPECT_TRUE(postSyncFound);
+}
+
+HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendWriteGlobalTimestampReturnsSuccess, Platforms) {
+    Mock<CommandQueue> cmdQueue;
+    const ze_command_queue_desc_t desc = {};
+    uint64_t timestampAddress = 0x12345678555500;
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    ASSERT_NE(nullptr, commandList);
+    bool ret = commandList->initialize(device, false);
+    ASSERT_TRUE(ret);
+    commandList->device = device;
+    commandList->cmdQImmediate = &cmdQueue;
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->cmdQImmediateDesc = &desc;
+
+    EXPECT_CALL(cmdQueue, executeCommandLists).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
+    EXPECT_CALL(cmdQueue, synchronize).Times(1).WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
+
+    auto result = commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList->cmdQImmediate = nullptr;
 }
 
 using AppendMemoryCopy = CommandListCreate;

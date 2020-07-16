@@ -65,6 +65,9 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent) override;
 
+    ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+
     ze_result_t appendImageCopyFromMemory(ze_image_handle_t hDstImage,
                                           const void *srcPtr,
                                           const ze_image_region_t *pDstRegion,

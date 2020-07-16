@@ -119,6 +119,8 @@ struct CommandListCoreFamily : CommandListImp {
 
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent) override;
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent) override;
+    ze_result_t appendWriteGlobalTimestamp(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
     ze_result_t reserveSpace(size_t size, void **ptr) override;
     ze_result_t reset() override;
     ze_result_t executeCommandListImmediate(bool performMigration) override;

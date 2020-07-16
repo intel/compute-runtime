@@ -141,5 +141,51 @@ HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagDeviceWhenAppendin
     ASSERT_TRUE(postSyncFound);
 }
 
+using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
+HWTEST2_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTimestampCalledWithSignalEventThenPipeControlForTimestampAndSignalEncoded, Platforms) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
+    auto &commandContainer = commandList->commandContainer;
+
+    uint64_t timestampAddress = 0x12345678555500;
+    uint32_t timestampAddressLow = (uint32_t)(timestampAddress & 0xFFFFFFFF);
+    uint32_t timestampAddressHigh = (uint32_t)(timestampAddress >> 32);
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
+
+    commandList->appendWriteGlobalTimestamp(dstptr, event->toHandle(), 0, nullptr);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itorPC);
+    auto cmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
+    while (cmd->getPostSyncOperation() != POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP) {
+        itorPC++;
+        itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
+        EXPECT_NE(cmdList.end(), itorPC);
+        cmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
+    }
+    EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+    EXPECT_FALSE(cmd->getDcFlushEnable());
+    EXPECT_EQ(cmd->getAddressHigh(), timestampAddressHigh);
+    EXPECT_EQ(cmd->getAddress(), timestampAddressLow);
+
+    itorPC++;
+    itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
+    EXPECT_NE(cmdList.end(), itorPC);
+    cmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
+    while (cmd->getPostSyncOperation() != POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
+        itorPC++;
+        itorPC = find<PIPE_CONTROL *>(itorPC, cmdList.end());
+        EXPECT_NE(cmdList.end(), itorPC);
+        cmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
+    }
+    EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
+    EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+    EXPECT_FALSE(cmd->getDcFlushEnable());
+}
+
 } // namespace ult
 } // namespace L0

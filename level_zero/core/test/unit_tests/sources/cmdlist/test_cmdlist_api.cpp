@@ -11,6 +11,8 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
+#include "third_party/level_zero/ze_api_ext.h"
+
 namespace L0 {
 namespace ult {
 
@@ -69,6 +71,15 @@ TEST(zeCommandListAppendWaitOnEvent, whenCalledThenRedirectedToObject) {
     EXPECT_CALL(commandList, appendWaitOnEvents(1, &event)).Times(1);
 
     auto result = zeCommandListAppendWaitOnEvents(commandList.toHandle(), 1, &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST(zeCommandListAppendWriteGlobalTimestampExt, whenCalledThenRedirectedToObject) {
+    Mock<CommandList> commandList;
+
+    EXPECT_CALL(commandList, appendWriteGlobalTimestamp(nullptr, nullptr, 0, nullptr)).Times(1);
+
+    auto result = zeCommandListAppendWriteGlobalTimestampExt(commandList.toHandle(), nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 

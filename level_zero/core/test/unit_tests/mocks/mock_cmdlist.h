@@ -150,6 +150,8 @@ struct Mock<CommandList> : public CommandList {
                              size_t pattern_size, size_t size, ze_event_handle_t hEvent));
     MOCK_METHOD1(appendSignalEvent, ze_result_t(ze_event_handle_t hEvent));
     MOCK_METHOD2(appendWaitOnEvents, ze_result_t(uint32_t numEvents, ze_event_handle_t *phEvent));
+    MOCK_METHOD4(appendWriteGlobalTimestamp, ze_result_t(uint64_t *dstptr, ze_event_handle_t hSignalEvent,
+                                                         uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents));
     MOCK_METHOD2(reserveSpace, ze_result_t(size_t size, void **ptr));
     MOCK_METHOD0(reset, ze_result_t());
     MOCK_METHOD0(resetParameters, ze_result_t());

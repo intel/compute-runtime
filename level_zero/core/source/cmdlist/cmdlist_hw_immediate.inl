@@ -132,6 +132,17 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWaitOnEvents(ui
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendWriteGlobalTimestamp(
+    uint64_t *dstptr, ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    auto ret = CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
+    if (ret == ZE_RESULT_SUCCESS) {
+        executeCommandListImmediate(true);
+    }
+    return ret;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendImageCopyFromMemory(
     ze_image_handle_t hDstImage,
     const void *srcPtr,
