@@ -72,6 +72,8 @@ class DrmMockTime : public DrmMockSuccess {
 
 class DrmMockCustom : public Drm {
   public:
+    using Drm::memoryInfo;
+
     struct IoctlResExt {
         int32_t no;
         int32_t res;
