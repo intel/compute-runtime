@@ -12,6 +12,8 @@
 #include "level_zero/core/source/device/device.h"
 #include <level_zero/ze_api.h>
 
+#include "third_party/level_zero/ze_api_ext.h"
+
 struct _ze_driver_handle_t {
     virtual ~_ze_driver_handle_t() = default;
 };
@@ -26,6 +28,8 @@ struct DriverHandle : _ze_driver_handle_t {
     virtual ze_result_t getApiVersion(ze_api_version_t *version) = 0;
     virtual ze_result_t getIPCProperties(ze_driver_ipc_properties_t *pIPCProperties) = 0;
     virtual ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) = 0;
+    virtual ze_result_t getExtensionProperties(uint32_t *pCount,
+                                               ze_driver_extension_properties_t *pExtensionProperties) = 0;
     virtual ze_result_t getMemAllocProperties(const void *ptr,
                                               ze_memory_allocation_properties_t *pMemAllocProperties,
                                               ze_device_handle_t *phDevice) = 0;

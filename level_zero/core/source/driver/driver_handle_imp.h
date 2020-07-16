@@ -21,6 +21,8 @@ struct DriverHandleImp : public DriverHandle {
     ze_result_t getApiVersion(ze_api_version_t *version) override;
     ze_result_t getIPCProperties(ze_driver_ipc_properties_t *pIPCProperties) override;
     ze_result_t getExtensionFunctionAddress(const char *pFuncName, void **pfunc) override;
+    ze_result_t getExtensionProperties(uint32_t *pCount,
+                                       ze_driver_extension_properties_t *pExtensionProperties) override;
     ze_result_t getMemAllocProperties(const void *ptr,
                                       ze_memory_allocation_properties_t *pMemAllocProperties,
                                       ze_device_handle_t *phDevice) override;

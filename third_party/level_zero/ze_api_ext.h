@@ -283,6 +283,48 @@ zeCommandListAppendWriteGlobalTimestampExt(
                                            ///< on before executing query
 );
 
+#ifndef ZE_MAX_EXTENSION_NAME
+/// @brief Maximum extension name string size
+#define ZE_MAX_EXTENSION_NAME 256
+#endif // ZE_MAX_EXTENSION_NAME
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Extension properties queried using ::zeDriverGetExtensionProperties
+typedef struct _ze_driver_extension_properties_t {
+    char name[ZE_MAX_EXTENSION_NAME]; ///< [out] extension name
+    uint32_t version;                 ///< [out] extension version using ::ZE_MAKE_VERSION
+
+} ze_driver_extension_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieves extension properties
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///
+/// @remarks
+///   _Analogues_
+///     - **vkEnumerateInstanceExtensionProperties**
+///
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pCount`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDriverGetExtensionProperties(
+    ze_driver_handle_t hDriver,                            ///< [in] handle of the driver instance
+    uint32_t *pCount,                                      ///< [in,out] pointer to the number of extension properties.
+                                                           ///< if count is zero, then the driver will update the value with the total
+                                                           ///< number of extension properties available.
+                                                           ///< if count is non-zero, then driver will only retrieve that number of
+                                                           ///< extension properties.
+                                                           ///< if count is larger than the number of extension properties available,
+                                                           ///< then the driver will update the value with the correct number of
+                                                           ///< extension properties available.
+    ze_driver_extension_properties_t *pExtensionProperties ///< [in,out][optional][range(0, *pCount)] array of query results for
+                                                           ///< extension properties
+);
+
 } //extern C
 
 #endif // _ZE_API_EXT_H

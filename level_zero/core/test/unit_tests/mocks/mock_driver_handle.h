@@ -40,6 +40,12 @@ struct Mock<DriverHandle> : public DriverHandleImp {
                                                     ze_memory_allocation_properties_t *pMemAllocProperties,
                                                     ze_device_handle_t *phDevice));
 
+    MOCK_METHOD(ze_result_t,
+                getExtensionProperties,
+                (uint32_t * pCount,
+                 ze_driver_extension_properties_t *pExtensionProperties),
+                (override));
+
     MOCK_METHOD0(getMemoryManager, NEO::MemoryManager *());
     MOCK_METHOD1(setMemoryManager, void(NEO::MemoryManager *));
     MOCK_METHOD3(getMemAddressRange, ze_result_t(const void *ptr, void **pBase, size_t *pSize));

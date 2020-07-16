@@ -85,6 +85,11 @@ ze_result_t DriverHandleImp::getExtensionFunctionAddress(const char *pFuncName, 
     return ZE_RESULT_ERROR_INVALID_ARGUMENT;
 }
 
+ze_result_t DriverHandleImp::getExtensionProperties(uint32_t *pCount,
+                                                    ze_driver_extension_properties_t *pExtensionProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t DriverHandleImp::getMemAllocProperties(const void *ptr,
                                                    ze_memory_allocation_properties_t *pMemAllocProperties,
                                                    ze_device_handle_t *phDevice) {

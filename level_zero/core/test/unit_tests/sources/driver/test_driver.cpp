@@ -23,6 +23,13 @@ namespace ult {
 
 using DriverVersionTest = Test<DeviceFixture>;
 
+TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenUnsupportedIsReturned) {
+    uint32_t count = 0;
+    ze_driver_extension_properties_t properties;
+    ze_result_t res = driverHandle->getExtensionProperties(&count, &properties);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);
+}
+
 TEST_F(DriverVersionTest, returnsExpectedDriverVersion) {
     ze_driver_properties_t properties;
     ze_result_t res = driverHandle->getProperties(&properties);

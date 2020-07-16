@@ -53,4 +53,12 @@ zeDriverGetExtensionFunctionAddress(
     return L0::DriverHandle::fromHandle(hDriver)->getExtensionFunctionAddress(pFuncName, pfunc);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDriverGetExtensionProperties(
+    ze_driver_handle_t hDriver,
+    uint32_t *pCount,
+    ze_driver_extension_properties_t *pExtensionProperties) {
+    return L0::DriverHandle::fromHandle(hDriver)->getExtensionProperties(pCount, pExtensionProperties);
+}
+
 } // extern "C"
