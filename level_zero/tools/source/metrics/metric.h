@@ -43,8 +43,8 @@ struct MetricContext {
     virtual void setMetricsLibrary(MetricsLibrary &metricsLibrary) = 0;
     virtual void setMetricEnumeration(MetricEnumeration &metricEnumeration) = 0;
 
-    // Called by zetInit.
-    static void enableMetricApi(ze_result_t &result);
+    // Called by zeInit.
+    static ze_result_t enableMetricApi();
 
     // Metric groups activation.
     virtual ze_result_t activateMetricGroups() = 0;

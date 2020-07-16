@@ -158,40 +158,31 @@ bool MetricContextImp::isMetricGroupActivated(const zet_metric_group_handle_t hM
 
 ze_result_t MetricContextImp::activateMetricGroups() { return metricGroupDomains.activate(); }
 
-void MetricContext::enableMetricApi(ze_result_t &result) {
-    if (!getenv_tobool("ZE_ENABLE_METRICS")) {
-        result = ZE_RESULT_SUCCESS;
-        return;
-    }
-
+ze_result_t MetricContext::enableMetricApi() {
     if (!isMetricApiAvailable()) {
-        result = static_cast<ze_result_t>(0x70020000);
-        return;
+        return static_cast<ze_result_t>(0x70020000);
     }
 
     DriverHandle *driverHandle = L0::DriverHandle::fromHandle(GlobalDriverHandle);
 
     uint32_t count = 0;
-    result = driverHandle->getDevice(&count, nullptr);
-    if (result != ZE_RESULT_SUCCESS) {
-        result = ZE_RESULT_ERROR_UNKNOWN;
-        return;
+    if (driverHandle->getDevice(&count, nullptr) != ZE_RESULT_SUCCESS) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
     std::vector<ze_device_handle_t> devices(count);
-    result = driverHandle->getDevice(&count, devices.data());
-    if (result != ZE_RESULT_SUCCESS) {
-        result = ZE_RESULT_ERROR_UNKNOWN;
-        return;
+    if (driverHandle->getDevice(&count, devices.data()) != ZE_RESULT_SUCCESS) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
     for (auto deviceHandle : devices) {
         Device *device = L0::Device::fromHandle(deviceHandle);
         if (!device->getMetricContext().loadDependencies()) {
-            result = static_cast<ze_result_t>(0x70020000);
-            return;
+            return static_cast<ze_result_t>(0x70020000);
         }
     }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 std::unique_ptr<MetricContext> MetricContext::create(Device &device) {

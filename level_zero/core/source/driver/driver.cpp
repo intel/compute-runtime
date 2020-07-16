@@ -13,8 +13,9 @@
 #include "shared/source/os_interface/device_factory.h"
 
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
+#include "level_zero/tools/source/metrics/metric.h"
 
 #include <memory>
 #include <thread>
@@ -24,8 +25,8 @@ namespace L0 {
 _ze_driver_handle_t *GlobalDriverHandle;
 uint32_t driverCount = 1;
 
-void DriverImp::initialize(bool *result) {
-    *result = false;
+void DriverImp::initialize(ze_result_t *result) {
+    *result = ZE_RESULT_ERROR_UNINITIALIZED;
 
     NEO::EnvironmentVariableReader envReader;
     L0EnvVariables envVariables = {};
@@ -33,6 +34,8 @@ void DriverImp::initialize(bool *result) {
         envReader.getSetting("ZE_AFFINITY_MASK", std::string(""));
     envVariables.programDebugging =
         envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", false);
+    envVariables.metrics =
+        envReader.getSetting("ZE_ENABLE_METRICS", false);
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
@@ -47,20 +50,29 @@ void DriverImp::initialize(bool *result) {
     if (!neoDevices.empty()) {
         GlobalDriverHandle = DriverHandle::create(std::move(neoDevices), envVariables);
         if (GlobalDriverHandle != nullptr) {
-            *result = true;
+            *result = ZE_RESULT_SUCCESS;
+
+            if (envVariables.metrics) {
+                *result = MetricContext::enableMetricApi();
+                if (*result != ZE_RESULT_SUCCESS) {
+                    delete GlobalDriver;
+                    GlobalDriverHandle = nullptr;
+                    GlobalDriver = nullptr;
+                }
+            }
         }
     }
 }
 
-bool DriverImp::initStatus(false);
+ze_result_t DriverImp::initStatus(ZE_RESULT_ERROR_UNINITIALIZED);
 
 ze_result_t DriverImp::driverInit(ze_init_flag_t flag) {
     std::call_once(initDriverOnce, [this]() {
-        bool result;
+        ze_result_t result;
         this->initialize(&result);
         initStatus = result;
     });
-    return ((initStatus) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNINITIALIZED);
+    return initStatus;
 }
 
 ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandles) {

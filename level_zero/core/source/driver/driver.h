@@ -14,7 +14,7 @@
 namespace L0 {
 struct Driver {
     virtual ze_result_t driverInit(_ze_init_flag_t) = 0;
-    virtual void initialize(bool *result) = 0;
+    virtual void initialize(ze_result_t *result) = 0;
     static Driver *get() { return driver; }
     virtual ~Driver() = default;
 

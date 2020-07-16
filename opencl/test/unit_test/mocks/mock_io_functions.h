@@ -9,6 +9,7 @@
 #include "shared/source/utilities/io_functions.h"
 
 #include <cstdint>
+#include <set>
 #include <string>
 
 namespace NEO {
@@ -20,6 +21,7 @@ extern uint32_t mockGetenvCalled;
 
 extern bool returnMockEnvValue;
 extern std::string mockEnvValue;
+extern std::set<std::string> notMockableEnvValues;
 
 inline FILE *mockFopen(const char *filename, const char *mode) {
     mockFopenCalled++;
@@ -38,8 +40,10 @@ inline int mockFclose(FILE *stream) {
 
 inline char *mockGetenv(const char *name) noexcept {
     mockGetenvCalled++;
-    if (returnMockEnvValue) {
-        return const_cast<char *>(mockEnvValue.c_str());
+    if (notMockableEnvValues.find(name) == notMockableEnvValues.end()) {
+        if (returnMockEnvValue) {
+            return const_cast<char *>(mockEnvValue.c_str());
+        }
     }
     return getenv(name);
 }

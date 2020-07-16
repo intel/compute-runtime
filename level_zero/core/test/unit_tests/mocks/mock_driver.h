@@ -32,11 +32,11 @@ struct Mock<Driver> : public Driver {
                 (override));
     MOCK_METHOD(void,
                 initialize,
-                (bool *result),
+                (ze_result_t * result),
                 (override));
 
     ze_result_t mockInit(ze_init_flag_t) { return this->DriverImp::driverInit(ZE_INIT_FLAG_NONE); }
-    void mockInitialize(bool *result) { *result = true; }
+    void mockInitialize(ze_result_t *result) { *result = ZE_RESULT_SUCCESS; }
 
     Driver *previousDriver = nullptr;
 };

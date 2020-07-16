@@ -21,6 +21,7 @@ uint32_t mockGetenvCalled = 0;
 
 bool returnMockEnvValue = false;
 std::string mockEnvValue = "1";
+std::set<std::string> notMockableEnvValues = {""};
 
 } // namespace IoFunctions
 } // namespace NEO

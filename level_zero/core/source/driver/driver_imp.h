@@ -18,16 +18,17 @@ class DriverImp : public Driver {
   public:
     ze_result_t driverInit(_ze_init_flag_t) override;
 
-    void initialize(bool *result) override;
+    void initialize(ze_result_t *result) override;
 
   protected:
     std::once_flag initDriverOnce;
-    static bool initStatus;
+    static ze_result_t initStatus;
 };
 
 struct L0EnvVariables {
     std::string affinityMask;
     bool programDebugging;
+    bool metrics;
 };
 
 } // namespace L0

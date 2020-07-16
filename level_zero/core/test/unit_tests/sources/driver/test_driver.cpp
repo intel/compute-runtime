@@ -95,16 +95,32 @@ TEST(DriverImpTest, givenDriverImpWhenInitializedThenEnvVariablesAreRead) {
 
     VariableBackup<bool> mockDeviceFlagBackup(&IoFunctions::returnMockEnvValue, true);
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    VariableBackup<std::set<std::string>> notMockableEnvValuesBackup(&IoFunctions::notMockableEnvValues, {"ZE_ENABLE_METRICS"});
 
-    bool result = false;
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     DriverImp driverImp;
     driverImp.initialize(&result);
-    EXPECT_TRUE(result);
-    EXPECT_LE(2u, IoFunctions::mockGetenvCalled);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_LE(3u, IoFunctions::mockGetenvCalled);
 
     delete L0::GlobalDriver;
     L0::GlobalDriverHandle = nullptr;
     L0::GlobalDriver = nullptr;
+}
+
+TEST(DriverImpTest, givenMissingMetricApiDependenciesWhenInitializingDriverImpThenGlobalDriverHandleIsNull) {
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.levelZeroSupported = true;
+
+    VariableBackup<bool> mockDeviceFlagBackup(&IoFunctions::returnMockEnvValue, true);
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    DriverImp driverImp;
+    driverImp.initialize(&result);
+    EXPECT_NE(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(nullptr, L0::GlobalDriverHandle);
+    EXPECT_EQ(nullptr, L0::GlobalDriver);
 }
 
 TEST(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironmentThenPerContextMemorySpaceIsTrue) {
@@ -113,8 +129,9 @@ TEST(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironment
 
     VariableBackup<bool> mockDeviceFlagBackup(&IoFunctions::returnMockEnvValue, true);
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    VariableBackup<std::set<std::string>> notMockableEnvValuesBackup(&IoFunctions::notMockableEnvValues, {"ZE_ENABLE_METRICS"});
 
-    bool result = false;
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     DriverImp driverImp;
     driverImp.initialize(&result);
 
@@ -133,7 +150,7 @@ TEST(DriverImpTest, givenNoProgramDebuggingEnvVarWhenCreatingExecutionEnvironmen
 
     VariableBackup<bool> mockDeviceFlagBackup(&IoFunctions::returnMockEnvValue, false);
 
-    bool result = false;
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
     DriverImp driverImp;
     driverImp.initialize(&result);
 
