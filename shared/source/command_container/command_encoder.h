@@ -57,6 +57,8 @@ struct EncodeDispatchKernel {
                                  bool inlineDataProgrammingRequired,
                                  bool isIndirect,
                                  uint32_t requiredWorkGroupOrder);
+
+    static void programBarrierEnable(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo);
 };
 
 template <typename GfxFamily>

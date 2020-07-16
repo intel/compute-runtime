@@ -14,10 +14,13 @@
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/gen_common/matchers.h"
+#include "test.h"
+
 using namespace NEO;
 
 using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
@@ -706,4 +709,24 @@ HWTEST_F(WalkerThreadTest, givenDebugFlagEnabledWhenKernelDescriptorInlineDataDi
     kernelDesc.kernelAttributes.flags.passInlineData = false;
 
     EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::inlineDataProgrammingRequired(kernelDesc));
+}
+
+using namespace NEO;
+
+using InterfaceDescriptorDataTests = ::testing::Test;
+
+HWCMDTEST_F(IGFX_GEN8_CORE, InterfaceDescriptorDataTests, givenVariousValuesWhenCallingSetBarrierEnableThenCorrectValueIsSet) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
+    MockDevice device;
+    auto hwInfo = device.getHardwareInfo();
+
+    EncodeDispatchKernel<FamilyType>::programBarrierEnable(&idd, 0, hwInfo);
+    EXPECT_FALSE(idd.getBarrierEnable());
+
+    EncodeDispatchKernel<FamilyType>::programBarrierEnable(&idd, 1, hwInfo);
+    EXPECT_TRUE(idd.getBarrierEnable());
+
+    EncodeDispatchKernel<FamilyType>::programBarrierEnable(&idd, 2, hwInfo);
+    EXPECT_TRUE(idd.getBarrierEnable());
 }

@@ -66,7 +66,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     auto numThreadsPerThreadGroup = dispatchInterface->getNumThreadsPerThreadGroup();
     idd.setNumberOfThreadsInGpgpuThreadGroup(numThreadsPerThreadGroup);
 
-    idd.setBarrierEnable(kernelDescriptor.kernelAttributes.flags.usesBarriers);
+    EncodeDispatchKernel<Family>::programBarrierEnable(&idd,
+                                                       kernelDescriptor.kernelAttributes.hasBarriers,
+                                                       container.getDevice()->getHardwareInfo());
     auto slmSize = static_cast<typename INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE>(
         HwHelperHw<Family>::get().computeSlmValues(dispatchInterface->getSlmTotalSize()));
     idd.setSharedLocalMemorySize(
@@ -337,6 +339,13 @@ void EncodeDispatchKernel<GfxFamily>::encodeThreadData(WALKER_TYPE &walkerCmd,
     constexpr uint32_t maxDword = std::numeric_limits<uint32_t>::max();
     walkerCmd.setRightExecutionMask(static_cast<uint32_t>(executionMask));
     walkerCmd.setBottomExecutionMask(maxDword);
+}
+
+template <typename GfxFamily>
+void EncodeDispatchKernel<GfxFamily>::programBarrierEnable(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
+                                                           uint32_t value,
+                                                           const HardwareInfo &hwInfo) {
+    pInterfaceDescriptor->setBarrierEnable(value);
 }
 
 template <typename GfxFamily>

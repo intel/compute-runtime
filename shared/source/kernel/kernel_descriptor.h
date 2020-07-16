@@ -46,6 +46,7 @@ struct KernelDescriptor final {
         uint32_t perThreadScratchSize[2] = {0U, 0U};
         uint32_t perThreadPrivateMemorySize = 0U;
         uint32_t perThreadSystemThreadSurfaceSize = 0U;
+        uint32_t hasBarriers = 0u;
         uint16_t requiredWorkgroupSize[3] = {0U, 0U, 0U};
         uint16_t crossThreadDataSize = 0U;
         uint16_t perThreadDataSize = 0U;

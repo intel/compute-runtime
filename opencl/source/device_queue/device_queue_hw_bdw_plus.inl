@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
+
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/device_queue/device_queue_hw_base.inl"
 #include "opencl/source/program/block_kernel_manager.h"
@@ -203,9 +205,9 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
         pIDDestination[blockIndex + i].setKernelStartPointerHigh(blockKernelStartPointer >> 32);
         pIDDestination[blockIndex + i].setKernelStartPointer(static_cast<uint32_t>(blockKernelStartPointer));
         pIDDestination[blockIndex + i].setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
-        HardwareCommandsHelper<GfxFamily>::programBarrierEnable(&pIDDestination[blockIndex + i],
-                                                                pBlockInfo->patchInfo.executionEnvironment->HasBarriers,
-                                                                parentKernel->getDevice().getHardwareInfo());
+        EncodeDispatchKernel<GfxFamily>::programBarrierEnable(&pIDDestination[blockIndex + i],
+                                                              pBlockInfo->patchInfo.executionEnvironment->HasBarriers,
+                                                              parentKernel->getDevice().getHardwareInfo());
 
         // Set offset to sampler states, block's DHSOffset is added by scheduler
         pIDDestination[blockIndex + i].setSamplerStatePointer(static_cast<uint32_t>(pBlockInfo->getBorderColorStateSize()));
