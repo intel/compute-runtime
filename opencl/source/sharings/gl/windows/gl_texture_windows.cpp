@@ -152,8 +152,10 @@ Image *GlTexture::createSharedGlTexture(Context *context, cl_mem_flags flags, cl
         alloc->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
                                                                                                   : true;
     }
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+    multiGraphicsAllocation.addAllocation(alloc);
 
-    return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, alloc, mcsAlloc, flags, 0, &surfaceFormatInfo, imgInfo, cubeFaceIndex,
+    return Image::createSharedImage(context, glTexture, mcsSurfaceInfo, std::move(multiGraphicsAllocation), mcsAlloc, flags, 0, &surfaceFormatInfo, imgInfo, cubeFaceIndex,
                                     std::max(miplevel, 0), imgInfo.imgDesc.numMipLevels);
 } // namespace NEO
 

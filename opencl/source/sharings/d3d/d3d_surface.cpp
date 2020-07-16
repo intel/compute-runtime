@@ -115,8 +115,10 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
     DEBUG_BREAK_IF(!alloc);
 
     auto surface = new D3DSurface(context, surfaceInfo, surfaceStaging, plane, imagePlane, adapterType, isSharedResource, lockable);
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
+    multiGraphicsAllocation.addAllocation(alloc);
 
-    return Image::createSharedImage(context, surface, mcsSurfaceInfo, alloc, nullptr, flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
+    return Image::createSharedImage(context, surface, mcsSurfaceInfo, std::move(multiGraphicsAllocation), nullptr, flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
 }
 
 void D3DSurface::synchronizeObject(UpdateData &updateData) {

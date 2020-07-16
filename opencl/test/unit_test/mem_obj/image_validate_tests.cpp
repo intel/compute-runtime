@@ -764,7 +764,7 @@ struct NullImage : public Image {
     using Image::imageFormat;
 
     NullImage() : Image(nullptr, MemoryProperties(), cl_mem_flags{}, 0, 0, nullptr, cl_image_format{},
-                        cl_image_desc{}, false, new MockGraphicsAllocation(nullptr, 0), false,
+                        cl_image_desc{}, false, GraphicsAllocationHelper::toMultiGraphicsAllocation(new MockGraphicsAllocation(nullptr, 0)), false,
                         0, 0, ClSurfaceFormatInfo{}, nullptr) {
     }
     ~NullImage() override {

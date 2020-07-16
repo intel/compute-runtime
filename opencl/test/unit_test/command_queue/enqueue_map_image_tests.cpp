@@ -206,7 +206,7 @@ HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSe
                                       imageFormat,
                                       imageDesc,
                                       false,
-                                      graphicsAllocation,
+                                      GraphicsAllocationHelper::toMultiGraphicsAllocation(graphicsAllocation),
                                       true,
                                       0,
                                       0,
@@ -927,7 +927,7 @@ TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenRetu
                     0, nullptr,
                     imageFormat, imageDesc,
                     true,
-                    allocation,
+                    GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation),
                     false, 0, 0,
                     surfaceFormat, nullptr) {
         }

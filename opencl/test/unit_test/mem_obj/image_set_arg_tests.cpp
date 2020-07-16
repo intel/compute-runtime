@@ -280,7 +280,7 @@ HWTEST_F(ImageSetArgTest, givenImageArraySizeGreaterThanOneButTypeIsNotImageArra
         &context,
         nullptr,
         mcsSurfaceInfo,
-        allocation,
+        GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation),
         nullptr,
         CL_MEM_READ_WRITE,
         0,

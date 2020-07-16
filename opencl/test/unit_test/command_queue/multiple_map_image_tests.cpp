@@ -34,13 +34,13 @@ struct MultipleMapImageTest : public ClDeviceFixture, public ::testing::Test {
                                       const cl_image_format &imageFormat,
                                       const cl_image_desc &imageDesc,
                                       bool zeroCopy,
-                                      GraphicsAllocation *graphicsAllocation,
+                                      MultiGraphicsAllocation multiGraphicsAllocation,
                                       bool isObjectRedescribed,
                                       uint32_t baseMipLevel,
                                       uint32_t mipCount,
                                       const ClSurfaceFormatInfo *surfaceFormatInfo,
                                       const SurfaceOffsets *surfaceOffsets) {
-            return new MockImage<T>(context, memoryProperties, flags, flagsIntel, size, hostPtr, imageFormat, imageDesc, zeroCopy, graphicsAllocation,
+            return new MockImage<T>(context, memoryProperties, flags, flagsIntel, size, hostPtr, imageFormat, imageDesc, zeroCopy, multiGraphicsAllocation,
                                     isObjectRedescribed, baseMipLevel, mipCount, *surfaceFormatInfo, surfaceOffsets);
         };
 

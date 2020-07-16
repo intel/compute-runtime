@@ -54,7 +54,7 @@ Image::Image(Context *context,
              cl_image_format imageFormat,
              const cl_image_desc &imageDesc,
              bool zeroCopy,
-             GraphicsAllocation *graphicsAllocation,
+             MultiGraphicsAllocation multiGraphicsAllocation,
              bool isObjectRedescribed,
              uint32_t baseMipLevel,
              uint32_t mipCount,
@@ -66,9 +66,9 @@ Image::Image(Context *context,
              flags,
              flagsIntel,
              size,
-             graphicsAllocation->getUnderlyingBuffer(),
+             multiGraphicsAllocation.getDefaultGraphicsAllocation()->getUnderlyingBuffer(),
              hostPtr,
-             graphicsAllocation,
+             multiGraphicsAllocation.getDefaultGraphicsAllocation(),
              zeroCopy,
              false,
              isObjectRedescribed),
@@ -347,8 +347,11 @@ Image *Image::create(Context *context,
             imgInfo.imgDesc = Image::convertDescriptor(imageDescriptor);
         }
 
+        auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
+        multiGraphicsAllocation.addAllocation(memory);
+
         image = createImageHw(context, memoryProperties, flags, flagsIntel, imgInfo.size, hostPtrToSet, surfaceFormat->OCLImageFormat,
-                              imageDescriptor, zeroCopy, memory, false, 0, 0, surfaceFormat);
+                              imageDescriptor, zeroCopy, std::move(multiGraphicsAllocation), false, 0, 0, surfaceFormat);
 
         if (context->isProvidingPerformanceHints() && HwHelper::renderCompressedImagesSupported(context->getDevice(0)->getHardwareInfo())) {
             if (memory->getDefaultGmm()) {
@@ -429,7 +432,7 @@ Image *Image::create(Context *context,
 
 Image *Image::createImageHw(Context *context, const MemoryProperties &memoryProperties, cl_mem_flags flags, cl_mem_flags_intel flagsIntel, size_t size, void *hostPtr,
                             const cl_image_format &imageFormat, const cl_image_desc &imageDesc,
-                            bool zeroCopy, GraphicsAllocation *graphicsAllocation,
+                            bool zeroCopy, MultiGraphicsAllocation multiGraphicsAllocation,
                             bool isObjectRedescribed, uint32_t baseMipLevel, uint32_t mipCount,
                             const ClSurfaceFormatInfo *surfaceFormatInfo) {
     const auto device = context->getDevice(0);
@@ -438,21 +441,23 @@ Image *Image::createImageHw(Context *context, const MemoryProperties &memoryProp
     auto funcCreate = imageFactory[hwInfo.platform.eRenderCoreFamily].createImageFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
     auto image = funcCreate(context, memoryProperties, flags, flagsIntel, size, hostPtr, imageFormat, imageDesc,
-                            zeroCopy, graphicsAllocation, isObjectRedescribed, baseMipLevel, mipCount, surfaceFormatInfo, nullptr);
+                            zeroCopy, std::move(multiGraphicsAllocation), isObjectRedescribed, baseMipLevel, mipCount, surfaceFormatInfo, nullptr);
     DEBUG_BREAK_IF(nullptr == image);
     image->createFunction = funcCreate;
     return image;
 }
 
 Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler, const McsSurfaceInfo &mcsSurfaceInfo,
-                                GraphicsAllocation *graphicsAllocation, GraphicsAllocation *mcsAllocation,
+                                MultiGraphicsAllocation multiGraphicsAllocation, GraphicsAllocation *mcsAllocation,
                                 cl_mem_flags flags, cl_mem_flags_intel flagsIntel, const ClSurfaceFormatInfo *surfaceFormat,
                                 ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount) {
+    auto rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
+    auto size = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex)->getUnderlyingBufferSize();
     auto sharedImage = createImageHw(
         context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
-        flags, flagsIntel, graphicsAllocation->getUnderlyingBufferSize(), nullptr,
+        flags, flagsIntel, size, nullptr,
         surfaceFormat->OCLImageFormat, Image::convertDescriptor(imgInfo.imgDesc), false,
-        graphicsAllocation, false, baseMipLevel, mipCount, surfaceFormat);
+        std::move(multiGraphicsAllocation), false, baseMipLevel, mipCount, surfaceFormat);
     sharedImage->setSharingHandler(sharingHandler);
     sharedImage->setMcsAllocation(mcsAllocation);
     sharedImage->setQPitch(imgInfo.qPitch);
@@ -933,7 +938,7 @@ Image *Image::redescribeFillImage() {
                                 imageFormatNew,
                                 imageDescNew,
                                 this->isMemObjZeroCopy(),
-                                this->multiGraphicsAllocation.getDefaultGraphicsAllocation(),
+                                this->multiGraphicsAllocation,
                                 true,
                                 this->baseMipLevel,
                                 this->mipCount,
@@ -990,7 +995,7 @@ Image *Image::redescribe() {
                                 imageFormatNew,
                                 this->imageDesc,
                                 this->isMemObjZeroCopy(),
-                                this->multiGraphicsAllocation.getDefaultGraphicsAllocation(),
+                                this->multiGraphicsAllocation,
                                 true,
                                 this->baseMipLevel,
                                 this->mipCount,

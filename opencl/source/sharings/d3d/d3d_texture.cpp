@@ -101,8 +101,10 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         alloc->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
                                                                                                    : true;
     }
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
+    multiGraphicsAllocation.addAllocation(alloc);
 
-    return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, alloc, nullptr, flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
+    return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, std::move(multiGraphicsAllocation), nullptr, flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
 }
 
 template <typename D3D>
@@ -166,8 +168,10 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
         alloc->getDefaultGmm()->isRenderCompressed = hwHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
                                                                                                    : true;
     }
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
+    multiGraphicsAllocation.addAllocation(alloc);
 
-    return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, alloc, nullptr, flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
+    return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, std::move(multiGraphicsAllocation), nullptr, flags, 0, clSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
 }
 
 template <typename D3D>

@@ -136,8 +136,10 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     }
 
     auto vaSurface = new VASurface(sharingFunctions, imageId, plane, surface, context->getInteropUserSyncEnabled());
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+    multiGraphicsAllocation.addAllocation(alloc);
 
-    auto image = Image::createSharedImage(context, vaSurface, mcsSurfaceInfo, alloc, nullptr, flags, flagsIntel, imgSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
+    auto image = Image::createSharedImage(context, vaSurface, mcsSurfaceInfo, std::move(multiGraphicsAllocation), nullptr, flags, flagsIntel, imgSurfaceFormat, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
     image->setMediaPlaneType(plane);
     return image;
 }
