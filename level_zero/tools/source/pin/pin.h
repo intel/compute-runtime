@@ -15,7 +15,7 @@ namespace L0 {
 
 class PinContext {
   public:
-    static void init(ze_init_flag_t flag, ze_result_t &result);
+    static ze_result_t init();
 
   private:
     static const std::string gtPinLibraryFilename;

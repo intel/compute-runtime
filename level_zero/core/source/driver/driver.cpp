@@ -16,6 +16,7 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
+#include "level_zero/tools/source/pin/pin.h"
 
 #include <memory>
 #include <thread>
@@ -36,6 +37,8 @@ void DriverImp::initialize(ze_result_t *result) {
         envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", false);
     envVariables.metrics =
         envReader.getSetting("ZE_ENABLE_METRICS", false);
+    envVariables.pin =
+        envReader.getSetting("ZE_ENABLE_PROGRAM_INSTRUMENTATION", false);
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
@@ -54,6 +57,15 @@ void DriverImp::initialize(ze_result_t *result) {
 
             if (envVariables.metrics) {
                 *result = MetricContext::enableMetricApi();
+                if (*result != ZE_RESULT_SUCCESS) {
+                    delete GlobalDriver;
+                    GlobalDriverHandle = nullptr;
+                    GlobalDriver = nullptr;
+                }
+            }
+
+            if ((*result == ZE_RESULT_SUCCESS) && envVariables.pin) {
+                *result = PinContext::init();
                 if (*result != ZE_RESULT_SUCCESS) {
                     delete GlobalDriver;
                     GlobalDriverHandle = nullptr;

@@ -7,7 +7,6 @@
 
 #include "level_zero/tools/source/tools_init_imp.h"
 
-#include "level_zero/tools/source/pin/pin.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/source/tools_init.h"
 
@@ -18,10 +17,6 @@ namespace L0 {
 
 static void enableTools(ze_result_t &result, ze_init_flag_t flag, bool *ptoolsAreEnabled) {
     SysmanHandleContext::init(flag);
-    PinContext::init(flag, std::ref(result));
-    if (result != ZE_RESULT_SUCCESS) {
-        return;
-    }
     *ptoolsAreEnabled = true;
 }
 

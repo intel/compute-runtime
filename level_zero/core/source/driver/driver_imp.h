@@ -29,6 +29,7 @@ struct L0EnvVariables {
     std::string affinityMask;
     bool programDebugging;
     bool metrics;
+    bool pin;
 };
 
 } // namespace L0
