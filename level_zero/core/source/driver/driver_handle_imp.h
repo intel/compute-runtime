@@ -16,6 +16,7 @@ namespace L0 {
 
 struct DriverHandleImp : public DriverHandle {
     ~DriverHandleImp() override;
+    ze_result_t createContext(const ze_context_desc_t *desc, ze_context_handle_t *phContext) override;
     ze_result_t getDevice(uint32_t *pCount, ze_device_handle_t *phDevices) override;
     ze_result_t getProperties(ze_driver_properties_t *properties) override;
     ze_result_t getApiVersion(ze_api_version_t *version) override;

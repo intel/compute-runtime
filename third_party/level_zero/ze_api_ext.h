@@ -66,6 +66,108 @@ extern "C" {
 typedef struct _ze_kernel_uuid_t ze_kernel_uuid_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Forward-declare ze_context_desc_t
+typedef struct _ze_context_desc_t ze_context_desc_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Handle of driver's context object
+typedef struct _ze_context_handle_t *ze_context_handle_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supported context creation flags
+typedef uint32_t ze_context_flags_t;
+typedef enum _ze_context_flag_t {
+    ZE_CONTEXT_FLAG_TBD = ZE_BIT(0), ///< reserved for future use
+    ZE_CONTEXT_FLAG_FORCE_UINT32 = 0x7fffffff
+
+} ze_context_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Context descriptor
+typedef struct _ze_context_desc_t {
+    ze_context_flags_t flags; ///< [in] creation flags.
+                              ///< must be 0 (default) or a valid combination of ::ze_context_flag_t;
+                              ///< default behavior may use implicit driver-based heuristics.
+
+} ze_context_desc_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Creates a context for the driver.
+///
+/// @details
+///     - The application must only use the context for the driver which was
+///       provided during creation.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hDriver`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == desc`
+///         + `nullptr == phContext`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `0x1 < desc->flags`
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextCreate(
+    ze_driver_handle_t hDriver,    ///< [in] handle of the driver object
+    const ze_context_desc_t *desc, ///< [in] pointer to context descriptor
+    ze_context_handle_t *phContext ///< [out] pointer to handle of context object created
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Destroys a context.
+///
+/// @details
+///     - The application must ensure the device is not currently referencing
+///       the context before it is deleted.
+///     - The implementation of this function may immediately free all Host and
+///       Device allocations associated with this context.
+///     - The application must **not** call this function from simultaneous
+///       threads with the same context handle.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextDestroy(
+    ze_context_handle_t hContext ///< [in][release] handle of context object to destroy
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Returns current status of the context.
+///
+/// @details
+///     - The application may call this function from simultaneous threads with
+///       the same context handle.
+///     - The implementation of this function should be lock-free.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_SUCCESS
+///         + Context is available for use.
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///         + Context is invalid; due to device lost or reset.
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextGetStatus(
+    ze_context_handle_t hContext ///< [in] handle of context object
+);
+
+///////////////////////////////////////////////////////////////////////////////
 #ifndef ZE_MAX_KERNEL_UUID_SIZE
 /// @brief Maximum kernel universal unique id (UUID) size in bytes
 #define ZE_MAX_KERNEL_UUID_SIZE 16

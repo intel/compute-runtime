@@ -51,6 +51,11 @@ struct Mock<DriverHandle> : public DriverHandleImp {
                  ze_device_handle_t *phDevice),
                 (override));
     MOCK_METHOD(ze_result_t,
+                createContext,
+                (const ze_context_desc_t *desc,
+                 ze_context_handle_t *phContext),
+                (override));
+    MOCK_METHOD(ze_result_t,
                 getExtensionProperties,
                 (uint32_t * pCount,
                  ze_driver_extension_properties_t *pExtensionProperties),

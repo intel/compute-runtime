@@ -10,6 +10,7 @@ set(L0_SRCS_API
   ${CMAKE_CURRENT_SOURCE_DIR}/ze_cl_interop.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ze_cmdlist.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ze_cmdqueue.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ze_context.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ze_copy.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ze_core_loader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ze_device.cpp

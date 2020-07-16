@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_library.h"
 
+#include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/debugger/debugger_l0.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
@@ -25,6 +26,18 @@
 namespace L0 {
 
 struct DriverHandleImp *GlobalDriver;
+
+ze_result_t DriverHandleImp::createContext(const ze_context_desc_t *desc,
+                                           ze_context_handle_t *phContext) {
+    ContextImp *context = new ContextImp(this);
+    if (nullptr == context) {
+        return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+    }
+
+    *phContext = context->toHandle();
+
+    return ZE_RESULT_SUCCESS;
+}
 
 NEO::MemoryManager *DriverHandleImp::getMemoryManager() {
     return this->memoryManager;
