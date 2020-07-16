@@ -15,6 +15,18 @@
 
 namespace L0 {
 
+class FabricDeviceImp : public FabricDevice, NEO::NonCopyableOrMovableClass {
+  public:
+    FabricDeviceImp() = delete;
+    FabricDeviceImp(OsSysman *pOsSysman);
+    ~FabricDeviceImp() override;
+    uint32_t getNumPorts() override;
+    OsFabricDevice *getOsFabricDevice() override { return pOsFabricDevice; }
+
+  protected:
+    OsFabricDevice *pOsFabricDevice = nullptr;
+};
+
 class FabricPortImp : public FabricPort, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t fabricPortGetProperties(zet_fabric_port_properties_t *pProperties) override;
@@ -24,14 +36,12 @@ class FabricPortImp : public FabricPort, NEO::NonCopyableOrMovableClass {
     ze_result_t fabricPortGetState(zet_fabric_port_state_t *pState) override;
     ze_result_t fabricPortGetThroughput(zet_fabric_port_throughput_t *pThroughput) override;
 
-    FabricPortImp() = default;
-    FabricPortImp(OsSysman *pOsSysman, uint32_t portNum);
+    FabricPortImp() = delete;
+    FabricPortImp(FabricDevice *pFabricDevice, uint32_t portNum);
     ~FabricPortImp() override;
-    void init();
-
-    static uint32_t numPorts(OsSysman *pOsSysman);
 
   protected:
+    void init();
     OsFabricPort *pOsFabricPort = nullptr;
 
   private:

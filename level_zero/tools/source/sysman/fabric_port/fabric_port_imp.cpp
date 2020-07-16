@@ -13,6 +13,21 @@
 
 namespace L0 {
 
+uint32_t FabricDeviceImp::getNumPorts() {
+    UNRECOVERABLE_IF(nullptr == pOsFabricDevice);
+    return pOsFabricDevice->getNumPorts();
+}
+
+FabricDeviceImp::FabricDeviceImp(OsSysman *pOsSysman) {
+    pOsFabricDevice = OsFabricDevice::create(pOsSysman);
+    UNRECOVERABLE_IF(nullptr == pOsFabricDevice);
+}
+
+FabricDeviceImp::~FabricDeviceImp() {
+    delete pOsFabricDevice;
+    pOsFabricDevice = nullptr;
+}
+
 void fabricPortGetTimestamp(uint64_t &timestamp) {
     std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
     timestamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
@@ -54,8 +69,8 @@ void FabricPortImp::init() {
     pOsFabricPort->getMaxTxSpeed(fabricPortProperties.maxTxSpeed);
 }
 
-FabricPortImp::FabricPortImp(OsSysman *pOsSysman, uint32_t portNum) {
-    pOsFabricPort = OsFabricPort::create(pOsSysman, portNum);
+FabricPortImp::FabricPortImp(FabricDevice *pFabricDevice, uint32_t portNum) {
+    pOsFabricPort = OsFabricPort::create(pFabricDevice->getOsFabricDevice(), portNum);
     UNRECOVERABLE_IF(nullptr == pOsFabricPort);
 
     init();
@@ -64,10 +79,6 @@ FabricPortImp::FabricPortImp(OsSysman *pOsSysman, uint32_t portNum) {
 FabricPortImp::~FabricPortImp() {
     delete pOsFabricPort;
     pOsFabricPort = nullptr;
-}
-
-uint32_t FabricPortImp::numPorts(OsSysman *pOsSysman) {
-    return OsFabricPort::numPorts(pOsSysman);
 }
 
 } // namespace L0

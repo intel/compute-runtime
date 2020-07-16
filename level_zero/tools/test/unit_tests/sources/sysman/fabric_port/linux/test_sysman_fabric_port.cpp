@@ -38,7 +38,7 @@ class SysmanFabricPortFixture : public DeviceFixture, public ::testing::Test {
         sysmanImp->pFabricPortHandleContext->init();
 
         for (uint32_t portNum = 0U; portNum < numPorts; portNum++) {
-            FabricPort *pFabricPort = new FabricPortImp(sysmanImp->pOsSysman, portNum);
+            FabricPort *pFabricPort = new FabricPortImp(sysmanImp->pFabricPortHandleContext->pFabricDevice, portNum);
             EXPECT_NE(nullptr, pFabricPort);
             sysmanImp->pFabricPortHandleContext->handleList.push_back(pFabricPort);
         }

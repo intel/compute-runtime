@@ -12,6 +12,15 @@
 
 namespace L0 {
 
+class OsFabricDevice {
+  public:
+    virtual uint32_t getNumPorts() = 0;
+
+    static OsFabricDevice *create(OsSysman *pOsSysman);
+
+    virtual ~OsFabricDevice() = default;
+};
+
 class OsFabricPort {
   public:
     virtual ze_result_t getLinkType(ze_bool_t verbose, zet_fabric_link_type_t *pLinkType) = 0;
@@ -24,8 +33,7 @@ class OsFabricPort {
     virtual void getMaxRxSpeed(zet_fabric_port_speed_t &maxRxSpeed) = 0;
     virtual void getMaxTxSpeed(zet_fabric_port_speed_t &maxTxSpeed) = 0;
 
-    static uint32_t numPorts(OsSysman *pOsSysman);
-    static OsFabricPort *create(OsSysman *pOsSysman, uint32_t portNum);
+    static OsFabricPort *create(OsFabricDevice *pOsFabricDevice, uint32_t portNum);
 
     virtual ~OsFabricPort() = default;
 };

@@ -15,6 +15,14 @@ struct _zet_sysman_fabric_port_handle_t {};
 namespace L0 {
 
 struct OsSysman;
+class OsFabricDevice;
+
+class FabricDevice {
+  public:
+    virtual ~FabricDevice() = default;
+    virtual OsFabricDevice *getOsFabricDevice() = 0;
+    virtual uint32_t getNumPorts() = 0;
+};
 
 class FabricPort : _zet_sysman_fabric_port_handle_t {
   public:
@@ -40,6 +48,7 @@ struct FabricPortHandleContext {
 
     ze_result_t fabricPortGet(uint32_t *pCount, zet_sysman_fabric_port_handle_t *phPort);
 
+    FabricDevice *pFabricDevice = nullptr;
     OsSysman *pOsSysman = nullptr;
     std::vector<FabricPort *> handleList = {};
 };

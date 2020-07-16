@@ -11,6 +11,16 @@
 
 namespace L0 {
 
+uint32_t WddmFabricDeviceImp::getNumPorts() {
+    return numPorts;
+}
+
+WddmFabricDeviceImp::WddmFabricDeviceImp(OsSysman *pOsSysman) {
+}
+
+WddmFabricDeviceImp::~WddmFabricDeviceImp() {
+}
+
 ze_result_t WddmFabricPortImp::getLinkType(ze_bool_t verbose, zet_fabric_link_type_t *pLinkType) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
@@ -47,19 +57,20 @@ void WddmFabricPortImp::getMaxTxSpeed(zet_fabric_port_speed_t &maxTxSpeed) {
     ::memset(&maxTxSpeed, '\0', sizeof(maxTxSpeed));
 }
 
-WddmFabricPortImp::WddmFabricPortImp(OsSysman *pOsSysman, uint32_t portNum) {
+WddmFabricPortImp::WddmFabricPortImp(OsFabricDevice *pOsFabricDevice, uint32_t portNum) {
 }
 
 WddmFabricPortImp::~WddmFabricPortImp() {
 }
 
-OsFabricPort *OsFabricPort::create(OsSysman *pOsSysman, uint32_t portNum) {
-    WddmFabricPortImp *pWddmFabricPortImp = new WddmFabricPortImp(pOsSysman, portNum);
-    return static_cast<OsFabricPort *>(pWddmFabricPortImp);
+OsFabricDevice *OsFabricDevice::create(OsSysman *pOsSysman) {
+    WddmFabricDeviceImp *pWddmFabricDeviceImp = new WddmFabricDeviceImp(pOsSysman);
+    return pWddmFabricDeviceImp;
 }
 
-uint32_t OsFabricPort::numPorts(OsSysman *pOsSysman) {
-    return 0U;
+OsFabricPort *OsFabricPort::create(OsFabricDevice *pOsFabricDevice, uint32_t portNum) {
+    WddmFabricPortImp *pWddmFabricPortImp = new WddmFabricPortImp(pOsFabricDevice, portNum);
+    return pWddmFabricPortImp;
 }
 
 } // namespace L0

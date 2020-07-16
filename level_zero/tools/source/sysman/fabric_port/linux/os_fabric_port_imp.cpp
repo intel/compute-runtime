@@ -11,6 +11,16 @@
 
 namespace L0 {
 
+uint32_t LinuxFabricDeviceImp::getNumPorts() {
+    return numPorts;
+}
+
+LinuxFabricDeviceImp::LinuxFabricDeviceImp(OsSysman *pOsSysman) {
+}
+
+LinuxFabricDeviceImp::~LinuxFabricDeviceImp() {
+}
+
 ze_result_t LinuxFabricPortImp::getLinkType(ze_bool_t verbose, zet_fabric_link_type_t *pLinkType) {
     if (verbose) {
         ::snprintf(reinterpret_cast<char *>(pLinkType->desc), ZET_MAX_FABRIC_LINK_TYPE_SIZE, "%s", "SAMPLE LINK, VERBOSE");
@@ -67,7 +77,7 @@ void LinuxFabricPortImp::getMaxTxSpeed(zet_fabric_port_speed_t &maxTxSpeed) {
     maxTxSpeed = this->maxTxSpeed;
 }
 
-LinuxFabricPortImp::LinuxFabricPortImp(OsSysman *pOsSysman, uint32_t portNum) {
+LinuxFabricPortImp::LinuxFabricPortImp(OsFabricDevice *pOsFabricDevice, uint32_t portNum) {
     this->portNum = portNum;
     model = std::string("EXAMPLE");
 }
@@ -75,13 +85,14 @@ LinuxFabricPortImp::LinuxFabricPortImp(OsSysman *pOsSysman, uint32_t portNum) {
 LinuxFabricPortImp::~LinuxFabricPortImp() {
 }
 
-OsFabricPort *OsFabricPort::create(OsSysman *pOsSysman, uint32_t portNum) {
-    LinuxFabricPortImp *pLinuxFabricPortImp = new LinuxFabricPortImp(pOsSysman, portNum);
-    return static_cast<OsFabricPort *>(pLinuxFabricPortImp);
+OsFabricDevice *OsFabricDevice::create(OsSysman *pOsSysman) {
+    LinuxFabricDeviceImp *pLinuxFabricDeviceImp = new LinuxFabricDeviceImp(pOsSysman);
+    return pLinuxFabricDeviceImp;
 }
 
-uint32_t OsFabricPort::numPorts(OsSysman *pOsSysman) {
-    return 0U;
+OsFabricPort *OsFabricPort::create(OsFabricDevice *pOsFabricDevice, uint32_t portNum) {
+    LinuxFabricPortImp *pLinuxFabricPortImp = new LinuxFabricPortImp(pOsFabricDevice, portNum);
+    return pLinuxFabricPortImp;
 }
 
 } // namespace L0

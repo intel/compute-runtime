@@ -7,22 +7,32 @@
 
 #include "level_zero/tools/source/sysman/fabric_port/fabric_port.h"
 
+#include "shared/source/helpers/debug_helpers.h"
+
 #include "level_zero/tools/source/sysman/fabric_port/fabric_port_imp.h"
 
 namespace L0 {
 
 FabricPortHandleContext::~FabricPortHandleContext() {
-    for (FabricPort *pFabricPort : handleList) {
-        delete pFabricPort;
+    if (nullptr != pFabricDevice) {
+        for (FabricPort *pFabricPort : handleList) {
+            delete pFabricPort;
+        }
+        handleList.clear();
+        delete pFabricDevice;
+        pFabricDevice = nullptr;
     }
-    handleList.clear();
 }
 
 ze_result_t FabricPortHandleContext::init() {
-    uint32_t numPorts = FabricPortImp::numPorts(pOsSysman);
+    pFabricDevice = new FabricDeviceImp(pOsSysman);
+    UNRECOVERABLE_IF(nullptr == pFabricDevice);
+
+    uint32_t numPorts = pFabricDevice->getNumPorts();
 
     for (uint32_t portNum = 0; portNum < numPorts; portNum++) {
-        FabricPort *pFabricPort = new FabricPortImp(pOsSysman, portNum);
+        FabricPort *pFabricPort = new FabricPortImp(pFabricDevice, portNum);
+        UNRECOVERABLE_IF(nullptr == pFabricPort);
         handleList.push_back(pFabricPort);
     }
     return ZE_RESULT_SUCCESS;
