@@ -11,11 +11,6 @@
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
-
 namespace L0 {
 namespace ult {
 
@@ -41,17 +36,37 @@ struct Mock<CommandQueue> : public CommandQueue {
     Mock(L0::Device *device = nullptr, NEO::CommandStreamReceiver *csr = nullptr, const ze_command_queue_desc_t *desc = &default_cmd_queue_desc);
     ~Mock() override;
 
-    MOCK_METHOD2(createFence, ze_result_t(const ze_fence_desc_t *desc, ze_fence_handle_t *phFence));
-    MOCK_METHOD0(destroy, ze_result_t());
-    MOCK_METHOD4(executeCommandLists,
-                 ze_result_t(uint32_t numCommandLists, ze_command_list_handle_t *phCommandLists,
-                             ze_fence_handle_t hFence, bool performMigration));
-    MOCK_METHOD3(executeCommands, ze_result_t(uint32_t numCommands,
-                                              void *phCommands,
-                                              ze_fence_handle_t hFence));
-    MOCK_METHOD1(synchronize, ze_result_t(uint32_t timeout));
-
-    MOCK_METHOD2(dispatchTaskCountWrite, void(NEO::LinearStream &commandStream, bool flushDataCache));
+    MOCK_METHOD(ze_result_t,
+                createFence,
+                (const ze_fence_desc_t *desc,
+                 ze_fence_handle_t *phFence),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                destroy,
+                (),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                executeCommandLists,
+                (uint32_t numCommandLists,
+                 ze_command_list_handle_t *phCommandLists,
+                 ze_fence_handle_t hFence,
+                 bool performMigration),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                executeCommands,
+                (uint32_t numCommands,
+                 void *phCommands,
+                 ze_fence_handle_t hFence),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                synchronize,
+                (uint32_t timeout),
+                (override));
+    MOCK_METHOD(void,
+                dispatchTaskCountWrite,
+                (NEO::LinearStream & commandStream,
+                 bool flushDataCache),
+                (override));
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -71,7 +86,3 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
 
 } // namespace ult
 } // namespace L0
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
