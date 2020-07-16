@@ -53,7 +53,7 @@ class D3DBuffer : public D3DSharing<D3D> {
         auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
         multiGraphicsAllocation.addAllocation(alloc);
 
-        return Buffer::createSharedBuffer(context, flags, d3dBufferObj, multiGraphicsAllocation);
+        return Buffer::createSharedBuffer(context, flags, d3dBufferObj, std::move(multiGraphicsAllocation));
     }
     ~D3DBuffer() override = default;
 

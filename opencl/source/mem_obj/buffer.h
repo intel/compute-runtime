@@ -202,7 +202,7 @@ class BufferHw : public Buffer {
              bool zeroCopy,
              bool isHostPtrSVM,
              bool isObjectRedescribed)
-        : Buffer(context, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, multiGraphicsAllocation,
+        : Buffer(context, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, std::move(multiGraphicsAllocation),
                  zeroCopy, isHostPtrSVM, isObjectRedescribed) {}
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument, const Device &device) override;
@@ -227,7 +227,7 @@ class BufferHw : public Buffer {
                                               size,
                                               memoryStorage,
                                               hostPtr,
-                                              multiGraphicsAllocation,
+                                              std::move(multiGraphicsAllocation),
                                               zeroCopy,
                                               isHostPtrSVM,
                                               isObjectRedescribed);

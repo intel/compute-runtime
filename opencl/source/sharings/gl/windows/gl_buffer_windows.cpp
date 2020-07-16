@@ -42,7 +42,7 @@ Buffer *GlBuffer::createSharedGlBuffer(Context *context, cl_mem_flags flags, uns
     auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
     multiGraphicsAllocation.addAllocation(graphicsAllocation);
 
-    return Buffer::createSharedBuffer(context, flags, glHandler, multiGraphicsAllocation);
+    return Buffer::createSharedBuffer(context, flags, glHandler, std::move(multiGraphicsAllocation));
 }
 
 void GlBuffer::synchronizeObject(UpdateData &updateData) {

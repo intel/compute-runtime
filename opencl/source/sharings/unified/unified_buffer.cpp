@@ -33,5 +33,5 @@ Buffer *UnifiedBuffer::createSharedUnifiedBuffer(Context *context, cl_mem_flags 
     auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
     multiGraphicsAllocation.addAllocation(graphicsAllocation);
 
-    return Buffer::createSharedBuffer(context, flags, sharingHandler, multiGraphicsAllocation);
+    return Buffer::createSharedBuffer(context, flags, sharingHandler, std::move(multiGraphicsAllocation));
 }

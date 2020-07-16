@@ -122,9 +122,6 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
                                                                    0xFFFF800400001000,
                                                                    sizeof(srcMemory),
                                                                    MemoryPool::MemoryNull);
-    auto multiGraphicsAllocation = MultiGraphicsAllocation(context.getDevice(0)->getRootDeviceIndex());
-    multiGraphicsAllocation.addAllocation(srcAllocation);
-
     std::unique_ptr<Buffer> srcBuffer(Buffer::createBufferHw(
         &context,
         MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice()),
@@ -133,7 +130,7 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
         sizeof(srcMemory),
         srcAllocation->getUnderlyingBuffer(),
         srcMemory,
-        multiGraphicsAllocation,
+        GraphicsAllocationHelper::toMultiGraphicsAllocation(srcAllocation),
         false,
         false,
         false));
