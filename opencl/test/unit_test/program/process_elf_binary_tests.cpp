@@ -37,12 +37,12 @@ class ProcessElfBinaryTests : public ::testing::Test {
     std::unique_ptr<ClDevice> device;
 };
 
-TEST_F(ProcessElfBinaryTests, NullBinary) {
+TEST_F(ProcessElfBinaryTests, GivenNullWhenCreatingProgramFromBinaryThenInvalidBinaryErrorIsReturned) {
     cl_int retVal = program->createProgramFromBinary(nullptr, 0);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
-TEST_F(ProcessElfBinaryTests, InvalidBinary) {
+TEST_F(ProcessElfBinaryTests, GivenInvalidBinaryWhenCreatingProgramFromBinaryThenInvalidBinaryErrorIsReturned) {
     char pBinary[] = "thisistotallyinvalid\0";
     size_t binarySize = strnlen_s(pBinary, 21);
     cl_int retVal = program->createProgramFromBinary(pBinary, binarySize);
@@ -50,7 +50,7 @@ TEST_F(ProcessElfBinaryTests, InvalidBinary) {
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 }
 
-TEST_F(ProcessElfBinaryTests, ValidBinary) {
+TEST_F(ProcessElfBinaryTests, GivenValidBinaryWhenCreatingProgramFromBinaryThenSuccessIsReturned) {
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd16_", ".bin");
 
@@ -62,7 +62,7 @@ TEST_F(ProcessElfBinaryTests, ValidBinary) {
     EXPECT_EQ(0, memcmp(pBinary.get(), program->packedDeviceBinary.get(), binarySize));
 }
 
-TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
+TEST_F(ProcessElfBinaryTests, GivenValidSpirBinaryWhenCreatingProgramFromBinaryThenSuccessIsReturned) {
     //clCreateProgramWithIL => SPIR-V stored as source code
     const uint32_t spirvBinary[2] = {0x03022307, 0x07230203};
     size_t spirvBinarySize = sizeof(spirvBinary);
@@ -186,7 +186,7 @@ INSTANTIATE_TEST_CASE_P(ResolveBinaryTests,
                         ProcessElfBinaryTestsWithBinaryType,
                         ::testing::ValuesIn(BinaryTypeValues));
 
-TEST_F(ProcessElfBinaryTests, BackToBack) {
+TEST_F(ProcessElfBinaryTests, GivenMultipleCallsWhenCreatingProgramFromBinaryThenEachProgramIsCorrect) {
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd16_", ".bin");
 
@@ -207,7 +207,7 @@ TEST_F(ProcessElfBinaryTests, BackToBack) {
     EXPECT_EQ(0, memcmp(pBinary.get(), program->packedDeviceBinary.get(), binarySize));
 }
 
-TEST_F(ProcessElfBinaryTests, BuildOptionsEmpty) {
+TEST_F(ProcessElfBinaryTests, GivenEmptyBuildOptionsWhenCreatingProgramFromBinaryThenSuccessIsReturned) {
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "simple_kernels_", ".bin");
 
@@ -221,7 +221,7 @@ TEST_F(ProcessElfBinaryTests, BuildOptionsEmpty) {
     EXPECT_EQ(0, memcmp("", options.c_str(), optionsSize));
 }
 
-TEST_F(ProcessElfBinaryTests, BuildOptionsNotEmpty) {
+TEST_F(ProcessElfBinaryTests, GivenNonEmptyBuildOptionsWhenCreatingProgramFromBinaryThenSuccessIsReturned) {
     std::string filePath;
     retrieveBinaryKernelFilename(filePath, "simple_kernels_opts_", ".bin");
 
