@@ -1270,11 +1270,11 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushN
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
-    EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
+    EXPECT_EQ(2u, gpgpuCsr->peekTaskCount());
 
     commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
-    EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
+    EXPECT_EQ(2u, gpgpuCsr->peekTaskCount());
 }
 
 HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushNotRequiredWhenDoingBcsCopyAfterBarrierThenSubmitToGpgpu) {

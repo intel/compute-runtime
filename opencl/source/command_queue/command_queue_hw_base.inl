@@ -157,7 +157,7 @@ bool CommandQueueHw<Family>::isGpgpuSubmissionForBcsRequired(bool queueBlocked) 
         return true;
     }
 
-    bool required = isCacheFlushForBcsRequired() && (latestSentEnqueueType != EnqueueProperties::Operation::Blit) && (latestSentEnqueueType != EnqueueProperties::Operation::None);
+    bool required = (latestSentEnqueueType != EnqueueProperties::Operation::Blit) && (latestSentEnqueueType != EnqueueProperties::Operation::None);
 
     if (DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.get() == 1) {
         required = true;

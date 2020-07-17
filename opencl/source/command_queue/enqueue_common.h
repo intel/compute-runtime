@@ -491,7 +491,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(const Mu
     blitProperties.outputTimestampPacket = currentTimestampPacketNode;
 
     if (isGpgpuSubmissionForBcsRequired(queueBlocked)) {
-        if (isCacheFlushForBcsRequired()) {
+        if (timestampPacketDependencies.cacheFlushNodes.peekNodes().size() > 0) {
             auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]);
             PipeControlArgs args(true);
             MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
@@ -956,9 +956,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     CompletionStamp completionStamp = {this->taskCount, this->taskLevel, this->flushStamp->peekStamp()};
     bool flushGpgpuCsr = true;
 
-    if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) &&
-        !isGpgpuSubmissionForBcsRequired(false) &&
-        timestampPacketDependencies.barrierNodes.peekNodes().size() == 0) {
+    if ((enqueueProperties.operation == EnqueueProperties::Operation::Blit) && !isGpgpuSubmissionForBcsRequired(false)) {
         flushGpgpuCsr = false;
     }
 
