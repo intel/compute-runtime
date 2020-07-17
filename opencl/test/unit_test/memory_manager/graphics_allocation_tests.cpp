@@ -151,6 +151,15 @@ TEST(GraphicsAllocationTest, givenDefaultAllocationWhenGettingNumHandlesThenOneI
     EXPECT_EQ(1u, graphicsAllocation.getNumGmms());
 }
 
+TEST(GraphicsAllocationTest, givenAlwaysResidentAllocationWhenUpdateTaskCountThenItIsNotUpdated) {
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, 0u);
+
+    graphicsAllocation.updateResidencyTaskCount(10u, 0u);
+
+    EXPECT_EQ(graphicsAllocation.getResidencyTaskCount(0u), GraphicsAllocation::objectAlwaysResident);
+}
+
 TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsBeingObtainedThenZeroIsReturned) {
     MockGraphicsAllocation graphicsAllocation;
     EXPECT_EQ(0llu, graphicsAllocation.peekInternalHandle(nullptr));

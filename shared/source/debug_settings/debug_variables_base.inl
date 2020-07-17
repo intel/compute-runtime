@@ -109,6 +109,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionEnableDebugBuffer, 0, "0: diagno
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDiagnosticExecutionCount, 30, "Number of executions of EnableDebugBuffer modes within diagnostic run")
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionDisableCacheFlush, false, "Disable dispatching cache flush commands")
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionDisableMonitorFence, false, "Disable dispatching monitor fence commands")
+DECLARE_DEBUG_VARIABLE(bool, BindAllAllocations, false, "Bind all allocations during flush")
 
 /*PERFORMANCE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")

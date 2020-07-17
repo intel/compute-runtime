@@ -7,6 +7,8 @@
 
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
@@ -80,6 +82,14 @@ void DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osCo
     std::lock_guard<std::mutex> lock(mutex);
     for (auto gfxAllocation = residencyContainer.begin(); gfxAllocation != residencyContainer.end();) {
         if ((*gfxAllocation)->isAlwaysResident(osContext->getContextId())) {
+            gfxAllocation = residencyContainer.erase(gfxAllocation);
+        } else if (DebugManager.flags.BindAllAllocations.get()) {
+            auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
+            auto &drmContextIds = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds();
+            for (uint32_t drmIterator = 0u; drmIterator < drmContextIds.size(); drmIterator++) {
+                drmAllocation->makeBOsResident(osContext->getContextId(), drmContextIds[drmIterator], drmIterator, nullptr, true);
+            }
+            drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
             gfxAllocation = residencyContainer.erase(gfxAllocation);
         } else {
             gfxAllocation++;
