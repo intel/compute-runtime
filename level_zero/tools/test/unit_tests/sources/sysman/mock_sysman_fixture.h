@@ -23,10 +23,9 @@ using namespace NEO;
 
 namespace L0 {
 namespace ult {
-
+constexpr int mockFd = 0;
 class SysmanMockDrm : public Drm {
   public:
-    const int mockFd = 33;
     SysmanMockDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceId>(mockFd, ""), rootDeviceEnvironment) {}
 };
 
