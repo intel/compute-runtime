@@ -1082,14 +1082,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     } else {
         builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::FillBufferSSHOffset);
 
-        auto patternAlloc = device->allocateManagedMemoryFromHostPtr(reinterpret_cast<void *>(srcPtr),
-                                                                     srcOffset + patternSize, this);
-        if (patternAlloc == nullptr) {
+        auto patternAlloc = this->getAlignedAllocation(this->device, reinterpret_cast<void *>(srcPtr), srcOffset + patternSize);
+        if (patternAlloc.alloc == nullptr) {
             DEBUG_BREAK_IF(true);
             return ZE_RESULT_ERROR_UNKNOWN;
         }
-
-        commandContainer.getDeallocationContainer().push_back(patternAlloc);
+        srcOffset += patternAlloc.offset;
 
         groupSizeX = static_cast<uint32_t>(patternSize);
         if (builtinFunction->setGroupSize(groupSizeX, 1u, 1u)) {
@@ -1099,7 +1097,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
 
         builtinFunction->setArgumentValue(0, sizeof(dstPtr), &dstPtr);
         builtinFunction->setArgumentValue(1, sizeof(dstOffset), &dstOffset);
-        builtinFunction->setArgumentValue(2, sizeof(srcPtr), &srcPtr);
+        builtinFunction->setArgBufferWithAlloc(2, patternAlloc.alignedAllocationPtr,
+                                               patternAlloc.alloc);
         builtinFunction->setArgumentValue(3, sizeof(srcOffset), &srcOffset);
     }
 

@@ -13,8 +13,11 @@
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
+#include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/image/image_hw.h"
+#include "level_zero/core/source/kernel/kernel_imp.h"
+#include "level_zero/core/source/module/module.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
@@ -22,7 +25,6 @@
 
 namespace L0 {
 namespace ult {
-
 using CommandListCreate = Test<DeviceFixture>;
 
 TEST(zeCommandListCreateImmediate, redirectsToObject) {
@@ -414,6 +416,133 @@ class MockDriverHandle : public L0::DriverHandleImp {
     std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
     NEO::SvmAllocationData data{rootDeviceIndex};
 };
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandListForMemFillHostPtr : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+  public:
+    MockCommandListForMemFillHostPtr() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
+
+    AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize) override {
+        return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocation(device, buffer, bufferSize);
+    }
+};
+
+struct AppendMemoryFillFixture {
+    class MockDriverHandleHostPtr : public L0::DriverHandleImp {
+      public:
+        bool findAllocationDataForRange(const void *buffer,
+                                        size_t size,
+                                        NEO::SvmAllocationData **allocData) override {
+            if (buffer == reinterpret_cast<void *>(registeredGraphicsAllocationAddress)) {
+                mockAllocation.reset(new NEO::MockGraphicsAllocation(rootDeviceIndex, NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                                                     reinterpret_cast<void *>(registeredGraphicsAllocationAddress), 0x1000, 0, sizeof(uint32_t),
+                                                                     MemoryPool::System4KBPages));
+                data.gpuAllocations.addAllocation(mockAllocation.get());
+                if (allocData) {
+                    *allocData = &data;
+                }
+                return true;
+            }
+            return false;
+        }
+        const uint32_t rootDeviceIndex = 0u;
+        std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
+        NEO::SvmAllocationData data{rootDeviceIndex};
+    };
+    class MockKernelForMemFill : public L0::KernelImp {
+      public:
+        ze_result_t setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
+                                 uint32_t groupSizeZ) override {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
+            return;
+        }
+        void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
+            return;
+        }
+        std::unique_ptr<Kernel> clone() const override { return nullptr; }
+    };
+
+    struct MockBuiltinFunctionsForMemFill : BuiltinFunctionsLibImpl {
+        MockBuiltinFunctionsForMemFill(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
+            tmpMockKernel = new MockKernelForMemFill;
+        }
+        MockKernelForMemFill *getFunction(Builtin func) override {
+            return tmpMockKernel;
+        }
+        ~MockBuiltinFunctionsForMemFill() override {
+            delete tmpMockKernel;
+        }
+        MockKernelForMemFill *tmpMockKernel = nullptr;
+    };
+    class MockDeviceHandle : public L0::DeviceImp {
+      public:
+        MockDeviceHandle() {
+            tmpMockBultinLib = new MockBuiltinFunctionsForMemFill{nullptr, nullptr};
+        }
+        MockBuiltinFunctionsForMemFill *getBuiltinFunctionsLib() override {
+            return tmpMockBultinLib;
+        }
+        ~MockDeviceHandle() override {
+            delete tmpMockBultinLib;
+        }
+        MockBuiltinFunctionsForMemFill *tmpMockBultinLib = nullptr;
+    };
+    virtual void SetUp() { // NOLINT(readability-identifier-naming)
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+        neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        deviceMock = std::make_unique<MockDeviceHandle>();
+        driverHandle->initialize(std::move(devices));
+        neoMockDevice->incRefInternal();
+        deviceMock.get()->neoDevice = neoMockDevice;
+    }
+
+    virtual void TearDown() { // NOLINT(readability-identifier-naming)
+    }
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    std::unique_ptr<MockDeviceHandle> deviceMock;
+    NEO::MockDevice *neoDevice = nullptr;
+    NEO::MockDevice *neoMockDevice = nullptr;
+    static constexpr uint64_t registeredGraphicsAllocationAddress = 0x1234;
+};
+
+using AppendMemoryfillHostPtr = Test<AppendMemoryFillFixture>;
+
+HWTEST2_F(AppendMemoryfillHostPtr, givenTwoCommandListsAndHostPointerUsedInBothWhenMemoryfillCalledThenNewUniqueAllocationIsAddedtoHostPtrMap, Platforms) {
+    MockCommandListForMemFillHostPtr<gfxCoreFamily> cmdListFirst;
+    MockCommandListForMemFillHostPtr<gfxCoreFamily> cmdListSecond;
+    MockDriverHandleHostPtr driverHandleMock;
+    deviceMock.get()->setDriverHandle(&driverHandleMock);
+    cmdListFirst.initialize(deviceMock.get(), false);
+    cmdListSecond.initialize(deviceMock.get(), false);
+    uint64_t pattern[4] = {1, 2, 3, 4};
+    void *ptr = reinterpret_cast<void *>(registeredGraphicsAllocationAddress);
+    cmdListFirst.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
+    cmdListSecond.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
+    EXPECT_EQ(cmdListFirst.hostPtrMap.size(), 1u);
+    EXPECT_EQ(cmdListSecond.hostPtrMap.size(), 1u);
+    auto allocationFirstList = cmdListFirst.hostPtrMap.begin()->second;
+    auto allocationSecondList = cmdListSecond.hostPtrMap.begin()->second;
+    EXPECT_NE(allocationFirstList, allocationSecondList);
+    deviceMock.get()->setDriverHandle(driverHandle.get());
+}
+
+HWTEST2_F(AppendMemoryfillHostPtr, givenCommandListAndHostPointerWhenMemoryfillCalledThenNewAllocationisAddedToHostPtrMap, Platforms) {
+    MockCommandListForMemFillHostPtr<gfxCoreFamily> cmdList;
+    MockDriverHandleHostPtr driverHandleMock;
+    deviceMock.get()->setDriverHandle(&driverHandleMock);
+    cmdList.initialize(deviceMock.get(), false);
+    uint64_t pattern[4] = {1, 2, 3, 4};
+    void *ptr = reinterpret_cast<void *>(registeredGraphicsAllocationAddress);
+    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
+    EXPECT_EQ(cmdList.hostPtrMap.size(), 1u);
+    deviceMock.get()->setDriverHandle(driverHandle.get());
+}
+
 HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithLargePatternSizeThenMemCopyWasCalled, Platforms) {
     MockCommandListForMemFill<gfxCoreFamily> cmdList;
     cmdList.initialize(device, true);

@@ -9,25 +9,12 @@
 
 #include "shared/source/built_ins/built_ins.h"
 
-#include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/module/module.h"
-
 namespace L0 {
 
 std::unique_ptr<BuiltinFunctionsLib> BuiltinFunctionsLib::create(Device *device,
                                                                  NEO::BuiltIns *builtins) {
     return std::unique_ptr<BuiltinFunctionsLib>(new BuiltinFunctionsLibImpl(device, builtins));
 }
-
-struct BuiltinFunctionsLibImpl::BuiltinData {
-    ~BuiltinData() {
-        func.reset();
-        module.reset();
-    }
-
-    std::unique_ptr<Module> module;
-    std::unique_ptr<Kernel> func;
-};
 
 void BuiltinFunctionsLibImpl::initFunctions() {
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {

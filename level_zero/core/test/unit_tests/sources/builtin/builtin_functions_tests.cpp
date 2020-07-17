@@ -19,15 +19,6 @@
 #include "gtest/gtest.h"
 
 namespace L0 {
-struct BuiltinFunctionsLibImpl::BuiltinData {
-    ~BuiltinData() {
-        func.reset();
-        module.reset();
-    }
-
-    std::unique_ptr<Module> module;
-    std::unique_ptr<Kernel> func;
-};
 namespace ult {
 class TestBuiltinFunctionsLibImpl : public DeviceFixture, public testing::Test {
   public:
