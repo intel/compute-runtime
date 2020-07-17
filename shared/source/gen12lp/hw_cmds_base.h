@@ -84,6 +84,8 @@ struct TGLLPFamily : public GEN12LP {
     static const STATE_SIP cmdInitStateSip;
     static const BINDING_TABLE_STATE cmdInitBindingTableState;
     static const MI_USER_INTERRUPT cmdInitUserInterrupt;
+    static const L3_CONTROL cmdInitL3ControlWithoutPostSync;
+    static const L3_CONTROL cmdInitL3ControlWithPostSync;
     static const XY_COPY_BLT cmdInitXyCopyBlt;
     static const MI_FLUSH_DW cmdInitMiFlushDw;
     static const XY_FAST_COLOR_BLT cmdInitXyColorBlt;

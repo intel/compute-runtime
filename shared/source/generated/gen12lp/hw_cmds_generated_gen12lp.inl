@@ -5223,6 +5223,357 @@ typedef struct tagGPGPU_CSR_BASE_ADDRESS {
 } GPGPU_CSR_BASE_ADDRESS;
 STATIC_ASSERT(12 == sizeof(GPGPU_CSR_BASE_ADDRESS));
 
+typedef struct tagL3_FLUSH_ADDRESS_RANGE {
+    union tagTheStructure {
+        struct tagCommon {
+            uint64_t Reserved_0 : BITFIELD_RANGE(0, 2);
+            uint64_t AddressMask : BITFIELD_RANGE(3, 8);
+            uint64_t Reserved_9 : BITFIELD_RANGE(9, 11);
+            uint64_t AddressLow : BITFIELD_RANGE(12, 31);
+            uint64_t AddressHigh : BITFIELD_RANGE(32, 47);
+            uint64_t Reserved_48 : BITFIELD_RANGE(48, 59);
+            uint64_t L3FlushEvictionPolicy : BITFIELD_RANGE(60, 61);
+            uint64_t Reserved_62 : BITFIELD_RANGE(62, 63);
+        } Common;
+        struct tagCommonA0Stepping {
+            uint64_t AddressHigh : BITFIELD_RANGE(0, 15);
+            uint64_t Reserved_0 : BITFIELD_RANGE(16, 27);
+            uint64_t L3FlushEvictionPolicy : BITFIELD_RANGE(28, 29);
+            uint64_t Reserved_9 : BITFIELD_RANGE(30, 34);
+            uint64_t AddressMask : BITFIELD_RANGE(35, 40);
+            uint64_t Reserved_48 : BITFIELD_RANGE(41, 43);
+            uint64_t AddressLow : BITFIELD_RANGE(44, 63);
+        } CommonA0Stepping;
+        uint32_t RawData[2];
+    } TheStructure;
+
+    typedef enum tagL3_FLUSH_EVICTION_POLICY {
+        L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION = 0x0,
+    } L3_FLUSH_EVICTION_POLICY;
+    inline void init() {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+    }
+    static tagL3_FLUSH_ADDRESS_RANGE sInit() {
+        L3_FLUSH_ADDRESS_RANGE state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 2);
+        return TheStructure.RawData[index];
+    }
+
+    typedef enum tagADDRESSLOW {
+        ADDRESSLOW_BIT_SHIFT = 0xC,
+        ADDRESSLOW_ALIGN_SIZE = 0x1000,
+    } ADDRESSLOW;
+
+    inline void setAddressLow(const uint64_t value, bool isA0Stepping) {
+        if (isA0Stepping) {
+            TheStructure.CommonA0Stepping.AddressLow = value >> ADDRESSLOW_BIT_SHIFT;
+        } else {
+            TheStructure.Common.AddressLow = value >> ADDRESSLOW_BIT_SHIFT;
+        }
+    }
+
+    inline uint64_t getAddressLow(bool isA0Stepping) const {
+        if (isA0Stepping) {
+            return (TheStructure.CommonA0Stepping.AddressLow << ADDRESSLOW_BIT_SHIFT) & uint64_t(0xffffffff);
+        } else {
+            return (TheStructure.Common.AddressLow << ADDRESSLOW_BIT_SHIFT);
+        }
+    }
+
+    inline void setAddressHigh(const uint64_t value, bool isA0Stepping) {
+        if (isA0Stepping) {
+            TheStructure.CommonA0Stepping.AddressHigh = value;
+        } else {
+            TheStructure.Common.AddressHigh = value;
+        }
+    }
+
+    inline uint64_t getAddressHigh(bool isA0Stepping) const {
+        if (isA0Stepping) {
+            return (TheStructure.CommonA0Stepping.AddressHigh);
+        } else {
+            return (TheStructure.Common.AddressHigh);
+        }
+    }
+
+    inline void setAddress(const uint64_t value, bool isA0Stepping) {
+        setAddressLow(static_cast<uint32_t>(value), isA0Stepping);
+        setAddressHigh(static_cast<uint32_t>(value >> 32), isA0Stepping);
+    }
+
+    inline uint64_t getAddress(bool isA0Stepping) const {
+        return static_cast<uint64_t>(getAddressLow(isA0Stepping)) | (static_cast<uint64_t>(getAddressHigh(isA0Stepping)) << 32);
+    }
+
+    inline void setL3FlushEvictionPolicy(const L3_FLUSH_EVICTION_POLICY value, bool isA0Stepping) {
+        if (isA0Stepping) {
+            TheStructure.CommonA0Stepping.L3FlushEvictionPolicy = value;
+        } else {
+            TheStructure.Common.L3FlushEvictionPolicy = value;
+        }
+    }
+    inline L3_FLUSH_EVICTION_POLICY getL3FlushEvictionPolicy(bool isA0Stepping) const {
+        if (isA0Stepping) {
+            return static_cast<L3_FLUSH_EVICTION_POLICY>(TheStructure.CommonA0Stepping.L3FlushEvictionPolicy);
+        } else {
+            return static_cast<L3_FLUSH_EVICTION_POLICY>(TheStructure.Common.L3FlushEvictionPolicy);
+        }
+    }
+    inline void setAddressMask(const uint64_t value, bool isA0Stepping) {
+        if (isA0Stepping) {
+            TheStructure.CommonA0Stepping.AddressMask = value;
+        } else {
+            UNRECOVERABLE_IF(value > 0x1f8);
+            TheStructure.Common.AddressMask = value;
+        }
+    }
+    inline uint32_t getAddressMask(bool isA0Stepping) const {
+        if (isA0Stepping) {
+            return TheStructure.CommonA0Stepping.AddressMask;
+        } else {
+            return TheStructure.Common.AddressMask;
+        }
+    }
+} L3_FLUSH_ADDRESS_RANGE;
+STATIC_ASSERT(8 == sizeof(L3_FLUSH_ADDRESS_RANGE));
+
+struct L3_CONTROL_BASE {
+    union tagTheStructure {
+        struct tagCommon {
+            uint32_t Length : BITFIELD_RANGE(0, 7);
+            uint32_t DepthCacheFlush : BITFIELD_RANGE(8, 8);
+            uint32_t RenderTargetCacheFlushEnable : BITFIELD_RANGE(9, 9);
+            uint32_t HdcPipelineFlush : BITFIELD_RANGE(10, 10);
+            uint32_t Reserved_11 : BITFIELD_RANGE(11, 13);
+            uint32_t PostSyncOperation : BITFIELD_RANGE(14, 14);
+            uint32_t PostSyncOperationL3CacheabilityControl : BITFIELD_RANGE(15, 15); // removed on DG1
+            uint32_t Reserved_16 : BITFIELD_RANGE(16, 19);
+            uint32_t CommandStreamerStallEnable : BITFIELD_RANGE(20, 20);
+            uint32_t DestinationAddressType : BITFIELD_RANGE(21, 21);
+            uint32_t Reserved_22 : BITFIELD_RANGE(22, 22);
+            uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(23, 23);
+            uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
+            uint32_t CommandSubtype : BITFIELD_RANGE(27, 28);
+            uint32_t Type : BITFIELD_RANGE(29, 31);
+        } Common;
+        uint32_t RawData[1];
+    } TheStructure;
+
+    typedef enum tagLENGTH {
+        LENGTH_POST_SYNC_OPERATION_DISABLED = 1,
+        LENGTH_POST_SYNC_OPERATION_ENABLED = 5,
+    } LENGTH;
+    typedef enum tagPOST_SYNC_OPERATION {
+        POST_SYNC_OPERATION_NO_WRITE = 0x0,
+        POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA = 0x1,
+    } POST_SYNC_OPERATION;
+    typedef enum tagPOST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL {
+        POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL_DEFAULT_MOCS = 0x0,
+        POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL_CACHEABLE_MOCS = 0x1,
+    } POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL;
+    typedef enum tagDESTINATION_ADDRESS_TYPE {
+        DESTINATION_ADDRESS_TYPE_PPGTT = 0x0,
+        DESTINATION_ADDRESS_TYPE_GGTT = 0x1,
+    } DESTINATION_ADDRESS_TYPE;
+    typedef enum tag_3D_COMMAND_SUB_OPCODE {
+        _3D_COMMAND_SUB_OPCODE_L3_CONTROL = 0x1,
+    } _3D_COMMAND_SUB_OPCODE;
+    typedef enum tag_3D_COMMAND_OPCODE {
+        _3D_COMMAND_OPCODE_L3_CONTROL = 0x5,
+    } _3D_COMMAND_OPCODE;
+    typedef enum tagCOMMAND_SUBTYPE {
+        COMMAND_SUBTYPE_GFXPIPE_3D = 0x3,
+    } COMMAND_SUBTYPE;
+    typedef enum tagTYPE {
+        TYPE_GFXPIPE = 0x3,
+    } TYPE;
+    inline void init(void) {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.PostSyncOperation = POST_SYNC_OPERATION_NO_WRITE;
+        TheStructure.Common.PostSyncOperationL3CacheabilityControl = POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL_DEFAULT_MOCS;
+        TheStructure.Common.DestinationAddressType = DESTINATION_ADDRESS_TYPE_PPGTT;
+        TheStructure.Common._3DCommandSubOpcode = _3D_COMMAND_SUB_OPCODE_L3_CONTROL;
+        TheStructure.Common._3DCommandOpcode = _3D_COMMAND_OPCODE_L3_CONTROL;
+        TheStructure.Common.CommandSubtype = COMMAND_SUBTYPE_GFXPIPE_3D;
+        TheStructure.Common.Type = TYPE_GFXPIPE;
+    }
+    static L3_CONTROL_BASE sInit(void) {
+        L3_CONTROL_BASE state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 7);
+        return TheStructure.RawData[index];
+    }
+    inline void setLength(const LENGTH value) {
+        TheStructure.Common.Length = value;
+    }
+    inline LENGTH getLength(void) const {
+        return (LENGTH)TheStructure.Common.Length;
+    }
+    inline void setDepthCacheFlush(const bool value) {
+        TheStructure.Common.DepthCacheFlush = value;
+    }
+    inline bool getDepthCacheFlush(void) const {
+        return TheStructure.Common.DepthCacheFlush;
+    }
+    inline void setRenderTargetCacheFlushEnable(const bool value) {
+        TheStructure.Common.RenderTargetCacheFlushEnable = value;
+    }
+    inline bool getRenderTargetCacheFlushEnable(void) const {
+        return TheStructure.Common.RenderTargetCacheFlushEnable;
+    }
+    inline void setHdcPipelineFlush(const bool value) {
+        TheStructure.Common.HdcPipelineFlush = value;
+    }
+    inline bool getHdcPipelineFlush(void) const {
+        return TheStructure.Common.HdcPipelineFlush;
+    }
+    inline void setPostSyncOperation(const POST_SYNC_OPERATION value) {
+        TheStructure.Common.PostSyncOperation = value;
+    }
+    inline POST_SYNC_OPERATION getPostSyncOperation(void) const {
+        return static_cast<POST_SYNC_OPERATION>(TheStructure.Common.PostSyncOperation);
+    }
+    inline void setPostSyncOperationL3CacheabilityControl(const POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL value) {
+        TheStructure.Common.PostSyncOperationL3CacheabilityControl = value;
+    }
+    inline POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL getPostSyncOperationL3CacheabilityControl(void) const {
+        return static_cast<POST_SYNC_OPERATION_L3_CACHEABILITY_CONTROL>(TheStructure.Common.PostSyncOperationL3CacheabilityControl);
+    }
+    inline void setCommandStreamerStallEnable(const bool value) {
+        TheStructure.Common.CommandStreamerStallEnable = value;
+    }
+    inline bool getCommandStreamerStallEnable(void) const {
+        return TheStructure.Common.CommandStreamerStallEnable;
+    }
+    inline void setDestinationAddressType(const DESTINATION_ADDRESS_TYPE value) {
+        TheStructure.Common.DestinationAddressType = value;
+    }
+    inline DESTINATION_ADDRESS_TYPE getDestinationAddressType(void) const {
+        return static_cast<DESTINATION_ADDRESS_TYPE>(TheStructure.Common.DestinationAddressType);
+    }
+    inline void setType(const TYPE value) {
+        TheStructure.Common.Type = value;
+    }
+    inline TYPE getType(void) const {
+        return static_cast<TYPE>(TheStructure.Common.Type);
+    }
+};
+
+struct L3_CONTROL_POST_SYNC_DATA {
+    union tagTheStructure {
+        struct tagCommon {
+            uint64_t Reserved_96 : BITFIELD_RANGE(0, 2);
+            uint64_t Address : BITFIELD_RANGE(3, 47);
+            uint64_t Reserved_144 : BITFIELD_RANGE(48, 63);
+            uint64_t ImmediateData;
+        } Common;
+        uint32_t RawData[4];
+    } TheStructure;
+
+    inline void init(void) {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+    }
+
+    typedef enum tagADDRESS {
+        ADDRESS_BIT_SHIFT = 0x3,
+        ADDRESS_ALIGN_SIZE = 0x8,
+    } ADDRESS;
+    inline void setAddress(const uint64_t value) {
+        UNRECOVERABLE_IF(value > 0xfffffffffff8L);
+        TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
+    }
+    inline uint64_t getAddress(void) const {
+        return TheStructure.Common.Address << ADDRESS_BIT_SHIFT;
+    }
+    inline void setImmediateData(const uint64_t value) {
+        TheStructure.Common.ImmediateData = value;
+    }
+    inline uint64_t getImmediateData(void) const {
+        return TheStructure.Common.ImmediateData;
+    }
+};
+
+struct L3_CONTROL {
+    union tagTheStructure {
+        struct tagCommon {
+            L3_CONTROL_BASE Base;
+            L3_CONTROL_POST_SYNC_DATA PostSyncData;
+            L3_FLUSH_ADDRESS_RANGE L3FlushAddressRange;
+        } Common;
+        uint32_t RawData[7];
+    } TheStructure;
+
+    inline void init(void) {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        getBase().init();
+        getPostSyncData().init();
+        getBase().setLength(L3_CONTROL_BASE::LENGTH_POST_SYNC_OPERATION_ENABLED);
+        TheStructure.Common.L3FlushAddressRange.init();
+    }
+
+    inline void setL3FlushAddressRange(const L3_FLUSH_ADDRESS_RANGE &value) {
+        TheStructure.Common.L3FlushAddressRange = value;
+    }
+    inline L3_FLUSH_ADDRESS_RANGE &getL3FlushAddressRange(void) {
+        return TheStructure.Common.L3FlushAddressRange;
+    }
+    inline const L3_FLUSH_ADDRESS_RANGE &getL3FlushAddressRange(void) const {
+        return TheStructure.Common.L3FlushAddressRange;
+    }
+
+    static L3_CONTROL sInit(void) {
+        L3_CONTROL state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        UNRECOVERABLE_IF(index >= 7);
+        return TheStructure.RawData[index];
+    }
+
+    L3_CONTROL_BASE &getBase() {
+        return TheStructure.Common.Base;
+    }
+
+    const L3_CONTROL_BASE &getBase() const {
+        return TheStructure.Common.Base;
+    }
+
+    L3_CONTROL_POST_SYNC_DATA &getPostSyncData() {
+        return TheStructure.Common.PostSyncData;
+    }
+
+    const L3_CONTROL_POST_SYNC_DATA &getPostSyncData() const {
+        return TheStructure.Common.PostSyncData;
+    }
+
+    inline void setPostSyncAddress(const uint64_t value) {
+        getPostSyncData().setAddress(value);
+    }
+
+    inline uint64_t getPostSyncAddress(void) const {
+        return getPostSyncData().getAddress();
+    }
+
+    inline void setPostSyncImmediateData(const uint64_t value) {
+        getPostSyncData().setImmediateData(value);
+    }
+
+    inline uint64_t getPostSyncImmediateData(void) const {
+        return getPostSyncData().getImmediateData();
+    }
+};
+
+STATIC_ASSERT(28 == sizeof(L3_CONTROL));
+STATIC_ASSERT(std::is_pod<L3_CONTROL>::value);
+
 typedef struct tagXY_BLOCK_COPY_BLT {
     union tagTheStructure {
         struct tagCommon {
