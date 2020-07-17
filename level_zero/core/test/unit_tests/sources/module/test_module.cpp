@@ -236,5 +236,52 @@ HWTEST_F(ModuleDynamicLinkTests, givenCallToDynamicLinkThenUnsupportedFeatureIsR
     delete module1;
 }
 
+class MultiDeviceModuleSetArgBufferTest : public MultiDeviceModuleFixture, public ::testing::Test {
+  public:
+    void SetUp() override {
+        MultiDeviceModuleFixture::SetUp();
+    }
+
+    void TearDown() override {
+        MultiDeviceModuleFixture::TearDown();
+    }
+
+    void createKernelAndAllocMemory(uint32_t rootDeviceIndex, void **ptr, ze_kernel_handle_t *kernelHandle) {
+        ze_kernel_desc_t kernelDesc = {};
+        kernelDesc.version = ZE_KERNEL_DESC_VERSION_CURRENT;
+        kernelDesc.flags = ZE_KERNEL_FLAG_NONE;
+        kernelDesc.pKernelName = kernelName.c_str();
+        ze_result_t res = modules[rootDeviceIndex].get()->createKernel(&kernelDesc, kernelHandle);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        res = driverHandle->allocHostMem(ZE_HOST_MEM_ALLOC_FLAG_DEFAULT, 4096u, rootDeviceIndex, ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    }
+};
+
+HWTEST_F(MultiDeviceModuleSetArgBufferTest,
+         givenCallsToSetArgBufferThenAllocationIsSetForCorrectDevice) {
+
+    for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
+        createModuleFromBinary(rootDeviceIndex);
+
+        ze_kernel_handle_t kernelHandle;
+        void *ptr = nullptr;
+        createKernelAndAllocMemory(rootDeviceIndex, &ptr, &kernelHandle);
+
+        L0::KernelImp *kernel = reinterpret_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
+        kernel->setArgBuffer(0, sizeof(ptr), &ptr);
+
+        for (auto alloc : kernel->getResidencyContainer()) {
+            if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(ptr)) {
+                EXPECT_EQ(rootDeviceIndex, alloc->getRootDeviceIndex());
+            }
+        }
+
+        driverHandle->freeMem(ptr);
+        Kernel::fromHandle(kernelHandle)->destroy();
+    }
+}
+
 } // namespace ult
 } // namespace L0
