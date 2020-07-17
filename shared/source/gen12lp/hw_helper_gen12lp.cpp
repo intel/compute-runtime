@@ -63,43 +63,33 @@ bool HwHelperHw<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo)
 }
 
 template <>
-bool HwHelperHw<Family>::isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) const {
+uint32_t HwHelperHw<Family>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP) {
-        for (auto stepping : {&lowestSteppingWithBug, &steppingWithFix}) {
-            switch (*stepping) {
-            case REVISION_A0:
-                *stepping = 0x0;
-                break;
-            case REVISION_B:
-                *stepping = 0x1;
-                break;
-            case REVISION_C:
-                *stepping = 0x3;
-                break;
-            default:
-                DEBUG_BREAK_IF(true);
-                return false;
-            }
+        switch (stepping) {
+        case REVISION_A0:
+            return 0x0;
+        case REVISION_B:
+            return 0x1;
+        case REVISION_C:
+            return 0x3;
         }
-        return (lowestSteppingWithBug <= hwInfo.platform.usRevId && hwInfo.platform.usRevId < steppingWithFix);
-    } else if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_DG1) {
-        for (auto stepping : {&lowestSteppingWithBug, &steppingWithFix}) {
-            switch (*stepping) {
-            case REVISION_A0:
-                *stepping = 0x0;
-                break;
-            case REVISION_B:
-                *stepping = 0x1;
-                break;
-            default:
-                DEBUG_BREAK_IF(true);
-                return false;
-            }
-        }
-        return (lowestSteppingWithBug <= hwInfo.platform.usRevId && hwInfo.platform.usRevId < steppingWithFix);
     }
+    return Gen12LPHelpers::getHwRevIdFromStepping(stepping, hwInfo);
+}
 
-    return Gen12LPHelpers::workaroundRequired(lowestSteppingWithBug, steppingWithFix, hwInfo);
+template <>
+uint32_t HwHelperHw<Family>::getSteppingFromHwRevId(uint32_t hwRevId, const HardwareInfo &hwInfo) const {
+    if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP) {
+        switch (hwRevId) {
+        case 0x0:
+            return REVISION_A0;
+        case 0x1:
+            return REVISION_B;
+        case 0x3:
+            return REVISION_C;
+        }
+    }
+    return Gen12LPHelpers::getSteppingFromHwRevId(hwRevId, hwInfo);
 }
 
 template <>

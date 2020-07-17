@@ -19,8 +19,12 @@ bool pipeControlWaRequired(PRODUCT_FAMILY productFamily) {
     return (productFamily == PRODUCT_FAMILY::IGFX_TIGERLAKE_LP);
 }
 
-bool workaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo) {
-    return false;
+uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) {
+    return CommonConstants::invalidStepping;
+}
+
+uint32_t getSteppingFromHwRevId(uint32_t hwRevId, const HardwareInfo &hwInfo) {
+    return CommonConstants::invalidStepping;
 }
 
 bool imagePitchAlignmentWaRequired(PRODUCT_FAMILY productFamily) {

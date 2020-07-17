@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/utilities/compiler_support.h"
+
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 
 using HwHelperTestDg1 = HwHelperTest;
@@ -51,4 +53,25 @@ DG1TEST_F(HwHelperTestDg1, givenDg1BWhenAdjustDefaultEngineTypeCalledThenCcsIsRe
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
+}
+
+DG1TEST_F(HwHelperTestDg1, givenDg1AndVariousSteppingsWhenGettingIsWorkaroundRequiredThenCorrectValueIsReturned) {
+    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    uint32_t steppings[] = {
+        REVISION_A0,
+        REVISION_B,
+        CommonConstants::invalidStepping};
+
+    for (auto stepping : steppings) {
+        hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
+
+        switch (stepping) {
+        case REVISION_A0:
+            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+            CPP_ATTRIBUTE_FALLTHROUGH;
+        default:
+            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+        }
+    }
 }

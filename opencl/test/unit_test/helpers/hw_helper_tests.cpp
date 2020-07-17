@@ -898,6 +898,29 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenDefaultHwHelperHwWhenIsWorkaround
     EXPECT_FALSE(helper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
 }
 
+HWTEST_F(HwHelperTest, givenVariousValuesWhenConvertingHwRevIdAndSteppingThenConversionIsCorrect) {
+    auto &helper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    for (uint32_t testValue = 0; testValue < 0x10; testValue++) {
+        auto hwRevIdFromStepping = helper.getHwRevIdFromStepping(testValue, hardwareInfo);
+        if (hwRevIdFromStepping != CommonConstants::invalidStepping) {
+            EXPECT_EQ(testValue, helper.getSteppingFromHwRevId(hwRevIdFromStepping, hardwareInfo));
+        }
+        auto steppingFromHwRevId = helper.getSteppingFromHwRevId(testValue, hardwareInfo);
+        if (steppingFromHwRevId != CommonConstants::invalidStepping) {
+            EXPECT_EQ(testValue, helper.getHwRevIdFromStepping(steppingFromHwRevId, hardwareInfo));
+        }
+    }
+}
+
+HWTEST_F(HwHelperTest, givenInvalidProductFamilyWhenConvertingHwRevIdAndSteppingThenConversionFails) {
+    auto &helper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    hardwareInfo.platform.eProductFamily = IGFX_UNKNOWN;
+    for (uint32_t testValue = 0; testValue < 0x10; testValue++) {
+        EXPECT_EQ(CommonConstants::invalidStepping, helper.getHwRevIdFromStepping(testValue, hardwareInfo));
+        EXPECT_EQ(CommonConstants::invalidStepping, helper.getSteppingFromHwRevId(testValue, hardwareInfo));
+    }
+}
+
 HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenIsForceEmuInt32DivRemSPWARequiredCalledThenFalseIsReturned) {
     if (hardwareInfo.platform.eRenderCoreFamily == IGFX_GEN12LP_CORE) {
         GTEST_SKIP();
