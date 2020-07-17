@@ -211,3 +211,16 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
 
     bo->setAddress(0llu);
 }
+
+TEST_F(DrmBufferObjectTest, givenDeleterWhenBufferObjectIsCreatedAndDeletedThenCloseIsCalled) {
+    mock->ioctl_cnt.reset();
+    mock->ioctl_expected.reset();
+
+    {
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(mock.get(), 1, 0x1000));
+    }
+
+    EXPECT_EQ(1, mock->ioctl_cnt.gemClose);
+    mock->ioctl_cnt.reset();
+    mock->ioctl_expected.reset();
+}

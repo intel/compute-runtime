@@ -27,6 +27,13 @@ class BufferObject {
     BufferObject(Drm *drm, int handle, size_t size);
     MOCKABLE_VIRTUAL ~BufferObject(){};
 
+    struct Deleter {
+        void operator()(BufferObject *bo) {
+            bo->close();
+            delete bo;
+        }
+    };
+
     bool setTiling(uint32_t mode, uint32_t stride);
 
     MOCKABLE_VIRTUAL int pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t drmContextId);
