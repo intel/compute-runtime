@@ -146,6 +146,13 @@ zetSysmanPowerGet(
     return L0::Sysman::fromHandle(hSysman)->powerGet(pCount, phPower);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesPowerGetProperties(
+    zes_pwr_handle_t hPower,
+    zes_power_properties_t *pProperties) {
+    return L0::Power::fromHandle(hPower)->powerGetProperties(pProperties);
+}
+
 __zedllexport ze_result_t __zecall
 zetSysmanPowerGetProperties(
     zet_sysman_pwr_handle_t hPower,
@@ -153,11 +160,27 @@ zetSysmanPowerGetProperties(
     return L0::Power::fromHandle(hPower)->powerGetProperties(pProperties);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesPowerGetEnergyCounter(
+    zes_pwr_handle_t hPower,
+    zes_power_energy_counter_t *pEnergy) {
+    return L0::Power::fromHandle(hPower)->powerGetEnergyCounter(pEnergy);
+}
+
 __zedllexport ze_result_t __zecall
 zetSysmanPowerGetEnergyCounter(
     zet_sysman_pwr_handle_t hPower,
     zet_power_energy_counter_t *pEnergy) {
     return L0::Power::fromHandle(hPower)->powerGetEnergyCounter(pEnergy);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesPowerGetLimits(
+    zes_pwr_handle_t hPower,
+    zes_power_sustained_limit_t *pSustained,
+    zes_power_burst_limit_t *pBurst,
+    zes_power_peak_limit_t *pPeak) {
+    return L0::Power::fromHandle(hPower)->powerGetLimits(pSustained, pBurst, pPeak);
 }
 
 __zedllexport ze_result_t __zecall
@@ -169,6 +192,15 @@ zetSysmanPowerGetLimits(
     return L0::Power::fromHandle(hPower)->powerGetLimits(pSustained, pBurst, pPeak);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesPowerSetLimits(
+    zes_pwr_handle_t hPower,
+    const zes_power_sustained_limit_t *pSustained,
+    const zes_power_burst_limit_t *pBurst,
+    const zes_power_peak_limit_t *pPeak) {
+    return L0::Power::fromHandle(hPower)->powerSetLimits(pSustained, pBurst, pPeak);
+}
+
 __zedllexport ze_result_t __zecall
 zetSysmanPowerSetLimits(
     zet_sysman_pwr_handle_t hPower,
@@ -178,11 +210,25 @@ zetSysmanPowerSetLimits(
     return L0::Power::fromHandle(hPower)->powerSetLimits(pSustained, pBurst, pPeak);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesPowerGetEnergyThreshold(
+    zes_pwr_handle_t hPower,
+    zes_energy_threshold_t *pThreshold) {
+    return L0::Power::fromHandle(hPower)->powerGetEnergyThreshold(pThreshold);
+}
+
 __zedllexport ze_result_t __zecall
 zetSysmanPowerGetEnergyThreshold(
     zet_sysman_pwr_handle_t hPower,
     zet_energy_threshold_t *pThreshold) {
     return L0::Power::fromHandle(hPower)->powerGetEnergyThreshold(pThreshold);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesPowerSetEnergyThreshold(
+    zes_pwr_handle_t hPower,
+    double threshold) {
+    return L0::Power::fromHandle(hPower)->powerSetEnergyThreshold(threshold);
 }
 
 __zedllexport ze_result_t __zecall

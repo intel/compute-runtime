@@ -18,6 +18,11 @@ ze_result_t LinuxPowerImp::getEnergyThreshold(zet_energy_threshold_t *pThreshold
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t LinuxPowerImp::getEnergyThreshold(zes_energy_threshold_t *pThreshold) {
+
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t LinuxPowerImp::setEnergyThreshold(double threshold) {
 
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;

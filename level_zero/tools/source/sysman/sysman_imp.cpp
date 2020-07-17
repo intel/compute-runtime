@@ -22,14 +22,19 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     hCoreDevice = hDevice;
     pOsSysman = OsSysman::create(this);
     UNRECOVERABLE_IF(nullptr == pOsSysman);
+    pPowerHandleContext = new PowerHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pOsSysman);
+    freeResource(pPowerHandleContext);
 }
 
 void SysmanDeviceImp::init() {
     pOsSysman->init();
+    if (pPowerHandleContext) {
+        pPowerHandleContext->init();
+    }
 }
 
 SysmanImp::SysmanImp(ze_device_handle_t hDevice) {
@@ -187,7 +192,7 @@ ze_result_t SysmanImp::powerGet(uint32_t *pCount, zet_sysman_pwr_handle_t *phPow
 }
 
 ze_result_t SysmanDeviceImp::powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pPowerHandleContext->powerGet(pCount, phPower);
 }
 
 ze_result_t SysmanImp::frequencyGet(uint32_t *pCount, zet_sysman_freq_handle_t *phFrequency) {
