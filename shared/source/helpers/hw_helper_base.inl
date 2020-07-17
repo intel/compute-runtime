@@ -393,6 +393,22 @@ inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const Hardwa
 }
 
 template <typename GfxFamily>
+LocalMemoryAccessMode HwHelperHw<GfxFamily>::getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+    switch (static_cast<LocalMemoryAccessMode>(DebugManager.flags.ForceLocalMemoryAccessMode.get())) {
+    case LocalMemoryAccessMode::Default:
+    case LocalMemoryAccessMode::CpuAccessAllowed:
+    case LocalMemoryAccessMode::CpuAccessDisallowed:
+        return static_cast<LocalMemoryAccessMode>(DebugManager.flags.ForceLocalMemoryAccessMode.get());
+    }
+    return getDefaultLocalMemoryAccessMode(hwInfo);
+}
+
+template <typename GfxFamily>
+inline LocalMemoryAccessMode HwHelperHw<GfxFamily>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+    return LocalMemoryAccessMode::Default;
+}
+
+template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush() {
     return sizeof(typename GfxFamily::PIPE_CONTROL);
 }

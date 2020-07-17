@@ -911,6 +911,23 @@ HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenMinimalSIMDSizeIsQueriedThen8Is
     EXPECT_EQ(8u, helper.getMinimalSIMDSize());
 }
 
+HWTEST_F(HwHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
+    struct MockHwHelper : HwHelperHw<FamilyType> {
+        using HwHelper::getDefaultLocalMemoryAccessMode;
+    };
+
+    DebugManagerStateRestore restore{};
+    auto hwHelper = static_cast<MockHwHelper &>(HwHelper::get(renderCoreFamily));
+    EXPECT_EQ(hwHelper.getDefaultLocalMemoryAccessMode(*defaultHwInfo), hwHelper.getLocalMemoryAccessMode(*defaultHwInfo));
+
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    EXPECT_EQ(LocalMemoryAccessMode::Default, hwHelper.getLocalMemoryAccessMode(*defaultHwInfo));
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
+    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessAllowed, hwHelper.getLocalMemoryAccessMode(*defaultHwInfo));
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
+    EXPECT_EQ(LocalMemoryAccessMode::CpuAccessDisallowed, hwHelper.getLocalMemoryAccessMode(*defaultHwInfo));
+}
+
 HWTEST2_F(HwHelperTest, givenSingleEnginePlatformWhenGettingComputeEngineIndexByOrdinalThenZeroIndexIsReturned, IsAtMostGen11) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(0u, helper.getComputeEngineIndexByOrdinal(*defaultHwInfo, 0));

@@ -29,6 +29,12 @@ struct HardwareCapabilities;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
 
+enum class LocalMemoryAccessMode {
+    Default = 0,
+    CpuAccessAllowed = 1,
+    CpuAccessDisallowed = 3
+};
+
 class HwHelper {
   public:
     using EngineInstancesContainer = StackVec<aub_stream::EngineType, 32>;
@@ -57,6 +63,7 @@ class HwHelper {
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
     virtual bool allowRenderCompression(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo) const = 0;
+    virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
     static bool renderCompressedImagesSupported(const HardwareInfo &hwInfo);
     static bool cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo);
@@ -111,6 +118,8 @@ class HwHelper {
     static constexpr uint32_t internalUsageEngineIndex = 2;
 
   protected:
+    virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
+
     HwHelper() = default;
 };
 
@@ -273,9 +282,13 @@ class HwHelperHw : public HwHelper {
 
     bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo) const override;
 
+    LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
+
     bool isBankOverrideRequired(const HardwareInfo &hwInfo) const override;
 
   protected:
+    LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
+
     static const AuxTranslationMode defaultAuxTranslationMode;
     HwHelperHw() = default;
 };
