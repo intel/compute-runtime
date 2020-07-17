@@ -1029,4 +1029,41 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPrologue() const 
     return 0u;
 }
 
+template <typename GfxFamily>
+inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &device, OsContext &osContext) {
+    bool ret = true;
+
+    if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
+        auto contextEngineType = osContext.getEngineType();
+        const DirectSubmissionProperties &directSubmissionProperty =
+            device.getHardwareInfo().capabilityTable.directSubmissionEngines.data[contextEngineType];
+
+        bool startDirect = true;
+        if (!osContext.isDefaultContext()) {
+            startDirect = directSubmissionProperty.useNonDefault;
+        }
+        if (osContext.isLowPriority()) {
+            startDirect = directSubmissionProperty.useLowPriority;
+        }
+        if (osContext.isInternalEngine()) {
+            startDirect = directSubmissionProperty.useInternal;
+        }
+        if (osContext.isRootDevice()) {
+            startDirect = directSubmissionProperty.useRootDevice;
+        }
+
+        if (directSubmissionProperty.engineSupported && startDirect) {
+            if (contextEngineType == aub_stream::ENGINE_BCS) {
+                blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(device, osContext);
+                ret = blitterDirectSubmission->initialize(directSubmissionProperty.submitOnInit);
+            } else {
+                directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(device, osContext);
+                ret = directSubmission->initialize(directSubmissionProperty.submitOnInit);
+                this->dispatchMode = DispatchMode::ImmediateDispatch;
+            }
+        }
+    }
+    return ret;
+}
+
 } // namespace NEO

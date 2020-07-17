@@ -59,15 +59,19 @@ class DirectSubmissionHw {
 
     bool dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp);
 
+    static std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> create(Device &device, OsContext &osContext);
+
   protected:
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;
     static constexpr size_t prefetchNoops = prefetchSize / sizeof(uint32_t);
     bool allocateResources();
     void deallocateResources();
-    virtual bool allocateOsResources(DirectSubmissionAllocations &allocations) = 0;
+    MOCKABLE_VIRTUAL bool makeResourcesResident(DirectSubmissionAllocations &allocations);
+    virtual bool allocateOsResources() = 0;
     virtual bool submit(uint64_t gpuAddress, size_t size) = 0;
     virtual bool handleResidency() = 0;
-    virtual uint64_t switchRingBuffers() = 0;
+    virtual uint64_t switchRingBuffers();
+    virtual void handleSwitchRingBuffers() = 0;
     GraphicsAllocation *switchRingBuffersAllocations();
     virtual uint64_t updateTagValue() = 0;
     virtual void getTagAddressValue(TagData &tagData) = 0;

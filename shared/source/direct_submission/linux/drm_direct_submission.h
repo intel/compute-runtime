@@ -19,12 +19,14 @@ class DrmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     DrmDirectSubmission(Device &device,
                         OsContext &osContext);
 
+    ~DrmDirectSubmission();
+
   protected:
-    bool allocateOsResources(DirectSubmissionAllocations &allocations) override;
+    bool allocateOsResources() override;
     bool submit(uint64_t gpuAddress, size_t size) override;
 
     bool handleResidency() override;
-    uint64_t switchRingBuffers() override;
+    void handleSwitchRingBuffers() override;
     uint64_t updateTagValue() override;
     void getTagAddressValue(TagData &tagData) override;
 };

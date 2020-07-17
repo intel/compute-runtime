@@ -126,28 +126,15 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSubmitingCmdBufferThenExpectPass
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenExpectRingMonitorFenceCreatedAndAllocationsResident) {
-    MemoryManager *memoryManager = device->getExecutionEnvironment()->memoryManager.get();
-    const auto allocationSize = MemoryConstants::pageSize;
-    const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(),
-                                                                 allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER, device->getDeviceBitfield()};
-    GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
-    ASSERT_NE(nullptr, ringBuffer);
-
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device.get(),
                                                                                             *osContext.get());
 
-    DirectSubmissionAllocations allocations;
-    allocations.push_back(ringBuffer);
-
-    bool ret = wddmDirectSubmission.allocateOsResources(allocations);
+    bool ret = wddmDirectSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
-    EXPECT_EQ(1u, wddm->makeResidentResult.handleCount);
-
-    memoryManager->freeGraphicsMemory(ringBuffer);
+    EXPECT_EQ(3u, wddm->makeResidentResult.handleCount);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesFenceCreationFailsThenExpectRingMonitorFenceNotCreatedAndAllocationsNotResident) {
@@ -166,7 +153,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesFenceCreation
 
     wddmMockInterface->createMonitoredFenceCalledFail = true;
 
-    bool ret = wddmDirectSubmission.allocateOsResources(allocations);
+    bool ret = wddmDirectSubmission.allocateOsResources();
     EXPECT_FALSE(ret);
 
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
@@ -177,32 +164,19 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesFenceCreation
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFailsThenExpectRingMonitorFenceCreatedAndAllocationsNotResident) {
-    MemoryManager *memoryManager = device->getExecutionEnvironment()->memoryManager.get();
-    const auto allocationSize = MemoryConstants::pageSize;
-    const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(),
-                                                                 allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER, device->getDeviceBitfield()};
-    GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
-    ASSERT_NE(nullptr, ringBuffer);
-
     MockWddmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> wddmDirectSubmission(*device.get(),
                                                                                             *osContext.get());
-
-    DirectSubmissionAllocations allocations;
-    allocations.push_back(ringBuffer);
 
     wddm->callBaseMakeResident = false;
     wddm->makeResidentStatus = false;
 
-    bool ret = wddmDirectSubmission.allocateOsResources(allocations);
+    bool ret = wddmDirectSubmission.allocateResources();
     EXPECT_FALSE(ret);
 
-    EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
+    EXPECT_EQ(0u, wddmMockInterface->createMonitoredFenceCalled);
     //expect 2 makeResident calls, due to fail on 1st and then retry (which also fails)
     EXPECT_EQ(2u, wddm->makeResidentResult.called);
-    EXPECT_EQ(1u, wddm->makeResidentResult.handleCount);
-
-    memoryManager->freeGraphicsMemory(ringBuffer);
+    EXPECT_EQ(3u, wddm->makeResidentResult.handleCount);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenGettingTagDataThenExpectContextMonitorFence) {
@@ -406,24 +380,11 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmResidencyEnabledWhenAllocatingResour
     EXPECT_EQ(1u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
 
-    MemoryManager *memoryManager = device->getExecutionEnvironment()->memoryManager.get();
-    const auto allocationSize = MemoryConstants::pageSize;
-    const AllocationProperties commandStreamAllocationProperties{device->getRootDeviceIndex(),
-                                                                 allocationSize,
-                                                                 GraphicsAllocation::AllocationType::RING_BUFFER, device->getDeviceBitfield()};
-    GraphicsAllocation *ringBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandStreamAllocationProperties);
-    ASSERT_NE(nullptr, ringBuffer);
-
-    DirectSubmissionAllocations allocations;
-    allocations.push_back(ringBuffer);
-
-    bool ret = wddmDirectSubmission.allocateOsResources(allocations);
+    bool ret = wddmDirectSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
-    memoryManager->freeGraphicsMemory(ringBuffer);
-
     EXPECT_EQ(1u, NEO::IoFunctions::mockFopenCalled);
-    EXPECT_EQ(6u, NEO::IoFunctions::mockVfptrinfCalled);
+    EXPECT_EQ(10u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
 }
 

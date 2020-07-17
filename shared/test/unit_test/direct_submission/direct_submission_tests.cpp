@@ -9,6 +9,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/fixtures/device_fixture.h"
@@ -33,6 +34,7 @@ extern std::atomic<uintptr_t> lastClFlushedPtr;
 struct DirectSubmissionFixture : public DeviceFixture {
     void SetUp() {
         DeviceFixture::SetUp();
+        DeviceFactory::prepareDeviceEnvironments(*pDevice->getExecutionEnvironment());
 
         osContext.reset(OsContext::create(nullptr, 0u, pDevice->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
                                           false, false, false));

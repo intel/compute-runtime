@@ -22,6 +22,11 @@ namespace NEO {
 DECLARE_COMMAND_BUFFER(CommandBufferHeader, UMD_OCL, FALSE, FALSE, PERFTAG_OCL);
 
 template <typename GfxFamily, typename Dispatcher>
+inline std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> DirectSubmissionHw<GfxFamily, Dispatcher>::create(Device &device, OsContext &osContext) {
+    return std::make_unique<WddmDirectSubmission<GfxFamily, Dispatcher>>(device, osContext);
+}
+
+template <typename GfxFamily, typename Dispatcher>
 WddmDirectSubmission<GfxFamily, Dispatcher>::WddmDirectSubmission(Device &device,
                                                                   OsContext &osContext)
     : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext) {
@@ -49,18 +54,12 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::~WddmDirectSubmission() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-bool WddmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources(DirectSubmissionAllocations &allocations) {
+bool WddmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
     //for now only WDDM2.0
     UNRECOVERABLE_IF(wddm->getWddmVersion() != WddmVersion::WDDM_2_0);
 
-    WddmMemoryOperationsHandler *memoryInterface =
-        static_cast<WddmMemoryOperationsHandler *>(device.getRootDeviceEnvironment().memoryOperationsInterface.get());
-
     bool ret = wddm->getWddmInterface()->createMonitoredFence(ringFence);
     ringFence.currentFenceValue = 1;
-    if (ret) {
-        ret = memoryInterface->makeResident(&device, ArrayRef<GraphicsAllocation *>(allocations)) == MemoryOperationsStatus::SUCCESS;
-    }
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "ULLS resource allocation finished with: %d\n", ret);
     return ret;
 }
@@ -93,27 +92,13 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 }
 
 template <typename GfxFamily, typename Dispatcher>
-uint64_t WddmDirectSubmission<GfxFamily, Dispatcher>::switchRingBuffers() {
-    GraphicsAllocation *nextRingBuffer = switchRingBuffersAllocations();
-    void *flushPtr = ringCommandStream.getSpace(0);
-    uint64_t currentBufferGpuVa = getCommandBufferPositionGpuAddress(flushPtr);
-
-    if (ringStart) {
-        dispatchSwitchRingBufferSection(nextRingBuffer->getGpuAddress());
-        cpuCachelineFlush(flushPtr, getSizeSwitchRingBufferSection());
-    }
-
-    ringCommandStream.replaceBuffer(nextRingBuffer->getUnderlyingBuffer(), ringCommandStream.getMaxAvailableSpace());
-    ringCommandStream.replaceGraphicsAllocation(nextRingBuffer);
-
+void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
     if (ringStart) {
         if (completionRingBuffers[currentRingBuffer] != 0) {
             MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
             handleCompletionRingBuffer(completionRingBuffers[currentRingBuffer], currentFence);
         }
     }
-
-    return currentBufferGpuVa;
 }
 
 template <typename GfxFamily, typename Dispatcher>

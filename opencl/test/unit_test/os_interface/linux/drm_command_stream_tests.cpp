@@ -1287,6 +1287,41 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, FlushNotAligned) {
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
 
+struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTest {
+
+    template <typename GfxFamily>
+    void SetUpT() {
+        DebugManager.flags.EnableDirectSubmission.set(1u);
+        DrmCommandStreamEnhancedTest::SetUpT<GfxFamily>();
+        auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+        auto engineType = device->getDefaultEngine().osContext->getEngineType();
+        hwInfo->capabilityTable.directSubmissionEngines.data[engineType].engineSupported = true;
+        csr->initDirectSubmission(*device.get(), *device->getDefaultEngine().osContext);
+    }
+
+    template <typename GfxFamily>
+    void TearDownT() {
+        this->dbgState.reset();
+        DrmCommandStreamEnhancedTest::TearDownT<GfxFamily>();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
+HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenFlushThenFlushStampIsNotUpdated) {
+    auto &cs = csr->getCS();
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr};
+    uint8_t bbStart[64];
+    batchBuffer.endCmdPtr = &bbStart[0];
+
+    auto flushStamp = csr->obtainCurrentFlushStamp();
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    EXPECT_EQ(csr->obtainCurrentFlushStamp(), flushStamp);
+}
+
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, CheckDrmFree) {
     auto &cs = csr->getCS();
     auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());

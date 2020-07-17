@@ -97,6 +97,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         return blitterDirectSubmission.get() != nullptr;
     }
 
+    bool initDirectSubmission(Device &device, OsContext &osContext) override;
+
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);

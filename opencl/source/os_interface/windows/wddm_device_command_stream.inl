@@ -155,43 +155,4 @@ void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContain
     }
 }
 
-template <typename GfxFamily>
-bool WddmCommandStreamReceiver<GfxFamily>::initDirectSubmission(Device &device, OsContext &osContext) {
-    bool ret = true;
-
-    if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
-        auto contextEngineType = osContext.getEngineType();
-        const DirectSubmissionProperties &directSubmissionProperty =
-            device.getHardwareInfo().capabilityTable.directSubmissionEngines.data[contextEngineType];
-
-        bool startDirect = true;
-        if (!osContext.isDefaultContext()) {
-            startDirect = directSubmissionProperty.useNonDefault;
-        }
-        if (osContext.isLowPriority()) {
-            startDirect = directSubmissionProperty.useLowPriority;
-        }
-        if (osContext.isInternalEngine()) {
-            startDirect = directSubmissionProperty.useInternal;
-        }
-        if (osContext.isRootDevice()) {
-            startDirect = directSubmissionProperty.useRootDevice;
-        }
-
-        if (directSubmissionProperty.engineSupported && startDirect) {
-            if (contextEngineType == aub_stream::ENGINE_BCS) {
-                blitterDirectSubmission = std::make_unique<
-                    WddmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>>(device, osContext);
-                ret = blitterDirectSubmission->initialize(directSubmissionProperty.submitOnInit);
-            } else {
-                directSubmission = std::make_unique<
-                    WddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(device, osContext);
-                ret = directSubmission->initialize(directSubmissionProperty.submitOnInit);
-                this->dispatchMode = DispatchMode::ImmediateDispatch;
-            }
-        }
-    }
-    return ret;
-}
-
 } // namespace NEO

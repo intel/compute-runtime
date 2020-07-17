@@ -35,8 +35,6 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     }
     GmmPageTableMngr *createPageTableManager() override;
 
-    bool initDirectSubmission(Device &device, OsContext &osContext) override;
-
   protected:
     void kmDafLockAllocations(ResidencyContainer &allocationsForResidency);
 

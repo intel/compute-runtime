@@ -66,8 +66,12 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
         deallocateResources();
     }
 
-    bool allocateOsResources(DirectSubmissionAllocations &allocations) override {
+    bool allocateOsResources() override {
         return allocateOsResourcesReturn;
+    }
+
+    bool makeResourcesResident(DirectSubmissionAllocations &allocations) override {
+        return true;
     }
 
     bool submit(uint64_t gpuAddress, size_t size) override {
@@ -82,15 +86,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
         return handleResidencyReturn;
     }
 
-    uint64_t switchRingBuffers() override {
-        GraphicsAllocation *nextRingBuffer = switchRingBuffersAllocations();
-        uint64_t currentBufferGpuVa = getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));
-
-        ringCommandStream.replaceBuffer(nextRingBuffer->getUnderlyingBuffer(), ringCommandStream.getMaxAvailableSpace());
-        ringCommandStream.replaceGraphicsAllocation(nextRingBuffer);
-
-        return currentBufferGpuVa;
-    }
+    void handleSwitchRingBuffers() override {}
 
     uint64_t updateTagValue() override {
         return updateTagValueReturn;

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
@@ -71,6 +72,10 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
 
     auto lock = memoryOperationsInterface->lockHandlerForExecWA();
     memoryOperationsInterface->mergeWithResidencyContainer(this->osContext, allocationsForResidency);
+
+    if (this->directSubmission.get()) {
+        return this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
+    }
 
     this->flushStamp->setStamp(bb->peekHandle());
     this->flushInternal(batchBuffer, allocationsForResidency);

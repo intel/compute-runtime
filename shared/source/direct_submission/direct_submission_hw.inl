@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/source/utilities/cpuintrinsics.h"
@@ -87,7 +88,18 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
     workloadModeOneStoreAddress = static_cast<volatile void *>(&semaphoreData->Reserved1Uint32);
     *static_cast<volatile uint32_t *>(workloadModeOneStoreAddress) = 0u;
-    return allocateOsResources(allocations);
+
+    auto ret = makeResourcesResident(allocations);
+
+    return ret && allocateOsResources();
+}
+
+template <typename GfxFamily, typename Dispatcher>
+bool DirectSubmissionHw<GfxFamily, Dispatcher>::makeResourcesResident(DirectSubmissionAllocations &allocations) {
+    auto memoryInterface = this->device.getRootDeviceEnvironment().memoryOperationsInterface.get();
+    auto ret = memoryInterface->makeResident(&device, ArrayRef<GraphicsAllocation *>(allocations)) == MemoryOperationsStatus::SUCCESS;
+
+    return ret;
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -335,6 +347,25 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::setReturnAddress(void *re
 
     MI_BATCH_BUFFER_START *returnBBStart = static_cast<MI_BATCH_BUFFER_START *>(returnCmd);
     *returnBBStart = cmd;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffers() {
+    GraphicsAllocation *nextRingBuffer = switchRingBuffersAllocations();
+    void *flushPtr = ringCommandStream.getSpace(0);
+    uint64_t currentBufferGpuVa = getCommandBufferPositionGpuAddress(flushPtr);
+
+    if (ringStart) {
+        dispatchSwitchRingBufferSection(nextRingBuffer->getGpuAddress());
+        cpuCachelineFlush(flushPtr, getSizeSwitchRingBufferSection());
+    }
+
+    ringCommandStream.replaceBuffer(nextRingBuffer->getUnderlyingBuffer(), ringCommandStream.getMaxAvailableSpace());
+    ringCommandStream.replaceGraphicsAllocation(nextRingBuffer);
+
+    handleSwitchRingBuffers();
+
+    return currentBufferGpuVa;
 }
 
 template <typename GfxFamily, typename Dispatcher>

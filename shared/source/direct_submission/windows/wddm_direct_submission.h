@@ -25,12 +25,12 @@ class WddmDirectSubmission : public DirectSubmissionHw<GfxFamily, Dispatcher> {
     ~WddmDirectSubmission();
 
   protected:
-    bool allocateOsResources(DirectSubmissionAllocations &allocations) override;
+    bool allocateOsResources() override;
     bool submit(uint64_t gpuAddress, size_t size) override;
 
     bool handleResidency() override;
     void handleCompletionRingBuffer(uint64_t completionValue, MonitoredFence &fence);
-    uint64_t switchRingBuffers() override;
+    void handleSwitchRingBuffers() override;
     uint64_t updateTagValue() override;
     void getTagAddressValue(TagData &tagData) override;
 
