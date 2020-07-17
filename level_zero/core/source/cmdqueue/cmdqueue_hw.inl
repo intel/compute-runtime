@@ -69,6 +69,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
+    auto lockCSR = csr->obtainUniqueOwnership();
+
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
         if (isCopyOnlyCommandQueue != commandList->isCopyOnly()) {

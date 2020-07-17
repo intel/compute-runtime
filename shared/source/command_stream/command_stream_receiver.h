@@ -266,7 +266,7 @@ class CommandStreamReceiver {
     uint64_t totalMemoryUsed = 0u;
 
     // taskCount - # of tasks submitted
-    uint32_t taskCount = 0;
+    std::atomic<uint32_t> taskCount{0};
 
     uint32_t lastSentL3Config = 0;
     uint32_t latestSentStatelessMocsConfig = 0;

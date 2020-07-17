@@ -224,7 +224,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             args);
 
         this->latestSentTaskCount = taskCount + 1;
-        DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", taskCount);
+        DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             flatBatchBufferHelper->setPatchInfoData(PatchInfoData(address, 0u,
                                                                   PatchInfoAllocationType::TagAddress,
@@ -421,7 +421,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             MemorySynchronizationCommands<GfxFamily>::addPipeControl(commandStreamCSR, args);
         }
         this->taskLevel = taskLevel;
-        DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskCount", this->taskCount);
+        DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskCount", peekTaskCount());
     }
 
     if (DebugManager.flags.ForcePipeControlPriorToWalker.get()) {
@@ -545,7 +545,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     ++taskCount;
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", taskCount);
+    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "Current taskCount:", tagAddress ? *tagAddress : 0);
 
     CompletionStamp completionStamp = {
