@@ -38,7 +38,7 @@ class Pipe : public MemObj {
          cl_uint maxPackets,
          const cl_pipe_properties *properties,
          void *memoryStorage,
-         GraphicsAllocation *gfxAllocation);
+         MultiGraphicsAllocation multiGraphicsAllocation);
 
     cl_uint pipePacketSize;
     cl_uint pipeMaxPackets;

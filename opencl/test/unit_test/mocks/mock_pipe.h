@@ -27,7 +27,7 @@ class MockPipeStorage {
 
 class MockPipe : public MockPipeStorage, public Pipe {
   public:
-    MockPipe(Context *context) : MockPipeStorage(), Pipe(context, 0, 1, 128, nullptr, &data, mockGfxAllocation) {
+    MockPipe(Context *context) : MockPipeStorage(), Pipe(context, 0, 1, 128, nullptr, &data, GraphicsAllocationHelper::toMultiGraphicsAllocation(mockGfxAllocation)) {
     }
     ~MockPipe() override {
         if (!getContext()) {

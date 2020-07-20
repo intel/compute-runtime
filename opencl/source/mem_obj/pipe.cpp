@@ -24,7 +24,7 @@ Pipe::Pipe(Context *context,
            cl_uint maxPackets,
            const cl_pipe_properties *properties,
            void *memoryStorage,
-           GraphicsAllocation *gfxAllocation)
+           MultiGraphicsAllocation multiGraphicsAllocation)
     : MemObj(context,
              CL_MEM_OBJECT_PIPE,
              MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
@@ -33,7 +33,7 @@ Pipe::Pipe(Context *context,
              static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace),
              memoryStorage,
              nullptr,
-             gfxAllocation,
+             multiGraphicsAllocation.getDefaultGraphicsAllocation(),
              false,
              false,
              false),
@@ -71,7 +71,10 @@ Pipe *Pipe::create(Context *context,
             break;
         }
 
-        pPipe = new (std::nothrow) Pipe(context, flags, packetSize, maxPackets, properties, memory->getUnderlyingBuffer(), memory);
+        auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
+        multiGraphicsAllocation.addAllocation(memory);
+
+        pPipe = new (std::nothrow) Pipe(context, flags, packetSize, maxPackets, properties, memory->getUnderlyingBuffer(), std::move(multiGraphicsAllocation));
         if (!pPipe) {
             memoryManager->freeGraphicsMemory(memory);
             memory = nullptr;
