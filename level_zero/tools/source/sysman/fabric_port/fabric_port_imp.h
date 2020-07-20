@@ -13,6 +13,8 @@
 #include "level_zero/tools/source/sysman/fabric_port/os_fabric_port.h"
 #include <level_zero/zet_api.h>
 
+#include "third_party/level_zero/zes_api_ext.h"
+
 namespace L0 {
 
 class FabricDeviceImp : public FabricDevice, NEO::NonCopyableOrMovableClass {
@@ -29,6 +31,13 @@ class FabricDeviceImp : public FabricDevice, NEO::NonCopyableOrMovableClass {
 
 class FabricPortImp : public FabricPort, NEO::NonCopyableOrMovableClass {
   public:
+    ze_result_t fabricPortGetProperties(zes_fabric_port_properties_t *pProperties) override;
+    ze_result_t fabricPortGetLinkType(zes_fabric_link_type_t *pLinkType) override;
+    ze_result_t fabricPortGetConfig(zes_fabric_port_config_t *pConfig) override;
+    ze_result_t fabricPortSetConfig(const zes_fabric_port_config_t *pConfig) override;
+    ze_result_t fabricPortGetState(zes_fabric_port_state_t *pState) override;
+    ze_result_t fabricPortGetThroughput(zes_fabric_port_throughput_t *pThroughput) override;
+
     ze_result_t fabricPortGetProperties(zet_fabric_port_properties_t *pProperties) override;
     ze_result_t fabricPortGetLinkType(ze_bool_t verbose, zet_fabric_link_type_t *pLinkType) override;
     ze_result_t fabricPortGetConfig(zet_fabric_port_config_t *pConfig) override;
@@ -45,7 +54,8 @@ class FabricPortImp : public FabricPort, NEO::NonCopyableOrMovableClass {
     OsFabricPort *pOsFabricPort = nullptr;
 
   private:
-    zet_fabric_port_properties_t fabricPortProperties = {};
+    bool onSubdevice = false;
+    uint32_t subdeviceId = 0U;
 };
 
 } // namespace L0

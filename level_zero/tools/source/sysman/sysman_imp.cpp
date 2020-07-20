@@ -24,9 +24,11 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     UNRECOVERABLE_IF(nullptr == pOsSysman);
     pPowerHandleContext = new PowerHandleContext(pOsSysman);
     pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
+    pFabricPortHandleContext = new FabricPortHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
+    freeResource(pFabricPortHandleContext);
     freeResource(pOsSysman);
     freeResource(pPowerHandleContext);
     freeResource(pFrequencyHandleContext);
@@ -39,6 +41,9 @@ void SysmanDeviceImp::init() {
     }
     if (pFrequencyHandleContext) {
         pFrequencyHandleContext->init();
+    }
+    if (pFabricPortHandleContext) {
+        pFabricPortHandleContext->init();
     }
 }
 
@@ -222,6 +227,10 @@ ze_result_t SysmanImp::firmwareGet(uint32_t *pCount, zet_sysman_firmware_handle_
 
 ze_result_t SysmanImp::memoryGet(uint32_t *pCount, zet_sysman_mem_handle_t *phMemory) {
     return pMemoryHandleContext->memoryGet(pCount, phMemory);
+}
+
+ze_result_t SysmanDeviceImp::fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) {
+    return pFabricPortHandleContext->fabricPortGet(pCount, phPort);
 }
 
 ze_result_t SysmanImp::fabricPortGet(uint32_t *pCount, zet_sysman_fabric_port_handle_t *phPort) {

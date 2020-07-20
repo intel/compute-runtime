@@ -33,8 +33,45 @@ void fabricPortGetTimestamp(uint64_t &timestamp) {
     timestamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
 }
 
+ze_result_t FabricPortImp::fabricPortGetProperties(zes_fabric_port_properties_t *pProperties) {
+    pOsFabricPort->getModel(pProperties->model);
+    pProperties->onSubdevice = onSubdevice;
+    pProperties->subdeviceId = subdeviceId;
+    pOsFabricPort->getPortId(pProperties->portId);
+    pOsFabricPort->getMaxRxSpeed(pProperties->maxRxSpeed);
+    pOsFabricPort->getMaxTxSpeed(pProperties->maxTxSpeed);
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t FabricPortImp::fabricPortGetLinkType(zes_fabric_link_type_t *pLinkType) {
+    return pOsFabricPort->getLinkType(pLinkType);
+}
+
+ze_result_t FabricPortImp::fabricPortGetConfig(zes_fabric_port_config_t *pConfig) {
+    return pOsFabricPort->getConfig(pConfig);
+}
+
+ze_result_t FabricPortImp::fabricPortSetConfig(const zes_fabric_port_config_t *pConfig) {
+    return pOsFabricPort->setConfig(pConfig);
+}
+
+ze_result_t FabricPortImp::fabricPortGetState(zes_fabric_port_state_t *pState) {
+    return pOsFabricPort->getState(pState);
+}
+
+ze_result_t FabricPortImp::fabricPortGetThroughput(zes_fabric_port_throughput_t *pThroughput) {
+    fabricPortGetTimestamp(pThroughput->timestamp);
+    return pOsFabricPort->getThroughput(pThroughput);
+}
+
 ze_result_t FabricPortImp::fabricPortGetProperties(zet_fabric_port_properties_t *pProperties) {
-    *pProperties = fabricPortProperties;
+    pOsFabricPort->getModel(pProperties->model);
+    pProperties->onSubdevice = onSubdevice;
+    pProperties->subdeviceId = subdeviceId;
+    pOsFabricPort->getPortUuid(pProperties->portUuid);
+    pOsFabricPort->getMaxRxSpeed(pProperties->maxRxSpeed);
+    pOsFabricPort->getMaxTxSpeed(pProperties->maxTxSpeed);
     return ZE_RESULT_SUCCESS;
 }
 
@@ -56,17 +93,12 @@ ze_result_t FabricPortImp::fabricPortGetState(zet_fabric_port_state_t *pState) {
 
 ze_result_t FabricPortImp::fabricPortGetThroughput(zet_fabric_port_throughput_t *pThroughput) {
     fabricPortGetTimestamp(pThroughput->timestamp);
-    ze_result_t result = pOsFabricPort->getThroughput(pThroughput);
-    return result;
+    return pOsFabricPort->getThroughput(pThroughput);
 }
 
 void FabricPortImp::init() {
-    fabricPortProperties.onSubdevice = false;
-    fabricPortProperties.subdeviceId = 0L;
-    pOsFabricPort->getModel(fabricPortProperties.model);
-    pOsFabricPort->getPortUuid(fabricPortProperties.portUuid);
-    pOsFabricPort->getMaxRxSpeed(fabricPortProperties.maxRxSpeed);
-    pOsFabricPort->getMaxTxSpeed(fabricPortProperties.maxTxSpeed);
+    onSubdevice = false;
+    subdeviceId = 0L;
 }
 
 FabricPortImp::FabricPortImp(FabricDevice *pFabricDevice, uint32_t portNum) {

@@ -10,6 +10,8 @@
 #include "level_zero/tools/source/sysman/os_sysman.h"
 #include <level_zero/zet_api.h>
 
+#include "third_party/level_zero/zes_api_ext.h"
+
 namespace L0 {
 
 class OsFabricDevice {
@@ -23,6 +25,16 @@ class OsFabricDevice {
 
 class OsFabricPort {
   public:
+    virtual ze_result_t getLinkType(zes_fabric_link_type_t *pLinkType) = 0;
+    virtual ze_result_t getConfig(zes_fabric_port_config_t *pConfig) = 0;
+    virtual ze_result_t setConfig(const zes_fabric_port_config_t *pConfig) = 0;
+    virtual ze_result_t getState(zes_fabric_port_state_t *pState) = 0;
+    virtual ze_result_t getThroughput(zes_fabric_port_throughput_t *pThroughput) = 0;
+    virtual void getModel(char *model) = 0;
+    virtual void getPortId(zes_fabric_port_id_t &portId) = 0;
+    virtual void getMaxRxSpeed(zes_fabric_port_speed_t &maxRxSpeed) = 0;
+    virtual void getMaxTxSpeed(zes_fabric_port_speed_t &maxTxSpeed) = 0;
+
     virtual ze_result_t getLinkType(ze_bool_t verbose, zet_fabric_link_type_t *pLinkType) = 0;
     virtual ze_result_t getConfig(zet_fabric_port_config_t *pConfig) = 0;
     virtual ze_result_t setConfig(const zet_fabric_port_config_t *pConfig) = 0;

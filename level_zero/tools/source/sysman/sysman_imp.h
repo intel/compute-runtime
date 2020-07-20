@@ -94,9 +94,11 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     OsSysman *pOsSysman = nullptr;
     PowerHandleContext *pPowerHandleContext = nullptr;
     FrequencyHandleContext *pFrequencyHandleContext = nullptr;
+    FabricPortHandleContext *pFabricPortHandleContext = nullptr;
 
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
     ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) override;
+    ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) override;
 
   private:
     template <typename T>

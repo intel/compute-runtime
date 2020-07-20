@@ -813,7 +813,7 @@ zesDeviceEnumFabricPorts(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_fabric_port_handle_t *phPort) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->fabricPortGet(pCount, phPort);
 }
 
 __zedllexport ze_result_t __zecall
@@ -828,7 +828,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFabricPortGetProperties(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::FabricPort::fromHandle(hPort)->fabricPortGetProperties(pProperties);
 }
 
 __zedllexport ze_result_t __zecall
@@ -842,7 +842,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFabricPortGetLinkType(
     zes_fabric_port_handle_t hPort,
     zes_fabric_link_type_t *pLinkType) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::FabricPort::fromHandle(hPort)->fabricPortGetLinkType(pLinkType);
 }
 
 __zedllexport ze_result_t __zecall
@@ -857,7 +857,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFabricPortGetConfig(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::FabricPort::fromHandle(hPort)->fabricPortGetConfig(pConfig);
 }
 
 __zedllexport ze_result_t __zecall
@@ -871,7 +871,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFabricPortSetConfig(
     zes_fabric_port_handle_t hPort,
     const zes_fabric_port_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::FabricPort::fromHandle(hPort)->fabricPortSetConfig(pConfig);
 }
 
 __zedllexport ze_result_t __zecall
@@ -885,7 +885,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFabricPortGetState(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_state_t *pState) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::FabricPort::fromHandle(hPort)->fabricPortGetState(pState);
 }
 
 __zedllexport ze_result_t __zecall
@@ -899,7 +899,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFabricPortGetThroughput(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_throughput_t *pThroughput) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::FabricPort::fromHandle(hPort)->fabricPortGetThroughput(pThroughput);
 }
 
 __zedllexport ze_result_t __zecall
