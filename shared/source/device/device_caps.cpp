@@ -39,7 +39,7 @@ void Device::initializeCaps() {
     deviceInfo.vendorId = 0x8086;
     deviceInfo.maxReadImageArgs = 128;
     deviceInfo.maxWriteImageArgs = 128;
-    deviceInfo.maxParameterSize = 1024;
+    deviceInfo.maxParameterSize = 2048;
 
     deviceInfo.addressBits = 64;
 
