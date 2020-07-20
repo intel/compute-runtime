@@ -25,14 +25,14 @@ class ProcessSpirBinaryTests : public ::testing::Test {
     std::unique_ptr<MockProgram> program;
 };
 
-TEST_F(ProcessSpirBinaryTests, NullBinary) {
+TEST_F(ProcessSpirBinaryTests, GivenNullBinaryWhenProcessingSpirBinaryThenSourceCodeIsEmpty) {
     auto retVal = program->processSpirBinary(nullptr, 0, false);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(true, program->sourceCode.empty());
 }
 
-TEST_F(ProcessSpirBinaryTests, InvalidSizeBinary) {
+TEST_F(ProcessSpirBinaryTests, GivenInvalidSizeBinaryWhenProcessingSpirBinaryThenIrBinarSizeIsSetToPassedValue) {
     char pBinary[] = "somebinary\0";
     size_t binarySize = 1;
     auto retVal = program->processSpirBinary(pBinary, binarySize, false);
@@ -41,7 +41,7 @@ TEST_F(ProcessSpirBinaryTests, InvalidSizeBinary) {
     EXPECT_EQ(binarySize, program->irBinarySize);
 }
 
-TEST_F(ProcessSpirBinaryTests, SomeBinary) {
+TEST_F(ProcessSpirBinaryTests, WhenProcessingSpirBinaryThenIrBinaryIsSetCorrectly) {
     char pBinary[] = "somebinary\0";
     size_t binarySize = strnlen_s(pBinary, 11);
     auto retVal = program->processSpirBinary(pBinary, binarySize, false);
@@ -55,7 +55,7 @@ TEST_F(ProcessSpirBinaryTests, SomeBinary) {
     EXPECT_EQ(nullptr, pBuildLog);
 }
 
-TEST_F(ProcessSpirBinaryTests, SpirvBinary) {
+TEST_F(ProcessSpirBinaryTests, WhenProcessingSpirBinaryThenIsSpirvIsSetBasedonPassedValue) {
     const uint32_t pBinary[2] = {0x03022307, 0x07230203};
     size_t binarySize = sizeof(pBinary);
 
