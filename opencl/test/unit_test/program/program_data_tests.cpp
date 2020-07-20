@@ -168,11 +168,11 @@ void ProgramDataTestBase::buildAndDecodeProgramPatchList() {
 
 using ProgramDataTest = ProgramDataTestBase;
 
-TEST_F(ProgramDataTest, EmptyProgramBinaryHeader) {
+TEST_F(ProgramDataTest, GivenEmptyProgramBinaryHeaderWhenBuildingAndDecodingThenSucessIsReturned) {
     buildAndDecodeProgramPatchList();
 }
 
-TEST_F(ProgramDataTest, AllocateConstantMemorySurfaceProgramBinaryInfo) {
+TEST_F(ProgramDataTest, WhenAllocatingConstantMemorySurfaceThenUnderlyingBufferIsSetCorrectly) {
 
     auto constSize = setupConstantAllocation();
 
@@ -362,7 +362,7 @@ TEST_F(ProgramDataTest, GivenDeviceForcing32BitMessagesWhenConstAllocationIsPres
     }
 }
 
-TEST_F(ProgramDataTest, AllocateGlobalMemorySurfaceProgramBinaryInfo) {
+TEST_F(ProgramDataTest, WhenAllocatingGlobalMemorySurfaceThenUnderlyingBufferIsSetCorrectly) {
     auto globalSize = setupGlobalAllocation();
     buildAndDecodeProgramPatchList();
     EXPECT_NE(nullptr, pProgram->getGlobalSurface());
