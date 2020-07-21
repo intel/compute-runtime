@@ -165,7 +165,7 @@ void MetricContext::enableMetricApi(ze_result_t &result) {
     }
 
     if (!isMetricApiAvailable()) {
-        result = ZE_RESULT_ERROR_UNKNOWN;
+        result = static_cast<ze_result_t>(0x70020000);
         return;
     }
 
@@ -188,7 +188,7 @@ void MetricContext::enableMetricApi(ze_result_t &result) {
     for (auto deviceHandle : devices) {
         Device *device = L0::Device::fromHandle(deviceHandle);
         if (!device->getMetricContext().loadDependencies()) {
-            result = ZE_RESULT_ERROR_UNKNOWN;
+            result = static_cast<ze_result_t>(0x70020000);
             return;
         }
     }
@@ -207,12 +207,14 @@ bool MetricContext::isMetricApiAvailable() {
     // Check Metrics Discovery availability.
     library.reset(NEO::OsLibrary::load(MetricEnumeration::getMetricsDiscoveryFilename()));
     if (library == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Unable to find metrics discovery %s\n", MetricEnumeration::getMetricsDiscoveryFilename());
         return false;
     }
 
     // Check Metrics Library availability.
     library.reset(NEO::OsLibrary::load(MetricsLibrary::getFilename()));
     if (library == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Unable to find metrics library %s\n", MetricsLibrary::getFilename());
         return false;
     }
 

@@ -191,10 +191,13 @@ bool MetricsLibrary::load() {
             handle->getProcAddress(METRICS_LIBRARY_CONTEXT_DELETE_1_0));
     }
 
+    if (contextCreateFunction == nullptr || contextDeleteFunction == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "cannot load %s exported functions\n", MetricsLibrary::getFilename());
+        return false;
+    }
+
     // Return success if exported functions have been loaded.
-    const bool result = contextCreateFunction && contextDeleteFunction;
-    DEBUG_BREAK_IF(!result);
-    return result;
+    return true;
 }
 
 bool MetricsLibrary::createContext() {

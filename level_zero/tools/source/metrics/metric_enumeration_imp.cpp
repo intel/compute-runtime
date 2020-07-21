@@ -84,6 +84,7 @@ ze_result_t MetricEnumeration::loadMetricsDiscovery() {
 
     if (openMetricsDevice == nullptr || closeMetricsDevice == nullptr ||
         openMetricsDeviceFromFile == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "cannot load %s exported functions\n", MetricEnumeration::getMetricsDiscoveryFilename());
         cleanupMetricsDiscovery();
         return ZE_RESULT_ERROR_UNKNOWN;
     }
