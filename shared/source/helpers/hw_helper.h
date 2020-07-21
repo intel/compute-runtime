@@ -99,7 +99,7 @@ class HwHelper {
     virtual uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const = 0;
     virtual uint32_t getBindlessSurfaceExtendedMessageDescriptorValue(uint32_t surfStateOffset) const = 0;
     virtual void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const = 0;
-
+    virtual bool isBankOverrideRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const = 0;
     virtual uint32_t getGlobalTimeStampBits() const = 0;
 
@@ -272,6 +272,8 @@ class HwHelperHw : public HwHelper {
     bool allowRenderCompression(const HardwareInfo &hwInfo) const override;
 
     bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo) const override;
+
+    bool isBankOverrideRequired(const HardwareInfo &hwInfo) const override;
 
   protected:
     static const AuxTranslationMode defaultAuxTranslationMode;

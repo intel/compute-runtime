@@ -102,6 +102,10 @@ class Drm {
         return memoryInfo.get();
     }
 
+    RootDeviceEnvironment &getRootDeviceEnvironment() {
+        return rootDeviceEnvironment;
+    }
+
     static inline uint32_t createMemoryRegionId(uint16_t type, uint16_t instance) {
         return (1u << (type + 16)) | (1u << instance);
     }
