@@ -116,6 +116,7 @@ struct CommandListCoreFamily : CommandListImp {
     ze_result_t appendMIBBStart(uint64_t address, size_t predication, bool secondLevel) override;
     ze_result_t appendMIBBEnd() override;
     ze_result_t appendMINoop() override;
+    ze_result_t appendPipeControl(void *dstPtr, uint64_t value) override;
 
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent) override;
     ze_result_t appendWaitOnEvents(uint32_t numEvents, ze_event_handle_t *phEvent) override;

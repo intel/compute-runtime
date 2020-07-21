@@ -54,4 +54,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMINoop() {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPipeControl(void *dstPtr, uint64_t value) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0

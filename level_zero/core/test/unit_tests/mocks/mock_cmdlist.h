@@ -279,6 +279,10 @@ struct MockCommandList : public CommandList {
 
     ADDMETHOD_NOBASE(appendMINoop, ze_result_t, ZE_RESULT_SUCCESS, ());
 
+    ADDMETHOD_NOBASE(appendPipeControl, ze_result_t, ZE_RESULT_SUCCESS,
+                     (void *dstPtr,
+                      uint64_t value));
+
     ADDMETHOD_NOBASE(executeCommandListImmediate, ze_result_t, ZE_RESULT_SUCCESS,
                      (bool perforMigration));
 

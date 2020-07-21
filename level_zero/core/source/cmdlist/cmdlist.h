@@ -118,6 +118,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendMIBBStart(uint64_t address, size_t predication, bool secondLevel) = 0;
     virtual ze_result_t appendMIBBEnd() = 0;
     virtual ze_result_t appendMINoop() = 0;
+    virtual ze_result_t appendPipeControl(void *dstPtr, uint64_t value) = 0;
 
     static CommandList *create(uint32_t productFamily, Device *device, bool isCopyOnly);
     static CommandList *createImmediate(uint32_t productFamily, Device *device,
