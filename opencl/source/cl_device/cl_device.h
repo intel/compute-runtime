@@ -130,6 +130,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     void initializeOpenclCAllVersions();
     void initializeOsSpecificCaps();
     void setupFp64Flags();
+    const std::string getClDeviceName(const HardwareInfo &hwInfo) const;
 
     Device &device;
     std::vector<std::unique_ptr<ClDevice>> subDevices;

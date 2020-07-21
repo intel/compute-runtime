@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -71,10 +72,7 @@ void ClDevice::initializeCaps() {
 
     driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
 
-    // Add our graphics family name to the device name
-    name += "Intel(R) ";
-    name += familyName[hwInfo.platform.eRenderCoreFamily];
-    name += " HD Graphics NEO";
+    name = getClDeviceName(hwInfo);
 
     if (driverInfo) {
         name.assign(driverInfo.get()->getDeviceName(name).c_str());
@@ -432,6 +430,15 @@ void ClDevice::initializeOpenclCAllVersions() {
         openClCVersion.version = CL_MAKE_VERSION(3, 0, 0);
         deviceInfo.openclCAllVersions.push_back(openClCVersion);
     }
+}
+
+const std::string ClDevice::getClDeviceName(const HardwareInfo &hwInfo) const {
+    std::stringstream deviceName;
+
+    deviceName << device.getDeviceName(hwInfo);
+    deviceName << " [0x" << std::hex << hwInfo.platform.usDeviceID << "]";
+
+    return deviceName.str();
 }
 
 } // namespace NEO

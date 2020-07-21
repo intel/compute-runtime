@@ -393,9 +393,8 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     }
 
     memset(pDeviceProperties->name, 0, ZE_MAX_DEVICE_NAME);
-    std::string name = "Intel(R) ";
-    name += NEO::familyName[hardwareInfo.platform.eRenderCoreFamily];
-    name += '\0';
+
+    std::string name = getNEODevice()->getDeviceName(hardwareInfo);
     memcpy_s(pDeviceProperties->name, name.length(), name.c_str(), name.length());
 
     return ZE_RESULT_SUCCESS;

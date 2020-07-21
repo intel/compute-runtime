@@ -119,9 +119,9 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_NE(nullptr, caps.builtInKernels);
 
     std::string strDriverName = caps.name;
-    std::string strFamilyName = familyName[device->getRenderCoreFamily()];
+    std::string strDeviceName = device->getClDeviceName(*defaultHwInfo.get());
 
-    EXPECT_NE(std::string::npos, strDriverName.find(strFamilyName));
+    EXPECT_NE(std::string::npos, strDriverName.find(strDeviceName));
 
     EXPECT_NE(nullptr, caps.name);
     EXPECT_NE(nullptr, caps.vendor);
@@ -1246,9 +1246,7 @@ TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionTh
 
     const auto &caps = device->getDeviceInfo();
 
-    std::string tempName = "Intel(R) ";
-    tempName += familyName[defaultHwInfo->platform.eRenderCoreFamily];
-    tempName += " HD Graphics NEO";
+    std::string tempName = device->getClDeviceName(*defaultHwInfo.get());
 
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
