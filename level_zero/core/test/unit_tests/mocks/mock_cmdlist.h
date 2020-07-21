@@ -34,6 +34,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendMemoryCopyBlit;
     using BaseClass::appendMemoryCopyBlitRegion;
     using BaseClass::appendSignalEventPostWalker;
+    using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::getAlignedAllocation;
     using BaseClass::getAllocationFromHostPtrMap;
