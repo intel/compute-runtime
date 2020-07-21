@@ -23,6 +23,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::generateOptsSuffix;
     using OfflineCompiler::getHardwareInfo;
     using OfflineCompiler::getStringWithinDelimiters;
+    using OfflineCompiler::hwInfo;
     using OfflineCompiler::igcDeviceCtx;
     using OfflineCompiler::inputFileLlvm;
     using OfflineCompiler::inputFileSpirV;
@@ -48,8 +49,6 @@ class MockOfflineCompiler : public OfflineCompiler {
     int initialize(size_t numArgs, const std::vector<std::string> &argv) {
         return OfflineCompiler::initialize(numArgs, argv, true);
     }
-
-
 
     void storeGenBinary(const void *pSrc, const size_t srcSize) {
         OfflineCompiler::storeBinary(genBinary, genBinarySize, pSrc, srcSize);

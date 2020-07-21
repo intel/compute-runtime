@@ -137,6 +137,7 @@ class OfflineCompiler {
     std::unique_ptr<OsLibrary> igcLib = nullptr;
     CIF::RAII::UPtr_t<CIF::CIFMain> igcMain = nullptr;
     CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL> igcDeviceCtx = nullptr;
+    int revisionId = REVISION_A0;
 
     std::unique_ptr<OsLibrary> fclLib = nullptr;
     CIF::RAII::UPtr_t<CIF::CIFMain> fclMain = nullptr;
