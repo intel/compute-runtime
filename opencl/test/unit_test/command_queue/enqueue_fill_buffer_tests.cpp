@@ -104,7 +104,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
 
     BuiltinOpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
-                         patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+                         patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
     dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
@@ -135,7 +135,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferRightLeftover) {
 
     BuiltinOpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
-                         patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+                         patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
     dc.dstOffset = {0, 0, 0};
@@ -161,7 +161,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferMiddle) {
 
     BuiltinOpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
-                         patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+                         patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
     dc.dstOffset = {0, 0, 0};
@@ -187,7 +187,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferLeftLeftover) {
 
     BuiltinOpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
-                         patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+                         patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
     dc.dstOffset = {EnqueueFillBufferTraits::patternSize, 0, 0};
@@ -280,7 +280,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
 
     BuiltinOpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
-                         patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+                         patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
     dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
@@ -315,7 +315,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, DISABLED_WhenFillingBufferThenArgumentOneSho
 
     BuiltinOpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
-                         patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+                         patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
     dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
@@ -347,7 +347,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchP
 
     BuiltinOpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
-                         patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+                         patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
     dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
@@ -375,7 +375,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessThenStatelessKerne
 
     BuiltinOpParams dc;
     MemObj patternMemObj(&this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
-                         patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+                         patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
     dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};

@@ -47,7 +47,7 @@ class MemObj : public BaseObject<_cl_mem> {
            size_t size,
            void *memoryStorage,
            void *hostPtr,
-           GraphicsAllocation *gfxAllocation,
+           MultiGraphicsAllocation multiGraphicsAllocation,
            bool zeroCopy,
            bool isHostPtrSVM,
            bool isObjectRedescrbied);

@@ -83,7 +83,7 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenFillingBufferThenHeapsAndCommandBufferCo
 
     BuiltinOpParams dc;
     MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(EnqueueFillBufferTraits::patternSize, 4), patternAllocation->getUnderlyingBuffer(),
-                         patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+                         patternAllocation->getUnderlyingBuffer(), GraphicsAllocationHelper::toMultiGraphicsAllocation(patternAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = dstBuffer;
     dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};

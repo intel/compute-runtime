@@ -35,23 +35,20 @@ MemObj::MemObj(Context *context,
                size_t size,
                void *memoryStorage,
                void *hostPtr,
-               GraphicsAllocation *gfxAllocation,
+               MultiGraphicsAllocation multiGraphicsAllocation,
                bool zeroCopy,
                bool isHostPtrSVM,
                bool isObjectRedescribed)
     : context(context), memObjectType(memObjectType), memoryProperties(memoryProperties), flags(flags), flagsIntel(flagsIntel), size(size),
       memoryStorage(memoryStorage), hostPtr(hostPtr),
       isZeroCopy(zeroCopy), isHostPtrSVM(isHostPtrSVM), isObjectRedescribed(isObjectRedescribed),
-      multiGraphicsAllocation(gfxAllocation ? gfxAllocation->getRootDeviceIndex() : 0) {
+      multiGraphicsAllocation(std::move(multiGraphicsAllocation)) {
 
     if (context) {
         context->incRefInternal();
         memoryManager = context->getMemoryManager();
         auto device = context->getDevice(0);
         executionEnvironment = device->getExecutionEnvironment();
-    }
-    if (gfxAllocation) {
-        multiGraphicsAllocation.addAllocation(gfxAllocation);
     }
 }
 

@@ -42,7 +42,7 @@ TEST(sharingHandler, givenMemObjWhenAcquireIncrementCounterThenReleaseShouldDecr
     std::unique_ptr<MemObj> memObj(
         new MemObj(&context, CL_MEM_OBJECT_BUFFER,
                    MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice()),
-                   CL_MEM_USE_HOST_PTR, 0, sizeof(buffer), buffer, buffer, mockAllocation, true, false, false));
+                   CL_MEM_USE_HOST_PTR, 0, sizeof(buffer), buffer, buffer, GraphicsAllocationHelper::toMultiGraphicsAllocation(mockAllocation), true, false, false));
 
     struct MockSharingHandler : SharingHandler {
         using SharingHandler::acquireCount;
@@ -66,7 +66,7 @@ TEST(sharingHandler, givenMemObjWhenAcquireTwoTimesThenReleaseShouldBeCalledTwoT
     std::unique_ptr<MemObj> memObj(
         new MemObj(&context, CL_MEM_OBJECT_BUFFER,
                    MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice()),
-                   CL_MEM_USE_HOST_PTR, 0, sizeof(buffer), buffer, buffer, mockAllocation, true, false, false));
+                   CL_MEM_USE_HOST_PTR, 0, sizeof(buffer), buffer, buffer, GraphicsAllocationHelper::toMultiGraphicsAllocation(mockAllocation), true, false, false));
 
     struct MockSharingHandler : SharingHandler {
         using SharingHandler::acquireCount;
@@ -109,7 +109,7 @@ TEST(sharingHandler, givenSharingHandlerWhenAcquiringThenReturnErrorCode) {
     MockGraphicsAllocation *graphicsAllocation = new MockGraphicsAllocation(nullptr, 0);
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER,
                   MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice()),
-                  CL_MEM_USE_HOST_PTR, 0, 1, nullptr, nullptr, graphicsAllocation, true, false, false);
+                  CL_MEM_USE_HOST_PTR, 0, 1, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(graphicsAllocation), true, false, false);
 
     auto result = sharingHandler.acquire(&memObj, graphicsAllocation->getRootDeviceIndex());
     EXPECT_NE(CL_SUCCESS, result);

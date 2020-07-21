@@ -60,7 +60,7 @@ Buffer::Buffer(Context *context,
              size,
              memoryStorage,
              hostPtr,
-             multiGraphicsAllocation.getDefaultGraphicsAllocation(),
+             std::move(multiGraphicsAllocation),
              zeroCopy,
              isHostPtrSVM,
              isObjectRedescribed) {
@@ -68,7 +68,7 @@ Buffer::Buffer(Context *context,
     setHostPtrMinSize(size);
 }
 
-Buffer::Buffer() : MemObj(nullptr, CL_MEM_OBJECT_BUFFER, {}, 0, 0, 0, nullptr, nullptr, nullptr, false, false, false) {
+Buffer::Buffer() : MemObj(nullptr, CL_MEM_OBJECT_BUFFER, {}, 0, 0, 0, nullptr, nullptr, 0, false, false, false) {
 }
 
 Buffer::~Buffer() = default;

@@ -67,7 +67,7 @@ TEST(MemObj, GivenMemObjWhenInititalizedFromHostPtrThenInitializeFields) {
     MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(buffer, sizeof(buffer));
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
-                  sizeof(buffer), buffer, buffer, mockAllocation, true, false, false);
+                  sizeof(buffer), buffer, buffer, GraphicsAllocationHelper::toMultiGraphicsAllocation(mockAllocation), true, false, false);
 
     EXPECT_EQ(&buffer, memObj.getCpuAddress());
     EXPECT_EQ(&buffer, memObj.getHostPtr());
@@ -83,7 +83,7 @@ TEST(MemObj, givenMemObjectWhenAskedForTransferToHostPtrThenDoNothing) {
     MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(hostPtr, sizeof(hostPtr));
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
-                  size, hostPtr, hostPtr, mockAllocation, true, false, false);
+                  size, hostPtr, hostPtr, GraphicsAllocationHelper::toMultiGraphicsAllocation(mockAllocation), true, false, false);
 
     memset(memObj.getCpuAddress(), 123, size);
     memset(hostPtr, 0, size);
@@ -103,7 +103,7 @@ TEST(MemObj, givenMemObjectWhenAskedForTransferFromHostPtrThenDoNothing) {
     MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(hostPtr, sizeof(hostPtr));
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_PIPE, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
-                  size, hostPtr, hostPtr, mockAllocation, true, false, false);
+                  size, hostPtr, hostPtr, GraphicsAllocationHelper::toMultiGraphicsAllocation(mockAllocation), true, false, false);
 
     memset(memObj.getCpuAddress(), 123, size);
     memset(expectedBufferPtr, 123, size);
@@ -120,7 +120,7 @@ TEST(MemObj, givenHostPtrAndUseHostPtrFlagWhenAskingForBaseMapPtrThenReturnHostP
     MockContext context;
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
-                  1, nullptr, &hostPtr, nullptr, true, false, false);
+                  1, nullptr, &hostPtr, 0, true, false, false);
 
     EXPECT_EQ(&hostPtr, memObj.getBasePtrForMap(context.getDevice(0)->getRootDeviceIndex()));
 }
@@ -130,7 +130,7 @@ TEST(MemObj, givenHostPtrWithoutUseHostPtrFlagWhenAskingForBaseMapPtrThenReturnA
     MockContext context;
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
-                  1, nullptr, &hostPtr, nullptr, true, false, false);
+                  1, nullptr, &hostPtr, 0, true, false, false);
 
     EXPECT_NE(&hostPtr, memObj.getBasePtrForMap(context.getDevice(0)->getRootDeviceIndex()));
     EXPECT_EQ(memObj.getAllocatedMapPtr(), memObj.getBasePtrForMap(context.getDevice(0)->getRootDeviceIndex()));
@@ -142,7 +142,7 @@ TEST(MemObj, givenMemObjWhenReleaseAllocatedPtrIsCalledTwiceThenItDoesntCrash) {
     MockContext context;
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
-                  1, nullptr, nullptr, nullptr, true, false, false);
+                  1, nullptr, nullptr, 0, true, false, false);
 
     memObj.setAllocatedMapPtr(allocatedPtr);
     memObj.releaseAllocatedMapPtr();
@@ -162,7 +162,7 @@ TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThe
     *(defaultEngine.commandStreamReceiver->getTagAddress()) = 1;
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
-                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+                  MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
     auto &allocationList = defaultEngine.commandStreamReceiver->getTemporaryAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
     memObj.destroyGraphicsAllocation(allocation, true);
@@ -181,7 +181,7 @@ TEST(MemObj, givenReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAl
     *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = 1;
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
-                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+                  MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
 
     auto &allocationList = device->getDefaultEngine().commandStreamReceiver->getTemporaryAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
@@ -199,7 +199,7 @@ TEST(MemObj, givenNotUsedGraphicsAllocationWhenMemObjDestroysAllocationAsyncThen
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
-                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+                  MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
 
     auto &allocationList = context.getDevice(0)->getDefaultEngine().commandStreamReceiver->getTemporaryAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
@@ -217,7 +217,7 @@ TEST(MemObj, givenMemoryManagerWithoutDeviceWhenMemObjDestroysAllocationAsyncThe
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
-                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+                  MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
 
     auto &allocationList = context.getDevice(0)->getDefaultEngine().commandStreamReceiver->getTemporaryAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
@@ -233,7 +233,7 @@ TEST(MemObj, givenMemObjAndPointerToObjStorageWithProperCommandWhenCheckIfMemTra
     context.memoryManager = &memoryManager;
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
-                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+                  MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
     void *ptr = memObj.getCpuAddressForMemoryTransfer();
     bool isMemTransferNeeded = memObj.checkIfMemoryTransferIsRequired(0, 0, ptr, CL_COMMAND_WRITE_BUFFER);
     EXPECT_FALSE(isMemTransferNeeded);
@@ -261,7 +261,7 @@ TEST(MemObj, givenMemObjAndPointerToObjStorageBadCommandWhenCheckIfMemTransferRe
     context.memoryManager = &memoryManager;
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
-                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+                  MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
     void *ptr = memObj.getCpuAddressForMemoryTransfer();
     bool isMemTransferNeeded = memObj.checkIfMemoryTransferIsRequired(0, 0, ptr, CL_COMMAND_FILL_BUFFER);
     EXPECT_TRUE(isMemTransferNeeded);
@@ -274,7 +274,7 @@ TEST(MemObj, givenMemObjAndPointerToDiffrentStorageAndProperCommandWhenCheckIfMe
     context.memoryManager = &memoryManager;
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
-                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+                  MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
     void *ptr = (void *)0x1234;
     bool isMemTransferNeeded = memObj.checkIfMemoryTransferIsRequired(0, 0, ptr, CL_COMMAND_WRITE_BUFFER);
     EXPECT_TRUE(isMemTransferNeeded);
@@ -286,7 +286,7 @@ TEST(MemObj, givenSharingHandlerWhenAskedForCpuMappingThenReturnFalse) {
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
-                  MemoryConstants::pageSize, nullptr, nullptr, allocation, true, false, false);
+                  MemoryConstants::pageSize, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false);
     memObj.setSharingHandler(new SharingHandler());
     EXPECT_FALSE(memObj.mappingOnCpuAllowed());
 }
@@ -299,7 +299,7 @@ TEST(MemObj, givenTiledObjectWhenAskedForCpuMappingThenReturnFalse) {
     MockContext context;
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MyMemObj memObj(nullptr, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
-                    MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+                    MemoryConstants::pageSize, nullptr, nullptr, 0, true, false, false);
 
     EXPECT_FALSE(memObj.mappingOnCpuAllowed());
 }
@@ -314,7 +314,7 @@ TEST(MemObj, givenRenderCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
     allocation->setDefaultGmm(new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, false));
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
-                  1, allocation->getUnderlyingBuffer(), nullptr, allocation, false, false, false);
+                  1, allocation->getUnderlyingBuffer(), nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), false, false, false);
 
     allocation->getDefaultGmm()->isRenderCompressed = false;
     EXPECT_TRUE(memObj.mappingOnCpuAllowed());
@@ -331,7 +331,7 @@ TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_COPY_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_COPY_HOST_PTR, 0,
-                  64, allocation->getUnderlyingBuffer(), nullptr, allocation, true, false, false);
+                  64, allocation->getUnderlyingBuffer(), nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false);
 
     EXPECT_FALSE(memObj.isTiledAllocation());
     EXPECT_FALSE(memObj.peekSharingHandler());
@@ -348,7 +348,7 @@ TEST(MemObj, givenNonCpuAccessibleMemoryWhenAskingForMappingOnCpuThenDisallow) {
     allocation->setDefaultGmm(new Gmm(context.getDevice(0)->getGmmClientContext(), nullptr, 1, false));
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
-                  1, allocation->getUnderlyingBuffer(), nullptr, allocation, false, false, false);
+                  1, allocation->getUnderlyingBuffer(), nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), false, false, false);
 
     EXPECT_TRUE(memObj.mappingOnCpuAllowed());
     reinterpret_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
@@ -362,13 +362,13 @@ TEST(MemObj, givenMultipleMemObjectsWithReusedGraphicsAllocationWhenDestroyedThe
 
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(MockAllocationProperties{context.getDevice(0)->getRootDeviceIndex(), MemoryConstants::pageSize});
 
-    std::unique_ptr<MemObj> memObj1(new MemObj(&context, CL_MEM_OBJECT_BUFFER, {}, 0, 0, 1, nullptr, nullptr, allocation, true, false, false));
+    std::unique_ptr<MemObj> memObj1(new MemObj(&context, CL_MEM_OBJECT_BUFFER, {}, 0, 0, 1, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false));
     memObj1->setSharingHandler(new MySharingHandler(allocation));
 
-    std::unique_ptr<MemObj> memObj2(new MemObj(&context, CL_MEM_OBJECT_BUFFER, {}, 0, 0, 1, nullptr, nullptr, allocation, true, false, false));
+    std::unique_ptr<MemObj> memObj2(new MemObj(&context, CL_MEM_OBJECT_BUFFER, {}, 0, 0, 1, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false));
     memObj2->setSharingHandler(new MySharingHandler(allocation));
 
-    std::unique_ptr<MemObj> memObj3(new MemObj(&context, CL_MEM_OBJECT_BUFFER, {}, 0, 0, 1, nullptr, nullptr, allocation, true, false, false));
+    std::unique_ptr<MemObj> memObj3(new MemObj(&context, CL_MEM_OBJECT_BUFFER, {}, 0, 0, 1, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false));
     memObj3->setSharingHandler(new MySharingHandler(allocation));
 
     EXPECT_EQ(3u, allocation->peekReuseCount());
@@ -385,7 +385,7 @@ TEST(MemObj, givenMemObjectWhenContextIsNotNullThenContextOutlivesMemobjects) {
     MockContext context;
     EXPECT_EQ(1, context.getRefInternalCount());
     {
-        MemObj memObj(&context, 0, {}, 0, 0, 0, nullptr, nullptr, nullptr, false, false, false);
+        MemObj memObj(&context, 0, {}, 0, 0, 0, nullptr, nullptr, 0, false, false, false);
         EXPECT_EQ(2, context.getRefInternalCount());
     }
     EXPECT_EQ(1, context.getRefInternalCount());
@@ -398,7 +398,7 @@ TEST(MemObj, givenSharedMemObjectWithNullGfxAllocationWhenSettingGfxAllocationTh
     MockGraphicsAllocation *gfxAllocation = new MockGraphicsAllocation(nullptr, 0);
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
-                  1, nullptr, nullptr, nullptr, true, false, false);
+                  1, nullptr, nullptr, 0, true, false, false);
     memObj.setSharingHandler(new MySharingHandler(&memObj));
 
     memObj.resetGraphicsAllocation(gfxAllocation);
@@ -415,7 +415,7 @@ TEST(MemObj, givenSharedMemObjectAndGfxAllocationWhenGraphicsAllocationIsRemoved
     MockGraphicsAllocation *graphicsAllocation = new MockGraphicsAllocation(nullptr, 0);
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
-                  1, nullptr, nullptr, graphicsAllocation, true, false, false);
+                  1, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(graphicsAllocation), true, false, false);
     memObj.setSharingHandler(new MySharingHandler(&memObj));
 
     graphicsAllocation->decReuseCount();
@@ -432,7 +432,7 @@ TEST(MemObj, givenSharedMemObjectAndZeroReuseCountWhenChangingGfxAllocationThenO
     MockGraphicsAllocation *newGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
-                  1, nullptr, nullptr, oldGfxAllocation, true, false, false);
+                  1, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(oldGfxAllocation), true, false, false);
     memObj.setSharingHandler(new MySharingHandler(&memObj));
 
     oldGfxAllocation->decReuseCount();
@@ -451,7 +451,7 @@ TEST(MemObj, givenSharedMemObjectAndNonZeroReuseCountWhenChangingGfxAllocationTh
     MockGraphicsAllocation *newGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
-                  1, nullptr, nullptr, oldGfxAllocation, true, false, false);
+                  1, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(oldGfxAllocation), true, false, false);
     memObj.setSharingHandler(new MySharingHandler(&memObj));
 
     memObj.resetGraphicsAllocation(newGfxAllocation);
@@ -470,7 +470,7 @@ TEST(MemObj, givenNotSharedMemObjectWhenChangingGfxAllocationThenOldAllocationIs
     MockGraphicsAllocation *newGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_USE_HOST_PTR, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_USE_HOST_PTR, 0,
-                  1, nullptr, nullptr, oldGfxAllocation, true, false, false);
+                  1, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(oldGfxAllocation), true, false, false);
 
     memObj.resetGraphicsAllocation(newGfxAllocation);
 
@@ -488,7 +488,7 @@ TEST(MemObj, givenMemObjNotUsingHostPtrWhenGettingBasePtrTwiceReturnSameMapPtr) 
     MockContext context;
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context.getDevice(0)->getDevice());
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
-                  1, nullptr, nullptr, nullptr, true, false, false);
+                  1, nullptr, nullptr, 0, true, false, false);
 
     void *mapPtr = memObj.getBasePtrForMap(context.getDevice(0)->getRootDeviceIndex());
     EXPECT_NE(nullptr, mapPtr);
@@ -503,7 +503,7 @@ using MemObjMultiRootDeviceTests = MultiRootDeviceFixture;
 TEST_F(MemObjMultiRootDeviceTests, WhenMemObjMapIsCreatedThenAllocationHasCorrectRootDeviceIndex) {
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice());
     MemObj memObj(context.get(), CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
-                  1, nullptr, nullptr, nullptr, true, false, false);
+                  1, nullptr, nullptr, 0, true, false, false);
 
     void *mapPtr = memObj.getBasePtrForMap(device->getRootDeviceIndex());
     EXPECT_NE(nullptr, mapPtr);

@@ -56,8 +56,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     BuiltinOpParams dc;
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(getDevice().getRootDeviceIndex());
+    multiGraphicsAllocation.addAllocation(patternAllocation);
+
     MemObj patternMemObj(this->context, 0, {}, 0, 0, alignUp(patternSize, 4), patternAllocation->getUnderlyingBuffer(),
-                         patternAllocation->getUnderlyingBuffer(), patternAllocation, false, false, true);
+                         patternAllocation->getUnderlyingBuffer(), std::move(multiGraphicsAllocation), false, false, true);
     dc.srcMemObj = &patternMemObj;
     dc.dstMemObj = buffer;
     dc.dstOffset = {offset, 0, 0};

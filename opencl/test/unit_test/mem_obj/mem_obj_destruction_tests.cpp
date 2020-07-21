@@ -47,7 +47,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
         memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
                             MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &device->getDevice()),
                             CL_MEM_READ_WRITE, 0, size,
-                            nullptr, nullptr, allocation, true, false, false);
+                            nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false);
         csr = device->getDefaultEngine().commandStreamReceiver;
         *csr->getTagAddress() = 0;
         contextId = device->getDefaultEngine().osContext->getContextId();
@@ -228,7 +228,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
         memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
                             MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice()),
                             CL_MEM_READ_WRITE, 0, size,
-                            storage, nullptr, allocation, true, false, false);
+                            storage, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false);
         memObj->addMappedPtr(storage, 1, mapFlags, region, origin, 0);
     } else {
         memObj->setAllocatedMapPtr(storage);

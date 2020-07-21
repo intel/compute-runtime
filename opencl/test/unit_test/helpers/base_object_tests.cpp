@@ -321,7 +321,7 @@ TYPED_TEST(BaseObjectTests, WhenObjectIsCreatedThenNumWaitersIsZero) {
 TYPED_TEST(BaseObjectTests, WhenConvertingToInternalObjectThnRefApiCountIsSetToZero) {
     class ObjectForTest : public NEO::MemObj {
       public:
-        ObjectForTest() : MemObj(nullptr, 0, {}, 0, 0, 0u, nullptr, nullptr, nullptr, false, false, false) {
+        ObjectForTest() : MemObj(nullptr, 0, {}, 0, 0, 0u, nullptr, nullptr, 0, false, false, false) {
         }
 
         void convertToInternalObject(void) {
