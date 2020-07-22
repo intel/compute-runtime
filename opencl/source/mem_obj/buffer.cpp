@@ -637,9 +637,6 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
     auto pBuffer = funcCreate(nullptr, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, multiGraphicsAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
 
-    if (!multiGraphicsAllocation.getDefaultGraphicsAllocation()) {
-        std::swap(pBuffer->multiGraphicsAllocation, multiGraphicsAllocation);
-    }
     pBuffer->offset = offset;
     pBuffer->executionEnvironment = device->getExecutionEnvironment();
     return pBuffer;

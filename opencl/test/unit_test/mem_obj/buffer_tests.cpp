@@ -2895,6 +2895,24 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferThatIsMisalignedWhenSurfaceStateIsBei
     EXPECT_EQ(0u, surfaceState.getMemoryObjectControlState());
 }
 
+using BufferHwFromDeviceTests = BufferTests;
+
+HWTEST_F(BufferHwFromDeviceTests, givenMultiGraphicsAllocationWhenCreateBufferHwFromDeviceThenMultiGraphicsAllocationInBufferIsProperlySet) {
+    auto size = 2 * MemoryConstants::pageSize;
+    auto ptr = alignedMalloc(size, MemoryConstants::pageSize);
+    MockGraphicsAllocation svmAlloc(ptr, size);
+
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(device.get()->getRootDeviceIndex());
+    multiGraphicsAllocation.addAllocation(&svmAlloc);
+    auto buffer = std::unique_ptr<Buffer>(Buffer::createBufferHwFromDevice(device.get(), 0, 0, size, ptr, ptr, multiGraphicsAllocation, 0, true, false, false));
+
+    EXPECT_EQ(device.get()->getRootDeviceIndex(), 0u);
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getGraphicsAllocations().size(), multiGraphicsAllocation.getGraphicsAllocations().size());
+    EXPECT_EQ(buffer->getMultiGraphicsAllocation().getGraphicsAllocation(device.get()->getRootDeviceIndex()), multiGraphicsAllocation.getGraphicsAllocation(device.get()->getRootDeviceIndex()));
+
+    alignedFree(ptr);
+}
+
 class BufferL3CacheTests : public ::testing::TestWithParam<uint64_t> {
   public:
     void SetUp() override {
