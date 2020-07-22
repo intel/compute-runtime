@@ -13,6 +13,7 @@
 
 #include "test.h"
 
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -418,6 +419,22 @@ HWTEST_F(CommandQueueIndirectAllocations, givenCommandQueueWhenExecutingCommandL
 
     device->getDriverHandle()->getSvmAllocsManager()->freeSVMAlloc(deviceAlloc);
     commandQueue->destroy();
+}
+
+using ContextCreateCommandQueueTest = Test<ContextFixture>;
+
+TEST_F(ContextCreateCommandQueueTest, givenCallToContextCreateCommandQueueThenCallSucceeds) {
+    ze_command_queue_desc_t desc = {};
+    desc.version = ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT;
+    desc.ordinal = 0u;
+
+    ze_command_queue_handle_t commandQueue = {};
+
+    ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, commandQueue);
+
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
 } // namespace ult

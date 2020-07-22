@@ -7,6 +7,8 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 
+#include "level_zero/core/source/device/device.h"
+
 namespace L0 {
 
 ze_result_t ContextImp::destroy() {
@@ -109,6 +111,37 @@ ze_result_t ContextImp::getMemAllocProperties(const void *ptr,
     return this->driverHandle->getMemAllocProperties(ptr,
                                                      pMemAllocProperties,
                                                      phDevice);
+}
+
+ze_result_t ContextImp::createModule(ze_device_handle_t hDevice,
+                                     const ze_module_desc_t *desc,
+                                     ze_module_handle_t *phModule,
+                                     ze_module_build_log_handle_t *phBuildLog) {
+    return L0::Device::fromHandle(hDevice)->createModule(desc, phModule, phBuildLog);
+}
+
+ze_result_t ContextImp::createSampler(ze_device_handle_t hDevice,
+                                      const ze_sampler_desc_t *pDesc,
+                                      ze_sampler_handle_t *phSampler) {
+    return L0::Device::fromHandle(hDevice)->createSampler(pDesc, phSampler);
+}
+
+ze_result_t ContextImp::createCommandQueue(ze_device_handle_t hDevice,
+                                           const ze_command_queue_desc_t *desc,
+                                           ze_command_queue_handle_t *commandQueue) {
+    return L0::Device::fromHandle(hDevice)->createCommandQueue(desc, commandQueue);
+}
+
+ze_result_t ContextImp::createCommandList(ze_device_handle_t hDevice,
+                                          const ze_command_list_desc_t *desc,
+                                          ze_command_list_handle_t *commandList) {
+    return L0::Device::fromHandle(hDevice)->createCommandList(desc, commandList);
+}
+
+ze_result_t ContextImp::createCommandListImmediate(ze_device_handle_t hDevice,
+                                                   const ze_command_queue_desc_t *desc,
+                                                   ze_command_list_handle_t *commandList) {
+    return L0::Device::fromHandle(hDevice)->createCommandListImmediate(desc, commandList);
 }
 
 } // namespace L0

@@ -52,6 +52,22 @@ struct Context : _ze_context_handle_t {
     virtual ze_result_t getMemAllocProperties(const void *ptr,
                                               ze_memory_allocation_properties_t *pMemAllocProperties,
                                               ze_device_handle_t *phDevice) = 0;
+    virtual ze_result_t createModule(ze_device_handle_t hDevice,
+                                     const ze_module_desc_t *desc,
+                                     ze_module_handle_t *phModule,
+                                     ze_module_build_log_handle_t *phBuildLog) = 0;
+    virtual ze_result_t createSampler(ze_device_handle_t hDevice,
+                                      const ze_sampler_desc_t *pDesc,
+                                      ze_sampler_handle_t *phSampler) = 0;
+    virtual ze_result_t createCommandQueue(ze_device_handle_t hDevice,
+                                           const ze_command_queue_desc_t *desc,
+                                           ze_command_queue_handle_t *commandQueue) = 0;
+    virtual ze_result_t createCommandList(ze_device_handle_t hDevice,
+                                          const ze_command_list_desc_t *desc,
+                                          ze_command_list_handle_t *commandList) = 0;
+    virtual ze_result_t createCommandListImmediate(ze_device_handle_t hDevice,
+                                                   const ze_command_queue_desc_t *desc,
+                                                   ze_command_list_handle_t *commandList) = 0;
 
     static Context *fromHandle(ze_context_handle_t handle) { return static_cast<Context *>(handle); }
     inline ze_context_handle_t toHandle() { return this; }

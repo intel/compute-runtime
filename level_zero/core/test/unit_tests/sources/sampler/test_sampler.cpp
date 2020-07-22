@@ -151,5 +151,28 @@ INSTANTIATE_TEST_CASE_P(SamplerDescCombinations, SamplerCreateTest,
                                            samplerFilterMode,
                                            samplerIsNormalized));
 
+using ContextCreateSamplerTest = Test<ContextFixture>;
+
+HWTEST2_F(ContextCreateSamplerTest, givenDifferentDescriptorValuesThenSamplerIsCorrectlyCreated, SamplerCreateSupport) {
+    ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_NONE;
+    ze_sampler_filter_mode_t filterMode = ZE_SAMPLER_FILTER_MODE_LINEAR;
+    ze_bool_t isNormalized = false;
+
+    ze_sampler_desc_t desc = {};
+    desc.version = ZE_SAMPLER_DESC_VERSION_CURRENT;
+    desc.addressMode = addressMode;
+    desc.filterMode = filterMode;
+    desc.isNormalized = isNormalized;
+
+    ze_sampler_handle_t hSampler;
+    ze_result_t res = context->createSampler(device, &desc, &hSampler);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto sampler = reinterpret_cast<L0::SamplerImp *>(L0::Sampler::fromHandle(hSampler));
+    EXPECT_NE(nullptr, sampler);
+
+    sampler->destroy();
+}
+
 } // namespace ult
 } // namespace L0

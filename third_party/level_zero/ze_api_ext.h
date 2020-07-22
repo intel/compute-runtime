@@ -735,6 +735,192 @@ zeMemGetIpcHandle(
     ze_ipc_mem_handle_t *pIpcHandle ///< [out] Returned IPC memory handle
 );
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Creates a module on the context.
+///
+/// @details
+///     - Compiles the module for execution on the device.
+///     - The application must only use the module for the device, or its
+///       sub-devices, which was provided during creation.
+///     - The module can be copied to other devices and contexts within the same
+///       driver instance by using ::zeModuleGetNativeBinary.
+///     - A build log can optionally be returned to the caller. The caller is
+///       responsible for destroying build log using ::zeModuleBuildLogDestroy.
+///     - The module descriptor constants are only supported for SPIR-V
+///       specialization constants.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == desc`
+///         + `nullptr == desc->pInputModule`
+///         + `nullptr == phModule`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `::ZE_MODULE_FORMAT_NATIVE < desc->format`
+///     - ::ZE_RESULT_ERROR_INVALID_NATIVE_BINARY
+///     - ::ZE_RESULT_ERROR_INVALID_SIZE
+///         + `0 == desc->inputSize`
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_MODULE_BUILD_FAILURE
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeModuleCreateExt(
+    ze_context_handle_t hContext,            ///< [in] handle of the context object
+    ze_device_handle_t hDevice,              ///< [in] handle of the device
+    const ze_module_desc_t *desc,            ///< [in] pointer to module descriptor
+    ze_module_handle_t *phModule,            ///< [out] pointer to handle of module object created
+    ze_module_build_log_handle_t *phBuildLog ///< [out][optional] pointer to handle of module's build log.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Creates sampler on the context.
+///
+/// @details
+///     - The application must only use the sampler for the device, or its
+///       sub-devices, which was provided during creation.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == desc`
+///         + `nullptr == phSampler`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `::ZE_SAMPLER_ADDRESS_MODE_MIRROR < desc->addressMode`
+///         + `::ZE_SAMPLER_FILTER_MODE_LINEAR < desc->filterMode`
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeSamplerCreateExt(
+    ze_context_handle_t hContext,  ///< [in] handle of the context object
+    ze_device_handle_t hDevice,    ///< [in] handle of the device
+    const ze_sampler_desc_t *desc, ///< [in] pointer to sampler descriptor
+    ze_sampler_handle_t *phSampler ///< [out] handle of the sampler
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Creates a command queue on the context.
+///
+/// @details
+///     - A command queue represents a logical input stream to the device, tied
+///       to a physical input stream.
+///     - The application must only use the command queue for the device, or its
+///       sub-devices, which was provided during creation.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @remarks
+///   _Analogues_
+///     - **clCreateCommandQueue**
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == desc`
+///         + `nullptr == phCommandQueue`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `0x1 < desc->flags`
+///         + `::ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS < desc->mode`
+///         + `::ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH < desc->priority`
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandQueueCreateExt(
+    ze_context_handle_t hContext,             ///< [in] handle of the context object
+    ze_device_handle_t hDevice,               ///< [in] handle of the device object
+    const ze_command_queue_desc_t *desc,      ///< [in] pointer to command queue descriptor
+    ze_command_queue_handle_t *phCommandQueue ///< [out] pointer to handle of command queue object created
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Creates a command list on the context.
+///
+/// @details
+///     - A command list represents a sequence of commands for execution on a
+///       command queue.
+///     - The command list is created in the 'open' state.
+///     - The application must only use the command list for the device, or its
+///       sub-devices, which was provided during creation.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == desc`
+///         + `nullptr == phCommandList`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `0x7 < desc->flags`
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListCreateExt(
+    ze_context_handle_t hContext,           ///< [in] handle of the context object
+    ze_device_handle_t hDevice,             ///< [in] handle of the device object
+    const ze_command_list_desc_t *desc,     ///< [in] pointer to command list descriptor
+    ze_command_list_handle_t *phCommandList ///< [out] pointer to handle of command list object created
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Creates an immediate command list on the context.
+///
+/// @details
+///     - An immediate command list is used for low-latency submission of
+///       commands.
+///     - An immediate command list creates an implicit command queue.
+///     - The command list is created in the 'open' state and never needs to be
+///       closed.
+///     - The application must only use the command list for the device, or its
+///       sub-devices, which was provided during creation.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == altdesc`
+///         + `nullptr == phCommandList`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `0x1 < altdesc->flags`
+///         + `::ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS < altdesc->mode`
+///         + `::ZE_COMMAND_QUEUE_PRIORITY_PRIORITY_HIGH < altdesc->priority`
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListCreateImmediateExt(
+    ze_context_handle_t hContext,           ///< [in] handle of the context object
+    ze_device_handle_t hDevice,             ///< [in] handle of the device object
+    const ze_command_queue_desc_t *altdesc, ///< [in] pointer to command queue descriptor
+    ze_command_list_handle_t *phCommandList ///< [out] pointer to handle of command list object created
+);
+
 } //extern C
 
 #endif // _ZE_API_EXT_H

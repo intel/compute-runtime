@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/context/context.h"
 #include <level_zero/ze_api.h>
 
 #include "third_party/level_zero/ze_api_ext.h"
@@ -20,12 +21,30 @@ zeCommandListCreate(
     return L0::Device::fromHandle(hDevice)->createCommandList(desc, phCommandList);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListCreateExt(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const ze_command_list_desc_t *desc,
+    ze_command_list_handle_t *phCommandList) {
+    return L0::Context::fromHandle(hContext)->createCommandList(hDevice, desc, phCommandList);
+}
+
 __zedllexport ze_result_t __zecall
 zeCommandListCreateImmediate(
     ze_device_handle_t hDevice,
     const ze_command_queue_desc_t *altdesc,
     ze_command_list_handle_t *phCommandList) {
     return L0::Device::fromHandle(hDevice)->createCommandListImmediate(altdesc, phCommandList);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListCreateImmediateExt(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const ze_command_queue_desc_t *altdesc,
+    ze_command_list_handle_t *phCommandList) {
+    return L0::Context::fromHandle(hContext)->createCommandListImmediate(hDevice, altdesc, phCommandList);
 }
 
 __zedllexport ze_result_t __zecall

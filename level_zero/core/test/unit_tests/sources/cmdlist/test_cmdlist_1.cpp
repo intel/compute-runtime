@@ -14,6 +14,7 @@
 #include "test.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -25,6 +26,31 @@
 
 namespace L0 {
 namespace ult {
+
+using ContextCommandListCreate = Test<ContextFixture>;
+
+TEST_F(ContextCommandListCreate, whenCreatingCommandListFromContextThenSuccessIsReturned) {
+    ze_command_list_desc_t desc = {};
+    ze_command_list_handle_t hCommandList = {};
+
+    ze_result_t result = context->createCommandList(device, &desc, &hCommandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
+    commandList->destroy();
+}
+
+TEST_F(ContextCommandListCreate, whenCreatingCommandListImmediateFromContextThenSuccessIsReturned) {
+    ze_command_queue_desc_t desc = {};
+    ze_command_list_handle_t hCommandList = {};
+
+    ze_result_t result = context->createCommandListImmediate(device, &desc, &hCommandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
+    commandList->destroy();
+}
+
 using CommandListCreate = Test<DeviceFixture>;
 
 TEST(zeCommandListCreateImmediate, redirectsToObject) {

@@ -9,8 +9,10 @@
 
 #include "test.h"
 
+#include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module_imp.h"
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
@@ -281,6 +283,33 @@ HWTEST_F(MultiDeviceModuleSetArgBufferTest,
         driverHandle->freeMem(ptr);
         Kernel::fromHandle(kernelHandle)->destroy();
     }
+}
+
+using ContextModuleCreateTest = Test<ContextFixture>;
+
+HWTEST_F(ContextModuleCreateTest, givenCallToCreateModuleThenModuleIsReturned) {
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "test_kernel_", ".bin");
+
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {ZE_MODULE_DESC_VERSION_CURRENT};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+
+    ze_module_handle_t hModule;
+    ze_device_handle_t hDevice = device->toHandle();
+    ze_result_t res = context->createModule(hDevice, &moduleDesc, &hModule, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    L0::Module *pModule = L0::Module::fromHandle(hModule);
+    res = pModule->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 } // namespace ult

@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
+#include "level_zero/core/source/context/context.h"
 #include <level_zero/ze_api.h>
 
 extern "C" {
@@ -16,6 +17,15 @@ zeCommandQueueCreate(
     const ze_command_queue_desc_t *desc,
     ze_command_queue_handle_t *phCommandQueue) {
     return L0::Device::fromHandle(hDevice)->createCommandQueue(desc, phCommandQueue);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandQueueCreateExt(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const ze_command_queue_desc_t *desc,
+    ze_command_queue_handle_t *phCommandQueue) {
+    return L0::Context::fromHandle(hContext)->createCommandQueue(hDevice, desc, phCommandQueue);
 }
 
 __zedllexport ze_result_t __zecall

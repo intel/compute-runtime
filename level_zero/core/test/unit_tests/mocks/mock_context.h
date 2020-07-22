@@ -93,6 +93,37 @@ struct Mock<Context> : public Context {
                  ze_ipc_memory_flags_t flags,
                  void **ptr),
                 (override));
+    MOCK_METHOD(ze_result_t,
+                createModule,
+                (ze_device_handle_t hDevice,
+                 const ze_module_desc_t *desc,
+                 ze_module_handle_t *phModule,
+                 ze_module_build_log_handle_t *phBuildLog),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                createSampler,
+                (ze_device_handle_t hDevice,
+                 const ze_sampler_desc_t *pDesc,
+                 ze_sampler_handle_t *phSampler),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                createCommandQueue,
+                (ze_device_handle_t hDevice,
+                 const ze_command_queue_desc_t *desc,
+                 ze_command_queue_handle_t *commandQueue),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                createCommandList,
+                (ze_device_handle_t hDevice,
+                 const ze_command_list_desc_t *desc,
+                 ze_command_list_handle_t *commandList),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                createCommandListImmediate,
+                (ze_device_handle_t hDevice,
+                 const ze_command_queue_desc_t *desc,
+                 ze_command_list_handle_t *commandList),
+                (override));
 };
 
 } // namespace ult
