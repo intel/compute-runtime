@@ -205,7 +205,7 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap
         pIDDestination[blockIndex + i].setKernelStartPointerHigh(blockKernelStartPointer >> 32);
         pIDDestination[blockIndex + i].setKernelStartPointer(static_cast<uint32_t>(blockKernelStartPointer));
         pIDDestination[blockIndex + i].setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
-        EncodeDispatchKernel<GfxFamily>::programBarrierEnable(&pIDDestination[blockIndex + i],
+        EncodeDispatchKernel<GfxFamily>::programBarrierEnable(pIDDestination[blockIndex + i],
                                                               pBlockInfo->patchInfo.executionEnvironment->HasBarriers,
                                                               parentKernel->getDevice().getHardwareInfo());
 

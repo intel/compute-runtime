@@ -164,6 +164,4 @@ void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Line
     *pipeControl = cmd;
 }
 
-template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const HardwareInfo &hwInfo) {}
 } // namespace NEO

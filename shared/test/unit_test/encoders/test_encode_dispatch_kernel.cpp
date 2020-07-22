@@ -721,12 +721,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, InterfaceDescriptorDataTests, givenVariousValuesWhen
     MockDevice device;
     auto hwInfo = device.getHardwareInfo();
 
-    EncodeDispatchKernel<FamilyType>::programBarrierEnable(&idd, 0, hwInfo);
+    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, 0, hwInfo);
     EXPECT_FALSE(idd.getBarrierEnable());
 
-    EncodeDispatchKernel<FamilyType>::programBarrierEnable(&idd, 1, hwInfo);
+    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, 1, hwInfo);
     EXPECT_TRUE(idd.getBarrierEnable());
 
-    EncodeDispatchKernel<FamilyType>::programBarrierEnable(&idd, 2, hwInfo);
+    EncodeDispatchKernel<FamilyType>::programBarrierEnable(idd, 2, hwInfo);
     EXPECT_TRUE(idd.getBarrierEnable());
 }
