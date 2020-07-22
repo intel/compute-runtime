@@ -347,5 +347,90 @@ TEST_F(AllocHostMemoryTest,
     EXPECT_EQ(nullptr, ptr);
 }
 
+using ContextMemoryTest = Test<ContextFixture>;
+
+TEST_F(ContextMemoryTest, whenAllocatingSharedAllocationFromContextThenAllocationSucceeds) {
+    size_t size = 10u;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                                 ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(ContextMemoryTest, whenAllocatingHostAllocationFromContextThenAllocationSucceeds) {
+    size_t size = 10u;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_result_t result = context->allocHostMem(ZE_HOST_MEM_ALLOC_FLAG_DEFAULT,
+                                               size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(ContextMemoryTest, whenAllocatingDeviceAllocationFromContextThenAllocationSucceeds) {
+    size_t size = 10u;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    result = context->freeMem(ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(ContextMemoryTest, whenRetrievingAddressRangeForDeviceAllocationThenRangeIsCorrect) {
+    size_t allocSize = 4096u;
+    size_t alignment = 1u;
+    void *allocPtr = nullptr;
+
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                                 allocSize, alignment, &allocPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, allocPtr);
+
+    void *base = nullptr;
+    size_t size = 0u;
+    void *pPtr = reinterpret_cast<void *>(reinterpret_cast<uint64_t>(allocPtr) + 77);
+    result = context->getMemAddressRange(pPtr, &base, &size);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(base, allocPtr);
+    EXPECT_GE(size, allocSize);
+
+    result = context->freeMem(allocPtr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(ContextMemoryTest, givenSystemAllocatedPointerThenGetAllocPropertiesReturnsUnknownType) {
+    size_t size = 10;
+    int *ptr = new int[size];
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    memoryProperties.version = ZE_MEMORY_ALLOCATION_PROPERTIES_VERSION_CURRENT;
+    ze_device_handle_t deviceHandle;
+    ze_result_t result = context->getMemAllocProperties(ptr, &memoryProperties, &deviceHandle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(memoryProperties.type, ZE_MEMORY_TYPE_UNKNOWN);
+
+    delete[] ptr;
+}
+
 } // namespace ult
 } // namespace L0

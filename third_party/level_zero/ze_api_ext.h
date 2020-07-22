@@ -427,6 +427,314 @@ zeDriverGetExtensionProperties(
                                                            ///< extension properties
 );
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Allocates shared memory on the context.
+///
+/// @details
+///     - Shared allocations share ownership between the host and one or more
+///       devices.
+///     - Shared allocations may optionally be associated with a device by
+///       passing a handle to the device.
+///     - Devices supporting only single-device shared access capabilities may
+///       access shared memory associated with the device.
+///       For these devices, ownership of the allocation is shared between the
+///       host and the associated device only.
+///     - Passing nullptr as the device handle does not associate the shared
+///       allocation with any device.
+///       For allocations with no associated device, ownership of the allocation
+///       is shared between the host and all devices supporting cross-device
+///       shared access capabilities.
+///     - The application must only use the memory allocation for the context
+///       and device, or its sub-devices, which was provided during allocation.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == deviceDesc`
+///         + `nullptr == hostDesc`
+///         + `nullptr == pptr`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `0x3 < deviceDesc->flags`
+///         + `0x7 < hostDesc->flags`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_SIZE
+///         + `0 == size`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT
+///         + Must be zero or a power-of-two
+///         + `0 != (alignment & (alignment - 1))`
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemAllocShared(
+    ze_context_handle_t hContext,                 ///< [in] handle of the context object
+    const ze_device_mem_alloc_desc_t *deviceDesc, ///< [in] pointer to device memory allocation descriptor
+    const ze_host_mem_alloc_desc_t *hostDesc,     ///< [in] pointer to host memory allocation descriptor
+    size_t size,                                  ///< [in] size in bytes to allocate; must be less-than
+                                                  ///< ::ze_device_properties_t.maxMemAllocSize.
+    size_t alignment,                             ///< [in] minimum alignment in bytes for the allocation; must be a power of
+                                                  ///< two.
+    ze_device_handle_t hDevice,                   ///< [in][optional] device handle to associate with
+    void **pptr                                   ///< [out] pointer to shared allocation
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Allocates device memory on the context.
+///
+/// @details
+///     - Device allocations are owned by a specific device.
+///     - In general, a device allocation may only be accessed by the device
+///       that owns it.
+///     - The application must only use the memory allocation for the context
+///       and device, or its sub-devices, which was provided during allocation.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == deviceDesc`
+///         + `nullptr == pptr`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `0x3 < deviceDesc->flags`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_SIZE
+///         + `0 == size`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT
+///         + Must be zero or a power-of-two
+///         + `0 != (alignment & (alignment - 1))`
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemAllocDevice(
+    ze_context_handle_t hContext,                 ///< [in] handle of the context object
+    const ze_device_mem_alloc_desc_t *deviceDesc, ///< [in] pointer to device memory allocation descriptor
+    size_t size,                                  ///< [in] size in bytes to allocate; must be less-than
+                                                  ///< ::ze_device_properties_t.maxMemAllocSize.
+    size_t alignment,                             ///< [in] minimum alignment in bytes for the allocation; must be a power of
+                                                  ///< two.
+    ze_device_handle_t hDevice,                   ///< [in] handle of the device
+    void **pptr                                   ///< [out] pointer to device allocation
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Allocates host memory on the context.
+///
+/// @details
+///     - Host allocations are owned by the host process.
+///     - Host allocations are accessible by the host and all devices within the
+///       driver's context.
+///     - Host allocations are frequently used as staging areas to transfer data
+///       to or from devices.
+///     - The application must only use the memory allocation for the context
+///       which was provided during allocation.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == hostDesc`
+///         + `nullptr == pptr`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `0x7 < hostDesc->flags`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_SIZE
+///         + `0 == size`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT
+///         + Must be zero or a power-of-two
+///         + `0 != (alignment & (alignment - 1))`
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemAllocHost(
+    ze_context_handle_t hContext,             ///< [in] handle of the context object
+    const ze_host_mem_alloc_desc_t *hostDesc, ///< [in] pointer to host memory allocation descriptor
+    size_t size,                              ///< [in] size in bytes to allocate; must be less-than
+                                              ///< ::ze_device_properties_t.maxMemAllocSize.
+    size_t alignment,                         ///< [in] minimum alignment in bytes for the allocation; must be a power of
+                                              ///< two.
+    void **pptr                               ///< [out] pointer to host allocation
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Frees allocated host memory, device memory, or shared memory on the
+///        context.
+///
+/// @details
+///     - The application must ensure the device is not currently referencing
+///       the memory before it is freed
+///     - The implementation of this function may immediately free all Host and
+///       Device allocations associated with this memory
+///     - The application must **not** call this function from simultaneous
+///       threads with the same pointer.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ptr`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemFree(
+    ze_context_handle_t hContext, ///< [in] handle of the context object
+    void *ptr                     ///< [in][release] pointer to memory to free
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieves attributes of a memory allocation
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The application may query attributes of a memory allocation unrelated
+///       to the context.
+///       When this occurs, the returned allocation type will be
+///       ::ZE_MEMORY_TYPE_UNKNOWN, and the returned identifier and associated
+///       device is unspecified.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ptr`
+///         + `nullptr == pMemAllocProperties`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemGetAllocProperties(
+    ze_context_handle_t hContext,                           ///< [in] handle of the context object
+    const void *ptr,                                        ///< [in] memory pointer to query
+    ze_memory_allocation_properties_t *pMemAllocProperties, ///< [in,out] query result for memory allocation properties
+    ze_device_handle_t *phDevice                            ///< [out][optional] device associated with this allocation
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieves the base address and/or size of an allocation
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ptr`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemGetAddressRange(
+    ze_context_handle_t hContext, ///< [in] handle of the context object
+    const void *ptr,              ///< [in] memory pointer to query
+    void **pBase,                 ///< [in,out][optional] base address of the allocation
+    size_t *pSize                 ///< [in,out][optional] size of the allocation
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supported IPC memory flags
+typedef uint32_t ze_ipc_memory_flags_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Opens an IPC memory handle to retrieve a device pointer on the
+///        context.
+///
+/// @details
+///     - Takes an IPC memory handle from a remote process and associates it
+///       with a device pointer usable in this process.
+///     - The device pointer in this process should not be freed with
+///       ::zeMemFree, but rather with ::zeMemCloseIpcHandle.
+///     - Multiple calls to this function with the same IPC handle will return
+///       unique pointers.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `0x1 < flags`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pptr`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemOpenIpcHandle(
+    ze_context_handle_t hContext, ///< [in] handle of the context object
+    ze_device_handle_t hDevice,   ///< [in] handle of the device to associate with the IPC memory handle
+    ze_ipc_mem_handle_t handle,   ///< [in] IPC memory handle
+    ze_ipc_memory_flags_t flags,  ///< [in] flags controlling the operation.
+                                  ///< must be 0 (default) or a valid combination of ::ze_ipc_memory_flag_t.
+    void **pptr                   ///< [out] pointer to device allocation in this process
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Closes an IPC memory handle
+///
+/// @details
+///     - Closes an IPC memory handle by unmapping memory that was opened in
+///       this process using ::zeMemOpenIpcHandle.
+///     - The application must **not** call this function from simultaneous
+///       threads with the same pointer.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ptr`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemCloseIpcHandle(
+    ze_context_handle_t hContext, ///< [in] handle of the context object
+    const void *ptr               ///< [in][release] pointer to device allocation in this process
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Creates an IPC memory handle for the specified allocation
+///
+/// @details
+///     - Takes a pointer to a device memory allocation and creates an IPC
+///       memory handle for exporting it for use in another process.
+///     - The pointer must be base pointer of the device memory allocation; i.e.
+///       the value returned from ::zeMemAllocDevice.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ptr`
+///         + `nullptr == pIpcHandle`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeMemGetIpcHandle(
+    ze_context_handle_t hContext,   ///< [in] handle of the context object
+    const void *ptr,                ///< [in] pointer to the device memory allocation
+    ze_ipc_mem_handle_t *pIpcHandle ///< [out] Returned IPC memory handle
+);
+
 } //extern C
 
 #endif // _ZE_API_EXT_H

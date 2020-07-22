@@ -113,6 +113,15 @@ struct Mock<DriverHandle> : public DriverHandleImp {
                  void **ptr),
                 (override));
     MOCK_METHOD(ze_result_t,
+                allocSharedMem,
+                (ze_device_handle_t hDevice,
+                 ze_device_mem_alloc_flag_t deviceFlags,
+                 ze_host_mem_alloc_flag_t hostFlags,
+                 size_t size,
+                 size_t alignment,
+                 void **ptr),
+                (override));
+    MOCK_METHOD(ze_result_t,
                 freeMem,
                 (const void *ptr),
                 (override));

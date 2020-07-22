@@ -24,7 +24,7 @@ TEST_F(ContextTest, givenCallToContextGetStatusThenUnsupportedIsReturned) {
     ze_result_t res = driverHandle->createContext(&desc, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    Context *context = L0::Context::fromHandle(hContext);
+    L0::Context *context = L0::Context::fromHandle(hContext);
 
     res = context->getStatus();
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, res);

@@ -12,6 +12,7 @@
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
 
+#include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
 
@@ -51,6 +52,25 @@ struct MultiDeviceFixture {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     std::vector<L0::Device *> devices;
     const uint32_t numRootDevices = 4u;
+};
+
+struct ContextFixture : DeviceFixture {
+    void SetUp() override {
+        DeviceFixture::SetUp();
+
+        ze_context_handle_t hContext = {};
+        ze_context_desc_t desc;
+        ze_result_t res = driverHandle->createContext(&desc, &hContext);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_NE(nullptr, hContext);
+        context = L0::Context::fromHandle(hContext);
+    }
+
+    void TearDown() override {
+        context->destroy();
+        DeviceFixture::TearDown();
+    }
+    L0::Context *context = nullptr;
 };
 
 } // namespace ult
