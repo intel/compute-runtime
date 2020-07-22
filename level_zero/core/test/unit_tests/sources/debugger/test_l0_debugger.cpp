@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gen_common/reg_configs/reg_configs_common.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 
 #include "test.h"
@@ -37,11 +38,48 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenCallingIsDebuggerActiveThenTrueIsRetur
     EXPECT_TRUE(neoDevice->getDebugger()->isDebuggerActive());
 }
 
-TEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenSbaTrackingBufferIsAllocated) {
+TEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuffersAreAllocated) {
     auto debugger = device->getL0Debugger();
     ASSERT_NE(nullptr, debugger);
-    ASSERT_NE(nullptr, debugger->getSbaTrackingBuffer());
-    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER, debugger->getSbaTrackingBuffer()->getAllocationType());
+
+    EXPECT_NE(0u, debugger->getSbaTrackingGpuVa());
+    std::vector<NEO::GraphicsAllocation *> allocations;
+
+    for (auto &engine : device->getNEODevice()->getEngines()) {
+        auto sbaAllocation = debugger->getSbaTrackingBuffer(engine.osContext->getContextId());
+        ASSERT_NE(nullptr, sbaAllocation);
+        allocations.push_back(sbaAllocation);
+
+        EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER, sbaAllocation->getAllocationType());
+    }
+
+    for (uint32_t i = 0; i < allocations.size() - 1; i++) {
+        EXPECT_NE(allocations[i], allocations[i + 1]);
+    }
+
+    EXPECT_EQ(device->getNEODevice()->getEngines().size(), mockDebugger->perContextSbaAllocations.size());
+}
+
+TEST_F(L0DebuggerTest, givenCreatedL0DebuggerThenSbaTrackingBuffersContainValidHeader) {
+    auto debugger = device->getL0Debugger();
+    ASSERT_NE(nullptr, debugger);
+
+    for (auto &sbaBuffer : mockDebugger->perContextSbaAllocations) {
+        auto sbaAllocation = sbaBuffer.second;
+        ASSERT_NE(nullptr, sbaAllocation);
+
+        auto sbaHeader = reinterpret_cast<SbaTrackedAddresses *>(sbaAllocation->getUnderlyingBuffer());
+
+        EXPECT_STREQ("sbaarea", sbaHeader->magic);
+        EXPECT_EQ(0u, sbaHeader->BindlessSamplerStateBaseAddress);
+        EXPECT_EQ(0u, sbaHeader->BindlessSurfaceStateBaseAddress);
+        EXPECT_EQ(0u, sbaHeader->DynamicStateBaseAddress);
+        EXPECT_EQ(0u, sbaHeader->GeneralStateBaseAddress);
+        EXPECT_EQ(0u, sbaHeader->IndirectObjectBaseAddress);
+        EXPECT_EQ(0u, sbaHeader->InstructionBaseAddress);
+        EXPECT_EQ(0u, sbaHeader->SurfaceStateBaseAddress);
+        EXPECT_EQ(0u, sbaHeader->Version);
+    }
 }
 
 HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenKernelDebugCommandsAreAdded) {

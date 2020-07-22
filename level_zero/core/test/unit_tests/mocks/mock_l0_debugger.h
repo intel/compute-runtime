@@ -14,6 +14,7 @@ namespace ult {
 class MockDebuggerL0 : public L0::DebuggerL0 {
   public:
     using L0::DebuggerL0::DebuggerL0;
+    using L0::DebuggerL0::perContextSbaAllocations;
     ~MockDebuggerL0() override = default;
 };
 

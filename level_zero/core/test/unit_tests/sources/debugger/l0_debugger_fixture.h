@@ -46,7 +46,8 @@ struct L0DebuggerFixture {
 struct MockL0DebuggerFixture : public L0DebuggerFixture {
     void SetUp() {
         L0DebuggerFixture::SetUp();
-        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(new MockDebuggerL0(neoDevice));
+        mockDebugger = new MockDebuggerL0(neoDevice);
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(mockDebugger);
         neoDevice->setDebuggerActive(true);
         neoDevice->setPreemptionMode(PreemptionMode::Disabled);
         auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
@@ -61,7 +62,9 @@ struct MockL0DebuggerFixture : public L0DebuggerFixture {
 
     void TearDown() {
         L0DebuggerFixture::TearDown();
+        mockDebugger = nullptr;
     }
+    MockDebuggerL0 *mockDebugger = nullptr;
 };
 
 } // namespace ult
