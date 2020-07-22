@@ -63,8 +63,9 @@ struct Metric : _zet_metric_handle_t {
     virtual ~Metric() = default;
 
     virtual ze_result_t getProperties(zet_metric_properties_t *pProperties) = 0;
+    virtual ze_result_t getPropertiesExt(zet_metric_properties_ext_t *pProperties) = 0;
 
-    static Metric *create(zet_metric_properties_t &properties);
+    static Metric *create(zet_metric_properties_ext_t &properties);
     static Metric *fromHandle(zet_metric_handle_t handle) { return static_cast<Metric *>(handle); }
     inline zet_metric_handle_t toHandle() { return this; }
 };
@@ -73,19 +74,20 @@ struct MetricGroup : _zet_metric_group_handle_t {
     virtual ~MetricGroup() = default;
 
     virtual ze_result_t getProperties(zet_metric_group_properties_t *pProperties) = 0;
+    virtual ze_result_t getPropertiesExt(zet_metric_group_properties_ext_t *pProperties) = 0;
     virtual ze_result_t getMetric(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
     virtual ze_result_t calculateMetricValues(size_t rawDataSize,
                                               const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                               zet_typed_value_t *pMetricValues) = 0;
 
-    static MetricGroup *create(zet_metric_group_properties_t &properties,
+    static MetricGroup *create(zet_metric_group_properties_ext_t &properties,
                                MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
                                const std::vector<Metric *> &metrics);
     static MetricGroup *fromHandle(zet_metric_group_handle_t handle) {
         return static_cast<MetricGroup *>(handle);
     }
-    static zet_metric_group_properties_t getProperties(const zet_metric_group_handle_t handle);
+    static zet_metric_group_properties_ext_t getProperties(const zet_metric_group_handle_t handle);
 
     zet_metric_group_handle_t toHandle() { return this; }
 

@@ -194,8 +194,8 @@ MetricEnumeration::cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
         // Obtain params once again - updated after SetApiFiltering
         pMetricSetParams = metricSet.GetParams();
 
-        zet_metric_group_properties_t properties = {};
-        properties.version = ZET_METRIC_GROUP_PROPERTIES_VERSION_CURRENT;
+        zet_metric_group_properties_ext_t properties = {};
+        properties.stype = ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES;
         snprintf(properties.name, sizeof(properties.name), "%s",
                  pMetricSetParams->SymbolName); // To always have null-terminated string
         snprintf(properties.description, sizeof(properties.description), "%s",
@@ -235,8 +235,8 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
         MetricsDiscovery::TMetricParams_1_0 *pSourceMetricParams = pSourceMetric->GetParams();
         DEBUG_BREAK_IF(pSourceMetricParams == nullptr);
 
-        zet_metric_properties_t properties = {};
-        properties.version = ZET_METRIC_PROPERTIES_VERSION_CURRENT;
+        zet_metric_properties_ext_t properties = {};
+        properties.stype = ZET_STRUCTURE_TYPE_METRIC_PROPERTIES;
         snprintf(properties.name, sizeof(properties.name), "%s",
                  pSourceMetricParams->SymbolName); // To always have a null-terminated string
         snprintf(properties.description, sizeof(properties.description), "%s",
@@ -264,8 +264,8 @@ ze_result_t MetricEnumeration::createMetrics(MetricsDiscovery::IMetricSet_1_5 &m
             pSourceInformation->GetParams();
         DEBUG_BREAK_IF(pSourceInformationParams == nullptr);
 
-        zet_metric_properties_t properties;
-        properties.version = ZET_METRIC_PROPERTIES_VERSION_CURRENT;
+        zet_metric_properties_ext_t properties = {};
+        properties.stype = ZET_STRUCTURE_TYPE_METRIC_PROPERTIES;
         snprintf(properties.name, sizeof(properties.name), "%s",
                  pSourceInformationParams->SymbolName); // To always have a null-terminated string
         snprintf(properties.description, sizeof(properties.description), "%s",
@@ -378,16 +378,32 @@ MetricGroupImp ::~MetricGroupImp() {
 };
 
 ze_result_t MetricGroupImp::getProperties(zet_metric_group_properties_t *pProperties) {
+
+    pProperties->version = zet_metric_group_properties_version_t::ZET_METRIC_GROUP_PROPERTIES_VERSION_CURRENT;
+    pProperties->domain = properties.domain;
+    pProperties->maxCommandQueueOrdinal = 0xFFFFFFFF;
+    pProperties->metricCount = properties.metricCount;
+    pProperties->samplingType = static_cast<zet_metric_group_sampling_type_t>(properties.samplingType);
+
+    memcpy(pProperties->name,
+           properties.name, sizeof(pProperties->name));
+    memcpy(pProperties->description,
+           properties.description, sizeof(pProperties->description));
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t MetricGroupImp::getPropertiesExt(zet_metric_group_properties_ext_t *pProperties) {
     copyProperties(properties, *pProperties);
     return ZE_RESULT_SUCCESS;
 }
 
-zet_metric_group_properties_t MetricGroup::getProperties(const zet_metric_group_handle_t handle) {
+zet_metric_group_properties_ext_t MetricGroup::getProperties(const zet_metric_group_handle_t handle) {
     auto metricGroup = MetricGroup::fromHandle(handle);
     UNRECOVERABLE_IF(!metricGroup);
 
-    zet_metric_group_properties_t properties = {ZET_METRIC_GROUP_PROPERTIES_VERSION_CURRENT};
-    metricGroup->getProperties(&properties);
+    zet_metric_group_properties_ext_t properties = {ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES};
+    metricGroup->getPropertiesExt(&properties);
 
     return properties;
 }
@@ -425,12 +441,12 @@ bool MetricGroupImp::deactivate() {
     return result;
 }
 
-uint32_t MetricGroupImp::getApiMask(const zet_metric_group_sampling_type_t samplingType) {
+uint32_t MetricGroupImp::getApiMask(const zet_metric_group_sampling_type_flags_t samplingType) {
 
     switch (samplingType) {
-    case ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED:
+    case ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED:
         return MetricsDiscovery::API_TYPE_IOSTREAM;
-    case ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED:
+    case ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED:
         return MetricsDiscovery::API_TYPE_OCL | MetricsDiscovery::API_TYPE_OGL4_X;
     default:
         DEBUG_BREAK_IF(true);
@@ -541,7 +557,7 @@ bool MetricGroupImp::getCalculatedMetricValues(const size_t rawDataSize, const u
     return result;
 }
 
-ze_result_t MetricGroupImp::initialize(const zet_metric_group_properties_t &sourceProperties,
+ze_result_t MetricGroupImp::initialize(const zet_metric_group_properties_ext_t &sourceProperties,
                                        MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                        MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
                                        const std::vector<Metric *> &groupMetrics) {
@@ -560,9 +576,8 @@ uint32_t MetricGroupImp::getRawReportSize() {
                : pMetricSetParams->QueryReportSize;
 }
 
-void MetricGroupImp::copyProperties(const zet_metric_group_properties_t &source,
-                                    zet_metric_group_properties_t &destination) {
-    DEBUG_BREAK_IF(source.version < destination.version);
+void MetricGroupImp::copyProperties(const zet_metric_group_properties_ext_t &source,
+                                    zet_metric_group_properties_ext_t &destination) {
     destination = source;
     memcpy_s(destination.name, sizeof(destination.name),
              source.name, sizeof(destination.name));
@@ -605,18 +620,32 @@ void MetricGroupImp::copyValue(const MetricsDiscovery::TTypedValue_1_0 &source,
 }
 
 ze_result_t MetricImp::getProperties(zet_metric_properties_t *pProperties) {
+
+    pProperties->version = ZET_METRIC_PROPERTIES_VERSION_CURRENT;
+    pProperties->tierNumber = properties.tierNumber;
+    pProperties->metricType = properties.metricType;
+    pProperties->resultType = properties.resultType;
+
+    memcpy(pProperties->name, properties.name, sizeof(pProperties->name));
+    memcpy(pProperties->description, properties.description, sizeof(pProperties->description));
+    memcpy(pProperties->component, properties.component, sizeof(pProperties->component));
+    memcpy(pProperties->resultUnits, properties.resultUnits, sizeof(pProperties->resultUnits));
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t MetricImp::getPropertiesExt(zet_metric_properties_ext_t *pProperties) {
     copyProperties(properties, *pProperties);
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MetricImp::initialize(const zet_metric_properties_t &sourceProperties) {
+ze_result_t MetricImp::initialize(const zet_metric_properties_ext_t &sourceProperties) {
     copyProperties(sourceProperties, properties);
     return ZE_RESULT_SUCCESS;
 }
 
-void MetricImp::copyProperties(const zet_metric_properties_t &source,
-                               zet_metric_properties_t &destination) {
-    DEBUG_BREAK_IF(source.version < destination.version);
+void MetricImp::copyProperties(const zet_metric_properties_ext_t &source,
+                               zet_metric_properties_ext_t &destination) {
     destination = source;
     memcpy_s(destination.name, sizeof(destination.name),
              source.name, sizeof(destination.name));
@@ -628,7 +657,7 @@ void MetricImp::copyProperties(const zet_metric_properties_t &source,
              source.resultUnits, sizeof(destination.resultUnits));
 }
 
-MetricGroup *MetricGroup::create(zet_metric_group_properties_t &properties,
+MetricGroup *MetricGroup::create(zet_metric_group_properties_ext_t &properties,
                                  MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                  MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
                                  const std::vector<Metric *> &metrics) {
@@ -638,7 +667,7 @@ MetricGroup *MetricGroup::create(zet_metric_group_properties_t &properties,
     return pMetricGroup;
 }
 
-Metric *Metric::create(zet_metric_properties_t &properties) {
+Metric *Metric::create(zet_metric_properties_ext_t &properties) {
     auto pMetric = new MetricImp();
     UNRECOVERABLE_IF(pMetric == nullptr);
     pMetric->initialize(properties);

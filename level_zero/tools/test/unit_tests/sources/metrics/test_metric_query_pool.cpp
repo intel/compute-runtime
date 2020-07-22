@@ -46,7 +46,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryPoolCreateIsC
     zet_device_handle_t metricDevice = device->toHandle();
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_pool_handle_t poolHandle = {};
@@ -73,7 +73,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryPoolCreateIsC
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -107,7 +107,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectMetricGroupTypeWhenZetMetricQueryPoolC
     zet_device_handle_t metricDevice = device->toHandle();
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED;
 
     zet_metric_query_pool_handle_t poolHandle = {};
@@ -132,7 +132,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectMetricGroupTypeWhenZetMetricQueryPoolC
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -160,7 +160,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryCreateIsCalle
     zet_device_handle_t metricDevice = device->toHandle();
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
@@ -188,7 +188,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryCreateIsCalle
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -230,7 +230,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectSlotIndexWhenZetMetricQueryCreateIsCal
     zet_device_handle_t metricDevice = device->toHandle();
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
@@ -258,7 +258,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectSlotIndexWhenZetMetricQueryCreateIsCal
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -299,7 +299,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryResetIsCalled
     zet_device_handle_t metricDevice = device->toHandle();
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
@@ -327,7 +327,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryResetIsCalled
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -372,7 +372,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetCommandListAppendMetri
     zet_device_handle_t metricDevice = device->toHandle();
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
@@ -400,7 +400,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetCommandListAppendMetri
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -448,7 +448,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
@@ -479,7 +479,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -620,7 +620,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetCommandListAppendMetri
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
@@ -651,7 +651,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetCommandListAppendMetri
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -731,7 +731,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
@@ -762,7 +762,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -847,7 +847,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
@@ -878,7 +878,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -963,7 +963,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
@@ -994,7 +994,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -1079,7 +1079,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
@@ -1110,7 +1110,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -1195,7 +1195,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
@@ -1228,7 +1228,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -1330,7 +1330,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
@@ -1363,7 +1363,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 

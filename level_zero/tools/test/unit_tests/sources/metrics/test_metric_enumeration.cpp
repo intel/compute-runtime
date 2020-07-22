@@ -704,6 +704,105 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCa
     EXPECT_EQ(metricProperties.resultType, ZET_VALUE_TYPE_UINT64);
 }
 
+TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCalledThenReturnSuccessExt) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+    metricsSetParams.MetricsCount = 1;
+
+    // Metrics Discovery:: metric.
+    Mock<IMetric_1_0> metric;
+    TMetricParams_1_0 metricParams = {};
+    metricParams.SymbolName = "Metric symbol name";
+    metricParams.ShortName = "Metric short name";
+    metricParams.LongName = "Metric long name";
+    metricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
+    metricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
+    zet_metric_properties_ext_t metricProperties = {};
+
+    // One api: metric group handle.
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
+        .Times(0);
+
+    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, GetMetric(_))
+        .Times(1)
+        .WillOnce(Return(&metric));
+
+    EXPECT_CALL(metric, GetParams())
+        .Times(1)
+        .WillOnce(Return(&metricParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    // Metric group count.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    // Metric group handle.
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    // Obtain metric.
+    uint32_t metricCount = 0;
+    zet_metric_handle_t metricHandle = {};
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricCount, 1u);
+    EXPECT_EQ(zetMetricGet(metricGroupHandle, &metricCount, &metricHandle), ZE_RESULT_SUCCESS);
+    EXPECT_NE(metricHandle, nullptr);
+
+    // Obtain metric params.
+    EXPECT_EQ(zetMetricGetPropertiesExt(metricHandle, &metricProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(strcmp(metricProperties.name, metricParams.SymbolName), 0);
+    EXPECT_EQ(strcmp(metricProperties.description, metricParams.LongName), 0);
+    EXPECT_EQ(metricProperties.metricType, ZET_METRIC_TYPE_RATIO);
+    EXPECT_EQ(metricProperties.resultType, ZET_VALUE_TYPE_UINT64);
+}
+
 TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetDeviceActivateMetricGroupsIsCalledThenReturnsFail) {
 
     // Metrics Discovery device.

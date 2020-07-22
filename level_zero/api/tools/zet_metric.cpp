@@ -26,7 +26,15 @@ __zedllexport ze_result_t __zecall
 zetMetricGroupGetProperties(
     zet_metric_group_handle_t hMetricGroup,
     zet_metric_group_properties_t *pProperties) {
+
     return L0::MetricGroup::fromHandle(hMetricGroup)->getProperties(pProperties);
+}
+
+__zedllexport ze_result_t __zecall
+zetMetricGroupGetPropertiesExt(
+    zet_metric_group_handle_t hMetricGroup,
+    zet_metric_group_properties_ext_t *pProperties) {
+    return L0::MetricGroup::fromHandle(hMetricGroup)->getPropertiesExt(pProperties);
 }
 
 __zedllexport ze_result_t __zecall
@@ -42,6 +50,13 @@ zetMetricGetProperties(
     zet_metric_handle_t hMetric,
     zet_metric_properties_t *pProperties) {
     return L0::Metric::fromHandle(hMetric)->getProperties(pProperties);
+}
+
+__zedllexport ze_result_t __zecall
+zetMetricGetPropertiesExt(
+    zet_metric_handle_t hMetric,
+    zet_metric_properties_ext_t *pProperties) {
+    return L0::Metric::fromHandle(hMetric)->getPropertiesExt(pProperties);
 }
 
 __zedllexport ze_result_t __zecall

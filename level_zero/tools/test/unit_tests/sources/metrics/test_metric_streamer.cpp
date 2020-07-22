@@ -37,11 +37,11 @@ TEST_F(MetricStreamerTest, givenInvalidMetricGroupTypeWhenZetMetricStreamerOpenI
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -65,11 +65,11 @@ TEST_F(MetricStreamerTest, zetMetricTracerOpen_InvalidMetricGroupType_ReturnsFai
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
 
-    EXPECT_CALL(metricGroup, getProperties(_))
+    EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 

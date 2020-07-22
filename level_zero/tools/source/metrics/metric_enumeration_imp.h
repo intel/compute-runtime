@@ -73,12 +73,13 @@ struct MetricGroupImp : MetricGroup {
     ~MetricGroupImp() override;
 
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override;
+    ze_result_t getPropertiesExt(zet_metric_group_properties_ext_t *pProperties) override;
     ze_result_t getMetric(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
     ze_result_t calculateMetricValues(size_t rawDataSize, const uint8_t *pRawData,
                                       uint32_t *pMetricValueCount,
                                       zet_typed_value_t *pCalculatedData) override;
 
-    ze_result_t initialize(const zet_metric_group_properties_t &sourceProperties,
+    ze_result_t initialize(const zet_metric_group_properties_ext_t &sourceProperties,
                            MetricsDiscovery::IMetricSet_1_5 &metricSet,
                            MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
                            const std::vector<Metric *> &groupMetrics);
@@ -88,7 +89,7 @@ struct MetricGroupImp : MetricGroup {
     bool activate() override;
     bool deactivate() override;
 
-    static uint32_t getApiMask(const zet_metric_group_sampling_type_t samplingType);
+    static uint32_t getApiMask(const zet_metric_group_sampling_type_flags_t samplingType);
 
     // Time based measurements.
     ze_result_t openIoStream(uint32_t &timerPeriodNs, uint32_t &oaBufferSize) override;
@@ -97,9 +98,8 @@ struct MetricGroupImp : MetricGroup {
     ze_result_t closeIoStream() override;
 
   protected:
-    void copyProperties(const zet_metric_group_properties_t &source,
-                        zet_metric_group_properties_t &destination);
-
+    void copyProperties(const zet_metric_group_properties_ext_t &source,
+                        zet_metric_group_properties_ext_t &destination);
     void copyValue(const MetricsDiscovery::TTypedValue_1_0 &source,
                    zet_typed_value_t &destination) const;
 
@@ -112,8 +112,8 @@ struct MetricGroupImp : MetricGroup {
 
     // Cached metrics.
     std::vector<Metric *> metrics;
-    zet_metric_group_properties_t properties{
-        ZET_METRIC_GROUP_PROPERTIES_VERSION_CURRENT,
+    zet_metric_group_properties_ext_t properties{
+        ZET_STRUCTURE_TYPE_METRIC_GROUP_PROPERTIES,
     };
     MetricsDiscovery::IMetricSet_1_5 *pReferenceMetricSet = nullptr;
     MetricsDiscovery::IConcurrentGroup_1_5 *pReferenceConcurrentGroup = nullptr;
@@ -123,16 +123,16 @@ struct MetricImp : Metric {
     ~MetricImp() override{};
 
     ze_result_t getProperties(zet_metric_properties_t *pProperties) override;
+    ze_result_t getPropertiesExt(zet_metric_properties_ext_t *pProperties) override;
 
-    ze_result_t initialize(const zet_metric_properties_t &sourceProperties);
+    ze_result_t initialize(const zet_metric_properties_ext_t &sourceProperties);
 
   protected:
-    void copyProperties(const zet_metric_properties_t &source,
-                        zet_metric_properties_t &destination);
+    void copyProperties(const zet_metric_properties_ext_t &source,
+                        zet_metric_properties_ext_t &destination);
 
-    zet_metric_properties_t properties{
-        ZET_METRIC_PROPERTIES_VERSION_CURRENT,
-    };
+    zet_metric_properties_ext_t properties{
+        ZET_STRUCTURE_TYPE_METRIC_PROPERTIES};
 };
 
 } // namespace L0

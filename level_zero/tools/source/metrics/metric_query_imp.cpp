@@ -303,7 +303,7 @@ bool MetricsLibrary::getGpuCommands(CommandList &commandList,
 
 ConfigurationHandle_1_0
 MetricsLibrary::createConfiguration(const zet_metric_group_handle_t metricGroupHandle,
-                                    const zet_metric_group_properties_t properties) {
+                                    const zet_metric_group_properties_ext_t properties) {
     // Metric group internal data.
     auto metricGroup = MetricGroup::fromHandle(metricGroupHandle);
     auto metricGroupDummy = ConfigurationHandle_1_0{};

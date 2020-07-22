@@ -245,6 +245,85 @@ zetCommandListAppendMetricQueryEndExt(
                                             ///< on before launching
 );
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Metric group sampling type
+typedef uint32_t zet_metric_group_sampling_type_flags_t;
+typedef enum _zet_metric_group_sampling_type_flag_t {
+    ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED = ZE_BIT(0), ///< Event based sampling
+    ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED = ZE_BIT(1),  ///< Time based sampling
+    ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_FORCE_UINT32 = 0x7fffffff
+
+} zet_metric_group_sampling_type_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Metric group properties queried using ::zetMetricGroupGetProperties
+typedef struct _zet_metric_group_properties_ext_t {
+    zet_structure_type_t stype;                          ///< [in] type of this structure
+    void *pNext;                                         ///< [in,out][optional] pointer to extension-specific structure
+    char name[ZET_MAX_METRIC_GROUP_NAME];                ///< [out] metric group name
+    char description[ZET_MAX_METRIC_GROUP_DESCRIPTION];  ///< [out] metric group description
+    zet_metric_group_sampling_type_flags_t samplingType; ///< [out] metric group sampling type.
+                                                         ///< returns a combination of ::zet_metric_group_sampling_type_flag_t.
+    uint32_t domain;                                     ///< [out] metric group domain number. Cannot use simultaneous metric
+                                                         ///< groups from different domains.
+    uint32_t metricCount;                                ///< [out] metric count belonging to this group
+
+} zet_metric_group_properties_ext_t;
+
+/// @brief Metric properties queried using ::zetMetricGetProperties
+typedef struct _zet_metric_properties_ext_t {
+    zet_structure_type_t stype;                    ///< [in] type of this structure
+    void *pNext;                                   ///< [in,out][optional] pointer to extension-specific structure
+    char name[ZET_MAX_METRIC_NAME];                ///< [out] metric name
+    char description[ZET_MAX_METRIC_DESCRIPTION];  ///< [out] metric description
+    char component[ZET_MAX_METRIC_COMPONENT];      ///< [out] metric component
+    uint32_t tierNumber;                           ///< [out] number of tier
+    zet_metric_type_t metricType;                  ///< [out] metric type
+    zet_value_type_t resultType;                   ///< [out] metric result type
+    char resultUnits[ZET_MAX_METRIC_RESULT_UNITS]; ///< [out] metric result units
+
+} zet_metric_properties_ext_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieves attributes of a metric group.
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hMetricGroup`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pProperties`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetMetricGroupGetPropertiesExt(
+    zet_metric_group_handle_t hMetricGroup,        ///< [in] handle of the metric group
+    zet_metric_group_properties_ext_t *pProperties ///< [in,out] metric group properties
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieves attributes of a metric.
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hMetric`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pProperties`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetMetricGetPropertiesExt(
+    zet_metric_handle_t hMetric,             ///< [in] handle of the metric
+    zet_metric_properties_ext_t *pProperties ///< [in,out] metric properties
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
