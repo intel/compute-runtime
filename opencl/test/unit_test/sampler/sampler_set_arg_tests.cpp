@@ -108,7 +108,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
 };
 
 typedef Test<SamplerSetArgFixture> SamplerSetArgTest;
-HWTEST_F(SamplerSetArgTest, clSetKernelArgSampler) {
+HWTEST_F(SamplerSetArgTest, WhenSettingKernelArgSamplerThenSamplerStatesAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     createSampler();
 
@@ -137,7 +137,7 @@ HWTEST_F(SamplerSetArgTest, clSetKernelArgSampler) {
     EXPECT_EQ(0u, surfaces.size());
 }
 
-HWTEST_F(SamplerSetArgTest, getKernelArgShouldReturnSampler) {
+HWTEST_F(SamplerSetArgTest, WhenGettingKernelArgThenSamplerIsReturned) {
     createSampler();
     cl_sampler samplerObj = sampler;
 
@@ -291,7 +291,7 @@ HWTEST_F(SamplerSetArgTest, GivenIncorrentSamplerObjectWhenSetKernelArgSamplerIs
     EXPECT_EQ(refCountBefore, refCountAfter);
 }
 
-HWTEST_F(SamplerSetArgTest, WithFilteringNearestAndAddressingClClampSetAsKernelArgumentSetsConstantBuffer) {
+HWTEST_F(SamplerSetArgTest, GivenFilteringNearestAndAddressingClampWhenSettingKernelArgumentThenConstantBufferIsSet) {
 
     sampler = Sampler::create(
         context,
@@ -320,7 +320,7 @@ HWTEST_F(SamplerSetArgTest, WithFilteringNearestAndAddressingClClampSetAsKernelA
     EXPECT_EQ(objectId, *crossThreadData);
 }
 
-HWTEST_F(SamplerSetArgTest, GIVENkernelWithoutObjIdOffsetWHENsetArgTHENdoesntPatchObjId) {
+HWTEST_F(SamplerSetArgTest, GivenKernelWithoutObjIdOffsetWhenSettingArgThenObjIdNotPatched) {
 
     sampler = Sampler::create(
         context,
@@ -341,7 +341,7 @@ HWTEST_F(SamplerSetArgTest, GIVENkernelWithoutObjIdOffsetWHENsetArgTHENdoesntPat
     EXPECT_TRUE(crossThreadDataUnchanged());
 }
 
-HWTEST_F(SamplerSetArgTest, setKernelArgWithNullptrSampler) {
+HWTEST_F(SamplerSetArgTest, GivenNullWhenSettingKernelArgThenInvalidSamplerErrorIsReturned) {
     createSampler();
     cl_sampler samplerObj = sampler;
 
@@ -352,7 +352,7 @@ HWTEST_F(SamplerSetArgTest, setKernelArgWithNullptrSampler) {
     ASSERT_EQ(CL_INVALID_SAMPLER, retVal);
 }
 
-HWTEST_F(SamplerSetArgTest, setKernelArgWithInvalidSampler) {
+HWTEST_F(SamplerSetArgTest, GivenInvalidSamplerWhenSettingKernelArgThenInvalidSamplerErrorIsReturned) {
     createSampler();
     cl_sampler samplerObj = sampler;
 
@@ -407,7 +407,7 @@ struct NormalizedTest
     }
 };
 
-HWTEST_P(NormalizedTest, setKernelArgSampler) {
+HWTEST_P(NormalizedTest, WhenSettingKernelArgSamplerThenCoordsAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     auto normalizedCoordinates = GetParam();
     sampler = Sampler::create(
@@ -458,7 +458,7 @@ struct AddressingModeTest
     }
 };
 
-HWTEST_P(AddressingModeTest, setKernelArgSampler) {
+HWTEST_P(AddressingModeTest, WhenSettingKernelArgSamplerThenModesAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     auto addressingMode = GetParam();
     sampler = Sampler::create(
@@ -533,7 +533,7 @@ INSTANTIATE_TEST_CASE_P(SamplerSetArg,
                         AddressingModeTest,
                         ::testing::ValuesIn(addressingModeCases));
 
-HWTEST_F(SamplerSetArgTest, setKernelArgSamplerWithMipMaps) {
+HWTEST_F(SamplerSetArgTest, GivenMipmapsWhenSettingKernelArgSamplerThenLodAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
 
     FixedU4D8 minLod = 2.0f;
@@ -577,7 +577,7 @@ struct FilterModeTest
     }
 };
 
-HWTEST_P(FilterModeTest, setKernelArgSampler) {
+HWTEST_P(FilterModeTest, WhenSettingKernelArgSamplerThenFiltersAreCorrect) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     auto filterMode = GetParam();
     sampler = Sampler::create(
