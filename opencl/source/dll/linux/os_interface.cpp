@@ -15,7 +15,10 @@ namespace NEO {
 bool OSInterface::osEnableLocalMemory = true;
 
 void OSInterface::setGmmInputArgs(void *args) {
-    reinterpret_cast<GMM_INIT_IN_ARGS *>(args)->FileDescriptor = this->get()->getDrm()->getFileDescriptor();
+    auto gmmInArgs = reinterpret_cast<GMM_INIT_IN_ARGS *>(args);
+
+    gmmInArgs->FileDescriptor = this->get()->getDrm()->getFileDescriptor();
+    gmmInArgs->ClientType = GMM_CLIENT::GMM_OCL_VISTA;
 }
 
 } // namespace NEO

@@ -18,7 +18,7 @@ TEST(osInterfaceTests, osInterfaceLocalMemoryEnabledByDefault) {
     EXPECT_TRUE(OSInterface::osEnableLocalMemory);
 }
 
-TEST(osInterfaceTests, whenOsInterfaceSetupGmmInputArgsThenProperAdapterBDFIsSet) {
+TEST(osInterfaceTests, whenOsInterfaceSetupGmmInputArgsThenArgsAreSet) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
     auto wddm = new WddmMock(rootDeviceEnvironment);
@@ -33,6 +33,9 @@ TEST(osInterfaceTests, whenOsInterfaceSetupGmmInputArgsThenProperAdapterBDFIsSet
 
     GMM_INIT_IN_ARGS gmmInputArgs = {};
     EXPECT_NE(0, memcmp(&adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
+
     rootDeviceEnvironment.osInterface->setGmmInputArgs(&gmmInputArgs);
+
     EXPECT_EQ(0, memcmp(&adapterBDF, &gmmInputArgs.stAdapterBDF, sizeof(ADAPTER_BDF)));
+    EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, gmmInputArgs.ClientType);
 }

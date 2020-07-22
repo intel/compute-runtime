@@ -34,6 +34,7 @@ TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenProperFileDescriptorI
 
     auto expectedFileDescriptor = drm->getFileDescriptor();
     EXPECT_EQ(static_cast<uint32_t>(expectedFileDescriptor), gmmInputArgs.FileDescriptor);
+    EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, gmmInputArgs.ClientType);
 }
 
 TEST(GmmHelperTest, whenCreateGmmHelperWithoutOsInterfaceThenPassedFileDescriptorIsZeroed) {
@@ -45,5 +46,6 @@ TEST(GmmHelperTest, whenCreateGmmHelperWithoutOsInterfaceThenPassedFileDescripto
 
     gmmHelper.reset(new GmmHelper(nullptr, defaultHwInfo.get()));
     EXPECT_EQ(expectedFileDescriptor, passedInputArgs.FileDescriptor);
+    EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
 }
 } // namespace NEO

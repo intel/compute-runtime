@@ -1013,7 +1013,10 @@ void Wddm::waitOnPagingFenceFromCpu() {
 }
 
 void Wddm::setGmmInputArg(void *args) {
-    reinterpret_cast<GMM_INIT_IN_ARGS *>(args)->stAdapterBDF = this->adapterBDF;
+    auto gmmInArgs = reinterpret_cast<GMM_INIT_IN_ARGS *>(args);
+
+    gmmInArgs->stAdapterBDF = this->adapterBDF;
+    gmmInArgs->ClientType = GMM_CLIENT::GMM_OCL_VISTA;
 }
 
 void Wddm::updatePagingFenceValue(uint64_t newPagingFenceValue) {
