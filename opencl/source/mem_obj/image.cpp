@@ -418,7 +418,9 @@ Image *Image::create(Context *context,
             }
         }
 
-        image->mapAllocation = mapAllocation;
+        if (mapAllocation) {
+            image->mapAllocations.addAllocation(mapAllocation);
+        }
 
         if (errcodeRet != CL_SUCCESS) {
             image->release();

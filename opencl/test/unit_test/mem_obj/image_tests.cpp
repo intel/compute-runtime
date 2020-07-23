@@ -648,7 +648,7 @@ TEST(TestCreateImageUseHostPtr, givenZeroCopyImageValuesWhenUsingHostPtrThenZero
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(image->isMemObjZeroCopy());
     EXPECT_EQ(hostPtr, allocation->getUnderlyingBuffer());
-    EXPECT_NE(nullptr, image->getMapAllocation());
+    EXPECT_NE(nullptr, image->getMapAllocation(context.getDevice(0)->getRootDeviceIndex()));
 
     alignedFree(hostPtr);
 }

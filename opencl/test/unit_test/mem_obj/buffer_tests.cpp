@@ -280,7 +280,7 @@ TEST(Buffer, givenHostPtrPassedToBufferCreateWhenMemUseHostPtrFlagisSetAndBuffer
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, offsetedPtr, retVal));
     ASSERT_NE(nullptr, buffer.get());
 
-    auto mapAllocation = buffer->getMapAllocation();
+    auto mapAllocation = buffer->getMapAllocation(device.get()->getRootDeviceIndex());
     EXPECT_NE(nullptr, mapAllocation);
     EXPECT_EQ(offsetedPtr, mapAllocation->getUnderlyingBuffer());
     EXPECT_EQ(GraphicsAllocation::AllocationType::MAP_ALLOCATION, mapAllocation->getAllocationType());
@@ -606,6 +606,7 @@ TEST_F(RenderCompressedBuffersSvmTests, givenSvmAllocationWhenCreatingBufferThen
     buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, sizeof(uint32_t), svmPtr, retVal));
     EXPECT_EQ(expectedAllocationType, buffer->getGraphicsAllocation(device->getRootDeviceIndex())->getAllocationType());
 
+    buffer.reset(nullptr);
     context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
 }
 
@@ -654,7 +655,7 @@ TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenBufferCreateWhenMemoryTr
     static_cast<MockMemoryManager *>(context->memoryManager)->forceRenderCompressed = true;
     std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), flags, bufferSize, hostPtr, retVal));
     EXPECT_NE(nullptr, mockCmdQ->writeMapAllocation);
-    EXPECT_EQ(buffer->getMapAllocation(), mockCmdQ->writeMapAllocation);
+    EXPECT_EQ(buffer->getMapAllocation(device.get()->getRootDeviceIndex()), mockCmdQ->writeMapAllocation);
 }
 
 TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenNonRenderCompressedBufferWhenCopyFromHostPtrIsRequiredThenDontCallWriteBuffer) {
@@ -1019,8 +1020,8 @@ TEST_P(ValidHostPtr, SvmHostPtr) {
         EXPECT_EQ(svmData->gpuAllocations.getGraphicsAllocation(pDevice->getRootDeviceIndex()), bufferSvm->getGraphicsAllocation(pDevice->getRootDeviceIndex()));
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        context->getSVMAllocsManager()->freeSVMAlloc(ptr);
         delete bufferSvm;
+        context->getSVMAllocsManager()->freeSVMAlloc(ptr);
     }
 }
 

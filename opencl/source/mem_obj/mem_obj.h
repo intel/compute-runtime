@@ -75,7 +75,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     void setHostPtrMinSize(size_t size);
     void releaseAllocatedMapPtr();
-    void releaseMapAllocation();
+    void releaseMapAllocation(uint32_t rootDeviceIndex);
 
     bool isMemObjZeroCopy() const;
     bool isMemObjWithHostPtrSVM() const;
@@ -117,13 +117,13 @@ class MemObj : public BaseObject<_cl_mem> {
         return memoryManager;
     }
     void setMapAllocation(GraphicsAllocation *allocation) {
-        mapAllocation = allocation;
+        mapAllocations.addAllocation(allocation);
     }
-    GraphicsAllocation *getMapAllocation() const {
+    GraphicsAllocation *getMapAllocation(uint32_t rootDeviceIndex) const {
         if (associatedMemObject) {
-            return associatedMemObject->getMapAllocation();
+            return associatedMemObject->getMapAllocation(rootDeviceIndex);
         }
-        return mapAllocation;
+        return mapAllocations.getGraphicsAllocation(rootDeviceIndex);
     }
 
     const cl_mem_flags &getFlags() const { return flags; }
@@ -156,7 +156,7 @@ class MemObj : public BaseObject<_cl_mem> {
     MemoryManager *memoryManager = nullptr;
     MultiGraphicsAllocation multiGraphicsAllocation;
     GraphicsAllocation *mcsAllocation = nullptr;
-    GraphicsAllocation *mapAllocation = nullptr;
+    MultiGraphicsAllocation mapAllocations;
     std::shared_ptr<SharingHandler> sharingHandler;
     std::vector<uint64_t> propertiesVector;
 

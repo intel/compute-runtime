@@ -193,8 +193,8 @@ TEST_F(SubBufferTest, givenBufferWithNoHostPtrWhenSubbufferGetsMapPtrThenExpectB
     void *mapPtr = subBuffer->getBasePtrForMap(0);
     void *bufferMapPtr = buffer->getBasePtrForMap(0);
     EXPECT_EQ(bufferMapPtr, mapPtr);
-    auto mapAllocation = subBuffer->getMapAllocation();
-    auto bufferMapAllocation = buffer->getMapAllocation();
+    auto mapAllocation = subBuffer->getMapAllocation(0);
+    auto bufferMapAllocation = buffer->getMapAllocation(0);
     ASSERT_NE(nullptr, bufferMapAllocation);
     EXPECT_EQ(bufferMapAllocation, mapAllocation);
     EXPECT_EQ(bufferMapPtr, mapAllocation->getUnderlyingBuffer());

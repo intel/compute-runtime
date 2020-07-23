@@ -426,7 +426,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenMapAllocationWhenEnqueueingReadOrWriteBu
 
     auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_USE_HOST_PTR, 1, hostPtr, retVal));
     bufferForBlt->forceDisallowCPUCopy = true;
-    auto mapAllocation = bufferForBlt->getMapAllocation();
+    auto mapAllocation = bufferForBlt->getMapAllocation(device->getRootDeviceIndex());
     EXPECT_NE(nullptr, mapAllocation);
 
     mockCmdQ->kernelParams.transferAllocation = nullptr;

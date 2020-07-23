@@ -99,7 +99,6 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
                                             size_t size,
                                             void *hostPtr,
                                             cl_int &retVal) {
-
     Context *pContext = nullptr;
     retVal = validateObjects(WithCastToInternal(context, &pContext));
     if (retVal != CL_SUCCESS) {
@@ -335,7 +334,9 @@ Buffer *Buffer::create(Context *context,
 
     Buffer::provideCompressionHint(allocationType, context, pBuffer);
 
-    pBuffer->mapAllocation = mapAllocation;
+    if (mapAllocation) {
+        pBuffer->mapAllocations.addAllocation(mapAllocation);
+    }
     pBuffer->setHostPtrMinSize(size);
 
     if (copyMemoryFromHostPtr) {
@@ -627,7 +628,6 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
                                          bool zeroCopy,
                                          bool isHostPtrSVM,
                                          bool isImageRedescribed) {
-
     const auto &hwInfo = device->getHardwareInfo();
 
     auto funcCreate = bufferFactory[hwInfo.platform.eRenderCoreFamily].createBufferFunction;

@@ -341,13 +341,13 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
     }
 
     if (!unmapInfo.readOnly) {
-        memObj->getMapAllocation()->setAubWritable(true, GraphicsAllocation::defaultBank);
-        memObj->getMapAllocation()->setTbxWritable(true, GraphicsAllocation::defaultBank);
+        memObj->getMapAllocation(getDevice().getRootDeviceIndex())->setAubWritable(true, GraphicsAllocation::defaultBank);
+        memObj->getMapAllocation(getDevice().getRootDeviceIndex())->setTbxWritable(true, GraphicsAllocation::defaultBank);
 
         if (memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
             auto buffer = castToObject<Buffer>(memObj);
 
-            retVal = enqueueWriteBuffer(buffer, CL_FALSE, unmapInfo.offset[0], unmapInfo.size[0], mappedPtr, memObj->getMapAllocation(),
+            retVal = enqueueWriteBuffer(buffer, CL_FALSE, unmapInfo.offset[0], unmapInfo.size[0], mappedPtr, memObj->getMapAllocation(getDevice().getRootDeviceIndex()),
                                         eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
         } else {
             auto image = castToObjectOrAbort<Image>(memObj);
@@ -356,7 +356,7 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
             UNRECOVERABLE_IF(mipIdx >= 4);
             writeOrigin[mipIdx] = unmapInfo.mipLevel;
             retVal = enqueueWriteImage(image, CL_FALSE, writeOrigin, &unmapInfo.size[0],
-                                       image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), mappedPtr, memObj->getMapAllocation(),
+                                       image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), mappedPtr, memObj->getMapAllocation(getDevice().getRootDeviceIndex()),
                                        eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
         }
     } else {
@@ -390,7 +390,7 @@ void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperti
     if (transferProperties.memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
         auto buffer = castToObject<Buffer>(transferProperties.memObj);
         errcodeRet = enqueueReadBuffer(buffer, transferProperties.blocking, transferProperties.offset[0], transferProperties.size[0],
-                                       returnPtr, transferProperties.memObj->getMapAllocation(), eventsRequest.numEventsInWaitList,
+                                       returnPtr, transferProperties.memObj->getMapAllocation(getDevice().getRootDeviceIndex()), eventsRequest.numEventsInWaitList,
                                        eventsRequest.eventWaitList, eventsRequest.outEvent);
     } else {
         auto image = castToObjectOrAbort<Image>(transferProperties.memObj);
@@ -400,7 +400,7 @@ void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperti
         readOrigin[mipIdx] = transferProperties.mipLevel;
         errcodeRet = enqueueReadImage(image, transferProperties.blocking, readOrigin, &transferProperties.size[0],
                                       image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(),
-                                      returnPtr, transferProperties.memObj->getMapAllocation(), eventsRequest.numEventsInWaitList,
+                                      returnPtr, transferProperties.memObj->getMapAllocation(getDevice().getRootDeviceIndex()), eventsRequest.numEventsInWaitList,
                                       eventsRequest.eventWaitList, eventsRequest.outEvent);
     }
 
