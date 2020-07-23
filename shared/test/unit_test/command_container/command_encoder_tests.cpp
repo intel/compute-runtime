@@ -6,26 +6,13 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/test/unit_test/fixtures/device_fixture.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
 
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
 #include "test.h"
 
 using namespace NEO;
-
-class CommandEncoderTests : public DeviceFixture,
-                            public ::testing::Test {
-
-  public:
-    void SetUp() override {
-        ::testing::Test::SetUp();
-        DeviceFixture::SetUp();
-    }
-    void TearDown() override {
-        DeviceFixture::TearDown();
-        ::testing::Test::TearDown();
-    }
-};
+using CommandEncoderTests = ::testing::Test;
 
 HWTEST_F(CommandEncoderTests, givenImmDataWriteWhenProgrammingMiFlushDwThenSetAllRequiredFields) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
@@ -62,7 +49,7 @@ HWTEST_F(CommandEncoderTests, whenEncodeMemoryPrefetchCalledThenDoNothing) {
 
     GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 123, 456, 789, MemoryPool::LocalMemory);
 
-    EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 2);
+    EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 2, *defaultHwInfo);
 
     EXPECT_EQ(0u, linearStream.getUsed());
     EXPECT_EQ(0u, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch());

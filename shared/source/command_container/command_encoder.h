@@ -269,7 +269,7 @@ struct EncodeMiFlushDW {
 
 template <typename GfxFamily>
 struct EncodeMemoryPrefetch {
-    static void programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size);
+    static void programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, const HardwareInfo &hwInfo);
     static size_t getSizeForMemoryPrefetch();
 };
 } // namespace NEO
