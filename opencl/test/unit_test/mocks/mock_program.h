@@ -29,7 +29,7 @@ class MockProgram : public Program {
   public:
     using Program::createProgramFromBinary;
     using Program::internalOptionsToExtract;
-    using Program::isKernelDebugEnabled;
+    using Program::kernelDebugEnabled;
     using Program::linkBinary;
     using Program::separateBlockKernels;
     using Program::updateNonUniformFlag;

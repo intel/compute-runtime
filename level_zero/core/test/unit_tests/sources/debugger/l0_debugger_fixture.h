@@ -49,6 +49,14 @@ struct MockL0DebuggerFixture : public L0DebuggerFixture {
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(new MockDebuggerL0(neoDevice));
         neoDevice->setDebuggerActive(true);
         neoDevice->setPreemptionMode(PreemptionMode::Disabled);
+        auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+            {device->getRootDeviceIndex(), true,
+             NEO::SipKernel::maxDbgSurfaceSize,
+             NEO::GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA,
+             false,
+             false,
+             device->getNEODevice()->getDeviceBitfield()});
+        static_cast<L0::DeviceImp *>(device)->setDebugSurface(debugSurface);
     }
 
     void TearDown() {

@@ -12,6 +12,7 @@
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
+#include "opencl/source/mem_obj/buffer.h"
 
 namespace NEO {
 
@@ -88,6 +89,14 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         commandStream = blockedCommandsData->commandStream.get();
     } else {
         commandStream = &commandQueue.getCS(0);
+    }
+
+    if (commandQueue.getDevice().getDebugger()) {
+        auto debugSurface = commandQueue.getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
+        void *addressToPatch = reinterpret_cast<void *>(debugSurface->getGpuAddress());
+        size_t sizeToPatch = debugSurface->getUnderlyingBufferSize();
+        Buffer::setSurfaceState(&commandQueue.getDevice(), commandQueue.getDevice().getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh),
+                                sizeToPatch, addressToPatch, 0, debugSurface, 0, 0);
     }
 
     auto numSupportedDevices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices();

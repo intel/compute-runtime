@@ -10,6 +10,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
 namespace NEO {
@@ -23,5 +24,9 @@ std::unique_ptr<Debugger> Debugger::create(HardwareInfo *hwInfo) {
         sourceLevelDebugger->initialize(localMemorySipAvailable);
     }
     return sourceLevelDebugger;
+}
+
+void *Debugger::getDebugSurfaceReservedSurfaceState(IndirectHeap &ssh) {
+    return ssh.getCpuBase();
 }
 } // namespace NEO

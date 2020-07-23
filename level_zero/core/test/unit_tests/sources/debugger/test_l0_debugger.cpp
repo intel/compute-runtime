@@ -13,6 +13,7 @@
 #include "test.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/sources/debugger/l0_debugger_fixture.h"
 
 namespace L0 {
@@ -188,6 +189,34 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedTwiceThen
     }
 
     commandQueue->destroy();
+}
+
+HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenBindlessSurfaceStateForDebugSurfaceIsProgrammedAtOffsetZero) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    Mock<::L0::Kernel> kernel;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, false));
+    ze_group_count_t groupCount{1, 1, 1};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandList->close();
+
+    auto *ssh = commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+
+    auto debugSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ssh->getCpuBase());
+    auto debugSurface = static_cast<L0::DeviceImp *>(device)->getDebugSurface();
+
+    SURFACE_STATE_BUFFER_LENGTH length;
+    length.Length = static_cast<uint32_t>(debugSurface->getUnderlyingBufferSize() - 1);
+
+    EXPECT_EQ(length.SurfaceState.Depth + 1u, debugSurfaceState->getDepth());
+    EXPECT_EQ(length.SurfaceState.Width + 1u, debugSurfaceState->getWidth());
+    EXPECT_EQ(length.SurfaceState.Height + 1u, debugSurfaceState->getHeight());
+    EXPECT_EQ(debugSurface->getGpuAddress(), debugSurfaceState->getSurfaceBaseAddress());
+
+    EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, debugSurfaceState->getSurfaceType());
+    EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, debugSurfaceState->getCoherencyType());
 }
 
 } // namespace ult
