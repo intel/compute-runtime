@@ -110,14 +110,14 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDevicePciGetProperties(
     zes_device_handle_t hDevice,
     zes_pci_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->pciGetProperties(pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDevicePciGetState(
     zes_device_handle_t hDevice,
     zes_pci_state_t *pState) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->pciGetState(pState);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -125,14 +125,14 @@ zesDevicePciGetBars(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_pci_bar_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->pciGetBars(pCount, pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDevicePciGetStats(
     zes_device_handle_t hDevice,
     zes_pci_stats_t *pStats) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->pciGetStats(pStats);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

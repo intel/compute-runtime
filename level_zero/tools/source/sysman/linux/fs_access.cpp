@@ -70,6 +70,23 @@ ze_result_t FsAccess::read(const std::string file, double &val) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t FsAccess::read(const std::string file, int32_t &val) {
+    // Read a single line from text file without trailing newline
+    std::ifstream fs;
+
+    fs.open(file.c_str());
+    if (fs.fail()) {
+        return getResult(errno);
+    }
+    fs >> val;
+    if (fs.fail()) {
+        fs.close();
+        return getResult(errno);
+    }
+    fs.close();
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t FsAccess::read(const std::string file, uint32_t &val) {
     // Read a single line from text file without trailing newline
     std::ifstream fs;
@@ -379,7 +396,7 @@ ze_result_t SysfsAccess::read(const std::string file, std::string &val) {
     return FsAccess::read(fullPath(file).c_str(), val);
 }
 
-ze_result_t SysfsAccess::read(const std::string file, int &val) {
+ze_result_t SysfsAccess::read(const std::string file, int32_t &val) {
     std::string str;
     ze_result_t result;
 

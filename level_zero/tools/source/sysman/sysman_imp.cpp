@@ -22,6 +22,7 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     hCoreDevice = hDevice;
     pOsSysman = OsSysman::create(this);
     UNRECOVERABLE_IF(nullptr == pOsSysman);
+    pPci = new PciImp(pOsSysman, hCoreDevice);
     pPowerHandleContext = new PowerHandleContext(pOsSysman);
     pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
     pFabricPortHandleContext = new FabricPortHandleContext(pOsSysman);
@@ -35,6 +36,7 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pStandbyHandleContext);
     freeResource(pTempHandleContext);
     freeResource(pFabricPortHandleContext);
+    freeResource(pPci);
     freeResource(pFrequencyHandleContext);
     freeResource(pPowerHandleContext);
     freeResource(pOsSysman);
@@ -54,6 +56,9 @@ void SysmanDeviceImp::init() {
     if (pTempHandleContext) {
         pTempHandleContext->init();
     }
+    if (pPci) {
+        pPci->init();
+    }
     if (pStandbyHandleContext) {
         pStandbyHandleContext->init();
     }
@@ -64,6 +69,22 @@ void SysmanDeviceImp::init() {
 
 ze_result_t SysmanDeviceImp::frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) {
     return pFrequencyHandleContext->frequencyGet(pCount, phFrequency);
+}
+
+ze_result_t SysmanDeviceImp::pciGetProperties(zes_pci_properties_t *pProperties) {
+    return pPci->pciStaticProperties(pProperties);
+}
+
+ze_result_t SysmanDeviceImp::pciGetState(zes_pci_state_t *pState) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t SysmanDeviceImp::pciGetBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) {
+    return pPci->pciGetInitializedBars(pCount, pProperties);
+}
+
+ze_result_t SysmanDeviceImp::pciGetStats(zes_pci_stats_t *pStats) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t SysmanDeviceImp::powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) {

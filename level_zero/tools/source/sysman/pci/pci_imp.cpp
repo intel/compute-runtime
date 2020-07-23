@@ -23,7 +23,7 @@ namespace L0 {
 // pcieSpeedWithEnc = maxLinkSpeedInGt * (Gigabit to Megabit) * Encoding =
 //                               maxLinkSpeedInGt * 1000 * Encoding
 //
-uint64_t convertPcieSpeedFromGTsToBs(double maxLinkSpeedInGt) {
+int64_t convertPcieSpeedFromGTsToBs(double maxLinkSpeedInGt) {
     double pcieSpeedWithEnc;
     if ((maxLinkSpeedInGt == 16) || (maxLinkSpeedInGt == 8)) {
         pcieSpeedWithEnc = maxLinkSpeedInGt * 1000 * 128 / 130;
@@ -39,7 +39,7 @@ uint64_t convertPcieSpeedFromGTsToBs(double maxLinkSpeedInGt) {
     //  Now, because 1Mb/s = (1000*1000)/8 bytes/second = 125000 bytes/second
     //
     pcieSpeedWithEnc = pcieSpeedWithEnc * 125000;
-    return static_cast<uint64_t>(pcieSpeedWithEnc);
+    return static_cast<int64_t>(pcieSpeedWithEnc);
 }
 
 ze_result_t PciImp::pciStaticProperties(zes_pci_properties_t *pProperties) {
@@ -80,14 +80,17 @@ void PciImp::init() {
                &pciProperties.address.device, &pciProperties.address.function);
     }
 
-    uint32_t maxLinkWidth = 0, gen = 0;
-    uint64_t maxBandWidth = 0;
+    int32_t maxLinkWidth = -1, gen = -1;
+    int64_t maxBandWidth = -1;
     double maxLinkSpeed = 0;
     pOsPci->getMaxLinkSpeed(maxLinkSpeed);
     pOsPci->getMaxLinkWidth(maxLinkWidth);
     maxBandWidth = maxLinkWidth * convertPcieSpeedFromGTsToBs(maxLinkSpeed);
-
-    pciProperties.maxSpeed.maxBandwidth = maxBandWidth;
+    if (maxBandWidth == 0) {
+        pciProperties.maxSpeed.maxBandwidth = -1;
+    } else {
+        pciProperties.maxSpeed.maxBandwidth = maxBandWidth;
+    }
     pciProperties.maxSpeed.width = maxLinkWidth;
     pOsPci->getLinkGen(gen);
     pciProperties.maxSpeed.gen = gen;
