@@ -136,6 +136,8 @@ int drmSetContextParam(drm_i915_gem_context_param *param) {
     case I915_CONTEXT_PRIVATE_PARAM_BOOST:
         ret = failOnParamBoost;
         break;
+    case I915_CONTEXT_PARAM_VM:
+        break;
 #if defined(I915_PARAM_HAS_SCHEDULER)
     case I915_CONTEXT_PARAM_PRIORITY:
         ret = failOnSetPriority;

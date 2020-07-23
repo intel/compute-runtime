@@ -95,6 +95,9 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PERSISTENCE) {
             return this->StoredRetValForPersistant;
         }
+        if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_VM) {
+            return this->StoredRetVal;
+        }
     }
 
     if ((request == DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM) && (arg != nullptr)) {

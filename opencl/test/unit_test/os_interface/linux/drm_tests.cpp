@@ -126,21 +126,25 @@ TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext)
 
         EXPECT_EQ(1u, osContext1.getDrmContextIds().size());
         EXPECT_EQ(drmMock.receivedCreateContextId, osContext1.getDrmContextIds()[0]);
-        EXPECT_EQ(drmMock.receivedCreateContextId, drmMock.getVirtualMemoryAddressSpace(0));
         EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
 
         {
             OsContextLinux osContext2(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
             EXPECT_EQ(1u, osContext2.getDrmContextIds().size());
             EXPECT_EQ(drmMock.receivedCreateContextId, osContext2.getDrmContextIds()[0]);
-            EXPECT_EQ(drmMock.receivedCreateContextId, drmMock.getVirtualMemoryAddressSpace(0));
             EXPECT_EQ(0u, drmMock.receivedDestroyContextId);
         }
-        EXPECT_EQ(drmMock.getVirtualMemoryAddressSpace(0), drmMock.receivedDestroyContextId);
     }
 
-    EXPECT_EQ(drmMock.getVirtualMemoryAddressSpace(0), drmMock.receivedDestroyContextId);
-    EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
+}
+
+TEST(DrmTest, whenCreatingDrmContextThenProperVmIdIsSet) {
+    DrmMock drmMock;
+
+    OsContextLinux osContext1(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+
+    EXPECT_EQ(drmMock.receivedContextParamRequest.value, drmMock.getVirtualMemoryAddressSpace(0u));
 }
 
 TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextIsCreatedThenReceivedContextParamRequestCountReturnsCorrectValue) {
@@ -151,7 +155,7 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
     {
         drmMock.StoredRetValForPersistant = -1;
         drmMock.checkNonPersistentContextsSupport();
-        ++expectedCount;
+        expectedCount += 2;
         OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
         EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
     }
@@ -160,7 +164,7 @@ TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextI
         drmMock.checkNonPersistentContextsSupport();
         ++expectedCount;
         OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
-        ++expectedCount;
+        expectedCount += 2;
         EXPECT_EQ(expectedCount, drmMock.receivedContextParamRequestCount);
     }
 }
@@ -172,15 +176,15 @@ TEST(DrmTest, givenDrmPreemptionEnabledAndLowPriorityEngineWhenCreatingOsContext
     OsContextLinux osContext1(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
     OsContextLinux osContext2(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, true, false, false);
 
-    EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
 
     drmMock.preemptionSupported = true;
 
     OsContextLinux osContext3(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
-    EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(3u, drmMock.receivedContextParamRequestCount);
 
     OsContextLinux osContext4(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, true, false, false);
-    EXPECT_EQ(1u, drmMock.receivedContextParamRequestCount);
+    EXPECT_EQ(5u, drmMock.receivedContextParamRequestCount);
     EXPECT_EQ(drmMock.receivedCreateContextId, drmMock.receivedContextParamRequest.ctx_id);
     EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_PRIORITY), drmMock.receivedContextParamRequest.param);
     EXPECT_EQ(static_cast<uint64_t>(-1023), drmMock.receivedContextParamRequest.value);
@@ -357,7 +361,6 @@ TEST(DrmTest, givenDrmWhenCreatingOsContextThenCreateDrmContextWithVmId) {
 
     auto &contextIds = osContext.getDrmContextIds();
     EXPECT_EQ(1u, contextIds.size());
-    EXPECT_EQ(SysCalls::vmId, contextIds[0]);
 }
 
 TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPerContextIsUsed) {
