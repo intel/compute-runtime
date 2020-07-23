@@ -57,7 +57,7 @@ class MockSchedulerKernel : public SchedulerKernel {
     }
 };
 
-TEST(SchedulerKernelTest, getLws) {
+TEST(SchedulerKernelTest, WhenSchedulerKernelIsCreatedThenLwsIs24) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     KernelInfo info;
@@ -67,7 +67,7 @@ TEST(SchedulerKernelTest, getLws) {
     EXPECT_EQ((size_t)24u, lws);
 }
 
-TEST(SchedulerKernelTest, getGws) {
+TEST(SchedulerKernelTest, WhenSchedulerKernelIsCreatedThenGwsIs24) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     KernelInfo info;
@@ -83,7 +83,7 @@ TEST(SchedulerKernelTest, getGws) {
     EXPECT_LT(hwThreads * simdSize, gws);
 }
 
-TEST(SchedulerKernelTest, setGws) {
+TEST(SchedulerKernelTest, WhenSettingGwsThenGetGwsReturnedSetValue) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     KernelInfo info;
@@ -96,7 +96,7 @@ TEST(SchedulerKernelTest, setGws) {
     EXPECT_EQ(24u, gws);
 }
 
-TEST(SchedulerKernelTest, getCurbeSize) {
+TEST(SchedulerKernelTest, WhenSchedulerKernelIsCreatedThenCurbeSizeIsCorrect) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     KernelInfo info;
@@ -115,7 +115,7 @@ TEST(SchedulerKernelTest, getCurbeSize) {
     EXPECT_GE((size_t)expectedCurbeSize, kernel.getCurbeSize());
 }
 
-TEST(SchedulerKernelTest, setArgsForSchedulerKernel) {
+TEST(SchedulerKernelTest, WhenSettingArgsForSchedulerKernelThenAllocationsAreCorrect) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false, &device->getDevice()));
@@ -145,7 +145,7 @@ TEST(SchedulerKernelTest, setArgsForSchedulerKernel) {
     }
 }
 
-TEST(SchedulerKernelTest, setArgsForSchedulerKernelWithNullDebugQueue) {
+TEST(SchedulerKernelTest, GivenNullDebugQueueWhenSettingArgsForSchedulerKernelThenAllocationsAreCorrect) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = clUniquePtr(new MockContext(device.get()));
     auto program = clUniquePtr(new MockProgram(*device->getExecutionEnvironment(), context.get(), false, &device->getDevice()));
@@ -208,7 +208,7 @@ TEST(SchedulerKernelTest, givenGraphicsAllocationWithDifferentCpuAndGpuAddresses
     }
 }
 
-TEST(SchedulerKernelTest, createKernelReflectionForForcedSchedulerDispatch) {
+TEST(SchedulerKernelTest, GivenForceDispatchSchedulerWhenCreatingKernelReflectionThenKernelReflectSurfaceIsNotNull) {
     DebugManagerStateRestore dbgRestorer;
 
     DebugManager.flags.ForceDispatchScheduler.set(true);
@@ -227,7 +227,7 @@ TEST(SchedulerKernelTest, createKernelReflectionForForcedSchedulerDispatch) {
     EXPECT_NE(nullptr, scheduler->getKernelReflectionSurface());
 }
 
-TEST(SchedulerKernelTest, createKernelReflectionSecondTimeForForcedSchedulerDispatchReturnsExistingAllocation) {
+TEST(SchedulerKernelTest, GivenForceDispatchSchedulerWhenCreatingKernelReflectionTwiceThenTheSameAllocationIsUsed) {
     DebugManagerStateRestore dbgRestorer;
 
     DebugManager.flags.ForceDispatchScheduler.set(true);
@@ -250,7 +250,7 @@ TEST(SchedulerKernelTest, createKernelReflectionSecondTimeForForcedSchedulerDisp
     EXPECT_EQ(allocation, allocation2);
 }
 
-TEST(SchedulerKernelTest, createKernelReflectionForSchedulerDoesNothing) {
+TEST(SchedulerKernelTest, GivenNoForceDispatchSchedulerWhenCreatingKernelReflectionThenKernelReflectionSurfaceIsNotCreated) {
     DebugManagerStateRestore dbgRestorer;
 
     DebugManager.flags.ForceDispatchScheduler.set(false);
@@ -269,7 +269,7 @@ TEST(SchedulerKernelTest, createKernelReflectionForSchedulerDoesNothing) {
     EXPECT_EQ(nullptr, scheduler->getKernelReflectionSurface());
 }
 
-TEST(SchedulerKernelTest, getCurbeSizeWithNullKernelInfo) {
+TEST(SchedulerKernelTest, GivenNullKernelInfoWhenGettingCurbeSizeThenSizeIsCorrect) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     KernelInfo info;
