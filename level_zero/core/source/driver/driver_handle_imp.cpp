@@ -141,11 +141,60 @@ DriverHandleImp::~DriverHandleImp() {
     }
 }
 
+uint32_t DriverHandleImp::parseAffinityMask(std::vector<std::unique_ptr<NEO::Device>> &neoDevices) {
+    std::vector<std::vector<bool>> affinityMaskBitSet(neoDevices.size());
+    for (uint32_t i = 0; i < affinityMaskBitSet.size(); i++) {
+        affinityMaskBitSet[i].resize(neoDevices[i]->getNumAvailableDevices());
+    }
+
+    size_t pos = 0;
+    while (pos < this->affinityMaskString.size()) {
+        size_t posNextDot = this->affinityMaskString.find_first_of(".", pos);
+        size_t posNextComma = this->affinityMaskString.find_first_of(",", pos);
+        std::string rootDeviceString = this->affinityMaskString.substr(pos, std::min(posNextDot, posNextComma) - pos);
+        uint32_t rootDeviceIndex = static_cast<uint32_t>(std::stoul(rootDeviceString, nullptr, 0));
+        pos += rootDeviceString.size();
+        if (posNextDot != std::string::npos &&
+            this->affinityMaskString.at(pos) == '.' && posNextDot < posNextComma) {
+            pos++;
+            std::string subDeviceString = this->affinityMaskString.substr(pos, posNextComma - pos);
+            uint32_t subDeviceIndex = static_cast<uint32_t>(std::stoul(subDeviceString, nullptr, 0));
+            affinityMaskBitSet[rootDeviceIndex][subDeviceIndex] = true;
+        } else {
+            std::fill(affinityMaskBitSet[rootDeviceIndex].begin(),
+                      affinityMaskBitSet[rootDeviceIndex].end(),
+                      true);
+        }
+        if (posNextComma == std::string::npos) {
+            break;
+        }
+        pos = posNextComma + 1;
+    }
+
+    uint32_t offset = 0;
+    uint32_t affinityMask = 0;
+    for (uint32_t i = 0; i < affinityMaskBitSet.size(); i++) {
+        for (uint32_t j = 0; j < affinityMaskBitSet[i].size(); j++) {
+            if (affinityMaskBitSet[i][j] == true) {
+                affinityMask |= (1UL << offset);
+            }
+            offset++;
+        }
+    }
+
+    return affinityMask;
+}
+
 ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>> neoDevices) {
 
     uint32_t affinityMask = std::numeric_limits<uint32_t>::max();
+
     if (this->affinityMaskString.length() > 0) {
-        affinityMask = static_cast<uint32_t>(strtoul(this->affinityMaskString.c_str(), nullptr, 16));
+        if (NEO::DebugManager.flags.UseLegacyLevelZeroAffinity.get()) {
+            affinityMask = static_cast<uint32_t>(strtoul(this->affinityMaskString.c_str(), nullptr, 16));
+        } else {
+            affinityMask = parseAffinityMask(neoDevices);
+        }
     }
 
     uint32_t currentMaskOffset = 0;

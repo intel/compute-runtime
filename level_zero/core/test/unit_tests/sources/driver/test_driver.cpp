@@ -235,12 +235,12 @@ TEST_F(DriverTestMultipleFamilyNoSupport, whenInitializingDriverWithArrayOfNotSu
     EXPECT_EQ(nullptr, driverHandle);
 }
 
-struct MaskArray {
+struct LegacyMaskArray {
     const std::string masks[16] = {"0", "1", "2", "3", "4", "5", "6", "7",
                                    "8", "9", "A", "B", "C", "D", "E", "F"};
 };
-struct DriverTestMultipleDeviceWithAffinityMask : public ::testing::WithParamInterface<std::tuple<std::string, std::string>>,
-                                                  public ::testing::Test {
+struct DriverTestMultipleDeviceWithLegacyAffinityMask : public ::testing::WithParamInterface<std::tuple<std::string, std::string>>,
+                                                        public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
@@ -270,7 +270,7 @@ struct DriverTestMultipleDeviceWithAffinityMask : public ::testing::WithParamInt
     const uint32_t numSubDevices = 4u;
 };
 
-TEST_F(DriverTestMultipleDeviceWithAffinityMask,
+TEST_F(DriverTestMultipleDeviceWithLegacyAffinityMask,
        whenNotSettingAffinityThenAllRootDevicesAndSubDevicesAreExposed) {
     L0::DriverHandleImp *driverHandle = new DriverHandleImp;
 
@@ -299,7 +299,7 @@ TEST_F(DriverTestMultipleDeviceWithAffinityMask,
     L0::GlobalDriver = nullptr;
 }
 
-TEST_P(DriverTestMultipleDeviceWithAffinityMask,
+TEST_P(DriverTestMultipleDeviceWithLegacyAffinityMask,
        whenSettingAffinityMaskToDifferentValuesThenCorrectNumberOfDevicesIsExposed) {
     L0::DriverHandleImp *driverHandle = new DriverHandleImp;
 
@@ -353,6 +353,150 @@ TEST_P(DriverTestMultipleDeviceWithAffinityMask,
                     EXPECT_EQ(numOfSubDevicesExposedInDevice1, subDeviceCount);
                 }
             }
+        }
+    }
+
+    delete driverHandle;
+    L0::GlobalDriver = nullptr;
+}
+
+LegacyMaskArray legacyMaskArray;
+INSTANTIATE_TEST_SUITE_P(DriverTestMultipleDeviceWithLegacyAffinityMaskTests,
+                         DriverTestMultipleDeviceWithLegacyAffinityMask,
+                         ::testing::Combine(
+                             ::testing::ValuesIn(legacyMaskArray.masks),
+                             ::testing::ValuesIn(legacyMaskArray.masks)));
+
+struct MaskArray {
+    const std::string masks[4] = {"0", "1", "2", "3"}; // fixture has 4 subDevices
+};
+
+struct DriverTestMultipleDeviceWithAffinityMask : public ::testing::WithParamInterface<std::tuple<std::string, std::string>>,
+                                                  public ::testing::Test {
+    void SetUp() override {
+        DebugManager.flags.UseLegacyLevelZeroAffinity.set(false);
+        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+
+        NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+        }
+
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            devices.push_back(std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(
+                NEO::defaultHwInfo.get(),
+                executionEnvironment, i)));
+        }
+    }
+
+    DebugManagerStateRestore restorer;
+    std::vector<std::unique_ptr<NEO::Device>> devices;
+
+    const uint32_t numRootDevices = 2u;
+    const uint32_t numSubDevices = 4u;
+};
+
+TEST_P(DriverTestMultipleDeviceWithAffinityMask,
+       whenSettingAffinityMaskToRetrieveOneSubDeviceOnEachDeviceThenCorrectDevicesAreExposed) {
+    L0::DriverHandleImp *driverHandle = new DriverHandleImp;
+
+    std::string subDevice0String = std::get<0>(GetParam());
+    uint32_t subDevice0Index = std::stoi(subDevice0String, nullptr, 0);
+
+    std::string subDevice1String = std::get<1>(GetParam());
+    uint32_t subDevice1Index = std::stoi(subDevice1String, nullptr, 0);
+
+    constexpr uint32_t totalRootDevices = 2;
+
+    driverHandle->affinityMaskString = "0." + subDevice0String + "," + "1." + subDevice1String;
+
+    ze_result_t res = driverHandle->initialize(std::move(devices));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    uint32_t deviceCount = 0;
+    res = zeDeviceGet(driverHandle->toHandle(), &deviceCount, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(deviceCount, totalRootDevices);
+
+    std::vector<ze_device_handle_t> phDevices(deviceCount);
+    res = zeDeviceGet(driverHandle->toHandle(), &deviceCount, phDevices.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    for (uint32_t i = 0; i < deviceCount; i++) {
+        ze_device_handle_t hDevice = phDevices[i];
+        EXPECT_NE(nullptr, hDevice);
+
+        DeviceImp *device = reinterpret_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
+
+        uint32_t subDeviceCount = 0;
+        res = zeDeviceGetSubDevices(hDevice, &subDeviceCount, nullptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_EQ(1u, subDeviceCount);
+
+        ze_device_handle_t hSubDevice;
+        res = zeDeviceGetSubDevices(hDevice, &subDeviceCount, &hSubDevice);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        DeviceImp *subDevice = reinterpret_cast<DeviceImp *>(L0::Device::fromHandle(hSubDevice));
+
+        if (i == 0) {
+            EXPECT_EQ(subDevice->neoDevice, device->neoDevice->getDeviceById(subDevice0Index));
+        } else {
+            EXPECT_EQ(subDevice->neoDevice, device->neoDevice->getDeviceById(subDevice1Index));
+        }
+    }
+
+    delete driverHandle;
+    L0::GlobalDriver = nullptr;
+}
+
+TEST_P(DriverTestMultipleDeviceWithAffinityMask,
+       whenSettingAffinityMaskToRetrieveAllDevicesInOneDeviceAndOneSubDeviceInOtherThenCorrectDevicesAreExposed) {
+    L0::DriverHandleImp *driverHandle = new DriverHandleImp;
+
+    std::string subDevice1String = std::get<1>(GetParam());
+    uint32_t subDevice1Index = std::stoi(subDevice1String, nullptr, 0);
+
+    constexpr uint32_t totalRootDevices = 2;
+
+    driverHandle->affinityMaskString = "0,1." + subDevice1String;
+
+    ze_result_t res = driverHandle->initialize(std::move(devices));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    uint32_t deviceCount = 0;
+    res = zeDeviceGet(driverHandle->toHandle(), &deviceCount, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(deviceCount, totalRootDevices);
+
+    std::vector<ze_device_handle_t> phDevices(deviceCount);
+    res = zeDeviceGet(driverHandle->toHandle(), &deviceCount, phDevices.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    for (uint32_t i = 0; i < deviceCount; i++) {
+        ze_device_handle_t hDevice = phDevices[i];
+        EXPECT_NE(nullptr, hDevice);
+
+        DeviceImp *device = reinterpret_cast<DeviceImp *>(L0::Device::fromHandle(hDevice));
+
+        uint32_t subDeviceCount = 0;
+        res = zeDeviceGetSubDevices(hDevice, &subDeviceCount, nullptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        if (i == 0) {
+            EXPECT_EQ(4u, subDeviceCount);
+        } else {
+            ze_device_handle_t hSubDevice;
+            res = zeDeviceGetSubDevices(hDevice, &subDeviceCount, &hSubDevice);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+            DeviceImp *subDevice = reinterpret_cast<DeviceImp *>(L0::Device::fromHandle(hSubDevice));
+
+            EXPECT_EQ(1u, subDeviceCount);
+            EXPECT_EQ(subDevice->neoDevice, device->neoDevice->getDeviceById(subDevice1Index));
         }
     }
 

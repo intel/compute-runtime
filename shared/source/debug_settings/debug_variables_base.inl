@@ -71,6 +71,7 @@ DECLARE_DEBUG_VARIABLE(bool, DoNotRegisterTrimCallback, false, "When set to true
 DECLARE_DEBUG_VARIABLE(bool, OverrideInvalidEngineWithDefault, false, "When set to true driver chooses engine 0 if no engine is found.")
 DECLARE_DEBUG_VARIABLE(bool, ForceImplicitFlush, false, "Flush after each enqueue. Useful for debugging batched submission logic. ")
 DECLARE_DEBUG_VARIABLE(bool, ForcePipeControlPriorToWalker, false, "Allows to force pipe contron prior to walker.")
+DECLARE_DEBUG_VARIABLE(bool, UseLegacyLevelZeroAffinity, true, "Use Level Zero affinity mask as bit set, as defined in v0.91 specification")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, PrintDeviceAndEngineIdOnSubmission, false, "print submissions device and engine IDs to standard output")

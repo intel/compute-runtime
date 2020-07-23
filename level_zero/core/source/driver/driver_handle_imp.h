@@ -60,6 +60,8 @@ struct DriverHandleImp : public DriverHandle {
                                                                      size_t size,
                                                                      bool *allocationRangeCovered) override;
 
+    uint32_t parseAffinityMask(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
+
     uint32_t numDevices = 0;
     std::unordered_map<std::string, void *> extensionFunctionsLookupMap;
     std::vector<Device *> devices;
