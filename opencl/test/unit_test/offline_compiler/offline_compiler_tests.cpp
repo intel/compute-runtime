@@ -1188,23 +1188,4 @@ TEST(OfflineCompilerTest, givenDeviceSpecificKernelFileWhenCompilerIsInitialized
     EXPECT_EQ(SUCCESS, retVal);
     EXPECT_STREQ("-cl-opt-disable", mockOfflineCompiler->options.c_str());
 }
-
-TEST(OfflineCompilerTest, givenRevisionIdWhenCompilerIsInitializedThenPassItToHwInfo) {
-    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
-    ASSERT_NE(nullptr, mockOfflineCompiler);
-
-    std::vector<std::string> argv = {
-        "ocloc",
-        "-q",
-        "-file",
-        "test_files/copybuffer.cl",
-        "-device",
-        gEnvironment->devicePrefix.c_str(),
-        "-revision_id",
-        "3"};
-
-    int retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(SUCCESS, retVal);
-    EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, 3);
-}
 } // namespace NEO

@@ -238,7 +238,6 @@ int OfflineCompiler::getHardwareInfo(const char *pDeviceName) {
         if (hardwarePrefix[productId] && (0 == strcmp(pDeviceName, hardwarePrefix[productId]))) {
             if (hardwareInfoTable[productId]) {
                 hwInfo = *hardwareInfoTable[productId];
-                hwInfo.platform.usRevId = revisionId;
                 hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0x0);
                 familyNameWithType.clear();
                 familyNameWithType.append(familyName[hwInfo.platform.eRenderCoreFamily]);
@@ -525,9 +524,6 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("--help" == currArg) {
             printUsage();
             retVal = PRINT_USAGE;
-        } else if (("-revision_id" == currArg) && hasMoreArgs) {
-            revisionId = std::stoi(argv[argIndex + 1]);
-            argIndex++;
         } else {
             argHelper->printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
             retVal = INVALID_COMMAND_LINE;
