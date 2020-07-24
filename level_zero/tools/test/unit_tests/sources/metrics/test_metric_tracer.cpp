@@ -506,8 +506,7 @@ TEST_F(MetricTracerTest, givenValidArgumentsWhenZetCommandListAppendMetricTracer
     ze_event_handle_t eventHandle = {};
 
     // One api: command list handle
-    Mock<CommandList> commandList;
-    zet_command_list_handle_t commandListHandle = commandList.toHandle();
+    MockCommandList commandList;
 
     // One api: tracer handle.
     zet_metric_tracer_handle_t tracerHandle = {};
@@ -576,10 +575,6 @@ TEST_F(MetricTracerTest, givenValidArgumentsWhenZetCommandListAppendMetricTracer
         .Times(1)
         .WillOnce(Return(TCompletionCode::CC_OK));
 
-    EXPECT_CALL(commandList, appendMetricTracerMarker(_, _))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-
     EXPECT_CALL(metricsConcurrentGroup, CloseIoStream())
         .Times(1)
         .WillOnce(Return(TCompletionCode::CC_OK));
@@ -608,11 +603,6 @@ TEST_F(MetricTracerTest, givenValidArgumentsWhenZetCommandListAppendMetricTracer
     // Metric tracer open.
     EXPECT_EQ(zetMetricTracerOpen(metricDeviceHandle, metricGroupHandle, &tracerDesc, eventHandle, &tracerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(tracerHandle, nullptr);
-
-    uint32_t markerValue = 1;
-
-    // Metric tracer marker.
-    EXPECT_EQ(zetCommandListAppendMetricTracerMarker(commandListHandle, tracerHandle, markerValue), ZE_RESULT_SUCCESS);
 
     // Metric tracer close.
     EXPECT_EQ(zetMetricTracerClose(tracerHandle), ZE_RESULT_SUCCESS);
@@ -627,8 +617,7 @@ TEST_F(MetricTracerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppendMe
     ze_event_handle_t eventHandle = {};
 
     // One api: command list handle
-    Mock<CommandList> commandList;
-    zet_command_list_handle_t commandListHandle = commandList.toHandle();
+    MockCommandList commandList;
 
     // One api: tracer handle.
     zet_metric_tracer_handle_t tracerHandle = {};
@@ -697,10 +686,6 @@ TEST_F(MetricTracerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppendMe
         .Times(1)
         .WillOnce(Return(TCompletionCode::CC_OK));
 
-    EXPECT_CALL(commandList, appendMetricTracerMarker(_, _))
-        .Times(10)
-        .WillRepeatedly(Return(ZE_RESULT_SUCCESS));
-
     EXPECT_CALL(metricsConcurrentGroup, CloseIoStream())
         .Times(1)
         .WillOnce(Return(TCompletionCode::CC_OK));
@@ -729,13 +714,6 @@ TEST_F(MetricTracerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppendMe
     // Metric tracer open.
     EXPECT_EQ(zetMetricTracerOpen(metricDeviceHandle, metricGroupHandle, &tracerDesc, eventHandle, &tracerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(tracerHandle, nullptr);
-
-    std::array<uint32_t, 10> markerValues = {1, 2, 3, 4, 5, 6, 7, 8, 9, 0};
-
-    // Metric tracer marker.
-    for (auto &m : markerValues) {
-        EXPECT_EQ(zetCommandListAppendMetricTracerMarker(commandListHandle, tracerHandle, m), ZE_RESULT_SUCCESS);
-    }
 
     // Metric tracer close.
     EXPECT_EQ(zetMetricTracerClose(tracerHandle), ZE_RESULT_SUCCESS);

@@ -444,7 +444,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
 
     zet_device_handle_t metricDevice = device->toHandle();
 
-    Mock<CommandList> commandList;
+    MockCommandList commandList;
     zet_command_list_handle_t commandListHandle = commandList.toHandle();
 
     Mock<MetricGroup> metricGroup;
@@ -495,10 +495,6 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(commandList, appendMetricQueryBegin(_))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
 
     EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
         .Times(1)
@@ -596,7 +592,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetCommandListAppendMetri
     zet_device_handle_t metricDevice = device->toHandle();
     zet_driver_handle_t driver = driverHandle->toHandle();
 
-    Mock<CommandList> commandList;
+    MockCommandList commandList;
     zet_command_list_handle_t commandListHandle = commandList.toHandle();
 
     ze_event_pool_handle_t eventPoolHandle = {};
@@ -660,10 +656,6 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetCommandListAppendMetri
     EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(commandList, appendMetricQueryBegin(_))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
 
     EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
         .Times(1)
@@ -700,7 +692,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     zet_device_handle_t metricDevice = device->toHandle();
     zet_driver_handle_t driver = driverHandle->toHandle();
 
-    Mock<CommandList> commandList;
+    MockCommandList commandList;
     zet_command_list_handle_t commandListHandle = commandList.toHandle();
 
     ze_event_pool_handle_t eventPoolHandle = {};
@@ -764,14 +756,6 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(commandList, appendMetricQueryBegin(_))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-
-    EXPECT_CALL(commandList, appendMetricQueryEnd(_, _))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
 
     EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
         .Times(1)
@@ -813,7 +797,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
     zet_device_handle_t metricDevice = device->toHandle();
     zet_driver_handle_t driver = driverHandle->toHandle();
 
-    Mock<CommandList> commandList;
+    MockCommandList commandList;
     zet_command_list_handle_t commandListHandle = commandList.toHandle();
 
     ze_event_pool_handle_t eventPoolHandle = {};
@@ -878,14 +862,6 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
 
-    EXPECT_CALL(commandList, appendMetricQueryBegin(_))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-
-    EXPECT_CALL(commandList, appendMetricQueryEnd(_, _))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-
     EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
         .Times(1)
         .WillOnce(Return(StatusCode::Success));
@@ -926,7 +902,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
     zet_device_handle_t metricDevice = device->toHandle();
     zet_driver_handle_t driver = driverHandle->toHandle();
 
-    Mock<CommandList> commandList;
+    MockCommandList commandList;
     zet_command_list_handle_t commandListHandle = commandList.toHandle();
 
     ze_event_pool_handle_t eventPoolHandle = {};
@@ -992,14 +968,6 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
     EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextCreate(_, _, _))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<2>(metricsLibraryContextHandle), Return(StatusCode::Success)));
-
-    EXPECT_CALL(commandList, appendMetricQueryBegin(_))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
-
-    EXPECT_CALL(commandList, appendMetricQueryEnd(_, _))
-        .Times(1)
-        .WillOnce(Return(ZE_RESULT_SUCCESS));
 
     EXPECT_CALL(*mockMetricsLibrary, getMetricQueryReportSize(_))
         .Times(1)
