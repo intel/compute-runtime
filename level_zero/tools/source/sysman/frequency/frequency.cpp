@@ -38,4 +38,19 @@ ze_result_t FrequencyHandleContext::frequencyGet(uint32_t *pCount, zet_sysman_fr
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t FrequencyHandleContext::frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) {
+    if (nullptr == phFrequency) {
+        *pCount = static_cast<uint32_t>(handle_list.size());
+        return ZE_RESULT_SUCCESS;
+    }
+    uint32_t i = 0;
+    for (Frequency *freq : handle_list) {
+        if (i >= *pCount)
+            break;
+        phFrequency[i++] = freq->toZesFreqHandle();
+    }
+    *pCount = i;
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0

@@ -6,19 +6,7 @@
  */
 
 #pragma once
-#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/frequency/linux/os_frequency_imp.h"
-
-#include "sysman/frequency/frequency_imp.h"
-#include "sysman/frequency/os_frequency.h"
-#include "sysman/linux/fs_access.h"
-
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
-
-using ::testing::_;
 
 namespace L0 {
 namespace ult {
@@ -45,8 +33,40 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
     double mockMaxVal = 0;
     double mockMinVal = 0;
 
-    MOCK_METHOD2(read, ze_result_t(const std::string file, double &val));
-    MOCK_METHOD2(write, ze_result_t(const std::string file, const double val));
+    MOCK_METHOD(ze_result_t, read, (const std::string file, double &val), (override));
+    MOCK_METHOD(ze_result_t, write, (const std::string file, const double val), (override));
+
+    ze_result_t getValReturnError(const std::string file, double &val) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t getValActualReturnError(const std::string file, double &val) {
+        if (file.compare(actualFreqFile) == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValEfficientReturnError(const std::string file, double &val) {
+        if (file.compare(efficientFreqFile) == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValTdpReturnError(const std::string file, double &val) {
+        if (file.compare(tdpFreqFile) == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValRequestReturnError(const std::string file, double &val) {
+        if (file.compare(requestFreqFile) == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
 
     ze_result_t getVal(const std::string file, double &val) {
         if (file.compare(minFreqFile) == 0) {
@@ -75,6 +95,21 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
         }
         return ZE_RESULT_SUCCESS;
     }
+
+    ze_result_t setValMinReturnError(const std::string file, const double val) {
+        if (file.compare(minFreqFile) == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t setValMaxReturnError(const std::string file, const double val) {
+        if (file.compare(maxFreqFile) == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
     ze_result_t setVal(const std::string file, const double val) {
         if (file.compare(minFreqFile) == 0) {
             mockMin = val;
@@ -114,7 +149,3 @@ class PublicLinuxFrequencyImp : public L0::LinuxFrequencyImp {
 
 } // namespace ult
 } // namespace L0
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

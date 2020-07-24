@@ -23,6 +23,12 @@ class FrequencyImp : public Frequency, NEO::NonCopyableOrMovableClass {
     ze_result_t frequencySetRange(const zet_freq_range_t *pLimits) override;
     ze_result_t frequencyGetState(zet_freq_state_t *pState) override;
 
+    ze_result_t frequencyGetProperties(zes_freq_properties_t *pProperties) override;
+    ze_result_t frequencyGetRange(zes_freq_range_t *pLimits) override;
+    ze_result_t frequencySetRange(const zes_freq_range_t *pLimits) override;
+    ze_result_t frequencyGetState(zes_freq_state_t *pState) override;
+    ze_result_t frequencyGetThrottleTime(zes_freq_throttle_time_t *pThrottleTime) override;
+
     FrequencyImp() = default;
     FrequencyImp(OsSysman *pOsSysman);
     ~FrequencyImp() override;
@@ -34,6 +40,7 @@ class FrequencyImp : public Frequency, NEO::NonCopyableOrMovableClass {
     static const bool canControl;
 
     zet_freq_properties_t frequencyProperties = {};
+    zes_freq_properties_t zesFrequencyProperties = {};
     double *pClocks = nullptr;
     uint32_t numClocks = 0;
 };

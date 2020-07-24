@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/frequency/linux/os_frequency_imp.h"
 
+#include "sysman/linux/os_sysman_imp.h"
+
 namespace L0 {
 
 const std::string LinuxFrequencyImp::minFreqFile("gt_min_freq_mhz");

@@ -82,6 +82,7 @@ struct SysmanDevice : _ze_device_handle_t {
     static SysmanDevice *fromHandle(zes_device_handle_t handle) { return Device::fromHandle(handle)->getSysmanHandle(); }
 
     virtual ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) = 0;
+    virtual ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) = 0;
     virtual ~SysmanDevice() = default;
 };
 

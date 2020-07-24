@@ -238,6 +238,14 @@ zetSysmanPowerSetEnergyThreshold(
     return L0::Power::fromHandle(hPower)->powerSetEnergyThreshold(threshold);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesDeviceEnumFrequencyDomains(
+    zes_device_handle_t hDevice,
+    uint32_t *pCount,
+    zes_freq_handle_t *phFrequency) {
+    return L0::SysmanDevice::fromHandle(hDevice)->frequencyGet(pCount, phFrequency);
+}
+
 __zedllexport ze_result_t __zecall
 zetSysmanFrequencyGet(
     zet_sysman_handle_t hSysman,
@@ -246,11 +254,26 @@ zetSysmanFrequencyGet(
     return L0::Sysman::fromHandle(hSysman)->frequencyGet(pCount, phFrequency);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesFrequencyGetProperties(
+    zes_freq_handle_t hFrequency,
+    zes_freq_properties_t *pProperties) {
+    return L0::Frequency::fromHandle(hFrequency)->frequencyGetProperties(pProperties);
+}
+
 __zedllexport ze_result_t __zecall
 zetSysmanFrequencyGetProperties(
     zet_sysman_freq_handle_t hFrequency,
     zet_freq_properties_t *pProperties) {
     return L0::Frequency::fromHandle(hFrequency)->frequencyGetProperties(pProperties);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesFrequencyGetAvailableClocks(
+    zes_freq_handle_t hFrequency,
+    uint32_t *pCount,
+    double *phFrequency) {
+    return L0::Frequency::fromHandle(hFrequency)->frequencyGetAvailableClocks(pCount, phFrequency);
 }
 
 __zedllexport ze_result_t __zecall
@@ -261,11 +284,25 @@ zetSysmanFrequencyGetAvailableClocks(
     return L0::Frequency::fromHandle(hFrequency)->frequencyGetAvailableClocks(pCount, phFrequency);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesFrequencyGetRange(
+    zes_freq_handle_t hFrequency,
+    zes_freq_range_t *pLimits) {
+    return L0::Frequency::fromHandle(hFrequency)->frequencyGetRange(pLimits);
+}
+
 __zedllexport ze_result_t __zecall
 zetSysmanFrequencyGetRange(
     zet_sysman_freq_handle_t hFrequency,
     zet_freq_range_t *pLimits) {
     return L0::Frequency::fromHandle(hFrequency)->frequencyGetRange(pLimits);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesFrequencySetRange(
+    zes_freq_handle_t hFrequency,
+    const zes_freq_range_t *pLimits) {
+    return L0::Frequency::fromHandle(hFrequency)->frequencySetRange(pLimits);
 }
 
 __zedllexport ze_result_t __zecall
@@ -275,11 +312,25 @@ zetSysmanFrequencySetRange(
     return L0::Frequency::fromHandle(hFrequency)->frequencySetRange(pLimits);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesFrequencyGetState(
+    zes_freq_handle_t hFrequency,
+    zes_freq_state_t *pState) {
+    return L0::Frequency::fromHandle(hFrequency)->frequencyGetState(pState);
+}
+
 __zedllexport ze_result_t __zecall
 zetSysmanFrequencyGetState(
     zet_sysman_freq_handle_t hFrequency,
     zet_freq_state_t *pState) {
     return L0::Frequency::fromHandle(hFrequency)->frequencyGetState(pState);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zesFrequencyGetThrottleTime(
+    zes_freq_handle_t hFrequency,
+    zes_freq_throttle_time_t *pThrottleTime) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 __zedllexport ze_result_t __zecall

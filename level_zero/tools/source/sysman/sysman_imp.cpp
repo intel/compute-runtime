@@ -23,17 +23,22 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pOsSysman = OsSysman::create(this);
     UNRECOVERABLE_IF(nullptr == pOsSysman);
     pPowerHandleContext = new PowerHandleContext(pOsSysman);
+    pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pOsSysman);
     freeResource(pPowerHandleContext);
+    freeResource(pFrequencyHandleContext);
 }
 
 void SysmanDeviceImp::init() {
     pOsSysman->init();
     if (pPowerHandleContext) {
         pPowerHandleContext->init();
+    }
+    if (pFrequencyHandleContext) {
+        pFrequencyHandleContext->init();
     }
 }
 
@@ -196,6 +201,10 @@ ze_result_t SysmanDeviceImp::powerGet(uint32_t *pCount, zes_pwr_handle_t *phPowe
 }
 
 ze_result_t SysmanImp::frequencyGet(uint32_t *pCount, zet_sysman_freq_handle_t *phFrequency) {
+    return pFrequencyHandleContext->frequencyGet(pCount, phFrequency);
+}
+
+ze_result_t SysmanDeviceImp::frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) {
     return pFrequencyHandleContext->frequencyGet(pCount, phFrequency);
 }
 
