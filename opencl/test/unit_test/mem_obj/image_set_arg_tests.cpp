@@ -108,7 +108,7 @@ class ImageSetArgTest : public ClDeviceFixture,
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
     std::unique_ptr<KernelInfo> pKernelInfo;
-    char surfaceStateHeap[0x80];
+    char surfaceStateHeap[0x80] = {};
     Image *srcImage = nullptr;
     GraphicsAllocation *srcAllocation = nullptr;
     int expectedChannelRed;
