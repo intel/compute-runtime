@@ -231,6 +231,15 @@ struct MockCommandList : public CommandList {
                       uint32_t numWaitEvents,
                       ze_event_handle_t *phWaitEvents));
 
+    ADDMETHOD_NOBASE(appendMemoryCopyFromContext, ze_result_t, ZE_RESULT_SUCCESS,
+                     (void *dstptr,
+                      ze_context_handle_t hContextSrc,
+                      const void *srcptr,
+                      size_t size,
+                      ze_event_handle_t hSignalEvent,
+                      uint32_t numWaitEvents,
+                      ze_event_handle_t *phWaitEvents));
+
     ADDMETHOD_NOBASE(reserveSpace, ze_result_t, ZE_RESULT_SUCCESS,
                      (size_t size,
                       void **ptr));

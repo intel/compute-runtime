@@ -104,4 +104,17 @@ zeCommandListAppendMemAdvise(
     return L0::CommandList::fromHandle(hCommandList)->appendMemAdvise(hDevice, ptr, size, advice);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListAppendMemoryCopyFromContext(
+    ze_command_list_handle_t hCommandList,
+    void *dstptr,
+    ze_context_handle_t hContextSrc,
+    const void *srcptr,
+    size_t size,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::CommandList::fromHandle(hCommandList)->appendMemoryCopyFromContext(dstptr, hContextSrc, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents);
+}
+
 } // extern "C"
