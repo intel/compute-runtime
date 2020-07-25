@@ -27,6 +27,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_device_handle_t hCoreDevice = nullptr;
     OsSysman *pOsSysman = nullptr;
     Pci *pPci = nullptr;
+    GlobalOperations *pGlobalOperations = nullptr;
     PowerHandleContext *pPowerHandleContext = nullptr;
     FrequencyHandleContext *pFrequencyHandleContext = nullptr;
     FabricPortHandleContext *pFabricPortHandleContext = nullptr;
@@ -41,6 +42,10 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) override;
     ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) override;
     ze_result_t standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) override;
+    ze_result_t deviceGetProperties(zes_device_properties_t *pProperties) override;
+    ze_result_t processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) override;
+    ze_result_t deviceReset(ze_bool_t force) override;
+    ze_result_t deviceGetState(zes_device_state_t *pState) override;
     ze_result_t engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) override;
     ze_result_t pciGetProperties(zes_pci_properties_t *pProperties) override;
     ze_result_t pciGetState(zes_pci_state_t *pState) override;

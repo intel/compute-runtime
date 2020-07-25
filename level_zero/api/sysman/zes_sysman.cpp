@@ -13,14 +13,14 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDeviceGetProperties(
     zes_device_handle_t hDevice,
     zes_device_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->deviceGetProperties(pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDeviceGetState(
     zes_device_handle_t hDevice,
     zes_device_state_t *pState) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->deviceGetState(pState);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -96,14 +96,14 @@ zesDeviceProcessesGetState(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_process_state_t *pProcesses) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->processesGetState(pCount, pProcesses);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDeviceReset(
     zes_device_handle_t hDevice,
     ze_bool_t force) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->deviceReset(force);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

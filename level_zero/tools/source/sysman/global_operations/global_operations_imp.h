@@ -20,7 +20,8 @@ namespace L0 {
 class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableOrMovableClass {
   public:
     void init() override;
-    ze_result_t reset() override;
+    ze_result_t reset(ze_bool_t force) override;
+    ze_result_t deviceGetProperties(zes_device_properties_t *pProperties) override;
     ze_result_t processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) override;
 
     OsGlobalOperations *pOsGlobalOperations = nullptr;
@@ -33,6 +34,7 @@ class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableOrMovableCl
 
   private:
     OsSysman *pOsSysman = nullptr;
+    zes_device_properties_t sysmanProperties = {};
 };
 
 } // namespace L0

@@ -26,6 +26,8 @@ const std::string LinuxGlobalOperationsImp::subsystemVendorFile("device/subsyste
 const std::string LinuxGlobalOperationsImp::driverFile("device/driver");
 const std::string LinuxGlobalOperationsImp::functionLevelReset("device/reset");
 const std::string LinuxGlobalOperationsImp::clientsDir("clients");
+const std::string LinuxGlobalOperationsImp::srcVersionFile("/sys/module/i915/srcversion");
+const std::string LinuxGlobalOperationsImp::agamaVersionFile("/sys/module/i915/agama_version");
 
 // Map engine entries(numeric values) present in /sys/class/drm/card<n>/clients/<client_n>/busy,
 // with engine enum defined in leve-zero spec
@@ -38,66 +40,69 @@ const std::map<int, zes_engine_type_flags_t> engineMap = {
     {3, ZES_ENGINE_TYPE_FLAG_MEDIA},
     {4, ZES_ENGINE_TYPE_FLAG_COMPUTE}};
 
-void LinuxGlobalOperationsImp::getSerialNumber(int8_t (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) {
-    std::copy(unknown.begin(), unknown.end(), serialNumber);
-    serialNumber[unknown.size()] = '\0';
+void LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) {
+    std::strncpy(serialNumber, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
 }
 
-void LinuxGlobalOperationsImp::getBoardNumber(int8_t (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) {
-    std::copy(unknown.begin(), unknown.end(), boardNumber);
-    boardNumber[unknown.size()] = '\0';
+void LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) {
+    std::strncpy(boardNumber, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
 }
 
-void LinuxGlobalOperationsImp::getBrandName(int8_t (&brandName)[ZES_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getBrandName(char (&brandName)[ZES_STRING_PROPERTY_SIZE]) {
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(subsystemVendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
-        std::copy(unknown.begin(), unknown.end(), brandName);
-        brandName[unknown.size()] = '\0';
+        std::strncpy(brandName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
         return;
     }
     if (strVal.compare(intelPciId) == 0) {
-        std::copy(vendorIntel.begin(), vendorIntel.end(), brandName);
-        brandName[vendorIntel.size()] = '\0';
+        std::strncpy(brandName, vendorIntel.c_str(), ZES_STRING_PROPERTY_SIZE);
         return;
     }
-    std::copy(unknown.begin(), unknown.end(), brandName);
-    brandName[unknown.size()] = '\0';
+    std::strncpy(brandName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
 }
 
-void LinuxGlobalOperationsImp::getModelName(int8_t (&modelName)[ZES_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) {
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(deviceFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
-        std::copy(unknown.begin(), unknown.end(), modelName);
-        modelName[unknown.size()] = '\0';
+        std::strncpy(modelName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
         return;
     }
-
-    std::copy(strVal.begin(), strVal.end(), modelName);
-    modelName[strVal.size()] = '\0';
+    std::strncpy(modelName, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);
 }
 
-void LinuxGlobalOperationsImp::getVendorName(int8_t (&vendorName)[ZES_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getVendorName(char (&vendorName)[ZES_STRING_PROPERTY_SIZE]) {
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(vendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
-        std::copy(unknown.begin(), unknown.end(), vendorName);
-        vendorName[unknown.size()] = '\0';
+        std::strncpy(vendorName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
         return;
     }
     if (strVal.compare(intelPciId) == 0) {
-        std::copy(vendorIntel.begin(), vendorIntel.end(), vendorName);
-        vendorName[vendorIntel.size()] = '\0';
+        std::strncpy(vendorName, vendorIntel.c_str(), ZES_STRING_PROPERTY_SIZE);
         return;
     }
-    std::copy(unknown.begin(), unknown.end(), vendorName);
-    vendorName[unknown.size()] = '\0';
+    std::strncpy(vendorName, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
 }
 
-void LinuxGlobalOperationsImp::getDriverVersion(int8_t (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
-    std::copy(unknown.begin(), unknown.end(), driverVersion);
-    driverVersion[unknown.size()] = '\0';
+void LinuxGlobalOperationsImp::getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
+    std::string strVal;
+    ze_result_t result = pFsAccess->read(agamaVersionFile, strVal);
+    if (ZE_RESULT_SUCCESS == result) {
+        std::strncpy(driverVersion, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);
+        return;
+    } else if ((result != ZE_RESULT_ERROR_NOT_AVAILABLE) && (result != ZE_RESULT_SUCCESS)) {
+        std::strncpy(driverVersion, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+        return;
+    } else {
+        result = pFsAccess->read(srcVersionFile, strVal);
+        if (ZE_RESULT_SUCCESS != result) {
+            std::strncpy(driverVersion, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+            return;
+        }
+        std::strncpy(driverVersion, strVal.c_str(), ZES_STRING_PROPERTY_SIZE);
+    }
 }
 
 static void getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAccess *pSysfsAccess, const ::pid_t pid, std::vector<int> &deviceFds) {
@@ -120,7 +125,7 @@ static void getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAccess *pSy
     }
 }
 
-ze_result_t LinuxGlobalOperationsImp::reset() {
+ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     FsAccess *pFsAccess = &pLinuxSysmanImp->getFsAccess();
     ProcfsAccess *pProcfsAccess = &pLinuxSysmanImp->getProcfsAccess();
     SysfsAccess *pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
@@ -288,7 +293,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
                     val = i915MapToL0EngineType->second;
                 }
                 // In this for loop we want to retrieve the overall engines used by process
-                engineType = engineType | (1 << val);
+                engineType = engineType | val;
             }
         }
 
@@ -333,6 +338,7 @@ LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
 
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    pFsAccess = &pLinuxSysmanImp->getFsAccess();
 }
 
 OsGlobalOperations *OsGlobalOperations::create(OsSysman *pOsSysman) {

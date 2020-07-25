@@ -30,9 +30,11 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pEngineHandleContext = new EngineHandleContext(pOsSysman);
     pSchedulerHandleContext = new SchedulerHandleContext(pOsSysman);
     pRasHandleContext = new RasHandleContext(pOsSysman);
+    pGlobalOperations = new GlobalOperationsImp(pOsSysman, hCoreDevice);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
+    freeResource(pGlobalOperations);
     freeResource(pRasHandleContext);
     freeResource(pSchedulerHandleContext);
     freeResource(pEngineHandleContext);
@@ -74,10 +76,29 @@ void SysmanDeviceImp::init() {
     if (pRasHandleContext) {
         pRasHandleContext->init();
     }
+    if (pGlobalOperations) {
+        pGlobalOperations->init();
+    }
 }
 
 ze_result_t SysmanDeviceImp::frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) {
     return pFrequencyHandleContext->frequencyGet(pCount, phFrequency);
+}
+
+ze_result_t SysmanDeviceImp::deviceGetProperties(zes_device_properties_t *pProperties) {
+    return pGlobalOperations->deviceGetProperties(pProperties);
+}
+
+ze_result_t SysmanDeviceImp::processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) {
+    return pGlobalOperations->processesGetState(pCount, pProcesses);
+}
+
+ze_result_t SysmanDeviceImp::deviceReset(ze_bool_t force) {
+    return pGlobalOperations->reset(force);
+}
+
+ze_result_t SysmanDeviceImp::deviceGetState(zes_device_state_t *pState) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t SysmanDeviceImp::pciGetProperties(zes_pci_properties_t *pProperties) {

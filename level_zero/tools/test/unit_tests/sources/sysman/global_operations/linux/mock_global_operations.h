@@ -10,10 +10,6 @@
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/linux/os_global_operations_imp.h"
 
-#include "sysman/sysman.h"
-
-using ::testing::_;
-
 namespace L0 {
 namespace ult {
 
@@ -25,6 +21,8 @@ const std::string vendorFile("device/vendor");
 const std::string deviceFile("device/device");
 const std::string subsystemVendorFile("device/subsystem_vendor");
 const std::string driverFile("device/driver");
+const std::string agamaVersionFile("/sys/module/i915/agama_version");
+const std::string srcVersionFile("/sys/module/i915/srcversion");
 const std::string functionLevelReset("device/reset");
 const std::string clientsDir("clients");
 constexpr uint64_t pid1 = 1711u;
@@ -39,6 +37,8 @@ const std::string engine0("0");
 const std::string engine1("1");
 const std::string engine2("2");
 const std::string engine3("3");
+std::string driverVersion("5.0.0-37-generic SMP mod_unload");
+std::string srcVersion("5.0.0-37");
 
 class GlobalOperationsSysfsAccess : public SysfsAccess {};
 
@@ -127,8 +127,49 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
     MOCK_METHOD(ze_result_t, scanDirEntries, (const std::string path, std::vector<std::string> &list), (override));
 };
 
+class GlobalOperationsFsAccess : public FsAccess {};
+
+template <>
+struct Mock<GlobalOperationsFsAccess> : public GlobalOperationsFsAccess {
+    ze_result_t getValAgamaFile(const std::string file, std::string &val) {
+        if (file.compare(agamaVersionFile) == 0) {
+            val = driverVersion;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValSrcFile(const std::string file, std::string &val) {
+        if (file.compare(srcVersionFile) == 0) {
+            val = srcVersion;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValSrcFileNotAvaliable(const std::string file, std::string &val) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t getValNotAvaliable(const std::string file, std::string &val) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t getValPermissionDenied(const std::string file, std::string &val) {
+        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    }
+
+    Mock<GlobalOperationsFsAccess>() = default;
+
+    MOCK_METHOD(ze_result_t, read, (const std::string file, std::string &val), (override));
+};
+
 class PublicLinuxGlobalOperationsImp : public L0::LinuxGlobalOperationsImp {
   public:
+    using LinuxGlobalOperationsImp::pFsAccess;
     using LinuxGlobalOperationsImp::pLinuxSysmanImp;
     using LinuxGlobalOperationsImp::pSysfsAccess;
 };

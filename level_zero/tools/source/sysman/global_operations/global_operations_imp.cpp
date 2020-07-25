@@ -37,8 +37,21 @@ ze_result_t GlobalOperationsImp::processesGetState(uint32_t *pCount, zes_process
     return result;
 }
 
-ze_result_t GlobalOperationsImp::reset() {
-    return pOsGlobalOperations->reset();
+ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pProperties) {
+    Device *device = L0::Device::fromHandle(hCoreDevice);
+    ze_device_properties_t deviceProperties;
+    device->getProperties(&deviceProperties);
+    sysmanProperties.core = deviceProperties;
+    uint32_t count = 0;
+    device->getSubDevices(&count, nullptr);
+    sysmanProperties.numSubdevices = count;
+
+    *pProperties = sysmanProperties;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t GlobalOperationsImp::reset(ze_bool_t force) {
+    return pOsGlobalOperations->reset(force);
 }
 
 void GlobalOperationsImp::init() {
@@ -46,6 +59,12 @@ void GlobalOperationsImp::init() {
         pOsGlobalOperations = OsGlobalOperations::create(pOsSysman);
     }
     UNRECOVERABLE_IF(nullptr == pOsGlobalOperations);
+    pOsGlobalOperations->getVendorName(sysmanProperties.vendorName);
+    pOsGlobalOperations->getDriverVersion(sysmanProperties.driverVersion);
+    pOsGlobalOperations->getModelName(sysmanProperties.modelName);
+    pOsGlobalOperations->getBrandName(sysmanProperties.brandName);
+    pOsGlobalOperations->getBoardNumber(sysmanProperties.boardNumber);
+    pOsGlobalOperations->getSerialNumber(sysmanProperties.serialNumber);
 }
 
 GlobalOperationsImp::~GlobalOperationsImp() {

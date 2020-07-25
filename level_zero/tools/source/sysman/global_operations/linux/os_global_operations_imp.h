@@ -14,19 +14,20 @@ class SysfsAccess;
 
 class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMovableClass {
   public:
-    void getSerialNumber(int8_t (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) override;
-    void getBoardNumber(int8_t (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) override;
-    void getBrandName(int8_t (&brandName)[ZES_STRING_PROPERTY_SIZE]) override;
-    void getModelName(int8_t (&modelName)[ZES_STRING_PROPERTY_SIZE]) override;
-    void getVendorName(int8_t (&vendorName)[ZES_STRING_PROPERTY_SIZE]) override;
-    void getDriverVersion(int8_t (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
-    ze_result_t reset() override;
+    void getSerialNumber(char (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getBrandName(char (&brandName)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getModelName(char (&modelName)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getVendorName(char (&vendorName)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getDriverVersion(char (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
+    ze_result_t reset(ze_bool_t force) override;
     ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) override;
     LinuxGlobalOperationsImp() = default;
     LinuxGlobalOperationsImp(OsSysman *pOsSysman);
     ~LinuxGlobalOperationsImp() override = default;
 
   protected:
+    FsAccess *pFsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
 
@@ -38,6 +39,8 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     static const std::string driverFile;
     static const std::string functionLevelReset;
     static const std::string clientsDir;
+    static const std::string srcVersionFile;
+    static const std::string agamaVersionFile;
 };
 
 } // namespace L0
