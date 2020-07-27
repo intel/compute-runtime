@@ -489,7 +489,7 @@ ze_result_t MetricQueryImp::appendBegin(CommandList &commandList) {
 
     switch (pool.description.flags) {
     case ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE:
-        return writeMetricQuery(commandList, nullptr, true);
+        return writeMetricQuery(commandList, nullptr, 0, nullptr, true);
 
     default:
         DEBUG_BREAK_IF(true);
@@ -497,11 +497,11 @@ ze_result_t MetricQueryImp::appendBegin(CommandList &commandList) {
     }
 }
 
-ze_result_t MetricQueryImp::appendEnd(CommandList &commandList,
-                                      ze_event_handle_t hCompletionEvent) {
+ze_result_t MetricQueryImp::appendEnd(CommandList &commandList, ze_event_handle_t hSignalEvent,
+                                      uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     switch (pool.description.flags) {
     case ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE:
-        return writeMetricQuery(commandList, hCompletionEvent, false);
+        return writeMetricQuery(commandList, hSignalEvent, numWaitEvents, phWaitEvents, false);
 
     default:
         DEBUG_BREAK_IF(true);
@@ -529,8 +529,13 @@ ze_result_t MetricQueryImp::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList,
-                                             ze_event_handle_t hCompletionEvent, const bool begin) {
+ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList, ze_event_handle_t hSignalEvent,
+                                             uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                             const bool begin) {
+
+    bool writeCompletionEvent = hSignalEvent && !begin;
+    bool result = false;
+
     // Make gpu allocation visible.
     commandList.commandContainer.addToResidencyContainer(pool.pAllocation);
 
@@ -546,12 +551,18 @@ ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList,
                              ? GpuCommandBufferType::Compute
                              : GpuCommandBufferType::Render;
 
-    bool writeCompletionEvent = hCompletionEvent && !begin;
-    bool result = metricsLibrary.getGpuCommands(commandList, commandBuffer);
+    // Wait for events before executing query.
+    result = zeCommandListAppendWaitOnEvents(commandList.toHandle(), numWaitEvents, phWaitEvents) ==
+             ZE_RESULT_SUCCESS;
+
+    // Get query commands.
+    if (result) {
+        result = metricsLibrary.getGpuCommands(commandList, commandBuffer);
+    }
 
     // Write completion event.
     if (result && writeCompletionEvent) {
-        result = zeCommandListAppendSignalEvent(commandList.toHandle(), hCompletionEvent) ==
+        result = zeCommandListAppendSignalEvent(commandList.toHandle(), hSignalEvent) ==
                  ZE_RESULT_SUCCESS;
     }
 

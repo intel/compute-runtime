@@ -142,7 +142,8 @@ struct MetricQuery : _zet_metric_query_handle_t {
     virtual ~MetricQuery() = default;
 
     virtual ze_result_t appendBegin(CommandList &commandList) = 0;
-    virtual ze_result_t appendEnd(CommandList &commandList, ze_event_handle_t hCompletionEvent) = 0;
+    virtual ze_result_t appendEnd(CommandList &commandList, ze_event_handle_t hSignalEvent,
+                                  uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) = 0;
 
     static ze_result_t appendMemoryBarrier(CommandList &commandList);
     static ze_result_t appendStreamerMarker(CommandList &commandList,

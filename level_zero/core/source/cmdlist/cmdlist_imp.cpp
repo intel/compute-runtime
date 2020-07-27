@@ -52,9 +52,9 @@ ze_result_t CommandListImp::appendMetricQueryBegin(zet_metric_query_handle_t hMe
     return MetricQuery::fromHandle(hMetricQuery)->appendBegin(*this);
 }
 
-ze_result_t CommandListImp::appendMetricQueryEnd(zet_metric_query_handle_t hMetricQuery,
-                                                 ze_event_handle_t hCompletionEvent) {
-    return MetricQuery::fromHandle(hMetricQuery)->appendEnd(*this, hCompletionEvent);
+ze_result_t CommandListImp::appendMetricQueryEnd(zet_metric_query_handle_t hMetricQuery, ze_event_handle_t hSignalEvent,
+                                                 uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+    return MetricQuery::fromHandle(hMetricQuery)->appendEnd(*this, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 CommandList *CommandList::create(uint32_t productFamily, Device *device, bool isCopyOnly) {

@@ -184,7 +184,17 @@ zetCommandListAppendMetricQueryEnd(
     zet_command_list_handle_t hCommandList,
     zet_metric_query_handle_t hMetricQuery,
     ze_event_handle_t hCompletionEvent) {
-    return L0::CommandList::fromHandle(hCommandList)->appendMetricQueryEnd(hMetricQuery, hCompletionEvent);
+    return L0::CommandList::fromHandle(hCommandList)->appendMetricQueryEnd(hMetricQuery, hCompletionEvent, 0, nullptr);
+}
+
+__zedllexport ze_result_t __zecall
+zetCommandListAppendMetricQueryEndExt(
+    zet_command_list_handle_t hCommandList,
+    zet_metric_query_handle_t hMetricQuery,
+    ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents,
+    ze_event_handle_t *phWaitEvents) {
+    return L0::CommandList::fromHandle(hCommandList)->appendMetricQueryEnd(hMetricQuery, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 __zedllexport ze_result_t __zecall

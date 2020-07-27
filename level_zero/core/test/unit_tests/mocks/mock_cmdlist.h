@@ -252,7 +252,9 @@ struct MockCommandList : public CommandList {
 
     ADDMETHOD_NOBASE(appendMetricQueryEnd, ze_result_t, ZE_RESULT_SUCCESS,
                      (zet_metric_query_handle_t hMetricQuery,
-                      ze_event_handle_t hCompletionEvent));
+                      ze_event_handle_t hSignalEvent,
+                      uint32_t numWaitEvents,
+                      ze_event_handle_t *phWaitEvents));
 
     ADDMETHOD_NOBASE(appendMILoadRegImm, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t reg,

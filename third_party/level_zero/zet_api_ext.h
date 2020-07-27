@@ -210,6 +210,41 @@ zetContextActivateMetricGroups(
                                               ///< metric query and metric stream must use activated metric groups.
 );
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Appends metric query end into a command list.
+///
+/// @details
+///     - The application must ensure the metric query and events are accessible
+///       by the device on which the command list was created.
+///     - The application must ensure the command list, events and metric query
+///       were created on the same context.
+///     - The application must ensure the signal event was **not** created from
+///       an event pool that was created using
+///       ::ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP flag.
+///     - The application must **not** call this function from simultaneous
+///       threads with the same command list handle.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hCommandList`
+///         + `nullptr == hMetricQuery`
+///     - ::ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT
+///     - ::ZE_RESULT_ERROR_INVALID_SIZE
+///         + `(nullptr == phWaitEvents) && (0 < numWaitEvents)`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetCommandListAppendMetricQueryEndExt(
+    zet_command_list_handle_t hCommandList, ///< [in] handle of the command list
+    zet_metric_query_handle_t hMetricQuery, ///< [in] handle of the metric query
+    ze_event_handle_t hSignalEvent,         ///< [in][optional] handle of the event to signal on completion
+    uint32_t numWaitEvents,                 ///< [in][optional] number of events to wait on before launching; must be 0
+                                            ///< if `nullptr == phWaitEvents`
+    ze_event_handle_t *phWaitEvents         ///< [in][optional][range(0, numWaitEvents)] handle of the events to wait
+                                            ///< on before launching
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
