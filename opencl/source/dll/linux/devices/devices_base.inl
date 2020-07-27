@@ -49,8 +49,16 @@ DEVICE( IEHL_1x4x8_DEVICE_A0_ID,          EHL_1x4x8, GTTYPE_GT1 )
 DEVICE( IJSL_1x4x4_DEVICE_B0_ID,          EHL_1x4x4, GTTYPE_GT1 )
 DEVICE( IJSL_1x4x6_DEVICE_B0_ID,          EHL_1x4x6, GTTYPE_GT1 )
 DEVICE( IJSL_1x4x8_DEVICE_B0_ID,          EHL_1x4x8, GTTYPE_GT1 )
-#endif
+DEVICE( DEV_ID_4541,                      EHL_1x2x4, GTTYPE_GT1 )
+DEVICE( DEV_ID_4551,                      EHL_1x4x4, GTTYPE_GT1 )
+DEVICE( DEV_ID_4571,                      EHL_1x4x8, GTTYPE_GT1 )
+DEVICE( DEV_ID_4555,                      EHL_HW_CONFIG, GTTYPE_GT1 )
+DEVICE( DEV_ID_4E51,                      EHL_1x4x4, GTTYPE_GT1 )
+DEVICE( DEV_ID_4E61,                      EHL_1x4x6, GTTYPE_GT1 )
+DEVICE( DEV_ID_4E71,                      EHL_1x4x8, GTTYPE_GT1 )
+DEVICE( DEV_ID_4E55,                      EHL_HW_CONFIG, GTTYPE_GT1 )
 
+#endif
 #endif
 
 #ifdef SUPPORT_GEN9

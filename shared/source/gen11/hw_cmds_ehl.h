@@ -34,6 +34,15 @@ class EHL_1x2x4 : public EHL {
     static GT_SYSTEM_INFO gtSystemInfo;
 };
 
+class EHL_HW_CONFIG : public EHL {
+  public:
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
+    static const HardwareInfo hwInfo;
+
+  private:
+    static GT_SYSTEM_INFO gtSystemInfo;
+};
+
 class EHL_1x4x4 : public EHL {
   public:
     static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);

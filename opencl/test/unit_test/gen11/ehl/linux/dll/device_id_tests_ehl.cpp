@@ -14,7 +14,7 @@
 using namespace NEO;
 
 TEST(EhlDeviceIdTest, supportedDeviceId) {
-    std::array<DeviceDescriptor, 7> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 15> expectedDescriptors = {{
         {IEHL_1x4x8_SUPERSKU_DEVICE_A0_ID, &EHL_1x4x8::hwInfo, &EHL_1x4x8::setupHardwareInfo, GTTYPE_GT1},
         {IEHL_1x2x4_DEVICE_A0_ID, &EHL_1x2x4::hwInfo, &EHL_1x2x4::setupHardwareInfo, GTTYPE_GT1},
         {IEHL_1x4x4_DEVICE_A0_ID, &EHL_1x4x4::hwInfo, &EHL_1x4x4::setupHardwareInfo, GTTYPE_GT1},
@@ -22,6 +22,14 @@ TEST(EhlDeviceIdTest, supportedDeviceId) {
         {IJSL_1x4x4_DEVICE_B0_ID, &EHL_1x4x4::hwInfo, &EHL_1x4x4::setupHardwareInfo, GTTYPE_GT1},
         {IJSL_1x4x6_DEVICE_B0_ID, &EHL_1x4x6::hwInfo, &EHL_1x4x6::setupHardwareInfo, GTTYPE_GT1},
         {IJSL_1x4x8_DEVICE_B0_ID, &EHL_1x4x8::hwInfo, &EHL_1x4x8::setupHardwareInfo, GTTYPE_GT1},
+        {DEV_ID_4541, &EHL_1x2x4::hwInfo, &EHL_1x2x4::setupHardwareInfo, GTTYPE_GT1},
+        {DEV_ID_4551, &EHL_1x4x4::hwInfo, &EHL_1x4x4::setupHardwareInfo, GTTYPE_GT1},
+        {DEV_ID_4571, &EHL_1x4x8::hwInfo, &EHL_1x4x8::setupHardwareInfo, GTTYPE_GT1},
+        {DEV_ID_4555, &EHL_HW_CONFIG::hwInfo, &EHL_HW_CONFIG::setupHardwareInfo, GTTYPE_GT1},
+        {DEV_ID_4E51, &EHL_1x4x4::hwInfo, &EHL_1x4x4::setupHardwareInfo, GTTYPE_GT1},
+        {DEV_ID_4E61, &EHL_1x4x6::hwInfo, &EHL_1x4x6::setupHardwareInfo, GTTYPE_GT1},
+        {DEV_ID_4E71, &EHL_1x4x8::hwInfo, &EHL_1x4x8::setupHardwareInfo, GTTYPE_GT1},
+        {DEV_ID_4E55, &EHL_HW_CONFIG::hwInfo, &EHL_HW_CONFIG::setupHardwareInfo, GTTYPE_GT1},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
