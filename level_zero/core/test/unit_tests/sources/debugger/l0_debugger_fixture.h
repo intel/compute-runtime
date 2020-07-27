@@ -43,13 +43,14 @@ struct L0DebuggerFixture {
     L0::Device *device = nullptr;
 };
 
-struct MockL0DebuggerFixture : public L0DebuggerFixture {
+struct L0DebuggerHwFixture : public L0DebuggerFixture {
     void SetUp() {
         L0DebuggerFixture::SetUp();
-        mockDebugger = new MockDebuggerL0(neoDevice);
-        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(mockDebugger);
+        debuggerHw = mockDebuggerL0HwFactory[neoDevice->getHardwareInfo().platform.eRenderCoreFamily](neoDevice);
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(debuggerHw);
         neoDevice->setDebuggerActive(true);
         neoDevice->setPreemptionMode(PreemptionMode::Disabled);
+
         auto debugSurface = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
             {device->getRootDeviceIndex(), true,
              NEO::SipKernel::maxDbgSurfaceSize,
@@ -62,9 +63,13 @@ struct MockL0DebuggerFixture : public L0DebuggerFixture {
 
     void TearDown() {
         L0DebuggerFixture::TearDown();
-        mockDebugger = nullptr;
+        debuggerHw = nullptr;
     }
-    MockDebuggerL0 *mockDebugger = nullptr;
+    template <typename GfxFamily>
+    MockDebuggerL0Hw<GfxFamily> *getMockDebuggerL0Hw() {
+        return static_cast<MockDebuggerL0Hw<GfxFamily> *>(debuggerHw);
+    }
+    DebuggerL0 *debuggerHw = nullptr;
 };
 
 } // namespace ult

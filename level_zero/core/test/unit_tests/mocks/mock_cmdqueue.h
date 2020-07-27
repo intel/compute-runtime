@@ -23,6 +23,7 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using BaseClass::device;
     using BaseClass::printfFunctionContainer;
     using BaseClass::synchronizeByPollingForTaskCount;
+    using CommandQueue::commandQueuePerThreadScratchSize;
 
     WhiteBox(Device *device, NEO::CommandStreamReceiver *csr,
              const ze_command_queue_desc_t *desc);

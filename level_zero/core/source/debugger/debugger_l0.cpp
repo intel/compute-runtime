@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/debugger/debugger_l0.h"
 
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -16,6 +17,9 @@
 #include <cstring>
 
 namespace L0 {
+
+DebugerL0CreateFn debuggerL0Factory[IGFX_MAX_CORE] = {};
+
 DebuggerL0::DebuggerL0(NEO::Device *device) : device(device) {
     isLegacyMode = false;
 
@@ -52,6 +56,14 @@ DebuggerL0 ::~DebuggerL0() {
 
 bool DebuggerL0::isDebuggerActive() {
     return true;
+}
+
+void DebuggerL0::captureStateBaseAddress(NEO::CommandContainer &container) {
+    uint64_t ssh = 0;
+    if (container.isHeapDirty(NEO::HeapType::SURFACE_STATE)) {
+        ssh = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getHeapGpuBase();
+    }
+    programSbaTrackingCommands(*container.getCommandStream(), 0, ssh);
 }
 
 } // namespace L0

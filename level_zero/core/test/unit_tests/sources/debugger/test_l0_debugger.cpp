@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gen_common/reg_configs/reg_configs_common.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
@@ -20,7 +21,7 @@
 namespace L0 {
 namespace ult {
 
-using L0DebuggerTest = Test<MockL0DebuggerFixture>;
+using L0DebuggerTest = Test<L0DebuggerHwFixture>;
 
 TEST_F(L0DebuggerTest, givenL0DebuggerWhenCallingIsLegacyThenFalseIsReturned) {
     EXPECT_FALSE(neoDevice->getDebugger()->isLegacy());
@@ -38,7 +39,7 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenCallingIsDebuggerActiveThenTrueIsRetur
     EXPECT_TRUE(neoDevice->getDebugger()->isDebuggerActive());
 }
 
-TEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuffersAreAllocated) {
+HWTEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuffersAreAllocated) {
     auto debugger = device->getL0Debugger();
     ASSERT_NE(nullptr, debugger);
 
@@ -57,14 +58,14 @@ TEST_F(L0DebuggerTest, givenL0DebuggerWhenCreatedThenPerContextSbaTrackingBuffer
         EXPECT_NE(allocations[i], allocations[i + 1]);
     }
 
-    EXPECT_EQ(device->getNEODevice()->getEngines().size(), mockDebugger->perContextSbaAllocations.size());
+    EXPECT_EQ(device->getNEODevice()->getEngines().size(), getMockDebuggerL0Hw<FamilyType>()->perContextSbaAllocations.size());
 }
 
-TEST_F(L0DebuggerTest, givenCreatedL0DebuggerThenSbaTrackingBuffersContainValidHeader) {
+HWTEST_F(L0DebuggerTest, givenCreatedL0DebuggerThenSbaTrackingBuffersContainValidHeader) {
     auto debugger = device->getL0Debugger();
     ASSERT_NE(nullptr, debugger);
 
-    for (auto &sbaBuffer : mockDebugger->perContextSbaAllocations) {
+    for (auto &sbaBuffer : getMockDebuggerL0Hw<FamilyType>()->perContextSbaAllocations) {
         auto sbaAllocation = sbaBuffer.second;
         ASSERT_NE(nullptr, sbaAllocation);
 
@@ -229,6 +230,93 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedTwiceThen
     commandQueue->destroy();
 }
 
+using NotGen8Or11 = AreNotGfxCores<IGFX_GEN8_CORE, IGFX_GEN11_CORE>;
+
+HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsExecutedThenProgramGsbaWritesToSbaTrackingBuffer, NotGen8Or11) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto cmdQ = CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false);
+    ASSERT_NE(nullptr, cmdQ);
+
+    auto commandQueue = whitebox_cast(cmdQ);
+    auto cmdQHw = static_cast<CommandQueueHw<gfxCoreFamily> *>(cmdQ);
+
+    if (cmdQHw->estimateStateBaseAddressCmdSize() == 0) {
+        commandQueue->destroy();
+        GTEST_SKIP();
+    }
+
+    commandQueue->commandQueuePerThreadScratchSize = 4096;
+
+    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+
+    ze_command_list_handle_t commandLists[] = {
+        CommandList::create(productFamily, device, false)->toHandle()};
+    uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+
+    auto sbaItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), sbaItor);
+    auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*sbaItor);
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(sbaItor, cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+    auto cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    uint64_t gsbaGpuVa = cmdSba->getGeneralStateBaseAddress();
+    EXPECT_EQ(static_cast<uint32_t>(gsbaGpuVa & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
+    EXPECT_EQ(static_cast<uint32_t>(gsbaGpuVa >> 32), cmdSdi->getDataDword1());
+
+    auto expectedGpuVa = GmmHelper::decanonize(device->getL0Debugger()->getSbaTrackingGpuVa()) + offsetof(SbaTrackedAddresses, GeneralStateBaseAddress);
+    EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
+
+    for (auto i = 0u; i < numCommandLists; i++) {
+        auto commandList = CommandList::fromHandle(commandLists[i]);
+        commandList->destroy();
+    }
+    commandQueue->destroy();
+}
+
+HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititalizedOrResetThenSSHAddressIsTracked, NotGen8Or11) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    size_t usedSpaceBefore = 0;
+    ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, false)->toHandle();
+    auto commandList = CommandList::fromHandle(commandListHandle);
+
+    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, commandList->commandContainer.getCommandStream()->getCpuBase(), usedSpaceAfter));
+
+    auto sbaItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), sbaItor);
+    auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*sbaItor);
+
+    uint64_t sshGpuVa = cmdSba->getSurfaceStateBaseAddress();
+    auto expectedGpuVa = commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getHeapGpuBase();
+    EXPECT_EQ(expectedGpuVa, sshGpuVa);
+    EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
+
+    commandList->reset();
+    EXPECT_EQ(2u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
+
+    commandList->destroy();
+}
+
 HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenBindlessSurfaceStateForDebugSurfaceIsProgrammedAtOffsetZero) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
@@ -257,5 +345,86 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenBindle
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, debugSurfaceState->getCoherencyType());
 }
 
+using L0DebuggerSimpleTest = Test<DeviceFixture>;
+
+HWTEST_F(L0DebuggerSimpleTest, givenNonZeroGpuVasWhenProgrammingSbaTrackingThenCorrectCmdsAreAddedToStream) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+
+    debugger->sbaTrackingGpuVa.address = 0x45670000;
+    auto expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, GeneralStateBaseAddress);
+
+    StackVec<char, 4096> buffer(4096);
+    NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
+    uint64_t gsba = 0x60000;
+    uint64_t ssba = 0x1234567000;
+
+    debugger->programSbaTrackingCommands(cmdStream, gsba, ssba);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
+
+    EXPECT_EQ(2 * sizeof(MI_STORE_DATA_IMM), cmdStream.getUsed());
+
+    auto sdiItor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), sdiItor);
+    auto cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    EXPECT_EQ(static_cast<uint32_t>(gsba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
+    EXPECT_EQ(static_cast<uint32_t>(gsba >> 32), cmdSdi->getDataDword1());
+    EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
+    EXPECT_TRUE(cmdSdi->getStoreQword());
+
+    sdiItor++;
+    cmdSdi = genCmdCast<MI_STORE_DATA_IMM *>(*sdiItor);
+
+    expectedGpuVa = debugger->sbaTrackingGpuVa.address + offsetof(SbaTrackedAddresses, SurfaceStateBaseAddress);
+    EXPECT_EQ(static_cast<uint32_t>(ssba & 0x0000FFFFFFFFULL), cmdSdi->getDataDword0());
+    EXPECT_EQ(static_cast<uint32_t>(ssba >> 32), cmdSdi->getDataDword1());
+    EXPECT_EQ(expectedGpuVa, cmdSdi->getAddress());
+    EXPECT_TRUE(cmdSdi->getStoreQword());
+}
+
+HWTEST_F(L0DebuggerSimpleTest, givenZeroGpuVasWhenProgrammingSbaTrackingThenStreamIsNotUsed) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+
+    debugger->sbaTrackingGpuVa.address = 0x45670000;
+
+    StackVec<char, 4096> buffer(4096);
+    NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
+    uint64_t gsba = 0;
+    uint64_t ssba = 0;
+
+    debugger->programSbaTrackingCommands(cmdStream, gsba, ssba);
+
+    EXPECT_EQ(0u, cmdStream.getUsed());
+}
+
+HWTEST_F(L0DebuggerSimpleTest, whenAllocateCalledThenDebuggerIsCreated) {
+    auto debugger = DebuggerL0Hw<FamilyType>::allocate(neoDevice);
+    EXPECT_NE(nullptr, debugger);
+    delete debugger;
+}
+
+HWTEST_F(L0DebuggerSimpleTest, givenNotDirtySSHWhenCapturingSBAThenNoTrackingCmdsAreAdded) {
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+
+    debugger->sbaTrackingGpuVa.address = 0x45670000;
+
+    NEO::CommandContainer container;
+    container.initialize(neoDevice);
+
+    debugger->captureStateBaseAddress(container);
+    auto sizeUsed = container.getCommandStream()->getUsed();
+
+    EXPECT_NE(0u, sizeUsed);
+    container.setDirtyStateForAllHeaps(false);
+
+    debugger->captureStateBaseAddress(container);
+    auto sizeUsed2 = container.getCommandStream()->getUsed();
+
+    EXPECT_EQ(sizeUsed, sizeUsed2);
+}
 } // namespace ult
 } // namespace L0

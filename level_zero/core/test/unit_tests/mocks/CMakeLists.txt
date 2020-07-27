@@ -8,6 +8,7 @@ set(TARGET_NAME ${TARGET_NAME_L0}_mocks)
 
 set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/debugger_l0_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_built_ins.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_built_ins.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdlist.h

@@ -16,6 +16,7 @@
 namespace NEO {
 class Device;
 class GraphicsAllocation;
+class LinearStream;
 } // namespace NEO
 
 namespace L0 {
@@ -51,10 +52,38 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
         return sbaTrackingGpuVa.address;
     }
 
+    void captureStateBaseAddress(NEO::CommandContainer &container) override;
+
+    virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) const = 0;
+    virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, uint64_t generalStateGpuVa, uint64_t surfaceStateGpuVa) const = 0;
+
   protected:
     NEO::Device *device = nullptr;
     NEO::GraphicsAllocation *sbaAllocation = nullptr;
     std::unordered_map<uint32_t, NEO::GraphicsAllocation *> perContextSbaAllocations;
     NEO::AddressRange sbaTrackingGpuVa;
 };
+
+using DebugerL0CreateFn = DebuggerL0 *(*)(NEO::Device *device);
+extern DebugerL0CreateFn debuggerL0Factory[];
+
+template <typename GfxFamily>
+class DebuggerL0Hw : public DebuggerL0 {
+  public:
+    static DebuggerL0 *allocate(NEO::Device *device);
+
+    size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) const override;
+    void programSbaTrackingCommands(NEO::LinearStream &cmdStream, uint64_t generalStateGpuVa, uint64_t surfaceStateGpuVa) const override;
+
+  protected:
+    DebuggerL0Hw(NEO::Device *device) : DebuggerL0(device){};
+};
+
+template <uint32_t productFamily, typename GfxFamily>
+struct DebuggerL0PopulateFactory {
+    DebuggerL0PopulateFactory() {
+        debuggerL0Factory[productFamily] = DebuggerL0Hw<GfxFamily>::allocate;
+    }
+};
+
 } // namespace L0

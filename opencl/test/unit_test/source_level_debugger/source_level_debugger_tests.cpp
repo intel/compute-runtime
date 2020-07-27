@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/device/device.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
@@ -600,4 +601,16 @@ TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenTheyAreCreatedTheyUseDedic
         auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
         EXPECT_NE(sourceLevelDebugger, device2->getDebugger());
     }
+}
+
+TEST(SourceLevelDebugger, whenCaptureSBACalledThenNoCommandsAreAddedToStream) {
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    auto device = std::unique_ptr<Device>(Device::create<MockDevice>(executionEnvironment, 0u));
+    MockSourceLevelDebugger debugger;
+
+    CommandContainer container;
+    container.initialize(device.get());
+
+    debugger.captureStateBaseAddress(container);
+    EXPECT_EQ(0u, container.getCommandStream()->getUsed());
 }

@@ -42,17 +42,16 @@ struct EncodeStateBaseAddress;
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, bool isCopyOnly) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    this->device = device;
+    this->commandListPreemptionMode = device->getDevicePreemptionMode();
+    this->isCopyOnlyCmdList = isCopyOnly;
 
     if (!commandContainer.initialize(static_cast<DeviceImp *>(device)->neoDevice)) {
         return false;
     }
     if (!isCopyOnly) {
-        NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer);
-        commandContainer.setDirtyStateForAllHeaps(false);
+        programStateBaseAddress(commandContainer);
     }
-    this->device = device;
-    this->commandListPreemptionMode = device->getDevicePreemptionMode();
-    this->isCopyOnlyCmdList = isCopyOnly;
 
     return true;
 }
@@ -1449,8 +1448,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     removeHostPtrAllocations();
     commandContainer.reset();
 
-    NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer);
-    commandContainer.setDirtyStateForAllHeaps(false);
+    programStateBaseAddress(commandContainer);
 
     return ZE_RESULT_SUCCESS;
 }
@@ -1484,6 +1482,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::setGlobalWorkSizeIndirect(NEO:
     NEO::EncodeIndirectParams<GfxFamily>::setGlobalWorkSizeIndirect(commandContainer, offsets, crossThreadAddress, lws);
 
     return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandContainer &container) {
+    NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer);
+    if (device->getL0Debugger()) {
+        device->getL0Debugger()->captureStateBaseAddress(commandContainer);
+    }
+    commandContainer.setDirtyStateForAllHeaps(false);
 }
 
 } // namespace L0

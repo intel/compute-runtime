@@ -10,12 +10,33 @@
 
 namespace L0 {
 namespace ult {
+extern DebugerL0CreateFn mockDebuggerL0HwFactory[];
 
-class MockDebuggerL0 : public L0::DebuggerL0 {
+template <typename GfxFamily>
+class MockDebuggerL0Hw : public L0::DebuggerL0Hw<GfxFamily> {
   public:
-    using L0::DebuggerL0::DebuggerL0;
     using L0::DebuggerL0::perContextSbaAllocations;
-    ~MockDebuggerL0() override = default;
+    using L0::DebuggerL0::sbaTrackingGpuVa;
+
+    MockDebuggerL0Hw(NEO::Device *device) : L0::DebuggerL0Hw<GfxFamily>(device) {}
+    ~MockDebuggerL0Hw() override = default;
+
+    static DebuggerL0 *allocate(NEO::Device *device) {
+        return new MockDebuggerL0Hw<GfxFamily>(device);
+    }
+
+    void captureStateBaseAddress(NEO::CommandContainer &container) override {
+        captureStateBaseAddressCount++;
+        L0::DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(container);
+    }
+    uint32_t captureStateBaseAddressCount = 0;
+};
+
+template <uint32_t productFamily, typename GfxFamily>
+struct MockDebuggerL0HwPopulateFactory {
+    MockDebuggerL0HwPopulateFactory() {
+        mockDebuggerL0HwFactory[productFamily] = MockDebuggerL0Hw<GfxFamily>::allocate;
+    }
 };
 
 } // namespace ult

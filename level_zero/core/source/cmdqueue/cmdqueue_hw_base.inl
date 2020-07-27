@@ -60,6 +60,10 @@ void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba
 
     gsbaInit = true;
 
+    if (device->getL0Debugger()) {
+        device->getL0Debugger()->programSbaTrackingCommands(commandStream, gsba, 0);
+    }
+
     NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(*device->getNEODevice(), commandStream, false);
 }
 
@@ -70,6 +74,10 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
     size_t size = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + NEO::EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(*device->getNEODevice());
+
+    if (device->getL0Debugger() != nullptr) {
+        size += device->getL0Debugger()->getSbaTrackingCommandsSize(1);
+    }
     return size;
 }
 

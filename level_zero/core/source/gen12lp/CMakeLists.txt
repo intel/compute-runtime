@@ -8,6 +8,7 @@ if(SUPPORT_GEN12LP)
     set(HW_SOURCES_GEN12LP
         ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
         ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_gen12lp.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/debugger_gen12lp.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/cache_flush_gen12lp.inl
         ${CMAKE_CURRENT_SOURCE_DIR}/enable_family_full_l0_gen12lp.cpp
     )
