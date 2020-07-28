@@ -32,6 +32,7 @@ namespace NEO {
 BufferObject::BufferObject(Drm *drm, int handle, size_t size) : drm(drm), refCount(1), handle(handle), size(size), isReused(false) {
     this->tiling_mode = I915_TILING_NONE;
     this->lockedAddress = nullptr;
+    bindInfo.fill(false);
 }
 
 uint32_t BufferObject::getRefCount() const {
@@ -128,18 +129,24 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     return err;
 }
 
-void BufferObject::bind(uint32_t drmContextId) {
-    auto ret = this->drm->bindBufferObject(drmContextId, this);
-    auto err = this->drm->getErrno();
-    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "bind buffer object returned with %d. errno=%d(%s)\n", ret, err, strerror(err));
-    UNRECOVERABLE_IF(ret != 0);
+void BufferObject::bind(uint32_t vmHandleId) {
+    if (!this->bindInfo[vmHandleId]) {
+        auto ret = this->drm->bindBufferObject(vmHandleId, this);
+        auto err = this->drm->getErrno();
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "bind buffer object returned with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        UNRECOVERABLE_IF(ret != 0);
+        this->bindInfo[vmHandleId] = true;
+    }
 }
 
-void BufferObject::unbind(uint32_t drmContextId) {
-    auto ret = this->drm->unbindBufferObject(drmContextId, this);
-    auto err = this->drm->getErrno();
-    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "unbind buffer object returned with %d. errno=%d(%s)\n", ret, err, strerror(err));
-    UNRECOVERABLE_IF(ret != 0);
+void BufferObject::unbind(uint32_t vmHandleId) {
+    if (this->bindInfo[vmHandleId]) {
+        auto ret = this->drm->unbindBufferObject(vmHandleId, this);
+        auto err = this->drm->getErrno();
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "unbind buffer object returned with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        UNRECOVERABLE_IF(ret != 0);
+        this->bindInfo[vmHandleId] = false;
+    }
 }
 
 void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage) {

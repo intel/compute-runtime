@@ -87,8 +87,8 @@ class Drm {
     bool createVirtualMemoryAddressSpace(uint32_t vmCount);
     void destroyVirtualMemoryAddressSpace();
     uint32_t getVirtualMemoryAddressSpace(uint32_t vmId);
-    int bindBufferObject(uint32_t drmContextId, BufferObject *bo);
-    int unbindBufferObject(uint32_t drmContextId, BufferObject *bo);
+    int bindBufferObject(uint32_t vmHandleId, BufferObject *bo);
+    int unbindBufferObject(uint32_t vmHandleId, BufferObject *bo);
     int setupHardwareInfo(DeviceDescriptor *, bool);
 
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }

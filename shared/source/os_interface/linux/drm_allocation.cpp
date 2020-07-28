@@ -28,20 +28,20 @@ uint64_t DrmAllocation::peekInternalHandle(MemoryManager *memoryManager) {
     return static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBO()->peekHandle(), this->rootDeviceIndex));
 }
 
-void DrmAllocation::makeBOsResident(uint32_t osContextId, uint32_t drmContextId, uint32_t handleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
+void DrmAllocation::makeBOsResident(uint32_t osContextId, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
     if (this->fragmentsStorage.fragmentCount) {
         for (unsigned int f = 0; f < this->fragmentsStorage.fragmentCount; f++) {
             if (!this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContextId]) {
-                bindBO(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage->bo, drmContextId, bufferObjects, bind);
+                bindBO(this->fragmentsStorage.fragmentStorageData[f].osHandleStorage->bo, vmHandleId, bufferObjects, bind);
                 this->fragmentsStorage.fragmentStorageData[f].residency->resident[osContextId] = true;
             }
         }
     } else {
-        bindBOs(handleId, drmContextId, bufferObjects, bind);
+        bindBOs(vmHandleId, bufferObjects, bind);
     }
 }
 
-void DrmAllocation::bindBO(BufferObject *bo, uint32_t drmContextId, std::vector<BufferObject *> *bufferObjects, bool bind) {
+void DrmAllocation::bindBO(BufferObject *bo, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
     if (bo) {
         if (bufferObjects) {
             if (bo->peekIsReusableAllocation()) {
@@ -56,9 +56,9 @@ void DrmAllocation::bindBO(BufferObject *bo, uint32_t drmContextId, std::vector<
 
         } else {
             if (bind) {
-                bo->bind(drmContextId);
+                bo->bind(vmHandleId);
             } else {
-                bo->unbind(drmContextId);
+                bo->unbind(vmHandleId);
             }
         }
     }

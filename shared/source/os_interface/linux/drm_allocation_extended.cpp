@@ -10,9 +10,9 @@
 
 namespace NEO {
 
-void DrmAllocation::bindBOs(uint32_t handleId, uint32_t drmContextId, std::vector<BufferObject *> *bufferObjects, bool bind) {
+void DrmAllocation::bindBOs(uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
     auto bo = this->getBO();
-    bindBO(bo, drmContextId, bufferObjects, bind);
+    bindBO(bo, vmHandleId, bufferObjects, bind);
 }
 
 } // namespace NEO

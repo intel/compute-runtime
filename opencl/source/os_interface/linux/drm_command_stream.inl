@@ -116,7 +116,7 @@ template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
     for (auto &alloc : inputAllocationsForResidency) {
         auto drmAlloc = static_cast<DrmAllocation *>(alloc);
-        drmAlloc->makeBOsResident(osContext->getContextId(), 0u, handleId, &this->residency, false);
+        drmAlloc->makeBOsResident(osContext->getContextId(), handleId, &this->residency, false);
     }
 }
 

@@ -6,8 +6,11 @@
  */
 
 #pragma once
-#include "drm/i915_drm.h"
 
+#include "drm/i915_drm.h"
+#include "engine_limits.h"
+
+#include <array>
 #include <atomic>
 #include <cstddef>
 #include <stdint.h>
@@ -40,8 +43,8 @@ class BufferObject {
 
     int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId, BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage);
 
-    void bind(uint32_t drmContextId);
-    void unbind(uint32_t drmContextId);
+    void bind(uint32_t vmHandleId);
+    void unbind(uint32_t vmHandleId);
 
     void printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage);
 
@@ -82,5 +85,7 @@ class BufferObject {
     void *lockedAddress; // CPU side virtual address
 
     uint64_t unmapSize = 0;
+
+    std::array<bool, EngineLimits::maxHandleCount> bindInfo;
 };
 } // namespace NEO
