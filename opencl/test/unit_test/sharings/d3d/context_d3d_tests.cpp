@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-TEST(D3DContextTest, sharingAreNotPresentByDefault) {
+TEST(D3DContextTest, WhenContextIsCreatedThenSharingIsNotPresent) {
     MockContext context;
 
     EXPECT_EQ(nullptr, context.getSharing<D3DSharingFunctions<D3DTypesHelper::D3D9>>());
