@@ -58,6 +58,12 @@ const HwHelper::EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineIn
 }
 
 template <typename GfxFamily>
+void HwHelperHw<GfxFamily>::addEngineToEngineGroup(std::vector<std::vector<EngineControl>> &engineGroups,
+                                                   EngineControl &engine, const HardwareInfo &hwInfo) const {
+    engineGroups[static_cast<uint32_t>(EngineGroupType::RenderCompute)].push_back(engine);
+}
+
+template <typename GfxFamily>
 std::string HwHelperHw<GfxFamily>::getExtensions() const {
     return "";
 }

@@ -148,7 +148,46 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
 
 ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
                                                       ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    auto engines = this->getNEODevice()->getEngineGroups();
+    uint32_t numEngineGroups = 0;
+    for (uint32_t i = 0; i < engines.size(); i++) {
+        if (engines[i].size() > 0) {
+            numEngineGroups++;
+        }
+    }
+
+    if (*pCount == 0) {
+        *pCount = numEngineGroups;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    *pCount = std::min(numEngineGroups, *pCount);
+    for (uint32_t i = 0, engineGroupCount = 0;
+         i < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups) && engineGroupCount < *pCount;
+         i++, engineGroupCount++) {
+
+        if (engines[i].empty()) {
+            continue;
+        }
+
+        if (i == static_cast<uint32_t>(NEO::EngineGroupType::RenderCompute)) {
+            pCommandQueueGroupProperties[engineGroupCount].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE |
+                                                                   ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY |
+                                                                   ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS |
+                                                                   ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS;
+        }
+        if (i == static_cast<uint32_t>(NEO::EngineGroupType::Compute)) {
+            pCommandQueueGroupProperties[engineGroupCount].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE |
+                                                                   ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
+        }
+        if (i == static_cast<uint32_t>(NEO::EngineGroupType::Copy)) {
+            pCommandQueueGroupProperties[engineGroupCount].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
+        }
+        pCommandQueueGroupProperties[engineGroupCount].maxMemoryFillPatternSize = sizeof(uint32_t);
+        pCommandQueueGroupProperties[engineGroupCount].numQueues = static_cast<uint32_t>(engines[i].size());
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t DeviceImp::createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) {

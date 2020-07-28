@@ -44,6 +44,9 @@ class Device : public ReferenceTrackedObject<Device> {
     const HardwareInfo &getHardwareInfo() const;
     const DeviceInfo &getDeviceInfo() const;
     EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority);
+    std::vector<std::vector<EngineControl>> &getEngineGroups() {
+        return this->engineGroups;
+    }
     EngineControl &getEngine(uint32_t index);
     EngineControl &getDefaultEngine();
     EngineControl &getInternalEngine();
@@ -119,6 +122,7 @@ class Device : public ReferenceTrackedObject<Device> {
     std::unique_ptr<PerformanceCounters> performanceCounters;
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     std::vector<EngineControl> engines;
+    std::vector<std::vector<EngineControl>> engineGroups;
     PreemptionMode preemptionMode;
     ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t defaultEngineIndex = 0;

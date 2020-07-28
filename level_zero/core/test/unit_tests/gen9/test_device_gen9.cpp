@@ -36,5 +36,25 @@ HWTEST2_F(DevicePropertyTest, givenReturnedDevicePropertiesThenExpectedPageFault
     EXPECT_FALSE(deviceProps.onDemandPageFaultsSupported);
 }
 
+using DeviceQueueGroupTest = Test<DeviceFixture>;
+
+HWTEST2_F(DeviceQueueGroupTest, givenCommandQueuePropertiesCallThenCorrectNumberOfGroupsIsReturned, IsGen9) {
+    uint32_t count = 0;
+    ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(1u, count);
+
+    ze_command_queue_group_properties_t properties;
+    res = device->getCommandQueueGroupProperties(&count, &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
+    EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
+    EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
+    EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
+    EXPECT_EQ(properties.numQueues, 1u);
+    EXPECT_EQ(properties.maxMemoryFillPatternSize, sizeof(uint32_t));
+}
+
 } // namespace ult
 } // namespace L0

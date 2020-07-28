@@ -35,6 +35,13 @@ enum class LocalMemoryAccessMode {
     CpuAccessDisallowed = 3
 };
 
+enum class EngineGroupType : uint32_t {
+    RenderCompute = 0,
+    Compute,
+    Copy,
+    MaxEngineGroups
+};
+
 class HwHelper {
   public:
     using EngineInstancesContainer = StackVec<aub_stream::EngineType, 32>;
@@ -81,6 +88,8 @@ class HwHelper {
                                                 bool forceNonAuxMode,
                                                 bool useL1Cache) = 0;
     virtual const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const = 0;
+    virtual void addEngineToEngineGroup(std::vector<std::vector<EngineControl>> &engineGroups,
+                                        EngineControl &engine, const HardwareInfo &hwInfo) const = 0;
     virtual const StackVec<size_t, 3> getDeviceSubGroupSizes() const = 0;
     virtual const StackVec<uint32_t, 6> getThreadsPerEUConfigs() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
@@ -229,6 +238,9 @@ class HwHelperHw : public HwHelper {
     MOCKABLE_VIRTUAL void setL1CachePolicy(bool useL1Cache, typename GfxFamily::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo);
 
     const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override;
+
+    void addEngineToEngineGroup(std::vector<std::vector<EngineControl>> &engineGroups,
+                                EngineControl &engine, const HardwareInfo &hwInfo) const override;
 
     const StackVec<size_t, 3> getDeviceSubGroupSizes() const override;
 

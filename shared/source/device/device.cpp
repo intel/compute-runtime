@@ -102,6 +102,7 @@ bool Device::createEngines() {
     auto &hwInfo = getHardwareInfo();
     auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
 
+    this->engineGroups.resize(static_cast<uint32_t>(EngineGroupType::MaxEngineGroups));
     for (uint32_t deviceCsrIndex = 0; deviceCsrIndex < gpgpuEngines.size(); deviceCsrIndex++) {
         if (!createEngine(deviceCsrIndex, gpgpuEngines[deviceCsrIndex])) {
             return false;
@@ -151,7 +152,15 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
         return false;
     }
 
-    engines.push_back({commandStreamReceiver.get(), osContext});
+    EngineControl engine{commandStreamReceiver.get(), osContext};
+    engine.engineType = engineType;
+    engines.push_back(engine);
+    if (!lowPriority && !internalUsage) {
+        const auto &hardwareInfo = this->getHardwareInfo();
+        auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+        hwHelper.addEngineToEngineGroup(engineGroups, engine, hwInfo);
+    }
+
     commandStreamReceivers.push_back(std::move(commandStreamReceiver));
 
     return true;
