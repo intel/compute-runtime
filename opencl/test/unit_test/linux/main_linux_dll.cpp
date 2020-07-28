@@ -244,6 +244,16 @@ TEST_F(DrmTests, createReturnsDrm) {
 
     ioctlCnt = 0;
     ioctlSeq[0] = -1;
+    errno = EBUSY;
+    // check if device works, although there was EBUSY error from KMD
+    getParam.param = I915_PARAM_CHIPSET_ID;
+    getParam.value = &lDeviceId;
+    ret = drm->ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(deviceId, lDeviceId);
+
+    ioctlCnt = 0;
+    ioctlSeq[0] = -1;
     errno = 0;
     // we failed with any other error code
     getParam.param = I915_PARAM_CHIPSET_ID;
