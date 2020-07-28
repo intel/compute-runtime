@@ -911,6 +911,21 @@ HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenMinimalSIMDSizeIsQueriedThen8Is
     EXPECT_EQ(8u, helper.getMinimalSIMDSize());
 }
 
+HWTEST_F(HwHelperTest, whenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectValuesAreReturned) {
+    DebugManagerStateRestore restore{};
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    auto expectedDefaultValue = (helper.getLocalMemoryAccessMode(*defaultHwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed);
+    EXPECT_EQ(expectedDefaultValue, helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo));
+
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo));
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo));
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
+    EXPECT_TRUE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo));
+}
+
 HWTEST_F(HwHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
     struct MockHwHelper : HwHelperHw<FamilyType> {
         using HwHelper::getDefaultLocalMemoryAccessMode;

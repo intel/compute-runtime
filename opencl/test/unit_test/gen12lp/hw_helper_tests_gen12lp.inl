@@ -255,11 +255,6 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, whenGettingComputeEngineIndexByOrdinalThenCor
     }
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, givenDefaultHwHelperHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo));
-}
-
 class HwHelperTestsGen12LpBuffer : public ::testing::Test {
   public:
     void SetUp() override {
