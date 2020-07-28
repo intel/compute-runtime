@@ -75,7 +75,7 @@ struct MetricGroupImp : MetricGroup {
     ze_result_t getProperties(zet_metric_group_properties_t *pProperties) override;
     ze_result_t getPropertiesExt(zet_metric_group_properties_ext_t *pProperties) override;
     ze_result_t getMetric(uint32_t *pCount, zet_metric_handle_t *phMetrics) override;
-    ze_result_t calculateMetricValues(size_t rawDataSize, const uint8_t *pRawData,
+    ze_result_t calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize, const uint8_t *pRawData,
                                       uint32_t *pMetricValueCount,
                                       zet_typed_value_t *pCalculatedData) override;
 
@@ -106,7 +106,7 @@ struct MetricGroupImp : MetricGroup {
     bool getCalculatedMetricCount(const size_t rawDataSize,
                                   uint32_t &metricValueCount);
 
-    bool getCalculatedMetricValues(const size_t rawDataSize, const uint8_t *pRawData,
+    bool getCalculatedMetricValues(const zet_metric_group_calculation_type_t, const size_t rawDataSize, const uint8_t *pRawData,
                                    uint32_t &metricValueCount,
                                    zet_typed_value_t *pCalculatedData);
 

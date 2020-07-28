@@ -76,7 +76,7 @@ struct MetricGroup : _zet_metric_group_handle_t {
     virtual ze_result_t getProperties(zet_metric_group_properties_t *pProperties) = 0;
     virtual ze_result_t getPropertiesExt(zet_metric_group_properties_ext_t *pProperties) = 0;
     virtual ze_result_t getMetric(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
-    virtual ze_result_t calculateMetricValues(size_t rawDataSize,
+    virtual ze_result_t calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
                                               const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                               zet_typed_value_t *pMetricValues) = 0;
 

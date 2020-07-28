@@ -66,7 +66,18 @@ zetMetricGroupCalculateMetricValues(
     const uint8_t *pRawData,
     uint32_t *pMetricValueCount,
     zet_typed_value_t *pMetricValues) {
-    return L0::MetricGroup::fromHandle(hMetricGroup)->calculateMetricValues(rawDataSize, pRawData, pMetricValueCount, pMetricValues);
+    return L0::MetricGroup::fromHandle(hMetricGroup)->calculateMetricValues(ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataSize, pRawData, pMetricValueCount, pMetricValues);
+}
+
+__zedllexport ze_result_t __zecall
+zetMetricGroupCalculateMetricValuesExt(
+    zet_metric_group_handle_t hMetricGroup,
+    zet_metric_group_calculation_type_t type,
+    size_t rawDataSize,
+    const uint8_t *pRawData,
+    uint32_t *pMetricValueCount,
+    zet_typed_value_t *pMetricValues) {
+    return L0::MetricGroup::fromHandle(hMetricGroup)->calculateMetricValues(type, rawDataSize, pRawData, pMetricValueCount, pMetricValues);
 }
 
 __zedllexport ze_result_t __zecall

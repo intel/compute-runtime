@@ -1956,5 +1956,176 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndCorrectCalculatedRepor
     EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, rawResultsSize, rawResults.data(), &calculatedResultsCount, caculatedrawResults.data()), ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndCorrectCalculatedReportCountWhenZetMetricGroupCalculateMetricValuesIsCalledThenMaxValuesAreReturned) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+
+    // Metrics Discovery: metric set
+    Mock<IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.QueryReportSize = 256;
+    metricsSetParams.MetricsCount = 11;
+
+    // Metrics Discovery: metric
+    Mock<IMetric_1_0> metric;
+    MetricsDiscovery::TMetricParams_1_0 metricParams = {};
+
+    // One api: metric group.
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
+        .Times(0);
+
+    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, GetMetric(_))
+        .Times(11)
+        .WillRepeatedly(Return(&metric));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<4>(metricsSetParams.MetricsCount), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(metric, GetParams())
+        .WillRepeatedly(Return(&metricParams));
+
+    // Metric group handles.
+    uint32_t metricGroupCount = 1;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    // Return correct calculated report count for single raw report.
+    size_t rawResultsSize = metricsSetParams.QueryReportSize;
+    std::vector<uint8_t> rawResults(rawResultsSize);
+    uint32_t calculatedResultsCount = 0;
+
+    EXPECT_EQ(zetMetricGroupCalculateMetricValuesExt(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_MAX_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResultsCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(calculatedResultsCount, metricsSetParams.MetricsCount);
+
+    // Provide incorrect calculated report buffer.
+    std::vector<zet_typed_value_t> caculatedrawResults(calculatedResultsCount);
+    EXPECT_EQ(zetMetricGroupCalculateMetricValuesExt(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_MAX_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResultsCount, caculatedrawResults.data()), ZE_RESULT_SUCCESS);
+}
+
+TEST_F(MetricEnumerationTest, givenIncorrectCalculationTypeWhenZetMetricGroupCalculateMetricValuesIsCalledThenMaxValuesAreReturned) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+
+    // Metrics Discovery: metric set
+    Mock<IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.QueryReportSize = 256;
+    metricsSetParams.MetricsCount = 11;
+
+    // Metrics Discovery: metric
+    Mock<IMetric_1_0> metric;
+    MetricsDiscovery::TMetricParams_1_0 metricParams = {};
+
+    // One api: metric group.
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
+        .Times(0);
+
+    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, GetMetric(_))
+        .Times(11)
+        .WillRepeatedly(Return(&metric));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metric, GetParams())
+        .WillRepeatedly(Return(&metricParams));
+
+    // Metric group handles.
+    uint32_t metricGroupCount = 1;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    // Return correct calculated report count for single raw report.
+    size_t rawResultsSize = metricsSetParams.QueryReportSize;
+    std::vector<uint8_t> rawResults(rawResultsSize);
+    uint32_t calculatedResultsCount = 0;
+
+    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, rawResultsSize, rawResults.data(), &calculatedResultsCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(calculatedResultsCount, metricsSetParams.MetricsCount);
+
+    // Provide incorrect calculated report buffer.
+    std::vector<zet_typed_value_t> caculatedrawResults(calculatedResultsCount);
+    EXPECT_NE(zetMetricGroupCalculateMetricValuesExt(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_FORCE_UINT32, rawResultsSize, rawResults.data(), &calculatedResultsCount, caculatedrawResults.data()), ZE_RESULT_SUCCESS);
+}
 } // namespace ult
 } // namespace L0

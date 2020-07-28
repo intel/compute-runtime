@@ -377,6 +377,50 @@ zetMetricGetPropertiesExt(
 );
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Metric group calculation type
+typedef enum _zet_metric_group_calculation_type_t {
+    ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES = 0,     ///< Calculated metric values from raw data.
+    ZET_METRIC_GROUP_CALCULATION_TYPE_MAX_METRIC_VALUES = 1, ///< Maximum metric values.
+    ZET_METRIC_GROUP_CALCULATION_TYPE_FORCE_UINT32 = 0x7fffffff
+
+} zet_metric_group_calculation_type_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Calculates metric values from raw data.
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hMetricGroup`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `::ZET_METRIC_GROUP_CALCULATION_TYPE_MAX_METRIC_VALUES < type`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pRawData`
+///         + `nullptr == pMetricValueCount`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetMetricGroupCalculateMetricValuesExt(
+    zet_metric_group_handle_t hMetricGroup,   ///< [in] handle of the metric group
+    zet_metric_group_calculation_type_t type, ///< [in] calculation type to be applied on raw data
+    size_t rawDataSize,                       ///< [in] size in bytes of raw data buffer
+    const uint8_t *pRawData,                  ///< [in][range(0, rawDataSize)] buffer of raw data to calculate
+    uint32_t *pMetricValueCount,              ///< [in,out] pointer to number of metric values calculated.
+                                              ///< if count is zero, then the driver will update the value with the total
+                                              ///< number of metric values to be calculated.
+                                              ///< if count is non-zero, then driver will only calculate that number of
+                                              ///< metric values.
+                                              ///< if count is larger than the number available in the raw data buffer,
+                                              ///< then the driver will update the value with the actual number of metric
+                                              ///< values to be calculated.
+    zet_typed_value_t *pMetricValues          ///< [in,out][optional][range(0, *pMetricValueCount)] buffer of calculated
+                                              ///< metrics
+);
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Supportted profile features
 typedef uint32_t zet_profile_flagsExt_t;
 typedef enum _zet_profile_flagExt_t {

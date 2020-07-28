@@ -487,13 +487,13 @@ ze_result_t MetricGroupImp::closeIoStream() {
     return (closeResult == MetricsDiscovery::CC_OK) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
-ze_result_t MetricGroupImp::calculateMetricValues(size_t rawDataSize,
+ze_result_t MetricGroupImp::calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
                                                   const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                                   zet_typed_value_t *pMetricValues) {
     const bool calculateCountOnly = *pMetricValueCount == 0;
     const bool result = calculateCountOnly
                             ? getCalculatedMetricCount(rawDataSize, *pMetricValueCount)
-                            : getCalculatedMetricValues(rawDataSize, pRawData, *pMetricValueCount, pMetricValues);
+                            : getCalculatedMetricValues(type, rawDataSize, pRawData, *pMetricValueCount, pMetricValues);
 
     return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
@@ -515,7 +515,7 @@ bool MetricGroupImp::getCalculatedMetricCount(const size_t rawDataSize,
     return true;
 }
 
-bool MetricGroupImp::getCalculatedMetricValues(const size_t rawDataSize, const uint8_t *pRawData,
+bool MetricGroupImp::getCalculatedMetricValues(const zet_metric_group_calculation_type_t type, const size_t rawDataSize, const uint8_t *pRawData,
                                                uint32_t &metricValueCount,
                                                zet_typed_value_t *pCalculatedData) {
 
@@ -530,18 +530,20 @@ bool MetricGroupImp::getCalculatedMetricValues(const size_t rawDataSize, const u
         return false;
     }
 
-    // Calculated metrics container.
+    // Calculated metrics / maximum values container.
     std::vector<MetricsDiscovery::TTypedValue_1_0> calculatedMetrics(expectedMetricValueCount);
+    std::vector<MetricsDiscovery::TTypedValue_1_0> maximumValues(expectedMetricValueCount);
 
     // Set filtering type.
     pReferenceMetricSet->SetApiFiltering(MetricGroupImp::getApiMask(properties.samplingType));
 
     // Calculate metrics.
-    const bool result = pReferenceMetricSet->CalculateMetrics(
-                            reinterpret_cast<unsigned char *>(const_cast<uint8_t *>(pRawData)), static_cast<uint32_t>(rawDataSize),
-                            calculatedMetrics.data(),
-                            static_cast<uint32_t>(calculatedMetrics.size()) * sizeof(MetricsDiscovery::TTypedValue_1_0),
-                            &calculatedReportCount, nullptr, static_cast<uint32_t>(0)) == MetricsDiscovery::CC_OK;
+    const uint32_t outMetricsSize = static_cast<uint32_t>(calculatedMetrics.size()) * sizeof(MetricsDiscovery::TTypedValue_1_0);
+    bool result = pReferenceMetricSet->CalculateMetrics(
+                      reinterpret_cast<unsigned char *>(const_cast<uint8_t *>(pRawData)), static_cast<uint32_t>(rawDataSize),
+                      calculatedMetrics.data(),
+                      outMetricsSize,
+                      &calculatedReportCount, maximumValues.data(), outMetricsSize) == MetricsDiscovery::CC_OK;
 
     if (result) {
 
@@ -549,8 +551,22 @@ bool MetricGroupImp::getCalculatedMetricValues(const size_t rawDataSize, const u
         metricValueCount = std::min<uint32_t>(metricValueCount, calculatedReportCount * properties.metricCount);
 
         // Translate metrics from metrics discovery to oneAPI format.
-        for (size_t i = 0; i < metricValueCount; ++i) {
-            copyValue(calculatedMetrics[i], pCalculatedData[i]);
+        switch (type) {
+        case ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES:
+            for (size_t i = 0; i < metricValueCount; ++i) {
+                copyValue(calculatedMetrics[i], pCalculatedData[i]);
+            }
+            break;
+
+        case ZET_METRIC_GROUP_CALCULATION_TYPE_MAX_METRIC_VALUES:
+            for (size_t i = 0; i < metricValueCount; ++i) {
+                copyValue(maximumValues[i], pCalculatedData[i]);
+            }
+            break;
+
+        default:
+            result = false;
+            break;
         }
     }
 

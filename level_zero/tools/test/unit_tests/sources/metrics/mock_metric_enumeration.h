@@ -135,7 +135,7 @@ struct Mock<MetricGroup> : public MetricGroup {
     Mock() {}
 
     MOCK_METHOD(ze_result_t, getMetric, (uint32_t *, zet_metric_handle_t *), (override));
-    MOCK_METHOD(ze_result_t, calculateMetricValues, (size_t, const uint8_t *, uint32_t *, zet_typed_value_t *), (override));
+    MOCK_METHOD(ze_result_t, calculateMetricValues, (const zet_metric_group_calculation_type_t, size_t, const uint8_t *, uint32_t *, zet_typed_value_t *), (override));
     MOCK_METHOD(ze_result_t, getProperties, (zet_metric_group_properties_t * properties), (override));
     MOCK_METHOD(ze_result_t, getPropertiesExt, (zet_metric_group_properties_ext_t * properties), (override));
     MOCK_METHOD(uint32_t, getRawReportSize, (), (override));
