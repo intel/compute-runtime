@@ -54,6 +54,10 @@ typedef enum _zet_structure_type_t {
 typedef struct _zet_metric_streamer_desc_t zet_metric_streamer_desc_t;
 
 ///////////////////////////////////////////////////////////////////////////////
+/// @brief Forward-declare zet_metric_query_pool_desc_ext_t
+typedef struct _zet_metric_query_pool_desc_ext_t zet_metric_query_pool_desc_ext_t;
+
+///////////////////////////////////////////////////////////////////////////////
 /// @brief Metric streamer descriptor
 typedef struct _zet_metric_streamer_desc_t {
     zet_structure_type_t stype;   ///< [in] type of this structure
@@ -170,6 +174,54 @@ zetMetricStreamerReadData(
                                                   ///< update the value with the actual size needed.
     uint8_t *pRawData                             ///< [in,out][optional][range(0, *pRawDataSize)] buffer containing streamer
                                                   ///< reports in raw format
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Metric query pool types
+typedef enum _zet_metric_query_pool_type_t {
+    ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE = 0, ///< Performance metric query pool.
+    ZET_METRIC_QUERY_POOL_TYPE_EXECUTION = 1,   ///< Skips workload execution between begin/end calls.
+    ZET_METRIC_QUERY_POOL_TYPE_FORCE_UINT32 = 0x7fffffff
+
+} zet_metric_query_pool_type_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Metric query pool description
+typedef struct _zet_metric_query_pool_desc_ext_t {
+    zet_structure_type_t stype;        ///< [in] type of this structure
+    const void *pNext;                 ///< [in][optional] pointer to extension-specific structure
+    zet_metric_query_pool_type_t type; ///< [in] Query pool type.
+    uint32_t count;                    ///< [in] Internal slots count within query pool object.
+
+} zet_metric_query_pool_desc_ext_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Creates a pool of metric queries on the context.
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hDevice`
+///         + `nullptr == hMetricGroup`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == desc`
+///         + `nullptr == phMetricQueryPool`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `::ZET_METRIC_QUERY_POOL_TYPE_EXECUTION < desc->type`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetMetricQueryPoolCreateExt(
+    zet_context_handle_t hContext,                    ///< [in] handle of the context object
+    zet_device_handle_t hDevice,                      ///< [in] handle of the device
+    zet_metric_group_handle_t hMetricGroup,           ///< [in] metric group associated with the query object.
+    const zet_metric_query_pool_desc_ext_t *desc,     ///< [in] metric query pool descriptor
+    zet_metric_query_pool_handle_t *phMetricQueryPool ///< [out] handle of metric query pool
 );
 
 ///////////////////////////////////////////////////////////////////////////////

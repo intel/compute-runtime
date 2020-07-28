@@ -379,6 +379,19 @@ void MetricsLibrary::deleteAllConfigurations() {
 ze_result_t metricQueryPoolCreate(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup, const zet_metric_query_pool_desc_t *pDesc,
                                   zet_metric_query_pool_handle_t *phMetricQueryPool) {
 
+    zet_metric_query_pool_desc_ext_t descExt = {};
+    descExt.stype = ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC;
+    descExt.type = (pDesc->flags == ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE)
+                       ? ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE
+                       : ZET_METRIC_QUERY_POOL_TYPE_EXECUTION;
+    descExt.count = pDesc->count;
+
+    return metricQueryPoolCreateExt(nullptr, hDevice, hMetricGroup, &descExt, phMetricQueryPool);
+}
+
+ze_result_t metricQueryPoolCreateExt(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+                                     const zet_metric_query_pool_desc_ext_t *pDesc, zet_metric_query_pool_handle_t *phMetricQueryPool) {
+
     auto device = Device::fromHandle(hDevice);
     auto &metricContext = device->getMetricContext();
 
@@ -397,7 +410,7 @@ ze_result_t metricQueryPoolCreate(zet_device_handle_t hDevice, zet_metric_group_
 
 MetricQueryPool *MetricQueryPool::create(zet_device_handle_t hDevice,
                                          zet_metric_group_handle_t hMetricGroup,
-                                         const zet_metric_query_pool_desc_t &desc) {
+                                         const zet_metric_query_pool_desc_ext_t &desc) {
     auto device = Device::fromHandle(hDevice);
     auto metricPoolImp = new MetricQueryPoolImp(device->getMetricContext(), hMetricGroup, desc);
 
@@ -411,14 +424,14 @@ MetricQueryPool *MetricQueryPool::create(zet_device_handle_t hDevice,
 
 MetricQueryPoolImp::MetricQueryPoolImp(MetricContext &metricContextInput,
                                        zet_metric_group_handle_t hEventMetricGroupInput,
-                                       const zet_metric_query_pool_desc_t &poolDescription)
+                                       const zet_metric_query_pool_desc_ext_t &poolDescription)
     : metricContext(metricContextInput), metricsLibrary(metricContext.getMetricsLibrary()),
       description(poolDescription),
       hMetricGroup(hEventMetricGroupInput) {}
 
 bool MetricQueryPoolImp::create() {
-    switch (description.flags) {
-    case ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE:
+    switch (description.type) {
+    case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
         return createMetricQueryPool();
 
     default:
@@ -428,8 +441,8 @@ bool MetricQueryPoolImp::create() {
 }
 
 ze_result_t MetricQueryPoolImp::destroy() {
-    switch (description.flags) {
-    case ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE:
+    switch (description.type) {
+    case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
         DEBUG_BREAK_IF(!(pAllocation && query.IsValid()));
         metricContext.getDevice().getDriverHandle()->getMemoryManager()->freeGraphicsMemory(pAllocation);
         metricsLibrary.destroyMetricQuery(query);
@@ -487,8 +500,8 @@ MetricQueryImp::MetricQueryImp(MetricContext &metricContextInput, MetricQueryPoo
 
 ze_result_t MetricQueryImp::appendBegin(CommandList &commandList) {
 
-    switch (pool.description.flags) {
-    case ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE:
+    switch (pool.description.type) {
+    case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
         return writeMetricQuery(commandList, nullptr, 0, nullptr, true);
 
     default:
@@ -499,8 +512,8 @@ ze_result_t MetricQueryImp::appendBegin(CommandList &commandList) {
 
 ze_result_t MetricQueryImp::appendEnd(CommandList &commandList, ze_event_handle_t hSignalEvent,
                                       uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
-    switch (pool.description.flags) {
-    case ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE:
+    switch (pool.description.type) {
+    case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
         return writeMetricQuery(commandList, hSignalEvent, numWaitEvents, phWaitEvents, false);
 
     default:

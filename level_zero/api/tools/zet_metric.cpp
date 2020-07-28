@@ -162,6 +162,16 @@ zetMetricQueryPoolCreate(
 }
 
 __zedllexport ze_result_t __zecall
+zetMetricQueryPoolCreateExt(
+    zet_context_handle_t hContext,
+    zet_device_handle_t hDevice,
+    zet_metric_group_handle_t hMetricGroup,
+    const zet_metric_query_pool_desc_ext_t *desc,
+    zet_metric_query_pool_handle_t *phMetricQueryPool) {
+    return L0::metricQueryPoolCreateExt(hContext, hDevice, hMetricGroup, desc, phMetricQueryPool);
+}
+
+__zedllexport ze_result_t __zecall
 zetMetricQueryPoolDestroy(
     zet_metric_query_pool_handle_t hMetricQueryPool) {
     return L0::MetricQueryPool::fromHandle(hMetricQueryPool)->destroy();
