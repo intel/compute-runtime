@@ -24,17 +24,17 @@ using ::testing::Return;
 namespace L0 {
 namespace ult {
 
-class MetricQueryPoolTest : public MetricDeviceFixture,
+class MetricQueryPoolTest : public MetricContextFixture,
                             public ::testing::Test {
   public:
     void SetUp() override {
-        MetricDeviceFixture::SetUp();
+        MetricContextFixture::SetUp();
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         driverHandle.reset(DriverHandle::create(NEO::DeviceFactory::createDevices(*executionEnvironment), L0EnvVariables{}));
     }
 
     void TearDown() override {
-        MetricDeviceFixture::TearDown();
+        MetricContextFixture::TearDown();
         driverHandle.reset();
         GlobalDriver = nullptr;
     }

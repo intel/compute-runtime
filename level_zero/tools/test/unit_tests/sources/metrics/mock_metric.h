@@ -139,7 +139,7 @@ struct Mock<MetricQuery> : public MetricQuery {
     MOCK_METHOD(ze_result_t, destroy, (), (override));
 };
 
-class MetricDeviceFixture : public DeviceFixture {
+class MetricContextFixture : public ContextFixture {
 
   protected:
     void SetUp() override;

@@ -11,6 +11,7 @@
 #include <level_zero/ze_api.h>
 
 #include "third_party/level_zero/ze_api_ext.h"
+#include "third_party/level_zero/zet_api_ext.h"
 
 struct _ze_context_handle_t {
     virtual ~_ze_context_handle_t() = default;
@@ -68,6 +69,9 @@ struct Context : _ze_context_handle_t {
     virtual ze_result_t createCommandListImmediate(ze_device_handle_t hDevice,
                                                    const ze_command_queue_desc_t *desc,
                                                    ze_command_list_handle_t *commandList) = 0;
+    virtual ze_result_t activateMetricGroups(zet_device_handle_t hDevice,
+                                             uint32_t count,
+                                             zet_metric_group_handle_t *phMetricGroups) = 0;
 
     static Context *fromHandle(ze_context_handle_t handle) { return static_cast<Context *>(handle); }
     inline ze_context_handle_t toHandle() { return this; }

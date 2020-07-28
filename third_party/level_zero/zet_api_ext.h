@@ -13,6 +13,8 @@
 #endif
 
 // standard headers
+#include <level_zero/zet_api.h>
+
 #include "third_party/level_zero/ze_api_ext.h"
 
 #include <stddef.h>
@@ -23,6 +25,10 @@ extern "C" {
 #endif
 
 // Intel 'oneAPI' Level-Zero Tool API common types
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Handle of context object
+typedef ze_context_handle_t zet_context_handle_t;
+
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Handle of metric streamer's object
 typedef struct _zet_metric_streamer_handle_t *zet_metric_streamer_handle_t;
@@ -164,6 +170,44 @@ zetMetricStreamerReadData(
                                                   ///< update the value with the actual size needed.
     uint8_t *pRawData                             ///< [in,out][optional][range(0, *pRawDataSize)] buffer containing streamer
                                                   ///< reports in raw format
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Activates metric groups.
+///
+/// @details
+///     - Immediately reconfigures the device to activate only those metric
+///       groups provided.
+///     - Any metric groups previously activated but not provided will be
+///       deactivated.
+///     - Deactivating metric groups that are still in-use will result in
+///       undefined behavior.
+///     - All metric groups must have different domains, see
+///       ::zet_metric_group_properties_t.
+///     - The application must **not** call this function from simultaneous
+///       threads with the same device handle.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_SIZE
+///         + `(nullptr == phMetricGroups) && (0 < count)`
+///     - ::ZE_RESULT_ERROR_INVALID_ARGUMENT
+///         + Multiple metric groups share the same domain
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetContextActivateMetricGroups(
+    zet_context_handle_t hContext,            ///< [in] handle of the context object
+    zet_device_handle_t hDevice,              ///< [in] handle of the device
+    uint32_t count,                           ///< [in] metric group count to activate; must be 0 if `nullptr ==
+                                              ///< phMetricGroups`
+    zet_metric_group_handle_t *phMetricGroups ///< [in][optional][range(0, count)] handles of the metric groups to activate.
+                                              ///< nullptr deactivates all previously used metric groups.
+                                              ///< all metrics groups must come from a different domains.
+                                              ///< metric query and metric stream must use activated metric groups.
 );
 
 #if defined(__cplusplus)

@@ -12,10 +12,10 @@ using namespace MetricsLibraryApi;
 namespace L0 {
 namespace ult {
 
-void MetricDeviceFixture::SetUp() {
+void MetricContextFixture::SetUp() {
 
     // Call base class.
-    DeviceFixture::SetUp();
+    ContextFixture::SetUp();
 
     // Initialize metric api.
     auto &metricContext = device->getMetricContext();
@@ -34,7 +34,7 @@ void MetricDeviceFixture::SetUp() {
     metricsDeviceParams.Version.MinorNumber = MetricEnumeration::requiredMetricsDiscoveryMinorVersion;
 }
 
-void MetricDeviceFixture::TearDown() {
+void MetricContextFixture::TearDown() {
 
     // Restore original metrics library
     mockMetricsLibrary->setMockedApi(nullptr);
@@ -45,7 +45,7 @@ void MetricDeviceFixture::TearDown() {
     mockMetricEnumeration.reset();
 
     // Call base class.
-    DeviceFixture::TearDown();
+    ContextFixture::TearDown();
 }
 
 Mock<MetricsLibrary>::Mock(::L0::MetricContext &metricContext) : MetricsLibrary(metricContext) {

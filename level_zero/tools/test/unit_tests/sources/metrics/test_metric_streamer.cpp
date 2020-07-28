@@ -20,7 +20,7 @@ using ::testing::Return;
 namespace L0 {
 namespace ult {
 
-using MetricStreamerTest = Test<MetricDeviceFixture>;
+using MetricStreamerTest = Test<MetricContextFixture>;
 
 TEST_F(MetricStreamerTest, givenInvalidMetricGroupTypeWhenZetMetricStreamerOpenIsCalledThenReturnsFail) {
 

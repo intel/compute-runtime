@@ -62,6 +62,9 @@ struct ContextImp : Context {
     ze_result_t createCommandListImmediate(ze_device_handle_t hDevice,
                                            const ze_command_queue_desc_t *desc,
                                            ze_command_list_handle_t *commandList) override;
+    ze_result_t activateMetricGroups(zet_device_handle_t hDevice,
+                                     uint32_t count,
+                                     zet_metric_group_handle_t *phMetricGroups) override;
 
   protected:
     DriverHandle *driverHandle = nullptr;

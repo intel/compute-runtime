@@ -63,6 +63,15 @@ zetDeviceActivateMetricGroups(
 }
 
 __zedllexport ze_result_t __zecall
+zetContextActivateMetricGroups(
+    zet_context_handle_t hContext,
+    zet_device_handle_t hDevice,
+    uint32_t count,
+    zet_metric_group_handle_t *phMetricGroups) {
+    return L0::Context::fromHandle(hContext)->activateMetricGroups(hDevice, count, phMetricGroups);
+}
+
+__zedllexport ze_result_t __zecall
 zetMetricTracerOpen(
     zet_device_handle_t hDevice,
     zet_metric_group_handle_t hMetricGroup,

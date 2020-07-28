@@ -22,18 +22,18 @@ using ::testing::Return;
 namespace L0 {
 namespace ult {
 
-class MetricQueryPoolLinuxTest : public MetricDeviceFixture,
+class MetricQueryPoolLinuxTest : public MetricContextFixture,
                                  public ::testing::Test {
   public:
     void SetUp() override {
-        MetricDeviceFixture::SetUp();
+        MetricContextFixture::SetUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto osInterface = device->getOsInterface().get();
         osInterface->setDrm(new DrmMock(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
     }
 
     void TearDown() override {
-        MetricDeviceFixture::TearDown();
+        MetricContextFixture::TearDown();
     }
 };
 
