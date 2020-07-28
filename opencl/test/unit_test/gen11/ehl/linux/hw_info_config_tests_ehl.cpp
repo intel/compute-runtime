@@ -68,13 +68,11 @@ EHLTEST_F(HwInfoConfigTestLinuxEhl, negative) {
 
 template <typename T>
 class EhlHwInfoTests : public ::testing::Test {};
-typedef ::testing::Types<EHL_1x4x8> ehlTestTypes;
-TYPED_TEST_CASE(EhlHwInfoTests, ehlTestTypes);
-TYPED_TEST(EhlHwInfoTests, gtSetupIsCorrect) {
+TEST(EhlHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo;
     DrmMock drm;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
+    DeviceDescriptor device = {0, &hwInfo, &EHL_HW_CONFIG::setupHardwareInfo, GTTYPE_GT1};
 
     int ret = drm.setupHardwareInfo(&device, false);
 
