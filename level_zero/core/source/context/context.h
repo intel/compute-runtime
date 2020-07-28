@@ -72,6 +72,32 @@ struct Context : _ze_context_handle_t {
     virtual ze_result_t activateMetricGroups(zet_device_handle_t hDevice,
                                              uint32_t count,
                                              zet_metric_group_handle_t *phMetricGroups) = 0;
+    virtual ze_result_t reserveVirtualMem(const void *pStart,
+                                          size_t size,
+                                          void **pptr) = 0;
+    virtual ze_result_t freeVirtualMem(const void *ptr,
+                                       size_t size) = 0;
+    virtual ze_result_t queryVirtualMemPageSize(ze_device_handle_t hDevice,
+                                                size_t size,
+                                                size_t *pagesize) = 0;
+    virtual ze_result_t createPhysicalMem(ze_device_handle_t hDevice,
+                                          ze_physical_mem_desc_t *desc,
+                                          ze_physical_mem_handle_t *phPhysicalMemory) = 0;
+    virtual ze_result_t destroyPhysicalMem(ze_physical_mem_handle_t hPhysicalMemory) = 0;
+    virtual ze_result_t mapVirtualMem(const void *ptr,
+                                      size_t size,
+                                      ze_physical_mem_handle_t hPhysicalMemory,
+                                      size_t offset,
+                                      ze_memory_access_attribute_t access) = 0;
+    virtual ze_result_t unMapVirtualMem(const void *ptr,
+                                        size_t size) = 0;
+    virtual ze_result_t setVirtualMemAccessAttribute(const void *ptr,
+                                                     size_t size,
+                                                     ze_memory_access_attribute_t access) = 0;
+    virtual ze_result_t getVirtualMemAccessAttribute(const void *ptr,
+                                                     size_t size,
+                                                     ze_memory_access_attribute_t *access,
+                                                     size_t *outSize) = 0;
 
     static Context *fromHandle(ze_context_handle_t handle) { return static_cast<Context *>(handle); }
     inline ze_context_handle_t toHandle() { return this; }

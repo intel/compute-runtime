@@ -921,6 +921,332 @@ zeCommandListCreateImmediateExt(
     ze_command_list_handle_t *phCommandList ///< [out] pointer to handle of command list object created
 );
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Handle of physical memory object
+typedef struct _ze_physical_mem_handle_t *ze_physical_mem_handle_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Virtual memory page access attributes
+typedef enum _ze_memory_access_attribute_t {
+    ZE_MEMORY_ACCESS_ATTRIBUTE_NONE = 0,      ///< Indicates the memory page is inaccessible.
+    ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE = 1, ///< Indicates the memory page supports read write access.
+    ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY = 2,  ///< Indicates the memory page supports read-only access.
+    ZE_MEMORY_ACCESS_ATTRIBUTE_FORCE_UINT32 = 0x7fffffff
+
+} ze_memory_access_attribute_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Reserves pages in virtual address space.
+///
+/// @details
+///     - The application must only use the memory allocation on the context for
+///       which it was created.
+///     - The starting address and size must be page aligned. See
+///       ::zeVirtualMemQueryPageSize.
+///     - If pStart is not null then implementation will attempt to reserve
+///       starting from that address. If not available then will find another
+///       suitable starting address.
+///     - The application may call this function from simultaneous threads.
+///     - The access attributes will default to none to indicate reservation is
+///       inaccessible.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pStart`
+///         + `nullptr == pptr`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_SIZE
+///         + `0 == size`
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemReserve(
+    ze_context_handle_t hContext, ///< [in] handle of the context object
+    const void *pStart,           ///< [in] pointer to start of region to reserve. If nullptr then
+                                  ///< implementation will choose a start address.
+    size_t size,                  ///< [in] size in bytes to reserve; must be page aligned.
+    void **pptr                   ///< [out] pointer to virtual reservation.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Free pages in a reserved virtual address range.
+///
+/// @details
+///     - Any existing virtual mappings for the range will be unmapped.
+///     - Physical allocations objects that were mapped to this range will not
+///       be destroyed. These need to be destroyed explicitly.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ptr`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_SIZE
+///         + `0 == size`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemFree(
+    ze_context_handle_t hContext, ///< [in] handle of the context object
+    const void *ptr,              ///< [in] pointer to start of region to free.
+    size_t size                   ///< [in] size in bytes to free; must be page aligned.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Queries page size to use for aligning virtual memory reservations and
+///        physical memory allocations.
+///
+/// @details
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pagesize`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_SIZE
+///         + `0 == size`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemQueryPageSize(
+    ze_context_handle_t hContext, ///< [in] handle of the context object
+    ze_device_handle_t hDevice,   ///< [in] handle of the device object
+    size_t size,                  ///< [in] unaligned allocation size in bytes
+    size_t *pagesize              ///< [out] pointer to page size to use for start address and size
+                                  ///< alignments.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supported physical memory creation flags
+typedef uint32_t ze_physical_mem_flags_t;
+typedef enum _ze_physical_mem_flag_t {
+    ZE_PHYSICAL_MEM_FLAG_TBD = ZE_BIT(0), ///< reserved for future use.
+    ZE_PHYSICAL_MEM_FLAG_FORCE_UINT32 = 0x7fffffff
+
+} ze_physical_mem_flag_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Physical memory descriptor
+typedef struct _ze_physical_mem_desc_t {
+    const void *pNext;             ///< [in][optional] pointer to extension-specific structure
+    ze_physical_mem_flags_t flags; ///< [in] creation flags.
+                                   ///< must be 0 (default) or a valid combination of ::ze_physical_mem_flag_t.
+    size_t size;                   ///< [in] size in bytes to reserve; must be page aligned.
+
+} ze_physical_mem_desc_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Creates a physical memory object for the context.
+///
+/// @details
+///     - The application must only use the physical memory object on the
+///       context for which it was created.
+///     - The size must be page aligned. See ::zeVirtualMemQueryPageSize.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hDevice`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == desc`
+///         + `nullptr == phPhysicalMemory`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `0x1 < desc->flags`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_SIZE
+///         + `0 == desc->size`
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zePhysicalMemCreate(
+    ze_context_handle_t hContext,              ///< [in] handle of the context object
+    ze_device_handle_t hDevice,                ///< [in] handle of the device object
+    ze_physical_mem_desc_t *desc,              ///< [in] pointer to physical memory descriptor.
+    ze_physical_mem_handle_t *phPhysicalMemory ///< [out] pointer to handle of physical memory object created
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Destroys a physical memory object.
+///
+/// @details
+///     - The application must ensure the device is not currently referencing
+///       the physical memory object before it is deleted
+///     - The application must **not** call this function from simultaneous
+///       threads with the same physical memory handle.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hPhysicalMemory`
+///     - ::ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zePhysicalMemDestroy(
+    ze_context_handle_t hContext,            ///< [in] handle of the context object
+    ze_physical_mem_handle_t hPhysicalMemory ///< [in][release] handle of physical memory object to destroy
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Maps pages in virtual address space to pages from physical memory
+///        object.
+///
+/// @details
+///     - The virtual address range must have been reserved using
+///       ::zeVirtualMemReserve.
+///     - The application must only use the mapped memory allocation on the
+///       context for which it was created.
+///     - The virtual start address and size must be page aligned. See
+///       ::zeVirtualMemQueryPageSize.
+///     - The application should use, for the starting address and size, the
+///       same size alignment used for the physical allocation.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///         + `nullptr == hPhysicalMemory`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ptr`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `::ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY < access`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_SIZE
+///         + `0 == size`
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemMap(
+    ze_context_handle_t hContext,             ///< [in] handle of the context object
+    const void *ptr,                          ///< [in] pointer to start of virtual address range to map.
+    size_t size,                              ///< [in] size in bytes of virtual address range to map; must be page
+                                              ///< aligned.
+    ze_physical_mem_handle_t hPhysicalMemory, ///< [in] handle to physical memory object.
+    size_t offset,                            ///< [in] offset into physical memory allocation object; must be page
+                                              ///< aligned.
+    ze_memory_access_attribute_t access       ///< [in] specifies page access attributes to apply to the virtual address
+                                              ///< range.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Unmaps pages in virtual address space from pages from a physical
+///        memory object.
+///
+/// @details
+///     - The page access attributes for virtual address range will revert back
+///       to none.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function must be thread-safe.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ptr`
+///     - ::ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY
+///     - ::ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT - "Address must be page aligned"
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_SIZE
+///         + `0 == size`
+///         + Size must be page aligned
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemUnmap(
+    ze_context_handle_t hContext, ///< [in] handle of the context object
+    const void *ptr,              ///< [in] pointer to start of region to unmap.
+    size_t size                   ///< [in] size in bytes to unmap; must be page aligned.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Set memory access attributes for a virtual address range.
+///
+/// @details
+///     - This function may be called from simultaneous threads with the same
+///       function handle.
+///     - The implementation of this function should be lock-free.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ptr`
+///     - ::ZE_RESULT_ERROR_INVALID_ENUMERATION
+///         + `::ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY < access`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT - "Address must be page aligned"
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_SIZE
+///         + `0 == size`
+///         + Size must be page aligned
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemSetAccessAttribute(
+    ze_context_handle_t hContext,       ///< [in] handle of the context object
+    const void *ptr,                    ///< [in] pointer to start of reserved virtual address region.
+    size_t size,                        ///< [in] size in bytes; must be page aligned.
+    ze_memory_access_attribute_t access ///< [in] specifies page access attributes to apply to the virtual address
+                                        ///< range.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Get memory access attribute for a virtual address range.
+///
+/// @details
+///     - If size and outSize are equal then the pages in the specified virtual
+///       address range have the same access attributes.
+///     - This function may be called from simultaneous threads with the same
+///       function handle.
+///     - The implementation of this function should be lock-free.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hContext`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == ptr`
+///         + `nullptr == access`
+///         + `nullptr == outSize`
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_ALIGNMENT - "Address must be page aligned"
+///     - ::ZE_RESULT_ERROR_UNSUPPORTED_SIZE
+///         + `0 == size`
+///         + Size must be page aligned
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemGetAccessAttribute(
+    ze_context_handle_t hContext,         ///< [in] handle of the context object
+    const void *ptr,                      ///< [in] pointer to start of virtual address region for query.
+    size_t size,                          ///< [in] size in bytes; must be page aligned.
+    ze_memory_access_attribute_t *access, ///< [out] query result for page access attribute.
+    size_t *outSize                       ///< [out] query result for size of virtual address range, starting at ptr,
+                                          ///< that shares same access attribute.
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif

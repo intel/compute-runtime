@@ -124,6 +124,59 @@ struct Mock<Context> : public Context {
                  const ze_command_queue_desc_t *desc,
                  ze_command_list_handle_t *commandList),
                 (override));
+    MOCK_METHOD(ze_result_t,
+                reserveVirtualMem,
+                (const void *pStart,
+                 size_t size,
+                 void **pptr),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                freeVirtualMem,
+                (const void *ptr,
+                 size_t size),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                queryVirtualMemPageSize,
+                (ze_device_handle_t hDevice,
+                 size_t size,
+                 size_t *pagesize),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                createPhysicalMem,
+                (ze_device_handle_t hDevice,
+                 ze_physical_mem_desc_t *desc,
+                 ze_physical_mem_handle_t *phPhysicalMemory),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                destroyPhysicalMem,
+                (ze_physical_mem_handle_t hPhysicalMemory),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                mapVirtualMem,
+                (const void *ptr,
+                 size_t size,
+                 ze_physical_mem_handle_t hPhysicalMemory,
+                 size_t offset,
+                 ze_memory_access_attribute_t access),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                unMapVirtualMem,
+                (const void *ptr,
+                 size_t size),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                setVirtualMemAccessAttribute,
+                (const void *ptr,
+                 size_t size,
+                 ze_memory_access_attribute_t access),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                getVirtualMemAccessAttribute,
+                (const void *ptr,
+                 size_t size,
+                 ze_memory_access_attribute_t *access,
+                 size_t *outSize),
+                (override));
 };
 
 } // namespace ult

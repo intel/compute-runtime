@@ -150,4 +150,57 @@ ze_result_t ContextImp::activateMetricGroups(zet_device_handle_t hDevice,
     return L0::Device::fromHandle(hDevice)->activateMetricGroups(count, phMetricGroups);
 }
 
+ze_result_t ContextImp::reserveVirtualMem(const void *pStart,
+                                          size_t size,
+                                          void **pptr) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ContextImp::freeVirtualMem(const void *ptr,
+                                       size_t size) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ContextImp::queryVirtualMemPageSize(ze_device_handle_t hDevice,
+                                                size_t size,
+                                                size_t *pagesize) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ContextImp::createPhysicalMem(ze_device_handle_t hDevice,
+                                          ze_physical_mem_desc_t *desc,
+                                          ze_physical_mem_handle_t *phPhysicalMemory) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ContextImp::destroyPhysicalMem(ze_physical_mem_handle_t hPhysicalMemory) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ContextImp::mapVirtualMem(const void *ptr,
+                                      size_t size,
+                                      ze_physical_mem_handle_t hPhysicalMemory,
+                                      size_t offset,
+                                      ze_memory_access_attribute_t access) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ContextImp::unMapVirtualMem(const void *ptr,
+                                        size_t size) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ContextImp::setVirtualMemAccessAttribute(const void *ptr,
+                                                     size_t size,
+                                                     ze_memory_access_attribute_t access) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ContextImp::getVirtualMemAccessAttribute(const void *ptr,
+                                                     size_t size,
+                                                     ze_memory_access_attribute_t *access,
+                                                     size_t *outSize) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 } // namespace L0
