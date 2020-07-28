@@ -153,17 +153,21 @@ uint32_t DriverHandleImp::parseAffinityMask(std::vector<std::unique_ptr<NEO::Dev
         size_t posNextComma = this->affinityMaskString.find_first_of(",", pos);
         std::string rootDeviceString = this->affinityMaskString.substr(pos, std::min(posNextDot, posNextComma) - pos);
         uint32_t rootDeviceIndex = static_cast<uint32_t>(std::stoul(rootDeviceString, nullptr, 0));
-        pos += rootDeviceString.size();
-        if (posNextDot != std::string::npos &&
-            this->affinityMaskString.at(pos) == '.' && posNextDot < posNextComma) {
-            pos++;
-            std::string subDeviceString = this->affinityMaskString.substr(pos, posNextComma - pos);
-            uint32_t subDeviceIndex = static_cast<uint32_t>(std::stoul(subDeviceString, nullptr, 0));
-            affinityMaskBitSet[rootDeviceIndex][subDeviceIndex] = true;
-        } else {
-            std::fill(affinityMaskBitSet[rootDeviceIndex].begin(),
-                      affinityMaskBitSet[rootDeviceIndex].end(),
-                      true);
+        if (rootDeviceIndex < neoDevices.size()) {
+            pos += rootDeviceString.size();
+            if (posNextDot != std::string::npos &&
+                this->affinityMaskString.at(pos) == '.' && posNextDot < posNextComma) {
+                pos++;
+                std::string subDeviceString = this->affinityMaskString.substr(pos, posNextComma - pos);
+                uint32_t subDeviceIndex = static_cast<uint32_t>(std::stoul(subDeviceString, nullptr, 0));
+                if (subDeviceIndex < neoDevices[rootDeviceIndex]->getNumAvailableDevices()) {
+                    affinityMaskBitSet[rootDeviceIndex][subDeviceIndex] = true;
+                }
+            } else {
+                std::fill(affinityMaskBitSet[rootDeviceIndex].begin(),
+                          affinityMaskBitSet[rootDeviceIndex].end(),
+                          true);
+            }
         }
         if (posNextComma == std::string::npos) {
             break;
