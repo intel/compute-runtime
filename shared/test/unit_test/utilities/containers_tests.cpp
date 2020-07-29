@@ -69,7 +69,7 @@ void makeList(NodeType *(&nodes)[ArraySize], uint32_t *destructorsCounter = null
     }
 }
 
-TEST(IFNode, insertOne) {
+TEST(IFNode, WhenInsertingOneThenNodeIsAppendedAtEnd) {
     DummyFNode head;
     ASSERT_EQ(nullptr, head.next);
 
@@ -87,7 +87,7 @@ TEST(IFNode, insertOne) {
     ASSERT_EQ(nullptr, successor.next);
 }
 
-TEST(IFNode, insertAllNext) {
+TEST(IFNode, WhenInsertingAllThenAllNodesAreInserted) {
     DummyFNode *listA[5];
     DummyFNode *listB[7];
     makeList(listA);
@@ -109,7 +109,7 @@ TEST(IFNode, insertAllNext) {
     ASSERT_EQ(totalNodes, nodesCount);
 }
 
-TEST(IFNode, deleteThisAndAllNext) {
+TEST(IFNode, GivenFirstElementWhenDeletingThisAndAllNextThenAllElementsAreDeleted) {
     DummyFNode *list[7];
     uint32_t destructorCounter = 0;
     makeList(list, &destructorCounter);
@@ -117,7 +117,7 @@ TEST(IFNode, deleteThisAndAllNext) {
     ASSERT_EQ(sizeof(list) / sizeof(list[0]), destructorCounter);
 }
 
-TEST(IFNode, getTail) {
+TEST(IFNode, WhenGettingTailThenLastElementIsReturned) {
     DummyFNode *list[7];
     makeList(list, nullptr);
     auto tail = list[0]->getTail();
@@ -125,7 +125,7 @@ TEST(IFNode, getTail) {
     ASSERT_EQ(list[sizeof(list) / sizeof(list[0]) - 1], tail);
 }
 
-TEST(IFNode, slice) {
+TEST(IFNode, WhenSlicingThenListIsSplitCorrectly) {
     DummyFNode *list[7];
     uint32_t destructorCounter = 0;
     makeList(list, &destructorCounter);
@@ -138,7 +138,7 @@ TEST(IFNode, slice) {
     ASSERT_EQ(sizeof(list) / sizeof(list[0]), destructorCounter);
 }
 
-TEST(IFNode, countSuccessors) {
+TEST(IFNode, WhenCountingSuccessorsThenCorrectValueIsReturned) {
     DummyFNode *nodes[7];
     makeList(nodes, 0);
     ASSERT_EQ(sizeof(nodes) / sizeof(nodes[0]), 1 + nodes[0]->countSuccessors());
@@ -147,7 +147,7 @@ TEST(IFNode, countSuccessors) {
     }
 }
 
-TEST(IFNode, verifySequence) {
+TEST(IFNode, WhenVerifingSequenceThenCorrectValueIsReturned) {
     DummyFNode *nodes[4];
     DummyFNode additional;
     makeList(nodes, 0);
@@ -199,15 +199,15 @@ void iFListTestPushFrontOne() {
     ASSERT_EQ(&node1, node2.next);
 }
 
-TEST(IFList, pushFrontOneThreadSafe) {
+TEST(IFList, GivenThreadSafeWhenPushingFrontOneThenResultIsCorrect) {
     iFListTestPushFrontOne<true>();
 }
 
-TEST(IFList, pushFrontOneNonThreadSafe) {
+TEST(IFList, GivenNonThreadSafeWhenPushingFrontOneThenResultIsCorrect) {
     iFListTestPushFrontOne<false>();
 }
 
-TEST(IFList, ownNodesDeletion) {
+TEST(IFList, WhenResettingThenListIsEmpty) {
     DummyFNode *nodes[7];
     uint32_t destructorCounter = 0;
     makeList(nodes, &destructorCounter);
@@ -218,7 +218,7 @@ TEST(IFList, ownNodesDeletion) {
     ASSERT_EQ(sizeof(nodes) / sizeof(nodes[0]), destructorCounter);
 }
 
-TEST(IFList, spliceAndDeleteAll) {
+TEST(IFList, WhenSplicingAndDeletingAllThenListIsEmpty) {
     DummyFNode *nodes[7];
     DummyFNode *nodes2[sizeof(nodes) / sizeof(nodes[0])];
     uint32_t destructorCounter = 0;
@@ -253,15 +253,15 @@ void iFListTestDetachNodes() {
     ASSERT_EQ(maxNodes, destructorCounter);
 }
 
-TEST(IFList, detachNodesThreadSafe) {
+TEST(IFList, GivenThreadSafeWhenDetachingNodesThenResultIsCorrect) {
     iFListTestDetachNodes<true>();
 }
 
-TEST(IFList, detachNodesNonThreadSafe) {
+TEST(IFList, GivenNonThreadSafeWhenDetachingNodesThenResultIsCorrect) {
     iFListTestDetachNodes<false>();
 }
 
-TEST(IFList, compareExchangeHead) {
+TEST(IFList, WhenExchangingHeadThenResultIsCorrect) {
     struct DummyList : IFList<DummyFNode, true, false> {
         void testCompareExchangeHead(DummyFNode *preSet, DummyFNode *&expected, DummyFNode *desired) {
             head = preSet;
@@ -308,15 +308,15 @@ void iFRefListTestPushFrontOne() {
     list.reset();
 }
 
-TEST(IFRefList, pushFrontOneThreadSafe) {
+TEST(IFRefList, GivenThreadSafeWhenPushingFrontOneThenResultIsCorrect) {
     iFRefListTestPushFrontOne<true>();
 }
 
-TEST(IFRefList, pushFrontOneNonThreadSafe) {
+TEST(IFRefList, GivenNonThreadSafeWhenPushingFrontOneThenResultIsCorrect) {
     iFRefListTestPushFrontOne<false>();
 }
 
-TEST(IDNode, insertOne) {
+TEST(IDNode, GivenNextOrPrevWhenInsertingOneThenNodeInsertedInCorrectPlace) {
     DummyDNode head;
     ASSERT_EQ(nullptr, head.prev);
     ASSERT_EQ(nullptr, head.next);
@@ -342,7 +342,7 @@ TEST(IDNode, insertOne) {
     ASSERT_EQ(&predecessor2, predecessor.next);
 }
 
-TEST(IDNode, insertAllNext) {
+TEST(IDNode, WhenInsertingAllNextThenAllNodesInsertedAtEnd) {
     DummyDNode *listA[5];
     DummyDNode *listB[7];
     DummyDNode *listC[1];
@@ -379,7 +379,7 @@ TEST(IDNode, insertAllNext) {
     ASSERT_EQ(totalNodes, nodesCount);
 }
 
-TEST(IDNode, deleteThisAndAllNext) {
+TEST(IDNode, WhenDeletingThisAndAllNextThenAllCorrectNodesAreDeleted) {
     DummyFNode *list[7];
     uint32_t destructorCounter = 0;
     makeList(list, &destructorCounter);
@@ -387,7 +387,7 @@ TEST(IDNode, deleteThisAndAllNext) {
     ASSERT_EQ(sizeof(list) / sizeof(list[0]), destructorCounter);
 }
 
-TEST(IDNode, deleteThisAndAllPrev) {
+TEST(IDNode, WhenDeletingThisAndAllPrevThenAllCorrectNodesAreDeleted) {
     DummyDNode *list[7];
     uint32_t destructorCounter = 0;
     makeList(list, &destructorCounter);
@@ -399,7 +399,7 @@ TEST(IDNode, deleteThisAndAllPrev) {
     ASSERT_EQ(1U, destructorCounter);
 }
 
-TEST(IDNode, deleteThisAndAllConnected) {
+TEST(IDNode, WhenDeletingThisAndAllConnectedThenAllCorrectNodesAreDeleted) {
     DummyDNode *list[7];
     uint32_t destructorCounter = 0;
     makeList(list, &destructorCounter);
@@ -407,7 +407,7 @@ TEST(IDNode, deleteThisAndAllConnected) {
     ASSERT_EQ(sizeof(list) / sizeof(list[0]), destructorCounter);
 }
 
-TEST(IDNode, getHeadAndTail) {
+TEST(IDNode, WhenGettingHeadAndGettingTailThenCorrectNodeIsReturned) {
     DummyDNode *list[7];
     makeList(list, nullptr);
     auto head = list[5]->getHead();
@@ -417,7 +417,7 @@ TEST(IDNode, getHeadAndTail) {
     ASSERT_EQ(list[sizeof(list) / sizeof(list[0]) - 1], tail);
 }
 
-TEST(IDNode, slice) {
+TEST(IDNode, WhenSlicingThenListsAreCorrect) {
     DummyDNode *list[7];
     uint32_t destructorCounter = 0;
     makeList(list, &destructorCounter);
@@ -432,7 +432,7 @@ TEST(IDNode, slice) {
     ASSERT_EQ(sizeof(list) / sizeof(list[0]), destructorCounter);
 }
 
-TEST(IDNode, countConnected) {
+TEST(IDNode, WhenCountingConnectedThenCountIsCorrect) {
     DummyDNode *nodes[7];
     makeList(nodes, 0);
 
@@ -444,7 +444,7 @@ TEST(IDNode, countConnected) {
     }
 }
 
-TEST(IDNode, isPredecessorSuccessorOrConnected) {
+TEST(IDNode, WhenCheckingRelationshipThenResultIsCorrect) {
     DummyDNode *nodes[7];
     makeList(nodes, 0);
 
@@ -482,7 +482,7 @@ TEST(IDNode, isPredecessorSuccessorOrConnected) {
     }
 }
 
-TEST(IDNode, verifySequence) {
+TEST(IDNode, WhenVerifyingSequenceThenResultIsCorrect) {
     DummyDNode *nodes[4];
     makeList(nodes, 0);
     // valid list
@@ -571,15 +571,15 @@ void iDListTestPushOne() {
     ASSERT_EQ(&node2, list.peekTail());
 }
 
-TEST(IDList, pushOneThreadSafe) {
+TEST(IDList, GivenThreadSafeWhenPushingOneThenResultIsCorrect) {
     iDListTestPushOne<true>();
 }
 
-TEST(IDList, pushOneNonThreadSafe) {
+TEST(IDList, GivenNonThreadSafeWhenPushingOneThenResultIsCorrect) {
     iDListTestPushOne<false>();
 }
 
-TEST(IDList, ownNodesDeletion) {
+TEST(IDList, WhenResettingTheListIsEmpty) {
     DummyDNode *nodes[7];
     uint32_t destructorCounter = 0;
     makeList(nodes, &destructorCounter);
@@ -620,11 +620,11 @@ void iDListSpliceAndDeleteAll() {
     EXPECT_EQ(2 * sizeof(nodes) / sizeof(nodes[0]), destructorCounter);
 }
 
-TEST(IDList, spliceAndDeleteAllThreadSafe) {
+TEST(IDList, GivenThreadSafeWhenSplicingAndDeletingAllThenResultIsCorrect) {
     iDListSpliceAndDeleteAll<true>();
 }
 
-TEST(IDList, spliceAndDeleteAllNonThreadSafe) {
+TEST(IDList, GivenNonThreadSafeWhenSplicingAndDeletingAllThenResultIsCorrect) {
     iDListSpliceAndDeleteAll<false>();
 }
 
@@ -646,11 +646,11 @@ void iDListTestDetachNodes() {
     ASSERT_EQ(maxNodes, destructorCounter);
 }
 
-TEST(IDList, detachNodesThreadSafe) {
+TEST(IDList, GivenThreadSafeWhenDetachingNodesThenResultIsCorrect) {
     iDListTestDetachNodes<true>();
 }
 
-TEST(IDList, detachNodesNonThreadSafe) {
+TEST(IDList, GivenNonThreadSafeWhenDetachingNodesThenResultIsCorrect) {
     iDListTestDetachNodes<false>();
 }
 
@@ -706,11 +706,11 @@ void iDListTestRemoveOne() {
     removedNode.release();
 }
 
-TEST(IDList, removeOneThreadSafe) {
+TEST(IDList, GivenThreadSafeWhenRemovingOneThenResultIsCorrect) {
     iDListTestRemoveOne<true>();
 }
 
-TEST(IDList, removeOneNonThreadSafe) {
+TEST(IDList, GivenNonThreadSafeWhenRemovingOneThenResultIsCorrect) {
     iDListTestRemoveOne<false>();
 }
 
@@ -767,11 +767,11 @@ void iDListTestRemoveFrontOne() {
     EXPECT_TRUE(list.peekIsEmpty());
 }
 
-TEST(IDList, removeFrontOneThreadSafe) {
+TEST(IDList, GivenThreadSafeWhenRemovingFrontOneThenResultIsCorrect) {
     iDListTestRemoveFrontOne<true>();
 }
 
-TEST(IDList, removeFrontOneNonThreadSafe) {
+TEST(IDList, GivenNonThreadSafeWhenRemovingFrontOneThenResultIsCorrect) {
     iDListTestRemoveFrontOne<false>();
 }
 
@@ -836,11 +836,11 @@ void iDListTestDetachSequence() {
     }
 }
 
-TEST(IDList, detachSequenceThreadSafe) {
+TEST(IDList, GivenThreadSafeWhenDetachingSequenceThenResultIsCorrect) {
     iDListTestDetachSequence<true>();
 }
 
-TEST(IDList, detachSequenceNonThreadSafe) {
+TEST(IDList, GivenNonThreadSafeWhenDetachingSequenceThenResultIsCorrect) {
     iDListTestDetachSequence<false>();
 }
 
@@ -879,11 +879,11 @@ void iDListTestPeekContains() {
     EXPECT_FALSE(list.peekContains(*node3));
 }
 
-TEST(IDList, peekContainsThreadSafe) {
+TEST(IDList, GivenThreadSafeWhenPeekingThenResultIsCorrect) {
     iDListTestPeekContains<true>();
 }
 
-TEST(IDList, peekContainsNonThreadSafe) {
+TEST(IDList, GivenNonThreadSafeWhenPeekingThenResultIsCorrect) {
     iDListTestPeekContains<false>();
 }
 
@@ -965,7 +965,7 @@ void testIDListUnlockOnException() {
     EXPECT_FALSE(l.getLockedRef().test_and_set(std::memory_order_seq_cst));
 }
 
-TEST(IDList, InsideLockWhenExceptionIsThrownThenUnlocksBeforeRethrowingException) {
+TEST(IDList, GivenInsideLockWhenExceptionIsThrownThenUnlocksBeforeRethrowingException) {
     testIDListUnlockOnException<DummyDNode, true, false, true>();
     testIDListUnlockOnException<DummyDNode, true, false, false>();
 }
@@ -1000,15 +1000,15 @@ void iDRefListTestPushFrontOne() {
     list.reset();
 }
 
-TEST(IDRefList, pushFrontOneThreadSafe) {
+TEST(IDRefList, GivenThreadSafeWhenPushingFrontOneThenResultIsCorrect) {
     iDRefListTestPushFrontOne<true>();
 }
 
-TEST(IDRefList, pushFrontOneNonThreadSafe) {
+TEST(IDRefList, GivenNonThreadSafeWhenPushingFrontOneThenResultIsCorrect) {
     iDRefListTestPushFrontOne<false>();
 }
 
-TEST(IDRefList, recursiveLock) {
+TEST(IDRefList, GivenRecursiveLockWhenExecutingThenListIsNotEmpty) {
     class RecursiveLockList : public IDList<DummyDNode, true, true, true> {
       public:
         void execute() {
@@ -1038,7 +1038,7 @@ bool contains(const ContainerType *container, const void *ptr) {
     return (tested >= base) && (tested + elementSize <= base + sizeof(ContainerType));
 }
 
-TEST(StackVec, Constructor) {
+TEST(StackVec, WhenStackVecIsCreatedThenItIsCorrectlyPopulated) {
     using Type = int;
     static const uint32_t srcSize = 10;
     static const uint32_t overReserve = 3;
@@ -1079,12 +1079,12 @@ TEST(StackVec, Constructor) {
     EXPECT_EQ(5, withInitList[3]);
 }
 
-TEST(StackVec, ConstructorWithInitialSizeGetsResizedAutomaticallyDuringConstruction) {
+TEST(StackVec, GivenInitialSizeWhenCreatingThenResizeOccurs) {
     StackVec<int, 5> vec1(10);
     EXPECT_EQ(10U, vec1.size());
 }
 
-TEST(StackVec, CopyConstructor) {
+TEST(StackVec, WhenCopyingByConstructorThenCopyIsCorrect) {
     using Type = int;
     constexpr size_t sizeBase = 7;
     constexpr size_t sizeSmaller = 5;
@@ -1109,7 +1109,7 @@ TEST(StackVec, CopyConstructor) {
     }
 }
 
-TEST(StackVec, CopyAsignment) {
+TEST(StackVec, WhenCopyingByAssignmentThenCopyIsCorrect) {
     using Type = int;
     constexpr size_t sizeBase = 7;
     constexpr size_t sizeSmaller = 5;
@@ -1145,7 +1145,7 @@ TEST(StackVec, CopyAsignment) {
     }
 }
 
-TEST(StackVec, MoveConstructor) {
+TEST(StackVec, WhenMovingThenObjectIsCorrect) {
     using Type = int;
     constexpr size_t sizeBase = 7;
     constexpr size_t sizeSmaller = 5;
@@ -1168,7 +1168,7 @@ TEST(StackVec, MoveConstructor) {
     }
 }
 
-TEST(StackVec, MoveAsignment) {
+TEST(StackVec, WhenMovingByAssignmentThenObjectIsCorrect) {
     using Type = int;
     constexpr size_t sizeBase = 7;
     constexpr size_t sizeSmaller = 5;
@@ -1202,7 +1202,7 @@ TEST(StackVec, MoveAsignment) {
     }
 }
 
-TEST(StackVec, Alignment) {
+TEST(StackVec, WhenStackVecIsCreatedThenItIsCorrectlyAligned) {
     StackVec<uint16_t, 4> s16;
     StackVec<uint32_t, 4> s32;
     StackVec<uint64_t, 4> s64;
@@ -1220,7 +1220,7 @@ TEST(StackVec, Alignment) {
     EXPECT_EQ(0U, reinterpret_cast<uintptr_t>(s64.begin()) % 8);
 }
 
-TEST(StackVec, PushBack) {
+TEST(StackVec, WhenPushingBackThenContentsAreCorrect) {
     using Type = uint32_t;
     StackVec<Type, 5> v;
     ASSERT_EQ(0U, v.size());
@@ -1295,7 +1295,7 @@ TEST(StackVecPopBack, GivenNonEmptyStackVecThenRemoveSingleElementFromTheEnd) {
     EXPECT_EQ(0U, v.size());
 }
 
-TEST(StackVec, Reserve) {
+TEST(StackVec, WhenReservingThenCapacityIncreasesAndSizeDoesNot) {
     using Type = uint32_t;
     StackVec<Type, 5> v;
     ASSERT_EQ(5U, v.capacity());
@@ -1313,7 +1313,7 @@ TEST(StackVec, Reserve) {
     ASSERT_LE(1024U, v.capacity());
 }
 
-TEST(StackVec, Resize) {
+TEST(StackVec, WhenResizingThenElementsAreCorrectlyManaged) {
     struct Element {
         Element()
             : v(7) {
@@ -1423,7 +1423,7 @@ TEST(StackVec, Resize) {
     EXPECT_FALSE(contains(&vec, &*vec.begin()));
 }
 
-TEST(StackVec, Iterators) {
+TEST(StackVec, WhenIteratingThenCorrectElementsAreReturned) {
     using Type = int;
     StackVec<Type, 5> v;
     v.push_back(1);
@@ -1449,7 +1449,7 @@ TEST(StackVec, Iterators) {
     ASSERT_EQ(36, sum);
 }
 
-TEST(StackVec, Clear) {
+TEST(StackVec, WhenClearingThenAllElementsAreRemoved) {
     uint32_t destructorCounter = 0;
     DummyFNode nd1(&destructorCounter);
     DummyFNode nd2(&destructorCounter);
@@ -1478,7 +1478,7 @@ TEST(StackVec, Clear) {
     ASSERT_EQ(0U, v2.size());
 }
 
-TEST(StackVec, ReverseBeginningFunctions) {
+TEST(StackVec, WhenGettingReverseThenCorrectElementIsReturned) {
     using VecType = StackVec<int, 1>;
     VecType v;
     v.push_back(5);
@@ -1489,7 +1489,7 @@ TEST(StackVec, ReverseBeginningFunctions) {
     ASSERT_EQ(v.end(), v.crbegin().base());
 }
 
-TEST(StackVec, ConstMemberFunctions) {
+TEST(StackVec, WhenUsingConstMemberFunctionsThenResultsAreCorrect) {
     using VecType = StackVec<int, 3>;
     VecType v;
     ASSERT_EQ(v.begin(), ((const VecType *)&v)->begin());
@@ -1510,7 +1510,7 @@ TEST(StackVec, ConstMemberFunctions) {
     ASSERT_EQ(&v[0], &((const VecType *)&v)->operator[](0));
 }
 
-TEST(StackVec, ComplexElements) {
+TEST(StackVec, GivenComplexElementsWhenCreatingThenCreationSucceeds) {
     std::vector<int> src(100, 5);
 
     static const int elementsCount = 10;
@@ -1522,7 +1522,7 @@ TEST(StackVec, ComplexElements) {
     v.reset();
 }
 
-TEST(StackVec, DefinesIteratorTypes) {
+TEST(StackVec, WhenGettingIteratorThenIteratorTypeIsCorrect) {
     struct S {
     };
 
@@ -1539,7 +1539,7 @@ TEST(StackVec, DefinesIteratorTypes) {
     static_assert(std::is_same<const_iterator, decltype(constVec.end())>::value, "iterator types do not match");
 }
 
-TEST(StackVec, EqualsOperatorReturnsFalseIfStackVecsHaveDifferentSizes) {
+TEST(StackVec, GivenStackVecsOfDifferentSizesWhenComparingThenEqualReturnsFalse) {
     StackVec<int, 5> longer;
     longer.resize(4, 0);
 
@@ -1552,7 +1552,7 @@ TEST(StackVec, EqualsOperatorReturnsFalseIfStackVecsHaveDifferentSizes) {
     EXPECT_TRUE(shorter != longer);
 }
 
-TEST(StackVec, EqualsOperatorReturnsFalseIfDataNotEqual) {
+TEST(StackVec, GivenStackVecsContainingDifferentDataWhenComparingThenEqualReturnsFalse) {
     char dataA[] = {0, 1, 3, 4, 5};
     char dataB[] = {0, 1, 3, 5, 4};
 
@@ -1562,7 +1562,7 @@ TEST(StackVec, EqualsOperatorReturnsFalseIfDataNotEqual) {
     EXPECT_TRUE(vecA != vecB);
 }
 
-TEST(StackVec, EqualsOperatorReturnsTrueIfBothContainersAreEmpty) {
+TEST(StackVec, GivenStackVecsAreEmptyWhenComparingThenEqualReturnsTrue) {
     StackVec<char, 10> vecA;
     StackVec<char, 15> vecB;
 
@@ -1570,7 +1570,7 @@ TEST(StackVec, EqualsOperatorReturnsTrueIfBothContainersAreEmpty) {
     EXPECT_FALSE(vecA != vecB);
 }
 
-TEST(StackVec, EqualsOperatorReturnsTrueIfDataIsEqual) {
+TEST(StackVec, GivenStackVecsContainingSameDataWhenComparingThenEqualReturnsTrue) {
     char dataA[] = {0, 1, 3, 4, 5};
     char dataB[] = {0, 1, 3, 4, 5};
 
@@ -1606,7 +1606,7 @@ int sum(ArrayRef<int> a) {
     return sum;
 }
 
-TEST(ArrayRef, WrapContainers) {
+TEST(ArrayRef, WhenArrayRefIsCreatedThenBehaviorIsCorrect) {
     StackVec<int, 5> sv;
     sv.push_back(0);
     sv.push_back(1);
@@ -1664,7 +1664,7 @@ TEST(ArrayRef, GivenEmptyContainerThenArrayRefIsEmpty) {
     EXPECT_TRUE(constArrayRef.empty());
 }
 
-TEST(ArrayRef, ImplicitCoversionToArrayrefOfConst) {
+TEST(ArrayRef, WhenImplicitlyCovertingToConstThenResultIsCorrect) {
     int carray[] = {5, 6, 7, 8, 9};
     ArrayRef<int> arrayRef(carray);
     ArrayRef<const int> constArrayRef = arrayRef;
@@ -1672,7 +1672,7 @@ TEST(ArrayRef, ImplicitCoversionToArrayrefOfConst) {
     EXPECT_EQ(arrayRef.end(), constArrayRef.end());
 }
 
-TEST(ArrayRef, DefinesIteratorTypes) {
+TEST(ArrayRef, WhenGettingIteratorThenIteratorTypeIsCorrect) {
     struct S {
     };
 
@@ -1689,7 +1689,7 @@ TEST(ArrayRef, DefinesIteratorTypes) {
     static_assert(std::is_same<const_iterator, decltype(constArray.end())>::value, "iterator types do not match");
 }
 
-TEST(ArrayRef, EqualsOperatorReturnsFalseIfArraysReferenceContaintersOfDifferentLenghts) {
+TEST(ArrayRef, GivenArraysOfDifferentSizesWhenComparingThenEqualReturnsFalse) {
     char data[] = {0, 1, 3, 4, 5};
 
     ArrayRef<char> longer{data, sizeof(data)};
@@ -1698,7 +1698,7 @@ TEST(ArrayRef, EqualsOperatorReturnsFalseIfArraysReferenceContaintersOfDifferent
     EXPECT_FALSE(shorter == longer);
 }
 
-TEST(ArrayRef, EqualsOperatorReturnsFalseIfDataNotEqual) {
+TEST(ArrayRef, GivenArraysContainingDifferentDataWhenComparingThenEqualReturnsFalse) {
     char dataA[] = {0, 1, 3, 4, 5};
     char dataB[] = {0, 1, 3, 5, 4};
 
@@ -1707,14 +1707,14 @@ TEST(ArrayRef, EqualsOperatorReturnsFalseIfDataNotEqual) {
     EXPECT_FALSE(arrayA == arrayB);
 }
 
-TEST(ArrayRef, EqualsOperatorReturnsTrueIfBothContainersAreEmpty) {
+TEST(ArrayRef, GivenEmptyArraysWhenComparingThenEqualReturnsTrue) {
     ArrayRef<char> arrayA;
     ArrayRef<char> arrayB;
 
     EXPECT_TRUE(arrayA == arrayB);
 }
 
-TEST(ArrayRef, EqualsOperatorReturnsTrueIfDataIsEqual) {
+TEST(ArrayRef, GivenArraysContainingSameDataWhenComparingThenEqualReturnsTrue) {
     char dataA[] = {0, 1, 3, 4, 5};
     char dataB[] = {0, 1, 3, 4, 5};
 
