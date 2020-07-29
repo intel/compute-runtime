@@ -9,9 +9,9 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
-
-#include "third_party/level_zero/ze_api_ext.h"
+#include <level_zero/ze_api.h>
 
 namespace L0 {
 namespace ult {
@@ -41,7 +41,7 @@ TEST_F(zeCommandListAppendMemAdviseTest, whenCalledThenRedirectedToObject) {
 TEST(zeCommandListAppendMemoryCopy, whenCalledThenRedirectedToObject) {
     MockCommandList commandList;
 
-    auto res = zeCommandListAppendMemoryCopy(&commandList, reinterpret_cast<void *>(0x2000), reinterpret_cast<const void *>(0x1000), 0x1000, nullptr);
+    auto res = zeCommandListAppendMemoryCopy(&commandList, reinterpret_cast<void *>(0x2000), reinterpret_cast<const void *>(0x1000), 0x1000, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
@@ -51,7 +51,7 @@ TEST(zeCommandListAppendMemoryFill, whenCalledThenRedirectedToObject) {
 
     int value = 0;
     auto res = zeCommandListAppendMemoryFill(&commandList, reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(&value),
-                                             sizeof(value), bufferSize, nullptr);
+                                             sizeof(value), bufferSize, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
@@ -63,10 +63,10 @@ TEST(zeCommandListAppendWaitOnEvent, whenCalledThenRedirectedToObject) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-TEST(zeCommandListAppendWriteGlobalTimestampExt, whenCalledThenRedirectedToObject) {
+TEST(zeCommandListAppendWriteGlobalTimestamp, whenCalledThenRedirectedToObject) {
     MockCommandList commandList;
 
-    auto result = zeCommandListAppendWriteGlobalTimestampExt(commandList.toHandle(), nullptr, nullptr, 0, nullptr);
+    auto result = zeCommandListAppendWriteGlobalTimestamp(commandList.toHandle(), nullptr, nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 

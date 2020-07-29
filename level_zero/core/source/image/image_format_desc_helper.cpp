@@ -11,7 +11,7 @@
 
 namespace L0 {
 
-cl_channel_type getClChannelDataType(const ze_image_format_desc_t &imgDescription) {
+cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription) {
     switch (imgDescription.layout) {
     case ZE_IMAGE_FORMAT_LAYOUT_8:
     case ZE_IMAGE_FORMAT_LAYOUT_8_8:
@@ -88,7 +88,7 @@ cl_channel_type getClChannelDataType(const ze_image_format_desc_t &imgDescriptio
     return CL_INVALID_VALUE;
 }
 
-cl_channel_order getClChannelOrder(const ze_image_format_desc_t &imgDescription) {
+cl_channel_order getClChannelOrder(const ze_image_format_t &imgDescription) {
     swizzles imgSwizzles{imgDescription.x, imgDescription.y, imgDescription.z, imgDescription.w};
 
     if (imgSwizzles == swizzles{ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_0, ZE_IMAGE_FORMAT_SWIZZLE_0, ZE_IMAGE_FORMAT_SWIZZLE_1})

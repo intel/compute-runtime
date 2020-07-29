@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2019-2020 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,21 +10,25 @@
 extern "C" {
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDeviceMakeMemoryResident_Tracing(ze_device_handle_t hDevice,
-                                   void *ptr,
-                                   size_t size);
+zeContextMakeMemoryResident_Tracing(ze_context_handle_t hContext,
+                                    ze_device_handle_t hDevice,
+                                    void *ptr,
+                                    size_t size);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDeviceEvictMemory_Tracing(ze_device_handle_t hDevice,
-                            void *ptr,
-                            size_t size);
+zeContextEvictMemory_Tracing(ze_context_handle_t hContext,
+                             ze_device_handle_t hDevice,
+                             void *ptr,
+                             size_t size);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDeviceMakeImageResident_Tracing(ze_device_handle_t hDevice,
-                                  ze_image_handle_t hImage);
+zeContextMakeImageResident_Tracing(ze_context_handle_t hContext,
+                                   ze_device_handle_t hDevice,
+                                   ze_image_handle_t hImage);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDeviceEvictImage_Tracing(ze_device_handle_t hDevice,
-                           ze_image_handle_t hImage);
+zeContextEvictImage_Tracing(ze_context_handle_t hContext,
+                            ze_device_handle_t hDevice,
+                            ze_image_handle_t hImage);
 
 } // extern "C"

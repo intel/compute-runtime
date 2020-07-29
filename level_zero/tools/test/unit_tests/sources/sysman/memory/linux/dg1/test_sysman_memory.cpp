@@ -33,7 +33,7 @@ class SysmanMemoryFixture : public DeviceFixture, public ::testing::Test {
     OsMemory *pOsMemory = nullptr;
     PublicLinuxMemoryImp linuxMemoryImp;
     MemoryImp *pMemoryImp = nullptr;
-    zet_sysman_mem_handle_t hSysmanMemory;
+    zes__mem_handle_t hSysmanMemory;
 
     void SetUp() override {
         DeviceFixture::SetUp();
@@ -80,28 +80,28 @@ TEST_F(SysmanMemoryFixture, GivenComponentCountZeroWhenCallingZetSysmanMemoryGet
 }
 
 TEST_F(SysmanMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetPropertiesThenVerifySysmanMemoryGetPropertiesCallSucceeds) {
-    zet_mem_properties_t properties;
+    zes_mem_properties_t properties;
 
     ze_result_t result = zetSysmanMemoryGetProperties(hSysmanMemory, &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ZET_MEM_TYPE_DDR, properties.type);
+    EXPECT_EQ(ZES_MEM_TYPE_DDR, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
     EXPECT_EQ(0u, properties.subdeviceId);
     EXPECT_EQ(0u, properties.physicalSize);
 }
 
 TEST_F(SysmanMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetStateThenVerifySysmanMemoryGetStateCallSucceeds) {
-    zet_mem_state_t state;
+    zes_mem_state_t state;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetSysmanMemoryGetState(hSysmanMemory, &state));
-    EXPECT_EQ(ZET_MEM_HEALTH_OK, state.health);
+    EXPECT_EQ(ZES_MEM_HEALTH_OK, state.health);
     EXPECT_EQ((probedSizeRegionOne - unallocatedSizeRegionOne), state.allocatedSize);
     EXPECT_EQ(probedSizeRegionOne, state.maxSize);
 }
 
 TEST_F(SysmanMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetStateAndIfQueryMemoryInfoFailsThenErrorIsReturned) {
-    zet_mem_state_t state;
+    zes_mem_state_t state;
 
     ON_CALL(*pDrm, queryMemoryInfo())
         .WillByDefault(::testing::Invoke(pDrm, &Mock<MemoryNeoDrm>::queryMemoryInfoMockReturnFalse));
@@ -109,7 +109,7 @@ TEST_F(SysmanMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetS
 }
 
 TEST_F(SysmanMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetStateAndIfQueryMemoryDidntProvideDeviceMemoryThenErrorIsReturned) {
-    zet_mem_state_t state;
+    zes_mem_state_t state;
 
     ON_CALL(*pDrm, queryMemoryInfo())
         .WillByDefault(::testing::Invoke(pDrm, &Mock<MemoryNeoDrm>::queryMemoryInfoMockWithoutDevice));

@@ -74,7 +74,7 @@ struct MetricsLibrary {
     virtual bool getContextData(Device &device, ContextCreateData_1_0 &contextData);
 
     ConfigurationHandle_1_0 createConfiguration(const zet_metric_group_handle_t metricGroup,
-                                                const zet_metric_group_properties_ext_t properties);
+                                                const zet_metric_group_properties_t properties);
     ConfigurationHandle_1_0 addConfiguration(const zet_metric_group_handle_t metricGroup);
 
     ClientGen getGenType(const uint32_t gen) const;
@@ -123,7 +123,7 @@ struct MetricQueryImp : MetricQuery {
 
 struct MetricQueryPoolImp : MetricQueryPool {
   public:
-    MetricQueryPoolImp(MetricContext &metricContext, zet_metric_group_handle_t hEventMetricGroup, const zet_metric_query_pool_desc_ext_t &poolDescription);
+    MetricQueryPoolImp(MetricContext &metricContext, zet_metric_group_handle_t hEventMetricGroup, const zet_metric_query_pool_desc_t &poolDescription);
 
     bool create();
     ze_result_t destroy() override;
@@ -138,7 +138,7 @@ struct MetricQueryPoolImp : MetricQueryPool {
     MetricsLibrary &metricsLibrary;
     std::vector<MetricQueryImp> pool;
     NEO::GraphicsAllocation *pAllocation = nullptr;
-    zet_metric_query_pool_desc_ext_t description = {};
+    zet_metric_query_pool_desc_t description = {};
     zet_metric_group_handle_t hMetricGroup = nullptr;
     QueryHandle_1_0 query = {};
 };

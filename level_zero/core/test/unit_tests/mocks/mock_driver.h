@@ -28,14 +28,14 @@ struct Mock<Driver> : public Driver {
 
     MOCK_METHOD(ze_result_t,
                 driverInit,
-                (ze_init_flag_t),
+                (ze_init_flags_t),
                 (override));
     MOCK_METHOD(void,
                 initialize,
                 (ze_result_t * result),
                 (override));
 
-    ze_result_t mockInit(ze_init_flag_t) { return this->DriverImp::driverInit(ZE_INIT_FLAG_NONE); }
+    ze_result_t mockInit(ze_init_flag_t) { return this->DriverImp::driverInit(ZE_INIT_FLAG_GPU_ONLY); }
     void mockInitialize(ze_result_t *result) { *result = ZE_RESULT_SUCCESS; }
 
     Driver *previousDriver = nullptr;

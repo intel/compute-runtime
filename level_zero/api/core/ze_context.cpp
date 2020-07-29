@@ -9,10 +9,6 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>
 
-#include "third_party/level_zero/ze_api_ext.h"
-
-extern "C" {
-
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeContextCreate(
     ze_driver_handle_t hDriver,
@@ -110,5 +106,3 @@ zeVirtualMemGetAccessAttribute(
     size_t *outSize) {
     return L0::Context::fromHandle(hContext)->getVirtualMemAccessAttribute(ptr, size, access, outSize);
 }
-
-} // extern "C"

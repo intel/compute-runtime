@@ -83,7 +83,7 @@ bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize
         for (uint32_t i = 0; i < pConstants->numConstants; i++) {
             uint64_t specConstantValue = 0;
             memcpy_s(&specConstantValue, sizeof(uint64_t),
-                     reinterpret_cast<void *>(pConstants->pConstantValues[i]), sizeof(uint64_t));
+                     const_cast<void *>(pConstants->pConstantValues[i]), sizeof(uint64_t));
             uint32_t specConstantId = pConstants->pConstantIds[i];
             specConstantsValues[specConstantId] = specConstantValue;
         }

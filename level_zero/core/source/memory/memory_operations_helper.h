@@ -9,7 +9,7 @@
 
 #include "shared/source/memory_manager/memory_operations_status.h"
 
-#include <level_zero/ze_common.h>
+#include <level_zero/ze_api.h>
 
 static ze_result_t changeMemoryOperationStatusToL0ResultType(NEO::MemoryOperationsStatus status) {
     switch (status) {

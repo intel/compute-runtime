@@ -233,7 +233,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetGetMetricGroupProperties
 
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
-    zet_metric_group_properties_ext_t metricGroupProperties = {};
+    zet_metric_group_properties_t metricGroupProperties = {};
 
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
@@ -277,7 +277,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetGetMetricGroupProperties
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
     EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
@@ -733,7 +733,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCa
     metricParams.LongName = "Metric long name";
     metricParams.ResultType = MetricsDiscovery::TMetricResultType::RESULT_UINT64;
     metricParams.MetricType = MetricsDiscovery::TMetricType::METRIC_TYPE_RATIO;
-    zet_metric_properties_ext_t metricProperties = {};
+    zet_metric_properties_t metricProperties = {};
 
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
@@ -796,14 +796,14 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetPropertiestIsCa
     EXPECT_NE(metricHandle, nullptr);
 
     // Obtain metric params.
-    EXPECT_EQ(zetMetricGetPropertiesExt(metricHandle, &metricProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGetProperties(metricHandle, &metricProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(strcmp(metricProperties.name, metricParams.SymbolName), 0);
     EXPECT_EQ(strcmp(metricProperties.description, metricParams.LongName), 0);
     EXPECT_EQ(metricProperties.metricType, ZET_METRIC_TYPE_RATIO);
     EXPECT_EQ(metricProperties.resultType, ZET_VALUE_TYPE_UINT64);
 }
 
-TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetDeviceActivateMetricGroupsIsCalledThenReturnsFail) {
+TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenzetContextActivateMetricGroupsIsCalledThenReturnsFail) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -886,7 +886,7 @@ TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetDeviceActivateMetricGr
     EXPECT_NE(metricGroupHandle, nullptr);
 }
 
-TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenZetDeviceActivateMetricGroupsIsCalledThenReturnsSuccess) {
+TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -969,7 +969,7 @@ TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenZetDeviceActiva
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Activate metric group.
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenZetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
@@ -1058,7 +1058,7 @@ TEST_F(MetricEnumerationTest, givenValidEventBasedMetricGroupWhenZetContextActiv
     EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricEnumerationTest, givenValidTimeBasedMetricGroupWhenZetDeviceActivateMetricGroupsIsCalledThenReturnsSuccess) {
+TEST_F(MetricEnumerationTest, givenValidTimeBasedMetricGroupWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1141,10 +1141,10 @@ TEST_F(MetricEnumerationTest, givenValidTimeBasedMetricGroupWhenZetDeviceActivat
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Activate metric group.
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricEnumerationTest, givenActivateTheSameMetricGroupTwiceWhenZetDeviceActivateMetricGroupsIsCalledThenReturnsSuccess) {
+TEST_F(MetricEnumerationTest, givenActivateTheSameMetricGroupTwiceWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1227,11 +1227,11 @@ TEST_F(MetricEnumerationTest, givenActivateTheSameMetricGroupTwiceWhenZetDeviceA
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Activate metric group.
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithDifferentDomainsWhenZetDeviceActivateMetricGroupsIsCalledThenReturnsSuccess) {
+TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithDifferentDomainsWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 2;
@@ -1306,11 +1306,11 @@ TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithDifferentDomainsWh
     EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle[1], &metricGroupProperties[1]), ZE_RESULT_SUCCESS);
 
     // Activate two metric groups with a different domains.
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 1, &metricGroupHandle[0]), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 1, &metricGroupHandle[1]), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[0]), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[1]), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithDifferentDomainsAtOnceWhenZetDeviceActivateMetricGroupsIsCalledThenReturnsSuccess) {
+TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithDifferentDomainsAtOnceWhenzetContextActivateMetricGroupsIsCalledThenReturnsSuccess) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 2;
@@ -1385,10 +1385,10 @@ TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithDifferentDomainsAt
     EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle[1], &metricGroupProperties[1]), ZE_RESULT_SUCCESS);
 
     // Activate two metric groups with a different domains.
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 2, metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 2, metricGroupHandle), ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithTheSameDomainsWhenZetDeviceActivateMetricGroupsIsCalledThenReturnsFail) {
+TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithTheSameDomainsWhenzetContextActivateMetricGroupsIsCalledThenReturnsFail) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1462,12 +1462,12 @@ TEST_F(MetricEnumerationTest, givenActivateTwoMetricGroupsWithTheSameDomainsWhen
     EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle[1], &metricGroupProperties[1]), ZE_RESULT_SUCCESS);
 
     // Activate two metric groups with a different domains.
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 1, &metricGroupHandle[0]), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 1, &metricGroupHandle[1]), ZE_RESULT_ERROR_UNKNOWN);
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 2, metricGroupHandle), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[0]), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[1]), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 2, metricGroupHandle), ZE_RESULT_ERROR_UNKNOWN);
 }
 
-TEST_F(MetricEnumerationTest, givenDeactivateTestsWhenZetDeviceActivateMetricGroupsIsCalledThenReturnsApropriateResults) {
+TEST_F(MetricEnumerationTest, givenDeactivateTestsWhenzetContextActivateMetricGroupsIsCalledThenReturnsApropriateResults) {
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1541,24 +1541,24 @@ TEST_F(MetricEnumerationTest, givenDeactivateTestsWhenZetDeviceActivateMetricGro
     EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle[1], &metricGroupProperties[1]), ZE_RESULT_SUCCESS);
 
     // Activate two metric groups with a different domains.
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 1, &metricGroupHandle[0]), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 1, &metricGroupHandle[1]), ZE_RESULT_ERROR_UNKNOWN);
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 2, metricGroupHandle), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[0]), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, &metricGroupHandle[1]), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 2, metricGroupHandle), ZE_RESULT_ERROR_UNKNOWN);
 
     // Deactivate all.
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
 
     // Activate two metric groups at once.
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 2, metricGroupHandle), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 2, metricGroupHandle), ZE_RESULT_ERROR_UNKNOWN);
 
     // Deactivate all.
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
 
     // Activate one domain.
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 1, metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 1, metricGroupHandle), ZE_RESULT_SUCCESS);
 
     // Deactivate all.
-    EXPECT_EQ(zetDeviceActivateMetricGroups(device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), device->toHandle(), 0, nullptr), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(MetricEnumerationTest, givenInvalidArgumentsWhenZetMetricGroupCalculateMetricValuesIsCalledThenReturnsFail) {
@@ -1684,12 +1684,12 @@ TEST_F(MetricEnumerationTest, givenIncorrectRawReportSizeWhenZetMetricGroupCalcu
     // Invalid raw buffer size provided by the user.
     uint32_t calculatedResults = 0;
     EXPECT_NE(metricsSetParams.QueryReportSize, rawResultsSize);
-    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, rawResultsSize, rawResults, &calculatedResults, nullptr), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults, &calculatedResults, nullptr), ZE_RESULT_ERROR_UNKNOWN);
 
     // Invalid raw buffer size provided by the driver.
     metricsSetParams.QueryReportSize = 0;
     EXPECT_NE(metricsSetParams.QueryReportSize, rawResultsSize);
-    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, rawResultsSize, rawResults, &calculatedResults, nullptr), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults, &calculatedResults, nullptr), ZE_RESULT_ERROR_UNKNOWN);
 }
 
 TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeWhenZetMetricGroupCalculateMetricValuesIsCalledThenReturnsCorrectCalculatedReportCount) {
@@ -1767,7 +1767,7 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeWhenZetMetricGroupCalcula
         std::vector<uint8_t> rawResults(rawResultsSize);
         uint32_t calculatedResults = 0;
 
-        EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, rawResultsSize, rawResults.data(), &calculatedResults, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResults, nullptr), ZE_RESULT_SUCCESS);
         EXPECT_EQ(calculatedResults, metricsSetParams.MetricsCount);
     }
 
@@ -1777,7 +1777,7 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeWhenZetMetricGroupCalcula
         std::vector<uint8_t> rawResults(rawResultsSize);
         uint32_t calculatedResults = 0;
 
-        EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, rawResultsSize, rawResults.data(), &calculatedResults, nullptr), ZE_RESULT_SUCCESS);
+        EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResults, nullptr), ZE_RESULT_SUCCESS);
         EXPECT_EQ(calculatedResults, 2 * metricsSetParams.MetricsCount);
     }
 }
@@ -1861,13 +1861,13 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndLowerProvidedCalculate
     std::vector<uint8_t> rawResults(rawResultsSize);
     uint32_t calculatedResultsCount = 0;
 
-    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, rawResultsSize, rawResults.data(), &calculatedResultsCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResultsCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(calculatedResultsCount, metricsSetParams.MetricsCount);
 
     // Provide lower calculated report count than returned earlier from api.
     calculatedResultsCount = 2;
     std::vector<zet_typed_value_t> caculatedrawResults(calculatedResultsCount);
-    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, rawResultsSize, rawResults.data(), &calculatedResultsCount, caculatedrawResults.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResultsCount, caculatedrawResults.data()), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndCorrectCalculatedReportCountWhenZetMetricGroupCalculateMetricValuesIsCalledThenReturnsSuccess) {
@@ -1948,12 +1948,12 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndCorrectCalculatedRepor
     std::vector<uint8_t> rawResults(rawResultsSize);
     uint32_t calculatedResultsCount = 0;
 
-    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, rawResultsSize, rawResults.data(), &calculatedResultsCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResultsCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(calculatedResultsCount, metricsSetParams.MetricsCount);
 
     // Provide incorrect calculated report buffer.
     std::vector<zet_typed_value_t> caculatedrawResults(calculatedResultsCount);
-    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, rawResultsSize, rawResults.data(), &calculatedResultsCount, caculatedrawResults.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResultsCount, caculatedrawResults.data()), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndCorrectCalculatedReportCountWhenZetMetricGroupCalculateMetricValuesIsCalledThenMaxValuesAreReturned) {
@@ -2034,12 +2034,12 @@ TEST_F(MetricEnumerationTest, givenCorrectRawReportSizeAndCorrectCalculatedRepor
     std::vector<uint8_t> rawResults(rawResultsSize);
     uint32_t calculatedResultsCount = 0;
 
-    EXPECT_EQ(zetMetricGroupCalculateMetricValuesExt(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_MAX_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResultsCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_MAX_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResultsCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(calculatedResultsCount, metricsSetParams.MetricsCount);
 
     // Provide incorrect calculated report buffer.
     std::vector<zet_typed_value_t> caculatedrawResults(calculatedResultsCount);
-    EXPECT_EQ(zetMetricGroupCalculateMetricValuesExt(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_MAX_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResultsCount, caculatedrawResults.data()), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_MAX_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResultsCount, caculatedrawResults.data()), ZE_RESULT_SUCCESS);
 }
 
 TEST_F(MetricEnumerationTest, givenIncorrectCalculationTypeWhenZetMetricGroupCalculateMetricValuesIsCalledThenMaxValuesAreReturned) {
@@ -2102,10 +2102,6 @@ TEST_F(MetricEnumerationTest, givenIncorrectCalculationTypeWhenZetMetricGroupCal
     EXPECT_CALL(metricsSet, SetApiFiltering(_))
         .WillRepeatedly(Return(TCompletionCode::CC_OK));
 
-    EXPECT_CALL(metricsSet, CalculateMetrics(_, _, _, _, _, _, _))
-        .Times(1)
-        .WillOnce(Return(TCompletionCode::CC_OK));
-
     EXPECT_CALL(metric, GetParams())
         .WillRepeatedly(Return(&metricParams));
 
@@ -2120,12 +2116,8 @@ TEST_F(MetricEnumerationTest, givenIncorrectCalculationTypeWhenZetMetricGroupCal
     std::vector<uint8_t> rawResults(rawResultsSize);
     uint32_t calculatedResultsCount = 0;
 
-    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, rawResultsSize, rawResults.data(), &calculatedResultsCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResultsCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(calculatedResultsCount, metricsSetParams.MetricsCount);
-
-    // Provide incorrect calculated report buffer.
-    std::vector<zet_typed_value_t> caculatedrawResults(calculatedResultsCount);
-    EXPECT_NE(zetMetricGroupCalculateMetricValuesExt(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_FORCE_UINT32, rawResultsSize, rawResults.data(), &calculatedResultsCount, caculatedrawResults.data()), ZE_RESULT_SUCCESS);
 }
 } // namespace ult
 } // namespace L0

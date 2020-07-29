@@ -16,7 +16,7 @@ RasHandleContext::~RasHandleContext() {
         delete pRas;
     }
 }
-void RasHandleContext::createHandle(zet_ras_error_type_t type) {
+void RasHandleContext::createHandle(zes_ras_error_type_t type) {
     Ras *pRas = new RasImp(pOsSysman, type);
     if (pRas->isRasErrorSupported == true) {
         handleList.push_back(pRas);
@@ -25,11 +25,11 @@ void RasHandleContext::createHandle(zet_ras_error_type_t type) {
     }
 }
 void RasHandleContext::init() {
-    createHandle(ZET_RAS_ERROR_TYPE_UNCORRECTABLE);
-    createHandle(ZET_RAS_ERROR_TYPE_CORRECTABLE);
+    createHandle(ZES_RAS_ERROR_TYPE_UNCORRECTABLE);
+    createHandle(ZES_RAS_ERROR_TYPE_CORRECTABLE);
 }
 ze_result_t RasHandleContext::rasGet(uint32_t *pCount,
-                                     zet_sysman_ras_handle_t *phRas) {
+                                     zes_ras_handle_t *phRas) {
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
     if (0 == *pCount || *pCount > handleListSize) {

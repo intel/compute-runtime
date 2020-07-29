@@ -16,7 +16,7 @@ namespace L0 {
 
 class DriverImp : public Driver {
   public:
-    ze_result_t driverInit(_ze_init_flag_t) override;
+    ze_result_t driverInit(ze_init_flags_t flags) override;
 
     void initialize(ze_result_t *result) override;
 

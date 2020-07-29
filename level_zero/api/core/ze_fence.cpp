@@ -8,8 +8,6 @@
 #include "level_zero/core/source/fence/fence.h"
 #include <level_zero/ze_api.h>
 
-extern "C" {
-
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeFenceCreate(
     ze_command_queue_handle_t hCommandQueue,
@@ -27,7 +25,7 @@ zeFenceDestroy(
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeFenceHostSynchronize(
     ze_fence_handle_t hFence,
-    uint32_t timeout) {
+    uint64_t timeout) {
     return L0::Fence::fromHandle(hFence)->hostSynchronize(timeout);
 }
 
@@ -42,5 +40,3 @@ zeFenceReset(
     ze_fence_handle_t hFence) {
     return L0::Fence::fromHandle(hFence)->reset();
 }
-
-} // extern "C"

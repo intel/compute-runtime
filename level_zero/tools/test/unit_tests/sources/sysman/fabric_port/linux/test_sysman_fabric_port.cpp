@@ -61,18 +61,18 @@ TEST_F(SysmanFabricPortFixture, GivenPortCountZeroWhenCallingZetSysmanFabricPort
 
 TEST_F(SysmanFabricPortFixture, GivenPortCountZeroAndValidHandlePtrWhenCallingZetSysmanFabricPortGetThenCountIsReturnedAndNoHandlesReturnedAndVerifyFabricPortGetCallSucceeds) {
     uint32_t count = 0U;
-    zet_sysman_fabric_port_handle_t handle = static_cast<zet_sysman_fabric_port_handle_t>(0UL);
+    zes_fabric_port_handle_t handle = static_cast<zes_fabric_port_handle_t>(0UL);
 
     ze_result_t result = zetSysmanFabricPortGet(hSysman, &count, &handle);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, SysmanFabricPortFixture::numPorts);
-    EXPECT_EQ(handle, static_cast<zet_sysman_fabric_port_handle_t>(0UL));
+    EXPECT_EQ(handle, static_cast<zes_fabric_port_handle_t>(0UL));
 }
 
 TEST_F(SysmanFabricPortFixture, GivenPortCountCorrectWhenCallingZetSysmanFabricPortGetThenCountHandlesAreReturnedAndAndVerifySysmanFabricPortGetCallSucceeds) {
     uint32_t count = SysmanFabricPortFixture::numPorts;
-    zet_sysman_fabric_port_handle_t hPorts[SysmanFabricPortFixture::numPorts];
+    zes_fabric_port_handle_t hPorts[SysmanFabricPortFixture::numPorts];
     ze_result_t result = zetSysmanFabricPortGet(hSysman, &count, hPorts);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -81,7 +81,7 @@ TEST_F(SysmanFabricPortFixture, GivenPortCountCorrectWhenCallingZetSysmanFabricP
 
 TEST_F(SysmanFabricPortFixture, GivenPortCountGreaterThanPortsWhenCallingZetSysmanFabricPortGetThenCorrectCountisReturnedAndAndVerifySysmanFabricPortGetCallSucceeds) {
     uint32_t count = SysmanFabricPortFixture::numPorts + 1U;
-    zet_sysman_fabric_port_handle_t hPorts[SysmanFabricPortFixture::numPorts + 1U];
+    zes_fabric_port_handle_t hPorts[SysmanFabricPortFixture::numPorts + 1U];
     ze_result_t result = zetSysmanFabricPortGet(hSysman, &count, hPorts);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -90,7 +90,7 @@ TEST_F(SysmanFabricPortFixture, GivenPortCountGreaterThanPortsWhenCallingZetSysm
 
 TEST_F(SysmanFabricPortFixture, GivenPortCounLessThanPortsWhenCallingZetSysmanFabricPortGetThenCountLessTanPortsHandlesAreReturned) {
     uint32_t count = SysmanFabricPortFixture::numPorts - 1U;
-    zet_sysman_fabric_port_handle_t hPorts[SysmanFabricPortFixture::numPorts - 1U];
+    zes_fabric_port_handle_t hPorts[SysmanFabricPortFixture::numPorts - 1U];
     ze_result_t result = zetSysmanFabricPortGet(hSysman, &count, hPorts);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -99,7 +99,7 @@ TEST_F(SysmanFabricPortFixture, GivenPortCounLessThanPortsWhenCallingZetSysmanFa
 
 TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFabricPortGetPropertiesThenZetSysmanFabricPortGetPropertiesCallSucceeds) {
     uint32_t count = 1U;
-    zet_sysman_fabric_port_handle_t hPorts[1U];
+    zes_fabric_port_handle_t hPorts[1U];
     ze_result_t result = zetSysmanFabricPortGet(hSysman, &count, hPorts);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -109,8 +109,8 @@ TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFa
     // Initialize values
     properties.onSubdevice = true;
     properties.subdeviceId = std::numeric_limits<uint32_t>::max();
-    std::memset(properties.model, std::numeric_limits<int8_t>::max(), ZET_MAX_FABRIC_PORT_MODEL_SIZE);
-    std::memset(properties.portUuid.id, std::numeric_limits<uint8_t>::max(), ZET_MAX_FABRIC_PORT_UUID_SIZE);
+    std::memset(properties.model, std::numeric_limits<int8_t>::max(), ZES_MAX_FABRIC_PORT_MODEL_SIZE);
+    std::memset(properties.portUuid.id, std::numeric_limits<uint8_t>::max(), ZES_MAX_FABRIC_PORT_UUID_SIZE);
     properties.maxRxSpeed.bitRate = std::numeric_limits<uint64_t>::max();
     properties.maxRxSpeed.width = std::numeric_limits<uint32_t>::max();
     properties.maxRxSpeed.maxBandwidth = std::numeric_limits<uint64_t>::max();
@@ -125,7 +125,7 @@ TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFa
     EXPECT_EQ(0L, properties.subdeviceId);
     EXPECT_STREQ("EXAMPLE", reinterpret_cast<char *>(properties.model));
     zet_fabric_port_uuid_t expectedUuid = {};
-    EXPECT_TRUE(0 == std::memcmp(&expectedUuid, properties.portUuid.id, ZET_MAX_FABRIC_PORT_UUID_SIZE));
+    EXPECT_TRUE(0 == std::memcmp(&expectedUuid, properties.portUuid.id, ZES_MAX_FABRIC_PORT_UUID_SIZE));
     EXPECT_EQ(0LU, properties.maxRxSpeed.bitRate);
     EXPECT_EQ(0U, properties.maxRxSpeed.width);
     EXPECT_EQ(0LU, properties.maxRxSpeed.maxBandwidth);
@@ -136,7 +136,7 @@ TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFa
 
 TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFabricPortGetLinkTypeThenZetSysmanFabricPortGetLinkTypeCallSucceeds) {
     uint32_t count = 1U;
-    zet_sysman_fabric_port_handle_t hPorts[1U];
+    zes_fabric_port_handle_t hPorts[1U];
     ze_result_t result = zetSysmanFabricPortGet(hSysman, &count, hPorts);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -157,7 +157,7 @@ TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFa
 
 TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFabricPortGetConfigThenZetSysmanFabricPortGetConfigCallSucceeds) {
     uint32_t count = 1U;
-    zet_sysman_fabric_port_handle_t hPorts[1U];
+    zes_fabric_port_handle_t hPorts[1U];
     ze_result_t result = zetSysmanFabricPortGet(hSysman, &count, hPorts);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -173,7 +173,7 @@ TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFa
 
 TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFabricPortSetConfigThenZetSysmanFabricPortGetConfigCallSucceeds) {
     uint32_t count = 1U;
-    zet_sysman_fabric_port_handle_t hPorts[1U];
+    zes_fabric_port_handle_t hPorts[1U];
     ze_result_t result = zetSysmanFabricPortGet(hSysman, &count, hPorts);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -194,7 +194,7 @@ TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFa
 
 TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFabricPortGetStateThenZetSysmanFabricPortGetStateCallSucceeds) {
     uint32_t count = 1U;
-    zet_sysman_fabric_port_handle_t hPorts[1U];
+    zes_fabric_port_handle_t hPorts[1U];
     ze_result_t result = zetSysmanFabricPortGet(hSysman, &count, hPorts);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -217,7 +217,7 @@ TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFa
 
 TEST_F(SysmanFabricPortFixture, GivenValidFabricPortHandleWhenCallingZetSysmanFabricPortGetThroughputThenZetSysmanFabricPortGetThroughputCallSucceeds) {
     uint32_t count = 1U;
-    zet_sysman_fabric_port_handle_t hPorts[1U];
+    zes_fabric_port_handle_t hPorts[1U];
     ze_result_t result = zetSysmanFabricPortGet(hSysman, &count, hPorts);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

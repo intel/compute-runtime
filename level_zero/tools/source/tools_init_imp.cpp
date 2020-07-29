@@ -7,7 +7,7 @@
 
 #include "level_zero/tools/source/tools_init_imp.h"
 
-#include "level_zero/tools/source/sysman/sysman.h"
+//#include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/source/tools_init.h"
 
 #include <mutex>
@@ -16,7 +16,6 @@
 namespace L0 {
 
 static void enableTools(ze_result_t &result, ze_init_flag_t flag, bool *ptoolsAreEnabled) {
-    SysmanHandleContext::init(flag);
     *ptoolsAreEnabled = true;
 }
 

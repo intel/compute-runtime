@@ -147,7 +147,7 @@ uint32_t MetricStreamerImp::getRequiredBufferSize(const uint32_t maxReportCount)
                                                    : maxReportCount * rawReportSize;
 }
 
-ze_result_t MetricStreamer::open(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+ze_result_t MetricStreamer::open(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                                  zet_metric_streamer_desc_t &desc, ze_event_handle_t hNotificationEvent,
                                  zet_metric_streamer_handle_t *phMetricStreamer) {
     auto pDevice = Device::fromHandle(hDevice);

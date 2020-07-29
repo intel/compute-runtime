@@ -17,7 +17,6 @@ class PlatformMonitoringTech;
 class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getEnergyCounter(uint64_t &energy) override;
-    ze_result_t getEnergyThreshold(zet_energy_threshold_t *pThreshold) override;
     ze_result_t getEnergyThreshold(zes_energy_threshold_t *pThreshold) override;
     ze_result_t setEnergyThreshold(double threshold) override;
     bool isPowerModuleSupported() override;

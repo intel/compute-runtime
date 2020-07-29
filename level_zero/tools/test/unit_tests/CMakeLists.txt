@@ -63,7 +63,9 @@ endif()
 
 set_target_properties(${TARGET_NAME} PROPERTIES FOLDER ${TARGET_NAME_L0})
 
-add_subdirectoriesL0(${CMAKE_CURRENT_SOURCE_DIR} "*")
+# add_subdirectoriesL0(${CMAKE_CURRENT_SOURCE_DIR} "*")
+add_subdirectory(sources/metrics)
+add_subdirectory(gens)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE $<TARGET_PROPERTY:${L0_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 

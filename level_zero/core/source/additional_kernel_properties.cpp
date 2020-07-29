@@ -9,6 +9,6 @@
 
 namespace L0 {
 
-void DeviceImp::processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_kernel_properties_t *pKernelProperties) {
+void DeviceImp::processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_module_properties_t *pKernelProperties) {
 }
 } // namespace L0

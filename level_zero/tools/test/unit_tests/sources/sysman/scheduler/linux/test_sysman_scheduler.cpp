@@ -85,22 +85,22 @@ class SysmanSchedulerFixture : public DeviceFixture, public ::testing::Test {
         }
     }
 
-    zet_sched_mode_t fixtureGetCurrentMode(zet_sysman_handle_t hSysman) {
-        zet_sched_mode_t mode;
+    zes_sched_mode_t fixtureGetCurrentMode(zet_sysman_handle_t hSysman) {
+        zes_sched_mode_t mode;
         ze_result_t result = zetSysmanSchedulerGetCurrentMode(hSysman, &mode);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         return mode;
     }
 
-    zet_sched_timeout_properties_t fixtureGetTimeoutModeProperties(zet_sysman_handle_t hSysman, ze_bool_t getDefaults) {
-        zet_sched_timeout_properties_t config;
+    zes_sched_timeout_properties_t fixtureGetTimeoutModeProperties(zet_sysman_handle_t hSysman, ze_bool_t getDefaults) {
+        zes_sched_timeout_properties_t config;
         ze_result_t result = zetSysmanSchedulerGetTimeoutModeProperties(hSysman, getDefaults, &config);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         return config;
     }
 
-    zet_sched_timeslice_properties_t fixtureGetTimesliceModeProperties(zet_sysman_handle_t hSysman, ze_bool_t getDefaults) {
-        zet_sched_timeslice_properties_t config;
+    zes_sched_timeslice_properties_t fixtureGetTimesliceModeProperties(zet_sysman_handle_t hSysman, ze_bool_t getDefaults) {
+        zes_sched_timeslice_properties_t config;
         ze_result_t result = zetSysmanSchedulerGetTimesliceModeProperties(hSysman, getDefaults, &config);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         return config;
@@ -109,7 +109,7 @@ class SysmanSchedulerFixture : public DeviceFixture, public ::testing::Test {
 
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetCurrentModeThenVerifyzetSysmanSchedulerGetCurrentModeCallSucceeds) {
     auto mode = fixtureGetCurrentMode(hSysman);
-    EXPECT_EQ(mode, ZET_SCHED_MODE_TIMESLICE);
+    EXPECT_EQ(mode, ZES_SCHED_MODE_TIMESLICE);
 }
 
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetTimeoutModePropertiesThenVerifyzetSysmanSchedulerGetTimeoutModePropertiesCallSucceeds) {
@@ -136,7 +136,7 @@ TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedul
 
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerSetTimeoutModeThenVerifyzetSysmanSchedulerSetTimeoutModeCallSucceeds) {
     ze_bool_t needReboot;
-    zet_sched_timeout_properties_t setConfig;
+    zes_sched_timeout_properties_t setConfig;
     setConfig.watchdogTimeout = 10000u;
     ze_result_t result = zetSysmanSchedulerSetTimeoutMode(hSysman, &setConfig, &needReboot);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -144,12 +144,12 @@ TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedul
     auto getConfig = fixtureGetTimeoutModeProperties(hSysman, false);
     EXPECT_EQ(getConfig.watchdogTimeout, setConfig.watchdogTimeout);
     auto mode = fixtureGetCurrentMode(hSysman);
-    EXPECT_EQ(mode, ZET_SCHED_MODE_TIMEOUT);
+    EXPECT_EQ(mode, ZES_SCHED_MODE_TIMEOUT);
 }
 
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerSetTimesliceModeThenVerifyzetSysmanSchedulerSetTimesliceModeCallSucceeds) {
     ze_bool_t needReboot;
-    zet_sched_timeslice_properties_t setConfig;
+    zes_sched_timeslice_properties_t setConfig;
     setConfig.interval = 1000u;
     setConfig.yieldTimeout = 1000u;
     ze_result_t result = zetSysmanSchedulerSetTimesliceMode(hSysman, &setConfig, &needReboot);
@@ -159,7 +159,7 @@ TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedul
     EXPECT_EQ(getConfig.interval, setConfig.interval);
     EXPECT_EQ(getConfig.yieldTimeout, setConfig.yieldTimeout);
     auto mode = fixtureGetCurrentMode(hSysman);
-    EXPECT_EQ(mode, ZET_SCHED_MODE_TIMESLICE);
+    EXPECT_EQ(mode, ZES_SCHED_MODE_TIMESLICE);
 }
 
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerSetExclusiveModeThenVerifyzetSysmanSchedulerSetExclusiveModeCallSucceeds) {
@@ -168,13 +168,13 @@ TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedul
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_FALSE(needReboot);
     auto mode = fixtureGetCurrentMode(hSysman);
-    EXPECT_EQ(mode, ZET_SCHED_MODE_EXCLUSIVE);
+    EXPECT_EQ(mode, ZES_SCHED_MODE_EXCLUSIVE);
 }
 
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetCurrentModeWhenSysfsNodeIsAbsentThenFailureIsReturned) {
     ON_CALL(*pSysfsAccess, read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<SchedulerSysfsAccess>::getValForError));
-    zet_sched_mode_t mode;
+    zes_sched_mode_t mode;
     ze_result_t result = zetSysmanSchedulerGetCurrentMode(hSysman, &mode);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
@@ -182,7 +182,7 @@ TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedul
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetTimeoutModePropertiesWithDefaultsWhenSysfsNodeIsAbsentThenFailureIsReturned) {
     ON_CALL(*pSysfsAccess, read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<SchedulerSysfsAccess>::getValForError));
-    zet_sched_timeout_properties_t config;
+    zes_sched_timeout_properties_t config;
     ze_result_t result = zetSysmanSchedulerGetTimeoutModeProperties(hSysman, true, &config);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }
@@ -190,7 +190,7 @@ TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedul
 TEST_F(SysmanSchedulerFixture, GivenValidSysmanHandleWhenCallingzetSysmanSchedulerGetTimesliceModePropertiesWithDefaultsWhenSysfsNodeIsAbsentThenFailureIsReturned) {
     ON_CALL(*pSysfsAccess, read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<SchedulerSysfsAccess>::getValForError));
-    zet_sched_timeslice_properties_t config;
+    zes_sched_timeslice_properties_t config;
     ze_result_t result = zetSysmanSchedulerGetTimesliceModeProperties(hSysman, true, &config);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 }

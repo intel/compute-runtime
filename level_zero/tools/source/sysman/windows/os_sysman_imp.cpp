@@ -11,9 +11,7 @@ namespace L0 {
 
 ze_result_t WddmSysmanImp::init() {
     Device *pDevice = nullptr;
-    if (pParentSysmanImp != nullptr) {
-        pDevice = Device::fromHandle(pParentSysmanImp->hCoreDevice);
-    } else if (pParentSysmanDeviceImp != nullptr) {
+    if (pParentSysmanDeviceImp != nullptr) {
         pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
     } else {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -43,11 +41,6 @@ WddmSysmanImp::~WddmSysmanImp() {
         delete pKmdSysManager;
         pKmdSysManager = nullptr;
     }
-}
-
-OsSysman *OsSysman::create(SysmanImp *pParentSysmanImp) {
-    WddmSysmanImp *pWddmSysmanImp = new WddmSysmanImp(pParentSysmanImp);
-    return static_cast<OsSysman *>(pWddmSysmanImp);
 }
 
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {

@@ -8,21 +8,8 @@
 #include "level_zero/core/source/module/module.h"
 #include <level_zero/ze_api.h>
 
-#include "third_party/level_zero/ze_api_ext.h"
-
-extern "C" {
-
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleCreate(
-    ze_device_handle_t hDevice,
-    const ze_module_desc_t *desc,
-    ze_module_handle_t *phModule,
-    ze_module_build_log_handle_t *phBuildLog) {
-    return L0::Device::fromHandle(hDevice)->createModule(desc, phModule, phBuildLog);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeModuleCreateExt(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
     const ze_module_desc_t *desc,
@@ -63,6 +50,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetGlobalPointer(
     ze_module_handle_t hModule,
     const char *pGlobalName,
+    size_t *pSize,
     void **pptr) {
     return L0::Module::fromHandle(hModule)->getGlobalPointer(pGlobalName, pptr);
 }
@@ -135,27 +123,31 @@ zeKernelSetArgumentValue(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeKernelSetAttribute(
+zeKernelSetIndirectAccess(
     ze_kernel_handle_t hKernel,
-    ze_kernel_attribute_t attr,
-    uint32_t size,
-    const void *pValue) {
-    return L0::Kernel::fromHandle(hKernel)->setAttribute(attr, size, pValue);
+    ze_kernel_indirect_access_flags_t flags) {
+    return L0::Kernel::fromHandle(hKernel)->setIndirectAccess(flags);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeKernelGetAttribute(
+zeKernelGetIndirectAccess(
     ze_kernel_handle_t hKernel,
-    ze_kernel_attribute_t attr,
+    ze_kernel_indirect_access_flags_t *pFlags) {
+    return L0::Kernel::fromHandle(hKernel)->getIndirectAccess(pFlags);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeKernelGetSourceAttributes(
+    ze_kernel_handle_t hKernel,
     uint32_t *pSize,
-    void *pValue) {
-    return L0::Kernel::fromHandle(hKernel)->getAttribute(attr, pSize, pValue);
+    char **pString) {
+    return L0::Kernel::fromHandle(hKernel)->getSourceAttributes(pSize, pString);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetIntermediateCacheConfig(
     ze_kernel_handle_t hKernel,
-    ze_cache_config_t cacheConfig) {
+    ze_cache_config_flags_t cacheConfig) {
     return L0::Kernel::fromHandle(hKernel)->setIntermediateCacheConfig(cacheConfig);
 }
 
@@ -215,8 +207,8 @@ zeCommandListAppendLaunchMultipleKernelsIndirect(
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelGetPropertiesExt(
     ze_kernel_handle_t hKernel,
-    ze_kernel_propertiesExt_t *pKernelProperties) {
-    return L0::Kernel::fromHandle(hKernel)->getPropertiesExt(pKernelProperties);
+    ze_kernel_properties_t *pKernelProperties) {
+    return L0::Kernel::fromHandle(hKernel)->getProperties(pKernelProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -234,5 +226,3 @@ zeModuleDynamicLinkExt(
     ze_module_build_log_handle_t *phLinkLog) {
     return L0::Module::fromHandle(phModules[0])->performDynamicLink(numModules, phModules, phLinkLog);
 }
-
-} // extern "C"

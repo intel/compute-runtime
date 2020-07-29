@@ -21,13 +21,12 @@ class LinuxRasImp : public OsRas, NEO::NonCopyableOrMovableClass {
     LinuxRasImp(OsSysman *pOsSysman);
     LinuxRasImp() = default;
     ~LinuxRasImp() override = default;
-    ze_result_t getCounterValues(zet_ras_details_t *pDetails) override;
     bool isRasSupported(void) override;
-    void setRasErrorType(zet_ras_error_type_t rasErrorType) override;
+    void setRasErrorType(zes_ras_error_type_t rasErrorType) override;
 
   protected:
     FsAccess *pFsAccess = nullptr;
-    zet_ras_error_type_t osRasErrorType;
+    zes_ras_error_type_t osRasErrorType;
 
   private:
     static const std::string rasCounterDir;

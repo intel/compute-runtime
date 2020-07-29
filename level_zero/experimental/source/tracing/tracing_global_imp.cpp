@@ -8,7 +8,7 @@
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeInit_Tracing(ze_init_flag_t flags) {
+zeInit_Tracing(ze_init_flags_t flags) {
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Global.pfnInit,
                                flags);
 

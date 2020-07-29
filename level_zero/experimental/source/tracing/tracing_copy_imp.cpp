@@ -12,21 +12,27 @@ zeCommandListAppendMemoryCopy_Tracing(ze_command_list_handle_t hCommandList,
                                       void *dstptr,
                                       const void *srcptr,
                                       size_t size,
-                                      ze_event_handle_t hEvent) {
+                                      ze_event_handle_t hSignalEvent,
+                                      uint32_t numWaitEvents,
+                                      ze_event_handle_t *phWaitEvents) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopy,
                                hCommandList,
                                dstptr,
                                srcptr,
                                size,
-                               hEvent);
+                               hSignalEvent,
+                               numWaitEvents,
+                               phWaitEvents);
 
     ze_command_list_append_memory_copy_params_t tracerParams;
     tracerParams.phCommandList = &hCommandList;
     tracerParams.pdstptr = &dstptr;
     tracerParams.psrcptr = &srcptr;
     tracerParams.psize = &size;
-    tracerParams.phEvent = &hEvent;
+    tracerParams.phSignalEvent = &hSignalEvent;
+    tracerParams.pnumWaitEvents = &numWaitEvents;
+    tracerParams.pphWaitEvents = &phWaitEvents;
 
     L0::APITracerCallbackDataImp<ze_pfnCommandListAppendMemoryCopyCb_t> api_callbackData;
 
@@ -41,7 +47,9 @@ zeCommandListAppendMemoryCopy_Tracing(ze_command_list_handle_t hCommandList,
                                    *tracerParams.pdstptr,
                                    *tracerParams.psrcptr,
                                    *tracerParams.psize,
-                                   *tracerParams.phEvent);
+                                   *tracerParams.phSignalEvent,
+                                   *tracerParams.pnumWaitEvents,
+                                   *tracerParams.pphWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -50,7 +58,9 @@ zeCommandListAppendMemoryFill_Tracing(ze_command_list_handle_t hCommandList,
                                       const void *pattern,
                                       size_t patternSize,
                                       size_t size,
-                                      ze_event_handle_t hEvent) {
+                                      ze_event_handle_t hSignalEvent,
+                                      uint32_t numWaitEvents,
+                                      ze_event_handle_t *phWaitEvents) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryFill,
                                hCommandList,
@@ -58,7 +68,9 @@ zeCommandListAppendMemoryFill_Tracing(ze_command_list_handle_t hCommandList,
                                pattern,
                                patternSize,
                                size,
-                               hEvent);
+                               hSignalEvent,
+                               numWaitEvents,
+                               phWaitEvents);
 
     ze_command_list_append_memory_fill_params_t tracerParams;
     tracerParams.phCommandList = &hCommandList;
@@ -66,7 +78,9 @@ zeCommandListAppendMemoryFill_Tracing(ze_command_list_handle_t hCommandList,
     tracerParams.ppattern = &pattern;
     tracerParams.ppattern_size = &patternSize;
     tracerParams.psize = &size;
-    tracerParams.phEvent = &hEvent;
+    tracerParams.phSignalEvent = &hSignalEvent;
+    tracerParams.pnumWaitEvents = &numWaitEvents;
+    tracerParams.pphWaitEvents = &phWaitEvents;
 
     L0::APITracerCallbackDataImp<ze_pfnCommandListAppendMemoryFillCb_t> api_callbackData;
 
@@ -82,7 +96,9 @@ zeCommandListAppendMemoryFill_Tracing(ze_command_list_handle_t hCommandList,
                                    *tracerParams.ppattern,
                                    *tracerParams.ppattern_size,
                                    *tracerParams.psize,
-                                   *tracerParams.phEvent);
+                                   *tracerParams.phSignalEvent,
+                                   *tracerParams.pnumWaitEvents,
+                                   *tracerParams.pphWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -95,7 +111,9 @@ zeCommandListAppendMemoryCopyRegion_Tracing(ze_command_list_handle_t hCommandLis
                                             const ze_copy_region_t *srcRegion,
                                             uint32_t srcPitch,
                                             uint32_t srcSlicePitch,
-                                            ze_event_handle_t hEvent) {
+                                            ze_event_handle_t hSignalEvent,
+                                            uint32_t numWaitEvents,
+                                            ze_event_handle_t *phWaitEvents) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopyRegion,
                                hCommandList,
@@ -107,7 +125,9 @@ zeCommandListAppendMemoryCopyRegion_Tracing(ze_command_list_handle_t hCommandLis
                                srcRegion,
                                srcPitch,
                                srcSlicePitch,
-                               hEvent);
+                               hSignalEvent,
+                               numWaitEvents,
+                               phWaitEvents);
 
     ze_command_list_append_memory_copy_region_params_t tracerParams;
     tracerParams.phCommandList = &hCommandList;
@@ -119,7 +139,9 @@ zeCommandListAppendMemoryCopyRegion_Tracing(ze_command_list_handle_t hCommandLis
     tracerParams.psrcRegion = &srcRegion;
     tracerParams.psrcPitch = &srcPitch;
     tracerParams.psrcSlicePitch = &srcSlicePitch;
-    tracerParams.phEvent = &hEvent;
+    tracerParams.phSignalEvent = &hSignalEvent;
+    tracerParams.pnumWaitEvents = &numWaitEvents;
+    tracerParams.pphWaitEvents = &phWaitEvents;
 
     L0::APITracerCallbackDataImp<ze_pfnCommandListAppendMemoryCopyRegionCb_t> api_callbackData;
 
@@ -139,26 +161,83 @@ zeCommandListAppendMemoryCopyRegion_Tracing(ze_command_list_handle_t hCommandLis
                                    *tracerParams.psrcRegion,
                                    *tracerParams.psrcPitch,
                                    *tracerParams.psrcSlicePitch,
-                                   *tracerParams.phEvent);
+                                   *tracerParams.phSignalEvent,
+                                   *tracerParams.pnumWaitEvents,
+                                   *tracerParams.pphWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListAppendMemoryCopyFromContext_Tracing(ze_command_list_handle_t hCommandList,
+                                                 void *dstptr,
+                                                 ze_context_handle_t hContextSrc,
+                                                 const void *srcptr,
+                                                 size_t size,
+                                                 ze_event_handle_t hSignalEvent,
+                                                 uint32_t numWaitEvents,
+                                                 ze_event_handle_t *phWaitEvents) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopyFromContext,
+                               hCommandList,
+                               dstptr,
+                               hContextSrc,
+                               srcptr,
+                               size,
+                               hSignalEvent,
+                               numWaitEvents,
+                               phWaitEvents);
+
+    ze_command_list_append_memory_copy_from_context_params_t tracerParams;
+    tracerParams.phCommandList = &hCommandList;
+    tracerParams.pdstptr = &dstptr;
+    tracerParams.phContextSrc = &hContextSrc,
+    tracerParams.psrcptr = &srcptr,
+    tracerParams.psize = &size,
+    tracerParams.phSignalEvent = &hSignalEvent;
+    tracerParams.pnumWaitEvents = &numWaitEvents;
+    tracerParams.pphWaitEvents = &phWaitEvents;
+
+    L0::APITracerCallbackDataImp<ze_pfnCommandListAppendMemoryCopyFromContextCb_t> api_callbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnCommandListAppendMemoryCopyFromContextCb_t, CommandList, pfnAppendMemoryCopyFromContextCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopyFromContext,
+                                   &tracerParams,
+                                   api_callbackData.apiOrdinal,
+                                   api_callbackData.prologCallbacks,
+                                   api_callbackData.epilogCallbacks,
+                                   *tracerParams.phCommandList,
+                                   *tracerParams.pdstptr,
+                                   *tracerParams.phContextSrc,
+                                   *tracerParams.psrcptr,
+                                   *tracerParams.psize,
+                                   *tracerParams.phSignalEvent,
+                                   *tracerParams.pnumWaitEvents,
+                                   *tracerParams.pphWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendImageCopy_Tracing(ze_command_list_handle_t hCommandList,
                                      ze_image_handle_t hDstImage,
                                      ze_image_handle_t hSrcImage,
-                                     ze_event_handle_t hEvent) {
+                                     ze_event_handle_t hSignalEvent,
+                                     uint32_t numWaitEvents,
+                                     ze_event_handle_t *phWaitEvents) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopy,
                                hCommandList,
                                hDstImage,
                                hSrcImage,
-                               hEvent);
+                               hSignalEvent,
+                               numWaitEvents,
+                               phWaitEvents);
 
     ze_command_list_append_image_copy_params_t tracerParams;
     tracerParams.phCommandList = &hCommandList;
     tracerParams.phDstImage = &hDstImage;
     tracerParams.phSrcImage = &hSrcImage;
-    tracerParams.phEvent = &hEvent;
+    tracerParams.phSignalEvent = &hSignalEvent;
+    tracerParams.pnumWaitEvents = &numWaitEvents;
+    tracerParams.pphWaitEvents = &phWaitEvents;
 
     L0::APITracerCallbackDataImp<ze_pfnCommandListAppendImageCopyCb_t> api_callbackData;
 
@@ -172,17 +251,20 @@ zeCommandListAppendImageCopy_Tracing(ze_command_list_handle_t hCommandList,
                                    *tracerParams.phCommandList,
                                    *tracerParams.phDstImage,
                                    *tracerParams.phSrcImage,
-                                   *tracerParams.phEvent);
+                                   *tracerParams.phSignalEvent,
+                                   *tracerParams.pnumWaitEvents,
+                                   *tracerParams.pphWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeCommandListAppendImageCopyRegion_Tracing(
-    ze_command_list_handle_t hCommandList,
-    ze_image_handle_t hDstImage,
-    ze_image_handle_t hSrcImage,
-    const ze_image_region_t *pDstRegion,
-    const ze_image_region_t *pSrcRegion,
-    ze_event_handle_t hEvent) {
+zeCommandListAppendImageCopyRegion_Tracing(ze_command_list_handle_t hCommandList,
+                                           ze_image_handle_t hDstImage,
+                                           ze_image_handle_t hSrcImage,
+                                           const ze_image_region_t *pDstRegion,
+                                           const ze_image_region_t *pSrcRegion,
+                                           ze_event_handle_t hSignalEvent,
+                                           uint32_t numWaitEvents,
+                                           ze_event_handle_t *phWaitEvents) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopyRegion,
                                hCommandList,
@@ -190,7 +272,9 @@ zeCommandListAppendImageCopyRegion_Tracing(
                                hSrcImage,
                                pDstRegion,
                                pSrcRegion,
-                               hEvent);
+                               hSignalEvent,
+                               numWaitEvents,
+                               phWaitEvents);
 
     ze_command_list_append_image_copy_region_params_t tracerParams;
     tracerParams.phCommandList = &hCommandList;
@@ -198,7 +282,9 @@ zeCommandListAppendImageCopyRegion_Tracing(
     tracerParams.phSrcImage = &hSrcImage;
     tracerParams.ppDstRegion = &pDstRegion;
     tracerParams.ppSrcRegion = &pSrcRegion;
-    tracerParams.phEvent = &hEvent;
+    tracerParams.phSignalEvent = &hSignalEvent;
+    tracerParams.pnumWaitEvents = &numWaitEvents;
+    tracerParams.pphWaitEvents = &phWaitEvents;
 
     L0::APITracerCallbackDataImp<ze_pfnCommandListAppendImageCopyRegionCb_t> api_callbackData;
 
@@ -214,7 +300,9 @@ zeCommandListAppendImageCopyRegion_Tracing(
                                    *tracerParams.phSrcImage,
                                    *tracerParams.ppDstRegion,
                                    *tracerParams.ppSrcRegion,
-                                   *tracerParams.phEvent);
+                                   *tracerParams.phSignalEvent,
+                                   *tracerParams.pnumWaitEvents,
+                                   *tracerParams.pphWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -222,21 +310,27 @@ zeCommandListAppendImageCopyToMemory_Tracing(ze_command_list_handle_t hCommandLi
                                              void *dstptr,
                                              ze_image_handle_t hSrcImage,
                                              const ze_image_region_t *pSrcRegion,
-                                             ze_event_handle_t hEvent) {
+                                             ze_event_handle_t hSignalEvent,
+                                             uint32_t numWaitEvents,
+                                             ze_event_handle_t *phWaitEvents) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopyToMemory,
                                hCommandList,
                                dstptr,
                                hSrcImage,
                                pSrcRegion,
-                               hEvent);
+                               hSignalEvent,
+                               numWaitEvents,
+                               phWaitEvents);
 
     ze_command_list_append_image_copy_to_memory_params_t tracerParams;
     tracerParams.phCommandList = &hCommandList;
     tracerParams.pdstptr = &dstptr;
     tracerParams.phSrcImage = &hSrcImage;
     tracerParams.ppSrcRegion = &pSrcRegion;
-    tracerParams.phEvent = &hEvent;
+    tracerParams.phSignalEvent = &hSignalEvent;
+    tracerParams.pnumWaitEvents = &numWaitEvents;
+    tracerParams.pphWaitEvents = &phWaitEvents;
 
     L0::APITracerCallbackDataImp<ze_pfnCommandListAppendImageCopyToMemoryCb_t> api_callbackData;
 
@@ -251,7 +345,9 @@ zeCommandListAppendImageCopyToMemory_Tracing(ze_command_list_handle_t hCommandLi
                                    *tracerParams.pdstptr,
                                    *tracerParams.phSrcImage,
                                    *tracerParams.ppSrcRegion,
-                                   *tracerParams.phEvent);
+                                   *tracerParams.phSignalEvent,
+                                   *tracerParams.pnumWaitEvents,
+                                   *tracerParams.pphWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -259,21 +355,27 @@ zeCommandListAppendImageCopyFromMemory_Tracing(ze_command_list_handle_t hCommand
                                                ze_image_handle_t hDstImage,
                                                const void *srcptr,
                                                const ze_image_region_t *pDstRegion,
-                                               ze_event_handle_t hEvent) {
+                                               ze_event_handle_t hSignalEvent,
+                                               uint32_t numWaitEvents,
+                                               ze_event_handle_t *phWaitEvents) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendImageCopyFromMemory,
                                hCommandList,
                                hDstImage,
                                srcptr,
                                pDstRegion,
-                               hEvent);
+                               hSignalEvent,
+                               numWaitEvents,
+                               phWaitEvents);
 
     ze_command_list_append_image_copy_from_memory_params_t tracerParams;
     tracerParams.phCommandList = &hCommandList;
     tracerParams.phDstImage = &hDstImage;
     tracerParams.psrcptr = &srcptr;
     tracerParams.ppDstRegion = &pDstRegion;
-    tracerParams.phEvent = &hEvent;
+    tracerParams.phSignalEvent = &hSignalEvent;
+    tracerParams.pnumWaitEvents = &numWaitEvents;
+    tracerParams.pphWaitEvents = &phWaitEvents;
 
     L0::APITracerCallbackDataImp<ze_pfnCommandListAppendImageCopyFromMemoryCb_t> api_callbackData;
 
@@ -288,7 +390,9 @@ zeCommandListAppendImageCopyFromMemory_Tracing(ze_command_list_handle_t hCommand
                                    *tracerParams.phDstImage,
                                    *tracerParams.psrcptr,
                                    *tracerParams.ppDstRegion,
-                                   *tracerParams.phEvent);
+                                   *tracerParams.phSignalEvent,
+                                   *tracerParams.pnumWaitEvents,
+                                   *tracerParams.pphWaitEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

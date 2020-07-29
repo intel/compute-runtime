@@ -13,7 +13,7 @@ ze_result_t LinuxMemoryImp::getMemorySize(uint64_t &maxSize, uint64_t &allocSize
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t LinuxMemoryImp::getMemHealth(zet_mem_health_t &memHealth) {
+ze_result_t LinuxMemoryImp::getMemHealth(zes_mem_health_t &memHealth) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

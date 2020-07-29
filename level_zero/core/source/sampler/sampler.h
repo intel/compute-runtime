@@ -8,7 +8,7 @@
 #pragma once
 
 #include "level_zero/core/source/device/device.h"
-#include <level_zero/ze_sampler.h>
+#include <level_zero/ze_api.h>
 
 struct _ze_sampler_handle_t {};
 

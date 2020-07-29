@@ -8,8 +8,6 @@
 #include "level_zero/core/source/device/device.h"
 #include <level_zero/ze_api.h>
 
-extern "C" {
-
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceMakeMemoryResident(
     ze_device_handle_t hDevice,
@@ -39,5 +37,3 @@ zeDeviceEvictImage(
     ze_image_handle_t hImage) {
     return L0::Device::fromHandle(hDevice)->evictImage(hImage);
 }
-
-} // extern "C"

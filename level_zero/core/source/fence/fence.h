@@ -11,7 +11,7 @@
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
-#include <level_zero/ze_fence.h>
+#include <level_zero/ze_api.h>
 
 #include <limits>
 
@@ -23,7 +23,7 @@ struct Fence : _ze_fence_handle_t {
     static Fence *create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc);
     virtual ~Fence() = default;
     virtual ze_result_t destroy() = 0;
-    virtual ze_result_t hostSynchronize(uint32_t timeout) = 0;
+    virtual ze_result_t hostSynchronize(uint64_t timeout) = 0;
     virtual ze_result_t queryStatus() = 0;
     virtual ze_result_t reset() = 0;
 
@@ -61,7 +61,7 @@ struct FenceImp : public Fence {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t hostSynchronize(uint32_t timeout) override;
+    ze_result_t hostSynchronize(uint64_t timeout) override;
 
     ze_result_t queryStatus() override;
 

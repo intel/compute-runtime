@@ -60,15 +60,15 @@ void CommandQueueImp::submitBatchBuffer(size_t offset, NEO::ResidencyContainer &
     buffers.setCurrentFlushStamp(csr->obtainCurrentFlushStamp());
 }
 
-ze_result_t CommandQueueImp::synchronize(uint32_t timeout) {
+ze_result_t CommandQueueImp::synchronize(uint64_t timeout) {
     return synchronizeByPollingForTaskCount(timeout);
 }
 
-ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint32_t timeout) {
+ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) {
     UNRECOVERABLE_IF(csr == nullptr);
 
     auto taskCountToWait = this->taskCount;
-    bool enableTimeout = (timeout != std::numeric_limits<uint32_t>::max());
+    bool enableTimeout = (timeout != std::numeric_limits<uint64_t>::max());
     csr->waitForCompletionWithTimeout(enableTimeout, timeout, this->taskCount);
 
     if (*csr->getTagAddress() < taskCountToWait) {

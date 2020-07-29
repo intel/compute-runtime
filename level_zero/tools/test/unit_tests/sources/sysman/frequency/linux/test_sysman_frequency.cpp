@@ -432,7 +432,7 @@ TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleWhenCallingzetSysmanFreq
 TEST_F(SysmanFrequencyFixture, GivenValidFrequencyHandleAndZeroCountWhenCallingzetSysmanFrequencyGetAvailableClocksCallSucceeds) {
     uint32_t count = 0;
 
-    ze_result_t result = zetSysmanFrequencyGetAvailableClocks(hSysmanFrequency, &count, nullptr);
+    ze_result_t result = zesSysmanFrequencyGetAvailableClocks(hSysmanFrequency, &count, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(numClocks, count);

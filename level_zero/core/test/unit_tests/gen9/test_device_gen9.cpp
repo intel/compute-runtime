@@ -19,21 +19,19 @@ using ::testing::Return;
 using KernelPropertyTest = Test<DeviceFixture>;
 
 HWTEST2_F(KernelPropertyTest, givenReturnedKernelPropertiesThenExpectedDp4aSupportReturned, IsGen9) {
-    ze_device_kernel_properties_t kernelProps;
-    kernelProps.version = ZE_DEVICE_KERNEL_PROPERTIES_VERSION_CURRENT;
+    ze_device_module_properties_t kernelProps;
 
     device->getKernelProperties(&kernelProps);
-    EXPECT_FALSE(kernelProps.dp4aSupported);
+    EXPECT_EQ(0u, kernelProps.flags & ZE_DEVICE_MODULE_FLAG_DP4A);
 }
 
 using DevicePropertyTest = Test<DeviceFixture>;
 
 HWTEST2_F(DevicePropertyTest, givenReturnedDevicePropertiesThenExpectedPageFaultSupportReturned, IsGen9) {
     ze_device_properties_t deviceProps;
-    deviceProps.version = ZE_DEVICE_PROPERTIES_VERSION_CURRENT;
 
     device->getProperties(&deviceProps);
-    EXPECT_FALSE(deviceProps.onDemandPageFaultsSupported);
+    EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING);
 }
 
 using DeviceQueueGroupTest = Test<DeviceFixture>;

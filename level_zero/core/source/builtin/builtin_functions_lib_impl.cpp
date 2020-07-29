@@ -139,7 +139,7 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
     ze_result_t res;
     std::unique_ptr<Module> module;
     ze_module_handle_t moduleHandle;
-    ze_module_desc_t moduleDesc = {ZE_MODULE_DESC_VERSION_CURRENT};
+    ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
     moduleDesc.pInputModule = reinterpret_cast<uint8_t *>(&builtInCode.resource[0]);
     moduleDesc.inputSize = builtInCode.resource.size();
@@ -150,7 +150,7 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
 
     std::unique_ptr<Kernel> kernel;
     ze_kernel_handle_t kernelHandle;
-    ze_kernel_desc_t kernelDesc = {ZE_KERNEL_DESC_VERSION_CURRENT};
+    ze_kernel_desc_t kernelDesc = {};
     kernelDesc.pKernelName = builtInName;
     res = module->createKernel(&kernelDesc, &kernelHandle);
     DEBUG_BREAK_IF(res != ZE_RESULT_SUCCESS);

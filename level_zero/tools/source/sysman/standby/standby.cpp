@@ -28,20 +28,6 @@ void StandbyHandleContext::init() {
     }
 }
 
-ze_result_t StandbyHandleContext::standbyGet(uint32_t *pCount, zet_sysman_standby_handle_t *phStandby) {
-    uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
-    uint32_t numToCopy = std::min(*pCount, handleListSize);
-    if (0 == *pCount || *pCount > handleListSize) {
-        *pCount = handleListSize;
-    }
-    if (nullptr != phStandby) {
-        for (uint32_t i = 0; i < numToCopy; i++) {
-            phStandby[i] = handleList[i]->toHandle();
-        }
-    }
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t StandbyHandleContext::standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) {
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);

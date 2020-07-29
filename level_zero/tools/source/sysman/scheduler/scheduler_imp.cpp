@@ -14,7 +14,7 @@ namespace L0 {
 constexpr uint64_t minTimeoutModeHeartbeat = 5000u;
 constexpr uint64_t minTimeoutInMicroSeconds = 1000u;
 
-ze_result_t SchedulerImp::getCurrentMode(zet_sched_mode_t *pMode) {
+ze_result_t SchedulerImp::getCurrentMode(zes_sched_mode_t *pMode) {
     uint64_t timeout = 0;
     uint64_t timeslice = 0;
     ze_result_t result = pOsScheduler->getPreemptTimeout(timeout, false);
@@ -26,18 +26,18 @@ ze_result_t SchedulerImp::getCurrentMode(zet_sched_mode_t *pMode) {
         return result;
     }
     if (timeslice > 0) {
-        *pMode = ZET_SCHED_MODE_TIMESLICE;
+        *pMode = ZES_SCHED_MODE_TIMESLICE;
     } else {
         if (timeout > 0) {
-            *pMode = ZET_SCHED_MODE_TIMEOUT;
+            *pMode = ZES_SCHED_MODE_TIMEOUT;
         } else {
-            *pMode = ZET_SCHED_MODE_EXCLUSIVE;
+            *pMode = ZES_SCHED_MODE_EXCLUSIVE;
         }
     }
     return result;
 }
 
-ze_result_t SchedulerImp::getTimeoutModeProperties(ze_bool_t getDefaults, zet_sched_timeout_properties_t *pConfig) {
+ze_result_t SchedulerImp::getTimeoutModeProperties(ze_bool_t getDefaults, zes_sched_timeout_properties_t *pConfig) {
     uint64_t heartbeat = 0;
     ze_result_t result = pOsScheduler->getHeartbeatInterval(heartbeat, getDefaults);
     if (result != ZE_RESULT_SUCCESS) {
@@ -48,7 +48,7 @@ ze_result_t SchedulerImp::getTimeoutModeProperties(ze_bool_t getDefaults, zet_sc
     return result;
 }
 
-ze_result_t SchedulerImp::getTimesliceModeProperties(ze_bool_t getDefaults, zet_sched_timeslice_properties_t *pConfig) {
+ze_result_t SchedulerImp::getTimesliceModeProperties(ze_bool_t getDefaults, zes_sched_timeslice_properties_t *pConfig) {
     uint64_t timeout = 0, timeslice = 0;
     ze_result_t result = pOsScheduler->getPreemptTimeout(timeout, getDefaults);
     if (result != ZE_RESULT_SUCCESS) {
@@ -63,8 +63,8 @@ ze_result_t SchedulerImp::getTimesliceModeProperties(ze_bool_t getDefaults, zet_
     return result;
 }
 
-ze_result_t SchedulerImp::setTimeoutMode(zet_sched_timeout_properties_t *pProperties, ze_bool_t *pNeedReboot) {
-    zet_sched_mode_t currMode;
+ze_result_t SchedulerImp::setTimeoutMode(zes_sched_timeout_properties_t *pProperties, ze_bool_t *pNeedReboot) {
+    zes_sched_mode_t currMode;
     ze_result_t result = getCurrentMode(&currMode);
     if (result != ZE_RESULT_SUCCESS) {
         return result;
@@ -78,7 +78,7 @@ ze_result_t SchedulerImp::setTimeoutMode(zet_sched_timeout_properties_t *pProper
     }
     *pNeedReboot = false;
     result = pOsScheduler->setHeartbeatInterval(pProperties->watchdogTimeout);
-    if ((currMode == ZET_SCHED_MODE_TIMEOUT) || (result != ZE_RESULT_SUCCESS)) {
+    if ((currMode == ZES_SCHED_MODE_TIMEOUT) || (result != ZE_RESULT_SUCCESS)) {
         return result;
     }
 
@@ -96,7 +96,7 @@ ze_result_t SchedulerImp::setTimeoutMode(zet_sched_timeout_properties_t *pProper
     return result;
 }
 
-ze_result_t SchedulerImp::setTimesliceMode(zet_sched_timeslice_properties_t *pProperties, ze_bool_t *pNeedReboot) {
+ze_result_t SchedulerImp::setTimesliceMode(zes_sched_timeslice_properties_t *pProperties, ze_bool_t *pNeedReboot) {
     if (pProperties->interval < minTimeoutInMicroSeconds) {
         // interval(in usec) less than 1000 would be computed to
         // 0 milli seconds interval.

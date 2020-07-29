@@ -61,7 +61,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmediate(bo
     this->close();
     ze_command_list_handle_t immediateHandle = this->toHandle();
     this->cmdQImmediate->executeCommandLists(1, &immediateHandle, nullptr, performMigration);
-    this->cmdQImmediate->synchronize(std::numeric_limits<uint32_t>::max());
+    this->cmdQImmediate->synchronize(std::numeric_limits<uint64_t>::max());
     this->reset();
 
     return ZE_RESULT_SUCCESS;
@@ -1301,7 +1301,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), event->getGpuAddress(), Event::STATE_SIGNALED, false, true);
     } else {
         NEO::PipeControlArgs args;
-        args.dcFlushEnable = (event->signalScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
+        args.dcFlushEnable = (!event->signalScope) ? false : true;
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
             *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
             event->getGpuAddress(), Event::STATE_SIGNALED,
@@ -1336,7 +1336,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
                                                                        eventStateClear,
                                                                        COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
 
-        bool dcFlushEnable = (event->waitScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
+        bool dcFlushEnable = (!event->waitScope) ? false : true;
         if (dcFlushEnable) {
             if (isCopyOnlyCmdList) {
                 NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
@@ -1389,7 +1389,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
             NEO::EncodeStoreMMIO<GfxFamily>::encode(*commandContainer.getCommandStream(),
                                                     GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, contextEndAddr);
 
-            args.dcFlushEnable = (event->signalScope == ZE_EVENT_SCOPE_FLAG_NONE) ? false : true;
+            args.dcFlushEnable = (!event->signalScope) ? false : true;
             if (args.dcFlushEnable) {
                 NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
             }

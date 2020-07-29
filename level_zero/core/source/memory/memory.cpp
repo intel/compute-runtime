@@ -99,7 +99,7 @@ ze_result_t DriverHandleImp::getMemAddressRange(const void *ptr, void **pBase, s
     return ZE_RESULT_ERROR_UNKNOWN;
 }
 
-ze_result_t DriverHandleImp::allocHostMem(ze_host_mem_alloc_flag_t flags, size_t size, size_t alignment,
+ze_result_t DriverHandleImp::allocHostMem(ze_host_mem_alloc_flags_t flags, size_t size, size_t alignment,
                                           void **ptr) {
     if (size > this->devices[0]->getDeviceInfo().maxMemAllocSize) {
         *ptr = nullptr;
@@ -120,7 +120,7 @@ ze_result_t DriverHandleImp::allocHostMem(ze_host_mem_alloc_flag_t flags, size_t
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flag_t flags,
+ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flags_t flags,
                                             size_t size, size_t alignment, void **ptr) {
     if (size > this->devices[0]->getNEODevice()->getHardwareCapabilities().maxMemAllocSize) {
         *ptr = nullptr;
@@ -141,8 +141,8 @@ ze_result_t DriverHandleImp::allocDeviceMem(ze_device_handle_t hDevice, ze_devic
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t DriverHandleImp::allocSharedMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flag_t deviceFlags,
-                                            ze_host_mem_alloc_flag_t hostFlags, size_t size, size_t alignment,
+ze_result_t DriverHandleImp::allocSharedMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flags_t deviceFlags,
+                                            ze_host_mem_alloc_flags_t hostFlags, size_t size, size_t alignment,
                                             void **ptr) {
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY);
     ze_device_handle_t device;

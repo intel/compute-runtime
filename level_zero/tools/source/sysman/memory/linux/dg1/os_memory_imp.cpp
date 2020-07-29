@@ -35,8 +35,8 @@ ze_result_t LinuxMemoryImp::getMemorySize(uint64_t &maxSize, uint64_t &allocSize
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxMemoryImp::getMemHealth(zet_mem_health_t &memHealth) {
-    memHealth = ZET_MEM_HEALTH_OK;
+ze_result_t LinuxMemoryImp::getMemHealth(zes_mem_health_t &memHealth) {
+    memHealth = ZES_MEM_HEALTH_OK;
 
     return ZE_RESULT_SUCCESS;
 }

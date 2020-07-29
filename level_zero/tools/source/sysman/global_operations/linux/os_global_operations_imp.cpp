@@ -31,24 +31,24 @@ const std::string LinuxGlobalOperationsImp::clientsDir("clients");
 // with engine enum defined in leve-zero spec
 // Note that entries with int 2 and 3(represented by i915 as CLASS_VIDEO and CLASS_VIDEO_ENHANCE)
 // are both mapped to MEDIA, as CLASS_VIDEO represents any media fixed-function hardware.
-const std::map<int, zet_engine_type_t> engineMap = {
-    {0, ZET_ENGINE_TYPE_3D},
-    {1, ZET_ENGINE_TYPE_DMA},
-    {2, ZET_ENGINE_TYPE_MEDIA},
-    {3, ZET_ENGINE_TYPE_MEDIA},
-    {4, ZET_ENGINE_TYPE_COMPUTE}};
+const std::map<int, zes_engine_type_flags_t> engineMap = {
+    {0, ZES_ENGINE_TYPE_FLAG_3D},
+    {1, ZES_ENGINE_TYPE_FLAG_DMA},
+    {2, ZES_ENGINE_TYPE_FLAG_MEDIA},
+    {3, ZES_ENGINE_TYPE_FLAG_MEDIA},
+    {4, ZES_ENGINE_TYPE_FLAG_COMPUTE}};
 
-void LinuxGlobalOperationsImp::getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getSerialNumber(int8_t (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) {
     std::copy(unknown.begin(), unknown.end(), serialNumber);
     serialNumber[unknown.size()] = '\0';
 }
 
-void LinuxGlobalOperationsImp::getBoardNumber(int8_t (&boardNumber)[ZET_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getBoardNumber(int8_t (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) {
     std::copy(unknown.begin(), unknown.end(), boardNumber);
     boardNumber[unknown.size()] = '\0';
 }
 
-void LinuxGlobalOperationsImp::getBrandName(int8_t (&brandName)[ZET_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getBrandName(int8_t (&brandName)[ZES_STRING_PROPERTY_SIZE]) {
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(subsystemVendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
@@ -65,7 +65,7 @@ void LinuxGlobalOperationsImp::getBrandName(int8_t (&brandName)[ZET_STRING_PROPE
     brandName[unknown.size()] = '\0';
 }
 
-void LinuxGlobalOperationsImp::getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getModelName(int8_t (&modelName)[ZES_STRING_PROPERTY_SIZE]) {
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(deviceFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
@@ -78,7 +78,7 @@ void LinuxGlobalOperationsImp::getModelName(int8_t (&modelName)[ZET_STRING_PROPE
     modelName[strVal.size()] = '\0';
 }
 
-void LinuxGlobalOperationsImp::getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getVendorName(int8_t (&vendorName)[ZES_STRING_PROPERTY_SIZE]) {
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(vendorFile, strVal);
     if (ZE_RESULT_SUCCESS != result) {
@@ -95,7 +95,7 @@ void LinuxGlobalOperationsImp::getVendorName(int8_t (&vendorName)[ZET_STRING_PRO
     vendorName[unknown.size()] = '\0';
 }
 
-void LinuxGlobalOperationsImp::getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) {
+void LinuxGlobalOperationsImp::getDriverVersion(int8_t (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
     std::copy(unknown.begin(), unknown.end(), driverVersion);
     driverVersion[unknown.size()] = '\0';
 }
@@ -228,7 +228,7 @@ ze_result_t LinuxGlobalOperationsImp::reset() {
 // accumulated nanoseconds each client spent on engines.
 // Thus we traverse each file in busy dir for non-zero time and if we find that file say 0,then we could say that
 // this engine 0 is used by process.
-ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zet_process_state_t> &pProcessList) {
+ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process_state_t> &pProcessList) {
     std::vector<std::string> clientIds;
     struct engineMemoryPairType {
         int64_t engineTypeField;
@@ -282,7 +282,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zet_process
             if (timeSpent > 0) {
                 int i915EnginNumber = stoi(engineNum);
                 auto i915MapToL0EngineType = engineMap.find(i915EnginNumber);
-                zet_engine_type_t val = ZET_ENGINE_TYPE_OTHER;
+                zes_engine_type_flags_t val = ZES_ENGINE_TYPE_FLAG_OTHER;
                 if (i915MapToL0EngineType != engineMap.end()) {
                     // Found a valid map
                     val = i915MapToL0EngineType->second;
@@ -320,10 +320,10 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zet_process
 
     // iterate through all elements of pidClientMap
     for (auto itr = pidClientMap.begin(); itr != pidClientMap.end(); ++itr) {
-        zet_process_state_t process;
+        zes_process_state_t process;
         process.processId = static_cast<uint32_t>(itr->first);
         process.memSize = itr->second.deviceMemorySizeField;
-        process.engines = itr->second.engineTypeField;
+        process.engines = static_cast<uint32_t>(itr->second.engineTypeField);
         pProcessList.push_back(process);
     }
     return result;

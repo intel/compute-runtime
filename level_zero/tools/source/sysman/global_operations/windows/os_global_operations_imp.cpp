@@ -12,14 +12,14 @@ namespace L0 {
 
 class WddmGlobalOperationsImp : public OsGlobalOperations {
   public:
-    void getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) override;
-    void getBoardNumber(int8_t (&boardNumber)[ZET_STRING_PROPERTY_SIZE]) override;
-    void getBrandName(int8_t (&brandName)[ZET_STRING_PROPERTY_SIZE]) override;
-    void getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_SIZE]) override;
-    void getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]) override;
-    void getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) override;
+    void getSerialNumber(int8_t (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getBoardNumber(int8_t (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getBrandName(int8_t (&brandName)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getModelName(int8_t (&modelName)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getVendorName(int8_t (&vendorName)[ZES_STRING_PROPERTY_SIZE]) override;
+    void getDriverVersion(int8_t (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) override;
     ze_result_t reset() override;
-    ze_result_t scanProcessesState(std::vector<zet_process_state_t> &pProcessList) override;
+    ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) override;
 
     WddmGlobalOperationsImp(OsSysman *pOsSysman);
     ~WddmGlobalOperationsImp() = default;
@@ -29,29 +29,29 @@ class WddmGlobalOperationsImp : public OsGlobalOperations {
     WddmGlobalOperationsImp &operator=(const WddmGlobalOperationsImp &obj) = delete;
 };
 
-void WddmGlobalOperationsImp::getSerialNumber(int8_t (&serialNumber)[ZET_STRING_PROPERTY_SIZE]) {
+void WddmGlobalOperationsImp::getSerialNumber(int8_t (&serialNumber)[ZES_STRING_PROPERTY_SIZE]) {
 }
 
-void WddmGlobalOperationsImp::getBoardNumber(int8_t (&boardNumber)[ZET_STRING_PROPERTY_SIZE]) {
+void WddmGlobalOperationsImp::getBoardNumber(int8_t (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) {
 }
 
-void WddmGlobalOperationsImp::getBrandName(int8_t (&brandName)[ZET_STRING_PROPERTY_SIZE]) {
+void WddmGlobalOperationsImp::getBrandName(int8_t (&brandName)[ZES_STRING_PROPERTY_SIZE]) {
 }
 
-void WddmGlobalOperationsImp::getModelName(int8_t (&modelName)[ZET_STRING_PROPERTY_SIZE]) {
+void WddmGlobalOperationsImp::getModelName(int8_t (&modelName)[ZES_STRING_PROPERTY_SIZE]) {
 }
 
-void WddmGlobalOperationsImp::getVendorName(int8_t (&vendorName)[ZET_STRING_PROPERTY_SIZE]) {
+void WddmGlobalOperationsImp::getVendorName(int8_t (&vendorName)[ZES_STRING_PROPERTY_SIZE]) {
 }
 
-void WddmGlobalOperationsImp::getDriverVersion(int8_t (&driverVersion)[ZET_STRING_PROPERTY_SIZE]) {
+void WddmGlobalOperationsImp::getDriverVersion(int8_t (&driverVersion)[ZES_STRING_PROPERTY_SIZE]) {
 }
 
 ze_result_t WddmGlobalOperationsImp::reset() {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmGlobalOperationsImp::scanProcessesState(std::vector<zet_process_state_t> &pProcessList) {
+ze_result_t WddmGlobalOperationsImp::scanProcessesState(std::vector<zes_process_state_t> &pProcessList) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

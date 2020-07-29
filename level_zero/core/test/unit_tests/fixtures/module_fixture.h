@@ -35,7 +35,7 @@ struct ModuleFixture : public DeviceFixture {
         ASSERT_NE(0u, size);
         ASSERT_NE(nullptr, src);
 
-        ze_module_desc_t moduleDesc = {ZE_MODULE_DESC_VERSION_CURRENT};
+        ze_module_desc_t moduleDesc = {};
         moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
         moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
         moduleDesc.inputSize = size;
@@ -46,7 +46,7 @@ struct ModuleFixture : public DeviceFixture {
     }
 
     void createKernel() {
-        ze_kernel_desc_t desc = {ZE_KERNEL_DESC_VERSION_CURRENT};
+        ze_kernel_desc_t desc = {};
         desc.pKernelName = kernelName.c_str();
 
         kernel = std::make_unique<WhiteBox<::L0::Kernel>>();
@@ -81,7 +81,7 @@ struct MultiDeviceModuleFixture : public MultiDeviceFixture {
         ASSERT_NE(0u, size);
         ASSERT_NE(nullptr, src);
 
-        ze_module_desc_t moduleDesc = {ZE_MODULE_DESC_VERSION_CURRENT};
+        ze_module_desc_t moduleDesc = {};
         moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
         moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
         moduleDesc.inputSize = size;

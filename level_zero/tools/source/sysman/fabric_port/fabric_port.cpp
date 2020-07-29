@@ -56,18 +56,4 @@ ze_result_t FabricPortHandleContext::fabricPortGet(uint32_t *pCount, zes_fabric_
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FabricPortHandleContext::fabricPortGet(uint32_t *pCount, zet_sysman_fabric_port_handle_t *phPort) {
-    uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
-    uint32_t numToCopy = std::min(*pCount, handleListSize);
-    if (0 == *pCount || *pCount > handleListSize) {
-        *pCount = handleListSize;
-    }
-    if (nullptr != phPort) {
-        for (uint32_t i = 0; i < numToCopy; i++) {
-            phPort[i] = handleList[i]->toHandle();
-        }
-    }
-    return ZE_RESULT_SUCCESS;
-}
-
 } // namespace L0

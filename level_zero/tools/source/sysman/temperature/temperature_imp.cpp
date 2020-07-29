@@ -23,29 +23,12 @@ ze_result_t TemperatureImp::temperatureSetConfig(const zes_temp_config_t *pConfi
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t TemperatureImp::temperatureGetProperties(zet_temp_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t TemperatureImp::temperatureGetConfig(zet_temp_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t TemperatureImp::temperatureSetConfig(const zet_temp_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
 ze_result_t TemperatureImp::temperatureGetState(double *pTemperature) {
     return pOsTemperature->getSensorTemperature(pTemperature);
 }
 
 void TemperatureImp::init() {
     this->initSuccess = pOsTemperature->isTempModuleSupported();
-}
-
-TemperatureImp::TemperatureImp(OsSysman *pOsSysman, zet_temp_sensors_t type) {
-    pOsTemperature = OsTemperature::create(pOsSysman, type);
-    init();
 }
 
 TemperatureImp::TemperatureImp(OsSysman *pOsSysman, zes_temp_sensors_t type) {

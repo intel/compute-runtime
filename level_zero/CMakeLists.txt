@@ -21,9 +21,7 @@ if(BUILD_WITH_L0)
         if(IS_DIRECTORY "${LEVEL_ZERO_ROOT_tmp}")
             set(CUSTOM_L0_INCLUDE_PATH "${LEVEL_ZERO_ROOT_tmp}/include/level_zero/")
             file(GLOB LEVEL_ZERO_SOURCE_HEADERS
-                "${LEVEL_ZERO_ROOT_tmp}/include/core/*"
-                "${LEVEL_ZERO_ROOT_tmp}/include/tools/*"
-                "${LEVEL_ZERO_ROOT_tmp}/include/experimental/*"
+                "${LEVEL_ZERO_ROOT_tmp}/include/*.h"
             )
             file(MAKE_DIRECTORY ${CUSTOM_L0_INCLUDE_PATH})
             file(COPY ${LEVEL_ZERO_SOURCE_HEADERS} DESTINATION ${CUSTOM_L0_INCLUDE_PATH})
@@ -46,6 +44,7 @@ if(BUILD_WITH_L0)
 
     add_definitions( -DL0_PROJECT_VERSION_MAJOR="${PROJECT_VERSION_MAJOR}" )
     add_definitions( -DL0_PROJECT_VERSION_MINOR="${PROJECT_VERSION_MINOR}" )
+    add_definitions( -DL0_PROJECT_VERSION_PATCH="${PROJECT_VERSION_PATCH}" )
     add_definitions( -DNEO_VERSION_BUILD="${NEO_VERSION_BUILD}" )
 
     add_definitions( -DZE_ENABLE_OCL_INTEROP=1)
@@ -448,7 +447,7 @@ set_property(TARGET ${TARGET_NAME_L0} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASA
 set_target_properties(${TARGET_NAME_L0} PROPERTIES
     FOLDER ${TARGET_NAME_L0}
     VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}"
-    SOVERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
+    SOVERSION "${PROJECT_VERSION_MAJOR}"
 )
 
 if(UNIX)

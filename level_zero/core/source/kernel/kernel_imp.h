@@ -28,15 +28,13 @@ struct KernelImp : Kernel {
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t setAttribute(ze_kernel_attribute_t attr, uint32_t size, const void *pValue) override;
-
-    ze_result_t getAttribute(ze_kernel_attribute_t attr, uint32_t *pSize, void *pValue) override;
+    ze_result_t setIndirectAccess(ze_kernel_indirect_access_flags_t flags) override;
+    ze_result_t getIndirectAccess(ze_kernel_indirect_access_flags_t *flags) override;
+    ze_result_t getSourceAttributes(uint32_t *pSize, char **pString) override;
 
     ze_result_t getProperties(ze_kernel_properties_t *pKernelProperties) override;
 
-    ze_result_t getPropertiesExt(ze_kernel_propertiesExt_t *pKernelProperties) override;
-
-    ze_result_t setIntermediateCacheConfig(ze_cache_config_t cacheConfig) override {
+    ze_result_t setIntermediateCacheConfig(ze_cache_config_flags_t cacheConfig) override {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 

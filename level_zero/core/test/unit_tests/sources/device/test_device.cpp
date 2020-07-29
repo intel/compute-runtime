@@ -71,38 +71,23 @@ TEST_F(DeviceTest, givenEmptySVmAllocStorageWhenAllocateMemoryFromHostPtrThenVal
 }
 
 TEST_F(DeviceTest, givenKernelPropertiesStructureWhenKernelPropertiesCalledThenAllPropertiesAreAssigned) {
-    ze_device_kernel_properties_t kernelProperties, kernelPropertiesBefore;
-    memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_kernel_properties_t));
+    const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
+
+    ze_device_module_properties_t kernelProperties, kernelPropertiesBefore;
+    memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
     kernelPropertiesBefore = kernelProperties;
     device->getKernelProperties(&kernelProperties);
 
     EXPECT_NE(kernelPropertiesBefore.spirvVersionSupported, kernelProperties.spirvVersionSupported);
     EXPECT_NE(kernelPropertiesBefore.nativeKernelSupported.id, kernelProperties.nativeKernelSupported.id);
-    EXPECT_NE(kernelPropertiesBefore.fp16Supported, kernelProperties.fp16Supported);
-    EXPECT_NE(kernelPropertiesBefore.fp64Supported, kernelProperties.fp64Supported);
-    EXPECT_NE(kernelPropertiesBefore.int64AtomicsSupported, kernelProperties.int64AtomicsSupported);
+
+    EXPECT_TRUE(kernelPropertiesBefore.flags & ZE_DEVICE_MODULE_FLAG_FP16);
+    if (hardwareInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
+        EXPECT_TRUE(kernelPropertiesBefore.flags & ZE_DEVICE_MODULE_FLAG_INT64_ATOMICS);
+    }
+
     EXPECT_NE(kernelPropertiesBefore.maxArgumentsSize, kernelProperties.maxArgumentsSize);
     EXPECT_NE(kernelPropertiesBefore.printfBufferSize, kernelProperties.printfBufferSize);
-}
-
-TEST_F(DeviceTest, givenDeviceWithCopyEngineThenNumAsyncCopyEnginesDevicePropertyIsCorrectlyReturned) {
-    ze_device_properties_t deviceProperties;
-    deviceProperties.version = ZE_DEVICE_PROPERTIES_VERSION_CURRENT;
-    deviceProperties.numAsyncCopyEngines = std::numeric_limits<int>::max();
-    device->getProperties(&deviceProperties);
-
-    auto expecteNumOfCopyEngines = NEO::HwHelper::getCopyEnginesCount(device->getNEODevice()->getHardwareInfo());
-    EXPECT_EQ(expecteNumOfCopyEngines, deviceProperties.numAsyncCopyEngines);
-}
-
-TEST_F(DeviceTest, givenDeviceWithComputeEngineThenNumAsyncComputeEnginesDevicePropertyIsCorrectlyReturned) {
-    ze_device_properties_t deviceProperties;
-    deviceProperties.version = ZE_DEVICE_PROPERTIES_VERSION_CURRENT;
-    deviceProperties.numAsyncComputeEngines = std::numeric_limits<int>::max();
-    device->getProperties(&deviceProperties);
-
-    auto expectedNumOfComputeEngines = NEO::HwHelper::getEnginesCount(device->getNEODevice()->getHardwareInfo());
-    EXPECT_EQ(expectedNumOfComputeEngines, deviceProperties.numAsyncComputeEngines);
 }
 
 TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenAllPropertiesAreAssigned) {
@@ -112,15 +97,8 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     memset(&deviceProperties.vendorId, std::numeric_limits<int>::max(), sizeof(deviceProperties.vendorId));
     memset(&deviceProperties.deviceId, std::numeric_limits<int>::max(), sizeof(deviceProperties.deviceId));
     memset(&deviceProperties.uuid, std::numeric_limits<int>::max(), sizeof(deviceProperties.uuid));
-    memset(&deviceProperties.isSubdevice, std::numeric_limits<int>::max(), sizeof(deviceProperties.isSubdevice));
     memset(&deviceProperties.subdeviceId, std::numeric_limits<int>::max(), sizeof(deviceProperties.subdeviceId));
     memset(&deviceProperties.coreClockRate, std::numeric_limits<int>::max(), sizeof(deviceProperties.coreClockRate));
-    memset(&deviceProperties.unifiedMemorySupported, std::numeric_limits<int>::max(), sizeof(deviceProperties.unifiedMemorySupported));
-    memset(&deviceProperties.eccMemorySupported, std::numeric_limits<int>::max(), sizeof(deviceProperties.eccMemorySupported));
-    memset(&deviceProperties.onDemandPageFaultsSupported, std::numeric_limits<int>::max(), sizeof(deviceProperties.onDemandPageFaultsSupported));
-    memset(&deviceProperties.maxCommandQueues, std::numeric_limits<int>::max(), sizeof(deviceProperties.maxCommandQueues));
-    memset(&deviceProperties.numAsyncComputeEngines, std::numeric_limits<int>::max(), sizeof(deviceProperties.numAsyncComputeEngines));
-    memset(&deviceProperties.numAsyncCopyEngines, std::numeric_limits<int>::max(), sizeof(deviceProperties.numAsyncCopyEngines));
     memset(&deviceProperties.maxCommandQueuePriority, std::numeric_limits<int>::max(), sizeof(deviceProperties.maxCommandQueuePriority));
     memset(&deviceProperties.numThreadsPerEU, std::numeric_limits<int>::max(), sizeof(deviceProperties.numThreadsPerEU));
     memset(&deviceProperties.physicalEUSimdWidth, std::numeric_limits<int>::max(), sizeof(deviceProperties.physicalEUSimdWidth));
@@ -137,15 +115,8 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     EXPECT_NE(deviceProperties.vendorId, devicePropertiesBefore.vendorId);
     EXPECT_NE(deviceProperties.deviceId, devicePropertiesBefore.deviceId);
     EXPECT_NE(0, memcmp(&deviceProperties.uuid, &devicePropertiesBefore.uuid, sizeof(devicePropertiesBefore.uuid)));
-    EXPECT_NE(deviceProperties.isSubdevice, devicePropertiesBefore.isSubdevice);
     EXPECT_NE(deviceProperties.subdeviceId, devicePropertiesBefore.subdeviceId);
     EXPECT_NE(deviceProperties.coreClockRate, devicePropertiesBefore.coreClockRate);
-    EXPECT_NE(deviceProperties.unifiedMemorySupported, devicePropertiesBefore.unifiedMemorySupported);
-    EXPECT_NE(deviceProperties.eccMemorySupported, devicePropertiesBefore.eccMemorySupported);
-    EXPECT_NE(deviceProperties.onDemandPageFaultsSupported, devicePropertiesBefore.onDemandPageFaultsSupported);
-    EXPECT_NE(deviceProperties.maxCommandQueues, devicePropertiesBefore.maxCommandQueues);
-    EXPECT_NE(deviceProperties.numAsyncComputeEngines, devicePropertiesBefore.numAsyncComputeEngines);
-    EXPECT_NE(deviceProperties.numAsyncCopyEngines, devicePropertiesBefore.numAsyncCopyEngines);
     EXPECT_NE(deviceProperties.maxCommandQueuePriority, devicePropertiesBefore.maxCommandQueuePriority);
     EXPECT_NE(deviceProperties.numThreadsPerEU, devicePropertiesBefore.numThreadsPerEU);
     EXPECT_NE(deviceProperties.physicalEUSimdWidth, devicePropertiesBefore.physicalEUSimdWidth);
@@ -190,20 +161,22 @@ struct DeviceHasNoDoubleFp64Test : public ::testing::Test {
 };
 
 TEST_F(DeviceHasNoDoubleFp64Test, givenDeviceThatDoesntHaveFp64WhenDbgFlagEnablesFp64ThenReportFp64Flags) {
-    ze_device_kernel_properties_t kernelProperties;
-    memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_kernel_properties_t));
+    ze_device_module_properties_t kernelProperties;
+    memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
 
     device->getKernelProperties(&kernelProperties);
-    EXPECT_EQ(ZE_FP_CAPS_NONE, kernelProperties.doubleFpCapabilities);
-    EXPECT_EQ(ZE_FP_CAPS_NONE, kernelProperties.singleFpCapabilities);
+    EXPECT_EQ(0u, kernelProperties.fp64flags);
 
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.OverrideDefaultFP64Settings.set(1);
 
     device->getKernelProperties(&kernelProperties);
-    EXPECT_EQ(true, kernelProperties.fp64Supported);
-    EXPECT_NE(ZE_FP_CAPS_NONE, kernelProperties.doubleFpCapabilities);
-    EXPECT_EQ(ZE_FP_CAPS_ROUNDED_DIVIDE_SQRT, kernelProperties.singleFpCapabilities);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_ROUND_TO_INF);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_INF_NAN);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_DENORM);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_FMA);
 }
 
 struct MockMemoryManagerMultiDevice : public MemoryManagerMock {
@@ -451,52 +424,6 @@ TEST_F(MultipleDevicesSameFamilyAndLocalMemorySupportTest, givenTwoDevicesFromSa
     ze_result_t res = device0->canAccessPeer(device1->toHandle(), &canAccess);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_FALSE(canAccess);
-}
-
-TEST_F(DeviceTest, givenBlitterSupportAndCopyOnlyFlagWhenCopyOnlyDebugFlagIsDefaultThenUseBliterIsTrueAndSuccessIsReturned) {
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    Mock<L0::DeviceImp> l0Device(neoMockDevice, neoDevice->getExecutionEnvironment());
-    ze_command_list_desc_t desc = {};
-    desc.flags = ZE_COMMAND_LIST_FLAG_COPY_ONLY;
-    auto flag = ZE_COMMAND_LIST_FLAG_COPY_ONLY;
-    bool useBliter = false;
-    ze_result_t res = l0Device.isCreatedCommandListCopyOnly(&desc, &useBliter, flag);
-    EXPECT_TRUE(useBliter);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
-TEST_F(DeviceTest, givenBlitterSupportAndCopyOnlyFlagWhenCopyOnlyDebugFlagIsSetToZeroThenUseBliterIsFalseAndSuccessIsReturned) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCopyOnlyCommandListsAndCommandQueues.set(0);
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    Mock<L0::DeviceImp> l0Device(neoMockDevice, neoDevice->getExecutionEnvironment());
-    ze_command_list_desc_t desc = {};
-    desc.flags = ZE_COMMAND_LIST_FLAG_COPY_ONLY;
-    auto flag = ZE_COMMAND_LIST_FLAG_COPY_ONLY;
-    bool useBliter = true;
-    ze_result_t res = l0Device.isCreatedCommandListCopyOnly(&desc, &useBliter, flag);
-    EXPECT_FALSE(useBliter);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-}
-
-TEST_F(DeviceTest, givenBlitterSupportAndCopyOnlyFlagWhenCopyOnlyDebugFlagIsSetToOneThenUseBliterIsTrueAndSuccessIsReturned) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableCopyOnlyCommandListsAndCommandQueues.set(1);
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, rootDeviceIndex);
-    Mock<L0::DeviceImp> l0Device(neoMockDevice, neoDevice->getExecutionEnvironment());
-    ze_command_list_desc_t desc = {};
-    desc.flags = ZE_COMMAND_LIST_FLAG_COPY_ONLY;
-    auto flag = ZE_COMMAND_LIST_FLAG_COPY_ONLY;
-    bool useBliter = false;
-    ze_result_t res = l0Device.isCreatedCommandListCopyOnly(&desc, &useBliter, flag);
-    EXPECT_TRUE(useBliter);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
 TEST_F(DeviceTest, givenNoActiveSourceLevelDebuggerWhenGetIsCalledThenNullptrIsReturned) {

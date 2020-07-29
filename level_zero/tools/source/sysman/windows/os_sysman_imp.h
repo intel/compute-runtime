@@ -19,7 +19,6 @@ namespace L0 {
 class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:
     WddmSysmanImp() = default;
-    WddmSysmanImp(SysmanImp *pParentSysmanImp) : pParentSysmanImp(pParentSysmanImp){};
     WddmSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) : pParentSysmanDeviceImp(pParentSysmanDeviceImp){};
     ~WddmSysmanImp() override;
 
@@ -32,7 +31,6 @@ class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     KmdSysManager *pKmdSysManager = nullptr;
 
   private:
-    SysmanImp *pParentSysmanImp = nullptr;
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
     NEO::Wddm *pWddm = nullptr;
 };

@@ -61,7 +61,7 @@ struct Mock<CommandQueue> : public CommandQueue {
                 (override));
     MOCK_METHOD(ze_result_t,
                 synchronize,
-                (uint32_t timeout),
+                (uint64_t timeout),
                 (override));
     MOCK_METHOD(void,
                 dispatchTaskCountWrite,
@@ -78,7 +78,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
 
     MockCommandQueueHw(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : L0::CommandQueueHw<gfxCoreFamily>(device, csr, desc) {
     }
-    ze_result_t synchronize(uint32_t timeout) override {
+    ze_result_t synchronize(uint64_t timeout) override {
         synchronizedCalled++;
         return ZE_RESULT_SUCCESS;
     }

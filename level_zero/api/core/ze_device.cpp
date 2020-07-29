@@ -11,8 +11,6 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
 
-extern "C" {
-
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGet(
     ze_driver_handle_t hDriver,
@@ -46,7 +44,7 @@ zeDeviceGetComputeProperties(
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetKernelProperties(
     ze_device_handle_t hDevice,
-    ze_device_kernel_properties_t *pKernelProperties) {
+    ze_device_module_properties_t *pKernelProperties) {
     return L0::Device::fromHandle(hDevice)->getKernelProperties(pKernelProperties);
 }
 
@@ -68,6 +66,7 @@ zeDeviceGetMemoryAccessProperties(
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetCacheProperties(
     ze_device_handle_t hDevice,
+    uint32_t *pCount,
     ze_device_cache_properties_t *pCacheProperties) {
     return L0::Device::fromHandle(hDevice)->getCacheProperties(pCacheProperties);
 }
@@ -98,7 +97,7 @@ zeDeviceCanAccessPeer(
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceSetLastLevelCacheConfig(
     ze_device_handle_t hDevice,
-    ze_cache_config_t cacheConfig) {
+    ze_cache_config_flags_t cacheConfig) {
     return L0::Device::fromHandle(hDevice)->setLastLevelCacheConfig(cacheConfig);
 }
 
@@ -109,5 +108,3 @@ zeDeviceGetCommandQueueGroupProperties(
     ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
     return L0::Device::fromHandle(hDevice)->getCommandQueueGroupProperties(pCount, pCommandQueueGroupProperties);
 }
-
-} // extern "C"

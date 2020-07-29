@@ -21,9 +21,7 @@ ze_result_t LinuxSysmanImp::init() {
     UNRECOVERABLE_IF(nullptr == pProcfsAccess);
 
     Device *pDevice = nullptr;
-    if (pParentSysmanImp != nullptr) {
-        pDevice = Device::fromHandle(pParentSysmanImp->hCoreDevice);
-    } else if (pParentSysmanDeviceImp != nullptr) {
+    if (pParentSysmanDeviceImp != nullptr) {
         pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
     } else {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -77,10 +75,6 @@ PlatformMonitoringTech &LinuxSysmanImp::getPlatformMonitoringTechAccess() {
     return *pPmt;
 }
 
-LinuxSysmanImp::LinuxSysmanImp(SysmanImp *pParentSysmanImp) {
-    this->pParentSysmanImp = pParentSysmanImp;
-}
-
 LinuxSysmanImp::LinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) {
     this->pParentSysmanDeviceImp = pParentSysmanDeviceImp;
 }
@@ -106,11 +100,6 @@ LinuxSysmanImp::~LinuxSysmanImp() {
         delete pPmt;
         pPmt = nullptr;
     }
-}
-
-OsSysman *OsSysman::create(SysmanImp *pParentSysmanImp) {
-    LinuxSysmanImp *pLinuxSysmanImp = new LinuxSysmanImp(pParentSysmanImp);
-    return static_cast<OsSysman *>(pLinuxSysmanImp);
 }
 
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {

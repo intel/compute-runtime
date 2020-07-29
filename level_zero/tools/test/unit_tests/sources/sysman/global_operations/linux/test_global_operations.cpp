@@ -27,10 +27,10 @@ constexpr int64_t memSize2 = 1024;
 // In mock function getValUnsignedLong, we have set the engines used as 0, 3 and 1.
 // Hence, expecting 28 as engine field because 28 in binary would be 00011100
 // This indicates bit number 2, 3 and 4 are set, thus this indicates, this process
-// used ZET_ENGINE_TYPE_3D, ZET_ENGINE_TYPE_MEDIA and ZET_ENGINE_TYPE_DMA
+// used ZES_ENGINE_TYPE_FLAG_3D, ZES_ENGINE_TYPE_FLAG_MEDIA and ZES_ENGINE_TYPE_FLAG_DMA
 // Their corresponding mapping with i915 engine numbers are 0, 3 and 1 respectively.
 constexpr int64_t engines1 = 28u;
-// 4 in binary 0100, as 2nd bit is set, hence it indicates, process used ZET_ENGINE_TYPE_3D
+// 4 in binary 0100, as 2nd bit is set, hence it indicates, process used ZES_ENGINE_TYPE_FLAG_3D
 // Corresponding i915 mapped value in mocked getValUnsignedLong() is 0.
 constexpr int64_t engines2 = 4u;
 constexpr uint32_t totalProcessStates = 2u; // Two process States for two pids
@@ -100,7 +100,7 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidSysmanHandleWhileRetrievingInfor
     uint32_t count = 0;
     ASSERT_EQ(ZE_RESULT_SUCCESS, zetSysmanProcessesGetState(hSysman, &count, nullptr));
     EXPECT_EQ(count, totalProcessStates);
-    std::vector<zet_process_state_t> processes(count);
+    std::vector<zes_process_state_t> processes(count);
     ASSERT_EQ(ZE_RESULT_SUCCESS, zetSysmanProcessesGetState(hSysman, &count, processes.data()));
     EXPECT_EQ(processes[0].processId, pid1);
     EXPECT_EQ(processes[0].engines, engines1);

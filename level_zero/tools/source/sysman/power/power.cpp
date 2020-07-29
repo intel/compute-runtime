@@ -28,20 +28,6 @@ void PowerHandleContext::init() {
     }
 }
 
-ze_result_t PowerHandleContext::powerGet(uint32_t *pCount, zet_sysman_pwr_handle_t *phPower) {
-    uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
-    uint32_t numToCopy = std::min(*pCount, handleListSize);
-    if (0 == *pCount || *pCount > handleListSize) {
-        *pCount = handleListSize;
-    }
-    if (nullptr != phPower) {
-        for (uint32_t i = 0; i < numToCopy; i++) {
-            phPower[i] = handleList[i]->toHandle();
-        }
-    }
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t PowerHandleContext::powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) {
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
@@ -50,7 +36,7 @@ ze_result_t PowerHandleContext::powerGet(uint32_t *pCount, zes_pwr_handle_t *phP
     }
     if (nullptr != phPower) {
         for (uint32_t i = 0; i < numToCopy; i++) {
-            phPower[i] = handleList[i]->toZesPwrHandle();
+            phPower[i] = handleList[i]->toHandle();
         }
     }
     return ZE_RESULT_SUCCESS;

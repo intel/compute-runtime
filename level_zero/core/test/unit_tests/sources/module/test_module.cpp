@@ -37,8 +37,6 @@ HWTEST_F(ModuleTest, givenKernelCreateReturnsSuccess) {
     ze_kernel_handle_t kernelHandle;
 
     ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.version = ZE_KERNEL_DESC_VERSION_CURRENT;
-    kernelDesc.flags = ZE_KERNEL_FLAG_NONE;
     kernelDesc.pKernelName = kernelName.c_str();
 
     ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
@@ -55,8 +53,6 @@ HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, 
     ze_kernel_handle_t kernelHandle;
 
     ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.version = ZE_KERNEL_DESC_VERSION_CURRENT;
-    kernelDesc.flags = ZE_KERNEL_FLAG_NONE;
     kernelDesc.pKernelName = kernelName.c_str();
 
     ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
@@ -67,7 +63,7 @@ HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, 
 
     void *devicePtr = nullptr;
     res = device->getDriverHandle()->allocDeviceMem(device->toHandle(),
-                                                    ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                                    0u,
                                                     16384u,
                                                     0u,
                                                     &devicePtr);
@@ -93,8 +89,6 @@ HWTEST_F(ModuleTest, givenKernelCreateWithIncorrectKernelNameReturnsFailure) {
     ze_kernel_handle_t kernelHandle;
 
     ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.version = ZE_KERNEL_DESC_VERSION_CURRENT;
-    kernelDesc.flags = ZE_KERNEL_FLAG_NONE;
     kernelDesc.pKernelName = "nonexistent_function";
 
     ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
@@ -120,7 +114,7 @@ struct ModuleSpecConstantsTests : public DeviceFixture,
 
     const uint32_t moduleNumSpecConstants = 4;
     ze_module_constants_t specConstants;
-    std::vector<uint64_t> specConstantsPointerValues;
+    std::vector<const void *> specConstantsPointerValues;
 
     const std::string binaryFilename = "test_kernel";
     const std::string kernelName = "test";
@@ -138,14 +132,14 @@ HWTEST_F(ModuleSpecConstantsTests, givenSpecializationConstantsSetInDescriptorTh
     ASSERT_NE(0u, size);
     ASSERT_NE(nullptr, src);
 
-    ze_module_desc_t moduleDesc = {ZE_MODULE_DESC_VERSION_CURRENT};
+    ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
     moduleDesc.inputSize = size;
 
     specConstants.numConstants = mockCompiler->moduleNumSpecConstants;
     for (uint32_t i = 0; i < mockCompiler->moduleNumSpecConstants; i++) {
-        specConstantsPointerValues.push_back(reinterpret_cast<uint64_t>(&mockCompiler->moduleSpecConstantsValues[i]));
+        specConstantsPointerValues.push_back(&mockCompiler->moduleSpecConstantsValues[i]);
     }
 
     specConstants.pConstantIds = mockCompiler->moduleSpecConstantsIds.data();
@@ -175,7 +169,7 @@ HWTEST_F(ModuleLinkingTest, givenFailureDuringLinkingWhenCreatingModuleThenModul
     mockTranslationUnit->programInfo.linkerInput = std::move(linkerInput);
     uint8_t spirvData{};
 
-    ze_module_desc_t moduleDesc = {ZE_MODULE_DESC_VERSION_CURRENT};
+    ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.pInputModule = &spirvData;
     moduleDesc.inputSize = sizeof(spirvData);
@@ -204,7 +198,7 @@ HWTEST_F(ModuleLinkingTest, givenRemainingUnresolvedSymbolsDuringLinkingWhenCrea
     mockTranslationUnit->programInfo.linkerInput = std::move(linkerInput);
     uint8_t spirvData{};
 
-    ze_module_desc_t moduleDesc = {ZE_MODULE_DESC_VERSION_CURRENT};
+    ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.pInputModule = &spirvData;
     moduleDesc.inputSize = sizeof(spirvData);
@@ -237,7 +231,6 @@ HWTEST_F(ModuleDynamicLinkTests, givenCallToDynamicLinkThenUnsupportedFeatureIsR
     delete module0;
     delete module1;
 }
-
 class MultiDeviceModuleSetArgBufferTest : public MultiDeviceModuleFixture, public ::testing::Test {
   public:
     void SetUp() override {
@@ -250,13 +243,11 @@ class MultiDeviceModuleSetArgBufferTest : public MultiDeviceModuleFixture, publi
 
     void createKernelAndAllocMemory(uint32_t rootDeviceIndex, void **ptr, ze_kernel_handle_t *kernelHandle) {
         ze_kernel_desc_t kernelDesc = {};
-        kernelDesc.version = ZE_KERNEL_DESC_VERSION_CURRENT;
-        kernelDesc.flags = ZE_KERNEL_FLAG_NONE;
         kernelDesc.pKernelName = kernelName.c_str();
         ze_result_t res = modules[rootDeviceIndex].get()->createKernel(&kernelDesc, kernelHandle);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-        res = driverHandle->allocHostMem(ZE_HOST_MEM_ALLOC_FLAG_DEFAULT, 4096u, rootDeviceIndex, ptr);
+        res = driverHandle->allocHostMem(0u, 4096u, rootDeviceIndex, ptr);
         EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     }
 };
@@ -297,7 +288,7 @@ HWTEST_F(ContextModuleCreateTest, givenCallToCreateModuleThenModuleIsReturned) {
     ASSERT_NE(0u, size);
     ASSERT_NE(nullptr, src);
 
-    ze_module_desc_t moduleDesc = {ZE_MODULE_DESC_VERSION_CURRENT};
+    ze_module_desc_t moduleDesc = {};
     moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
     moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
     moduleDesc.inputSize = size;

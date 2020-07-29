@@ -21,16 +21,14 @@ class CommandListFixture : public DeviceFixture {
         DeviceFixture::SetUp();
         commandList.reset(whitebox_cast(CommandList::create(productFamily, device, false)));
 
-        ze_event_pool_desc_t eventPoolDesc = {
-            ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-            ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-            2};
+        ze_event_pool_desc_t eventPoolDesc = {};
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+        eventPoolDesc.count = 2;
 
-        ze_event_desc_t eventDesc = {
-            ZE_EVENT_DESC_VERSION_CURRENT,
-            0,
-            ZE_EVENT_SCOPE_FLAG_NONE,
-            ZE_EVENT_SCOPE_FLAG_NONE};
+        ze_event_desc_t eventDesc = {};
+        eventDesc.index = 0;
+        eventDesc.wait = 0;
+        eventDesc.signal = 0;
 
         eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
         event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));

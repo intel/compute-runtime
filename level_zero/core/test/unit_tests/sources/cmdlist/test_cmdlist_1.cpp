@@ -21,6 +21,7 @@
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
@@ -53,8 +54,9 @@ TEST_F(ContextCommandListCreate, whenCreatingCommandListImmediateFromContextThen
 
 using CommandListCreate = Test<DeviceFixture>;
 
-TEST(zeCommandListCreateImmediate, redirectsToObject) {
+TEST(zeCommandListCreateImmediate, DISABLED_redirectsToObject) {
     Mock<Device> device;
+    Mock<Context> context;
     ze_command_queue_desc_t desc = {};
     ze_command_list_handle_t commandList = {};
 
@@ -62,7 +64,7 @@ TEST(zeCommandListCreateImmediate, redirectsToObject) {
         .Times(1)
         .WillRepeatedly(::testing::Return(ZE_RESULT_SUCCESS));
 
-    auto result = zeCommandListCreateImmediate(device.toHandle(), &desc, &commandList);
+    auto result = zeCommandListCreateImmediate(context.toHandle(), device.toHandle(), &desc, &commandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -121,7 +123,7 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseReturnsSuccess) {
     void *ptr = nullptr;
 
     auto res = driverHandle->allocDeviceMem(device->toHandle(),
-                                            ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                            0u,
                                             size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(nullptr, ptr);
@@ -142,7 +144,7 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemoryPrefetchReturnsSuccess) {
     void *ptr = nullptr;
 
     auto res = driverHandle->allocDeviceMem(device->toHandle(),
-                                            ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT,
+                                            0u,
                                             size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(nullptr, ptr);
@@ -158,12 +160,8 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemoryPrefetchReturnsSuccess) {
 }
 
 TEST_F(CommandListCreate, givenImmediateCommandListThenCustomNumIddPerBlockUsed) {
-    const ze_command_queue_desc_t desc = {
-        ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT,
-        ZE_COMMAND_QUEUE_FLAG_NONE,
-        ZE_COMMAND_QUEUE_MODE_DEFAULT,
-        ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
-        0};
+    const ze_command_queue_desc_t desc = {};
+
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, false));
     ASSERT_NE(nullptr, commandList);
 
@@ -172,12 +170,7 @@ TEST_F(CommandListCreate, givenImmediateCommandListThenCustomNumIddPerBlockUsed)
 }
 
 TEST_F(CommandListCreate, whenCreatingImmediateCommandListThenItHasImmediateCommandQueueCreated) {
-    const ze_command_queue_desc_t desc = {
-        ZE_COMMAND_QUEUE_DESC_VERSION_CURRENT,
-        ZE_COMMAND_QUEUE_FLAG_NONE,
-        ZE_COMMAND_QUEUE_MODE_DEFAULT,
-        ZE_COMMAND_QUEUE_PRIORITY_NORMAL,
-        0};
+    const ze_command_queue_desc_t desc = {};
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, false));
     ASSERT_NE(nullptr, commandList);
 
@@ -367,8 +360,8 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendSignalEventThe
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, true));
     auto &commandContainer = commandList->commandContainer;
     MockEvent event;
-    event.waitScope = ZE_EVENT_SCOPE_FLAG_NONE;
-    event.signalScope = ZE_EVENT_SCOPE_FLAG_NONE;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     commandList->appendSignalEvent(event.toHandle());
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -383,8 +376,8 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendSignalEventThePipeControlI
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
     auto &commandContainer = commandList->commandContainer;
     MockEvent event;
-    event.waitScope = ZE_EVENT_SCOPE_FLAG_NONE;
-    event.signalScope = ZE_EVENT_SCOPE_FLAG_NONE;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
     commandList->appendSignalEvent(event.toHandle());
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -399,7 +392,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendWaitEventsWith
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, true));
     auto &commandContainer = commandList->commandContainer;
     MockEvent event;
-    event.signalScope = ZE_EVENT_SCOPE_FLAG_NONE;
+    event.signalScope = 0;
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     auto eventHandle = event.toHandle();
     commandList->appendWaitOnEvents(1, &eventHandle);
@@ -416,7 +409,7 @@ HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushTheP
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
     auto &commandContainer = commandList->commandContainer;
     MockEvent event;
-    event.signalScope = ZE_EVENT_SCOPE_FLAG_NONE;
+    event.signalScope = 0;
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     auto eventHandle = event.toHandle();
     commandList->appendWaitOnEvents(1, &eventHandle);
@@ -630,7 +623,6 @@ HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBl
 }
 
 using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
-
 HWTEST2_F(CommandListCreate, givenCopyCommandListWhenCopyFromImagBlitThenCommandAddedToStream, ImageSupport) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
@@ -654,15 +646,12 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenTimestampPassedToMemoryCopy
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, true);
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-        ZE_EVENT_POOL_FLAG_TIMESTAMP,
-        1};
-    ze_event_desc_t eventDesc = {
-        ZE_EVENT_DESC_VERSION_CURRENT,
-        0,
-        ZE_EVENT_SCOPE_FLAG_NONE,
-        ZE_EVENT_SCOPE_FLAG_NONE};
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
@@ -716,15 +705,12 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenTimestampPassedToImageCopyB
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, true);
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-        ZE_EVENT_POOL_FLAG_TIMESTAMP,
-        1};
-    ze_event_desc_t eventDesc = {
-        ZE_EVENT_DESC_VERSION_CURRENT,
-        0,
-        ZE_EVENT_SCOPE_FLAG_NONE,
-        ZE_EVENT_SCOPE_FLAG_NONE};
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
@@ -750,15 +736,12 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCo
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, true);
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-        ZE_EVENT_POOL_FLAG_TIMESTAMP,
-        1};
-    ze_event_desc_t eventDesc = {
-        ZE_EVENT_DESC_VERSION_CURRENT,
-        0,
-        ZE_EVENT_SCOPE_FLAG_NONE,
-        ZE_EVENT_SCOPE_FLAG_NONE};
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
@@ -786,15 +769,12 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingAfterCommandForCop
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, true);
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-        ZE_EVENT_POOL_FLAG_TIMESTAMP,
-        1};
-    ze_event_desc_t eventDesc = {
-        ZE_EVENT_DESC_VERSION_CURRENT,
-        0,
-        ZE_EVENT_SCOPE_FLAG_NONE,
-        ZE_EVENT_SCOPE_FLAG_NONE};
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 

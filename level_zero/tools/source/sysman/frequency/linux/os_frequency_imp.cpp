@@ -125,7 +125,7 @@ ze_result_t LinuxFrequencyImp::getMinVal(double &minVal) {
 }
 
 ze_result_t LinuxFrequencyImp::getThrottleReasons(uint32_t &throttleReasons) {
-    throttleReasons = ZET_FREQ_THROTTLE_REASONS_NONE;
+    throttleReasons = 0u;
     return ZE_RESULT_SUCCESS;
 }
 

@@ -13,8 +13,6 @@
 #include "level_zero/core/source/device/device.h"
 #include <level_zero/ze_api.h>
 
-#include "third_party/level_zero/ze_api_ext.h"
-
 struct _ze_driver_handle_t {
     virtual ~_ze_driver_handle_t() = default;
 };
@@ -37,13 +35,13 @@ struct DriverHandle : _ze_driver_handle_t {
                                               ze_memory_allocation_properties_t *pMemAllocProperties,
                                               ze_device_handle_t *phDevice) = 0;
 
-    virtual ze_result_t allocHostMem(ze_host_mem_alloc_flag_t flags, size_t size, size_t alignment, void **ptr) = 0;
+    virtual ze_result_t allocHostMem(ze_host_mem_alloc_flags_t flags, size_t size, size_t alignment, void **ptr) = 0;
 
-    virtual ze_result_t allocDeviceMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flag_t flags, size_t size,
+    virtual ze_result_t allocDeviceMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flags_t flags, size_t size,
                                        size_t alignment, void **ptr) = 0;
 
-    virtual ze_result_t allocSharedMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flag_t deviceFlags,
-                                       ze_host_mem_alloc_flag_t hostFlags, size_t size, size_t alignment,
+    virtual ze_result_t allocSharedMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flags_t deviceFlags,
+                                       ze_host_mem_alloc_flags_t hostFlags, size_t size, size_t alignment,
                                        void **ptr) = 0;
     virtual ze_result_t freeMem(const void *ptr) = 0;
     virtual NEO::MemoryManager *getMemoryManager() = 0;

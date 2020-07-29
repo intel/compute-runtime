@@ -20,7 +20,6 @@ namespace L0 {
 
 class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:
-    LinuxSysmanImp(SysmanImp *pParentSysmanImp);
     LinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp);
     ~LinuxSysmanImp() override;
 
@@ -42,7 +41,6 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
 
   private:
     LinuxSysmanImp() = delete;
-    SysmanImp *pParentSysmanImp = nullptr;
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
     NEO::Drm *pDrm = nullptr;
 };

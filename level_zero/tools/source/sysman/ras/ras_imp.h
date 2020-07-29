@@ -16,20 +16,19 @@ namespace L0 {
 
 class RasImp : public Ras, NEO::NonCopyableOrMovableClass {
   public:
-    ze_result_t rasGetProperties(zet_ras_properties_t *pProperties) override;
-    ze_result_t rasGetConfig(zet_ras_config_t *pConfig) override;
-    ze_result_t rasSetConfig(const zet_ras_config_t *pConfig) override;
-    ze_result_t rasGetState(ze_bool_t clear, uint64_t *pTotalErrors, zet_ras_details_t *pDetails) override;
+    ze_result_t rasGetProperties(zes_ras_properties_t *pProperties) override;
+    ze_result_t rasGetConfig(zes_ras_config_t *pConfig) override;
+    ze_result_t rasSetConfig(const zes_ras_config_t *pConfig) override;
 
     RasImp() = default;
-    RasImp(OsSysman *pOsSysman, zet_ras_error_type_t type);
+    RasImp(OsSysman *pOsSysman, zes_ras_error_type_t type);
     ~RasImp() override;
 
     OsRas *pOsRas = nullptr;
     void init();
 
   private:
-    zet_ras_properties_t rasProperties = {};
+    zes_ras_properties_t rasProperties = {};
 };
 
 } // namespace L0

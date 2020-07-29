@@ -252,10 +252,6 @@ struct MockCommandList : public CommandList {
                      (zet_metric_streamer_handle_t hMetricStreamer,
                       uint32_t value));
 
-    ADDMETHOD_NOBASE(appendMetricTracerMarker, ze_result_t, ZE_RESULT_SUCCESS,
-                     (zet_metric_tracer_handle_t hMetricTracer,
-                      uint32_t value));
-
     ADDMETHOD_NOBASE(appendMetricQueryBegin, ze_result_t, ZE_RESULT_SUCCESS,
                      (zet_metric_query_handle_t hMetricQuery));
 

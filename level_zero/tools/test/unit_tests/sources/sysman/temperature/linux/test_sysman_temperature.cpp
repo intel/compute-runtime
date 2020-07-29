@@ -42,7 +42,7 @@ class SysmanTemperatureFixture : public DeviceFixture, public ::testing::Test {
 
         for (uint32_t i = 0; i < handleCount; i++) {
             linuxTemperatureImp[i].pPmt = pPmt;
-            linuxTemperatureImp[i].setSensorType(static_cast<zet_temp_sensors_t>(i));
+            linuxTemperatureImp[i].setSensorType(static_cast<zes_temp_sensors_t>(i));
             OsTemperature *pOsTemperature = static_cast<OsTemperature *>(&linuxTemperatureImp[i]);
             pTemperatureImp[i] = new TemperatureImp();
             pTemperatureImp[i]->pOsTemperature = pOsTemperature;
@@ -135,7 +135,7 @@ TEST_F(SysmanTemperatureFixture, GivenOsSysmanPointerWhenCreatingOsTemperaturePo
     auto pLinuxSysmanImpTest = std::make_unique<ZetPublicLinuxSysmanImpTemperature>(sysmanImp.get());
     pLinuxSysmanImpTest->pPmt = new PlatformMonitoringTech();
     auto pOsSysmanTest = static_cast<OsSysman *>(pLinuxSysmanImpTest.get());
-    auto pOsTemperatureTest = OsTemperature::create(pOsSysmanTest, ZET_TEMP_SENSORS_GLOBAL);
+    auto pOsTemperatureTest = OsTemperature::create(pOsSysmanTest, ZES_TEMP_SENSORS_GLOBAL);
     EXPECT_NE(pOsTemperatureTest, nullptr);
     delete pOsTemperatureTest;
 }

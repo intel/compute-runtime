@@ -55,6 +55,8 @@ inline SamplerPatchValues getAddrMode(ze_sampler_address_mode_t addressingMode) 
         return SamplerPatchValues::AddressNone;
     case ZE_SAMPLER_ADDRESS_MODE_MIRROR:
         return SamplerPatchValues::AddressMirroredRepeat;
+    default:
+        DEBUG_BREAK_IF(true);
     }
     return SamplerPatchValues::AddressNone;
 }
@@ -356,53 +358,43 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t KernelImp::setAttribute(ze_kernel_attribute_t attr, uint32_t size, const void *pValue) {
-    if (size != sizeof(bool)) {
-        return ZE_RESULT_ERROR_INVALID_KERNEL_ATTRIBUTE_VALUE;
-    }
-
-    if (attr == ZE_KERNEL_ATTR_INDIRECT_DEVICE_ACCESS) {
-        this->unifiedMemoryControls.indirectDeviceAllocationsAllowed = *(static_cast<const bool *>(pValue));
-    } else if (attr == ZE_KERNEL_ATTR_INDIRECT_HOST_ACCESS) {
-        this->unifiedMemoryControls.indirectHostAllocationsAllowed = *(static_cast<const bool *>(pValue));
-    } else if (attr == ZE_KERNEL_ATTR_INDIRECT_SHARED_ACCESS) {
-        this->unifiedMemoryControls.indirectSharedAllocationsAllowed = *(static_cast<const bool *>(pValue));
-    } else {
-        return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+ze_result_t KernelImp::setIndirectAccess(ze_kernel_indirect_access_flags_t flags) {
+    if (flags & ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE) {
+        this->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    } else if (flags & ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST) {
+        this->unifiedMemoryControls.indirectHostAllocationsAllowed = true;
+    } else if (flags & ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED) {
+        this->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
     }
 
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t KernelImp::getAttribute(ze_kernel_attribute_t attr, uint32_t *pSize, void *pValue) {
-    if (attr == ZE_KERNEL_ATTR_INDIRECT_DEVICE_ACCESS) {
-        memcpy_s(pValue, sizeof(bool), &this->unifiedMemoryControls.indirectDeviceAllocationsAllowed, sizeof(bool));
-        return ZE_RESULT_SUCCESS;
+ze_result_t KernelImp::getIndirectAccess(ze_kernel_indirect_access_flags_t *flags) {
+    *flags = 0;
+    if (this->unifiedMemoryControls.indirectDeviceAllocationsAllowed) {
+        *flags |= ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE;
+    }
+    if (this->unifiedMemoryControls.indirectHostAllocationsAllowed) {
+        *flags |= ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE;
+    }
+    if (this->unifiedMemoryControls.indirectSharedAllocationsAllowed) {
+        *flags |= ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE;
     }
 
-    if (attr == ZE_KERNEL_ATTR_INDIRECT_HOST_ACCESS) {
-        memcpy_s(pValue, sizeof(bool), &this->unifiedMemoryControls.indirectHostAllocationsAllowed, sizeof(bool));
-        return ZE_RESULT_SUCCESS;
-    }
+    return ZE_RESULT_SUCCESS;
+}
 
-    if (attr == ZE_KERNEL_ATTR_INDIRECT_SHARED_ACCESS) {
-        memcpy_s(pValue, sizeof(bool), &this->unifiedMemoryControls.indirectSharedAllocationsAllowed, sizeof(bool));
-        return ZE_RESULT_SUCCESS;
+ze_result_t KernelImp::getSourceAttributes(uint32_t *pSize, char **pString) {
+    auto &desc = kernelImmData->getDescriptor();
+    if (pString == nullptr) {
+        *pSize = (uint32_t)desc.kernelMetadata.kernelLanguageAttributes.length() + 1;
+    } else {
+        strncpy_s(*pString, desc.kernelMetadata.kernelLanguageAttributes.length() + 1,
+                  desc.kernelMetadata.kernelLanguageAttributes.c_str(),
+                  desc.kernelMetadata.kernelLanguageAttributes.length() + 1);
     }
-
-    if (attr == ZE_KERNEL_ATTR_SOURCE_ATTRIBUTE) {
-        auto &desc = kernelImmData->getDescriptor();
-        if (pValue == nullptr) {
-            *pSize = (uint32_t)desc.kernelMetadata.kernelLanguageAttributes.length() + 1;
-        } else {
-            strncpy_s((char *)pValue, desc.kernelMetadata.kernelLanguageAttributes.length() + 1,
-                      desc.kernelMetadata.kernelLanguageAttributes.c_str(),
-                      desc.kernelMetadata.kernelLanguageAttributes.length() + 1);
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    return ZE_RESULT_ERROR_INVALID_ENUMERATION;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t KernelImp::setArgImmediate(uint32_t argIndex, size_t argSize, const void *argVal) {
@@ -549,22 +541,6 @@ ze_result_t KernelImp::setArgSampler(uint32_t argIndex, size_t argSize, const vo
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) {
-    size_t kernelNameSize = std::min(this->kernelImmData->getDescriptor().kernelMetadata.kernelName.size(),
-                                     (static_cast<size_t>(ZE_MAX_KERNEL_NAME) - 1));
-    strncpy_s(pKernelProperties->name, ZE_MAX_KERNEL_NAME,
-              this->kernelImmData->getDescriptor().kernelMetadata.kernelName.c_str(), kernelNameSize);
-
-    pKernelProperties->requiredGroupSizeX = this->groupSize[0];
-    pKernelProperties->requiredGroupSizeY = this->groupSize[1];
-    pKernelProperties->requiredGroupSizeZ = this->groupSize[2];
-
-    pKernelProperties->numKernelArgs =
-        static_cast<uint32_t>(this->kernelImmData->getDescriptor().payloadMappings.explicitArgs.size());
-
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t KernelImp::getKernelName(size_t *pSize, char *pName) {
     size_t kernelNameSize = this->kernelImmData->getDescriptor().kernelMetadata.kernelName.size() + 1;
     if (0 == *pSize || nullptr == pName) {
@@ -579,11 +555,7 @@ ze_result_t KernelImp::getKernelName(size_t *pSize, char *pName) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t KernelImp::getPropertiesExt(ze_kernel_propertiesExt_t *pKernelProperties) {
-    size_t kernelNameSize = std::min(this->kernelImmData->getDescriptor().kernelMetadata.kernelName.size(),
-                                     (static_cast<size_t>(ZE_MAX_KERNEL_NAME) - 1));
-    strncpy_s(pKernelProperties->name, ZE_MAX_KERNEL_NAME,
-              this->kernelImmData->getDescriptor().kernelMetadata.kernelName.c_str(), kernelNameSize);
+ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) {
 
     pKernelProperties->requiredGroupSizeX = this->groupSize[0];
     pKernelProperties->requiredGroupSizeY = this->groupSize[1];

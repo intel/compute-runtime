@@ -24,22 +24,6 @@ ze_result_t LinuxEngineImp::getTimeStamp(uint64_t &timeStamp) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxEngineImp::getEngineGroup(zet_engine_group_t &engineGroup) {
-    std::string strVal;
-    ze_result_t result = pSysfsAccess->read(computeEngineGroupFile, strVal);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-
-    if (strVal.compare(computeEngineGroupName) == 0) {
-        engineGroup = ZET_ENGINE_GROUP_COMPUTE_ALL;
-    } else {
-        engineGroup = ZET_ENGINE_GROUP_ALL;
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    return result;
-}
-
 ze_result_t LinuxEngineImp::getEngineGroup(zes_engine_group_t &engineGroup) {
     std::string strVal;
     ze_result_t result = pSysfsAccess->read(computeEngineGroupFile, strVal);

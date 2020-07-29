@@ -18,16 +18,6 @@ using ::testing::_;
 using ::testing::AnyNumber;
 using ::testing::Return;
 
-using DevicePropertyTest = Test<DeviceFixture>;
-
-HWTEST2_F(DevicePropertyTest, givenReturnedDevicePropertiesThenExpectedPageFaultSupportReturned, IsGen12LP) {
-    ze_device_properties_t deviceProps;
-    deviceProps.version = ZE_DEVICE_PROPERTIES_VERSION_CURRENT;
-
-    device->getProperties(&deviceProps);
-    EXPECT_FALSE(deviceProps.onDemandPageFaultsSupported);
-}
-
 using DeviceQueueGroupTest = Test<DeviceFixture>;
 
 HWTEST2_F(DeviceQueueGroupTest,

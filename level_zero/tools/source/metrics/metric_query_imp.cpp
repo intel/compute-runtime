@@ -303,7 +303,7 @@ bool MetricsLibrary::getGpuCommands(CommandList &commandList,
 
 ConfigurationHandle_1_0
 MetricsLibrary::createConfiguration(const zet_metric_group_handle_t metricGroupHandle,
-                                    const zet_metric_group_properties_ext_t properties) {
+                                    const zet_metric_group_properties_t properties) {
     // Metric group internal data.
     auto metricGroup = MetricGroup::fromHandle(metricGroupHandle);
     auto metricGroupDummy = ConfigurationHandle_1_0{};
@@ -376,21 +376,8 @@ void MetricsLibrary::deleteAllConfigurations() {
     configurations.clear();
 }
 
-ze_result_t metricQueryPoolCreate(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup, const zet_metric_query_pool_desc_t *pDesc,
-                                  zet_metric_query_pool_handle_t *phMetricQueryPool) {
-
-    zet_metric_query_pool_desc_ext_t descExt = {};
-    descExt.stype = ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC;
-    descExt.type = (pDesc->flags == ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE)
-                       ? ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE
-                       : ZET_METRIC_QUERY_POOL_TYPE_EXECUTION;
-    descExt.count = pDesc->count;
-
-    return metricQueryPoolCreateExt(nullptr, hDevice, hMetricGroup, &descExt, phMetricQueryPool);
-}
-
-ze_result_t metricQueryPoolCreateExt(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
-                                     const zet_metric_query_pool_desc_ext_t *pDesc, zet_metric_query_pool_handle_t *phMetricQueryPool) {
+ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+                                  const zet_metric_query_pool_desc_t *pDesc, zet_metric_query_pool_handle_t *phMetricQueryPool) {
 
     auto device = Device::fromHandle(hDevice);
     auto &metricContext = device->getMetricContext();
@@ -410,7 +397,7 @@ ze_result_t metricQueryPoolCreateExt(zet_context_handle_t hContext, zet_device_h
 
 MetricQueryPool *MetricQueryPool::create(zet_device_handle_t hDevice,
                                          zet_metric_group_handle_t hMetricGroup,
-                                         const zet_metric_query_pool_desc_ext_t &desc) {
+                                         const zet_metric_query_pool_desc_t &desc) {
     auto device = Device::fromHandle(hDevice);
     auto metricPoolImp = new MetricQueryPoolImp(device->getMetricContext(), hMetricGroup, desc);
 
@@ -424,7 +411,7 @@ MetricQueryPool *MetricQueryPool::create(zet_device_handle_t hDevice,
 
 MetricQueryPoolImp::MetricQueryPoolImp(MetricContext &metricContextInput,
                                        zet_metric_group_handle_t hEventMetricGroupInput,
-                                       const zet_metric_query_pool_desc_ext_t &poolDescription)
+                                       const zet_metric_query_pool_desc_t &poolDescription)
     : metricContext(metricContextInput), metricsLibrary(metricContext.getMetricsLibrary()),
       description(poolDescription),
       hMetricGroup(hEventMetricGroupInput) {}
@@ -499,7 +486,6 @@ MetricQueryImp::MetricQueryImp(MetricContext &metricContextInput, MetricQueryPoo
       pool(poolInput), slot(slotInput) {}
 
 ze_result_t MetricQueryImp::appendBegin(CommandList &commandList) {
-
     switch (pool.description.type) {
     case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
         return writeMetricQuery(commandList, nullptr, 0, nullptr, true);

@@ -8,8 +8,6 @@
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include <level_zero/ze_api.h>
 
-extern "C" {
-
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendBarrier(
     ze_command_list_handle_t hCommandList,
@@ -36,5 +34,3 @@ zeDeviceSystemBarrier(
     ze_device_handle_t hDevice) {
     return L0::Device::fromHandle(hDevice)->systemBarrier();
 }
-
-} // extern "C"

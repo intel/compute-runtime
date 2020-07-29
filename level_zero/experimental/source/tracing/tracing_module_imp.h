@@ -10,7 +10,8 @@
 extern "C" {
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeModuleCreate_Tracing(ze_device_handle_t hDevice,
+zeModuleCreate_Tracing(ze_context_handle_t hContext,
+                       ze_device_handle_t hDevice,
                        const ze_module_desc_t *desc,
                        ze_module_handle_t *phModule,
                        ze_module_build_log_handle_t *phBuildLog);
@@ -34,6 +35,7 @@ zeModuleGetNativeBinary_Tracing(ze_module_handle_t hModule,
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetGlobalPointer_Tracing(ze_module_handle_t hModule,
                                  const char *pGlobalName,
+                                 size_t *pSize,
                                  void **pptr);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -69,12 +71,6 @@ zeKernelSetArgumentValue_Tracing(ze_kernel_handle_t hKernel,
                                  uint32_t argIndex,
                                  size_t argSize,
                                  const void *pArgValue);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeKernelSetAttribute_Tracing(ze_kernel_handle_t hKernel,
-                             ze_kernel_attribute_t attr,
-                             uint32_t size,
-                             const void *pValue);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelGetProperties_Tracing(ze_kernel_handle_t hKernel,
@@ -122,10 +118,4 @@ zeModuleGetKernelNames_Tracing(ze_module_handle_t hModule,
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSuggestMaxCooperativeGroupCount_Tracing(ze_kernel_handle_t hKernel,
                                                 uint32_t *totalGroupCount);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeKernelGetAttribute_Tracing(ze_kernel_handle_t hKernel,
-                             ze_kernel_attribute_t attr,
-                             uint32_t *pSize,
-                             void *pValue);
 }

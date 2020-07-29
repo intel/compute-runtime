@@ -9,20 +9,8 @@
 #include "level_zero/core/source/context/context.h"
 #include <level_zero/ze_api.h>
 
-#include "third_party/level_zero/ze_api_ext.h"
-
-extern "C" {
-
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListCreate(
-    ze_device_handle_t hDevice,
-    const ze_command_list_desc_t *desc,
-    ze_command_list_handle_t *phCommandList) {
-    return L0::Device::fromHandle(hDevice)->createCommandList(desc, phCommandList);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeCommandListCreateExt(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
     const ze_command_list_desc_t *desc,
@@ -32,14 +20,6 @@ zeCommandListCreateExt(
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListCreateImmediate(
-    ze_device_handle_t hDevice,
-    const ze_command_queue_desc_t *altdesc,
-    ze_command_list_handle_t *phCommandList) {
-    return L0::Device::fromHandle(hDevice)->createCommandListImmediate(altdesc, phCommandList);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeCommandListCreateImmediateExt(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
     const ze_command_queue_desc_t *altdesc,
@@ -66,7 +46,7 @@ zeCommandListReset(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeCommandListAppendWriteGlobalTimestampExt(
+zeCommandListAppendWriteGlobalTimestamp(
     ze_command_list_handle_t hCommandList,
     uint64_t *dstptr,
     ze_event_handle_t hSignalEvent,
@@ -74,5 +54,3 @@ zeCommandListAppendWriteGlobalTimestampExt(
     ze_event_handle_t *phWaitEvents) {
     return L0::CommandList::fromHandle(hCommandList)->appendWriteGlobalTimestamp(dstptr, hSignalEvent, numWaitEvents, phWaitEvents);
 }
-
-} // extern "C"

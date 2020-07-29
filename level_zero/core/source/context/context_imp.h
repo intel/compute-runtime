@@ -18,17 +18,17 @@ struct ContextImp : Context {
     ze_result_t destroy() override;
     ze_result_t getStatus() override;
     DriverHandle *getDriverHandle() override;
-    ze_result_t allocHostMem(ze_host_mem_alloc_flag_t flags,
+    ze_result_t allocHostMem(ze_host_mem_alloc_flags_t flags,
                              size_t size,
                              size_t alignment,
                              void **ptr) override;
     ze_result_t allocDeviceMem(ze_device_handle_t hDevice,
-                               ze_device_mem_alloc_flag_t flags,
+                               ze_device_mem_alloc_flags_t flags,
                                size_t size,
                                size_t alignment, void **ptr) override;
     ze_result_t allocSharedMem(ze_device_handle_t hDevice,
-                               ze_device_mem_alloc_flag_t deviceFlags,
-                               ze_host_mem_alloc_flag_t hostFlags,
+                               ze_device_mem_alloc_flags_t deviceFlags,
+                               ze_host_mem_alloc_flags_t hostFlags,
                                size_t size,
                                size_t alignment,
                                void **ptr) override;
@@ -91,6 +91,15 @@ struct ContextImp : Context {
                                              size_t size,
                                              ze_memory_access_attribute_t *access,
                                              size_t *outSize) override;
+    ze_result_t openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
+                                       ze_event_pool_handle_t *phEventPool) override;
+    ze_result_t createEventPool(const ze_event_pool_desc_t *desc,
+                                uint32_t numDevices,
+                                ze_device_handle_t *phDevices,
+                                ze_event_pool_handle_t *phEventPool) override;
+    ze_result_t createImage(ze_device_handle_t hDevice,
+                            const ze_image_desc_t *desc,
+                            ze_image_handle_t *phImage) override;
 
   protected:
     DriverHandle *driverHandle = nullptr;

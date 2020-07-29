@@ -14,7 +14,7 @@ components:
   infra:
     branch: infra
     dest_dir: infra
-    revision: c04d188ae49ed3d7e5c3cd6e871dc1e29df631e6
+    revision: 0a6a620bba78c7978cc82d96c6f9f7b78575faac
     type: git
   internal:
     branch: master
@@ -30,7 +30,7 @@ components:
     branch: master
     dest_dir: level_zero
     repository: https://github.com/oneapi-src/level-zero
-    revision: v0.91.10
+    revision: v1.0
     type: git
   libva:
     dest_dir: libva

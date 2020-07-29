@@ -23,11 +23,6 @@ bool WddmTemperatureImp::isTempModuleSupported() {
     return false;
 }
 
-OsTemperature *OsTemperature::create(OsSysman *pOsSysman, zet_temp_sensors_t sensorType) {
-    WddmTemperatureImp *pWddmTemperatureImp = new WddmTemperatureImp();
-    return static_cast<OsTemperature *>(pWddmTemperatureImp);
-}
-
 OsTemperature *OsTemperature::create(OsSysman *pOsSysman, zes_temp_sensors_t sensorType) {
     WddmTemperatureImp *pWddmTemperatureImp = new WddmTemperatureImp();
     return static_cast<OsTemperature *>(pWddmTemperatureImp);

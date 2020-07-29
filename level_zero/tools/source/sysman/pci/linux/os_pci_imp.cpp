@@ -143,7 +143,7 @@ void getBarBaseAndSize(std::string readBytes, uint64_t &baseAddr, uint64_t &barS
     barSize = end - start + 1;
 }
 
-ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zet_pci_bar_properties_t *> &pBarProperties) {
+ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) {
     std::vector<std::string> ReadBytes;
     ze_result_t result = pSysfsAccess->read(resourceFile, ReadBytes);
     if (result != ZE_RESULT_SUCCESS) {
@@ -153,7 +153,7 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zet_pci_bar_propert
         uint64_t baseAddr, barSize, barFlags;
         getBarBaseAndSize(ReadBytes[i], baseAddr, barSize, barFlags);
         if (baseAddr) {
-            zet_pci_bar_properties_t *pBarProp = new zet_pci_bar_properties_t;
+            zes_pci_bar_properties_t *pBarProp = new zes_pci_bar_properties_t;
             pBarProp->index = i;
             pBarProp->base = baseAddr;
             pBarProp->size = barSize;
@@ -163,9 +163,9 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zet_pci_bar_propert
             // Bit-1 -  Reserved
             // Bit-2 - Valid only for MMIO type BAR
             //         Value  0x1 -> 64bit BAR*/
-            pBarProp->type = (barFlags & 0x1) ? ZET_PCI_BAR_TYPE_VGA_IO : ZET_PCI_BAR_TYPE_MMIO;
+            pBarProp->type = ZES_PCI_BAR_TYPE_MMIO;
             if (i == 6) { // the 7th entry of resource file is expected to be ROM BAR
-                pBarProp->type = ZET_PCI_BAR_TYPE_ROM;
+                pBarProp->type = ZES_PCI_BAR_TYPE_ROM;
             }
             pBarProperties.push_back(pBarProp);
         }

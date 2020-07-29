@@ -52,7 +52,7 @@ ze_result_t Mock<DriverHandle>::doGetDevice(uint32_t *pCount, ze_device_handle_t
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t Mock<DriverHandle>::doAllocHostMem(ze_host_mem_alloc_flag_t flags, size_t size, size_t alignment,
+ze_result_t Mock<DriverHandle>::doAllocHostMem(ze_host_mem_alloc_flags_t flags, size_t size, size_t alignment,
                                                void **ptr) {
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
 
@@ -67,7 +67,7 @@ ze_result_t Mock<DriverHandle>::doAllocHostMem(ze_host_mem_alloc_flag_t flags, s
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t Mock<DriverHandle>::doAllocDeviceMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flag_t flags, size_t size, size_t alignment, void **ptr) {
+ze_result_t Mock<DriverHandle>::doAllocDeviceMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flags_t flags, size_t size, size_t alignment, void **ptr) {
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY);
 
     auto allocation = svmAllocsManager->createUnifiedMemoryAllocation(0u, size, unifiedMemoryProperties);

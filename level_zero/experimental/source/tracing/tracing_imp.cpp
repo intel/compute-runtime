@@ -24,7 +24,7 @@ APITracer *APITracer::create() {
     return tracer;
 }
 
-ze_result_t createAPITracer(zet_driver_handle_t hDriver, const zet_tracer_desc_t *desc, zet_tracer_handle_t *phTracer) {
+ze_result_t createAPITracer(zet_context_handle_t hContext, const zet_tracer_exp_desc_t *desc, zet_tracer_exp_handle_t *phTracer) {
 
     if (!PGLOBAL_APITracerContextImp->isTracingEnabled()) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
@@ -38,7 +38,7 @@ ze_result_t createAPITracer(zet_driver_handle_t hDriver, const zet_tracer_desc_t
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t APITracerImp::destroyTracer(zet_tracer_handle_t phTracer) {
+ze_result_t APITracerImp::destroyTracer(zet_tracer_exp_handle_t phTracer) {
 
     APITracerImp *tracer = static_cast<APITracerImp *>(phTracer);
 

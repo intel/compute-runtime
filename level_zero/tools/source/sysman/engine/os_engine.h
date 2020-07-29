@@ -7,9 +7,7 @@
 
 #pragma once
 
-#include <level_zero/zet_api.h>
-
-#include "third_party/level_zero/zes_api_ext.h"
+#include <level_zero/zes_api.h>
 
 namespace L0 {
 
@@ -18,7 +16,6 @@ class OsEngine {
   public:
     virtual ze_result_t getActiveTime(uint64_t &activeTime) = 0;
     virtual ze_result_t getTimeStamp(uint64_t &timeStamp) = 0;
-    virtual ze_result_t getEngineGroup(zet_engine_group_t &engineGroup) = 0;
     virtual ze_result_t getEngineGroup(zes_engine_group_t &engineGroup) = 0;
     static OsEngine *create(OsSysman *pOsSysman);
     virtual ~OsEngine() = default;

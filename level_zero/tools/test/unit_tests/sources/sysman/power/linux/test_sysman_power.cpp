@@ -100,9 +100,9 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerEnergyThre
 class SysmanPowerFixture : public DeviceFixture, public ::testing::Test {
 
   protected:
-    std::unique_ptr<SysmanImp> sysmanImp;
+    std::unique_ptr<SysmanDeviceImp> sysmanImp;
     zet_sysman_handle_t hSysman;
-    zet_sysman_pwr_handle_t hSysmanPowerHandle;
+    zes_pwr_handle_t hSysmanPowerHandle;
     Mock<PowerPmt> *pPmt = nullptr;
 
     PowerImp *pPowerImp = nullptr;
@@ -111,7 +111,7 @@ class SysmanPowerFixture : public DeviceFixture, public ::testing::Test {
     void SetUp() override {
 
         DeviceFixture::SetUp();
-        sysmanImp = std::make_unique<SysmanImp>(device->toHandle());
+        sysmanImp = std::make_unique<SysmanDeviceImp>(device->toHandle());
         pPmt = new NiceMock<Mock<PowerPmt>>;
         OsPower *pOsPower = nullptr;
 
@@ -154,14 +154,14 @@ TEST_F(SysmanPowerFixture, GivenComponentCountZeroWhenCallingZetSysmanPowerGetTh
 }
 
 TEST_F(SysmanPowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrieved) {
-    zet_power_energy_counter_t energyCounter;
+    zes_power_energy_counter_t energyCounter;
     uint64_t expectedEnergyCounter = convertJouleToMicroJoule * setEnergyCounter;
     ASSERT_EQ(ZE_RESULT_SUCCESS, zetSysmanPowerGetEnergyCounter(hSysmanPowerHandle, &energyCounter));
     EXPECT_EQ(energyCounter.energy, expectedEnergyCounter);
 }
 
 TEST_F(SysmanPowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyThresholdThenUnsupportedFeatureErrorIsReturned) {
-    zet_energy_threshold_t threshold;
+    zes_energy_threshold_t threshold;
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zetSysmanPowerGetEnergyThreshold(hSysmanPowerHandle, &threshold));
 }

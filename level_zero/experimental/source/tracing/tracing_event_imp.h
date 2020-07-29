@@ -7,12 +7,10 @@
 
 #pragma once
 
-#include "third_party/level_zero/ze_api_ext.h"
-
 extern "C" {
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeEventPoolCreate_Tracing(ze_driver_handle_t hDriver,
+zeEventPoolCreate_Tracing(ze_context_handle_t hContext,
                           const ze_event_pool_desc_t *desc,
                           uint32_t numDevices,
                           ze_device_handle_t *phDevices,
@@ -34,7 +32,7 @@ zeEventPoolGetIpcHandle_Tracing(ze_event_pool_handle_t hEventPool,
                                 ze_ipc_event_pool_handle_t *phIpc);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeEventPoolOpenIpcHandle_Tracing(ze_driver_handle_t hDriver,
+zeEventPoolOpenIpcHandle_Tracing(ze_context_handle_t hContext,
                                  ze_ipc_event_pool_handle_t hIpc,
                                  ze_event_pool_handle_t *phEventPool);
 
@@ -55,7 +53,7 @@ zeEventHostSignal_Tracing(ze_event_handle_t hEvent);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeEventHostSynchronize_Tracing(ze_event_handle_t hEvent,
-                               uint32_t timeout);
+                               uint64_t timeout);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeEventQueryStatus_Tracing(ze_event_handle_t hEvent);
@@ -68,7 +66,6 @@ zeCommandListAppendEventReset_Tracing(ze_command_list_handle_t hCommandList,
                                       ze_event_handle_t hEvent);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeEventGetTimestamp_Tracing(ze_event_handle_t hEvent,
-                            ze_event_timestamp_type_t timestampType,
-                            void *dstptr);
+zeEventQueryKernelTimestamp_Tracing(ze_event_handle_t hEvent,
+                                    ze_kernel_timestamp_result_t *dstptr);
 }

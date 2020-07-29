@@ -18,7 +18,6 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass
   public:
     ze_result_t getSensorTemperature(double *pTemperature) override;
     bool isTempModuleSupported() override;
-    void setSensorType(zet_temp_sensors_t sensorType);
     void setSensorType(zes_temp_sensors_t sensorType);
     LinuxTemperatureImp(OsSysman *pOsSysman);
     LinuxTemperatureImp() = default;
@@ -27,6 +26,6 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass
   protected:
     PlatformMonitoringTech *pPmt = nullptr;
     int zetType = 0x7fffffff;
-    zes_temp_sensors_t type = ZES_TEMP_SENSORS_FORCE_UINT32;
+    zes_temp_sensors_t type = ZES_TEMP_SENSORS_GLOBAL;
 };
 } // namespace L0

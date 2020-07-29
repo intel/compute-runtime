@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "third_party/level_zero/ze_api_ext.h"
-
 extern "C" {
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -24,11 +22,11 @@ zeDriverGetApiVersion_Tracing(ze_driver_handle_t hDrivers,
                               ze_api_version_t *version);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDriverGetIPCProperties_Tracing(ze_driver_handle_t hDriver,
-                                 ze_driver_ipc_properties_t *pIPCProperties);
+zeDriverGetIpcProperties_Tracing(ze_driver_handle_t hDriver,
+                                 ze_driver_ipc_properties_t *pIpcProperties);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDriverGetExtensionFunctionAddress_Tracing(ze_driver_handle_t hDriver,
-                                            const char *pFuncName,
-                                            void **pfunc);
+zeDriverGetExtensionProperties_Tracing(ze_driver_handle_t hDriver,
+                                       uint32_t *pCount,
+                                       ze_driver_extension_properties_t *pExtensionProperties);
 }

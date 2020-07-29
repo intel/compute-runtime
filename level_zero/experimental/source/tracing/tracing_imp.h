@@ -9,7 +9,6 @@
 
 #include "level_zero/experimental/source/tracing/tracing.h"
 #include "level_zero/experimental/source/tracing/tracing_barrier_imp.h"
-#include "level_zero/experimental/source/tracing/tracing_cl_interop_imp.h"
 #include "level_zero/experimental/source/tracing/tracing_cmdlist_imp.h"
 #include "level_zero/experimental/source/tracing/tracing_cmdqueue_imp.h"
 #include "level_zero/experimental/source/tracing/tracing_copy_imp.h"
@@ -26,7 +25,6 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
 
-#include "third_party/level_zero/ze_api_ext.h"
 #include "ze_ddi_tables.h"
 
 #include <atomic>
@@ -82,7 +80,7 @@ typedef enum tracingState {
 } tracingState_t;
 
 struct APITracerImp : APITracer {
-    ze_result_t destroyTracer(zet_tracer_handle_t phTracer) override;
+    ze_result_t destroyTracer(zet_tracer_exp_handle_t phTracer) override;
     ze_result_t setPrologues(zet_core_callbacks_t *pCoreCbs) override;
     ze_result_t setEpilogues(zet_core_callbacks_t *pCoreCbs) override;
     ze_result_t enableTracer(ze_bool_t enable) override;

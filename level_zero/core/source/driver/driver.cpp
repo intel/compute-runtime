@@ -78,7 +78,7 @@ void DriverImp::initialize(ze_result_t *result) {
 
 ze_result_t DriverImp::initStatus(ZE_RESULT_ERROR_UNINITIALIZED);
 
-ze_result_t DriverImp::driverInit(ze_init_flag_t flag) {
+ze_result_t DriverImp::driverInit(ze_init_flags_t flags) {
     std::call_once(initDriverOnce, [this]() {
         ze_result_t result;
         this->initialize(&result);
@@ -111,6 +111,6 @@ ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDriverHandle
 static DriverImp driverImp;
 Driver *Driver::driver = &driverImp;
 
-ze_result_t init(ze_init_flag_t flag) { return Driver::get()->driverInit(flag); }
+ze_result_t init(ze_init_flags_t flags) { return Driver::get()->driverInit(flags); }
 
 } // namespace L0

@@ -9,11 +9,9 @@
 #include "level_zero/core/source/driver/driver_handle.h"
 #include <level_zero/ze_api.h>
 
-extern "C" {
-
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeInit(
-    ze_init_flag_t flags) {
+    ze_init_flags_t flags) {
     return L0::init(flags);
 }
 
@@ -39,7 +37,7 @@ zeDriverGetApiVersion(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDriverGetIPCProperties(
+zeDriverGetIpcProperties(
     ze_driver_handle_t hDriver,
     ze_driver_ipc_properties_t *pIPCProperties) {
     return L0::DriverHandle::fromHandle(hDriver)->getIPCProperties(pIPCProperties);
@@ -60,5 +58,3 @@ zeDriverGetExtensionProperties(
     ze_driver_extension_properties_t *pExtensionProperties) {
     return L0::DriverHandle::fromHandle(hDriver)->getExtensionProperties(pCount, pExtensionProperties);
 }
-
-} // extern "C"

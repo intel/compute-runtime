@@ -59,7 +59,7 @@ zeFenceDestroy_Tracing(ze_fence_handle_t hFence) {
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeFenceHostSynchronize_Tracing(ze_fence_handle_t hFence,
-                               uint32_t timeout) {
+                               uint64_t timeout) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Fence.pfnHostSynchronize,
                                hFence,

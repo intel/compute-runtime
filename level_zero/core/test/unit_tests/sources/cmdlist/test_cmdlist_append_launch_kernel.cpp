@@ -209,16 +209,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppend
     Mock<::L0::Kernel> kernel;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, false));
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-        1};
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
 
-    ze_event_desc_t eventDesc = {
-        ZE_EVENT_DESC_VERSION_CURRENT,
-        0,
-        ZE_EVENT_SCOPE_FLAG_NONE,
-        ZE_EVENT_SCOPE_FLAG_NONE};
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
 
     auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
@@ -273,16 +269,12 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     Mock<::L0::Kernel> kernel;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, false));
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-        ZE_EVENT_POOL_FLAG_TIMESTAMP,
-        1};
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
-    ze_event_desc_t eventDesc = {
-        ZE_EVENT_DESC_VERSION_CURRENT,
-        0,
-        ZE_EVENT_SCOPE_FLAG_NONE,
-        ZE_EVENT_SCOPE_FLAG_NONE};
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
 
     auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
@@ -360,13 +352,13 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFla
     Mock<::L0::Kernel> kernel;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, false));
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-        ZE_EVENT_POOL_FLAG_TIMESTAMP,
-        1};
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
-    ze_event_desc_t eventDesc = {
-        ZE_EVENT_DESC_VERSION_CURRENT,
+    const ze_event_desc_t eventDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
         0,
         ZE_EVENT_SCOPE_FLAG_HOST,
         ZE_EVENT_SCOPE_FLAG_HOST};
@@ -432,7 +424,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, false));
 
     void *alloc = nullptr;
-    auto result = device->getDriverHandle()->allocDeviceMem(device->toHandle(), ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT, 16384u, 4096u, &alloc);
+    auto result = device->getDriverHandle()->allocDeviceMem(device->toHandle(), 0u, 16384u, 4096u, &alloc);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),
@@ -542,13 +534,12 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsAddsSemaphoreT
     ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
 
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-        1};
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 1;
 
-    ze_event_desc_t eventDesc = {ZE_EVENT_DESC_VERSION_CURRENT, 0, ZE_EVENT_SCOPE_FLAG_NONE,
-                                 ZE_EVENT_SCOPE_FLAG_NONE};
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
 
     std::unique_ptr<EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     std::unique_ptr<Event> event(Event::create(eventPool.get(), &eventDesc, device));
@@ -585,16 +576,15 @@ HWTEST_F(CommandListAppendLaunchKernel, givenMultipleValidWaitEventsAddsSemaphor
     ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
 
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-        2};
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 2;
 
-    ze_event_desc_t eventDesc1 = {ZE_EVENT_DESC_VERSION_CURRENT, 0, ZE_EVENT_SCOPE_FLAG_NONE,
-                                  ZE_EVENT_SCOPE_FLAG_NONE};
+    ze_event_desc_t eventDesc1 = {};
+    eventDesc1.index = 0;
 
-    ze_event_desc_t eventDesc2 = {ZE_EVENT_DESC_VERSION_CURRENT, 1, ZE_EVENT_SCOPE_FLAG_NONE,
-                                  ZE_EVENT_SCOPE_FLAG_NONE};
+    ze_event_desc_t eventDesc2 = {};
+    eventDesc2.index = 1;
 
     std::unique_ptr<EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     std::unique_ptr<Event> event1(Event::create(eventPool.get(), &eventDesc1, device));
@@ -630,7 +620,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMult
     const ze_kernel_handle_t launchFn = kernel->toHandle();
     uint32_t *numLaunchArgs;
     auto result = device->getDriverHandle()->allocDeviceMem(
-        device->toHandle(), ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
+        device->toHandle(), 0u, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
     result = commandList->appendLaunchMultipleKernelsIndirect(1, &launchFn, numLaunchArgs, nullptr, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     *numLaunchArgs = 0;
@@ -657,7 +647,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMult
     uint32_t *numLaunchArgs;
     const uint32_t numKernels = 3;
     auto result = device->getDriverHandle()->allocDeviceMem(
-        device->toHandle(), ZE_DEVICE_MEM_ALLOC_FLAG_DEFAULT, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
+        device->toHandle(), 0u, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
     result = commandList->appendLaunchMultipleKernelsIndirect(numKernels, launchFn, numLaunchArgs, nullptr, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     *numLaunchArgs = 2;

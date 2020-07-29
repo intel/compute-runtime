@@ -94,7 +94,7 @@ struct Mock<Device> : public Device {
                 (override));
     MOCK_METHOD(ze_result_t,
                 getKernelProperties,
-                (ze_device_kernel_properties_t * pKernelProperties),
+                (ze_device_module_properties_t * pKernelProperties),
                 (override));
     MOCK_METHOD(ze_result_t,
                 getMemoryProperties,
@@ -125,11 +125,11 @@ struct Mock<Device> : public Device {
                 (override));
     MOCK_METHOD(ze_result_t,
                 setIntermediateCacheConfig,
-                (ze_cache_config_t CacheConfig),
+                (ze_cache_config_flags_t CacheConfig),
                 (override));
     MOCK_METHOD(ze_result_t,
                 setLastLevelCacheConfig,
-                (ze_cache_config_t CacheConfig),
+                (ze_cache_config_flags_t CacheConfig),
                 (override));
     MOCK_METHOD(ze_result_t,
                 getCacheProperties,
@@ -153,26 +153,22 @@ struct Mock<Device> : public Device {
                 (override));
     MOCK_METHOD(ze_result_t,
                 systemBarrier,
-
                 (),
                 (override));
     MOCK_METHOD(ze_result_t,
                 registerCLMemory,
-
                 (cl_context context,
                  cl_mem mem,
                  void **ptr),
                 (override));
     MOCK_METHOD(ze_result_t,
                 registerCLProgram,
-
                 (cl_context context,
                  cl_program program,
                  ze_module_handle_t *phModule),
                 (override));
     MOCK_METHOD(ze_result_t,
                 registerCLCommandQueue,
-
                 (cl_context context,
                  cl_command_queue commandQueue,
                  ze_command_queue_handle_t *phCommandQueue),

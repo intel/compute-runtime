@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "third_party/level_zero/ze_api_ext.h"
-
 extern "C" {
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -31,6 +29,7 @@ zeDeviceGetMemoryProperties_Tracing(ze_device_handle_t hDevice,
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetCacheProperties_Tracing(ze_device_handle_t hDevice,
+                                   uint32_t pCount,
                                    ze_device_cache_properties_t *pCacheProperties);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -53,18 +52,10 @@ zeDeviceCanAccessPeer_Tracing(ze_device_handle_t hDevice,
                               ze_bool_t *value);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeKernelSetIntermediateCacheConfig_Tracing(ze_kernel_handle_t hKernel,
-                                           ze_cache_config_t cacheConfig);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDeviceSetLastLevelCacheConfig_Tracing(ze_device_handle_t hDevice,
-                                        ze_cache_config_t cacheConfig);
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDeviceGetKernelProperties_Tracing(ze_device_handle_t hDevice,
-                                    ze_device_kernel_properties_t *pKernelProperties);
+zeKernelSetCacheConfig_Tracing(ze_kernel_handle_t hKernel,
+                               ze_cache_config_flags_t flags);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetMemoryAccessProperties_Tracing(ze_device_handle_t hDevice,
-                                          ze_device_memory_access_properties_t *pMemAccessProperties);
+                                          ze_memory_access_cap_flags_t *pMemAccessProperties);
 }

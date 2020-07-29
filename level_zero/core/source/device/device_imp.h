@@ -34,15 +34,15 @@ struct DeviceImp : public Device {
     ze_result_t getComputeProperties(ze_device_compute_properties_t *pComputeProperties) override;
     ze_result_t getP2PProperties(ze_device_handle_t hPeerDevice,
                                  ze_device_p2p_properties_t *pP2PProperties) override;
-    ze_result_t getKernelProperties(ze_device_kernel_properties_t *pKernelProperties) override;
+    ze_result_t getKernelProperties(ze_device_module_properties_t *pKernelProperties) override;
     ze_result_t getMemoryProperties(uint32_t *pCount, ze_device_memory_properties_t *pMemProperties) override;
     ze_result_t getMemoryAccessProperties(ze_device_memory_access_properties_t *pMemAccessProperties) override;
     ze_result_t getProperties(ze_device_properties_t *pDeviceProperties) override;
     ze_result_t getSubDevices(uint32_t *pCount, ze_device_handle_t *phSubdevices) override;
     ze_result_t makeImageResident(ze_image_handle_t hImage) override;
     ze_result_t makeMemoryResident(void *ptr, size_t size) override;
-    ze_result_t setIntermediateCacheConfig(ze_cache_config_t cacheConfig) override;
-    ze_result_t setLastLevelCacheConfig(ze_cache_config_t cacheConfig) override;
+    ze_result_t setIntermediateCacheConfig(ze_cache_config_flags_t cacheConfig) override;
+    ze_result_t setLastLevelCacheConfig(ze_cache_config_flags_t cacheConfig) override;
     ze_result_t getCacheProperties(ze_device_cache_properties_t *pCacheProperties) override;
     ze_result_t imageGetProperties(const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) override;
     ze_result_t getDeviceImageProperties(ze_device_image_properties_t *pDeviceImageProperties) override;
@@ -73,7 +73,7 @@ struct DeviceImp : public Device {
     const NEO::DeviceInfo &getDeviceInfo() const override;
     NEO::Device *getNEODevice() override;
     void activateMetricGroups() override;
-    void processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_kernel_properties_t *pKernelProperties);
+    void processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_module_properties_t *pKernelProperties);
     NEO::GraphicsAllocation *getDebugSurface() const override { return debugSurface; }
     void setDebugSurface(NEO::GraphicsAllocation *debugSurface) { this->debugSurface = debugSurface; };
     ~DeviceImp() override;

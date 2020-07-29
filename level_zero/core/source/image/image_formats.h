@@ -176,6 +176,6 @@ constexpr FormatTypes layoutP416 = {{{GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SU
                                      {GMM_FORMAT_INVALID, NEO::NUM_GFX3DSTATE_SURFACEFORMATS, 0, 1, 1, 1}}};
 
 constexpr std::array<FormatTypes, 30> formats = {layout8, layout16, layout32, layout88, layout8888, layout1616, layout16161616, layout3232, layout32323232, layout1010102, layout111110, layout565, layout5551, layout4444, layoutY8,
-                                                 layoutNV12, layoutYUYV, layoutVYUY, layoutYVYU, layoutUYVY, layoutAYUV, layoutYUAV, layoutP010, layoutY410, layoutP012, layoutY16, layoutP016, layoutY216, layoutP216, layoutP416};
+                                                 layoutNV12, layoutYUYV, layoutVYUY, layoutYVYU, layoutUYVY, layoutAYUV, layoutP010, layoutY410, layoutP012, layoutY16, layoutP016, layoutY216, layoutP216, layoutP416};
 } // namespace ImageFormats
 } // namespace L0

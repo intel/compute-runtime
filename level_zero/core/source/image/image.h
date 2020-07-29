@@ -10,7 +10,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 
 #include "level_zero/core/source/device/device.h"
-#include <level_zero/ze_image.h>
+#include <level_zero/ze_api.h>
 
 struct _ze_image_handle_t {};
 

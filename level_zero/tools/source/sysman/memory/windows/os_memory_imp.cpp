@@ -13,14 +13,14 @@ class WddmMemoryImp : public OsMemory {
 
   public:
     ze_result_t getMemorySize(uint64_t &maxSize, uint64_t &allocSize) override;
-    ze_result_t getMemHealth(zet_mem_health_t &memHealth) override;
+    ze_result_t getMemHealth(zes_mem_health_t &memHealth) override;
 };
 
 ze_result_t WddmMemoryImp::getMemorySize(uint64_t &maxSize, uint64_t &allocSize) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmMemoryImp::getMemHealth(zet_mem_health_t &memHealth) {
+ze_result_t WddmMemoryImp::getMemHealth(zes_mem_health_t &memHealth) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

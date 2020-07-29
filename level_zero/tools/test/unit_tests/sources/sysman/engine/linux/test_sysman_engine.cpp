@@ -60,7 +60,7 @@ class SysmanEngineFixture : public DeviceFixture, public ::testing::Test {
         ON_CALL(*pSysfsAccess, read(_, Matcher<std::string &>(_)))
             .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<EngineSysfsAccess>::getVal));
 
-        pEngineImp->init(ZET_ENGINE_GROUP_COMPUTE_ALL);
+        pEngineImp->init(ZES_ENGINE_GROUP_COMPUTE_ALL);
         sysmanImp->pEngineHandleContext->handleList.push_back(pEngineImp);
 
         hSysman = sysmanImp->toHandle();
@@ -105,7 +105,7 @@ TEST_F(SysmanEngineFixture, GivenValidEngineHandleWhenCallingZetSysmanEngineGetP
     ze_result_t result = zetSysmanEngineGetProperties(hSysmanEngine, &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ZET_ENGINE_GROUP_COMPUTE_ALL, properties.type);
+    EXPECT_EQ(ZES_ENGINE_GROUP_COMPUTE_ALL, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 }
 TEST_F(SysmanEngineFixture, GivenValidEngineHandleWhenCallingZetSysmanGetActivityThenVerifySysmanEngineGetActivityCallReturnsUnsupportedErrorStatus) {
@@ -117,7 +117,7 @@ TEST_F(SysmanEngineFixture, GivenValidEngineHandleWhenCallingZetSysmanGetActivit
 }
 
 TEST_F(SysmanEngineFixture, GivenEngineGroupEmptyWhenGettingEngineGroupAndIfRetrievedEngineGroupNotComputeThenErrorReturned) {
-    zet_engine_group_t engineGroup;
+    zes_engine_group_t engineGroup;
     ON_CALL(*pSysfsAccess, read(_, Matcher<std::string &>(_)))
         .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<EngineSysfsAccess>::getIncorrectVal));
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pEngineImp->pOsEngine->getEngineGroup(engineGroup));

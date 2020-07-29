@@ -7,8 +7,6 @@
 
 #pragma once
 
-#include "third_party/level_zero/ze_api_ext.h"
-
 extern "C" {
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -21,7 +19,7 @@ zeFenceDestroy_Tracing(ze_fence_handle_t hFence);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeFenceHostSynchronize_Tracing(ze_fence_handle_t hFence,
-                               uint32_t timeout);
+                               uint64_t timeout);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeFenceQueryStatus_Tracing(ze_fence_handle_t hFence);

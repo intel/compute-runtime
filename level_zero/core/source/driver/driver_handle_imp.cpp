@@ -69,8 +69,8 @@ ze_result_t DriverHandleImp::getProperties(ze_driver_properties_t *properties) {
 }
 
 ze_result_t DriverHandleImp::getIPCProperties(ze_driver_ipc_properties_t *pIPCProperties) {
-    pIPCProperties->eventsSupported = false;
-    pIPCProperties->memsSupported = true;
+    pIPCProperties->flags = ZE_IPC_PROPERTY_FLAG_MEMORY;
+
     return ZE_RESULT_SUCCESS;
 }
 

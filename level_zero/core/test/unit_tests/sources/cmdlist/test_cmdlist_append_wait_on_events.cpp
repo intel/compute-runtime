@@ -103,8 +103,12 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenEventWithWaitScopeFlagDeviceWhenAppe
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
 
-    ze_event_desc_t eventDesc = {ZE_EVENT_DESC_VERSION_CURRENT, 1, ZE_EVENT_SCOPE_FLAG_NONE,
-                                 ZE_EVENT_SCOPE_FLAG_DEVICE};
+    const ze_event_desc_t eventDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
+        0,
+        0,
+        ZE_EVENT_SCOPE_FLAG_DEVICE};
 
     auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
     ze_event_handle_t hEventHandle = event->toHandle();

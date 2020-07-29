@@ -14,9 +14,9 @@ namespace L0 {
 class SysfsAccess;
 
 // Following below mappings of scheduler properties with sysfs nodes
-// zet_sched_timeslice_properties_t.interval = timeslice_duration_ms
-// zet_sched_timeslice_properties_t.yieldTimeout = preempt_timeout_ms
-// zet_sched_timeout_properties_t. watchdogTimeout =  heartbeat_interval_ms
+// zes_sched_timeslice_properties_t.interval = timeslice_duration_ms
+// zes_sched_timeslice_properties_t.yieldTimeout = preempt_timeout_ms
+// zes_sched_timeout_properties_t. watchdogTimeout =  heartbeat_interval_ms
 class LinuxSchedulerImp : public OsScheduler, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) override;

@@ -22,7 +22,7 @@ class OsPci {
     virtual ze_result_t getMaxLinkWidth(uint32_t &maxLinkWidth) = 0;
     virtual ze_result_t getLinkGen(uint32_t &linkGen) = 0;
     virtual void setLmemSupport(bool val) = 0;
-    virtual ze_result_t initializeBarProperties(std::vector<zet_pci_bar_properties_t *> &pBarProperties) = 0;
+    virtual ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) = 0;
     static OsPci *create(OsSysman *pOsSysman);
     virtual ~OsPci() = default;
 };

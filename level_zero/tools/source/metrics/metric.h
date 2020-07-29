@@ -9,14 +9,11 @@
 #include "level_zero/core/source/event/event.h"
 #include <level_zero/zet_api.h>
 
-#include "third_party/level_zero/zet_api_ext.h"
-
 #include <vector>
 
 struct _zet_metric_group_handle_t {};
 struct _zet_metric_handle_t {};
 struct _zet_metric_streamer_handle_t {};
-struct _zet_metric_tracer_handle_t {};
 struct _zet_metric_query_pool_handle_t {};
 struct _zet_metric_query_handle_t {};
 
@@ -63,9 +60,8 @@ struct Metric : _zet_metric_handle_t {
     virtual ~Metric() = default;
 
     virtual ze_result_t getProperties(zet_metric_properties_t *pProperties) = 0;
-    virtual ze_result_t getPropertiesExt(zet_metric_properties_ext_t *pProperties) = 0;
 
-    static Metric *create(zet_metric_properties_ext_t &properties);
+    static Metric *create(zet_metric_properties_t &properties);
     static Metric *fromHandle(zet_metric_handle_t handle) { return static_cast<Metric *>(handle); }
     inline zet_metric_handle_t toHandle() { return this; }
 };
@@ -74,20 +70,19 @@ struct MetricGroup : _zet_metric_group_handle_t {
     virtual ~MetricGroup() = default;
 
     virtual ze_result_t getProperties(zet_metric_group_properties_t *pProperties) = 0;
-    virtual ze_result_t getPropertiesExt(zet_metric_group_properties_ext_t *pProperties) = 0;
     virtual ze_result_t getMetric(uint32_t *pCount, zet_metric_handle_t *phMetrics) = 0;
     virtual ze_result_t calculateMetricValues(const zet_metric_group_calculation_type_t type, size_t rawDataSize,
                                               const uint8_t *pRawData, uint32_t *pMetricValueCount,
                                               zet_typed_value_t *pMetricValues) = 0;
 
-    static MetricGroup *create(zet_metric_group_properties_ext_t &properties,
+    static MetricGroup *create(zet_metric_group_properties_t &properties,
                                MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
                                const std::vector<Metric *> &metrics);
     static MetricGroup *fromHandle(zet_metric_group_handle_t handle) {
         return static_cast<MetricGroup *>(handle);
     }
-    static zet_metric_group_properties_ext_t getProperties(const zet_metric_group_handle_t handle);
+    static zet_metric_group_properties_t getProperties(const zet_metric_group_handle_t handle);
 
     zet_metric_group_handle_t toHandle() { return this; }
 
@@ -109,7 +104,7 @@ struct MetricStreamer : _zet_metric_streamer_handle_t {
                                  uint8_t *pRawData) = 0;
     virtual ze_result_t close() = 0;
 
-    static ze_result_t open(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+    static ze_result_t open(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                             zet_metric_streamer_desc_t &desc, ze_event_handle_t hNotificationEvent, zet_metric_streamer_handle_t *phMetricStreamer);
     static MetricStreamer *fromHandle(zet_metric_streamer_handle_t handle) {
         return static_cast<MetricStreamer *>(handle);
@@ -119,14 +114,6 @@ struct MetricStreamer : _zet_metric_streamer_handle_t {
     inline zet_metric_streamer_handle_t toHandle() { return this; }
 };
 
-struct MetricTracer : _zet_metric_tracer_handle_t {
-    virtual ~MetricTracer() = default;
-
-    static MetricStreamer *fromHandle(zet_metric_tracer_handle_t handle) {
-        return MetricStreamer::fromHandle(reinterpret_cast<zet_metric_streamer_handle_t>(handle));
-    }
-};
-
 struct MetricQueryPool : _zet_metric_query_pool_handle_t {
     virtual ~MetricQueryPool() = default;
 
@@ -134,7 +121,7 @@ struct MetricQueryPool : _zet_metric_query_pool_handle_t {
     virtual ze_result_t createMetricQuery(uint32_t index,
                                           zet_metric_query_handle_t *phMetricQuery) = 0;
 
-    static MetricQueryPool *create(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup, const zet_metric_query_pool_desc_ext_t &desc);
+    static MetricQueryPool *create(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup, const zet_metric_query_pool_desc_t &desc);
     static MetricQueryPool *fromHandle(zet_metric_query_pool_handle_t handle);
 
     zet_metric_query_pool_handle_t toHandle();
@@ -169,14 +156,8 @@ ze_result_t metricStreamerOpen(zet_context_handle_t hContext, zet_device_handle_
                                zet_metric_streamer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
                                zet_metric_streamer_handle_t *phMetricStreamer);
 
-ze_result_t metricTracerOpen(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
-                             zet_metric_tracer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
-                             zet_metric_tracer_handle_t *phMetricTracer);
-
 // MetricQueryPool.
-ze_result_t metricQueryPoolCreate(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup, const zet_metric_query_pool_desc_t *pDesc,
-                                  zet_metric_query_pool_handle_t *phMetricQueryPool);
-ze_result_t metricQueryPoolCreateExt(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
-                                     const zet_metric_query_pool_desc_ext_t *pDesc, zet_metric_query_pool_handle_t *phMetricQueryPool);
+ze_result_t metricQueryPoolCreate(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+                                  const zet_metric_query_pool_desc_t *pDesc, zet_metric_query_pool_handle_t *phMetricQueryPool);
 
 } // namespace L0

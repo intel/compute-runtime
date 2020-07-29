@@ -42,12 +42,12 @@ uint64_t convertPcieSpeedFromGTsToBs(double maxLinkSpeedInGt) {
     return static_cast<uint64_t>(pcieSpeedWithEnc);
 }
 
-ze_result_t PciImp::pciStaticProperties(zet_pci_properties_t *pProperties) {
+ze_result_t PciImp::pciStaticProperties(zes_pci_properties_t *pProperties) {
     *pProperties = pciProperties;
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t PciImp::pciGetInitializedBars(uint32_t *pCount, zet_pci_bar_properties_t *pProperties) {
+ze_result_t PciImp::pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) {
     if (pProperties == nullptr) {
         *pCount = static_cast<uint32_t>(pciBarProperties.size());
         return ZE_RESULT_SUCCESS;
@@ -95,7 +95,7 @@ void PciImp::init() {
 }
 
 PciImp::~PciImp() {
-    for (zet_pci_bar_properties_t *pProperties : pciBarProperties) {
+    for (zes_pci_bar_properties_t *pProperties : pciBarProperties) {
         delete pProperties;
         pProperties = nullptr;
     }

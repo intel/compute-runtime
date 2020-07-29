@@ -55,7 +55,6 @@ HWTEST2_P(SamplerCreateTest, givenDifferentDescriptorValuesThenSamplerIsCorrectl
     ze_bool_t isNormalized = std::get<2>(GetParam());
 
     ze_sampler_desc_t desc = {};
-    desc.version = ZE_SAMPLER_DESC_VERSION_CURRENT;
     desc.addressMode = addressMode;
     desc.filterMode = filterMode;
     desc.isNormalized = isNormalized;
@@ -159,7 +158,6 @@ HWTEST2_F(ContextCreateSamplerTest, givenDifferentDescriptorValuesThenSamplerIsC
     ze_bool_t isNormalized = false;
 
     ze_sampler_desc_t desc = {};
-    desc.version = ZE_SAMPLER_DESC_VERSION_CURRENT;
     desc.addressMode = addressMode;
     desc.filterMode = filterMode;
     desc.isNormalized = isNormalized;

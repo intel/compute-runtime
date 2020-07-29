@@ -29,7 +29,7 @@ ContextImp::ContextImp(DriverHandle *driverHandle) {
     this->driverHandle = driverHandle;
 }
 
-ze_result_t ContextImp::allocHostMem(ze_host_mem_alloc_flag_t flags,
+ze_result_t ContextImp::allocHostMem(ze_host_mem_alloc_flags_t flags,
                                      size_t size,
                                      size_t alignment,
                                      void **ptr) {
@@ -41,7 +41,7 @@ ze_result_t ContextImp::allocHostMem(ze_host_mem_alloc_flag_t flags,
 }
 
 ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
-                                       ze_device_mem_alloc_flag_t flags,
+                                       ze_device_mem_alloc_flags_t flags,
                                        size_t size,
                                        size_t alignment, void **ptr) {
     DEBUG_BREAK_IF(nullptr == this->driverHandle);
@@ -53,8 +53,8 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
 }
 
 ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
-                                       ze_device_mem_alloc_flag_t deviceFlags,
-                                       ze_host_mem_alloc_flag_t hostFlags,
+                                       ze_device_mem_alloc_flags_t deviceFlags,
+                                       ze_host_mem_alloc_flags_t hostFlags,
                                        size_t size,
                                        size_t alignment,
                                        void **ptr) {
@@ -100,7 +100,7 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
     DEBUG_BREAK_IF(nullptr == this->driverHandle);
     return this->driverHandle->openIpcMemHandle(hDevice,
                                                 handle,
-                                                ZE_IPC_MEMORY_FLAG_NONE,
+                                                ZE_IPC_MEMORY_FLAG_TBD,
                                                 ptr);
 }
 
@@ -201,6 +201,26 @@ ze_result_t ContextImp::getVirtualMemAccessAttribute(const void *ptr,
                                                      ze_memory_access_attribute_t *access,
                                                      size_t *outSize) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t ContextImp::openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
+                                               ze_event_pool_handle_t *phEventPool) {
+    DEBUG_BREAK_IF(nullptr == this->driverHandle);
+    return this->driverHandle->openEventPoolIpcHandle(hIpc, phEventPool);
+}
+
+ze_result_t ContextImp::createEventPool(const ze_event_pool_desc_t *desc,
+                                        uint32_t numDevices,
+                                        ze_device_handle_t *phDevices,
+                                        ze_event_pool_handle_t *phEventPool) {
+    DEBUG_BREAK_IF(nullptr == this->driverHandle);
+    return this->driverHandle->createEventPool(desc, numDevices, phDevices, phEventPool);
+}
+
+ze_result_t ContextImp::createImage(ze_device_handle_t hDevice,
+                                    const ze_image_desc_t *desc,
+                                    ze_image_handle_t *phImage) {
+    return L0::Device::fromHandle(hDevice)->createImage(desc, phImage);
 }
 
 } // namespace L0

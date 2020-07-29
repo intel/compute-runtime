@@ -46,11 +46,12 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryPoolCreateExt
     zet_device_handle_t metricDevice = device->toHandle();
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_ext_t metricGroupProperties = {};
+
+    zet_metric_group_properties_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_pool_handle_t poolHandle = {};
-    zet_metric_query_pool_desc_ext_t poolDesc = {};
+    zet_metric_query_pool_desc_t poolDesc = {};
     poolDesc.stype = ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC;
     poolDesc.count = 1;
     poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
@@ -73,7 +74,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryPoolCreateExt
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getPropertiesExt(_))
+    EXPECT_CALL(metricGroup, getProperties(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -97,7 +98,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryPoolCreateExt
         .Times(1)
         .WillOnce(Return(StatusCode::Success));
 
-    EXPECT_EQ(zetMetricQueryPoolCreateExt(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(poolHandle, nullptr);
     EXPECT_EQ(zetMetricQueryPoolDestroy(poolHandle), ZE_RESULT_SUCCESS);
 }
@@ -117,7 +118,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenStreamerIsOpenThenQueryPool
 
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_ext_t metricGroupProperties = {};
+    zet_metric_group_properties_t metricGroupProperties = {};
 
     metricsDeviceParams.ConcurrentGroupsCount = 1;
 
@@ -136,7 +137,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenStreamerIsOpenThenQueryPool
     metricsSetParams.RawReportSize = 256;
 
     zet_metric_query_pool_handle_t poolHandle = {};
-    zet_metric_query_pool_desc_ext_t poolDesc = {};
+    zet_metric_query_pool_desc_t poolDesc = {};
     poolDesc.stype = ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC;
     poolDesc.count = 1;
     poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
@@ -198,19 +199,19 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenStreamerIsOpenThenQueryPool
     EXPECT_EQ(metricGroupCount, 1u);
     EXPECT_NE(metricGroupHandle, nullptr);
 
-    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
     EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
 
-    EXPECT_EQ(zetDeviceActivateMetricGroups(metricDevice, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetContextActivateMetricGroups(context->toHandle(), metricDevice, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDevice, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(streamerHandle, nullptr);
 
-    EXPECT_EQ(zetMetricQueryPoolCreateExt(context->toHandle(), metricDevice, metricGroupHandle, &poolDesc, &poolHandle), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroupHandle, &poolDesc, &poolHandle), ZE_RESULT_ERROR_NOT_AVAILABLE);
 
     EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(streamerHandle, nullptr);
@@ -221,11 +222,11 @@ TEST_F(MetricQueryPoolTest, givenIncorrectMetricGroupTypeWhenZetMetricQueryPoolC
     zet_device_handle_t metricDevice = device->toHandle();
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_ext_t metricGroupProperties = {};
+    zet_metric_group_properties_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED;
 
     zet_metric_query_pool_handle_t poolHandle = {};
-    zet_metric_query_pool_desc_ext_t poolDesc = {};
+    zet_metric_query_pool_desc_t poolDesc = {};
     poolDesc.stype = ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC;
     poolDesc.count = 1;
     poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
@@ -246,7 +247,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectMetricGroupTypeWhenZetMetricQueryPoolC
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getPropertiesExt(_))
+    EXPECT_CALL(metricGroup, getProperties(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -265,14 +266,13 @@ TEST_F(MetricQueryPoolTest, givenIncorrectMetricGroupTypeWhenZetMetricQueryPoolC
     EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockContextDelete(_))
         .Times(0);
 
-    EXPECT_EQ(zetMetricQueryPoolCreateExt(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_ERROR_INVALID_ARGUMENT);
     EXPECT_EQ(poolHandle, nullptr);
 }
 
 TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQueryEndExtIsCalledThenReturnsSuccess) {
 
     zet_device_handle_t metricDevice = device->toHandle();
-    zet_driver_handle_t driver = driverHandle->toHandle();
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
@@ -280,26 +280,26 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     ze_event_pool_handle_t eventPoolHandle = {};
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_DEFAULT;
-    eventPoolDesc.version = ZE_EVENT_POOL_DESC_VERSION_CURRENT;
+    eventPoolDesc.flags = 0;
+    eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
 
     ze_event_handle_t eventHandle = {};
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    eventDesc.version = ZE_EVENT_DESC_VERSION_CURRENT;
+    eventDesc.stype = ZE_STRUCTURE_TYPE_EVENT_DESC;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_ext_t metricGroupProperties = {};
+    zet_metric_group_properties_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
     zet_metric_query_pool_desc_t poolDesc = {};
-    poolDesc.version = ZET_METRIC_QUERY_POOL_DESC_VERSION_CURRENT;
+    poolDesc.stype = ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC;
     poolDesc.count = 1;
-    poolDesc.flags = ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE;
+    poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
 
     TypedValue_1_0 value = {};
     value.Type = ValueType::Uint32;
@@ -322,7 +322,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getPropertiesExt(_))
+    EXPECT_CALL(metricGroup, getProperties(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -355,7 +355,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
         .WillOnce(Return(StatusCode::Success));
 
     // Create metric query pool.
-    EXPECT_EQ(zetMetricQueryPoolCreate(metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(poolHandle, nullptr);
 
     // Create metric query.
@@ -363,7 +363,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     EXPECT_NE(queryHandle, nullptr);
 
     // Create event pool.
-    EXPECT_EQ(zeEventPoolCreate(driver, &eventPoolDesc, 1, &metricDevice, &eventPoolHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &metricDevice, &eventPoolHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(eventPoolHandle, nullptr);
 
     // Create event.
@@ -374,7 +374,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     EXPECT_EQ(zetCommandListAppendMetricQueryBegin(commandListHandle, queryHandle), ZE_RESULT_SUCCESS);
 
     // Write END metric query to command list, use an event to determine if the data is available.
-    EXPECT_EQ(zetCommandListAppendMetricQueryEndExt(commandListHandle, queryHandle, eventHandle, 0, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetCommandListAppendMetricQueryEnd(commandListHandle, queryHandle, eventHandle, 0, nullptr), ZE_RESULT_SUCCESS);
 
     // Destroy event and its pool.
     EXPECT_EQ(zeEventDestroy(eventHandle), ZE_RESULT_SUCCESS);
@@ -388,7 +388,6 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
 TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCalledThenReturnsFailExt) {
 
     zet_device_handle_t metricDevice = device->toHandle();
-    zet_driver_handle_t driver = driverHandle->toHandle();
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
@@ -396,26 +395,26 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
     ze_event_pool_handle_t eventPoolHandle = {};
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_DEFAULT;
-    eventPoolDesc.version = ZE_EVENT_POOL_DESC_VERSION_CURRENT;
+    eventPoolDesc.flags = 0;
+    eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
 
     ze_event_handle_t eventHandle = {};
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    eventDesc.version = ZE_EVENT_DESC_VERSION_CURRENT;
+    eventDesc.stype = ZE_STRUCTURE_TYPE_EVENT_DESC;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_ext_t metricGroupProperties = {};
+    zet_metric_group_properties_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
     zet_metric_query_pool_desc_t poolDesc = {};
-    poolDesc.version = ZET_METRIC_QUERY_POOL_DESC_VERSION_CURRENT;
+    poolDesc.stype = ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC;
     poolDesc.count = 1;
-    poolDesc.flags = ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE;
+    poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
 
     TypedValue_1_0 value = {};
     value.Type = ValueType::Uint32;
@@ -438,7 +437,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getPropertiesExt(_))
+    EXPECT_CALL(metricGroup, getProperties(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -471,7 +470,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
         .WillOnce(Return(StatusCode::Success));
 
     // Create metric query pool.
-    EXPECT_EQ(zetMetricQueryPoolCreate(metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(poolHandle, nullptr);
 
     // Create metric query.
@@ -479,7 +478,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
     EXPECT_NE(queryHandle, nullptr);
 
     // Create event pool.
-    EXPECT_EQ(zeEventPoolCreate(driver, &eventPoolDesc, 1, &metricDevice, &eventPoolHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &metricDevice, &eventPoolHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(eventPoolHandle, nullptr);
 
     // Create event.
@@ -490,7 +489,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
     EXPECT_EQ(zetCommandListAppendMetricQueryBegin(commandListHandle, queryHandle), ZE_RESULT_SUCCESS);
 
     // Write END metric query to command list, use an event to determine if the data is available.
-    EXPECT_EQ(zetCommandListAppendMetricQueryEndExt(commandListHandle, queryHandle, eventHandle, 0, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetCommandListAppendMetricQueryEnd(commandListHandle, queryHandle, eventHandle, 0, nullptr), ZE_RESULT_SUCCESS);
 
     // Destroy event and its pool.
     EXPECT_EQ(zeEventDestroy(eventHandle), ZE_RESULT_SUCCESS);
@@ -504,7 +503,6 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
 TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCalledThenReturnsSuccessExt) {
 
     zet_device_handle_t metricDevice = device->toHandle();
-    zet_driver_handle_t driver = driverHandle->toHandle();
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
@@ -512,26 +510,26 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
     ze_event_pool_handle_t eventPoolHandle = {};
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_DEFAULT;
-    eventPoolDesc.version = ZE_EVENT_POOL_DESC_VERSION_CURRENT;
+    eventPoolDesc.flags = 0;
+    eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
 
     ze_event_handle_t eventHandle = {};
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
-    eventDesc.version = ZE_EVENT_DESC_VERSION_CURRENT;
+    eventDesc.stype = ZE_STRUCTURE_TYPE_EVENT_DESC;
     eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
     Mock<MetricGroup> metricGroup;
-    zet_metric_group_properties_ext_t metricGroupProperties = {};
+    zet_metric_group_properties_t metricGroupProperties = {};
     metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
     zet_metric_query_pool_desc_t poolDesc = {};
-    poolDesc.version = ZET_METRIC_QUERY_POOL_DESC_VERSION_CURRENT;
+    poolDesc.stype = ZET_STRUCTURE_TYPE_METRIC_QUERY_POOL_DESC;
     poolDesc.count = 1;
-    poolDesc.flags = ZET_METRIC_QUERY_POOL_FLAG_PERFORMANCE;
+    poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE;
 
     TypedValue_1_0 value = {};
     value.Type = ValueType::Uint32;
@@ -556,7 +554,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
     EXPECT_CALL(*mockMetricsLibrary, load())
         .Times(0);
 
-    EXPECT_CALL(metricGroup, getPropertiesExt(_))
+    EXPECT_CALL(metricGroup, getProperties(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
@@ -597,7 +595,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
         .WillOnce(Return(StatusCode::Success));
 
     // Create metric query pool.
-    EXPECT_EQ(zetMetricQueryPoolCreate(metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricQueryPoolCreate(context->toHandle(), metricDevice, metricGroup.toHandle(), &poolDesc, &poolHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(poolHandle, nullptr);
 
     // Create metric query.
@@ -605,7 +603,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
     EXPECT_NE(queryHandle, nullptr);
 
     // Create event pool.
-    EXPECT_EQ(zeEventPoolCreate(driver, &eventPoolDesc, 1, &metricDevice, &eventPoolHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zeEventPoolCreate(context->toHandle(), &eventPoolDesc, 1, &metricDevice, &eventPoolHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(eventPoolHandle, nullptr);
 
     // Create event.
@@ -616,7 +614,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
     EXPECT_EQ(zetCommandListAppendMetricQueryBegin(commandListHandle, queryHandle), ZE_RESULT_SUCCESS);
 
     // Write END metric query to command list, use an event to determine if the data is available.
-    EXPECT_EQ(zetCommandListAppendMetricQueryEndExt(commandListHandle, queryHandle, eventHandle, 0, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetCommandListAppendMetricQueryEnd(commandListHandle, queryHandle, eventHandle, 0, nullptr), ZE_RESULT_SUCCESS);
 
     // Get desired raw data size.
     size_t rawSize = 0;

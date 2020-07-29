@@ -8,18 +8,21 @@
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeModuleCreate_Tracing(ze_device_handle_t hDevice,
+zeModuleCreate_Tracing(ze_context_handle_t hContext,
+                       ze_device_handle_t hDevice,
                        const ze_module_desc_t *desc,
                        ze_module_handle_t *phModule,
                        ze_module_build_log_handle_t *phBuildLog) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Module.pfnCreate,
+                               hContext,
                                hDevice,
                                desc,
                                phModule,
                                phBuildLog);
 
     ze_module_create_params_t tracerParams;
+    tracerParams.phContext = &hContext;
     tracerParams.phDevice = &hDevice;
     tracerParams.pdesc = &desc;
     tracerParams.pphModule = &phModule;
@@ -34,6 +37,7 @@ zeModuleCreate_Tracing(ze_device_handle_t hDevice,
                                    apiCallbackData.apiOrdinal,
                                    apiCallbackData.prologCallbacks,
                                    apiCallbackData.epilogCallbacks,
+                                   *tracerParams.phContext,
                                    *tracerParams.phDevice,
                                    *tracerParams.pdesc,
                                    *tracerParams.pphModule,
@@ -143,16 +147,19 @@ zeModuleGetNativeBinary_Tracing(ze_module_handle_t hModule,
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetGlobalPointer_Tracing(ze_module_handle_t hModule,
                                  const char *pGlobalName,
+                                 size_t *pSize,
                                  void **pptr) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Module.pfnGetGlobalPointer,
                                hModule,
                                pGlobalName,
+                               pSize,
                                pptr);
 
     ze_module_get_global_pointer_params_t tracerParams;
     tracerParams.phModule = &hModule;
     tracerParams.ppGlobalName = &pGlobalName;
+    tracerParams.ppSize = &pSize;
     tracerParams.ppptr = &pptr;
 
     L0::APITracerCallbackDataImp<ze_pfnModuleGetGlobalPointerCb_t> apiCallbackData;
@@ -166,6 +173,7 @@ zeModuleGetGlobalPointer_Tracing(ze_module_handle_t hModule,
                                    apiCallbackData.epilogCallbacks,
                                    *tracerParams.phModule,
                                    *tracerParams.ppGlobalName,
+                                   *tracerParams.ppSize,
                                    *tracerParams.ppptr);
 }
 
@@ -357,39 +365,6 @@ zeKernelSetArgumentValue_Tracing(ze_kernel_handle_t hKernel,
                                    *tracerParams.pargIndex,
                                    *tracerParams.pargSize,
                                    *tracerParams.ppArgValue);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeKernelSetAttribute_Tracing(ze_kernel_handle_t hKernel,
-                             ze_kernel_attribute_t attr,
-                             uint32_t size,
-                             const void *pValue) {
-
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Kernel.pfnSetAttribute,
-                               hKernel,
-                               attr,
-                               size,
-                               pValue);
-
-    ze_kernel_set_attribute_params_t tracerParams;
-    tracerParams.phKernel = &hKernel;
-    tracerParams.pattr = &attr;
-    tracerParams.psize = &size;
-    tracerParams.ppValue = &pValue;
-
-    L0::APITracerCallbackDataImp<ze_pfnKernelSetAttributeCb_t> apiCallbackData;
-
-    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnKernelSetAttributeCb_t, Kernel, pfnSetAttributeCb);
-
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Kernel.pfnSetAttribute,
-                                   &tracerParams,
-                                   apiCallbackData.apiOrdinal,
-                                   apiCallbackData.prologCallbacks,
-                                   apiCallbackData.epilogCallbacks,
-                                   *tracerParams.phKernel,
-                                   *tracerParams.pattr,
-                                   *tracerParams.psize,
-                                   *tracerParams.ppValue);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -649,37 +624,4 @@ zeKernelSuggestMaxCooperativeGroupCount_Tracing(ze_kernel_handle_t hKernel,
                                    apiCallbackData.epilogCallbacks,
                                    *tracerParams.phKernel,
                                    *tracerParams.ptotalGroupCount);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeKernelGetAttribute_Tracing(ze_kernel_handle_t hKernel,
-                             ze_kernel_attribute_t attr,
-                             uint32_t *pSize,
-                             void *pValue) {
-
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Kernel.pfnGetAttribute,
-                               hKernel,
-                               attr,
-                               pSize,
-                               pValue);
-
-    ze_kernel_get_attribute_params_t tracerParams;
-    tracerParams.phKernel = &hKernel;
-    tracerParams.pattr = &attr;
-    tracerParams.ppSize = &pSize;
-    tracerParams.ppValue = &pValue;
-
-    L0::APITracerCallbackDataImp<ze_pfnKernelGetAttributeCb_t> apiCallbackData;
-
-    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnKernelGetAttributeCb_t, Kernel, pfnGetAttributeCb);
-
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Kernel.pfnGetAttribute,
-                                   &tracerParams,
-                                   apiCallbackData.apiOrdinal,
-                                   apiCallbackData.prologCallbacks,
-                                   apiCallbackData.epilogCallbacks,
-                                   *tracerParams.phKernel,
-                                   *tracerParams.pattr,
-                                   *tracerParams.ppSize,
-                                   *tracerParams.ppValue);
 }

@@ -339,7 +339,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     csr->makeSurfacePackNonResident(residencyContainer);
 
     if (getSynchronousMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS) {
-        this->synchronize(std::numeric_limits<uint32_t>::max());
+        this->synchronize(std::numeric_limits<uint64_t>::max());
     }
 
     return ZE_RESULT_SUCCESS;

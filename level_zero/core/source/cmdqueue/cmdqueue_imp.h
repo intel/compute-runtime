@@ -66,7 +66,7 @@ struct CommandQueueImp : public CommandQueue {
 
     ze_result_t destroy() override;
 
-    ze_result_t synchronize(uint32_t timeout) override;
+    ze_result_t synchronize(uint64_t timeout) override;
 
     void initialize(bool copyOnly);
 
@@ -83,7 +83,7 @@ struct CommandQueueImp : public CommandQueue {
   protected:
     void submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr);
 
-    ze_result_t synchronizeByPollingForTaskCount(uint32_t timeout);
+    ze_result_t synchronizeByPollingForTaskCount(uint64_t timeout);
 
     void printFunctionsPrintfOutput();
 

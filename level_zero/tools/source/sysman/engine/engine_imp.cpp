@@ -11,14 +11,6 @@
 
 namespace L0 {
 
-ze_result_t EngineImp::engineGetActivity(zet_engine_stats_t *pStats) {
-    ze_result_t result = pOsEngine->getActiveTime(pStats->activeTime);
-    if (result != ZE_RESULT_SUCCESS) {
-        return result;
-    }
-    return pOsEngine->getTimeStamp(pStats->timestamp);
-}
-
 ze_result_t EngineImp::engineGetActivity(zes_engine_stats_t *pStats) {
     ze_result_t result = pOsEngine->getActiveTime(pStats->activeTime);
     if (result != ZE_RESULT_SUCCESS) {
@@ -27,25 +19,9 @@ ze_result_t EngineImp::engineGetActivity(zes_engine_stats_t *pStats) {
     return pOsEngine->getTimeStamp(pStats->timestamp);
 }
 
-ze_result_t EngineImp::engineGetProperties(zet_engine_properties_t *pProperties) {
-    *pProperties = zetEngineProperties;
-    return ZE_RESULT_SUCCESS;
-}
-
 ze_result_t EngineImp::engineGetProperties(zes_engine_properties_t *pProperties) {
     *pProperties = engineProperties;
     return ZE_RESULT_SUCCESS;
-}
-
-void EngineImp::init(zet_engine_group_t type) {
-    if (pOsEngine->getEngineGroup(type) == ZE_RESULT_SUCCESS) {
-        this->initSuccess = true;
-    } else {
-        this->initSuccess = false;
-    }
-    zetEngineProperties.type = type;
-    zetEngineProperties.onSubdevice = false;
-    zetEngineProperties.subdeviceId = 0;
 }
 
 void EngineImp::init(zes_engine_group_t type) {
@@ -57,11 +33,6 @@ void EngineImp::init(zes_engine_group_t type) {
     engineProperties.type = type;
     engineProperties.onSubdevice = false;
     engineProperties.subdeviceId = 0;
-}
-
-EngineImp::EngineImp(OsSysman *pOsSysman, zet_engine_group_t type) {
-    pOsEngine = OsEngine::create(pOsSysman);
-    init(type);
 }
 
 EngineImp::EngineImp(OsSysman *pOsSysman, zes_engine_group_t type) {

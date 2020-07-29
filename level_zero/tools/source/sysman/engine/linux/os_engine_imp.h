@@ -16,7 +16,6 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getActiveTime(uint64_t &activeTime) override;
     ze_result_t getTimeStamp(uint64_t &timeStamp) override;
-    ze_result_t getEngineGroup(zet_engine_group_t &engineGroup) override;
     ze_result_t getEngineGroup(zes_engine_group_t &engineGroup) override;
     LinuxEngineImp() = default;
     LinuxEngineImp(OsSysman *pOsSysman);

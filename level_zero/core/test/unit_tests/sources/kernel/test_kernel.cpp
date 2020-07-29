@@ -208,8 +208,6 @@ class KernelPropertiesTests : public ModuleFixture, public ::testing::Test {
         ModuleFixture::SetUp();
 
         ze_kernel_desc_t kernelDesc = {};
-        kernelDesc.version = ZE_KERNEL_DESC_VERSION_CURRENT;
-        kernelDesc.flags = ZE_KERNEL_FLAG_NONE;
         kernelDesc.pKernelName = kernelName.c_str();
 
         ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
@@ -248,14 +246,14 @@ HWTEST_F(KernelPropertiesTests, givenKernelThenCorrectNameIsRetrieved) {
 }
 
 HWTEST_F(KernelPropertiesTests, givenInvalidKernelThenUnitializedIsReturned) {
-    ze_kernel_propertiesExt_t kernelProperties = {};
+    ze_kernel_properties_t kernelProperties = {};
 
     std::vector<KernelInfo *> prevKernelInfos;
     L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module.get());
     moduleImp->getTranslationUnit()->programInfo.kernelInfos.swap(prevKernelInfos);
     EXPECT_EQ(0u, moduleImp->getTranslationUnit()->programInfo.kernelInfos.size());
 
-    ze_result_t res = kernel->getPropertiesExt(&kernelProperties);
+    ze_result_t res = kernel->getProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, res);
 
     prevKernelInfos.swap(moduleImp->getTranslationUnit()->programInfo.kernelInfos);
@@ -263,7 +261,7 @@ HWTEST_F(KernelPropertiesTests, givenInvalidKernelThenUnitializedIsReturned) {
 }
 
 HWTEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
-    ze_kernel_propertiesExt_t kernelProperties = {};
+    ze_kernel_properties_t kernelProperties = {};
 
     kernelProperties.requiredNumSubGroups = std::numeric_limits<uint32_t>::max();
     kernelProperties.requiredSubgroupSize = std::numeric_limits<uint32_t>::max();
@@ -278,14 +276,12 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
     memset(&kernelProperties.uuid.mid, std::numeric_limits<int>::max(),
            sizeof(kernelProperties.uuid.mid));
 
-    ze_kernel_propertiesExt_t kernelPropertiesBefore = {};
+    ze_kernel_properties_t kernelPropertiesBefore = {};
     kernelPropertiesBefore = kernelProperties;
 
-    ze_result_t res = kernel->getPropertiesExt(&kernelProperties);
+    ze_result_t res = kernel->getProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_EQ(0, strncmp(kernelName.c_str(), kernelProperties.name,
-                         sizeof(kernelProperties.name)));
     EXPECT_EQ(numKernelArguments, kernelProperties.numKernelArgs);
 
     L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module.get());
@@ -334,14 +330,14 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
 }
 
 HWTEST_F(KernelPropertiesTests, givenValidKernelAndNoMediavfestateThenSpillMemSizeIsZero) {
-    ze_kernel_propertiesExt_t kernelProperties = {};
+    ze_kernel_properties_t kernelProperties = {};
 
     kernelProperties.spillMemSize = std::numeric_limits<uint32_t>::max();
 
-    ze_kernel_propertiesExt_t kernelPropertiesBefore = {};
+    ze_kernel_properties_t kernelPropertiesBefore = {};
     kernelPropertiesBefore = kernelProperties;
 
-    ze_result_t res = kernel->getPropertiesExt(&kernelProperties);
+    ze_result_t res = kernel->getProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module.get());
@@ -358,14 +354,14 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelAndNoMediavfestateThenSpillMemSi
 }
 
 HWTEST_F(KernelPropertiesTests, givenValidKernelAndNollocateStatelessPrivateSurfaceThenPrivateMemSizeIsZero) {
-    ze_kernel_propertiesExt_t kernelProperties = {};
+    ze_kernel_properties_t kernelProperties = {};
 
     kernelProperties.spillMemSize = std::numeric_limits<uint32_t>::max();
 
-    ze_kernel_propertiesExt_t kernelPropertiesBefore = {};
+    ze_kernel_properties_t kernelPropertiesBefore = {};
     kernelPropertiesBefore = kernelProperties;
 
-    ze_result_t res = kernel->getPropertiesExt(&kernelProperties);
+    ze_result_t res = kernel->getProperties(&kernelProperties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module.get());

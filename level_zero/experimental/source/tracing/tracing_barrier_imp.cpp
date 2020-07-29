@@ -84,24 +84,3 @@ zeCommandListAppendMemoryRangesBarrier_Tracing(ze_command_list_handle_t hCommand
                                    *tracerParams.pnumWaitEvents,
                                    *tracerParams.pphWaitEvents);
 }
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDeviceSystemBarrier_Tracing(ze_device_handle_t hDevice) {
-
-    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Device.pfnSystemBarrier,
-                               hDevice);
-
-    ze_device_system_barrier_params_t tracerParams;
-    tracerParams.phDevice = &hDevice;
-
-    L0::APITracerCallbackDataImp<ze_pfnDeviceSystemBarrierCb_t> apiCallbackData;
-
-    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnDeviceSystemBarrierCb_t, Device, pfnSystemBarrierCb);
-
-    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Device.pfnSystemBarrier,
-                                   &tracerParams,
-                                   apiCallbackData.apiOrdinal,
-                                   apiCallbackData.prologCallbacks,
-                                   apiCallbackData.epilogCallbacks,
-                                   *tracerParams.phDevice);
-}

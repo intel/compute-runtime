@@ -351,22 +351,7 @@ ze_result_t metricStreamerOpen(zet_context_handle_t hContext, zet_device_handle_
                                zet_metric_streamer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
                                zet_metric_streamer_handle_t *phMetricStreamer) {
 
-    return MetricStreamer::open(hDevice, hMetricGroup, *pDesc, hNotificationEvent, phMetricStreamer);
-}
-
-ze_result_t metricTracerOpen(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
-                             zet_metric_tracer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
-                             zet_metric_tracer_handle_t *phMetricTracer) {
-
-    zet_metric_streamer_handle_t *phMetricStreamer = reinterpret_cast<zet_metric_streamer_handle_t *>(phMetricTracer);
-    zet_metric_streamer_desc_t metricStreamerDesc = {};
-
-    metricStreamerDesc.notifyEveryNReports = pDesc->notifyEveryNReports;
-    metricStreamerDesc.samplingPeriod = pDesc->samplingPeriod;
-    metricStreamerDesc.stype = ZET_STRUCTURE_TYPE_METRIC_STREAMER_DESC;
-    metricStreamerDesc.pNext = nullptr;
-
-    return MetricStreamer::open(hDevice, hMetricGroup, metricStreamerDesc, hNotificationEvent, phMetricStreamer);
+    return MetricStreamer::open(hContext, hDevice, hMetricGroup, *pDesc, hNotificationEvent, phMetricStreamer);
 }
 
 } // namespace L0

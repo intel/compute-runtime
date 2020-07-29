@@ -15,11 +15,6 @@
 namespace L0 {
 class PowerImp : public Power, NEO::NonCopyableOrMovableClass {
   public:
-    ze_result_t powerGetProperties(zet_power_properties_t *pProperties) override;
-    ze_result_t powerGetEnergyCounter(zet_power_energy_counter_t *pEnergy) override;
-    ze_result_t powerGetLimits(zet_power_sustained_limit_t *pSustained, zet_power_burst_limit_t *pBurst, zet_power_peak_limit_t *pPeak) override;
-    ze_result_t powerSetLimits(const zet_power_sustained_limit_t *pSustained, const zet_power_burst_limit_t *pBurst, const zet_power_peak_limit_t *pPeak) override;
-    ze_result_t powerGetEnergyThreshold(zet_energy_threshold_t *pThreshold) override;
     ze_result_t powerSetEnergyThreshold(double threshold) override;
 
     ze_result_t powerGetProperties(zes_power_properties_t *pProperties) override;

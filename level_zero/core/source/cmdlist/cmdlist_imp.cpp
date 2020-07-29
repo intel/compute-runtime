@@ -40,14 +40,6 @@ ze_result_t CommandListImp::appendMetricStreamerMarker(zet_metric_streamer_handl
     return MetricQuery::appendStreamerMarker(*this, hMetricStreamer, value);
 }
 
-ze_result_t CommandListImp::appendMetricTracerMarker(zet_metric_tracer_handle_t hMetricTracer,
-                                                     uint32_t value) {
-
-    zet_metric_streamer_handle_t hMetricStreamer = reinterpret_cast<zet_metric_streamer_handle_t>(hMetricTracer);
-
-    return MetricQuery::appendStreamerMarker(*this, hMetricStreamer, value);
-}
-
 ze_result_t CommandListImp::appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) {
     return MetricQuery::fromHandle(hMetricQuery)->appendBegin(*this);
 }

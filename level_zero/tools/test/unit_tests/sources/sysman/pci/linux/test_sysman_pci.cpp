@@ -117,7 +117,7 @@ class SysmanPciFixture : public ::testing::Test {
 };
 
 TEST_F(SysmanPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropertiesThenVerifyzetSysmanPciGetPropertiesCallSucceeds) {
-    zet_pci_properties_t properties, propertiesBefore;
+    zes_pci_properties_t properties, propertiesBefore;
 
     memset(&properties.address.bus, std::numeric_limits<int>::max(), sizeof(properties.address.bus));
     memset(&properties.address.device, std::numeric_limits<int>::max(), sizeof(properties.address.device));
@@ -146,7 +146,7 @@ TEST_F(SysmanPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropert
 }
 
 TEST_F(SysmanPciFixture, GivenValidSysmanHandleWhenSettingLmemSupportAndCallingzetSysmanPciGetPropertiesThenVerifyzetSysmanPciGetPropertiesCallSucceeds) {
-    zet_pci_properties_t properties, propertiesBefore;
+    zes_pci_properties_t properties, propertiesBefore;
     memoryManager->localMemorySupported[0] = 1;
     pciImp.init();
 
@@ -196,7 +196,7 @@ TEST_F(SysmanPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_GT(count, 0u);
 
-    std::vector<zet_pci_bar_properties_t> pciBarProps(count);
+    std::vector<zes_pci_bar_properties_t> pciBarProps(count);
     result = zetSysmanPciGetBars(hSysman, &count, pciBarProps.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     for (uint32_t i = 0; i < count; i++) {

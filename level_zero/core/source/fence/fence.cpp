@@ -61,9 +61,9 @@ ze_result_t FenceImp::reset() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FenceImp::hostSynchronize(uint32_t timeout) {
+ze_result_t FenceImp::hostSynchronize(uint64_t timeout) {
     std::chrono::high_resolution_clock::time_point time1, time2;
-    int64_t timeDiff = 0;
+    uint64_t timeDiff = 0;
     ze_result_t ret = ZE_RESULT_NOT_READY;
 
     if (cmdQueue->getCsr()->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
@@ -84,7 +84,7 @@ ze_result_t FenceImp::hostSynchronize(uint32_t timeout) {
         std::this_thread::yield();
         NEO::CpuIntrinsics::pause();
 
-        if (timeout == std::numeric_limits<uint32_t>::max()) {
+        if (timeout == std::numeric_limits<uint64_t>::max()) {
             continue;
         }
 

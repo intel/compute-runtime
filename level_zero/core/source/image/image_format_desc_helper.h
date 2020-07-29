@@ -31,7 +31,7 @@ struct swizzles {
     }
 };
 
-cl_channel_type getClChannelDataType(const ze_image_format_desc_t &imgDescription);
-cl_channel_order getClChannelOrder(const ze_image_format_desc_t &imgDescription);
+cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription);
+cl_channel_order getClChannelOrder(const ze_image_format_t &imgDescription);
 
 } // namespace L0

@@ -32,7 +32,7 @@ constexpr int standbyModeDefault = 1;
 class SysmanStandbyFixture : public DeviceFixture, public ::testing::Test {
 
   protected:
-    std::unique_ptr<SysmanImp> sysmanImp;
+    std::unique_ptr<SysmanDeviceImp> sysmanImp;
     zet_sysman_handle_t hSysman;
     zet_sysman_standby_handle_t hSysmanStandby;
     Mock<StandbySysfsAccess> *pSysfsAccess = nullptr;
@@ -43,7 +43,7 @@ class SysmanStandbyFixture : public DeviceFixture, public ::testing::Test {
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        sysmanImp = std::make_unique<SysmanImp>(device->toHandle());
+        sysmanImp = std::make_unique<SysmanDeviceImp>(device->toHandle());
         pSysfsAccess = new NiceMock<Mock<StandbySysfsAccess>>;
         linuxStandbyImp.pSysfsAccess = pSysfsAccess;
         pOsStandby = static_cast<OsStandby *>(&linuxStandbyImp);
@@ -100,21 +100,21 @@ TEST_F(SysmanStandbyFixture, GivenValidStandbyHandleWhenCallingzetSysmanStandbyG
     ze_result_t result = zetSysmanStandbyGetProperties(hSysmanStandby, &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ZET_STANDBY_TYPE_GLOBAL, properties.type);
+    EXPECT_EQ(ZES_STANDBY_TYPE_GLOBAL, properties.type);
     EXPECT_FALSE(properties.onSubdevice);
 }
 
 TEST_F(SysmanStandbyFixture, GivenValidStandbyHandleWhenCallingzetSysmanStandbyGetModeThenVerifyzetSysmanStandbyGetModeCallSucceeds) {
-    zet_standby_promo_mode_t mode;
+    zes_standby_promo_mode_t mode;
 
     ze_result_t result = zetSysmanStandbyGetMode(hSysmanStandby, &mode);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(ZET_STANDBY_PROMO_MODE_DEFAULT, mode);
+    EXPECT_EQ(ZES_STANDBY_PROMO_MODE_DEFAULT, mode);
 }
 
 TEST_F(SysmanStandbyFixture, GivenValidStandbyHandleWhenCallingzetSysmanStandbySetModeThenVerifySysmanzetStandbySetModeCallSucceeds) {
-    ze_result_t result = zetSysmanStandbySetMode(hSysmanStandby, ZET_STANDBY_PROMO_MODE_NEVER);
+    ze_result_t result = zetSysmanStandbySetMode(hSysmanStandby, ZES_STANDBY_PROMO_MODE_NEVER);
 
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
 }

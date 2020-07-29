@@ -8,16 +8,14 @@
 #include "level_zero/core/source/event/event.h"
 #include <level_zero/ze_api.h>
 
-extern "C" {
-
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeEventPoolCreate(
-    ze_driver_handle_t hDriver,
+    ze_context_handle_t hContext,
     const ze_event_pool_desc_t *desc,
     uint32_t numDevices,
     ze_device_handle_t *phDevices,
     ze_event_pool_handle_t *phEventPool) {
-    return L0::DriverHandle::fromHandle(hDriver)->createEventPool(desc, numDevices, phDevices, phEventPool);
+    return L0::Context::fromHandle(hContext)->createEventPool(desc, numDevices, phDevices, phEventPool);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -49,10 +47,10 @@ zeEventPoolGetIpcHandle(
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeEventPoolOpenIpcHandle(
-    ze_driver_handle_t hDriver,
+    ze_context_handle_t hContext,
     ze_ipc_event_pool_handle_t hIpc,
     ze_event_pool_handle_t *phEventPool) {
-    return L0::DriverHandle::fromHandle(hDriver)->openEventPoolIpcHandle(hIpc, phEventPool);
+    return L0::Context::fromHandle(hContext)->openEventPoolIpcHandle(hIpc, phEventPool);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -85,7 +83,7 @@ zeEventHostSignal(
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeEventHostSynchronize(
     ze_event_handle_t hEvent,
-    uint32_t timeout) {
+    uint64_t timeout) {
     return L0::Event::fromHandle(hEvent)->hostSynchronize(timeout);
 }
 
@@ -109,17 +107,8 @@ zeEventHostReset(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeEventGetTimestamp(
+zeEventQueryKernelTimestamp(
     ze_event_handle_t hEvent,
-    ze_event_timestamp_type_t timestampType,
-    void *dstptr) {
-    return L0::Event::fromHandle(hEvent)->getTimestamp(timestampType, dstptr);
+    ze_kernel_timestamp_result_t *timestampType) {
+    return L0::Event::fromHandle(hEvent)->queryKernelTimestamp(timestampType);
 }
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
-zeEventQueryKernelTimestampExt(
-    ze_event_handle_t hEvent,
-    ze_kernel_timestamp_result_t *dstptr) {
-    return L0::Event::fromHandle(hEvent)->queryKernelTimestamp(dstptr);
-}
-} // extern "C"

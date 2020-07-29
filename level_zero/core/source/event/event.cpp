@@ -36,7 +36,7 @@ struct EventImp : public Event {
 
     ze_result_t hostSignal() override;
 
-    ze_result_t hostSynchronize(uint32_t timeout) override;
+    ze_result_t hostSynchronize(uint64_t timeout) override;
 
     ze_result_t queryStatus() override {
         uint64_t *hostAddr = static_cast<uint64_t *>(hostAddress);
@@ -62,8 +62,6 @@ struct EventImp : public Event {
 
     ze_result_t reset() override;
 
-    ze_result_t getTimestamp(ze_event_timestamp_type_t timestampType, void *dstptr) override;
-
     ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override;
 
     Device *device;
@@ -76,8 +74,8 @@ struct EventImp : public Event {
 };
 
 struct EventPoolImp : public EventPool {
-    EventPoolImp(DriverHandle *driver, uint32_t numDevices, ze_device_handle_t *phDevices, uint32_t numEvents, ze_event_pool_flag_t flags) : numEvents(numEvents) {
-        if (flags & ZE_EVENT_POOL_FLAG_TIMESTAMP) {
+    EventPoolImp(DriverHandle *driver, uint32_t numDevices, ze_device_handle_t *phDevices, uint32_t numEvents, ze_event_pool_flags_t flags) : numEvents(numEvents) {
+        if (flags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
             isEventPoolUsedForTimestamp = true;
         }
         ze_device_handle_t hDevice;
@@ -205,7 +203,7 @@ ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
     auto eventTsSetFunc = [&](auto tsAddr) {
         auto tsptr = reinterpret_cast<void *>(tsAddr);
         memcpy_s(tsptr, sizeof(uint32_t), static_cast<void *>(&eventVal), sizeof(uint32_t));
-        if (signalScopeFlag != ZE_EVENT_SCOPE_FLAG_NONE) {
+        if (!signalScopeFlag) {
             NEO::CpuIntrinsics::clFlush(tsptr);
         }
     };
@@ -231,7 +229,7 @@ ze_result_t EventImp::hostEventSetValue(uint32_t eventVal) {
 
     makeAllocationResident();
 
-    if (this->signalScope != ZE_EVENT_SCOPE_FLAG_NONE) {
+    if (!this->signalScope) {
         NEO::CpuIntrinsics::clFlush(hostAddr);
     }
 
@@ -242,9 +240,9 @@ ze_result_t EventImp::hostSignal() {
     return hostEventSetValue(Event::STATE_SIGNALED);
 }
 
-ze_result_t EventImp::hostSynchronize(uint32_t timeout) {
+ze_result_t EventImp::hostSynchronize(uint64_t timeout) {
     std::chrono::high_resolution_clock::time_point time1, time2;
-    int64_t timeDiff = 0;
+    uint64_t timeDiff = 0;
     ze_result_t ret = ZE_RESULT_NOT_READY;
 
     if (this->csr->getType() == NEO::CommandStreamReceiverType::CSR_AUB) {
@@ -282,39 +280,6 @@ ze_result_t EventImp::hostSynchronize(uint32_t timeout) {
 
 ze_result_t EventImp::reset() {
     return hostEventSetValue(Event::STATE_INITIAL);
-}
-
-ze_result_t EventImp::getTimestamp(ze_event_timestamp_type_t timestampType, void *dstptr) {
-    auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
-    uint64_t tsAddr = 0u;
-    constexpr uint64_t tsMask = (1ull << 32) - 1;
-    uint64_t tsData = Event::STATE_INITIAL & tsMask;
-
-    if (!this->isTimestampEvent)
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-
-    // Ensure timestamps have been written
-    if (queryStatus() != ZE_RESULT_SUCCESS) {
-        memcpy_s(dstptr, sizeof(uint64_t), static_cast<void *>(&tsData), sizeof(uint64_t));
-        return ZE_RESULT_SUCCESS;
-    }
-
-    if (timestampType == ZE_EVENT_TIMESTAMP_CONTEXT_START) {
-        tsAddr = baseAddr + offsetof(KernelTimestampEvent, contextStart);
-    } else if (timestampType == ZE_EVENT_TIMESTAMP_GLOBAL_START) {
-        tsAddr = baseAddr + offsetof(KernelTimestampEvent, globalStart);
-    } else if (timestampType == ZE_EVENT_TIMESTAMP_CONTEXT_END) {
-        tsAddr = baseAddr + offsetof(KernelTimestampEvent, contextEnd);
-    } else {
-        tsAddr = baseAddr + offsetof(KernelTimestampEvent, globalEnd);
-    }
-
-    memcpy_s(static_cast<void *>(&tsData), sizeof(uint32_t), reinterpret_cast<void *>(tsAddr), sizeof(uint32_t));
-
-    tsData &= tsMask;
-    memcpy_s(dstptr, sizeof(uint64_t), static_cast<void *>(&tsData), sizeof(uint64_t));
-
-    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t EventImp::queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) {

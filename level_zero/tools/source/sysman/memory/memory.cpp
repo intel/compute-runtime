@@ -31,7 +31,7 @@ ze_result_t MemoryHandleContext::init() {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t MemoryHandleContext::memoryGet(uint32_t *pCount, zet_sysman_mem_handle_t *phMemory) {
+ze_result_t MemoryHandleContext::memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) {
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
     if (0 == *pCount || *pCount > handleListSize) {

@@ -10,6 +10,7 @@
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/get_extension_function_lookup_map.h"
 
 namespace L0 {
@@ -28,13 +29,13 @@ struct DriverHandleImp : public DriverHandle {
                                       ze_memory_allocation_properties_t *pMemAllocProperties,
                                       ze_device_handle_t *phDevice) override;
 
-    ze_result_t allocHostMem(ze_host_mem_alloc_flag_t flags, size_t size, size_t alignment, void **ptr) override;
+    ze_result_t allocHostMem(ze_host_mem_alloc_flags_t flags, size_t size, size_t alignment, void **ptr) override;
 
-    ze_result_t allocDeviceMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flag_t flags, size_t size,
+    ze_result_t allocDeviceMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flags_t flags, size_t size,
                                size_t alignment, void **ptr) override;
 
-    ze_result_t allocSharedMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flag_t deviceFlags,
-                               ze_host_mem_alloc_flag_t hostFlags, size_t size, size_t alignment,
+    ze_result_t allocSharedMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flags_t deviceFlags,
+                               ze_host_mem_alloc_flags_t hostFlags, size_t size, size_t alignment,
                                void **ptr) override;
 
     ze_result_t getMemAddressRange(const void *ptr, void **pBase, size_t *pSize) override;

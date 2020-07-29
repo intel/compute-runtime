@@ -14,13 +14,13 @@
 
 namespace L0 {
 namespace ult {
-
 using EventPoolCreate = Test<DeviceFixture>;
 using EventCreate = Test<DeviceFixture>;
 
 TEST_F(EventPoolCreate, allocationContainsAtLeast16Bytes) {
     ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
         ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
         1};
 
@@ -35,10 +35,9 @@ TEST_F(EventPoolCreate, allocationContainsAtLeast16Bytes) {
 }
 
 TEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelTimestamps) {
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-        ZE_EVENT_POOL_FLAG_TIMESTAMP,
-        1};
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
@@ -49,15 +48,14 @@ TEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelT
 }
 
 TEST_F(EventPoolCreate, givenAnEventIsCreatedFromThisEventPoolThenEventContainsDeviceCommandStreamReceiver) {
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-        1};
-    const ze_event_desc_t eventDesc = {
-        ZE_EVENT_DESC_VERSION_CURRENT,
-        0,
-        ZE_EVENT_SCOPE_FLAG_HOST,
-        ZE_EVENT_SCOPE_FLAG_HOST};
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
 
     ze_event_handle_t event = nullptr;
 
@@ -73,11 +71,13 @@ TEST_F(EventPoolCreate, givenAnEventIsCreatedFromThisEventPoolThenEventContainsD
 
 TEST_F(EventCreate, givenAnEventCreatedThenTheEventHasTheDeviceCommandStreamReceiverSet) {
     ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
         ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
         1};
     const ze_event_desc_t eventDesc = {
-        ZE_EVENT_DESC_VERSION_CURRENT,
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
         0,
         ZE_EVENT_SCOPE_FLAG_DEVICE,
         ZE_EVENT_SCOPE_FLAG_DEVICE};
@@ -93,12 +93,14 @@ TEST_F(EventCreate, givenAnEventCreatedThenTheEventHasTheDeviceCommandStreamRece
 
 TEST_F(EventCreate, givenAnEventCreateWithInvalidIndexUsingThisEventPoolThenErrorIsReturned) {
     ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
         ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
         1};
     const ze_event_desc_t eventDesc = {
-        ZE_EVENT_DESC_VERSION_CURRENT,
-        1,
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
+        2,
         ZE_EVENT_SCOPE_FLAG_DEVICE,
         ZE_EVENT_SCOPE_FLAG_DEVICE};
 
@@ -115,7 +117,8 @@ TEST_F(EventCreate, givenAnEventCreateWithInvalidIndexUsingThisEventPoolThenErro
 
 TEST_F(EventPoolCreate, returnsSuccessFromCreateEventPoolWithNoDevice) {
     ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
         ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
         4};
 
@@ -127,7 +130,8 @@ TEST_F(EventPoolCreate, returnsSuccessFromCreateEventPoolWithNoDevice) {
 
 TEST_F(EventPoolCreate, returnsSuccessFromCreateEventPoolWithDevice) {
     ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
         ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
         4};
 
@@ -163,7 +167,8 @@ struct EventCreateAllocationResidencyTest : public ::testing::Test {
 TEST_F(EventCreateAllocationResidencyTest,
        givenEventCreateAndEventDestroyCallsThenMakeResidentAndEvictAreCalled) {
     ze_event_pool_desc_t eventPoolDesc = {
-        ZE_EVENT_POOL_DESC_VERSION_CURRENT,
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
         ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
         1};
 
@@ -171,11 +176,12 @@ TEST_F(EventCreateAllocationResidencyTest,
     auto eventPool = EventPool::create(driverHandle.get(), 1, &deviceHandle, &eventPoolDesc);
     ASSERT_NE(nullptr, eventPool);
 
-    ze_event_desc_t eventDesc = {
-        ZE_EVENT_DESC_VERSION_CURRENT,
+    const ze_event_desc_t eventDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
         0,
-        ZE_EVENT_SCOPE_FLAG_NONE,
-        ZE_EVENT_SCOPE_FLAG_NONE};
+        ZE_EVENT_SCOPE_FLAG_DEVICE,
+        ZE_EVENT_SCOPE_FLAG_DEVICE};
 
     EXPECT_CALL(*mockMemoryOperationsHandler, makeResident).Times(1);
     auto event = L0::Event::create(eventPool, &eventDesc, device);
@@ -195,16 +201,14 @@ class TimestampEventCreate : public Test<DeviceFixture> {
   public:
     void SetUp() override {
         DeviceFixture::SetUp();
-        ze_event_pool_desc_t eventPoolDesc = {
-            ZE_EVENT_POOL_DESC_VERSION_CURRENT,
-            ZE_EVENT_POOL_FLAG_TIMESTAMP,
-            1};
+        ze_event_pool_desc_t eventPoolDesc = {};
+        eventPoolDesc.count = 1;
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
-        ze_event_desc_t eventDesc = {
-            ZE_EVENT_DESC_VERSION_CURRENT,
-            0,
-            ZE_EVENT_SCOPE_FLAG_NONE,
-            ZE_EVENT_SCOPE_FLAG_NONE};
+        ze_event_desc_t eventDesc = {};
+        eventDesc.index = 0;
+        eventDesc.signal = 0;
+        eventDesc.wait = 0;
 
         eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
         ASSERT_NE(nullptr, eventPool);
@@ -222,20 +226,6 @@ class TimestampEventCreate : public Test<DeviceFixture> {
 
 TEST_F(TimestampEventCreate, givenEventCreatedWithTimestampThenIsTimestampEventFlagSet) {
     EXPECT_TRUE(event->isTimestampEvent);
-}
-
-TEST_F(TimestampEventCreate, givenEventTimestampsNotTriggeredThenValuesInInitialState) {
-    uint64_t globalStart, globalEnd, contextStart, contextEnd;
-
-    event->getTimestamp(ZE_EVENT_TIMESTAMP_GLOBAL_START, &globalStart);
-    event->getTimestamp(ZE_EVENT_TIMESTAMP_GLOBAL_END, &globalEnd);
-    event->getTimestamp(ZE_EVENT_TIMESTAMP_CONTEXT_START, &contextStart);
-    event->getTimestamp(ZE_EVENT_TIMESTAMP_CONTEXT_END, &contextEnd);
-
-    EXPECT_EQ(static_cast<uint64_t>(Event::STATE_CLEARED), globalStart);
-    EXPECT_EQ(static_cast<uint64_t>(Event::STATE_CLEARED), globalEnd);
-    EXPECT_EQ(static_cast<uint64_t>(Event::STATE_CLEARED), contextStart);
-    EXPECT_EQ(static_cast<uint64_t>(Event::STATE_CLEARED), contextEnd);
 }
 
 TEST_F(TimestampEventCreate, givenSingleTimestampEventThenAllocationSizeCreatedForAllTimestamps) {
