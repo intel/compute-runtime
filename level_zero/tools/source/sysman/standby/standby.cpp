@@ -7,34 +7,35 @@
 
 #include "standby.h"
 
+#include "shared/source/helpers/basic_math.h"
+
 #include "standby_imp.h"
 
 namespace L0 {
 
 StandbyHandleContext::~StandbyHandleContext() {
-    for (Standby *pStandby : handle_list) {
+    for (Standby *pStandby : handleList) {
         delete pStandby;
     }
 }
 
 ze_result_t StandbyHandleContext::init() {
     Standby *pStandby = new StandbyImp(pOsSysman);
-    handle_list.push_back(pStandby);
+    handleList.push_back(pStandby);
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t StandbyHandleContext::standbyGet(uint32_t *pCount, zet_sysman_standby_handle_t *phStandby) {
-    if (nullptr == phStandby) {
-        *pCount = static_cast<uint32_t>(handle_list.size());
-        return ZE_RESULT_SUCCESS;
+    uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
+    uint32_t numToCopy = std::min(*pCount, handleListSize);
+    if (0 == *pCount || *pCount > handleListSize) {
+        *pCount = handleListSize;
     }
-    uint32_t i = 0;
-    for (Standby *standby : handle_list) {
-        if (i >= *pCount)
-            break;
-        phStandby[i++] = standby->toHandle();
+    if (nullptr != phStandby) {
+        for (uint32_t i = 0; i < numToCopy; i++) {
+            phStandby[i] = handleList[i]->toHandle();
+        }
     }
-    *pCount = i;
     return ZE_RESULT_SUCCESS;
 }
 

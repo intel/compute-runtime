@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/power/power.h"
 
+#include "shared/source/helpers/basic_math.h"
+
 #include "level_zero/tools/source/sysman/power/power_imp.h"
 
 namespace L0 {
@@ -27,34 +29,30 @@ void PowerHandleContext::init() {
 }
 
 ze_result_t PowerHandleContext::powerGet(uint32_t *pCount, zet_sysman_pwr_handle_t *phPower) {
-    if (nullptr == phPower) {
-        *pCount = static_cast<uint32_t>(handleList.size());
-        return ZE_RESULT_SUCCESS;
+    uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
+    uint32_t numToCopy = std::min(*pCount, handleListSize);
+    if (0 == *pCount || *pCount > handleListSize) {
+        *pCount = handleListSize;
     }
-    uint32_t i = 0;
-    for (Power *power : handleList) {
-        if (i >= *pCount) {
-            break;
+    if (nullptr != phPower) {
+        for (uint32_t i = 0; i < numToCopy; i++) {
+            phPower[i] = handleList[i]->toHandle();
         }
-        phPower[i++] = power->toHandle();
     }
-    *pCount = i;
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t PowerHandleContext::powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) {
-    if (nullptr == phPower) {
-        *pCount = static_cast<uint32_t>(handleList.size());
-        return ZE_RESULT_SUCCESS;
+    uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
+    uint32_t numToCopy = std::min(*pCount, handleListSize);
+    if (0 == *pCount || *pCount > handleListSize) {
+        *pCount = handleListSize;
     }
-    uint32_t i = 0;
-    for (Power *power : handleList) {
-        if (i >= *pCount) {
-            break;
+    if (nullptr != phPower) {
+        for (uint32_t i = 0; i < numToCopy; i++) {
+            phPower[i] = handleList[i]->toZesPwrHandle();
         }
-        phPower[i++] = power->toZesPwrHandle();
     }
-    *pCount = i;
     return ZE_RESULT_SUCCESS;
 }
 

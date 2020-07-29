@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/engine/engine.h"
 
+#include "shared/source/helpers/basic_math.h"
+
 #include "level_zero/tools/source/sysman/engine/engine_imp.h"
 
 namespace L0 {
@@ -28,18 +30,16 @@ ze_result_t EngineHandleContext::init() {
 }
 
 ze_result_t EngineHandleContext::engineGet(uint32_t *pCount, zet_sysman_engine_handle_t *phEngine) {
-    if (nullptr == phEngine) {
-        *pCount = static_cast<uint32_t>(handleList.size());
-        return ZE_RESULT_SUCCESS;
+    uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
+    uint32_t numToCopy = std::min(*pCount, handleListSize);
+    if (0 == *pCount || *pCount > handleListSize) {
+        *pCount = handleListSize;
     }
-    uint32_t i = 0;
-    for (Engine *engine : handleList) {
-        if (i >= *pCount) {
-            break;
+    if (nullptr != phEngine) {
+        for (uint32_t i = 0; i < numToCopy; i++) {
+            phEngine[i] = handleList[i]->toHandle();
         }
-        phEngine[i++] = engine->toHandle();
     }
-    *pCount = i;
     return ZE_RESULT_SUCCESS;
 }
 

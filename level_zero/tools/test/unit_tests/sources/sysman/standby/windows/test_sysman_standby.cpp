@@ -48,7 +48,7 @@ class SysmanStandbyFixture : public DeviceFixture, public ::testing::Test {
             .WillByDefault(Invoke(pOsStandby, &Mock<OsStandby>::setMockMode));
 
         pStandbyImp->init();
-        sysmanImp->pStandbyHandleContext->handle_list.push_back(pStandbyImp);
+        sysmanImp->pStandbyHandleContext->handleList.push_back(pStandbyImp);
 
         hSysman = sysmanImp->toHandle();
         hSysmanStandby = pStandbyImp->toHandle();

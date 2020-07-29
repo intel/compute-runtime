@@ -55,10 +55,10 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
             .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::setVal));
 
         // delete handles created in initial SysmanDeviceHandleContext::init() call
-        for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handle_list) {
+        for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
             delete handle;
         }
-        pSysmanDeviceImp->pFrequencyHandleContext->handle_list.clear();
+        pSysmanDeviceImp->pFrequencyHandleContext->handleList.clear();
         pSysmanDeviceImp->pFrequencyHandleContext->init();
     }
 
@@ -84,7 +84,8 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
 };
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyHandlesThenNonZeroCountIsReturnedAndCallSucceds) {
-    uint32_t count;
+    uint32_t count = 0U;
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr));
     EXPECT_EQ(count, handleComponentCount);
 
@@ -98,10 +99,19 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequ
     }
 }
 
+TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroAndValidPtrWhenEnumeratingFrequencyHandlesThenNonZeroCountAndNoHandlesAreReturnedAndCallSucceds) {
+    uint32_t count = 0U;
+    zes_freq_handle_t handle = static_cast<zes_freq_handle_t>(0UL);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFrequencyDomains(device->toHandle(), &count, &handle));
+    EXPECT_EQ(count, handleComponentCount);
+    EXPECT_EQ(handle, static_cast<zes_freq_handle_t>(0UL));
+}
+
 TEST_F(SysmanDeviceFrequencyFixture, GivenActualComponentCountTwoWhenTryingToGetOneComponentOnlyThenOneComponentIsReturnedAndCountUpdated) {
     auto pFrequencyHandleContextTest = std::make_unique<FrequencyHandleContext>(pOsSysman);
-    pFrequencyHandleContextTest->handle_list.push_back(new FrequencyImp(pOsSysman));
-    pFrequencyHandleContextTest->handle_list.push_back(new FrequencyImp(pOsSysman));
+    pFrequencyHandleContextTest->handleList.push_back(new FrequencyImp(pOsSysman));
+    pFrequencyHandleContextTest->handleList.push_back(new FrequencyImp(pOsSysman));
 
     uint32_t count = 1;
     std::vector<zes_freq_handle_t> phFrequency(count, nullptr);
@@ -366,7 +376,7 @@ class SysmanFrequencyFixture : public DeviceFixture, public ::testing::Test {
         ON_CALL(*pSysfsAccess, write(_, _))
             .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<FrequencySysfsAccess>::setVal));
         pFrequencyImp->init();
-        sysmanImp->pFrequencyHandleContext->handle_list.push_back(pFrequencyImp);
+        sysmanImp->pFrequencyHandleContext->handleList.push_back(pFrequencyImp);
         hSysman = sysmanImp->toHandle();
         hSysmanFrequency = pFrequencyImp->toHandle();
     }

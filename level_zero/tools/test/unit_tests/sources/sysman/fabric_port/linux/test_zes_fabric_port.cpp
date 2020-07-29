@@ -55,6 +55,17 @@ TEST_F(ZesFabricPortFixture, GivenPortCountZeroWhenCallingZesFabricPortGetThenCo
     EXPECT_EQ(count, ZesFabricPortFixture::numPorts);
 }
 
+TEST_F(ZesFabricPortFixture, GivenPortCountZeroAndValidHandlePtrWhenCallingZesFabricPortGetThenCountIsReturnedAndNoHandlesReturnedAndVerifyZesFabricPortGetCallSucceeds) {
+    uint32_t count = 0U;
+    zes_fabric_port_handle_t handle = static_cast<zes_fabric_port_handle_t>(0UL);
+
+    ze_result_t result = zesDeviceEnumFabricPorts(device, &count, &handle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, ZesFabricPortFixture::numPorts);
+    EXPECT_EQ(handle, static_cast<zes_fabric_port_handle_t>(0UL));
+}
+
 TEST_F(ZesFabricPortFixture, GivenPortCountCorrectWhenCallingZesFabricPortGetThenCountHandlesAreReturnedAndAndVerifyZesFabricPortGetCallSucceeds) {
     uint32_t count = ZesFabricPortFixture::numPorts;
     zes_fabric_port_handle_t hPorts[ZesFabricPortFixture::numPorts];

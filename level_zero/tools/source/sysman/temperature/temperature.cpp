@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/temperature/temperature.h"
 
+#include "shared/source/helpers/basic_math.h"
+
 #include "level_zero/tools/source/sysman/temperature/temperature_imp.h"
 
 namespace L0 {
@@ -32,18 +34,16 @@ void TemperatureHandleContext::init() {
 }
 
 ze_result_t TemperatureHandleContext::temperatureGet(uint32_t *pCount, zet_sysman_temp_handle_t *phTemperature) {
-    if (nullptr == phTemperature) {
-        *pCount = static_cast<uint32_t>(handleList.size());
-        return ZE_RESULT_SUCCESS;
+    uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
+    uint32_t numToCopy = std::min(*pCount, handleListSize);
+    if (0 == *pCount || *pCount > handleListSize) {
+        *pCount = handleListSize;
     }
-    uint32_t i = 0;
-    for (Temperature *temperature : handleList) {
-        if (i >= *pCount) {
-            break;
+    if (nullptr != phTemperature) {
+        for (uint32_t i = 0; i < numToCopy; i++) {
+            phTemperature[i] = handleList[i]->toHandle();
         }
-        phTemperature[i++] = temperature->toHandle();
     }
-    *pCount = i;
     return ZE_RESULT_SUCCESS;
 }
 

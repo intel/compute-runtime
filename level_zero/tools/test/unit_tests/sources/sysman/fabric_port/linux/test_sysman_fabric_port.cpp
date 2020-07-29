@@ -59,6 +59,17 @@ TEST_F(SysmanFabricPortFixture, GivenPortCountZeroWhenCallingZetSysmanFabricPort
     EXPECT_EQ(count, SysmanFabricPortFixture::numPorts);
 }
 
+TEST_F(SysmanFabricPortFixture, GivenPortCountZeroAndValidHandlePtrWhenCallingZetSysmanFabricPortGetThenCountIsReturnedAndNoHandlesReturnedAndVerifyFabricPortGetCallSucceeds) {
+    uint32_t count = 0U;
+    zet_sysman_fabric_port_handle_t handle = static_cast<zet_sysman_fabric_port_handle_t>(0UL);
+
+    ze_result_t result = zetSysmanFabricPortGet(hSysman, &count, &handle);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, SysmanFabricPortFixture::numPorts);
+    EXPECT_EQ(handle, static_cast<zet_sysman_fabric_port_handle_t>(0UL));
+}
+
 TEST_F(SysmanFabricPortFixture, GivenPortCountCorrectWhenCallingZetSysmanFabricPortGetThenCountHandlesAreReturnedAndAndVerifySysmanFabricPortGetCallSucceeds) {
     uint32_t count = SysmanFabricPortFixture::numPorts;
     zet_sysman_fabric_port_handle_t hPorts[SysmanFabricPortFixture::numPorts];

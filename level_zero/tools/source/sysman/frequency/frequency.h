@@ -59,7 +59,7 @@ struct FrequencyHandleContext {
     ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency);
 
     OsSysman *pOsSysman;
-    std::vector<Frequency *> handle_list = {};
+    std::vector<Frequency *> handleList = {};
 };
 
 } // namespace L0

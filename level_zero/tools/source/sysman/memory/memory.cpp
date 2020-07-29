@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -31,18 +32,16 @@ ze_result_t MemoryHandleContext::init() {
 }
 
 ze_result_t MemoryHandleContext::memoryGet(uint32_t *pCount, zet_sysman_mem_handle_t *phMemory) {
-    if (nullptr == phMemory) {
-        *pCount = static_cast<uint32_t>(handleList.size());
-        return ZE_RESULT_SUCCESS;
+    uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
+    uint32_t numToCopy = std::min(*pCount, handleListSize);
+    if (0 == *pCount || *pCount > handleListSize) {
+        *pCount = handleListSize;
     }
-    uint32_t i = 0;
-    for (Memory *mem : handleList) {
-        if (i >= *pCount) {
-            break;
+    if (nullptr != phMemory) {
+        for (uint32_t i = 0; i < numToCopy; i++) {
+            phMemory[i] = handleList[i]->toHandle();
         }
-        phMemory[i++] = mem->toHandle();
     }
-    *pCount = i;
     return ZE_RESULT_SUCCESS;
 }
 
