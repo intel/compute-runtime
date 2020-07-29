@@ -324,6 +324,53 @@ zetMetricGetPropertiesExt(
     zet_metric_properties_ext_t *pProperties ///< [in,out] metric properties
 );
 
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Supportted profile features
+typedef uint32_t zet_profile_flagsExt_t;
+typedef enum _zet_profile_flagExt_t {
+    ZET_PROFILE_FLAG_REGISTER_REALLOCATION_EXT = ZE_BIT(0), ///< request the compiler attempt to minimize register usage as much as
+                                                            ///< possible to allow for instrumentation
+    ZET_PROFILE_FLAG_FREE_REGISTER_INFO_EXT = ZE_BIT(1),    ///< request the compiler generate free register info
+    ZET_PROFILE_FLAG_FORCE_UINT32_EXT = 0x7fffffff
+
+} zet_profile_flagExt_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Profiling meta-data for instrumentation
+typedef struct _zet_profile_properties_t {
+    zet_structure_type_t stype;   ///< [in] type of this structure
+    void *pNext;                  ///< [in,out][optional] pointer to extension-specific structure
+    zet_profile_flagsExt_t flags; ///< [out] indicates which flags were enabled during compilation.
+                                  ///< returns 0 (none) or a combination of ::zet_profile_flag_t
+    uint32_t numTokens;           ///< [out] number of tokens immediately following this structure
+
+} zet_profile_properties_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieve profiling information generated for the kernel.
+///
+/// @details
+///     - Module must be created using the following build option:
+///         + "-zet-profile-flags <n>" - enable generation of profile
+///           information
+///         + "<n>" must be a combination of ::zet_profile_flag_t, in hex
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hKernel`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pProfileProperties`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zetKernelGetProfileInfoExt(
+    zet_kernel_handle_t hKernel,                 ///< [in] handle to kernel
+    zet_profile_properties_t *pProfileProperties ///< [out] pointer to profile properties
+);
+
 #if defined(__cplusplus)
 } // extern "C"
 #endif
