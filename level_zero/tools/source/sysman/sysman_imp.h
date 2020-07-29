@@ -89,16 +89,17 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     SysmanDeviceImp() = delete;
     void init();
 
-    ze_device_handle_t hCoreDevice;
-
+    ze_device_handle_t hCoreDevice = nullptr;
     OsSysman *pOsSysman = nullptr;
     PowerHandleContext *pPowerHandleContext = nullptr;
     FrequencyHandleContext *pFrequencyHandleContext = nullptr;
     FabricPortHandleContext *pFabricPortHandleContext = nullptr;
+    TemperatureHandleContext *pTempHandleContext = nullptr;
 
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
     ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) override;
     ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) override;
+    ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) override;
 
   private:
     template <typename T>

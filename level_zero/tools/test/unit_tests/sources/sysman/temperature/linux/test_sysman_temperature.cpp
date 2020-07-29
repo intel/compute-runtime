@@ -42,13 +42,13 @@ class SysmanTemperatureFixture : public DeviceFixture, public ::testing::Test {
 
         for (uint32_t i = 0; i < handleCount; i++) {
             linuxTemperatureImp[i].pPmt = pPmt;
+            linuxTemperatureImp[i].setSensorType(static_cast<zet_temp_sensors_t>(i));
             OsTemperature *pOsTemperature = static_cast<OsTemperature *>(&linuxTemperatureImp[i]);
             pTemperatureImp[i] = new TemperatureImp();
             pTemperatureImp[i]->pOsTemperature = pOsTemperature;
             pTemperatureImp[i]->init();
-            pTemperatureImp[i]->pOsTemperature->setSensorType(static_cast<zet_temp_sensors_t>(i));
             sysmanImp->pTempHandleContext->handleList.push_back(pTemperatureImp[i]);
-            hSysmanTempHandle[i] = pTemperatureImp[i]->toHandle();
+            hSysmanTempHandle[i] = pTemperatureImp[i]->toZetHandle();
         }
         hSysman = sysmanImp->toHandle();
     }
@@ -90,10 +90,13 @@ TEST_F(SysmanTemperatureFixture, GivenValidTempHandleWhenGettingGlobalTemperatur
 
 TEST_F(SysmanTemperatureFixture, GivenValidTempHandleWhenGettingUnsupportedSensorsTemperatureThenUnsupportedReturned) {
     double pTemperature = 0;
-    pTemperatureImp[0]->pOsTemperature->setSensorType(ZET_TEMP_SENSORS_MEMORY);
-    pTemperatureImp[1]->pOsTemperature->setSensorType(ZET_TEMP_SENSORS_MEMORY);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pTemperatureImp[0]->pOsTemperature->getSensorTemperature(&pTemperature));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pTemperatureImp[1]->pOsTemperature->getSensorTemperature(&pTemperature));
+    linuxTemperatureImp[0].setSensorType(ZET_TEMP_SENSORS_MEMORY);
+    OsTemperature *pOsTemperatureTest1 = static_cast<OsTemperature *>(&linuxTemperatureImp[0]);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsTemperatureTest1->getSensorTemperature(&pTemperature));
+
+    linuxTemperatureImp[1].setSensorType(ZET_TEMP_SENSORS_MEMORY);
+    OsTemperature *pOsTemperatureTest2 = static_cast<OsTemperature *>(&linuxTemperatureImp[1]);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsTemperatureTest2->getSensorTemperature(&pTemperature));
 }
 
 TEST_F(SysmanTemperatureFixture, GivenPmtSupportNotAvailableWhenCheckingForTempModuleSupportThenTempModuleSupportShouldReturnFalse) {
@@ -120,6 +123,21 @@ TEST_F(SysmanTemperatureFixture, GivenPmtSupportAvailableWhenCheckingForTempModu
     pPmt->init(deviceName, pFsAccess);
     EXPECT_TRUE(pTemperatureImp[0]->pOsTemperature->isTempModuleSupported());
     EXPECT_TRUE(pTemperatureImp[1]->pOsTemperature->isTempModuleSupported());
+}
+
+class ZetPublicLinuxSysmanImpTemperature : public L0::LinuxSysmanImp {
+  public:
+    using LinuxSysmanImp::pPmt;
+    ZetPublicLinuxSysmanImpTemperature(SysmanImp *pParentSysmanImp) : LinuxSysmanImp(pParentSysmanImp) {}
+};
+
+TEST_F(SysmanTemperatureFixture, GivenOsSysmanPointerWhenCreatingOsTemperaturePointerThenValidOsTemperatureIsCreated) {
+    auto pLinuxSysmanImpTest = std::make_unique<ZetPublicLinuxSysmanImpTemperature>(sysmanImp.get());
+    pLinuxSysmanImpTest->pPmt = new PlatformMonitoringTech();
+    auto pOsSysmanTest = static_cast<OsSysman *>(pLinuxSysmanImpTest.get());
+    auto pOsTemperatureTest = OsTemperature::create(pOsSysmanTest, ZET_TEMP_SENSORS_GLOBAL);
+    EXPECT_NE(pOsTemperatureTest, nullptr);
+    delete pOsTemperatureTest;
 }
 
 } // namespace ult

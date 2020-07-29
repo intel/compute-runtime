@@ -25,13 +25,15 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pPowerHandleContext = new PowerHandleContext(pOsSysman);
     pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
     pFabricPortHandleContext = new FabricPortHandleContext(pOsSysman);
+    pTempHandleContext = new TemperatureHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
+    freeResource(pTempHandleContext);
     freeResource(pFabricPortHandleContext);
-    freeResource(pOsSysman);
-    freeResource(pPowerHandleContext);
     freeResource(pFrequencyHandleContext);
+    freeResource(pPowerHandleContext);
+    freeResource(pOsSysman);
 }
 
 void SysmanDeviceImp::init() {
@@ -44,6 +46,9 @@ void SysmanDeviceImp::init() {
     }
     if (pFabricPortHandleContext) {
         pFabricPortHandleContext->init();
+    }
+    if (pTempHandleContext) {
+        pTempHandleContext->init();
     }
 }
 
@@ -235,6 +240,10 @@ ze_result_t SysmanDeviceImp::fabricPortGet(uint32_t *pCount, zes_fabric_port_han
 
 ze_result_t SysmanImp::fabricPortGet(uint32_t *pCount, zet_sysman_fabric_port_handle_t *phPort) {
     return pFabricPortHandleContext->fabricPortGet(pCount, phPort);
+}
+
+ze_result_t SysmanDeviceImp::temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) {
+    return pTempHandleContext->temperatureGet(pCount, phTemperature);
 }
 
 ze_result_t SysmanImp::temperatureGet(uint32_t *pCount, zet_sysman_temp_handle_t *phTemperature) {

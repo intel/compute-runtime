@@ -27,15 +27,13 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
     // GT temperature could be read via 8th to 15th bit in the value read in temperature
     computeTemperature = (computeTemperature >> 8) & 0xff;
 
-    switch (type) {
-    case ZET_TEMP_SENSORS_GPU:
+    if ((zetType == ZET_TEMP_SENSORS_GPU) || (type == ZES_TEMP_SENSORS_GPU)) {
         *pTemperature = static_cast<double>(computeTemperature);
-        break;
-    case ZET_TEMP_SENSORS_GLOBAL:
+    } else if ((zetType == ZET_TEMP_SENSORS_GLOBAL) || (type == ZES_TEMP_SENSORS_GLOBAL)) {
         key = "SOC_TEMPERATURES";
         result = pPmt->readValue(key, socTemperature);
         if (result != ZE_RESULT_SUCCESS) {
-            break;
+            return result;
         }
 
         uint64_t socTemperatureList[numSocTemperatureEntries];
@@ -48,7 +46,7 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
         key = "CORE_TEMPERATURES";
         result = pPmt->readValue(key, coreTemperature);
         if (result != ZE_RESULT_SUCCESS) {
-            break;
+            return result;
         }
 
         uint32_t coreTemperatureList[numCoreTemperatureEntries];
@@ -60,11 +58,9 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
 
         *pTemperature = static_cast<double>(std::max({static_cast<uint64_t>(computeTemperature),
                                                       static_cast<uint64_t>(coreTemperature), socTemperature}));
-        break;
-    default:
+    } else {
         *pTemperature = 0;
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        break;
     }
 
     return result;
@@ -75,17 +71,27 @@ bool LinuxTemperatureImp::isTempModuleSupported() {
 }
 
 void LinuxTemperatureImp::setSensorType(zet_temp_sensors_t sensorType) {
+    zetType = sensorType;
+}
+
+void LinuxTemperatureImp::setSensorType(zes_temp_sensors_t sensorType) {
     type = sensorType;
 }
 
 LinuxTemperatureImp::LinuxTemperatureImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pPmt = &pLinuxSysmanImp->getPlatformMonitoringTechAccess();
 }
 
-OsTemperature *OsTemperature::create(OsSysman *pOsSysman) {
+OsTemperature *OsTemperature::create(OsSysman *pOsSysman, zet_temp_sensors_t sensorType) {
     LinuxTemperatureImp *pLinuxTemperatureImp = new LinuxTemperatureImp(pOsSysman);
+    pLinuxTemperatureImp->setSensorType(sensorType);
+    return static_cast<OsTemperature *>(pLinuxTemperatureImp);
+}
+
+OsTemperature *OsTemperature::create(OsSysman *pOsSysman, zes_temp_sensors_t sensorType) {
+    LinuxTemperatureImp *pLinuxTemperatureImp = new LinuxTemperatureImp(pOsSysman);
+    pLinuxTemperatureImp->setSensorType(sensorType);
     return static_cast<OsTemperature *>(pLinuxTemperatureImp);
 }
 

@@ -914,7 +914,7 @@ zesDeviceEnumTemperatureSensors(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_temp_handle_t *phTemperature) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->temperatureGet(pCount, phTemperature);
 }
 
 __zedllexport ze_result_t __zecall
@@ -929,7 +929,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesTemperatureGetProperties(
     zes_temp_handle_t hTemperature,
     zes_temp_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Temperature::fromHandle(hTemperature)->temperatureGetProperties(pProperties);
 }
 
 __zedllexport ze_result_t __zecall
@@ -943,7 +943,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesTemperatureGetConfig(
     zes_temp_handle_t hTemperature,
     zes_temp_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Temperature::fromHandle(hTemperature)->temperatureGetConfig(pConfig);
 }
 
 __zedllexport ze_result_t __zecall
@@ -957,7 +957,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesTemperatureSetConfig(
     zes_temp_handle_t hTemperature,
     const zes_temp_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Temperature::fromHandle(hTemperature)->temperatureSetConfig(pConfig);
 }
 
 __zedllexport ze_result_t __zecall
@@ -971,7 +971,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesTemperatureGetState(
     zes_temp_handle_t hTemperature,
     double *pTemperature) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Temperature::fromHandle(hTemperature)->temperatureGetState(pTemperature);
 }
 
 __zedllexport ze_result_t __zecall
