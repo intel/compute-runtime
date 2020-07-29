@@ -23,6 +23,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::generateOptsSuffix;
     using OfflineCompiler::getHardwareInfo;
     using OfflineCompiler::getStringWithinDelimiters;
+    using OfflineCompiler::hwInfo;
     using OfflineCompiler::igcDeviceCtx;
     using OfflineCompiler::inputFileLlvm;
     using OfflineCompiler::inputFileSpirV;
