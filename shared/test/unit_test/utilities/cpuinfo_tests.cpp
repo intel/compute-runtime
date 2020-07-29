@@ -151,7 +151,7 @@ TEST(CpuInfoTest, whenFeatureIsSupportedThenMaskBitIsOn) {
     CpuInfo::cpuidFunc = defaultCpuidFunc;
 }
 
-TEST(CpuInfoTest, reportedVirtualAddressSizeIsCorrect) {
+TEST(CpuInfoTest, WhenGettingVirtualAddressSizeThenCorrectResultIsReturned) {
     void (*defaultCpuidFunc)(int[4], int) = CpuInfo::cpuidFunc;
     CpuInfo::cpuidFunc = mockCpuidReport36BitVirtualAddressSize;
 
@@ -162,8 +162,7 @@ TEST(CpuInfoTest, reportedVirtualAddressSizeIsCorrect) {
     CpuInfo::cpuidFunc = defaultCpuidFunc;
 }
 
-
-TEST(CpuInfo, cpuidex) {
+TEST(CpuInfo, WhenGettingCpuidexThenOperationSucceeds) {
     const CpuInfo &cpuInfo = CpuInfo::getInstance();
 
     uint32_t cpuRegsInfo[4];
