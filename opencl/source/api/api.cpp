@@ -3501,7 +3501,7 @@ clSetPerformanceConfigurationINTEL(
 
 void *clHostMemAllocINTEL(
     cl_context context,
-    cl_mem_properties_intel *properties,
+    const cl_mem_properties_intel *properties,
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
@@ -3540,7 +3540,7 @@ void *clHostMemAllocINTEL(
 void *clDeviceMemAllocINTEL(
     cl_context context,
     cl_device_id device,
-    cl_mem_properties_intel *properties,
+    const cl_mem_properties_intel *properties,
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
@@ -3582,7 +3582,7 @@ void *clDeviceMemAllocINTEL(
 void *clSharedMemAllocINTEL(
     cl_context context,
     cl_device_id device,
-    cl_mem_properties_intel *properties,
+    const cl_mem_properties_intel *properties,
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet) {
@@ -3654,7 +3654,7 @@ cl_int clMemFreeCommon(cl_context context,
 
 cl_int clMemFreeINTEL(
     cl_context context,
-    const void *ptr) {
+    void *ptr) {
     return clMemFreeCommon(context, ptr, false);
 }
 

@@ -927,7 +927,7 @@ extern CL_API_ENTRY cl_program CL_API_CALL clCreateProgramWithILKHR(
 
 void *clHostMemAllocINTEL(
     cl_context context,
-    cl_mem_properties_intel *properties,
+    const cl_mem_properties_intel *properties,
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet);
@@ -935,7 +935,7 @@ void *clHostMemAllocINTEL(
 void *clDeviceMemAllocINTEL(
     cl_context context,
     cl_device_id device,
-    cl_mem_properties_intel *properties,
+    const cl_mem_properties_intel *properties,
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet);
@@ -943,14 +943,14 @@ void *clDeviceMemAllocINTEL(
 void *clSharedMemAllocINTEL(
     cl_context context,
     cl_device_id device,
-    cl_mem_properties_intel *properties,
+    const cl_mem_properties_intel *properties,
     size_t size,
     cl_uint alignment,
     cl_int *errcodeRet);
 
 cl_int clMemFreeINTEL(
     cl_context context,
-    const void *ptr);
+    void *ptr);
 
 cl_int clMemBlockingFreeINTEL(
     cl_context context,
