@@ -64,6 +64,8 @@ struct EventImp : public Event {
 
     ze_result_t getTimestamp(ze_event_timestamp_type_t timestampType, void *dstptr) override;
 
+    ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override;
+
     Device *device;
     EventPool *eventPool;
 
@@ -311,6 +313,33 @@ ze_result_t EventImp::getTimestamp(ze_event_timestamp_type_t timestampType, void
 
     tsData &= tsMask;
     memcpy_s(dstptr, sizeof(uint64_t), static_cast<void *>(&tsData), sizeof(uint64_t));
+
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t EventImp::queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) {
+    auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
+    constexpr uint64_t tsMask = (1ull << 32) - 1;
+    uint64_t tsData = Event::STATE_INITIAL & tsMask;
+    ze_kernel_timestamp_result_t &result = *dstptr;
+
+    // Ensure timestamps have been written
+    if (queryStatus() != ZE_RESULT_SUCCESS) {
+        memcpy_s(dstptr, sizeof(uint64_t), static_cast<void *>(&tsData), sizeof(uint64_t));
+        return ZE_RESULT_SUCCESS;
+    }
+
+    auto eventTsSetFunc = [&](auto tsAddr, uint64_t &timestampField) {
+        memcpy_s(static_cast<void *>(&tsData), sizeof(uint32_t), reinterpret_cast<void *>(tsAddr), sizeof(uint32_t));
+
+        tsData &= tsMask;
+        memcpy_s(&(timestampField), sizeof(uint64_t), static_cast<void *>(&tsData), sizeof(uint64_t));
+    };
+
+    eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, contextStart), result.context.kernelStart);
+    eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalStart), result.global.kernelStart);
+    eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, contextEnd), result.context.kernelEnd);
+    eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalEnd), result.global.kernelEnd);
 
     return ZE_RESULT_SUCCESS;
 }

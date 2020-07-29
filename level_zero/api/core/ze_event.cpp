@@ -116,4 +116,10 @@ zeEventGetTimestamp(
     return L0::Event::fromHandle(hEvent)->getTimestamp(timestampType, dstptr);
 }
 
+__zedllexport ze_result_t __zecall
+zeEventQueryKernelTimestampExt(
+    ze_event_handle_t hEvent,
+    ze_kernel_timestamp_result_t *dstptr) {
+    return L0::Event::fromHandle(hEvent)->queryKernelTimestamp(dstptr);
+}
 } // extern "C"

@@ -1223,6 +1223,49 @@ zeVirtualMemSetAccessAttribute(
 ///       function handle.
 ///     - The implementation of this function should be lock-free.
 ///
+/// @brief Forward-declare ze_kernel_timestamp_data_t
+typedef struct _ze_kernel_timestamp_data_t ze_kernel_timestamp_data_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Kernel timestamp clock data
+/// 
+/// @details
+///     - The timestamp frequency can be queried from
+///       ::ze_device_properties_t.timerResolution.
+///     - The number of valid bits in the timestamp value can be queried from
+///       ::ze_device_properties_t.kernelTimestampValidBits.
+typedef struct _ze_kernel_timestamp_data_t
+{
+    uint64_t kernelStart;                           ///< [out] device clock at start of kernel execution
+    uint64_t kernelEnd;                             ///< [out] device clock at end of kernel execution
+
+} ze_kernel_timestamp_data_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Forward-declare ze_kernel_timestamp_result_t
+typedef struct _ze_kernel_timestamp_result_t ze_kernel_timestamp_result_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Kernel timestamp result
+typedef struct _ze_kernel_timestamp_result_t
+{
+    ze_kernel_timestamp_data_t global;              ///< [out] wall-clock data
+    ze_kernel_timestamp_data_t context;             ///< [out] context-active data; only includes clocks while device context
+                                                    ///< was actively executing.
+
+} ze_kernel_timestamp_result_t;
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Queries an event's timestamp value on the host.
+/// 
+/// @details
+///     - The application must ensure the event was created from an event pool
+///       that was created using ::ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP flag.
+///     - The destination memory will be unmodified if the event has not been
+///       signaled.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+/// 
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_UNINITIALIZED
@@ -1247,8 +1290,17 @@ zeVirtualMemGetAccessAttribute(
                                           ///< that shares same access attribute.
 );
 
-#if defined(__cplusplus)
-} // extern "C"
-#endif
+///         + `nullptr == hEvent`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == dstptr`
+///     - ::ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT
+///     - ::ZE_RESULT_NOT_READY
+///         + not signaled
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeEventQueryKernelTimestampExt(
+    ze_event_handle_t hEvent,                       ///< [in] handle of the event
+    ze_kernel_timestamp_result_t* dstptr            ///< [in,out] pointer to memory for where timestamp result will be written.
+    );
 
+} // extern "C"
 #endif // _ZE_API_EXT_H

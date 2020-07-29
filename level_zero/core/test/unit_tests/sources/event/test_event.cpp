@@ -253,5 +253,23 @@ TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsOfPacketTagBuff
     EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, allocation->getAllocationType());
 }
 
+TEST_F(TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
+    KernelTimestampEvent data = {};
+    data.contextStart = 1u;
+    data.contextEnd = 2u;
+    data.globalStart = 3u;
+    data.globalEnd = 4u;
+
+    event->hostAddress = &data;
+
+    ze_kernel_timestamp_result_t result = {};
+
+    event->queryKernelTimestamp(&result);
+    EXPECT_EQ(data.contextStart, result.context.kernelStart);
+    EXPECT_EQ(data.contextEnd, result.context.kernelEnd);
+    EXPECT_EQ(data.globalStart, result.global.kernelStart);
+    EXPECT_EQ(data.globalEnd, result.global.kernelEnd);
+}
+
 } // namespace ult
 } // namespace L0

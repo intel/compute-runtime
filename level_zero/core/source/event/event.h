@@ -29,6 +29,7 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t queryStatus() = 0;
     virtual ze_result_t reset() = 0;
     virtual ze_result_t getTimestamp(ze_event_timestamp_type_t timestampType, void *dstptr) = 0;
+    virtual ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) = 0;
 
     enum State : uint32_t {
         STATE_SIGNALED = 0u,
