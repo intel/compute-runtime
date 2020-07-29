@@ -18,7 +18,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     GmmHelper *gmmHelper,
     bool isMultiOsContextCapable) {
 
-    if (DebugManager.flags.UseBindlessBuffers.get() != 0 || DebugManager.flags.UseBindlessImages.get() != 0) {
+    if (ssh) {
         stateBaseAddress->setBindlessSurfaceStateBaseAddressModifyEnable(true);
         stateBaseAddress->setBindlessSurfaceStateBaseAddress(ssh->getHeapGpuBase());
         uint32_t size = uint32_t(ssh->getMaxAvailableSpace() / 64) - 1;
