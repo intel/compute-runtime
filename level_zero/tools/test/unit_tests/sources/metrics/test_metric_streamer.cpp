@@ -46,7 +46,7 @@ TEST_F(MetricStreamerTest, givenInvalidMetricGroupTypeWhenZetMetricStreamerOpenI
         .WillOnce(DoAll(::testing::SetArgPointee<0>(metricGroupProperties), Return(ZE_RESULT_SUCCESS)));
 
     // Metric streamer open.
-    EXPECT_EQ(zetMetricStreamerOpen(metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_ERROR_INVALID_ARGUMENT);
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_ERROR_INVALID_ARGUMENT);
     EXPECT_EQ(streamerHandle, nullptr);
 }
 
@@ -179,7 +179,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
     EXPECT_EQ(zetDeviceActivateMetricGroups(metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
     // Metric streamer open.
-    EXPECT_EQ(zetMetricStreamerOpen(metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(streamerHandle, nullptr);
 
     // Metric streamer close.
@@ -398,10 +398,10 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
     EXPECT_EQ(zetDeviceActivateMetricGroups(metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
     // Metric streamer open.
-    EXPECT_EQ(zetMetricStreamerOpen(metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &firstStreamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &firstStreamerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(firstStreamerHandle, nullptr);
 
-    EXPECT_EQ(zetMetricStreamerOpen(metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &secondStreamerHandle), ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &secondStreamerHandle), ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE);
     EXPECT_EQ(secondStreamerHandle, nullptr);
 
     // Metric streamer close.
@@ -485,7 +485,7 @@ TEST_F(MetricStreamerTest, givenCorrectArgumentsWhenZetMetricQueryPoolCreateExtI
     EXPECT_NE(poolHandle, nullptr);
 
     // Metric streamer open.
-    EXPECT_EQ(zetMetricStreamerOpen(metricDevice, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDevice, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_ERROR_NOT_AVAILABLE);
     EXPECT_EQ(streamerHandle, nullptr);
 
     // Metric query pool destroy.
@@ -593,7 +593,7 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetMetricStreamerReadDataIsC
     EXPECT_EQ(zetDeviceActivateMetricGroups(metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
     // Metric streamer open.
-    EXPECT_EQ(zetMetricStreamerOpen(metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(streamerHandle, nullptr);
 
     // Metric streamer close.
@@ -813,7 +813,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCal
     EXPECT_EQ(zetDeviceActivateMetricGroups(metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
     // Metric streamer open.
-    EXPECT_EQ(zetMetricStreamerOpen(metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(streamerHandle, nullptr);
 
     // Metric streamer: get desired raw data size.
@@ -1053,7 +1053,7 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetCommandListAppendMetricSt
     EXPECT_EQ(zetDeviceActivateMetricGroups(metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
     // Metric streamer open.
-    EXPECT_EQ(zetMetricStreamerOpen(metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(streamerHandle, nullptr);
 
     // Metric streamer close.
@@ -1305,7 +1305,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
     EXPECT_EQ(zetDeviceActivateMetricGroups(metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
     // Metric streamer open.
-    EXPECT_EQ(zetMetricStreamerOpen(metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(streamerHandle, nullptr);
 
     // Metric streamer marker.
@@ -1601,7 +1601,7 @@ TEST_F(MetricStreamerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppend
     EXPECT_EQ(zetDeviceActivateMetricGroups(metricDeviceHandle, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
     // Metric streamer open.
-    EXPECT_EQ(zetMetricStreamerOpen(metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDeviceHandle, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(streamerHandle, nullptr);
 
     // Metric streamer marker.

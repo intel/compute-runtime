@@ -94,6 +94,7 @@ typedef struct _zet_metric_streamer_desc_t {
 ///     - ::ZE_RESULT_ERROR_INVALID_SYNCHRONIZATION_OBJECT
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricStreamerOpen(
+    zet_context_handle_t hContext,                 ///< [in] handle of the context object
     zet_device_handle_t hDevice,                   ///< [in] handle of the device
     zet_metric_group_handle_t hMetricGroup,        ///< [in] handle of the metric group
     zet_metric_streamer_desc_t *desc,              ///< [in,out] metric streamer descriptor

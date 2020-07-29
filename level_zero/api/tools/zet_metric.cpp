@@ -132,12 +132,13 @@ zetMetricTracerReadData(
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricStreamerOpen(
+    zet_context_handle_t hContext,
     zet_device_handle_t hDevice,
     zet_metric_group_handle_t hMetricGroup,
     zet_metric_streamer_desc_t *pDesc,
     ze_event_handle_t hNotificationEvent,
     zet_metric_streamer_handle_t *phMetricStreamer) {
-    return L0::metricStreamerOpen(hDevice, hMetricGroup, pDesc, hNotificationEvent, phMetricStreamer);
+    return L0::metricStreamerOpen(hContext, hDevice, hMetricGroup, pDesc, hNotificationEvent, phMetricStreamer);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

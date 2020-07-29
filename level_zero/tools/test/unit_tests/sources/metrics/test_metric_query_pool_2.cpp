@@ -207,7 +207,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenStreamerIsOpenThenQueryPool
 
     EXPECT_EQ(zetDeviceActivateMetricGroups(metricDevice, 1, &metricGroupHandle), ZE_RESULT_SUCCESS);
 
-    EXPECT_EQ(zetMetricStreamerOpen(metricDevice, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), metricDevice, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(streamerHandle, nullptr);
 
     EXPECT_EQ(zetMetricQueryPoolCreateExt(context->toHandle(), metricDevice, metricGroupHandle, &poolDesc, &poolHandle), ZE_RESULT_ERROR_NOT_AVAILABLE);

@@ -165,7 +165,7 @@ struct MetricQuery : _zet_metric_query_handle_t {
 ze_result_t metricGroupGet(zet_device_handle_t hDevice, uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups);
 
 // MetricStreamer.
-ze_result_t metricStreamerOpen(zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
+ze_result_t metricStreamerOpen(zet_context_handle_t hContext, zet_device_handle_t hDevice, zet_metric_group_handle_t hMetricGroup,
                                zet_metric_streamer_desc_t *pDesc, ze_event_handle_t hNotificationEvent,
                                zet_metric_streamer_handle_t *phMetricStreamer);
 
