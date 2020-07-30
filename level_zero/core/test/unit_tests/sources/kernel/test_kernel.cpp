@@ -202,6 +202,39 @@ HWTEST2_F(SetKernelArg, givenBufferArgumentWhichHasNotBeenAllocatedByRuntimeThen
 
 using KernelPropertiesTest = Test<ModuleFixture>;
 
+HWTEST_F(KernelPropertiesTest, givenKernelThenCorrectNameIsRetrieved) {
+    ze_kernel_handle_t kernelHandle;
+
+    ze_kernel_desc_t kernelDesc = {};
+    kernelDesc.version = ZE_KERNEL_DESC_VERSION_CURRENT;
+    kernelDesc.flags = ZE_KERNEL_FLAG_NONE;
+    kernelDesc.pKernelName = kernelName.c_str();
+
+    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto kernel = L0::Kernel::fromHandle(kernelHandle);
+
+    size_t kernelSize = 0;
+    res = kernel->getKernelName(&kernelSize, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(kernelSize, kernelName.length() + 1);
+
+    size_t alteredKernelSize = kernelSize * 2;
+    res = kernel->getKernelName(&alteredKernelSize, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(alteredKernelSize, kernelSize);
+
+    char *kernelNameRetrieved = new char[kernelSize];
+    res = kernel->getKernelName(&kernelSize, kernelNameRetrieved);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_EQ(0, strncmp(kernelName.c_str(), kernelNameRetrieved, kernelSize));
+
+    delete[] kernelNameRetrieved;
+    Kernel::fromHandle(kernelHandle)->destroy();
+}
+
 HWTEST_F(KernelPropertiesTest, givenKernelThenPropertiesAreRetrieved) {
     ze_kernel_handle_t kernelHandle;
 

@@ -220,6 +220,14 @@ zeKernelGetPropertiesExt(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
+zeKernelGetName(
+    ze_kernel_handle_t hKernel,
+    size_t *pSize,
+    char *pName) {
+    return L0::Kernel::fromHandle(hKernel)->getKernelName(pSize, pName);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleDynamicLinkExt(
     uint32_t numModules,
     ze_module_handle_t *phModules,

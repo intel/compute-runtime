@@ -1228,16 +1228,15 @@ typedef struct _ze_kernel_timestamp_data_t ze_kernel_timestamp_data_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Kernel timestamp clock data
-/// 
+///
 /// @details
 ///     - The timestamp frequency can be queried from
 ///       ::ze_device_properties_t.timerResolution.
 ///     - The number of valid bits in the timestamp value can be queried from
 ///       ::ze_device_properties_t.kernelTimestampValidBits.
-typedef struct _ze_kernel_timestamp_data_t
-{
-    uint64_t kernelStart;                           ///< [out] device clock at start of kernel execution
-    uint64_t kernelEnd;                             ///< [out] device clock at end of kernel execution
+typedef struct _ze_kernel_timestamp_data_t {
+    uint64_t kernelStart; ///< [out] device clock at start of kernel execution
+    uint64_t kernelEnd;   ///< [out] device clock at end of kernel execution
 
 } ze_kernel_timestamp_data_t;
 
@@ -1247,17 +1246,16 @@ typedef struct _ze_kernel_timestamp_result_t ze_kernel_timestamp_result_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Kernel timestamp result
-typedef struct _ze_kernel_timestamp_result_t
-{
-    ze_kernel_timestamp_data_t global;              ///< [out] wall-clock data
-    ze_kernel_timestamp_data_t context;             ///< [out] context-active data; only includes clocks while device context
-                                                    ///< was actively executing.
+typedef struct _ze_kernel_timestamp_result_t {
+    ze_kernel_timestamp_data_t global;  ///< [out] wall-clock data
+    ze_kernel_timestamp_data_t context; ///< [out] context-active data; only includes clocks while device context
+                                        ///< was actively executing.
 
 } ze_kernel_timestamp_result_t;
 
 ///////////////////////////////////////////////////////////////////////////////
 /// @brief Queries an event's timestamp value on the host.
-/// 
+///
 /// @details
 ///     - The application must ensure the event was created from an event pool
 ///       that was created using ::ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP flag.
@@ -1265,7 +1263,7 @@ typedef struct _ze_kernel_timestamp_result_t
 ///       signaled.
 ///     - The application may call this function from simultaneous threads.
 ///     - The implementation of this function should be lock-free.
-/// 
+///
 /// @returns
 ///     - ::ZE_RESULT_SUCCESS
 ///     - ::ZE_RESULT_ERROR_UNINITIALIZED
@@ -1298,9 +1296,35 @@ zeVirtualMemGetAccessAttribute(
 ///         + not signaled
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeEventQueryKernelTimestampExt(
-    ze_event_handle_t hEvent,                       ///< [in] handle of the event
-    ze_kernel_timestamp_result_t* dstptr            ///< [in,out] pointer to memory for where timestamp result will be written.
-    );
+    ze_event_handle_t hEvent,            ///< [in] handle of the event
+    ze_kernel_timestamp_result_t *dstptr ///< [in,out] pointer to memory for where timestamp result will be written.
+);
+
+///////////////////////////////////////////////////////////////////////////////
+/// @brief Retrieve kernel name from Kernel.
+///
+/// @details
+///     - The caller can pass nullptr for pName when querying only for size.
+///     - The implementation will copy the kernel name into a buffer supplied by
+///       the caller.
+///     - The application may call this function from simultaneous threads.
+///     - The implementation of this function should be lock-free.
+///
+/// @returns
+///     - ::ZE_RESULT_SUCCESS
+///     - ::ZE_RESULT_ERROR_UNINITIALIZED
+///     - ::ZE_RESULT_ERROR_DEVICE_LOST
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_HANDLE
+///         + `nullptr == hKernel`
+///     - ::ZE_RESULT_ERROR_INVALID_NULL_POINTER
+///         + `nullptr == pSize`
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeKernelGetName(
+    ze_kernel_handle_t hKernel, ///< [in] handle of the kernel object
+    size_t *pSize,              ///< [in,out] size of kernel name string, including null terminator, in
+                                ///< bytes.
+    char *pName                 ///< [in,out][optional] char pointer to kernel name.
+);
 
 } // extern "C"
 #endif // _ZE_API_EXT_H
