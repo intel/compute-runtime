@@ -233,3 +233,12 @@ TEST_F(RegistryReaderTest, givenRegistryKeyPresentWhenValueIsNonZeroInBothDwords
     bool value = registryReader.getSetting(keyName.c_str(), defaultValue);
     EXPECT_TRUE(value);
 }
+
+TEST_F(DebugReaderWithRegistryAndEnvTest, givenSetProcessNameWhenReadFromEnvironmentVariableThenReturnClCacheDir) {
+    regOpenKeySuccessCount = 0u;
+    regQueryValueSuccessCount = 0u;
+    registryReader.processName = "processName";
+    std::string defaultCacheDir = "";
+    std::string cacheDir = registryReader.getSetting("processName", defaultCacheDir);
+    EXPECT_STREQ("./tested_cl_cache_dir", cacheDir.c_str());
+}

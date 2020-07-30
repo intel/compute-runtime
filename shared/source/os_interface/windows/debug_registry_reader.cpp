@@ -143,7 +143,7 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     }
 
     if (readSettingFromEnv) {
-        const char *envValue = getenv(settingName);
+        const char *envValue = strcmp(processName.c_str(), settingName) ? getenv(settingName) : getenv("cl_cache_dir");
         if (envValue) {
             keyValue.assign(envValue);
         }
