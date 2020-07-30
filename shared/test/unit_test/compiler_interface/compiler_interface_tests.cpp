@@ -689,6 +689,19 @@ TEST(LoadCompilerTest, whenEntrypointInterfaceIsNotCompatibleThenReturnFalseAndN
     EXPECT_EQ(nullptr, retMain.get());
 }
 
+TEST(LoadCompilerTest, GivenZebinIgnoreIcbeVersionDebugFlagThenIgnoreIgcsIcbeVersion) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ZebinIgnoreIcbeVersion.set(true);
+
+    MockCompilerEnableGuard mock;
+    std::unique_ptr<NEO::OsLibrary> retLib;
+    CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
+    bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
+    EXPECT_TRUE(retVal);
+    EXPECT_NE(nullptr, retLib.get());
+    EXPECT_NE(nullptr, retMain.get());
+}
+
 template <typename DeviceCtxBase, typename TranslationCtx>
 struct MockCompilerDeviceCtx : DeviceCtxBase {
     TranslationCtx *CreateTranslationCtxImpl(CIF::Version_t ver, IGC::CodeType::CodeType_t inType,

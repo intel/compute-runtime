@@ -452,6 +452,9 @@ struct YamlParser {
     }
 
     ConstChildrenRange createChildrenRange(const Node &parent) const {
+        if (0 == parent.numChildren) {
+            return ConstChildrenRange(invalidNodeID, nodes);
+        }
         return ConstChildrenRange(nodes[parent.firstChildId], nodes);
     }
 
@@ -478,7 +481,7 @@ struct YamlParser {
 };
 
 template <>
-inline bool YamlParser::readValueChecked<uint64_t>(const Node &node, uint64_t &outValue) const {
+inline bool YamlParser::readValueChecked<int64_t>(const Node &node, int64_t &outValue) const {
     if (invalidTokenId == node.value) {
         return false;
     }
@@ -490,6 +493,45 @@ inline bool YamlParser::readValueChecked<uint64_t>(const Node &node, uint64_t &o
     nullTerminated.push_back('\0');
     outValue = atoll(nullTerminated.begin());
     return true;
+}
+
+template <>
+inline bool YamlParser::readValueChecked<int32_t>(const Node &node, int32_t &outValue) const {
+    int64_t int64V = 0U;
+    bool validValue = readValueChecked<int64_t>(node, int64V);
+    validValue &= int64V <= std::numeric_limits<int32_t>::max();
+    validValue &= int64V >= std::numeric_limits<int32_t>::min();
+    outValue = static_cast<int32_t>(int64V);
+    return validValue;
+}
+
+template <>
+inline bool YamlParser::readValueChecked<int16_t>(const Node &node, int16_t &outValue) const {
+    int64_t int64V = 0U;
+    bool validValue = readValueChecked<int64_t>(node, int64V);
+    validValue &= int64V <= std::numeric_limits<int16_t>::max();
+    validValue &= int64V >= std::numeric_limits<int16_t>::min();
+    outValue = static_cast<int16_t>(int64V);
+    return validValue;
+}
+
+template <>
+inline bool YamlParser::readValueChecked<int8_t>(const Node &node, int8_t &outValue) const {
+    int64_t int64V = 0U;
+    bool validValue = readValueChecked<int64_t>(node, int64V);
+    validValue &= int64V <= std::numeric_limits<int8_t>::max();
+    validValue &= int64V >= std::numeric_limits<int8_t>::min();
+    outValue = static_cast<int8_t>(int64V);
+    return validValue;
+}
+
+template <>
+inline bool YamlParser::readValueChecked<uint64_t>(const Node &node, uint64_t &outValue) const {
+    int64_t int64V = 0U;
+    bool validValue = readValueChecked<int64_t>(node, int64V);
+    validValue &= int64V >= 0;
+    outValue = static_cast<uint64_t>(int64V);
+    return validValue;
 }
 
 template <>

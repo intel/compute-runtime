@@ -32,6 +32,7 @@ template <typename DataType, size_t OnStackCapacity,
           typename StackSizeT = typename StackVecSize<OnStackCapacity>::SizeT>
 class StackVec {
   public:
+    using value_type = DataType; // NOLINT
     using SizeT = StackSizeT;
     using iterator = DataType *;
     using const_iterator = const DataType *;

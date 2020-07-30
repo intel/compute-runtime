@@ -16,7 +16,7 @@ TEST(IsDeviceBinaryFormatPatchtokens, GivenValidBinaryReturnTrue) {
     EXPECT_TRUE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Patchtokens>(programTokens.storage));
 }
 
-TEST(IsDeviceBinaryFormatPatchtokens, GivenInvalidBinaryReturnTrue) {
+TEST(IsDeviceBinaryFormatPatchtokens, GivenInvalidBinaryReturnFalse) {
     const uint8_t binary[] = "not_patchtokens";
     EXPECT_FALSE(NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Patchtokens>(binary));
 }

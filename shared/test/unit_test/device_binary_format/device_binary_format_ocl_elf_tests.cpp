@@ -215,7 +215,6 @@ TEST(UnpackSingleDeviceBinaryOclElf, GivenOclElfExecutableWhenPatchtokensBinaryI
 
 TEST(DecodeSingleDeviceBinaryOclElf, WhenUsedAsSingleDeviceBinaryThenDecodingFails) {
     PatchTokensTestData::ValidEmptyProgram patchtokensProgram;
-    ;
 
     NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEnc64;
     elfEnc64.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/os_library.h"
 
 #include "opencl/source/helpers/validators.h"
@@ -105,7 +106,11 @@ inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib
         return false;
     }
 
-    if (false == main->IsCompatible<EntryPointT>()) {
+    std::vector<CIF::InterfaceId_t> interfacesToIgnore;
+    if (DebugManager.flags.ZebinIgnoreIcbeVersion.get()) {
+        interfacesToIgnore.push_back(IGC::OclGenBinaryBase::GetInterfaceId());
+    }
+    if (false == main->IsCompatible<EntryPointT>(&interfacesToIgnore)) {
         DEBUG_BREAK_IF(true); // given compiler library is not compatible
         return false;
     }

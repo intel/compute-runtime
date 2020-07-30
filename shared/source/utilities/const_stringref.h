@@ -137,6 +137,17 @@ class ConstStringRef {
         return false;
     }
 
+    constexpr bool startsWith(const char *subString) const noexcept {
+        const char *findEnd = ptr + len;
+        const char *lhs = ptr;
+        const char *rhs = subString;
+        while ((lhs < findEnd) && (*lhs == *rhs) && ('\0' != *rhs)) {
+            ++lhs;
+            ++rhs;
+        }
+        return ('\0' == *rhs);
+    }
+
   protected:
     ConstStringRef(std::nullptr_t) = delete;
 
@@ -159,7 +170,8 @@ constexpr bool equals(const ConstStringRef &lhs, const ConstStringRef &rhs) {
 }
 
 constexpr bool equals(const ConstStringRef &lhs, const char *rhs) {
-    for (size_t i = 0, e = lhs.size(); i < e; ++i) {
+    size_t i = 0;
+    for (size_t e = lhs.size(); i < e; ++i) {
         if (lhs[i] != rhs[i]) {
             return false;
         }
@@ -168,7 +180,7 @@ constexpr bool equals(const ConstStringRef &lhs, const char *rhs) {
         }
     }
 
-    return true;
+    return (rhs[i] == '\0');
 }
 
 constexpr bool operator==(const ConstStringRef &lhs, const ConstStringRef &rhs) {

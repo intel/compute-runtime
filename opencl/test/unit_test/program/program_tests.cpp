@@ -23,6 +23,7 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
+#include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_compiler_interface.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
@@ -3043,4 +3044,18 @@ TEST_F(ProgramBinTest, GivenSourceKernelWhenLinkingProgramThenGtpinInitInfoIsPas
 
     EXPECT_EQ(pIgcInitPtr, mockCompilerInterface->gtpinInfoPassed);
     mockCompilerInterface.release();
+}
+
+TEST(ProgramReplaceDeviceBinary, GivenBinaryZebinThenUseAsBothPackedAndUnpackedBinaryContainer) {
+    MockExecutionEnvironment execEnv;
+    ZebinTestData::ValidEmptyProgram zebin;
+    std::unique_ptr<char[]> src = makeCopy(zebin.storage.data(), zebin.storage.size());
+    MockProgram program{execEnv};
+    program.replaceDeviceBinary(std::move(src), zebin.storage.size());
+    ASSERT_EQ(zebin.storage.size(), program.packedDeviceBinarySize);
+    ASSERT_EQ(zebin.storage.size(), program.unpackedDeviceBinarySize);
+    ASSERT_NE(nullptr, program.packedDeviceBinary);
+    ASSERT_NE(nullptr, program.unpackedDeviceBinary);
+    EXPECT_EQ(0, memcmp(program.packedDeviceBinary.get(), zebin.storage.data(), program.packedDeviceBinarySize));
+    EXPECT_EQ(0, memcmp(program.unpackedDeviceBinary.get(), zebin.storage.data(), program.unpackedDeviceBinarySize));
 }

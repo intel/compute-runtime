@@ -441,6 +441,10 @@ void Program::replaceDeviceBinary(std::unique_ptr<char[]> newBinary, size_t newB
         this->packedDeviceBinarySize = newBinarySize;
         this->unpackedDeviceBinary.reset();
         this->unpackedDeviceBinarySize = 0U;
+        if (isAnySingleDeviceBinaryFormat(ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(this->packedDeviceBinary.get()), this->packedDeviceBinarySize))) {
+            this->unpackedDeviceBinary = makeCopy(packedDeviceBinary.get(), packedDeviceBinarySize);
+            this->unpackedDeviceBinarySize = packedDeviceBinarySize;
+        }
     } else {
         this->packedDeviceBinary.reset();
         this->packedDeviceBinarySize = 0U;

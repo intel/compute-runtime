@@ -168,6 +168,8 @@ struct KernelDescriptor final {
         std::unique_ptr<DebugData> debugData;
         const void *igcInfoForGtpin = nullptr;
     } external;
+
+    std::vector<uint8_t> generatedHeaps;
 };
 
 } // namespace NEO

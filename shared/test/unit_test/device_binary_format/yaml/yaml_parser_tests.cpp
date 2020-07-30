@@ -2060,6 +2060,21 @@ TEST(YamlParser, GivenNodeWhenCreateChildrenRangeIsCalledThenCreatesProperRange)
     EXPECT_EQ(childrenRange.end(), it);
 }
 
+TEST(YamlParser, GivenNodeWithoutChildrenWhenCreateChildrenRangeIsCalledThenCreatesEmptyRange) {
+    ConstStringRef yaml = "- a";
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    auto root = parser.getRoot();
+    ASSERT_EQ(1U, root->numChildren);
+    auto first = parser.createChildrenRange(*root).begin();
+    EXPECT_EQ(0U, first->numChildren);
+    auto range = parser.createChildrenRange(*first);
+    EXPECT_EQ(range.end(), range.begin());
+}
+
 TEST(YamlParser, WhenBuildDebugNodesIsCalledThenBuildsDebugFriendlyRepresentation) {
     ConstStringRef yaml =
         R"===(
@@ -2170,7 +2185,7 @@ banana : 5
     EXPECT_STREQ("5", parser.readValueNoQuotes(*banana).str().c_str());
 }
 
-TEST(YamlParserReadValueCheckedUint64, GivenNodeWithoutASingleValueThenReturnFalse) {
+TEST(YamlParserReadValueCheckedInt64, GivenNodeWithoutASingleValueThenReturnFalse) {
     ConstStringRef yaml = R"===( 
 list : 
    - a
@@ -2183,12 +2198,12 @@ list :
     EXPECT_TRUE(success);
     auto notIntNode = parser.getChild(*parser.getRoot(), "list");
     ASSERT_NE(notIntNode, nullptr);
-    uint64_t readUint64 = 0;
-    auto readSuccess = parser.readValueChecked<uint64_t>(*notIntNode, readUint64);
+    int64_t readInt64 = 0;
+    auto readSuccess = parser.readValueChecked<int64_t>(*notIntNode, readInt64);
     EXPECT_FALSE(readSuccess);
 }
 
-TEST(YamlParserReadValueCheckedUint64, GivenNonIntegerValueThenReturnFalse) {
+TEST(YamlParserReadValueCheckedint64, GivenNonIntegerValueThenReturnFalse) {
     ConstStringRef yaml = "not_integer : five";
     std::string parserErrors;
     std::string parserWarnings;
@@ -2197,14 +2212,153 @@ TEST(YamlParserReadValueCheckedUint64, GivenNonIntegerValueThenReturnFalse) {
     EXPECT_TRUE(success);
     auto notIntNode = parser.getChild(*parser.getRoot(), "not_integer");
     ASSERT_NE(notIntNode, nullptr);
-    uint64_t readUint64 = 0;
-    auto readSuccess = parser.readValueChecked<uint64_t>(*notIntNode, readUint64);
+    int64_t readInt64 = 0;
+    auto readSuccess = parser.readValueChecked<int64_t>(*notIntNode, readInt64);
+    EXPECT_FALSE(readSuccess);
+}
+
+TEST(YamlParserReadValueCheckedInt64, GivenIntegerThenParsesItCorrectly) {
+    ConstStringRef yaml = "positive : 9223372036854775807\nnegative : -9223372036854775807";
+    int64_t expectedInt64 = 9223372036854775807;
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    auto positiveNode = parser.getChild(*parser.getRoot(), "positive");
+    auto negativeNode = parser.getChild(*parser.getRoot(), "negative");
+    ASSERT_NE(positiveNode, nullptr);
+    ASSERT_NE(negativeNode, nullptr);
+    int64_t readPositive = 0;
+    int64_t readNegative = 0;
+    auto readSuccess = parser.readValueChecked<int64_t>(*positiveNode, readPositive);
+    EXPECT_TRUE(readSuccess);
+    EXPECT_EQ(expectedInt64, readPositive);
+    readSuccess = parser.readValueChecked<int64_t>(*negativeNode, readNegative);
+    EXPECT_TRUE(readSuccess);
+    EXPECT_EQ(-expectedInt64, readNegative);
+}
+
+TEST(YamlParserReadValueCheckedInt32, GivenIntegerThenParsesItCorrectly) {
+    ConstStringRef yaml = R"===( 
+positive64 : 9223372036854775807
+negative64 : -9223372036854775807
+positive32 : 2147483647
+negative32 : -2147483647
+)===";
+    int32_t expectedInt32 = 2147483647;
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    auto positive32Node = parser.getChild(*parser.getRoot(), "positive32");
+    auto negative32Node = parser.getChild(*parser.getRoot(), "negative32");
+    ASSERT_NE(positive32Node, nullptr);
+    ASSERT_NE(negative32Node, nullptr);
+    int32_t readPositive = 0;
+    int32_t readNegative = 0;
+    auto readSuccess = parser.readValueChecked<int32_t>(*positive32Node, readPositive);
+    EXPECT_TRUE(readSuccess);
+    EXPECT_EQ(expectedInt32, readPositive);
+    readSuccess = parser.readValueChecked<int32_t>(*negative32Node, readNegative);
+    EXPECT_TRUE(readSuccess);
+    EXPECT_EQ(-expectedInt32, readNegative);
+
+    auto positive64Node = parser.getChild(*parser.getRoot(), "positive64");
+    auto negative64Node = parser.getChild(*parser.getRoot(), "negative64");
+    readSuccess = parser.readValueChecked<int32_t>(*positive64Node, readPositive);
+    EXPECT_FALSE(readSuccess);
+    readSuccess = parser.readValueChecked<int32_t>(*negative64Node, readNegative);
+    EXPECT_FALSE(readSuccess);
+}
+
+TEST(YamlParserReadValueCheckedInt16, GivenIntegerThenParsesItCorrectly) {
+    ConstStringRef yaml = R"===( 
+positive32 : 2147483647
+negative32 : -2147483647
+positive16 : 32767
+negative16 : -32767
+)===";
+    int16_t expectedInt16 = 32767;
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    auto positive16Node = parser.getChild(*parser.getRoot(), "positive16");
+    auto negative16Node = parser.getChild(*parser.getRoot(), "negative16");
+    ASSERT_NE(positive16Node, nullptr);
+    ASSERT_NE(negative16Node, nullptr);
+    int16_t readPositive = 0;
+    int16_t readNegative = 0;
+    auto readSuccess = parser.readValueChecked<int16_t>(*positive16Node, readPositive);
+    EXPECT_TRUE(readSuccess);
+    EXPECT_EQ(expectedInt16, readPositive);
+    readSuccess = parser.readValueChecked<int16_t>(*negative16Node, readNegative);
+    EXPECT_TRUE(readSuccess);
+    EXPECT_EQ(-expectedInt16, readNegative);
+
+    auto positive32Node = parser.getChild(*parser.getRoot(), "positive32");
+    auto negative32Node = parser.getChild(*parser.getRoot(), "negative32");
+    readSuccess = parser.readValueChecked<int16_t>(*positive32Node, readPositive);
+    EXPECT_FALSE(readSuccess);
+    readSuccess = parser.readValueChecked<int16_t>(*negative32Node, readNegative);
+    EXPECT_FALSE(readSuccess);
+}
+
+TEST(YamlParserReadValueCheckedInt8, GivenIntegerThenParsesItCorrectly) {
+    ConstStringRef yaml = R"===( 
+positive16 : 65530
+negative16 : -65530
+positive8 : 127
+negative8 : -127
+)===";
+    int8_t expectedInt8 = 127;
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    auto positive8Node = parser.getChild(*parser.getRoot(), "positive8");
+    auto negative8Node = parser.getChild(*parser.getRoot(), "negative8");
+    ASSERT_NE(positive8Node, nullptr);
+    ASSERT_NE(negative8Node, nullptr);
+    int8_t readPositive = 0;
+    int8_t readNegative = 0;
+    auto readSuccess = parser.readValueChecked<int8_t>(*positive8Node, readPositive);
+    EXPECT_TRUE(readSuccess);
+    EXPECT_EQ(expectedInt8, readPositive);
+    readSuccess = parser.readValueChecked<int8_t>(*negative8Node, readNegative);
+    EXPECT_TRUE(readSuccess);
+    EXPECT_EQ(-expectedInt8, readNegative);
+
+    auto positive16Node = parser.getChild(*parser.getRoot(), "positive16");
+    auto negative16Node = parser.getChild(*parser.getRoot(), "negative16");
+    readSuccess = parser.readValueChecked<int8_t>(*positive16Node, readPositive);
+    EXPECT_FALSE(readSuccess);
+    readSuccess = parser.readValueChecked<int8_t>(*negative16Node, readNegative);
     EXPECT_FALSE(readSuccess);
 }
 
 TEST(YamlParserReadValueCheckedUint64, GivenIntegerThenParsesItCorrectly) {
-    ConstStringRef yaml = "integer64 : 6294967295";
+    ConstStringRef yaml = "positive : 6294967295";
     uint64_t expectedUint64 = 6294967295;
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    auto positiveNode = parser.getChild(*parser.getRoot(), "positive");
+    ASSERT_NE(positiveNode, nullptr);
+    uint64_t readPositive = 0;
+    auto readSuccess = parser.readValueChecked<uint64_t>(*positiveNode, readPositive);
+    EXPECT_TRUE(readSuccess);
+    EXPECT_EQ(expectedUint64, readPositive);
+}
+
+TEST(YamlParserReadValueCheckedUint64, GivenNegativeIntegerThenFail) {
+    ConstStringRef yaml = "integer64 : -10";
     std::string parserErrors;
     std::string parserWarnings;
     NEO::Yaml::YamlParser parser;
@@ -2214,8 +2368,7 @@ TEST(YamlParserReadValueCheckedUint64, GivenIntegerThenParsesItCorrectly) {
     ASSERT_NE(int64Node, nullptr);
     uint64_t readUint64 = 0;
     auto readSuccess = parser.readValueChecked<uint64_t>(*int64Node, readUint64);
-    EXPECT_TRUE(readSuccess);
-    EXPECT_EQ(expectedUint64, readUint64);
+    EXPECT_FALSE(readSuccess);
 }
 
 TEST(YamlParserReadValueCheckedUint32, GivenIntegerThenParsesItCorrectly) {
@@ -2244,6 +2397,20 @@ integer32 : 294967295
     EXPECT_EQ(expectedUint32, readUint32);
 }
 
+TEST(YamlParserReadValueCheckedUint32, GivenNegativeIntegerThenFail) {
+    ConstStringRef yaml = "integer32 : -10";
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    auto int32Node = parser.getChild(*parser.getRoot(), "integer32");
+    ASSERT_NE(int32Node, nullptr);
+    uint32_t readUint32 = 0;
+    auto readSuccess = parser.readValueChecked<uint32_t>(*int32Node, readUint32);
+    EXPECT_FALSE(readSuccess);
+}
+
 TEST(YamlParserReadValueCheckedUint16, GivenIntegerThenParsesItCorrectly) {
     ConstStringRef yaml = R"===( 
 integer32 : 294967295
@@ -2270,6 +2437,20 @@ integer16 : 65530
     EXPECT_EQ(expectedUint16, readUint16);
 }
 
+TEST(YamlParserReadValueCheckedUint16, GivenNegativeIntegerThenFail) {
+    ConstStringRef yaml = "integer16 : -10";
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    auto int16Node = parser.getChild(*parser.getRoot(), "integer16");
+    ASSERT_NE(int16Node, nullptr);
+    uint16_t readUint16 = 0;
+    auto readSuccess = parser.readValueChecked<uint16_t>(*int16Node, readUint16);
+    EXPECT_FALSE(readSuccess);
+}
+
 TEST(YamlParserReadValueCheckedUint8, GivenIntegerThenParsesItCorrectly) {
     ConstStringRef yaml = R"===( 
 integer16 : 65530
@@ -2294,6 +2475,20 @@ integer8 : 250
     readSuccess = parser.readValueChecked<uint8_t>(*int8Node, readUint8);
     EXPECT_TRUE(readSuccess);
     EXPECT_EQ(expectedUint8, readUint8);
+}
+
+TEST(YamlParserReadValueCheckedUint8, GivenNegativeIntegerThenFail) {
+    ConstStringRef yaml = "integer8 : -10";
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    EXPECT_TRUE(success);
+    auto int8Node = parser.getChild(*parser.getRoot(), "integer8");
+    ASSERT_NE(int8Node, nullptr);
+    uint8_t readUint8 = 0;
+    auto readSuccess = parser.readValueChecked<uint8_t>(*int8Node, readUint8);
+    EXPECT_FALSE(readSuccess);
 }
 
 TEST(YamlParserReadValueCheckedBool, GivenFlagsThenParsesThemCorrectly) {

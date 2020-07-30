@@ -74,6 +74,20 @@ TEST(ConstStringRef, WhenComparingAgainstContainersThenUsesLexicographicOrdering
     std::string strTex("Tex");
     EXPECT_TRUE(strTex != constStrText);
     EXPECT_TRUE(constStrText != strTex);
+
+    EXPECT_TRUE(ConstStringRef("Text") == "Text");
+    EXPECT_TRUE("Text" == ConstStringRef("Text"));
+    EXPECT_FALSE(ConstStringRef("Tex") == "Text");
+    EXPECT_FALSE("Text" == ConstStringRef("Tex"));
+    EXPECT_FALSE(ConstStringRef("Tex") == "Text");
+    EXPECT_FALSE("Text" == ConstStringRef("Tex"));
+
+    EXPECT_FALSE(ConstStringRef("Text") != "Text");
+    EXPECT_FALSE("Text" != ConstStringRef("Text"));
+    EXPECT_TRUE(ConstStringRef("Tex") != "Text");
+    EXPECT_TRUE("Text" != ConstStringRef("Tex"));
+    EXPECT_TRUE(ConstStringRef("Tex") != "Text");
+    EXPECT_TRUE("Text" != ConstStringRef("Tex"));
 }
 
 TEST(ConstStringRef, WhenStrIsCalledThenEmitsProperString) {
@@ -188,4 +202,17 @@ TEST(ConstStringRefEqualsCaseInsesitive, WhenStringsIdenticalThenReturnTrue) {
 
 TEST(ConstStringRefEqualsCaseInsesitive, WhenStringsDifferOnlyByCaseThenReturnTrue) {
     EXPECT_TRUE(equalsCaseInsesitive(ConstStringRef("aBc"), ConstStringRef("Abc")));
+}
+
+TEST(ConstStringStartsWith, GivenRightPrefixThenReturnsTrue) {
+    ConstStringRef str = "some text";
+    EXPECT_TRUE(str.startsWith("some"));
+    EXPECT_TRUE(str.startsWith("some text"));
+}
+
+TEST(ConstStringStartsWith, GivenInvalidPrefixThenReturnsFalse) {
+    ConstStringRef str = "some text";
+    EXPECT_FALSE(str.startsWith("ome"));
+    EXPECT_FALSE(str.startsWith("some text "));
+    EXPECT_FALSE(str.startsWith("substr some text"));
 }

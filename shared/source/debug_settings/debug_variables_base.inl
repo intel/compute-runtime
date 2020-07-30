@@ -72,6 +72,8 @@ DECLARE_DEBUG_VARIABLE(bool, OverrideInvalidEngineWithDefault, false, "When set 
 DECLARE_DEBUG_VARIABLE(bool, ForceImplicitFlush, false, "Flush after each enqueue. Useful for debugging batched submission logic. ")
 DECLARE_DEBUG_VARIABLE(bool, ForcePipeControlPriorToWalker, false, "Allows to force pipe contron prior to walker.")
 DECLARE_DEBUG_VARIABLE(bool, UseLegacyLevelZeroAffinity, true, "Use Level Zero affinity mask as bit set, as defined in v0.91 specification")
+DECLARE_DEBUG_VARIABLE(bool, ZebinAppendElws, false, "Append crossthread data with enqueue local work size")
+DECLARE_DEBUG_VARIABLE(bool, ZebinIgnoreIcbeVersion, false, "Ignore IGC\'s ICBE version")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, PrintDeviceAndEngineIdOnSubmission, false, "print submissions device and engine IDs to standard output")

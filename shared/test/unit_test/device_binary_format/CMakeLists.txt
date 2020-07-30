@@ -13,11 +13,14 @@ target_sources(${TARGET_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_ar_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_ocl_elf_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_patchtokens_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_zebin_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_formats_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_dumper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_validator_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/zebin_decoder_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/zebin_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/yaml/yaml_parser_tests.cpp
 )
 
