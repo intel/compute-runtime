@@ -37,7 +37,9 @@ DebugSettingsManager<DebugLevel>::DebugSettingsManager(const char *registryPath)
 }
 
 template <DebugFunctionalityLevel DebugLevel>
-DebugSettingsManager<DebugLevel>::~DebugSettingsManager() = default;
+DebugSettingsManager<DebugLevel>::~DebugSettingsManager() {
+    readerImpl.reset();
+};
 
 template <DebugFunctionalityLevel DebugLevel>
 void DebugSettingsManager<DebugLevel>::getHardwareInfoOverride(std::string &hwInfoConfig) {
