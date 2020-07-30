@@ -7,10 +7,12 @@
 
 #include "shared/test/unit_test/mocks/mock_device.h"
 
+#include "opencl/source/program/kernel_info.h"
 #include "test.h"
 
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
+#include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/source/sampler/sampler_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -200,23 +202,34 @@ HWTEST2_F(SetKernelArg, givenBufferArgumentWhichHasNotBeenAllocatedByRuntimeThen
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 }
 
-using KernelPropertiesTest = Test<ModuleFixture>;
+class KernelPropertiesTests : public ModuleFixture, public ::testing::Test {
+  public:
+    void SetUp() override {
+        ModuleFixture::SetUp();
 
-HWTEST_F(KernelPropertiesTest, givenKernelThenCorrectNameIsRetrieved) {
+        ze_kernel_desc_t kernelDesc = {};
+        kernelDesc.version = ZE_KERNEL_DESC_VERSION_CURRENT;
+        kernelDesc.flags = ZE_KERNEL_FLAG_NONE;
+        kernelDesc.pKernelName = kernelName.c_str();
+
+        ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        kernel = L0::Kernel::fromHandle(kernelHandle);
+    }
+
+    void TearDown() override {
+        Kernel::fromHandle(kernelHandle)->destroy();
+        ModuleFixture::TearDown();
+    }
+
     ze_kernel_handle_t kernelHandle;
+    L0::Kernel *kernel = nullptr;
+};
 
-    ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.version = ZE_KERNEL_DESC_VERSION_CURRENT;
-    kernelDesc.flags = ZE_KERNEL_FLAG_NONE;
-    kernelDesc.pKernelName = kernelName.c_str();
-
-    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    auto kernel = L0::Kernel::fromHandle(kernelHandle);
-
+HWTEST_F(KernelPropertiesTests, givenKernelThenCorrectNameIsRetrieved) {
     size_t kernelSize = 0;
-    res = kernel->getKernelName(&kernelSize, nullptr);
+    ze_result_t res = kernel->getKernelName(&kernelSize, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(kernelSize, kernelName.length() + 1);
 
@@ -232,22 +245,24 @@ HWTEST_F(KernelPropertiesTest, givenKernelThenCorrectNameIsRetrieved) {
     EXPECT_EQ(0, strncmp(kernelName.c_str(), kernelNameRetrieved, kernelSize));
 
     delete[] kernelNameRetrieved;
-    Kernel::fromHandle(kernelHandle)->destroy();
 }
 
-HWTEST_F(KernelPropertiesTest, givenKernelThenPropertiesAreRetrieved) {
-    ze_kernel_handle_t kernelHandle;
+HWTEST_F(KernelPropertiesTests, givenInvalidKernelThenUnitializedIsReturned) {
+    ze_kernel_propertiesExt_t kernelProperties = {};
 
-    ze_kernel_desc_t kernelDesc = {};
-    kernelDesc.version = ZE_KERNEL_DESC_VERSION_CURRENT;
-    kernelDesc.flags = ZE_KERNEL_FLAG_NONE;
-    kernelDesc.pKernelName = kernelName.c_str();
+    std::vector<KernelInfo *> prevKernelInfos;
+    L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module.get());
+    moduleImp->getTranslationUnit()->programInfo.kernelInfos.swap(prevKernelInfos);
+    EXPECT_EQ(0u, moduleImp->getTranslationUnit()->programInfo.kernelInfos.size());
 
-    ze_result_t res = module->createKernel(&kernelDesc, &kernelHandle);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ze_result_t res = kernel->getPropertiesExt(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, res);
 
-    auto kernel = L0::Kernel::fromHandle(kernelHandle);
+    prevKernelInfos.swap(moduleImp->getTranslationUnit()->programInfo.kernelInfos);
+    EXPECT_NE(0u, moduleImp->getTranslationUnit()->programInfo.kernelInfos.size());
+}
 
+HWTEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
     ze_kernel_propertiesExt_t kernelProperties = {};
 
     kernelProperties.requiredNumSubGroups = std::numeric_limits<uint32_t>::max();
@@ -266,19 +281,47 @@ HWTEST_F(KernelPropertiesTest, givenKernelThenPropertiesAreRetrieved) {
     ze_kernel_propertiesExt_t kernelPropertiesBefore = {};
     kernelPropertiesBefore = kernelProperties;
 
-    kernel->getPropertiesExt(&kernelProperties);
+    ze_result_t res = kernel->getPropertiesExt(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     EXPECT_EQ(0, strncmp(kernelName.c_str(), kernelProperties.name,
                          sizeof(kernelProperties.name)));
     EXPECT_EQ(numKernelArguments, kernelProperties.numKernelArgs);
 
-    EXPECT_EQ(0u, kernelProperties.requiredNumSubGroups);
-    EXPECT_EQ(0u, kernelProperties.requiredSubgroupSize);
-    EXPECT_EQ(0u, kernelProperties.maxSubgroupSize);
-    EXPECT_EQ(0u, kernelProperties.maxNumSubgroups);
-    EXPECT_EQ(0u, kernelProperties.localMemSize);
-    EXPECT_EQ(0u, kernelProperties.privateMemSize);
-    EXPECT_EQ(0u, kernelProperties.spillMemSize);
+    L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module.get());
+    NEO::KernelInfo *ki = nullptr;
+    for (uint32_t i = 0; i < moduleImp->getTranslationUnit()->programInfo.kernelInfos.size(); i++) {
+        ki = moduleImp->getTranslationUnit()->programInfo.kernelInfos[i];
+        if (ki->name.compare(0, ki->name.size(), kernel->getImmutableData()->getDescriptor().kernelMetadata.kernelName) == 0) {
+            break;
+        }
+    }
+
+    uint32_t requiredNumSubGroups = static_cast<uint32_t>(ki->patchInfo.executionEnvironment->CompiledSubGroupsNumber);
+    EXPECT_EQ(requiredNumSubGroups, kernelProperties.requiredNumSubGroups);
+
+    uint32_t requiredSubgroupSize = static_cast<uint32_t>(ki->requiredSubGroupSize);
+    EXPECT_EQ(requiredSubgroupSize, kernelProperties.requiredSubgroupSize);
+
+    uint32_t maxSubgroupSize = ki->getMaxSimdSize();
+    EXPECT_EQ(maxSubgroupSize, kernelProperties.maxSubgroupSize);
+
+    uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getDevice()->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
+    uint32_t maxRequiredWorkGroupSize = static_cast<uint32_t>(ki->getMaxRequiredWorkGroupSize(maxKernelWorkGroupSize));
+    uint32_t largestCompiledSIMDSize = static_cast<uint32_t>(ki->patchInfo.executionEnvironment->LargestCompiledSIMDSize);
+    uint32_t maxNumSubgroups = static_cast<uint32_t>(Math::divideAndRoundUp(maxRequiredWorkGroupSize, largestCompiledSIMDSize));
+    EXPECT_EQ(maxNumSubgroups, kernelProperties.maxNumSubgroups);
+
+    uint32_t localMemSize = static_cast<uint32_t>(moduleImp->getDevice()->getNEODevice()->getDeviceInfo().localMemSize);
+    EXPECT_EQ(localMemSize, kernelProperties.localMemSize);
+
+    uint32_t privateMemSize = ki->patchInfo.pAllocateStatelessPrivateSurface ? ki->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize
+                                                                             : 0;
+    EXPECT_EQ(privateMemSize, kernelProperties.privateMemSize);
+
+    uint32_t spillMemSize = ki->patchInfo.mediavfestate ? ki->patchInfo.mediavfestate->PerThreadScratchSpace
+                                                        : 0;
+    EXPECT_EQ(spillMemSize, kernelProperties.spillMemSize);
 
     uint8_t zeroKid[ZE_MAX_KERNEL_UUID_SIZE];
     uint8_t zeroMid[ZE_MAX_MODULE_UUID_SIZE];
@@ -288,11 +331,59 @@ HWTEST_F(KernelPropertiesTest, givenKernelThenPropertiesAreRetrieved) {
                         sizeof(kernelProperties.uuid.kid)));
     EXPECT_EQ(0, memcmp(&kernelProperties.uuid.mid, &zeroMid,
                         sizeof(kernelProperties.uuid.mid)));
-
-    Kernel::fromHandle(kernelHandle)->destroy();
 }
 
-HWTEST_F(KernelPropertiesTest, WhenKernelIsCreatedThenDefaultLocalIdGenerationbyRuntimeIsTrue) {
+HWTEST_F(KernelPropertiesTests, givenValidKernelAndNoMediavfestateThenSpillMemSizeIsZero) {
+    ze_kernel_propertiesExt_t kernelProperties = {};
+
+    kernelProperties.spillMemSize = std::numeric_limits<uint32_t>::max();
+
+    ze_kernel_propertiesExt_t kernelPropertiesBefore = {};
+    kernelPropertiesBefore = kernelProperties;
+
+    ze_result_t res = kernel->getPropertiesExt(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module.get());
+    NEO::KernelInfo *ki = nullptr;
+    for (uint32_t i = 0; i < moduleImp->getTranslationUnit()->programInfo.kernelInfos.size(); i++) {
+        ki = moduleImp->getTranslationUnit()->programInfo.kernelInfos[i];
+        if (ki->name.compare(0, ki->name.size(), kernel->getImmutableData()->getDescriptor().kernelMetadata.kernelName) == 0) {
+            break;
+        }
+    }
+
+    ki->patchInfo.mediavfestate = nullptr;
+    EXPECT_EQ(0u, kernelProperties.spillMemSize);
+}
+
+HWTEST_F(KernelPropertiesTests, givenValidKernelAndNollocateStatelessPrivateSurfaceThenPrivateMemSizeIsZero) {
+    ze_kernel_propertiesExt_t kernelProperties = {};
+
+    kernelProperties.spillMemSize = std::numeric_limits<uint32_t>::max();
+
+    ze_kernel_propertiesExt_t kernelPropertiesBefore = {};
+    kernelPropertiesBefore = kernelProperties;
+
+    ze_result_t res = kernel->getPropertiesExt(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    L0::ModuleImp *moduleImp = reinterpret_cast<L0::ModuleImp *>(module.get());
+    NEO::KernelInfo *ki = nullptr;
+    for (uint32_t i = 0; i < moduleImp->getTranslationUnit()->programInfo.kernelInfos.size(); i++) {
+        ki = moduleImp->getTranslationUnit()->programInfo.kernelInfos[i];
+        if (ki->name.compare(0, ki->name.size(), kernel->getImmutableData()->getDescriptor().kernelMetadata.kernelName) == 0) {
+            break;
+        }
+    }
+
+    ki->patchInfo.pAllocateStatelessPrivateSurface = nullptr;
+    EXPECT_EQ(0u, kernelProperties.privateMemSize);
+}
+
+using KernelLocalIdsTest = Test<ModuleFixture>;
+
+HWTEST_F(KernelLocalIdsTest, WhenKernelIsCreatedThenDefaultLocalIdGenerationbyRuntimeIsTrue) {
     createKernel();
 
     EXPECT_TRUE(kernel->requiresGenerationOfLocalIdsByRuntime());

@@ -592,13 +592,33 @@ ze_result_t KernelImp::getPropertiesExt(ze_kernel_propertiesExt_t *pKernelProper
     pKernelProperties->numKernelArgs =
         static_cast<uint32_t>(this->kernelImmData->getDescriptor().payloadMappings.explicitArgs.size());
 
-    pKernelProperties->requiredNumSubGroups = 0;
-    pKernelProperties->requiredSubgroupSize = 0;
-    pKernelProperties->maxSubgroupSize = 0;
-    pKernelProperties->maxNumSubgroups = 0;
-    pKernelProperties->localMemSize = 0;
-    pKernelProperties->privateMemSize = 0;
-    pKernelProperties->spillMemSize = 0;
+    ModuleImp *moduleImp = reinterpret_cast<ModuleImp *>(this->module);
+    NEO::KernelInfo *ki = nullptr;
+    for (uint32_t i = 0; i < moduleImp->getTranslationUnit()->programInfo.kernelInfos.size(); i++) {
+        ki = moduleImp->getTranslationUnit()->programInfo.kernelInfos[i];
+        if (ki->name.compare(0, ki->name.size(), this->kernelImmData->getDescriptor().kernelMetadata.kernelName) == 0) {
+            break;
+        }
+    }
+
+    if (nullptr == ki) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    pKernelProperties->requiredNumSubGroups = static_cast<uint32_t>(ki->patchInfo.executionEnvironment->CompiledSubGroupsNumber);
+    pKernelProperties->requiredSubgroupSize = static_cast<uint32_t>(ki->requiredSubGroupSize);
+    pKernelProperties->maxSubgroupSize = ki->getMaxSimdSize();
+
+    uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getDevice()->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
+    uint32_t maxRequiredWorkGroupSize = static_cast<uint32_t>(ki->getMaxRequiredWorkGroupSize(maxKernelWorkGroupSize));
+    uint32_t largestCompiledSIMDSize = static_cast<uint32_t>(ki->patchInfo.executionEnvironment->LargestCompiledSIMDSize);
+    pKernelProperties->maxNumSubgroups = static_cast<uint32_t>(Math::divideAndRoundUp(maxRequiredWorkGroupSize, largestCompiledSIMDSize));
+
+    pKernelProperties->localMemSize = static_cast<uint32_t>(moduleImp->getDevice()->getNEODevice()->getDeviceInfo().localMemSize);
+    pKernelProperties->privateMemSize = ki->patchInfo.pAllocateStatelessPrivateSurface ? ki->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize
+                                                                                       : 0;
+    pKernelProperties->spillMemSize = ki->patchInfo.mediavfestate ? ki->patchInfo.mediavfestate->PerThreadScratchSpace
+                                                                  : 0;
     memset(pKernelProperties->uuid.kid, 0, ZE_MAX_KERNEL_UUID_SIZE);
     memset(pKernelProperties->uuid.mid, 0, ZE_MAX_MODULE_UUID_SIZE);
 

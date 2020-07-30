@@ -103,6 +103,10 @@ struct ModuleImp : public Module {
 
     bool isDebugEnabled() const override;
 
+    ModuleTranslationUnit *getTranslationUnit() {
+        return this->translationUnit.get();
+    }
+
   protected:
     void verifyDebugCapabilities();
     Device *device = nullptr;
