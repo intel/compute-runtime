@@ -43,7 +43,7 @@ class TestSettingsFileReader : public SettingsFileReader {
 const char *TestSettingsFileReader::testPath = "./test_files/igdrcl.config";
 const char *TestSettingsFileReader::stringTestPath = "./test_files/igdrcl_string.config";
 
-TEST(SettingsFileReader, CreateFileReaderWithoutFile) {
+TEST(SettingsFileReader, GivenFilesDoesNotExistWhenCreatingFileReaderThenCreationSucceeds) {
     bool settingsFileExists = fileExists(SettingsReader::settingsFileName);
 
     // if settings file exists, remove it
@@ -58,7 +58,7 @@ TEST(SettingsFileReader, CreateFileReaderWithoutFile) {
     EXPECT_EQ(0u, reader->getStringSettingsCount());
 }
 
-TEST(SettingsFileReader, GetStringSettingFromFile) {
+TEST(SettingsFileReader, WhenGettingSettingThenCorrectStringValueIsReturned) {
     // Use test settings file
     auto reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::stringTestPath);
     ASSERT_NE(nullptr, reader);
@@ -97,7 +97,7 @@ TEST(SettingsFileReader, givenDebugFileSettingInWhichStringIsFollowedByIntegerWh
     EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
 }
 
-TEST(SettingsFileReader, GetSettingWhenNotInFile) {
+TEST(SettingsFileReader, GivenSettingNotInFileWhenGettingSettingThenProvidedDefaultIsReturned) {
 
     // Use test settings file
     auto reader = std::make_unique<TestSettingsFileReader>(TestSettingsFileReader::testPath);
@@ -119,7 +119,7 @@ TEST(SettingsFileReader, GetSettingWhenNotInFile) {
     EXPECT_EQ(defaultStringValue, returnedStringValue);
 }
 
-TEST(SettingsFileReader, appSpecificLocation) {
+TEST(SettingsFileReader, WhenGettingAppSpecificLocationTheCorrectLocationIsReturned) {
     std::unique_ptr<TestSettingsFileReader> reader(new TestSettingsFileReader(TestSettingsFileReader::testPath));
     std::string appSpecific = "cl_cache_dir";
     EXPECT_EQ(appSpecific, reader->appSpecificLocation(appSpecific));
