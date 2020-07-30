@@ -116,7 +116,7 @@ using TglLpUsDeviceIdTest = Test<ClDeviceFixture>;
 
 HWTEST2_F(TglLpUsDeviceIdTest, isSimulationCap, IsTGLLP) {
     unsigned short tglLpSimulationIds[2] = {
-        IGEN12LP_GT1_MOB_DEVICE_F0_ID,
+        DEV_ID_FF20,
         0, // default, non-simulation
     };
     NEO::MockDevice *mockDevice = nullptr;
