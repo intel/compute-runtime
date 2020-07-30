@@ -19,9 +19,7 @@ uint32_t mockVfptrinfCalled = 0;
 uint32_t mockFcloseCalled = 0;
 uint32_t mockGetenvCalled = 0;
 
-bool returnMockEnvValue = false;
-std::string mockEnvValue = "1";
-std::set<std::string> notMockableEnvValues = {""};
+std::unordered_map<std::string, std::string> *mockableEnvValues = nullptr;
 
 } // namespace IoFunctions
 } // namespace NEO

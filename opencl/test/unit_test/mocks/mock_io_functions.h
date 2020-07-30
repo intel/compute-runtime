@@ -9,8 +9,8 @@
 #include "shared/source/utilities/io_functions.h"
 
 #include <cstdint>
-#include <set>
 #include <string>
+#include <unordered_map>
 
 namespace NEO {
 namespace IoFunctions {
@@ -19,9 +19,7 @@ extern uint32_t mockVfptrinfCalled;
 extern uint32_t mockFcloseCalled;
 extern uint32_t mockGetenvCalled;
 
-extern bool returnMockEnvValue;
-extern std::string mockEnvValue;
-extern std::set<std::string> notMockableEnvValues;
+extern std::unordered_map<std::string, std::string> *mockableEnvValues;
 
 inline FILE *mockFopen(const char *filename, const char *mode) {
     mockFopenCalled++;
@@ -40,10 +38,8 @@ inline int mockFclose(FILE *stream) {
 
 inline char *mockGetenv(const char *name) noexcept {
     mockGetenvCalled++;
-    if (notMockableEnvValues.find(name) == notMockableEnvValues.end()) {
-        if (returnMockEnvValue) {
-            return const_cast<char *>(mockEnvValue.c_str());
-        }
+    if (mockableEnvValues != nullptr && mockableEnvValues->find(name) != mockableEnvValues->end()) {
+        return const_cast<char *>(mockableEnvValues->find(name)->second.c_str());
     }
     return getenv(name);
 }
