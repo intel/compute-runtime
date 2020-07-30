@@ -6,17 +6,10 @@
  */
 
 #pragma once
-#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/engine/linux/os_engine_imp.h"
 
 #include "sysman/engine/engine_imp.h"
-#include "sysman/engine/os_engine.h"
 #include "sysman/linux/fs_access.h"
-
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
 
 using ::testing::_;
 
@@ -29,11 +22,20 @@ class EngineSysfsAccess : public SysfsAccess {};
 
 template <>
 struct Mock<EngineSysfsAccess> : public EngineSysfsAccess {
-    MOCK_METHOD2(read, ze_result_t(const std::string file, std::string &val));
+    MOCK_METHOD(ze_result_t, read, (const std::string file, std::string &val), (override));
 
     ze_result_t getVal(const std::string file, std::string &val) {
         if (file.compare(computeEngineGroupFile) == 0) {
             val = "rcs0";
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+    ze_result_t getValReturnError(const std::string file, std::string &val) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    ze_result_t getIncorrectVal(const std::string file, std::string &val) {
+        if (file.compare(computeEngineGroupFile) == 0) {
+            val = "";
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -47,7 +49,3 @@ class PublicLinuxEngineImp : public L0::LinuxEngineImp {
 };
 } // namespace ult
 } // namespace L0
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif

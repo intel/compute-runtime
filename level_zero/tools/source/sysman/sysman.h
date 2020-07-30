@@ -86,6 +86,7 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) = 0;
     virtual ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) = 0;
     virtual ze_result_t standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) = 0;
+    virtual ze_result_t engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) = 0;
     virtual ~SysmanDevice() = default;
 };
 

@@ -27,9 +27,11 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pFabricPortHandleContext = new FabricPortHandleContext(pOsSysman);
     pTempHandleContext = new TemperatureHandleContext(pOsSysman);
     pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
+    pEngineHandleContext = new EngineHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
+    freeResource(pEngineHandleContext);
     freeResource(pStandbyHandleContext);
     freeResource(pTempHandleContext);
     freeResource(pFabricPortHandleContext);
@@ -54,6 +56,9 @@ void SysmanDeviceImp::init() {
     }
     if (pStandbyHandleContext) {
         pStandbyHandleContext->init();
+    }
+    if (pEngineHandleContext) {
+        pEngineHandleContext->init();
     }
 }
 
@@ -224,6 +229,10 @@ ze_result_t SysmanDeviceImp::frequencyGet(uint32_t *pCount, zes_freq_handle_t *p
 }
 
 ze_result_t SysmanImp::engineGet(uint32_t *pCount, zet_sysman_engine_handle_t *phEngine) {
+    return pEngineHandleContext->engineGet(pCount, phEngine);
+}
+
+ze_result_t SysmanDeviceImp::engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) {
     return pEngineHandleContext->engineGet(pCount, phEngine);
 }
 

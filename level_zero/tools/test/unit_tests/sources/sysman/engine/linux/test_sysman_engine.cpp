@@ -60,11 +60,11 @@ class SysmanEngineFixture : public DeviceFixture, public ::testing::Test {
         ON_CALL(*pSysfsAccess, read(_, Matcher<std::string &>(_)))
             .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<EngineSysfsAccess>::getVal));
 
-        pEngineImp->init();
+        pEngineImp->init(ZET_ENGINE_GROUP_COMPUTE_ALL);
         sysmanImp->pEngineHandleContext->handleList.push_back(pEngineImp);
 
         hSysman = sysmanImp->toHandle();
-        hSysmanEngine = pEngineImp->toHandle();
+        hSysmanEngine = pEngineImp->toZetHandle();
     }
     void TearDown() override {
         //pOsEngine is static_cast of LinuxEngineImp class , hence in cleanup assign to nullptr
@@ -114,6 +114,13 @@ TEST_F(SysmanEngineFixture, GivenValidEngineHandleWhenCallingZetSysmanGetActivit
     ze_result_t result = zetSysmanEngineGetActivity(hSysmanEngine, &Stats);
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST_F(SysmanEngineFixture, GivenEngineGroupEmptyWhenGettingEngineGroupAndIfRetrievedEngineGroupNotComputeThenErrorReturned) {
+    zet_engine_group_t engineGroup;
+    ON_CALL(*pSysfsAccess, read(_, Matcher<std::string &>(_)))
+        .WillByDefault(::testing::Invoke(pSysfsAccess, &Mock<EngineSysfsAccess>::getIncorrectVal));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, pEngineImp->pOsEngine->getEngineGroup(engineGroup));
 }
 
 } // namespace ult

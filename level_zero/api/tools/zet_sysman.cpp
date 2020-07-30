@@ -600,7 +600,7 @@ zesDeviceEnumEngineGroups(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_engine_handle_t *phEngine) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->engineGet(pCount, phEngine);
 }
 
 __zedllexport ze_result_t __zecall
@@ -615,7 +615,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesEngineGetProperties(
     zes_engine_handle_t hEngine,
     zes_engine_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Engine::fromHandle(hEngine)->engineGetProperties(pProperties);
 }
 
 __zedllexport ze_result_t __zecall
@@ -629,7 +629,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesEngineGetActivity(
     zes_engine_handle_t hEngine,
     zes_engine_stats_t *pStats) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Engine::fromHandle(hEngine)->engineGetActivity(pStats);
 }
 
 __zedllexport ze_result_t __zecall

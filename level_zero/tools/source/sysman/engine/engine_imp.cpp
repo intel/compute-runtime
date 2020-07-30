@@ -9,44 +9,64 @@
 
 #include "level_zero/core/source/device/device.h"
 
-#include <chrono>
-
 namespace L0 {
 
-void engineGetTimestamp(uint64_t &timestamp) {
-    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
-    timestamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
-}
 ze_result_t EngineImp::engineGetActivity(zet_engine_stats_t *pStats) {
-
-    ze_result_t result;
-
-    result = pOsEngine->getActiveTime(pStats->activeTime);
-
-    engineGetTimestamp(pStats->timestamp);
-
-    return result;
+    ze_result_t result = pOsEngine->getActiveTime(pStats->activeTime);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    return pOsEngine->getTimeStamp(pStats->timestamp);
 }
 
-void EngineImp::init() {
-    zet_engine_group_t engineGroup = ZET_ENGINE_GROUP_ALL;
-    if (pOsEngine->getEngineGroup(engineGroup) == ZE_RESULT_SUCCESS) {
+ze_result_t EngineImp::engineGetActivity(zes_engine_stats_t *pStats) {
+    ze_result_t result = pOsEngine->getActiveTime(pStats->activeTime);
+    if (result != ZE_RESULT_SUCCESS) {
+        return result;
+    }
+    return pOsEngine->getTimeStamp(pStats->timestamp);
+}
+
+ze_result_t EngineImp::engineGetProperties(zet_engine_properties_t *pProperties) {
+    *pProperties = zetEngineProperties;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t EngineImp::engineGetProperties(zes_engine_properties_t *pProperties) {
+    *pProperties = engineProperties;
+    return ZE_RESULT_SUCCESS;
+}
+
+void EngineImp::init(zet_engine_group_t type) {
+    if (pOsEngine->getEngineGroup(type) == ZE_RESULT_SUCCESS) {
         this->initSuccess = true;
     } else {
         this->initSuccess = false;
     }
-    engineProperties.type = engineGroup;
+    zetEngineProperties.type = type;
+    zetEngineProperties.onSubdevice = false;
+    zetEngineProperties.subdeviceId = 0;
+}
+
+void EngineImp::init(zes_engine_group_t type) {
+    if (pOsEngine->getEngineGroup(type) == ZE_RESULT_SUCCESS) {
+        this->initSuccess = true;
+    } else {
+        this->initSuccess = false;
+    }
+    engineProperties.type = type;
     engineProperties.onSubdevice = false;
     engineProperties.subdeviceId = 0;
 }
-ze_result_t EngineImp::engineGetProperties(zet_engine_properties_t *pProperties) {
-    *pProperties = engineProperties;
-    return ZE_RESULT_SUCCESS;
-}
-EngineImp::EngineImp(OsSysman *pOsSysman) {
-    pOsEngine = OsEngine::create(pOsSysman);
 
-    init();
+EngineImp::EngineImp(OsSysman *pOsSysman, zet_engine_group_t type) {
+    pOsEngine = OsEngine::create(pOsSysman);
+    init(type);
+}
+
+EngineImp::EngineImp(OsSysman *pOsSysman, zes_engine_group_t type) {
+    pOsEngine = OsEngine::create(pOsSysman);
+    init(type);
 }
 
 EngineImp::~EngineImp() {
