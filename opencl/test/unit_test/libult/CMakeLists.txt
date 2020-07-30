@@ -8,11 +8,20 @@ macro(macro_for_each_gen)
   list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/libult/${GEN_TYPE_LOWER}.cpp
-    ${NEO_SHARED_DIRECTORY}/${GEN_TYPE_LOWER}/enable_hw_info_config_${GEN_TYPE_LOWER}.cpp
-    ${NEO_SHARED_DIRECTORY}/${GEN_TYPE_LOWER}/enable_${GEN_TYPE_LOWER}.cpp
     ${NEO_SHARED_DIRECTORY}/${GEN_TYPE_LOWER}/enable_family_full_core_${GEN_TYPE_LOWER}.cpp
     ${NEO_SOURCE_DIR}/opencl/source/${GEN_TYPE_LOWER}/enable_family_full_ocl_${GEN_TYPE_LOWER}.cpp
   )
+
+  foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
+    string(REGEX REPLACE "/$" "" _BRANCH_FILENAME_SUFFIX "${BRANCH_DIR}")
+    string(REGEX REPLACE "^/" "_" _BRANCH_FILENAME_SUFFIX "${_BRANCH_FILENAME_SUFFIX}")
+    foreach(SRC_IT "enable_hw_info_config_" "enable_")
+      set(SRC_FILE ${NEO_SHARED_DIRECTORY}/${GEN_TYPE_LOWER}${BRANCH_DIR}${SRC_IT}${GEN_TYPE_LOWER}${_BRANCH_FILENAME_SUFFIX}.cpp)
+      if(EXISTS ${SRC_FILE})
+        list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
+      endif()
+     endforeach()
+  endforeach()
 
   if(EXISTS "${NEO_SHARED_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
     list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW "${NEO_SHARED_TEST_DIRECTORY}/unit_test/${GEN_TYPE_LOWER}/cmd_parse${BRANCH_DIR_SUFFIX}/cmd_parse_${GEN_TYPE_LOWER}.inl")
