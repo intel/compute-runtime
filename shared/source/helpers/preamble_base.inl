@@ -9,13 +9,13 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 
+#include "hw_cmds.h"
 #include "reg_configs_common.h"
 
 #include <cstddef>

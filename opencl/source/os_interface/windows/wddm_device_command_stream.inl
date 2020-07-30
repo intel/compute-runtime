@@ -16,13 +16,14 @@
 #include "shared/source/direct_submission/windows/wddm_direct_submission.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/flush_stamp.h"
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 
 #include "opencl/source/os_interface/windows/wddm_device_command_stream.h"
+
+#include "hw_cmds.h"
 #pragma warning(pop)
 
 #include "shared/source/os_interface/windows/gdi_interface.h"

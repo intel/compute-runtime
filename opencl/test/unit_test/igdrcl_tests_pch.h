@@ -10,7 +10,6 @@
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -19,6 +18,7 @@
 
 #include "test.h"
 
+#include "hw_cmds.h"
 #include "third_party/opencl_headers/CL/cl.h"
 
 #include <algorithm>

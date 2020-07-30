@@ -8,7 +8,6 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_interface.inl"
 #include "shared/source/helpers/file_io.h"
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/test_files.h"
@@ -20,6 +19,7 @@
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
 
 #include "gmock/gmock.h"
+#include "hw_cmds.h"
 
 #include <memory>
 

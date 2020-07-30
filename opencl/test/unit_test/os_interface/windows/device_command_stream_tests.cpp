@@ -12,7 +12,6 @@
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/direct_submission/windows/wddm_direct_submission.h"
 #include "shared/source/helpers/flush_stamp.h"
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -49,6 +48,8 @@
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_memory_manager.h"
 #include "opencl/test/unit_test/os_interface/windows/wddm_fixture.h"
 #include "test.h"
+
+#include "hw_cmds.h"
 
 using namespace NEO;
 using namespace ::testing;

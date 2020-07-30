@@ -7,9 +7,10 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/hw_cmds.h"
 
 #include "level_zero/core/source/debugger/debugger_l0.h"
+
+#include "hw_cmds.h"
 
 namespace L0 {
 

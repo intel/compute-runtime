@@ -6,10 +6,10 @@
  */
 
 #pragma once
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include "gtest/gtest.h"
+#include "hw_cmds.h"
 #include "igfxfmid.h"
 #include "test_mode.h"
 

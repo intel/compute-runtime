@@ -7,7 +7,6 @@
 
 #include "opencl/test/unit_test/scheduler/scheduler_source_tests.h"
 
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 
 #include "opencl/source/device_queue/device_queue_hw.h"
@@ -17,6 +16,7 @@
 #include "test.h"
 
 #include "gtest/gtest.h"
+#include "hw_cmds.h"
 // Keep this include after execution_model_fixture.h otherwise there is high chance of conflict with macros
 #include "opencl/source/builtin_kernels_simulation/opencl_c.h"
 #include "opencl/source/builtin_kernels_simulation/scheduler_simulation.h"

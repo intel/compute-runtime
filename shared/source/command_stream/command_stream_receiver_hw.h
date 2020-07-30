@@ -12,8 +12,9 @@
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/dirty_state_helpers.h"
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/hw_info.h"
+
+#include "hw_cmds.h"
 
 namespace NEO {
 template <typename GfxFamily>

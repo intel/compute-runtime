@@ -8,7 +8,6 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
@@ -19,6 +18,8 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "test.h"
+
+#include "hw_cmds.h"
 
 using namespace NEO;
 

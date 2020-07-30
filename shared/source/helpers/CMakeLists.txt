@@ -44,7 +44,6 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/hash.h
   ${CMAKE_CURRENT_SOURCE_DIR}/heap_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/heap_helper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/hw_cmds.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_base.inl
@@ -84,6 +83,7 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/timestamp_packet_extra.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/vec.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/definitions/${BRANCH_DIR_SUFFIX}/hw_cmds.h
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions/pipe_control_args_base.h
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/pipe_control_args.h
 )

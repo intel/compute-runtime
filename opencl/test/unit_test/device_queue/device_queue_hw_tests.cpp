@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
@@ -18,6 +17,8 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+
+#include "hw_cmds.h"
 
 #include <memory>
 

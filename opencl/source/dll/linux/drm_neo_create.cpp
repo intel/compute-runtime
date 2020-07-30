@@ -9,13 +9,13 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_null_device.h"
 
 #include "drm/i915_drm.h"
+#include "hw_cmds.h"
 
 #include <array>
 #include <cstdio>

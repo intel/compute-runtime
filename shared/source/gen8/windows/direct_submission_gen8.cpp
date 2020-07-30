@@ -10,7 +10,8 @@
 #include "shared/source/direct_submission/dispatchers/dispatcher.inl"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.inl"
 #include "shared/source/direct_submission/windows/wddm_direct_submission.inl"
-#include "shared/source/helpers/hw_cmds.h"
+
+#include "hw_cmds.h"
 
 namespace NEO {
 using GfxFamily = BDWFamily;

@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/helpers/hw_cmds.h"
+#include "hw_cmds.h"
 
 namespace NEO {
 class Kernel;

@@ -7,7 +7,6 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -18,6 +17,8 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/sampler/sampler.h"
+
+#include "hw_cmds.h"
 
 #include <cstdint>
 #include <cstring>

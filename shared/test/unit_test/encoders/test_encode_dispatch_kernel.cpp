@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/kernel_descriptor.h"
@@ -20,6 +19,8 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/gen_common/matchers.h"
 #include "test.h"
+
+#include "hw_cmds.h"
 
 using namespace NEO;
 

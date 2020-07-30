@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
@@ -22,6 +21,7 @@
 #include "test.h"
 
 #include "gtest/gtest.h"
+#include "hw_cmds.h"
 
 using namespace NEO;
 

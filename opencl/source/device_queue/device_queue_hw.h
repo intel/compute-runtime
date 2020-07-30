@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/helpers/hw_cmds.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 
@@ -15,6 +14,8 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/program/program.h"
 #include "opencl/source/scheduler/scheduler_kernel.h"
+
+#include "hw_cmds.h"
 
 namespace NEO {
 
