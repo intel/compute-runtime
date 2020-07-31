@@ -14,7 +14,7 @@ using EhlHwInfo = ::testing::Test;
 EHLTEST_F(EhlHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
     HardwareInfo hwInfo;
 
-    hardwareInfoSetup[productFamily](&hwInfo, false, 0x0);
+    hardwareInfoSetup[productFamily](&hwInfo, false, 0x100040008);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
     EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
     EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);
@@ -33,7 +33,7 @@ EHLTEST_F(EhlHwInfo, givenBoolWhenCallEhlHardwareInfoSetupThenFeatureTableAndWor
         gtSystemInfo = {0};
         featureTable = {};
         workaroundTable = {};
-        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, 0x0);
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, 0x100040008);
 
         EXPECT_EQ(setParamBool, featureTable.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, featureTable.ftrPPGTT);
@@ -62,3 +62,5 @@ EHLTEST_F(EhlHwInfo, givenBoolWhenCallEhlHardwareInfoSetupThenFeatureTableAndWor
         EXPECT_EQ(setParamBool, workaroundTable.waReportPerfCountUseGlobalContextID);
     }
 }
+
+HWCMDTEST_EXCLUDE_FAMILY(DeviceFactoryTest, givenValidHwConfigStringPrepareDeviceEnvironmentsForProductFamilyOverrideReturnsTrue, IGFX_ELKHARTLAKE);

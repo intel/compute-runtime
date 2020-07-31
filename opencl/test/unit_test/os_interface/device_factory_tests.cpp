@@ -16,8 +16,8 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "test.h"
 
-#include "gtest/gtest.h"
 #include "hw_device_id.h"
 
 #include <set>
@@ -201,7 +201,7 @@ TEST_F(DeviceFactoryTest, givenInvalidHwConfigStringPrepareDeviceEnvironmentsFor
     EXPECT_FALSE(success);
 }
 
-TEST_F(DeviceFactoryTest, givenValidHwConfigStringPrepareDeviceEnvironmentsForProductFamilyOverrideReturnsTrue) {
+HWTEST_F(DeviceFactoryTest, givenValidHwConfigStringPrepareDeviceEnvironmentsForProductFamilyOverrideReturnsTrue) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.HardwareInfoOverride.set("1x1x1");
 
