@@ -2780,6 +2780,17 @@ TEST_F(DrmMemoryManagerBasic, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncD
     memoryManager.commonCleanup();
 }
 
+TEST_F(DrmMemoryManagerBasic, givenEnabledDirectSubmissionWhenMemoryManagerIsCreatedThenForcePinGemCloseWorkerAndValidateHostMemoryAreDisabled) {
+    DebugManagerStateRestore dbgStateRestore;
+    DebugManager.flags.EnableDirectSubmission.set(1u);
+
+    TestedDrmMemoryManager memoryManager(true, true, true, executionEnvironment);
+
+    EXPECT_FALSE(memoryManager.isValidateHostMemoryEnabled());
+    EXPECT_FALSE(memoryManager.forcePinEnabled);
+    EXPECT_EQ(memoryManager.peekGemCloseWorker(), nullptr);
+}
+
 TEST_F(DrmMemoryManagerBasic, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
     DebugManagerStateRestore dbgStateRestore;
     DebugManager.flags.EnableDeferredDeleter.set(true);
