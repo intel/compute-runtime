@@ -1033,7 +1033,7 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
         ev->timestampPacketContainer = std::make_unique<MockTimestampContainer>();
     }
 
-    void addTimestampNode(int contextStart, int contextEnd, int globalStart) {
+    void addTimestampNode(int contextStart, int contextEnd, int globalStart, int globalEnd) {
         auto node = new MockTagNode<TimestampPacketStorage>();
         auto timestampPacketStorage = new TimestampPacketStorage();
         node->tagForCpuAccess = timestampPacketStorage;
@@ -1041,6 +1041,7 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
         timestampPacketStorage->packets[0].contextStart = contextStart;
         timestampPacketStorage->packets[0].contextEnd = contextEnd;
         timestampPacketStorage->packets[0].globalStart = globalStart;
+        timestampPacketStorage->packets[0].globalEnd = globalEnd;
 
         ev->timestampPacketContainer->add(node);
     }
@@ -1082,20 +1083,21 @@ struct ProfilingTimestampPacketsTest : public ::testing::Test {
 };
 
 TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithOneElementAndTimestampNodeWhenCalculatingProfilingThenTimesAreTakenFromPacket) {
-    addTimestampNode(10, 11, 12);
+    addTimestampNode(10, 11, 12, 13);
 
     HwTimeStamps hwTimestamps;
     hwTimestamps.ContextStartTS = 100;
     hwTimestamps.ContextEndTS = 110;
     hwTimestamps.GlobalStartTS = 120;
+
     MockTagNode<HwTimeStamps> hwTimestampsNode;
     hwTimestampsNode.tagForCpuAccess = &hwTimestamps;
     ev->timeStampNode = &hwTimestampsNode;
 
     ev->calcProfilingData();
 
-    EXPECT_EQ(10u, ev->getStartTimeStamp());
-    EXPECT_EQ(11u, ev->getEndTimeStamp());
+    EXPECT_EQ(12u, ev->getStartTimeStamp());
+    EXPECT_EQ(13u, ev->getEndTimeStamp());
     EXPECT_EQ(12u, ev->getGlobalStartTimestamp());
 
     ev->timeStampNode = nullptr;
@@ -1153,14 +1155,14 @@ TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCa
 }
 
 TEST_F(ProfilingTimestampPacketsTest, givenTimestampsPacketContainerWithThreeElementsWhenCalculatingProfilingThenTimesAreTakenFromProperPacket) {
-    addTimestampNode(10, 11, 12);
-    addTimestampNode(1, 21, 22);
-    addTimestampNode(5, 31, 2);
+    addTimestampNode(10, 11, 12, 13);
+    addTimestampNode(1, 21, 22, 13);
+    addTimestampNode(5, 31, 2, 13);
 
     ev->calcProfilingData();
 
-    EXPECT_EQ(1u, ev->getStartTimeStamp());
-    EXPECT_EQ(31u, ev->getEndTimeStamp());
+    EXPECT_EQ(2u, ev->getStartTimeStamp());
+    EXPECT_EQ(13u, ev->getEndTimeStamp());
     EXPECT_EQ(2u, ev->getGlobalStartTimestamp());
 }
 
