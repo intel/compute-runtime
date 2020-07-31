@@ -1424,7 +1424,8 @@ TEST(YamlTreeFindChildByKey, WhenChildWithKeyDoesNotExistThenReturnsNull) {
     NEO::Yaml::TokensCache tokens;
     std::string warnings;
     std::string errors;
-    bool success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    auto success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    EXPECT_TRUE(success);
 
     NEO::Yaml::NodesCache treeNodes;
     success = NEO::Yaml::buildTree(lines, tokens, treeNodes, errors, warnings);
@@ -1460,7 +1461,8 @@ TEST(YamlTreeFindChildByKey, WhenChildWithKeyDoesExistThenReturnsIt) {
     NEO::Yaml::TokensCache tokens;
     std::string warnings;
     std::string errors;
-    bool success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    auto success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    EXPECT_TRUE(success);
 
     NEO::Yaml::NodesCache treeNodes;
     success = NEO::Yaml::buildTree(lines, tokens, treeNodes, errors, warnings);
@@ -1546,7 +1548,8 @@ TEST(YamlTreeGetFirstChild, WhenChildExistsThenReturnsIt) {
     NEO::Yaml::TokensCache tokens;
     std::string warnings;
     std::string errors;
-    bool success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    auto success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    EXPECT_TRUE(success);
 
     NEO::Yaml::NodesCache treeNodes;
     success = NEO::Yaml::buildTree(lines, tokens, treeNodes, errors, warnings);
@@ -1579,7 +1582,8 @@ TEST(YamlTreeGetLastChild, WhenChildExistsThenReturnsIt) {
     NEO::Yaml::TokensCache tokens;
     std::string warnings;
     std::string errors;
-    bool success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    auto success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    EXPECT_TRUE(success);
 
     NEO::Yaml::NodesCache treeNodes;
     success = NEO::Yaml::buildTree(lines, tokens, treeNodes, errors, warnings);
@@ -1774,7 +1778,8 @@ TEST(YamlTreeBuildDebugNodes, GivenTreeNodesThenBuildsDebugFriendlyRepresentatio
     NEO::Yaml::TokensCache tokens;
     std::string warnings;
     std::string errors;
-    bool success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    auto success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    EXPECT_TRUE(success);
 
     NEO::Yaml::NodesCache treeNodes;
     success = NEO::Yaml::buildTree(lines, tokens, treeNodes, errors, warnings);
