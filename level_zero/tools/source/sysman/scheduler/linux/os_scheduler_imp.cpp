@@ -17,6 +17,7 @@ const std::string LinuxSchedulerImp::timesliceDurationMilliSecs("engine/rcs0/tim
 const std::string LinuxSchedulerImp::defaultTimesliceDurationMilliSecs("engine/rcs0/.defaults/timeslice_duration_ms");
 const std::string LinuxSchedulerImp::heartbeatIntervalMilliSecs("engine/rcs0/heartbeat_interval_ms");
 const std::string LinuxSchedulerImp::defaultHeartbeatIntervalMilliSecs("engine/rcs0/.defaults/heartbeat_interval_ms");
+const std::string LinuxSchedulerImp::computeEngineDir("engine/rcs0");
 constexpr uint16_t milliSecsToMicroSecs = 1000;
 
 ze_result_t LinuxSchedulerImp::getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) {
@@ -71,6 +72,14 @@ ze_result_t LinuxSchedulerImp::setTimesliceDuration(uint64_t timeslice) {
 ze_result_t LinuxSchedulerImp::setHeartbeatInterval(uint64_t heartbeat) {
     heartbeat = heartbeat / milliSecsToMicroSecs;
     return pSysfsAccess->write(heartbeatIntervalMilliSecs, heartbeat);
+}
+
+ze_bool_t LinuxSchedulerImp::canControlScheduler() {
+    return 1;
+}
+
+bool LinuxSchedulerImp::isSchedulerSupported() {
+    return (ZE_RESULT_SUCCESS == pSysfsAccess->canRead(computeEngineDir));
 }
 
 LinuxSchedulerImp::LinuxSchedulerImp(OsSysman *pOsSysman) {

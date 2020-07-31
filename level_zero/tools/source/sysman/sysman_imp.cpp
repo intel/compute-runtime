@@ -11,7 +11,6 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/pci/pci_imp.h"
-#include "level_zero/tools/source/sysman/scheduler/scheduler_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 
 #include <vector>
@@ -29,9 +28,11 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pTempHandleContext = new TemperatureHandleContext(pOsSysman);
     pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
     pEngineHandleContext = new EngineHandleContext(pOsSysman);
+    pSchedulerHandleContext = new SchedulerHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
+    freeResource(pSchedulerHandleContext);
     freeResource(pEngineHandleContext);
     freeResource(pStandbyHandleContext);
     freeResource(pTempHandleContext);
@@ -64,6 +65,9 @@ void SysmanDeviceImp::init() {
     }
     if (pEngineHandleContext) {
         pEngineHandleContext->init();
+    }
+    if (pSchedulerHandleContext) {
+        pSchedulerHandleContext->init();
     }
 }
 
@@ -105,6 +109,10 @@ ze_result_t SysmanDeviceImp::fabricPortGet(uint32_t *pCount, zes_fabric_port_han
 
 ze_result_t SysmanDeviceImp::temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) {
     return pTempHandleContext->temperatureGet(pCount, phTemperature);
+}
+
+ze_result_t SysmanDeviceImp::schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler) {
+    return pSchedulerHandleContext->schedulerGet(pCount, phScheduler);
 }
 
 } // namespace L0

@@ -18,6 +18,8 @@ class OsScheduler {
     virtual ze_result_t setPreemptTimeout(uint64_t timeout) = 0;
     virtual ze_result_t setTimesliceDuration(uint64_t timeslice) = 0;
     virtual ze_result_t setHeartbeatInterval(uint64_t heartbeat) = 0;
+    virtual ze_bool_t canControlScheduler() = 0;
+    virtual bool isSchedulerSupported() = 0;
     static OsScheduler *create(OsSysman *pOsSysman);
     virtual ~OsScheduler() = default;
 };

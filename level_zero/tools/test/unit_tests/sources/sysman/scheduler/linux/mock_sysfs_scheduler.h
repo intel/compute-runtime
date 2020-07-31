@@ -6,11 +6,9 @@
  */
 
 #pragma once
-#include "level_zero/core/test/unit_tests/mock.h"
+#include "level_zero/tools/source/sysman/scheduler/linux/os_scheduler_imp.h"
 
 #include "sysman/linux/fs_access.h"
-
-using ::testing::_;
 
 namespace L0 {
 namespace ult {
@@ -21,6 +19,7 @@ const std::string timesliceDurationMilliSecs("engine/rcs0/timeslice_duration_ms"
 const std::string defaultTimesliceDurationMilliSecs("engine/rcs0/.defaults/timeslice_duration_ms");
 const std::string heartbeatIntervalMilliSecs("engine/rcs0/heartbeat_interval_ms");
 const std::string defaultHeartbeatIntervalMilliSecs("engine/rcs0/.defaults/heartbeat_interval_ms");
+const std::string computeEngineDir("engine/rcs0");
 
 class SchedulerSysfsAccess : public SysfsAccess {};
 
@@ -79,11 +78,21 @@ struct Mock<SchedulerSysfsAccess> : public SysfsAccess {
         }
         return ZE_RESULT_SUCCESS;
     }
+    ze_result_t getCanReadStatus(const std::string file) {
+        if (file.compare(computeEngineDir) == 0) {
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    ze_result_t getCanReadStatusReturnError(const std::string file) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
 
     Mock<SchedulerSysfsAccess>() = default;
 
     MOCK_METHOD(ze_result_t, read, (const std::string file, uint64_t &val), (override));
     MOCK_METHOD(ze_result_t, write, (const std::string file, const uint64_t val), (override));
+    MOCK_METHOD(ze_result_t, canRead, (const std::string file), (override));
 };
 
 class PublicLinuxSchedulerImp : public L0::LinuxSchedulerImp {

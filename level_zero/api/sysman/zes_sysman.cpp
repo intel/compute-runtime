@@ -28,21 +28,21 @@ zesDeviceEnumSchedulers(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_sched_handle_t *phScheduler) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->schedulerGet(pCount, phScheduler);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesSchedulerGetProperties(
     zes_sched_handle_t hScheduler,
     zes_sched_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Scheduler::fromHandle(hScheduler)->schedulerGetProperties(pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesSchedulerGetCurrentMode(
     zes_sched_handle_t hScheduler,
     zes_sched_mode_t *pMode) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Scheduler::fromHandle(hScheduler)->getCurrentMode(pMode);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -50,7 +50,7 @@ zesSchedulerGetTimeoutModeProperties(
     zes_sched_handle_t hScheduler,
     ze_bool_t getDefaults,
     zes_sched_timeout_properties_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Scheduler::fromHandle(hScheduler)->getTimeoutModeProperties(getDefaults, pConfig);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -58,7 +58,7 @@ zesSchedulerGetTimesliceModeProperties(
     zes_sched_handle_t hScheduler,
     ze_bool_t getDefaults,
     zes_sched_timeslice_properties_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Scheduler::fromHandle(hScheduler)->getTimesliceModeProperties(getDefaults, pConfig);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -66,7 +66,7 @@ zesSchedulerSetTimeoutMode(
     zes_sched_handle_t hScheduler,
     zes_sched_timeout_properties_t *pProperties,
     ze_bool_t *pNeedReload) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Scheduler::fromHandle(hScheduler)->setTimeoutMode(pProperties, pNeedReload);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -74,21 +74,21 @@ zesSchedulerSetTimesliceMode(
     zes_sched_handle_t hScheduler,
     zes_sched_timeslice_properties_t *pProperties,
     ze_bool_t *pNeedReload) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Scheduler::fromHandle(hScheduler)->setTimesliceMode(pProperties, pNeedReload);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesSchedulerSetExclusiveMode(
     zes_sched_handle_t hScheduler,
     ze_bool_t *pNeedReload) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Scheduler::fromHandle(hScheduler)->setExclusiveMode(pNeedReload);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesSchedulerSetComputeUnitDebugMode(
     zes_sched_handle_t hScheduler,
     ze_bool_t *pNeedReload) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Scheduler::fromHandle(hScheduler)->setComputeUnitDebugMode(pNeedReload);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

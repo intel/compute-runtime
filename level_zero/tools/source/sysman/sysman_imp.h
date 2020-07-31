@@ -33,6 +33,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     TemperatureHandleContext *pTempHandleContext = nullptr;
     StandbyHandleContext *pStandbyHandleContext = nullptr;
     EngineHandleContext *pEngineHandleContext = nullptr;
+    SchedulerHandleContext *pSchedulerHandleContext = nullptr;
 
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
     ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) override;
@@ -44,6 +45,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t pciGetState(zes_pci_state_t *pState) override;
     ze_result_t pciGetBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) override;
     ze_result_t pciGetStats(zes_pci_stats_t *pStats) override;
+    ze_result_t schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler) override;
 
   private:
     template <typename T>

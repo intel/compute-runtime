@@ -17,6 +17,8 @@ class WddmSchedulerImp : public OsScheduler {
     ze_result_t setPreemptTimeout(uint64_t timeout) override;
     ze_result_t setTimesliceDuration(uint64_t timeslice) override;
     ze_result_t setHeartbeatInterval(uint64_t heartbeat) override;
+    ze_bool_t canControlScheduler() override;
+    bool isSchedulerSupported() override;
 };
 
 ze_result_t WddmSchedulerImp::getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) {
@@ -41,6 +43,14 @@ ze_result_t WddmSchedulerImp::setTimesliceDuration(uint64_t timeslice) {
 
 ze_result_t WddmSchedulerImp::setHeartbeatInterval(uint64_t heartbeat) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_bool_t WddmSchedulerImp::canControlScheduler() {
+    return 0;
+}
+
+bool WddmSchedulerImp::isSchedulerSupported() {
+    return false;
 }
 
 OsScheduler *OsScheduler::create(OsSysman *pOsSysman) {
