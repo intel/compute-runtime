@@ -242,6 +242,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     if (eventBuilder.getEvent() && getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
         eventBuilder.getEvent()->addTimestampPacketNodes(timestampPacketDependencies.nonAuxToAuxNodes);
+        eventBuilder.getEvent()->addTimestampPacketNodes(timestampPacketDependencies.auxToNonAuxNodes);
     }
 
     bool flushDependenciesForNonKernelCommand = false;

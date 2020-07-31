@@ -554,7 +554,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenOutEventWhenDispatchingThenAssi
     commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &clEvent);
     auto event = castToObject<Event>(clEvent);
     auto &eventNodes = event->getTimestampPacketNodes()->peekNodes();
-    EXPECT_EQ(3u, eventNodes.size());
+    EXPECT_EQ(5u, eventNodes.size());
 
     auto cmdListQueue = getCmdList<FamilyType>(commandQueue->getCS(0), 0);
 
