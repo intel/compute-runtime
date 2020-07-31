@@ -17,6 +17,7 @@ class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
     DrmMemoryOperationsHandlerDefault();
     ~DrmMemoryOperationsHandlerDefault() override;
 
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override;

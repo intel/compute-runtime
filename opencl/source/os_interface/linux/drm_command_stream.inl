@@ -74,6 +74,7 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
     memoryOperationsInterface->mergeWithResidencyContainer(this->osContext, allocationsForResidency);
 
     if (this->directSubmission.get()) {
+        memoryOperationsInterface->makeResidentWithinOsContext(this->osContext, ArrayRef<GraphicsAllocation *>(&batchBuffer.commandBufferAllocation, 1));
         return this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
     }
 

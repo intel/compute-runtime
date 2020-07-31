@@ -14,6 +14,7 @@ class DrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandler {
     DrmMemoryOperationsHandlerBind();
     ~DrmMemoryOperationsHandlerBind() override;
 
+    MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override;
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;
     MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) override;
