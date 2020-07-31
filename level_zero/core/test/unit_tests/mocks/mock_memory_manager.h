@@ -32,17 +32,6 @@ struct WhiteBox<::NEO::OsAgnosticMemoryManager> : public ::NEO::OsAgnosticMemory
 
 using MemoryManagerMock = WhiteBox<::NEO::OsAgnosticMemoryManager>;
 
-template <>
-struct Mock<NEO::MemoryManager> : public MemoryManagerMock {
-    Mock(NEO::ExecutionEnvironment &executionEnvironment);
-    MOCK_METHOD2(allocateGraphicsMemoryInPreferredPool,
-                 NEO::GraphicsAllocation *(const NEO::AllocationProperties &properties, const void *hostPtr));
-    MOCK_METHOD1(freeGraphicsMemory, void(NEO::GraphicsAllocation *));
-
-    NEO::GraphicsAllocation *doAllocateGraphicsMemoryInPreferredPool(const NEO::AllocationProperties &properties, const void *hostPtr);
-    void doFreeGraphicsMemory(NEO::GraphicsAllocation *allocation);
-};
-
 } // namespace ult
 } // namespace L0
 

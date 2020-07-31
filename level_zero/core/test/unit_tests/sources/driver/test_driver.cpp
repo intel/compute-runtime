@@ -15,11 +15,21 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 
 #include <bitset>
 
 namespace L0 {
 namespace ult {
+
+TEST(zeInit, whenCallingZeInitThenInitializeOnDriverIsCalled) {
+    Mock<Driver> driver;
+
+    auto result = zeInit(ZE_INIT_FLAG_GPU_ONLY);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, driver.initCalledCount);
+}
 
 using DriverVersionTest = Test<DeviceFixture>;
 

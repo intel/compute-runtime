@@ -6,8 +6,6 @@
  */
 
 #pragma once
-#include "gmock/gmock.h"
-
 namespace L0 {
 namespace ult {
 

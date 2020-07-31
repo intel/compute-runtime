@@ -15,6 +15,7 @@ set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdlist.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdqueue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cmdqueue.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_driver.h
@@ -27,7 +28,6 @@ set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_l0_debugger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_module.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_module.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sampler.h
