@@ -1110,7 +1110,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWhenCallFlushTas
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(beforeFlushRequiredThreadArbitrationPolicy), mockCsr->requiredThreadArbitrationPolicy);
+    EXPECT_EQ(beforeFlushRequiredThreadArbitrationPolicy, mockCsr->requiredThreadArbitrationPolicy);
 
     dispatchFlags.threadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
     mockCsr->requiredThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
@@ -1124,5 +1124,5 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWhenCallFlushTas
                        dispatchFlags,
                        *pDevice);
 
-    EXPECT_EQ(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(dispatchFlags.threadArbitrationPolicy), mockCsr->requiredThreadArbitrationPolicy);
+    EXPECT_EQ(dispatchFlags.threadArbitrationPolicy, mockCsr->requiredThreadArbitrationPolicy);
 }

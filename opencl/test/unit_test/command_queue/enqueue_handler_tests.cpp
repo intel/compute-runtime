@@ -523,7 +523,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenClSetKernelExecInfoAlreadyse
                                                                  0,
                                                                  nullptr,
                                                                  nullptr);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::getAppropriateThreadArbitrationPolicy(getNewKernelArbitrationPolicy(euThreadSetting)), pDevice->getUltCommandStreamReceiver<FamilyType>().requiredThreadArbitrationPolicy);
+    EXPECT_EQ(getNewKernelArbitrationPolicy(euThreadSetting), pDevice->getUltCommandStreamReceiver<FamilyType>().requiredThreadArbitrationPolicy);
 
     mockCmdQ->release();
 }
