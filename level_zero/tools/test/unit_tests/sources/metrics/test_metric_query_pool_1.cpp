@@ -47,7 +47,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryPoolCreateIsC
 
     Mock<MetricGroup> metricGroup;
     zet_metric_group_properties_ext_t metricGroupProperties = {};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_pool_handle_t poolHandle = {};
     zet_metric_query_pool_desc_t poolDesc = {};
@@ -108,7 +108,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectMetricGroupTypeWhenZetMetricQueryPoolC
 
     Mock<MetricGroup> metricGroup;
     zet_metric_group_properties_ext_t metricGroupProperties = {};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED;
 
     zet_metric_query_pool_handle_t poolHandle = {};
     zet_metric_query_pool_desc_t poolDesc = {};
@@ -161,7 +161,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryCreateIsCalle
 
     Mock<MetricGroup> metricGroup;
     zet_metric_group_properties_ext_t metricGroupProperties = {};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
@@ -231,7 +231,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectSlotIndexWhenZetMetricQueryCreateIsCal
 
     Mock<MetricGroup> metricGroup;
     zet_metric_group_properties_ext_t metricGroupProperties = {};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
@@ -300,7 +300,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryResetIsCalled
 
     Mock<MetricGroup> metricGroup;
     zet_metric_group_properties_ext_t metricGroupProperties = {};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
@@ -373,7 +373,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetCommandListAppendMetri
 
     Mock<MetricGroup> metricGroup;
     zet_metric_group_properties_ext_t metricGroupProperties = {};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
@@ -449,7 +449,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
 
     Mock<MetricGroup> metricGroup;
     zet_metric_group_properties_ext_t metricGroupProperties = {};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
@@ -621,7 +621,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetCommandListAppendMetri
 
     Mock<MetricGroup> metricGroup;
     zet_metric_group_properties_ext_t metricGroupProperties = {};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
@@ -732,7 +732,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
 
     Mock<MetricGroup> metricGroup;
     zet_metric_group_properties_ext_t metricGroupProperties = {};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
@@ -848,7 +848,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
 
     Mock<MetricGroup> metricGroup;
     zet_metric_group_properties_ext_t metricGroupProperties = {};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};
@@ -964,7 +964,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
 
     Mock<MetricGroup> metricGroup;
     zet_metric_group_properties_ext_t metricGroupProperties = {};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     zet_metric_query_handle_t queryHandle = {};
     zet_metric_query_pool_handle_t poolHandle = {};

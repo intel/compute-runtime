@@ -39,7 +39,7 @@ TEST_F(MetricStreamerTest, givenInvalidMetricGroupTypeWhenZetMetricStreamerOpenI
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_ext_t metricGroupProperties = {};
 
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
@@ -67,7 +67,7 @@ TEST_F(MetricStreamerTest, zetMetricTracerOpen_InvalidMetricGroupType_ReturnsFai
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_ext_t metricGroupProperties = {};
 
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     EXPECT_CALL(metricGroup, getPropertiesExt(_))
         .Times(1)
@@ -97,7 +97,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -168,9 +168,9 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
@@ -206,7 +206,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricTracerOpenIsCalledThe
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -277,9 +277,9 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricTracerOpenIsCalledThe
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
@@ -316,7 +316,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -387,9 +387,9 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerOpenIsCalledT
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
@@ -429,7 +429,7 @@ TEST_F(MetricStreamerTest, givenCorrectArgumentsWhenZetMetricQueryPoolCreateExtI
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
     zet_metric_group_properties_ext_t metricGroupProperties = {};
-    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    metricGroupProperties.samplingType = ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     // One api: query pool handle.
     zet_metric_query_pool_handle_t poolHandle = {};
@@ -511,7 +511,7 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetMetricStreamerReadDataIsC
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -582,9 +582,9 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetMetricStreamerReadDataIsC
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
@@ -619,7 +619,7 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetMetricTracerReadDataIsCal
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -690,9 +690,9 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetMetricTracerReadDataIsCal
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
@@ -727,7 +727,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCal
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -802,9 +802,9 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricStreamerReadDataIsCal
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
@@ -849,7 +849,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricTracerReadDataIsCalle
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -924,9 +924,9 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetMetricTracerReadDataIsCalle
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
@@ -971,7 +971,7 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetCommandListAppendMetricSt
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1042,9 +1042,9 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetCommandListAppendMetricSt
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
@@ -1079,7 +1079,7 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetCommandListAppendMetricTr
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1150,9 +1150,9 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetCommandListAppendMetricTr
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
@@ -1190,7 +1190,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1294,9 +1294,9 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
@@ -1338,7 +1338,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricTrac
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1442,9 +1442,9 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricTrac
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
@@ -1486,7 +1486,7 @@ TEST_F(MetricStreamerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppend
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1590,9 +1590,9 @@ TEST_F(MetricStreamerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppend
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);
@@ -1636,7 +1636,7 @@ TEST_F(MetricStreamerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppend
     // One api: metric group handle.
     Mock<MetricGroup> metricGroup;
     zet_metric_group_handle_t metricGroupHandle = metricGroup.toHandle();
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     // Metrics Discovery device.
     metricsDeviceParams.ConcurrentGroupsCount = 1;
@@ -1740,9 +1740,9 @@ TEST_F(MetricStreamerTest, givenMultipleMarkerInsertionsWhenZetCommandListAppend
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);

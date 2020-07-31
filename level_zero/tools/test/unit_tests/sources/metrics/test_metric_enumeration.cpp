@@ -233,7 +233,7 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetGetMetricGroupProperties
 
     // One api: metric group handle.
     zet_metric_group_handle_t metricGroupHandle = {};
-    zet_metric_group_properties_t metricGroupProperties = {};
+    zet_metric_group_properties_ext_t metricGroupProperties = {};
 
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
@@ -277,9 +277,9 @@ TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetGetMetricGroupProperties
     EXPECT_NE(metricGroupHandle, nullptr);
 
     // Metric group properties.
-    EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(zetMetricGroupGetPropertiesExt(metricGroupHandle, &metricGroupProperties), ZE_RESULT_SUCCESS);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
-    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED);
+    EXPECT_EQ(metricGroupProperties.samplingType, ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED);
     EXPECT_EQ(metricGroupProperties.metricCount, metricsSetParams.MetricsCount);
     EXPECT_EQ(strcmp(metricGroupProperties.description, metricsSetParams.ShortName), 0);
     EXPECT_EQ(strcmp(metricGroupProperties.name, metricsSetParams.SymbolName), 0);

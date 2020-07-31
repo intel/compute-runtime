@@ -38,7 +38,7 @@ struct MetricEnumeration {
     ze_result_t cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                  MetricsDiscovery::IConcurrentGroup_1_5 &pConcurrentGroup,
                                  const uint32_t domain,
-                                 const zet_metric_group_sampling_type_t samplingType);
+                                 const zet_metric_group_sampling_type_flag_t samplingType);
     ze_result_t createMetrics(MetricsDiscovery::IMetricSet_1_5 &metricSet,
                               std::vector<Metric *> &metrics);
 

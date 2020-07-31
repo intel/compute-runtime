@@ -167,9 +167,9 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
                 DEBUG_BREAK_IF(pMetricSet == nullptr);
 
                 cacheMetricGroup(*pMetricSet, *pConcurrentGroup, i,
-                                 ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED);
+                                 ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED);
                 cacheMetricGroup(*pMetricSet, *pConcurrentGroup, i,
-                                 ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED);
+                                 ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED);
             }
         }
     }
@@ -181,7 +181,7 @@ ze_result_t
 MetricEnumeration::cacheMetricGroup(MetricsDiscovery::IMetricSet_1_5 &metricSet,
                                     MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
                                     const uint32_t domain,
-                                    const zet_metric_group_sampling_type_t samplingType) {
+                                    const zet_metric_group_sampling_type_flag_t samplingType) {
     MetricsDiscovery::TMetricSetParams_1_4 *pMetricSetParams = metricSet.GetParams();
     DEBUG_BREAK_IF(pMetricSetParams == nullptr);
 
@@ -571,7 +571,7 @@ ze_result_t MetricGroupImp::initialize(const zet_metric_group_properties_ext_t &
 uint32_t MetricGroupImp::getRawReportSize() {
     auto pMetricSetParams = pReferenceMetricSet->GetParams();
 
-    return (properties.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED)
+    return (properties.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED)
                ? pMetricSetParams->RawReportSize
                : pMetricSetParams->QueryReportSize;
 }

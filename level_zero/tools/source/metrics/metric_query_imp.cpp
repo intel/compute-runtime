@@ -317,8 +317,8 @@ MetricsLibrary::createConfiguration(const zet_metric_group_handle_t metricGroupH
 
     // Check supported sampling types.
     const bool validSampling =
-        properties.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED ||
-        properties.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED;
+        properties.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED ||
+        properties.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED;
 
     // Activate metric group through metrics discovery to send metric group
     // configuration to kernel driver.
@@ -460,7 +460,7 @@ ze_result_t MetricQueryPoolImp::destroy() {
 bool MetricQueryPoolImp::createMetricQueryPool() {
     // Validate metric group query - only event based is supported.
     auto metricGroupProperites = MetricGroup::getProperties(hMetricGroup);
-    const bool validMetricGroup = metricGroupProperites.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+    const bool validMetricGroup = metricGroupProperites.samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
     if (!validMetricGroup) {
         return false;

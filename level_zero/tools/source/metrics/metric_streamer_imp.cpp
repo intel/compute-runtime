@@ -168,7 +168,7 @@ ze_result_t MetricStreamer::open(zet_device_handle_t hDevice, zet_metric_group_h
 
     // Check metric group sampling type.
     auto metricGroupProperties = MetricGroup::getProperties(hMetricGroup);
-    if (metricGroupProperties.samplingType != ZET_METRIC_GROUP_SAMPLING_TYPE_TIME_BASED) {
+    if (metricGroupProperties.samplingType != ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_TIME_BASED) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 

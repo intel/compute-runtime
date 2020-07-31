@@ -266,7 +266,7 @@ ze_result_t MetricGroupDomains::activate() {
         bool &metricGroupActive = domain.second.second;
         bool metricGroupEventBased =
             hMetricGroup && MetricGroup::getProperties(hMetricGroup).samplingType ==
-                                ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED;
+                                ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED;
 
         // Activate only event based metric groups.
         // Time based metric group will be activated during zetMetricStreamerOpen.
@@ -309,7 +309,7 @@ ze_result_t MetricGroupDomains::deactivate() {
         auto metricGroup = MetricGroup::fromHandle(hMetricGroup);
         bool metricGroupActivated = domain.second.second;
         auto metricGroupEventBased = (metricGroup != nullptr)
-                                         ? MetricGroup::getProperties(hMetricGroup).samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_EVENT_BASED
+                                         ? MetricGroup::getProperties(hMetricGroup).samplingType == ZET_METRIC_GROUP_SAMPLING_TYPE_FLAG_EVENT_BASED
                                          : false;
         auto hConfigurationEmpty = ConfigurationHandle_1_0{};
         auto hConfiguration = metricGroupEventBased
