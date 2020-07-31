@@ -66,7 +66,9 @@ class Wddm {
     MOCKABLE_VIRTUAL bool createAllocation64k(const Gmm *gmm, D3DKMT_HANDLE &outHandle);
     MOCKABLE_VIRTUAL NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles);
     MOCKABLE_VIRTUAL bool destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
+    MOCKABLE_VIRTUAL bool verifySharedHandle(D3DKMT_HANDLE osHandle);
     MOCKABLE_VIRTUAL bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc);
+    MOCKABLE_VIRTUAL bool verifyNTHandle(HANDLE handle);
     bool openNTHandle(HANDLE handle, WddmAllocation *alloc);
     MOCKABLE_VIRTUAL void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size);
     MOCKABLE_VIRTUAL void unlockResource(const D3DKMT_HANDLE &handle);

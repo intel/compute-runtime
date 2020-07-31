@@ -1419,6 +1419,24 @@ TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledW
     memoryManager.freeGraphicsMemory(wddmAlloc);
 }
 
+TEST_F(MockWddmMemoryManagerTest, givenWddmMemoryManagerWhenVerifySharedHandleThenVerifySharedHandleIsCalled) {
+    wddm->init();
+    MockWddmMemoryManager memoryManager(*executionEnvironment);
+    osHandle handle = 1;
+    memoryManager.verifyHandle(handle, 0, false);
+    EXPECT_EQ(0, wddm->counterVerifyNTHandle);
+    EXPECT_EQ(1, wddm->counterVerifySharedHandle);
+}
+
+TEST_F(MockWddmMemoryManagerTest, givenWddmMemoryManagerWhenVerifyNTHandleThenVerifyNTHandleIsCalled) {
+    wddm->init();
+    MockWddmMemoryManager memoryManager(*executionEnvironment);
+    osHandle handle = 1;
+    memoryManager.verifyHandle(handle, 0, true);
+    EXPECT_EQ(1, wddm->counterVerifyNTHandle);
+    EXPECT_EQ(0, wddm->counterVerifySharedHandle);
+}
+
 TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemoryForBufferWithoutHostPtrThen64kbAdressIsAllocated) {
     DebugManagerStateRestore dbgRestore;
     wddm->init();

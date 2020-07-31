@@ -98,6 +98,17 @@ class WddmMock : public Wddm {
         }
     }
 
+    uint32_t counterVerifyNTHandle = 0;
+    uint32_t counterVerifySharedHandle = 0;
+    bool verifyNTHandle(HANDLE handle) override {
+        ++counterVerifyNTHandle;
+        return Wddm::verifyNTHandle(handle);
+    }
+    bool verifySharedHandle(D3DKMT_HANDLE osHandle) override {
+        ++counterVerifySharedHandle;
+        return Wddm::verifySharedHandle(osHandle);
+    }
+
     void resetGdi(Gdi *gdi);
 
     WddmMockHelpers::MakeResidentCall makeResidentResult;

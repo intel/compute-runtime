@@ -957,8 +957,8 @@ HWTEST_F(CommandQueueHwTest, givenEventWithRecordedCommandWhenSubmitCommandIsCal
     EXPECT_EQ(CompletionStamp::notReady, neoEvent.peekTaskCount());
 
     std::thread t([&]() {
-        while (!go)
-            ;
+        while (!go) {
+        }
         neoEvent.updateTaskCount(77u, 0);
     });
 

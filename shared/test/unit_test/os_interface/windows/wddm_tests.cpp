@@ -39,4 +39,29 @@ TEST_F(WddmTests, whenInitializingWddmThenSetMinAddressToCorrectValue) {
     ASSERT_EQ(expectedMinAddress, wddm->getWddmMinAddress());
 }
 
+TEST_F(WddmTests, givenWddmWhenPassesCorrectHandleToVerifySharedHandleThenReturnTrue) {
+    init();
+    D3DKMT_HANDLE handle = 1u;
+    EXPECT_TRUE(wddm->verifySharedHandle(handle));
+}
+
+TEST_F(WddmTests, givenWddmWhenPassesIncorrectHandleToVerifySharedHandleThenReturnFalse) {
+    init();
+    D3DKMT_HANDLE handle = 0u;
+    EXPECT_FALSE(wddm->verifySharedHandle(handle));
+}
+
+TEST_F(WddmTests, givenWddmWhenPassesCorrectHandleToVerifyNTHandleThenReturnTrue) {
+    init();
+    uint32_t temp = 0;
+    HANDLE handle = &temp;
+    EXPECT_TRUE(wddm->verifyNTHandle(handle));
+}
+
+TEST_F(WddmTests, givenWddmWhenPassesIncorrectHandleToVerifyNTHandleThenReturnFalse) {
+    init();
+    HANDLE handle = nullptr;
+    EXPECT_FALSE(wddm->verifyNTHandle(handle));
+}
+
 } // namespace NEO

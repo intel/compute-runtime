@@ -292,6 +292,12 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     return wddmAllocation.release();
 }
 
+bool WddmMemoryManager::verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool ntHandle) {
+    bool status = ntHandle ? getWddm(rootDeviceIndex).verifyNTHandle(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(handle)))
+                           : getWddm(rootDeviceIndex).verifySharedHandle(handle);
+    return status;
+}
+
 GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex) {
     auto allocation = std::make_unique<WddmAllocation>(rootDeviceIndex, allocationType, nullptr, 0, handle, MemoryPool::SystemCpuInaccessible);
 

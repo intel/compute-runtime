@@ -462,6 +462,78 @@ TYPED_TEST_P(D3DTests, givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllo
     EXPECT_EQ(GraphicsAllocation::AllocationType::SHARED_IMAGE, image->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
 }
 
+TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextWhen3dCreatedThenReturnCorrectCode) {
+    this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+
+    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
+    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging)));
+
+    cl_int retCode = 0;
+    mockMM.get()->verifyValue = false;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, &retCode));
+    mockMM.get()->verifyValue = true;
+    EXPECT_EQ(nullptr, image.get());
+    EXPECT_EQ(retCode, CL_INVALID_D3D11_RESOURCE_KHR);
+}
+
+TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextAndNTHandleWhen3dCreatedThenReturnCorrectCode) {
+    this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED_NTHANDLE;
+
+    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
+    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging)));
+
+    cl_int retCode = 0;
+    mockMM.get()->verifyValue = false;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, &retCode));
+    mockMM.get()->verifyValue = true;
+    EXPECT_EQ(nullptr, image.get());
+    EXPECT_EQ(retCode, CL_INVALID_D3D11_RESOURCE_KHR);
+}
+
+TYPED_TEST_P(D3DTests, givenSharedObjectAndAlocationFailedWhen3dCreatedThenReturnCorrectCode) {
+    this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+
+    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
+    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging)));
+
+    cl_int retCode = 0;
+    mockMM.get()->failAlloc = true;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, &retCode));
+    mockMM.get()->failAlloc = false;
+    EXPECT_EQ(nullptr, image.get());
+    EXPECT_EQ(retCode, CL_OUT_OF_HOST_MEMORY);
+}
+
+TYPED_TEST_P(D3DTests, givenSharedObjectAndNTHandleAndAllocationFailedWhen3dCreatedThenReturnCorrectCode) {
+    this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED_NTHANDLE;
+
+    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
+    EXPECT_CALL(*this->mockSharingFcns, createTexture3d(_, _, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTextureStaging)));
+
+    cl_int retCode = 0;
+    mockMM.get()->failAlloc = true;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create3d(this->context, reinterpret_cast<D3DTexture3d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 1, &retCode));
+    mockMM.get()->failAlloc = false;
+    EXPECT_EQ(nullptr, image.get());
+    EXPECT_EQ(retCode, CL_OUT_OF_HOST_MEMORY);
+}
+
 REGISTER_TYPED_TEST_CASE_P(D3DTests,
                            givenSharedResourceBufferAndInteropUserSyncEnabledWhenReleaseIsCalledThenDontDoExplicitFinish,
                            givenNonSharedResourceBufferAndInteropUserSyncDisabledWhenReleaseIsCalledThenDoExplicitFinishTwice,
@@ -480,7 +552,11 @@ REGISTER_TYPED_TEST_CASE_P(D3DTests,
                            givenPlaneWhenFindYuvSurfaceCalledThenReturnValidImgFormat,
                            GivenForced32BitAddressingWhenCreatingBufferThenBufferHas32BitAllocation,
                            givenD3DTexture2dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet,
-                           givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet);
+                           givenD3DTexture3dWhenOclImageIsCreatedThenSharedImageAllocationTypeIsSet,
+                           givenSharedObjectFromInvalidContextWhen3dCreatedThenReturnCorrectCode,
+                           givenSharedObjectFromInvalidContextAndNTHandleWhen3dCreatedThenReturnCorrectCode,
+                           givenSharedObjectAndAlocationFailedWhen3dCreatedThenReturnCorrectCode,
+                           givenSharedObjectAndNTHandleAndAllocationFailedWhen3dCreatedThenReturnCorrectCode);
 
 INSTANTIATE_TYPED_TEST_CASE_P(D3DSharingTests, D3DTests, D3DTypes);
 

@@ -604,6 +604,13 @@ bool Wddm::destroyAllocations(const D3DKMT_HANDLE *handles, uint32_t allocationC
 
     return status == STATUS_SUCCESS;
 }
+bool Wddm::verifySharedHandle(D3DKMT_HANDLE osHandle) {
+    D3DKMT_QUERYRESOURCEINFO QueryResourceInfo = {0};
+    QueryResourceInfo.hDevice = device;
+    QueryResourceInfo.hGlobalShare = osHandle;
+    auto status = getGdi()->queryResourceInfo(&QueryResourceInfo);
+    return status == STATUS_SUCCESS;
+}
 
 bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     D3DKMT_QUERYRESOURCEINFO QueryResourceInfo = {0};
@@ -644,6 +651,14 @@ bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     alloc->setDefaultGmm(new Gmm(rootDeviceEnvironment.getGmmClientContext(), static_cast<GMM_RESOURCE_INFO *>(resourceInfo)));
 
     return true;
+}
+
+bool Wddm::verifyNTHandle(HANDLE handle) {
+    D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE queryResourceInfoFromNtHandle = {};
+    queryResourceInfoFromNtHandle.hDevice = device;
+    queryResourceInfoFromNtHandle.hNtHandle = handle;
+    auto status = getGdi()->queryResourceInfoFromNtHandle(&queryResourceInfoFromNtHandle);
+    return status == STATUS_SUCCESS;
 }
 
 bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {

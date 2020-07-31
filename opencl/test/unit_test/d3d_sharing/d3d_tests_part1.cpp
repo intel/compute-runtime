@@ -156,6 +156,62 @@ TYPED_TEST_P(D3DTests, givenNV12FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParam
     EXPECT_EQ(2u, mockGmmResInfo->arrayIndexPassedToGetOffset);
 }
 
+TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextWhen2dCreatedThenReturnCorrectCode) {
+    this->mockSharingFcns->mockTexture2dDesc.Format = DXGI_FORMAT_NV12;
+    this->mockSharingFcns->mockTexture2dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+    EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
+    cl_int retCode = 0;
+    mockMM.get()->verifyValue = false;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
+    mockMM.get()->verifyValue = true;
+    EXPECT_EQ(nullptr, image.get());
+    EXPECT_EQ(retCode, CL_INVALID_D3D11_RESOURCE_KHR);
+}
+
+TYPED_TEST_P(D3DTests, givenSharedObjectFromInvalidContextAndNTHandleWhen2dCreatedThenReturnCorrectCode) {
+    this->mockSharingFcns->mockTexture2dDesc.Format = DXGI_FORMAT_NV12;
+    this->mockSharingFcns->mockTexture2dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED_NTHANDLE;
+    EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
+    cl_int retCode = 0;
+    mockMM.get()->verifyValue = false;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
+    mockMM.get()->verifyValue = true;
+    EXPECT_EQ(nullptr, image.get());
+    EXPECT_EQ(retCode, CL_INVALID_D3D11_RESOURCE_KHR);
+}
+
+TYPED_TEST_P(D3DTests, givenSharedObjectAndAlocationFailedWhen2dCreatedThenReturnCorrectCode) {
+    this->mockSharingFcns->mockTexture2dDesc.Format = DXGI_FORMAT_NV12;
+    this->mockSharingFcns->mockTexture2dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+    EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
+    cl_int retCode = 0;
+    mockMM.get()->failAlloc = true;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
+    mockMM.get()->failAlloc = false;
+    EXPECT_EQ(nullptr, image.get());
+    EXPECT_EQ(retCode, CL_OUT_OF_HOST_MEMORY);
+}
+
+TYPED_TEST_P(D3DTests, givenSharedObjectAndNTHandleAndAllocationFailedWhen2dCreatedThenReturnCorrectCode) {
+    this->mockSharingFcns->mockTexture2dDesc.Format = DXGI_FORMAT_NV12;
+    this->mockSharingFcns->mockTexture2dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED_NTHANDLE;
+    EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
+        .Times(1)
+        .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
+    cl_int retCode = 0;
+    mockMM.get()->failAlloc = true;
+    auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, reinterpret_cast<D3DTexture2d *>(&this->dummyD3DTexture), CL_MEM_READ_WRITE, 4, &retCode));
+    mockMM.get()->failAlloc = false;
+    EXPECT_EQ(nullptr, image.get());
+    EXPECT_EQ(retCode, CL_OUT_OF_HOST_MEMORY);
+}
+
 TYPED_TEST_P(D3DTests, givenNV12FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams) {
     this->mockSharingFcns->mockTexture2dDesc.Format = DXGI_FORMAT_NV12;
     EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
@@ -692,6 +748,10 @@ REGISTER_TYPED_TEST_CASE_P(D3DTests,
                            givenWriteOnlyFormatWhenLookingForSurfaceFormatThenReturnValidFormat,
                            givenReadWriteFormatWhenLookingForSurfaceFormatThenReturnValidFormat,
                            givenNV12FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,
+                           givenSharedObjectFromInvalidContextWhen2dCreatedThenReturnCorrectCode,
+                           givenSharedObjectFromInvalidContextAndNTHandleWhen2dCreatedThenReturnCorrectCode,
+                           givenSharedObjectAndAlocationFailedWhen2dCreatedThenReturnCorrectCode,
+                           givenSharedObjectAndNTHandleAndAllocationFailedWhen2dCreatedThenReturnCorrectCode,
                            givenP010FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,
                            givenP016FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,
                            givenNV12FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,

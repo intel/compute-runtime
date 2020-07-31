@@ -63,6 +63,7 @@ class WddmMemoryManager : public MemoryManager {
 
     AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) override { return AddressRange{0, 0}; };
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override{};
+    bool verifyHandle(osHandle handle, uint32_t rootDeviceIndex, bool ntHandle) override;
 
   protected:
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
