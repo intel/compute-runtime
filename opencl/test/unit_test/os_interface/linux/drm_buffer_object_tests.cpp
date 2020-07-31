@@ -26,8 +26,8 @@ class TestedBufferObject : public BufferObject {
         this->tiling_mode = mode;
     }
 
-    void fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t drmContextId) override {
-        BufferObject::fillExecObject(execObject, drmContextId);
+    void fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t vmHandleId, uint32_t drmContextId) override {
+        BufferObject::fillExecObject(execObject, vmHandleId, drmContextId);
         execObjectPointerFilled = &execObject;
     }
 
@@ -66,7 +66,7 @@ TEST_F(DrmBufferObjectTest, exec) {
     mock->ioctl_res = 0;
 
     drm_i915_gem_exec_object2 execObjectsStorage = {};
-    auto ret = bo->exec(0, 0, 0, false, 1, nullptr, 0u, &execObjectsStorage);
+    auto ret = bo->exec(0, 0, 0, false, 0, 1, nullptr, 0u, &execObjectsStorage);
     EXPECT_EQ(mock->ioctl_res, ret);
     EXPECT_EQ(0u, mock->execBuffer.flags);
 }
@@ -76,7 +76,7 @@ TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
     mock->ioctl_res = -1;
     mock->errnoValue = EFAULT;
     drm_i915_gem_exec_object2 execObjectsStorage = {};
-    EXPECT_EQ(EFAULT, bo->exec(0, 0, 0, false, 1, nullptr, 0u, &execObjectsStorage));
+    EXPECT_EQ(EFAULT, bo->exec(0, 0, 0, false, 0, 1, nullptr, 0u, &execObjectsStorage));
 }
 
 TEST_F(DrmBufferObjectTest, setTiling_success) {
@@ -105,7 +105,7 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedCrosses32BitBoundaryW
     memset(&execObject, 0, sizeof(execObject));
     bo->setAddress(((uint64_t)1u << 32) - 0x1000u);
     bo->setSize(0x1000);
-    bo->fillExecObject(execObject, 1);
+    bo->fillExecObject(execObject, 0, 1);
     //base address + size > size of 32bit address space
     EXPECT_TRUE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
 }
@@ -116,7 +116,7 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedWithin32BitBoundaryWh
     memset(&execObject, 0, sizeof(execObject));
     bo->setAddress(((uint64_t)1u << 32) - 0x1000u);
     bo->setSize(0xFFF);
-    bo->fillExecObject(execObject, 1);
+    bo->fillExecObject(execObject, 0, 1);
     //base address + size < size of 32bit address space
     EXPECT_TRUE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
 }
@@ -133,7 +133,7 @@ TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {
 
     bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
     BufferObject *boArray[1] = {boToPin.get()};
-    auto ret = bo->pin(boArray, 1, 1);
+    auto ret = bo->pin(boArray, 1, 0, 1);
     EXPECT_EQ(EINVAL, ret);
 }
 
@@ -144,7 +144,7 @@ TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundI
     drm_i915_gem_exec_object2 execObjectsStorage = {};
 
     testing::internal::CaptureStdout();
-    auto ret = bo->exec(0, 0, 0, false, 1, nullptr, 0u, &execObjectsStorage);
+    auto ret = bo->exec(0, 0, 0, false, 0, 1, nullptr, 0u, &execObjectsStorage);
     EXPECT_EQ(0, ret);
 
     std::string output = testing::internal::GetCapturedStdout();
@@ -170,7 +170,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
     mock->errnoValue = EFAULT;
 
     BufferObject *boArray[1] = {boToPin.get()};
-    auto ret = bo->pin(boArray, 1, 1);
+    auto ret = bo->pin(boArray, 1, 0, 1);
     EXPECT_EQ(EFAULT, ret);
 }
 
@@ -200,7 +200,7 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
     BufferObject *array[3] = {boToPin.get(), boToPin2.get(), boToPin3.get()};
 
     bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
-    auto ret = bo->pin(array, 3, 1);
+    auto ret = bo->pin(array, 3, 0, 1);
     EXPECT_EQ(mock->ioctl_res, ret);
 
     EXPECT_LT(0u, mock->execBuffer.batch_len);

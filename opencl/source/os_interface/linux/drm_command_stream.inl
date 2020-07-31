@@ -90,7 +90,7 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
 }
 
 template <typename GfxFamily>
-void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, uint32_t drmContextId) {
+void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId) {
     DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
     DEBUG_BREAK_IF(!alloc);
     BufferObject *bb = alloc->getBO();
@@ -110,6 +110,7 @@ void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, u
     int err = bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
                        batchBuffer.startOffset, execFlags,
                        batchBuffer.requiresCoherency,
+                       vmHandleId,
                        drmContextId,
                        this->residency.data(), this->residency.size(),
                        this->execObjectsStorage.data());

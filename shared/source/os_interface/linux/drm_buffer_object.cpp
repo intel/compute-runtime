@@ -90,7 +90,7 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
     return set_tiling.tiling_mode == mode;
 }
 
-void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t drmContextId) {
+void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t vmHandleId, uint32_t drmContextId) {
     execObject.handle = this->handle;
     execObject.relocation_count = 0; //No relocations, we are SoftPinning
     execObject.relocs_ptr = 0ul;
@@ -99,13 +99,15 @@ void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_
     execObject.flags = EXEC_OBJECT_PINNED | EXEC_OBJECT_SUPPORTS_48B_ADDRESS;
     execObject.rsvd1 = drmContextId;
     execObject.rsvd2 = 0;
+
+    this->fillExecObjectImpl(execObject, vmHandleId);
 }
 
-int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId, BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage) {
+int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t vmHandleId, uint32_t drmContextId, BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage) {
     for (size_t i = 0; i < residencyCount; i++) {
-        residency[i]->fillExecObject(execObjectsStorage[i], drmContextId);
+        residency[i]->fillExecObject(execObjectsStorage[i], vmHandleId, drmContextId);
     }
-    this->fillExecObject(execObjectsStorage[residencyCount], drmContextId);
+    this->fillExecObject(execObjectsStorage[residencyCount], vmHandleId, drmContextId);
 
     drm_i915_gem_execbuffer2 execbuf{};
     execbuf.buffers_ptr = reinterpret_cast<uintptr_t>(execObjectsStorage);
@@ -176,9 +178,9 @@ void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const
     std::cout << logger << std::endl;
 }
 
-int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t drmContextId) {
+int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t vmHandleId, uint32_t drmContextId) {
     StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
-    return this->exec(4u, 0u, 0u, false, drmContextId, boToPin, numberOfBos, &execObject[0]);
+    return this->exec(4u, 0u, 0u, false, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
 }
 
 } // namespace NEO

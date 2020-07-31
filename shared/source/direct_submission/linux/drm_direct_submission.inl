@@ -54,12 +54,13 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
     drm_i915_gem_exec_object2 execObject{};
 
     bool ret = false;
-    for (const auto &drmContextId : drmContextIds) {
+    for (uint32_t drmIterator = 0u; drmIterator < drmContextIds.size(); drmIterator++) {
         ret |= bb->exec(static_cast<uint32_t>(size),
                         0,
                         execFlags,
                         false,
-                        drmContextId,
+                        drmIterator,
+                        drmContextIds[drmIterator],
                         nullptr,
                         0,
                         &execObject);

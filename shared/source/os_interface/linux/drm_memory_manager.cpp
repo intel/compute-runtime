@@ -181,7 +181,7 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
 
 void DrmMemoryManager::emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const {
     if (forcePinEnabled && pinBBs.at(allocationData.rootDeviceIndex) != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
-        pinBBs.at(allocationData.rootDeviceIndex)->pin(&bo, 1, getDefaultDrmContextId());
+        pinBBs.at(allocationData.rootDeviceIndex)->pin(&bo, 1, 0, getDefaultDrmContextId());
     }
 }
 
@@ -276,7 +276,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithGpuVa(const Allo
 
     BufferObject *boPtr = bo.get();
     if (forcePinEnabled && pinBBs.at(allocationData.rootDeviceIndex) != nullptr && alignedSize >= this->pinThreshold) {
-        pinBBs.at(allocationData.rootDeviceIndex)->pin(&boPtr, 1, osContextLinux->getContextId());
+        pinBBs.at(allocationData.rootDeviceIndex)->pin(&boPtr, 1, 0, osContextLinux->getDrmContextIds()[0]);
     }
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, bo->gpuAddress, alignedSize, MemoryPool::System4KBPages);
@@ -310,7 +310,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
 
     if (validateHostPtrMemory) {
         auto boPtr = bo.get();
-        int result = pinBBs.at(allocationData.rootDeviceIndex)->pin(&boPtr, 1, getDefaultDrmContextId());
+        int result = pinBBs.at(allocationData.rootDeviceIndex)->pin(&boPtr, 1, 0, getDefaultDrmContextId());
         if (result != SUCCESS) {
             unreference(bo.release(), true);
             releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, allocationData.rootDeviceIndex);
@@ -666,7 +666,7 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
     }
 
     if (validateHostPtrMemory) {
-        int result = pinBBs.at(rootDeviceIndex)->pin(allocatedBos, numberOfBosAllocated, getDefaultDrmContextId());
+        int result = pinBBs.at(rootDeviceIndex)->pin(allocatedBos, numberOfBosAllocated, 0, getDefaultDrmContextId());
 
         if (result == EFAULT) {
             for (uint32_t i = 0; i < numberOfBosAllocated; i++) {

@@ -14,7 +14,7 @@ namespace NEO {
 template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
     this->processResidency(allocationsForResidency, 0u);
-    this->exec(batchBuffer, static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0]);
+    this->exec(batchBuffer, 0u, static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0]);
 }
 
 } // namespace NEO

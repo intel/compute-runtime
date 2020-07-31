@@ -39,9 +39,9 @@ class BufferObject {
 
     bool setTiling(uint32_t mode, uint32_t stride);
 
-    MOCKABLE_VIRTUAL int pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t drmContextId);
+    MOCKABLE_VIRTUAL int pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t vmHandleId, uint32_t drmContextId);
 
-    int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t drmContextId, BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage);
+    int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t vmHandleId, uint32_t drmContextId, BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage);
 
     void bind(uint32_t vmHandleId);
     void unbind(uint32_t vmHandleId);
@@ -78,7 +78,8 @@ class BufferObject {
     //Tiling
     uint32_t tiling_mode;
 
-    MOCKABLE_VIRTUAL void fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t drmContextId);
+    MOCKABLE_VIRTUAL void fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t vmHandleId, uint32_t drmContextId);
+    void fillExecObjectImpl(drm_i915_gem_exec_object2 &execObject, uint32_t vmHandleId);
 
     uint64_t gpuAddress = 0llu;
 
