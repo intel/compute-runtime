@@ -31,8 +31,8 @@ HWTEST_F(CommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerate
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
-                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
-                                                      usedSpaceAfter));
+                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), usedSpaceBefore),
+                                                      usedSpaceAfter - usedSpaceBefore));
 
     // Find a PC w/ CS stall
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());

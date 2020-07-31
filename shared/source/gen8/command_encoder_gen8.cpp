@@ -6,16 +6,16 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_container/command_encoder.inl"
-#include "shared/source/command_container/command_encoder_base.inl"
-#include "shared/source/command_container/encode_compute_mode_bdw_plus.inl"
 #include "shared/source/gen8/hw_cmds_base.h"
 #include "shared/source/gen8/reg_configs.h"
 
+using Family = NEO::BDWFamily;
+
+#include "shared/source/command_container/command_encoder.inl"
+#include "shared/source/command_container/command_encoder_base.inl"
+#include "shared/source/command_container/encode_compute_mode_bdw_plus.inl"
+
 namespace NEO {
-
-using Family = BDWFamily;
-
 template struct EncodeDispatchKernel<Family>;
 template struct EncodeStates<Family>;
 template struct EncodeMath<Family>;
@@ -32,4 +32,5 @@ template struct EncodeSempahore<Family>;
 template struct EncodeBatchBufferStartOrEnd<Family>;
 template struct EncodeMiFlushDW<Family>;
 template struct EncodeMemoryPrefetch<Family>;
+template struct EncodeWA<Family>;
 } // namespace NEO

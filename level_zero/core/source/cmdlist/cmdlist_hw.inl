@@ -1494,6 +1494,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::setGlobalWorkSizeIndirect(NEO:
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandContainer &container) {
+    NEO::PipeControlArgs args(true);
+    args.hdcPipelineFlush = true;
+    args.textureCacheInvalidationEnable = true;
+    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+
     NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer);
     if (device->getL0Debugger()) {
         device->getL0Debugger()->captureStateBaseAddress(commandContainer);

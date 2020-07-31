@@ -159,11 +159,20 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     }
 
     auto slmSizeNew = dispatchInterface->getSlmTotalSize();
-    bool flush = container.slmSize != slmSizeNew || container.isAnyHeapDirty();
+    bool dirtyHeaps = container.isAnyHeapDirty();
+    bool flush = container.slmSize != slmSizeNew || dirtyHeaps;
 
     if (flush) {
         PipeControlArgs args(true);
+        if (dirtyHeaps) {
+            args.hdcPipelineFlush = true;
+        }
         MemorySynchronizationCommands<Family>::addPipeControl(*container.getCommandStream(), args);
+
+        if (dirtyHeaps) {
+            EncodeStateBaseAddress<Family>::encode(container);
+            container.setDirtyStateForAllHeaps(false);
+        }
 
         if (container.slmSize != slmSizeNew) {
             EncodeL3State<Family>::encode(container, slmSizeNew != 0u);
@@ -172,11 +181,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
             if (container.nextIddInBlock != container.getNumIddPerBlock()) {
                 EncodeMediaInterfaceDescriptorLoad<Family>::encode(container);
             }
-        }
-
-        if (container.isAnyHeapDirty()) {
-            EncodeStateBaseAddress<Family>::encode(container);
-            container.setDirtyStateForAllHeaps(false);
         }
     }
 

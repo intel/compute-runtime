@@ -6,19 +6,19 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_container/command_encoder.inl"
-#include "shared/source/command_container/command_encoder_base.inl"
-#include "shared/source/command_container/encode_compute_mode_tgllp_plus.inl"
 #include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/gen12lp/reg_configs.h"
 #include "shared/source/helpers/preamble.h"
 
+using Family = NEO::TGLLPFamily;
+
+#include "shared/source/command_container/command_encoder.inl"
+#include "shared/source/command_container/command_encoder_base.inl"
+#include "shared/source/command_container/encode_compute_mode_tgllp_plus.inl"
+
 namespace NEO {
-
-using Family = TGLLPFamily;
-
 template <>
-inline size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device) {
+size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device) {
     size_t size = 0;
     if (device.getDefaultEngine().commandStreamReceiver->isRcs()) {
         size += 2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(device.getHardwareInfo());
@@ -39,7 +39,7 @@ void EncodeComputeMode<Family>::adjustComputeMode(LinearStream &csr, uint32_t nu
 }
 
 template <>
-inline void EncodeWA<Family>::encodeAdditionalPipelineSelect(Device &device, LinearStream &stream, bool is3DPipeline) {
+void EncodeWA<Family>::encodeAdditionalPipelineSelect(Device &device, LinearStream &stream, bool is3DPipeline) {
     if (device.getDefaultEngine().commandStreamReceiver->isRcs()) {
         PipelineSelectArgs args;
         args.is3DPipelineRequired = is3DPipeline;

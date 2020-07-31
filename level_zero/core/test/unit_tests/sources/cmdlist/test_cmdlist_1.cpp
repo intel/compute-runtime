@@ -191,8 +191,9 @@ TEST_F(CommandListCreate, givenInvalidProductFamilyThenReturnsNullPointer) {
     EXPECT_EQ(nullptr, commandList);
 }
 
-HWTEST_F(CommandListCreate, whenCommandListIsCreatedThenStateBaseAddressCmdIsAddedAndCorrectlyProgrammed) {
+HWTEST_F(CommandListCreate, whenCommandListIsCreatedThenPCAndStateBaseAddressCmdsAreAddedAndCorrectlyProgrammed) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
     auto &commandContainer = commandList->commandContainer;
@@ -210,8 +211,17 @@ HWTEST_F(CommandListCreate, whenCommandListIsCreatedThenStateBaseAddressCmdIsAdd
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
-    auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+
+    auto itorPc = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorPc);
+    auto cmdPc = genCmdCast<PIPE_CONTROL *>(*itorPc);
+    EXPECT_TRUE(cmdPc->getDcFlushEnable());
+    EXPECT_TRUE(cmdPc->getCommandStreamerStallEnable());
+    EXPECT_TRUE(cmdPc->getTextureCacheInvalidationEnable());
+
+    auto itor = find<STATE_BASE_ADDRESS *>(itorPc, cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
+
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*itor);
 
     auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
