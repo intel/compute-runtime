@@ -8,11 +8,13 @@
 #include "level_zero/tools/source/tools_init.h"
 #include <level_zero/zet_api.h>
 
+#include "third_party/level_zero/ze_api_ext.h"
+
 #include <iostream>
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetInit(
     ze_init_flag_t flags) {
     return L0::ToolsInit::get()->initTools(flags);

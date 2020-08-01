@@ -11,41 +11,41 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeInit(
     ze_init_flag_t flags) {
     return L0::init(flags);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGet(
     uint32_t *pCount,
     ze_driver_handle_t *phDrivers) {
     return L0::driverHandleGet(pCount, phDrivers);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetProperties(
     ze_driver_handle_t hDriver,
     ze_driver_properties_t *pProperties) {
     return L0::DriverHandle::fromHandle(hDriver)->getProperties(pProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetApiVersion(
     ze_driver_handle_t hDriver,
     ze_api_version_t *version) {
     return L0::DriverHandle::fromHandle(hDriver)->getApiVersion(version);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetIPCProperties(
     ze_driver_handle_t hDriver,
     ze_driver_ipc_properties_t *pIPCProperties) {
     return L0::DriverHandle::fromHandle(hDriver)->getIPCProperties(pIPCProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetExtensionFunctionAddress(
     ze_driver_handle_t hDriver,
     const char *pFuncName,

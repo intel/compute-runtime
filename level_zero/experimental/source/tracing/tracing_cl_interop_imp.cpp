@@ -7,7 +7,7 @@
 
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceRegisterCLMemory_Tracing(ze_device_handle_t hDevice,
                                  cl_context context,
                                  cl_mem mem,
@@ -40,7 +40,7 @@ zeDeviceRegisterCLMemory_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.pptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceRegisterCLProgram_Tracing(ze_device_handle_t hDevice,
                                   cl_context context,
                                   cl_program program,
@@ -73,7 +73,7 @@ zeDeviceRegisterCLProgram_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.pphModule);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceRegisterCLCommandQueue_Tracing(ze_device_handle_t hDevice,
                                        cl_context context,
                                        cl_command_queue commandQueue,

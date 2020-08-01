@@ -7,7 +7,7 @@
 
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeSamplerCreate_Tracing(ze_device_handle_t hDevice,
                         const ze_sampler_desc_t *pDesc,
                         ze_sampler_handle_t *phSampler) {
@@ -36,7 +36,7 @@ zeSamplerCreate_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.pphSampler);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeSamplerDestroy_Tracing(ze_sampler_handle_t hSampler) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Sampler.pfnDestroy,

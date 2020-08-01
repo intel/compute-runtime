@@ -7,8 +7,10 @@
 
 #pragma once
 
+#include "third_party/level_zero/ze_api_ext.h"
+
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeInit_Tracing(ze_init_flag_t flags);
 }

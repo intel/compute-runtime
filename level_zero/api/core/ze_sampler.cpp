@@ -11,7 +11,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeSamplerCreate(
     ze_device_handle_t hDevice,
     const ze_sampler_desc_t *desc,
@@ -28,7 +28,7 @@ zeSamplerCreateExt(
     return L0::Context::fromHandle(hContext)->createSampler(hDevice, desc, phSampler);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeSamplerDestroy(
     ze_sampler_handle_t hSampler) {
     return L0::Sampler::fromHandle(hSampler)->destroy();

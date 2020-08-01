@@ -10,7 +10,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeFenceCreate(
     ze_command_queue_handle_t hCommandQueue,
     const ze_fence_desc_t *desc,
@@ -18,26 +18,26 @@ zeFenceCreate(
     return L0::CommandQueue::fromHandle(hCommandQueue)->createFence(desc, phFence);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeFenceDestroy(
     ze_fence_handle_t hFence) {
     return L0::Fence::fromHandle(hFence)->destroy();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeFenceHostSynchronize(
     ze_fence_handle_t hFence,
     uint32_t timeout) {
     return L0::Fence::fromHandle(hFence)->hostSynchronize(timeout);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeFenceQueryStatus(
     ze_fence_handle_t hFence) {
     return L0::Fence::fromHandle(hFence)->queryStatus();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeFenceReset(
     ze_fence_handle_t hFence) {
     return L0::Fence::fromHandle(hFence)->reset();

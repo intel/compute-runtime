@@ -10,7 +10,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemoryCopy(
     ze_command_list_handle_t hCommandList,
     void *dstptr,
@@ -20,7 +20,7 @@ zeCommandListAppendMemoryCopy(
     return L0::CommandList::fromHandle(hCommandList)->appendMemoryCopy(dstptr, srcptr, size, hEvent, 0, nullptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemoryFill(
     ze_command_list_handle_t hCommandList,
     void *ptr,
@@ -31,7 +31,7 @@ zeCommandListAppendMemoryFill(
     return L0::CommandList::fromHandle(hCommandList)->appendMemoryFill(ptr, pattern, patternSize, size, hEvent);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemoryCopyRegion(
     ze_command_list_handle_t hCommandList,
     void *dstptr,
@@ -46,7 +46,7 @@ zeCommandListAppendMemoryCopyRegion(
     return L0::CommandList::fromHandle(hCommandList)->appendMemoryCopyRegion(dstptr, dstRegion, dstPitch, dstSlicePitch, srcptr, srcRegion, srcPitch, srcSlicePitch, hEvent);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendImageCopy(
     ze_command_list_handle_t hCommandList,
     ze_image_handle_t hDstImage,
@@ -55,7 +55,7 @@ zeCommandListAppendImageCopy(
     return L0::CommandList::fromHandle(hCommandList)->appendImageCopy(hDstImage, hSrcImage, hEvent, 0, nullptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendImageCopyRegion(
     ze_command_list_handle_t hCommandList,
     ze_image_handle_t hDstImage,
@@ -66,7 +66,7 @@ zeCommandListAppendImageCopyRegion(
     return L0::CommandList::fromHandle(hCommandList)->appendImageCopyRegion(hDstImage, hSrcImage, pDstRegion, pSrcRegion, hEvent, 0, nullptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendImageCopyToMemory(
     ze_command_list_handle_t hCommandList,
     void *dstptr,
@@ -76,7 +76,7 @@ zeCommandListAppendImageCopyToMemory(
     return L0::CommandList::fromHandle(hCommandList)->appendImageCopyToMemory(dstptr, hSrcImage, pSrcRegion, hEvent, 0, nullptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendImageCopyFromMemory(
     ze_command_list_handle_t hCommandList,
     ze_image_handle_t hDstImage,
@@ -86,7 +86,7 @@ zeCommandListAppendImageCopyFromMemory(
     return L0::CommandList::fromHandle(hCommandList)->appendImageCopyFromMemory(hDstImage, srcptr, pDstRegion, hEvent, 0, nullptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemoryPrefetch(
     ze_command_list_handle_t hCommandList,
     const void *ptr,
@@ -94,7 +94,7 @@ zeCommandListAppendMemoryPrefetch(
     return L0::CommandList::fromHandle(hCommandList)->appendMemoryPrefetch(ptr, size);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemAdvise(
     ze_command_list_handle_t hCommandList,
     ze_device_handle_t hDevice,

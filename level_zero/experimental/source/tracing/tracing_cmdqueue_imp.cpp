@@ -7,7 +7,7 @@
 
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandQueueCreate_Tracing(ze_device_handle_t hDevice,
                              const ze_command_queue_desc_t *desc,
                              ze_command_queue_handle_t *phCommandQueue) {
@@ -34,7 +34,7 @@ zeCommandQueueCreate_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.pdesc,
                                    *tracerParams.pphCommandQueue);
 }
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandQueueDestroy_Tracing(ze_command_queue_handle_t hCommandQueue) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandQueue.pfnDestroy,
@@ -54,7 +54,7 @@ zeCommandQueueDestroy_Tracing(ze_command_queue_handle_t hCommandQueue) {
                                    apiCallbackData.epilogCallbacks,
                                    *tracerParams.phCommandQueue);
 }
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandQueueExecuteCommandLists_Tracing(ze_command_queue_handle_t hCommandQueue,
                                           uint32_t numCommandLists,
                                           ze_command_list_handle_t *phCommandLists,
@@ -85,7 +85,7 @@ zeCommandQueueExecuteCommandLists_Tracing(ze_command_queue_handle_t hCommandQueu
                                    *tracerParams.pphCommandLists,
                                    *tracerParams.phFence);
 }
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandQueueSynchronize_Tracing(ze_command_queue_handle_t hCommandQueue,
                                   uint32_t timeout) {
 

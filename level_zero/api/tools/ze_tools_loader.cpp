@@ -11,13 +11,14 @@
 #include <level_zero/zet_api.h>
 #include <level_zero/zet_ddi.h>
 
+#include "third_party/level_zero/ze_api_ext.h"
 #include "ze_ddi_tables.h"
 
 extern "C" {
 
 extern ze_gpu_driver_dditable_t driver_ddiTable;
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetGlobalProcAddrTable(
     ze_api_version_t version,
     zet_global_dditable_t *pDdiTable) {
@@ -33,7 +34,7 @@ zetGetGlobalProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetDeviceProcAddrTable(
     ze_api_version_t version,
     zet_device_dditable_t *pDdiTable) {
@@ -49,7 +50,7 @@ zetGetDeviceProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetCommandListProcAddrTable(
     ze_api_version_t version,
     zet_command_list_dditable_t *pDdiTable) {
@@ -68,7 +69,7 @@ zetGetCommandListProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetModuleProcAddrTable(
     ze_api_version_t version,
     zet_module_dditable_t *pDdiTable) {
@@ -84,7 +85,7 @@ zetGetModuleProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetKernelProcAddrTable(
     ze_api_version_t version,
     zet_kernel_dditable_t *pDdiTable) {
@@ -100,7 +101,7 @@ zetGetKernelProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetMetricGroupProcAddrTable(
     ze_api_version_t version,
     zet_metric_group_dditable_t *pDdiTable) {
@@ -118,7 +119,7 @@ zetGetMetricGroupProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetMetricProcAddrTable(
     ze_api_version_t version,
     zet_metric_dditable_t *pDdiTable) {
@@ -135,7 +136,7 @@ zetGetMetricProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetMetricTracerProcAddrTable(
     ze_api_version_t version,
     zet_metric_tracer_dditable_t *pDdiTable) {
@@ -153,7 +154,7 @@ zetGetMetricTracerProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetMetricQueryPoolProcAddrTable(
     ze_api_version_t version,
     zet_metric_query_pool_dditable_t *pDdiTable) {
@@ -170,7 +171,7 @@ zetGetMetricQueryPoolProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetMetricQueryProcAddrTable(
     ze_api_version_t version,
     zet_metric_query_dditable_t *pDdiTable) {
@@ -189,7 +190,7 @@ zetGetMetricQueryProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetTracerProcAddrTable(
     ze_api_version_t version,
     zet_tracer_dditable_t *pDdiTable) {
@@ -209,7 +210,7 @@ zetGetTracerProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanProcAddrTable(
     ze_api_version_t version,
     zet_sysman_dditable_t *pDdiTable) {
@@ -258,7 +259,7 @@ zetGetSysmanProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanPowerProcAddrTable(
     ze_api_version_t version,
     zet_sysman_power_dditable_t *pDdiTable) {
@@ -279,7 +280,7 @@ zetGetSysmanPowerProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanFrequencyProcAddrTable(
     ze_api_version_t version,
     zet_sysman_frequency_dditable_t *pDdiTable) {
@@ -307,7 +308,7 @@ zetGetSysmanFrequencyProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanEngineProcAddrTable(
     ze_api_version_t version,
     zet_sysman_engine_dditable_t *pDdiTable) {
@@ -324,7 +325,7 @@ zetGetSysmanEngineProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanStandbyProcAddrTable(
     ze_api_version_t version,
     zet_sysman_standby_dditable_t *pDdiTable) {
@@ -342,7 +343,7 @@ zetGetSysmanStandbyProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanFirmwareProcAddrTable(
     ze_api_version_t version,
     zet_sysman_firmware_dditable_t *pDdiTable) {
@@ -360,7 +361,7 @@ zetGetSysmanFirmwareProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanMemoryProcAddrTable(
     ze_api_version_t version,
     zet_sysman_memory_dditable_t *pDdiTable) {
@@ -378,7 +379,7 @@ zetGetSysmanMemoryProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanFabricPortProcAddrTable(
     ze_api_version_t version,
     zet_sysman_fabric_port_dditable_t *pDdiTable) {
@@ -399,7 +400,7 @@ zetGetSysmanFabricPortProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanTemperatureProcAddrTable(
     ze_api_version_t version,
     zet_sysman_temperature_dditable_t *pDdiTable) {
@@ -418,7 +419,7 @@ zetGetSysmanTemperatureProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanPsuProcAddrTable(
     ze_api_version_t version,
     zet_sysman_psu_dditable_t *pDdiTable) {
@@ -435,7 +436,7 @@ zetGetSysmanPsuProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanFanProcAddrTable(
     ze_api_version_t version,
     zet_sysman_fan_dditable_t *pDdiTable) {
@@ -454,7 +455,7 @@ zetGetSysmanFanProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanLedProcAddrTable(
     ze_api_version_t version,
     zet_sysman_led_dditable_t *pDdiTable) {
@@ -472,7 +473,7 @@ zetGetSysmanLedProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanRasProcAddrTable(
     ze_api_version_t version,
     zet_sysman_ras_dditable_t *pDdiTable) {
@@ -491,7 +492,7 @@ zetGetSysmanRasProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanDiagnosticsProcAddrTable(
     ze_api_version_t version,
     zet_sysman_diagnostics_dditable_t *pDdiTable) {
@@ -509,7 +510,7 @@ zetGetSysmanDiagnosticsProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetSysmanEventProcAddrTable(
     ze_api_version_t version,
     zet_sysman_event_dditable_t *pDdiTable) {
@@ -528,7 +529,7 @@ zetGetSysmanEventProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetGetDebugProcAddrTable(
     ze_api_version_t version,
     zet_debug_dditable_t *pDdiTable) {

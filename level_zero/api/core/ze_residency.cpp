@@ -10,7 +10,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceMakeMemoryResident(
     ze_device_handle_t hDevice,
     void *ptr,
@@ -18,7 +18,7 @@ zeDeviceMakeMemoryResident(
     return L0::Device::fromHandle(hDevice)->makeMemoryResident(ptr, size);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceEvictMemory(
     ze_device_handle_t hDevice,
     void *ptr,
@@ -26,14 +26,14 @@ zeDeviceEvictMemory(
     return L0::Device::fromHandle(hDevice)->evictMemory(ptr, size);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceMakeImageResident(
     ze_device_handle_t hDevice,
     ze_image_handle_t hImage) {
     return L0::Device::fromHandle(hDevice)->makeImageResident(hImage);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceEvictImage(
     ze_device_handle_t hDevice,
     ze_image_handle_t hImage) {

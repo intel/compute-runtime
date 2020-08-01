@@ -11,13 +11,14 @@
 #include <level_zero/zet_api.h>
 #include <level_zero/zet_ddi.h>
 
+#include "third_party/level_zero/ze_api_ext.h"
 #include "ze_ddi_tables.h"
 
 extern "C" {
 
 ze_gpu_driver_dditable_t driver_ddiTable;
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetDriverProcAddrTable(
     ze_api_version_t version,
     ze_driver_dditable_t *pDdiTable) {
@@ -109,7 +110,7 @@ zeGetDriverProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetGlobalProcAddrTable(
     ze_api_version_t version,
     ze_global_dditable_t *pDdiTable) {
@@ -136,7 +137,7 @@ zeGetGlobalProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetDeviceProcAddrTable(
     ze_api_version_t version,
     ze_device_dditable_t *pDdiTable) {
@@ -258,7 +259,7 @@ zeGetDeviceProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetCommandQueueProcAddrTable(
     ze_api_version_t version,
     ze_command_queue_dditable_t *pDdiTable) {
@@ -300,7 +301,7 @@ zeGetCommandQueueProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetCommandListProcAddrTable(
     ze_api_version_t version,
     ze_command_list_dditable_t *pDdiTable) {
@@ -437,7 +438,7 @@ zeGetCommandListProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetFenceProcAddrTable(
     ze_api_version_t version,
     ze_fence_dditable_t *pDdiTable) {
@@ -484,7 +485,7 @@ zeGetFenceProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetEventPoolProcAddrTable(
     ze_api_version_t version,
     ze_event_pool_dditable_t *pDdiTable) {
@@ -531,7 +532,7 @@ zeGetEventPoolProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetEventProcAddrTable(
     ze_api_version_t version,
     ze_event_dditable_t *pDdiTable) {
@@ -588,7 +589,7 @@ zeGetEventProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetImageProcAddrTable(
     ze_api_version_t version,
     ze_image_dditable_t *pDdiTable) {
@@ -625,7 +626,7 @@ zeGetImageProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetModuleProcAddrTable(
     ze_api_version_t version,
     ze_module_dditable_t *pDdiTable) {
@@ -677,7 +678,7 @@ zeGetModuleProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetModuleBuildLogProcAddrTable(
     ze_api_version_t version,
     ze_module_build_log_dditable_t *pDdiTable) {
@@ -709,7 +710,7 @@ zeGetModuleBuildLogProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetKernelProcAddrTable(
     ze_api_version_t version,
     ze_kernel_dditable_t *pDdiTable) {
@@ -781,7 +782,7 @@ zeGetKernelProcAddrTable(
     return result;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeGetSamplerProcAddrTable(
     ze_api_version_t version,
     ze_sampler_dditable_t *pDdiTable) {

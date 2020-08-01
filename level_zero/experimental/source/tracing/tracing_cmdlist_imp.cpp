@@ -7,7 +7,7 @@
 
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListCreate_Tracing(ze_device_handle_t hDevice,
                             const ze_command_list_desc_t *desc,
                             ze_command_list_handle_t *phCommandList) {
@@ -36,7 +36,7 @@ zeCommandListCreate_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.pphCommandList);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListCreateImmediate_Tracing(
     ze_device_handle_t hDevice,
     const ze_command_queue_desc_t *altdesc,
@@ -66,7 +66,7 @@ zeCommandListCreateImmediate_Tracing(
                                    *tracerParams.pphCommandList);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListDestroy_Tracing(ze_command_list_handle_t hCommandList) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnDestroy, hCommandList);
@@ -86,7 +86,7 @@ zeCommandListDestroy_Tracing(ze_command_list_handle_t hCommandList) {
                                    *tracerParams.phCommandList);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListClose_Tracing(ze_command_list_handle_t hCommandList) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnClose, hCommandList);
@@ -106,7 +106,7 @@ zeCommandListClose_Tracing(ze_command_list_handle_t hCommandList) {
                                    *tracerParams.phCommandList);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListReset_Tracing(ze_command_list_handle_t hCommandList) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnReset,

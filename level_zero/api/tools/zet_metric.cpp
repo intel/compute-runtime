@@ -14,7 +14,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricGroupGet(
     zet_device_handle_t hDevice,
     uint32_t *pCount,
@@ -22,7 +22,7 @@ zetMetricGroupGet(
     return L0::metricGroupGet(hDevice, pCount, phMetricGroups);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricGroupGetProperties(
     zet_metric_group_handle_t hMetricGroup,
     zet_metric_group_properties_t *pProperties) {
@@ -30,14 +30,14 @@ zetMetricGroupGetProperties(
     return L0::MetricGroup::fromHandle(hMetricGroup)->getProperties(pProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricGroupGetPropertiesExt(
     zet_metric_group_handle_t hMetricGroup,
     zet_metric_group_properties_ext_t *pProperties) {
     return L0::MetricGroup::fromHandle(hMetricGroup)->getPropertiesExt(pProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricGet(
     zet_metric_group_handle_t hMetricGroup,
     uint32_t *pCount,
@@ -45,21 +45,21 @@ zetMetricGet(
     return L0::MetricGroup::fromHandle(hMetricGroup)->getMetric(pCount, phMetrics);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricGetProperties(
     zet_metric_handle_t hMetric,
     zet_metric_properties_t *pProperties) {
     return L0::Metric::fromHandle(hMetric)->getProperties(pProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricGetPropertiesExt(
     zet_metric_handle_t hMetric,
     zet_metric_properties_ext_t *pProperties) {
     return L0::Metric::fromHandle(hMetric)->getPropertiesExt(pProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricGroupCalculateMetricValues(
     zet_metric_group_handle_t hMetricGroup,
     size_t rawDataSize,
@@ -69,7 +69,7 @@ zetMetricGroupCalculateMetricValues(
     return L0::MetricGroup::fromHandle(hMetricGroup)->calculateMetricValues(ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawDataSize, pRawData, pMetricValueCount, pMetricValues);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricGroupCalculateMetricValuesExt(
     zet_metric_group_handle_t hMetricGroup,
     zet_metric_group_calculation_type_t type,
@@ -80,7 +80,7 @@ zetMetricGroupCalculateMetricValuesExt(
     return L0::MetricGroup::fromHandle(hMetricGroup)->calculateMetricValues(type, rawDataSize, pRawData, pMetricValueCount, pMetricValues);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetDeviceActivateMetricGroups(
     zet_device_handle_t hDevice,
     uint32_t count,
@@ -88,7 +88,7 @@ zetDeviceActivateMetricGroups(
     return L0::Device::fromHandle(hDevice)->activateMetricGroups(count, phMetricGroups);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetContextActivateMetricGroups(
     zet_context_handle_t hContext,
     zet_device_handle_t hDevice,
@@ -97,7 +97,7 @@ zetContextActivateMetricGroups(
     return L0::Context::fromHandle(hContext)->activateMetricGroups(hDevice, count, phMetricGroups);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricTracerOpen(
     zet_device_handle_t hDevice,
     zet_metric_group_handle_t hMetricGroup,
@@ -107,7 +107,7 @@ zetMetricTracerOpen(
     return L0::metricTracerOpen(hDevice, hMetricGroup, pDesc, hNotificationEvent, phMetricTracer);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetCommandListAppendMetricTracerMarker(
     ze_command_list_handle_t hCommandList,
     zet_metric_tracer_handle_t hMetricTracer,
@@ -115,13 +115,13 @@ zetCommandListAppendMetricTracerMarker(
     return L0::CommandList::fromHandle(hCommandList)->appendMetricTracerMarker(hMetricTracer, value);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricTracerClose(
     zet_metric_tracer_handle_t hMetricTracer) {
     return L0::MetricTracer::fromHandle(hMetricTracer)->close();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricTracerReadData(
     zet_metric_tracer_handle_t hMetricTracer,
     uint32_t maxReportCount,
@@ -164,7 +164,7 @@ zetMetricStreamerReadData(
     return L0::MetricStreamer::fromHandle(hMetricStreamer)->readData(maxReportCount, pRawDataSize, pRawData);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricQueryPoolCreate(
     zet_device_handle_t hDevice,
     zet_metric_group_handle_t hMetricGroup,
@@ -173,7 +173,7 @@ zetMetricQueryPoolCreate(
     return L0::metricQueryPoolCreate(hDevice, hMetricGroup, desc, phMetricQueryPool);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricQueryPoolCreateExt(
     zet_context_handle_t hContext,
     zet_device_handle_t hDevice,
@@ -183,13 +183,13 @@ zetMetricQueryPoolCreateExt(
     return L0::metricQueryPoolCreateExt(hContext, hDevice, hMetricGroup, desc, phMetricQueryPool);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricQueryPoolDestroy(
     zet_metric_query_pool_handle_t hMetricQueryPool) {
     return L0::MetricQueryPool::fromHandle(hMetricQueryPool)->destroy();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricQueryCreate(
     zet_metric_query_pool_handle_t hMetricQueryPool,
     uint32_t index,
@@ -197,26 +197,26 @@ zetMetricQueryCreate(
     return L0::MetricQueryPool::fromHandle(hMetricQueryPool)->createMetricQuery(index, phMetricQuery);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricQueryDestroy(
     zet_metric_query_handle_t hMetricQuery) {
     return L0::MetricQuery::fromHandle(hMetricQuery)->destroy();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricQueryReset(
     zet_metric_query_handle_t hMetricQuery) {
     return L0::MetricQuery::fromHandle(hMetricQuery)->reset();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetCommandListAppendMetricQueryBegin(
     zet_command_list_handle_t hCommandList,
     zet_metric_query_handle_t hMetricQuery) {
     return L0::CommandList::fromHandle(hCommandList)->appendMetricQueryBegin(hMetricQuery);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetCommandListAppendMetricQueryEnd(
     zet_command_list_handle_t hCommandList,
     zet_metric_query_handle_t hMetricQuery,
@@ -224,7 +224,7 @@ zetCommandListAppendMetricQueryEnd(
     return L0::CommandList::fromHandle(hCommandList)->appendMetricQueryEnd(hMetricQuery, hCompletionEvent, 0, nullptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetCommandListAppendMetricQueryEndExt(
     zet_command_list_handle_t hCommandList,
     zet_metric_query_handle_t hMetricQuery,
@@ -234,13 +234,13 @@ zetCommandListAppendMetricQueryEndExt(
     return L0::CommandList::fromHandle(hCommandList)->appendMetricQueryEnd(hMetricQuery, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetCommandListAppendMetricMemoryBarrier(
     zet_command_list_handle_t hCommandList) {
     return L0::CommandList::fromHandle(hCommandList)->appendMetricMemoryBarrier();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetMetricQueryGetData(
     zet_metric_query_handle_t hMetricQuery,
     size_t *pRawDataSize,

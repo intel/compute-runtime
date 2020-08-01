@@ -12,7 +12,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetModuleGetDebugInfo(
     zet_module_handle_t hModule,
     zet_module_debug_info_format_t format,

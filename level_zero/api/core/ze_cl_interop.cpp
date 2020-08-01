@@ -10,7 +10,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceRegisterCLMemory(
     ze_device_handle_t hDevice,
     cl_context context,
@@ -19,7 +19,7 @@ zeDeviceRegisterCLMemory(
     return L0::Device::fromHandle(hDevice)->registerCLMemory(context, mem, ptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceRegisterCLProgram(
     ze_device_handle_t hDevice,
     cl_context context,
@@ -28,7 +28,7 @@ zeDeviceRegisterCLProgram(
     return L0::Device::fromHandle(hDevice)->registerCLProgram(context, program, phModule);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceRegisterCLCommandQueue(
     ze_device_handle_t hDevice,
     cl_context context,

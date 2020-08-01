@@ -10,7 +10,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeImageGetProperties(
     ze_device_handle_t hDevice,
     const ze_image_desc_t *desc,
@@ -18,7 +18,7 @@ zeImageGetProperties(
     return L0::Device::fromHandle(hDevice)->imageGetProperties(desc, pImageProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeImageCreate(
     ze_device_handle_t hDevice,
     const ze_image_desc_t *desc,
@@ -26,7 +26,7 @@ zeImageCreate(
     return L0::Device::fromHandle(hDevice)->createImage(desc, phImage);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeImageDestroy(
     ze_image_handle_t hImage) {
     return L0::Image::fromHandle(hImage)->destroy();

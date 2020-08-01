@@ -7,7 +7,7 @@
 
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGet_Tracing(ze_driver_handle_t hDriver,
                     uint32_t *pCount,
                     ze_device_handle_t *phDevices) {
@@ -36,7 +36,7 @@ zeDeviceGet_Tracing(ze_driver_handle_t hDriver,
                                    *tracerParams.pphDevices);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetProperties_Tracing(ze_device_handle_t hDevice,
                               ze_device_properties_t *pDeviceProperties) {
 
@@ -61,7 +61,7 @@ zeDeviceGetProperties_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.ppDeviceProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetComputeProperties_Tracing(ze_device_handle_t hDevice,
                                      ze_device_compute_properties_t *pComputeProperties) {
 
@@ -86,7 +86,7 @@ zeDeviceGetComputeProperties_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.ppComputeProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetMemoryProperties_Tracing(ze_device_handle_t hDevice,
                                     uint32_t *pCount,
                                     ze_device_memory_properties_t *pMemProperties) {
@@ -115,7 +115,7 @@ zeDeviceGetMemoryProperties_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.ppMemProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetCacheProperties_Tracing(ze_device_handle_t hDevice,
                                    ze_device_cache_properties_t *pCacheProperties) {
 
@@ -140,7 +140,7 @@ zeDeviceGetCacheProperties_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.ppCacheProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetImageProperties_Tracing(ze_device_handle_t hDevice,
                                    ze_device_image_properties_t *pImageProperties) {
 
@@ -165,7 +165,7 @@ zeDeviceGetImageProperties_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.ppImageProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetSubDevices_Tracing(ze_device_handle_t hDevice,
                               uint32_t *pCount,
                               ze_device_handle_t *phSubdevices) {
@@ -194,7 +194,7 @@ zeDeviceGetSubDevices_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.pphSubdevices);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetP2PProperties_Tracing(ze_device_handle_t hDevice,
                                  ze_device_handle_t hPeerDevice,
                                  ze_device_p2p_properties_t *pP2PProperties) {
@@ -223,7 +223,7 @@ zeDeviceGetP2PProperties_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.ppP2PProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceCanAccessPeer_Tracing(ze_device_handle_t hDevice,
                               ze_device_handle_t hPeerDevice,
                               ze_bool_t *value) {
@@ -252,7 +252,7 @@ zeDeviceCanAccessPeer_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.pvalue);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetIntermediateCacheConfig_Tracing(ze_kernel_handle_t hKernel,
                                            ze_cache_config_t cacheConfig) {
 
@@ -277,7 +277,7 @@ zeKernelSetIntermediateCacheConfig_Tracing(ze_kernel_handle_t hKernel,
                                    *tracerParams.pCacheConfig);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceSetLastLevelCacheConfig_Tracing(ze_device_handle_t hDevice,
                                         ze_cache_config_t cacheConfig) {
 
@@ -302,7 +302,7 @@ zeDeviceSetLastLevelCacheConfig_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.pCacheConfig);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetKernelProperties_Tracing(ze_device_handle_t hDevice,
                                     ze_device_kernel_properties_t *pKernelProperties) {
 
@@ -328,7 +328,7 @@ zeDeviceGetKernelProperties_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.ppKernelProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetMemoryAccessProperties_Tracing(ze_device_handle_t hDevice,
                                           ze_device_memory_access_properties_t *pMemAccessProperties) {
 

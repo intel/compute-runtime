@@ -13,7 +13,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListCreate(
     ze_device_handle_t hDevice,
     const ze_command_list_desc_t *desc,
@@ -30,7 +30,7 @@ zeCommandListCreateExt(
     return L0::Context::fromHandle(hContext)->createCommandList(hDevice, desc, phCommandList);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListCreateImmediate(
     ze_device_handle_t hDevice,
     const ze_command_queue_desc_t *altdesc,
@@ -47,19 +47,19 @@ zeCommandListCreateImmediateExt(
     return L0::Context::fromHandle(hContext)->createCommandListImmediate(hDevice, altdesc, phCommandList);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListDestroy(
     ze_command_list_handle_t hCommandList) {
     return L0::CommandList::fromHandle(hCommandList)->destroy();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListClose(
     ze_command_list_handle_t hCommandList) {
     return L0::CommandList::fromHandle(hCommandList)->close();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListReset(
     ze_command_list_handle_t hCommandList) {
     return L0::CommandList::fromHandle(hCommandList)->reset();

@@ -12,7 +12,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanGet(
     zet_device_handle_t hDevice,
     zet_sysman_version_t version,
@@ -27,7 +27,7 @@ zesDeviceGetProperties(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanDeviceGetProperties(
     zet_sysman_handle_t hSysman,
     zet_sysman_properties_t *pProperties) {
@@ -63,7 +63,7 @@ zesSchedulerGetCurrentMode(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanSchedulerGetCurrentMode(
     zet_sysman_handle_t hSysman,
     zet_sched_mode_t *pMode) {
@@ -78,7 +78,7 @@ zesSchedulerGetTimeoutModeProperties(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanSchedulerGetTimeoutModeProperties(
     zet_sysman_handle_t hSysman,
     ze_bool_t getDefaults,
@@ -94,7 +94,7 @@ zesSchedulerGetTimesliceModeProperties(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanSchedulerGetTimesliceModeProperties(
     zet_sysman_handle_t hSysman,
     ze_bool_t getDefaults,
@@ -110,7 +110,7 @@ zesSchedulerSetTimeoutMode(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanSchedulerSetTimeoutMode(
     zet_sysman_handle_t hSysman,
     zet_sched_timeout_properties_t *pProperties,
@@ -126,7 +126,7 @@ zesSchedulerSetTimesliceMode(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanSchedulerSetTimesliceMode(
     zet_sysman_handle_t hSysman,
     zet_sched_timeslice_properties_t *pProperties,
@@ -141,7 +141,7 @@ zesSchedulerSetExclusiveMode(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanSchedulerSetExclusiveMode(
     zet_sysman_handle_t hSysman,
     ze_bool_t *pNeedReboot) {
@@ -155,7 +155,7 @@ zesSchedulerSetComputeUnitDebugMode(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanSchedulerSetComputeUnitDebugMode(
     zet_sysman_handle_t hSysman,
     ze_bool_t *pNeedReboot) {
@@ -170,7 +170,7 @@ zesDeviceProcessesGetState(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanProcessesGetState(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -185,13 +185,13 @@ zesDeviceReset(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanDeviceReset(
     zet_sysman_handle_t hSysman) {
     return L0::Sysman::fromHandle(hSysman)->deviceReset();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanDeviceGetRepairStatus(
     zet_sysman_handle_t hSysman,
     zet_repair_status_t *pRepairStatus) {
@@ -205,7 +205,7 @@ zesDevicePciGetProperties(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPciGetProperties(
     zet_sysman_handle_t hSysman,
     zet_pci_properties_t *pProperties) {
@@ -219,7 +219,7 @@ zesDevicePciGetState(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPciGetState(
     zet_sysman_handle_t hSysman,
     zet_pci_state_t *pState) {
@@ -234,7 +234,7 @@ zesDevicePciGetBars(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPciGetBars(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -249,7 +249,7 @@ zesDevicePciGetStats(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPciGetStats(
     zet_sysman_handle_t hSysman,
     zet_pci_stats_t *pStats) {
@@ -264,7 +264,7 @@ zesDeviceEnumPowerDomains(
     return L0::SysmanDevice::fromHandle(hDevice)->powerGet(pCount, phPower);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPowerGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -279,7 +279,7 @@ zesPowerGetProperties(
     return L0::Power::fromHandle(hPower)->powerGetProperties(pProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPowerGetProperties(
     zet_sysman_pwr_handle_t hPower,
     zet_power_properties_t *pProperties) {
@@ -293,7 +293,7 @@ zesPowerGetEnergyCounter(
     return L0::Power::fromHandle(hPower)->powerGetEnergyCounter(pEnergy);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPowerGetEnergyCounter(
     zet_sysman_pwr_handle_t hPower,
     zet_power_energy_counter_t *pEnergy) {
@@ -309,7 +309,7 @@ zesPowerGetLimits(
     return L0::Power::fromHandle(hPower)->powerGetLimits(pSustained, pBurst, pPeak);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPowerGetLimits(
     zet_sysman_pwr_handle_t hPower,
     zet_power_sustained_limit_t *pSustained,
@@ -327,7 +327,7 @@ zesPowerSetLimits(
     return L0::Power::fromHandle(hPower)->powerSetLimits(pSustained, pBurst, pPeak);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPowerSetLimits(
     zet_sysman_pwr_handle_t hPower,
     const zet_power_sustained_limit_t *pSustained,
@@ -343,7 +343,7 @@ zesPowerGetEnergyThreshold(
     return L0::Power::fromHandle(hPower)->powerGetEnergyThreshold(pThreshold);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPowerGetEnergyThreshold(
     zet_sysman_pwr_handle_t hPower,
     zet_energy_threshold_t *pThreshold) {
@@ -357,7 +357,7 @@ zesPowerSetEnergyThreshold(
     return L0::Power::fromHandle(hPower)->powerSetEnergyThreshold(threshold);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPowerSetEnergyThreshold(
     zet_sysman_pwr_handle_t hPower,
     double threshold) {
@@ -372,7 +372,7 @@ zesDeviceEnumFrequencyDomains(
     return L0::SysmanDevice::fromHandle(hDevice)->frequencyGet(pCount, phFrequency);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -387,7 +387,7 @@ zesFrequencyGetProperties(
     return L0::Frequency::fromHandle(hFrequency)->frequencyGetProperties(pProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyGetProperties(
     zet_sysman_freq_handle_t hFrequency,
     zet_freq_properties_t *pProperties) {
@@ -402,7 +402,7 @@ zesFrequencyGetAvailableClocks(
     return L0::Frequency::fromHandle(hFrequency)->frequencyGetAvailableClocks(pCount, phFrequency);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyGetAvailableClocks(
     zet_sysman_freq_handle_t hFrequency,
     uint32_t *pCount,
@@ -417,7 +417,7 @@ zesFrequencyGetRange(
     return L0::Frequency::fromHandle(hFrequency)->frequencyGetRange(pLimits);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyGetRange(
     zet_sysman_freq_handle_t hFrequency,
     zet_freq_range_t *pLimits) {
@@ -431,7 +431,7 @@ zesFrequencySetRange(
     return L0::Frequency::fromHandle(hFrequency)->frequencySetRange(pLimits);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencySetRange(
     zet_sysman_freq_handle_t hFrequency,
     const zet_freq_range_t *pLimits) {
@@ -445,7 +445,7 @@ zesFrequencyGetState(
     return L0::Frequency::fromHandle(hFrequency)->frequencyGetState(pState);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyGetState(
     zet_sysman_freq_handle_t hFrequency,
     zet_freq_state_t *pState) {
@@ -459,7 +459,7 @@ zesFrequencyGetThrottleTime(
     return L0::Frequency::fromHandle(hFrequency)->frequencyGetThrottleTime(pThrottleTime);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyGetThrottleTime(
     zet_sysman_freq_handle_t hFrequency,
     zet_freq_throttle_time_t *pThrottleTime) {
@@ -517,21 +517,21 @@ zesFrequencyOcGetCapabilities(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyOcGetCapabilities(
     zet_sysman_freq_handle_t hFrequency,
     zet_oc_capabilities_t *pOcCapabilities) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyOcGetConfig(
     zet_sysman_freq_handle_t hFrequency,
     zet_oc_config_t *pOcConfiguration) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyOcSetConfig(
     zet_sysman_freq_handle_t hFrequency,
     zet_oc_config_t *pOcConfiguration,
@@ -546,7 +546,7 @@ zesFrequencyOcGetIccMax(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyOcGetIccMax(
     zet_sysman_freq_handle_t hFrequency,
     double *pOcIccMax) {
@@ -560,7 +560,7 @@ zesFrequencyOcSetIccMax(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyOcSetIccMax(
     zet_sysman_freq_handle_t hFrequency,
     double ocIccMax) {
@@ -574,7 +574,7 @@ zesFrequencyOcGetTjMax(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyOcGetTjMax(
     zet_sysman_freq_handle_t hFrequency,
     double *pOcTjMax) {
@@ -588,7 +588,7 @@ zesFrequencyOcSetTjMax(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFrequencyOcSetTjMax(
     zet_sysman_freq_handle_t hFrequency,
     double ocTjMax) {
@@ -603,7 +603,7 @@ zesDeviceEnumEngineGroups(
     return L0::SysmanDevice::fromHandle(hDevice)->engineGet(pCount, phEngine);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanEngineGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -618,7 +618,7 @@ zesEngineGetProperties(
     return L0::Engine::fromHandle(hEngine)->engineGetProperties(pProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanEngineGetProperties(
     zet_sysman_engine_handle_t hEngine,
     zet_engine_properties_t *pProperties) {
@@ -632,7 +632,7 @@ zesEngineGetActivity(
     return L0::Engine::fromHandle(hEngine)->engineGetActivity(pStats);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanEngineGetActivity(
     zet_sysman_engine_handle_t hEngine,
     zet_engine_stats_t *pStats) {
@@ -647,7 +647,7 @@ zesDeviceEnumStandbyDomains(
     return L0::SysmanDevice::fromHandle(hDevice)->standbyGet(pCount, phStandby);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanStandbyGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -662,7 +662,7 @@ zesStandbyGetProperties(
     return L0::Standby::fromHandle(hStandby)->standbyGetProperties(pProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanStandbyGetProperties(
     zet_sysman_standby_handle_t hStandby,
     zet_standby_properties_t *pProperties) {
@@ -676,7 +676,7 @@ zesStandbyGetMode(
     return L0::Standby::fromHandle(hStandby)->standbyGetMode(pMode);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanStandbyGetMode(
     zet_sysman_standby_handle_t hStandby,
     zet_standby_promo_mode_t *pMode) {
@@ -690,7 +690,7 @@ zesStandbySetMode(
     return L0::Standby::fromHandle(hStandby)->standbySetMode(mode);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanStandbySetMode(
     zet_sysman_standby_handle_t hStandby,
     zet_standby_promo_mode_t mode) {
@@ -705,7 +705,7 @@ zesDeviceEnumFirmwares(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFirmwareGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -720,14 +720,14 @@ zesFirmwareGetProperties(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFirmwareGetProperties(
     zet_sysman_firmware_handle_t hFirmware,
     zet_firmware_properties_t *pProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFirmwareGetChecksum(
     zet_sysman_firmware_handle_t hFirmware,
     uint32_t *pChecksum) {
@@ -742,7 +742,7 @@ zesFirmwareFlash(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFirmwareFlash(
     zet_sysman_firmware_handle_t hFirmware,
     void *pImage,
@@ -758,7 +758,7 @@ zesDeviceEnumMemoryModules(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanMemoryGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -773,7 +773,7 @@ zesMemoryGetProperties(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanMemoryGetProperties(
     zet_sysman_mem_handle_t hMemory,
     zet_mem_properties_t *pProperties) {
@@ -787,7 +787,7 @@ zesMemoryGetState(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanMemoryGetState(
     zet_sysman_mem_handle_t hMemory,
     zet_mem_state_t *pState) {
@@ -801,7 +801,7 @@ zesMemoryGetBandwidth(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanMemoryGetBandwidth(
     zet_sysman_mem_handle_t hMemory,
     zet_mem_bandwidth_t *pBandwidth) {
@@ -816,7 +816,7 @@ zesDeviceEnumFabricPorts(
     return L0::SysmanDevice::fromHandle(hDevice)->fabricPortGet(pCount, phPort);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFabricPortGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -831,7 +831,7 @@ zesFabricPortGetProperties(
     return L0::FabricPort::fromHandle(hPort)->fabricPortGetProperties(pProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFabricPortGetProperties(
     zet_sysman_fabric_port_handle_t hPort,
     zet_fabric_port_properties_t *pProperties) {
@@ -845,7 +845,7 @@ zesFabricPortGetLinkType(
     return L0::FabricPort::fromHandle(hPort)->fabricPortGetLinkType(pLinkType);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFabricPortGetLinkType(
     zet_sysman_fabric_port_handle_t hPort,
     ze_bool_t verbose,
@@ -860,7 +860,7 @@ zesFabricPortGetConfig(
     return L0::FabricPort::fromHandle(hPort)->fabricPortGetConfig(pConfig);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFabricPortGetConfig(
     zet_sysman_fabric_port_handle_t hPort,
     zet_fabric_port_config_t *pConfig) {
@@ -874,7 +874,7 @@ zesFabricPortSetConfig(
     return L0::FabricPort::fromHandle(hPort)->fabricPortSetConfig(pConfig);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFabricPortSetConfig(
     zet_sysman_fabric_port_handle_t hPort,
     const zet_fabric_port_config_t *pConfig) {
@@ -888,7 +888,7 @@ zesFabricPortGetState(
     return L0::FabricPort::fromHandle(hPort)->fabricPortGetState(pState);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFabricPortGetState(
     zet_sysman_fabric_port_handle_t hPort,
     zet_fabric_port_state_t *pState) {
@@ -902,7 +902,7 @@ zesFabricPortGetThroughput(
     return L0::FabricPort::fromHandle(hPort)->fabricPortGetThroughput(pThroughput);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFabricPortGetThroughput(
     zet_sysman_fabric_port_handle_t hPort,
     zet_fabric_port_throughput_t *pThroughput) {
@@ -917,7 +917,7 @@ zesDeviceEnumTemperatureSensors(
     return L0::SysmanDevice::fromHandle(hDevice)->temperatureGet(pCount, phTemperature);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanTemperatureGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -932,7 +932,7 @@ zesTemperatureGetProperties(
     return L0::Temperature::fromHandle(hTemperature)->temperatureGetProperties(pProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanTemperatureGetProperties(
     zet_sysman_temp_handle_t hTemperature,
     zet_temp_properties_t *pProperties) {
@@ -946,7 +946,7 @@ zesTemperatureGetConfig(
     return L0::Temperature::fromHandle(hTemperature)->temperatureGetConfig(pConfig);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanTemperatureGetConfig(
     zet_sysman_temp_handle_t hTemperature,
     zet_temp_config_t *pConfig) {
@@ -960,7 +960,7 @@ zesTemperatureSetConfig(
     return L0::Temperature::fromHandle(hTemperature)->temperatureSetConfig(pConfig);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanTemperatureSetConfig(
     zet_sysman_temp_handle_t hTemperature,
     const zet_temp_config_t *pConfig) {
@@ -974,7 +974,7 @@ zesTemperatureGetState(
     return L0::Temperature::fromHandle(hTemperature)->temperatureGetState(pTemperature);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanTemperatureGetState(
     zet_sysman_temp_handle_t hTemperature,
     double *pTemperature) {
@@ -989,7 +989,7 @@ zesDeviceEnumPsus(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPsuGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -1004,7 +1004,7 @@ zesPsuGetProperties(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPsuGetProperties(
     zet_sysman_psu_handle_t hPsu,
     zet_psu_properties_t *pProperties) {
@@ -1018,7 +1018,7 @@ zesPsuGetState(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanPsuGetState(
     zet_sysman_psu_handle_t hPsu,
     zet_psu_state_t *pState) {
@@ -1033,7 +1033,7 @@ zesDeviceEnumFans(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFanGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -1048,7 +1048,7 @@ zesFanGetProperties(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFanGetProperties(
     zet_sysman_fan_handle_t hFan,
     zet_fan_properties_t *pProperties) {
@@ -1062,7 +1062,7 @@ zesFanGetConfig(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFanGetConfig(
     zet_sysman_fan_handle_t hFan,
     zet_fan_config_t *pConfig) {
@@ -1089,7 +1089,7 @@ zesFanSetSpeedTableMode(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFanSetConfig(
     zet_sysman_fan_handle_t hFan,
     const zet_fan_config_t *pConfig) {
@@ -1104,7 +1104,7 @@ zesFanGetState(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanFanGetState(
     zet_sysman_fan_handle_t hFan,
     zet_fan_speed_units_t units,
@@ -1120,7 +1120,7 @@ zesDeviceEnumLeds(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanLedGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -1135,7 +1135,7 @@ zesLedGetProperties(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanLedGetProperties(
     zet_sysman_led_handle_t hLed,
     zet_led_properties_t *pProperties) {
@@ -1149,7 +1149,7 @@ zesLedGetState(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanLedGetState(
     zet_sysman_led_handle_t hLed,
     zet_led_state_t *pState) {
@@ -1163,7 +1163,7 @@ zesLedSetState(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanLedSetState(
     zet_sysman_led_handle_t hLed,
     const zet_led_state_t *pState) {
@@ -1185,7 +1185,7 @@ zesDeviceEnumRasErrorSets(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanRasGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -1200,7 +1200,7 @@ zesRasGetProperties(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanRasGetProperties(
     zet_sysman_ras_handle_t hRas,
     zet_ras_properties_t *pProperties) {
@@ -1214,7 +1214,7 @@ zesRasGetConfig(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanRasGetConfig(
     zet_sysman_ras_handle_t hRas,
     zet_ras_config_t *pConfig) {
@@ -1228,7 +1228,7 @@ zesRasSetConfig(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanRasSetConfig(
     zet_sysman_ras_handle_t hRas,
     const zet_ras_config_t *pConfig) {
@@ -1243,7 +1243,7 @@ zesRasGetState(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanRasGetState(
     zet_sysman_ras_handle_t hRas,
     ze_bool_t clear,
@@ -1259,28 +1259,28 @@ zesDeviceEventRegister(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanEventGet(
     zet_sysman_handle_t hSysman,
     zet_sysman_event_handle_t *phEvent) {
     return L0::Sysman::fromHandle(hSysman)->eventGet(phEvent);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanEventGetConfig(
     zet_sysman_event_handle_t hEvent,
     zet_event_config_t *pConfig) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanEventSetConfig(
     zet_sysman_event_handle_t hEvent,
     const zet_event_config_t *pConfig) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanEventGetState(
     zet_sysman_event_handle_t hEvent,
     ze_bool_t clear,
@@ -1299,7 +1299,7 @@ zesDriverEventListen(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanEventListen(
     ze_driver_handle_t hDriver,
     uint32_t timeout,
@@ -1317,7 +1317,7 @@ zesDeviceEnumDiagnosticTestSuites(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanDiagnosticsGet(
     zet_sysman_handle_t hSysman,
     uint32_t *pCount,
@@ -1332,7 +1332,7 @@ zesDiagnosticsGetProperties(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanDiagnosticsGetProperties(
     zet_sysman_diag_handle_t hDiagnostics,
     zet_diag_properties_t *pProperties) {
@@ -1347,7 +1347,7 @@ zesDiagnosticsGetTests(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanDiagnosticsGetTests(
     zet_sysman_diag_handle_t hDiagnostics,
     uint32_t *pCount,
@@ -1364,7 +1364,7 @@ zesDiagnosticsRunTests(
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zetSysmanDiagnosticsRunTests(
     zet_sysman_diag_handle_t hDiagnostics,
     uint32_t start,

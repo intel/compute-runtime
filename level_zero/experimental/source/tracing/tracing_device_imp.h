@@ -7,62 +7,64 @@
 
 #pragma once
 
+#include "third_party/level_zero/ze_api_ext.h"
+
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGet_Tracing(ze_driver_handle_t hDriver,
                     uint32_t *pCount,
                     ze_device_handle_t *phDevices);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetProperties_Tracing(ze_device_handle_t hDevice,
                               ze_device_properties_t *pDeviceProperties);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetComputeProperties_Tracing(ze_device_handle_t hDevice,
                                      ze_device_compute_properties_t *pComputeProperties);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetMemoryProperties_Tracing(ze_device_handle_t hDevice,
                                     uint32_t *pCount,
                                     ze_device_memory_properties_t *pMemProperties);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetCacheProperties_Tracing(ze_device_handle_t hDevice,
                                    ze_device_cache_properties_t *pCacheProperties);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetImageProperties_Tracing(ze_device_handle_t hDevice,
                                    ze_device_image_properties_t *pImageProperties);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetSubDevices_Tracing(ze_device_handle_t hDevice,
                               uint32_t *pCount,
                               ze_device_handle_t *phSubdevices);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetP2PProperties_Tracing(ze_device_handle_t hDevice,
                                  ze_device_handle_t hPeerDevice,
                                  ze_device_p2p_properties_t *pP2PProperties);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceCanAccessPeer_Tracing(ze_device_handle_t hDevice,
                               ze_device_handle_t hPeerDevice,
                               ze_bool_t *value);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetIntermediateCacheConfig_Tracing(ze_kernel_handle_t hKernel,
                                            ze_cache_config_t cacheConfig);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceSetLastLevelCacheConfig_Tracing(ze_device_handle_t hDevice,
                                         ze_cache_config_t cacheConfig);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetKernelProperties_Tracing(ze_device_handle_t hDevice,
                                     ze_device_kernel_properties_t *pKernelProperties);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetMemoryAccessProperties_Tracing(ze_device_handle_t hDevice,
                                           ze_device_memory_access_properties_t *pMemAccessProperties);
 }

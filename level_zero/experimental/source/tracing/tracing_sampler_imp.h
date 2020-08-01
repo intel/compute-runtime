@@ -9,11 +9,11 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeSamplerCreate_Tracing(ze_device_handle_t hDevice,
                         const ze_sampler_desc_t *desc,
                         ze_sampler_handle_t *phSampler);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeSamplerDestroy_Tracing(ze_sampler_handle_t hSampler);
 }

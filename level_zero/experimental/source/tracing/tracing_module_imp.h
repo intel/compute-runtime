@@ -9,53 +9,53 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleCreate_Tracing(ze_device_handle_t hDevice,
                        const ze_module_desc_t *desc,
                        ze_module_handle_t *phModule,
                        ze_module_build_log_handle_t *phBuildLog);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleDestroy_Tracing(ze_module_handle_t hModule);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleBuildLogDestroy_Tracing(ze_module_build_log_handle_t hModuleBuildLog);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleBuildLogGetString_Tracing(ze_module_build_log_handle_t hModuleBuildLog,
                                   size_t *pSize,
                                   char *pBuildLog);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetNativeBinary_Tracing(ze_module_handle_t hModule,
                                 size_t *pSize,
                                 uint8_t *pModuleNativeBinary);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetGlobalPointer_Tracing(ze_module_handle_t hModule,
                                  const char *pGlobalName,
                                  void **pptr);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelCreate_Tracing(ze_module_handle_t hModule,
                        const ze_kernel_desc_t *desc,
                        ze_kernel_handle_t *phFunction);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelDestroy_Tracing(ze_kernel_handle_t hKernel);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetFunctionPointer_Tracing(ze_module_handle_t hModule,
                                    const char *pKernelName,
                                    void **pfnFunction);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetGroupSize_Tracing(ze_kernel_handle_t hKernel,
                              uint32_t groupSizeX,
                              uint32_t groupSizeY,
                              uint32_t groupSizeZ);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSuggestGroupSize_Tracing(ze_kernel_handle_t hKernel,
                                  uint32_t globalSizeX,
                                  uint32_t globalSizeY,
@@ -64,23 +64,23 @@ zeKernelSuggestGroupSize_Tracing(ze_kernel_handle_t hKernel,
                                  uint32_t *groupSizeY,
                                  uint32_t *groupSizeZ);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetArgumentValue_Tracing(ze_kernel_handle_t hKernel,
                                  uint32_t argIndex,
                                  size_t argSize,
                                  const void *pArgValue);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetAttribute_Tracing(ze_kernel_handle_t hKernel,
                              ze_kernel_attribute_t attr,
                              uint32_t size,
                              const void *pValue);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelGetProperties_Tracing(ze_kernel_handle_t hKernel,
                               ze_kernel_properties_t *pKernelProperties);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendLaunchKernel_Tracing(ze_command_list_handle_t hCommandList,
                                         ze_kernel_handle_t hKernel,
                                         const ze_group_count_t *pLaunchFuncArgs,
@@ -88,7 +88,7 @@ zeCommandListAppendLaunchKernel_Tracing(ze_command_list_handle_t hCommandList,
                                         uint32_t numWaitEvents,
                                         ze_event_handle_t *phWaitEvents);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendLaunchKernelIndirect_Tracing(ze_command_list_handle_t hCommandList,
                                                 ze_kernel_handle_t hKernel,
                                                 const ze_group_count_t *pLaunchArgumentsBuffer,
@@ -96,7 +96,7 @@ zeCommandListAppendLaunchKernelIndirect_Tracing(ze_command_list_handle_t hComman
                                                 uint32_t numWaitEvents,
                                                 ze_event_handle_t *phWaitEvents);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendLaunchMultipleKernelsIndirect_Tracing(ze_command_list_handle_t hCommandList,
                                                          uint32_t numKernels,
                                                          ze_kernel_handle_t *phKernels,
@@ -106,7 +106,7 @@ zeCommandListAppendLaunchMultipleKernelsIndirect_Tracing(ze_command_list_handle_
                                                          uint32_t numWaitEvents,
                                                          ze_event_handle_t *phWaitEvents);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendLaunchCooperativeKernel_Tracing(ze_command_list_handle_t hCommandList,
                                                    ze_kernel_handle_t hKernel,
                                                    const ze_group_count_t *pLaunchFuncArgs,
@@ -114,16 +114,16 @@ zeCommandListAppendLaunchCooperativeKernel_Tracing(ze_command_list_handle_t hCom
                                                    uint32_t numWaitEvents,
                                                    ze_event_handle_t *phWaitEvents);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetKernelNames_Tracing(ze_module_handle_t hModule,
                                uint32_t *pCount,
                                const char **pNames);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSuggestMaxCooperativeGroupCount_Tracing(ze_kernel_handle_t hKernel,
                                                 uint32_t *totalGroupCount);
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelGetAttribute_Tracing(ze_kernel_handle_t hKernel,
                              ze_kernel_attribute_t attr,
                              uint32_t *pSize,

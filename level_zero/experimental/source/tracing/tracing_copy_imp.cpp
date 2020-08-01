@@ -7,7 +7,7 @@
 
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemoryCopy_Tracing(ze_command_list_handle_t hCommandList,
                                       void *dstptr,
                                       const void *srcptr,
@@ -44,7 +44,7 @@ zeCommandListAppendMemoryCopy_Tracing(ze_command_list_handle_t hCommandList,
                                    *tracerParams.phEvent);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemoryFill_Tracing(ze_command_list_handle_t hCommandList,
                                       void *ptr,
                                       const void *pattern,
@@ -85,7 +85,7 @@ zeCommandListAppendMemoryFill_Tracing(ze_command_list_handle_t hCommandList,
                                    *tracerParams.phEvent);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemoryCopyRegion_Tracing(ze_command_list_handle_t hCommandList,
                                             void *dstptr,
                                             const ze_copy_region_t *dstRegion,
@@ -142,7 +142,7 @@ zeCommandListAppendMemoryCopyRegion_Tracing(ze_command_list_handle_t hCommandLis
                                    *tracerParams.phEvent);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendImageCopy_Tracing(ze_command_list_handle_t hCommandList,
                                      ze_image_handle_t hDstImage,
                                      ze_image_handle_t hSrcImage,
@@ -175,7 +175,7 @@ zeCommandListAppendImageCopy_Tracing(ze_command_list_handle_t hCommandList,
                                    *tracerParams.phEvent);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendImageCopyRegion_Tracing(
     ze_command_list_handle_t hCommandList,
     ze_image_handle_t hDstImage,
@@ -217,7 +217,7 @@ zeCommandListAppendImageCopyRegion_Tracing(
                                    *tracerParams.phEvent);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendImageCopyToMemory_Tracing(ze_command_list_handle_t hCommandList,
                                              void *dstptr,
                                              ze_image_handle_t hSrcImage,
@@ -254,7 +254,7 @@ zeCommandListAppendImageCopyToMemory_Tracing(ze_command_list_handle_t hCommandLi
                                    *tracerParams.phEvent);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendImageCopyFromMemory_Tracing(ze_command_list_handle_t hCommandList,
                                                ze_image_handle_t hDstImage,
                                                const void *srcptr,
@@ -291,7 +291,7 @@ zeCommandListAppendImageCopyFromMemory_Tracing(ze_command_list_handle_t hCommand
                                    *tracerParams.phEvent);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemoryPrefetch_Tracing(ze_command_list_handle_t hCommandList,
                                           const void *ptr,
                                           size_t size) {
@@ -320,7 +320,7 @@ zeCommandListAppendMemoryPrefetch_Tracing(ze_command_list_handle_t hCommandList,
                                    *tracerParams.psize);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemAdvise_Tracing(ze_command_list_handle_t hCommandList,
                                      ze_device_handle_t hDevice,
                                      const void *ptr,

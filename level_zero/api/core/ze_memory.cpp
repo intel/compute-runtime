@@ -10,7 +10,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverAllocSharedMem(
     ze_driver_handle_t hDriver,
     const ze_device_mem_alloc_desc_t *deviceDesc,
@@ -33,7 +33,7 @@ zeMemAllocShared(ze_context_handle_t hContext,
     return L0::Context::fromHandle(hContext)->allocSharedMem(hDevice, deviceDesc->flags, hostDesc->flags, size, alignment, pptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverAllocDeviceMem(
     ze_driver_handle_t hDriver,
     const ze_device_mem_alloc_desc_t *deviceDesc,
@@ -54,7 +54,7 @@ zeMemAllocDevice(ze_context_handle_t hContext,
     return L0::Context::fromHandle(hContext)->allocDeviceMem(hDevice, deviceDesc->flags, size, alignment, pptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverAllocHostMem(
     ze_driver_handle_t hDriver,
     const ze_host_mem_alloc_desc_t *hostDesc,
@@ -73,7 +73,7 @@ zeMemAllocHost(ze_context_handle_t hContext,
     return L0::Context::fromHandle(hContext)->allocHostMem(hostDesc->flags, size, alignment, pptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverFreeMem(
     ze_driver_handle_t hDriver,
     void *ptr) {
@@ -86,7 +86,7 @@ zeMemFree(ze_context_handle_t hContext,
     return L0::Context::fromHandle(hContext)->freeMem(ptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetMemAllocProperties(
     ze_driver_handle_t hDriver,
     const void *ptr,
@@ -104,7 +104,7 @@ zeMemGetAllocProperties(
     return L0::Context::fromHandle(hContext)->getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetMemAddressRange(
     ze_driver_handle_t hDriver,
     const void *ptr,
@@ -122,7 +122,7 @@ zeMemGetAddressRange(
     return L0::Context::fromHandle(hContext)->getMemAddressRange(ptr, pBase, pSize);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetMemIpcHandle(
     ze_driver_handle_t hDriver,
     const void *ptr,
@@ -138,7 +138,7 @@ zeMemGetIpcHandle(
     return L0::Context::fromHandle(hContext)->getIpcMemHandle(ptr, pIpcHandle);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverOpenMemIpcHandle(
     ze_driver_handle_t hDriver,
     ze_device_handle_t hDevice,
@@ -158,7 +158,7 @@ zeMemOpenIpcHandle(
     return L0::Context::fromHandle(hContext)->openIpcMemHandle(hDevice, handle, flags, pptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverCloseMemIpcHandle(
     ze_driver_handle_t hDriver,
     const void *ptr) {

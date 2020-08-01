@@ -7,7 +7,7 @@
 
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendBarrier_Tracing(ze_command_list_handle_t hCommandList,
                                    ze_event_handle_t hSignalEvent,
                                    uint32_t numWaitEvents,
@@ -40,7 +40,7 @@ zeCommandListAppendBarrier_Tracing(ze_command_list_handle_t hCommandList,
                                    *tracerParams.pphWaitEvents);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemoryRangesBarrier_Tracing(ze_command_list_handle_t hCommandList,
                                                uint32_t numRanges,
                                                const size_t *pRangeSizes,
@@ -85,7 +85,7 @@ zeCommandListAppendMemoryRangesBarrier_Tracing(ze_command_list_handle_t hCommand
                                    *tracerParams.pphWaitEvents);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceSystemBarrier_Tracing(ze_device_handle_t hDevice) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Device.pfnSystemBarrier,

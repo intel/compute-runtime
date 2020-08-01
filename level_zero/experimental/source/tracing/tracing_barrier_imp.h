@@ -7,14 +7,16 @@
 
 #pragma once
 
+#include "third_party/level_zero/ze_api_ext.h"
+
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendBarrier_Tracing(ze_command_list_handle_t hCommandList,
                                    ze_event_handle_t hSignalEvent,
                                    uint32_t numWaitEvents,
                                    ze_event_handle_t *phWaitEvents);
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemoryRangesBarrier_Tracing(ze_command_list_handle_t hCommandList,
                                                uint32_t numRanges,
                                                const size_t *pRangeSizes,
@@ -22,6 +24,6 @@ zeCommandListAppendMemoryRangesBarrier_Tracing(ze_command_list_handle_t hCommand
                                                ze_event_handle_t hSignalEvent,
                                                uint32_t numWaitEvents,
                                                ze_event_handle_t *phWaitEvents);
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceSystemBarrier_Tracing(ze_device_handle_t hDevice);
 }

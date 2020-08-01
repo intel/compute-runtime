@@ -26,6 +26,7 @@
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
 
+#include "third_party/level_zero/ze_api_ext.h"
 #include "ze_ddi_tables.h"
 
 #include <atomic>

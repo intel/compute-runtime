@@ -7,7 +7,7 @@
 
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleCreate_Tracing(ze_device_handle_t hDevice,
                        const ze_module_desc_t *desc,
                        ze_module_handle_t *phModule,
@@ -40,7 +40,7 @@ zeModuleCreate_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.pphBuildLog);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleDestroy_Tracing(ze_module_handle_t hModule) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Module.pfnDestroy,
@@ -61,7 +61,7 @@ zeModuleDestroy_Tracing(ze_module_handle_t hModule) {
                                    *tracerParams.phModule);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleBuildLogDestroy_Tracing(ze_module_build_log_handle_t hModuleBuildLog) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.ModuleBuildLog.pfnDestroy,
@@ -82,7 +82,7 @@ zeModuleBuildLogDestroy_Tracing(ze_module_build_log_handle_t hModuleBuildLog) {
                                    *tracerParams.phModuleBuildLog);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleBuildLogGetString_Tracing(ze_module_build_log_handle_t hModuleBuildLog,
                                   size_t *pSize,
                                   char *pBuildLog) {
@@ -111,7 +111,7 @@ zeModuleBuildLogGetString_Tracing(ze_module_build_log_handle_t hModuleBuildLog,
                                    *tracerParams.ppBuildLog);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetNativeBinary_Tracing(ze_module_handle_t hModule,
                                 size_t *pSize,
                                 uint8_t *pModuleNativeBinary) {
@@ -140,7 +140,7 @@ zeModuleGetNativeBinary_Tracing(ze_module_handle_t hModule,
                                    *tracerParams.ppModuleNativeBinary);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetGlobalPointer_Tracing(ze_module_handle_t hModule,
                                  const char *pGlobalName,
                                  void **pptr) {
@@ -169,7 +169,7 @@ zeModuleGetGlobalPointer_Tracing(ze_module_handle_t hModule,
                                    *tracerParams.ppptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelCreate_Tracing(ze_module_handle_t hModule,
                        const ze_kernel_desc_t *desc,
                        ze_kernel_handle_t *phKernel) {
@@ -198,7 +198,7 @@ zeKernelCreate_Tracing(ze_module_handle_t hModule,
                                    *tracerParams.pphKernel);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelDestroy_Tracing(ze_kernel_handle_t hKernel) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Kernel.pfnDestroy,
@@ -219,7 +219,7 @@ zeKernelDestroy_Tracing(ze_kernel_handle_t hKernel) {
                                    *tracerParams.phKernel);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetFunctionPointer_Tracing(ze_module_handle_t hModule,
                                    const char *pKernelName,
                                    void **pfnFunction) {
@@ -248,7 +248,7 @@ zeModuleGetFunctionPointer_Tracing(ze_module_handle_t hModule,
                                    *tracerParams.ppfnFunction);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetGroupSize_Tracing(ze_kernel_handle_t hKernel,
                              uint32_t groupSizeX,
                              uint32_t groupSizeY,
@@ -281,7 +281,7 @@ zeKernelSetGroupSize_Tracing(ze_kernel_handle_t hKernel,
                                    *tracerParams.pgroupSizeZ);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSuggestGroupSize_Tracing(ze_kernel_handle_t hKernel,
                                  uint32_t globalSizeX,
                                  uint32_t globalSizeY,
@@ -326,7 +326,7 @@ zeKernelSuggestGroupSize_Tracing(ze_kernel_handle_t hKernel,
                                    *tracerParams.pgroupSizeZ);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetArgumentValue_Tracing(ze_kernel_handle_t hKernel,
                                  uint32_t argIndex,
                                  size_t argSize,
@@ -359,7 +359,7 @@ zeKernelSetArgumentValue_Tracing(ze_kernel_handle_t hKernel,
                                    *tracerParams.ppArgValue);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetAttribute_Tracing(ze_kernel_handle_t hKernel,
                              ze_kernel_attribute_t attr,
                              uint32_t size,
@@ -392,7 +392,7 @@ zeKernelSetAttribute_Tracing(ze_kernel_handle_t hKernel,
                                    *tracerParams.ppValue);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelGetProperties_Tracing(ze_kernel_handle_t hKernel,
                               ze_kernel_properties_t *pKernelProperties) {
 
@@ -417,7 +417,7 @@ zeKernelGetProperties_Tracing(ze_kernel_handle_t hKernel,
                                    *tracerParams.ppKernelProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendLaunchKernel_Tracing(ze_command_list_handle_t hCommandList,
                                         ze_kernel_handle_t hKernel,
                                         const ze_group_count_t *pLaunchFuncArgs,
@@ -460,7 +460,7 @@ zeCommandListAppendLaunchKernel_Tracing(ze_command_list_handle_t hCommandList,
                                    *tracerParams.pphWaitEvents);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendLaunchKernelIndirect_Tracing(ze_command_list_handle_t hCommandList,
                                                 ze_kernel_handle_t hKernel,
                                                 const ze_group_count_t *pLaunchArgumentsBuffer,
@@ -503,7 +503,7 @@ zeCommandListAppendLaunchKernelIndirect_Tracing(ze_command_list_handle_t hComman
                                    *tracerParams.pphWaitEvents);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendLaunchMultipleKernelsIndirect_Tracing(ze_command_list_handle_t hCommandList,
                                                          uint32_t numKernels,
                                                          ze_kernel_handle_t *phKernels,
@@ -554,7 +554,7 @@ zeCommandListAppendLaunchMultipleKernelsIndirect_Tracing(ze_command_list_handle_
                                    *tracerParams.pphWaitEvents);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendLaunchCooperativeKernel_Tracing(ze_command_list_handle_t hCommandList,
                                                    ze_kernel_handle_t hKernel,
                                                    const ze_group_count_t *pLaunchFuncArgs,
@@ -596,7 +596,7 @@ zeCommandListAppendLaunchCooperativeKernel_Tracing(ze_command_list_handle_t hCom
                                    *tracerParams.pphWaitEvents);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetKernelNames_Tracing(ze_module_handle_t hModule,
                                uint32_t *pCount,
                                const char **pNames) {
@@ -625,7 +625,7 @@ zeModuleGetKernelNames_Tracing(ze_module_handle_t hModule,
                                    *tracerParams.ppNames);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSuggestMaxCooperativeGroupCount_Tracing(ze_kernel_handle_t hKernel,
                                                 uint32_t *totalGroupCount) {
 
@@ -651,7 +651,7 @@ zeKernelSuggestMaxCooperativeGroupCount_Tracing(ze_kernel_handle_t hKernel,
                                    *tracerParams.ptotalGroupCount);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelGetAttribute_Tracing(ze_kernel_handle_t hKernel,
                              ze_kernel_attribute_t attr,
                              uint32_t *pSize,

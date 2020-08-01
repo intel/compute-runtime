@@ -13,7 +13,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGet(
     ze_driver_handle_t hDriver,
     uint32_t *pCount,
@@ -21,7 +21,7 @@ zeDeviceGet(
     return L0::DriverHandle::fromHandle(hDriver)->getDevice(pCount, phDevices);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetSubDevices(
     ze_device_handle_t hDevice,
     uint32_t *pCount,
@@ -29,28 +29,28 @@ zeDeviceGetSubDevices(
     return L0::Device::fromHandle(hDevice)->getSubDevices(pCount, phSubdevices);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetProperties(
     ze_device_handle_t hDevice,
     ze_device_properties_t *pDeviceProperties) {
     return L0::Device::fromHandle(hDevice)->getProperties(pDeviceProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetComputeProperties(
     ze_device_handle_t hDevice,
     ze_device_compute_properties_t *pComputeProperties) {
     return L0::Device::fromHandle(hDevice)->getComputeProperties(pComputeProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetKernelProperties(
     ze_device_handle_t hDevice,
     ze_device_kernel_properties_t *pKernelProperties) {
     return L0::Device::fromHandle(hDevice)->getKernelProperties(pKernelProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetMemoryProperties(
     ze_device_handle_t hDevice,
     uint32_t *pCount,
@@ -58,28 +58,28 @@ zeDeviceGetMemoryProperties(
     return L0::Device::fromHandle(hDevice)->getMemoryProperties(pCount, pMemProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetMemoryAccessProperties(
     ze_device_handle_t hDevice,
     ze_device_memory_access_properties_t *pMemAccessProperties) {
     return L0::Device::fromHandle(hDevice)->getMemoryAccessProperties(pMemAccessProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetCacheProperties(
     ze_device_handle_t hDevice,
     ze_device_cache_properties_t *pCacheProperties) {
     return L0::Device::fromHandle(hDevice)->getCacheProperties(pCacheProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetImageProperties(
     ze_device_handle_t hDevice,
     ze_device_image_properties_t *pImageProperties) {
     return L0::Device::fromHandle(hDevice)->getDeviceImageProperties(pImageProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetP2PProperties(
     ze_device_handle_t hDevice,
     ze_device_handle_t hPeerDevice,
@@ -87,7 +87,7 @@ zeDeviceGetP2PProperties(
     return L0::Device::fromHandle(hDevice)->getP2PProperties(hPeerDevice, pP2PProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceCanAccessPeer(
     ze_device_handle_t hDevice,
     ze_device_handle_t hPeerDevice,
@@ -95,7 +95,7 @@ zeDeviceCanAccessPeer(
     return L0::Device::fromHandle(hDevice)->canAccessPeer(hPeerDevice, value);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceSetLastLevelCacheConfig(
     ze_device_handle_t hDevice,
     ze_cache_config_t cacheConfig) {

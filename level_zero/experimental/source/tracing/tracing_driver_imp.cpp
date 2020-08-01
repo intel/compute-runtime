@@ -7,7 +7,7 @@
 
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGet_Tracing(uint32_t *pCount,
                     ze_driver_handle_t *phDrivers) {
 
@@ -32,7 +32,7 @@ zeDriverGet_Tracing(uint32_t *pCount,
                                    *tracerParams.pphDrivers);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetProperties_Tracing(ze_driver_handle_t hDriver,
                               ze_driver_properties_t *properties) {
 
@@ -56,7 +56,7 @@ zeDriverGetProperties_Tracing(ze_driver_handle_t hDriver,
                                    *tracerParams.ppDriverProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetApiVersion_Tracing(ze_driver_handle_t hDrivers,
                               ze_api_version_t *version) {
 
@@ -79,7 +79,7 @@ zeDriverGetApiVersion_Tracing(ze_driver_handle_t hDrivers,
                                    *tracerParams.pversion);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetIPCProperties_Tracing(ze_driver_handle_t hDriver,
                                  ze_driver_ipc_properties_t *pIPCProperties) {
 
@@ -104,7 +104,7 @@ zeDriverGetIPCProperties_Tracing(ze_driver_handle_t hDriver,
                                    *tracerParams.ppIPCProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetExtensionFunctionAddress_Tracing(ze_driver_handle_t hDriver,
                                             const char *pFuncName,
                                             void **pfunc) {

@@ -7,7 +7,7 @@
 
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeImageGetProperties_Tracing(ze_device_handle_t hDevice,
                              const ze_image_desc_t *desc,
                              ze_image_properties_t *pImageProperties) {
@@ -36,7 +36,7 @@ zeImageGetProperties_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.ppImageProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeImageCreate_Tracing(ze_device_handle_t hDevice,
                       const ze_image_desc_t *desc,
                       ze_image_handle_t *phImage) {
@@ -65,7 +65,7 @@ zeImageCreate_Tracing(ze_device_handle_t hDevice,
                                    *tracerParams.pphImage);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeImageDestroy_Tracing(ze_image_handle_t hImage) {
 
     ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Image.pfnDestroy,

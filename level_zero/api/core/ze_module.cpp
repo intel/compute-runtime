@@ -12,7 +12,7 @@
 
 extern "C" {
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleCreate(
     ze_device_handle_t hDevice,
     const ze_module_desc_t *desc,
@@ -31,19 +31,19 @@ zeModuleCreateExt(
     return L0::Context::fromHandle(hContext)->createModule(hDevice, desc, phModule, phBuildLog);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleDestroy(
     ze_module_handle_t hModule) {
     return L0::Module::fromHandle(hModule)->destroy();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleBuildLogDestroy(
     ze_module_build_log_handle_t hModuleBuildLog) {
     return L0::ModuleBuildLog::fromHandle(hModuleBuildLog)->destroy();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleBuildLogGetString(
     ze_module_build_log_handle_t hModuleBuildLog,
     size_t *pSize,
@@ -51,7 +51,7 @@ zeModuleBuildLogGetString(
     return L0::ModuleBuildLog::fromHandle(hModuleBuildLog)->getString(pSize, pBuildLog);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetNativeBinary(
     ze_module_handle_t hModule,
     size_t *pSize,
@@ -59,7 +59,7 @@ zeModuleGetNativeBinary(
     return L0::Module::fromHandle(hModule)->getNativeBinary(pSize, pModuleNativeBinary);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetGlobalPointer(
     ze_module_handle_t hModule,
     const char *pGlobalName,
@@ -67,7 +67,7 @@ zeModuleGetGlobalPointer(
     return L0::Module::fromHandle(hModule)->getGlobalPointer(pGlobalName, pptr);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetKernelNames(
     ze_module_handle_t hModule,
     uint32_t *pCount,
@@ -75,7 +75,7 @@ zeModuleGetKernelNames(
     return L0::Module::fromHandle(hModule)->getKernelNames(pCount, pNames);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelCreate(
     ze_module_handle_t hModule,
     const ze_kernel_desc_t *desc,
@@ -83,13 +83,13 @@ zeKernelCreate(
     return L0::Module::fromHandle(hModule)->createKernel(desc, phFunction);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelDestroy(
     ze_kernel_handle_t hKernel) {
     return L0::Kernel::fromHandle(hKernel)->destroy();
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeModuleGetFunctionPointer(
     ze_module_handle_t hModule,
     const char *pKernelName,
@@ -97,7 +97,7 @@ zeModuleGetFunctionPointer(
     return L0::Module::fromHandle(hModule)->getFunctionPointer(pKernelName, pfnFunction);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetGroupSize(
     ze_kernel_handle_t hKernel,
     uint32_t groupSizeX,
@@ -106,7 +106,7 @@ zeKernelSetGroupSize(
     return L0::Kernel::fromHandle(hKernel)->setGroupSize(groupSizeX, groupSizeY, groupSizeZ);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSuggestGroupSize(
     ze_kernel_handle_t hKernel,
     uint32_t globalSizeX,
@@ -118,14 +118,14 @@ zeKernelSuggestGroupSize(
     return L0::Kernel::fromHandle(hKernel)->suggestGroupSize(globalSizeX, globalSizeY, globalSizeZ, groupSizeX, groupSizeY, groupSizeZ);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSuggestMaxCooperativeGroupCount(
     ze_kernel_handle_t hKernel,
     uint32_t *totalGroupCount) {
     return L0::Kernel::fromHandle(hKernel)->suggestMaxCooperativeGroupCount(totalGroupCount);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetArgumentValue(
     ze_kernel_handle_t hKernel,
     uint32_t argIndex,
@@ -134,7 +134,7 @@ zeKernelSetArgumentValue(
     return L0::Kernel::fromHandle(hKernel)->setArgumentValue(argIndex, argSize, pArgValue);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetAttribute(
     ze_kernel_handle_t hKernel,
     ze_kernel_attribute_t attr,
@@ -143,7 +143,7 @@ zeKernelSetAttribute(
     return L0::Kernel::fromHandle(hKernel)->setAttribute(attr, size, pValue);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelGetAttribute(
     ze_kernel_handle_t hKernel,
     ze_kernel_attribute_t attr,
@@ -152,21 +152,21 @@ zeKernelGetAttribute(
     return L0::Kernel::fromHandle(hKernel)->getAttribute(attr, pSize, pValue);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSetIntermediateCacheConfig(
     ze_kernel_handle_t hKernel,
     ze_cache_config_t cacheConfig) {
     return L0::Kernel::fromHandle(hKernel)->setIntermediateCacheConfig(cacheConfig);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelGetProperties(
     ze_kernel_handle_t hKernel,
     ze_kernel_properties_t *pKernelProperties) {
     return L0::Kernel::fromHandle(hKernel)->getProperties(pKernelProperties);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendLaunchKernel(
     ze_command_list_handle_t hCommandList,
     ze_kernel_handle_t hKernel,
@@ -177,7 +177,7 @@ zeCommandListAppendLaunchKernel(
     return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernel(hKernel, pLaunchFuncArgs, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendLaunchCooperativeKernel(
     ze_command_list_handle_t hCommandList,
     ze_kernel_handle_t hKernel,
@@ -188,7 +188,7 @@ zeCommandListAppendLaunchCooperativeKernel(
     return L0::CommandList::fromHandle(hCommandList)->appendLaunchCooperativeKernel(hKernel, pLaunchFuncArgs, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendLaunchKernelIndirect(
     ze_command_list_handle_t hCommandList,
     ze_kernel_handle_t hKernel,
@@ -199,7 +199,7 @@ zeCommandListAppendLaunchKernelIndirect(
     return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernelIndirect(hKernel, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
-__zedllexport ze_result_t __zecall
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendLaunchMultipleKernelsIndirect(
     ze_command_list_handle_t hCommandList,
     uint32_t numKernels,
