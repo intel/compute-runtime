@@ -203,6 +203,7 @@ HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSe
                                       0,
                                       4096u,
                                       nullptr,
+                                      nullptr,
                                       imageFormat,
                                       imageDesc,
                                       false,
@@ -924,7 +925,7 @@ TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenRetu
         MockImage(Context *context, cl_mem_flags flags, GraphicsAllocation *allocation, const ClSurfaceFormatInfo &surfaceFormat,
                   const cl_image_format &imageFormat, const cl_image_desc &imageDesc)
             : Image(context, MemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()), flags, 0,
-                    0, nullptr,
+                    0, nullptr, nullptr,
                     imageFormat, imageDesc,
                     true,
                     GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation),

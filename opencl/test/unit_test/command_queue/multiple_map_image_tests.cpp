@@ -40,7 +40,8 @@ struct MultipleMapImageTest : public ClDeviceFixture, public ::testing::Test {
                                       uint32_t mipCount,
                                       const ClSurfaceFormatInfo *surfaceFormatInfo,
                                       const SurfaceOffsets *surfaceOffsets) {
-            return new MockImage<T>(context, memoryProperties, flags, flagsIntel, size, hostPtr, imageFormat, imageDesc, zeroCopy, multiGraphicsAllocation,
+            auto memoryStorage = multiGraphicsAllocation.getDefaultGraphicsAllocation()->getUnderlyingBuffer();
+            return new MockImage<T>(context, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, imageFormat, imageDesc, zeroCopy, multiGraphicsAllocation,
                                     isObjectRedescribed, baseMipLevel, mipCount, *surfaceFormatInfo, surfaceOffsets);
         };
 

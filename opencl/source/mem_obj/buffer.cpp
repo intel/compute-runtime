@@ -634,7 +634,7 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
     DEBUG_BREAK_IF(nullptr == funcCreate);
 
     MemoryProperties memoryProperties = MemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, 0, device);
-    auto pBuffer = funcCreate(nullptr, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, multiGraphicsAllocation,
+    auto pBuffer = funcCreate(nullptr, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, std::move(multiGraphicsAllocation),
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
 
     pBuffer->offset = offset;

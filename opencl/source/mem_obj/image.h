@@ -205,6 +205,7 @@ class Image : public MemObj {
           cl_mem_flags flags,
           cl_mem_flags_intel flagsIntel,
           size_t size,
+          void *memoryStorage,
           void *hostPtr,
           cl_image_format imageFormat,
           const cl_image_desc &imageDesc,
@@ -261,6 +262,7 @@ class ImageHw : public Image {
             cl_mem_flags flags,
             cl_mem_flags_intel flagsIntel,
             size_t size,
+            void *memoryStorage,
             void *hostPtr,
             const cl_image_format &imageFormat,
             const cl_image_desc &imageDesc,
@@ -271,7 +273,7 @@ class ImageHw : public Image {
             uint32_t mipCount,
             const ClSurfaceFormatInfo &surfaceFormatInfo,
             const SurfaceOffsets *surfaceOffsets = nullptr)
-        : Image(context, memoryProperties, flags, flagsIntel, size, hostPtr, imageFormat, imageDesc,
+        : Image(context, memoryProperties, flags, flagsIntel, size, memoryStorage, hostPtr, imageFormat, imageDesc,
                 zeroCopy, std::move(multiGraphicsAllocation), isObjectRedescribed, baseMipLevel, mipCount, surfaceFormatInfo, surfaceOffsets) {
         if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D ||
             getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER ||
@@ -325,11 +327,13 @@ class ImageHw : public Image {
                          const ClSurfaceFormatInfo *surfaceFormatInfo,
                          const SurfaceOffsets *surfaceOffsets) {
         UNRECOVERABLE_IF(surfaceFormatInfo == nullptr);
+        auto memoryStorage = multiGraphicsAllocation.getDefaultGraphicsAllocation()->getUnderlyingBuffer();
         return new ImageHw<GfxFamily>(context,
                                       memoryProperties,
                                       flags,
                                       flagsIntel,
                                       size,
+                                      memoryStorage,
                                       hostPtr,
                                       imageFormat,
                                       imageDesc,
