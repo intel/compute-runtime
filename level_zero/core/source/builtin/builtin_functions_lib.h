@@ -8,6 +8,7 @@
 #pragma once
 
 #include <memory>
+#include <mutex>
 
 namespace NEO {
 class BuiltIns;
@@ -44,6 +45,7 @@ enum class ImageBuiltin : uint32_t {
 };
 
 struct BuiltinFunctionsLib {
+    using MutexType = std::mutex;
     virtual ~BuiltinFunctionsLib() = default;
     static std::unique_ptr<BuiltinFunctionsLib> create(Device *device,
                                                        NEO::BuiltIns *builtins);
@@ -54,9 +56,12 @@ struct BuiltinFunctionsLib {
     virtual void initImageFunctions() = 0;
     virtual Kernel *getPageFaultFunction() = 0;
     virtual void initPageFaultFunction() = 0;
+    MOCKABLE_VIRTUAL std::unique_lock<MutexType> obtainUniqueOwnership();
 
   protected:
     BuiltinFunctionsLib() = default;
+
+    MutexType ownershipMutex;
 };
 
 } // namespace L0
