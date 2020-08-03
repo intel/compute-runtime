@@ -205,13 +205,6 @@ zeCommandListAppendLaunchMultipleKernelsIndirect(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeKernelGetPropertiesExt(
-    ze_kernel_handle_t hKernel,
-    ze_kernel_properties_t *pKernelProperties) {
-    return L0::Kernel::fromHandle(hKernel)->getProperties(pKernelProperties);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelGetName(
     ze_kernel_handle_t hKernel,
     size_t *pSize,
@@ -220,7 +213,7 @@ zeKernelGetName(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeModuleDynamicLinkExt(
+zeModuleDynamicLink(
     uint32_t numModules,
     ze_module_handle_t *phModules,
     ze_module_build_log_handle_t *phLinkLog) {
