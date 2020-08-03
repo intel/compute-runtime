@@ -209,7 +209,7 @@ zesFrequencyGetAvailableClocks(
     zes_freq_handle_t hFrequency,
     uint32_t *pCount,
     double *phFrequency) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyGetAvailableClocks(pCount, phFrequency);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

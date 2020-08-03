@@ -18,6 +18,7 @@ namespace L0 {
 class FrequencyImp : public Frequency, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t frequencyGetProperties(zes_freq_properties_t *pProperties) override;
+    ze_result_t frequencyGetAvailableClocks(uint32_t *pCount, double *phFrequency) override;
     ze_result_t frequencyGetRange(zes_freq_range_t *pLimits) override;
     ze_result_t frequencySetRange(const zes_freq_range_t *pLimits) override;
     ze_result_t frequencyGetState(zes_freq_state_t *pState) override;

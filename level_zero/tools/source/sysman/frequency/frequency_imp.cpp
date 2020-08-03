@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/frequency/frequency_imp.h"
 
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <cmath>
@@ -18,6 +19,19 @@ const bool FrequencyImp::canControl = true; // canControl is true on i915 (GEN9 
 
 ze_result_t FrequencyImp::frequencyGetProperties(zes_freq_properties_t *pProperties) {
     *pProperties = zesFrequencyProperties;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t FrequencyImp::frequencyGetAvailableClocks(uint32_t *pCount, double *phFrequency) {
+    uint32_t numToCopy = std::min(*pCount, numClocks);
+    if (0 == *pCount || *pCount > numClocks) {
+        *pCount = numClocks;
+    }
+    if (nullptr != phFrequency) {
+        for (uint32_t i = 0; i < numToCopy; i++) {
+            phFrequency[i] = pClocks[i];
+        }
+    }
     return ZE_RESULT_SUCCESS;
 }
 
