@@ -277,6 +277,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
                                    rowPitch, slicePitch, bytesPerPixel, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, {pDstRegion->width, pDstRegion->height, pDstRegion->depth}, imgSize, hEvent);
     }
 
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
+
     Kernel *builtinKernel = nullptr;
 
     switch (bytesPerPixel) {
@@ -390,6 +392,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
                                    {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, rowPitch, slicePitch,
                                    rowPitch, slicePitch, bytesPerPixel, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, imgSize, {pSrcRegion->width, pSrcRegion->height, pSrcRegion->depth}, hEvent);
     }
+
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
     Kernel *builtinKernel = nullptr;
 
@@ -537,6 +541,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
                                    dstRowPitch, dstSlicePitch, bytesPerPixel, {srcRegion.width, srcRegion.height, srcRegion.depth}, srcImgSize, dstImgSize, hEvent);
     }
 
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
+
     auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
 
     if (kernel->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX,
@@ -602,6 +608,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernelWithGA(v
                                                                                uint32_t size,
                                                                                uint32_t elementSize,
                                                                                Builtin builtin) {
+
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
     auto builtinFunction = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
@@ -713,6 +721,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(NEO::Graph
                                                                       NEO::GraphicsAllocation *srcptr,
                                                                       size_t size, bool flushHost) {
 
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
+
     auto builtinFunction = device->getBuiltinFunctionsLib()->getPageFaultFunction();
 
     uint32_t groupSizeX = builtinFunction->getImmutableData()
@@ -757,6 +767,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
                                                                    ze_event_handle_t hSignalEvent,
                                                                    uint32_t numWaitEvents,
                                                                    ze_event_handle_t *phWaitEvents) {
+
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     uintptr_t start = reinterpret_cast<uintptr_t>(dstptr);
@@ -846,6 +858,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
                                                                          uint32_t srcPitch,
                                                                          uint32_t srcSlicePitch,
                                                                          ze_event_handle_t hSignalEvent) {
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
+
     size_t dstSize = 0;
     size_t srcSize = 0;
 
@@ -917,6 +931,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(NEO::
                                                                            uint32_t numWaitEvents,
                                                                            ze_event_handle_t *phWaitEvents) {
 
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
+
     auto builtinFunction = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
     uint32_t groupSizeX = srcRegion->width;
@@ -974,6 +990,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(NEO::
                                                                            ze_event_handle_t hSignalEvent,
                                                                            uint32_t numWaitEvents,
                                                                            ze_event_handle_t *phWaitEvents) {
+
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
     auto builtinFunction = device->getBuiltinFunctionsLib()->getFunction(builtin);
 
@@ -1060,6 +1078,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
     uintptr_t srcPtr = reinterpret_cast<uintptr_t>(const_cast<void *>(pattern));
     size_t srcOffset = 0;
     NEO::EncodeSurfaceState<GfxFamily>::getSshAlignedPointer(srcPtr, srcOffset);
+
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
     Kernel *builtinFunction = nullptr;
     uint32_t groupSizeX = 1u;
