@@ -57,6 +57,7 @@ ze_result_t LinuxFabricPortImp::getThroughput(zes_fabric_port_throughput_t *pThr
 }
 
 void LinuxFabricPortImp::getModel(char *model) {
+    ::snprintf(model, ZES_MAX_FABRIC_PORT_MODEL_SIZE, "%s", this->model.c_str());
 }
 
 void LinuxFabricPortImp::getPortId(zes_fabric_port_id_t &portId) {

@@ -12,15 +12,6 @@
 namespace L0 {
 namespace ult {
 
-using SysmanGetTest = Test<DeviceFixture>;
-
-TEST_F(SysmanGetTest, whenCallingZetSysmanGetWithoutCallingZetInitThenUnitializedIsReturned) {
-    zet_sysman_handle_t hSysman;
-
-    ze_result_t res = zetSysmanGet(device->toHandle(), &hSysman);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, res);
-}
-
 using MockDeviceSysmanGetTest = Test<DeviceFixture>;
 TEST_F(MockDeviceSysmanGetTest, GivenValidSysmanHandleSetInDeviceStructWhenGetThisSysmanHandleThenHandlesShouldBeSimilar) {
     SysmanDeviceImp *sysman = new SysmanDeviceImp(device->toHandle());

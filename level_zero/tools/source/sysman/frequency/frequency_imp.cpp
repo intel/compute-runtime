@@ -128,6 +128,13 @@ void FrequencyImp::init() {
         zesFrequencyProperties.max = 0.0;
     }
     zesFrequencyProperties.isThrottleEventSupported = false;
+
+    double freqRange = zesFrequencyProperties.max - zesFrequencyProperties.min;
+    numClocks = static_cast<uint32_t>(round(freqRange / step)) + 1;
+    pClocks = new double[numClocks];
+    for (unsigned int i = 0; i < numClocks; i++) {
+        pClocks[i] = round(zesFrequencyProperties.min + (step * i));
+    }
 }
 
 FrequencyImp::FrequencyImp(OsSysman *pOsSysman) {

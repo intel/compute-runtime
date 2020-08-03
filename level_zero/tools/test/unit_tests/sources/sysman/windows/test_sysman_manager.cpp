@@ -26,8 +26,6 @@ namespace ult {
 class SysmanKmdManagerFixture : public ::testing::Test {
 
   protected:
-    std::unique_ptr<SysmanImp> sysmanImp;
-    zet_sysman_handle_t hSysman;
     Mock<MockKmdSysManager> *pKmdSysManager = nullptr;
     OsSysman *pOsSysman = nullptr;
     PublicWddmSysmanImp wddmSysmanImp;

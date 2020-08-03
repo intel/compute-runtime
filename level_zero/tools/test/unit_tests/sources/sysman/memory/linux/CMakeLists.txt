@@ -6,13 +6,13 @@
 
 if(SUPPORT_DG1)
 set(L0_TESTS_TOOLS_SYSMAN_MEMORY_LINUX
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/dg1/test_sysman_memory.cpp
+ #   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+ #   ${CMAKE_CURRENT_SOURCE_DIR}/dg1/test_sysman_memory.cpp
 )
 else()
 set(L0_TESTS_TOOLS_SYSMAN_MEMORY_LINUX
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_memory.cpp
+ #   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+ #   ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_memory.cpp
 )
 endif()
 

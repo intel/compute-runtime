@@ -8,7 +8,7 @@ if(UNIX)
     target_sources(${TARGET_NAME}
         PRIVATE
            ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-           ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_power.cpp
+           ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_power.cpp
            ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysfs_power.h
     )
 endif()
