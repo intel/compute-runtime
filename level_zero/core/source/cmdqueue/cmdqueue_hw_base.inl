@@ -45,7 +45,10 @@ void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba
     NEO::Device *neoDevice = device->getNEODevice();
     NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(*neoDevice, commandStream, true);
 
-    NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(commandStream,
+    auto pSbaCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
+    STATE_BASE_ADDRESS sbaCmd;
+
+    NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(&sbaCmd,
                                                                     nullptr,
                                                                     nullptr,
                                                                     nullptr,
@@ -56,7 +59,7 @@ void CommandQueueHw<gfxCoreFamily>::programGeneralStateBaseAddress(uint64_t gsba
                                                                     true,
                                                                     neoDevice->getGmmHelper(),
                                                                     false);
-
+    *pSbaCmd = sbaCmd;
     gsbaInit = true;
 
     if (device->getL0Debugger()) {

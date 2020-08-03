@@ -1499,7 +1499,8 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
     args.textureCacheInvalidationEnable = true;
     NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
 
-    NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer);
+    STATE_BASE_ADDRESS sba;
+    NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer, sba);
     if (device->getL0Debugger()) {
         device->getL0Debugger()->captureStateBaseAddress(commandContainer);
     }

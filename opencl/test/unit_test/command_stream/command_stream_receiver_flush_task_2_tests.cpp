@@ -1139,7 +1139,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenGeneralStateBaseAddres
 
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
 
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(commandStream,
+    typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(&sbaCmd,
                                                                 &dsh,
                                                                 &ioh,
                                                                 &ssh,
@@ -1151,18 +1152,15 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenGeneralStateBaseAddres
                                                                 pDevice->getGmmHelper(),
                                                                 false);
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStream);
-    auto cmd = hwParser.getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
-
-    EXPECT_NE(generalStateBaseAddress, cmd->getGeneralStateBaseAddress());
-    EXPECT_EQ(GmmHelper::decanonize(generalStateBaseAddress), cmd->getGeneralStateBaseAddress());
+    EXPECT_NE(generalStateBaseAddress, sbaCmd.getGeneralStateBaseAddress());
+    EXPECT_EQ(GmmHelper::decanonize(generalStateBaseAddress), sbaCmd.getGeneralStateBaseAddress());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNonZeroGeneralStateBaseAddressWhenProgrammingIsDisabledThenExpectCommandValueZero) {
     uint64_t generalStateBaseAddress = 0x80010000ull;
 
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(commandStream,
+    typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(&sbaCmd,
                                                                 &dsh,
                                                                 &ioh,
                                                                 &ssh,
@@ -1174,20 +1172,17 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNonZeroGeneralStateBaseAddres
                                                                 pDevice->getGmmHelper(),
                                                                 false);
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStream);
-    auto cmd = hwParser.getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
-
-    EXPECT_EQ(0ull, cmd->getGeneralStateBaseAddress());
-    EXPECT_EQ(0u, cmd->getGeneralStateBufferSize());
-    EXPECT_FALSE(cmd->getGeneralStateBaseAddressModifyEnable());
-    EXPECT_FALSE(cmd->getGeneralStateBufferSizeModifyEnable());
+    EXPECT_EQ(0ull, sbaCmd.getGeneralStateBaseAddress());
+    EXPECT_EQ(0u, sbaCmd.getGeneralStateBufferSize());
+    EXPECT_FALSE(sbaCmd.getGeneralStateBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd.getGeneralStateBufferSizeModifyEnable());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNonZeroInternalHeapBaseAddressWhenProgrammingIsDisabledThenExpectCommandValueZero) {
     uint64_t internalHeapBaseAddress = 0x80010000ull;
 
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(commandStream,
+    typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(&sbaCmd,
                                                                 &dsh,
                                                                 &ioh,
                                                                 &ssh,
@@ -1199,15 +1194,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNonZeroInternalHeapBaseAddres
                                                                 pDevice->getGmmHelper(),
                                                                 false);
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStream);
-    auto cmd = hwParser.getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
-
-    EXPECT_FALSE(cmd->getInstructionBaseAddressModifyEnable());
-    EXPECT_EQ(0ull, cmd->getInstructionBaseAddress());
-    EXPECT_FALSE(cmd->getInstructionBufferSizeModifyEnable());
-    EXPECT_EQ(0u, cmd->getInstructionBufferSize());
-    EXPECT_EQ(0u, cmd->getInstructionMemoryObjectControlState());
+    EXPECT_FALSE(sbaCmd.getInstructionBaseAddressModifyEnable());
+    EXPECT_EQ(0ull, sbaCmd.getInstructionBaseAddress());
+    EXPECT_FALSE(sbaCmd.getInstructionBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd.getInstructionBufferSize());
+    EXPECT_EQ(0u, sbaCmd.getInstructionMemoryObjectControlState());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenSbaProgrammingWhenHeapsAreNotProvidedThenDontProgram) {
@@ -1215,8 +1206,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenSbaProgram
 
     uint64_t internalHeapBase = 0x10000;
     uint64_t generalStateBase = 0x30000;
+    typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
 
-    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(commandStream,
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(&sbaCmd,
                                                                 nullptr,
                                                                 nullptr,
                                                                 nullptr,
@@ -1228,30 +1220,26 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenSbaProgram
                                                                 pDevice->getGmmHelper(),
                                                                 false);
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(commandStream);
-    auto cmd = hwParser.getCommand<typename FamilyType::STATE_BASE_ADDRESS>();
+    EXPECT_FALSE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd.getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd.getDynamicStateBaseAddress());
+    EXPECT_EQ(0u, sbaCmd.getDynamicStateBufferSize());
 
-    EXPECT_FALSE(cmd->getDynamicStateBaseAddressModifyEnable());
-    EXPECT_FALSE(cmd->getDynamicStateBufferSizeModifyEnable());
-    EXPECT_EQ(0u, cmd->getDynamicStateBaseAddress());
-    EXPECT_EQ(0u, cmd->getDynamicStateBufferSize());
+    EXPECT_FALSE(sbaCmd.getIndirectObjectBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd.getIndirectObjectBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd.getIndirectObjectBaseAddress());
+    EXPECT_EQ(0u, sbaCmd.getIndirectObjectBufferSize());
 
-    EXPECT_FALSE(cmd->getIndirectObjectBaseAddressModifyEnable());
-    EXPECT_FALSE(cmd->getIndirectObjectBufferSizeModifyEnable());
-    EXPECT_EQ(0u, cmd->getIndirectObjectBaseAddress());
-    EXPECT_EQ(0u, cmd->getIndirectObjectBufferSize());
+    EXPECT_FALSE(sbaCmd.getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(0u, sbaCmd.getSurfaceStateBaseAddress());
 
-    EXPECT_FALSE(cmd->getSurfaceStateBaseAddressModifyEnable());
-    EXPECT_EQ(0u, cmd->getSurfaceStateBaseAddress());
+    EXPECT_TRUE(sbaCmd.getInstructionBaseAddressModifyEnable());
+    EXPECT_EQ(internalHeapBase, sbaCmd.getInstructionBaseAddress());
+    EXPECT_TRUE(sbaCmd.getInstructionBufferSizeModifyEnable());
+    EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, sbaCmd.getInstructionBufferSize());
 
-    EXPECT_TRUE(cmd->getInstructionBaseAddressModifyEnable());
-    EXPECT_EQ(internalHeapBase, cmd->getInstructionBaseAddress());
-    EXPECT_TRUE(cmd->getInstructionBufferSizeModifyEnable());
-    EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, cmd->getInstructionBufferSize());
-
-    EXPECT_TRUE(cmd->getGeneralStateBaseAddressModifyEnable());
-    EXPECT_TRUE(cmd->getGeneralStateBufferSizeModifyEnable());
-    EXPECT_EQ(GmmHelper::decanonize(generalStateBase), cmd->getGeneralStateBaseAddress());
-    EXPECT_EQ(0xfffffu, cmd->getGeneralStateBufferSize());
+    EXPECT_TRUE(sbaCmd.getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd.getGeneralStateBufferSizeModifyEnable());
+    EXPECT_EQ(GmmHelper::decanonize(generalStateBase), sbaCmd.getGeneralStateBaseAddress());
+    EXPECT_EQ(0xfffffu, sbaCmd.getGeneralStateBufferSize());
 }

@@ -72,6 +72,7 @@ struct MockOsContext : public OsContext {
 GEN12LPTEST_F(CommandEncoderTest, givenVariousEngineTypesWhenEncodeSBAThenAdditionalPipelineSelectWAIsAppliedOnlyToRcs) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     CommandContainer cmdContainer;
 
@@ -79,7 +80,8 @@ GEN12LPTEST_F(CommandEncoderTest, givenVariousEngineTypesWhenEncodeSBAThenAdditi
     ASSERT_TRUE(ret);
 
     {
-        EncodeStateBaseAddress<FamilyType>::encode(cmdContainer);
+        STATE_BASE_ADDRESS sba;
+        EncodeStateBaseAddress<FamilyType>::encode(cmdContainer, sba);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());
@@ -92,7 +94,8 @@ GEN12LPTEST_F(CommandEncoderTest, givenVariousEngineTypesWhenEncodeSBAThenAdditi
     {
         static_cast<MockOsContext *>(pDevice->getDefaultEngine().osContext)->engineType = aub_stream::ENGINE_CCS;
 
-        EncodeStateBaseAddress<FamilyType>::encode(cmdContainer);
+        STATE_BASE_ADDRESS sba;
+        EncodeStateBaseAddress<FamilyType>::encode(cmdContainer, sba);
 
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());

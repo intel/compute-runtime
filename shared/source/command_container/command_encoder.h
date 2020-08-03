@@ -169,7 +169,8 @@ struct EncodeMediaInterfaceDescriptorLoad {
 
 template <typename GfxFamily>
 struct EncodeStateBaseAddress {
-    static void encode(CommandContainer &container);
+    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+    static void encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd);
 };
 
 template <typename GfxFamily>

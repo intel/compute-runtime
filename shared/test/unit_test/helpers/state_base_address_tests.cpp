@@ -47,7 +47,7 @@ HWTEST2_F(SBATest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
     *cmd = stateBaseAddress;
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(
-        commandStream,
+        cmd,
         nullptr,
         nullptr,
         &ssh,

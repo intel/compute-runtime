@@ -31,6 +31,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using MI_BATCH_BUFFER_END = typename Family::MI_BATCH_BUFFER_END;
+    using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
 
     auto &kernelDescriptor = dispatchInterface->getKernelDescriptor();
     auto sizeCrossThreadData = dispatchInterface->getCrossThreadDataSize();
@@ -170,7 +171,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         MemorySynchronizationCommands<Family>::addPipeControl(*container.getCommandStream(), args);
 
         if (dirtyHeaps) {
-            EncodeStateBaseAddress<Family>::encode(container);
+            STATE_BASE_ADDRESS sba;
+            EncodeStateBaseAddress<Family>::encode(container, sba);
             container.setDirtyStateForAllHeaps(false);
         }
 
@@ -337,13 +339,13 @@ size_t EncodeDispatchKernel<Family>::estimateEncodeDispatchKernelCmdsSize(Device
 }
 
 template <typename Family>
-void EncodeStateBaseAddress<Family>::encode(CommandContainer &container) {
+void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_BASE_ADDRESS &sbaCmd) {
     EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), true);
 
     auto gmmHelper = container.getDevice()->getGmmHelper();
 
     StateBaseAddressHelper<Family>::programStateBaseAddress(
-        *container.getCommandStream(),
+        &sbaCmd,
         container.isHeapDirty(HeapType::DYNAMIC_STATE) ? container.getIndirectHeap(HeapType::DYNAMIC_STATE) : nullptr,
         container.isHeapDirty(HeapType::INDIRECT_OBJECT) ? container.getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr,
         container.isHeapDirty(HeapType::SURFACE_STATE) ? container.getIndirectHeap(HeapType::SURFACE_STATE) : nullptr,
@@ -354,6 +356,9 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container) {
         false,
         gmmHelper,
         false);
+
+    auto pCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(container.getCommandStream()->getSpace(sizeof(STATE_BASE_ADDRESS)));
+    *pCmd = sbaCmd;
 
     EncodeWA<Family>::encodeAdditionalPipelineSelect(*container.getDevice(), *container.getCommandStream(), false);
 }

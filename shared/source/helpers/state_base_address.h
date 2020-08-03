@@ -21,7 +21,7 @@ struct StateBaseAddressHelper {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     static void programStateBaseAddress(
-        LinearStream &commandStream,
+        STATE_BASE_ADDRESS *stateBaseAddress,
         const IndirectHeap *dsh,
         const IndirectHeap *ioh,
         const IndirectHeap *ssh,

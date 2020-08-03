@@ -15,7 +15,7 @@
 namespace NEO {
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
-    LinearStream &commandStream,
+    STATE_BASE_ADDRESS *stateBaseAddress,
     const IndirectHeap *dsh,
     const IndirectHeap *ioh,
     const IndirectHeap *ssh,
@@ -27,42 +27,41 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     GmmHelper *gmmHelper,
     bool isMultiOsContextCapable) {
 
-    auto pCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
-    STATE_BASE_ADDRESS cmd = GfxFamily::cmdInitStateBaseAddress;
+    *stateBaseAddress = GfxFamily::cmdInitStateBaseAddress;
 
     if (dsh) {
-        cmd.setDynamicStateBaseAddressModifyEnable(true);
-        cmd.setDynamicStateBufferSizeModifyEnable(true);
-        cmd.setDynamicStateBaseAddress(dsh->getHeapGpuBase());
-        cmd.setDynamicStateBufferSize(dsh->getHeapSizeInPages());
+        stateBaseAddress->setDynamicStateBaseAddressModifyEnable(true);
+        stateBaseAddress->setDynamicStateBufferSizeModifyEnable(true);
+        stateBaseAddress->setDynamicStateBaseAddress(dsh->getHeapGpuBase());
+        stateBaseAddress->setDynamicStateBufferSize(dsh->getHeapSizeInPages());
     }
 
     if (ioh) {
-        cmd.setIndirectObjectBaseAddressModifyEnable(true);
-        cmd.setIndirectObjectBufferSizeModifyEnable(true);
-        cmd.setIndirectObjectBaseAddress(ioh->getHeapGpuBase());
-        cmd.setIndirectObjectBufferSize(ioh->getHeapSizeInPages());
+        stateBaseAddress->setIndirectObjectBaseAddressModifyEnable(true);
+        stateBaseAddress->setIndirectObjectBufferSizeModifyEnable(true);
+        stateBaseAddress->setIndirectObjectBaseAddress(ioh->getHeapGpuBase());
+        stateBaseAddress->setIndirectObjectBufferSize(ioh->getHeapSizeInPages());
     }
 
     if (ssh) {
-        cmd.setSurfaceStateBaseAddressModifyEnable(true);
-        cmd.setSurfaceStateBaseAddress(ssh->getHeapGpuBase());
+        stateBaseAddress->setSurfaceStateBaseAddressModifyEnable(true);
+        stateBaseAddress->setSurfaceStateBaseAddress(ssh->getHeapGpuBase());
     }
 
     if (setInstructionStateBaseAddress) {
-        cmd.setInstructionBaseAddressModifyEnable(true);
-        cmd.setInstructionBaseAddress(internalHeapBase);
-        cmd.setInstructionBufferSizeModifyEnable(true);
-        cmd.setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
-        cmd.setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
+        stateBaseAddress->setInstructionBaseAddressModifyEnable(true);
+        stateBaseAddress->setInstructionBaseAddress(internalHeapBase);
+        stateBaseAddress->setInstructionBufferSizeModifyEnable(true);
+        stateBaseAddress->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
+        stateBaseAddress->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
     }
 
     if (setGeneralStateBaseAddress) {
-        cmd.setGeneralStateBaseAddressModifyEnable(true);
-        cmd.setGeneralStateBufferSizeModifyEnable(true);
+        stateBaseAddress->setGeneralStateBaseAddressModifyEnable(true);
+        stateBaseAddress->setGeneralStateBufferSizeModifyEnable(true);
         // GSH must be set to 0 for stateless
-        cmd.setGeneralStateBaseAddress(GmmHelper::decanonize(generalStateBase));
-        cmd.setGeneralStateBufferSize(0xfffff);
+        stateBaseAddress->setGeneralStateBaseAddress(GmmHelper::decanonize(generalStateBase));
+        stateBaseAddress->setGeneralStateBufferSize(0xfffff);
     }
 
     if (DebugManager.flags.OverrideStatelessMocsIndex.get() != -1) {
@@ -71,11 +70,9 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     statelessMocsIndex = statelessMocsIndex << 1;
 
-    cmd.setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
+    stateBaseAddress->setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
 
-    appendStateBaseAddressParameters(&cmd, ssh, setGeneralStateBaseAddress, internalHeapBase, gmmHelper, isMultiOsContextCapable);
-
-    *pCmd = cmd;
+    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, internalHeapBase, gmmHelper, isMultiOsContextCapable);
 }
 
 } // namespace NEO

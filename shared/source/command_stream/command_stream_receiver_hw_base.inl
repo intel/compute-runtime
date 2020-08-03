@@ -356,9 +356,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
 
         auto stateBaseAddressCmdOffset = commandStreamCSR.getUsed();
-
+        auto pCmd = static_cast<STATE_BASE_ADDRESS *>(commandStreamCSR.getSpace(sizeof(STATE_BASE_ADDRESS)));
+        STATE_BASE_ADDRESS cmd;
         StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
-            commandStreamCSR,
+            &cmd,
             &dsh,
             &ioh,
             &ssh,
@@ -369,6 +370,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             true,
             device.getGmmHelper(),
             isMultiOsContextCapable());
+        *pCmd = cmd;
 
         if (sshDirty) {
             bindingTableBaseAddressRequired = true;
