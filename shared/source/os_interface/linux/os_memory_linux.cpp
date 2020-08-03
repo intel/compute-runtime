@@ -9,7 +9,9 @@
 
 #include "shared/source/os_interface/linux/os_inc.h"
 
+#include <cinttypes>
 #include <fstream>
+#include <string>
 
 namespace NEO {
 
@@ -53,7 +55,7 @@ void OSMemoryLinux::getMemoryMaps(MemoryMaps &memoryMaps) {
     std::string line;
     while (std::getline(ifs, line)) {
         uint64_t start = 0, end = 0;
-        sscanf(line.c_str(), "%lx-%lx", &start, &end);
+        sscanf(line.c_str(), "%" SCNx64 "-%" SCNx64, &start, &end);
         memoryMaps.push_back({start, end});
     }
 }
