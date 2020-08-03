@@ -45,11 +45,6 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const size_t &sizeCrossThreadData,
         const size_t &sizePerThreadData);
 
-    static void setAdditionalInfo(
-        INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
-        const Kernel &kernel,
-        const uint32_t numThreadsPerThreadGroup);
-
     inline static uint32_t additionalSizeRequiredDsh();
 
     static size_t sendInterfaceDescriptorData(

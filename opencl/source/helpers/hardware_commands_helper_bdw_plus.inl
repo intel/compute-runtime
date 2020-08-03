@@ -42,9 +42,6 @@ void HardwareCommandsHelper<GfxFamily>::setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pI
 }
 
 template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::setAdditionalInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const Kernel &kernel, const uint32_t threadsPerThreadGroup) {}
-
-template <typename GfxFamily>
 uint32_t HardwareCommandsHelper<GfxFamily>::additionalSizeRequiredDsh() {
     return sizeof(INTERFACE_DESCRIPTOR_DATA);
 }

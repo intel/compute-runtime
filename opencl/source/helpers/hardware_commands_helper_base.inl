@@ -175,7 +175,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     interfaceDescriptor.setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
 
     setGrfInfo(&interfaceDescriptor, kernel, sizeCrossThreadData, sizePerThreadData);
-    setAdditionalInfo(&interfaceDescriptor, kernel, threadsPerThreadGroup);
+    EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, kernel.getDevice().getHardwareInfo(), threadsPerThreadGroup, kernel.slmTotalSize);
 
     interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
 
