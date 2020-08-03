@@ -100,7 +100,7 @@ SKLTEST_F(ThreadArbitration, givenPreambleWhenItIsProgrammedThenThreadArbitratio
 }
 
 SKLTEST_F(ThreadArbitration, defaultArbitrationPolicy) {
-    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, PreambleHelper<SKLFamily>::getDefaultThreadArbitrationPolicy());
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, HwHelperHw<SKLFamily>::get().getDefaultThreadArbitrationPolicy());
 }
 
 GEN9TEST_F(PreambleVfeState, WaOff) {

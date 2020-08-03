@@ -321,6 +321,8 @@ cl_int Kernel::initialize() {
                 Buffer::setSurfaceState(&getDevice().getDevice(), surfaceState, 0, nullptr, 0, nullptr, 0, 0);
             }
         }
+
+        setThreadArbitrationPolicy(hwHelper.getDefaultThreadArbitrationPolicy());
         if (kernelInfo.patchInfo.executionEnvironment) {
             if (!kernelInfo.patchInfo.executionEnvironment->SubgroupIndependentForwardProgressRequired) {
                 setThreadArbitrationPolicy(ThreadArbitrationPolicy::AgeBased);

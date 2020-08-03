@@ -3101,6 +3101,17 @@ TEST(KernelTest, givenKernelWhenForcePerDssBackedBufferProgrammingIsNotSetThenKe
     EXPECT_FALSE(kernel.mockKernel->requiresPerDssBackedBuffer());
 }
 
+TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaultValue) {
+    SPatchExecutionEnvironment sPatchExecutionEnvironment = {};
+    sPatchExecutionEnvironment.SubgroupIndependentForwardProgressRequired = true;
+    UltClDeviceFactory deviceFactory{1, 0};
+    MockKernelWithInternals mockKernelWithInternals{*deviceFactory.rootDevices[0], sPatchExecutionEnvironment};
+
+    auto &mockKernel = *mockKernelWithInternals.mockKernel;
+    auto &hwHelper = HwHelper::get(deviceFactory.rootDevices[0]->getHardwareInfo().platform.eRenderCoreFamily);
+    EXPECT_EQ(hwHelper.getDefaultThreadArbitrationPolicy(), mockKernel.threadArbitrationPolicy);
+}
+
 namespace NEO {
 
 template <typename GfxFamily>

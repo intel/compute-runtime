@@ -34,6 +34,11 @@ uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::Gen9);
 }
 
+template <>
+uint32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
+    return ThreadArbitrationPolicy::RoundRobin;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

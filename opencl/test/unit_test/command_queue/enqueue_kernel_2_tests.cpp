@@ -695,6 +695,68 @@ INSTANTIATE_TEST_CASE_P(EnqueueKernel,
                         EnqueueKernelPrintfTest,
                         ::testing::ValuesIn(TestParamPrintf));
 
+using EnqueueKernelTests = ::testing::Test;
+
+HWTEST_F(EnqueueKernelTests, whenEnqueueingKernelThenCsrCorrectlySetsRequiredThreadArbitrationPolicy) {
+    struct myCsr : public UltCommandStreamReceiver<FamilyType> {
+        using CommandStreamReceiverHw<FamilyType>::requiredThreadArbitrationPolicy;
+    };
+
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
+
+    UltClDeviceFactory clDeviceFactory{1, 0};
+    MockContext context{clDeviceFactory.rootDevices[0]};
+    SPatchExecutionEnvironment sPatchExecutionEnvironment = {};
+
+    sPatchExecutionEnvironment.SubgroupIndependentForwardProgressRequired = true;
+    MockKernelWithInternals mockKernelWithInternalsWithIfpRequired{*clDeviceFactory.rootDevices[0], sPatchExecutionEnvironment};
+    sPatchExecutionEnvironment.SubgroupIndependentForwardProgressRequired = false;
+    MockKernelWithInternals mockKernelWithInternalsWithIfpNotRequired{*clDeviceFactory.rootDevices[0], sPatchExecutionEnvironment};
+
+    cl_int retVal;
+    std::unique_ptr<CommandQueue> pCommandQueue{CommandQueue::create(&context, clDeviceFactory.rootDevices[0], nullptr, true, retVal)};
+    auto &csr = static_cast<myCsr &>(pCommandQueue->getGpgpuCommandStreamReceiver());
+
+    pCommandQueue->enqueueKernel(
+        mockKernelWithInternalsWithIfpRequired.mockKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        0,
+        nullptr,
+        nullptr);
+    pCommandQueue->flush();
+    EXPECT_EQ(HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(), csr.requiredThreadArbitrationPolicy);
+
+    pCommandQueue->enqueueKernel(
+        mockKernelWithInternalsWithIfpNotRequired.mockKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        0,
+        nullptr,
+        nullptr);
+    pCommandQueue->flush();
+    EXPECT_EQ(ThreadArbitrationPolicy::AgeBased, csr.requiredThreadArbitrationPolicy);
+
+    pCommandQueue->enqueueKernel(
+        mockKernelWithInternalsWithIfpRequired.mockKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        0,
+        nullptr,
+        nullptr);
+    pCommandQueue->flush();
+    EXPECT_EQ(HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy(), csr.requiredThreadArbitrationPolicy);
+}
+
 typedef HelloWorldFixture<HelloWorldFixtureFactory> EnqueueKernelFixture;
 typedef Test<EnqueueKernelFixture> EnqueueKernelTest;
 

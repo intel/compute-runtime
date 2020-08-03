@@ -158,7 +158,7 @@ GEN12LPTEST_F(ThreadArbitrationGen12Lp, givenPolicyWhenThreadArbitrationProgramm
     PreambleHelper<FamilyType>::programThreadArbitration(&cs, ThreadArbitrationPolicy::RoundRobin);
 
     EXPECT_EQ(0u, cs.getUsed());
-    EXPECT_EQ(0u, PreambleHelper<FamilyType>::getDefaultThreadArbitrationPolicy());
+    EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy());
 }
 
 typedef PreambleFixture PreemptionWatermarkGen12LP;

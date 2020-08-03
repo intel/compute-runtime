@@ -64,11 +64,6 @@ void PreambleHelper<SKLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComman
 }
 
 template <>
-uint32_t PreambleHelper<SKLFamily>::getDefaultThreadArbitrationPolicy() {
-    return ThreadArbitrationPolicy::RoundRobin;
-}
-
-template <>
 void PreambleHelper<SKLFamily>::programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy) {
     UNRECOVERABLE_IF(requiredThreadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent);
 

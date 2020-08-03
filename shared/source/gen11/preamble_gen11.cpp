@@ -64,11 +64,6 @@ void PreambleHelper<ICLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pComman
 }
 
 template <>
-uint32_t PreambleHelper<ICLFamily>::getDefaultThreadArbitrationPolicy() {
-    return ThreadArbitrationPolicy::RoundRobinAfterDependency;
-}
-
-template <>
 void PreambleHelper<ICLFamily>::programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy) {
     UNRECOVERABLE_IF(requiredThreadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent);
 

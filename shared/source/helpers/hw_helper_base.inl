@@ -466,4 +466,9 @@ bool HwHelperHw<GfxFamily>::isBankOverrideRequired(const HardwareInfo &hwInfo) c
     return false;
 }
 
+template <typename GfxFamily>
+uint32_t HwHelperHw<GfxFamily>::getDefaultThreadArbitrationPolicy() const {
+    return 0;
+}
+
 } // namespace NEO

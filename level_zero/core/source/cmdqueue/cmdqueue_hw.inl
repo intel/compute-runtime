@@ -227,7 +227,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             statePreemption = commandQueuePreemptionMode;
         }
 
-        uint32_t threadArbitrationPolicy = NEO::PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
+        auto &hwHelper = NEO::HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+        uint32_t threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
         if (NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
             threadArbitrationPolicy = static_cast<uint32_t>(NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get());
         }

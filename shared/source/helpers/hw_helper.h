@@ -120,6 +120,7 @@ class HwHelper {
     virtual bool isBankOverrideRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const = 0;
     virtual uint32_t getGlobalTimeStampBits() const = 0;
+    virtual uint32_t getDefaultThreadArbitrationPolicy() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -303,6 +304,8 @@ class HwHelperHw : public HwHelper {
     LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
 
     bool isBankOverrideRequired(const HardwareInfo &hwInfo) const override;
+
+    uint32_t getDefaultThreadArbitrationPolicy() const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

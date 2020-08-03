@@ -21,6 +21,11 @@ std::string HwHelperHw<Family>::getExtensions() const {
     return "cl_intel_subgroup_local_block_io ";
 }
 
+template <>
+uint32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
+    return ThreadArbitrationPolicy::RoundRobinAfterDependency;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
