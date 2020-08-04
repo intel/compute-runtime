@@ -478,6 +478,9 @@ zeGetCommandListProcAddrTable(
     pDdiTable->pfnAppendLaunchCooperativeKernel = (ze_pfnCommandListAppendLaunchCooperativeKernel_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeCommandListAppendLaunchCooperativeKernel");
     pDdiTable->pfnAppendLaunchKernelIndirect = (ze_pfnCommandListAppendLaunchKernelIndirect_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeCommandListAppendLaunchKernelIndirect");
     pDdiTable->pfnAppendLaunchMultipleKernelsIndirect = (ze_pfnCommandListAppendLaunchMultipleKernelsIndirect_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeCommandListAppendLaunchMultipleKernelsIndirect");
+    pDdiTable->pfnAppendWriteGlobalTimestamp = (ze_pfnCommandListAppendWriteGlobalTimestamp_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeCommandListAppendWriteGlobalTimestamp");
+    pDdiTable->pfnAppendMemoryCopyFromContext = (ze_pfnCommandListAppendMemoryCopyFromContext_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeCommandListAppendMemoryCopyFromContext");
+    pDdiTable->pfnAppendQueryKernelTimestamps = (ze_pfnCommandListAppendQueryKernelTimestamps_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeCommandListAppendQueryKernelTimestamps");
     driver_ddiTable.core_ddiTable.CommandList = *pDdiTable;
     if (driver_ddiTable.enableTracing) {
         pDdiTable->pfnAppendBarrier = (ze_pfnCommandListAppendBarrier_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeCommandListAppendBarrier_Tracing");
@@ -571,6 +574,18 @@ zeGetCommandListProcAddrTable(
         pDdiTable->pfnAppendLaunchMultipleKernelsIndirect = (ze_pfnCommandListAppendLaunchMultipleKernelsIndirect_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeCommandListAppendLaunchMultipleKernelsIndirect_Tracing");
         if (nullptr == pDdiTable->pfnAppendLaunchMultipleKernelsIndirect) {
             pDdiTable->pfnAppendLaunchMultipleKernelsIndirect = driver_ddiTable.core_ddiTable.CommandList.pfnAppendLaunchMultipleKernelsIndirect;
+        }
+        pDdiTable->pfnAppendWriteGlobalTimestamp = (ze_pfnCommandListAppendWriteGlobalTimestamp_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeCommandListAppendWriteGlobalTimestamp_Tracing");
+        if (nullptr == pDdiTable->pfnAppendWriteGlobalTimestamp) {
+            pDdiTable->pfnAppendWriteGlobalTimestamp = driver_ddiTable.core_ddiTable.CommandList.pfnAppendWriteGlobalTimestamp;
+        }
+        pDdiTable->pfnAppendMemoryCopyFromContext = (ze_pfnCommandListAppendMemoryCopyFromContext_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeCommandListAppendMemoryCopyFromContext_Tracing");
+        if (nullptr == pDdiTable->pfnAppendMemoryCopyFromContext) {
+            pDdiTable->pfnAppendMemoryCopyFromContext = driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryCopyFromContext;
+        }
+        pDdiTable->pfnAppendQueryKernelTimestamps = (ze_pfnCommandListAppendQueryKernelTimestamps_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeCommandListAppendQueryKernelTimestamps_Tracing");
+        if (nullptr == pDdiTable->pfnAppendQueryKernelTimestamps) {
+            pDdiTable->pfnAppendQueryKernelTimestamps = driver_ddiTable.core_ddiTable.CommandList.pfnAppendQueryKernelTimestamps;
         }
     }
     return result;
@@ -692,6 +707,7 @@ zeGetEventProcAddrTable(
     pDdiTable->pfnHostSynchronize = (ze_pfnEventHostSynchronize_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeEventHostSynchronize");
     pDdiTable->pfnQueryStatus = (ze_pfnEventQueryStatus_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeEventQueryStatus");
     pDdiTable->pfnHostReset = (ze_pfnEventHostReset_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeEventHostReset");
+    pDdiTable->pfnQueryKernelTimestamp = (ze_pfnEventQueryKernelTimestamp_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeEventQueryKernelTimestamp");
     driver_ddiTable.core_ddiTable.Event = *pDdiTable;
     if (driver_ddiTable.enableTracing) {
         pDdiTable->pfnCreate = (ze_pfnEventCreate_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeEventCreate_Tracing");
@@ -717,6 +733,10 @@ zeGetEventProcAddrTable(
         pDdiTable->pfnHostReset = (ze_pfnEventHostReset_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeEventHostReset_Tracing");
         if (nullptr == pDdiTable->pfnHostReset) {
             pDdiTable->pfnHostReset = driver_ddiTable.core_ddiTable.Event.pfnHostReset;
+        }
+        pDdiTable->pfnQueryKernelTimestamp = (ze_pfnEventQueryKernelTimestamp_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeEventQueryKernelTimestamp_Tracing");
+        if (nullptr == pDdiTable->pfnQueryKernelTimestamp) {
+            pDdiTable->pfnQueryKernelTimestamp = driver_ddiTable.core_ddiTable.Event.pfnQueryKernelTimestamp;
         }
     }
     return result;
