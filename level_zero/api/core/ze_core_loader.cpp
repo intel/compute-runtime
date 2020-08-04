@@ -331,7 +331,7 @@ zeGetDeviceProcAddrTable(
     pDdiTable->pfnGetSubDevices = (ze_pfnDeviceGetSubDevices_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetSubDevices");
     pDdiTable->pfnGetProperties = (ze_pfnDeviceGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetProperties");
     pDdiTable->pfnGetComputeProperties = (ze_pfnDeviceGetComputeProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetComputeProperties");
-    pDdiTable->pfnGetModuleProperties = (ze_pfnDeviceGetModuleProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetKernelProperties");
+    pDdiTable->pfnGetModuleProperties = (ze_pfnDeviceGetModuleProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetModuleProperties");
     pDdiTable->pfnGetMemoryProperties = (ze_pfnDeviceGetMemoryProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetMemoryProperties");
     pDdiTable->pfnGetMemoryAccessProperties = (ze_pfnDeviceGetMemoryAccessProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetMemoryAccessProperties");
     pDdiTable->pfnGetCacheProperties = (ze_pfnDeviceGetCacheProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetCacheProperties");
@@ -361,7 +361,7 @@ zeGetDeviceProcAddrTable(
         if (nullptr == pDdiTable->pfnGetComputeProperties) {
             pDdiTable->pfnGetComputeProperties = driver_ddiTable.core_ddiTable.Device.pfnGetComputeProperties;
         }
-        pDdiTable->pfnGetModuleProperties = (ze_pfnDeviceGetModuleProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetKernelProperties_Tracing");
+        pDdiTable->pfnGetModuleProperties = (ze_pfnDeviceGetModuleProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetModuleProperties_Tracing");
         if (nullptr == pDdiTable->pfnGetModuleProperties) {
             pDdiTable->pfnGetModuleProperties = driver_ddiTable.core_ddiTable.Device.pfnGetModuleProperties;
         }

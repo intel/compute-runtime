@@ -42,7 +42,7 @@ zeDeviceGetComputeProperties(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDeviceGetKernelProperties(
+zeDeviceGetModuleProperties(
     ze_device_handle_t hDevice,
     ze_device_module_properties_t *pKernelProperties) {
     return L0::Device::fromHandle(hDevice)->getKernelProperties(pKernelProperties);
