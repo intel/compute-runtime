@@ -139,12 +139,26 @@ TEST(DrmTest, givenDrmWhenOsContextIsCreatedThenCreateAndDestroyNewDrmOsContext)
     EXPECT_EQ(2u, drmMock.receivedContextParamRequestCount);
 }
 
-TEST(DrmTest, whenCreatingDrmContextThenProperVmIdIsSet) {
+TEST(DrmTest, whenCreatingDrmContextWithVirtualMemoryAddressSpaceThenProperVmIdIsSet) {
     DrmMock drmMock;
 
-    OsContextLinux osContext1(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+    ASSERT_EQ(1u, drmMock.virtualMemoryIds.size());
+
+    OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
 
     EXPECT_EQ(drmMock.receivedContextParamRequest.value, drmMock.getVirtualMemoryAddressSpace(0u));
+}
+
+TEST(DrmTest, whenCreatingDrmContextWithNoVirtualMemoryAddressSpaceThenProperContextIdIsSet) {
+    DrmMock drmMock;
+    drmMock.destroyVirtualMemoryAddressSpace();
+
+    ASSERT_EQ(0u, drmMock.virtualMemoryIds.size());
+
+    OsContextLinux osContext(drmMock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+
+    EXPECT_EQ(0u, drmMock.receivedCreateContextId);
+    EXPECT_EQ(0u, drmMock.receivedContextParamRequestCount);
 }
 
 TEST(DrmTest, givenDrmAndNegativeCheckNonPersistentContextsSupportWhenOsContextIsCreatedThenReceivedContextParamRequestCountReturnsCorrectValue) {
