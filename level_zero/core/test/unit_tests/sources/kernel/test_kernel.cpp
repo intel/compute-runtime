@@ -329,6 +329,34 @@ HWTEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
                         sizeof(kernelProperties.uuid.mid)));
 }
 
+HWTEST_F(KernelPropertiesTests, givenValidKernelIndirectAccessFlagsThenFlagsSetCorrectly) {
+    UnifiedMemoryControls unifiedMemoryControls = kernel->getUnifiedMemoryControls();
+    EXPECT_EQ(false, unifiedMemoryControls.indirectDeviceAllocationsAllowed);
+    EXPECT_EQ(false, unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_EQ(false, unifiedMemoryControls.indirectSharedAllocationsAllowed);
+
+    ze_kernel_indirect_access_flags_t flags = ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE |
+                                              ZE_KERNEL_INDIRECT_ACCESS_FLAG_HOST |
+                                              ZE_KERNEL_INDIRECT_ACCESS_FLAG_SHARED;
+    auto res = kernel->setIndirectAccess(flags);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    unifiedMemoryControls = kernel->getUnifiedMemoryControls();
+    EXPECT_EQ(true, unifiedMemoryControls.indirectDeviceAllocationsAllowed);
+    EXPECT_EQ(true, unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_EQ(true, unifiedMemoryControls.indirectSharedAllocationsAllowed);
+}
+
+HWTEST_F(KernelPropertiesTests, givenValidKernelIndirectAccessFlagsSetThenExpectKernelIndirectAllocationsAllowedTrue) {
+    EXPECT_EQ(false, kernel->hasIndirectAllocationsAllowed());
+
+    ze_kernel_indirect_access_flags_t flags = ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE;
+    auto res = kernel->setIndirectAccess(flags);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(true, kernel->hasIndirectAllocationsAllowed());
+}
+
 HWTEST_F(KernelPropertiesTests, givenValidKernelAndNoMediavfestateThenSpillMemSizeIsZero) {
     ze_kernel_properties_t kernelProperties = {};
 
