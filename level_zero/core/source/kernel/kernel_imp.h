@@ -127,7 +127,7 @@ struct KernelImp : Kernel {
     NEO::GraphicsAllocation *printfBuffer = nullptr;
 
     uint32_t groupSize[3] = {0u, 0u, 0u};
-    uint32_t numThreadsPerThreadGroup = 0u;
+    uint32_t numThreadsPerThreadGroup = 1u;
     uint32_t threadExecutionMask = 0u;
 
     std::unique_ptr<uint8_t[]> crossThreadData = 0;

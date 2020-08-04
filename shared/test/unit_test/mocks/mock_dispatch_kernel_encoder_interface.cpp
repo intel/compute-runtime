@@ -34,7 +34,6 @@ void MockDispatchKernelEncoder::expectAnyMockFunctionCall() {
     EXPECT_CALL(*this, getSlmTotalSize()).Times(::testing::AnyNumber());
 
     EXPECT_CALL(*this, getThreadExecutionMask()).Times(::testing::AnyNumber());
-    EXPECT_CALL(*this, getNumThreadsPerThreadGroup()).Times(::testing::AnyNumber());
     EXPECT_CALL(*this, getPerThreadDataSizeForWholeThreadGroup()).Times(::testing::AnyNumber());
 
     EXPECT_CALL(*this, getSurfaceStateHeapData()).Times(::testing::AnyNumber());

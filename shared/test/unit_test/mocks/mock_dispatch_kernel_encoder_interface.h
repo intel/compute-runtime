@@ -31,7 +31,6 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
     MOCK_METHOD(uint32_t, getCrossThreadDataSize, (), (const, override));
 
     MOCK_METHOD(uint32_t, getThreadExecutionMask, (), (const, override));
-    MOCK_METHOD(uint32_t, getNumThreadsPerThreadGroup, (), (const, override));
 
     MOCK_METHOD(const uint8_t *, getPerThreadData, (), (const, override));
     MOCK_METHOD(uint32_t, getPerThreadDataSize, (), (const, override));
@@ -48,6 +47,9 @@ struct MockDispatchKernelEncoder : public DispatchKernelEncoderI {
 
     uint32_t getRequiredWorkgroupOrder() const override {
         return requiredWalkGroupOrder;
+    }
+    uint32_t getNumThreadsPerThreadGroup() const override {
+        return 1;
     }
 
     void expectAnyMockFunctionCall();
