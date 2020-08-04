@@ -621,28 +621,28 @@ zesDeviceEnumRasErrorSets(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_ras_handle_t *phRas) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->rasGet(pCount, phRas);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesRasGetProperties(
     zes_ras_handle_t hRas,
     zes_ras_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Ras::fromHandle(hRas)->rasGetProperties(pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesRasGetConfig(
     zes_ras_handle_t hRas,
     zes_ras_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Ras::fromHandle(hRas)->rasGetConfig(pConfig);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesRasSetConfig(
     zes_ras_handle_t hRas,
     const zes_ras_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Ras::fromHandle(hRas)->rasSetConfig(pConfig);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -650,7 +650,7 @@ zesRasGetState(
     zes_ras_handle_t hRas,
     ze_bool_t clear,
     zes_ras_state_t *pState) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Ras::fromHandle(hRas)->rasGetState(pState);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

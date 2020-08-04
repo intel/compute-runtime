@@ -25,9 +25,7 @@ bool LinuxRasImp::isRasSupported(void) {
     if (osRasErrorType == ZES_RAS_ERROR_TYPE_CORRECTABLE) {
         return false;
     } else {
-        // i915 support for UNCORRECTABLE errors is assumed true
-        // since support for reset event is already available.
-        return true;
+        return false;
     }
 }
 

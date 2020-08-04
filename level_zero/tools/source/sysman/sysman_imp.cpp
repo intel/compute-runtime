@@ -29,9 +29,11 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
     pEngineHandleContext = new EngineHandleContext(pOsSysman);
     pSchedulerHandleContext = new SchedulerHandleContext(pOsSysman);
+    pRasHandleContext = new RasHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
+    freeResource(pRasHandleContext);
     freeResource(pSchedulerHandleContext);
     freeResource(pEngineHandleContext);
     freeResource(pStandbyHandleContext);
@@ -68,6 +70,9 @@ void SysmanDeviceImp::init() {
     }
     if (pSchedulerHandleContext) {
         pSchedulerHandleContext->init();
+    }
+    if (pRasHandleContext) {
+        pRasHandleContext->init();
     }
 }
 
@@ -113,6 +118,10 @@ ze_result_t SysmanDeviceImp::temperatureGet(uint32_t *pCount, zes_temp_handle_t 
 
 ze_result_t SysmanDeviceImp::schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler) {
     return pSchedulerHandleContext->schedulerGet(pCount, phScheduler);
+}
+
+ze_result_t SysmanDeviceImp::rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) {
+    return pRasHandleContext->rasGet(pCount, phRas);
 }
 
 } // namespace L0

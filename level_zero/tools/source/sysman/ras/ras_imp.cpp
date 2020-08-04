@@ -30,6 +30,10 @@ ze_result_t RasImp::rasSetConfig(const zes_ras_config_t *pConfig) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t RasImp::rasGetState(const zes_ras_state_t *pState) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 void RasImp::init() {
     pOsRas->setRasErrorType(this->rasErrorType);
     isRasErrorSupported = pOsRas->isRasSupported();
