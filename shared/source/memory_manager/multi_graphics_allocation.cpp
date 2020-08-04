@@ -44,7 +44,7 @@ bool MultiGraphicsAllocation::isCoherent() const {
     return getDefaultGraphicsAllocation()->isCoherent();
 }
 
-std::vector<GraphicsAllocation *> const &MultiGraphicsAllocation::getGraphicsAllocations() const {
+StackVec<GraphicsAllocation *, 1> const &MultiGraphicsAllocation::getGraphicsAllocations() const {
     return graphicsAllocations;
 }
 

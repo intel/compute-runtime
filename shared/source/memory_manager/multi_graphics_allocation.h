@@ -26,10 +26,10 @@ class MultiGraphicsAllocation {
 
     bool isCoherent() const;
 
-    std::vector<GraphicsAllocation *> const &getGraphicsAllocations() const;
+    StackVec<GraphicsAllocation *, 1> const &getGraphicsAllocations() const;
 
   protected:
-    std::vector<GraphicsAllocation *> graphicsAllocations;
+    StackVec<GraphicsAllocation *, 1> graphicsAllocations;
 };
 
 } // namespace NEO
