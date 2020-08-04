@@ -41,7 +41,7 @@ class HeapAllocatorUnderTest : public HeapAllocator {
     using HeapAllocator::allocationAlignment;
 };
 
-TEST(HeapAllocatorTest, DefaultCtorHasThresholdSet) {
+TEST(HeapAllocatorTest, WhenHeapAllocatorIsCreatedThenThresholdIsSet) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size);
@@ -49,18 +49,7 @@ TEST(HeapAllocatorTest, DefaultCtorHasThresholdSet) {
     EXPECT_EQ(MemoryConstants::pageSize, heapAllocator->allocationAlignment);
 }
 
-//this test is no longer valid as pt
-TEST(HeapAllocatorTest, DISABLED_FreeNotAllocatedPointer) {
-    uint64_t ptrBase = 0x100000llu;
-    size_t size = 1024 * 4096;
-    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size);
-    heapAllocator->free(0x123000llu, size);
-
-    EXPECT_EQ(0u, heapAllocator->getFreedChunksBig().size());
-    EXPECT_EQ(0u, heapAllocator->getFreedChunksSmall().size());
-}
-
-TEST(HeapAllocatorTest, StatisticsMethods) {
+TEST(HeapAllocatorTest, WhenAllocatingThenUsageStatisticsAreUpdated) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size);
@@ -279,7 +268,7 @@ TEST(HeapAllocatorTest, GivenStoredChunkNotAdjacentToIncomingChunkWhenStoreIsCal
     EXPECT_EQ(sizeToStore, freedChunks[2].size);
 }
 
-TEST(HeapAllocatorTest, AllocateReturnsPointerAndAddsEntryToMap) {
+TEST(HeapAllocatorTest, WhenAllocatingThenEntryIsAddedToMap) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
@@ -297,7 +286,7 @@ TEST(HeapAllocatorTest, AllocateReturnsPointerAndAddsEntryToMap) {
     EXPECT_LE(ptrBase, ptr);
 }
 
-TEST(HeapAllocatorTest, FreeReclaimsSpaceAndRemovesEntriesFromMap) {
+TEST(HeapAllocatorTest, WhenFreeingThenEntryIsRemovedFromMapAndSpaceMadeAvailable) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024u * 4096u;
     auto pLeftBound = ptrBase;
@@ -328,7 +317,7 @@ TEST(HeapAllocatorTest, FreeReclaimsSpaceAndRemovesEntriesFromMap) {
     EXPECT_EQ(heapAllocator->getRightBound(), pRightBound);
 }
 
-TEST(HeapAllocatorTest, AllocateMultiple) {
+TEST(HeapAllocatorTest, WhenAllocatingMultipleThenEachAllocationIsDistinct) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
 
@@ -374,7 +363,7 @@ TEST(HeapAllocatorTest, AllocateMultiple) {
     }
 }
 
-TEST(HeapAllocatorTest, AllocateWholeSpace) {
+TEST(HeapAllocatorTest, GivenNoSpaceLeftWhenAllocatingThenZeroIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
@@ -396,7 +385,7 @@ TEST(HeapAllocatorTest, AllocateWholeSpace) {
     EXPECT_EQ(0llu, ptr3);
 }
 
-TEST(HeapAllocatorTest, FreeInReverseOrder) {
+TEST(HeapAllocatorTest, GivenReverseOrderWhenFreeingThenHeapAllocatorStateIsCorrect) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
@@ -430,7 +419,7 @@ TEST(HeapAllocatorTest, FreeInReverseOrder) {
     EXPECT_EQ(heapAllocator->getRightBound(), pRightBound);
 }
 
-TEST(HeapAllocatorTest, SizeNotAvailable) {
+TEST(HeapAllocatorTest, GivenNoMemoryLeftWhenAllocatingThenZeroIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 0;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
@@ -442,7 +431,7 @@ TEST(HeapAllocatorTest, SizeNotAvailable) {
     EXPECT_EQ(0u, heapAllocator->getavailableSize());
 }
 
-TEST(HeapAllocatorTest, SizeAvailableButInsufficient) {
+TEST(HeapAllocatorTest, GivenSizeGreaterThanMemoryLeftWhenAllocatingThenZeroIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 11 * 4096;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, 3 * 4096);
@@ -486,7 +475,7 @@ TEST(HeapAllocatorTest, SizeAvailableButInsufficient) {
     EXPECT_EQ(0llu, ptr5);
 }
 
-TEST(HeapAllocatorTest, FreeNullDoesNothing) {
+TEST(HeapAllocatorTest, GivenNullWhenFreeingThenNothingHappens) {
     uint64_t ptrBase = 0x100000llu;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, sizeThreshold, sizeThreshold);
 
@@ -496,7 +485,7 @@ TEST(HeapAllocatorTest, FreeNullDoesNothing) {
     EXPECT_EQ(0u, heapAllocator->getFreedChunksBig().size());
 }
 
-TEST(HeapAllocatorTest, AllocateAfterFree) {
+TEST(HeapAllocatorTest, WhenFreeingThenMemoryAvailableForAllocation) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
@@ -546,7 +535,7 @@ TEST(HeapAllocatorTest, AllocateAfterFree) {
     EXPECT_EQ(heapAllocator->getRightBound(), pRightBound);
 }
 
-TEST(HeapAllocatorTest, AllocateFromFreedBiggerChunk) {
+TEST(HeapAllocatorTest, WhenFreeingChunkThenMemoryAvailableForAllocation) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
@@ -612,7 +601,7 @@ TEST(HeapAllocatorTest, AllocateFromFreedBiggerChunk) {
     EXPECT_EQ(size, heapAllocator->getavailableSize());
 }
 
-TEST(HeapAllocatorTest, AllocateWhenNoSpaceForSmallAllocation) {
+TEST(HeapAllocatorTest, GivenSmallAllocationGreaterThanAvailableSizeWhenAllocatingThenZeroIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
@@ -629,7 +618,7 @@ TEST(HeapAllocatorTest, AllocateWhenNoSpaceForSmallAllocation) {
     EXPECT_EQ(0llu, ptr2);
 }
 
-TEST(HeapAllocatorTest, AllocateWhenNoSpaceForBigAllocation) {
+TEST(HeapAllocatorTest, GivenBigAllocationGreaterThanAvailableSizeWhenAllocatingThenZeroIsReturned) {
     uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, sizeThreshold);
@@ -646,7 +635,7 @@ TEST(HeapAllocatorTest, AllocateWhenNoSpaceForBigAllocation) {
     EXPECT_EQ(0llu, ptr2);
 }
 
-TEST(HeapAllocatorTest, AllocationsDoNotOverlap) {
+TEST(HeapAllocatorTest, WhenMemoryIsAllocatedThenAllocationsDoNotOverlap) {
     std::ranlux24 generator(1);
 
     const uint32_t maxIndex = 2000;
@@ -733,7 +722,7 @@ TEST(HeapAllocatorTest, AllocationsDoNotOverlap) {
     alignedFree(pBasePtr);
 }
 
-TEST(HeapAllocatorTest, defragmentBig) {
+TEST(HeapAllocatorTest, GivenLargeAllocationsWhenFreeingThenSpaceIsDefragmented) {
     uint64_t ptrBase = 0x100000llu;
     uint64_t basePtr = 0x100000llu;
     size_t size = 1024 * 4096;
@@ -789,7 +778,7 @@ TEST(HeapAllocatorTest, defragmentBig) {
     EXPECT_EQ(5 * allocSize, freedChunks[1].size);
 }
 
-TEST(HeapAllocatorTest, defragmentSmall) {
+TEST(HeapAllocatorTest, GivenSmallAllocationsWhenFreeingThenSpaceIsDefragmented) {
     uint64_t ptrBase = 0x100000llu;
     uint64_t basePtr = 0x100000;
 
