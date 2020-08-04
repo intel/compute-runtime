@@ -16,8 +16,7 @@
 
 using namespace NEO;
 
-
-TEST(PerfProfiler, create) {
+TEST(PerfProfiler, WhenCreatingThenOnlyOneInstanceExists) {
     PerfProfiler *ptr = PerfProfiler::create();
     ASSERT_NE(nullptr, ptr);
     EXPECT_EQ(1, PerfProfiler::getCurrentCounter());
@@ -30,7 +29,7 @@ TEST(PerfProfiler, create) {
     EXPECT_EQ(nullptr, PerfProfiler::getObject(0));
 }
 
-TEST(PerfProfiler, createDestroyCreate) {
+TEST(PerfProfiler, WhenCreatingDestroyingCreatingThenStateMachineIsCorrect) {
     // purpose of this test is multiple create and destroy, so check the state machine works correctly
     EXPECT_EQ(0, PerfProfiler::getCurrentCounter());
     PerfProfiler *ptr = PerfProfiler::create();
@@ -58,7 +57,7 @@ TEST(PerfProfiler, createDestroyCreate) {
     EXPECT_EQ(nullptr, PerfProfiler::getObject(0));
 }
 
-TEST(PerfProfiler, destroyAll) {
+TEST(PerfProfiler, WhenDestroyingAllThenAllObjectsAreDestroyed) {
     struct PerfProfilerMock : PerfProfiler {
         static void addNullObjects() {
             PerfProfiler::objects[0] = nullptr;
@@ -70,12 +69,12 @@ TEST(PerfProfiler, destroyAll) {
     EXPECT_EQ(0, PerfProfiler::getCurrentCounter());
     PerfProfilerMock::addNullObjects(); // skip null objects
     EXPECT_EQ(1, PerfProfiler::getCurrentCounter());
-    PerfProfiler::destroyAll(); //destroy no object altough counter is incorrect
+    PerfProfiler::destroyAll(); //destroy no object although counter is incorrect
     EXPECT_EQ(0, PerfProfiler::getCurrentCounter());
     EXPECT_EQ(nullptr, PerfProfiler::getObject(0));
 }
 
-TEST(PerfProfiler, PerfProfilerXmlVerifier) {
+TEST(PerfProfiler, GivenPerfProfilerXmlVerifierWhenDumpingLogThenLogIsCorrect) {
     std::unique_ptr<std::stringstream> logs = std::unique_ptr<std::stringstream>(new std::stringstream());
     std::unique_ptr<std::stringstream> sysLogs = std::unique_ptr<std::stringstream>(new std::stringstream());
     std::unique_ptr<PerfProfiler> ptr(new PerfProfiler(1, std::move(logs), std::move(sysLogs)));
@@ -135,7 +134,7 @@ TEST(PerfProfiler, PerfProfilerXmlVerifier) {
     }
 }
 
-TEST(PerfProfiler, ApiEnterLeave) {
+TEST(PerfProfiler, GivenApiEnterLeaveWhenDumpingLogThenLogIsCorrect) {
     PerfProfiler *ptr = PerfProfiler::create(false);
     ASSERT_NE(nullptr, ptr);
     EXPECT_EQ(1, PerfProfiler::getCurrentCounter());
@@ -164,7 +163,7 @@ TEST(PerfProfiler, ApiEnterLeave) {
     EXPECT_EQ(0, PerfProfiler::getCurrentCounter());
 }
 
-TEST(PerfProfiler, SystemEnterLeave) {
+TEST(PerfProfiler, GivenSystemEnterLeaveWhenDumpingLogThenLogIsCorrect) {
     PerfProfiler *ptr = PerfProfiler::create(false);
     ASSERT_NE(nullptr, ptr);
     EXPECT_EQ(1, PerfProfiler::getCurrentCounter());
@@ -193,7 +192,7 @@ TEST(PerfProfiler, SystemEnterLeave) {
     EXPECT_EQ(0, PerfProfiler::getCurrentCounter());
 }
 
-TEST(PerfProfiler, readAndVerify) {
+TEST(PerfProfiler, GivenIncorrectInputWhenReadingAndVerifingThenExceptionIsThrown) {
     std::string log = "someData";
     std::stringstream in{log + log};
     bool exceptionCaught = false;
@@ -236,7 +235,7 @@ TEST(PerfProfiler, readAndVerify) {
     EXPECT_TRUE(exceptionCaught);
 }
 
-TEST(PerfProfiler, LogBuilderReadAndWrite) {
+TEST(PerfProfiler, GivenLogBuilderWhenReadingAndWritingThenLogIsCorrect) {
     std::stringstream out;
     long long startW = 3, startR = 0;
     long long endW = 5, endR = 0;
@@ -258,7 +257,7 @@ TEST(PerfProfiler, LogBuilderReadAndWrite) {
     EXPECT_EQ(functionW, functionR);
 }
 
-TEST(PerfProfiler, LogBuilderGivenLogWithBrokenFunctionNameWhenCantFindTrailingQuotationThenWillThrowException) {
+TEST(PerfProfiler, GivenLogWithBrokenFunctionNameWhenReadingLogThenExceptionIsThrown) {
     std::stringstream in{"<api name=\"funcName"};
     long long startR = 0;
     long long endR = 0;
@@ -275,7 +274,7 @@ TEST(PerfProfiler, LogBuilderGivenLogWithBrokenFunctionNameWhenCantFindTrailingQ
     EXPECT_TRUE(exceptionCaught);
 }
 
-TEST(PerfProfiler, SysLogBuilderReadAndWrite) {
+TEST(PerfProfiler, GivenSysLogBuilderWhenReadingAndWritingThenLogIsCorrect) {
     std::stringstream out;
     long long startW = 3, startR = 0;
     unsigned long long timeW = 7, timeR = 0;
