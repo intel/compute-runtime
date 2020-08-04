@@ -106,6 +106,7 @@ class HwHelper {
                                                    uint32_t threadsPerEu) = 0;
     virtual uint32_t alignSlmSize(uint32_t slmSize) = 0;
     virtual uint32_t computeSlmValues(uint32_t slmSize) = 0;
+    virtual uint32_t getDefaultEngineWithWa(const HardwareInfo &hwInfo, uint32_t defaultEngineType) const = 0;
 
     virtual bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) = 0;
     virtual uint32_t getMinimalSIMDSize() = 0;
@@ -267,6 +268,8 @@ class HwHelperHw : public HwHelper {
     uint32_t alignSlmSize(uint32_t slmSize) override;
 
     uint32_t computeSlmValues(uint32_t slmSize) override;
+
+    uint32_t getDefaultEngineWithWa(const HardwareInfo &hwInfo, uint32_t defaultEngineType) const override;
 
     static AuxTranslationMode getAuxTranslationMode();
 
