@@ -14,12 +14,12 @@ components:
   infra:
     branch: infra
     dest_dir: infra
-    revision: 3416db4b39bc4e8182ccd32d825b2bded7efb9be
+    revision: 3ec5b65971c6bcd1d873fd59a025c14c563ade67
     type: git
   internal:
     branch: master
     dest_dir: internal
-    revision: a03b19c87eac0678480da1cd369708678f8be0fd
+    revision: 968af2b930e9d7c5fd6d8c430172586521c42715
     type: git
   kmdaf:
     branch: kmdaf
