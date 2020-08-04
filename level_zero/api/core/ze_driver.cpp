@@ -44,14 +44,6 @@ zeDriverGetIpcProperties(
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
-zeDriverGetExtensionFunctionAddress(
-    ze_driver_handle_t hDriver,
-    const char *pFuncName,
-    void **pfunc) {
-    return L0::DriverHandle::fromHandle(hDriver)->getExtensionFunctionAddress(pFuncName, pfunc);
-}
-
-ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDriverGetExtensionProperties(
     ze_driver_handle_t hDriver,
     uint32_t *pCount,

@@ -35,7 +35,7 @@ zeGetDriverProcAddrTable(
     pDdiTable->pfnGetApiVersion = (ze_pfnDriverGetApiVersion_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDriverGetApiVersion");
     pDdiTable->pfnGetProperties = (ze_pfnDriverGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDriverGetProperties");
     pDdiTable->pfnGetIpcProperties = (ze_pfnDriverGetIpcProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDriverGetIpcProperties");
-    pDdiTable->pfnGetExtensionProperties = (ze_pfnDriverGetExtensionProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDriverGetExtensionFunctionAddress");
+    pDdiTable->pfnGetExtensionProperties = (ze_pfnDriverGetExtensionProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDriverGetExtensionProperties");
     driver_ddiTable.core_ddiTable.Driver = *pDdiTable;
     if (driver_ddiTable.enableTracing) {
         pDdiTable->pfnGet = (ze_pfnDriverGet_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDriverGet_Tracing");
@@ -54,7 +54,7 @@ zeGetDriverProcAddrTable(
         if (nullptr == pDdiTable->pfnGetIpcProperties) {
             pDdiTable->pfnGetIpcProperties = driver_ddiTable.core_ddiTable.Driver.pfnGetIpcProperties;
         }
-        pDdiTable->pfnGetExtensionProperties = (ze_pfnDriverGetExtensionProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDriverGetExtensionFunctionAddress_Tracing");
+        pDdiTable->pfnGetExtensionProperties = (ze_pfnDriverGetExtensionProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDriverGetExtensionProperties_Tracing");
         if (nullptr == pDdiTable->pfnGetExtensionProperties) {
             pDdiTable->pfnGetExtensionProperties = driver_ddiTable.core_ddiTable.Driver.pfnGetExtensionProperties;
         }
@@ -209,7 +209,7 @@ zeGetPhysicalMemProcAddrTable(
     }
     ze_result_t result = ZE_RESULT_SUCCESS;
     pDdiTable->pfnCreate = (ze_pfnPhysicalMemCreate_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zePhysicalMemCreate");
-    pDdiTable->pfnDestroy = (ze_pfnPhysicalMemDestroy_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zePhysicalMemDestory");
+    pDdiTable->pfnDestroy = (ze_pfnPhysicalMemDestroy_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zePhysicalMemDestroy");
 
     driver_ddiTable.core_ddiTable.PhysicalMem = *pDdiTable;
     if (driver_ddiTable.enableTracing) {
@@ -217,7 +217,7 @@ zeGetPhysicalMemProcAddrTable(
         if (nullptr == pDdiTable->pfnCreate) {
             pDdiTable->pfnCreate = driver_ddiTable.core_ddiTable.PhysicalMem.pfnCreate;
         }
-        pDdiTable->pfnDestroy = (ze_pfnPhysicalMemDestroy_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zePhysicalMemDestory");
+        pDdiTable->pfnDestroy = (ze_pfnPhysicalMemDestroy_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zePhysicalMemDestroy");
         if (nullptr == pDdiTable->pfnDestroy) {
             pDdiTable->pfnDestroy = driver_ddiTable.core_ddiTable.PhysicalMem.pfnDestroy;
         }
@@ -339,6 +339,7 @@ zeGetDeviceProcAddrTable(
     pDdiTable->pfnGetP2PProperties = (ze_pfnDeviceGetP2PProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetP2PProperties");
     pDdiTable->pfnCanAccessPeer = (ze_pfnDeviceCanAccessPeer_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceCanAccessPeer");
     pDdiTable->pfnGetStatus = (ze_pfnDeviceGetStatus_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetStatus");
+    pDdiTable->pfnGetExternalMemoryProperties = (ze_pfnDeviceGetExternalMemoryProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetExternalMemoryProperties");
     driver_ddiTable.core_ddiTable.Device = *pDdiTable;
     if (driver_ddiTable.enableTracing) {
         pDdiTable->pfnGet = (ze_pfnDeviceGet_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGet_Tracing");
@@ -392,6 +393,10 @@ zeGetDeviceProcAddrTable(
         pDdiTable->pfnGetStatus = (ze_pfnDeviceGetStatus_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetStatus_Tracing");
         if (nullptr == pDdiTable->pfnGetStatus) {
             pDdiTable->pfnGetStatus = driver_ddiTable.core_ddiTable.Device.pfnGetStatus;
+        }
+        pDdiTable->pfnGetExternalMemoryProperties = (ze_pfnDeviceGetExternalMemoryProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDeviceGetExternalMemoryProperties_Tracing");
+        if (nullptr == pDdiTable->pfnGetExternalMemoryProperties) {
+            pDdiTable->pfnGetExternalMemoryProperties = driver_ddiTable.core_ddiTable.Device.pfnGetExternalMemoryProperties;
         }
     }
     return result;
@@ -797,10 +802,12 @@ zeGetModuleProcAddrTable(
     ze_result_t result = ZE_RESULT_SUCCESS;
     pDdiTable->pfnCreate = (ze_pfnModuleCreate_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleCreate");
     pDdiTable->pfnDestroy = (ze_pfnModuleDestroy_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleDestroy");
+    pDdiTable->pfnDynamicLink = (ze_pfnModuleDynamicLink_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleDynamicLink");
     pDdiTable->pfnGetNativeBinary = (ze_pfnModuleGetNativeBinary_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleGetNativeBinary");
     pDdiTable->pfnGetGlobalPointer = (ze_pfnModuleGetGlobalPointer_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleGetGlobalPointer");
-    pDdiTable->pfnGetFunctionPointer = (ze_pfnModuleGetFunctionPointer_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleGetFunctionPointer");
     pDdiTable->pfnGetKernelNames = (ze_pfnModuleGetKernelNames_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleGetKernelNames");
+    pDdiTable->pfnGetFunctionPointer = (ze_pfnModuleGetFunctionPointer_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleGetFunctionPointer");
+    pDdiTable->pfnGetProperties = (ze_pfnModuleGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleGetProperties");
     driver_ddiTable.core_ddiTable.Module = *pDdiTable;
     if (driver_ddiTable.enableTracing) {
         pDdiTable->pfnCreate = (ze_pfnModuleCreate_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleCreate_Tracing");
@@ -815,6 +822,10 @@ zeGetModuleProcAddrTable(
         if (nullptr == pDdiTable->pfnGetNativeBinary) {
             pDdiTable->pfnGetNativeBinary = driver_ddiTable.core_ddiTable.Module.pfnGetNativeBinary;
         }
+        pDdiTable->pfnDynamicLink = (ze_pfnModuleDynamicLink_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleDynamicLink_Tracing");
+        if (nullptr == pDdiTable->pfnDynamicLink) {
+            pDdiTable->pfnDynamicLink = driver_ddiTable.core_ddiTable.Module.pfnDynamicLink;
+        }
         pDdiTable->pfnGetGlobalPointer = (ze_pfnModuleGetGlobalPointer_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleGetGlobalPointer_Tracing");
         if (nullptr == pDdiTable->pfnGetGlobalPointer) {
             pDdiTable->pfnGetGlobalPointer = driver_ddiTable.core_ddiTable.Module.pfnGetGlobalPointer;
@@ -826,6 +837,14 @@ zeGetModuleProcAddrTable(
         pDdiTable->pfnGetKernelNames = (ze_pfnModuleGetKernelNames_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleGetKernelNames_Tracing");
         if (nullptr == pDdiTable->pfnGetKernelNames) {
             pDdiTable->pfnGetKernelNames = driver_ddiTable.core_ddiTable.Module.pfnGetKernelNames;
+        }
+        pDdiTable->pfnGetFunctionPointer = (ze_pfnModuleGetFunctionPointer_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleGetFunctionPointer_Tracing");
+        if (nullptr == pDdiTable->pfnGetFunctionPointer) {
+            pDdiTable->pfnGetFunctionPointer = driver_ddiTable.core_ddiTable.Module.pfnGetFunctionPointer;
+        }
+        pDdiTable->pfnGetProperties = (ze_pfnModuleGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeModuleGetProperties_Tracing");
+        if (nullptr == pDdiTable->pfnGetProperties) {
+            pDdiTable->pfnGetProperties = driver_ddiTable.core_ddiTable.Module.pfnGetProperties;
         }
     }
     return result;
@@ -887,8 +906,10 @@ zeGetKernelProcAddrTable(
     pDdiTable->pfnSetArgumentValue = (ze_pfnKernelSetArgumentValue_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelSetArgumentValue");
     pDdiTable->pfnSetIndirectAccess = (ze_pfnKernelSetIndirectAccess_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelSetIndirectAccess");
     pDdiTable->pfnGetIndirectAccess = (ze_pfnKernelGetIndirectAccess_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelGetIndirectAccess");
-    pDdiTable->pfnGetSourceAttributes = (ze_pfnKernelGetSourceAttributes_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelGetAttribute");
+    pDdiTable->pfnGetSourceAttributes = (ze_pfnKernelGetSourceAttributes_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelGetSourceAttributes");
     pDdiTable->pfnGetProperties = (ze_pfnKernelGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelGetProperties");
+    pDdiTable->pfnSetCacheConfig = (ze_pfnKernelSetCacheConfig_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelSetCacheConfig");
+    pDdiTable->pfnGetName = (ze_pfnKernelGetName_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelGetName");
     driver_ddiTable.core_ddiTable.Kernel = *pDdiTable;
     if (driver_ddiTable.enableTracing) {
         pDdiTable->pfnCreate = (ze_pfnKernelCreate_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelCreate_Tracing");
@@ -923,13 +944,21 @@ zeGetKernelProcAddrTable(
         if (nullptr == pDdiTable->pfnGetIndirectAccess) {
             pDdiTable->pfnGetIndirectAccess = driver_ddiTable.core_ddiTable.Kernel.pfnGetIndirectAccess;
         }
-        pDdiTable->pfnGetSourceAttributes = (ze_pfnKernelGetSourceAttributes_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelGetAttribute_Tracing");
+        pDdiTable->pfnGetSourceAttributes = (ze_pfnKernelGetSourceAttributes_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelGetSourceAttributes_Tracing");
         if (nullptr == pDdiTable->pfnGetSourceAttributes) {
             pDdiTable->pfnGetSourceAttributes = driver_ddiTable.core_ddiTable.Kernel.pfnGetSourceAttributes;
         }
         pDdiTable->pfnGetProperties = (ze_pfnKernelGetProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelGetProperties_Tracing");
         if (nullptr == pDdiTable->pfnGetProperties) {
             pDdiTable->pfnGetProperties = driver_ddiTable.core_ddiTable.Kernel.pfnGetProperties;
+        }
+        pDdiTable->pfnSetCacheConfig = (ze_pfnKernelSetCacheConfig_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelSetCacheConfig_Tracing");
+        if (nullptr == pDdiTable->pfnSetCacheConfig) {
+            pDdiTable->pfnSetCacheConfig = driver_ddiTable.core_ddiTable.Kernel.pfnSetCacheConfig;
+        }
+        pDdiTable->pfnGetName = (ze_pfnKernelGetName_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeKernelGetName_Tracing");
+        if (nullptr == pDdiTable->pfnGetName) {
+            pDdiTable->pfnGetName = driver_ddiTable.core_ddiTable.Kernel.pfnGetName;
         }
     }
     return result;

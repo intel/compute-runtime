@@ -108,3 +108,10 @@ zeDeviceGetCommandQueueGroupProperties(
     ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
     return L0::Device::fromHandle(hDevice)->getCommandQueueGroupProperties(pCount, pCommandQueueGroupProperties);
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeDeviceGetExternalMemoryProperties(
+    ze_device_handle_t hDevice,
+    ze_device_external_memory_properties_t *pExternalMemoryProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}

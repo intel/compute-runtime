@@ -219,3 +219,17 @@ zeModuleDynamicLink(
     ze_module_build_log_handle_t *phLinkLog) {
     return L0::Module::fromHandle(phModules[0])->performDynamicLink(numModules, phModules, phLinkLog);
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeModuleGetProperties(
+    ze_module_handle_t hModule,
+    ze_module_properties_t *pModuleProperties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeKernelSetCacheConfig(
+    ze_kernel_handle_t hKernel,
+    ze_cache_config_flags_t flags) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
