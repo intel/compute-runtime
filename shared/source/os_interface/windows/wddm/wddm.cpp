@@ -1017,6 +1017,7 @@ void Wddm::setGmmInputArg(void *args) {
 
     gmmInArgs->stAdapterBDF = this->adapterBDF;
     gmmInArgs->ClientType = GMM_CLIENT::GMM_OCL_VISTA;
+    gmmInArgs->DeviceRegistryPath = const_cast<char *>(deviceRegistryPath.c_str());
 }
 
 void Wddm::updatePagingFenceValue(uint64_t newPagingFenceValue) {
