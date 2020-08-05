@@ -43,7 +43,7 @@ struct DeviceImp : public Device {
     ze_result_t makeMemoryResident(void *ptr, size_t size) override;
     ze_result_t setIntermediateCacheConfig(ze_cache_config_flags_t cacheConfig) override;
     ze_result_t setLastLevelCacheConfig(ze_cache_config_flags_t cacheConfig) override;
-    ze_result_t getCacheProperties(ze_device_cache_properties_t *pCacheProperties) override;
+    ze_result_t getCacheProperties(uint32_t *pCount, ze_device_cache_properties_t *pCacheProperties) override;
     ze_result_t imageGetProperties(const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) override;
     ze_result_t getDeviceImageProperties(ze_device_image_properties_t *pDeviceImageProperties) override;
     ze_result_t getCommandQueueGroupProperties(uint32_t *pCount,

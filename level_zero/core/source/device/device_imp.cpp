@@ -456,10 +456,19 @@ ze_result_t DeviceImp::setLastLevelCacheConfig(ze_cache_config_flags_t cacheConf
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t DeviceImp::getCacheProperties(ze_device_cache_properties_t *pCacheProperties) {
+ze_result_t DeviceImp::getCacheProperties(uint32_t *pCount, ze_device_cache_properties_t *pCacheProperties) {
+    if (*pCount == 0) {
+        *pCount = 1;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    if (*pCount > 1) {
+        *pCount = 1;
+    }
+
     const auto &hardwareInfo = this->getHwInfo();
-    pCacheProperties->cacheSize = getIntermediateCacheSize(hardwareInfo);
-    pCacheProperties->flags = 0;
+    pCacheProperties[0].cacheSize = getIntermediateCacheSize(hardwareInfo);
+    pCacheProperties[0].flags = 0;
 
     return ZE_RESULT_SUCCESS;
 }

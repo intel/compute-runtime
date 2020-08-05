@@ -68,7 +68,7 @@ zeDeviceGetCacheProperties(
     ze_device_handle_t hDevice,
     uint32_t *pCount,
     ze_device_cache_properties_t *pCacheProperties) {
-    return L0::Device::fromHandle(hDevice)->getCacheProperties(pCacheProperties);
+    return L0::Device::fromHandle(hDevice)->getCacheProperties(pCount, pCacheProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
