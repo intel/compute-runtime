@@ -271,25 +271,46 @@ TEST_F(ContextCreateCommandQueueTest, givenCallToContextCreateCommandQueueThenCa
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 
+HWTEST_F(ContextCreateCommandQueueTest, givenEveryPossibleGroupIndexWhenCreatingCommandQueueThenCommandQueueIsCreated) {
+    ze_command_queue_handle_t commandQueue = {};
+    for (uint32_t ordinal = 0; ordinal < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups); ordinal++) {
+        auto engines = neoDevice->getEngineGroups();
+        for (uint32_t index = 0; index < engines[ordinal].size(); index++) {
+            ze_command_queue_desc_t desc = {};
+            desc.ordinal = ordinal;
+            desc.index = index;
+            ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
+            EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+            EXPECT_NE(nullptr, commandQueue);
+
+            L0::CommandQueue::fromHandle(commandQueue)->destroy();
+        }
+    }
+}
+
 using CommandQueueSynchronizeTest = Test<ContextFixture>;
 
 HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTimeoutAndTimeoutValuesAreUsed) {
     struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<FamilyType> {
-        ~SynchronizeCsr() {
+        ~SynchronizeCsr() override {
             delete tagAddress;
         }
         SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment) : NEO::UltCommandStreamReceiver<FamilyType>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0) {
             tagAddress = new uint32_t;
         }
-        MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+        bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) override {
+            waitForComplitionCalledTimes++;
+            return true;
+        }
 
-        volatile uint32_t *getTagAddress() const {
+        volatile uint32_t *getTagAddress() const override {
             return tagAddress;
         }
+        uint32_t waitForComplitionCalledTimes = 0;
         uint32_t *tagAddress;
     };
 
-    auto csr = new ::testing::NiceMock<SynchronizeCsr>(*device->getNEODevice()->getExecutionEnvironment());
+    auto csr = std::unique_ptr<SynchronizeCsr>(new SynchronizeCsr(*device->getNEODevice()->getExecutionEnvironment()));
     ze_command_queue_desc_t desc = {};
     ze_command_queue_handle_t commandQueue = {};
     ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
@@ -297,31 +318,23 @@ HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTim
     EXPECT_NE(nullptr, commandQueue);
 
     CommandQueue *queue = reinterpret_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
-    queue->csr = csr;
+    queue->csr = csr.get();
 
     uint64_t timeout = 10;
     bool enableTimeoutExpected = true;
     int64_t timeoutMicrosecondsExpected = timeout;
 
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(enableTimeoutExpected,
-                                                   timeoutMicrosecondsExpected,
-                                                   ::testing::_))
-        .Times(1)
-        .WillOnce(::testing::Return(true));
     queue->synchronize(timeout);
 
+    EXPECT_EQ(csr->waitForComplitionCalledTimes, 1u);
     timeout = std::numeric_limits<uint64_t>::max();
     enableTimeoutExpected = false;
     timeoutMicrosecondsExpected = NEO::TimeoutControls::maxTimeout;
 
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(enableTimeoutExpected,
-                                                   timeoutMicrosecondsExpected,
-                                                   ::testing::_))
-        .Times(1)
-        .WillOnce(::testing::Return(true));
     queue->synchronize(timeout);
 
-    delete csr;
+    EXPECT_EQ(csr->waitForComplitionCalledTimes, 2u);
+
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 

@@ -112,31 +112,26 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
 
     NEO::CommandStreamReceiver *csr = nullptr;
-    bool useBliter = false;
-    if (desc->ordinal == static_cast<uint32_t>(NEO::EngineGroupType::Copy)) {
-        auto &selectorCopyEngine = this->neoDevice->getDeviceById(0)->getSelectorCopyEngine();
-        csr = this->neoDevice->getDeviceById(0)->getEngine(NEO::EngineHelpers::getBcsEngineType(neoDevice->getHardwareInfo(), selectorCopyEngine), false).commandStreamReceiver;
-        useBliter = true;
-    } else {
+    bool useBliter = desc->ordinal == static_cast<uint32_t>(NEO::EngineGroupType::Copy);
 
-        if (desc->ordinal >= static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups)) {
+    if (desc->ordinal >= static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    if (this->getNEODevice()->getNumAvailableDevices() > 1) {
+        if (desc->index >= this->neoDevice->getDeviceById(0)->getEngineGroups()[desc->ordinal].size()) {
             return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-
-        if (this->getNEODevice()->getNumAvailableDevices() > 1) {
-            if (desc->index >= this->neoDevice->getDeviceById(0)->getEngineGroups()[desc->ordinal].size()) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            csr = this->neoDevice->getDeviceById(0)->getEngineGroups()[desc->ordinal][desc->index].commandStreamReceiver;
-        } else {
-            if (desc->index >= this->neoDevice->getEngineGroups()[desc->ordinal].size()) {
-                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-            }
-            csr = this->neoDevice->getEngineGroups()[desc->ordinal][desc->index].commandStreamReceiver;
+        csr = this->neoDevice->getDeviceById(0)->getEngineGroups()[desc->ordinal][desc->index].commandStreamReceiver;
+    } else {
+        if (desc->index >= this->neoDevice->getEngineGroups()[desc->ordinal].size()) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
         }
-
-        UNRECOVERABLE_IF(csr == nullptr);
+        csr = this->neoDevice->getEngineGroups()[desc->ordinal][desc->index].commandStreamReceiver;
     }
+
+    UNRECOVERABLE_IF(csr == nullptr);
+
     *commandQueue = CommandQueue::create(productFamily, this, csr, desc, useBliter);
 
     return ZE_RESULT_SUCCESS;
