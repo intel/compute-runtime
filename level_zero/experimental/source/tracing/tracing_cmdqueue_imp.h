@@ -25,5 +25,5 @@ zeCommandQueueExecuteCommandLists_Tracing(ze_command_queue_handle_t hCommandQueu
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandQueueSynchronize_Tracing(ze_command_queue_handle_t hCommandQueue,
-                                  uint32_t timeout);
+                                  uint64_t timeout);
 }
