@@ -16,10 +16,6 @@ std::unique_ptr<BuiltinFunctionsLib> BuiltinFunctionsLib::create(Device *device,
     return std::unique_ptr<BuiltinFunctionsLib>(new BuiltinFunctionsLibImpl(device, builtins));
 }
 
-std::unique_lock<BuiltinFunctionsLib::MutexType> BuiltinFunctionsLib::obtainUniqueOwnership() {
-    return std::unique_lock<BuiltinFunctionsLib::MutexType>(this->ownershipMutex);
-}
-
 void BuiltinFunctionsLibImpl::initFunctions() {
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
         const char *builtinName = nullptr;
