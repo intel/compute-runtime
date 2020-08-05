@@ -36,9 +36,9 @@ void DriverImp::initialize(ze_result_t *result) {
     envVariables.programDebugging =
         envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", false);
     envVariables.metrics =
-        envReader.getSetting("ZE_ENABLE_METRICS", false);
+        envReader.getSetting("ZET_ENABLE_METRICS", false);
     envVariables.pin =
-        envReader.getSetting("ZE_ENABLE_PROGRAM_INSTRUMENTATION", false);
+        envReader.getSetting("ZET_ENABLE_PROGRAM_INSTRUMENTATION", false);
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
