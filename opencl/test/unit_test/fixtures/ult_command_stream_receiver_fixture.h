@@ -108,7 +108,7 @@ struct UltCommandStreamReceiverTest
     }
 
     template <typename GfxFamily>
-    void configureCSRtoNonDirtyState() {
+    void configureCSRtoNonDirtyState(bool isL1CacheEnabled) {
         bool slmUsed = false;
         if (DebugManager.flags.ForceSLML3Config.get()) {
             slmUsed = true;
@@ -122,7 +122,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
         commandStreamReceiver.setMediaVFEStateDirty(false);
         auto gmmHelper = pDevice->getGmmHelper();
-        auto mocsIndex = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+        auto mocsIndex = isL1CacheEnabled ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
 
         commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex >> 1;
         commandStreamReceiver.lastSentL3Config = L3Config;

@@ -739,7 +739,7 @@ TEST_F(HwHelperTest, givenAUBDumpForceAllToLocalMemoryDebugVarWhenSetThenGetEnab
     EXPECT_TRUE(helper.getEnableLocalMemory(hardwareInfo));
 }
 
-TEST_F(HwHelperTest, givenVariousCachesRequestProperMOCSIndexesAreBeingReturned) {
+HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenVariousCachesRequestProperMOCSIndexesAreBeingReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     auto gmmHelper = this->pDevice->getGmmHelper();
     auto expectedMocsForL3off = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
