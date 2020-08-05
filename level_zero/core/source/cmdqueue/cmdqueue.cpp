@@ -68,8 +68,14 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) 
     UNRECOVERABLE_IF(csr == nullptr);
 
     auto taskCountToWait = this->taskCount;
-    bool enableTimeout = (timeout != std::numeric_limits<uint64_t>::max());
-    csr->waitForCompletionWithTimeout(enableTimeout, timeout, this->taskCount);
+    bool enableTimeout = true;
+    int64_t timeoutMicroseconds = static_cast<int64_t>(timeout);
+    if (timeout == std::numeric_limits<uint64_t>::max()) {
+        enableTimeout = false;
+        timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
+    }
+
+    csr->waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, this->taskCount);
 
     if (*csr->getTagAddress() < taskCountToWait) {
         return ZE_RESULT_NOT_READY;

@@ -11,6 +11,7 @@
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 #include "shared/test/unit_test/mocks/mock_command_stream_receiver.h"
 
+#include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "test.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -267,6 +268,60 @@ TEST_F(ContextCreateCommandQueueTest, givenCallToContextCreateCommandQueueThenCa
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_NE(nullptr, commandQueue);
 
+    L0::CommandQueue::fromHandle(commandQueue)->destroy();
+}
+
+using CommandQueueSynchronizeTest = Test<ContextFixture>;
+
+HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTimeoutAndTimeoutValuesAreUsed) {
+    struct SynchronizeCsr : public NEO::UltCommandStreamReceiver<FamilyType> {
+        ~SynchronizeCsr() {
+            delete tagAddress;
+        }
+        SynchronizeCsr(const NEO::ExecutionEnvironment &executionEnvironment) : NEO::UltCommandStreamReceiver<FamilyType>(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment), 0) {
+            tagAddress = new uint32_t;
+        }
+        MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+
+        volatile uint32_t *getTagAddress() const {
+            return tagAddress;
+        }
+        uint32_t *tagAddress;
+    };
+
+    auto csr = new ::testing::NiceMock<SynchronizeCsr>(*device->getNEODevice()->getExecutionEnvironment());
+    ze_command_queue_desc_t desc = {};
+    ze_command_queue_handle_t commandQueue = {};
+    ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_NE(nullptr, commandQueue);
+
+    CommandQueue *queue = reinterpret_cast<CommandQueue *>(L0::CommandQueue::fromHandle(commandQueue));
+    queue->csr = csr;
+
+    uint64_t timeout = 10;
+    bool enableTimeoutExpected = true;
+    int64_t timeoutMicrosecondsExpected = timeout;
+
+    EXPECT_CALL(*csr, waitForCompletionWithTimeout(enableTimeoutExpected,
+                                                   timeoutMicrosecondsExpected,
+                                                   ::testing::_))
+        .Times(1)
+        .WillOnce(::testing::Return(true));
+    queue->synchronize(timeout);
+
+    timeout = std::numeric_limits<uint64_t>::max();
+    enableTimeoutExpected = false;
+    timeoutMicrosecondsExpected = NEO::TimeoutControls::maxTimeout;
+
+    EXPECT_CALL(*csr, waitForCompletionWithTimeout(enableTimeoutExpected,
+                                                   timeoutMicrosecondsExpected,
+                                                   ::testing::_))
+        .Times(1)
+        .WillOnce(::testing::Return(true));
+    queue->synchronize(timeout);
+
+    delete csr;
     L0::CommandQueue::fromHandle(commandQueue)->destroy();
 }
 

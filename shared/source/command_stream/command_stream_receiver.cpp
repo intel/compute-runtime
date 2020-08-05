@@ -121,7 +121,7 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
 }
 
 void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {
-    auto address = getTagAddress();
+    auto address = tagAddress;
     if (address) {
         while (*address < requiredTaskCount)
             ;

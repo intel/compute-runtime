@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
     VALIDATECALL(zeCommandListClose(cmdList));
     VALIDATECALL(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
 
-    VALIDATECALL(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    VALIDATECALL(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate
     bool outputValidationSuccessful = true;
