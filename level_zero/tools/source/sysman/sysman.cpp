@@ -16,23 +16,15 @@
 
 namespace L0 {
 
-SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t device) {
-    auto isSysmanEnabled = getenv("ZES_ENABLE_SYSMAN");
-    if ((isSysmanEnabled == nullptr) || (device == nullptr)) {
-        return nullptr;
-    }
-    auto isSysmanEnabledAsInt = atoi(isSysmanEnabled);
-    if (isSysmanEnabledAsInt == 1) {
-        SysmanDeviceImp *sysman = new SysmanDeviceImp(device);
-        UNRECOVERABLE_IF(!sysman);
-        sysman->init();
-        return sysman;
-    }
-    return nullptr;
+SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t coreDevice) {
+    SysmanDeviceImp *sysmanDevice = new SysmanDeviceImp(coreDevice);
+    UNRECOVERABLE_IF(!sysmanDevice);
+    sysmanDevice->init();
+    return sysmanDevice;
 }
 
-void DeviceImp::setSysmanHandle(SysmanDevice *pSysman) {
-    pSysmanDevice = pSysman;
+void DeviceImp::setSysmanHandle(SysmanDevice *pSysmanDev) {
+    pSysmanDevice = pSysmanDev;
 }
 
 SysmanDevice *DeviceImp::getSysmanHandle() {

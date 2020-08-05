@@ -30,6 +30,7 @@ struct L0EnvVariables {
     bool programDebugging;
     bool metrics;
     bool pin;
+    bool sysman;
 };
 
 } // namespace L0

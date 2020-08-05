@@ -253,6 +253,7 @@ DriverHandle *DriverHandle::create(std::vector<std::unique_ptr<NEO::Device>> dev
 
     driverHandle->affinityMaskString = envVariables.affinityMask;
     driverHandle->enableProgramDebugging = envVariables.programDebugging;
+    driverHandle->enableSysman = envVariables.sysman;
 
     ze_result_t res = driverHandle->initialize(std::move(devices));
     if (res != ZE_RESULT_SUCCESS) {

@@ -19,25 +19,12 @@ TEST_F(MockDeviceSysmanGetTest, GivenValidSysmanHandleSetInDeviceStructWhenGetTh
     EXPECT_EQ(sysman, device->getSysmanHandle());
 }
 
-TEST_F(MockDeviceSysmanGetTest, GivenNULLDeviceHandleWhenCreatingSymanHandleThenNullSysmanHandleIsReturned) {
-    ze_device_handle_t handle = nullptr;
-    setenv("ZES_ENABLE_SYSMAN", "1", 1);
-    EXPECT_EQ(nullptr, L0::SysmanDeviceHandleContext::init(handle));
-    unsetenv("ZES_ENABLE_SYSMAN");
-}
-
-TEST_F(SysmanDeviceFixture, GivenSysmanEnvironmentSetWhenEnumertatingSysmanHandlesThenValidSysmanHandleReceived) {
-    zes_device_handle_t hSysman = device->toHandle();
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleInSysmanInitThenValidSysmanHandleReceived) {
+    ze_device_handle_t hSysman = device->toHandle();
     auto pSysmanDevice = L0::SysmanDeviceHandleContext::init(hSysman);
     EXPECT_NE(pSysmanDevice, nullptr);
     delete pSysmanDevice;
     pSysmanDevice = nullptr;
-}
-
-TEST_F(SysmanDeviceFixture, GivenSysmanEnvironmentNotSetWhenEnumertatingSysmanHandlesThenNullSysmanHandleReceived) {
-    zes_device_handle_t hSysman = device->toHandle();
-    unsetenv("ZES_ENABLE_SYSMAN");
-    EXPECT_EQ(L0::SysmanDeviceHandleContext::init(hSysman), nullptr);
 }
 
 TEST_F(SysmanDeviceFixture, GivenSetValidDrmHandleForDeviceWhenDoingOsSysmanDeviceInitThenSameDrmHandleIsRetrieved) {

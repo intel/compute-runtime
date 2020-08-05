@@ -71,6 +71,7 @@ struct DriverHandleImp : public DriverHandle {
     // Environment Variables
     std::string affinityMaskString = "";
     bool enableProgramDebugging = false;
+    bool enableSysman = false;
 };
 
 extern struct DriverHandleImp *GlobalDriver;
