@@ -164,4 +164,13 @@ static RegisterEmbeddedResource registerAuxTranslationSrc(
 #include "shared/source/built_ins/kernels/aux_translation.builtin_kernel"
         ));
 
+static RegisterEmbeddedResource registerCopyKernelTimestampsSrc(
+    createBuiltinResourceName(
+        EBuiltInOps::FillImage3d,
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
+        .c_str(),
+    std::string(
+#include "shared/source/built_ins/kernels/copy_kernel_timestamps.builtin_kernel"
+        ));
+
 } // namespace NEO

@@ -21,5 +21,6 @@ std::vector<std::string> buintInFileNames = {
     "test_files/copy_image_to_image3d.builtin_kernel",
     "test_files/copy_buffer_rect.builtin_kernel",
     "test_files/copy_buffer_to_image3d.builtin_kernel",
-    "test_files/copy_image3d_to_buffer.builtin_kernel"};
+    "test_files/copy_image3d_to_buffer.builtin_kernel",
+    "test_files/copy_kernel_timestamps.builtin_kernel"};
 }

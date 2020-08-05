@@ -74,6 +74,14 @@ void BuiltinFunctionsLibImpl::initFunctions() {
             builtinName = "FillBufferSSHOffset";
             builtin = NEO::EBuiltInOps::FillBuffer;
             break;
+        case Builtin::QueryKernelTimestamps:
+            builtinName = "QueryKernelTimestamps";
+            builtin = NEO::EBuiltInOps::QueryKernelTimestamps;
+            break;
+        case Builtin::QueryKernelTimestampsWithOffsets:
+            builtinName = "QueryKernelTimestampsWithOffsets";
+            builtin = NEO::EBuiltInOps::QueryKernelTimestamps;
+            break;
         default:
             continue;
         };

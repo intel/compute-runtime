@@ -31,6 +31,8 @@ enum class Builtin : uint32_t {
     CopyBufferToImage3dBytes,
     FillBufferImmediate,
     FillBufferSSHOffset,
+    QueryKernelTimestamps,
+    QueryKernelTimestampsWithOffsets,
     COUNT
 };
 

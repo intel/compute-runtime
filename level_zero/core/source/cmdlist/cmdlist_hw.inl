@@ -1456,6 +1456,82 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyFromContext(
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
+    uint32_t numEvents, ze_event_handle_t *phEvents, void *dstptr,
+    const size_t *pOffsets, ze_event_handle_t hSignalEvent,
+    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
+
+    auto dstptrAllocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(ze_kernel_timestamp_result_t) * numEvents);
+    commandContainer.addToResidencyContainer(dstptrAllocationStruct.alloc);
+
+    uint64_t *timestampsAddress = new uint64_t[numEvents];
+
+    for (uint32_t i = 0u; i < numEvents; ++i) {
+        auto event = Event::fromHandle(phEvents[i]);
+        commandContainer.addToResidencyContainer(&event->getAllocation());
+        timestampsAddress[i] = event->getGpuAddress();
+    }
+
+    size_t alignedSize = alignUp<size_t>(sizeof(uint64_t) * numEvents, MemoryConstants::pageSize64k);
+    NEO::GraphicsAllocation::AllocationType allocationType = NEO::GraphicsAllocation::AllocationType::BUFFER;
+    NEO::AllocationProperties alocationProperties{device->getRootDeviceIndex(),
+                                                  true,
+                                                  alignedSize,
+                                                  allocationType,
+                                                  false,
+                                                  device->getNEODevice()->getDeviceBitfield()};
+
+    NEO::GraphicsAllocation *timestampsGPUAddress = device->getDriverHandle()->getMemoryManager()->allocateGraphicsMemoryWithProperties(alocationProperties);
+
+    UNRECOVERABLE_IF(timestampsGPUAddress == nullptr);
+
+    commandContainer.addToResidencyContainer(timestampsGPUAddress);
+    commandContainer.getDeallocationContainer().push_back(timestampsGPUAddress);
+
+    bool result = device->getDriverHandle()->getMemoryManager()->copyMemoryToAllocation(timestampsGPUAddress, timestampsAddress, sizeof(uint64_t) * numEvents);
+
+    UNRECOVERABLE_IF(!result);
+
+    Kernel *builtinFunction = nullptr;
+
+    auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
+
+    if (pOffsets == nullptr) {
+        builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestamps);
+    } else {
+        auto pOffsetAllocationStruct = getAlignedAllocation(this->device, pOffsets, sizeof(size_t) * numEvents);
+        auto offsetValPtr = static_cast<uintptr_t>(pOffsetAllocationStruct.alloc->getGpuAddress());
+        commandContainer.addToResidencyContainer(pOffsetAllocationStruct.alloc);
+        builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestampsWithOffsets);
+        builtinFunction->setArgBufferWithAlloc(2, offsetValPtr, pOffsetAllocationStruct.alloc);
+        offsetValPtr += sizeof(size_t);
+    }
+
+    ze_group_count_t dispatchFuncArgs{1, 1, 1};
+    builtinFunction->setGroupSize(numEvents, 1, 1);
+
+    auto dstValPtr = static_cast<uintptr_t>(dstptrAllocationStruct.alloc->getGpuAddress());
+
+    builtinFunction->setArgBufferWithAlloc(0u, static_cast<uintptr_t>(timestampsGPUAddress->getGpuAddress()), timestampsGPUAddress);
+    builtinFunction->setArgBufferWithAlloc(1, dstValPtr, dstptrAllocationStruct.alloc);
+
+    auto appendResult = appendLaunchKernel(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, numWaitEvents,
+                                           phWaitEvents);
+    if (appendResult != ZE_RESULT_SUCCESS) {
+        delete[] timestampsAddress;
+        return appendResult;
+    }
+
+    if (hSignalEvent) {
+        CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent);
+    }
+
+    delete[] timestampsAddress;
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::reserveSpace(size_t size, void **ptr) {
     auto availableSpace = commandContainer.getCommandStream()->getAvailableSpace();
     if (availableSpace < size) {

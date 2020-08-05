@@ -79,6 +79,7 @@ set(NEO_CORE_HELPERS
   ${CMAKE_CURRENT_SOURCE_DIR}/stdio.h
   ${CMAKE_CURRENT_SOURCE_DIR}/string.h
   ${CMAKE_CURRENT_SOURCE_DIR}/surface_format_info.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_offsets.h
   ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.h
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/timestamp_packet_extra.cpp

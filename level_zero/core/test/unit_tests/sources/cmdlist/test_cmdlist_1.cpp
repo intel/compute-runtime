@@ -350,6 +350,148 @@ class MockEvent : public Mock<Event> {
     std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
 };
 
+HWTEST_F(CommandListCreate, givenCommandListWithInvalidWaitEventArgWhenAppendQueryKernelTimestampsThenProperErrorRetruned) {
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    device->getBuiltinFunctionsLib()->initFunctions();
+    MockEvent event;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *alloc;
+    auto result = driverHandle->allocDeviceMem(device, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &alloc);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    auto eventHandle = event.toHandle();
+
+    result = commandList->appendQueryKernelTimestamps(1u, &eventHandle, alloc, nullptr, nullptr, 1u, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    driverHandle->freeMem(alloc);
+}
+
+struct CmdListHelper {
+    NEO::GraphicsAllocation *isaAllocation = nullptr;
+    NEO::ResidencyContainer residencyContainer;
+    ze_group_count_t threadGroupDimensions;
+    const uint32_t *groupSize = nullptr;
+};
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+
+  public:
+    CmdListHelper cmdListHelper;
+    ze_result_t appendLaunchKernel(ze_kernel_handle_t hKernel,
+                                   const ze_group_count_t *pThreadGroupDimensions,
+                                   ze_event_handle_t hEvent,
+                                   uint32_t numWaitEvents,
+                                   ze_event_handle_t *phWaitEvents) override {
+
+        const auto kernel = Kernel::fromHandle(hKernel);
+        cmdListHelper.isaAllocation = kernel->getIsaAllocation();
+        cmdListHelper.residencyContainer = kernel->getResidencyContainer();
+        cmdListHelper.groupSize = kernel->getGroupSize();
+        cmdListHelper.threadGroupDimensions = *pThreadGroupDimensions;
+
+        return ZE_RESULT_SUCCESS;
+    }
+};
+
+using AppendQueryKernelTimestamps = CommandListCreate;
+using TestPlatforms = IsAtLeastProduct<IGFX_SKYLAKE>;
+
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithoutOffsetsThenProperBuiltinWasAdded, TestPlatforms) {
+    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+    commandList.initialize(device, false);
+
+    device->getBuiltinFunctionsLib()->initFunctions();
+    MockEvent event;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *alloc;
+    auto result = driverHandle->allocDeviceMem(device, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &alloc);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
+
+    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    bool containsDstPtr = false;
+
+    for (auto &a : commandList.cmdListHelper.residencyContainer) {
+        if (a->getGpuAddress() == reinterpret_cast<uint64_t>(alloc)) {
+            containsDstPtr = true;
+        }
+    }
+
+    EXPECT_TRUE(containsDstPtr);
+
+    EXPECT_EQ(device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestamps)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
+    EXPECT_EQ(2u, commandList.cmdListHelper.groupSize[0]);
+    EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[1]);
+    EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[2]);
+
+    EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
+    EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
+    EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountZ);
+
+    driverHandle->freeMem(alloc);
+}
+
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithOffsetsThenProperBuiltinWasAdded, TestPlatforms) {
+    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+    commandList.initialize(device, false);
+
+    device->getBuiltinFunctionsLib()->initFunctions();
+    MockEvent event;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *alloc;
+    auto result = driverHandle->allocDeviceMem(device, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &alloc);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    void *offsetAlloc;
+    result = driverHandle->allocDeviceMem(device, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &offsetAlloc);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
+
+    auto offsetSizes = reinterpret_cast<size_t *>(offsetAlloc);
+    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, offsetSizes, nullptr, 0u, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    bool containsDstPtr = false;
+
+    for (auto &a : commandList.cmdListHelper.residencyContainer) {
+        if (a->getGpuAddress() == reinterpret_cast<uint64_t>(alloc)) {
+            containsDstPtr = true;
+        }
+    }
+
+    EXPECT_TRUE(containsDstPtr);
+
+    bool containOffsetPtr = false;
+
+    for (auto &a : commandList.cmdListHelper.residencyContainer) {
+        if (a->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAlloc)) {
+            containOffsetPtr = true;
+        }
+    }
+
+    EXPECT_TRUE(containOffsetPtr);
+
+    EXPECT_EQ(device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestampsWithOffsets)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
+    EXPECT_EQ(2u, commandList.cmdListHelper.groupSize[0]);
+    EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[1]);
+    EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[2]);
+
+    EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
+    EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
+    EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountZ);
+
+    driverHandle->freeMem(alloc);
+    driverHandle->freeMem(offsetAlloc);
+}
+
 HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendSignalEventThenMiFlushDWIsProgrammed) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, true));

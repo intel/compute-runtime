@@ -1,0 +1,42 @@
+/*
+ * Copyright (C) 2020 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+R"===(
+__kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* dst) {
+    uint gid = get_global_id(0);
+    const ulong tsMask = (1ull << 32) - 1;
+    uint currentOffset = gid * 4;
+    dst[currentOffset] = 0;
+    dst[currentOffset + 1] = 0;
+    dst[currentOffset + 2] = 0;
+    dst[currentOffset + 3] = 0;
+
+    ulong srcPtr = srcEvents[gid];
+    __global uint *src = (__global uint *) srcPtr;
+    dst[currentOffset] = src[1] & tsMask;
+    dst[currentOffset + 1] = src[3] & tsMask;
+    dst[currentOffset + 2] = src[0] & tsMask;
+    dst[currentOffset + 3] = src[2] & tsMask;
+}
+
+__kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __global ulong* dst, __global ulong *offsets) {
+    uint gid = get_global_id(0);
+    const ulong tsMask = (1ull << 32) - 1;
+    uint currentOffset = offsets[gid] / 8;
+    dst[currentOffset] = 0;
+    dst[currentOffset + 1] = 0;
+    dst[currentOffset + 2] = 0;
+    dst[currentOffset + 3] = 0;
+
+    ulong srcPtr = srcEvents[gid];
+    __global uint *src = (__global uint *) srcPtr;
+    dst[currentOffset] = src[1] & tsMask;
+    dst[currentOffset + 1] = src[3] & tsMask;
+    dst[currentOffset + 2] = src[0] & tsMask;
+    dst[currentOffset + 3] = src[2] & tsMask;
+}
+)==="

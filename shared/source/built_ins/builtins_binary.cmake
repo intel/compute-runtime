@@ -14,6 +14,7 @@ set(GENERATED_BUILTINS
   "copy_buffer_rect"
   "copy_buffer_to_buffer"
   "copy_buffer_to_image3d"
+  "copy_kernel_timestamps"
   "fill_buffer"
   "fill_image1d"
   "fill_image2d"
