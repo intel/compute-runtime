@@ -106,3 +106,44 @@ zeVirtualMemGetAccessAttribute(
     size_t *outSize) {
     return L0::Context::fromHandle(hContext)->getVirtualMemAccessAttribute(ptr, size, access, outSize);
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextSystemBarrier(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextMakeMemoryResident(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    void *ptr,
+    size_t size) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextEvictMemory(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    void *ptr,
+    size_t size) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextMakeImageResident(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    ze_image_handle_t hImage) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextEvictImage(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    ze_image_handle_t hImage) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
