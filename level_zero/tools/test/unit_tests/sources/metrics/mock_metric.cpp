@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/test/unit_tests/sources/metrics/mock_metric.h"
 
+#include "shared/test/unit_test/mocks/mock_os_library.h"
+
 using namespace MetricsLibraryApi;
 
 namespace L0 {
@@ -24,10 +26,12 @@ void MetricContextFixture::SetUp() {
     // Mock metrics library.
     mockMetricsLibrary = std::unique_ptr<Mock<MetricsLibrary>>(new (std::nothrow) Mock<MetricsLibrary>(metricContext));
     mockMetricsLibrary->setMockedApi(&mockMetricsLibraryApi);
+    mockMetricsLibrary->handle = new MockOsLibrary();
 
     //  Mock metric enumeration.
     mockMetricEnumeration = std::unique_ptr<Mock<MetricEnumeration>>(new (std::nothrow) Mock<MetricEnumeration>(metricContext));
     mockMetricEnumeration->setMockedApi(&mockMetricsDiscoveryApi);
+    mockMetricEnumeration->hMetricsDiscovery = std::make_unique<MockOsLibrary>();
 
     // Metrics Discovery device common settings.
     metricsDeviceParams.Version.MajorNumber = MetricEnumeration::requiredMetricsDiscoveryMajorVersion;
@@ -37,6 +41,7 @@ void MetricContextFixture::SetUp() {
 void MetricContextFixture::TearDown() {
 
     // Restore original metrics library
+    delete mockMetricsLibrary->handle;
     mockMetricsLibrary->setMockedApi(nullptr);
     mockMetricsLibrary.reset();
 

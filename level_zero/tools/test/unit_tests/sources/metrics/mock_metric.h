@@ -100,6 +100,9 @@ struct Mock<MetricsLibrary> : public MetricsLibrary {
     Mock(::L0::MetricContext &metricContext);
     ~Mock() override;
 
+    using MetricsLibrary::handle;
+    using MetricsLibrary::initializationState;
+
     // Api mock enable/disable.
     void setMockedApi(MockMetricsLibraryApi *mockedApi);
 

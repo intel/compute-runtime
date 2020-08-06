@@ -2119,5 +2119,121 @@ TEST_F(MetricEnumerationTest, givenIncorrectCalculationTypeWhenZetMetricGroupCal
     EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults.data(), &calculatedResultsCount, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(calculatedResultsCount, metricsSetParams.MetricsCount);
 }
+
+TEST_F(MetricEnumerationTest, givenInitializedMetricEnumerationWhenIsInitializedIsCalledThenMetricEnumerationWillNotBeInitializedAgain) {
+
+    mockMetricEnumeration->initializationState = ZE_RESULT_SUCCESS;
+    EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), true);
+}
+
+TEST_F(MetricEnumerationTest, givenNotInitializedMetricEnumerationWhenIsInitializedIsCalledThenMetricEnumerationWillBeInitialized) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+
+    // Metrics Discovery: metric set
+    Mock<IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.QueryReportSize = 256;
+    metricsSetParams.MetricsCount = 11;
+
+    // Metrics Discovery: metric
+    Mock<IMetric_1_0> metric;
+    MetricsDiscovery::TMetricParams_1_0 metricParams = {};
+
+    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
+        .Times(0);
+
+    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenMetricsDevice(_))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(&metricsDevice), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockCloseMetricsDevice(_))
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metricsDevice, GetParams())
+        .WillRepeatedly(Return(&metricsDeviceParams));
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, GetMetric(_))
+        .Times(11)
+        .WillRepeatedly(Return(&metric));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    EXPECT_CALL(metric, GetParams())
+        .WillRepeatedly(Return(&metricParams));
+
+    mockMetricEnumeration->initializationState = ZE_RESULT_ERROR_UNINITIALIZED;
+    EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), true);
+}
+
+TEST_F(MetricEnumerationTest, givenLoadedMetricsLibraryAndDiscoveryAndMetricsLibraryInitializedWhenLoadDependenciesThenReturnSuccess) {
+
+    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
+        .Times(1)
+        .WillOnce(Return(ZE_RESULT_SUCCESS));
+
+    EXPECT_CALL(*mockMetricsLibrary, load())
+        .Times(1)
+        .WillOnce(Return(true));
+
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    auto &metricContext = device->getMetricContext();
+    EXPECT_EQ(metricContext.loadDependencies(), true);
+    EXPECT_EQ(metricContext.isInitialized(), true);
+}
+
+TEST_F(MetricEnumerationTest, givenNotLoadedMetricsLibraryAndDiscoveryWhenLoadDependenciesThenReturnFail) {
+
+    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
+        .Times(1)
+        .WillOnce(Return(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE));
+
+    auto &metricContext = device->getMetricContext();
+    EXPECT_EQ(metricContext.loadDependencies(), false);
+    EXPECT_EQ(metricContext.isInitialized(), false);
+}
+
+TEST_F(MetricEnumerationTest, givenLoadedMetricsLibraryAndDiscoveryAndMetricsLibraryNotInitializedWhenLoadDependenciesThenReturnFail) {
+
+    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
+        .Times(1)
+        .WillOnce(Return(ZE_RESULT_SUCCESS));
+
+    EXPECT_CALL(*mockMetricsLibrary, load())
+        .Times(1)
+        .WillOnce(Return(true));
+
+    mockMetricsLibrary->initializationState = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    auto &metricContext = device->getMetricContext();
+    EXPECT_EQ(metricContext.loadDependencies(), false);
+    EXPECT_EQ(metricContext.isInitialized(), false);
+}
+
 } // namespace ult
 } // namespace L0

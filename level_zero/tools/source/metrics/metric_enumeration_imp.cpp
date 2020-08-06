@@ -50,11 +50,18 @@ ze_result_t MetricEnumeration::metricGroupGet(uint32_t &count,
     return ZE_RESULT_SUCCESS;
 }
 
-bool MetricEnumeration::isInitialized() { return initializationState == ZE_RESULT_SUCCESS; }
+bool MetricEnumeration::isInitialized() {
+
+    if (initializationState == ZE_RESULT_ERROR_UNINITIALIZED) {
+        initialize();
+    }
+
+    return initializationState == ZE_RESULT_SUCCESS;
+}
 
 ze_result_t MetricEnumeration::initialize() {
     if (initializationState == ZE_RESULT_ERROR_UNINITIALIZED) {
-        if (metricContext.isInitialized() &&
+        if (hMetricsDiscovery &&
             openMetricsDiscovery() == ZE_RESULT_SUCCESS &&
             cacheMetricInformation() == ZE_RESULT_SUCCESS) {
             initializationState = ZE_RESULT_SUCCESS;

@@ -116,12 +116,18 @@ struct Mock<MetricEnumeration> : public MetricEnumeration {
     Mock(::L0::MetricContext &metricContext);
     ~Mock() override;
 
+    using MetricEnumeration::hMetricsDiscovery;
+    using MetricEnumeration::initializationState;
+
     // Api mock enable/disable.
     void setMockedApi(MockMetricsDiscoveryApi *mockedApi);
 
     // Mock metric enumeration functions.
     MOCK_METHOD(bool, isInitialized, (), (override));
     MOCK_METHOD(ze_result_t, loadMetricsDiscovery, (), (override));
+
+    // Not mocked metrics enumeration functions.
+    bool baseIsInitialized() { return MetricEnumeration::isInitialized(); }
 
     // Mock metrics discovery api.
     static MockMetricsDiscoveryApi *g_mockApi;

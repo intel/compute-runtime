@@ -98,9 +98,17 @@ bool MetricContextImp::loadDependencies() {
         result = false;
         DEBUG_BREAK_IF(!result);
     }
+    // Initialize metrics library / discovery here
+    // to check requirements expected from the kernel driver.
     if (result) {
-        setInitializationState(ZE_RESULT_SUCCESS);
+        result = metricsLibrary->isInitialized();
+        DEBUG_BREAK_IF(!result);
     }
+
+    setInitializationState(result
+                               ? ZE_RESULT_SUCCESS
+                               : ZE_RESULT_ERROR_UNKNOWN);
+
     return result;
 }
 

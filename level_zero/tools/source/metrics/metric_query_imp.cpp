@@ -155,7 +155,7 @@ void MetricsLibrary::initialize() {
 
     // Metrics Enumeration needs to be initialized before Metrics Library
     const bool validMetricsEnumeration = metricsEnumeration.isInitialized();
-    const bool validMetricsLibrary = validMetricsEnumeration && metricContext.isInitialized() && createContext();
+    const bool validMetricsLibrary = validMetricsEnumeration && handle && createContext();
 
     // Load metrics library and exported functions.
     initializationState = validMetricsLibrary ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
