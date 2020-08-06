@@ -160,7 +160,7 @@ ze_result_t MetricContextImp::activateMetricGroups() { return metricGroupDomains
 
 ze_result_t MetricContext::enableMetricApi() {
     if (!isMetricApiAvailable()) {
-        return static_cast<ze_result_t>(0x70020000);
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
     }
 
     DriverHandle *driverHandle = L0::DriverHandle::fromHandle(GlobalDriverHandle);
@@ -178,7 +178,7 @@ ze_result_t MetricContext::enableMetricApi() {
     for (auto deviceHandle : devices) {
         Device *device = L0::Device::fromHandle(deviceHandle);
         if (!device->getMetricContext().loadDependencies()) {
-            return static_cast<ze_result_t>(0x70020000);
+            return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
         }
     }
 
