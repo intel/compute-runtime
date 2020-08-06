@@ -33,6 +33,7 @@ OsLibrary::OsLibrary(const std::string &name) {
         constexpr auto dlopenFlag = RTLD_LAZY;
 #else
         constexpr auto dlopenFlag = RTLD_LAZY | RTLD_DEEPBIND;
+        /* Background: https://github.com/intel/compute-runtime/issues/122 */
 #endif
         this->handle = dlopen(name.c_str(), dlopenFlag);
     }
