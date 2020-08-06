@@ -93,7 +93,7 @@ TEST_F(TagAllocatorTest, givenTagNodeTypeWhenCopyingOrMovingThenDisallow) {
     EXPECT_FALSE(std::is_copy_constructible<TagNode<TimeStamps>>::value);
 }
 
-TEST_F(TagAllocatorTest, Initialize) {
+TEST_F(TagAllocatorTest, WhenTagAllocatorIsCreatedThenItIsCorrectlyInitialized) {
 
     MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 100, 64, deviceBitfield);
 
@@ -107,7 +107,7 @@ TEST_F(TagAllocatorTest, Initialize) {
     EXPECT_EQ(gfxMemory, head);
 }
 
-TEST_F(TagAllocatorTest, GetReturnTagCheckFreeAndUsedLists) {
+TEST_F(TagAllocatorTest, WhenGettingAndReturningTagThenFreeAndUsedListsAreUpdated) {
 
     MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 10, 16, deviceBitfield);
 
@@ -145,7 +145,7 @@ TEST_F(TagAllocatorTest, WhenTagAllocatorIsCreatedThenItPopulatesTagsWithProperD
     EXPECT_EQ(deviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
 }
 
-TEST_F(TagAllocatorTest, TagAlignment) {
+TEST_F(TagAllocatorTest, WhenTagIsAllocatedThenItIsAligned) {
     size_t alignment = 64;
     MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 10, alignment, deviceBitfield);
 
@@ -183,7 +183,7 @@ TEST_F(TagAllocatorTest, givenTagAllocatorWhenAllNodesWereUsedThenCreateNewGraph
     EXPECT_EQ(2u, tagAllocator.getTagPoolCount());
 }
 
-TEST_F(TagAllocatorTest, givenInputTagCountWhenCreatingAllocatorThen) {
+TEST_F(TagAllocatorTest, givenInputTagCountWhenCreatingAllocatorThenRequestedNumberOfNodesIsCreated) {
     class MyMockMemoryManager : public MockMemoryManager {
       public:
         using MockMemoryManager::MockMemoryManager;
@@ -208,7 +208,7 @@ TEST_F(TagAllocatorTest, givenInputTagCountWhenCreatingAllocatorThen) {
     EXPECT_EQ(tagsCount, nodesFound);
 }
 
-TEST_F(TagAllocatorTest, GetTagsAndReturnInDifferentOrder) {
+TEST_F(TagAllocatorTest, GivenSpecificOrderWhenReturningTagsThenFreeListIsUpdatedCorrectly) {
 
     // Big alignment to force only 4 tags
     size_t alignment = 1024;
@@ -253,7 +253,7 @@ TEST_F(TagAllocatorTest, GetTagsAndReturnInDifferentOrder) {
     tagAllocator.returnTag(tagNodes[0]);
 }
 
-TEST_F(TagAllocatorTest, GetTagsFromTwoPools) {
+TEST_F(TagAllocatorTest, WhenGettingTagsFromTwoPoolsThenTagsAreDifferent) {
 
     // Big alignment to force only 1 tag
     size_t alignment = 4096;
@@ -277,7 +277,7 @@ TEST_F(TagAllocatorTest, GetTagsFromTwoPools) {
     tagAllocator.returnTag(tagNode2);
 }
 
-TEST_F(TagAllocatorTest, CleanupResources) {
+TEST_F(TagAllocatorTest, WhenCleaningUpResourcesThenAllResourcesAreReleased) {
 
     // Big alignment to force only 1 tag
     size_t alignment = 4096;
@@ -306,7 +306,7 @@ TEST_F(TagAllocatorTest, CleanupResources) {
     EXPECT_EQ(0u, tagAllocator.getGraphicsAllocationsCount());
 }
 
-TEST_F(TagAllocatorTest, whenNewTagIsTakenThenInitialize) {
+TEST_F(TagAllocatorTest, whenNewTagIsTakenThenItIsInitialized) {
     MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 2, deviceBitfield);
     tagAllocator.getFreeTagsHead()->tagForCpuAccess->start = 3;
     tagAllocator.getFreeTagsHead()->tagForCpuAccess->end = 4;
