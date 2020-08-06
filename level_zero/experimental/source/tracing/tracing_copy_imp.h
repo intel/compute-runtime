@@ -75,14 +75,18 @@ zeCommandListAppendImageCopyToMemory_Tracing(ze_command_list_handle_t hCommandLi
                                              void *dstptr,
                                              ze_image_handle_t hSrcImage,
                                              const ze_image_region_t *pSrcRegion,
-                                             ze_event_handle_t hEvent);
+                                             ze_event_handle_t hSignalEvent,
+                                             uint32_t numWaitEvents,
+                                             ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendImageCopyFromMemory_Tracing(ze_command_list_handle_t hCommandList,
                                                ze_image_handle_t hDstImage,
                                                const void *srcptr,
                                                const ze_image_region_t *pDstRegion,
-                                               ze_event_handle_t hEvent);
+                                               ze_event_handle_t hSignalEvent,
+                                               uint32_t numWaitEvents,
+                                               ze_event_handle_t *phWaitEvents);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListAppendMemoryPrefetch_Tracing(ze_command_list_handle_t hCommandList,

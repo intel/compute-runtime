@@ -29,7 +29,7 @@ zeDeviceGetMemoryProperties_Tracing(ze_device_handle_t hDevice,
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetCacheProperties_Tracing(ze_device_handle_t hDevice,
-                                   uint32_t pCount,
+                                   uint32_t *pCount,
                                    ze_device_cache_properties_t *pCacheProperties);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -57,5 +57,5 @@ zeKernelSetCacheConfig_Tracing(ze_kernel_handle_t hKernel,
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeDeviceGetMemoryAccessProperties_Tracing(ze_device_handle_t hDevice,
-                                          ze_memory_access_cap_flags_t *pMemAccessProperties);
+                                          ze_device_memory_access_properties_t *pMemAccessProperties);
 }
