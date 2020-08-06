@@ -8,8 +8,10 @@
 #include <level_zero/ze_api.h>
 
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <vector>
 
 #define VALIDATECALL(myZeCall)                \
@@ -104,8 +106,67 @@ int main(int argc, char *argv[]) {
     memset(srcBuffer, val, allocSize);
     memset(dstBuffer, 0, allocSize);
 
-    // Perform a GPU copy
-    VALIDATECALL(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, allocSize, nullptr, 0, nullptr));
+    ze_module_handle_t module = nullptr;
+    ze_kernel_handle_t kernel = nullptr;
+
+    std::ifstream file("copy_buffer_to_buffer.spv", std::ios::binary);
+
+    if (file.is_open()) {
+        file.seekg(0, file.end);
+        auto length = file.tellg();
+        file.seekg(0, file.beg);
+
+        std::unique_ptr<char[]> spirvInput(new char[length]);
+        file.read(spirvInput.get(), length);
+
+        ze_module_desc_t moduleDesc = {};
+        ze_module_build_log_handle_t buildlog;
+        moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+        moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(spirvInput.get());
+        moduleDesc.inputSize = length;
+        moduleDesc.pBuildFlags = "";
+
+        if (zeModuleCreate(context, device, &moduleDesc, &module, &buildlog) != ZE_RESULT_SUCCESS) {
+            size_t szLog = 0;
+            zeModuleBuildLogGetString(buildlog, &szLog, nullptr);
+
+            char *strLog = (char *)malloc(szLog);
+            zeModuleBuildLogGetString(buildlog, &szLog, strLog);
+            std::cout << "Build log:" << strLog << std::endl;
+
+            free(strLog);
+        }
+        VALIDATECALL(zeModuleBuildLogDestroy(buildlog));
+
+        ze_kernel_desc_t kernelDesc = {};
+        kernelDesc.pKernelName = "CopyBufferToBufferBytes";
+        VALIDATECALL(zeKernelCreate(module, &kernelDesc, &kernel));
+
+        uint32_t groupSizeX = 32u;
+        uint32_t groupSizeY = 1u;
+        uint32_t groupSizeZ = 1u;
+        VALIDATECALL(zeKernelSuggestGroupSize(kernel, allocSize, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
+        VALIDATECALL(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
+
+        uint32_t offset = 0;
+        VALIDATECALL(zeKernelSetArgumentValue(kernel, 1, sizeof(dstBuffer), &dstBuffer));
+        VALIDATECALL(zeKernelSetArgumentValue(kernel, 0, sizeof(srcBuffer), &srcBuffer));
+        VALIDATECALL(zeKernelSetArgumentValue(kernel, 2, sizeof(uint32_t), &offset));
+        VALIDATECALL(zeKernelSetArgumentValue(kernel, 3, sizeof(uint32_t), &offset));
+        VALIDATECALL(zeKernelSetArgumentValue(kernel, 4, sizeof(uint32_t), &offset));
+
+        ze_group_count_t dispatchTraits;
+        dispatchTraits.groupCountX = allocSize / groupSizeX;
+        dispatchTraits.groupCountY = 1u;
+        dispatchTraits.groupCountZ = 1u;
+
+        VALIDATECALL(zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
+                                                     nullptr, 0, nullptr));
+        file.close();
+    } else {
+        // Perform a GPU copy
+        VALIDATECALL(zeCommandListAppendMemoryCopy(cmdList, dstBuffer, srcBuffer, allocSize, nullptr, 0, nullptr));
+    }
 
     // Close list and submit for execution
     VALIDATECALL(zeCommandListClose(cmdList));
