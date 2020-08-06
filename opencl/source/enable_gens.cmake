@@ -97,8 +97,6 @@ macro(macro_for_each_gen)
 
   apply_macro_for_each_platform()
 
-  list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${NEO_SHARED_DIRECTORY}/${GEN_TYPE_LOWER}/image_core_${GEN_TYPE_LOWER}.cpp)
-
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
     string(REGEX REPLACE "/$" "" _BRANCH_FILENAME_SUFFIX "${BRANCH_DIR}")
     string(REGEX REPLACE "^/" "_" _BRANCH_FILENAME_SUFFIX "${_BRANCH_FILENAME_SUFFIX}")
@@ -107,6 +105,10 @@ macro(macro_for_each_gen)
     endif()
     if(EXISTS ${GENX_PREFIX}${BRANCH_DIR}linux/hw_info_config_${GEN_TYPE_LOWER}${_BRANCH_FILENAME_SUFFIX}.cpp)
       list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_LINUX ${GENX_PREFIX}${BRANCH_DIR}linux/hw_info_config_${GEN_TYPE_LOWER}${_BRANCH_FILENAME_SUFFIX}.cpp)
+    endif()
+    set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH_DIR}${GEN_TYPE_LOWER}/image_core_${GEN_TYPE_LOWER}.cpp)
+    if(EXISTS ${SRC_FILE})
+      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${SRC_FILE})
     endif()
   endforeach()
 
