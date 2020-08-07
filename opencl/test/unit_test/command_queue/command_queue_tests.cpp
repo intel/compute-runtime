@@ -1035,6 +1035,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsC
     kernel->getAllocatedKernelInfo()->usesSsh = true;
     auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
 
+    cmdQ.getGpgpuCommandStreamReceiver().allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
     cmdQ.setupDebugSurface(kernel.get());
 
     auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();

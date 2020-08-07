@@ -521,10 +521,6 @@ void CommandQueue::enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList
 bool CommandQueue::setupDebugSurface(Kernel *kernel) {
     auto debugSurface = getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation();
 
-    if (!debugSurface) {
-        debugSurface = getGpgpuCommandStreamReceiver().allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
-    }
-
     DEBUG_BREAK_IF(!kernel->requiresSshForBuffers());
 
     auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getSurfaceStateHeap()),

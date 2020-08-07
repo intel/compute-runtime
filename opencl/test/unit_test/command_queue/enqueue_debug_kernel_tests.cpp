@@ -202,4 +202,19 @@ HWTEST_F(EnqueueDebugKernelSimpleTest, givenKernelFromProgramWithoutDebugEnabled
     mockCmdQ->enqueueKernel(kernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
     ::testing::Mock::VerifyAndClearExpectations(mockCmdQ.get());
+    EXPECT_EQ(nullptr, mockCmdQ->getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation());
+}
+
+using ActiveDebuggerTest = EnqueueDebugKernelTest;
+
+HWTEST_F(ActiveDebuggerTest, givenKernelFromProgramWithoutDebugEnabledAndActiveDebuggerWhenEnqueuedThenDebugSurfaceIsSetup) {
+    MockProgram program(*pDevice->getExecutionEnvironment());
+    std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*pDevice, &program));
+    kernel->setContext(&context);
+    std::unique_ptr<CommandQueueHw<FamilyType>> cmdQ(new CommandQueueHw<FamilyType>(&context, pClDevice, nullptr, false));
+
+    size_t gws[] = {1, 1, 1};
+    cmdQ->enqueueKernel(kernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_NE(nullptr, cmdQ->getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation());
 }

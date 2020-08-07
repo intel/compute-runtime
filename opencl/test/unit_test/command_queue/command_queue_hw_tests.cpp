@@ -1297,7 +1297,7 @@ struct MockCommandQueueHwWithOverwrittenCsr : public CommandQueueHw<GfxFamily> {
 
 HWTEST_F(CommandQueueHwTest, givenFlushWhenFlushBatchedSubmissionsFailsThenErrorIsRetured) {
 
-    MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, device, nullptr, false);
+    MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, pClDevice, nullptr, false);
     MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->executionEnvironment, 0);
     cmdQueue.csr = &csr;
     cl_int errorCode = cmdQueue.flush();
@@ -1305,7 +1305,7 @@ HWTEST_F(CommandQueueHwTest, givenFlushWhenFlushBatchedSubmissionsFailsThenError
 }
 
 HWTEST_F(CommandQueueHwTest, givenFinishWhenFlushBatchedSubmissionsFailsThenErrorIsRetured) {
-    MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, device, nullptr, false);
+    MockCommandQueueHwWithOverwrittenCsr<FamilyType> cmdQueue(context, pClDevice, nullptr, false);
     MockCommandStreamReceiverWithFailingFlushBatchedSubmission csr(*pDevice->executionEnvironment, 0);
     cmdQueue.csr = &csr;
     cl_int errorCode = cmdQueue.finish();
