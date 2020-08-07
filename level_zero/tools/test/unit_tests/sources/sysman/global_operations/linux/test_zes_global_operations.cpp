@@ -178,5 +178,15 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileReadingNonExist
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysfsAccess->scanDirEntries("clients/7/busy", engineEntries));
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingResetVerifyPermissionDenied) {
+    ON_CALL(*pSysfsAccess.get(), getRealPath(_, Matcher<std::string &>(_)))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getRealPathVal));
+    ON_CALL(*pFsAccess.get(), canWrite(Matcher<std::string>(fullFunctionResetPath)))
+        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getPermissionDenied));
+    pGlobalOperationsImp->init();
+    ze_result_t result = zesDeviceReset(device, true);
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
+}
+
 } // namespace ult
 } // namespace L0

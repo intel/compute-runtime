@@ -147,30 +147,32 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
     std::vector<int> myPidFds;
     std::vector<::pid_t> processes;
 
-    // For all processes in the system, see if the process
-    // has this device open.
-    result = pProcfsAccess->listProcesses(processes);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-    for (auto &&pid : processes) {
-        std::vector<int> fds;
-        getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
-        if (pid == myPid) {
-            // L0 is expected to have this file open.
-            // Keep list of fds. Close before unbind.
-            myPidFds = fds;
-        } else if (!fds.empty()) {
-            // Device is in use by another process.
-            // Don't reset while in use.
-            return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
+    if (!force) {
+        // If not force, don't reset if any process
+        // has this device open.
+        result = pProcfsAccess->listProcesses(processes);
+        if (ZE_RESULT_SUCCESS != result) {
+            return result;
+        }
+        for (auto &&pid : processes) {
+            std::vector<int> fds;
+            getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
+            if (pid == myPid) {
+                // L0 is expected to have this file open.
+                // Keep list of fds. Close before unbind.
+                myPidFds = fds;
+            } else if (!fds.empty()) {
+                // Device is in use by another process.
+                // Don't reset while in use.
+                return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
+            }
         }
     }
 
     for (auto &&fd : myPidFds) {
         // Close open filedescriptors to the device
         // before unbinding device.
-        // From this point forward, there is
+        // From this point forward, there is no
         // graceful way to fail the reset call.
         // All future ze calls by this process for this
         // device will fail.
@@ -183,9 +185,9 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
         return result;
     }
 
-    // Verify no other process has the device open.
-    // This addresses the window between checking
-    // file handles above, and unbinding the device.
+    // If force is set (or someone opened the device
+    // after we checkd) there could be processes
+    // that have the device open. Kill them here.
     result = pProcfsAccess->listProcesses(processes);
     if (ZE_RESULT_SUCCESS != result) {
         return result;
@@ -194,9 +196,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
         std::vector<int> fds;
         getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
         if (!fds.empty()) {
-            // Process is using this device after we unbound it.
-            // Send a sigkill to the process to force it to close
-            // the device. Otherwise, the device cannot be rebound.
+            // Kill all processes that have the device open.
             ::kill(pid, SIGKILL);
         }
     }

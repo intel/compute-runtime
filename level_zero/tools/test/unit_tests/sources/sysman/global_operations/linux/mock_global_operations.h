@@ -39,11 +39,21 @@ const std::string engine2("2");
 const std::string engine3("3");
 std::string driverVersion("5.0.0-37-generic SMP mod_unload");
 std::string srcVersion("5.0.0-37");
+const std::string fullFunctionResetPath("/reset");
 
 class GlobalOperationsSysfsAccess : public SysfsAccess {};
 
 template <>
 struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
+    ze_result_t getRealPathVal(const std::string file, std::string &val) {
+        if (file.compare(functionLevelReset) == 0) {
+            val = fullFunctionResetPath;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
     ze_result_t getValString(const std::string file, std::string &val) {
         if (file.compare(subsystemVendorFile) == 0) {
             val = "0x8086";
@@ -131,6 +141,7 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
     MOCK_METHOD(ze_result_t, read, (const std::string file, std::string &val), (override));
     MOCK_METHOD(ze_result_t, read, (const std::string file, uint64_t &val), (override));
     MOCK_METHOD(ze_result_t, scanDirEntries, (const std::string path, std::vector<std::string> &list), (override));
+    MOCK_METHOD(ze_result_t, getRealPath, (const std::string path, std::string &val), (override));
 };
 
 class GlobalOperationsFsAccess : public FsAccess {};
@@ -168,9 +179,14 @@ struct Mock<GlobalOperationsFsAccess> : public GlobalOperationsFsAccess {
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     }
 
+    ze_result_t getPermissionDenied(const std::string file) {
+        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    }
+
     Mock<GlobalOperationsFsAccess>() = default;
 
     MOCK_METHOD(ze_result_t, read, (const std::string file, std::string &val), (override));
+    MOCK_METHOD(ze_result_t, canWrite, (const std::string file), (override));
 };
 
 class PublicLinuxGlobalOperationsImp : public L0::LinuxGlobalOperationsImp {
