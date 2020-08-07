@@ -194,6 +194,10 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_GT(count, 0u);
 
+    uint32_t testCount = count + 1;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDevicePciGetBars(device, &testCount, nullptr));
+    EXPECT_EQ(count, testCount);
+
     std::vector<zes_pci_bar_properties_t> pciBarProps(count);
     result = zesDevicePciGetBars(device, &count, pciBarProps.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

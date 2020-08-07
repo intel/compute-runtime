@@ -27,15 +27,6 @@ void TemperatureHandleContext::createHandle(zes_temp_sensors_t type) {
 }
 
 void TemperatureHandleContext::init() {
-    auto isSysmanEnabled = getenv("ZES_ENABLE_SYSMAN");
-    if (isSysmanEnabled != nullptr) {
-        auto isSysmanEnabledAsInt = atoi(isSysmanEnabled);
-        if (isSysmanEnabledAsInt == 1) {
-            createHandle(ZES_TEMP_SENSORS_GLOBAL);
-            createHandle(ZES_TEMP_SENSORS_GPU);
-        }
-        return;
-    }
     createHandle(ZES_TEMP_SENSORS_GLOBAL);
     createHandle(ZES_TEMP_SENSORS_GPU);
 }

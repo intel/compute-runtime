@@ -108,23 +108,6 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenPmtSupportAvailableWhenCheckingForTe
     }
 }
 
-TEST_F(SysmanDeviceTemperatureFixture, GivenSysmanEnvironmentVariableSetToZeroWhenCreatingTemperatureHandlesThenHandlesNotCreated) {
-    setenv("ZES_ENABLE_SYSMAN", "0", 1);
-    auto pTempHandleContextTest = std::make_unique<TemperatureHandleContext>(pOsSysman);
-    pTempHandleContextTest->init();
-    uint32_t count = 0;
-    std::vector<zes_temp_handle_t> handles(count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pTempHandleContextTest->temperatureGet(&count, handles.data()));
-    EXPECT_EQ(count, 0u);
-}
-
-TEST_F(SysmanDeviceTemperatureFixture, GivenSysmanEnvironmentVariableNotSetWhenCreatingTemperatureHandlesThenZetHandlesCreated) {
-    unsetenv("ZES_ENABLE_SYSMAN");
-    auto pTempHandleContextTestWithoutEnvSet = std::make_unique<TemperatureHandleContext>(pOsSysman);
-    pTempHandleContextTestWithoutEnvSet->init();
-    EXPECT_EQ(handleComponentCount, static_cast<uint32_t>(pTempHandleContextTestWithoutEnvSet->handleList.size()));
-}
-
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperaturePropertiesThenUnsupportedIsReturned) {
     auto handles = get_temp_handles(handleComponentCount);
     for (auto handle : handles) {

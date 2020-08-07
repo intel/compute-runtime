@@ -48,12 +48,13 @@ ze_result_t PciImp::pciStaticProperties(zes_pci_properties_t *pProperties) {
 }
 
 ze_result_t PciImp::pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) {
-    if (pProperties == nullptr) {
-        *pCount = static_cast<uint32_t>(pciBarProperties.size());
-        return ZE_RESULT_SUCCESS;
-    } else {
-        *pCount = std::min(*pCount, static_cast<uint32_t>(pciBarProperties.size()));
-        for (uint32_t i = 0; i < *pCount; i++) {
+    uint32_t pciBarPropertiesSize = static_cast<uint32_t>(pciBarProperties.size());
+    uint32_t numToCopy = std::min(*pCount, pciBarPropertiesSize);
+    if (0 == *pCount || *pCount > pciBarPropertiesSize) {
+        *pCount = pciBarPropertiesSize;
+    }
+    if (nullptr != pProperties) {
+        for (uint32_t i = 0; i < numToCopy; i++) {
             pProperties[i] = *pciBarProperties[i];
         }
     }
