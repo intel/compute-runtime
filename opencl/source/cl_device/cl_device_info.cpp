@@ -80,7 +80,6 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_BUILT_IN_KERNELS:                            getStr<CL_DEVICE_BUILT_IN_KERNELS                            >(src, srcSize, retSize); break;
     case CL_DEVICE_COMPILER_AVAILABLE:                          getCap<CL_DEVICE_COMPILER_AVAILABLE                          >(src, srcSize, retSize); break;
     case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:  getCap<CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL  >(src, srcSize, retSize); break;
-    case CL_DEVICE_DEVICE_ENQUEUE_SUPPORT:                      getCap<CL_DEVICE_DEVICE_ENQUEUE_SUPPORT                      >(src, srcSize, retSize); break;
     case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:               getCap<CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL               >(src, srcSize, retSize); break;
     case CL_DEVICE_DOUBLE_FP_CONFIG:                            getCap<CL_DEVICE_DOUBLE_FP_CONFIG                            >(src, srcSize, retSize); break;
     case CL_DEVICE_DRIVER_VERSION_INTEL:                        getCap<CL_DEVICE_DRIVER_VERSION_INTEL                        >(src, srcSize, retSize); break;
@@ -171,6 +170,15 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_VERSION:                                     getStr<CL_DEVICE_VERSION                                     >(src, srcSize, retSize); break;
     case CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT:     getCap<CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT     >(src, srcSize, retSize); break;
     case CL_DRIVER_VERSION:                                     getStr<CL_DRIVER_VERSION                                     >(src, srcSize, retSize); break; // clang-format on
+    case CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES:
+        if (paramValueSize == sizeof(cl_bool)) {
+            srcSize = retSize = sizeof(cl_bool);
+            param = (deviceInfo.deviceEnqueueSupport > 0u) ? CL_TRUE : CL_FALSE;
+            src = &param;
+        } else {
+            getCap<CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES>(src, srcSize, retSize);
+        }
+        break;
     case CL_DEVICE_NUM_SIMULTANEOUS_INTEROPS_INTEL:
         if (simultaneousInterops.size() > 1u) {
             srcSize = retSize = sizeof(cl_uint);

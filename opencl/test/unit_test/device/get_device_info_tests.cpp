@@ -598,13 +598,30 @@ TEST(GetDeviceInfo, WhenQueryingDeviceEnqueueSupportThenProperValueIsReturned) {
 
     cl_bool deviceEnqueueSupport;
     size_t paramRetSize;
-    const auto retVal = deviceFactory.rootDevices[0]->getDeviceInfo(CL_DEVICE_DEVICE_ENQUEUE_SUPPORT, sizeof(cl_bool),
+    const auto retVal = deviceFactory.rootDevices[0]->getDeviceInfo(CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES, sizeof(cl_bool),
                                                                     &deviceEnqueueSupport, &paramRetSize);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_bool), paramRetSize);
 
     cl_bool expectedDeviceEnqueueSupport = deviceFactory.rootDevices[0]->isDeviceEnqueueSupported() ? CL_TRUE : CL_FALSE;
     EXPECT_EQ(expectedDeviceEnqueueSupport, deviceEnqueueSupport);
+}
+
+TEST(GetDeviceInfo, WhenQueryingDeviceEnqueueCapabilitiesThenProperValueIsReturned) {
+    UltClDeviceFactory deviceFactory{1, 0};
+
+    cl_device_device_enqueue_capabilities deviceEnqueueCapabilities;
+    size_t paramRetSize;
+    const auto retVal = deviceFactory.rootDevices[0]->getDeviceInfo(CL_DEVICE_DEVICE_ENQUEUE_CAPABILITIES,
+                                                                    sizeof(cl_device_device_enqueue_capabilities),
+                                                                    &deviceEnqueueCapabilities, &paramRetSize);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_device_device_enqueue_capabilities), paramRetSize);
+
+    cl_device_device_enqueue_capabilities expectedDeviceEnqueueCapabilities = deviceFactory.rootDevices[0]->isDeviceEnqueueSupported()
+                                                                                  ? CL_DEVICE_QUEUE_SUPPORTED
+                                                                                  : 0u;
+    EXPECT_EQ(expectedDeviceEnqueueCapabilities, deviceEnqueueCapabilities);
 }
 
 TEST(GetDeviceInfo, WhenQueryingPipesSupportThenProperValueIsReturned) {
