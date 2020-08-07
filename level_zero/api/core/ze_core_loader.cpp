@@ -50,7 +50,7 @@ zeGetDriverProcAddrTable(
         if (nullptr == pDdiTable->pfnGetProperties) {
             pDdiTable->pfnGetProperties = driver_ddiTable.core_ddiTable.Driver.pfnGetProperties;
         }
-        pDdiTable->pfnGetIpcProperties = (ze_pfnDriverGetIpcProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDriverGetIPCProperties_Tracing");
+        pDdiTable->pfnGetIpcProperties = (ze_pfnDriverGetIpcProperties_t)GET_FUNCTION_PTR(driver_ddiTable.driverLibrary, "zeDriverGetIpcProperties_Tracing");
         if (nullptr == pDdiTable->pfnGetIpcProperties) {
             pDdiTable->pfnGetIpcProperties = driver_ddiTable.core_ddiTable.Driver.pfnGetIpcProperties;
         }
