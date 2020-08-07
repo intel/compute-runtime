@@ -1449,3 +1449,63 @@ TEST(DiscoverDevices, whenDriverInfoHasIncompatibleDriverStoreThenHwDeviceIdIsNo
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }
+
+TEST(VerifyHdcTest, givenHdcHandleFromCorrectAdapterLuidWhenVerifyHdcHandleIsCalledThenSuccessIsReturned) {
+    auto gdi = std::make_unique<MockGdi>();
+    auto osEnv = std::make_unique<OsEnvironmentWin>();
+    osEnv->gdi = std::move(gdi);
+
+    LUID adapterLuid = {0x1234, 0x5678};
+
+    VariableBackup<LUID> luidBackup(&MockGdi::adapterLuidToReturn, adapterLuid);
+
+    auto hwDeviceId = std::make_unique<HwDeviceId>(ADAPTER_HANDLE, adapterLuid, osEnv.get());
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.osEnvironment = std::move(osEnv);
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+
+    WddmMock wddm(std::move(hwDeviceId), rootDeviceEnvironment);
+
+    size_t hdcHandle = 0x1;
+
+    auto status = wddm.Wddm::verifyHdcHandle(hdcHandle);
+
+    EXPECT_TRUE(status);
+
+    status = wddm.Wddm::verifyHdcHandle(0u);
+
+    EXPECT_FALSE(status);
+}
+
+TEST(VerifyHdcTest, givenHdcHandleFromInvalidAdapterLuidWhenVerifyHdcHandleIsCalledThenFailureIsReturned) {
+    auto gdi = std::make_unique<MockGdi>();
+    auto osEnv = std::make_unique<OsEnvironmentWin>();
+    osEnv->gdi = std::move(gdi);
+
+    LUID adapterLuid = {0x1234, 0x5678};
+
+    VariableBackup<LUID> luidBackup(&MockGdi::adapterLuidToReturn);
+
+    auto hwDeviceId = std::make_unique<HwDeviceId>(ADAPTER_HANDLE, adapterLuid, osEnv.get());
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.osEnvironment = std::move(osEnv);
+    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
+
+    WddmMock wddm(std::move(hwDeviceId), rootDeviceEnvironment);
+
+    size_t hdcHandle = 0x1;
+
+    MockGdi::adapterLuidToReturn = {0x1233, 0x5678};
+
+    auto status = wddm.Wddm::verifyHdcHandle(hdcHandle);
+
+    EXPECT_FALSE(status);
+
+    MockGdi::adapterLuidToReturn = {0x1234, 0x5679};
+
+    status = wddm.Wddm::verifyHdcHandle(hdcHandle);
+
+    EXPECT_FALSE(status);
+}

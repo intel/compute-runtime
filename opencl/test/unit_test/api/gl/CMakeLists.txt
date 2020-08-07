@@ -15,7 +15,6 @@ if(WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_acquire_gl_objects_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_release_gl_objects_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_gl_device_info_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_gl_context_info_khr_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_gl_object_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_get_gl_texture_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_gl_intel_tracing_tests.cpp

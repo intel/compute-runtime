@@ -92,6 +92,8 @@ class Wddm {
 
     bool configureDeviceAddressSpace();
 
+    MOCKABLE_VIRTUAL bool verifyHdcHandle(size_t hdcHandle) const;
+
     GT_SYSTEM_INFO *getGtSysInfo() const {
         DEBUG_BREAK_IF(!gtSystemInfo);
         return gtSystemInfo.get();

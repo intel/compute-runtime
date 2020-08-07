@@ -22,7 +22,7 @@ inline const std::string getGdiName() {
 Gdi::Gdi() : gdiDll(getGdiName()),
              initialized(false) {
     if (gdiDll.isLoaded()) {
-        initialized = getAllProcAddresses();
+        initialized = Gdi::getAllProcAddresses();
     }
 }
 

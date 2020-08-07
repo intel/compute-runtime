@@ -46,6 +46,7 @@ class WddmMock : public Wddm {
     using Wddm::temporaryResources;
     using Wddm::wddmInterface;
 
+    WddmMock(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceId), rootDeviceEnvironment) {}
     WddmMock(RootDeviceEnvironment &rootDeviceEnvironment);
     ~WddmMock();
 
@@ -108,6 +109,9 @@ class WddmMock : public Wddm {
         ++counterVerifySharedHandle;
         return Wddm::verifySharedHandle(osHandle);
     }
+    bool verifyHdcHandle(size_t hdcHandle) const override {
+        return verifyHdcReturnValue;
+    }
 
     void resetGdi(Gdi *gdi);
 
@@ -147,6 +151,7 @@ class WddmMock : public Wddm {
     bool makeResidentStatus = true;
     bool callBaseMakeResident = true;
     bool callBaseCreatePagingLogger = true;
+    bool verifyHdcReturnValue = true;
 };
 
 struct GmockWddm : WddmMock {

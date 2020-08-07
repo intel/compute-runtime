@@ -1059,4 +1059,15 @@ void Wddm::createPagingFenceLogger() {
     }
 }
 
+bool Wddm::verifyHdcHandle(size_t hdcHandle) const {
+    D3DKMT_OPENADAPTERFROMHDC openAdapterFromHdcStruct{};
+    openAdapterFromHdcStruct.hDc = reinterpret_cast<HDC>(hdcHandle);
+    auto status = getGdi()->openAdapterFromHdc(&openAdapterFromHdcStruct);
+    if (STATUS_SUCCESS != status) {
+        DEBUG_BREAK_IF(true);
+        return false;
+    }
+    return openAdapterFromHdcStruct.AdapterLuid.HighPart == hwDeviceId->getAdapterLuid().HighPart && openAdapterFromHdcStruct.AdapterLuid.LowPart == hwDeviceId->getAdapterLuid().LowPart;
+}
+
 } // namespace NEO

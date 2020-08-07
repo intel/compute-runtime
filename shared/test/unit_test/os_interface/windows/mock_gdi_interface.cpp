@@ -9,4 +9,5 @@
 
 namespace NEO {
 UINT64 MockGdi::pagingFenceReturnValue = 0x3ull;
+LUID MockGdi::adapterLuidToReturn{};
 } // namespace NEO

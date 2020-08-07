@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/utilities/api_intercept.h"
 
 #include "opencl/source/api/api.h"
@@ -350,11 +351,23 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
     }
 
     if (paramName == CL_DEVICES_FOR_GL_CONTEXT_KHR || paramName == CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR) {
-        if (platform) {
-            info.set<cl_device_id>(platform->getClDevice(0));
-        } else {
-            info.set<cl_device_id>(platformsImpl[0]->getClDevice(0));
+        if (!platform) {
+            platform = platformsImpl[0].get();
         }
+
+        ClDevice *deviceToReturn = nullptr;
+        for (auto i = 0u; i < platform->getNumDevices(); i++) {
+            auto device = platform->getClDevice(i);
+            if (device->getRootDeviceEnvironment().osInterface->get()->getWddm()->verifyHdcHandle(GLHDCHandle)) {
+                deviceToReturn = device;
+                break;
+            }
+        }
+        if (!deviceToReturn) {
+            retVal = CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR;
+            return retVal;
+        }
+        info.set<cl_device_id>(deviceToReturn);
         return retVal;
     }
 
