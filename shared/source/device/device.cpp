@@ -153,7 +153,6 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
     }
 
     EngineControl engine{commandStreamReceiver.get(), osContext};
-    engine.engineType = engineType;
     engines.push_back(engine);
     if (!lowPriority && !internalUsage) {
         const auto &hardwareInfo = this->getHardwareInfo();

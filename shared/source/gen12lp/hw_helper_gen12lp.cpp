@@ -163,13 +163,13 @@ const HwHelper::EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInsta
 template <>
 void HwHelperHw<Family>::addEngineToEngineGroup(std::vector<std::vector<EngineControl>> &engineGroups,
                                                 EngineControl &engine, const HardwareInfo &hwInfo) const {
-    if (engine.engineType == aub_stream::ENGINE_RCS) {
+    if (engine.getEngineType() == aub_stream::ENGINE_RCS) {
         engineGroups[static_cast<uint32_t>(EngineGroupType::RenderCompute)].push_back(engine);
     }
-    if (engine.engineType == aub_stream::ENGINE_CCS) {
+    if (engine.getEngineType() == aub_stream::ENGINE_CCS) {
         engineGroups[static_cast<uint32_t>(EngineGroupType::Compute)].push_back(engine);
     }
-    if (engine.engineType == aub_stream::ENGINE_BCS) {
+    if (engine.getEngineType() == aub_stream::ENGINE_BCS) {
         engineGroups[static_cast<uint32_t>(EngineGroupType::Copy)].push_back(engine);
     }
 }
