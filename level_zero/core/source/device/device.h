@@ -122,6 +122,8 @@ struct Device : _ze_device_handle_t {
     virtual NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size) = 0;
     virtual void setSysmanHandle(SysmanDevice *pSysmanDevice) = 0;
     virtual SysmanDevice *getSysmanHandle() = 0;
+    virtual ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) = 0;
+    virtual ze_result_t mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) = 0;
 };
 
 } // namespace L0

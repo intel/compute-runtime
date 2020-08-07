@@ -273,9 +273,17 @@ TEST_F(ContextCreateCommandQueueTest, givenCallToContextCreateCommandQueueThenCa
 
 HWTEST_F(ContextCreateCommandQueueTest, givenEveryPossibleGroupIndexWhenCreatingCommandQueueThenCommandQueueIsCreated) {
     ze_command_queue_handle_t commandQueue = {};
+    auto engines = neoDevice->getEngineGroups();
+    uint32_t numaAvailableEngineGroups = 0;
     for (uint32_t ordinal = 0; ordinal < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups); ordinal++) {
-        auto engines = neoDevice->getEngineGroups();
-        for (uint32_t index = 0; index < engines[ordinal].size(); index++) {
+        if (engines[ordinal].size()) {
+            numaAvailableEngineGroups++;
+        }
+    }
+    for (uint32_t ordinal = 0; ordinal < numaAvailableEngineGroups; ordinal++) {
+        uint32_t engineGroupIndex = ordinal;
+        device->mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
+        for (uint32_t index = 0; index < engines[engineGroupIndex].size(); index++) {
             ze_command_queue_desc_t desc = {};
             desc.ordinal = ordinal;
             desc.index = index;
@@ -286,6 +294,23 @@ HWTEST_F(ContextCreateCommandQueueTest, givenEveryPossibleGroupIndexWhenCreating
             L0::CommandQueue::fromHandle(commandQueue)->destroy();
         }
     }
+}
+
+HWTEST_F(ContextCreateCommandQueueTest, givenOrdinalBigerThanAvailableEnginesWhenCreatingCommandQueueThenInvalidArgReturned) {
+    ze_command_queue_handle_t commandQueue = {};
+    auto engines = neoDevice->getEngineGroups();
+    uint32_t numaAvailableEngineGroups = 0;
+    for (uint32_t ordinal = 0; ordinal < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups); ordinal++) {
+        if (engines[ordinal].size()) {
+            numaAvailableEngineGroups++;
+        }
+    }
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = numaAvailableEngineGroups;
+    desc.index = 0;
+    ze_result_t res = context->createCommandQueue(device, &desc, &commandQueue);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+    EXPECT_EQ(nullptr, commandQueue);
 }
 
 using CommandQueueSynchronizeTest = Test<ContextFixture>;

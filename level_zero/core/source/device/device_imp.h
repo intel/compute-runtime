@@ -67,6 +67,7 @@ struct DeviceImp : public Device {
     void setDriverHandle(DriverHandle *driverHandle) override;
     NEO::PreemptionMode getDevicePreemptionMode() const override;
     const NEO::DeviceInfo &getDeviceInfo() const override;
+
     NEO::Device *getNEODevice() override;
     void activateMetricGroups() override;
     void processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_module_properties_t *pKernelProperties);
@@ -77,6 +78,8 @@ struct DeviceImp : public Device {
     NEO::GraphicsAllocation *allocateMemoryFromHostPtr(const void *buffer, size_t size) override;
     void setSysmanHandle(SysmanDevice *pSysman) override;
     SysmanDevice *getSysmanHandle() override;
+    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) override;
+    ze_result_t mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) override;
 
     NEO::Device *neoDevice = nullptr;
     bool isSubdevice = false;

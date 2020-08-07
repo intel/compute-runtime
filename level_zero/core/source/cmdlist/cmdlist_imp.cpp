@@ -68,16 +68,8 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                                           const ze_command_queue_desc_t *desc,
                                           bool internalUsage, bool isCopyOnly) {
 
-    auto deviceImp = static_cast<DeviceImp *>(device);
     NEO::CommandStreamReceiver *csr = nullptr;
-    if (internalUsage) {
-        csr = deviceImp->neoDevice->getInternalEngine().commandStreamReceiver;
-    } else if (isCopyOnly) {
-        auto &selectorCopyEngine = deviceImp->neoDevice->getDeviceById(0)->getSelectorCopyEngine();
-        csr = deviceImp->neoDevice->getDeviceById(0)->getEngine(NEO::EngineHelpers::getBcsEngineType(deviceImp->neoDevice->getHardwareInfo(), selectorCopyEngine), false).commandStreamReceiver;
-    } else {
-        csr = deviceImp->neoDevice->getDefaultEngine().commandStreamReceiver;
-    }
+    device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
 
     auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, isCopyOnly);
     if (!commandQueue) {

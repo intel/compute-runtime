@@ -179,6 +179,31 @@ TEST_F(CommandListCreate, whenCreatingImmediateCommandListThenItHasImmediateComm
     EXPECT_NE(nullptr, commandList->cmdQImmediate);
 }
 
+TEST_F(CommandListCreate, givenQueueDescriptionwhenCreatingImmediateCommandListForEveryEnigneThenItHasImmediateCommandQueueCreated) {
+    auto engines = neoDevice->getEngineGroups();
+    uint32_t numaAvailableEngineGroups = 0;
+    for (uint32_t ordinal = 0; ordinal < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups); ordinal++) {
+        if (engines[ordinal].size()) {
+            numaAvailableEngineGroups++;
+        }
+    }
+    for (uint32_t ordinal = 0; ordinal < numaAvailableEngineGroups; ordinal++) {
+        uint32_t engineGroupIndex = ordinal;
+        device->mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
+        for (uint32_t index = 0; index < engines[engineGroupIndex].size(); index++) {
+            ze_command_queue_desc_t desc = {};
+            desc.ordinal = ordinal;
+            desc.index = index;
+            std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, false));
+            ASSERT_NE(nullptr, commandList);
+
+            EXPECT_EQ(device, commandList->device);
+            EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->cmdListType);
+            EXPECT_NE(nullptr, commandList->cmdQImmediate);
+        }
+    }
+}
+
 TEST_F(CommandListCreate, givenInvalidProductFamilyThenReturnsNullPointer) {
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(IGFX_UNKNOWN, device, false));
     EXPECT_EQ(nullptr, commandList);

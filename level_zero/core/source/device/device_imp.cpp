@@ -95,11 +95,9 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
 ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t *desc,
                                                   ze_command_list_handle_t *phCommandList) {
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
-
-    bool useBliter = false;
-    if (desc->ordinal == static_cast<uint32_t>(NEO::EngineGroupType::Copy)) {
-        useBliter = true;
-    }
+    uint32_t engineGroupIndex = desc->ordinal;
+    mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
+    bool useBliter = engineGroupIndex == static_cast<uint32_t>(NEO::EngineGroupType::Copy);
     *phCommandList = CommandList::createImmediate(productFamily, this, desc, false, useBliter);
 
     return ZE_RESULT_SUCCESS;
@@ -110,22 +108,12 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
 
     NEO::CommandStreamReceiver *csr = nullptr;
-    bool useBliter = desc->ordinal == static_cast<uint32_t>(NEO::EngineGroupType::Copy);
-
-    if (desc->ordinal >= static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    if (this->getNEODevice()->getNumAvailableDevices() > 1) {
-        if (desc->index >= this->neoDevice->getDeviceById(0)->getEngineGroups()[desc->ordinal].size()) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
-        csr = this->neoDevice->getDeviceById(0)->getEngineGroups()[desc->ordinal][desc->index].commandStreamReceiver;
-    } else {
-        if (desc->index >= this->neoDevice->getEngineGroups()[desc->ordinal].size()) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-        }
-        csr = this->neoDevice->getEngineGroups()[desc->ordinal][desc->index].commandStreamReceiver;
+    uint32_t engineGroupIndex = desc->ordinal;
+    mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
+    bool useBliter = engineGroupIndex == static_cast<uint32_t>(NEO::EngineGroupType::Copy);
+    auto ret = getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
     }
 
     UNRECOVERABLE_IF(csr == nullptr);
@@ -725,4 +713,41 @@ NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer
     return allocation;
 }
 
+ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) {
+    if (ordinal >= static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    uint32_t engineGroupIndex = ordinal;
+    auto ret = mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+    if (this->getNEODevice()->getNumAvailableDevices() > 1) {
+        if (index >= this->neoDevice->getDeviceById(0)->getEngineGroups()[engineGroupIndex].size()) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        *csr = this->neoDevice->getDeviceById(0)->getEngineGroups()[engineGroupIndex][index].commandStreamReceiver;
+    } else {
+        if (index >= this->neoDevice->getEngineGroups()[engineGroupIndex].size()) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+        *csr = this->neoDevice->getEngineGroups()[engineGroupIndex][index].commandStreamReceiver;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+ze_result_t DeviceImp::mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) {
+    auto engines = this->getNEODevice()->getEngineGroups();
+    uint32_t numNonEmptyGroups = 0;
+    uint32_t i = 0;
+    for (; i < engines.size() && numNonEmptyGroups <= *ordinal; i++) {
+        if (!engines[i].empty()) {
+            numNonEmptyGroups++;
+        }
+    }
+    if (*ordinal + 1 > numNonEmptyGroups) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    *ordinal = i - 1;
+    return ZE_RESULT_SUCCESS;
+};
 } // namespace L0

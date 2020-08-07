@@ -252,6 +252,13 @@ struct Mock<Device> : public Device {
                 getSysmanHandle,
                 (),
                 (override));
+    ze_result_t getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr, uint32_t ordinal, uint32_t index) override {
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) override {
+        return ZE_RESULT_SUCCESS;
+    }
 };
 
 template <>
