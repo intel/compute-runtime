@@ -19,7 +19,6 @@ set(L0_SRCS_API
   ${CMAKE_CURRENT_SOURCE_DIR}/ze_image.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ze_memory.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ze_module.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/ze_residency.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ze_sampler.cpp
 )
 set_property(GLOBAL PROPERTY L0_SRCS_API ${L0_SRCS_API})

@@ -29,8 +29,6 @@ struct DeviceImp : public Device {
                              ze_module_build_log_handle_t *buildLog) override;
     ze_result_t createSampler(const ze_sampler_desc_t *pDesc,
                               ze_sampler_handle_t *phSampler) override;
-    ze_result_t evictImage(ze_image_handle_t hImage) override;
-    ze_result_t evictMemory(void *ptr, size_t size) override;
     ze_result_t getComputeProperties(ze_device_compute_properties_t *pComputeProperties) override;
     ze_result_t getP2PProperties(ze_device_handle_t hPeerDevice,
                                  ze_device_p2p_properties_t *pP2PProperties) override;
@@ -39,8 +37,6 @@ struct DeviceImp : public Device {
     ze_result_t getMemoryAccessProperties(ze_device_memory_access_properties_t *pMemAccessProperties) override;
     ze_result_t getProperties(ze_device_properties_t *pDeviceProperties) override;
     ze_result_t getSubDevices(uint32_t *pCount, ze_device_handle_t *phSubdevices) override;
-    ze_result_t makeImageResident(ze_image_handle_t hImage) override;
-    ze_result_t makeMemoryResident(void *ptr, size_t size) override;
     ze_result_t setIntermediateCacheConfig(ze_cache_config_flags_t cacheConfig) override;
     ze_result_t setLastLevelCacheConfig(ze_cache_config_flags_t cacheConfig) override;
     ze_result_t getCacheProperties(uint32_t *pCount, ze_device_cache_properties_t *pCacheProperties) override;

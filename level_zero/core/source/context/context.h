@@ -38,6 +38,14 @@ struct Context : _ze_context_handle_t {
                                        size_t alignment,
                                        void **ptr) = 0;
     virtual ze_result_t freeMem(const void *ptr) = 0;
+    virtual ze_result_t makeMemoryResident(ze_device_handle_t hDevice,
+                                           void *ptr,
+                                           size_t size) = 0;
+    virtual ze_result_t evictMemory(ze_device_handle_t hDevice,
+                                    void *ptr,
+                                    size_t size) = 0;
+    virtual ze_result_t makeImageResident(ze_device_handle_t hDevice, ze_image_handle_t hImage) = 0;
+    virtual ze_result_t evictImage(ze_device_handle_t hDevice, ze_image_handle_t hImage) = 0;
     virtual ze_result_t getMemAddressRange(const void *ptr,
                                            void **pBase,
                                            size_t *pSize) = 0;

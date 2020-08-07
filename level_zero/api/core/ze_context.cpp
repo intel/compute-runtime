@@ -120,7 +120,7 @@ zeContextMakeMemoryResident(
     ze_device_handle_t hDevice,
     void *ptr,
     size_t size) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Context::fromHandle(hContext)->makeMemoryResident(hDevice, ptr, size);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -129,7 +129,7 @@ zeContextEvictMemory(
     ze_device_handle_t hDevice,
     void *ptr,
     size_t size) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Context::fromHandle(hContext)->evictMemory(hDevice, ptr, size);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -137,7 +137,7 @@ zeContextMakeImageResident(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
     ze_image_handle_t hImage) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Context::fromHandle(hContext)->makeImageResident(hDevice, hImage);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -145,5 +145,5 @@ zeContextEvictImage(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
     ze_image_handle_t hImage) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Context::fromHandle(hContext)->evictImage(hDevice, hImage);
 }

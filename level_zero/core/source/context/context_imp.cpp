@@ -7,7 +7,11 @@
 
 #include "level_zero/core/source/context/context_imp.h"
 
+#include "shared/source/memory_manager/memory_operations_handler.h"
+
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/image/image.h"
+#include "level_zero/core/source/memory/memory_operations_helper.h"
 
 namespace L0 {
 
@@ -70,6 +74,48 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
 ze_result_t ContextImp::freeMem(const void *ptr) {
     DEBUG_BREAK_IF(nullptr == this->driverHandle);
     return this->driverHandle->freeMem(ptr);
+}
+
+ze_result_t ContextImp::makeMemoryResident(ze_device_handle_t hDevice, void *ptr, size_t size) {
+    auto alloc = getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    if (alloc == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    NEO::Device *neoDevice = L0::Device::fromHandle(hDevice)->getNEODevice();
+    NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    auto gpuAllocation = alloc->gpuAllocations.getGraphicsAllocation(neoDevice->getRootDeviceIndex());
+    auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&gpuAllocation, 1));
+    return changeMemoryOperationStatusToL0ResultType(success);
+}
+
+ze_result_t ContextImp::evictMemory(ze_device_handle_t hDevice, void *ptr, size_t size) {
+    auto alloc = getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    if (alloc == nullptr) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    NEO::Device *neoDevice = L0::Device::fromHandle(hDevice)->getNEODevice();
+    NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    auto success = memoryOperationsIface->evict(neoDevice, *alloc->gpuAllocations.getGraphicsAllocation(neoDevice->getRootDeviceIndex()));
+    return changeMemoryOperationStatusToL0ResultType(success);
+}
+
+ze_result_t ContextImp::makeImageResident(ze_device_handle_t hDevice, ze_image_handle_t hImage) {
+    auto alloc = Image::fromHandle(hImage)->getAllocation();
+
+    NEO::Device *neoDevice = L0::Device::fromHandle(hDevice)->getNEODevice();
+    NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1));
+    return changeMemoryOperationStatusToL0ResultType(success);
+}
+ze_result_t ContextImp::evictImage(ze_device_handle_t hDevice, ze_image_handle_t hImage) {
+    auto alloc = Image::fromHandle(hImage)->getAllocation();
+
+    NEO::Device *neoDevice = L0::Device::fromHandle(hDevice)->getNEODevice();
+    NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
+    auto success = memoryOperationsIface->evict(neoDevice, *alloc);
+    return changeMemoryOperationStatusToL0ResultType(success);
 }
 
 ze_result_t ContextImp::getMemAddressRange(const void *ptr,

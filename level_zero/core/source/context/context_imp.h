@@ -33,6 +33,14 @@ struct ContextImp : Context {
                                size_t alignment,
                                void **ptr) override;
     ze_result_t freeMem(const void *ptr) override;
+    ze_result_t makeMemoryResident(ze_device_handle_t hDevice,
+                                   void *ptr,
+                                   size_t size) override;
+    ze_result_t evictMemory(ze_device_handle_t hDevice,
+                            void *ptr,
+                            size_t size) override;
+    ze_result_t makeImageResident(ze_device_handle_t hDevice, ze_image_handle_t hImage) override;
+    ze_result_t evictImage(ze_device_handle_t hDevice, ze_image_handle_t hImage) override;
     ze_result_t getMemAddressRange(const void *ptr,
                                    void **pBase,
                                    size_t *pSize) override;

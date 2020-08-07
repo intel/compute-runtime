@@ -77,15 +77,6 @@ struct Mock<Device> : public Device {
                  ze_sampler_handle_t *phSampler),
                 (override));
     MOCK_METHOD(ze_result_t,
-                evictImage,
-                (ze_image_handle_t hImage),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                evictMemory,
-                (void *ptr,
-                 size_t size),
-                (override));
-    MOCK_METHOD(ze_result_t,
                 getComputeProperties,
                 (ze_device_compute_properties_t * pComputeProperties),
                 (override));
@@ -115,15 +106,6 @@ struct Mock<Device> : public Device {
                 getSubDevices,
                 (uint32_t * pCount,
                  ze_device_handle_t *phSubdevices),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                makeImageResident,
-                (ze_image_handle_t hImage),
-                (override));
-    MOCK_METHOD(ze_result_t,
-                makeMemoryResident,
-                (void *ptr,
-                 size_t size),
                 (override));
     MOCK_METHOD(ze_result_t,
                 setIntermediateCacheConfig,

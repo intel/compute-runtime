@@ -20,7 +20,6 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
@@ -36,7 +35,6 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/image/image.h"
-#include "level_zero/core/source/memory/memory_operations_helper.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 #include "level_zero/core/source/sampler/sampler.h"
@@ -212,23 +210,6 @@ ze_result_t DeviceImp::createModule(const ze_module_desc_t *desc, ze_module_hand
     *module = modulePtr;
 
     return ZE_RESULT_SUCCESS;
-}
-
-ze_result_t DeviceImp::evictImage(ze_image_handle_t hImage) {
-    auto alloc = Image::fromHandle(hImage)->getAllocation();
-    NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto success = memoryOperationsIface->evict(neoDevice, *alloc);
-    return changeMemoryOperationStatusToL0ResultType(success);
-}
-
-ze_result_t DeviceImp::evictMemory(void *ptr, size_t size) {
-    auto alloc = getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    if (alloc == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-    NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto success = memoryOperationsIface->evict(neoDevice, *alloc->gpuAllocations.getGraphicsAllocation(getRootDeviceIndex()));
-    return changeMemoryOperationStatusToL0ResultType(success);
 }
 
 ze_result_t DeviceImp::getComputeProperties(ze_device_compute_properties_t *pComputeProperties) {
@@ -423,24 +404,6 @@ ze_result_t DeviceImp::getSubDevices(uint32_t *pCount, ze_device_handle_t *phSub
     }
 
     return ZE_RESULT_SUCCESS;
-}
-
-ze_result_t DeviceImp::makeImageResident(ze_image_handle_t hImage) {
-    auto alloc = Image::fromHandle(hImage)->getAllocation();
-    NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1));
-    return changeMemoryOperationStatusToL0ResultType(success);
-}
-
-ze_result_t DeviceImp::makeMemoryResident(void *ptr, size_t size) {
-    auto alloc = getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
-    if (alloc == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-    NEO::MemoryOperationsHandler *memoryOperationsIface = neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    auto gpuAllocation = alloc->gpuAllocations.getGraphicsAllocation(getRootDeviceIndex());
-    auto success = memoryOperationsIface->makeResident(neoDevice, ArrayRef<NEO::GraphicsAllocation *>(&gpuAllocation, 1));
-    return changeMemoryOperationStatusToL0ResultType(success);
 }
 
 ze_result_t DeviceImp::setIntermediateCacheConfig(ze_cache_config_flags_t cacheConfig) {

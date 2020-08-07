@@ -64,6 +64,28 @@ struct Mock<Context> : public Context {
                  void **ptr),
                 (override));
     MOCK_METHOD(ze_result_t,
+                makeMemoryResident,
+                (ze_device_handle_t hDevice,
+                 void *ptr,
+                 size_t size),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                evictMemory,
+                (ze_device_handle_t hDevice,
+                 void *ptr,
+                 size_t size),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                makeImageResident,
+                (ze_device_handle_t hDevice,
+                 ze_image_handle_t hImage),
+                (override));
+    MOCK_METHOD(ze_result_t,
+                evictImage,
+                (ze_device_handle_t hDevice,
+                 ze_image_handle_t hImage),
+                (override));
+    MOCK_METHOD(ze_result_t,
                 freeMem,
                 (const void *ptr),
                 (override));
