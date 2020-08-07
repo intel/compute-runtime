@@ -46,11 +46,13 @@ template <typename GfxFamily, typename Dispatcher>
 struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, Dispatcher> {
     using BaseClass = DrmDirectSubmission<GfxFamily, Dispatcher>;
     using BaseClass::allocateResources;
+    using BaseClass::currentTagData;
     using BaseClass::DrmDirectSubmission;
     using BaseClass::getTagAddressValue;
     using BaseClass::handleResidency;
     using BaseClass::submit;
     using BaseClass::switchRingBuffers;
+    using BaseClass::tagAddress;
     using BaseClass::updateTagValue;
 };
 
@@ -74,8 +76,8 @@ HWTEST_F(DrmDirectSubmissionTest, givenDrmDirectSubmissionWhenCallingLinuxImplem
 
     TagData tagData = {1ull, 1ull};
     drmDirectSubmission.getTagAddressValue(tagData);
-    EXPECT_EQ(0ull, tagData.tagAddress);
-    EXPECT_EQ(0ull, tagData.tagValue);
+    EXPECT_EQ(drmDirectSubmission.currentTagData.tagAddress, tagData.tagAddress);
+    EXPECT_EQ(drmDirectSubmission.currentTagData.tagValue + 1, tagData.tagValue);
 }
 
 HWTEST_F(DrmDirectSubmissionTest, whenCreateDirectSubmissionThenValidObjectIsReturned) {

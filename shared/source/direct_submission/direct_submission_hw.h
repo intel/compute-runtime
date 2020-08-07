@@ -19,7 +19,7 @@ namespace NEO {
 struct RingSemaphoreData {
     uint32_t QueueWorkCount;
     uint8_t ReservedCacheline[60];
-    uint32_t Reserved1Uint32;
+    uint32_t tagAllocation;
     uint32_t Reserved2Uint32;
     uint32_t Reserved3Uint32;
     uint32_t Reserved4Uint32;

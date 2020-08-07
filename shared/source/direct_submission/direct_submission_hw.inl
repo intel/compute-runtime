@@ -86,7 +86,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
     memset(semaphorePtr, 0, sizeof(RingSemaphoreData));
     semaphoreData->QueueWorkCount = 0;
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
-    workloadModeOneStoreAddress = static_cast<volatile void *>(&semaphoreData->Reserved1Uint32);
+    workloadModeOneStoreAddress = static_cast<volatile void *>(&semaphoreData->Reserved4Uint32);
     *static_cast<volatile uint32_t *>(workloadModeOneStoreAddress) = 0u;
 
     auto ret = makeResourcesResident(allocations);

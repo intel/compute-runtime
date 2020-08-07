@@ -461,7 +461,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_EQ(0x40u + 1u, storeData->getDataDword0());
     uint64_t expectedGpuVa = directSubmission.semaphoreGpuVa;
     auto semaphore = static_cast<RingSemaphoreData *>(directSubmission.semaphorePtr);
-    expectedGpuVa += ptrDiff(&semaphore->Reserved1Uint32, directSubmission.semaphorePtr);
+    expectedGpuVa += ptrDiff(&semaphore->Reserved4Uint32, directSubmission.semaphorePtr);
     EXPECT_EQ(expectedGpuVa, storeData->getAddress());
 }
 

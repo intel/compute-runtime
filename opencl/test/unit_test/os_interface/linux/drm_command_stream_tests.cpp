@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/gmm_helper/resource_info.h"
@@ -1288,7 +1289,6 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, FlushNotAligned) {
 }
 
 struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTest {
-
     template <typename GfxFamily>
     void SetUpT() {
         DebugManager.flags.EnableDirectSubmission.set(1u);
@@ -1308,6 +1308,11 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
     DebugManagerStateRestore restorer;
 };
 
+template <typename GfxFamily>
+struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
+    using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::currentTagData;
+};
+
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenFlushThenFlushStampIsNotUpdated) {
     auto &cs = csr->getCS();
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
@@ -1320,6 +1325,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     EXPECT_EQ(csr->obtainCurrentFlushStamp(), flushStamp);
+
+    auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get();
+    static_cast<MockDrmDirectSubmission<FamilyType> *>(directSubmission)->currentTagData.tagValue = 0u;
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenFlushThenCommandBufferAllocationIsResident) {
@@ -1334,6 +1342,9 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
 
     auto memoryOperationsInterface = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get();
     EXPECT_EQ(memoryOperationsInterface->isResident(device.get(), *batchBuffer.commandBufferAllocation), MemoryOperationsStatus::SUCCESS);
+
+    auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get();
+    static_cast<MockDrmDirectSubmission<FamilyType> *>(directSubmission)->currentTagData.tagValue = 0u;
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, CheckDrmFree) {

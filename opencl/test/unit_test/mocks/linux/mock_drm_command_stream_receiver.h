@@ -17,6 +17,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::makeResident;
     using DrmCommandStreamReceiver<GfxFamily>::residency;
+    using CommandStreamReceiverHw<GfxFamily>::directSubmission;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::lastSentSliceCount;
 
     TestedDrmCommandStreamReceiver(gemCloseWorkerMode mode, ExecutionEnvironment &executionEnvironment)

@@ -24,15 +24,14 @@ inline std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> DirectSubmissi
 template <typename GfxFamily, typename Dispatcher>
 DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(Device &device,
                                                                 OsContext &osContext)
-    : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext) {
-    this->disableMonitorFence = true;
-}
+    : DirectSubmissionHw<GfxFamily, Dispatcher>(device, osContext){};
 
 template <typename GfxFamily, typename Dispatcher>
 inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
     if (this->ringStart) {
+        this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
         this->stopRingBuffer();
-        auto bb = static_cast<DrmAllocation *>(this->ringCommandStream.getGraphicsAllocation())->getBO();
+        auto bb = static_cast<DrmAllocation *>(this->ringBuffer)->getBO();
         bb->wait(-1);
     }
     this->deallocateResources();
@@ -40,6 +39,9 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
+    this->currentTagData.tagAddress = this->semaphoreGpuVa + MemoryConstants::cacheLineSize;
+    this->currentTagData.tagValue = 0u;
+    this->tagAddress = reinterpret_cast<volatile uint32_t *>(reinterpret_cast<uint8_t *>(this->semaphorePtr) + MemoryConstants::cacheLineSize);
     return true;
 }
 
@@ -76,16 +78,30 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
+    if (this->ringStart) {
+        if (this->completionRingBuffers[this->currentRingBuffer] != 0) {
+            this->wait(static_cast<uint32_t>(this->completionRingBuffers[this->currentRingBuffer]));
+        }
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>
 uint64_t DrmDirectSubmission<GfxFamily, Dispatcher>::updateTagValue() {
+    this->currentTagData.tagValue++;
+    this->completionRingBuffers[this->currentRingBuffer] = this->currentTagData.tagValue;
     return 0ull;
 }
 
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::getTagAddressValue(TagData &tagData) {
-    tagData.tagAddress = 0ull;
-    tagData.tagValue = 0ull;
+    tagData.tagAddress = this->currentTagData.tagAddress;
+    tagData.tagValue = this->currentTagData.tagValue + 1;
 }
+
+template <typename GfxFamily, typename Dispatcher>
+void DrmDirectSubmission<GfxFamily, Dispatcher>::wait(uint32_t taskCountToWait) {
+    while (taskCountToWait > *this->tagAddress) {
+    }
+}
+
 } // namespace NEO
