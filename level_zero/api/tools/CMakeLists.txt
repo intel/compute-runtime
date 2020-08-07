@@ -6,6 +6,7 @@
 
 set(L0_TOOLS_API
     ${CMAKE_CURRENT_SOURCE_DIR}/ze_tools_loader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/zet_debug.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/zet_metric.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/zet_module.cpp
 )
