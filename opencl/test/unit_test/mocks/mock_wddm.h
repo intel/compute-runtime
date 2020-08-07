@@ -88,6 +88,7 @@ class WddmMock : public Wddm {
     uint64_t *getPagingFenceAddress() override;
     void waitOnPagingFenceFromCpu() override;
     void createPagingFenceLogger() override;
+    bool verifyAdapterLuid(LUID adapterLuid) const override { return verifyAdapterLuidReturnValue; }
 
     bool configureDeviceAddressSpace() {
         configureDeviceAddressSpaceResult.called++;
@@ -140,6 +141,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult waitOnPagingFenceFromCpuResult;
 
     NTSTATUS createAllocationStatus = STATUS_SUCCESS;
+    bool verifyAdapterLuidReturnValue = true;
     bool mapGpuVaStatus = true;
     bool callBaseDestroyAllocations = true;
     bool failOpenSharedHandle = false;

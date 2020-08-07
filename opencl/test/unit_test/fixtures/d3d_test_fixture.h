@@ -93,6 +93,8 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     }
 
     void SetUp() override {
+        VariableBackup<UltHwConfig> backup(&ultHwConfig);
+        ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
         PlatformFixture::SetUp();
         rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
         context = new MockContext(pPlatform->getClDevice(0));

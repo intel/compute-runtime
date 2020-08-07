@@ -902,6 +902,10 @@ PFND3DKMT_ESCAPE Wddm::getEscapeHandle() const {
     return getGdi()->escape;
 }
 
+bool Wddm::verifyAdapterLuid(LUID adapterLuid) const {
+    return adapterLuid.HighPart == hwDeviceId->getAdapterLuid().HighPart && adapterLuid.LowPart == hwDeviceId->getAdapterLuid().LowPart;
+}
+
 VOID *Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) {
     if (DebugManager.flags.DoNotRegisterTrimCallback.get()) {
         return nullptr;

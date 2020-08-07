@@ -119,6 +119,7 @@ class Wddm {
     D3DKMT_HANDLE getPagingQueue() const { return pagingQueue; }
     D3DKMT_HANDLE getPagingQueueSyncObject() const { return pagingQueueSyncObject; }
     inline Gdi *getGdi() const { return hwDeviceId->getGdi(); }
+    MOCKABLE_VIRTUAL bool verifyAdapterLuid(LUID adapterLuid) const;
 
     PFND3DKMT_ESCAPE getEscapeHandle() const;
 

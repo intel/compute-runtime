@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/windows/os_interface.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
@@ -18,6 +19,7 @@
 #include "opencl/source/sharings/d3d/d3d_surface.h"
 #include "opencl/source/sharings/d3d/d3d_texture.h"
 #include "opencl/test/unit_test/fixtures/d3d_test_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_wddm.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -562,14 +564,11 @@ INSTANTIATE_TYPED_TEST_CASE_P(D3DSharingTests, D3DTests, D3DTypes);
 
 using D3D10Test = D3DTests<D3DTypesHelper::D3D10>;
 
-TEST_F(D3D10Test, givenIncompatibleD3DAdapterWhenGettingDeviceIdsThenNoDevicesAreReturned) {
+TEST_F(D3D10Test, givenIncompatibleAdapterLuidWhenGettingDeviceIdsThenNoDevicesAreReturned) {
     cl_device_id deviceID;
     cl_uint numDevices = 15;
-    auto clAdapterId = context->getDevice(0)->getHardwareInfo().platform.usDeviceID;
-    auto d3dAdapterId = clAdapterId + 1;
-    mockSharingFcns->mockDxgiDesc.DeviceId = d3dAdapterId;
+    static_cast<WddmMock *>(context->getDevice(0)->getRootDeviceEnvironment().osInterface->get()->getWddm())->verifyAdapterLuidReturnValue = false;
 
-    EXPECT_NE(clAdapterId, d3dAdapterId);
     auto retVal = clGetDeviceIDsFromD3D10KHR(pPlatform, CL_D3D10_DEVICE_KHR, nullptr, CL_ALL_DEVICES_FOR_D3D10_KHR, 1, &deviceID, &numDevices);
 
     EXPECT_EQ(CL_DEVICE_NOT_FOUND, retVal);
@@ -578,14 +577,11 @@ TEST_F(D3D10Test, givenIncompatibleD3DAdapterWhenGettingDeviceIdsThenNoDevicesAr
 
 using D3D11Test = D3DTests<D3DTypesHelper::D3D11>;
 
-TEST_F(D3D11Test, givenIncompatibleD3DAdapterWhenGettingDeviceIdsThenNoDevicesAreReturned) {
+TEST_F(D3D11Test, givenIncompatibleAdapterLuidWhenGettingDeviceIdsThenNoDevicesAreReturned) {
     cl_device_id deviceID;
     cl_uint numDevices = 15;
-    auto clAdapterId = context->getDevice(0)->getHardwareInfo().platform.usDeviceID;
-    auto d3dAdapterId = clAdapterId + 1;
-    mockSharingFcns->mockDxgiDesc.DeviceId = d3dAdapterId;
+    static_cast<WddmMock *>(context->getDevice(0)->getRootDeviceEnvironment().osInterface->get()->getWddm())->verifyAdapterLuidReturnValue = false;
 
-    EXPECT_NE(clAdapterId, d3dAdapterId);
     auto retVal = clGetDeviceIDsFromD3D11KHR(pPlatform, CL_D3D11_DEVICE_KHR, nullptr, CL_ALL_DEVICES_FOR_D3D11_KHR, 1, &deviceID, &numDevices);
 
     EXPECT_EQ(CL_DEVICE_NOT_FOUND, retVal);
