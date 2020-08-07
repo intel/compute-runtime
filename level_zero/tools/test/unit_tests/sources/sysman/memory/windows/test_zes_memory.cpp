@@ -5,10 +5,9 @@
  *
  */
 
-#include "level_zero/tools/source/sysman/sysman_imp.h"
-#include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
-
-#include "mock_memory.h"
+#include "level_zero/tools/source/sysman/memory/windows/os_memory_imp.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/memory/windows/mock_memory.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
 namespace L0 {
 namespace ult {
@@ -16,27 +15,26 @@ namespace ult {
 constexpr uint32_t memoryHandleComponentCount = 1u;
 class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
   protected:
-    Mock<MemoryNeoDrm> *pDrm = nullptr;
-    Drm *pOriginalDrm = nullptr;
-
+    Mock<MemoryKmdSysManager> *pKmdSysManager = nullptr;
+    KmdSysManager *pOriginalKmdSysManager = nullptr;
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
 
         pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
+
         pMemoryManager = new ::testing::NiceMock<MockMemoryManagerSysman>(*neoDevice->getExecutionEnvironment());
+
         pMemoryManager->localMemorySupported[0] = false;
+
         device->getDriverHandle()->setMemoryManager(pMemoryManager);
 
-        pDrm = new NiceMock<Mock<MemoryNeoDrm>>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
+        pKmdSysManager = new Mock<MemoryKmdSysManager>;
 
-        pSysmanDevice = device->getSysmanHandle();
-        pSysmanDeviceImp = static_cast<SysmanDeviceImp *>(pSysmanDevice);
-        pOsSysman = pSysmanDeviceImp->pOsSysman;
-        pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
-        pLinuxSysmanImp->pDrm = pDrm;
+        EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))
+            .WillRepeatedly(::testing::Invoke(pKmdSysManager, &Mock<MemoryKmdSysManager>::mock_escape));
 
-        ON_CALL(*pDrm, queryMemoryInfo())
-            .WillByDefault(::testing::Invoke(pDrm, &Mock<MemoryNeoDrm>::queryMemoryInfoMockPositiveTest));
+        pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
+        pWddmSysmanImp->pKmdSysManager = pKmdSysManager;
 
         for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
             delete handle;
@@ -49,10 +47,10 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     void TearDown() override {
         device->getDriverHandle()->setMemoryManager(pMemoryManagerOld);
         SysmanDeviceFixture::TearDown();
-        pLinuxSysmanImp->pDrm = pOriginalDrm;
-        if (pDrm != nullptr) {
-            delete pDrm;
-            pDrm = nullptr;
+        pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
+        if (pKmdSysManager != nullptr) {
+            delete pKmdSysManager;
+            pKmdSysManager = nullptr;
         }
         if (pMemoryManager != nullptr) {
             delete pMemoryManager;
@@ -150,6 +148,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryMo
 }
 
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetPropertiesWithLocalMemoryThenVerifySysmanMemoryGetPropertiesCallSucceeds) {
+    pKmdSysManager->mockMemoryLocation = KmdSysman::MemoryLocationsType::DeviceMemory;
     setLocalSupportedAndReinit(true);
 
     auto handles = get_memory_handles(memoryHandleComponentCount);
@@ -160,19 +159,18 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemo
         ze_result_t result = zesMemoryGetProperties(handle, &properties);
 
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-        EXPECT_EQ(properties.type, ZES_MEM_TYPE_DDR);
+        EXPECT_EQ(properties.type, ZES_MEM_TYPE_DDR5);
         EXPECT_EQ(properties.location, ZES_MEM_LOC_DEVICE);
         EXPECT_FALSE(properties.onSubdevice);
         EXPECT_EQ(properties.subdeviceId, 0u);
-        EXPECT_EQ(properties.physicalSize, 0u);
-        EXPECT_EQ(properties.numChannels, -1);
-        EXPECT_EQ(properties.busWidth, -1);
+        EXPECT_EQ(properties.physicalSize, pKmdSysManager->mockMemoryPhysicalSize);
+        EXPECT_EQ(properties.numChannels, pKmdSysManager->mockMemoryChannels);
+        EXPECT_EQ(properties.busWidth, pKmdSysManager->mockMemoryBus);
     }
 }
 
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetStatehenVerifySysmanMemoryGetStateCallSucceeds) {
     setLocalSupportedAndReinit(true);
-
     auto handles = get_memory_handles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
@@ -182,48 +180,27 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemo
 
         EXPECT_EQ(result, ZE_RESULT_SUCCESS);
         EXPECT_EQ(state.health, ZES_MEM_HEALTH_OK);
-        EXPECT_EQ(state.size, probedSizeRegionOne);
-        EXPECT_EQ(state.free, unallocatedSizeRegionOne);
+        EXPECT_GT(state.size, 0u);
+        EXPECT_GT(state.free, 0u);
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetBandwidthhenVerifySysmanMemoryGetBandwidthCallReturnUnsupportedFeature) {
+TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetBandwidthhenVerifySysmanMemoryGetBandwidthCallSucceeds) {
     setLocalSupportedAndReinit(true);
-
     auto handles = get_memory_handles(memoryHandleComponentCount);
 
     for (auto handle : handles) {
         zes_mem_bandwidth_t bandwidth;
-        EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+        ze_result_t result = zesMemoryGetBandwidth(handle, &bandwidth);
+
+        EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+        EXPECT_EQ(bandwidth.maxBandwidth, pKmdSysManager->mockMemoryMaxBandwidth);
+        EXPECT_EQ(bandwidth.readCounter, pKmdSysManager->mockMemoryCurrentBandwidth * MbpsToBytesPerSecond);
+        EXPECT_EQ(bandwidth.writeCounter, 0u);
+        EXPECT_GT(bandwidth.timestamp, 0u);
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetStateAndIfQueryMemoryInfoFailsThenErrorIsReturned) {
-    setLocalSupportedAndReinit(true);
-
-    ON_CALL(*pDrm, queryMemoryInfo())
-        .WillByDefault(::testing::Invoke(pDrm, &Mock<MemoryNeoDrm>::queryMemoryInfoMockReturnFalse));
-
-    auto handles = get_memory_handles(memoryHandleComponentCount);
-
-    for (auto handle : handles) {
-        zes_mem_state_t state;
-        EXPECT_EQ(zesMemoryGetState(handle, &state), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    }
-}
-
-TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemoryGetStateAndIfQueryMemoryDidntProvideDeviceMemoryThenErrorIsReturned) {
-    setLocalSupportedAndReinit(true);
-
-    ON_CALL(*pDrm, queryMemoryInfo())
-        .WillByDefault(::testing::Invoke(pDrm, &Mock<MemoryNeoDrm>::queryMemoryInfoMockWithoutDevice));
-
-    auto handles = get_memory_handles(memoryHandleComponentCount);
-
-    for (auto handle : handles) {
-        zes_mem_state_t state;
-        EXPECT_EQ(zesMemoryGetState(handle, &state), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    }
-}
 } // namespace ult
 } // namespace L0

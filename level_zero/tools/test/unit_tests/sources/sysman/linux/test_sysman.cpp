@@ -7,7 +7,7 @@
 
 #include "test.h"
 
-#include "level_zero/tools/test/unit_tests/sources/sysman/mock_sysman_fixture.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
 namespace L0 {
 namespace ult {

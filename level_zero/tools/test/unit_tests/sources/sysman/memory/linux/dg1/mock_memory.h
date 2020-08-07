@@ -9,11 +9,12 @@
 #include "shared/source/os_interface/linux/memory_info_impl.h"
 
 #include "level_zero/core/test/unit_tests/mock.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 #include "level_zero/tools/source/sysman/memory/linux/dg1/os_memory_imp.h"
 #include "level_zero/tools/source/sysman/memory/memory_imp.h"
 
 #include "sysman/linux/os_sysman_imp.h"
-using ::testing::_;
+
 using namespace NEO;
 constexpr uint64_t probedSizeRegionZero = 8 * GB;
 constexpr uint64_t probedSizeRegionOne = 16 * GB;
@@ -25,6 +26,11 @@ constexpr uint64_t unallocatedSizeRegionTwo = 25 * GB;
 constexpr uint64_t unallocatedSizeRegionThree = 3 * GB;
 namespace L0 {
 namespace ult {
+
+struct MockMemoryManagerSysman : public MemoryManagerMock {
+    MockMemoryManagerSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
+};
+
 class MemoryNeoDrm : public Drm {
   public:
     using Drm::memoryInfo;
@@ -75,11 +81,6 @@ struct Mock<MemoryNeoDrm> : public MemoryNeoDrm {
     }
 
     MOCK_METHOD(bool, queryMemoryInfo, (), (override));
-};
-
-class PublicLinuxMemoryImp : public L0::LinuxMemoryImp {
-  public:
-    using LinuxMemoryImp::pDrm;
 };
 
 } // namespace ult

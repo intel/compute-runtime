@@ -8,10 +8,10 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 #include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_kmd_sys_manager.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "mock_kmd_sys_manager.h"
 
 using ::testing::_;
 using ::testing::DoAll;
@@ -27,11 +27,8 @@ class SysmanKmdManagerFixture : public ::testing::Test {
 
   protected:
     Mock<MockKmdSysManager> *pKmdSysManager = nullptr;
-    OsSysman *pOsSysman = nullptr;
-    PublicWddmSysmanImp wddmSysmanImp;
 
     void SetUp() {
-        ;
         pKmdSysManager = new Mock<MockKmdSysManager>;
 
         EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))

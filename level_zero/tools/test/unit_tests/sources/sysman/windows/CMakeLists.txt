@@ -9,6 +9,8 @@ if(WIN32)
         PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
             ${CMAKE_CURRENT_SOURCE_DIR}/mock_kmd_sys_manager.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysman_fixture.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman.cpp
             ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_manager.cpp
     )
 endif()

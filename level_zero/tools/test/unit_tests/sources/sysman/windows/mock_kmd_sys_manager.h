@@ -6,12 +6,10 @@
  */
 
 #pragma once
-#include "level_zero/core/test/unit_tests/mock.h"
+#include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 #include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
-#include "sysman/windows/kmd_sys_manager.h"
-
-using ::testing::_;
+#include "gmock/gmock.h"
 
 namespace L0 {
 namespace ult {
@@ -371,11 +369,6 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
 
     Mock() = default;
     ~Mock() = default;
-};
-
-class PublicWddmSysmanImp : public L0::WddmSysmanImp {
-  public:
-    using WddmSysmanImp::pKmdSysManager;
 };
 
 } // namespace ult

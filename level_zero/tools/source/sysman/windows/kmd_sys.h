@@ -468,7 +468,7 @@ struct RequestProperty {
     uint32_t componentId;
     uint32_t paramInfo;
     uint32_t dataSize;
-    uint8_t dataBuffer[MaxPropertyBufferSize];
+    uint8_t dataBuffer[MaxPropertyBufferSize] = {0};
 };
 
 struct ResponseProperty {
@@ -510,7 +510,7 @@ struct ResponseProperty {
     uint32_t returnCode;
     uint32_t componentId;
     uint32_t dataSize;
-    uint8_t dataBuffer[MaxPropertyBufferSize];
+    uint8_t dataBuffer[MaxPropertyBufferSize] = {0};
 };
 } // namespace KmdSysman
 } // namespace L0

@@ -47,6 +47,7 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t pciGetStats(zes_pci_stats_t *pStats) = 0;
     virtual ze_result_t schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler) = 0;
     virtual ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) = 0;
+    virtual ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) = 0;
     virtual ~SysmanDevice() = default;
 };
 

@@ -9,11 +9,15 @@
 
 namespace L0 {
 
-ze_result_t LinuxMemoryImp::getMemorySize(uint64_t &maxSize, uint64_t &allocSize) {
+ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t LinuxMemoryImp::getMemHealth(zes_mem_health_t &memHealth) {
+ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

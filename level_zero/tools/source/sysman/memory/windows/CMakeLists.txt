@@ -5,6 +5,7 @@
 #
 
 set(L0_SRCS_TOOLS_SYSMAN_MEMORY_WINDOWS
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_memory_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_memory_imp.cpp
 )
 

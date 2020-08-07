@@ -6,7 +6,7 @@
  */
 
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
-#include "level_zero/tools/test/unit_tests/sources/sysman/mock_sysman_fixture.h"
+#include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
 #include "mock_sysfs_pci.h"
 

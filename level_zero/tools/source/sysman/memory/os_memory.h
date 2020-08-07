@@ -14,8 +14,9 @@ namespace L0 {
 struct OsSysman;
 class OsMemory {
   public:
-    virtual ze_result_t getMemorySize(uint64_t &maxSize, uint64_t &allocSize) = 0;
-    virtual ze_result_t getMemHealth(zes_mem_health_t &memHealth) = 0;
+    virtual ze_result_t getProperties(zes_mem_properties_t *pProperties) = 0;
+    virtual ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) = 0;
+    virtual ze_result_t getState(zes_mem_state_t *pState) = 0;
     static OsMemory *create(OsSysman *pOsSysman);
     virtual ~OsMemory() {}
 };

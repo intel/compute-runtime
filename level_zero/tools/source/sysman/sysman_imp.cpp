@@ -30,11 +30,13 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pEngineHandleContext = new EngineHandleContext(pOsSysman);
     pSchedulerHandleContext = new SchedulerHandleContext(pOsSysman);
     pRasHandleContext = new RasHandleContext(pOsSysman);
+    pMemoryHandleContext = new MemoryHandleContext(pOsSysman, hCoreDevice);
     pGlobalOperations = new GlobalOperationsImp(pOsSysman, hCoreDevice);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pGlobalOperations);
+    freeResource(pMemoryHandleContext);
     freeResource(pRasHandleContext);
     freeResource(pSchedulerHandleContext);
     freeResource(pEngineHandleContext);
@@ -75,6 +77,9 @@ void SysmanDeviceImp::init() {
     }
     if (pRasHandleContext) {
         pRasHandleContext->init();
+    }
+    if (pMemoryHandleContext) {
+        pMemoryHandleContext->init();
     }
     if (pGlobalOperations) {
         pGlobalOperations->init();
@@ -145,4 +150,7 @@ ze_result_t SysmanDeviceImp::rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) {
     return pRasHandleContext->rasGet(pCount, phRas);
 }
 
+ze_result_t SysmanDeviceImp::memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) {
+    return pMemoryHandleContext->memoryGet(pCount, phMemory);
+}
 } // namespace L0

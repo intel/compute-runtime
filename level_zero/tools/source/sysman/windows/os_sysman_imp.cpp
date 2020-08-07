@@ -36,6 +36,10 @@ KmdSysManager &WddmSysmanImp::getKmdSysManager() {
     return *pKmdSysManager;
 }
 
+WddmSysmanImp::WddmSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) {
+    this->pParentSysmanDeviceImp = pParentSysmanDeviceImp;
+}
+
 WddmSysmanImp::~WddmSysmanImp() {
     if (nullptr != pKmdSysManager) {
         delete pKmdSysManager;

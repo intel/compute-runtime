@@ -398,28 +398,28 @@ zesDeviceEnumMemoryModules(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_mem_handle_t *phMemory) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->memoryGet(pCount, phMemory);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesMemoryGetProperties(
     zes_mem_handle_t hMemory,
     zes_mem_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Memory::fromHandle(hMemory)->memoryGetProperties(pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesMemoryGetState(
     zes_mem_handle_t hMemory,
     zes_mem_state_t *pState) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Memory::fromHandle(hMemory)->memoryGetState(pState);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesMemoryGetBandwidth(
     zes_mem_handle_t hMemory,
     zes_mem_bandwidth_t *pBandwidth) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Memory::fromHandle(hMemory)->memoryGetBandwidth(pBandwidth);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

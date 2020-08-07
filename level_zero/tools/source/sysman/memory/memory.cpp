@@ -25,7 +25,7 @@ ze_result_t MemoryHandleContext::init() {
     isLmemSupported = device->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(device->getRootDeviceIndex());
 
     if (isLmemSupported) {
-        Memory *pMemory = new MemoryImp(pOsSysman, hCoreDevice);
+        Memory *pMemory = new MemoryImp(pOsSysman);
         handleList.push_back(pMemory);
     }
     return ZE_RESULT_SUCCESS;

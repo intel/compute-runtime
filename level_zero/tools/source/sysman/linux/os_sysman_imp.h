@@ -38,11 +38,11 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     ProcfsAccess *pProcfsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
     PlatformMonitoringTech *pPmt = nullptr;
+    NEO::Drm *pDrm = nullptr;
 
   private:
     LinuxSysmanImp() = delete;
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
-    NEO::Drm *pDrm = nullptr;
 };
 
 } // namespace L0

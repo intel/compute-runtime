@@ -10,15 +10,11 @@
 namespace L0 {
 
 ze_result_t MemoryImp::memoryGetBandwidth(zes_mem_bandwidth_t *pBandwidth) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pOsMemory->getBandwidth(pBandwidth);
 }
 
 ze_result_t MemoryImp::memoryGetState(zes_mem_state_t *pState) {
-    ze_result_t result = pOsMemory->getMemorySize(pState->size, pState->size);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-    return pOsMemory->getMemHealth(pState->health);
+    return pOsMemory->getState(pState);
 }
 
 ze_result_t MemoryImp::memoryGetProperties(zes_mem_properties_t *pProperties) {
@@ -27,16 +23,11 @@ ze_result_t MemoryImp::memoryGetProperties(zes_mem_properties_t *pProperties) {
 }
 
 void MemoryImp::init() {
-    memoryProperties.type = ZES_MEM_TYPE_DDR;
-    memoryProperties.onSubdevice = false;
-    memoryProperties.subdeviceId = 0;
-    memoryProperties.physicalSize = 0;
+    pOsMemory->getProperties(&memoryProperties);
 }
 
-MemoryImp::MemoryImp(OsSysman *pOsSysman, ze_device_handle_t hDevice) {
+MemoryImp::MemoryImp(OsSysman *pOsSysman) {
     pOsMemory = OsMemory::create(pOsSysman);
-    hCoreDevice = hDevice;
-
     init();
 }
 

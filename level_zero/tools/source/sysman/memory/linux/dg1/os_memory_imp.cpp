@@ -18,11 +18,29 @@ LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman) {
     pDrm = &pLinuxSysmanImp->getDrm();
 }
 
-ze_result_t LinuxMemoryImp::getMemorySize(uint64_t &maxSize, uint64_t &allocSize) {
+ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
+    pProperties->type = ZES_MEM_TYPE_DDR;
+    pProperties->location = ZES_MEM_LOC_DEVICE;
+    pProperties->onSubdevice = false;
+    pProperties->subdeviceId = 0;
+    pProperties->busWidth = -1;
+    pProperties->numChannels = -1;
+    pProperties->physicalSize = 0;
 
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxMemoryImp::getBandwidth(zes_mem_bandwidth_t *pBandwidth) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     if (pDrm->queryMemoryInfo() == false) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
+
+    pState->health = ZES_MEM_HEALTH_OK;
+
     auto memoryInfo = static_cast<NEO::MemoryInfoImpl *>(pDrm->getMemoryInfo());
     auto region = std::find_if(memoryInfo->regions.begin(), memoryInfo->regions.end(), [](auto tempRegion) {
         return (tempRegion.region.memory_class == I915_MEMORY_CLASS_DEVICE);
@@ -30,13 +48,9 @@ ze_result_t LinuxMemoryImp::getMemorySize(uint64_t &maxSize, uint64_t &allocSize
     if (region == memoryInfo->regions.end()) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    maxSize = region->probed_size;
-    allocSize = maxSize - region->unallocated_size;
-    return ZE_RESULT_SUCCESS;
-}
 
-ze_result_t LinuxMemoryImp::getMemHealth(zes_mem_health_t &memHealth) {
-    memHealth = ZES_MEM_HEALTH_OK;
+    pState->free = region->unallocated_size;
+    pState->size = region->probed_size;
 
     return ZE_RESULT_SUCCESS;
 }

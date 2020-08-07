@@ -18,8 +18,7 @@ namespace L0 {
 
 class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:
-    WddmSysmanImp() = default;
-    WddmSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) : pParentSysmanDeviceImp(pParentSysmanDeviceImp){};
+    WddmSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp);
     ~WddmSysmanImp() override;
 
     ze_result_t init() override;

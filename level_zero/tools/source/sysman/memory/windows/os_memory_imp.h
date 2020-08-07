@@ -7,24 +7,26 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "sysman/memory/os_memory.h"
+#include "sysman/windows/os_sysman_imp.h"
 
 namespace L0 {
+class KmdSysManager;
 
-class SysfsAccess;
+constexpr uint32_t MbpsToBytesPerSecond = 125000;
 
-class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
+class WddmMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getProperties(zes_mem_properties_t *pProperties) override;
     ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) override;
     ze_result_t getState(zes_mem_state_t *pState) override;
-    LinuxMemoryImp(OsSysman *pOsSysman);
-    LinuxMemoryImp() = default;
-    ~LinuxMemoryImp() override = default;
+    WddmMemoryImp(OsSysman *pOsSysman);
+    WddmMemoryImp() = default;
+    ~WddmMemoryImp() override = default;
 
   protected:
-    NEO::Drm *pDrm = nullptr;
+    KmdSysManager *pKmdSysManager = nullptr;
 };
+
 } // namespace L0
