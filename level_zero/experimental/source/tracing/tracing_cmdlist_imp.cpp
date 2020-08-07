@@ -133,3 +133,89 @@ zeCommandListReset_Tracing(ze_command_list_handle_t hCommandList) {
                                    apiCallbackData.epilogCallbacks,
                                    *tracerParams.phCommandList);
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListAppendWriteGlobalTimestamp_Tracing(ze_command_list_handle_t hCommandList,
+                                                uint64_t *dstptr,
+                                                ze_event_handle_t hSignalEvent,
+                                                uint32_t numWaitEvents,
+                                                ze_event_handle_t *phWaitEvents) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendWriteGlobalTimestamp,
+                               hCommandList,
+                               dstptr,
+                               hSignalEvent,
+                               numWaitEvents,
+                               phWaitEvents);
+
+    ze_command_list_append_write_global_timestamp_params_t tracerParams;
+    tracerParams.phCommandList = &hCommandList;
+    tracerParams.pdstptr = &dstptr;
+    tracerParams.phSignalEvent = &hSignalEvent;
+    tracerParams.pnumWaitEvents = &numWaitEvents;
+    tracerParams.pphWaitEvents = &phWaitEvents;
+
+    L0::APITracerCallbackDataImp<ze_pfnCommandListAppendWriteGlobalTimestampCb_t> apiCallbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendWriteGlobalTimestampCb_t, CommandList, pfnAppendWriteGlobalTimestampCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendWriteGlobalTimestamp,
+                                   &tracerParams,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
+                                   *tracerParams.phCommandList,
+                                   *tracerParams.pdstptr,
+                                   *tracerParams.phSignalEvent,
+                                   *tracerParams.pnumWaitEvents,
+                                   *tracerParams.pphWaitEvents);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListAppendQueryKernelTimestamps_Tracing(ze_command_list_handle_t hCommandList,
+                                                 uint32_t numEvents,
+                                                 ze_event_handle_t *phEvents,
+                                                 void *dstptr,
+                                                 const size_t *pOffsets,
+                                                 ze_event_handle_t hSignalEvent,
+                                                 uint32_t numWaitEvents,
+                                                 ze_event_handle_t *phWaitEvents) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.CommandList.pfnAppendQueryKernelTimestamps,
+                               hCommandList,
+                               numEvents,
+                               phEvents,
+                               dstptr,
+                               pOffsets,
+                               hSignalEvent,
+                               numWaitEvents,
+                               phWaitEvents);
+
+    ze_command_list_append_query_kernel_timestamps_params_t tracerParams;
+    tracerParams.phCommandList = &hCommandList;
+    tracerParams.pnumEvents = &numEvents;
+    tracerParams.pphEvents = &phEvents;
+    tracerParams.pdstptr = &dstptr;
+    tracerParams.ppOffsets = &pOffsets;
+    tracerParams.phSignalEvent = &hSignalEvent;
+    tracerParams.pnumWaitEvents = &numWaitEvents;
+    tracerParams.pphWaitEvents = &phWaitEvents;
+
+    L0::APITracerCallbackDataImp<ze_pfnCommandListAppendQueryKernelTimestampsCb_t> apiCallbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnCommandListAppendQueryKernelTimestampsCb_t, CommandList, pfnAppendQueryKernelTimestampsCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.CommandList.pfnAppendQueryKernelTimestamps,
+                                   &tracerParams,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
+                                   *tracerParams.phCommandList,
+                                   *tracerParams.pnumEvents,
+                                   *tracerParams.pphEvents,
+                                   *tracerParams.pdstptr,
+                                   *tracerParams.ppOffsets,
+                                   *tracerParams.phSignalEvent,
+                                   *tracerParams.pnumWaitEvents,
+                                   *tracerParams.pphWaitEvents);
+}

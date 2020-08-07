@@ -29,4 +29,20 @@ zeCommandListClose_Tracing(ze_command_list_handle_t hCommandList);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeCommandListReset_Tracing(ze_command_list_handle_t hCommandList);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListAppendWriteGlobalTimestamp_Tracing(ze_command_list_handle_t hCommandList,
+                                                uint64_t *dstptr,
+                                                ze_event_handle_t hSignalEvent,
+                                                uint32_t numWaitEvents,
+                                                ze_event_handle_t *phWaitEvents);
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeCommandListAppendQueryKernelTimestamps_Tracing(ze_command_list_handle_t hCommandList,
+                                                 uint32_t numEvents,
+                                                 ze_event_handle_t *phEvents,
+                                                 void *dstptr,
+                                                 const size_t *pOffsets,
+                                                 ze_event_handle_t hSignalEvent,
+                                                 uint32_t numWaitEvents,
+                                                 ze_event_handle_t *phWaitEvents);
 }

@@ -39,6 +39,15 @@ zeModuleGetGlobalPointer_Tracing(ze_module_handle_t hModule,
                                  void **pptr);
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
+zeModuleDynamicLink_Tracing(uint32_t numModules,
+                            ze_module_handle_t *phModules,
+                            ze_module_build_log_handle_t *phLinkLog);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeModuleGetProperties_Tracing(ze_module_handle_t hModule,
+                              ze_module_properties_t *pModuleProperties);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelCreate_Tracing(ze_module_handle_t hModule,
                        const ze_kernel_desc_t *desc,
                        ze_kernel_handle_t *phFunction);
@@ -118,4 +127,22 @@ zeModuleGetKernelNames_Tracing(ze_module_handle_t hModule,
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeKernelSuggestMaxCooperativeGroupCount_Tracing(ze_kernel_handle_t hKernel,
                                                 uint32_t *totalGroupCount);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeKernelGetIndirectAccess_Tracing(ze_kernel_handle_t hKernel,
+                                  ze_kernel_indirect_access_flags_t *pFlags);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeKernelGetName_Tracing(ze_kernel_handle_t hKernel,
+                        size_t *pSize,
+                        char *pName);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeKernelGetSourceAttributes_Tracing(ze_kernel_handle_t hKernel,
+                                    uint32_t *pSize,
+                                    char **pString);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeKernelSetIndirectAccess_Tracing(ze_kernel_handle_t hKernel,
+                                  ze_kernel_indirect_access_flags_t flags);
 }

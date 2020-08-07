@@ -64,4 +64,57 @@ zeMemOpenIpcHandle_Tracing(ze_context_handle_t hContext,
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zeMemCloseIpcHandle_Tracing(ze_context_handle_t hContext,
                             const void *ptr);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemReserve_Tracing(ze_context_handle_t hContext,
+                            const void *pStart,
+                            size_t size,
+                            void **pptr);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemFree_Tracing(ze_context_handle_t hContext,
+                         const void *ptr,
+                         size_t size);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemQueryPageSize_Tracing(ze_context_handle_t hContext,
+                                  ze_device_handle_t hDevice,
+                                  size_t size,
+                                  size_t *pagesize);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemMap_Tracing(ze_context_handle_t hContext,
+                        const void *ptr,
+                        size_t size,
+                        ze_physical_mem_handle_t hPhysicalMemory,
+                        size_t offset,
+                        ze_memory_access_attribute_t access);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemUnmap_Tracing(ze_context_handle_t hContext,
+                          const void *ptr,
+                          size_t size);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemSetAccessAttribute_Tracing(ze_context_handle_t hContext,
+                                       const void *ptr,
+                                       size_t size,
+                                       ze_memory_access_attribute_t access);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemGetAccessAttribute_Tracing(ze_context_handle_t hContext,
+                                       const void *ptr,
+                                       size_t size,
+                                       ze_memory_access_attribute_t *access,
+                                       size_t *outSize);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zePhysicalMemCreate_Tracing(ze_context_handle_t hContext,
+                            ze_device_handle_t hDevice,
+                            ze_physical_mem_desc_t *desc,
+                            ze_physical_mem_handle_t *phPhysicalMemory);
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zePhysicalMemDestroy_Tracing(ze_context_handle_t hContext,
+                             ze_physical_mem_handle_t hPhysicalMemory);
 }

@@ -311,3 +311,296 @@ zeMemCloseIpcHandle_Tracing(ze_context_handle_t hContext,
                                    *tracerParams.phContext,
                                    *tracerParams.pptr);
 }
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemReserve_Tracing(ze_context_handle_t hContext,
+                            const void *pStart,
+                            size_t size,
+                            void **pptr) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.VirtualMem.pfnReserve,
+                               hContext,
+                               pStart,
+                               size,
+                               pptr);
+
+    ze_virtual_mem_reserve_params_t tracerParams;
+    tracerParams.phContext = &hContext;
+    tracerParams.ppStart = &pStart;
+    tracerParams.psize = &size;
+    tracerParams.ppptr = &pptr;
+
+    L0::APITracerCallbackDataImp<ze_pfnVirtualMemReserveCb_t> apiCallbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnVirtualMemReserveCb_t, VirtualMem, pfnReserveCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.VirtualMem.pfnReserve,
+                                   &tracerParams,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
+                                   *tracerParams.phContext,
+                                   *tracerParams.ppStart,
+                                   *tracerParams.psize,
+                                   *tracerParams.ppptr);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemFree_Tracing(ze_context_handle_t hContext,
+                         const void *ptr,
+                         size_t size) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.VirtualMem.pfnFree,
+                               hContext,
+                               ptr,
+                               size);
+
+    ze_virtual_mem_free_params_t tracerParams;
+    tracerParams.phContext = &hContext;
+    tracerParams.pptr = &ptr;
+    tracerParams.psize = &size;
+
+    L0::APITracerCallbackDataImp<ze_pfnVirtualMemFreeCb_t> apiCallbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnVirtualMemFreeCb_t, VirtualMem, pfnFreeCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.VirtualMem.pfnFree,
+                                   &tracerParams,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
+                                   *tracerParams.phContext,
+                                   *tracerParams.pptr,
+                                   *tracerParams.psize);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemQueryPageSize_Tracing(ze_context_handle_t hContext,
+                                  ze_device_handle_t hDevice,
+                                  size_t size,
+                                  size_t *pagesize) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.VirtualMem.pfnQueryPageSize,
+                               hContext,
+                               hDevice,
+                               size,
+                               pagesize);
+
+    ze_virtual_mem_query_page_size_params_t tracerParams;
+    tracerParams.phContext = &hContext;
+    tracerParams.phDevice = &hDevice;
+    tracerParams.psize = &size;
+    tracerParams.ppagesize = &pagesize;
+
+    L0::APITracerCallbackDataImp<ze_pfnVirtualMemQueryPageSizeCb_t> apiCallbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnVirtualMemQueryPageSizeCb_t, VirtualMem, pfnQueryPageSizeCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.VirtualMem.pfnQueryPageSize,
+                                   &tracerParams,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
+                                   *tracerParams.phContext,
+                                   *tracerParams.phDevice,
+                                   *tracerParams.psize,
+                                   *tracerParams.ppagesize);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemMap_Tracing(ze_context_handle_t hContext,
+                        const void *ptr,
+                        size_t size,
+                        ze_physical_mem_handle_t hPhysicalMemory,
+                        size_t offset,
+                        ze_memory_access_attribute_t access) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.VirtualMem.pfnMap,
+                               hContext,
+                               ptr,
+                               size,
+                               hPhysicalMemory,
+                               offset,
+                               access);
+
+    ze_virtual_mem_map_params_t tracerParams;
+    tracerParams.phContext = &hContext;
+    tracerParams.pptr = &ptr;
+    tracerParams.psize = &size;
+    tracerParams.phPhysicalMemory = &hPhysicalMemory;
+    tracerParams.poffset = &offset;
+    tracerParams.paccess = &access;
+
+    L0::APITracerCallbackDataImp<ze_pfnVirtualMemMapCb_t> apiCallbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnVirtualMemMapCb_t, VirtualMem, pfnMapCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.VirtualMem.pfnMap,
+                                   &tracerParams,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
+                                   *tracerParams.phContext,
+                                   *tracerParams.pptr,
+                                   *tracerParams.psize,
+                                   *tracerParams.phPhysicalMemory,
+                                   *tracerParams.poffset,
+                                   *tracerParams.paccess);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemUnmap_Tracing(ze_context_handle_t hContext,
+                          const void *ptr,
+                          size_t size) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.VirtualMem.pfnUnmap,
+                               hContext,
+                               ptr,
+                               size);
+
+    ze_virtual_mem_unmap_params_t tracerParams;
+    tracerParams.phContext = &hContext;
+    tracerParams.pptr = &ptr;
+    tracerParams.psize = &size;
+
+    L0::APITracerCallbackDataImp<ze_pfnVirtualMemUnmapCb_t> apiCallbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnVirtualMemUnmapCb_t, VirtualMem, pfnUnmapCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.VirtualMem.pfnUnmap,
+                                   &tracerParams,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
+                                   *tracerParams.phContext,
+                                   *tracerParams.pptr,
+                                   *tracerParams.psize);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemSetAccessAttribute_Tracing(ze_context_handle_t hContext,
+                                       const void *ptr,
+                                       size_t size,
+                                       ze_memory_access_attribute_t access) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.VirtualMem.pfnSetAccessAttribute,
+                               hContext,
+                               ptr,
+                               size,
+                               access);
+
+    ze_virtual_mem_set_access_attribute_params_t tracerParams;
+    tracerParams.phContext = &hContext;
+    tracerParams.pptr = &ptr;
+    tracerParams.psize = &size;
+    tracerParams.paccess = &access;
+
+    L0::APITracerCallbackDataImp<ze_pfnVirtualMemSetAccessAttributeCb_t> apiCallbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnVirtualMemSetAccessAttributeCb_t, VirtualMem, pfnSetAccessAttributeCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.VirtualMem.pfnSetAccessAttribute,
+                                   &tracerParams,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
+                                   *tracerParams.phContext,
+                                   *tracerParams.pptr,
+                                   *tracerParams.psize,
+                                   *tracerParams.paccess);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeVirtualMemGetAccessAttribute_Tracing(ze_context_handle_t hContext,
+                                       const void *ptr,
+                                       size_t size,
+                                       ze_memory_access_attribute_t *access,
+                                       size_t *outSize) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.VirtualMem.pfnGetAccessAttribute,
+                               hContext,
+                               ptr,
+                               size,
+                               access,
+                               outSize);
+
+    ze_virtual_mem_get_access_attribute_params_t tracerParams;
+    tracerParams.phContext = &hContext;
+    tracerParams.pptr = &ptr;
+    tracerParams.psize = &size;
+    tracerParams.paccess = &access;
+    tracerParams.poutSize = &outSize;
+
+    L0::APITracerCallbackDataImp<ze_pfnVirtualMemGetAccessAttributeCb_t> apiCallbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnVirtualMemGetAccessAttributeCb_t, VirtualMem, pfnGetAccessAttributeCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.VirtualMem.pfnGetAccessAttribute,
+                                   &tracerParams,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
+                                   *tracerParams.phContext,
+                                   *tracerParams.pptr,
+                                   *tracerParams.psize,
+                                   *tracerParams.paccess,
+                                   *tracerParams.poutSize);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zePhysicalMemCreate_Tracing(ze_context_handle_t hContext,
+                            ze_device_handle_t hDevice,
+                            ze_physical_mem_desc_t *desc,
+                            ze_physical_mem_handle_t *phPhysicalMemory) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.PhysicalMem.pfnCreate,
+                               hContext,
+                               hDevice,
+                               desc,
+                               phPhysicalMemory);
+
+    ze_physical_mem_create_params_t tracerParams;
+    tracerParams.phContext = &hContext;
+    tracerParams.phDevice = &hDevice;
+    tracerParams.pdesc = &desc;
+    tracerParams.pphPhysicalMemory = &phPhysicalMemory;
+
+    L0::APITracerCallbackDataImp<ze_pfnPhysicalMemCreateCb_t> apiCallbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnPhysicalMemCreateCb_t, PhysicalMem, pfnCreateCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.PhysicalMem.pfnCreate,
+                                   &tracerParams,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
+                                   *tracerParams.phContext,
+                                   *tracerParams.phDevice,
+                                   *tracerParams.pdesc,
+                                   *tracerParams.pphPhysicalMemory);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zePhysicalMemDestroy_Tracing(ze_context_handle_t hContext,
+                             ze_physical_mem_handle_t hPhysicalMemory) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.PhysicalMem.pfnDestroy,
+                               hContext,
+                               hPhysicalMemory);
+
+    ze_physical_mem_destroy_params_t tracerParams;
+    tracerParams.phContext = &hContext;
+    tracerParams.phPhysicalMemory = &hPhysicalMemory;
+
+    L0::APITracerCallbackDataImp<ze_pfnPhysicalMemDestroyCb_t> apiCallbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(apiCallbackData, ze_pfnPhysicalMemDestroyCb_t, PhysicalMem, pfnDestroyCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.PhysicalMem.pfnDestroy,
+                                   &tracerParams,
+                                   apiCallbackData.apiOrdinal,
+                                   apiCallbackData.prologCallbacks,
+                                   apiCallbackData.epilogCallbacks,
+                                   *tracerParams.phContext,
+                                   *tracerParams.phPhysicalMemory);
+}

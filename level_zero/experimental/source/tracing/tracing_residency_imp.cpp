@@ -8,6 +8,102 @@
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextCreate_Tracing(ze_driver_handle_t hDriver,
+                        const ze_context_desc_t *desc,
+                        ze_context_handle_t *phContext) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Context.pfnCreate,
+                               hDriver,
+                               desc,
+                               phContext);
+
+    ze_context_create_params_t tracerParams;
+    tracerParams.phDriver = &hDriver;
+    tracerParams.pdesc = &desc;
+    tracerParams.pphContext = &phContext;
+
+    L0::APITracerCallbackDataImp<ze_pfnContextCreateCb_t> api_callbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnContextCreateCb_t, Context, pfnCreateCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnCreate,
+                                   &tracerParams,
+                                   api_callbackData.apiOrdinal,
+                                   api_callbackData.prologCallbacks,
+                                   api_callbackData.epilogCallbacks,
+                                   *tracerParams.phDriver,
+                                   *tracerParams.pdesc,
+                                   *tracerParams.pphContext);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextDestroy_Tracing(ze_context_handle_t hContext) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Context.pfnDestroy,
+                               hContext);
+
+    ze_context_destroy_params_t tracerParams;
+    tracerParams.phContext = &hContext;
+
+    L0::APITracerCallbackDataImp<ze_pfnContextDestroyCb_t> api_callbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnContextDestroyCb_t, Context, pfnDestroyCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnDestroy,
+                                   &tracerParams,
+                                   api_callbackData.apiOrdinal,
+                                   api_callbackData.prologCallbacks,
+                                   api_callbackData.epilogCallbacks,
+                                   *tracerParams.phContext);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextGetStatus_Tracing(ze_context_handle_t hContext) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Context.pfnGetStatus,
+                               hContext);
+
+    ze_context_get_status_params_t tracerParams;
+    tracerParams.phContext = &hContext;
+
+    L0::APITracerCallbackDataImp<ze_pfnContextGetStatusCb_t> api_callbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnContextGetStatusCb_t, Context, pfnGetStatusCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnGetStatus,
+                                   &tracerParams,
+                                   api_callbackData.apiOrdinal,
+                                   api_callbackData.prologCallbacks,
+                                   api_callbackData.epilogCallbacks,
+                                   *tracerParams.phContext);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeContextSystemBarrier_Tracing(ze_context_handle_t hContext,
+                               ze_device_handle_t hDevice) {
+
+    ZE_HANDLE_TRACER_RECURSION(driver_ddiTable.core_ddiTable.Context.pfnSystemBarrier,
+                               hContext,
+                               hDevice);
+
+    ze_context_system_barrier_params_t tracerParams;
+    tracerParams.phContext = &hContext;
+    tracerParams.phDevice = &hDevice;
+
+    L0::APITracerCallbackDataImp<ze_pfnContextSystemBarrierCb_t> api_callbackData;
+
+    ZE_GEN_PER_API_CALLBACK_STATE(api_callbackData, ze_pfnContextSystemBarrierCb_t, Context, pfnSystemBarrierCb);
+
+    return L0::APITracerWrapperImp(driver_ddiTable.core_ddiTable.Context.pfnSystemBarrier,
+                                   &tracerParams,
+                                   api_callbackData.apiOrdinal,
+                                   api_callbackData.prologCallbacks,
+                                   api_callbackData.epilogCallbacks,
+                                   *tracerParams.phContext,
+                                   *tracerParams.phDevice);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
 zeContextMakeMemoryResident_Tracing(ze_context_handle_t hContext,
                                     ze_device_handle_t hDevice,
                                     void *ptr,
