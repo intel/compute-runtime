@@ -5375,8 +5375,8 @@ cl_int CL_API_CALL clSetProgramReleaseCallback(cl_program program,
                                                void(CL_CALLBACK *pfnNotify)(cl_program /* program */, void * /* user_data */),
                                                void *userData) {
     DBG_LOG_INPUTS("program", program,
-                   "pfn_notify", pfnNotify,
-                   "user_data", userData);
+                   "pfnNotify", pfnNotify,
+                   "userData", userData);
 
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
@@ -5584,5 +5584,25 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         event);
 
     DBG_LOG_INPUTS("event", NEO::FileLoggerInstance().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
+    return retVal;
+}
+
+cl_int CL_API_CALL clSetContextDestructorCallback(cl_context context,
+                                                  void(CL_CALLBACK *pfnNotify)(cl_context /* context */, void * /* user_data */),
+                                                  void *userData) {
+    DBG_LOG_INPUTS("program", context,
+                   "pfnNotify", pfnNotify,
+                   "userData", userData);
+
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+
+    retVal = validateObjects(context,
+                             reinterpret_cast<void *>(pfnNotify));
+
+    if (retVal == CL_SUCCESS) {
+        retVal = CL_OUT_OF_HOST_MEMORY;
+    }
+
     return retVal;
 }

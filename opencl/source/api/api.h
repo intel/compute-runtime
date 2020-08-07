@@ -1088,3 +1088,8 @@ cl_mem CL_API_CALL clCreateImageWithProperties(
     const cl_image_desc *imageDesc,
     void *hostPtr,
     cl_int *errcodeRet);
+
+cl_int CL_API_CALL clSetContextDestructorCallback(
+    cl_context context,
+    void(CL_CALLBACK *pfn_notify)(cl_context /* context */, void * /* user_data */),
+    void *user_data);

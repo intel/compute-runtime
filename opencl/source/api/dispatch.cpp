@@ -186,7 +186,8 @@ SDispatchTable icdGlobalDispatchTable =
 
         /* OpenCL 3.0 */
         clCreateBufferWithProperties,
-        clCreateImageWithProperties};
+        clCreateImageWithProperties,
+        clSetContextDestructorCallback};
 
 SCRTDispatchTable crtGlobalDispatchTable = {
     clGetKernelArgInfo,

@@ -1006,6 +1006,11 @@ typedef CL_API_ENTRY cl_mem(CL_API_CALL *KHRpfn_clCreateImageWithProperties)(
     void *hostPtr,
     cl_int *errcodeRet) CL_API_SUFFIX__VERSION_3_0;
 
+typedef CL_API_ENTRY cl_int(CL_API_CALL *KHRpfn_clSetContextDestructorCallback)(
+    cl_context context,
+    void(CL_CALLBACK *pfnNotify)(cl_context context, void *userData),
+    void *userData) CL_API_SUFFIX__VERSION_3_0;
+
 /* clCreateImage */
 
 typedef CL_API_ENTRY cl_int(CL_API_CALL *INTELpfn_clGetImageParamsINTEL)(
@@ -1277,6 +1282,7 @@ struct SDispatchTable {
     /* OpenCL 3.0 */
     KHRpfn_clCreateBufferWithProperties clCreateBufferWithProperties;
     KHRpfn_clCreateImageWithProperties clCreateImageWithProperties;
+    KHRpfn_clSetContextDestructorCallback clSetContextDestructorCallback;
 };
 
 struct SCRTDispatchTable {
