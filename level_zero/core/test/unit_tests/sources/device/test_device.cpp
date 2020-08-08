@@ -107,6 +107,7 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     memset(&deviceProperties.numSlices, std::numeric_limits<int>::max(), sizeof(deviceProperties.numSlices));
     memset(&deviceProperties.timerResolution, std::numeric_limits<int>::max(), sizeof(deviceProperties.timerResolution));
     memset(&deviceProperties.name, std::numeric_limits<int>::max(), sizeof(deviceProperties.name));
+    deviceProperties.maxMemAllocSize = 0;
 
     devicePropertiesBefore = deviceProperties;
     device->getProperties(&deviceProperties);
@@ -125,6 +126,14 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     EXPECT_NE(deviceProperties.numSlices, devicePropertiesBefore.numSlices);
     EXPECT_NE(deviceProperties.timerResolution, devicePropertiesBefore.timerResolution);
     EXPECT_NE(0, memcmp(&deviceProperties.name, &devicePropertiesBefore.name, sizeof(devicePropertiesBefore.name)));
+    EXPECT_NE(deviceProperties.maxMemAllocSize, devicePropertiesBefore.maxMemAllocSize);
+}
+
+TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCorrectlyReturned) {
+    ze_device_properties_t deviceProperties;
+    deviceProperties.maxMemAllocSize = 0;
+    device->getProperties(&deviceProperties);
+    EXPECT_EQ(deviceProperties.maxMemAllocSize, this->neoDevice->getDeviceInfo().maxMemAllocSize);
 }
 
 TEST_F(DeviceTest, givenCommandQueuePropertiesCallThenCallSucceeds) {

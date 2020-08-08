@@ -364,6 +364,8 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->timerResolution = this->neoDevice->getDeviceInfo().outProfilingTimerResolution;
 
+    pDeviceProperties->maxMemAllocSize = this->neoDevice->getDeviceInfo().maxMemAllocSize;
+
     memset(pDeviceProperties->name, 0, ZE_MAX_DEVICE_NAME);
     std::string name = "Intel(R) ";
     name += NEO::familyName[hardwareInfo.platform.eRenderCoreFamily];
