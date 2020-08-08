@@ -90,7 +90,7 @@ bool createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddres
     auto &storageInfo = allocation->storageInfo;
     auto boAddress = gpuAddress;
     for (auto handleId = 0u; handleId < storageInfo.getNumBanks(); handleId++) {
-        uint32_t memoryBanks = static_cast<uint32_t>(storageInfo.getMemoryBanks());
+        uint32_t memoryBanks = 1u;
         if (storageInfo.getNumBanks() > 1) {
             memoryBanks &= 1u << handleId;
         }
