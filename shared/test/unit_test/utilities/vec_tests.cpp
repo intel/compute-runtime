@@ -9,7 +9,7 @@
 
 #include "gtest/gtest.h"
 
-TEST(VecTest, operators) {
+TEST(VecTest, WhenComparingThenResultIsCorrect) {
     Vec3<size_t> v0(nullptr);
     Vec3<size_t> v1({1, 2, 3});
     Vec3<size_t> v2(v1);
@@ -31,7 +31,7 @@ TEST(VecTest, operators) {
     ASSERT_NE(v1, v3);
 }
 
-TEST(VecTest, getSimpliefiedDim) {
+TEST(VecTest, WhenGettingSimplifiedDimThenDimensionIsReturned) {
     {
         Vec3<size_t> v{3, 3, 3};
         EXPECT_EQ(3U, v.getSimplifiedDim());
