@@ -1555,9 +1555,12 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
 
 cl_int CL_API_CALL clUnloadPlatformCompiler(cl_platform_id platform) {
     TRACING_ENTER(clUnloadPlatformCompiler, &platform);
-    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
+    cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("platform", platform);
+
+    retVal = validateObject(platform);
+
     TRACING_EXIT(clUnloadPlatformCompiler, &retVal);
     return retVal;
 }
@@ -4942,7 +4945,7 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
 
 cl_int CL_API_CALL clUnloadCompiler() {
     TRACING_ENTER(clUnloadCompiler);
-    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
+    cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
     TRACING_EXIT(clUnloadCompiler, &retVal);
     return retVal;

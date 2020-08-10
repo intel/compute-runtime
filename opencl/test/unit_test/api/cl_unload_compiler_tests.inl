@@ -5,16 +5,15 @@
  *
  */
 
-#include "cl_api_tests.h"
+#include "test.h"
 
 using namespace NEO;
 
-typedef api_tests clUnloadCompilerTests;
-
 namespace ULT {
 
-TEST_F(clUnloadCompilerTests, WhenUnloadingCompilerThenOutOfHostMemoryErrorIsReturned) {
+TEST(clUnloadCompilerTests, WhenUnloadingCompilerThenSuccessIsReturned) {
     auto retVal = clUnloadCompiler();
-    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
 } // namespace ULT
