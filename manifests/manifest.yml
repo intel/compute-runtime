@@ -24,7 +24,7 @@ components:
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
-    revision: 57e0a77511edfc4ca0e42b939075d1ab23c48a09
+    revision: 18a7db778c3ec50265d3d88810f93892e18fbb2a
     type: git
   level_zero:
     branch: master
@@ -42,6 +42,6 @@ components:
     dest_dir: wdk
     type: git
     branch: wdk
-    revision: 89abb3e1e441fd57c80680f62c9aa4e3ecaf9ac7-1443
-converter: M-1447
+    revision: a5f71b6696eb7679ebb263ee226e34520397ed00-1451
+converter: M-1451
 version: '1'
