@@ -235,10 +235,15 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
 // this engine 0 is used by process.
 ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process_state_t> &pProcessList) {
     std::vector<std::string> clientIds;
+    struct deviceMemStruct {
+        uint64_t deviceMemorySize;
+        uint64_t deviceSharedMemorySize;
+    };
     struct engineMemoryPairType {
         int64_t engineTypeField;
-        uint64_t deviceMemorySizeField;
+        deviceMemStruct deviceMemStructField;
     };
+
     ze_result_t result = pSysfsAccess->scanDirEntries(clientsDir, clientIds);
     if (ZE_RESULT_SUCCESS != result) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -308,7 +313,18 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
             }
         }
 
-        engineMemoryPairType engineMemoryPair = {engineType, memSize};
+        uint64_t sharedMemSize = 0;
+        std::string realClientTotalSharedMemoryPath = clientsDir + "/" + clientId + "/" + "total_device_memory_buffer_objects" + "/" + "imported_bytes";
+        result = pSysfsAccess->read(realClientTotalSharedMemoryPath, sharedMemSize);
+        if (ZE_RESULT_SUCCESS != result) {
+            if (ZE_RESULT_ERROR_NOT_AVAILABLE == result) {
+                continue;
+            } else {
+                return result;
+            }
+        }
+        deviceMemStruct totalDeviceMem = {memSize, sharedMemSize};
+        engineMemoryPairType engineMemoryPair = {engineType, totalDeviceMem};
         auto ret = pidClientMap.insert(std::make_pair(pid, engineMemoryPair));
         if (ret.second == false) {
             // insertion failed as entry with same pid already exists in map
@@ -316,9 +332,11 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
             engineMemoryPairType updateEngineMemoryPair;
             auto pidEntryFromMap = pidClientMap.find(pid);
             auto existingEngineType = pidEntryFromMap->second.engineTypeField;
-            auto existingMemorySize = pidEntryFromMap->second.deviceMemorySizeField;
+            auto existingdeviceMemorySize = pidEntryFromMap->second.deviceMemStructField.deviceMemorySize;
+            auto existingdeviceSharedMemorySize = pidEntryFromMap->second.deviceMemStructField.deviceSharedMemorySize;
             updateEngineMemoryPair.engineTypeField = existingEngineType | engineMemoryPair.engineTypeField;
-            updateEngineMemoryPair.deviceMemorySizeField = existingMemorySize + engineMemoryPair.deviceMemorySizeField;
+            updateEngineMemoryPair.deviceMemStructField.deviceMemorySize = existingdeviceMemorySize + engineMemoryPair.deviceMemStructField.deviceMemorySize;
+            updateEngineMemoryPair.deviceMemStructField.deviceSharedMemorySize = existingdeviceSharedMemorySize + engineMemoryPair.deviceMemStructField.deviceSharedMemorySize;
             pidClientMap[pid] = updateEngineMemoryPair;
         }
     }
@@ -327,7 +345,8 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
     for (auto itr = pidClientMap.begin(); itr != pidClientMap.end(); ++itr) {
         zes_process_state_t process;
         process.processId = static_cast<uint32_t>(itr->first);
-        process.memSize = itr->second.deviceMemorySizeField;
+        process.memSize = itr->second.deviceMemStructField.deviceMemorySize;
+        process.sharedSize = itr->second.deviceMemStructField.deviceSharedMemorySize;
         process.engines = static_cast<uint32_t>(itr->second.engineTypeField);
         pProcessList.push_back(process);
     }

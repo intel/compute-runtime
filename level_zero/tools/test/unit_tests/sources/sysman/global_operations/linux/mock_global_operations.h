@@ -77,8 +77,14 @@ struct Mock<GlobalOperationsSysfsAccess> : public GlobalOperationsSysfsAccess {
                    (file.compare("clients/5/total_device_memory_buffer_objects/created_bytes") == 0) ||
                    (file.compare("clients/6/total_device_memory_buffer_objects/created_bytes") == 0)) {
             val = 1024;
+        } else if ((file.compare("clients/4/total_device_memory_buffer_objects/imported_bytes") == 0) ||
+                   (file.compare("clients/5/total_device_memory_buffer_objects/imported_bytes") == 0) ||
+                   (file.compare("clients/6/total_device_memory_buffer_objects/imported_bytes") == 0)) {
+            val = 512;
         } else if (file.compare("clients/7/total_device_memory_buffer_objects/created_bytes") == 0) {
             return ZE_RESULT_ERROR_UNKNOWN;
+        } else if (file.compare("clients/7/total_device_memory_buffer_objects/imported_bytes") == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
         } else {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }

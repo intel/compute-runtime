@@ -30,6 +30,7 @@ ze_result_t GlobalOperationsImp::processesGetState(uint32_t *pCount, zes_process
             pProcesses[i].processId = pProcessList[i].processId;
             pProcesses[i].engines = pProcessList[i].engines;
             pProcesses[i].memSize = pProcessList[i].memSize;
+            pProcesses[i].sharedSize = pProcessList[i].sharedSize;
         }
     }
     *pCount = static_cast<uint32_t>(pProcessList.size());

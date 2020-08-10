@@ -16,6 +16,8 @@ namespace ult {
 
 constexpr uint64_t memSize1 = 2048;
 constexpr uint64_t memSize2 = 1024;
+constexpr uint64_t sharedMemSize1 = 1024;
+constexpr uint64_t sharedMemSize2 = 512;
 // In mock function getValUnsignedLong, we have set the engines used as 0, 3 and 1.
 // Hence, expecting 28 as engine field because 28 in binary would be 00011100
 // This indicates bit number 2, 3 and 4 are set, thus this indicates, this process
@@ -144,9 +146,11 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInfor
     EXPECT_EQ(processes[0].processId, pid1);
     EXPECT_EQ(processes[0].engines, engines1);
     EXPECT_EQ(processes[0].memSize, memSize1);
+    EXPECT_EQ(processes[0].sharedSize, sharedMemSize1);
     EXPECT_EQ(processes[1].processId, pid2);
     EXPECT_EQ(processes[1].engines, engines2);
     EXPECT_EQ(processes[1].memSize, memSize2);
+    EXPECT_EQ(processes[1].sharedSize, sharedMemSize2);
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileRetrievingInformationAboutHostProcessesUsingFaultyClientFileThenFailureIsReturned) {
@@ -160,6 +164,13 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileReadingExisting
     uint64_t memSize = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, pSysfsAccess->read("clients/6/total_device_memory_buffer_objects/created_bytes", memSize));
     EXPECT_EQ(memSize2, memSize);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileReadingInvalidMemoryFileThenErrorIsReturned) {
+    uint64_t memSize = 0;
+    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getScannedDir4Entries));
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pSysfsAccess->read("clients/7/total_device_memory_buffer_objects/imported_bytes", memSize));
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileReadingNonExistingFileThenErrorIsReturned) {
