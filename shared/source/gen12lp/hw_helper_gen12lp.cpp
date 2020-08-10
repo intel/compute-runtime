@@ -175,6 +175,11 @@ void HwHelperHw<Family>::addEngineToEngineGroup(std::vector<std::vector<EngineCo
 }
 
 template <>
+bool HwHelperHw<Family>::forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo) const {
+    return Gen12LPHelpers::forceBlitterUseForGlobalBuffers(hwInfo);
+}
+
+template <>
 void MemorySynchronizationCommands<Family>::addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
     if (Gen12LPHelpers::pipeControlWaRequired(hwInfo.platform.eProductFamily)) {

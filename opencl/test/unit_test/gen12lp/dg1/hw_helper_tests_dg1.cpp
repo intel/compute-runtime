@@ -75,3 +75,8 @@ DG1TEST_F(HwHelperTestDg1, givenDg1AndVariousSteppingsWhenGettingIsWorkaroundReq
         }
     }
 }
+
+DG1TEST_F(HwHelperTestDg1, givenDg1WhenPatchingGlobalBuffersThenUseBlitter) {
+    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    EXPECT_TRUE(hwHelper.forceBlitterUseForGlobalBuffers(hardwareInfo));
+}

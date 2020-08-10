@@ -63,5 +63,9 @@ bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) {
     return hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP;
 }
 
+bool forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo) {
+    return false;
+}
+
 } // namespace Gen12LPHelpers
 } // namespace NEO
