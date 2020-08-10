@@ -15,7 +15,7 @@
 
 using namespace NEO;
 
-TEST(TimerTest, Get) {
+TEST(TimerTest, WhenStartingEndingTimerThenDeltaInExpectedRange) {
     Timer::setFreq();
     Timer timer;
 
@@ -37,7 +37,7 @@ TEST(TimerTest, Get) {
     EXPECT_LE(maxDelta, 2000000000u);
 }
 
-TEST(TimerTest, GetStartEnd) {
+TEST(TimerTest, WhenGettingStartEndThenEndIsAfterStart) {
 
     Timer::setFreq();
     Timer timer;
@@ -52,7 +52,7 @@ TEST(TimerTest, GetStartEnd) {
     EXPECT_GE(end, start);
 }
 
-TEST(TimerTest, Assignement) {
+TEST(TimerTest, WhenAssigningTimerThenStartTimeIsCopied) {
 
     Timer::setFreq();
     Timer timer1, timer2;
