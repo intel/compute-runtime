@@ -1269,8 +1269,8 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenNonGen12LPPlatformWhenConfigureDeviceAd
     EXPECT_EQ(NEO::windowsMinAddress, wddm->getWddmMinAddress());
 }
 
-struct GdiWithMockedCloseFunc : public Gdi {
-    GdiWithMockedCloseFunc() : Gdi() {
+struct GdiWithMockedCloseFunc : public MockGdi {
+    GdiWithMockedCloseFunc() : MockGdi() {
         closeAdapter = mockCloseAdapter;
         GdiWithMockedCloseFunc::closeAdapterCalled = 0u;
         GdiWithMockedCloseFunc::closeAdapterCalledArgPassed = 0u;
@@ -1451,7 +1451,7 @@ TEST(DiscoverDevices, whenDriverInfoHasIncompatibleDriverStoreThenHwDeviceIdIsNo
 }
 
 TEST(VerifyHdcTest, givenHdcHandleFromCorrectAdapterLuidWhenVerifyHdcHandleIsCalledThenSuccessIsReturned) {
-    auto gdi = std::make_unique<MockGdi>();
+    auto gdi = std::make_unique<GdiWithMockedCloseFunc>();
     auto osEnv = std::make_unique<OsEnvironmentWin>();
     osEnv->gdi = std::move(gdi);
 
@@ -1466,20 +1466,25 @@ TEST(VerifyHdcTest, givenHdcHandleFromCorrectAdapterLuidWhenVerifyHdcHandleIsCal
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
 
     WddmMock wddm(std::move(hwDeviceId), rootDeviceEnvironment);
+    wddm.callBaseVerifyAdapterLuid = true;
 
     size_t hdcHandle = 0x1;
 
     auto status = wddm.Wddm::verifyHdcHandle(hdcHandle);
 
+    EXPECT_EQ(1u, GdiWithMockedCloseFunc::closeAdapterCalled);
+    EXPECT_EQ(MockGdi::adapterHandleForHdc, GdiWithMockedCloseFunc::closeAdapterCalledArgPassed);
+
     EXPECT_TRUE(status);
 
     status = wddm.Wddm::verifyHdcHandle(0u);
 
+    EXPECT_EQ(1u, GdiWithMockedCloseFunc::closeAdapterCalled);
     EXPECT_FALSE(status);
 }
 
 TEST(VerifyHdcTest, givenHdcHandleFromInvalidAdapterLuidWhenVerifyHdcHandleIsCalledThenFailureIsReturned) {
-    auto gdi = std::make_unique<MockGdi>();
+    auto gdi = std::make_unique<GdiWithMockedCloseFunc>();
     auto osEnv = std::make_unique<OsEnvironmentWin>();
     osEnv->gdi = std::move(gdi);
 
@@ -1494,6 +1499,7 @@ TEST(VerifyHdcTest, givenHdcHandleFromInvalidAdapterLuidWhenVerifyHdcHandleIsCal
     RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
 
     WddmMock wddm(std::move(hwDeviceId), rootDeviceEnvironment);
+    wddm.callBaseVerifyAdapterLuid = true;
 
     size_t hdcHandle = 0x1;
 
@@ -1501,11 +1507,16 @@ TEST(VerifyHdcTest, givenHdcHandleFromInvalidAdapterLuidWhenVerifyHdcHandleIsCal
 
     auto status = wddm.Wddm::verifyHdcHandle(hdcHandle);
 
+    EXPECT_EQ(1u, GdiWithMockedCloseFunc::closeAdapterCalled);
+    EXPECT_EQ(MockGdi::adapterHandleForHdc, GdiWithMockedCloseFunc::closeAdapterCalledArgPassed);
+
     EXPECT_FALSE(status);
 
     MockGdi::adapterLuidToReturn = {0x1234, 0x5679};
 
     status = wddm.Wddm::verifyHdcHandle(hdcHandle);
 
+    EXPECT_EQ(2u, GdiWithMockedCloseFunc::closeAdapterCalled);
+    EXPECT_EQ(MockGdi::adapterHandleForHdc, GdiWithMockedCloseFunc::closeAdapterCalledArgPassed);
     EXPECT_FALSE(status);
 }

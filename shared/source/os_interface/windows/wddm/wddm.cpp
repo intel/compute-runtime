@@ -1071,7 +1071,14 @@ bool Wddm::verifyHdcHandle(size_t hdcHandle) const {
         DEBUG_BREAK_IF(true);
         return false;
     }
-    return openAdapterFromHdcStruct.AdapterLuid.HighPart == hwDeviceId->getAdapterLuid().HighPart && openAdapterFromHdcStruct.AdapterLuid.LowPart == hwDeviceId->getAdapterLuid().LowPart;
+
+    auto adapterLuid = openAdapterFromHdcStruct.AdapterLuid;
+    D3DKMT_CLOSEADAPTER closeAdapterStruct{};
+
+    closeAdapterStruct.hAdapter = openAdapterFromHdcStruct.hAdapter;
+    getGdi()->closeAdapter(&closeAdapterStruct);
+
+    return verifyAdapterLuid(adapterLuid);
 }
 
 } // namespace NEO

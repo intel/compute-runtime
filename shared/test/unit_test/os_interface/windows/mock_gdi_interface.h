@@ -19,6 +19,7 @@ class MockGdi : public Gdi {
     }
     ~MockGdi(){};
 
+    static const D3DKMT_HANDLE adapterHandleForHdc = 0x1233;
     static UINT64 pagingFenceReturnValue;
     bool nonZeroNumBytesToTrim = false;
     static LUID adapterLuidToReturn;
@@ -173,6 +174,7 @@ class MockGdi : public Gdi {
             return STATUS_INVALID_PARAMETER;
         }
         openAdapterFromHdcStruct->AdapterLuid = MockGdi::adapterLuidToReturn;
+        openAdapterFromHdcStruct->hAdapter = MockGdi::adapterHandleForHdc;
         return STATUS_SUCCESS;
     }
 };
