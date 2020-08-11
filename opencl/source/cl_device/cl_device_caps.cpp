@@ -186,7 +186,7 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_khr_3d_image_writes ";
     }
 
-    auto sharingAllowed = (HwHelper::getSubDevicesCount(&hwInfo) == 1u);
+    auto sharingAllowed = (getNumAvailableDevices() == 1u);
     if (sharingAllowed) {
         deviceExtensions += sharingFactory.getExtensions(driverInfo.get());
     }

@@ -505,13 +505,23 @@ TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndDisabledMultipl
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_intel_sharing_format_query ")));
 }
 
-TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndEnabledMultipleSubDevicesWhenDeviceCapsAreCreatedThenSharingFormatQueryIsNotReported) {
+TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndEnabledMultipleSubDevicesWhenDeviceCapsAreCreatedForRootDeviceThenSharingFormatQueryIsNotReported) {
     DebugManagerStateRestore dbgRestorer;
+    VariableBackup<bool> mockDeviceFlagBackup{&MockDevice::createSingleDevice, false};
     DebugManager.flags.EnableFormatQuery.set(true);
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
     EXPECT_THAT(caps.deviceExtensions, ::testing::Not(::testing::HasSubstr(std::string("cl_intel_sharing_format_query "))));
+}
+
+TEST_F(DeviceGetCapsTest, givenEnableSharingFormatQuerySetTrueAndEnabledMultipleSubDevicesWhenDeviceCapsAreCreatedForSubDeviceThenSharingFormatQueryIsReported) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableFormatQuery.set(true);
+    DebugManager.flags.CreateMultipleSubDevices.set(2);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    const auto &caps = device->getDeviceInfo();
+    EXPECT_THAT(caps.deviceExtensions, ::testing::HasSubstr(std::string("cl_intel_sharing_format_query ")));
 }
 
 TEST_F(DeviceGetCapsTest, givenOpenCLVersion20WhenCapsAreCreatedThenDeviceDoesntReportClKhrSubgroupsExtension) {
