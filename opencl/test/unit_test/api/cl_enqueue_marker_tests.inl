@@ -31,12 +31,12 @@ TEST_F(clEnqueueMarkerTests, GivenValidCommandQueueWhenEnqueingMarkerThenSuccess
 class CommandWithoutKernelTypesTests : public testing::TestWithParam<unsigned int /*commandTypes*/> {
 };
 
-TEST_P(CommandWithoutKernelTypesTests, commandWithoutKernelTypes) {
+TEST_P(CommandWithoutKernelTypesTests, GivenCommandTypeWhenCheckingIsCommandWithoutKernelThenTrueIsReturned) {
     unsigned int commandType = GetParam();
     EXPECT_TRUE(isCommandWithoutKernel(commandType));
 };
 
-TEST_P(CommandWithoutKernelTypesTests, commandZeroType) {
+TEST_F(CommandWithoutKernelTypesTests, GivenZeroWhenCheckingIsCommandWithoutKernelThenFalseIsReturned) {
     EXPECT_FALSE(isCommandWithoutKernel(0));
 };
 
