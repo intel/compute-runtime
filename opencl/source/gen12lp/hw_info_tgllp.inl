@@ -77,7 +77,8 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     false,                                           // supportsOnDemandPageFaults
     false,                                           // supportsIndependentForwardProgress
     false,                                           // hostPtrTrackingEnabled
-    true                                             // levelZeroSupported
+    true,                                            // levelZeroSupported
+    true                                             // isIntegratedDevice
 };
 
 WorkaroundTable TGLLP::workaroundTable = {};

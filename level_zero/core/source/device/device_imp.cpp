@@ -355,10 +355,6 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->coreClockRate = deviceInfo.maxClockFrequency;
 
-    if (hardwareInfo.capabilityTable.supportsOnDemandPageFaults) {
-        pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING;
-    }
-
     pDeviceProperties->maxCommandQueuePriority = 0;
 
     pDeviceProperties->numThreadsPerEU = deviceInfo.numThreadsPerEU;
@@ -374,6 +370,22 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     pDeviceProperties->timerResolution = this->neoDevice->getDeviceInfo().outProfilingTimerResolution;
 
     pDeviceProperties->maxMemAllocSize = this->neoDevice->getDeviceInfo().maxMemAllocSize;
+
+    if (hardwareInfo.capabilityTable.isIntegratedDevice) {
+        pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_INTEGRATED;
+    }
+
+    if (isSubdevice) {
+        pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
+    }
+
+    if (this->neoDevice->getDeviceInfo().errorCorrectionSupport) {
+        pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_ECC;
+    }
+
+    if (hardwareInfo.capabilityTable.supportsOnDemandPageFaults) {
+        pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_ONDEMANDPAGING;
+    }
 
     memset(pDeviceProperties->name, 0, ZE_MAX_DEVICE_NAME);
     std::string name = "Intel(R) ";

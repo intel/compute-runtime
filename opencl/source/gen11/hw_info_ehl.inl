@@ -75,7 +75,8 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     false,                                         // supportsOnDemandPageFaults
     false,                                         // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
-    false                                          // levelZeroSupported
+    false,                                         // levelZeroSupported
+    true                                           // isIntegratedDevice
 };
 
 WorkaroundTable EHL::workaroundTable = {};

@@ -77,7 +77,8 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     false,                                         // supportsOnDemandPageFaults
     false,                                         // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
-    false                                          // levelZeroSupported
+    false,                                         // levelZeroSupported
+    true                                           // isIntegratedDevice
 };
 
 WorkaroundTable BXT::workaroundTable = {};

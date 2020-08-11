@@ -60,6 +60,7 @@ struct RuntimeCapabilityTable {
     bool supportsIndependentForwardProgress;
     bool hostPtrTrackingEnabled;
     bool levelZeroSupported;
+    bool isIntegratedDevice;
 };
 
 struct HardwareCapabilities {

@@ -156,6 +156,14 @@ TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCo
     EXPECT_EQ(deviceProperties.maxMemAllocSize, this->neoDevice->getDeviceInfo().maxMemAllocSize);
 }
 
+TEST_F(DeviceTest, whenGetDevicePropertiesCalledThenCorrectDevicePropertyEccFlagSet) {
+    ze_device_properties_t deviceProps;
+
+    device->getProperties(&deviceProps);
+    auto expected = (this->neoDevice->getDeviceInfo().errorCorrectionSupport) ? ZE_DEVICE_PROPERTY_FLAG_ECC : static_cast<ze_device_property_flag_t>(0u);
+    EXPECT_EQ(expected, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_ECC);
+}
+
 TEST_F(DeviceTest, givenCommandQueuePropertiesCallThenCallSucceeds) {
     uint32_t count = 0;
     ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
@@ -268,6 +276,27 @@ TEST_F(MultipleDevicesTest, whenRetrievingNumberOfSubdevicesThenCorrectNumberIsR
         EXPECT_NE(nullptr, subDevice);
         EXPECT_TRUE(static_cast<DeviceImp *>(subDevice)->isSubdevice);
     }
+}
+
+TEST_F(MultipleDevicesTest, whenRetriecingSubDevicePropertiesThenCorrectFlagIsSet) {
+    L0::Device *device0 = driverHandle->devices[0];
+
+    uint32_t count = 0;
+    auto result = device0->getSubDevices(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numSubDevices, count);
+
+    std::vector<ze_device_handle_t> subDevices(count);
+    count++;
+    result = device0->getSubDevices(&count, subDevices.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(numSubDevices, count);
+
+    ze_device_properties_t deviceProps;
+
+    L0::Device *subdevice0 = static_cast<L0::Device *>(subDevices[0]);
+    subdevice0->getProperties(&deviceProps);
+    EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
 }
 
 TEST_F(MultipleDevicesTest, givenTheSameDeviceThenCanAccessPeerReturnsTrue) {
@@ -461,6 +490,42 @@ TEST_F(DeviceTest, givenNoActiveSourceLevelDebuggerWhenGetIsCalledThenNullptrIsR
 
 TEST_F(DeviceTest, givenNoL0DebuggerWhenGettingL0DebuggerThenNullptrReturned) {
     EXPECT_EQ(nullptr, device->getL0Debugger());
+}
+
+TEST(DevicePropertyFlagIsIntegratedTest, givenIntegratedDeviceThenCorrectDevicePropertyFlagSet) {
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.isIntegratedDevice = true;
+
+    NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = driverHandle->devices[0];
+
+    ze_device_properties_t deviceProps;
+
+    device->getProperties(&deviceProps);
+    EXPECT_EQ(ZE_DEVICE_PROPERTY_FLAG_INTEGRATED, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
+}
+
+TEST(DevicePropertyFlagDiscreteDeviceTest, givenDiscreteDeviceThenCorrectDevicePropertyFlagSet) {
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.isIntegratedDevice = false;
+
+    NEO::MockDevice *neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->initialize(std::move(devices));
+    auto device = driverHandle->devices[0];
+
+    ze_device_properties_t deviceProps;
+
+    device->getProperties(&deviceProps);
+    EXPECT_EQ(0u, deviceProps.flags & ZE_DEVICE_PROPERTY_FLAG_INTEGRATED);
 }
 
 } // namespace ult

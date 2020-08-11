@@ -76,7 +76,8 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     false,                                           // supportsOnDemandPageFaults
     true,                                            // supportsIndependentForwardProgress
     true,                                            // hostPtrTrackingEnabled
-    true                                             // levelZeroSupported
+    true,                                            // levelZeroSupported
+    true                                             // isIntegratedDevice
 };
 
 WorkaroundTable ICLLP::workaroundTable = {};

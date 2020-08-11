@@ -72,7 +72,8 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     false,                                         // supportsOnDemandPageFaults
     true,                                          // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
-    true                                           // levelZeroSupported
+    true,                                          // levelZeroSupported
+    true                                           // isIntegratedDevice
 };
 
 WorkaroundTable CFL::workaroundTable = {};

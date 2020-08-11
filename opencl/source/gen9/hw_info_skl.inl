@@ -80,7 +80,8 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     false,                                         // supportsOnDemandPageFaults
     true,                                          // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
-    true                                           // levelZeroSupported
+    true,                                          // levelZeroSupported
+    true                                           // isIntegratedDevice
 };
 WorkaroundTable SKL::workaroundTable = {};
 FeatureTable SKL::featureTable = {};

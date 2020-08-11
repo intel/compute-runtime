@@ -79,7 +79,8 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     false,                                         // supportsOnDemandPageFaults
     false,                                         // supportsIndependentForwardProgress
     false,                                         // hostPtrTrackingEnabled
-    true                                           // levelZeroSupported
+    true,                                          // levelZeroSupported
+    false                                          // isIntegratedDevice
 };
 
 WorkaroundTable DG1::workaroundTable = {};
