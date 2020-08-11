@@ -39,7 +39,7 @@ extern ze_gpu_driver_dditable_t driver_ddiTable;
 namespace L0 {
 
 extern thread_local ze_bool_t tracingInProgress;
-extern struct APITracerContextImp *PGLOBAL_APITracerContextImp;
+extern struct APITracerContextImp *pGlobalAPITracerContextImp;
 
 typedef struct tracer_array_entry {
     zet_core_callbacks_t corePrologues;
@@ -160,7 +160,7 @@ class APITracerCallbackDataImp {
 
 #define ZE_GEN_PER_API_CALLBACK_STATE(perApiCallbackData, tracerType, callbackCategory, callbackFunctionType)                               \
     L0::tracer_array_t *currentTracerArray;                                                                                                 \
-    currentTracerArray = (L0::tracer_array_t *)L0::PGLOBAL_APITracerContextImp->getActiveTracersList();                                     \
+    currentTracerArray = (L0::tracer_array_t *)L0::pGlobalAPITracerContextImp->getActiveTracersList();                                      \
     if (currentTracerArray) {                                                                                                               \
         for (size_t i = 0; i < currentTracerArray->tracerArrayCount; i++) {                                                                 \
             tracerType prologueCallbackPtr;                                                                                                 \
@@ -204,7 +204,7 @@ ze_result_t APITracerWrapperImp(TFunction_pointer zeApiPtr,
             callbacksEpilogs->at(i).current_api_callback(paramsStruct, ret, callbacksEpilogs->at(i).pUserData, &ppTracerInstanceUserData[i]);
     }
     L0::tracingInProgress = 0;
-    L0::PGLOBAL_APITracerContextImp->releaseActivetracersList();
+    L0::pGlobalAPITracerContextImp->releaseActivetracersList();
     return ret;
 }
 

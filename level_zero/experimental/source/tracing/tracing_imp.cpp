@@ -13,8 +13,8 @@ namespace L0 {
 
 thread_local ze_bool_t tracingInProgress = 0;
 
-struct APITracerContextImp GLOBAL_APITracerContextImp;
-struct APITracerContextImp *PGLOBAL_APITracerContextImp = &GLOBAL_APITracerContextImp;
+struct APITracerContextImp globalAPITracerContextImp;
+struct APITracerContextImp *pGlobalAPITracerContextImp = &globalAPITracerContextImp;
 
 APITracer *APITracer::create() {
     APITracerImp *tracer = new APITracerImp;
@@ -26,7 +26,7 @@ APITracer *APITracer::create() {
 
 ze_result_t createAPITracer(zet_context_handle_t hContext, const zet_tracer_exp_desc_t *desc, zet_tracer_exp_handle_t *phTracer) {
 
-    if (!PGLOBAL_APITracerContextImp->isTracingEnabled()) {
+    if (!pGlobalAPITracerContextImp->isTracingEnabled()) {
         return ZE_RESULT_ERROR_UNINITIALIZED;
     }
 
@@ -42,7 +42,7 @@ ze_result_t APITracerImp::destroyTracer(zet_tracer_exp_handle_t phTracer) {
 
     APITracerImp *tracer = static_cast<APITracerImp *>(phTracer);
 
-    ze_result_t result = PGLOBAL_APITracerContextImp->finalizeDisableImpTracingWait(tracer);
+    ze_result_t result = pGlobalAPITracerContextImp->finalizeDisableImpTracingWait(tracer);
     if (result == ZE_RESULT_SUCCESS) {
         delete L0::APITracer::fromHandle(phTracer);
     }
@@ -72,7 +72,7 @@ ze_result_t APITracerImp::setEpilogues(zet_core_callbacks_t *pCoreCbs) {
 }
 
 ze_result_t APITracerImp::enableTracer(ze_bool_t enable) {
-    return PGLOBAL_APITracerContextImp->enableTracingImp(this, enable);
+    return pGlobalAPITracerContextImp->enableTracingImp(this, enable);
 }
 
 static std::mutex perThreadTracerDataMutex;
@@ -321,7 +321,7 @@ void *APITracerContextImp::getActiveTracersList() {
         // of tracer structure information from the threader enable/disable/destroy
         // thread to this tracing thread.  So it must use memory_order_acquire
         //
-        stableTracerArray = PGLOBAL_APITracerContextImp->activeTracerArray.load(std::memory_order_acquire);
+        stableTracerArray = pGlobalAPITracerContextImp->activeTracerArray.load(std::memory_order_acquire);
         myThreadPrivateTracerData.myThreadPublicTracerData->tracerArrayPointer.store(stableTracerArray, std::memory_order_relaxed);
         //
         // This read of active_tracer_array does NOT transfer any information
@@ -329,7 +329,7 @@ void *APITracerContextImp::getActiveTracersList() {
         // So it can use memory_order_relaxed.
         //
     } while (stableTracerArray !=
-             PGLOBAL_APITracerContextImp->activeTracerArray.load(std::memory_order_relaxed));
+             pGlobalAPITracerContextImp->activeTracerArray.load(std::memory_order_relaxed));
     return (void *)stableTracerArray;
 }
 
