@@ -110,6 +110,7 @@ void DrmCommandStreamReceiver<GfxFamily>::exec(const BatchBuffer &batchBuffer, u
     int err = bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
                        batchBuffer.startOffset, execFlags,
                        batchBuffer.requiresCoherency,
+                       this->osContext,
                        vmHandleId,
                        drmContextId,
                        this->residency.data(), this->residency.size(),
@@ -123,7 +124,7 @@ template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) {
     for (auto &alloc : inputAllocationsForResidency) {
         auto drmAlloc = static_cast<DrmAllocation *>(alloc);
-        drmAlloc->makeBOsResident(osContext->getContextId(), handleId, &this->residency, false);
+        drmAlloc->makeBOsResident(osContext, handleId, &this->residency, false);
     }
 }
 

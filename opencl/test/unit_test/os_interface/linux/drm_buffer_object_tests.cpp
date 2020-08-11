@@ -6,9 +6,15 @@
  */
 
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
+#include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/mock_device.h"
 
+#include "opencl/test/unit_test/mocks/linux/mock_drm_allocation.h"
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"
 
 #include "drm/i915_drm.h"
@@ -26,8 +32,8 @@ class TestedBufferObject : public BufferObject {
         this->tiling_mode = mode;
     }
 
-    void fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t vmHandleId, uint32_t drmContextId) override {
-        BufferObject::fillExecObject(execObject, vmHandleId, drmContextId);
+    void fillExecObject(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) override {
+        BufferObject::fillExecObject(execObject, osContext, vmHandleId, drmContextId);
         execObjectPointerFilled = &execObject;
     }
 
@@ -43,10 +49,13 @@ class DrmBufferObjectFixture {
     std::unique_ptr<DrmMockCustom> mock;
     TestedBufferObject *bo;
     drm_i915_gem_exec_object2 execObjectsStorage[256];
+    std::unique_ptr<OsContextLinux> osContext;
 
     void SetUp() {
         this->mock = std::make_unique<DrmMockCustom>();
         ASSERT_NE(nullptr, this->mock);
+        osContext.reset(new OsContextLinux(*this->mock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false));
+        this->mock->reset();
         bo = new TestedBufferObject(this->mock.get());
         ASSERT_NE(nullptr, bo);
     }
@@ -56,6 +65,9 @@ class DrmBufferObjectFixture {
         if (this->mock->ioctl_expected.total >= 0) {
             EXPECT_EQ(this->mock->ioctl_expected.total, this->mock->ioctl_cnt.total);
         }
+        mock->reset();
+        osContext.reset(nullptr);
+        mock.reset(nullptr);
     }
 };
 
@@ -66,7 +78,7 @@ TEST_F(DrmBufferObjectTest, exec) {
     mock->ioctl_res = 0;
 
     drm_i915_gem_exec_object2 execObjectsStorage = {};
-    auto ret = bo->exec(0, 0, 0, false, 0, 1, nullptr, 0u, &execObjectsStorage);
+    auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage);
     EXPECT_EQ(mock->ioctl_res, ret);
     EXPECT_EQ(0u, mock->execBuffer.flags);
 }
@@ -76,7 +88,7 @@ TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
     mock->ioctl_res = -1;
     mock->errnoValue = EFAULT;
     drm_i915_gem_exec_object2 execObjectsStorage = {};
-    EXPECT_EQ(EFAULT, bo->exec(0, 0, 0, false, 0, 1, nullptr, 0u, &execObjectsStorage));
+    EXPECT_EQ(EFAULT, bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage));
 }
 
 TEST_F(DrmBufferObjectTest, setTiling_success) {
@@ -105,7 +117,7 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedCrosses32BitBoundaryW
     memset(&execObject, 0, sizeof(execObject));
     bo->setAddress(((uint64_t)1u << 32) - 0x1000u);
     bo->setSize(0x1000);
-    bo->fillExecObject(execObject, 0, 1);
+    bo->fillExecObject(execObject, osContext.get(), 0, 1);
     //base address + size > size of 32bit address space
     EXPECT_TRUE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
 }
@@ -116,7 +128,7 @@ TEST_F(DrmBufferObjectTest, givenAddressThatWhenSizeIsAddedWithin32BitBoundaryWh
     memset(&execObject, 0, sizeof(execObject));
     bo->setAddress(((uint64_t)1u << 32) - 0x1000u);
     bo->setSize(0xFFF);
-    bo->fillExecObject(execObject, 0, 1);
+    bo->fillExecObject(execObject, osContext.get(), 0, 1);
     //base address + size < size of 32bit address space
     EXPECT_TRUE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
 }
@@ -133,7 +145,7 @@ TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {
 
     bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
     BufferObject *boArray[1] = {boToPin.get()};
-    auto ret = bo->pin(boArray, 1, 0, 1);
+    auto ret = bo->pin(boArray, 1, osContext.get(), 0, 1);
     EXPECT_EQ(EINVAL, ret);
 }
 
@@ -144,7 +156,7 @@ TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundI
     drm_i915_gem_exec_object2 execObjectsStorage = {};
 
     testing::internal::CaptureStdout();
-    auto ret = bo->exec(0, 0, 0, false, 0, 1, nullptr, 0u, &execObjectsStorage);
+    auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage);
     EXPECT_EQ(0, ret);
 
     std::string output = testing::internal::GetCapturedStdout();
@@ -170,7 +182,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
     mock->errnoValue = EFAULT;
 
     BufferObject *boArray[1] = {boToPin.get()};
-    auto ret = bo->pin(boArray, 1, 0, 1);
+    auto ret = bo->pin(boArray, 1, nullptr, 0, 1);
     EXPECT_EQ(EFAULT, ret);
 }
 
@@ -185,6 +197,8 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[256]);
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom);
     ASSERT_NE(nullptr, mock.get());
+    OsContextLinux osContext(*mock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
+
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
     ASSERT_NE(nullptr, bo.get());
     mock->ioctl_res = 0;
@@ -200,7 +214,7 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
     BufferObject *array[3] = {boToPin.get(), boToPin2.get(), boToPin3.get()};
 
     bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
-    auto ret = bo->pin(array, 3, 0, 1);
+    auto ret = bo->pin(array, 3, &osContext, 0, 1);
     EXPECT_EQ(mock->ioctl_res, ret);
 
     EXPECT_LT(0u, mock->execBuffer.batch_len);
@@ -223,4 +237,52 @@ TEST_F(DrmBufferObjectTest, givenDeleterWhenBufferObjectIsCreatedAndDeletedThenC
     EXPECT_EQ(1, mock->ioctl_cnt.gemClose);
     mock->ioctl_cnt.reset();
     mock->ioctl_expected.reset();
+}
+
+TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoCreatedThenBindInfoIsInitializedToOsContextCount) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    device->getRootDeviceEnvironment().executionEnvironment.setPerContextMemorySpace();
+
+    DrmMock drm(*(device->getExecutionEnvironment()->rootDeviceEnvironments[0].get()));
+    EXPECT_TRUE(drm.isPerContextVMRequired());
+    MockBufferObject bo(&drm);
+
+    auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
+    EXPECT_EQ(osContextCount, bo.bindInfo.size());
+
+    for (auto &iter : bo.bindInfo) {
+        for (uint32_t i = 0; i < EngineLimits::maxHandleCount; i++) {
+            EXPECT_FALSE(iter[i]);
+        }
+    }
+}
+
+TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoBoundAndUnboundThenCorrectBindInfoIsUpdated) {
+    auto executionEnvironment = new ExecutionEnvironment;
+    executionEnvironment->setPerContextMemorySpace();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create();
+
+    DrmMockNonFailing *drm = new DrmMockNonFailing(*executionEnvironment->rootDeviceEnvironments[0]);
+    EXPECT_TRUE(drm->isPerContextVMRequired());
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
+
+    std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
+
+    MockBufferObject bo(drm);
+
+    auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
+    EXPECT_EQ(osContextCount, bo.bindInfo.size());
+
+    auto contextId = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount() / 2;
+    auto osContext = device->getExecutionEnvironment()->memoryManager->getRegisteredEngines()[contextId].osContext;
+
+    bo.bind(osContext, 0);
+    EXPECT_TRUE(bo.bindInfo[contextId][0]);
+
+    bo.unbind(osContext, 0);
+    EXPECT_FALSE(bo.bindInfo[contextId][0]);
 }

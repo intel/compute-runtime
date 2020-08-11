@@ -140,3 +140,9 @@ class DrmMock : public Drm {
 
     virtual int handleRemainingRequests(unsigned long request, void *arg) { return -1; }
 };
+
+class DrmMockNonFailing : public DrmMock {
+  public:
+    using DrmMock::DrmMock;
+    int handleRemainingRequests(unsigned long request, void *arg) override { return 0; }
+};

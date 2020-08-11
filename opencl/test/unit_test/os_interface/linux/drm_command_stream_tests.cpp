@@ -1486,7 +1486,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, givenAllocationWithSingleBuffer
     auto allocation = new DrmAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, bos, nullptr, 0u, size, MemoryPool::LocalMemory);
     EXPECT_EQ(bo, allocation->getBO());
 
-    makeResidentBufferObjects<FamilyType>(allocation);
+    makeResidentBufferObjects<FamilyType>(&csr->getOsContext(), allocation);
     EXPECT_TRUE(isResident<FamilyType>(bo));
 
     mm->freeGraphicsMemory(allocation);

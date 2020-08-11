@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/os_time_linux.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "drm/i915_drm.h"
@@ -32,7 +33,18 @@ namespace NEO {
 BufferObject::BufferObject(Drm *drm, int handle, size_t size) : drm(drm), refCount(1), handle(handle), size(size), isReused(false) {
     this->tiling_mode = I915_TILING_NONE;
     this->lockedAddress = nullptr;
-    bindInfo.fill(false);
+
+    perContextVmsUsed = drm->isPerContextVMRequired();
+
+    if (perContextVmsUsed) {
+        bindInfo.resize(MemoryManager::maxOsContextCount);
+        for (auto &iter : bindInfo) {
+            iter.fill(false);
+        }
+    } else {
+        bindInfo.resize(1);
+        bindInfo[0].fill(false);
+    }
 }
 
 uint32_t BufferObject::getRefCount() const {
@@ -90,7 +102,7 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
     return set_tiling.tiling_mode == mode;
 }
 
-void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_t vmHandleId, uint32_t drmContextId) {
+void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {
     execObject.handle = this->handle;
     execObject.relocation_count = 0; //No relocations, we are SoftPinning
     execObject.relocs_ptr = 0ul;
@@ -100,14 +112,14 @@ void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, uint32_
     execObject.rsvd1 = drmContextId;
     execObject.rsvd2 = 0;
 
-    this->fillExecObjectImpl(execObject, vmHandleId);
+    this->fillExecObjectImpl(execObject, osContext, vmHandleId);
 }
 
-int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, uint32_t vmHandleId, uint32_t drmContextId, BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage) {
+int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId, BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage) {
     for (size_t i = 0; i < residencyCount; i++) {
-        residency[i]->fillExecObject(execObjectsStorage[i], vmHandleId, drmContextId);
+        residency[i]->fillExecObject(execObjectsStorage[i], osContext, vmHandleId, drmContextId);
     }
-    this->fillExecObject(execObjectsStorage[residencyCount], vmHandleId, drmContextId);
+    this->fillExecObject(execObjectsStorage[residencyCount], osContext, vmHandleId, drmContextId);
 
     drm_i915_gem_execbuffer2 execbuf{};
     execbuf.buffers_ptr = reinterpret_cast<uintptr_t>(execObjectsStorage);
@@ -131,23 +143,25 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     return err;
 }
 
-void BufferObject::bind(uint32_t vmHandleId) {
-    if (!this->bindInfo[vmHandleId]) {
-        auto ret = this->drm->bindBufferObject(vmHandleId, this);
+void BufferObject::bind(OsContext *osContext, uint32_t vmHandleId) {
+    auto contextId = perContextVmsUsed ? osContext->getContextId() : 0;
+    if (!this->bindInfo[contextId][vmHandleId]) {
+        auto ret = this->drm->bindBufferObject(osContext, vmHandleId, this);
         auto err = this->drm->getErrno();
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "bind buffer object returned with %d. errno=%d(%s)\n", ret, err, strerror(err));
         UNRECOVERABLE_IF(ret != 0);
-        this->bindInfo[vmHandleId] = true;
+        this->bindInfo[contextId][vmHandleId] = true;
     }
 }
 
-void BufferObject::unbind(uint32_t vmHandleId) {
-    if (this->bindInfo[vmHandleId]) {
-        auto ret = this->drm->unbindBufferObject(vmHandleId, this);
+void BufferObject::unbind(OsContext *osContext, uint32_t vmHandleId) {
+    auto contextId = perContextVmsUsed ? osContext->getContextId() : 0;
+    if (this->bindInfo[contextId][vmHandleId]) {
+        auto ret = this->drm->unbindBufferObject(osContext, vmHandleId, this);
         auto err = this->drm->getErrno();
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "unbind buffer object returned with %d. errno=%d(%s)\n", ret, err, strerror(err));
         UNRECOVERABLE_IF(ret != 0);
-        this->bindInfo[vmHandleId] = false;
+        this->bindInfo[contextId][vmHandleId] = false;
     }
 }
 
@@ -178,9 +192,9 @@ void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const
     std::cout << logger << std::endl;
 }
 
-int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t vmHandleId, uint32_t drmContextId) {
+int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {
     StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
-    return this->exec(4u, 0u, 0u, false, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
+    return this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
 }
 
 } // namespace NEO

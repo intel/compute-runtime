@@ -13,6 +13,7 @@
 #include <fstream>
 
 namespace NEO {
+class OsContext;
 
 int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
     maxGpuFrequency = 0;
@@ -49,11 +50,11 @@ unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, au
     return DrmEngineMapper::engineNodeMap(engineType);
 }
 
-int Drm::bindBufferObject(uint32_t vmHandleId, BufferObject *bo) {
+int Drm::bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
     return 0;
 }
 
-int Drm::unbindBufferObject(uint32_t vmHandleId, BufferObject *bo) {
+int Drm::unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo) {
     return 0;
 }
 

@@ -7,12 +7,13 @@
 
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
 
-void DrmAllocation::bindBOs(uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
+void DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind) {
     auto bo = this->getBO();
-    bindBO(bo, vmHandleId, bufferObjects, bind);
+    bindBO(bo, osContext, vmHandleId, bufferObjects, bind);
 }
 
 } // namespace NEO

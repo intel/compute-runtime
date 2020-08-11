@@ -2984,7 +2984,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
         PinBufferObject(Drm *drm) : BufferObject(drm, 1, 0) {
         }
 
-        int pin(BufferObject *const boToPin[], size_t numberOfBos, uint32_t vmHandleId, uint32_t drmContextId) override {
+        int pin(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) override {
             for (size_t i = 0; i < numberOfBos; i++) {
                 pinnedBoArray[i] = boToPin[i];
             }

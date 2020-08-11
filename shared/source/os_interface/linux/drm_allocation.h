@@ -10,6 +10,7 @@
 
 namespace NEO {
 class BufferObject;
+class OsContext;
 
 struct OsHandle {
     BufferObject *bo = nullptr;
@@ -60,9 +61,9 @@ class DrmAllocation : public GraphicsAllocation {
 
     uint64_t peekInternalHandle(MemoryManager *memoryManager) override;
 
-    void makeBOsResident(uint32_t osContextId, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
-    void bindBO(BufferObject *bo, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
-    void bindBOs(uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
+    void makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
+    void bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
+    void bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
 
   protected:
     BufferObjects bufferObjects{};

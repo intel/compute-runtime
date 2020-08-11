@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include "opencl/test/unit_test/mocks/linux/mock_drm_allocation.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "opencl/test/unit_test/utilities/file_logger_tests.h"
 #include "test.h"
 
@@ -22,10 +23,10 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
-
+    DrmMock drm{};
     MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::System64KBPages);
 
-    MockBufferObject bo;
+    MockBufferObject bo(&drm);
     bo.handle = 4;
 
     allocation.bufferObjects[0] = &bo;

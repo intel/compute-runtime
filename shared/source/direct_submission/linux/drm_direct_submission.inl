@@ -61,6 +61,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
                         0,
                         execFlags,
                         false,
+                        &this->osContext,
                         drmIterator,
                         drmContextIds[drmIterator],
                         nullptr,

@@ -31,6 +31,7 @@ namespace NEO {
 
 class BufferObject;
 class DeviceFactory;
+class OsContext;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
 
@@ -87,8 +88,8 @@ class Drm {
     bool createVirtualMemoryAddressSpace(uint32_t vmCount);
     void destroyVirtualMemoryAddressSpace();
     uint32_t getVirtualMemoryAddressSpace(uint32_t vmId);
-    int bindBufferObject(uint32_t vmHandleId, BufferObject *bo);
-    int unbindBufferObject(uint32_t vmHandleId, BufferObject *bo);
+    int bindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
+    int unbindBufferObject(OsContext *osContext, uint32_t vmHandleId, BufferObject *bo);
     int setupHardwareInfo(DeviceDescriptor *, bool);
 
     bool areNonPersistentContextsSupported() const { return nonPersistentContextsSupported; }

@@ -9,6 +9,6 @@
 
 namespace NEO {
 
-void BufferObject::fillExecObjectImpl(drm_i915_gem_exec_object2 &execObject, uint32_t vmHandleId) {}
+void BufferObject::fillExecObjectImpl(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId) {}
 
 } // namespace NEO
