@@ -1076,7 +1076,7 @@ TEST(DeviceGetCaps, givenOcl21FeaturesSupportedWhenCapsAreCreatedThenDeviceRepor
     }
 }
 
-TEST(DeviceGetCaps, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThenIgnoreEuCountPerPoolMin) {
+HWTEST_F(DeviceGetCapsTest, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThenIgnoreEuCountPerPoolMin) {
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     FeatureTable &mySkuTable = myHwInfo.featureTable;
