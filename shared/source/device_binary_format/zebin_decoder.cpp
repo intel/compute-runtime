@@ -773,7 +773,6 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
     }
 
     if (false == zebinSections.symtabSections.empty()) {
-        dst.prepareLinkerInputStorage();
         auto expectedSymSize = sizeof(NEO::Elf::ElfSymbolEntry<Elf::EI_CLASS_64>);
         auto gotSymSize = zebinSections.symtabSections[0]->header->entsize;
         if (expectedSymSize != gotSymSize) {

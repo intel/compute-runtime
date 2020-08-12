@@ -11,6 +11,7 @@
 #include "shared/offline_compiler/source/decoder/binary_encoder.h"
 #include "shared/offline_compiler/source/multi_command.h"
 #include "shared/offline_compiler/source/ocloc_fatbinary.h"
+#include "shared/offline_compiler/source/ocloc_validator.h"
 #include "shared/offline_compiler/source/offline_compiler.h"
 
 #include <iostream>
@@ -38,6 +39,7 @@ Commands:
   disasm                Disassembles Intel Compute GPU device binary.
   asm                   Assembles Intel Compute GPU device binary.
   multi                 Compiles multiple files using a config file.
+  validate              Validates Intel Compute GPU device binary
 
 Default command (when none provided) is 'compile'.
 
@@ -50,6 +52,9 @@ Examples:
 
   Assemble to Intel Compute GPU device binary (after above disasm)
     ocloc asm -out reassembled.bin
+
+  Validate Intel Compute GPU device binary
+    ocloc validate -file source_file_Gen9core.bin
 )===";
 
 extern "C" {
@@ -92,6 +97,8 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
             return retValue;
         } else if (requestedFatBinary(allArgs)) {
             return buildFatBinary(allArgs, helper.get());
+        } else if (numArgs > 1 && ConstStringRef("validate") == allArgs[1]) {
+            return NEO::Ocloc::validate(allArgs, helper.get());
         } else {
             int retVal = ErrorCode::SUCCESS;
 

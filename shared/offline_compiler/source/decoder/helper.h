@@ -46,7 +46,7 @@ class MessagePrinter {
         ss << stringFormat(format, std::forward<Args>(args)...);
     }
 
-    const std::ostream &getLog() {
+    const std::stringstream &getLog() {
         return ss;
     }
 
@@ -60,7 +60,7 @@ class MessagePrinter {
         }
         outputString.resize(size);
         snprintf(&*outputString.begin(), size, format.c_str(), args...);
-        return outputString;
+        return outputString.c_str();
     }
 
     std::stringstream ss;

@@ -12,10 +12,13 @@
 
 class MockOclocArgHelper : public OclocArgHelper {
   public:
-    std::map<std::string, std::string> &filesMap;
-    MockOclocArgHelper(std::map<std::string, std::string> &filesMap) : OclocArgHelper(
-                                                                           0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr),
-                                                                       filesMap(filesMap){};
+    using FileName = std::string;
+    using FileData = std::string;
+    using FilesMap = std::map<FileName, FileData>;
+    FilesMap &filesMap;
+    MockOclocArgHelper(FilesMap &filesMap) : OclocArgHelper(
+                                                 0, nullptr, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr),
+                                             filesMap(filesMap){};
 
   protected:
     bool fileExists(const std::string &filename) const override {

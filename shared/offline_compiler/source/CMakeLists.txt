@@ -48,10 +48,15 @@ set(CLOC_LIB_SRCS_LIB
   ${OCLOC_DIRECTORY}/source/ocloc_arg_helper.h
   ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.cpp
   ${OCLOC_DIRECTORY}/source/ocloc_fatbinary.h
+  ${OCLOC_DIRECTORY}/source/ocloc_validator.cpp
+  ${OCLOC_DIRECTORY}/source/ocloc_validator.h
   ${OCLOC_DIRECTORY}/source/offline_compiler.cpp
   ${OCLOC_DIRECTORY}/source/offline_compiler.h
   ${OCLOC_DIRECTORY}/source/offline_compiler_helper.cpp
   ${OCLOC_DIRECTORY}/source/offline_compiler_options.cpp
+  ${NEO_SOURCE_DIR}/shared/source/device_binary_format/device_binary_format_zebin.cpp
+  ${NEO_SOURCE_DIR}/shared/source/device_binary_format/zebin_decoder.cpp
+  ${NEO_SOURCE_DIR}/shared/source/device_binary_format/yaml/yaml_parser.cpp
 )
 
 if(${IGA_HEADERS_AVAILABLE})
