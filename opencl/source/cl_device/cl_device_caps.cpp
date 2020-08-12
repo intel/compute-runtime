@@ -258,7 +258,9 @@ void ClDevice::initializeCaps() {
     deviceInfo.memBaseAddressAlign = 1024;
     deviceInfo.minDataTypeAlignSize = 128;
 
-    deviceInfo.deviceEnqueueSupport = isDeviceEnqueueSupported() ? CL_DEVICE_QUEUE_SUPPORTED : 0u;
+    deviceInfo.deviceEnqueueSupport = isDeviceEnqueueSupported()
+                                          ? CL_DEVICE_QUEUE_SUPPORTED | CL_DEVICE_QUEUE_REPLACEABLE_DEFAULT
+                                          : 0u;
     if (isDeviceEnqueueSupported()) {
         deviceInfo.maxOnDeviceQueues = 1;
         deviceInfo.maxOnDeviceEvents = 1024;

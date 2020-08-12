@@ -618,9 +618,10 @@ TEST(GetDeviceInfo, WhenQueryingDeviceEnqueueCapabilitiesThenProperValueIsReturn
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(cl_device_device_enqueue_capabilities), paramRetSize);
 
-    cl_device_device_enqueue_capabilities expectedDeviceEnqueueCapabilities = deviceFactory.rootDevices[0]->isDeviceEnqueueSupported()
-                                                                                  ? CL_DEVICE_QUEUE_SUPPORTED
-                                                                                  : 0u;
+    cl_device_device_enqueue_capabilities expectedDeviceEnqueueCapabilities =
+        deviceFactory.rootDevices[0]->isDeviceEnqueueSupported()
+            ? CL_DEVICE_QUEUE_SUPPORTED | CL_DEVICE_QUEUE_REPLACEABLE_DEFAULT
+            : 0u;
     EXPECT_EQ(expectedDeviceEnqueueCapabilities, deviceEnqueueCapabilities);
 }
 
