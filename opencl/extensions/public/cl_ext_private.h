@@ -75,6 +75,7 @@ using cl_unified_shared_memory_capabilities_intel = cl_bitfield;
 #define CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL (1 << 20)
 
 #define CL_MEM_ALLOCATION_HANDLE_INTEL 0x10050
+#define CL_MEM_USES_COMPRESSION_INTEL 0x10051
 
 //Used with createBuffer
 #define CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL (1 << 23)

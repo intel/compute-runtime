@@ -14,6 +14,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
 
 #include "gtest/gtest.h"
 
@@ -322,6 +323,40 @@ TEST_F(GetMemObjectInfo, GivenMemReferenceCountWhenGettingMemObjectInfoThenCorre
         &sizeReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(sizeof(refCount), sizeReturned);
+}
+
+TEST_F(GetMemObjectInfo, GivenValidBufferWhenGettingCompressionOfMemObjectThenCorrectValueIsReturned) {
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+    auto graphicsAllocation = buffer->getGraphicsAllocation(0);
+
+    size_t sizeReturned = 0;
+    cl_bool usesCompression{};
+    cl_int retVal{};
+    retVal = buffer->getMemObjectInfo(
+        CL_MEM_USES_COMPRESSION_INTEL,
+        0,
+        nullptr,
+        &sizeReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(sizeof(cl_bool), sizeReturned);
+
+    graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    retVal = buffer->getMemObjectInfo(
+        CL_MEM_USES_COMPRESSION_INTEL,
+        sizeReturned,
+        &usesCompression,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(cl_bool{CL_TRUE}, usesCompression);
+
+    graphicsAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    retVal = buffer->getMemObjectInfo(
+        CL_MEM_USES_COMPRESSION_INTEL,
+        sizeReturned,
+        &usesCompression,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(cl_bool{CL_FALSE}, usesCompression);
 }
 
 class GetMemObjectInfoLocalMemory : public GetMemObjectInfo {
