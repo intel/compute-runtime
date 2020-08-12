@@ -93,24 +93,6 @@ struct DeviceImp : public Device {
     CommandList *pageFaultCommandList = nullptr;
 
   protected:
-    template <typename DescriptionType, typename ExpectedFlagType>
-    ze_result_t isCreatedCommandListCopyOnly(const DescriptionType *desc, bool *useBliter, ExpectedFlagType flag) {
-        *useBliter = false;
-        if (desc->flags & flag) {
-            auto hwInfo = neoDevice->getHardwareInfo();
-            if (hwInfo.capabilityTable.blitterOperationsSupported) {
-                if (NEO::DebugManager.flags.EnableCopyOnlyCommandListsAndCommandQueues.get() == -1) {
-                    *useBliter = true;
-                } else {
-                    *useBliter = NEO::DebugManager.flags.EnableCopyOnlyCommandListsAndCommandQueues.get();
-                }
-                return ZE_RESULT_SUCCESS;
-            }
-
-            return ZE_RESULT_ERROR_INVALID_ENUMERATION;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
     NEO::GraphicsAllocation *debugSurface = nullptr;
     SysmanDevice *pSysmanDevice = nullptr;
 };

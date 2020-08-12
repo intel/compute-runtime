@@ -83,10 +83,9 @@ ze_result_t DeviceImp::canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *
 ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
                                          ze_command_list_handle_t *commandList) {
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
-    bool useBliter = false;
-    if (desc->commandQueueGroupOrdinal == static_cast<uint32_t>(NEO::EngineGroupType::Copy)) {
-        useBliter = true;
-    }
+    uint32_t engineGroupIndex = desc->commandQueueGroupOrdinal;
+    mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
+    bool useBliter = engineGroupIndex == static_cast<uint32_t>(NEO::EngineGroupType::Copy);
     *commandList = CommandList::create(productFamily, this, useBliter);
 
     return ZE_RESULT_SUCCESS;
@@ -141,7 +140,7 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
     *pCount = std::min(numEngineGroups, *pCount);
     for (uint32_t i = 0, engineGroupCount = 0;
          i < static_cast<uint32_t>(NEO::EngineGroupType::MaxEngineGroups) && engineGroupCount < *pCount;
-         i++, engineGroupCount++) {
+         i++) {
 
         if (engines[i].empty()) {
             continue;
@@ -162,6 +161,7 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
         }
         pCommandQueueGroupProperties[engineGroupCount].maxMemoryFillPatternSize = sizeof(uint32_t);
         pCommandQueueGroupProperties[engineGroupCount].numQueues = static_cast<uint32_t>(engines[i].size());
+        engineGroupCount++;
     }
 
     return ZE_RESULT_SUCCESS;

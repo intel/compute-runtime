@@ -182,5 +182,59 @@ HWTEST2_F(DeviceQueueGroupTest,
     }
 }
 
+HWTEST2_F(DeviceQueueGroupTest,
+          givenQueueGroupsReturnedThenCommandListsAreCreatedCorrectly, IsGen12LP) {
+    const uint32_t rootDeviceIndex = 0u;
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.ftrCCSNode = false;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    hwInfo.featureTable.ftrBcsInfo.set(0);
+    auto *neoMockDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo,
+                                                                                              rootDeviceIndex);
+    Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
+
+    uint32_t count = 0;
+    ze_result_t res = deviceImp.getCommandQueueGroupProperties(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(count, 2u);
+
+    std::vector<ze_command_queue_group_properties_t> properties(count);
+    res = deviceImp.getCommandQueueGroupProperties(&count, properties.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc;
+    res = driverHandle->createContext(&desc, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    L0::Context *context = Context::fromHandle(hContext);
+
+    for (uint32_t i = 0; i < count; i++) {
+        if (i == static_cast<uint32_t>(NEO::EngineGroupType::RenderCompute)) {
+            EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
+            EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
+            EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
+            EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
+            EXPECT_EQ(properties[i].maxMemoryFillPatternSize, sizeof(uint32_t));
+            EXPECT_EQ(properties[i].numQueues, 1u);
+        } else if (i == static_cast<uint32_t>(NEO::EngineGroupType::Copy)) {
+            EXPECT_TRUE(properties[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
+            EXPECT_EQ(properties[i].maxMemoryFillPatternSize, sizeof(uint32_t));
+            EXPECT_EQ(properties[i].numQueues, 1u);
+        }
+
+        ze_command_list_desc_t desc = {};
+        desc.commandQueueGroupOrdinal = i;
+        ze_command_list_handle_t hCommandList = {};
+
+        res = context->createCommandList(device, &desc, &hCommandList);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        CommandList *commandList = CommandList::fromHandle(hCommandList);
+        commandList->destroy();
+    }
+
+    context->destroy();
+}
+
 } // namespace ult
 } // namespace L0

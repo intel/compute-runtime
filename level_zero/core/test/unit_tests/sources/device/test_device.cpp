@@ -162,8 +162,8 @@ TEST_F(DeviceTest, givenCommandQueuePropertiesCallThenCallSucceeds) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_GE(count, 1u);
 
-    ze_command_queue_group_properties_t queueProperties = {};
-    res = device->getCommandQueueGroupProperties(&count, &queueProperties);
+    std::vector<ze_command_queue_group_properties_t> queueProperties(count);
+    res = device->getCommandQueueGroupProperties(&count, queueProperties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
