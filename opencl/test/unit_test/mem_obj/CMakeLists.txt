@@ -9,6 +9,7 @@ set(IGDRCL_SRCS_tests_mem_obj
   ${CMAKE_CURRENT_SOURCE_DIR}/buffer_pin_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/buffer_set_arg_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/buffer_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/buffer_bcs_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/create_image_format_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/destructor_callback_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/get_mem_object_info_subbuffer_tests.cpp
