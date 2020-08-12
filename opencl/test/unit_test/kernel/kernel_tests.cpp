@@ -312,6 +312,20 @@ TEST_P(KernelTest, GivenKernelCompileWorkGroupSizeWhenGettingWorkGroupInfoThenCo
     EXPECT_EQ(paramValueSize, paramValueSizeRet);
 }
 
+TEST_P(KernelTest, GivenInvalidParamNameWhenGettingWorkGroupInfoThenInvalidValueErrorIsReturned) {
+    size_t paramValueSizeRet = 0x1234u;
+
+    retVal = pKernel->getWorkGroupInfo(
+        pClDevice,
+        0,
+        0,
+        nullptr,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0x1234u, paramValueSizeRet);
+}
+
 INSTANTIATE_TEST_CASE_P(KernelTests,
                         KernelTest,
                         ::testing::Combine(

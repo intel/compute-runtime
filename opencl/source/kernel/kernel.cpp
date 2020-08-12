@@ -572,6 +572,8 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info p
                                 size_t paramValueSize, void *paramValue,
                                 size_t *paramValueSizeRet) const {
     cl_int retVal = CL_INVALID_VALUE;
+    const void *pSrc = nullptr;
+    size_t srcSize = GetInfo::invalidSourceSize;
     struct size_t3 {
         size_t val[3];
     } requiredWorkGroupSize;
@@ -592,7 +594,8 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info p
             auto divisionSize = CommonConstants::maximalSimdSize / patchInfo.executionEnvironment->LargestCompiledSIMDSize;
             maxWorkgroupSize /= divisionSize;
         }
-        retVal = changeGetInfoStatusToCLResultType(info.set<size_t>(maxWorkgroupSize));
+        srcSize = sizeof(maxWorkgroupSize);
+        pSrc = &maxWorkgroupSize;
         break;
 
     case CL_KERNEL_COMPILE_WORK_GROUP_SIZE:
@@ -600,14 +603,16 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info p
         requiredWorkGroupSize.val[0] = patchInfo.executionEnvironment->RequiredWorkGroupSizeX;
         requiredWorkGroupSize.val[1] = patchInfo.executionEnvironment->RequiredWorkGroupSizeY;
         requiredWorkGroupSize.val[2] = patchInfo.executionEnvironment->RequiredWorkGroupSizeZ;
-        retVal = changeGetInfoStatusToCLResultType(info.set<size_t3>(requiredWorkGroupSize));
+        srcSize = sizeof(requiredWorkGroupSize);
+        pSrc = &requiredWorkGroupSize;
         break;
 
     case CL_KERNEL_LOCAL_MEM_SIZE:
         localMemorySize = patchInfo.localsurface
                               ? patchInfo.localsurface->TotalInlineLocalMemorySize
                               : 0;
-        retVal = changeGetInfoStatusToCLResultType(info.set<cl_ulong>(localMemorySize));
+        srcSize = sizeof(localMemorySize);
+        pSrc = &localMemorySize;
         break;
 
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
@@ -616,21 +621,28 @@ cl_int Kernel::getWorkGroupInfo(cl_device_id device, cl_kernel_work_group_info p
         if (hwHelper.isFusedEuDispatchEnabled(hwInfo)) {
             preferredWorkGroupSizeMultiple *= 2;
         }
-        retVal = changeGetInfoStatusToCLResultType((info.set<size_t>(preferredWorkGroupSizeMultiple)));
+        srcSize = sizeof(preferredWorkGroupSizeMultiple);
+        pSrc = &preferredWorkGroupSizeMultiple;
         break;
 
     case CL_KERNEL_SPILL_MEM_SIZE_INTEL:
         scratchSize = kernelInfo.patchInfo.mediavfestate ? kernelInfo.patchInfo.mediavfestate->PerThreadScratchSpace : 0;
-        retVal = changeGetInfoStatusToCLResultType(info.set<cl_ulong>(scratchSize));
+        srcSize = sizeof(scratchSize);
+        pSrc = &scratchSize;
         break;
     case CL_KERNEL_PRIVATE_MEM_SIZE:
         privateMemSize = kernelInfo.patchInfo.pAllocateStatelessPrivateSurface ? kernelInfo.patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize : 0;
-        retVal = changeGetInfoStatusToCLResultType(info.set<cl_ulong>(privateMemSize));
+        srcSize = sizeof(privateMemSize);
+        pSrc = &privateMemSize;
         break;
     default:
-        retVal = CL_INVALID_VALUE;
+        getAdditionalWorkGroupInfo(paramName, pSrc, srcSize);
         break;
     }
+
+    auto getInfoStatus = GetInfo::getInfo(paramValue, paramValueSize, pSrc, srcSize);
+    retVal = changeGetInfoStatusToCLResultType(getInfoStatus);
+    GetInfo::setParamValueReturnSize(paramValueSizeRet, srcSize, getInfoStatus);
 
     return retVal;
 }
