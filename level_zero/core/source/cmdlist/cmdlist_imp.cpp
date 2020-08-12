@@ -69,7 +69,12 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
                                           bool internalUsage, bool isCopyOnly) {
 
     NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    if (internalUsage) {
+        csr = deviceImp->neoDevice->getInternalEngine().commandStreamReceiver;
+    } else {
+        device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
+    }
 
     auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, isCopyOnly);
     if (!commandQueue) {
