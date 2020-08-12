@@ -159,3 +159,52 @@ TEST(GfxPartitionTest, testGfxPartitionFullRange47BitSVMHeap64KBSplit) {
     EXPECT_EQ(heapStandard64KBSize, gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD64KB));
     EXPECT_EQ(gfxBase + 4 * sizeHeap32 + heapStandardSize + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
 }
+
+class MockOsMemory : public OSMemory {
+  public:
+    MockOsMemory() = default;
+    ~MockOsMemory() { reserveCount = 0; }
+    uint32_t getReserveCount() { return reserveCount; }
+    struct MockOSMemoryReservedCpuAddressRange : public OSMemory::ReservedCpuAddressRange {
+        MockOSMemoryReservedCpuAddressRange(void *ptr, size_t size, size_t align) {
+            alignedPtr = originalPtr = ptr;
+            sizeToReserve = actualReservedSize = size;
+        }
+    };
+
+    OSMemory::ReservedCpuAddressRange reserveCpuAddressRange(size_t sizeToReserve, size_t alignment) override {
+        return reserveCpuAddressRange(0, sizeToReserve, alignment);
+    };
+
+    OSMemory::ReservedCpuAddressRange reserveCpuAddressRange(void *baseAddress, size_t sizeToReserve, size_t alignment) override {
+        reserveCount++;
+        return MockOSMemoryReservedCpuAddressRange(reinterpret_cast<void *>(0x10000), sizeToReserve, alignment);
+    };
+
+    void getMemoryMaps(MemoryMaps &outMemoryMaps) override {}
+
+    void releaseCpuAddressRange(const OSMemory::ReservedCpuAddressRange &reservedCpuAddressRange) override{};
+
+    void *osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve) override { return nullptr; }
+    void osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) override {}
+
+    static uint32_t reserveCount;
+};
+
+uint32_t MockOsMemory::reserveCount = 0;
+
+TEST(GfxPartitionTest, given47bitGpuAddressSpaceWhenInitializingMultipleGfxPartitionsThenReserveCpuAddressRangeForDriverAllocationsOnlyOnce) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
+    std::vector<std::unique_ptr<MockGfxPartition>> gfxPartitions;
+    for (int i = 0; i < 10; ++i) {
+        gfxPartitions.push_back(std::make_unique<MockGfxPartition>(reservedCpuAddressRange));
+        gfxPartitions[i]->osMemory.reset(new MockOsMemory);
+        gfxPartitions[i]->init(maxNBitValue(47), reservedCpuAddressRangeSize, i, 10);
+    }
+
+    EXPECT_EQ(1u, static_cast<MockOsMemory *>(gfxPartitions[0]->osMemory.get())->getReserveCount());
+}

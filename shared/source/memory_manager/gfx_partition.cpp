@@ -24,10 +24,11 @@ const std::array<HeapIndex, 7> GfxPartition::heapNonSvmNames{{HeapIndex::HEAP_IN
                                                               HeapIndex::HEAP_STANDARD64KB,
                                                               HeapIndex::HEAP_EXTENDED}};
 
-GfxPartition::GfxPartition() : osMemory(OSMemory::create()) {}
+GfxPartition::GfxPartition(OSMemory::ReservedCpuAddressRange &sharedReservedCpuAddressRange) : reservedCpuAddressRange(sharedReservedCpuAddressRange), osMemory(OSMemory::create()) {}
 
 GfxPartition::~GfxPartition() {
     osMemory->releaseCpuAddressRange(reservedCpuAddressRange);
+    reservedCpuAddressRange = {0};
 }
 
 void GfxPartition::Heap::init(uint64_t base, uint64_t size) {
@@ -112,10 +113,12 @@ void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             gfxBase = maxNBitValue(48 - 1) + 1;
             heapInit(HeapIndex::HEAP_SVM, 0ull, gfxBase);
         } else if (gpuAddressSpace == maxNBitValue(47)) {
-            UNRECOVERABLE_IF(cpuAddressRangeSizeToReserve == 0);
-            reservedCpuAddressRange = osMemory->reserveCpuAddressRange(cpuAddressRangeSizeToReserve, GfxPartition::heapGranularity);
-            UNRECOVERABLE_IF(reservedCpuAddressRange.originalPtr == nullptr);
-            UNRECOVERABLE_IF(!isAligned<GfxPartition::heapGranularity>(reservedCpuAddressRange.alignedPtr));
+            if (reservedCpuAddressRange.alignedPtr == nullptr) {
+                UNRECOVERABLE_IF(cpuAddressRangeSizeToReserve == 0);
+                reservedCpuAddressRange = osMemory->reserveCpuAddressRange(cpuAddressRangeSizeToReserve, GfxPartition::heapGranularity);
+                UNRECOVERABLE_IF(reservedCpuAddressRange.originalPtr == nullptr);
+                UNRECOVERABLE_IF(!isAligned<GfxPartition::heapGranularity>(reservedCpuAddressRange.alignedPtr));
+            }
             gfxBase = reinterpret_cast<uint64_t>(reservedCpuAddressRange.alignedPtr);
             gfxTop = gfxBase + cpuAddressRangeSizeToReserve;
             heapInit(HeapIndex::HEAP_SVM, 0ull, gpuAddressSpace + 1);

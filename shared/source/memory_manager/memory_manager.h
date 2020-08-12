@@ -226,6 +226,7 @@ class MemoryManager {
     std::vector<std::unique_ptr<LocalMemoryUsageBankSelector>> localMemoryUsageBankSelector;
     void *reservedMemory = nullptr;
     std::unique_ptr<PageFaultManager> pageFaultManager;
+    OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

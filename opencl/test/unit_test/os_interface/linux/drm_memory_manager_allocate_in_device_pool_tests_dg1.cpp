@@ -677,7 +677,7 @@ TEST_F(DrmMemoryManagerFailInjectionTest, givenEnabledLocalMemoryWhenNewFailsThe
     mock->ioctl_expected.total = -1; //don't care
     class MockGfxPartition : public GfxPartition {
       public:
-        MockGfxPartition() {
+        MockGfxPartition() : GfxPartition(reservedCpuAddressRange) {
             init(defaultHwInfo->capabilityTable.gpuAddressSpace, getSizeToReserve(), 0, 1);
         }
         ~MockGfxPartition() override {
@@ -691,6 +691,7 @@ TEST_F(DrmMemoryManagerFailInjectionTest, givenEnabledLocalMemoryWhenNewFailsThe
         struct MockHeap : Heap {
             using Heap::alloc;
         };
+        OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
     };
     TestedDrmMemoryManager testedMemoryManager(true, false, true, *executionEnvironment);
     testedMemoryManager.overrideGfxPartition(new MockGfxPartition);

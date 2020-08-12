@@ -20,6 +20,7 @@ OSMemory::ReservedCpuAddressRange OSMemory::reserveCpuAddressRange(void *baseAdd
 
     ReservedCpuAddressRange reservedCpuAddressRange;
 
+    reservedCpuAddressRange.sizeToReserve = sizeToReserve;
     reservedCpuAddressRange.actualReservedSize = sizeToReserve + alignment;
     reservedCpuAddressRange.originalPtr = this->osReserveCpuAddressRange(baseAddress, reservedCpuAddressRange.actualReservedSize);
     reservedCpuAddressRange.alignedPtr = alignUp(reservedCpuAddressRange.originalPtr, alignment);

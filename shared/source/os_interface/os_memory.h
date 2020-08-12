@@ -17,6 +17,7 @@ struct OSMemory {
     struct ReservedCpuAddressRange {
         void *originalPtr = nullptr;
         void *alignedPtr = nullptr;
+        size_t sizeToReserve = 0;
         size_t actualReservedSize = 0;
     };
 

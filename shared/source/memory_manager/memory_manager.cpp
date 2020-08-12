@@ -48,7 +48,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
             this->enable64kbpages[rootDeviceIndex] = DebugManager.flags.Enable64kbpages.get() != 0;
         }
 
-        gfxPartitions.push_back(std::make_unique<GfxPartition>());
+        gfxPartitions.push_back(std::make_unique<GfxPartition>(reservedCpuAddressRange));
 
         anyLocalMemorySupported |= this->localMemorySupported[rootDeviceIndex];
     }
