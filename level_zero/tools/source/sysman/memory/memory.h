@@ -28,10 +28,11 @@ class Memory : _zes_mem_handle_t {
         return static_cast<Memory *>(handle);
     }
     inline zes_mem_handle_t toHandle() { return this; }
+    bool initSuccess = false;
 };
 
 struct MemoryHandleContext {
-    MemoryHandleContext(OsSysman *pOsSysman, ze_device_handle_t hCoreDevice) : pOsSysman(pOsSysman), hCoreDevice(hCoreDevice){};
+    MemoryHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~MemoryHandleContext();
 
     ze_result_t init();
@@ -41,7 +42,9 @@ struct MemoryHandleContext {
     OsSysman *pOsSysman = nullptr;
     bool isLmemSupported = false;
     std::vector<Memory *> handleList = {};
-    ze_device_handle_t hCoreDevice;
+
+  private:
+    void createHandle();
 };
 
 } // namespace L0

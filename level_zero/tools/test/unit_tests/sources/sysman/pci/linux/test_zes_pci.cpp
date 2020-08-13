@@ -91,7 +91,6 @@ class ZesPciFixture : public ::testing::Test {
         ON_CALL(*pfsAccess.get(), read(_, Matcher<int32_t &>(_)))
             .WillByDefault(::testing::Invoke(pfsAccess.get(), &Mock<PcifsAccess>::getValInt));
         pPciImp = static_cast<L0::PciImp *>(pSysmanDeviceImp->pPci);
-        pPciImp->hCoreDevice = device->toHandle();
         pOsPciPrev = pPciImp->pOsPci;
         pPciImp->pOsPci = nullptr;
         memoryManager->localMemorySupported[0] = 0;
@@ -208,5 +207,9 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVe
     }
 }
 
+TEST_F(ZesPciFixture, GivenValidPathWhileCallingchangeDirNLevelsUpThenReturnedPathIsNLevelUpThenTheCurrentPath) {
+    std::string testMockRealPath2LevelsUp = changeDirNLevelsUp(mockRealPath, 2);
+    EXPECT_EQ(testMockRealPath2LevelsUp, mockRealPath2LevelsUp);
+}
 } // namespace ult
 } // namespace L0

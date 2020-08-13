@@ -20,12 +20,7 @@ ze_result_t LinuxSysmanImp::init() {
     pProcfsAccess = ProcfsAccess::create();
     UNRECOVERABLE_IF(nullptr == pProcfsAccess);
 
-    Device *pDevice = nullptr;
-    if (pParentSysmanDeviceImp != nullptr) {
-        pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
-    } else {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
+    pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
     UNRECOVERABLE_IF(nullptr == pDevice);
     NEO::OSInterface &OsInterface = pDevice->getOsInterface();
     pDrm = OsInterface.get()->getDrm();
@@ -68,6 +63,10 @@ SysfsAccess &LinuxSysmanImp::getSysfsAccess() {
 NEO::Drm &LinuxSysmanImp::getDrm() {
     UNRECOVERABLE_IF(nullptr == pDrm);
     return *pDrm;
+}
+
+Device *LinuxSysmanImp::getDeviceHandle() {
+    return pDevice;
 }
 
 PlatformMonitoringTech &LinuxSysmanImp::getPlatformMonitoringTechAccess() {

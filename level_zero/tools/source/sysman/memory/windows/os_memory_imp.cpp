@@ -8,7 +8,9 @@
 #include "sysman/memory/windows/os_memory_imp.h"
 
 namespace L0 {
-
+bool WddmMemoryImp::isMemoryModuleSupported() {
+    return pDevice->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(pDevice->getRootDeviceIndex());
+}
 ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     ze_result_t status = ZE_RESULT_SUCCESS;
     uint32_t valueSmall = 0;
@@ -177,6 +179,7 @@ ze_result_t WddmMemoryImp::getState(zes_mem_state_t *pState) {
 WddmMemoryImp::WddmMemoryImp(OsSysman *pOsSysman) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
+    pDevice = pWddmSysmanImp->getDeviceHandle();
 }
 
 OsMemory *OsMemory::create(OsSysman *pOsSysman) {

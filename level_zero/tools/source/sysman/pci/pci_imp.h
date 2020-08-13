@@ -26,13 +26,9 @@ class PciImp : public Pci, NEO::NonCopyableOrMovableClass {
     ze_result_t pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) override;
 
     PciImp() = default;
-    PciImp(OsSysman *pOsSysman, ze_device_handle_t hDevice) : pOsSysman(pOsSysman) {
-        pOsPci = nullptr;
-        hCoreDevice = hDevice;
-    };
+    PciImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~PciImp() override;
     OsPci *pOsPci = nullptr;
-    ze_device_handle_t hCoreDevice = {};
 
   private:
     OsSysman *pOsSysman = nullptr;

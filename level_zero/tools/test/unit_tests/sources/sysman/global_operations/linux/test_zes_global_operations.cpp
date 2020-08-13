@@ -58,7 +58,6 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
             .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValAgamaFile));
 
         pGlobalOperationsImp = static_cast<L0::GlobalOperationsImp *>(pSysmanDeviceImp->pGlobalOperations);
-        pGlobalOperationsImp->hCoreDevice = device->toHandle();
         pOsGlobalOperationsPrev = pGlobalOperationsImp->pOsGlobalOperations;
         pGlobalOperationsImp->pOsGlobalOperations = nullptr;
         pGlobalOperationsImp->init();

@@ -10,12 +10,7 @@
 namespace L0 {
 
 ze_result_t WddmSysmanImp::init() {
-    Device *pDevice = nullptr;
-    if (pParentSysmanDeviceImp != nullptr) {
-        pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
-    } else {
-        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
+    pDevice = Device::fromHandle(pParentSysmanDeviceImp->hCoreDevice);
     UNRECOVERABLE_IF(nullptr == pDevice);
 
     NEO::OSInterface &OsInterface = pDevice->getOsInterface();
@@ -24,6 +19,10 @@ ze_result_t WddmSysmanImp::init() {
     UNRECOVERABLE_IF(nullptr == pKmdSysManager);
 
     return ZE_RESULT_SUCCESS;
+}
+
+Device *WddmSysmanImp::getDeviceHandle() {
+    return pDevice;
 }
 
 NEO::Wddm &WddmSysmanImp::getWddm() {

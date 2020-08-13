@@ -44,6 +44,10 @@ void LinuxGlobalOperationsImp::getSerialNumber(char (&serialNumber)[ZES_STRING_P
     std::strncpy(serialNumber, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
 }
 
+Device *LinuxGlobalOperationsImp::getDevice() {
+    return pDevice;
+}
+
 void LinuxGlobalOperationsImp::getBoardNumber(char (&boardNumber)[ZES_STRING_PROPERTY_SIZE]) {
     std::strncpy(boardNumber, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
 }
@@ -358,6 +362,7 @@ LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {
 
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pFsAccess = &pLinuxSysmanImp->getFsAccess();
+    pDevice = pLinuxSysmanImp->getDeviceHandle();
 }
 
 OsGlobalOperations *OsGlobalOperations::create(OsSysman *pOsSysman) {

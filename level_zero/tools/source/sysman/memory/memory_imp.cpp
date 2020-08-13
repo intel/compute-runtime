@@ -23,7 +23,10 @@ ze_result_t MemoryImp::memoryGetProperties(zes_mem_properties_t *pProperties) {
 }
 
 void MemoryImp::init() {
-    pOsMemory->getProperties(&memoryProperties);
+    this->initSuccess = pOsMemory->isMemoryModuleSupported();
+    if (this->initSuccess == true) {
+        pOsMemory->getProperties(&memoryProperties);
+    }
 }
 
 MemoryImp::MemoryImp(OsSysman *pOsSysman) {

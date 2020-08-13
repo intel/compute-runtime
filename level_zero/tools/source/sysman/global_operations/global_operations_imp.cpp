@@ -39,14 +39,13 @@ ze_result_t GlobalOperationsImp::processesGetState(uint32_t *pCount, zes_process
 }
 
 ze_result_t GlobalOperationsImp::deviceGetProperties(zes_device_properties_t *pProperties) {
-    Device *device = L0::Device::fromHandle(hCoreDevice);
+    Device *device = pOsGlobalOperations->getDevice();
     ze_device_properties_t deviceProperties;
     device->getProperties(&deviceProperties);
     sysmanProperties.core = deviceProperties;
     uint32_t count = 0;
     device->getSubDevices(&count, nullptr);
     sysmanProperties.numSubdevices = count;
-
     *pProperties = sysmanProperties;
     return ZE_RESULT_SUCCESS;
 }

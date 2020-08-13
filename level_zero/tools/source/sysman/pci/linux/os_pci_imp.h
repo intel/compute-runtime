@@ -21,7 +21,6 @@ class LinuxPciImp : public OsPci, NEO::NonCopyableOrMovableClass {
     ze_result_t getMaxLinkSpeed(double &maxLinkSpeed) override;
     ze_result_t getMaxLinkWidth(int32_t &maxLinkwidth) override;
     ze_result_t getLinkGen(int32_t &linkGen) override;
-    void setLmemSupport(bool val) override;
     ze_result_t initializeBarProperties(std::vector<zes_pci_bar_properties_t *> &pBarProperties) override;
     LinuxPciImp() = default;
     LinuxPciImp(OsSysman *pOsSysman);

@@ -23,13 +23,10 @@ class GlobalOperationsImp : public GlobalOperations, NEO::NonCopyableOrMovableCl
     ze_result_t reset(ze_bool_t force) override;
     ze_result_t deviceGetProperties(zes_device_properties_t *pProperties) override;
     ze_result_t processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) override;
-
     OsGlobalOperations *pOsGlobalOperations = nullptr;
-    ze_device_handle_t hCoreDevice = {};
 
     GlobalOperationsImp() = default;
-    GlobalOperationsImp(OsSysman *pOsSysman, ze_device_handle_t hCoreDevice) : hCoreDevice(hCoreDevice),
-                                                                               pOsSysman(pOsSysman){};
+    GlobalOperationsImp(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~GlobalOperationsImp() override;
 
   private:

@@ -16,6 +16,11 @@ namespace L0 {
 LinuxMemoryImp::LinuxMemoryImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = &pLinuxSysmanImp->getDrm();
+    pDevice = pLinuxSysmanImp->getDeviceHandle();
+}
+
+bool LinuxMemoryImp::isMemoryModuleSupported() {
+    return pDevice->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(pDevice->getRootDeviceIndex());
 }
 
 ze_result_t LinuxMemoryImp::getProperties(zes_mem_properties_t *pProperties) {

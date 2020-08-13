@@ -21,7 +21,7 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     hCoreDevice = hDevice;
     pOsSysman = OsSysman::create(this);
     UNRECOVERABLE_IF(nullptr == pOsSysman);
-    pPci = new PciImp(pOsSysman, hCoreDevice);
+    pPci = new PciImp(pOsSysman);
     pPowerHandleContext = new PowerHandleContext(pOsSysman);
     pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
     pFabricPortHandleContext = new FabricPortHandleContext(pOsSysman);
@@ -30,8 +30,8 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pEngineHandleContext = new EngineHandleContext(pOsSysman);
     pSchedulerHandleContext = new SchedulerHandleContext(pOsSysman);
     pRasHandleContext = new RasHandleContext(pOsSysman);
-    pMemoryHandleContext = new MemoryHandleContext(pOsSysman, hCoreDevice);
-    pGlobalOperations = new GlobalOperationsImp(pOsSysman, hCoreDevice);
+    pMemoryHandleContext = new MemoryHandleContext(pOsSysman);
+    pGlobalOperations = new GlobalOperationsImp(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {

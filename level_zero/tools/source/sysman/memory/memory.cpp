@@ -19,15 +19,17 @@ MemoryHandleContext::~MemoryHandleContext() {
     }
 }
 
-ze_result_t MemoryHandleContext::init() {
-    Device *device = L0::Device::fromHandle(hCoreDevice);
-
-    isLmemSupported = device->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(device->getRootDeviceIndex());
-
-    if (isLmemSupported) {
-        Memory *pMemory = new MemoryImp(pOsSysman);
+void MemoryHandleContext::createHandle() {
+    Memory *pMemory = new MemoryImp(pOsSysman);
+    if (pMemory->initSuccess == true) {
         handleList.push_back(pMemory);
+    } else {
+        delete pMemory;
     }
+}
+
+ze_result_t MemoryHandleContext::init() {
+    createHandle();
     return ZE_RESULT_SUCCESS;
 }
 

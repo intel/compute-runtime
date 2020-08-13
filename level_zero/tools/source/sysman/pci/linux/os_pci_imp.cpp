@@ -31,9 +31,7 @@ std::string changeDirNLevelsUp(std::string realRootPath, uint8_t nLevel) {
     }
     return realRootPath;
 }
-void LinuxPciImp::setLmemSupport(bool val) {
-    isLmemSupported = val;
-}
+
 ze_result_t LinuxPciImp::getPciBdf(std::string &bdf) {
     std::string bdfDir;
     ze_result_t result = pSysfsAccess->readSymLink(deviceDir, bdfDir);
@@ -182,6 +180,8 @@ LinuxPciImp::LinuxPciImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pfsAccess = &pLinuxSysmanImp->getFsAccess();
+    Device *pDevice = pLinuxSysmanImp->getDeviceHandle();
+    isLmemSupported = pDevice->getDriverHandle()->getMemoryManager()->isLocalMemorySupported(pDevice->getRootDeviceIndex());
 }
 
 OsPci *OsPci::create(OsSysman *pOsSysman) {

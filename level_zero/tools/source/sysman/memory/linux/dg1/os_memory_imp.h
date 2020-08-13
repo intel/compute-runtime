@@ -14,17 +14,20 @@
 namespace L0 {
 
 class SysfsAccess;
+struct Device;
 
 class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getProperties(zes_mem_properties_t *pProperties) override;
     ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) override;
     ze_result_t getState(zes_mem_state_t *pState) override;
+    bool isMemoryModuleSupported() override;
     LinuxMemoryImp(OsSysman *pOsSysman);
     LinuxMemoryImp() = default;
     ~LinuxMemoryImp() override = default;
 
   protected:
     NEO::Drm *pDrm = nullptr;
+    Device *pDevice = nullptr;
 };
 } // namespace L0

@@ -21,12 +21,14 @@ class WddmMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
     ze_result_t getProperties(zes_mem_properties_t *pProperties) override;
     ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) override;
     ze_result_t getState(zes_mem_state_t *pState) override;
+    bool isMemoryModuleSupported() override;
     WddmMemoryImp(OsSysman *pOsSysman);
     WddmMemoryImp() = default;
     ~WddmMemoryImp() override = default;
 
   protected:
     KmdSysManager *pKmdSysManager = nullptr;
+    Device *pDevice = nullptr;
 };
 
 } // namespace L0

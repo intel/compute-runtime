@@ -71,5 +71,9 @@ TEST_F(SysmanDeviceFixture, GivenPmtHandleWhenCallinggetPlatformMonitoringTechAc
     EXPECT_EQ(&pLinuxSysmanImp->getPlatformMonitoringTechAccess(), pLinuxSysmanImp->pPmt);
 }
 
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleVerifyThatSameHandleIsRetrievedFromOsSpecificCode) {
+    EXPECT_EQ(pLinuxSysmanImp->getDeviceHandle(), device);
+}
+
 } // namespace ult
 } // namespace L0
