@@ -16,4 +16,7 @@ void OfflineCompiler::resolveExtraSettings() {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
 }
+
+void OfflineCompiler::adjustExtraSettings(HardwareInfo &hwInfo) {
+}
 } // namespace NEO

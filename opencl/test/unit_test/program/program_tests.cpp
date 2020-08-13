@@ -2721,8 +2721,9 @@ TEST_F(ProgramTests, WhenProgramIsCreatedThenItsDeviceIsProperlySet) {
     MockProgram programWithDeviceWithValidSpecializedDevice{executionEnvironment, nullptr, false, &validClDevice.getDevice()};
     EXPECT_TRUE(wasValidClDeviceUsed(programWithDeviceWithValidSpecializedDevice));
 }
+using CreateProgramFromBinaryTests2 = ::testing::Test;
 
-TEST(CreateProgramFromBinaryTests, givenBinaryProgramWhenKernelRebulildIsForcedThenDeviceBinaryIsNotUsed) {
+HWTEST_F(CreateProgramFromBinaryTests2, givenBinaryProgramWhenKernelRebulildIsForcedThenDeviceBinaryIsNotUsed) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.RebuildPrecompiledKernels.set(true);
     cl_int retVal = CL_INVALID_BINARY;
@@ -2743,7 +2744,7 @@ TEST(CreateProgramFromBinaryTests, givenBinaryProgramWhenKernelRebulildIsForcedT
     EXPECT_EQ(0U, pProgram->packedDeviceBinarySize);
 }
 
-TEST(CreateProgramFromBinaryTests, givenBinaryProgramWhenKernelRebulildIsNotForcedThenDeviceBinaryIsUsed) {
+HWTEST_F(CreateProgramFromBinaryTests2, givenBinaryProgramWhenKernelRebulildIsNotForcedThenDeviceBinaryIsUsed) {
     cl_int retVal = CL_INVALID_BINARY;
 
     PatchTokensTestData::ValidEmptyProgram programTokens;

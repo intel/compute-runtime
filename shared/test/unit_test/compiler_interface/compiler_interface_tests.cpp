@@ -17,6 +17,7 @@
 #include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/mocks/mock_cif.h"
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
+#include "test.h"
 
 #include "gmock/gmock.h"
 #include "hw_cmds.h"
@@ -902,7 +903,7 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewIgcTranslationCtxWhenCouldNotPop
     setIgcDebugVars(prevDebugVars);
 }
 
-TEST_F(CompilerInterfaceTest, givenNoDbgKeyForceUseDifferentPlatformWhenRequestForNewTranslationCtxThenUseDefaultPlatform) {
+HWTEST_F(CompilerInterfaceTest, givenNoDbgKeyForceUseDifferentPlatformWhenRequestForNewTranslationCtxThenUseDefaultPlatform) {
     auto device = this->pDevice;
     auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
     EXPECT_NE(nullptr, retIgc);
