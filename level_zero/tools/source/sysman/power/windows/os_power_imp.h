@@ -8,13 +8,12 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "level_zero/tools/source/sysman/power/os_power.h"
+#include "sysman/power/os_power.h"
+#include "sysman/windows/os_sysman_imp.h"
 
 namespace L0 {
-
-class SysfsAccess;
-class PlatformMonitoringTech;
-class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
+class KmdSysManager;
+class WddmPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getProperties(zes_power_properties_t *pProperties) override;
     ze_result_t getEnergyCounter(zes_power_energy_counter_t *pEnergy) override;
@@ -24,11 +23,12 @@ class LinuxPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     ze_result_t setEnergyThreshold(double threshold) override;
 
     bool isPowerModuleSupported() override;
-    LinuxPowerImp(OsSysman *pOsSysman);
-    LinuxPowerImp() = default;
-    ~LinuxPowerImp() override = default;
+    WddmPowerImp(OsSysman *pOsSysman);
+    WddmPowerImp() = default;
+    ~WddmPowerImp() override = default;
 
   protected:
-    PlatformMonitoringTech *pPmt = nullptr;
+    KmdSysManager *pKmdSysManager = nullptr;
 };
+
 } // namespace L0

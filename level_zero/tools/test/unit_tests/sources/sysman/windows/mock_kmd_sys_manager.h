@@ -204,6 +204,8 @@ struct Mock<MockKmdSysManager> : public MockKmdSysManager {
 
     void setProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
         if (!allowSetCalls) {
+            pResponse->outDataSize = 0;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
             return;
         }
 

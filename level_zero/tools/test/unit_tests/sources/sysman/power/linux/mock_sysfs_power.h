@@ -45,7 +45,6 @@ struct Mock<PowerPmt> : public PlatformMonitoringTech {
 class PublicLinuxPowerImp : public L0::LinuxPowerImp {
   public:
     using LinuxPowerImp::pPmt;
-    using LinuxPowerImp::pSysfsAccess;
 };
 } // namespace ult
 } // namespace L0

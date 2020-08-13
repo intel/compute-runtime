@@ -70,6 +70,17 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
     }
 }
 
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesThenCallSucceeds) {
+    auto handles = get_power_handles(powerHandleComponentCount);
+
+    for (auto handle : handles) {
+        zes_power_properties_t properties;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetProperties(handle, &properties));
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
+    }
+}
+
 TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCounterThenValidPowerReadingsRetrieved) {
     auto handles = get_power_handles(powerHandleComponentCount);
 
@@ -94,6 +105,26 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerEnergyThre
     auto handles = get_power_handles(powerHandleComponentCount);
     for (auto handle : handles) {
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetEnergyThreshold(handle, threshold));
+    }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerLimitsThenUnsupportedFeatureErrorIsReturned) {
+    auto handles = get_power_handles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        zes_power_sustained_limit_t sustained;
+        zes_power_burst_limit_t burst;
+        zes_power_peak_limit_t peak;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimits(handle, &sustained, &burst, &peak));
+    }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerLimitsThenUnsupportedFeatureErrorIsReturned) {
+    auto handles = get_power_handles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        zes_power_sustained_limit_t sustained;
+        zes_power_burst_limit_t burst;
+        zes_power_peak_limit_t peak;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimits(handle, &sustained, &burst, &peak));
     }
 }
 
