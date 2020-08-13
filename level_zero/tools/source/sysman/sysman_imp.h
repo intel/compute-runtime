@@ -38,6 +38,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     RasHandleContext *pRasHandleContext = nullptr;
     MemoryHandleContext *pMemoryHandleContext = nullptr;
     FanHandleContext *pFanHandleContext = nullptr;
+    FirmwareHandleContext *pFirmwareHandleContext = nullptr;
 
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
     ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) override;
@@ -57,6 +58,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) override;
     ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) override;
     ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) override;
+    ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) override;
 
   private:
     template <typename T>

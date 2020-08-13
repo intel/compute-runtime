@@ -375,14 +375,14 @@ zesDeviceEnumFirmwares(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_firmware_handle_t *phFirmware) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->firmwareGet(pCount, phFirmware);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFirmwareGetProperties(
     zes_firmware_handle_t hFirmware,
     zes_firmware_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Firmware::fromHandle(hFirmware)->firmwareGetProperties(pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

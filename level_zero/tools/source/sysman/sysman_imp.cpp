@@ -33,10 +33,12 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pMemoryHandleContext = new MemoryHandleContext(pOsSysman);
     pGlobalOperations = new GlobalOperationsImp(pOsSysman);
     pFanHandleContext = new FanHandleContext(pOsSysman);
+    pFirmwareHandleContext = new FirmwareHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pFanHandleContext);
+    freeResource(pFirmwareHandleContext);
     freeResource(pGlobalOperations);
     freeResource(pMemoryHandleContext);
     freeResource(pRasHandleContext);
@@ -88,6 +90,9 @@ void SysmanDeviceImp::init() {
     }
     if (pFanHandleContext) {
         pFanHandleContext->init();
+    }
+    if (pFirmwareHandleContext) {
+        pFirmwareHandleContext->init();
     }
 }
 
@@ -153,6 +158,10 @@ ze_result_t SysmanDeviceImp::schedulerGet(uint32_t *pCount, zes_sched_handle_t *
 
 ze_result_t SysmanDeviceImp::rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) {
     return pRasHandleContext->rasGet(pCount, phRas);
+}
+
+ze_result_t SysmanDeviceImp::firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) {
+    return pFirmwareHandleContext->firmwareGet(pCount, phFirmware);
 }
 
 ze_result_t SysmanDeviceImp::memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) {
