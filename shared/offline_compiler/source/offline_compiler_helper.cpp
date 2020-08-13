@@ -16,7 +16,9 @@ DebugSettingsManager<DebugLevel>::DebugSettingsManager(const char *registryPath)
 }
 
 template <DebugFunctionalityLevel DebugLevel>
-DebugSettingsManager<DebugLevel>::~DebugSettingsManager() = default;
+DebugSettingsManager<DebugLevel>::~DebugSettingsManager() {
+    readerImpl.reset();
+};
 
 // Global Debug Settings Manager
 DebugSettingsManager<globalDebugFunctionalityLevel> DebugManager("");
