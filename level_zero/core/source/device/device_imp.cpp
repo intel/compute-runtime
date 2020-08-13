@@ -582,8 +582,11 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
     }
 
     if (supportDualStorageSharedMemory) {
-        ze_command_queue_desc_t cmdQueueDesc;
+        ze_command_queue_desc_t cmdQueueDesc = {};
         cmdQueueDesc.ordinal = 0;
+        cmdQueueDesc.index = 0;
+        cmdQueueDesc.flags = 0;
+        cmdQueueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
         cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
         device->pageFaultCommandList =
             CommandList::createImmediate(
