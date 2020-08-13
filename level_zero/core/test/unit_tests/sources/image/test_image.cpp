@@ -112,6 +112,23 @@ HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreat
     EXPECT_EQ(imageInfo.useLocalMemory, false);
 }
 
+HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateWithUnsupportedImageThenNullPtrImageIsReturned, ImageSupport) {
+    ze_image_desc_t zeDesc = {};
+    zeDesc.arraylevels = 1u;
+    zeDesc.depth = 1u;
+    zeDesc.height = 1u;
+    zeDesc.width = 1u;
+    zeDesc.miplevels = 1u;
+    zeDesc.type = ZE_IMAGE_TYPE_2DARRAY;
+    zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
+
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_Y216};
+
+    std::unique_ptr<L0::Image> image(Image::create(productFamily, device, &zeDesc));
+
+    ASSERT_EQ(image, nullptr);
+}
+
 class TestImageFormats : public DeviceFixture, public testing::TestWithParam<std::pair<ze_image_format_layout_t, ze_image_format_type_t>> {
   public:
     void SetUp() override {

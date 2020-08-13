@@ -171,6 +171,10 @@ ze_result_t DeviceImp::createImage(const ze_image_desc_t *desc, ze_image_handle_
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
     *phImage = Image::create(productFamily, this, desc);
 
+    if (!*phImage) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
