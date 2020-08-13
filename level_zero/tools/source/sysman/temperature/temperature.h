@@ -29,6 +29,7 @@ class Temperature : _zes_temp_handle_t {
     }
     inline zes_temp_handle_t toHandle() { return this; }
     bool initSuccess = false;
+    zes_temp_properties_t tempProperties = {};
 };
 
 struct TemperatureHandleContext {

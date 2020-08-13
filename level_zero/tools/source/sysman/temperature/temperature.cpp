@@ -29,6 +29,7 @@ void TemperatureHandleContext::createHandle(zes_temp_sensors_t type) {
 void TemperatureHandleContext::init() {
     createHandle(ZES_TEMP_SENSORS_GLOBAL);
     createHandle(ZES_TEMP_SENSORS_GPU);
+    createHandle(ZES_TEMP_SENSORS_MEMORY);
 }
 
 ze_result_t TemperatureHandleContext::temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) {

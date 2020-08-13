@@ -15,6 +15,13 @@ namespace L0 {
 constexpr uint64_t numSocTemperatureEntries = 7;
 constexpr uint32_t numCoreTemperatureEntries = 4;
 
+ze_result_t LinuxTemperatureImp::getProperties(zes_temp_properties_t *pProperties) {
+    pProperties->type = type;
+    pProperties->onSubdevice = false;
+    pProperties->subdeviceId = 0;
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
     uint64_t socTemperature = 0;
     uint32_t computeTemperature = 0, coreTemperature = 0;
@@ -27,9 +34,9 @@ ze_result_t LinuxTemperatureImp::getSensorTemperature(double *pTemperature) {
     // GT temperature could be read via 8th to 15th bit in the value read in temperature
     computeTemperature = (computeTemperature >> 8) & 0xff;
 
-    if ((zetType == ZES_TEMP_SENSORS_GPU) || (type == ZES_TEMP_SENSORS_GPU)) {
+    if (type == ZES_TEMP_SENSORS_GPU) {
         *pTemperature = static_cast<double>(computeTemperature);
-    } else if ((zetType == ZES_TEMP_SENSORS_GLOBAL) || (type == ZES_TEMP_SENSORS_GLOBAL)) {
+    } else if (type == ZES_TEMP_SENSORS_GLOBAL) {
         key = "SOC_TEMPERATURES";
         result = pPmt->readValue(key, socTemperature);
         if (result != ZE_RESULT_SUCCESS) {

@@ -10,7 +10,7 @@
 
 namespace L0 {
 namespace ult {
-constexpr uint32_t handleComponentCount = 2u;
+constexpr uint32_t handleComponentCount = 3u;
 const std::string deviceName("testDevice");
 FsAccess *pFsAccessTemp = nullptr;
 class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
@@ -70,7 +70,7 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingGlobalTemp
 }
 
 TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingUnsupportedSensorsTemperatureThenUnsupportedReturned) {
-    auto pTemperatureImpMemory = std::make_unique<TemperatureImp>(pOsSysman, ZES_TEMP_SENSORS_MEMORY);
+    auto pTemperatureImpMemory = std::make_unique<TemperatureImp>(pOsSysman, ZES_TEMP_SENSORS_GLOBAL_MIN);
     auto pLinuxTemperatureImpMemory = static_cast<LinuxTemperatureImp *>(pTemperatureImpMemory->pOsTemperature);
     double pTemperature = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxTemperatureImpMemory->getSensorTemperature(&pTemperature));
@@ -112,7 +112,9 @@ TEST_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatur
     auto handles = get_temp_handles(handleComponentCount);
     for (auto handle : handles) {
         zes_temp_properties_t properties = {};
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesTemperatureGetProperties(handle, &properties));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
+        EXPECT_FALSE(properties.onSubdevice);
+        EXPECT_EQ(properties.subdeviceId, 0u);
     }
 }
 

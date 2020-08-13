@@ -12,7 +12,8 @@
 namespace L0 {
 
 ze_result_t TemperatureImp::temperatureGetProperties(zes_temp_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    *pProperties = tempProperties;
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t TemperatureImp::temperatureGetConfig(zes_temp_config_t *pConfig) {
@@ -28,7 +29,10 @@ ze_result_t TemperatureImp::temperatureGetState(double *pTemperature) {
 }
 
 void TemperatureImp::init() {
-    this->initSuccess = pOsTemperature->isTempModuleSupported();
+    if (pOsTemperature->isTempModuleSupported()) {
+        pOsTemperature->getProperties(&tempProperties);
+        this->initSuccess = true;
+    }
 }
 
 TemperatureImp::TemperatureImp(OsSysman *pOsSysman, zes_temp_sensors_t type) {
