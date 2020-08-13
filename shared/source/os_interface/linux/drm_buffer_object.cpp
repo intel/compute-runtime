@@ -55,6 +55,8 @@ bool BufferObject::close() {
     drm_gem_close close = {};
     close.handle = this->handle;
 
+    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on BO handle %d\n", this->handle);
+
     int ret = this->drm->ioctl(DRM_IOCTL_GEM_CLOSE, &close);
     if (ret != 0) {
         int err = errno;
@@ -130,7 +132,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     execbuf.rsvd1 = drmContextId;
 
     if (DebugManager.flags.PrintExecutionBuffer.get()) {
-        printExecutionBuffer(execbuf, residencyCount, execObjectsStorage);
+        printExecutionBuffer(execbuf, residencyCount, execObjectsStorage, residency);
     }
 
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
@@ -165,31 +167,32 @@ void BufferObject::unbind(OsContext *osContext, uint32_t vmHandleId) {
     }
 }
 
-void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage) {
-    std::string logger = "drm_i915_gem_execbuffer2 {\n";
-    logger += "  buffers_ptr: " + std::to_string(execbuf.buffers_ptr) + ",\n";
-    logger += "  buffer_count: " + std::to_string(execbuf.buffer_count) + ",\n";
-    logger += "  batch_start_offset: " + std::to_string(execbuf.batch_start_offset) + ",\n";
-    logger += "  batch_len: " + std::to_string(execbuf.batch_len) + ",\n";
-    logger += "  flags: " + std::to_string(execbuf.flags) + ",\n";
-    logger += "  rsvd1: " + std::to_string(execbuf.rsvd1) + ",\n";
-    logger += "}\n";
+void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage, BufferObject *const residency[]) {
+    std::stringstream logger;
+    logger << "drm_i915_gem_execbuffer2 { "
+           << "buffer_ptr: " + std::to_string(execbuf.buffers_ptr)
+           << ", buffer_count: " + std::to_string(execbuf.buffer_count)
+           << ", batch_start_offset: " + std::to_string(execbuf.batch_start_offset)
+           << ", batch_len: " + std::to_string(execbuf.batch_len)
+           << ", flags: " + std::to_string(execbuf.flags)
+           << ", rsvd1: " + std::to_string(execbuf.rsvd1)
+           << " }\n";
 
-    for (size_t i = 0; i < residencyCount + 1; i++) {
-        std::string temp = "drm_i915_gem_exec_object2 {\n";
-        temp += "  handle: " + std::to_string(execObjectsStorage[i].handle) + ",\n";
-        temp += "  relocation_count: " + std::to_string(execObjectsStorage[i].relocation_count) + ",\n";
-        temp += "  relocs_ptr: " + std::to_string(execObjectsStorage[i].relocs_ptr) + ",\n";
-        temp += "  alignment: " + std::to_string(execObjectsStorage[i].alignment) + ",\n";
-        temp += "  offset: " + std::to_string(execObjectsStorage[i].offset) + ",\n";
-        temp += "  flags: " + std::to_string(execObjectsStorage[i].flags) + ",\n";
-        temp += "  rsvd1: " + std::to_string(execObjectsStorage[i].rsvd1) + ",\n";
-        temp += "  rsvd2: " + std::to_string(execObjectsStorage[i].rsvd2) + ",\n";
-        temp += "  pad_to_size: " + std::to_string(execObjectsStorage[i].pad_to_size) + ",\n";
-        temp += "}\n";
-        logger += temp;
+    size_t i;
+    for (i = 0; i < residencyCount; i++) {
+        logger << "Buffer Object = { handle: " << execObjectsStorage[i].handle
+               << ", address range: 0x" << (void *)execObjectsStorage[i].offset
+               << " - 0x" << (void *)ptrOffset(execObjectsStorage[i].offset, residency[i]->peekSize())
+               << ", flags: " << execObjectsStorage[i].flags
+               << ", size: " << residency[i]->peekSize() << " }\n";
     }
-    std::cout << logger << std::endl;
+    logger << "Command Buffer Object = { handle: " << execObjectsStorage[i].handle
+           << ", address range: 0x" << (void *)execObjectsStorage[i].offset
+           << " - 0x" << (void *)ptrOffset(execObjectsStorage[i].offset, this->peekSize())
+           << ", flags: " << execObjectsStorage[i].flags
+           << ", size: " << this->peekSize() << " }\n";
+
+    std::cout << logger.str() << std::endl;
 }
 
 int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {

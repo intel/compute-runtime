@@ -462,6 +462,25 @@ TEST_F(DrmMemoryManagerTest, unreference) {
     memoryManager->unreference(bo, false);
 }
 
+TEST_F(DrmMemoryManagerTest, whenPrintBOCreateDestroyResultIsSetAndAllocUserptrIsCalledThenBufferObjectIsCreatedAndDebugInformationIsPrinted) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    testing::internal::CaptureStdout();
+    BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, 0ul, rootDeviceIndex);
+    ASSERT_NE(nullptr, bo);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    size_t idx = output.find("Created new BO with GEM_USERPTR, BO handle - ");
+    size_t expectedValue = 0;
+    EXPECT_EQ(expectedValue, idx);
+
+    memoryManager->unreference(bo, false);
+}
+
 TEST_F(DrmMemoryManagerTest, UnreferenceNullPtr) {
     memoryManager->unreference(nullptr, false);
 }

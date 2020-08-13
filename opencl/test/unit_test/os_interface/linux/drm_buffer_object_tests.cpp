@@ -149,18 +149,45 @@ TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {
     EXPECT_EQ(EINVAL, ret);
 }
 
-TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundInStdStream) {
+TEST_F(DrmBufferObjectTest, givenResidentBOWhenPrintExecutionBufferIsSetToTrueThenDebugInformationAboutBOIsPrinted) {
     mock->ioctl_expected.total = 1;
     DebugManagerStateRestore restore;
     DebugManager.flags.PrintExecutionBuffer.set(true);
-    drm_i915_gem_exec_object2 execObjectsStorage = {};
+
+    std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
+    std::unique_ptr<BufferObject> bo(new TestedBufferObject(this->mock.get()));
+    ASSERT_NE(nullptr, bo.get());
+    bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
+    BufferObject *boArray[1] = {bo.get()};
 
     testing::internal::CaptureStdout();
-    auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage);
+
+    auto ret = bo->pin(boArray, 1, osContext.get(), 0, 1);
     EXPECT_EQ(0, ret);
 
     std::string output = testing::internal::GetCapturedStdout();
     auto idx = output.find("drm_i915_gem_execbuffer2 {");
+    size_t expectedValue = 0;
+    EXPECT_EQ(expectedValue, idx);
+
+    idx = output.find("Buffer Object = { handle: ");
+    EXPECT_NE(std::string::npos, idx);
+
+    idx = output.find("Command Buffer Object = { handle: ");
+    EXPECT_NE(std::string::npos, idx);
+}
+
+TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCalledOnBOThenDebugInfromationIsPrinted) {
+    mock->ioctl_expected.total = 1;
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+
+    testing::internal::CaptureStdout();
+    bool result = bo->close();
+    EXPECT_EQ(true, result);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    size_t idx = output.find("Calling gem close on BO handle");
     size_t expectedValue = 0;
     EXPECT_EQ(expectedValue, idx);
 }

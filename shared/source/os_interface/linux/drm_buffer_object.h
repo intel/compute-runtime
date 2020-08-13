@@ -48,7 +48,7 @@ class BufferObject {
     void bind(OsContext *osContext, uint32_t vmHandleId);
     void unbind(OsContext *osContext, uint32_t vmHandleId);
 
-    void printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage);
+    void printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage, BufferObject *const residency[]);
 
     int wait(int64_t timeoutNs);
     bool close();
