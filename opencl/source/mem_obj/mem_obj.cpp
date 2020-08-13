@@ -353,8 +353,11 @@ void *MemObj::getBasePtrForMap(uint32_t rootDeviceIndex) {
         if (getMapAllocation(rootDeviceIndex)) {
             return getMapAllocation(rootDeviceIndex)->getUnderlyingBuffer();
         } else {
-            auto memory = memoryManager->allocateSystemMemory(getSize(), MemoryConstants::pageSize);
-            setAllocatedMapPtr(memory);
+            auto memory = getAllocatedMapPtr();
+            if (!memory) {
+                memory = memoryManager->allocateSystemMemory(getSize(), MemoryConstants::pageSize);
+                setAllocatedMapPtr(memory);
+            }
             AllocationProperties properties{rootDeviceIndex,
                                             false, // allocateMemory
                                             getSize(), GraphicsAllocation::AllocationType::MAP_ALLOCATION,

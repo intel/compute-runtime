@@ -504,15 +504,18 @@ TEST_F(MemObjMultiRootDeviceTests, WhenMemObjMapIsCreatedThenAllocationHasCorrec
     auto allocation = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice());
-    MemObj memObj(context.get(), CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
-                  1, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false);
+    std::unique_ptr<MemObj> memObj(
+        new MemObj(context.get(), CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
+                   1, nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false));
 
-    void *mapPtr = memObj.getBasePtrForMap(device->getRootDeviceIndex());
+    void *mapPtr = memObj->getBasePtrForMap(device->getRootDeviceIndex());
     EXPECT_NE(nullptr, mapPtr);
 
-    auto mapAllocation = memObj.getMapAllocation(device->getRootDeviceIndex());
+    auto mapAllocation = memObj->getMapAllocation(device->getRootDeviceIndex());
     ASSERT_NE(nullptr, mapAllocation);
     EXPECT_EQ(expectedRootDeviceIndex, mapAllocation->getRootDeviceIndex());
+
+    memObj.reset(nullptr);
 }
 
 TEST_F(MemObjMultiRootDeviceTests, WhenMemObjIsCreatedWithMultiGraphicsAllocationThenAllAllocationAreDestroyedProperly) {
@@ -524,13 +527,46 @@ TEST_F(MemObjMultiRootDeviceTests, WhenMemObjIsCreatedWithMultiGraphicsAllocatio
     multiGraphicsAllocation.addAllocation(allocation1);
 
     auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice());
-    MemObj *memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
-                                1, nullptr, nullptr, multiGraphicsAllocation, true, false, false);
+    std::unique_ptr<MemObj> memObj(
+        new MemObj(context.get(), CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
+                   1, nullptr, nullptr, multiGraphicsAllocation, true, false, false));
 
     EXPECT_NE(nullptr, memObj->getMultiGraphicsAllocation().getGraphicsAllocation(0));
     EXPECT_NE(nullptr, memObj->getMultiGraphicsAllocation().getGraphicsAllocation(1));
 
     EXPECT_NE(memObj->getMultiGraphicsAllocation().getGraphicsAllocation(0), memObj->getMultiGraphicsAllocation().getGraphicsAllocation(1));
 
-    delete memObj;
+    memObj.reset(nullptr);
+}
+
+TEST_F(MemObjMultiRootDeviceTests, WhenMemObjMapAreCreatedThenAllAllocationAreDestroyedProperly) {
+    auto allocation0 = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
+    auto allocation1 = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{1, MemoryConstants::pageSize});
+
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(1);
+    multiGraphicsAllocation.addAllocation(allocation0);
+    multiGraphicsAllocation.addAllocation(allocation1);
+
+    auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice());
+    std::unique_ptr<MemObj> memObj(
+        new MemObj(context.get(), CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
+                   1, nullptr, nullptr, multiGraphicsAllocation, true, false, false));
+
+    auto mapAllocation0 = memObj->getMapAllocation(0);
+    auto mapAllocation1 = memObj->getMapAllocation(1);
+
+    EXPECT_EQ(nullptr, mapAllocation0);
+    EXPECT_EQ(nullptr, mapAllocation1);
+
+    EXPECT_NE(nullptr, memObj->getBasePtrForMap(0));
+    EXPECT_EQ(memObj->getBasePtrForMap(0), memObj->getBasePtrForMap(1));
+
+    mapAllocation0 = memObj->getMapAllocation(0);
+    mapAllocation1 = memObj->getMapAllocation(1);
+
+    ASSERT_NE(nullptr, mapAllocation0);
+    ASSERT_NE(nullptr, mapAllocation1);
+    ASSERT_NE(mapAllocation0, mapAllocation1);
+
+    memObj.reset(nullptr);
 }
