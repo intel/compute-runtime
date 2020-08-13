@@ -39,10 +39,12 @@ struct DeviceFixture {
 struct MultiDeviceFixture {
     virtual void SetUp() { // NOLINT(readability-identifier-naming)
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
+        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         auto executionEnvironment = new NEO::ExecutionEnvironment;
         auto devices = NEO::DeviceFactory::createDevices(*executionEnvironment);
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        driverHandle->initialize(std::move(devices));
+        ze_result_t res = driverHandle->initialize(std::move(devices));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     }
 
     virtual void TearDown() { // NOLINT(readability-identifier-naming)
@@ -50,8 +52,9 @@ struct MultiDeviceFixture {
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
-    std::vector<L0::Device *> devices;
+    std::vector<NEO::Device *> devices;
     const uint32_t numRootDevices = 4u;
+    const uint32_t numSubDevices = 2u;
 };
 
 struct ContextFixture : DeviceFixture {

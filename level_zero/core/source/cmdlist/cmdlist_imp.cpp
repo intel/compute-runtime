@@ -76,6 +76,8 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
     }
 
+    UNRECOVERABLE_IF(nullptr == csr);
+
     auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, isCopyOnly);
     if (!commandQueue) {
         return nullptr;

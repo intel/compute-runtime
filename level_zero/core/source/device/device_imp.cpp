@@ -124,7 +124,12 @@ ze_result_t DeviceImp::createCommandQueue(const ze_command_queue_desc_t *desc,
 
 ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
                                                       ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
-    auto engines = this->getNEODevice()->getEngineGroups();
+    NEO::Device *neoDevice = this->neoDevice;
+    if (this->getNEODevice()->getNumAvailableDevices() > 1) {
+        neoDevice = this->neoDevice->getDeviceById(0);
+    }
+    auto engines = neoDevice->getEngineGroups();
+
     uint32_t numEngineGroups = 0;
     for (uint32_t i = 0; i < engines.size(); i++) {
         if (engines[i].size() > 0) {
@@ -745,7 +750,11 @@ ze_result_t DeviceImp::getCsrForOrdinalAndIndex(NEO::CommandStreamReceiver **csr
     return ZE_RESULT_SUCCESS;
 }
 ze_result_t DeviceImp::mapOrdinalForAvailableEngineGroup(uint32_t *ordinal) {
-    auto engines = this->getNEODevice()->getEngineGroups();
+    NEO::Device *neoDevice = this->neoDevice;
+    if (this->getNEODevice()->getNumAvailableDevices() > 1) {
+        neoDevice = this->neoDevice->getDeviceById(0);
+    }
+    auto engines = neoDevice->getEngineGroups();
     uint32_t numNonEmptyGroups = 0;
     uint32_t i = 0;
     for (; i < engines.size() && numNonEmptyGroups <= *ordinal; i++) {

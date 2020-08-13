@@ -12,6 +12,8 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
 
+#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -158,6 +160,50 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
                       cmd->getDataDword());
         }
     }
+}
+
+struct CommandQueueGroupMultiDevice : public MultiDeviceFixture, public ::testing::Test {
+    void SetUp() override {
+        MultiDeviceFixture::SetUp();
+        uint32_t count = 1;
+        ze_device_handle_t hDevice;
+        ze_result_t res = driverHandle->getDevice(&count, &hDevice);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, res);
+        device = L0::Device::fromHandle(hDevice);
+        ASSERT_NE(nullptr, device);
+    }
+    void TearDown() override {
+        MultiDeviceFixture::TearDown();
+    }
+    L0::Device *device = nullptr;
+};
+
+HWTEST2_F(CommandQueueGroupMultiDevice,
+          givenCommandQueuePropertiesCallThenCallSucceedsAndCommandListImmediateIsCreated, IsGen9) {
+    uint32_t count = 0;
+    ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_GE(count, 1u);
+
+    std::vector<ze_command_queue_group_properties_t> queueProperties(count);
+    res = device->getCommandQueueGroupProperties(&count, queueProperties.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    uint32_t queueGroupOrdinal = 0u;
+    uint32_t queueGroupIndex = 0u;
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = queueGroupOrdinal;
+    desc.index = queueGroupIndex;
+
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device,
+                                                                               &desc,
+                                                                               false,
+                                                                               false));
+    L0::CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    L0::DeviceImp *deviceImp = reinterpret_cast<L0::DeviceImp *>(device);
+    auto expectedCSR = deviceImp->neoDevice->getDeviceById(0)->getEngineGroups()[queueGroupOrdinal][queueGroupIndex].commandStreamReceiver;
+    EXPECT_EQ(cmdQueue->getCsr(), expectedCSR);
 }
 
 } // namespace ult
