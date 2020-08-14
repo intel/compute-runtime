@@ -111,7 +111,7 @@ ze_result_t SysmanDeviceImp::pciGetProperties(zes_pci_properties_t *pProperties)
 }
 
 ze_result_t SysmanDeviceImp::pciGetState(zes_pci_state_t *pState) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pPci->pciGetState(pState);
 }
 
 ze_result_t SysmanDeviceImp::pciGetBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) {

@@ -7,6 +7,7 @@
 set(L0_SRCS_TOOLS_SYSMAN_PCI_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/os_pci_imp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/os_pci_imp.h
 )
 
 if(WIN32)

@@ -136,6 +136,7 @@ struct Mock<PciSysfsAccess> : public PciSysfsAccess {
 
 class PublicLinuxPciImp : public L0::LinuxPciImp {
   public:
+    using LinuxPciImp::changeDirNLevelsUp;
     using LinuxPciImp::pfsAccess;
     using LinuxPciImp::pSysfsAccess;
 };

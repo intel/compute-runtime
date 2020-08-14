@@ -208,8 +208,26 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVe
 }
 
 TEST_F(ZesPciFixture, GivenValidPathWhileCallingchangeDirNLevelsUpThenReturnedPathIsNLevelUpThenTheCurrentPath) {
-    std::string testMockRealPath2LevelsUp = changeDirNLevelsUp(mockRealPath, 2);
+    PublicLinuxPciImp *pOsPci = static_cast<PublicLinuxPciImp *>(pPciImp->pOsPci);
+    std::string testMockRealPath2LevelsUp = pOsPci->changeDirNLevelsUp(mockRealPath, 2);
     EXPECT_EQ(testMockRealPath2LevelsUp, mockRealPath2LevelsUp);
 }
+
+TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStateThenVerifyzetSysmanPciGetStateCallReturnNotSupported) {
+    zes_pci_state_t state;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetState(device, &state));
+}
+
+TEST_F(ZesPciFixture, TestLinkSpeedToGenAndBack) {
+    for (int32_t i = PciGenerations::PciGen1; i <= PciGenerations::PciGen5; i++) {
+        double speed = convertPciGenToLinkSpeed(i);
+        int32_t gen = convertLinkSpeedToPciGen(speed);
+        EXPECT_EQ(i, gen);
+    }
+
+    EXPECT_EQ(-1, convertLinkSpeedToPciGen(0.0));
+    EXPECT_EQ(0.0, convertPciGenToLinkSpeed(0));
+}
+
 } // namespace ult
 } // namespace L0

@@ -22,7 +22,7 @@ constexpr uint8_t maxPciBars = 6;
 // Linux kernel would report 255 link width, as an indication of unknown.
 constexpr uint32_t unknownPcieLinkWidth = 255u;
 
-std::string changeDirNLevelsUp(std::string realRootPath, uint8_t nLevel) {
+std::string LinuxPciImp::changeDirNLevelsUp(std::string realRootPath, uint8_t nLevel) {
     size_t loc;
     while (nLevel > 0) {
         loc = realRootPath.find_last_of('/');
@@ -31,7 +31,12 @@ std::string changeDirNLevelsUp(std::string realRootPath, uint8_t nLevel) {
     }
     return realRootPath;
 }
-
+ze_result_t LinuxPciImp::getProperties(zes_pci_properties_t *properties) {
+    properties->haveBandwidthCounters = false;
+    properties->havePacketCounters = false;
+    properties->haveReplayCounters = false;
+    return ZE_RESULT_SUCCESS;
+}
 ze_result_t LinuxPciImp::getPciBdf(std::string &bdf) {
     std::string bdfDir;
     ze_result_t result = pSysfsAccess->readSymLink(deviceDir, bdfDir);
@@ -106,26 +111,6 @@ ze_result_t LinuxPciImp::getMaxLinkWidth(int32_t &maxLinkwidth) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxPciImp::getLinkGen(int32_t &linkGen) {
-    double maxLinkSpeed;
-    getMaxLinkSpeed(maxLinkSpeed);
-    if (maxLinkSpeed == 2.5) {
-        linkGen = 1;
-    } else if (maxLinkSpeed == 5) {
-        linkGen = 2;
-    } else if (maxLinkSpeed == 8) {
-        linkGen = 3;
-    } else if (maxLinkSpeed == 16) {
-        linkGen = 4;
-    } else if (maxLinkSpeed == 32) {
-        linkGen = 5;
-    } else {
-        linkGen = -1;
-    }
-
-    return ZE_RESULT_SUCCESS;
-}
-
 void getBarBaseAndSize(std::string readBytes, uint64_t &baseAddr, uint64_t &barSize, uint64_t &barFlags) {
 
     unsigned long long start, end, flags;
@@ -176,6 +161,9 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zes_pci_bar_propert
     return result;
 }
 
+ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
 LinuxPciImp::LinuxPciImp(OsSysman *pOsSysman) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
