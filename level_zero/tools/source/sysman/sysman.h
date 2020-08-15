@@ -9,6 +9,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/engine/engine.h"
 #include "level_zero/tools/source/sysman/fabric_port/fabric_port.h"
+#include "level_zero/tools/source/sysman/fan/fan.h"
 #include "level_zero/tools/source/sysman/frequency/frequency.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations.h"
 #include "level_zero/tools/source/sysman/memory/memory.h"
@@ -48,6 +49,7 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler) = 0;
     virtual ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) = 0;
     virtual ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) = 0;
+    virtual ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) = 0;
     virtual ~SysmanDevice() = default;
 };
 

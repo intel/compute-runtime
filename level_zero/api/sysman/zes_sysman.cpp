@@ -535,41 +535,41 @@ zesDeviceEnumFans(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_fan_handle_t *phFan) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->fanGet(pCount, phFan);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFanGetProperties(
     zes_fan_handle_t hFan,
     zes_fan_properties_t *pProperties) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Fan::fromHandle(hFan)->fanGetProperties(pProperties);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFanGetConfig(
     zes_fan_handle_t hFan,
     zes_fan_config_t *pConfig) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Fan::fromHandle(hFan)->fanGetConfig(pConfig);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFanSetDefaultMode(
     zes_fan_handle_t hFan) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Fan::fromHandle(hFan)->fanSetDefaultMode();
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFanSetFixedSpeedMode(
     zes_fan_handle_t hFan,
     const zes_fan_speed_t *speed) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Fan::fromHandle(hFan)->fanSetFixedSpeedMode(speed);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFanSetSpeedTableMode(
     zes_fan_handle_t hFan,
     const zes_fan_speed_table_t *speedTable) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Fan::fromHandle(hFan)->fanSetSpeedTableMode(speedTable);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -577,7 +577,7 @@ zesFanGetState(
     zes_fan_handle_t hFan,
     zes_fan_speed_units_t units,
     int32_t *pSpeed) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Fan::fromHandle(hFan)->fanGetState(units, pSpeed);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

@@ -32,9 +32,11 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pRasHandleContext = new RasHandleContext(pOsSysman);
     pMemoryHandleContext = new MemoryHandleContext(pOsSysman);
     pGlobalOperations = new GlobalOperationsImp(pOsSysman);
+    pFanHandleContext = new FanHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
+    freeResource(pFanHandleContext);
     freeResource(pGlobalOperations);
     freeResource(pMemoryHandleContext);
     freeResource(pRasHandleContext);
@@ -83,6 +85,9 @@ void SysmanDeviceImp::init() {
     }
     if (pGlobalOperations) {
         pGlobalOperations->init();
+    }
+    if (pFanHandleContext) {
+        pFanHandleContext->init();
     }
 }
 
@@ -152,5 +157,9 @@ ze_result_t SysmanDeviceImp::rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) {
 
 ze_result_t SysmanDeviceImp::memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) {
     return pMemoryHandleContext->memoryGet(pCount, phMemory);
+}
+
+ze_result_t SysmanDeviceImp::fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) {
+    return pFanHandleContext->fanGet(pCount, phFan);
 }
 } // namespace L0
