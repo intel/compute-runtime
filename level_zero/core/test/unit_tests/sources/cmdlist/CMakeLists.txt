@@ -14,5 +14,6 @@ target_sources(${TARGET_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_launch_kernel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_signal_event.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_wait_on_events.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_blit.cpp
 )
 add_subdirectories()
