@@ -520,7 +520,7 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
         // If no fragment is present it means it already exists.
         if (!handleStorage.fragmentStorageData[i].osHandleStorage && handleStorage.fragmentStorageData[i].cpuPtr) {
             handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandle();
-            handleStorage.fragmentStorageData[i].residency = new ResidencyData();
+            handleStorage.fragmentStorageData[i].residency = new ResidencyData(maxOsContextCount);
 
             handleStorage.fragmentStorageData[i].osHandleStorage->gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext(), handleStorage.fragmentStorageData[i].cpuPtr,
                                                                                 handleStorage.fragmentStorageData[i].fragmentSize, false);

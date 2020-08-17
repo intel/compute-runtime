@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include <vector>
@@ -14,8 +13,8 @@
 namespace NEO {
 
 struct ResidencyData {
-    ResidencyData() : lastFenceValues(static_cast<size_t>(MemoryManager::maxOsContextCount)) {}
-    std::vector<bool> resident = std::vector<bool>(MemoryManager::maxOsContextCount, 0);
+    ResidencyData(size_t maxOsContextCount) : resident(maxOsContextCount, 0), lastFenceValues(static_cast<size_t>(maxOsContextCount)) {}
+    std::vector<bool> resident;
 
     void updateCompletionData(uint64_t newFenceValue, uint32_t contextId);
     uint64_t getFenceValueForContextId(uint32_t contextId);

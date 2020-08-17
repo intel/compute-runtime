@@ -578,12 +578,13 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
 
 void DrmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) {
     DrmAllocation *drmMemory = static_cast<DrmAllocation *>(gfxAllocation);
+    auto maxOsContextCount = 1u;
     FragmentStorage fragment = {};
     fragment.driverAllocation = true;
     fragment.fragmentCpuPointer = gfxAllocation->getUnderlyingBuffer();
     fragment.fragmentSize = alignUp(gfxAllocation->getUnderlyingBufferSize(), MemoryConstants::pageSize);
     fragment.osInternalStorage = new OsHandle();
-    fragment.residency = new ResidencyData();
+    fragment.residency = new ResidencyData(maxOsContextCount);
     fragment.osInternalStorage->bo = drmMemory->getBO();
     hostPtrManager->storeFragment(gfxAllocation->getRootDeviceIndex(), fragment);
 }
@@ -650,12 +651,13 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
     BufferObject *allocatedBos[maxFragmentsCount];
     uint32_t numberOfBosAllocated = 0;
     uint32_t indexesOfAllocatedBos[maxFragmentsCount];
+    auto maxOsContextCount = 1u;
 
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         // If there is no fragment it means it already exists.
         if (!handleStorage.fragmentStorageData[i].osHandleStorage && handleStorage.fragmentStorageData[i].fragmentSize) {
             handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandle();
-            handleStorage.fragmentStorageData[i].residency = new ResidencyData();
+            handleStorage.fragmentStorageData[i].residency = new ResidencyData(maxOsContextCount);
 
             handleStorage.fragmentStorageData[i].osHandleStorage->bo = allocUserptr((uintptr_t)handleStorage.fragmentStorageData[i].cpuPtr,
                                                                                     handleStorage.fragmentStorageData[i].fragmentSize,

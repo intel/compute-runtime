@@ -3428,15 +3428,16 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMem
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCleanOsHandlesDeletesHandleDataThenOsHandleStorageAndResidencyIsSetToNullptr) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(false, false, true, *executionEnvironment));
     ASSERT_NE(nullptr, memoryManager->pinBBs[device->getRootDeviceIndex()]);
+    auto maxOsContextCount = 1u;
 
     OsHandleStorage handleStorage;
     handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandle();
-    handleStorage.fragmentStorageData[0].residency = new ResidencyData();
+    handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     handleStorage.fragmentStorageData[0].fragmentSize = 4096;
 
     handleStorage.fragmentStorageData[1].osHandleStorage = new OsHandle();
-    handleStorage.fragmentStorageData[1].residency = new ResidencyData();
+    handleStorage.fragmentStorageData[1].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[1].cpuPtr = reinterpret_cast<void *>(0x1000);
     handleStorage.fragmentStorageData[1].fragmentSize = 4096;
 

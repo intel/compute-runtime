@@ -179,7 +179,7 @@ void OsAgnosticMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *
     fragment.fragmentCpuPointer = gfxAllocation->getUnderlyingBuffer();
     fragment.fragmentSize = alignUp(gfxAllocation->getUnderlyingBufferSize(), MemoryConstants::pageSize);
     fragment.osInternalStorage = new OsHandle();
-    fragment.residency = new ResidencyData();
+    fragment.residency = new ResidencyData(maxOsContextCount);
     hostPtrManager->storeFragment(gfxAllocation->getRootDeviceIndex(), fragment);
 }
 
@@ -259,7 +259,7 @@ MemoryManager::AllocationStatus OsAgnosticMemoryManager::populateOsHandles(OsHan
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         if (!handleStorage.fragmentStorageData[i].osHandleStorage && handleStorage.fragmentStorageData[i].cpuPtr) {
             handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandle();
-            handleStorage.fragmentStorageData[i].residency = new ResidencyData();
+            handleStorage.fragmentStorageData[i].residency = new ResidencyData(maxOsContextCount);
 
             FragmentStorage newFragment = {};
             newFragment.fragmentCpuPointer = const_cast<void *>(handleStorage.fragmentStorageData[i].cpuPtr);

@@ -58,8 +58,9 @@ void WddmMemoryManagerFixture::SetUp() {
 }
 
 TEST(ResidencyData, givenNewlyConstructedResidencyDataThenItIsNotResidentOnAnyOsContext) {
-    ResidencyData residencyData;
-    for (auto contextId = 0u; contextId < MemoryManager::maxOsContextCount; contextId++) {
+    auto maxOsContextCount = 3u;
+    ResidencyData residencyData(maxOsContextCount);
+    for (auto contextId = 0u; contextId < maxOsContextCount; contextId++) {
         EXPECT_EQ(false, residencyData.resident[contextId]);
     }
 }
@@ -998,9 +999,10 @@ TEST_F(WddmMemoryManagerTest, WhenAllocating32BitMemoryThenGpuBaseAddressIsCanno
 TEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsThenAllMarkedAllocationsAreDestroyed) {
     OsHandleStorage storage;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
+    uint32_t maxOsContextCount = 1u;
 
     storage.fragmentStorageData[0].osHandleStorage = new OsHandle;
-    storage.fragmentStorageData[0].residency = new ResidencyData;
+    storage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
 
     storage.fragmentStorageData[0].osHandleStorage->handle = ALLOCATION_HANDLE;
     storage.fragmentStorageData[0].freeTheFragment = true;
@@ -1008,7 +1010,7 @@ TEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsT
 
     storage.fragmentStorageData[1].osHandleStorage = new OsHandle;
     storage.fragmentStorageData[1].osHandleStorage->handle = ALLOCATION_HANDLE;
-    storage.fragmentStorageData[1].residency = new ResidencyData;
+    storage.fragmentStorageData[1].residency = new ResidencyData(maxOsContextCount);
 
     storage.fragmentStorageData[1].freeTheFragment = false;
 
@@ -1016,7 +1018,7 @@ TEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsT
     storage.fragmentStorageData[2].osHandleStorage->handle = ALLOCATION_HANDLE;
     storage.fragmentStorageData[2].freeTheFragment = true;
     storage.fragmentStorageData[2].osHandleStorage->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), pSysMem, 4096u, false);
-    storage.fragmentStorageData[2].residency = new ResidencyData;
+    storage.fragmentStorageData[2].residency = new ResidencyData(maxOsContextCount);
 
     memoryManager->cleanOsHandles(storage, 0);
 
@@ -1246,11 +1248,12 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     D3DGPU_VIRTUAL_ADDRESS gpuAdress = MemoryConstants::pageSize * 1;
     auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + MemoryConstants::pageSize);
     auto size = MemoryConstants::pageSize * 2;
+    auto maxOsContextCount = 1u;
 
     handleStorage.fragmentStorageData[0].cpuPtr = ptr;
     handleStorage.fragmentStorageData[0].fragmentSize = size;
     handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandle();
-    handleStorage.fragmentStorageData[0].residency = new ResidencyData();
+    handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
     handleStorage.fragmentStorageData[0].osHandleStorage->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), ptr, size, false);
@@ -1281,11 +1284,12 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
     D3DGPU_VIRTUAL_ADDRESS gpuAdress = MemoryConstants::pageSize * 1;
     auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + MemoryConstants::pageSize);
     auto size = MemoryConstants::pageSize * 2;
+    auto maxOsContextCount = 1u;
 
     handleStorage.fragmentStorageData[0].cpuPtr = ptr;
     handleStorage.fragmentStorageData[0].fragmentSize = size;
     handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandle();
-    handleStorage.fragmentStorageData[0].residency = new ResidencyData();
+    handleStorage.fragmentStorageData[0].residency = new ResidencyData(maxOsContextCount);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
     auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
     handleStorage.fragmentStorageData[0].osHandleStorage->gmm = new Gmm(rootDeviceEnvironment->getGmmClientContext(), ptr, size, false);

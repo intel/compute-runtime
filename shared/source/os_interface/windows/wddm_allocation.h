@@ -9,6 +9,7 @@
 #define UMDF_USING_NTSTATUS
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
@@ -31,7 +32,7 @@ class WddmAllocation : public GraphicsAllocation {
 
     WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
                    void *reservedAddr, MemoryPool::Type pool, uint32_t shareable)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool), shareable(shareable), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, castToUint64(cpuPtrIn), 0llu, sizeIn, pool), shareable(shareable), residency(MemoryManager::maxOsContextCount), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {
         reservedAddressRangeInfo.addressPtr = reservedAddr;
         reservedAddressRangeInfo.rangeSize = sizeIn;
         handles.resize(gmms.size());
@@ -42,7 +43,7 @@ class WddmAllocation : public GraphicsAllocation {
 
     WddmAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
                    osHandle sharedHandle, MemoryPool::Type pool)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, sizeIn, sharedHandle, pool), residency(MemoryManager::maxOsContextCount), trimCandidateListPositions(MemoryManager::maxOsContextCount, trimListUnusedPosition) {
         handles.resize(gmms.size());
     }
 

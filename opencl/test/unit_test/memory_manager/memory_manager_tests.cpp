@@ -1793,9 +1793,10 @@ TEST(ResidencyDataTest, givenGpgpuEnginesWhenAskedForMaxOsContextCountThenValueI
 TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenItIsProperlyUpdated) {
     struct MockResidencyData : public ResidencyData {
         using ResidencyData::lastFenceValues;
+        using ResidencyData::ResidencyData;
     };
 
-    MockResidencyData residency;
+    MockResidencyData residency(MemoryManager::maxOsContextCount);
 
     MockOsContext osContext(0u, 1,
                             HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0],

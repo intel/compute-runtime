@@ -822,7 +822,8 @@ TEST_F(Wddm20Tests, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemor
 
     OsHandleStorage handleStorage;
     OsHandle handle = {0};
-    ResidencyData residency;
+    auto maxOsContextCount = 1u;
+    ResidencyData residency(maxOsContextCount);
 
     handleStorage.fragmentCount = 1;
     handleStorage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
