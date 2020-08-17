@@ -50,6 +50,7 @@ void ExecutionEnvironment::initializeMemoryManager() {
 }
 
 void ExecutionEnvironment::calculateMaxOsContextCount() {
+    MemoryManager::maxOsContextCount = 0u;
     for (const auto &rootDeviceEnvironment : this->rootDeviceEnvironments) {
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
         auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);

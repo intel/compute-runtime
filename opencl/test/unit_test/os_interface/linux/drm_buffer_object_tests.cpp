@@ -242,7 +242,7 @@ TEST_F(DrmBufferObjectTest, givenDeleterWhenBufferObjectIsCreatedAndDeletedThenC
 TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoCreatedThenBindInfoIsInitializedToOsContextCount) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     device->getRootDeviceEnvironment().executionEnvironment.setPerContextMemorySpace();
-
+    device->getExecutionEnvironment()->calculateMaxOsContextCount();
     DrmMock drm(*(device->getExecutionEnvironment()->rootDeviceEnvironments[0].get()));
     EXPECT_TRUE(drm.isPerContextVMRequired());
     MockBufferObject bo(&drm);
@@ -262,6 +262,7 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoBoundAndUnboundThenCorrectB
     executionEnvironment->setPerContextMemorySpace();
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create();
 
