@@ -266,6 +266,7 @@ struct LegacyMaskArray {
 struct DriverTestMultipleDeviceWithLegacyAffinityMask : public ::testing::WithParamInterface<std::tuple<std::string, std::string>>,
                                                         public ::testing::Test {
     void SetUp() override {
+        DebugManager.flags.UseLegacyLevelZeroAffinity.set(true);
         DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
         VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
