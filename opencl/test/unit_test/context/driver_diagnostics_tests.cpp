@@ -474,8 +474,8 @@ TEST_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenProperPe
     auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
     context->isSharedContext = false;
     auto buffer = std::unique_ptr<Buffer>(
-        Buffer::create(context.get(), MemoryPropertiesHelper::createMemoryProperties((1 << 21), 0, 0, &context->getDevice(0)->getDevice()),
-                       (1 << 21), 0, size, static_cast<void *>(NULL), retVal));
+        Buffer::create(context.get(), MemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context->getDevice(0)->getDevice()),
+                       0, 0, size, static_cast<void *>(NULL), retVal));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_COMPRESSED], buffer.get());
     auto compressionSupported = HwHelper::get(hwInfo.platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(hwInfo, size) &&
                                 HwHelper::renderCompressedBuffersSupported(hwInfo);
