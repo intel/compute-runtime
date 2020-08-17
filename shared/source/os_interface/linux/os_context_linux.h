@@ -24,11 +24,13 @@ class OsContextLinux : public OsContext {
 
     unsigned int getEngineFlag() const { return engineFlag; }
     const std::vector<uint32_t> &getDrmContextIds() const { return drmContextIds; }
+    const std::vector<uint32_t> &getDrmVmIds() const { return drmVmIds; }
     Drm &getDrm() const;
 
   protected:
     unsigned int engineFlag = 0;
     std::vector<uint32_t> drmContextIds;
+    std::vector<uint32_t> drmVmIds;
     Drm &drm;
 };
 } // namespace NEO

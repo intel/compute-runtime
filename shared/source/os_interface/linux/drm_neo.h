@@ -72,6 +72,7 @@ class Drm {
     void destroyDrmVirtualMemory(uint32_t drmVmId);
     uint32_t createDrmContext(uint32_t drmVmId);
     void destroyDrmContext(uint32_t drmContextId);
+    uint32_t queryVmId(uint32_t drmContextId);
     void setLowPriorityContextParam(uint32_t drmContextId);
 
     unsigned int bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType);

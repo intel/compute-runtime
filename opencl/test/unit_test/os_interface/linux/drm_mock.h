@@ -106,6 +106,7 @@ class DrmMock : public Drm {
         I915_SCHEDULER_CAP_PRIORITY |
         I915_SCHEDULER_CAP_PREEMPTION;
     int StoredExecSoftPin = 0;
+    int StoredRetValForVmId = 1;
 
     bool disableSomeTopology = false;
 

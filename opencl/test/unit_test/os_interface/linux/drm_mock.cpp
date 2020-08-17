@@ -119,7 +119,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         }
 
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_VM) {
-            static_cast<drm_i915_gem_context_param *>(arg)->value = 1u;
+            static_cast<drm_i915_gem_context_param *>(arg)->value = this->StoredRetValForVmId;
             return 0u;
         }
     }

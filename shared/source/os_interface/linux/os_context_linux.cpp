@@ -41,6 +41,11 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield devi
             }
             this->engineFlag = drm.bindDrmContext(drmContextId, deviceIndex, engineType);
             this->drmContextIds.push_back(drmContextId);
+
+            if (drm.isPerContextVMRequired()) {
+                drmVmId = drm.queryVmId(drmContextId);
+                this->drmVmIds.push_back(drmVmId);
+            }
         }
     }
 }

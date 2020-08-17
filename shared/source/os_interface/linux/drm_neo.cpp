@@ -243,6 +243,21 @@ void Drm::destroyDrmVirtualMemory(uint32_t drmVmId) {
     UNRECOVERABLE_IF(ret != 0);
 }
 
+uint32_t Drm::queryVmId(uint32_t drmContextId) {
+    drm_i915_gem_context_param param{};
+    param.ctx_id = drmContextId;
+    param.value = 0;
+    param.param = I915_CONTEXT_PARAM_VM;
+    auto retVal = this->ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &param);
+    DEBUG_BREAK_IF(retVal != 0);
+    (void)retVal;
+
+    auto vmId = static_cast<uint32_t>(param.value);
+    DEBUG_BREAK_IF(vmId == 0);
+
+    return vmId;
+}
+
 int Drm::getEuTotal(int &euTotal) {
     return getParamIoctl(I915_PARAM_EU_TOTAL, &euTotal);
 }
