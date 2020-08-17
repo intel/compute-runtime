@@ -67,7 +67,7 @@ ze_result_t CommandQueueImp::synchronize(uint64_t timeout) {
 ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) {
     UNRECOVERABLE_IF(csr == nullptr);
 
-    auto taskCountToWait = this->taskCount;
+    auto taskCountToWait = getTaskCount();
     bool enableTimeout = true;
     int64_t timeoutMicroseconds = static_cast<int64_t>(timeout);
     if (timeout == std::numeric_limits<uint64_t>::max()) {

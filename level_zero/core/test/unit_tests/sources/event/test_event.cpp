@@ -164,39 +164,6 @@ struct EventCreateAllocationResidencyTest : public ::testing::Test {
     L0::Device *device = nullptr;
 };
 
-TEST_F(EventCreateAllocationResidencyTest,
-       givenEventCreateAndEventDestroyCallsThenMakeResidentAndEvictAreCalled) {
-    ze_event_pool_desc_t eventPoolDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
-        nullptr,
-        ZE_EVENT_POOL_FLAG_HOST_VISIBLE,
-        1};
-
-    auto deviceHandle = device->toHandle();
-    auto eventPool = EventPool::create(driverHandle.get(), 1, &deviceHandle, &eventPoolDesc);
-    ASSERT_NE(nullptr, eventPool);
-
-    const ze_event_desc_t eventDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_DESC,
-        nullptr,
-        0,
-        ZE_EVENT_SCOPE_FLAG_DEVICE,
-        ZE_EVENT_SCOPE_FLAG_DEVICE};
-
-    EXPECT_CALL(*mockMemoryOperationsHandler, makeResident).Times(1);
-    auto event = L0::Event::create(eventPool, &eventDesc, device);
-    ASSERT_NE(nullptr, event);
-
-    NEO::MemoryOperationsHandler *memoryOperationsIface =
-        neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-    EXPECT_NE(nullptr, memoryOperationsIface);
-
-    EXPECT_CALL(*mockMemoryOperationsHandler, evict).Times(1);
-    event->destroy();
-
-    eventPool->destroy();
-}
-
 class TimestampEventCreate : public Test<DeviceFixture> {
   public:
     void SetUp() override {

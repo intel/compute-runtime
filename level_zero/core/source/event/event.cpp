@@ -70,7 +70,6 @@ struct EventImp : public Event {
   protected:
     ze_result_t hostEventSetValue(uint32_t eventValue);
     ze_result_t hostEventSetValueTimestamps(uint32_t eventVal);
-    void makeAllocationResident();
 };
 
 struct EventPoolImp : public EventPool {
@@ -162,31 +161,8 @@ NEO::GraphicsAllocation &Event::getAllocation() {
 }
 
 ze_result_t Event::destroy() {
-    auto eventImp = static_cast<EventImp *>(this);
-    auto deviceImp = static_cast<DeviceImp *>(eventImp->device);
-
-    NEO::MemoryOperationsHandler *memoryOperationsIface =
-        deviceImp->neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-
-    if (memoryOperationsIface) {
-        memoryOperationsIface->evict(deviceImp->getNEODevice(),
-                                     eventImp->eventPool->getAllocation());
-    }
-
     delete this;
     return ZE_RESULT_SUCCESS;
-}
-
-void EventImp::makeAllocationResident() {
-    auto deviceImp = static_cast<DeviceImp *>(this->device);
-    NEO::MemoryOperationsHandler *memoryOperationsIface =
-        deviceImp->neoDevice->getRootDeviceEnvironment().memoryOperationsInterface.get();
-
-    if (memoryOperationsIface) {
-        auto alloc = &(this->eventPool->getAllocation());
-        memoryOperationsIface->makeResident(deviceImp->neoDevice,
-                                            ArrayRef<NEO::GraphicsAllocation *>(&alloc, 1));
-    }
 }
 
 ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
@@ -207,8 +183,6 @@ ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
     eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, contextEnd));
     eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalEnd));
 
-    makeAllocationResident();
-
     return ZE_RESULT_SUCCESS;
 }
 
@@ -220,8 +194,6 @@ ze_result_t EventImp::hostEventSetValue(uint32_t eventVal) {
     auto hostAddr = static_cast<uint64_t *>(hostAddress);
     UNRECOVERABLE_IF(hostAddr == nullptr);
     memcpy_s(static_cast<void *>(hostAddr), sizeof(uint32_t), static_cast<void *>(&eventVal), sizeof(uint32_t));
-
-    makeAllocationResident();
 
     if (!this->signalScope) {
         NEO::CpuIntrinsics::clFlush(hostAddr);

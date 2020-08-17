@@ -101,7 +101,6 @@ void *SVMAllocsManager::createSVMAlloc(uint32_t rootDeviceIndex, size_t size, co
     if (size == 0)
         return nullptr;
 
-    std::unique_lock<SpinLock> lock(mtx);
     if (!memoryManager->isLocalMemorySupported(rootDeviceIndex)) {
         return createZeroCopySvmAllocation(rootDeviceIndex, size, svmProperties, deviceBitfield);
     } else {
@@ -283,6 +282,7 @@ void *SVMAllocsManager::createZeroCopySvmAllocation(uint32_t rootDeviceIndex, si
     allocData.gpuAllocations.addAllocation(allocation);
     allocData.size = size;
 
+    std::unique_lock<SpinLock> lock(mtx);
     this->SVMAllocs.insert(allocData);
     return allocation->getUnderlyingBuffer();
 }
@@ -328,6 +328,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(uint32_t rootDe
     allocData.device = unifiedMemoryProperties.device;
     allocData.size = size;
 
+    std::unique_lock<SpinLock> lock(mtx);
     this->SVMAllocs.insert(allocData);
     return svmPtr;
 }

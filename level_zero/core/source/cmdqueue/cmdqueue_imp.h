@@ -91,7 +91,7 @@ struct CommandQueueImp : public CommandQueue {
     NEO::CommandStreamReceiver *csr = nullptr;
     const ze_command_queue_desc_t desc;
     NEO::LinearStream *commandStream = nullptr;
-    uint32_t taskCount = 0;
+    std::atomic<uint32_t> taskCount{0};
     std::vector<Kernel *> printfFunctionContainer;
     bool gsbaInit = false;
     bool frontEndInit = false;
