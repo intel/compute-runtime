@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/string.h"
 
 #include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -15,6 +16,10 @@
 #include "gtest/gtest.h"
 
 #include <memory>
+
+namespace NEO {
+extern const char *latestConformanceVersionPassed;
+} // namespace NEO
 
 using namespace NEO;
 
@@ -60,6 +65,7 @@ std::pair<uint32_t, size_t> deviceInfoParams2[] = {
     {CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE, sizeof(size_t)},
     //    {CL_DEVICE_IL_VERSION, sizeof(char[])},
     {CL_DEVICE_IMAGE_SUPPORT, sizeof(cl_bool)},
+    {CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED, strlen(latestConformanceVersionPassed) + 1},
     {CL_DEVICE_LINKER_AVAILABLE, sizeof(cl_bool)},
     {CL_DEVICE_LOCAL_MEM_SIZE, sizeof(cl_ulong)},
     {CL_DEVICE_LOCAL_MEM_TYPE, sizeof(cl_device_local_mem_type)},

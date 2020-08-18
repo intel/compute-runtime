@@ -313,6 +313,7 @@ TEST_P(GetDeviceInfoStr, GivenStringTypeParamWhenGettingDeviceInfoThenSuccessIsR
 static cl_device_info deviceInfoStrParams[] =
     {
         CL_DEVICE_BUILT_IN_KERNELS,
+        CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED,
         CL_DEVICE_NAME,
         CL_DEVICE_OPENCL_C_VERSION,
         CL_DEVICE_PROFILE,

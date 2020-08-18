@@ -49,6 +49,7 @@ struct ClDeviceInfo {
     const char                            *clCVersion;
     const char                            *spirVersions;
     const char                            *deviceExtensions;
+    const char                            *latestConformanceVersionPassed;
     cl_device_id                          parentDevice;
     cl_device_affinity_domain             partitionAffinityDomain;
     cl_uint                               partitionMaxSubDevices;

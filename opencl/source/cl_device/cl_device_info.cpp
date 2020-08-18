@@ -98,6 +98,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_HOST_UNIFIED_MEMORY:                         getCap<CL_DEVICE_HOST_UNIFIED_MEMORY                         >(src, srcSize, retSize); break;
     case CL_DEVICE_IL_VERSION:                                  getStr<CL_DEVICE_IL_VERSION                                  >(src, srcSize, retSize); break;
     case CL_DEVICE_IMAGE_SUPPORT:                               getCap<CL_DEVICE_IMAGE_SUPPORT                               >(src, srcSize, retSize); break;
+    case CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED:           getStr<CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED           >(src, srcSize, retSize); break;
     case CL_DEVICE_LINKER_AVAILABLE:                            getCap<CL_DEVICE_LINKER_AVAILABLE                            >(src, srcSize, retSize); break;
     case CL_DEVICE_LOCAL_MEM_SIZE:                              getCap<CL_DEVICE_LOCAL_MEM_SIZE                              >(src, srcSize, retSize); break;
     case CL_DEVICE_LOCAL_MEM_TYPE:                              getCap<CL_DEVICE_LOCAL_MEM_TYPE                              >(src, srcSize, retSize); break;
