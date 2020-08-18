@@ -159,7 +159,7 @@ if(MSVC)
 endif()
 
 if(UNIX)
-  target_link_libraries(${OCLOC_NAME}_lib dl pthread)
+  target_link_libraries(${OCLOC_NAME}_lib dl pthread execinfo)
 endif()
 
 set(CLOC_LIB_SRCS_LIB ${CLOC_LIB_SRCS_LIB} PARENT_SCOPE)
