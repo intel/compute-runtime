@@ -92,6 +92,12 @@ class DirectSubmissionHw {
     void *dispatchWorkloadSection(BatchBuffer &batchBuffer);
     size_t getSizeDispatch();
 
+    void dispatchPrefetchMitigation();
+    size_t getSizePrefetchMitigation();
+
+    void dispatchDisablePrefetcher(bool disable);
+    size_t getSizeDisablePrefetcher();
+
     size_t getSizeEnd();
 
     uint64_t getCommandBufferPositionGpuAddress(void *position);

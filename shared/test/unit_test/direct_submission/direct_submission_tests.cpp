@@ -453,8 +453,12 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
-    MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>();
-    EXPECT_EQ(nullptr, bbStart);
+
+    if (directSubmission.getSizeSemaphoreSection() == EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() + 8 * MemoryConstants::cacheLineSize) {
+        EXPECT_EQ(0u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
+    } else {
+        EXPECT_EQ(1u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
+    }
 
     MI_STORE_DATA_IMM *storeData = hwParse.getCommand<MI_STORE_DATA_IMM>();
     ASSERT_NE(nullptr, storeData);
@@ -493,8 +497,12 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
-    MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>();
-    EXPECT_EQ(nullptr, bbStart);
+
+    if (directSubmission.getSizeSemaphoreSection() == EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() + 8 * MemoryConstants::cacheLineSize) {
+        EXPECT_EQ(0u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
+    } else {
+        EXPECT_EQ(1u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
+    }
 
     MI_STORE_DATA_IMM *storeData = hwParse.getCommand<MI_STORE_DATA_IMM>();
     EXPECT_EQ(nullptr, storeData);

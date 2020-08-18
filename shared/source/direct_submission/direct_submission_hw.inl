@@ -184,24 +184,21 @@ template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(uint32_t value) {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-
+    dispatchDisablePrefetcher(true);
     EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(ringCommandStream,
                                                           semaphoreGpuVa,
                                                           value,
                                                           COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
-    uint32_t *prefetchNoop = static_cast<uint32_t *>(ringCommandStream.getSpace(prefetchSize));
-    size_t i = 0u;
-    while (i < prefetchNoops) {
-        *prefetchNoop = 0u;
-        prefetchNoop++;
-        i++;
-    }
+    dispatchPrefetchMitigation();
+    dispatchDisablePrefetcher(false);
 }
 
 template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection() {
     size_t semaphoreSize = EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
-    return (semaphoreSize + prefetchSize);
+    semaphoreSize += getSizePrefetchMitigation();
+    semaphoreSize += 2 * getSizeDisablePrefetcher();
+    return semaphoreSize;
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -260,6 +257,22 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch() {
     }
 
     return size;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchPrefetchMitigation() {
+    uint32_t *prefetchNoop = static_cast<uint32_t *>(ringCommandStream.getSpace(prefetchSize));
+    size_t i = 0u;
+    while (i < prefetchNoops) {
+        *prefetchNoop = 0u;
+        prefetchNoop++;
+        i++;
+    }
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizePrefetchMitigation() {
+    return prefetchSize;
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -347,6 +360,15 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::setReturnAddress(void *re
 
     MI_BATCH_BUFFER_START *returnBBStart = static_cast<MI_BATCH_BUFFER_START *>(returnCmd);
     *returnBBStart = cmd;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchDisablePrefetcher(bool disable) {
+}
+
+template <typename GfxFamily, typename Dispatcher>
+inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDisablePrefetcher() {
+    return 0u;
 }
 
 template <typename GfxFamily, typename Dispatcher>
