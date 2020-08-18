@@ -296,7 +296,7 @@ size_t CmdParse<T>::getCommandLength(void *cmd) {
     {
         auto pCmd = genCmdCast<MI_STORE_DATA_IMM *>(cmd);
         if (pCmd)
-            return pCmd->TheStructure.Common.DwordLength + 3;
+            return SIZE32(*pCmd);
     }
     {
         auto pCmd = genCmdCast<MI_FLUSH_DW *>(cmd);

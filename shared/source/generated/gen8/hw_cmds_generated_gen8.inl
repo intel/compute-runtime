@@ -4669,6 +4669,8 @@ typedef struct tagMI_STORE_DATA_IMM {
     } TheStructure;
     typedef enum tagDWORD_LENGTH {
         DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x0,
+        DWORD_LENGTH_STORE_DWORD = 0x2,
+        DWORD_LENGTH_STORE_QWORD = 0x3,
     } DWORD_LENGTH;
     typedef enum tagMI_COMMAND_OPCODE {
         MI_COMMAND_OPCODE_MI_STORE_DATA_IMM = 0x20,
@@ -4684,7 +4686,7 @@ typedef struct tagMI_STORE_DATA_IMM {
     } PATCH_CONSTANTS;
     inline void init(void) {
         memset(&TheStructure, 0, sizeof(TheStructure));
-        TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        TheStructure.Common.DwordLength = DWORD_LENGTH_STORE_DWORD;
         TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_STORE_DATA_IMM;
         TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
     }
