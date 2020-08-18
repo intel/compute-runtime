@@ -554,7 +554,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         device, neoDevice->getBuiltIns());
     device->maxNumHwThreads = NEO::HwHelper::getMaxThreadsForVfe(neoDevice->getHardwareInfo());
 
-    const bool allocateDebugSurface = neoDevice->getDeviceInfo().debuggerActive && !isSubDevice;
+    const bool allocateDebugSurface = (device->getL0Debugger() || neoDevice->getDeviceInfo().debuggerActive) && !isSubDevice;
     NEO::GraphicsAllocation *debugSurface = nullptr;
 
     if (allocateDebugSurface) {

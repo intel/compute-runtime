@@ -31,8 +31,8 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
              const ze_command_queue_desc_t *desc);
     ~WhiteBox() override;
 };
-
 using CommandQueue = WhiteBox<::L0::CommandQueue>;
+
 static ze_command_queue_desc_t default_cmd_queue_desc = {};
 template <>
 struct Mock<CommandQueue> : public CommandQueue {
@@ -84,7 +84,14 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
         synchronizedCalled++;
         return ZE_RESULT_SUCCESS;
     }
+
+    void submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr) override {
+        residencyContainerSnapshot = residencyContainer;
+        BaseClass::submitBatchBuffer(offset, residencyContainer, endingCmdPtr);
+    }
+
     uint32_t synchronizedCalled = 0;
+    NEO::ResidencyContainer residencyContainerSnapshot;
 };
 
 } // namespace ult

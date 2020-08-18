@@ -53,6 +53,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     }
 
     void captureStateBaseAddress(NEO::CommandContainer &container) override;
+    void printTrackedAddresses(uint32_t contextId);
 
     virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) const = 0;
     virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, uint64_t generalStateGpuVa, uint64_t surfaceStateGpuVa) const = 0;

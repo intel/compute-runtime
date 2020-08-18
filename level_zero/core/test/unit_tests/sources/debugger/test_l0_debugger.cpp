@@ -288,6 +288,100 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledAndRequiredGsbaWhenCommandListIsE
     commandQueue->destroy();
 }
 
+HWTEST_F(L0DebuggerTest, givenDebuggingEnabledAndPrintDebugMessagesWhenCommandQueueIsSynchronizedThenSbaAddressesArePrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+
+    testing::internal::CaptureStdout();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false));
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+
+    ze_command_list_handle_t commandLists[] = {
+        CommandList::create(productFamily, device, false)->toHandle()};
+    const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandQueue->synchronize(0);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    size_t pos = output.find("Debugger: SBA stored ssh");
+    EXPECT_NE(std::string::npos, pos);
+
+    pos = output.find("Debugger: SBA ssh");
+    EXPECT_NE(std::string::npos, pos);
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->destroy();
+
+    commandQueue->destroy();
+}
+
+using L0DebuggerSimpleTest = Test<DeviceFixture>;
+
+HWTEST_F(L0DebuggerSimpleTest, givenNullL0DebuggerAndPrintDebugMessagesWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+
+    EXPECT_EQ(nullptr, device->getL0Debugger());
+    testing::internal::CaptureStdout();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false));
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+
+    ze_command_list_handle_t commandLists[] = {
+        CommandList::create(productFamily, device, false)->toHandle()};
+    const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandQueue->synchronize(0);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    size_t pos = output.find("Debugger: SBA");
+    EXPECT_EQ(std::string::npos, pos);
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->destroy();
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(L0DebuggerTest, givenL0DebuggerAndPrintDebugMessagesSetToFalseWhenCommandQueueIsSynchronizedThenSbaAddressesAreNotPrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.PrintDebugMessages.set(0);
+
+    EXPECT_NE(nullptr, device->getL0Debugger());
+    testing::internal::CaptureStdout();
+
+    ze_command_queue_desc_t queueDesc = {};
+    auto commandQueue = whitebox_cast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false));
+    ASSERT_NE(nullptr, commandQueue->commandStream);
+
+    ze_command_list_handle_t commandLists[] = {
+        CommandList::create(productFamily, device, false)->toHandle()};
+    const uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    commandQueue->synchronize(0);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    size_t pos = output.find("Debugger: SBA");
+    EXPECT_EQ(std::string::npos, pos);
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->destroy();
+
+    commandQueue->destroy();
+}
+
 HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititalizedOrResetThenSSHAddressIsTracked, NotGen8Or11) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
@@ -345,7 +439,39 @@ HWTEST_F(L0DebuggerTest, givenDebuggerWhenAppendingKernelToCommandListThenBindle
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT, debugSurfaceState->getCoherencyType());
 }
 
-using L0DebuggerSimpleTest = Test<DeviceFixture>;
+using IsSklOrAbove = IsAtLeastProduct<IGFX_SKYLAKE>;
+HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenSbaBufferIsPushedToResidencyContainer, IsSklOrAbove) {
+    ze_command_queue_desc_t queueDesc = {};
+
+    struct Deleter {
+        void operator()(CommandQueueImp *cmdQ) {
+            cmdQ->destroy();
+        }
+    };
+
+    std::unique_ptr<MockCommandQueueHw<gfxCoreFamily>, Deleter> commandQueue(new MockCommandQueueHw<gfxCoreFamily>(device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc));
+    commandQueue->initialize(false);
+
+    ze_command_list_handle_t commandLists[] = {
+        CommandList::create(productFamily, device, false)->toHandle()};
+    uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
+
+    auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto sbaBuffer = device->getL0Debugger()->getSbaTrackingBuffer(neoDevice->getDefaultEngine().commandStreamReceiver->getOsContext().getContextId());
+    bool sbaFound = false;
+
+    for (auto iter : commandQueue->residencyContainerSnapshot) {
+        if (iter == sbaBuffer) {
+            sbaFound = true;
+        }
+    }
+    EXPECT_TRUE(sbaFound);
+
+    auto commandList = CommandList::fromHandle(commandLists[0]);
+    commandList->destroy();
+}
 
 HWTEST_F(L0DebuggerSimpleTest, givenNonZeroGpuVasWhenProgrammingSbaTrackingThenCorrectCmdsAreAddedToStream) {
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;

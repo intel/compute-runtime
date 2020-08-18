@@ -83,6 +83,10 @@ ze_result_t CommandQueueImp::synchronizeByPollingForTaskCount(uint64_t timeout) 
 
     printFunctionsPrintfOutput();
 
+    if (device->getL0Debugger() && NEO::DebugManager.flags.PrintDebugMessages.get()) {
+        device->getL0Debugger()->printTrackedAddresses(csr->getOsContext().getContextId());
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

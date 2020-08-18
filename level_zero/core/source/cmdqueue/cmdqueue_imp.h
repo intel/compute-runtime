@@ -81,7 +81,7 @@ struct CommandQueueImp : public CommandQueue {
     virtual void dispatchTaskCountWrite(NEO::LinearStream &commandStream, bool flushDataCache) = 0;
 
   protected:
-    void submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr);
+    MOCKABLE_VIRTUAL void submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr);
 
     ze_result_t synchronizeByPollingForTaskCount(uint64_t timeout);
 

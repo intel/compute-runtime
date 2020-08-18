@@ -8,6 +8,7 @@
 #include "level_zero/core/source/debugger/debugger_l0.h"
 
 #include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -45,6 +46,14 @@ DebuggerL0::DebuggerL0(NEO::Device *device) : device(device) {
 
         perContextSbaAllocations[engine.osContext->getContextId()] = sbaAllocation;
     }
+}
+
+void DebuggerL0::printTrackedAddresses(uint32_t contextId) {
+    auto memory = perContextSbaAllocations[contextId]->getUnderlyingBuffer();
+    auto sba = reinterpret_cast<SbaTrackedAddresses *>(memory);
+
+    NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+                          "Debugger: SBA ssh = %" SCNx64 " gsba = %" SCNx64 " \n", sba->SurfaceStateBaseAddress, sba->GeneralStateBaseAddress);
 }
 
 DebuggerL0 ::~DebuggerL0() {

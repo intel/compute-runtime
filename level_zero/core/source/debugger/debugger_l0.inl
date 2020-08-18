@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 
 #include "level_zero/core/source/debugger/debugger_l0.h"
@@ -24,10 +25,14 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(NEO::LinearStream &cmdS
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
     auto gpuAddress = NEO::GmmHelper::decanonize(sbaTrackingGpuVa.address);
 
+    NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+                          "Debugger: SBA stored ssh = %" SCNx64 " gsba = %" SCNx64 " \n", surfaceStateGpuVa, generalStateGpuVa);
+
     if (generalStateGpuVa) {
         MI_STORE_DATA_IMM storeDataImmediate = GfxFamily::cmdInitStoreDataImm;
         storeDataImmediate.setAddress(gpuAddress + offsetof(SbaTrackedAddresses, GeneralStateBaseAddress));
         storeDataImmediate.setStoreQword(true);
+        storeDataImmediate.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_QWORD);
         storeDataImmediate.setDataDword0(static_cast<uint32_t>(generalStateGpuVa & 0x0000FFFFFFFFULL));
         storeDataImmediate.setDataDword1(static_cast<uint32_t>(generalStateGpuVa >> 32));
 
@@ -39,6 +44,7 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(NEO::LinearStream &cmdS
         MI_STORE_DATA_IMM storeDataImmediate = GfxFamily::cmdInitStoreDataImm;
         storeDataImmediate.setAddress(gpuAddress + offsetof(SbaTrackedAddresses, SurfaceStateBaseAddress));
         storeDataImmediate.setStoreQword(true);
+        storeDataImmediate.setDwordLength(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_QWORD);
         storeDataImmediate.setDataDword0(static_cast<uint32_t>(surfaceStateGpuVa & 0x0000FFFFFFFFULL));
         storeDataImmediate.setDataDword1(static_cast<uint32_t>(surfaceStateGpuVa >> 32));
 

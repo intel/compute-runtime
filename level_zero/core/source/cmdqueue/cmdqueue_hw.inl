@@ -198,6 +198,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     csr->programHardwareContext(child);
 
+    if (device->getL0Debugger()) {
+        residencyContainer.push_back(device->getL0Debugger()->getSbaTrackingBuffer(csr->getOsContext().getContextId()));
+    }
+
     if (!isCopyOnlyCommandQueue) {
         if (!gpgpuEnabled) {
             programPipelineSelect(child);
