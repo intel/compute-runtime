@@ -20,12 +20,13 @@ struct RingSemaphoreData {
     uint32_t QueueWorkCount;
     uint8_t ReservedCacheline[60];
     uint32_t tagAllocation;
-    uint32_t Reserved2Uint32;
-    uint32_t Reserved3Uint32;
-    uint32_t Reserved4Uint32;
-    uint64_t Reserved1Uint64;
-    uint64_t Reserved2Uint64;
+    uint8_t ReservedCacheline2[60];
+    uint32_t DiagnosticModeCounter;
+    uint32_t Reserved0Uint32;
+    uint64_t Reserved0Uint64;
+    uint8_t ReservedCacheline3[48];
 };
+static_assert((64u * 3) == sizeof(RingSemaphoreData), "Invalid size for RingSemaphoreData");
 #pragma pack()
 
 using DirectSubmissionAllocations = StackVec<GraphicsAllocation *, 8>;

@@ -5206,8 +5206,7 @@ typedef struct tagMI_STORE_DATA_IMM {
             uint32_t CommandType : BITFIELD_RANGE(29, 31);
             uint64_t CoreModeEnable : BITFIELD_RANGE(0, 0);
             uint64_t Reserved_33 : BITFIELD_RANGE(1, 1);
-            uint64_t Address_Graphicsaddress39_2 : BITFIELD_RANGE(2, 39);
-            uint64_t Address_Reserved : BITFIELD_RANGE(40, 63);
+            uint64_t Address : BITFIELD_RANGE(2, 63);
             uint32_t DataDword0;
             uint32_t DataDword1;
         } Common;
@@ -5262,25 +5261,15 @@ typedef struct tagMI_STORE_DATA_IMM {
     inline uint64_t getCoreModeEnable(void) const {
         return (TheStructure.Common.CoreModeEnable);
     }
-    typedef enum tagADDRESS_GRAPHICSADDRESS39_2 {
-        ADDRESS_GRAPHICSADDRESS39_2_BIT_SHIFT = 0x2,
-        ADDRESS_GRAPHICSADDRESS39_2_ALIGN_SIZE = 0x4,
-    } ADDRESS_GRAPHICSADDRESS39_2;
+    typedef enum tagADDRESS {
+        ADDRESS_BIT_SHIFT = 0x2,
+        ADDRESS_ALIGN_SIZE = 0x4,
+    } ADDRESS;
     inline void setAddress(const uint64_t value) {
-        TheStructure.Common.Address_Graphicsaddress39_2 = value >> ADDRESS_GRAPHICSADDRESS39_2_BIT_SHIFT;
+        TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
     }
     inline uint64_t getAddress(void) const {
-        return (TheStructure.Common.Address_Graphicsaddress39_2 << ADDRESS_GRAPHICSADDRESS39_2_BIT_SHIFT);
-    }
-    typedef enum tagADDRESS_RESERVED {
-        ADDRESS_RESERVED_BIT_SHIFT = 0x2,
-        ADDRESS_RESERVED_ALIGN_SIZE = 0x4,
-    } ADDRESS_RESERVED;
-    inline void setAddressReserved(const uint64_t value) {
-        TheStructure.Common.Address_Reserved = value >> ADDRESS_RESERVED_BIT_SHIFT;
-    }
-    inline uint64_t getAddressReserved(void) const {
-        return (TheStructure.Common.Address_Reserved << ADDRESS_RESERVED_BIT_SHIFT);
+        return (TheStructure.Common.Address << ADDRESS_BIT_SHIFT);
     }
     inline void setDataDword0(const uint32_t value) {
         TheStructure.Common.DataDword0 = value;
