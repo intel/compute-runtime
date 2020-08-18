@@ -52,7 +52,8 @@ GraphicsAllocation *WddmMemoryManager::allocateShareableMemory(const AllocationD
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), allocationData.hostPtr, allocationData.size, false);
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
-                                                       allocationData.type, nullptr, allocationData.size, nullptr, MemoryPool::SystemCpuInaccessible, allocationData.flags.shareable);
+                                                       allocationData.type, nullptr, allocationData.size, nullptr,
+                                                       MemoryPool::SystemCpuInaccessible, allocationData.flags.shareable, maxOsContextCount);
     allocation->setDefaultGmm(gmm.get());
     if (!createWddmAllocation(allocation.get(), nullptr)) {
         return nullptr;
@@ -72,8 +73,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImageImpl(const 
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, allocationData.imgInfo->size,
                                                        nullptr, MemoryPool::SystemCpuInaccessible,
-                                                       0u //shareable
-    );
+                                                       0u, // shareable
+                                                       maxOsContextCount);
     allocation->setDefaultGmm(gmm.get());
     if (!createWddmAllocation(allocation.get(), nullptr)) {
         return nullptr;
@@ -94,8 +95,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const Allocati
                                                            1u, // numGmms
                                                            allocationData.type, nullptr,
                                                            sizeAligned, nullptr, MemoryPool::System64KBPages,
-                                                           0u // shareable
-    );
+                                                           0u, // shareable
+                                                           maxOsContextCount);
 
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), nullptr, sizeAligned, false, allocationData.flags.preferRenderCompressed, true, {});
     wddmAllocation->setDefaultGmm(gmm);
@@ -140,8 +141,8 @@ GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const Allocati
     auto wddmAllocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex, numGmms,
                                                            allocationData.type, hostPtr, allocationData.size,
                                                            nullptr, memoryPool,
-                                                           0u // shareable
-    );
+                                                           0u, // shareable
+                                                           maxOsContextCount);
 
     if (allocationData.hostPtr) {
         wddmAllocation->setAllocationOffset(ptrDiff(hostPtr, alignedPtr));
@@ -186,8 +187,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithAlignment(const
                                                            1u, // numGmms
                                                            allocationData.type, pSysMem, sizeAligned,
                                                            nullptr, MemoryPool::System4KBPages,
-                                                           0u // shareable
-    );
+                                                           0u, // shareable
+                                                           maxOsContextCount);
     wddmAllocation->setDriverAllocatedCpuPtr(pSysMem);
 
     gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), pSysMem, sizeAligned, allocationData.flags.uncacheable);
@@ -226,8 +227,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
                                                            1u, // numGmms
                                                            allocationData.type, const_cast<void *>(allocationData.hostPtr),
                                                            allocationData.size, nullptr, MemoryPool::System4KBPages,
-                                                           0u // shareable
-    );
+                                                           0u, // shareable
+                                                           maxOsContextCount);
 
     auto alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
@@ -265,8 +266,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithHostPtr(const A
                                              1u, // numGmms
                                              allocationData.type, const_cast<void *>(inputPtr), allocationData.size,
                                              reserve, MemoryPool::System4KBPages,
-                                             0u // shareable
-        );
+                                             0u, // shareable
+                                             maxOsContextCount);
         allocation->setAllocationOffset(offset);
 
         Gmm *gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), ptrAligned, sizeAligned, false);
@@ -304,8 +305,8 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
                                                            1u, // numGmms
                                                            allocationData.type, const_cast<void *>(ptrAligned), sizeAligned, nullptr,
                                                            MemoryPool::System4KBPagesWith32BitGpuAddressing,
-                                                           0u // shareable
-    );
+                                                           0u, // shareable
+                                                           maxOsContextCount);
     wddmAllocation->setDriverAllocatedCpuPtr(pSysMem);
     wddmAllocation->set32BitAllocation(true);
     wddmAllocation->setAllocationOffset(offset);
@@ -333,7 +334,7 @@ bool WddmMemoryManager::verifyHandle(osHandle handle, uint32_t rootDeviceIndex, 
 }
 
 GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle, GraphicsAllocation::AllocationType allocationType, uint32_t rootDeviceIndex) {
-    auto allocation = std::make_unique<WddmAllocation>(rootDeviceIndex, allocationType, nullptr, 0, handle, MemoryPool::SystemCpuInaccessible);
+    auto allocation = std::make_unique<WddmAllocation>(rootDeviceIndex, allocationType, nullptr, 0, handle, MemoryPool::SystemCpuInaccessible, maxOsContextCount);
 
     bool status = ntHandle ? getWddm(rootDeviceIndex).openNTHandle(reinterpret_cast<HANDLE>(static_cast<uintptr_t>(handle)), allocation.get())
                            : getWddm(rootDeviceIndex).openSharedHandle(handle, allocation.get());
@@ -591,8 +592,8 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage 
                                          1u, // numGmms
                                          allocationData.type, const_cast<void *>(allocationData.hostPtr),
                                          allocationData.size, nullptr, MemoryPool::System4KBPages,
-                                         0u //shareable
-    );
+                                         0u, // shareable
+                                         maxOsContextCount);
     allocation->fragmentsStorage = handleStorage;
     obtainGpuAddressFromFragments(allocation, handleStorage);
     return allocation;

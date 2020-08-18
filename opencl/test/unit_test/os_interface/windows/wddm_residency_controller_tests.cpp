@@ -680,9 +680,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsNotZeroWhenTrimm
 }
 
 TEST_F(WddmResidencyControllerWithGdiTest, GivenNumBytesToTrimIsZeroWhenTrimmingToBudgetThenEvictingStops) {
-    WddmAllocation allocation1(0, GraphicsAllocation::AllocationType::UNKNOWN, reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull, 0u);
-    WddmAllocation allocation2(0, GraphicsAllocation::AllocationType::UNKNOWN, reinterpret_cast<void *>(0x1000), 0x3000, nullptr, MemoryPool::MemoryNull, 0u);
-    WddmAllocation allocation3(0, GraphicsAllocation::AllocationType::UNKNOWN, reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull, 0u);
+    WddmAllocation allocation1(0, GraphicsAllocation::AllocationType::UNKNOWN, reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    WddmAllocation allocation2(0, GraphicsAllocation::AllocationType::UNKNOWN, reinterpret_cast<void *>(0x1000), 0x3000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    WddmAllocation allocation3(0, GraphicsAllocation::AllocationType::UNKNOWN, reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
 
     allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
@@ -775,8 +775,8 @@ TEST_F(WddmResidencyControllerWithGdiTest, GivenLastFenceIsGreaterThanMonitoredW
 TEST_F(WddmResidencyControllerWithGdiAndMemoryManagerTest, WhenTrimmingToBudgetThenOnlyDoneFragmentsAreEvicted) {
     gdi->setNonZeroNumBytesToTrimInEvict();
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
-    WddmAllocation allocation1(0, GraphicsAllocation::AllocationType::UNKNOWN, ptr, 0x1000, nullptr, MemoryPool::MemoryNull, 0u);
-    WddmAllocation allocation2(0, GraphicsAllocation::AllocationType::UNKNOWN, ptr, 0x1000, nullptr, MemoryPool::MemoryNull, 0u);
+    WddmAllocation allocation1(0, GraphicsAllocation::AllocationType::UNKNOWN, ptr, 0x1000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    WddmAllocation allocation2(0, GraphicsAllocation::AllocationType::UNKNOWN, ptr, 0x1000, nullptr, MemoryPool::MemoryNull, 0u, 1u);
 
     allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
@@ -834,9 +834,9 @@ TEST_F(WddmResidencyControllerWithGdiTest, givenThreeAllocationsAlignedSizeBigge
     void *ptr2 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x3000);
     void *ptr3 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x5000);
 
-    WddmAllocation allocation1(0, GraphicsAllocation::AllocationType::UNKNOWN, ptr1, underlyingSize, nullptr, MemoryPool::MemoryNull, 0u);
-    WddmAllocation allocation2(0, GraphicsAllocation::AllocationType::UNKNOWN, ptr2, underlyingSize, nullptr, MemoryPool::MemoryNull, 0u);
-    WddmAllocation allocation3(0, GraphicsAllocation::AllocationType::UNKNOWN, ptr3, underlyingSize, nullptr, MemoryPool::MemoryNull, 0u);
+    WddmAllocation allocation1(0, GraphicsAllocation::AllocationType::UNKNOWN, ptr1, underlyingSize, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    WddmAllocation allocation2(0, GraphicsAllocation::AllocationType::UNKNOWN, ptr2, underlyingSize, nullptr, MemoryPool::MemoryNull, 0u, 1u);
+    WddmAllocation allocation3(0, GraphicsAllocation::AllocationType::UNKNOWN, ptr3, underlyingSize, nullptr, MemoryPool::MemoryNull, 0u, 1u);
 
     allocation1.getResidencyData().resident[osContextId] = true;
     allocation1.getResidencyData().updateCompletionData(0, osContextId);
@@ -1036,7 +1036,7 @@ TEST_F(WddmResidencyControllerWithMockWddmTest, givenMakeResidentFailsAndTrimToB
     MockWddmAllocation allocation1;
     void *cpuPtr = reinterpret_cast<void *>(wddm->getWddmMinAddress() + 0x1000);
     size_t allocationSize = 0x1000;
-    WddmAllocation allocationToTrim(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuPtr, allocationSize, nullptr, MemoryPool::MemoryNull, 0u);
+    WddmAllocation allocationToTrim(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuPtr, allocationSize, nullptr, MemoryPool::MemoryNull, 0u, 1u);
 
     allocationToTrim.getResidencyData().updateCompletionData(residencyController->getMonitoredFence().lastSubmittedFence, osContext->getContextId());
 
