@@ -1464,7 +1464,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     auto dstptrAllocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(ze_kernel_timestamp_result_t) * numEvents);
     commandContainer.addToResidencyContainer(dstptrAllocationStruct.alloc);
 
-    uint64_t *timestampsAddress = new uint64_t[numEvents];
+    std::unique_ptr<uint64_t[]> timestampsAddress = std::make_unique<uint64_t[]>(numEvents);
 
     for (uint32_t i = 0u; i < numEvents; ++i) {
         auto event = Event::fromHandle(phEvents[i]);
@@ -1488,7 +1488,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     commandContainer.addToResidencyContainer(timestampsGPUAddress);
     commandContainer.getDeallocationContainer().push_back(timestampsGPUAddress);
 
-    bool result = device->getDriverHandle()->getMemoryManager()->copyMemoryToAllocation(timestampsGPUAddress, timestampsAddress, sizeof(uint64_t) * numEvents);
+    bool result = device->getDriverHandle()->getMemoryManager()->copyMemoryToAllocation(timestampsGPUAddress, timestampsAddress.get(), sizeof(uint64_t) * numEvents);
 
     UNRECOVERABLE_IF(!result);
 
@@ -1507,8 +1507,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
         offsetValPtr += sizeof(size_t);
     }
 
-    ze_group_count_t dispatchFuncArgs{1, 1, 1};
-    builtinFunction->setGroupSize(numEvents, 1, 1);
+    uint32_t groupSizeX = 1u;
+    uint32_t groupSizeY = 1u;
+    uint32_t groupSizeZ = 1u;
+
+    if (builtinFunction->suggestGroupSize(numEvents, 1u, 1u,
+                                          &groupSizeX, &groupSizeY, &groupSizeZ) != ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(true);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    if (builtinFunction->setGroupSize(groupSizeX, groupSizeY, groupSizeZ) != ZE_RESULT_SUCCESS) {
+        DEBUG_BREAK_IF(true);
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    ze_group_count_t dispatchFuncArgs{numEvents / groupSizeX, 1u, 1u};
 
     auto dstValPtr = static_cast<uintptr_t>(dstptrAllocationStruct.alloc->getGpuAddress());
 
@@ -1518,15 +1532,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     auto appendResult = appendLaunchKernel(builtinFunction->toHandle(), &dispatchFuncArgs, hSignalEvent, numWaitEvents,
                                            phWaitEvents);
     if (appendResult != ZE_RESULT_SUCCESS) {
-        delete[] timestampsAddress;
         return appendResult;
     }
 
     if (hSignalEvent) {
         CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent);
     }
-
-    delete[] timestampsAddress;
 
     return ZE_RESULT_SUCCESS;
 }

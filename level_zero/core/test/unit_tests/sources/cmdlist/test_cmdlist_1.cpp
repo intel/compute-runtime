@@ -12,7 +12,9 @@
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
+#include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
+#include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
@@ -490,6 +492,208 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 
     driverHandle->freeMem(alloc);
     driverHandle->freeMem(offsetAlloc);
+}
+
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithEventsNumberBiggerThanMaxWorkItemSizeThenProperGroupSizeAndGroupCountIsSet, TestPlatforms) {
+    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+    commandList.initialize(device, false);
+
+    device->getBuiltinFunctionsLib()->initFunctions();
+    MockEvent event;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *alloc;
+    auto result = driverHandle->allocDeviceMem(device, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &alloc);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    size_t eventCount = device->getNEODevice()->getDeviceInfo().maxWorkItemSizes[0] * 2u;
+    std::unique_ptr<ze_event_handle_t[]> events = std::make_unique<ze_event_handle_t[]>(eventCount);
+
+    for (size_t i = 0u; i < eventCount; ++i) {
+        events[i] = event.toHandle();
+    }
+
+    result = commandList.appendQueryKernelTimestamps(static_cast<uint32_t>(eventCount), events.get(), alloc, nullptr, nullptr, 0u, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestamps)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
+
+    uint32_t groupSizeX = static_cast<uint32_t>(eventCount);
+    uint32_t groupSizeY = 1u;
+    uint32_t groupSizeZ = 1u;
+
+    device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestamps)->suggestGroupSize(groupSizeX, groupSizeY, groupSizeZ, &groupSizeX, &groupSizeY, &groupSizeZ);
+
+    EXPECT_EQ(groupSizeX, commandList.cmdListHelper.groupSize[0]);
+    EXPECT_EQ(groupSizeY, commandList.cmdListHelper.groupSize[1]);
+    EXPECT_EQ(groupSizeZ, commandList.cmdListHelper.groupSize[2]);
+
+    EXPECT_EQ(static_cast<uint32_t>(eventCount) / groupSizeX, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
+    EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
+    EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountZ);
+
+    driverHandle->freeMem(alloc);
+}
+
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsAndInvalidResultSuggestGroupSizeThanUnknownResultReturned, TestPlatforms) {
+    class MockQueryKernelTimestampsKernel : public L0::KernelImp {
+      public:
+        ze_result_t suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
+                                     uint32_t globalSizeZ, uint32_t *groupSizeX,
+                                     uint32_t *groupSizeY, uint32_t *groupSizeZ) override {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
+            return;
+        }
+        void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
+            return;
+        }
+        std::unique_ptr<Kernel> clone() const override { return nullptr; }
+    };
+    struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
+
+        using BuiltinFunctionsLibImpl::builtins;
+        using BuiltinFunctionsLibImpl::getFunction;
+        using BuiltinFunctionsLibImpl::imageBuiltins;
+        MockBuiltinFunctionsLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {}
+    };
+    struct MockBuiltinFunctionsForQueryKernelTimestamps : BuiltinFunctionsLibImpl {
+        MockBuiltinFunctionsForQueryKernelTimestamps(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
+            tmpMockKernel = new MockQueryKernelTimestampsKernel;
+        }
+        MockQueryKernelTimestampsKernel *getFunction(Builtin func) override {
+            return tmpMockKernel;
+        }
+        ~MockBuiltinFunctionsForQueryKernelTimestamps() override {
+            delete tmpMockKernel;
+        }
+        MockQueryKernelTimestampsKernel *tmpMockKernel = nullptr;
+    };
+    class MockDeviceHandle : public L0::DeviceImp {
+      public:
+        MockDeviceHandle() {
+        }
+        void initialize(L0::Device *device) {
+            neoDevice = device->getNEODevice();
+            neoDevice->incRefInternal();
+            execEnvironment = device->getExecEnvironment();
+            driverHandle = device->getDriverHandle();
+            tmpMockBultinLib = new MockBuiltinFunctionsForQueryKernelTimestamps{nullptr, nullptr};
+        }
+        MockBuiltinFunctionsForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
+            return tmpMockBultinLib;
+        }
+        ~MockDeviceHandle() override {
+            delete tmpMockBultinLib;
+        }
+        MockBuiltinFunctionsForQueryKernelTimestamps *tmpMockBultinLib = nullptr;
+    };
+
+    MockDeviceHandle mockDevice;
+    mockDevice.initialize(device);
+
+    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+
+    commandList.initialize(&mockDevice, false);
+
+    MockEvent event;
+    ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *alloc;
+    auto result = driverHandle->allocDeviceMem(&mockDevice, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &alloc);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    driverHandle->freeMem(alloc);
+}
+
+HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsAndInvalidResultSetGroupSizeThanUnknownResultReturned, TestPlatforms) {
+    class MockQueryKernelTimestampsKernel : public L0::KernelImp {
+      public:
+        ze_result_t suggestGroupSize(uint32_t globalSizeX, uint32_t globalSizeY,
+                                     uint32_t globalSizeZ, uint32_t *groupSizeX,
+                                     uint32_t *groupSizeY, uint32_t *groupSizeZ) override {
+            *groupSizeX = static_cast<uint32_t>(1u);
+            *groupSizeY = static_cast<uint32_t>(1u);
+            *groupSizeZ = static_cast<uint32_t>(1u);
+            return ZE_RESULT_SUCCESS;
+        }
+        ze_result_t setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
+                                 uint32_t groupSizeZ) override {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
+            return;
+        }
+        void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {
+            return;
+        }
+        std::unique_ptr<Kernel> clone() const override { return nullptr; }
+    };
+    struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
+
+        using BuiltinFunctionsLibImpl::builtins;
+        using BuiltinFunctionsLibImpl::getFunction;
+        using BuiltinFunctionsLibImpl::imageBuiltins;
+        MockBuiltinFunctionsLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {}
+    };
+    struct MockBuiltinFunctionsForQueryKernelTimestamps : BuiltinFunctionsLibImpl {
+        MockBuiltinFunctionsForQueryKernelTimestamps(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
+            tmpMockKernel = new MockQueryKernelTimestampsKernel;
+        }
+        MockQueryKernelTimestampsKernel *getFunction(Builtin func) override {
+            return tmpMockKernel;
+        }
+        ~MockBuiltinFunctionsForQueryKernelTimestamps() override {
+            delete tmpMockKernel;
+        }
+        MockQueryKernelTimestampsKernel *tmpMockKernel = nullptr;
+    };
+    class MockDeviceHandle : public L0::DeviceImp {
+      public:
+        MockDeviceHandle() {
+        }
+        void initialize(L0::Device *device) {
+            neoDevice = device->getNEODevice();
+            neoDevice->incRefInternal();
+            execEnvironment = device->getExecEnvironment();
+            driverHandle = device->getDriverHandle();
+            tmpMockBultinLib = new MockBuiltinFunctionsForQueryKernelTimestamps{nullptr, nullptr};
+        }
+        MockBuiltinFunctionsForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
+            return tmpMockBultinLib;
+        }
+        ~MockDeviceHandle() override {
+            delete tmpMockBultinLib;
+        }
+        MockBuiltinFunctionsForQueryKernelTimestamps *tmpMockBultinLib = nullptr;
+    };
+
+    MockDeviceHandle mockDevice;
+    mockDevice.initialize(device);
+
+    MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
+
+    commandList.initialize(&mockDevice, false);
+
+    MockEvent event;
+    ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    void *alloc;
+    auto result = driverHandle->allocDeviceMem(&mockDevice, ZE_DEVICE_MEM_ALLOC_FLAG_FORCE_UINT32, 128, 1, &alloc);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    result = commandList.appendQueryKernelTimestamps(2u, events, alloc, nullptr, nullptr, 0u, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    driverHandle->freeMem(alloc);
 }
 
 HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendSignalEventThenMiFlushDWIsProgrammed) {
