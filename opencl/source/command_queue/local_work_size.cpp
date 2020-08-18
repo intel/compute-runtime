@@ -173,8 +173,8 @@ void choosePreferredWorkGroupSizeWithRatio(uint32_t xyzFactors[3][1024], uint32_
     }
 }
 void choosePreferredWorkGroupSizeWithOutRatio(uint32_t xyzFactors[3][1024], uint32_t xyzFactorsLen[3], size_t workGroupSize[3], const size_t workItems[3], WorkSizeInfo wsInfo, uint32_t workdim) {
-    ulong localEuThrdsDispatched = 0xffffffff;
-    ulong workGroups;
+    uint64_t localEuThrdsDispatched = 0xffffffffffffffff;
+    uint64_t workGroups;
     for (uint32_t ZFactorsIdx = 0; ZFactorsIdx < xyzFactorsLen[2]; ++ZFactorsIdx) {
         for (uint32_t XFactorsIdx = 0; XFactorsIdx < xyzFactorsLen[0]; ++XFactorsIdx) {
             for (uint32_t YFactorsIdx = 0; YFactorsIdx < xyzFactorsLen[1]; ++YFactorsIdx) {
@@ -193,7 +193,7 @@ void choosePreferredWorkGroupSizeWithOutRatio(uint32_t xyzFactors[3][1024], uint
                 workGroups = Math::divideAndRoundUp(workItems[0], Xdim);
                 workGroups *= Math::divideAndRoundUp(workItems[1], Ydim);
                 workGroups *= Math::divideAndRoundUp(workItems[2], Zdim);
-                cl_ulong euThrdsDispatched;
+                uint64_t euThrdsDispatched;
 
                 euThrdsDispatched = Math::divideAndRoundUp(Xdim * Ydim * Zdim, wsInfo.simdSize);
                 euThrdsDispatched *= workGroups;
