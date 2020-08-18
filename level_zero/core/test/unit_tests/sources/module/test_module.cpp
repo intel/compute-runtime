@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
+#include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 
 #include "opencl/source/program/kernel_info.h"
 #include "test.h"
@@ -375,6 +376,27 @@ HWTEST_F(ContextModuleCreateTest, givenCallToCreateModuleThenModuleIsReturned) {
     L0::Module *pModule = L0::Module::fromHandle(hModule);
     res = pModule->destroy();
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+using ModuleTranslationUnitTest = Test<DeviceFixture>;
+
+HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequiredTargetProductProperly) {
+    ZebinTestData::ValidEmptyProgram emptyProgram;
+
+    auto copyHwInfo = device->getNEODevice()->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(copyHwInfo.platform.eRenderCoreFamily);
+    hwHelper.adjustPlatformCoreFamilyForIgc(copyHwInfo);
+
+    emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
+    L0::ModuleTranslationUnit moduleTuValid(this->device);
+    bool success = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
+    EXPECT_TRUE(success);
+
+    emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
+    ++emptyProgram.elfHeader->machine;
+    L0::ModuleTranslationUnit moduleTuInvalid(this->device);
+    success = moduleTuInvalid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
+    EXPECT_FALSE(success);
 }
 
 } // namespace ult

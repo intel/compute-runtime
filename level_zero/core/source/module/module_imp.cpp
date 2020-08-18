@@ -121,6 +121,7 @@ bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inp
     hwHelper.adjustPlatformCoreFamilyForIgc(copyHwInfo);
 
     targetDevice.coreFamily = copyHwInfo.platform.eRenderCoreFamily;
+    targetDevice.productFamily = copyHwInfo.platform.eProductFamily;
     targetDevice.stepping = copyHwInfo.platform.usRevId;
     targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
     std::string decodeErrors;
