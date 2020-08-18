@@ -132,8 +132,8 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
     cl_mem clAssociatedMemObject = static_cast<cl_mem>(this->associatedMemObject);
     cl_context ctx = nullptr;
     uint64_t internalHandle = 0llu;
-    auto allocation = getGraphicsAllocation(0);
-    cl_bool usesCompression = allocation && allocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
+    auto allocation = getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
+    cl_bool usesCompression = allocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
 
     switch (paramName) {
     case CL_MEM_TYPE:

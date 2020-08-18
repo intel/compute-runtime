@@ -327,7 +327,7 @@ TEST_F(GetMemObjectInfo, GivenMemReferenceCountWhenGettingMemObjectInfoThenCorre
 
 TEST_F(GetMemObjectInfo, GivenValidBufferWhenGettingCompressionOfMemObjectThenCorrectValueIsReturned) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
-    auto graphicsAllocation = buffer->getGraphicsAllocation(0);
+    auto graphicsAllocation = buffer->getMultiGraphicsAllocation().getDefaultGraphicsAllocation();
 
     size_t sizeReturned = 0;
     cl_bool usesCompression{};
