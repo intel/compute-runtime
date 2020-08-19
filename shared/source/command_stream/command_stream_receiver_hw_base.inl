@@ -775,7 +775,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
     bool enableTimeout = kmdNotifyHelper->obtainTimeoutParams(waitTimeout, useQuickKmdSleep, *getTagAddress(), taskCountToWait, flushStampToWait, forcePowerSavingMode);
 
     printDebugString(DebugManager.flags.LogWaitingForCompletion.get(), stdout,
-                     "\nWaiting for task count %u at location 0x%p. Current value: %u\n",
+                     "\nWaiting for task count %u at location %p. Current value: %u\n",
                      taskCountToWait, getTagAddress(), *getTagAddress());
 
     auto status = waitForCompletionWithTimeout(enableTimeout, waitTimeout, taskCountToWait);
