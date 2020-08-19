@@ -956,7 +956,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(NEO::
                                       srcRegion->depth / groupSizeZ};
 
     uint srcOrigin[3] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY), (srcRegion->originZ)};
-    uint dstOrigin[3] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY), (srcRegion->originZ)};
+    uint dstOrigin[3] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY), (dstRegion->originZ)};
     uint srcPitches[2] = {(srcPitch), (srcSlicePitch)};
     uint dstPitches[2] = {(dstPitch), (dstSlicePitch)};
 
