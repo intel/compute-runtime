@@ -203,8 +203,12 @@ bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Ty
         out = ArgTypeT::ArgTypeLocalId;
     } else if (tokenValue == PayloadArgument::ArgType::localSize) {
         out = ArgTypeT::ArgTypeLocalSize;
-    } else if (tokenValue == PayloadArgument::ArgType::groupSize) {
-        out = ArgTypeT::ArgTypeGroupSize;
+    } else if (tokenValue == PayloadArgument::ArgType::groupCount) {
+        out = ArgTypeT::ArgTypeGroupCount;
+    } else if (tokenValue == PayloadArgument::ArgType::globalSize) {
+        out = ArgTypeT::ArgTypeGlobalSize;
+    } else if (tokenValue == PayloadArgument::ArgType::enqueuedLocalSize) {
+        out = ArgTypeT::ArgTypeEnqueuedLocalSize;
     } else if (tokenValue == PayloadArgument::ArgType::globalIdOffset) {
         out = ArgTypeT::ArgTypeGlobalIdOffset;
     } else if (tokenValue == PayloadArgument::ArgType::privateBaseStateless) {
@@ -569,13 +573,28 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
         }
         break;
     }
-    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeGroupSize: {
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeGroupCount: {
         using GroupSizeT = uint32_t;
         if (false == setVecArgIndicesBasedOnSize<GroupSizeT>(dst.payloadMappings.dispatchTraits.numWorkGroups, src.size, src.offset)) {
-            {
-                outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::groupSize.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 4 or 8 or 12. Got : " + std::to_string(src.size) + "\n");
-                return DecodeError::InvalidBinary;
-            }
+            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::groupCount.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 4 or 8 or 12. Got : " + std::to_string(src.size) + "\n");
+            return DecodeError::InvalidBinary;
+        }
+        break;
+    }
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeGlobalSize: {
+        using GroupSizeT = uint32_t;
+        if (false == setVecArgIndicesBasedOnSize<GroupSizeT>(dst.payloadMappings.dispatchTraits.globalWorkSize, src.size, src.offset)) {
+            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::globalSize.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 4 or 8 or 12. Got : " + std::to_string(src.size) + "\n");
+            return DecodeError::InvalidBinary;
+        }
+        break;
+    }
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeEnqueuedLocalSize: {
+        using GroupSizeT = uint32_t;
+        if (false == setVecArgIndicesBasedOnSize<GroupSizeT>(dst.payloadMappings.dispatchTraits.enqueuedLocalWorkSize, src.size, src.offset)) {
+            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid size for argument of type " + NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PayloadArgument::ArgType::enqueuedLocalSize.str() + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 4 or 8 or 12. Got : " + std::to_string(src.size) + "\n");
+            return DecodeError::InvalidBinary;
         }
         break;
     }

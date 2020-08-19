@@ -122,8 +122,10 @@ static constexpr ConstStringRef addrspace("addrspace");
 static constexpr ConstStringRef accessType("access_type");
 namespace ArgType {
 static constexpr ConstStringRef localSize("local_size");
-static constexpr ConstStringRef groupSize("group_size");
+static constexpr ConstStringRef groupCount("group_count");
 static constexpr ConstStringRef globalIdOffset("global_id_offset");
+static constexpr ConstStringRef globalSize("global_size");
+static constexpr ConstStringRef enqueuedLocalSize("enqueued_local_size");
 static constexpr ConstStringRef privateBaseStateless("private_base_stateless");
 static constexpr ConstStringRef argByvalue("arg_byvalue");
 static constexpr ConstStringRef argBypointer("arg_bypointer");
@@ -242,7 +244,9 @@ enum ArgType : uint8_t {
     ArgTypePackedLocalIds = 1,
     ArgTypeLocalId,
     ArgTypeLocalSize,
-    ArgTypeGroupSize,
+    ArgTypeGroupCount,
+    ArgTypeGlobalSize,
+    ArgTypeEnqueuedLocalSize,
     ArgTypeGlobalIdOffset,
     ArgTypePrivateBaseStateless,
     ArgTypeArgByvalue,

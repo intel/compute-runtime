@@ -509,15 +509,17 @@ TEST(ReadEnumCheckedArgType, GivenValidStringRepresentationThenParseItCorrectly)
     NEO::Yaml::Token tokPackedLocalIds(packedLocalIds, NEO::Yaml::Token::Token::LiteralString);
     NEO::Yaml::Token tokLocalId(localId, NEO::Yaml::Token::Token::LiteralString);
     NEO::Yaml::Token tokLocalSize(localSize, NEO::Yaml::Token::Token::LiteralString);
-    NEO::Yaml::Token tokGroupSize(groupSize, NEO::Yaml::Token::Token::LiteralString);
+    NEO::Yaml::Token tokGroupCount(groupCount, NEO::Yaml::Token::Token::LiteralString);
+    NEO::Yaml::Token tokGlobalSize(globalSize, NEO::Yaml::Token::Token::LiteralString);
+    NEO::Yaml::Token tokEnqueuedLocalSize(enqueuedLocalSize, NEO::Yaml::Token::Token::LiteralString);
     NEO::Yaml::Token tokGlobalIdOffset(globalIdOffset, NEO::Yaml::Token::Token::LiteralString);
     NEO::Yaml::Token tokPrivateBaseStateless(privateBaseStateless, NEO::Yaml::Token::Token::LiteralString);
     NEO::Yaml::Token tokArgByValue(argByvalue, NEO::Yaml::Token::Token::LiteralString);
     NEO::Yaml::Token tokArgByPointer(argBypointer, NEO::Yaml::Token::Token::LiteralString);
 
     using ArgType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgType;
-    ArgType enumPackedLocalIds, enumLocalId, enumLocalSize, enumGroupSize, enumGlobalIdOffset,
-        enumPrivateBaseStateless, enumArgByValue, enumArgByPointer;
+    ArgType enumPackedLocalIds, enumLocalId, enumLocalSize, enumGroupCount, enumGlobalSize,
+        enumEnqueuedLocalSize, enumGlobalIdOffset, enumPrivateBaseStateless, enumArgByValue, enumArgByPointer;
     std::string errors;
     bool success;
 
@@ -536,10 +538,20 @@ TEST(ReadEnumCheckedArgType, GivenValidStringRepresentationThenParseItCorrectly)
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_EQ(ArgType::ArgTypeLocalSize, enumLocalSize);
 
-    success = NEO::readEnumChecked(&tokGroupSize, enumGroupSize, "some_kernel", errors);
+    success = NEO::readEnumChecked(&tokGroupCount, enumGroupCount, "some_kernel", errors);
     EXPECT_TRUE(success);
     EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(ArgType::ArgTypeGroupSize, enumGroupSize);
+    EXPECT_EQ(ArgType::ArgTypeGroupCount, enumGroupCount);
+
+    success = NEO::readEnumChecked(&tokGlobalSize, enumGlobalSize, "some_kernel", errors);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_EQ(ArgType::ArgTypeGlobalSize, enumGlobalSize);
+
+    success = NEO::readEnumChecked(&tokEnqueuedLocalSize, enumEnqueuedLocalSize, "some_kernel", errors);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_EQ(ArgType::ArgTypeEnqueuedLocalSize, enumEnqueuedLocalSize);
 
     success = NEO::readEnumChecked(&tokGlobalIdOffset, enumGlobalIdOffset, "some_kernel", errors);
     EXPECT_TRUE(success);
@@ -2468,14 +2480,14 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobaIdOffsetWhenArgSi
     }
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGroupSizeWhenArgSizeIsInvalidThenFails) {
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGroupCountWhenArgSizeIsInvalidThenFails) {
     NEO::ConstStringRef zeinfo = R"===(
         kernels:
             - name : some_kernel
               execution_env:   
                 simd_size: 32
               payload_arguments: 
-                - arg_type : group_size
+                - arg_type : group_count
                   offset : 16
                   size : 7
 )===";
@@ -2497,11 +2509,11 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGroupSizeWhenArgSizeIs
     auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
     auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type group_size in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type group_count in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
-TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGroupSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGroupCountWhenArgSizeValidThenPopulatesKernelDescriptor) {
     uint32_t vectorSizes[] = {4, 8, 12};
 
     for (auto vectorSize : vectorSizes) {
@@ -2511,7 +2523,7 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGroupSizeWhenArgSizeVa
               execution_env:   
                 simd_size: 32
               payload_arguments: 
-                - arg_type : group_size
+                - arg_type : group_count
                   offset : 16
                   size : )===" +
                              std::to_string(vectorSize) + R"===(
@@ -2540,6 +2552,160 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGroupSizeWhenArgSizeVa
         ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
         for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
             EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.numWorkGroups[i])
+                << " vectorSize : " << vectorSize << ", idx : " << i;
+        }
+    }
+}
+
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeEnqueuedLocalSizeWhenArgSizeIsInvalidThenFails) {
+    NEO::ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:   
+                simd_size: 32
+              payload_arguments: 
+                - arg_type : enqueued_local_size
+                  offset : 16
+                  size : 7
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type enqueued_local_size in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeEnqueuedLocalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {
+    uint32_t vectorSizes[] = {4, 8, 12};
+
+    for (auto vectorSize : vectorSizes) {
+        std::string zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:   
+                simd_size: 32
+              payload_arguments: 
+                - arg_type : enqueued_local_size
+                  offset : 16
+                  size : )===" +
+                             std::to_string(vectorSize) + R"===(
+        )===";
+        NEO::ProgramInfo programInfo;
+        ZebinTestData::ValidEmptyProgram zebin;
+        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+        std::string errors, warnings;
+        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+        NEO::Yaml::YamlParser parser;
+        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+        NEO::ZebinSections zebinSections;
+        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_TRUE(errors.empty()) << errors;
+        EXPECT_TRUE(warnings.empty()) << warnings;
+        ASSERT_EQ(1U, programInfo.kernelInfos.size());
+        ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
+            EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.enqueuedLocalWorkSize[i])
+                << " vectorSize : " << vectorSize << ", idx : " << i;
+        }
+    }
+}
+
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobalSizeWhenArgSizeIsInvalidThenFails) {
+    NEO::ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:   
+                simd_size: 32
+              payload_arguments: 
+                - arg_type : global_size
+                  offset : 16
+                  size : 7
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid size for argument of type global_size in context of : some_kernel. Expected 4 or 8 or 12. Got : 7\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenArgTypeGlobalSizeWhenArgSizeValidThenPopulatesKernelDescriptor) {
+    uint32_t vectorSizes[] = {4, 8, 12};
+
+    for (auto vectorSize : vectorSizes) {
+        std::string zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:   
+                simd_size: 32
+              payload_arguments: 
+                - arg_type : global_size
+                  offset : 16
+                  size : )===" +
+                             std::to_string(vectorSize) + R"===(
+        )===";
+        NEO::ProgramInfo programInfo;
+        ZebinTestData::ValidEmptyProgram zebin;
+        zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+        std::string errors, warnings;
+        auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+        ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+        NEO::Yaml::YamlParser parser;
+        bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+        ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+        NEO::ZebinSections zebinSections;
+        auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+        ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_TRUE(errors.empty()) << errors;
+        EXPECT_TRUE(warnings.empty()) << warnings;
+        ASSERT_EQ(1U, programInfo.kernelInfos.size());
+        ASSERT_EQ(1U, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.explicitArgs.size());
+        for (uint32_t i = 0; i < vectorSize / sizeof(uint32_t); ++i) {
+            EXPECT_EQ(16 + sizeof(uint32_t) * i, programInfo.kernelInfos[0]->kernelDescriptor.payloadMappings.dispatchTraits.globalWorkSize[i])
                 << " vectorSize : " << vectorSize << ", idx : " << i;
         }
     }
