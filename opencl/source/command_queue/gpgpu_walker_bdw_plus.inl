@@ -279,4 +279,9 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     *pMICmdLow = cmd;
 }
 
+template <typename GfxFamily>
+size_t EnqueueOperation<GfxFamily>::getSizeForCacheFlushAfterWalkerCommands(const Kernel &kernel, const CommandQueue &commandQueue) {
+    return 0;
+}
+
 } // namespace NEO

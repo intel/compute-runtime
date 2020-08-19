@@ -204,6 +204,10 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
     }
 
+    if (multiDispatchInfo.peekMainKernel()) {
+        expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeForCacheFlushAfterWalkerCommands(*multiDispatchInfo.peekMainKernel(), commandQueue);
+    }
+
     if (DebugManager.flags.PauseOnEnqueue.get() != -1) {
         expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl() * 2;
         expectedSizeCS += sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT) * 2;
