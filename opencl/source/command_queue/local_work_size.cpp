@@ -245,9 +245,9 @@ void computeWorkgroupSize2D(uint32_t maxWorkGroupSize, size_t workGroupSize[3], 
     uint32_t xFactorsLen = 0;
     uint32_t yFactorsLen = 0;
     uint64_t waste;
-    uint64_t localWSWaste = 0xffffffff;
+    uint64_t localWSWaste = 0xffffffffffffffff;
     uint64_t euThrdsDispatched;
-    uint64_t localEuThrdsDispatched = 0xffffffff;
+    uint64_t localEuThrdsDispatched = 0xffffffffffffffff;
     uint64_t workGroups;
     uint32_t xDim;
     uint32_t yDim;

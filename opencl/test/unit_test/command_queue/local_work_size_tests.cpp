@@ -37,6 +37,29 @@ TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual8AndBarriersWhenComputeCal
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
+TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8AndNoBarriersWhenComputeCalledThenLocalGroupComputedCorrectly) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+
+    //wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, coreFamily, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface
+    WorkSizeInfo wsInfo(256, 0u, 8, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, false, false);
+    uint32_t workDim = 2;
+    size_t workGroup[3] = {10003, 10003, 1};
+    size_t workGroupSize[3];
+
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 7u);
+    EXPECT_EQ(workGroupSize[1], 7u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+
+    workGroup[0] = 21;
+    workGroup[1] = 3000;
+    NEO::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 21u);
+    EXPECT_EQ(workGroupSize[1], 8u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+}
+
 TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {
     //wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, coreFamily, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface
     WorkSizeInfo wsInfo(256, 0u, 8, 0u, defaultHwInfo->platform.eRenderCoreFamily, 32u, 0u, false, false);
