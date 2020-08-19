@@ -5,10 +5,10 @@
 #
 
 if(UNIX)
-    target_sources(${TARGET_NAME}
-        PRIVATE
-           ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-           ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_engine.cpp
-           ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysfs_engine.h
-    )
+  target_sources(${TARGET_NAME}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_engine.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/mock_sysfs_engine.h
+  )
 endif()

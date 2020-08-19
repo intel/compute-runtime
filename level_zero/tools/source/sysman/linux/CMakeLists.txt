@@ -10,13 +10,14 @@ set(L0_SRCS_TOOLS_SYSMAN_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/os_sysman_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fs_access.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/pmt.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/pmt.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/pmt.h
+)
 
 if(UNIX)
-target_sources(${L0_STATIC_LIB_NAME}
-    PRIVATE
-        ${L0_SRCS_TOOLS_SYSMAN_LINUX}
-)
+  target_sources(${L0_STATIC_LIB_NAME}
+                 PRIVATE
+                 ${L0_SRCS_TOOLS_SYSMAN_LINUX}
+  )
 endif()
 
 add_subdirectories()

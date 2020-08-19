@@ -5,15 +5,15 @@
 #
 
 set(RUNTIME_SRCS_SHARINGS_UNIFIED
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/enable_unified.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/unified_buffer.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/unified_buffer.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/unified_image.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/unified_image.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/unified_sharing.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/unified_sharing.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/unified_sharing_types.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/enable_unified.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_buffer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_buffer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_image.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_image.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_sharing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_sharing.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/unified_sharing_types.h
 )
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_SHARINGS_UNIFIED})

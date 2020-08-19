@@ -9,4 +9,5 @@ set(IGDRCL_SRCS_perf_tests_api
     "${CMAKE_CURRENT_SOURCE_DIR}/api_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/api_tests.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/context_tests.cpp"
-    PARENT_SCOPE)
+    PARENT_SCOPE
+)

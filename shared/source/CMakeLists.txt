@@ -12,9 +12,9 @@ include(enable_gens.cmake)
 
 function(generate_shared_lib LIB_NAME MOCKABLE)
   add_library(${LIB_NAME} STATIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/enable_gens.cmake
-    ${CORE_SOURCES}
+              ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+              ${CMAKE_CURRENT_SOURCE_DIR}/enable_gens.cmake
+              ${CORE_SOURCES}
   )
   if(${MOCKABLE})
     target_compile_definitions(${LIB_NAME} PUBLIC MOCKABLE_VIRTUAL=virtual)
@@ -29,25 +29,25 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
   target_compile_definitions(${LIB_NAME} PUBLIC ${NEO_CORE_COMPILE_DEFS})
 
   target_include_directories(${LIB_NAME} PUBLIC
-    ${KMDAF_HEADERS_DIR}
-    ${ENGINE_NODE_DIR}
-    ${NEO__GMM_INCLUDE_DIR}
-    ${CIF_BASE_DIR}
-    ${IGC_OCL_ADAPTOR_DIR}
-    ${NEO__IGC_INCLUDE_DIR}
-    ${KHRONOS_HEADERS_DIR}
-    ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
+                             ${KMDAF_HEADERS_DIR}
+                             ${ENGINE_NODE_DIR}
+                             ${NEO__GMM_INCLUDE_DIR}
+                             ${CIF_BASE_DIR}
+                             ${IGC_OCL_ADAPTOR_DIR}
+                             ${NEO__IGC_INCLUDE_DIR}
+                             ${KHRONOS_HEADERS_DIR}
+                             ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}
   )
 
   if(WIN32)
     target_include_directories(${LIB_NAME} PUBLIC
-      ${WDK_INCLUDE_PATHS}
-      ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/windows
+                               ${WDK_INCLUDE_PATHS}
+                               ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/windows
     )
   else()
     target_include_directories(${LIB_NAME} PUBLIC
-      ${I915_INCLUDES_DIR}
-      ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/linux
+                               ${I915_INCLUDES_DIR}
+                               ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/linux
     )
   endif()
 
@@ -67,60 +67,60 @@ endif()
 
 macro(macro_for_each_gen)
   append_sources_from_properties(CORE_SOURCES
-      SHARED_SRCS_ADDITIONAL_FILES_${GEN_TYPE}
+                                 SHARED_SRCS_ADDITIONAL_FILES_${GEN_TYPE}
   )
 endmacro()
 
 apply_macro_for_each_gen("SUPPORTED")
 
 append_sources_from_properties(CORE_SOURCES
-    NEO_CORE_BUILT_INS
-    NEO_CORE_COMMAND_STREAM
-    NEO_CORE_COMMANDS
-    NEO_CORE_COMMAND_CONTAINER
-    NEO_CORE_COMMAND_ENCODERS
-    NEO_CORE_DEBUG_SETTINGS
-    NEO_CORE_DEBUGGER
-    NEO_CORE_DEVICE
-    NEO_CORE_DIRECT_SUBMISSION
-    NEO_CORE_DIRECT_SUBMISSION_DISPATCHERS
-    NEO_CORE_EXECUTION_ENVIRONMENT
-    NEO_CORE_GEN_COMMON
-    NEO_CORE_GMM_HELPER
-    NEO_CORE_HELPERS
-    NEO_CORE_IMAGE
-    NEO_CORE_INDIRECT_HEAP
-    NEO_CORE_KERNEL
-    NEO_CORE_MEMORY_MANAGER
-    NEO_CORE_MEMORY_PROPERTIES
-    NEO_CORE_OS_INTERFACE
-    NEO_CORE_PAGE_FAULT_MANAGER
-    NEO_CORE_PROGRAM
-    NEO_CORE_SKU_INFO_BASE
-    NEO_CORE_SRCS_BUILT_INS
-    NEO_CORE_SRCS_BUILT_IN_KERNELS
-    NEO_CORE_SRCS_BUILT_INS_OPS
-    NEO_CORE_SRCS_SOURCE_LEVEL_DEBUGGER
-    NEO_CORE_UTILITIES
-    NEO_UNIFIED_MEMORY
+                               NEO_CORE_BUILT_INS
+                               NEO_CORE_COMMAND_STREAM
+                               NEO_CORE_COMMANDS
+                               NEO_CORE_COMMAND_CONTAINER
+                               NEO_CORE_COMMAND_ENCODERS
+                               NEO_CORE_DEBUG_SETTINGS
+                               NEO_CORE_DEBUGGER
+                               NEO_CORE_DEVICE
+                               NEO_CORE_DIRECT_SUBMISSION
+                               NEO_CORE_DIRECT_SUBMISSION_DISPATCHERS
+                               NEO_CORE_EXECUTION_ENVIRONMENT
+                               NEO_CORE_GEN_COMMON
+                               NEO_CORE_GMM_HELPER
+                               NEO_CORE_HELPERS
+                               NEO_CORE_IMAGE
+                               NEO_CORE_INDIRECT_HEAP
+                               NEO_CORE_KERNEL
+                               NEO_CORE_MEMORY_MANAGER
+                               NEO_CORE_MEMORY_PROPERTIES
+                               NEO_CORE_OS_INTERFACE
+                               NEO_CORE_PAGE_FAULT_MANAGER
+                               NEO_CORE_PROGRAM
+                               NEO_CORE_SKU_INFO_BASE
+                               NEO_CORE_SRCS_BUILT_INS
+                               NEO_CORE_SRCS_BUILT_IN_KERNELS
+                               NEO_CORE_SRCS_BUILT_INS_OPS
+                               NEO_CORE_SRCS_SOURCE_LEVEL_DEBUGGER
+                               NEO_CORE_UTILITIES
+                               NEO_UNIFIED_MEMORY
 )
 
 if(WIN32)
   append_sources_from_properties(CORE_SOURCES
-    NEO_CORE_GMM_HELPER_WINDOWS
-    NEO_CORE_DIRECT_SUBMISSION_WINDOWS
-    NEO_CORE_OS_INTERFACE_WINDOWS
-    NEO_CORE_PAGE_FAULT_MANAGER_WINDOWS
-    NEO_CORE_SKU_INFO_WINDOWS
-    NEO_CORE_SRCS_HELPERS_WINDOWS
-    NEO_CORE_UTILITIES_WINDOWS
+                                 NEO_CORE_GMM_HELPER_WINDOWS
+                                 NEO_CORE_DIRECT_SUBMISSION_WINDOWS
+                                 NEO_CORE_OS_INTERFACE_WINDOWS
+                                 NEO_CORE_PAGE_FAULT_MANAGER_WINDOWS
+                                 NEO_CORE_SKU_INFO_WINDOWS
+                                 NEO_CORE_SRCS_HELPERS_WINDOWS
+                                 NEO_CORE_UTILITIES_WINDOWS
   )
 else()
   append_sources_from_properties(CORE_SOURCES
-    NEO_CORE_DIRECT_SUBMISSION_LINUX
-    NEO_CORE_OS_INTERFACE_LINUX
-    NEO_CORE_PAGE_FAULT_MANAGER_LINUX
-    NEO_CORE_UTILITIES_LINUX
+                                 NEO_CORE_DIRECT_SUBMISSION_LINUX
+                                 NEO_CORE_OS_INTERFACE_LINUX
+                                 NEO_CORE_PAGE_FAULT_MANAGER_LINUX
+                                 NEO_CORE_UTILITIES_LINUX
   )
 endif()
 
@@ -129,7 +129,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${BRANCH_TYPE}/core_sources.cmake)
 endif()
 
 if(NOT MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC")
 endif()
 
 if(DONT_CARE_OF_VIRTUALS)

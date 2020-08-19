@@ -20,10 +20,10 @@ else()
 endif()
 
 set(BUILTIN_OPTIONS_STATELESS
-  "-cl-intel-greater-than-4GB-buffer-required"
+    "-cl-intel-greater-than-4GB-buffer-required"
 )
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   list(APPEND __cloc__options__ "-D DEBUG")
 endif()
 
@@ -32,7 +32,7 @@ set(BUILTIN_CPP "")
 
 function(get_bits_for_stateless gen_type platform_type)
   # Force 32bits compiling on gen9lp for stateless builtins
-  if( (${GEN_TYPE} STREQUAL "GEN9" ) AND ( ${PLATFORM_TYPE} STREQUAL "LP"))
+  if((${GEN_TYPE} STREQUAL "GEN9") AND (${PLATFORM_TYPE} STREQUAL "LP"))
     set(BITS "32" PARENT_SCOPE)
   else()
     set(BITS ${NEO_BITS} PARENT_SCOPE)
@@ -51,12 +51,12 @@ function(compile_builtin gen_type platform_type builtin bits builtin_options)
 
   set(OUTPUTPATH_BASE "${OUTPUTDIR}/${BASENAME}_${family_name_with_type}")
   set(OUTPUT_FILES
-    ${OUTPUTPATH_BASE}.spv
-    ${OUTPUTPATH_BASE}.bin
-    ${OUTPUTPATH_BASE}.gen
+      ${OUTPUTPATH_BASE}.spv
+      ${OUTPUTPATH_BASE}.bin
+      ${OUTPUTPATH_BASE}.gen
   )
   set(OUTPUT_FILE_CPP
-    ${OUTPUTPATH_BASE}.cpp
+      ${OUTPUTPATH_BASE}.cpp
   )
 
   # function returns builtin cpp filename
@@ -77,16 +77,16 @@ function(compile_builtin gen_type platform_type builtin bits builtin_options)
 
   list(APPEND __cloc__options__ "-cl-kernel-arg-info")
   add_custom_command(
-    OUTPUT ${OUTPUT_FILES}
-    COMMAND ${cloc_cmd_prefix} -q -file ${FILENAME} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -out_dir ${OUTPUTDIR} -options "$<JOIN:${__cloc__options__}, >"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    DEPENDS ${builtin} ocloc copy_compiler_files
+                     OUTPUT ${OUTPUT_FILES}
+                     COMMAND ${cloc_cmd_prefix} -q -file ${FILENAME} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${builtin_options} -${bits} -out_dir ${OUTPUTDIR} -options "$<JOIN:${__cloc__options__}, >"
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                     DEPENDS ${builtin} ocloc copy_compiler_files
   )
   add_custom_command(
-    OUTPUT ${OUTPUT_FILE_CPP}
-    COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${OUTPUTPATH_BASE}.gen --output ${OUTPUT_FILE_CPP} --array ${BASENAME} --platform ${family_name_with_type}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    DEPENDS ${OUTPUTPATH_BASE}.gen $<TARGET_FILE:cpp_generate_tool>
+                     OUTPUT ${OUTPUT_FILE_CPP}
+                     COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${OUTPUTPATH_BASE}.gen --output ${OUTPUT_FILE_CPP} --array ${BASENAME} --platform ${family_name_with_type}
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                     DEPENDS ${OUTPUTPATH_BASE}.gen $<TARGET_FILE:cpp_generate_tool>
   )
 endfunction()
 
@@ -106,8 +106,8 @@ macro(macro_for_each_gen)
         set(IMAGE_SUPPORT FALSE)
         GEN_CONTAINS_PLATFORMS("SUPPORTED_IMAGES" ${GEN_TYPE} IMAGE_SUPPORT)
         if(${IMAGE_SUPPORT})
-            list(APPEND BUILTINS_COMMANDS ${TargetDir}/${BUILTIN_CPP})
-            set(RUNTIME_GENERATED_${GENERATED_BUILTINS_IMAGES}_${family_name_with_type} ${BUILTIN_CPP} PARENT_SCOPE)
+          list(APPEND BUILTINS_COMMANDS ${TargetDir}/${BUILTIN_CPP})
+          set(RUNTIME_GENERATED_${GENERATED_BUILTINS_IMAGES}_${family_name_with_type} ${BUILTIN_CPP} PARENT_SCOPE)
         endif()
       endforeach()
       get_bits_for_stateless(${GEN_TYPE} ${PLATFORM_TYPE})
@@ -121,8 +121,8 @@ macro(macro_for_each_gen)
         set(IMAGE_SUPPORT FALSE)
         GEN_CONTAINS_PLATFORMS("SUPPORTED_IMAGES" ${GEN_TYPE} IMAGE_SUPPORT)
         if(${IMAGE_SUPPORT})
-            list(APPEND BUILTINS_COMMANDS ${TargetDir}/${BUILTIN_CPP})
-            set(RUNTIME_GENERATED_${GENERATED_BUILTIN_IMAGES_STATELESS}_${family_name_with_type} ${BUILTIN_CPP} PARENT_SCOPE)
+          list(APPEND BUILTINS_COMMANDS ${TargetDir}/${BUILTIN_CPP})
+          set(RUNTIME_GENERATED_${GENERATED_BUILTIN_IMAGES_STATELESS}_${family_name_with_type} ${BUILTIN_CPP} PARENT_SCOPE)
         endif()
       endforeach()
       set(target_name builtins_${family_name_with_type})

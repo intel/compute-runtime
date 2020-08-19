@@ -19,4 +19,3 @@ set(IGDRCL_SRCS_performance_tests
     PARENT_SCOPE
 )
 
-

@@ -19,11 +19,11 @@ add_dependencies(run_mt_unit_tests run_${product}_mt_unit_tests)
 set_target_properties(run_${product}_mt_unit_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}")
 
 add_custom_command(
-  TARGET run_${product}_mt_unit_tests
-  POST_BUILD
-  COMMAND WORKING_DIRECTORY ${TargetDir}
-  COMMAND echo "Running igdrcl_mt_tests ${product} ${slices}x${subslices}x${eu_per_ss}"
-  COMMAND igdrcl_mt_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=${GTEST_REPEAT} ${igdrcl_mt_tests_LISTENER_OPTION}
+                   TARGET run_${product}_mt_unit_tests
+                   POST_BUILD
+                   COMMAND WORKING_DIRECTORY ${TargetDir}
+                   COMMAND echo "Running igdrcl_mt_tests ${product} ${slices}x${subslices}x${eu_per_ss}"
+                   COMMAND igdrcl_mt_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=${GTEST_REPEAT} ${igdrcl_mt_tests_LISTENER_OPTION}
 )
 
 add_dependencies(run_${product}_mt_unit_tests prepare_test_kernels)

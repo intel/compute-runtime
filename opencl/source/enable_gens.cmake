@@ -5,32 +5,32 @@
 #
 
 set(RUNTIME_SRCS_GENX_CPP_WINDOWS
-  windows/command_stream_receiver
-  windows/gmm_callbacks
+    windows/command_stream_receiver
+    windows/gmm_callbacks
 )
 
 set(RUNTIME_SRCS_GENX_CPP_LINUX
-  linux/command_stream_receiver
+    linux/command_stream_receiver
 )
 
 set(RUNTIME_SRCS_GENX_H_BASE
-  aub_mapper.h
+    aub_mapper.h
 )
 
 set(RUNTIME_SRCS_GENX_CPP_BASE
-  aub_command_stream_receiver
-  aub_mem_dump
-  buffer
-  command_queue
-  command_stream_receiver_simulated_common_hw
-  experimental_command_buffer
-  gpgpu_walker
-  hardware_commands_helper
-  hw_info
-  image
-  sampler
-  state_base_address
-  tbx_command_stream_receiver
+    aub_command_stream_receiver
+    aub_mem_dump
+    buffer
+    command_queue
+    command_stream_receiver_simulated_common_hw
+    experimental_command_buffer
+    gpgpu_walker
+    hardware_commands_helper
+    hw_info
+    image
+    sampler
+    state_base_address
+    tbx_command_stream_receiver
 )
 
 macro(macro_for_each_platform)

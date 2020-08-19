@@ -5,8 +5,8 @@
 #
 
 set(IGDRCL_SRCS_tests_gtpin
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_tests.cpp
 )
 macro(macro_for_each_gen)
   list(APPEND IGDRCL_SRCS_tests_gtpin ${NEO_SOURCE_DIR}/opencl/source/${GEN_TYPE_LOWER}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)

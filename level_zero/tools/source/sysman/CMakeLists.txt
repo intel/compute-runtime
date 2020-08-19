@@ -12,9 +12,9 @@ set(L0_SRCS_TOOLS_SYSMAN
 )
 
 target_sources(${L0_STATIC_LIB_NAME}
-    PRIVATE
-        ${L0_SRCS_TOOLS_SYSMAN}
-        ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               PRIVATE
+               ${L0_SRCS_TOOLS_SYSMAN}
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 
 add_subdirectories()

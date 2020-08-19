@@ -5,5 +5,5 @@
 #
 
 if(NOT SKIP_L0_UNIT_TESTS)
-    add_subdirectories()
+  add_subdirectories()
 endif()

@@ -10,10 +10,10 @@ set(L0_SRCS_TOOLS_GLOBAL_OPERATIONS_WINDOWS
 )
 
 if(WIN32)
-target_sources(${L0_STATIC_LIB_NAME}
-    PRIVATE
-    ${L0_SRCS_TOOLS_GLOBAL_OPERATIONS_WINDOWS}
-)
+  target_sources(${L0_STATIC_LIB_NAME}
+                 PRIVATE
+                 ${L0_SRCS_TOOLS_GLOBAL_OPERATIONS_WINDOWS}
+  )
 endif()
 
 # Make our source files visible to parent

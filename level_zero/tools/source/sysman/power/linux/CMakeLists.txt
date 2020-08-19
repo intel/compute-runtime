@@ -10,9 +10,10 @@ set(L0_SRCS_TOOLS_SYSMAN_POWER_LINUX
 )
 
 if(UNIX)
-    target_sources(${L0_STATIC_LIB_NAME}
-    PRIVATE
-    ${L0_SRCS_TOOLS_SYSMAN_POWER_LINUX})
+  target_sources(${L0_STATIC_LIB_NAME}
+                 PRIVATE
+                 ${L0_SRCS_TOOLS_SYSMAN_POWER_LINUX}
+  )
 endif()
 
 # Make our source files visible to parent

@@ -5,10 +5,10 @@
 #
 
 if(UNIX)
-    target_sources(${TARGET_NAME}
-        PRIVATE
-           ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-           ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_xml_parser.cpp
-           ${CMAKE_CURRENT_SOURCE_DIR}/sample_xml.h
-    )
+  target_sources(${TARGET_NAME}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_sysman_xml_parser.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/sample_xml.h
+  )
 endif()

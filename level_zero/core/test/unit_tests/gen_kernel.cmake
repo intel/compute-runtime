@@ -28,16 +28,16 @@ function(level_zero_gen_kernels target platform_name suffix options)
 
     set(outputpath_base "${outputdir}${basename}_${suffix}")
     set(output_files
-      ${outputpath_base}.bin
-      ${outputpath_base}.gen
+        ${outputpath_base}.bin
+        ${outputpath_base}.gen
     )
 
     add_custom_command(
-      COMMAND echo generate ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
-      OUTPUT ${output_files}
-      COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
-      WORKING_DIRECTORY ${workdir}
-      DEPENDS ${filepath} ocloc
+                       COMMAND echo generate ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
+                       OUTPUT ${output_files}
+                       COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${platform_name} -out_dir ${outputdir} -options "${options}"
+                       WORKING_DIRECTORY ${workdir}
+                       DEPENDS ${filepath} ocloc
     )
 
     list(APPEND results ${output_files})

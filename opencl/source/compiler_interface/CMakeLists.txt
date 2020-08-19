@@ -5,8 +5,8 @@
 #
 
 set(RUNTIME_SRCS_COMPILER_INTERFACE
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/default_cl_cache_config.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/default_cl_cache_config.cpp
 )
 
 get_property(NEO_COMPILER_INTERFACE GLOBAL PROPERTY NEO_COMPILER_INTERFACE)

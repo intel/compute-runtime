@@ -5,12 +5,12 @@
 #
 
 set(BUILTIN_KERNELS_SIMULATION_SRCS
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/opencl_c.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/opencl_c.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_simulation.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_simulation.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_simulation.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/opencl_c.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/opencl_c.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_simulation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_simulation.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_simulation.h
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -46,12 +46,12 @@ apply_macro_for_each_gen("SUPPORTED")
 
 add_library(${BIKSIM_LIB_NAME} OBJECT EXCLUDE_FROM_ALL ${BUILTIN_KERNELS_SIMULATION_SRCS})
 target_include_directories(${BIKSIM_LIB_NAME} BEFORE PRIVATE
-  ${ENGINE_NODE_DIR}
-  ${NEO__GMM_INCLUDE_DIR}
-  ${KHRONOS_HEADERS_DIR}
-  ${KHRONOS_GL_HEADERS_DIR}
-  ${NEO__IGC_INCLUDE_DIR}
-  ${THIRD_PARTY_DIR}
+                           ${ENGINE_NODE_DIR}
+                           ${NEO__GMM_INCLUDE_DIR}
+                           ${KHRONOS_HEADERS_DIR}
+                           ${KHRONOS_GL_HEADERS_DIR}
+                           ${NEO__IGC_INCLUDE_DIR}
+                           ${THIRD_PARTY_DIR}
 )
 set_target_properties(${BIKSIM_LIB_NAME} PROPERTIES FOLDER "built_ins")
 target_compile_definitions(${BIKSIM_LIB_NAME} PUBLIC ${SUPPORTED_GEN_FLAGS_DEFINITONS} ${DEFAULT_GEN_PLATFORMS_DEFITIONS} MOCKABLE_VIRTUAL=)

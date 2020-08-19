@@ -16,24 +16,24 @@ endif()
 
 add_custom_target(run_mt_unit_tests)
 add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${NEO_SOURCE_DIR}/shared/test/unit_test/test_macros/test_checks_shared.cpp
-  ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/os_interface.cpp
-  ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
-  ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_configuration.cpp
-  ${NEO_SOURCE_DIR}/opencl/source/aub/aub_stream_interface.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
-  $<TARGET_OBJECTS:igdrcl_libult>
-  $<TARGET_OBJECTS:igdrcl_libult_cs>
-  $<TARGET_OBJECTS:igdrcl_libult_env>
-  $<TARGET_OBJECTS:mock_gmm>
-  $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${NEO_SOURCE_DIR}/shared/test/unit_test/test_macros/test_checks_shared.cpp
+               ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/os_interface.cpp
+               ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
+               ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_configuration.cpp
+               ${NEO_SOURCE_DIR}/opencl/source/aub/aub_stream_interface.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
+               $<TARGET_OBJECTS:igdrcl_libult>
+               $<TARGET_OBJECTS:igdrcl_libult_cs>
+               $<TARGET_OBJECTS:igdrcl_libult_env>
+               $<TARGET_OBJECTS:mock_gmm>
+               $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
 )
 
 target_include_directories(igdrcl_mt_tests PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros/header${BRANCH_DIR_SUFFIX}
-  ${NEO_SOURCE_DIR}/opencl/source/gen_common
+                           ${CMAKE_CURRENT_SOURCE_DIR}
+                           ${NEO_SHARED_TEST_DIRECTORY}/unit_test/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${NEO_SOURCE_DIR}/opencl/source/gen_common
 )
 
 add_subdirectories()
@@ -45,18 +45,17 @@ target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${IGDRCL_EXTRA_LIBS})
 
 if(WIN32)
   target_sources(igdrcl_mt_tests PRIVATE
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
+                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/windows/wddm_create.cpp
   )
 else()
   target_sources(igdrcl_mt_tests PRIVATE
-    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
+                 ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
   )
 endif()
 
 if(WIN32)
   add_dependencies(igdrcl_mt_tests mock_gdi igdrcl_tests)
 endif()
-
 
 add_dependencies(igdrcl_mt_tests test_dynamic_lib)
 

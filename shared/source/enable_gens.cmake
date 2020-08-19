@@ -5,25 +5,25 @@
 #
 
 set(CORE_SRCS_GENX_H_BASE
-  hw_cmds.h
-  hw_info.h
-  hw_cmds_base.h
+    hw_cmds.h
+    hw_info.h
+    hw_cmds_base.h
 )
 
 set(CORE_RUNTIME_SRCS_GENX_CPP_BASE
-  command_encoder
-  command_stream_receiver_hw
-  hw_helper
-  preamble
-  preemption
+    command_encoder
+    command_stream_receiver_hw
+    hw_helper
+    preamble
+    preemption
 )
 
 set(CORE_RUNTIME_SRCS_GENX_CPP_WINDOWS
-  windows/direct_submission
+    windows/direct_submission
 )
 
 set(CORE_RUNTIME_SRCS_GENX_CPP_LINUX
-  linux/direct_submission
+    linux/direct_submission
 )
 
 macro(macro_for_each_platform)

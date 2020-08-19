@@ -10,9 +10,9 @@ set(L0_SRCS_TOOLS_PIN
 )
 
 target_sources(${L0_STATIC_LIB_NAME}
-    PRIVATE
-        ${L0_SRCS_TOOLS_PIN}
-        ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               PRIVATE
+               ${L0_SRCS_TOOLS_PIN}
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 
 add_subdirectories()

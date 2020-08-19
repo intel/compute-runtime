@@ -9,7 +9,7 @@ if(UNIX)
   set(package_output_dir ${NEO_BINARY_DIR}/packages)
 
   if(NEO_BUILD_OCL_PACKAGE AND NEO_BUILD_L0_PACKAGE)
-      message(FATAL_ERROR "OpenCL and LevelZero packages cannot be created simultaneously")
+    message(FATAL_ERROR "OpenCL and LevelZero packages cannot be created simultaneously")
   endif()
 
   if(NOT DEFINED NEO_OCL_VERSION_MAJOR)
@@ -30,18 +30,18 @@ if(UNIX)
       # clear-linux-os distribution avoids /etc for distribution defaults.
       set(OCL_ICD_VENDORDIR "/usr/share/defaults/etc/OpenCL/vendors")
     else()
-	    set(OCL_ICD_VENDORDIR "/etc/OpenCL/vendors")
+      set(OCL_ICD_VENDORDIR "/etc/OpenCL/vendors")
     endif()
   endif()
 
   set(OCL_ICD_RUNTIME_NAME ${CMAKE_SHARED_LIBRARY_PREFIX}${NEO_DLL_NAME_BASE}${CMAKE_SHARED_LIBRARY_SUFFIX})
   install(
-    CODE "file( WRITE ${NEO_BINARY_DIR}/intel.icd \"${CMAKE_INSTALL_FULL_LIBDIR}/intel-opencl/${OCL_ICD_RUNTIME_NAME}\n\" )"
-    CODE "file( WRITE ${NEO_BINARY_DIR}/tmp/postinst \"/sbin/ldconfig\n\" )"
-    CODE "file( WRITE ${NEO_BINARY_DIR}/tmp/postrm \"/sbin/ldconfig\n\" )"
-    CODE "file( COPY ${NEO_BINARY_DIR}/tmp/postinst DESTINATION ${NEO_BINARY_DIR} FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE )"
-    CODE "file( COPY ${NEO_BINARY_DIR}/tmp/postrm DESTINATION ${NEO_BINARY_DIR} FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE )"
-    COMPONENT opencl
+          CODE "file( WRITE ${NEO_BINARY_DIR}/intel.icd \"${CMAKE_INSTALL_FULL_LIBDIR}/intel-opencl/${OCL_ICD_RUNTIME_NAME}\n\" )"
+          CODE "file( WRITE ${NEO_BINARY_DIR}/tmp/postinst \"/sbin/ldconfig\n\" )"
+          CODE "file( WRITE ${NEO_BINARY_DIR}/tmp/postrm \"/sbin/ldconfig\n\" )"
+          CODE "file( COPY ${NEO_BINARY_DIR}/tmp/postinst DESTINATION ${NEO_BINARY_DIR} FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE )"
+          CODE "file( COPY ${NEO_BINARY_DIR}/tmp/postrm DESTINATION ${NEO_BINARY_DIR} FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE )"
+          COMPONENT opencl
   )
   install(FILES ${NEO_BINARY_DIR}/intel.icd DESTINATION ${OCL_ICD_VENDORDIR} COMPONENT opencl)
 
@@ -96,16 +96,16 @@ if(UNIX)
     get_property(CPACK_COMPONENTS_ALL GLOBAL PROPERTY NEO_L0_COMPONENTS_LIST)
   endif()
   set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
-    /etc/ld.so.conf.d
-    /usr/local
-    /usr/local/lib64
-    /usr/local/bin
+      /etc/ld.so.conf.d
+      /usr/local
+      /usr/local/lib64
+      /usr/local/bin
   )
 
   if(CMAKE_VERSION VERSION_GREATER 3.6 OR CMAKE_VERSION VERSION_EQUAL 3.6)
     set(CPACK_DEBIAN_OPENCL_FILE_NAME "intel-opencl_${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}-1~${os_codename}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}.deb")
     set(CPACK_DEBIAN_OCLOC_FILE_NAME "intel-ocloc_${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}-1~${os_codename}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}.deb")
-    set(CPACK_DEBIAN_LEVEL-ZERO-GPU_FILE_NAME  "intel-level-zero-gpu_${NEO_L0_VERSION_MAJOR}.${NEO_L0_VERSION_MINOR}.${NEO_VERSION_BUILD}-1~${os_codename}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}.deb")
+    set(CPACK_DEBIAN_LEVEL-ZERO-GPU_FILE_NAME "intel-level-zero-gpu_${NEO_L0_VERSION_MAJOR}.${NEO_L0_VERSION_MINOR}.${NEO_VERSION_BUILD}-1~${os_codename}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}.deb")
 
     set(CPACK_RPM_OPENCL_FILE_NAME "intel-opencl-${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_RPM_PACKAGE_RELEASE}%{?dist}.${CPACK_RPM_PACKAGE_ARCHITECTURE}.rpm")
     set(CPACK_RPM_OCLOC_FILE_NAME "intel-ocloc-${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_RPM_PACKAGE_RELEASE}%{?dist}.${CPACK_RPM_PACKAGE_ARCHITECTURE}.rpm")
@@ -153,8 +153,8 @@ if(UNIX)
   list(APPEND _external_package_optionals_rpm_level_zero_gpu "level-zero")
 
   if(PC_LIBXML_FOUND)
-      list(APPEND _external_package_optionals_debian_level_zero_gpu "libxml2")
-      list(APPEND _external_package_optionals_rpm_level_zero_gpu "libxml2")
+    list(APPEND _external_package_optionals_debian_level_zero_gpu "libxml2")
+    list(APPEND _external_package_optionals_rpm_level_zero_gpu "libxml2")
   endif()
 
   string(REPLACE ";" ", " CPACK_DEBIAN_OPENCL_PACKAGE_DEPENDS "${_external_package_dependencies_debian}")
@@ -176,4 +176,4 @@ if(UNIX)
   if(__HAS_PARENT)
     set(NEO__COMPONENT_NAME "opencl" PARENT_SCOPE)
   endif()
-endif(UNIX)
+endif()

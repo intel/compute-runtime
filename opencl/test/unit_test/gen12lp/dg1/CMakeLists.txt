@@ -6,11 +6,11 @@
 
 if(TESTS_DG1)
   set(IGDRCL_SRCS_tests_dg1
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_dg1.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_tests_dg1.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_dg1.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_dg1.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_dg1.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_tests_dg1.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_dg1.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_dg1.cpp
   )
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_dg1})
   add_subdirectories()

@@ -7,17 +7,17 @@
 add_subdirectory(tracing)
 
 set(L0_EXPERIMENTAL_SOURCES
-	${CMAKE_CURRENT_SOURCE_DIR}/experimental.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/experimental.cpp
 )
 
 target_include_directories(${L0_STATIC_LIB_NAME}
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/
+                           PUBLIC
+                           ${CMAKE_CURRENT_SOURCE_DIR}/
 )
 target_sources(${L0_STATIC_LIB_NAME}
-    PRIVATE
-        ${L0_EXPERIMENTAL_SOURCES}
-        ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               PRIVATE
+               ${L0_EXPERIMENTAL_SOURCES}
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 
 # Make our source files visible to parent

@@ -79,32 +79,32 @@ set(L0_RUNTIME_SOURCES
 )
 
 target_include_directories(${L0_STATIC_LIB_NAME}
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/
+                           PUBLIC
+                           ${CMAKE_CURRENT_SOURCE_DIR}/
 )
 
 target_include_directories(${TARGET_NAME_L0}
-    PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/
+                           PUBLIC
+                           ${CMAKE_CURRENT_SOURCE_DIR}/
 )
 
 add_subdirectories()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 target_sources(${L0_STATIC_LIB_NAME}
-    PRIVATE
-        ${L0_RUNTIME_SOURCES}
-        ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               PRIVATE
+               ${L0_RUNTIME_SOURCES}
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 
 target_sources(${TARGET_NAME_L0}
-    PRIVATE
-        ${L0_SRCS_DLL}
-        ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               PRIVATE
+               ${L0_SRCS_DLL}
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
 
 if(UNIX)
-    set_source_files_properties(${L0_RUNTIME_SOURCES} PROPERTIES COMPILE_FLAGS -Wall)
+  set_source_files_properties(${L0_RUNTIME_SOURCES} PROPERTIES COMPILE_FLAGS -Wall)
 endif()
 
 if(NOT DEFINED L0_DRIVER_VERSION)
