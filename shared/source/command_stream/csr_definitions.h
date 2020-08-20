@@ -41,6 +41,7 @@ namespace L3CachingSettings {
 constexpr uint32_t l3CacheOn = 0u;
 constexpr uint32_t l3CacheOff = 1u;
 constexpr uint32_t l3AndL1On = 2u;
+constexpr uint32_t NotApplicable = 3u;
 } // namespace L3CachingSettings
 
 struct DispatchFlags {

@@ -202,6 +202,7 @@ HWTEST_F(DispatchFlagsTests, whenEnqueueCommandWithoutKernelThenPassCorrectDispa
     EXPECT_EQ(blocking, mockCsr->passedDispatchFlags.blocking);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    EXPECT_EQ(L3CachingSettings::NotApplicable, mockCsr->passedDispatchFlags.l3CacheSettings);
     EXPECT_EQ(device->getPreemptionMode(), mockCsr->passedDispatchFlags.preemptionMode);
     EXPECT_EQ(mockCmdQ->flushStamp->getStampReference(), mockCsr->passedDispatchFlags.flushStampReference);
 }
@@ -265,6 +266,7 @@ HWTEST_F(DispatchFlagsTests, givenBlitEnqueueWhenDispatchingCommandsWithoutKerne
 
     EXPECT_TRUE(mockCsr->passedDispatchFlags.implicitFlush);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    EXPECT_EQ(L3CachingSettings::NotApplicable, mockCsr->passedDispatchFlags.l3CacheSettings);
 }
 
 HWTEST_F(DispatchFlagsTests, givenN1EnabledWhenDispatchingWithoutKernelTheAllowOutOfOrderExecution) {

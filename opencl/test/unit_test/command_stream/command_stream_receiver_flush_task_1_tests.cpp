@@ -540,6 +540,32 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStateBaseAddressWhenItIsRequi
     EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNotApplicableL3ConfigWhenFlushingTaskThenDontReloadSba) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    {
+        flushTaskFlags.l3CacheSettings = L3CachingSettings::l3CacheOn;
+        flushTask(commandStreamReceiver);
+
+        parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+        auto stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+        EXPECT_NE(cmdList.end(), stateBaseAddressItor);
+    }
+
+    {
+        flushTaskFlags.l3CacheSettings = L3CachingSettings::NotApplicable;
+        auto offset = commandStreamReceiver.commandStream.getUsed();
+
+        flushTask(commandStreamReceiver);
+
+        cmdList.clear();
+        parseCommands<FamilyType>(commandStreamReceiver.commandStream, offset);
+        auto stateBaseAddressItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+        EXPECT_EQ(cmdList.end(), stateBaseAddressItor);
+    }
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, preambleShouldBeSentIfNeverSent) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = false;

@@ -328,10 +328,14 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
 
-    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
-    auto l3On = dispatchFlags.l3CacheSettings != L3CachingSettings::l3CacheOff;
-    auto l1On = dispatchFlags.l3CacheSettings == L3CachingSettings::l3AndL1On;
-    auto mocsIndex = hwHelper.getMocsIndex(*device.getGmmHelper(), l3On, l1On);
+    auto mocsIndex = latestSentStatelessMocsConfig;
+
+    if (dispatchFlags.l3CacheSettings != L3CachingSettings::NotApplicable) {
+        auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
+        auto l3On = dispatchFlags.l3CacheSettings != L3CachingSettings::l3CacheOff;
+        auto l1On = dispatchFlags.l3CacheSettings == L3CachingSettings::l3AndL1On;
+        mocsIndex = hwHelper.getMocsIndex(*device.getGmmHelper(), l3On, l1On);
+    }
 
     if (mocsIndex != latestSentStatelessMocsConfig) {
         isStateBaseAddressDirty = true;

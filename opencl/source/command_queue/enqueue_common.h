@@ -987,7 +987,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             getThrottle(),                                                       //throttle
             device->getPreemptionMode(),                                         //preemptionMode
             GrfConfig::DefaultGrfNumber,                                         //numGrfRequired
-            L3CachingSettings::l3CacheOn,                                        //l3CacheSettings
+            L3CachingSettings::NotApplicable,                                    //l3CacheSettings
             ThreadArbitrationPolicy::NotPresent,                                 //threadArbitrationPolicy
             getSliceCount(),                                                     //sliceCount
             blocking,                                                            //blocking

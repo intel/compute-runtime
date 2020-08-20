@@ -190,7 +190,7 @@ HWTEST_F(DispatchFlagsTests, givenCommandMapUnmapWhenSubmitThenPassCorrectDispat
     EXPECT_EQ(mockCmdQ->getThrottle(), mockCsr->passedDispatchFlags.throttle);
     EXPECT_EQ(PreemptionHelper::taskPreemptionMode(devicePreemption, flags), mockCsr->passedDispatchFlags.preemptionMode);
     EXPECT_EQ(GrfConfig::DefaultGrfNumber, mockCsr->passedDispatchFlags.numGrfRequired);
-    EXPECT_EQ(L3CachingSettings::l3CacheOn, mockCsr->passedDispatchFlags.l3CacheSettings);
+    EXPECT_EQ(L3CachingSettings::NotApplicable, mockCsr->passedDispatchFlags.l3CacheSettings);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.dcFlush);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.useSLM);
@@ -278,7 +278,7 @@ HWTEST_F(DispatchFlagsTests, givenCommandWithoutKernelWhenSubmitThenPassCorrectD
     EXPECT_EQ(mockCmdQ->getThrottle(), mockCsr->passedDispatchFlags.throttle);
     EXPECT_EQ(mockCmdQ->getDevice().getPreemptionMode(), mockCsr->passedDispatchFlags.preemptionMode);
     EXPECT_EQ(GrfConfig::DefaultGrfNumber, mockCsr->passedDispatchFlags.numGrfRequired);
-    EXPECT_EQ(L3CachingSettings::l3CacheOn, mockCsr->passedDispatchFlags.l3CacheSettings);
+    EXPECT_EQ(L3CachingSettings::NotApplicable, mockCsr->passedDispatchFlags.l3CacheSettings);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.dcFlush);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.useSLM);
