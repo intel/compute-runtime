@@ -23,7 +23,8 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
                     return nullptr;
                 }
                 uint64_t gpuAddress = reinterpret_cast<uint64_t>(allocationData.hostPtr);
-                allocation = new MemoryAllocation(allocationData.rootDeviceIndex, allocationData.type, cpuAllocation, cpuAllocation, gpuAddress, allocationData.size, counter++, MemoryPool::LocalMemory, false, false);
+                allocation = new MemoryAllocation(allocationData.rootDeviceIndex, allocationData.type, cpuAllocation,
+                                                  cpuAllocation, gpuAddress, allocationData.size, counter++, MemoryPool::LocalMemory, false, false, maxOsContextCount);
             } else {
                 allocation = allocateGraphicsMemory(allocationData);
             }

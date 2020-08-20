@@ -31,7 +31,7 @@ MockSipKernel::MockSipKernel(SipKernelType type, Program *sipProgram) : SipKerne
                                            MemoryConstants::pageSize * 10u,
                                            0u,
                                            MemoryConstants::pageSize,
-                                           MemoryPool::System4KBPages);
+                                           MemoryPool::System4KBPages, 3u);
 }
 
 MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, nullptr) {
@@ -42,7 +42,7 @@ MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, nullptr) {
                                            MemoryConstants::pageSize * 10u,
                                            0u,
                                            MemoryConstants::pageSize,
-                                           MemoryPool::System4KBPages);
+                                           MemoryPool::System4KBPages, 3u);
     this->program = new MockProgram(this->executionEnvironment, nullptr, false, nullptr);
 }
 

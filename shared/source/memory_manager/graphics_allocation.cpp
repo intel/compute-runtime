@@ -19,7 +19,7 @@ void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
 }
 
 GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress,
-                                       uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool)
+                                       uint64_t baseAddress, size_t sizeIn, MemoryPool::Type pool, size_t maxOsContextCount)
     : rootDeviceIndex(rootDeviceIndex),
       gpuBaseAddress(baseAddress),
       gpuAddress(gpuAddress),
@@ -27,19 +27,19 @@ GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms,
       cpuPtr(cpuPtrIn),
       memoryPool(pool),
       allocationType(allocationType),
-      usageInfos(MemoryManager::maxOsContextCount) {
+      usageInfos(maxOsContextCount) {
     gmms.resize(numGmms);
 }
 
 GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn,
-                                       osHandle sharedHandleIn, MemoryPool::Type pool)
+                                       osHandle sharedHandleIn, MemoryPool::Type pool, size_t maxOsContextCount)
     : rootDeviceIndex(rootDeviceIndex),
       gpuAddress(castToUint64(cpuPtrIn)),
       size(sizeIn),
       cpuPtr(cpuPtrIn),
       memoryPool(pool),
       allocationType(allocationType),
-      usageInfos(MemoryManager::maxOsContextCount) {
+      usageInfos(maxOsContextCount) {
     sharingInfo.sharedHandle = sharedHandleIn;
     gmms.resize(numGmms);
 }

@@ -661,7 +661,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
 
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(AllocationView &allocationView) {
-    GraphicsAllocation gfxAllocation(this->rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, reinterpret_cast<void *>(allocationView.first), allocationView.first, 0llu, allocationView.second, MemoryPool::MemoryNull);
+    GraphicsAllocation gfxAllocation(this->rootDeviceIndex, GraphicsAllocation::AllocationType::UNKNOWN, reinterpret_cast<void *>(allocationView.first), allocationView.first, 0llu, allocationView.second, MemoryPool::MemoryNull, 0u);
     return writeMemory(gfxAllocation);
 }
 

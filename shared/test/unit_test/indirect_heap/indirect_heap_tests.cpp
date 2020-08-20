@@ -16,7 +16,7 @@ struct IndirectHeapTest : public ::testing::Test {
     class MyMockGraphicsAllocation : public GraphicsAllocation {
       public:
         MyMockGraphicsAllocation(void *ptr, size_t size)
-            : GraphicsAllocation(0, AllocationType::UNKNOWN, ptr, castToUint64(ptr), 0, size, MemoryPool::System4KBPages) {}
+            : GraphicsAllocation(0, AllocationType::UNKNOWN, ptr, castToUint64(ptr), 0, size, MemoryPool::System4KBPages, 1) {}
     };
 
     uint8_t buffer[256];

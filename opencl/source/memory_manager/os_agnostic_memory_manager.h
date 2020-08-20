@@ -21,29 +21,29 @@ class MemoryAllocation : public GraphicsAllocation {
     void setSharedHandle(osHandle handle) { sharingInfo.sharedHandle = handle; }
 
     MemoryAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn,
-                     MemoryPool::Type pool)
-        : MemoryAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, gpuAddress, baseAddress, sizeIn, pool) {}
+                     MemoryPool::Type pool, size_t maxOsContextCount)
+        : MemoryAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, gpuAddress, baseAddress, sizeIn, pool, maxOsContextCount) {}
 
     MemoryAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn,
-                     MemoryPool::Type pool)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, gpuAddress, baseAddress, sizeIn, pool),
+                     MemoryPool::Type pool, size_t maxOsContextCount)
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, gpuAddress, baseAddress, sizeIn, pool, maxOsContextCount),
           id(0), uncacheable(false) {}
 
-    MemoryAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool)
-        : MemoryAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool) {}
+    MemoryAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool, size_t maxOsContextCount)
+        : MemoryAllocation(rootDeviceIndex, 1, allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool, maxOsContextCount) {}
 
-    MemoryAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool),
+    MemoryAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn, MemoryPool::Type pool, size_t maxOsContextCount)
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, cpuPtrIn, sizeIn, sharedHandleIn, pool, maxOsContextCount),
           id(0), uncacheable(false) {}
 
     MemoryAllocation(uint32_t rootDeviceIndex, AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize,
-                     uint64_t count, MemoryPool::Type pool, bool uncacheable, bool flushL3Required)
+                     uint64_t count, MemoryPool::Type pool, bool uncacheable, bool flushL3Required, size_t maxOsContextCount)
         : MemoryAllocation(rootDeviceIndex, 1, allocationType, driverAllocatedCpuPointer, pMem, gpuAddress, memSize,
-                           count, pool, uncacheable, flushL3Required) {}
+                           count, pool, uncacheable, flushL3Required, maxOsContextCount) {}
 
     MemoryAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *driverAllocatedCpuPointer, void *pMem, uint64_t gpuAddress, size_t memSize,
-                     uint64_t count, MemoryPool::Type pool, bool uncacheable, bool flushL3Required)
-        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, pMem, gpuAddress, 0u, memSize, pool),
+                     uint64_t count, MemoryPool::Type pool, bool uncacheable, bool flushL3Required, size_t maxOsContextCount)
+        : GraphicsAllocation(rootDeviceIndex, numGmms, allocationType, pMem, gpuAddress, 0u, memSize, pool, maxOsContextCount),
           id(count), uncacheable(uncacheable) {
 
         this->driverAllocatedCpuPointer = driverAllocatedCpuPointer;

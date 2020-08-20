@@ -19,7 +19,7 @@ struct MockMultiGraphicsAllocation : public MultiGraphicsAllocation {
 TEST(MultiGraphicsAllocationTest, whenCreatingMultiGraphicsAllocationThenTheAllocationIsObtainableAsADefault) {
     GraphicsAllocation graphicsAllocation(1, // rootDeviceIndex
                                           GraphicsAllocation::AllocationType::BUFFER,
-                                          nullptr, 0, 0, MemoryPool::System4KBPages);
+                                          nullptr, 0, 0, MemoryPool::System4KBPages, 0);
 
     MockMultiGraphicsAllocation multiGraphicsAllocation(1);
     EXPECT_EQ(2u, multiGraphicsAllocation.graphicsAllocations.size());
@@ -35,10 +35,10 @@ TEST(MultiGraphicsAllocationTest, whenCreatingMultiGraphicsAllocationThenTheAllo
 TEST(MultiGraphicsAllocationTest, givenMultiGraphicsAllocationWhenAddingMultipleGraphicsAllocationsThenTheyAreObtainableByRootDeviceIndex) {
     GraphicsAllocation graphicsAllocation0(0, // rootDeviceIndex
                                            GraphicsAllocation::AllocationType::BUFFER,
-                                           nullptr, 0, 0, MemoryPool::System4KBPages);
+                                           nullptr, 0, 0, MemoryPool::System4KBPages, 0);
     GraphicsAllocation graphicsAllocation1(1, // rootDeviceIndex
                                            GraphicsAllocation::AllocationType::BUFFER,
-                                           nullptr, 0, 0, MemoryPool::System4KBPages);
+                                           nullptr, 0, 0, MemoryPool::System4KBPages, 0);
 
     MockMultiGraphicsAllocation multiGraphicsAllocation(1);
 
@@ -54,7 +54,7 @@ TEST(MultiGraphicsAllocationTest, givenMultiGraphicsAllocationWhenGettingAllocat
     auto expectedAllocationType = GraphicsAllocation::AllocationType::BUFFER;
     GraphicsAllocation graphicsAllocation(1, // rootDeviceIndex
                                           expectedAllocationType,
-                                          nullptr, 0, 0, MemoryPool::System4KBPages);
+                                          nullptr, 0, 0, MemoryPool::System4KBPages, 0);
 
     MockMultiGraphicsAllocation multiGraphicsAllocation(1);
     multiGraphicsAllocation.addAllocation(&graphicsAllocation);
@@ -67,7 +67,7 @@ TEST(MultiGraphicsAllocationTest, givenMultiGraphicsAllocationWhenGettingCoheren
     auto expectedAllocationType = GraphicsAllocation::AllocationType::BUFFER;
     GraphicsAllocation graphicsAllocation(1, // rootDeviceIndex
                                           expectedAllocationType,
-                                          nullptr, 0, 0, MemoryPool::System4KBPages);
+                                          nullptr, 0, 0, MemoryPool::System4KBPages, 0);
 
     MockMultiGraphicsAllocation multiGraphicsAllocation(1);
     multiGraphicsAllocation.addAllocation(&graphicsAllocation);
@@ -88,7 +88,7 @@ TEST(MultiGraphicsAllocationTest, givenMultiGraphicsAllocationwhenRemovingGraphi
     uint32_t rootDeviceIndex = 1u;
     GraphicsAllocation graphicsAllocation(rootDeviceIndex,
                                           GraphicsAllocation::AllocationType::BUFFER,
-                                          nullptr, 0, 0, MemoryPool::System4KBPages);
+                                          nullptr, 0, 0, MemoryPool::System4KBPages, 0);
 
     MockMultiGraphicsAllocation multiGraphicsAllocation(rootDeviceIndex);
     EXPECT_EQ(2u, multiGraphicsAllocation.graphicsAllocations.size());

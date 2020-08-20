@@ -513,7 +513,8 @@ struct CreateAllocationForHostSurfaceTest : public ::testing::Test {
 TEST_F(CreateAllocationForHostSurfaceTest, givenTemporaryAllocationWhenCreateAllocationForHostSurfaceThenReuseTemporaryAllocationWhenSizeAndAddressMatch) {
     auto hostPtr = reinterpret_cast<void *>(0x1234);
     size_t size = 100;
-    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0, GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages);
+    auto temporaryAllocation = std::make_unique<MemoryAllocation>(0,
+                                                                  GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, hostPtr, size, 0, MemoryPool::System4KBPages, mockMaxOsContextCount);
     auto allocationPtr = temporaryAllocation.get();
     temporaryAllocation->updateTaskCount(0u, 0u);
     commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::move(temporaryAllocation), TEMPORARY_ALLOCATION);
