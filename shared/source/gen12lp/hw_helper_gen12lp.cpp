@@ -74,6 +74,15 @@ uint32_t HwHelperHw<Family>::getHwRevIdFromStepping(uint32_t stepping, const Har
         case REVISION_C:
             return 0x3;
         }
+    } else if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ROCKETLAKE) {
+        switch (stepping) {
+        case REVISION_A0:
+            return 0x0;
+        case REVISION_B:
+            return 0x1;
+        case REVISION_C:
+            return 0x4;
+        }
     }
     return Gen12LPHelpers::getHwRevIdFromStepping(stepping, hwInfo);
 }
@@ -87,6 +96,15 @@ uint32_t HwHelperHw<Family>::getSteppingFromHwRevId(uint32_t hwRevId, const Hard
         case 0x1:
             return REVISION_B;
         case 0x3:
+            return REVISION_C;
+        }
+    } else if (hwInfo.platform.eProductFamily == PRODUCT_FAMILY::IGFX_ROCKETLAKE) {
+        switch (hwRevId) {
+        case 0x0:
+            return REVISION_A0;
+        case 0x1:
+            return REVISION_B;
+        case 0x4:
             return REVISION_C;
         }
     }

@@ -11,6 +11,9 @@
 #ifdef SUPPORT_DG1
 #include "hw_info_dg1.inl"
 #endif
+#ifdef SUPPORT_RKL
+#include "hw_info_rkl.inl"
+#endif
 
 #include "shared/source/gen12lp/hw_info_gen12lp.h"
 

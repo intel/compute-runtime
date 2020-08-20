@@ -16,6 +16,10 @@ bool SpecialUltHelperGen12lp::additionalCoherencyCheck(PRODUCT_FAMILY productFam
 }
 
 bool SpecialUltHelperGen12lp::shouldPerformimagePitchAlignment(PRODUCT_FAMILY productFamily) {
+    if (productFamily == IGFX_ROCKETLAKE) {
+        return false;
+    }
+
     return true;
 }
 
@@ -24,6 +28,10 @@ bool SpecialUltHelperGen12lp::shouldTestDefaultImplementationOfSetupHardwareCapa
 }
 
 bool SpecialUltHelperGen12lp::isPipeControlWArequired(PRODUCT_FAMILY productFamily) {
+    if (productFamily == IGFX_ROCKETLAKE) {
+        return false;
+    }
+
     return true;
 }
 

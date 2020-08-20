@@ -13,3 +13,6 @@
 #ifdef SUPPORT_DG1
 #include "hw_cmds_dg1.h"
 #endif
+#ifdef SUPPORT_RKL
+#include "hw_cmds_rkl.h"
+#endif

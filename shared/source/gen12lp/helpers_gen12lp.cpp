@@ -56,11 +56,12 @@ bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) {
 
 bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
     HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo));
+    return (((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo))) ||
+            ((hwInfo.platform.eProductFamily == IGFX_ROCKETLAKE) & (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo))));
 }
 
 bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) {
-    return hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP;
+    return (hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP || hwInfo.platform.eProductFamily == IGFX_ROCKETLAKE);
 }
 
 bool forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo) {

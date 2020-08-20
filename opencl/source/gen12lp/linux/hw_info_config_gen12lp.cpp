@@ -14,3 +14,6 @@
 #ifdef SUPPORT_DG1
 #include "hw_info_config_dg1.inl"
 #endif
+#ifdef SUPPORT_RKL
+#include "hw_info_config_rkl.inl"
+#endif

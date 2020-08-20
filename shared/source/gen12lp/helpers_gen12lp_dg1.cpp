@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/gen12lp/helpers_gen12lp.h"
+#include "shared/source/helpers/hw_helper.h"
 
 #include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
 #include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw.h"
@@ -74,15 +75,18 @@ void setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
                                        const HardwareInfo &hwInfo) {}
 
 bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo) {
-    return (hwInfo.platform.usRevId == REVISION_A0);
+    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    return hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
 }
 
 bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo) {
-    return ((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & (hwInfo.platform.usRevId == REVISION_A0));
+    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    return (((hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP) & (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo))) ||
+            ((hwInfo.platform.eProductFamily == IGFX_ROCKETLAKE) & (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo))));
 }
 
 bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo) {
-    return (hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP || hwInfo.platform.eProductFamily == IGFX_DG1);
+    return (hwInfo.platform.eProductFamily == IGFX_TIGERLAKE_LP || hwInfo.platform.eProductFamily == IGFX_DG1 || hwInfo.platform.eProductFamily == IGFX_ROCKETLAKE);
 }
 
 bool forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo) {
