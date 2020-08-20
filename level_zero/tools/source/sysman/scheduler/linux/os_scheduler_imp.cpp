@@ -30,6 +30,9 @@ ze_result_t LinuxSchedulerImp::getPreemptTimeout(uint64_t &timeout, ze_bool_t ge
     if (result == ZE_RESULT_SUCCESS) {
         timeout = timeout * milliSecsToMicroSecs;
     }
+    if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     return result;
 }
 
@@ -42,6 +45,9 @@ ze_result_t LinuxSchedulerImp::getTimesliceDuration(uint64_t &timeslice, ze_bool
     }
     if (result == ZE_RESULT_SUCCESS) {
         timeslice = timeslice * milliSecsToMicroSecs;
+    }
+    if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     return result;
 }
@@ -56,22 +62,37 @@ ze_result_t LinuxSchedulerImp::getHeartbeatInterval(uint64_t &heartbeat, ze_bool
     if (result == ZE_RESULT_SUCCESS) {
         heartbeat = heartbeat * milliSecsToMicroSecs;
     }
+    if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
     return result;
 }
 
 ze_result_t LinuxSchedulerImp::setPreemptTimeout(uint64_t timeout) {
     timeout = timeout / milliSecsToMicroSecs;
-    return pSysfsAccess->write(preemptTimeoutMilliSecs, timeout);
+    ze_result_t result = pSysfsAccess->write(preemptTimeoutMilliSecs, timeout);
+    if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    return result;
 }
 
 ze_result_t LinuxSchedulerImp::setTimesliceDuration(uint64_t timeslice) {
     timeslice = timeslice / milliSecsToMicroSecs;
-    return pSysfsAccess->write(timesliceDurationMilliSecs, timeslice);
+    ze_result_t result = pSysfsAccess->write(timesliceDurationMilliSecs, timeslice);
+    if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    return result;
 }
 
 ze_result_t LinuxSchedulerImp::setHeartbeatInterval(uint64_t heartbeat) {
     heartbeat = heartbeat / milliSecsToMicroSecs;
-    return pSysfsAccess->write(heartbeatIntervalMilliSecs, heartbeat);
+    ze_result_t result = pSysfsAccess->write(heartbeatIntervalMilliSecs, heartbeat);
+    if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    return result;
 }
 
 ze_bool_t LinuxSchedulerImp::canControlScheduler() {

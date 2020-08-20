@@ -168,7 +168,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidateFrequencyGetRangeWhengetMaxFai
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getValReturnError));
     auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman);
     zes_freq_range_t limit = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFrequencyImp->frequencyGetRange(&limit));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFrequencyImp->frequencyGetRange(&limit));
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetRangeThenVerifyzesFrequencyGetRangeTestCallSucceeds) {
@@ -190,7 +190,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFrequen
     limits.max = 600.0;
     ON_CALL(*pSysfsAccess.get(), write(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::setValMinReturnError));
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFrequencyImp->frequencySetRange(&limits));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFrequencyImp->frequencySetRange(&limits));
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures2ThenAPIExitsGracefully) {
@@ -202,7 +202,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFrequen
     limits.max = maxFreq;
     ON_CALL(*pSysfsAccess.get(), write(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::setValMaxReturnError));
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFrequencyImp->frequencySetRange(&limits));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFrequencyImp->frequencySetRange(&limits));
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest1CallSucceeds) {
@@ -313,19 +313,19 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidStatePointerWhenValidatingfrequen
     zes_freq_state_t state = {};
     ON_CALL(*pSysfsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getValRequestReturnError));
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFrequencyImp->frequencyGetState(&state));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFrequencyImp->frequencyGetState(&state));
 
     ON_CALL(*pSysfsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getValTdpReturnError));
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFrequencyImp->frequencyGetState(&state));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFrequencyImp->frequencyGetState(&state));
 
     ON_CALL(*pSysfsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getValEfficientReturnError));
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFrequencyImp->frequencyGetState(&state));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFrequencyImp->frequencyGetState(&state));
 
     ON_CALL(*pSysfsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getValActualReturnError));
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, pFrequencyImp->frequencyGetState(&state));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFrequencyImp->frequencyGetState(&state));
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenThrottleTimeStructPointerWhenCallingfrequencyGetThrottleTimeThenUnsupportedIsReturned) {

@@ -36,6 +36,10 @@ struct Mock<SchedulerSysfsAccess> : public SysfsAccess {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
+    ze_result_t getValForErrorWhileWrite(const std::string file, const uint64_t val) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
     ze_result_t getVal(const std::string file, uint64_t &val) {
         if (file.compare(preemptTimeoutMilliSecs) == 0) {
             val = mockValPreemptTimeoutMilliSecs;

@@ -205,7 +205,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     for (auto handle : handles) {
         zes_sched_mode_t mode;
         ze_result_t result = zesSchedulerGetCurrentMode(handle, &mode);
-        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     }
 }
 
@@ -216,7 +216,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     for (auto handle : handles) {
         zes_sched_timeout_properties_t config;
         ze_result_t result = zesSchedulerGetTimeoutModeProperties(handle, true, &config);
-        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     }
 }
 
@@ -227,7 +227,34 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
     for (auto handle : handles) {
         zes_sched_timeslice_properties_t config;
         ze_result_t result = zesSchedulerGetTimesliceModeProperties(handle, true, &config);
-        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    }
+}
+
+TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimeoutModeWhenSysfsNodeIsAbsentThenFailureIsReturned) {
+    ON_CALL(*pSysfsAccess.get(), write(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<SchedulerSysfsAccess>::getValForErrorWhileWrite));
+    auto handles = get_sched_handles(handleComponentCount);
+    for (auto handle : handles) {
+        ze_bool_t needReboot;
+        zes_sched_timeout_properties_t setConfig;
+        setConfig.watchdogTimeout = 10000u;
+        ze_result_t result = zesSchedulerSetTimeoutMode(handle, &setConfig, &needReboot);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    }
+}
+
+TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimesliceModeWhenSysfsNodeIsAbsentThenFailureIsReturned) {
+    ON_CALL(*pSysfsAccess.get(), write(_, _))
+        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<SchedulerSysfsAccess>::getValForErrorWhileWrite));
+    auto handles = get_sched_handles(handleComponentCount);
+    for (auto handle : handles) {
+        ze_bool_t needReboot;
+        zes_sched_timeslice_properties_t setConfig;
+        setConfig.interval = 1000u;
+        setConfig.yieldTimeout = 1000u;
+        ze_result_t result = zesSchedulerSetTimesliceMode(handle, &setConfig, &needReboot);
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     }
 }
 

@@ -23,6 +23,9 @@ ze_result_t LinuxStandbyImp::getMode(zes_standby_promo_mode_t &mode) {
     int currentMode = -1;
     ze_result_t result = pSysfsAccess->read(standbyModeFile, currentMode);
     if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         return result;
     }
     if (standbyModeDefault == currentMode) {

@@ -25,6 +25,9 @@ ze_result_t LinuxFrequencyImp::getMin(double &min) {
 
     ze_result_t result = pSysfsAccess->read(minFreqFile, intval);
     if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         return result;
     }
     min = intval;
@@ -34,6 +37,9 @@ ze_result_t LinuxFrequencyImp::getMin(double &min) {
 ze_result_t LinuxFrequencyImp::setMin(double min) {
     ze_result_t result = pSysfsAccess->write(minFreqFile, min);
     if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         return result;
     }
     return ZE_RESULT_SUCCESS;
@@ -44,6 +50,9 @@ ze_result_t LinuxFrequencyImp::getMax(double &max) {
 
     ze_result_t result = pSysfsAccess->read(maxFreqFile, intval);
     if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         return result;
     }
     max = intval;
@@ -53,6 +62,9 @@ ze_result_t LinuxFrequencyImp::getMax(double &max) {
 ze_result_t LinuxFrequencyImp::setMax(double max) {
     ze_result_t result = pSysfsAccess->write(maxFreqFile, max);
     if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         return result;
     }
     return ZE_RESULT_SUCCESS;
@@ -63,6 +75,9 @@ ze_result_t LinuxFrequencyImp::getRequest(double &request) {
 
     ze_result_t result = pSysfsAccess->read(requestFreqFile, intval);
     if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         return result;
     }
     request = intval;
@@ -74,6 +89,9 @@ ze_result_t LinuxFrequencyImp::getTdp(double &tdp) {
 
     ze_result_t result = pSysfsAccess->read(tdpFreqFile, intval);
     if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         return result;
     }
     tdp = intval;
@@ -85,6 +103,9 @@ ze_result_t LinuxFrequencyImp::getActual(double &actual) {
 
     ze_result_t result = pSysfsAccess->read(actualFreqFile, intval);
     if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         return result;
     }
     actual = intval;
@@ -96,6 +117,9 @@ ze_result_t LinuxFrequencyImp::getEfficient(double &efficient) {
 
     ze_result_t result = pSysfsAccess->read(efficientFreqFile, intval);
     if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         return result;
     }
     efficient = intval;
@@ -107,6 +131,9 @@ ze_result_t LinuxFrequencyImp::getMaxVal(double &maxVal) {
 
     ze_result_t result = pSysfsAccess->read(maxValFreqFile, intval);
     if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         return result;
     }
     maxVal = intval;
@@ -118,6 +145,9 @@ ze_result_t LinuxFrequencyImp::getMinVal(double &minVal) {
 
     ze_result_t result = pSysfsAccess->read(minValFreqFile, intval);
     if (ZE_RESULT_SUCCESS != result) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
         return result;
     }
     minVal = intval;
