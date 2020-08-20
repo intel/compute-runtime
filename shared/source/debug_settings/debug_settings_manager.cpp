@@ -7,6 +7,7 @@
 
 #include "debug_settings_manager.h"
 
+#include "shared/source/debug_settings/debug_variables_helper.h"
 #include "shared/source/debug_settings/definitions/translate_debug_settings.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -73,7 +74,7 @@ void DebugSettingsManager<DebugLevel>::dumpFlags() const {
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)   \
     settingsDumpFile << #variableName << " = " << flags.variableName.get() << '\n'; \
     dumpNonDefaultFlag<dataType>(#variableName, flags.variableName.get(), defaultValue);
-    if (registryReadAvailable()) {
+    if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
     }
 #include "release_variables.inl"
@@ -89,7 +90,7 @@ void DebugSettingsManager<DebugLevel>::injectSettingsFromReader() {
         flags.variableName.set(tempData);                                                    \
     }
 
-    if (registryReadAvailable()) {
+    if (registryReadAvailable() || isDebugKeysReadEnabled()) {
 #include "debug_variables.inl"
     }
 #include "release_variables.inl"

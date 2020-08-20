@@ -141,6 +141,19 @@ TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledWhenCallingDumpFlagsThe
     EXPECT_NE(std::string::npos, output.find("Non-default value of debug variable: Enable64kbpages = 1"));
 }
 
+TEST(DebugSettingsManager, givenPrintDebugSettingsEnabledOnDisabledDebugManagerWhenCallingDumpFlagsThenFlagsAreNotWrittenToDumpFile) {
+    testing::internal::CaptureStdout();
+    FullyDisabledTestDebugManager debugManager;
+    debugManager.flags.PrintDebugSettings.set(true);
+
+    std::remove(FullyDisabledTestDebugManager::settingsDumpFileName);
+    debugManager.dumpFlags();
+    std::remove(FullyDisabledTestDebugManager::settingsDumpFileName);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    ASSERT_EQ(0u, output.size());
+}
+
 TEST(AllocationInfoLogging, givenBaseGraphicsAllocationWhenGettingImplementationSpecificAllocationInfoThenReturnEmptyInfoString) {
     GraphicsAllocation graphicsAllocation(0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0ull, 0ull, 0, MemoryPool::MemoryNull);
     EXPECT_STREQ(graphicsAllocation.getAllocationInfoString().c_str(), "");
