@@ -29,14 +29,6 @@ void EngineHandleContext::createHandle(zes_engine_group_t type) {
 }
 
 void EngineHandleContext::init() {
-    auto isSysmanEnabled = getenv("ZES_ENABLE_SYSMAN");
-    if (isSysmanEnabled != nullptr) {
-        auto isSysmanEnabledAsInt = atoi(isSysmanEnabled);
-        if (isSysmanEnabledAsInt == 1) {
-            createHandle(ZES_ENGINE_GROUP_COMPUTE_ALL);
-        }
-        return;
-    }
     createHandle(ZES_ENGINE_GROUP_COMPUTE_ALL);
 }
 

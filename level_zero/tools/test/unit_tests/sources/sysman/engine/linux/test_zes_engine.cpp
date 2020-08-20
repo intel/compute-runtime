@@ -43,23 +43,6 @@ class SysmanDeviceEngineFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanDeviceEngineFixture, GivenSysmanEnvironmentVariableSetToZeroWhenCreatingEngineHandlesThenHandlesNotCreated) {
-    setenv("ZES_ENABLE_SYSMAN", "0", 1);
-    auto pEngineHandleContextTest = std::make_unique<EngineHandleContext>(pOsSysman);
-    pEngineHandleContextTest->init();
-    uint32_t count = 0;
-    std::vector<zes_engine_handle_t> handles(count, nullptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pEngineHandleContextTest->engineGet(&count, handles.data()));
-    EXPECT_EQ(count, 0u);
-}
-
-TEST_F(SysmanDeviceEngineFixture, GivenSysmanEnvironmentVariableNotSetWhenCreatingEngineEngineThenZetHandlesCreated) {
-    unsetenv("ZES_ENABLE_SYSMAN");
-    auto pEngineHandleContextTestWithoutEnvSet = std::make_unique<EngineHandleContext>(pOsSysman);
-    pEngineHandleContextTestWithoutEnvSet->init();
-    EXPECT_EQ(handleComponentCount, static_cast<uint32_t>(pEngineHandleContextTestWithoutEnvSet->handleList.size()));
-}
-
 TEST_F(SysmanDeviceEngineFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumEngineGroupsThenNonZeroCountIsReturnedAndVerifyCallSucceeds) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
