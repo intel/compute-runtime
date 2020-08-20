@@ -29,7 +29,7 @@ class BufferObject {
     friend DrmMemoryManager;
 
   public:
-    BufferObject(Drm *drm, int handle, size_t size);
+    BufferObject(Drm *drm, int handle, size_t size, size_t maxOsContextCount);
     MOCKABLE_VIRTUAL ~BufferObject(){};
 
     struct Deleter {

@@ -104,7 +104,7 @@ TEST_F(DrmGemCloseWorkerTests, gemClose) {
     this->drmMock->gem_close_expected = 1;
 
     auto worker = new DrmGemCloseWorker(*mm);
-    auto bo = new BufferObject(this->drmMock, 1, 0);
+    auto bo = new BufferObject(this->drmMock, 1, 0, 1);
 
     worker->push(bo);
 
@@ -115,7 +115,7 @@ TEST_F(DrmGemCloseWorkerTests, gemCloseExit) {
     this->drmMock->gem_close_expected = -1;
 
     auto worker = new DrmGemCloseWorker(*mm);
-    auto bo = new BufferObject(this->drmMock, 1, 0);
+    auto bo = new BufferObject(this->drmMock, 1, 0, 1);
 
     worker->push(bo);
 
@@ -135,7 +135,7 @@ TEST_F(DrmGemCloseWorkerTests, close) {
     this->drmMock->gem_close_expected = -1;
 
     auto worker = new DrmGemCloseWorker(*mm);
-    auto bo = new BufferObject(this->drmMock, 1, 0);
+    auto bo = new BufferObject(this->drmMock, 1, 0, 1);
 
     worker->push(bo);
     worker->close(false);
@@ -153,7 +153,7 @@ TEST_F(DrmGemCloseWorkerTests, givenAllocationWhenAskedForUnreferenceWithForceFl
     this->drmMock->gem_close_expected = 1;
 
     auto worker = new DrmGemCloseWorker(*mm);
-    auto bo = new BufferObject(this->drmMock, 1, 0);
+    auto bo = new BufferObject(this->drmMock, 1, 0, 1);
 
     bo->reference();
     worker->push(bo);

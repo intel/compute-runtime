@@ -18,7 +18,7 @@
 
 namespace NEO {
 
-BufferObject *createBufferObjectInMemoryRegion(Drm *drm, uint64_t gpuAddress, size_t size, uint32_t memoryBanks) {
+BufferObject *createBufferObjectInMemoryRegion(Drm *drm, uint64_t gpuAddress, size_t size, uint32_t memoryBanks, size_t maxOsContextCount) {
     auto memoryInfo = static_cast<MemoryInfoImpl *>(drm->getMemoryInfo());
     if (!memoryInfo) {
         return nullptr;
@@ -50,7 +50,7 @@ BufferObject *createBufferObjectInMemoryRegion(Drm *drm, uint64_t gpuAddress, si
         return nullptr;
     }
 
-    auto bo = new (std::nothrow) BufferObject(drm, createExt.handle, size);
+    auto bo = new (std::nothrow) BufferObject(drm, createExt.handle, size, maxOsContextCount);
     if (!bo) {
         return nullptr;
     }
@@ -85,7 +85,7 @@ uint64_t getGpuAddress(GraphicsAllocation::AllocationType allocType, GfxPartitio
     return gpuAddress;
 }
 
-bool createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress) {
+bool createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount) {
     std::array<std::unique_ptr<BufferObject>, EngineLimits::maxHandleCount> bos{};
     auto &storageInfo = allocation->storageInfo;
     auto boAddress = gpuAddress;
@@ -95,7 +95,7 @@ bool createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddres
             memoryBanks &= 1u << handleId;
         }
         auto boSize = alignUp(allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation(), MemoryConstants::pageSize64k);
-        bos[handleId] = std::unique_ptr<BufferObject>(createBufferObjectInMemoryRegion(drm, boAddress, boSize, memoryBanks));
+        bos[handleId] = std::unique_ptr<BufferObject>(createBufferObjectInMemoryRegion(drm, boAddress, boSize, memoryBanks, maxOsContextCount));
         if (nullptr == bos[handleId]) {
             return false;
         }
@@ -148,7 +148,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
     allocation->setFlushL3Required(allocationData.flags.flushL3);
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), sizeAllocated);
 
-    if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress)) {
+    if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress, maxOsContextCount)) {
         for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
             delete allocation->getGmm(handleId);
         }

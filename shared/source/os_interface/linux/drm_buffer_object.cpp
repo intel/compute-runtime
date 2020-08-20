@@ -30,14 +30,14 @@
 
 namespace NEO {
 
-BufferObject::BufferObject(Drm *drm, int handle, size_t size) : drm(drm), refCount(1), handle(handle), size(size), isReused(false) {
+BufferObject::BufferObject(Drm *drm, int handle, size_t size, size_t maxOsContextCount) : drm(drm), refCount(1), handle(handle), size(size), isReused(false) {
     this->tiling_mode = I915_TILING_NONE;
     this->lockedAddress = nullptr;
 
     perContextVmsUsed = drm->isPerContextVMRequired();
 
     if (perContextVmsUsed) {
-        bindInfo.resize(MemoryManager::maxOsContextCount);
+        bindInfo.resize(maxOsContextCount);
         for (auto &iter : bindInfo) {
             iter.fill(false);
         }

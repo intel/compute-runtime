@@ -147,7 +147,7 @@ class DrmCommandStreamEnhancedTemplate : public ::testing::Test {
         friend DrmCommandStreamEnhancedTemplate<T>;
 
       protected:
-        MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, 1, 0) {
+        MockBufferObject(Drm *drm, size_t size) : BufferObject(drm, 1, 0, 16u) {
             this->size = alignUp(size, 4096);
         }
     };

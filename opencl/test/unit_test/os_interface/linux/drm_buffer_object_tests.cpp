@@ -25,7 +25,7 @@ using namespace NEO;
 
 class TestedBufferObject : public BufferObject {
   public:
-    TestedBufferObject(Drm *drm) : BufferObject(drm, 1, 0) {
+    TestedBufferObject(Drm *drm) : BufferObject(drm, 1, 0, 1) {
     }
 
     void tileBy(uint32_t mode) {
@@ -188,7 +188,7 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
 
 TEST(DrmBufferObjectSimpleTest, givenBufferObjectWhenConstructedWithASizeThenTheSizeIsInitialized) {
     std::unique_ptr<DrmMockCustom> drmMock(new DrmMockCustom);
-    std::unique_ptr<BufferObject> bo(new BufferObject(drmMock.get(), 1, 0x1000));
+    std::unique_ptr<BufferObject> bo(new BufferObject(drmMock.get(), 1, 0x1000, 1));
 
     EXPECT_EQ(0x1000u, bo->peekSize());
 }
@@ -231,7 +231,7 @@ TEST_F(DrmBufferObjectTest, givenDeleterWhenBufferObjectIsCreatedAndDeletedThenC
     mock->ioctl_expected.reset();
 
     {
-        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(mock.get(), 1, 0x1000));
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(mock.get(), 1, 0x1000, 1));
     }
 
     EXPECT_EQ(1, mock->ioctl_cnt.gemClose);
@@ -245,9 +245,9 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoCreatedThenBindInfoIsInitia
     device->getExecutionEnvironment()->calculateMaxOsContextCount();
     DrmMock drm(*(device->getExecutionEnvironment()->rootDeviceEnvironments[0].get()));
     EXPECT_TRUE(drm.isPerContextVMRequired());
-    MockBufferObject bo(&drm);
-
     auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
+    MockBufferObject bo(&drm, 0, 0, osContextCount);
+
     EXPECT_EQ(osContextCount, bo.bindInfo.size());
 
     for (auto &iter : bo.bindInfo) {
@@ -273,9 +273,9 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoBoundAndUnboundThenCorrectB
 
     std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(), executionEnvironment, 0));
 
-    MockBufferObject bo(drm);
-
     auto osContextCount = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount();
+    MockBufferObject bo(drm, 0, 0, osContextCount);
+
     EXPECT_EQ(osContextCount, bo.bindInfo.size());
 
     auto contextId = device->getExecutionEnvironment()->memoryManager->getRegisteredEnginesCount() / 2;
