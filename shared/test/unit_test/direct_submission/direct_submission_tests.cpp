@@ -9,10 +9,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/helpers/flush_stamp.h"
-#include "shared/source/os_interface/device_factory.h"
-#include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
-#include "shared/test/unit_test/fixtures/device_fixture.h"
+#include "shared/test/unit_test/fixtures/direct_submission_fixture.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/dispatch_flags_helper.h"
 #include "shared/test/unit_test/helpers/ult_hw_config.h"
@@ -24,51 +22,7 @@
 #include "opencl/test/unit_test/mocks/mock_io_functions.h"
 #include "test.h"
 
-#include <atomic>
-#include <memory>
-
-using namespace NEO;
-
-extern std::atomic<uintptr_t> lastClFlushedPtr;
-
-struct DirectSubmissionFixture : public DeviceFixture {
-    void SetUp() {
-        DeviceFixture::SetUp();
-        DeviceFactory::prepareDeviceEnvironments(*pDevice->getExecutionEnvironment());
-
-        osContext.reset(OsContext::create(nullptr, 0u, pDevice->getDeviceBitfield(), aub_stream::ENGINE_RCS, PreemptionMode::ThreadGroup,
-                                          false, false, false));
-    }
-
-    std::unique_ptr<OsContext> osContext;
-};
-
 using DirectSubmissionTest = Test<DirectSubmissionFixture>;
-
-struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
-    void SetUp() {
-        DirectSubmissionFixture::SetUp();
-        MemoryManager *memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
-        const AllocationProperties commandBufferProperties{pDevice->getRootDeviceIndex(), 0x1000,
-                                                           GraphicsAllocation::AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()};
-        commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
-
-        batchBuffer.endCmdPtr = &bbStart[0];
-        batchBuffer.commandBufferAllocation = commandBuffer;
-        batchBuffer.usedSize = 0x40;
-    }
-
-    void TearDown() {
-        MemoryManager *memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
-        memoryManager->freeGraphicsMemory(commandBuffer);
-
-        DirectSubmissionFixture::TearDown();
-    }
-
-    BatchBuffer batchBuffer;
-    uint8_t bbStart[64];
-    GraphicsAllocation *commandBuffer;
-};
 
 using DirectSubmissionDispatchBufferTest = Test<DirectSubmissionDispatchBufferFixture>;
 
@@ -454,10 +408,10 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
 
-    if (directSubmission.getSizeSemaphoreSection() == EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() + 8 * MemoryConstants::cacheLineSize) {
-        EXPECT_EQ(0u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
-    } else {
+    if (directSubmission.getSizePrefetchMitigation() == sizeof(MI_BATCH_BUFFER_START)) {
         EXPECT_EQ(1u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
+    } else {
+        EXPECT_EQ(0u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
     }
 
     MI_STORE_DATA_IMM *storeData = hwParse.getCommand<MI_STORE_DATA_IMM>();
@@ -498,10 +452,10 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, 0);
 
-    if (directSubmission.getSizeSemaphoreSection() == EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() + 8 * MemoryConstants::cacheLineSize) {
-        EXPECT_EQ(0u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
-    } else {
+    if (directSubmission.getSizePrefetchMitigation() == sizeof(MI_BATCH_BUFFER_START)) {
         EXPECT_EQ(1u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
+    } else {
+        EXPECT_EQ(0u, hwParse.getCommandCount<MI_BATCH_BUFFER_START>());
     }
 
     MI_STORE_DATA_IMM *storeData = hwParse.getCommand<MI_STORE_DATA_IMM>();
