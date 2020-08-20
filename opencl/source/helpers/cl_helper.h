@@ -73,6 +73,8 @@ inline const std::string cmdTypetoString(cl_command_type cmd) {
         return "CL_COMMAND_SVM_MAP";
     case CL_COMMAND_SVM_UNMAP:
         return "CL_COMMAND_SVM_UNMAP";
+    case CL_COMMAND_SVM_MIGRATE_MEM:
+        return "CL_COMMAND_SVM_MIGRATE_MEM";
     case CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR:
         return "CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR";
     default: {

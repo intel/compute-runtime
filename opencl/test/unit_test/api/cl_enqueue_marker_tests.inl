@@ -45,6 +45,7 @@ static unsigned int commandWithoutKernelTypes[] = {
     CL_COMMAND_MARKER,
     CL_COMMAND_MIGRATE_MEM_OBJECTS,
     CL_COMMAND_SVM_MAP,
+    CL_COMMAND_SVM_MIGRATE_MEM,
     CL_COMMAND_SVM_UNMAP,
     CL_COMMAND_SVM_FREE};
 

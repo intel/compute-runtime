@@ -544,12 +544,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMigrateMem(cl_uint numSvmPointers,
     NullSurface s;
     Surface *surfaces[] = {&s};
 
-    enqueueHandler<CL_COMMAND_MIGRATE_MEM_OBJECTS>(surfaces,
-                                                   false,
-                                                   MultiDispatchInfo(),
-                                                   numEventsInWaitList,
-                                                   eventWaitList,
-                                                   event);
+    enqueueHandler<CL_COMMAND_SVM_MIGRATE_MEM>(surfaces,
+                                               false,
+                                               MultiDispatchInfo(),
+                                               numEventsInWaitList,
+                                               eventWaitList,
+                                               event);
 
     return CL_SUCCESS;
 }

@@ -23,10 +23,12 @@ void getIntelQueueInfo(CommandQueue *queue, cl_command_queue_info paramName, Get
     retVal = CL_INVALID_VALUE;
 }
 bool isCommandWithoutKernel(uint32_t commandType) {
-    return ((commandType == CL_COMMAND_BARRIER) || (commandType == CL_COMMAND_MARKER) ||
+    return ((commandType == CL_COMMAND_BARRIER) ||
+            (commandType == CL_COMMAND_MARKER) ||
             (commandType == CL_COMMAND_MIGRATE_MEM_OBJECTS) ||
+            (commandType == CL_COMMAND_SVM_FREE) ||
             (commandType == CL_COMMAND_SVM_MAP) ||
-            (commandType == CL_COMMAND_SVM_UNMAP) ||
-            (commandType == CL_COMMAND_SVM_FREE));
+            (commandType == CL_COMMAND_SVM_MIGRATE_MEM) ||
+            (commandType == CL_COMMAND_SVM_UNMAP));
 }
 } // namespace NEO

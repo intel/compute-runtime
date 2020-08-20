@@ -866,6 +866,23 @@ TEST_F(EnqueueSvmTest, GivenValidParamsWhenMigratingMemoryThenSuccessIsReturned)
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+HWTEST_F(EnqueueSvmTest, WhenMigratingMemoryThenSvmMigrateMemCommandTypeIsUsed) {
+    MockCommandQueueHw<FamilyType> commandQueue{context, pClDevice, nullptr};
+    const void *svmPtrs[] = {ptrSVM};
+    retVal = commandQueue.enqueueSVMMigrateMem(
+        1,       // cl_uint num_svm_pointers
+        svmPtrs, // const void **svm_pointers
+        nullptr, // const size_t *sizes
+        0,       // const cl_mem_migration_flags flags
+        0,       // cl_uint num_events_in_wait_list
+        nullptr, // cl_event *event_wait_list
+        nullptr  // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    uint32_t expectedCommandType = CL_COMMAND_SVM_MIGRATE_MEM;
+    EXPECT_EQ(expectedCommandType, commandQueue.lastCommandType);
+}
+
 TEST(CreateSvmAllocTests, givenVariousSvmAllocationPropertiesWhenAllocatingSvmThenSvmIsCorrectlyAllocated) {
     if (!defaultHwInfo->capabilityTable.ftrSvm) {
         return;

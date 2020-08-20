@@ -12,7 +12,7 @@
 #include <array>
 
 TEST(ClHelper, whenCallGetStringWithCmdTypeFunctionThenGetProperCmdTypeAsString) {
-    std::array<std::string, 30> expected = {{"CL_COMMAND_NDRANGE_KERNEL",
+    std::array<std::string, 31> expected = {{"CL_COMMAND_NDRANGE_KERNEL",
                                              "CL_COMMAND_TASK",
                                              "CL_COMMAND_NATIVE_KERNEL",
                                              "CL_COMMAND_READ_BUFFER",
@@ -41,9 +41,10 @@ TEST(ClHelper, whenCallGetStringWithCmdTypeFunctionThenGetProperCmdTypeAsString)
                                              "CL_COMMAND_SVM_MEMCPY",
                                              "CL_COMMAND_SVM_MEMFILL",
                                              "CL_COMMAND_SVM_MAP",
-                                             "CL_COMMAND_SVM_UNMAP"}};
+                                             "CL_COMMAND_SVM_UNMAP",
+                                             "CL_COMMAND_SVM_MIGRATE_MEM"}};
 
-    for (int i = CL_COMMAND_NDRANGE_KERNEL; i <= CL_COMMAND_SVM_UNMAP; i++) {
+    for (int i = CL_COMMAND_NDRANGE_KERNEL; i <= CL_COMMAND_SVM_MIGRATE_MEM; i++) {
         EXPECT_STREQ(expected[i - CL_COMMAND_NDRANGE_KERNEL].c_str(), NEO::cmdTypetoString(i).c_str());
     }
 
