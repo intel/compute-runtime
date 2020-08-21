@@ -85,7 +85,7 @@ class MockObject<Buffer> : public MockObjectBase<Buffer> {
 template <>
 class MockObject<Program> : public MockObjectBase<Program> {
   public:
-    MockObject() : MockObjectBase<Program>(*new ExecutionEnvironment()),
+    MockObject() : MockObjectBase<Program>(*new ExecutionEnvironment(), nullptr, false, nullptr),
                    executionEnvironment(&this->peekExecutionEnvironment()) {}
 
   private:

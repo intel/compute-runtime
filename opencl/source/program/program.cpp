@@ -34,10 +34,6 @@ namespace NEO {
 
 const std::string Program::clOptNameClVer("-cl-std=CL");
 
-Program::Program(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false, nullptr) {
-    numDevices = 0;
-}
-
 Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn, Device *device) : executionEnvironment(executionEnvironment),
                                                                                                                  context(context),
                                                                                                                  pDevice(device),
@@ -73,11 +69,11 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
         }
         force32BitAddressess = pClDevice->getSharedDeviceInfo().force32BitAddressess;
 
-        if (force32BitAddressess) {
+        if (force32BitAddressess && !isBuiltIn) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
         }
 
-        if (pClDevice->areSharedSystemAllocationsAllowed() ||
+        if ((isBuiltIn && is32bit) || pClDevice->areSharedSystemAllocationsAllowed() ||
             DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
         }

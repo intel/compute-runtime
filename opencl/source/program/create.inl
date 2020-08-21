@@ -96,19 +96,9 @@ T *Program::create(
     }
 
     if (retVal == CL_SUCCESS) {
-        program = new T(*device.getExecutionEnvironment());
+        program = new T(*device.getExecutionEnvironment(), context, isBuiltIn, &device.getDevice());
         program->sourceCode = nullTerminatedString;
         program->createdFrom = CreatedFrom::SOURCE;
-        program->context = context;
-        program->isBuiltIn = isBuiltIn;
-        if (program->context && !program->isBuiltIn) {
-            program->context->incRefInternal();
-        }
-        program->pDevice = &device.getDevice();
-        program->numDevices = 1;
-        if (is32bit || DebugManager.flags.DisableStatelessToStatefulOptimization.get() || device.areSharedSystemAllocationsAllowed()) {
-            CompilerOptions::concatenateAppend(program->internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
-        }
     }
 
     if (errcodeRet) {

@@ -260,8 +260,6 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL void replaceDeviceBinary(std::unique_ptr<char[]> newBinary, size_t newBinarySize);
 
   protected:
-    Program(ExecutionEnvironment &executionEnvironment);
-
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize);
 
     cl_int packDeviceBinary();

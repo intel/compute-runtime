@@ -55,6 +55,7 @@ class MockProgram : public Program {
     using Program::packedDeviceBinary;
     using Program::packedDeviceBinarySize;
     using Program::pDevice;
+    using Program::Program;
     using Program::programBinaryType;
     using Program::sourceCode;
     using Program::specConstantsIds;
@@ -64,9 +65,7 @@ class MockProgram : public Program {
     using Program::unpackedDeviceBinary;
     using Program::unpackedDeviceBinarySize;
 
-    template <typename... T>
-    MockProgram(T &&... args) : Program(std::forward<T>(args)...) {
-    }
+    MockProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false, nullptr) {}
 
     ~MockProgram() override {
         if (contextSet)
@@ -156,7 +155,7 @@ class MockProgram : public Program {
 class GlobalMockSipProgram : public Program {
   public:
     using Program::Program;
-    GlobalMockSipProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment) {
+    GlobalMockSipProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false, nullptr) {
     }
     cl_int processGenBinary() override;
     cl_int processGenBinaryOnce();
