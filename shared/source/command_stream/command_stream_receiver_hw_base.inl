@@ -253,6 +253,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
     csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
     csrSizeRequestFlags.specialPipelineSelectModeChanged = this->lastSpecialPipelineSelectMode != dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode;
+
+    if (dispatchFlags.numGrfRequired == GrfConfig::NotApplicable) {
+        dispatchFlags.numGrfRequired = lastSentNumGrfRequired;
+    }
+
     csrSizeRequestFlags.numGrfRequiredChanged = this->lastSentNumGrfRequired != dispatchFlags.numGrfRequired;
     lastSentNumGrfRequired = dispatchFlags.numGrfRequired;
 
