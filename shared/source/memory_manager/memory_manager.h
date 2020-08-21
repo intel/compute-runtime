@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/memory_manager/local_memory_usage.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include "engine_node.h"
@@ -88,6 +89,8 @@ class MemoryManager {
     void cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *);
     GraphicsAllocation *createGraphicsAllocationWithPadding(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding);
     virtual GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding);
+
+    void *createMultiGraphicsAllocation(std::vector<uint32_t> &rootDeviceIndices, AllocationProperties &properties, MultiGraphicsAllocation &multiGraphicsAllocation);
 
     virtual AllocationStatus populateOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) = 0;
     virtual void cleanOsHandles(OsHandleStorage &handleStorage, uint32_t rootDeviceIndex) = 0;

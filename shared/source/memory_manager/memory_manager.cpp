@@ -135,6 +135,36 @@ GraphicsAllocation *MemoryManager::createPaddedAllocation(GraphicsAllocation *in
     return allocateGraphicsMemoryWithProperties({inputGraphicsAllocation->getRootDeviceIndex(), sizeWithPadding, GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, systemMemoryBitfield});
 }
 
+void *MemoryManager::createMultiGraphicsAllocation(std::vector<uint32_t> &rootDeviceIndices, AllocationProperties &properties, MultiGraphicsAllocation &multiGraphicsAllocation) {
+    void *ptr = nullptr;
+
+    for (auto &rootDeviceIndex : rootDeviceIndices) {
+        properties.rootDeviceIndex = rootDeviceIndex;
+
+        if (!ptr) {
+            auto graphicsAllocation = allocateGraphicsMemoryWithProperties(properties);
+            if (!graphicsAllocation) {
+                return nullptr;
+            }
+            multiGraphicsAllocation.addAllocation(graphicsAllocation);
+            ptr = reinterpret_cast<void *>(graphicsAllocation->getGpuAddress());
+        } else {
+            properties.flags.allocateMemory = false;
+
+            auto graphicsAllocation = allocateGraphicsMemoryWithProperties(properties, ptr);
+            if (!graphicsAllocation) {
+                for (auto gpuAllocation : multiGraphicsAllocation.getGraphicsAllocations()) {
+                    freeGraphicsMemory(gpuAllocation);
+                }
+                return nullptr;
+            }
+            multiGraphicsAllocation.addAllocation(graphicsAllocation);
+        }
+    }
+
+    return ptr;
+}
+
 void MemoryManager::freeSystemMemory(void *ptr) {
     ::alignedFree(ptr);
 }

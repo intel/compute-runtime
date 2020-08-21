@@ -118,7 +118,14 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(uint32_t maxRootDevice
 
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
 
-    uint32_t rootDeviceIndex = 0u;
+    std::vector<uint32_t> rootDeviceIndices;
+    rootDeviceIndices.reserve(maxRootDeviceIndex);
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex <= maxRootDeviceIndex; rootDeviceIndex++) {
+        rootDeviceIndices.push_back(rootDeviceIndex);
+    }
+
+    uint32_t rootDeviceIndex = rootDeviceIndices.at(0);
+
     AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
                                                  true,
                                                  alignedSize,
@@ -130,36 +137,16 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(uint32_t maxRootDevice
 
     SvmAllocationData allocData(maxRootDeviceIndex);
 
-    GraphicsAllocation *unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties);
-    if (!unifiedMemoryAllocation) {
+    void *usmPtr = memoryManager->createMultiGraphicsAllocation(rootDeviceIndices, unifiedMemoryProperties, allocData.gpuAllocations);
+    if (!usmPtr) {
         return nullptr;
     }
 
-    allocData.gpuAllocations.addAllocation(unifiedMemoryAllocation);
     allocData.cpuAllocation = nullptr;
     allocData.size = size;
     allocData.memoryType = memoryProperties.memoryType;
     allocData.allocationFlagsProperty = memoryProperties.allocationFlags;
     allocData.device = nullptr;
-
-    void *usmPtr = reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
-
-    // Create allocation for the rest of the indexes, using the previously-allocated memory
-    for (rootDeviceIndex = 1; rootDeviceIndex <= maxRootDeviceIndex; rootDeviceIndex++) {
-        unifiedMemoryProperties.rootDeviceIndex = rootDeviceIndex;
-        unifiedMemoryProperties.flags.allocateMemory = false;
-
-        GraphicsAllocation *unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties,
-                                                                                                          usmPtr);
-        if (!unifiedMemoryAllocation) {
-            for (auto gpuAllocation : allocData.gpuAllocations.getGraphicsAllocations()) {
-                memoryManager->freeGraphicsMemory(gpuAllocation);
-            }
-            return nullptr;
-        }
-
-        allocData.gpuAllocations.addAllocation(unifiedMemoryAllocation);
-    }
 
     std::unique_lock<SpinLock> lock(mtx);
     this->SVMAllocs.insert(allocData);
