@@ -84,7 +84,7 @@ cl_int getQueueInfo(QueueType *queue,
             retVal = changeGetInfoStatusToCLResultType(getInfoHelper.set<cl_uint>(devQ->getQueueSize()));
             break;
         }
-        retVal = CL_INVALID_VALUE;
+        retVal = CL_INVALID_COMMAND_QUEUE;
         break;
     case CL_QUEUE_PROPERTIES_ARRAY: {
         const cl_queue_properties *source = nullptr;

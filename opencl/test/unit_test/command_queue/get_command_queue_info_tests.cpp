@@ -79,7 +79,7 @@ TEST_P(GetCommandQueueInfoTest, QUEUE_PROPERTIES) {
     EXPECT_EQ(properties, command_queue_properties_returned);
 }
 
-TEST_P(GetCommandQueueInfoTest, QUEUE_SIZE) {
+TEST_P(GetCommandQueueInfoTest, givenNonDeviceQueueWhenQueryingQueueSizeThenInvalidCommandQueueErrorIsReturned) {
     cl_uint queueSize = 0;
 
     auto retVal = pCmdQ->getCommandQueueInfo(
@@ -87,7 +87,7 @@ TEST_P(GetCommandQueueInfoTest, QUEUE_SIZE) {
         sizeof(queueSize),
         &queueSize,
         nullptr);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
 TEST_P(GetCommandQueueInfoTest, QUEUE_DEVICE_DEFAULT) {
