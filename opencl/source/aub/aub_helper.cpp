@@ -12,6 +12,8 @@
 
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"
 
+#include "third_party/aub_stream/headers/aubstream.h"
+
 namespace NEO {
 
 uint64_t AubHelper::getTotalMemBankSize() {
@@ -37,4 +39,9 @@ uint64_t AubHelper::getMemBankSize(const HardwareInfo *pHwInfo) {
 void AubHelper::setAdditionalMmioList() {
 }
 
+void AubHelper::setTbxConfiguration() {
+    aub_stream::setTbxServerIp(DebugManager.flags.TbxServer.get());
+    aub_stream::setTbxServerPort(DebugManager.flags.TbxPort.get());
+    aub_stream::setTbxFrontdoorMode(DebugManager.flags.TbxFrontdoorMode.get());
+}
 } // namespace NEO

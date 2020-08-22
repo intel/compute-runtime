@@ -22,6 +22,7 @@ using namespace NEO;
 namespace aub_stream_stubs {
 extern uint16_t tbxServerPort;
 extern std::string tbxServerIp;
+extern bool tbxFrontdoorMode;
 } // namespace aub_stream_stubs
 
 TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenAubManagerIsNotCreated) {
@@ -56,4 +57,17 @@ TEST(AubCenter, GivenUseAubStreamAndTbxServerPortDebugVariableSetWhenAubCenterIs
 
     MockAubCenter aubCenter(defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_TBX);
     EXPECT_EQ(port, aub_stream_stubs::tbxServerPort);
+}
+
+TEST(AubCenter, GivenUseAubStreamAndTbxFrontdoorModeDebugVariableSetWhenAubCenterIsCreatedThenFrontdoorModeIsModified) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseAubStream.set(true);
+    DebugManager.flags.TbxFrontdoorMode.set(true);
+
+    VariableBackup<bool> backup(&aub_stream_stubs::tbxFrontdoorMode);
+
+    EXPECT_FALSE(aub_stream_stubs::tbxFrontdoorMode);
+
+    MockAubCenter aubCenter(defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_TBX);
+    EXPECT_TRUE(aub_stream_stubs::tbxFrontdoorMode);
 }

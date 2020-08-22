@@ -45,6 +45,7 @@ class AubHelper : public NonCopyableOrMovableClass {
     static uint64_t getMemBankSize(const HardwareInfo *pHwInfo);
     static MMIOList getAdditionalMmioList();
     static void setAdditionalMmioList();
+    static void setTbxConfiguration();
 
     virtual int getDataHintForPml4Entry() const = 0;
     virtual int getDataHintForPdpEntry() const = 0;

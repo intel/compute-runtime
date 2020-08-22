@@ -34,8 +34,8 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
         if (DebugManager.flags.AubDumpAddMmioRegistersList.get() != "unk") {
             aub_stream::injectMMIOList(AubHelper::getAdditionalMmioList());
         }
-        aub_stream::setTbxServerIp(DebugManager.flags.TbxServer.get());
-        aub_stream::setTbxServerPort(DebugManager.flags.TbxPort.get());
+
+        AubHelper::setTbxConfiguration();
 
         aubManager.reset(createAubManager(pHwInfo->platform.eProductFamily, devicesCount, memoryBankSize, localMemoryEnabled, aubStreamMode, pHwInfo->capabilityTable.gpuAddressSpace));
     }
