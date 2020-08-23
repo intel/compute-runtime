@@ -45,6 +45,15 @@ DWORD getModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
     lstrcpyW(lpFilename, currentLibraryPath);
     return TRUE;
 }
+
+char *openCLDriverName = "igdrcl.dll";
+
+char *getenv(const char *variableName) {
+    if (strcmp(variableName, "OpenCLDriverName") == 0) {
+        return openCLDriverName;
+    }
+    return ::getenv(variableName);
+}
 } // namespace SysCalls
 
 } // namespace NEO

@@ -28,6 +28,9 @@ BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule) {
 DWORD getModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize) {
     return GetModuleFileName(hModule, lpFilename, nSize);
 }
+char *getenv(const char *variableName) {
+    return ::getenv(variableName);
+}
 } // namespace SysCalls
 
 } // namespace NEO

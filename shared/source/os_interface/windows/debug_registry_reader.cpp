@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 
@@ -17,6 +18,10 @@ namespace NEO {
 
 SettingsReader *SettingsReader::createOsReader(bool userScope, const std::string &regKey) {
     return new RegistryReader(userScope, regKey);
+}
+
+char *SettingsReader::getenv(const char *settingName) {
+    return SysCalls::getenv(settingName);
 }
 
 RegistryReader::RegistryReader(bool userScope, const std::string &regKey) : registryReadRootKey(regKey) {

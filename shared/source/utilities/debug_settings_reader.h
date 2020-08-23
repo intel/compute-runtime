@@ -30,6 +30,6 @@ class SettingsReader {
     virtual std::string getSetting(const char *settingName, const std::string &value) = 0;
     virtual const char *appSpecificLocation(const std::string &name) = 0;
     static const char *settingsFileName;
-    MOCKABLE_VIRTUAL char *getenv(const char *settingName) { return ::getenv(settingName); };
+    MOCKABLE_VIRTUAL char *getenv(const char *settingName);
 };
 }; // namespace NEO
