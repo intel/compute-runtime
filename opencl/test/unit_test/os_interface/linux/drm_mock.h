@@ -18,6 +18,7 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "drm/i915_drm.h"
+#include "gtest/gtest.h"
 
 #include <cstdio>
 #include <fstream>
@@ -146,4 +147,54 @@ class DrmMockNonFailing : public DrmMock {
   public:
     using DrmMock::DrmMock;
     int handleRemainingRequests(unsigned long request, void *arg) override { return 0; }
+};
+
+class DrmMockEngine : public DrmMock {
+  public:
+    uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();
+    uint32_t queryEngineInfoSuccessCount = std::numeric_limits<uint32_t>::max();
+
+    virtual int handleRemainingRequests(unsigned long request, void *arg) {
+        if ((request == DRM_IOCTL_I915_QUERY) && (arg != nullptr)) {
+            if (i915QuerySuccessCount == 0) {
+                return EINVAL;
+            }
+            i915QuerySuccessCount--;
+            auto query = static_cast<drm_i915_query *>(arg);
+            if (query->items_ptr == 0) {
+                return EINVAL;
+            }
+            for (auto i = 0u; i < query->num_items; i++) {
+                handleQueryItem(reinterpret_cast<drm_i915_query_item *>(query->items_ptr) + i);
+            }
+            return 0;
+        }
+        return -1;
+    }
+
+    void handleQueryItem(drm_i915_query_item *queryItem) {
+        switch (queryItem->query_id) {
+        case DRM_I915_QUERY_ENGINE_INFO:
+            if (queryEngineInfoSuccessCount == 0) {
+                queryItem->length = -EINVAL;
+            } else {
+                queryEngineInfoSuccessCount--;
+                auto numberOfEngines = 2u;
+                int engineInfoSize = sizeof(drm_i915_query_engine_info) + numberOfEngines * sizeof(drm_i915_engine_info);
+                if (queryItem->length == 0) {
+                    queryItem->length = engineInfoSize;
+                } else {
+                    EXPECT_EQ(engineInfoSize, queryItem->length);
+                    auto queryEnginenInfo = reinterpret_cast<drm_i915_query_engine_info *>(queryItem->data_ptr);
+                    EXPECT_EQ(0u, queryEnginenInfo->num_engines);
+                    queryEnginenInfo->num_engines = numberOfEngines;
+                    queryEnginenInfo->engines[0].engine.engine_class = I915_ENGINE_CLASS_RENDER;
+                    queryEnginenInfo->engines[0].engine.engine_instance = 1;
+                    queryEnginenInfo->engines[1].engine.engine_class = I915_ENGINE_CLASS_COPY;
+                    queryEnginenInfo->engines[1].engine.engine_instance = 1;
+                }
+            }
+            break;
+        }
+    }
 };

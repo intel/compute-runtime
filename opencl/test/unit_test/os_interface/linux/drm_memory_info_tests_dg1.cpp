@@ -14,16 +14,6 @@
 
 using namespace NEO;
 
-TEST(MemoryInfo, whenQueryingEngineInfoThenEngineInfoIsNotCreatedAndNoIoctlsAreCalled) {
-    auto drm = std::make_unique<DrmMockDg1>();
-    EXPECT_NE(nullptr, drm);
-
-    EXPECT_TRUE(drm->queryEngineInfo());
-
-    EXPECT_EQ(nullptr, drm->engineInfo.get());
-    EXPECT_EQ(0u, drm->ioctlCallsCount);
-}
-
 TEST(MemoryInfo, givenMemoryRegionQuerySupportedWhenQueryingMemoryInfoThenMemoryInfoIsCreatedWithRegions) {
     auto drm = std::make_unique<DrmMockDg1>();
     ASSERT_NE(nullptr, drm);

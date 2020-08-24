@@ -8,28 +8,37 @@
 #include "level_zero/tools/source/sysman/engine/engine.h"
 
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/tools/source/sysman/engine/engine_imp.h"
-
+class OsEngine;
 namespace L0 {
+
+EngineHandleContext::EngineHandleContext(OsSysman *pOsSysman) {
+    this->pOsSysman = pOsSysman;
+}
 
 EngineHandleContext::~EngineHandleContext() {
     for (Engine *pEngine : handleList) {
         delete pEngine;
     }
+    handleList.clear();
 }
 
-void EngineHandleContext::createHandle(zes_engine_group_t type) {
-    Engine *pEngine = new EngineImp(pOsSysman, type);
-    if (pEngine->initSuccess == true) {
-        handleList.push_back(pEngine);
-    } else {
-        delete pEngine;
-    }
+void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t engineInstance) {
+    Engine *pEngine = new EngineImp(pOsSysman, engineType, engineInstance);
+    handleList.push_back(pEngine);
 }
 
 void EngineHandleContext::init() {
-    createHandle(ZES_ENGINE_GROUP_COMPUTE_ALL);
+    std::multimap<zes_engine_group_t, uint32_t> engineGroupInstance = {};
+    ze_result_t status = OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman);
+    if (status != ZE_RESULT_SUCCESS) {
+        return;
+    }
+    for (auto itr = engineGroupInstance.begin(); itr != engineGroupInstance.end(); ++itr) {
+        createHandle(itr->first, itr->second);
+    }
 }
 
 ze_result_t EngineHandleContext::engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) {

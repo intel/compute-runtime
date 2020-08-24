@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/os_interface/linux/drm_engine_mapper.h"
+#include "shared/source/os_interface/linux/engine_info_impl.h"
 #include "shared/source/os_interface/linux/memory_info_impl.h"
 
 #include "drm_neo.h"
@@ -32,7 +33,14 @@ int Drm::getMaxGpuFrequency(HardwareInfo &hwInfo, int &maxGpuFrequency) {
 }
 
 bool Drm::queryEngineInfo() {
-    return true;
+    auto length = 0;
+    auto dataQuery = this->query(DRM_I915_QUERY_ENGINE_INFO, length);
+    auto data = reinterpret_cast<drm_i915_query_engine_info *>(dataQuery.get());
+    if (data) {
+        this->engineInfo.reset(new EngineInfoImpl(data->engines, data->num_engines));
+        return true;
+    }
+    return false;
 }
 
 bool Drm::queryMemoryInfo() {

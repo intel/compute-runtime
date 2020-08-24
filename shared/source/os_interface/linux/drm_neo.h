@@ -83,7 +83,7 @@ class Drm {
     bool setQueueSliceCount(uint64_t sliceCount);
     void checkQueueSliceSupport();
     uint64_t getSliceMask(uint64_t sliceCount);
-    bool queryEngineInfo();
+    MOCKABLE_VIRTUAL bool queryEngineInfo();
     MOCKABLE_VIRTUAL bool queryMemoryInfo();
     bool queryTopology(int &sliceCount, int &subSliceCount, int &euCount);
     bool createVirtualMemoryAddressSpace(uint32_t vmCount);
@@ -104,6 +104,9 @@ class Drm {
         return memoryInfo.get();
     }
 
+    EngineInfo *getEngineInfo() const {
+        return engineInfo.get();
+    }
     RootDeviceEnvironment &getRootDeviceEnvironment() {
         return rootDeviceEnvironment;
     }

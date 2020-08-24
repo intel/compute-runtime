@@ -13,17 +13,18 @@
 #include "level_zero/tools/source/sysman/engine/os_engine.h"
 #include <level_zero/zes_api.h>
 namespace L0 {
+
 class EngineImp : public Engine, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t engineGetProperties(zes_engine_properties_t *pProperties) override;
     ze_result_t engineGetActivity(zes_engine_stats_t *pStats) override;
 
     EngineImp() = default;
-    EngineImp(OsSysman *pOsSysman, zes_engine_group_t type);
+    EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance);
     ~EngineImp() override;
 
     OsEngine *pOsEngine = nullptr;
-    void init(zes_engine_group_t type);
+    void init();
 
   private:
     zes_engine_properties_t engineProperties = {};

@@ -7,46 +7,59 @@
 
 #include "level_zero/tools/source/sysman/engine/linux/os_engine_imp.h"
 
+#include "shared/source/os_interface/linux/engine_info_impl.h"
+
 #include "sysman/linux/os_sysman_imp.h"
 
-#include <chrono>
 namespace L0 {
 
-const std::string LinuxEngineImp::computeEngineGroupFile("engine/rcs0/name");
-const std::string LinuxEngineImp::computeEngineGroupName("rcs0");
-ze_result_t LinuxEngineImp::getActiveTime(uint64_t &activeTime) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
+static const std::multimap<drm_i915_gem_engine_class, zes_engine_group_t> i915ToEngineMap = {
+    {I915_ENGINE_CLASS_RENDER, ZES_ENGINE_GROUP_RENDER_SINGLE},
+    {I915_ENGINE_CLASS_VIDEO, ZES_ENGINE_GROUP_MEDIA_DECODE_SINGLE},
+    {I915_ENGINE_CLASS_VIDEO, ZES_ENGINE_GROUP_MEDIA_ENCODE_SINGLE},
+    {I915_ENGINE_CLASS_COPY, ZES_ENGINE_GROUP_COPY_SINGLE}};
 
-ze_result_t LinuxEngineImp::getTimeStamp(uint64_t &timeStamp) {
-    std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
-    timeStamp = std::chrono::duration_cast<std::chrono::microseconds>(ts.time_since_epoch()).count();
+ze_result_t OsEngine::getNumEngineTypeAndInstances(std::multimap<zes_engine_group_t, uint32_t> &engineGroupInstance, OsSysman *pOsSysman) {
+    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    NEO::Drm *pDrm = &pLinuxSysmanImp->getDrm();
+
+    if (pDrm->queryEngineInfo() == false) {
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    auto engineInfo = static_cast<NEO::EngineInfoImpl *>(pDrm->getEngineInfo());
+    for (auto itr = engineInfo->engines.begin(); itr != engineInfo->engines.end(); ++itr) {
+        auto L0EngineEntryInMap = i915ToEngineMap.find(static_cast<drm_i915_gem_engine_class>(itr->engine.engine_class));
+        if (L0EngineEntryInMap == i915ToEngineMap.end()) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+        auto L0EngineType = L0EngineEntryInMap->second;
+        engineGroupInstance.insert({L0EngineType, static_cast<uint32_t>(itr->engine.engine_instance)});
+    }
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t LinuxEngineImp::getEngineGroup(zes_engine_group_t &engineGroup) {
-    std::string strVal;
-    ze_result_t result = pSysfsAccess->read(computeEngineGroupFile, strVal);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-
-    if (strVal.compare(computeEngineGroupName) == 0) {
-        engineGroup = ZES_ENGINE_GROUP_COMPUTE_ALL;
-    } else {
-        engineGroup = ZES_ENGINE_GROUP_ALL;
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    return result;
+ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
+    pStats->timestamp = 0;
+    pStats->activeTime = 0;
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman) {
+ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
+    properties.type = engineGroup;
+    properties.onSubdevice = false;
+    properties.subdeviceId = 0;
+    return ZE_RESULT_SUCCESS;
+}
+
+LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-
-    pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    pDrm = &pLinuxSysmanImp->getDrm();
+    engineGroup = type;
+    this->engineInstance = engineInstance;
 }
-OsEngine *OsEngine::create(OsSysman *pOsSysman) {
-    LinuxEngineImp *pLinuxEngineImp = new LinuxEngineImp(pOsSysman);
+
+OsEngine *OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance) {
+    LinuxEngineImp *pLinuxEngineImp = new LinuxEngineImp(pOsSysman, type, engineInstance);
     return static_cast<OsEngine *>(pLinuxEngineImp);
 }
 

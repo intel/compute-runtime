@@ -8,6 +8,7 @@
 #pragma once
 #include <level_zero/zes_api.h>
 
+#include <map>
 #include <vector>
 
 struct _zes_engine_handle_t {
@@ -27,11 +28,10 @@ class Engine : _zes_engine_handle_t {
         return static_cast<Engine *>(handle);
     }
     inline zes_engine_handle_t toHandle() { return this; }
-    bool initSuccess = false;
 };
 
 struct EngineHandleContext {
-    EngineHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    EngineHandleContext(OsSysman *pOsSysman);
     ~EngineHandleContext();
 
     void init();
@@ -42,7 +42,7 @@ struct EngineHandleContext {
     std::vector<Engine *> handleList = {};
 
   private:
-    void createHandle(zes_engine_group_t type);
+    void createHandle(zes_engine_group_t engineType, uint32_t engineInstance);
 };
 
 } // namespace L0

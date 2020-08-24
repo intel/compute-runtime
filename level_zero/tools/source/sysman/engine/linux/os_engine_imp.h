@@ -7,26 +7,22 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "sysman/engine/os_engine.h"
-#include "sysman/linux/fs_access.h"
 namespace L0 {
-
 class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
   public:
-    ze_result_t getActiveTime(uint64_t &activeTime) override;
-    ze_result_t getTimeStamp(uint64_t &timeStamp) override;
-    ze_result_t getEngineGroup(zes_engine_group_t &engineGroup) override;
+    ze_result_t getActivity(zes_engine_stats_t *pStats) override;
+    ze_result_t getProperties(zes_engine_properties_t &properties) override;
     LinuxEngineImp() = default;
-    LinuxEngineImp(OsSysman *pOsSysman);
+    LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance);
     ~LinuxEngineImp() override = default;
 
   protected:
-    SysfsAccess *pSysfsAccess = nullptr;
-
-  private:
-    static const std::string computeEngineGroupFile;
-    static const std::string computeEngineGroupName;
+    zes_engine_group_t engineGroup = ZES_ENGINE_GROUP_ALL;
+    uint32_t engineInstance = 0;
+    NEO::Drm *pDrm = nullptr;
 };
 
 } // namespace L0
