@@ -247,7 +247,7 @@ void genericEpilogCallbackPtr(Tparams params, ze_result_t result, void *pTracerU
 
 template <typename THandleType>
 THandleType generateRandomHandle() {
-    return reinterpret_cast<THandleType>(static_cast<uint64_t>(rand()));
+    return reinterpret_cast<THandleType>(static_cast<uint64_t>(rand() % (RAND_MAX - 1) + 1));
 }
 
 template <typename TSizeType>
