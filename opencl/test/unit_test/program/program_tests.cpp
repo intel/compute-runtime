@@ -1649,6 +1649,71 @@ INSTANTIATE_TEST_CASE_P(ProgramFromSourceTests,
                             ::testing::ValuesIn(BinaryForSourceFileNames),
                             ::testing::ValuesIn(KernelNames)));
 
+using ProgramWithDebugSymbolsTests = Test<ProgramSimpleFixture>;
+
+TEST_F(ProgramWithDebugSymbolsTests, GivenProgramCreatedWithDashGOptionWhenGettingProgramBinariesThenDebugDataIsIncluded) {
+    cl_device_id device = pClDevice;
+
+    CreateProgramFromBinary(pContext, &device, "CopyBuffer_simd16", "-g");
+
+    ASSERT_NE(nullptr, pProgram);
+
+    retVal = pProgram->build(
+        1,
+        &device,
+        "-g",
+        nullptr,
+        nullptr,
+        false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    size_t paramValueSize = sizeof(size_t);
+    size_t paramValueSizeRet = 0;
+    size_t size = 0;
+
+    pProgram->packedDeviceBinary.reset();
+    pProgram->packedDeviceBinarySize = 0U;
+
+    retVal = pProgram->packDeviceBinary();
+
+    retVal = pProgram->getInfo(
+        CL_PROGRAM_BINARY_SIZES,
+        paramValueSize,
+        &size,
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto testBinary = std::make_unique<char[]>(size);
+
+    retVal = pProgram->getInfo(
+        CL_PROGRAM_BINARIES,
+        paramValueSize,
+        &testBinary,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    ArrayRef<const uint8_t> archive(reinterpret_cast<const uint8_t *>(testBinary.get()), size);
+    auto productAbbreviation = hardwarePrefix[pDevice->getHardwareInfo().platform.eProductFamily];
+
+    TargetDevice targetDevice = {};
+
+    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto copyHwInfo = *defaultHwInfo;
+    hwHelper.adjustPlatformCoreFamilyForIgc(copyHwInfo);
+    targetDevice.coreFamily = copyHwInfo.platform.eRenderCoreFamily;
+    targetDevice.stepping = copyHwInfo.platform.usRevId;
+    targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
+
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto singleDeviceBinary = unpackSingleDeviceBinary(archive, ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,
+                                                       decodeErrors, decodeWarnings);
+
+    EXPECT_FALSE(singleDeviceBinary.debugData.empty());
+}
+
 TEST_F(ProgramTests, WhenProgramIsCreatedThenCorrectOclVersionIsInOptions) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);

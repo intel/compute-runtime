@@ -366,6 +366,7 @@ set(TEST_KERNEL_options
     "-cl-finite-math-only"
     "-cl-kernel-arg-info"
     "-x spir -spir-std=1.2"
+    "-g"
 )
 
 set(TEST_KERNEL_2_0_options
