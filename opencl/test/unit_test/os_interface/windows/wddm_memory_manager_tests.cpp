@@ -1510,12 +1510,13 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForBufferAndRequest
 
     memoryManager.hugeGfxMemoryChunkSize = MemoryConstants::pageSize64k - MemoryConstants::pageSize;
 
-    GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize64k * 3, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield});
-    EXPECT_NE(nullptr, galloc);
-    EXPECT_EQ(4, galloc->getNumGmms());
+    WddmAllocation *wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties({rootDeviceIndex, MemoryConstants::pageSize64k * 3, GraphicsAllocation::AllocationType::BUFFER, mockDeviceBitfield}));
+    EXPECT_NE(nullptr, wddmAlloc);
+    EXPECT_EQ(4, wddmAlloc->getNumGmms());
     EXPECT_EQ(4, wddm->createAllocationResult.called);
+    EXPECT_EQ(wddmAlloc->getGpuAddressToModify(), GmmHelper::canonize(wddmAlloc->reservedGpuVirtualAddress));
 
-    memoryManager.freeGraphicsMemory(galloc);
+    memoryManager.freeGraphicsMemory(wddmAlloc);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenCorrectHugeGfxMemoryChunkIsSet) {
@@ -1539,13 +1540,14 @@ TEST_F(MockWddmMemoryManagerTest, givenAllocateGraphicsMemoryForHostBufferAndReq
     std::vector<uint8_t> hostPtr(MemoryConstants::pageSize64k * 3);
     AllocationProperties allocProps{rootDeviceIndex, MemoryConstants::pageSize64k * 3, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, mockDeviceBitfield};
     allocProps.flags.allocateMemory = false;
-    GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryWithProperties(allocProps, hostPtr.data());
+    WddmAllocation *wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemoryWithProperties(allocProps, hostPtr.data()));
 
-    EXPECT_NE(nullptr, galloc);
-    EXPECT_EQ(4, galloc->getNumGmms());
+    EXPECT_NE(nullptr, wddmAlloc);
+    EXPECT_EQ(4, wddmAlloc->getNumGmms());
     EXPECT_EQ(4, wddm->createAllocationResult.called);
+    EXPECT_EQ(wddmAlloc->getGpuAddressToModify(), GmmHelper::canonize(wddmAlloc->reservedGpuVirtualAddress));
 
-    memoryManager.freeGraphicsMemory(galloc);
+    memoryManager.freeGraphicsMemory(wddmAlloc);
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncDeleterEnabledIsTrue) {

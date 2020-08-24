@@ -247,8 +247,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
-    if (allocationData.type == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY && allocationData.size > getHugeGfxMemoryChunkSize()) {
-        return allocateGraphicsMemoryForNonSvmHostPtr(allocationData);
+    if (allocationData.size > getHugeGfxMemoryChunkSize()) {
+        return allocateHugeGraphicsMemory(allocationData);
     }
 
     if (mallocRestrictions.minAddress > reinterpret_cast<uintptr_t>(allocationData.hostPtr)) {
@@ -656,7 +656,7 @@ bool WddmMemoryManager::mapMultiHandleAllocationWithRetry(WddmAllocation *alloca
         allocation->reservedSizeForGpuVirtualAddress = alignUp(alignedSize, MemoryConstants::pageSize64k);
         allocation->reservedGpuVirtualAddress = wddm.reserveGpuVirtualAddress(gfxPartition->getHeapMinimalAddress(heapIndex), gfxPartition->getHeapLimit(heapIndex),
                                                                               allocation->reservedSizeForGpuVirtualAddress);
-        allocation->getGpuAddressToModify() = allocation->reservedGpuVirtualAddress;
+        allocation->getGpuAddressToModify() = GmmHelper::canonize(allocation->reservedGpuVirtualAddress);
         addressToMap = allocation->reservedGpuVirtualAddress;
     }
 
