@@ -206,19 +206,19 @@ struct FlattenedIDFixture : ::testing::TestWithParam<std::tuple<int, int, int, i
     uint16_t buffer[32 * 16];
 };
 
-HWTEST_P(FlattenedIDFixture, checkIDWithinLimits) {
+HWTEST_P(FlattenedIDFixture, WhenGeneratingFlattenedIdsThenAllIdsWithinLimits) {
     generateFlattenedIDs(buffer, simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
 
     validateIDWithinLimits(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
 }
 
-HWTEST_P(FlattenedIDFixture, checkAllWorkItemsCovered) {
+HWTEST_P(FlattenedIDFixture, WhenGeneratingFlattenedIdsThenAllWorkItemsCovered) {
     generateFlattenedIDs(buffer, simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
 
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, UnitTestHelper<FamilyType>::useFullRowForLocalIdsGeneration);
 }
 
-TEST_P(FlattenedIDFixture, sizeCalculationLocalIDs) {
+TEST_P(FlattenedIDFixture, WhenGeneratingFlattenedIdsThenLocalIdsAreCorrect) {
     auto sizePerThreadData = getSizeFlattenedIDs(
         simd,
         localWorkSizeX,
