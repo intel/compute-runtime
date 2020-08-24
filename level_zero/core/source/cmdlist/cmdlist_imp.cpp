@@ -102,7 +102,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
     commandList->cmdQImmediate = commandQueue;
     commandList->cmdListType = CommandListType::TYPE_IMMEDIATE;
-    commandList->cmdQImmediateDesc = desc;
     commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
 
     return commandList;

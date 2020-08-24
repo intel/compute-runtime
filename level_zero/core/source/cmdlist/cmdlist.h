@@ -175,8 +175,6 @@ struct CommandList : _ze_command_list_handle_t {
 
     CommandQueue *cmdQImmediate = nullptr;
     uint32_t cmdListType = CommandListType::TYPE_REGULAR;
-    const ze_command_queue_desc_t *cmdQImmediateDesc = nullptr;
-
     Device *device = nullptr;
     std::vector<Kernel *> printfFunctionContainer;
 
