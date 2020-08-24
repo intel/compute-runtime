@@ -11,7 +11,6 @@
 #include "shared/source/compiler_interface/compiler_interface.inl"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
-#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include "opencl/source/os_interface/os_inc_base.h"
@@ -331,6 +330,7 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
 
 bool CompilerInterface::loadFcl() {
     return NEO::loadCompiler<IGC::FclOclDeviceCtx>(Os::frontEndDllName, fclLib, fclMain);
+    ;
 }
 
 bool CompilerInterface::loadIgc() {
@@ -400,13 +400,8 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     if (productFamily != "unk") {
         getHwInfoForPlatformString(productFamily, hwInfo);
     }
-
-    auto &hwHelper = NEO::HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    auto copyHwInfo = *hwInfo;
-    hwHelper.adjustPlatformCoreFamilyForIgc(copyHwInfo);
-
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, copyHwInfo.platform);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, copyHwInfo.gtSystemInfo);
+    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo->platform);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo->gtSystemInfo);
 
     igcFeWa.get()->SetFtrDesktop(device.getHardwareInfo().featureTable.ftrDesktop);
     igcFeWa.get()->SetFtrChannelSwizzlingXOREnabled(device.getHardwareInfo().featureTable.ftrChannelSwizzlingXOREnabled);

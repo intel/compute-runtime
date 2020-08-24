@@ -17,7 +17,6 @@
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "test.h"
 
 #include "compiler_options.h"
 #include "gtest/gtest.h"
@@ -236,7 +235,7 @@ TEST_F(ProcessElfBinaryTests, GivenNonEmptyBuildOptionsWhenCreatingProgramFromBi
     EXPECT_STREQ(buildOptionsNotEmpty.c_str(), options.c_str());
 }
 
-HWTEST_F(ProcessElfBinaryTests, GivenBinaryWhenIncompatiblePatchtokenVerionThenProramCreationFails) {
+TEST_F(ProcessElfBinaryTests, GivenBinaryWhenIncompatiblePatchtokenVerionThenProramCreationFails) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
     {
         NEO::Elf::ElfEncoder<> elfEncoder;

@@ -180,10 +180,6 @@ bool HwHelperHw<Family>::getEnableLocalMemory(const HardwareInfo &hwInfo) const 
 }
 
 template <typename Family>
-void HwHelperHw<Family>::adjustPlatformCoreFamilyForIgc(HardwareInfo &hwInfo) {
-}
-
-template <typename Family>
 AuxTranslationMode HwHelperHw<Family>::getAuxTranslationMode() {
     if (DebugManager.flags.ForceAuxTranslationMode.get() != -1) {
         return static_cast<AuxTranslationMode>(DebugManager.flags.ForceAuxTranslationMode.get());

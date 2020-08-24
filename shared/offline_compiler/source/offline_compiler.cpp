@@ -425,12 +425,8 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     if ((igcPlatform == nullptr) || (igcGtSystemInfo == nullptr) || (igcFeWa == nullptr)) {
         return OUT_OF_HOST_MEMORY;
     }
-
-    auto copyHwInfo = hwInfo;
-    adjustExtraSettings(copyHwInfo);
-
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), copyHwInfo.platform);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), copyHwInfo.gtSystemInfo);
+    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), hwInfo.platform);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
     // populate with features
     igcFeWa.get()->SetFtrDesktop(hwInfo.featureTable.ftrDesktop);
     igcFeWa.get()->SetFtrChannelSwizzlingXOREnabled(hwInfo.featureTable.ftrChannelSwizzlingXOREnabled);

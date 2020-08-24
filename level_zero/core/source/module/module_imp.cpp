@@ -115,14 +115,9 @@ bool ModuleTranslationUnit::createFromNativeBinary(const char *input, size_t inp
     auto productAbbreviation = NEO::hardwarePrefix[device->getNEODevice()->getHardwareInfo().platform.eProductFamily];
 
     NEO::TargetDevice targetDevice = {};
-
-    auto copyHwInfo = device->getNEODevice()->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(copyHwInfo.platform.eRenderCoreFamily);
-    hwHelper.adjustPlatformCoreFamilyForIgc(copyHwInfo);
-
-    targetDevice.coreFamily = copyHwInfo.platform.eRenderCoreFamily;
-    targetDevice.productFamily = copyHwInfo.platform.eProductFamily;
-    targetDevice.stepping = copyHwInfo.platform.usRevId;
+    targetDevice.coreFamily = device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily;
+    targetDevice.productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+    targetDevice.stepping = device->getNEODevice()->getHardwareInfo().platform.usRevId;
     targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
     std::string decodeErrors;
     std::string decodeWarnings;

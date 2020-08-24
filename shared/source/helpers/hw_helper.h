@@ -122,7 +122,6 @@ class HwHelper {
     virtual bool isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const = 0;
     virtual uint32_t getGlobalTimeStampBits() const = 0;
     virtual uint32_t getDefaultThreadArbitrationPolicy() const = 0;
-    virtual void adjustPlatformCoreFamilyForIgc(HardwareInfo &hwInfo) = 0;
     virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
 
@@ -314,8 +313,6 @@ class HwHelperHw : public HwHelper {
     bool isBankOverrideRequired(const HardwareInfo &hwInfo) const override;
 
     uint32_t getDefaultThreadArbitrationPolicy() const override;
-
-    void adjustPlatformCoreFamilyForIgc(HardwareInfo &hwInfo) override;
 
     bool useOnlyGlobalTimestamps() const override;
 

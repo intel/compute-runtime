@@ -382,17 +382,14 @@ using ModuleTranslationUnitTest = Test<DeviceFixture>;
 
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequiredTargetProductProperly) {
     ZebinTestData::ValidEmptyProgram emptyProgram;
+    auto hwInfo = device->getNEODevice()->getHardwareInfo();
 
-    auto copyHwInfo = device->getNEODevice()->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(copyHwInfo.platform.eRenderCoreFamily);
-    hwHelper.adjustPlatformCoreFamilyForIgc(copyHwInfo);
-
-    emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
+    emptyProgram.elfHeader->machine = hwInfo.platform.eProductFamily;
     L0::ModuleTranslationUnit moduleTuValid(this->device);
     bool success = moduleTuValid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
     EXPECT_TRUE(success);
 
-    emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
+    emptyProgram.elfHeader->machine = hwInfo.platform.eProductFamily;
     ++emptyProgram.elfHeader->machine;
     L0::ModuleTranslationUnit moduleTuInvalid(this->device);
     success = moduleTuInvalid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());

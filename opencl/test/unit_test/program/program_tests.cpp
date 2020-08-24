@@ -1699,11 +1699,8 @@ TEST_F(ProgramWithDebugSymbolsTests, GivenProgramCreatedWithDashGOptionWhenGetti
 
     TargetDevice targetDevice = {};
 
-    auto &hwHelper = NEO::HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    auto copyHwInfo = *defaultHwInfo;
-    hwHelper.adjustPlatformCoreFamilyForIgc(copyHwInfo);
-    targetDevice.coreFamily = copyHwInfo.platform.eRenderCoreFamily;
-    targetDevice.stepping = copyHwInfo.platform.usRevId;
+    targetDevice.coreFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+    targetDevice.stepping = pDevice->getHardwareInfo().platform.usRevId;
     targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
 
     std::string decodeErrors;
@@ -2786,9 +2783,8 @@ TEST_F(ProgramTests, WhenProgramIsCreatedThenItsDeviceIsProperlySet) {
     MockProgram programWithDeviceWithValidSpecializedDevice{executionEnvironment, nullptr, false, &validClDevice.getDevice()};
     EXPECT_TRUE(wasValidClDeviceUsed(programWithDeviceWithValidSpecializedDevice));
 }
-using CreateProgramFromBinaryTests2 = ::testing::Test;
 
-HWTEST_F(CreateProgramFromBinaryTests2, givenBinaryProgramWhenKernelRebulildIsForcedThenDeviceBinaryIsNotUsed) {
+TEST(CreateProgramFromBinaryTests, givenBinaryProgramWhenKernelRebulildIsForcedThenDeviceBinaryIsNotUsed) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.RebuildPrecompiledKernels.set(true);
     cl_int retVal = CL_INVALID_BINARY;
@@ -2809,7 +2805,7 @@ HWTEST_F(CreateProgramFromBinaryTests2, givenBinaryProgramWhenKernelRebulildIsFo
     EXPECT_EQ(0U, pProgram->packedDeviceBinarySize);
 }
 
-HWTEST_F(CreateProgramFromBinaryTests2, givenBinaryProgramWhenKernelRebulildIsNotForcedThenDeviceBinaryIsUsed) {
+TEST(CreateProgramFromBinaryTests, givenBinaryProgramWhenKernelRebulildIsNotForcedThenDeviceBinaryIsUsed) {
     cl_int retVal = CL_INVALID_BINARY;
 
     PatchTokensTestData::ValidEmptyProgram programTokens;

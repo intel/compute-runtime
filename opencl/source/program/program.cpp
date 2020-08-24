@@ -170,13 +170,8 @@ cl_int Program::createProgramFromBinary(
         auto productAbbreviation = hardwarePrefix[pDevice->getHardwareInfo().platform.eProductFamily];
 
         TargetDevice targetDevice = {};
-
-        auto copyHwInfo = pDevice->getHardwareInfo();
-        auto &hwHelper = HwHelper::get(copyHwInfo.platform.eRenderCoreFamily);
-        hwHelper.adjustPlatformCoreFamilyForIgc(copyHwInfo);
-        targetDevice.coreFamily = copyHwInfo.platform.eRenderCoreFamily;
-
-        targetDevice.stepping = copyHwInfo.platform.usRevId;
+        targetDevice.coreFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+        targetDevice.stepping = pDevice->getHardwareInfo().platform.usRevId;
         targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
         std::string decodeErrors;
         std::string decodeWarnings;
