@@ -113,6 +113,9 @@ struct MetricQueryImp : MetricQuery {
     ze_result_t writeMetricQuery(CommandList &commandList, ze_event_handle_t hSignalEvent,
                                  uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
                                  const bool begin);
+    ze_result_t writeSkipExecutionQuery(CommandList &commandList, ze_event_handle_t hSignalEvent,
+                                        uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                        const bool begin);
 
   protected:
     MetricContext &metricContext;
@@ -132,6 +135,7 @@ struct MetricQueryPoolImp : MetricQueryPool {
 
   protected:
     bool createMetricQueryPool();
+    bool createSkipExecutionQueryPool();
 
   public:
     MetricContext &metricContext;

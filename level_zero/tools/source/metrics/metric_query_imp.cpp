@@ -420,7 +420,8 @@ bool MetricQueryPoolImp::create() {
     switch (description.type) {
     case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
         return createMetricQueryPool();
-
+    case ZET_METRIC_QUERY_POOL_TYPE_EXECUTION:
+        return createSkipExecutionQueryPool();
     default:
         DEBUG_BREAK_IF(true);
         return false;
@@ -435,7 +436,9 @@ ze_result_t MetricQueryPoolImp::destroy() {
         metricsLibrary.destroyMetricQuery(query);
         delete this;
         break;
-
+    case ZET_METRIC_QUERY_POOL_TYPE_EXECUTION:
+        delete this;
+        break;
     default:
         DEBUG_BREAK_IF(true);
         break;
@@ -461,6 +464,16 @@ bool MetricQueryPoolImp::createMetricQueryPool() {
 
     // Metrics library query object initialization.
     return metricsLibrary.createMetricQuery(description.count, query, pAllocation);
+}
+
+bool MetricQueryPoolImp::createSkipExecutionQueryPool() {
+
+    pool.reserve(description.count);
+    for (uint32_t i = 0; i < description.count; ++i) {
+        pool.push_back({metricContext, *this, i});
+    }
+
+    return true;
 }
 
 MetricQueryPool *MetricQueryPool::fromHandle(zet_metric_query_pool_handle_t handle) {
@@ -489,7 +502,8 @@ ze_result_t MetricQueryImp::appendBegin(CommandList &commandList) {
     switch (pool.description.type) {
     case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
         return writeMetricQuery(commandList, nullptr, 0, nullptr, true);
-
+    case ZET_METRIC_QUERY_POOL_TYPE_EXECUTION:
+        return writeSkipExecutionQuery(commandList, nullptr, 0, nullptr, true);
     default:
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -501,7 +515,8 @@ ze_result_t MetricQueryImp::appendEnd(CommandList &commandList, ze_event_handle_
     switch (pool.description.type) {
     case ZET_METRIC_QUERY_POOL_TYPE_PERFORMANCE:
         return writeMetricQuery(commandList, hSignalEvent, numWaitEvents, phWaitEvents, false);
-
+    case ZET_METRIC_QUERY_POOL_TYPE_EXECUTION:
+        return writeSkipExecutionQuery(commandList, hSignalEvent, numWaitEvents, phWaitEvents, false);
     default:
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -558,6 +573,36 @@ ze_result_t MetricQueryImp::writeMetricQuery(CommandList &commandList, ze_event_
     if (result) {
         result = metricsLibrary.getGpuCommands(commandList, commandBuffer);
     }
+
+    // Write completion event.
+    if (result && writeCompletionEvent) {
+        result = zeCommandListAppendSignalEvent(commandList.toHandle(), hSignalEvent) ==
+                 ZE_RESULT_SUCCESS;
+    }
+
+    return result ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
+}
+
+ze_result_t MetricQueryImp::writeSkipExecutionQuery(CommandList &commandList, ze_event_handle_t hSignalEvent,
+                                                    uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents,
+                                                    const bool begin) {
+
+    bool writeCompletionEvent = hSignalEvent && !begin;
+    bool result = false;
+
+    // Obtain gpu commands.
+    CommandBufferData_1_0 commandBuffer = {};
+    commandBuffer.CommandsType = ObjectType::OverrideNullHardware;
+    commandBuffer.Override.Enable = begin;
+    commandBuffer.Type = metricContext.isComputeUsed()
+                             ? GpuCommandBufferType::Compute
+                             : GpuCommandBufferType::Render;
+
+    // Wait for events before executing query.
+    zeCommandListAppendWaitOnEvents(commandList.toHandle(), numWaitEvents, phWaitEvents);
+
+    // Get query commands.
+    result = metricsLibrary.getGpuCommands(commandList, commandBuffer);
 
     // Write completion event.
     if (result && writeCompletionEvent) {
