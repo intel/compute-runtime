@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/gen12lp/hw_cmds.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "opencl/source/builtin_kernels_simulation/opencl_c.h"
@@ -14,6 +13,7 @@
 #include "opencl/source/execution_model/device_enqueue.h"
 
 #include "CL/cl.h"
+#include "hw_cmds.h"
 
 #include <type_traits>
 

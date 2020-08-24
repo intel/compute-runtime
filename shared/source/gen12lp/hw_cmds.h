@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/gen12lp/hw_cmds_base.h"
 #ifdef SUPPORT_TGLLP
 #include "hw_cmds_tgllp.h"
 #endif
