@@ -49,7 +49,7 @@ To allow NEO access to GPU device make sure user has permissions to files /dev/d
 NEO is available for installation on a variety of Linux distributions
 and can be installed via the distro's package manager.
 
-For example on Ubuntu* 19.04, 19.10:
+For example on Ubuntu* 20.04:
 
 ```
 apt-get install intel-opencl-icd
