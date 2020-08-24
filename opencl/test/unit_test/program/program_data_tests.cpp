@@ -546,8 +546,8 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     relocation.offset = 0;
     linkerInput->relocations.push_back(NEO::LinkerInput::Relocations{relocation});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
-    NEO::ExecutionEnvironment env;
-    MockProgram program{env};
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockProgram program{*device->getExecutionEnvironment(), nullptr, false, device.get()};
     KernelInfo kernelInfo = {};
     kernelInfo.name = "onlyKernel";
     std::vector<char> kernelHeap;
@@ -557,16 +557,17 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     program.getKernelInfoArray().push_back(&kernelInfo);
     program.linkerInput = std::move(linkerInput);
 
-    EXPECT_EQ(nullptr, program.getBuildLog(nullptr));
+    std::string buildLog = program.getBuildLog(device->getRootDeviceIndex());
+    EXPECT_TRUE(buildLog.empty());
     auto ret = program.linkBinary(program.pDevice, nullptr, nullptr);
     EXPECT_NE(CL_SUCCESS, ret);
     program.getKernelInfoArray().clear();
-    auto buildLog = program.getBuildLog(nullptr);
-    ASSERT_NE(nullptr, buildLog);
+    buildLog = program.getBuildLog(device->getRootDeviceIndex());
+    EXPECT_FALSE(buildLog.empty());
     Linker::UnresolvedExternals expectedUnresolvedExternals;
     expectedUnresolvedExternals.push_back(Linker::UnresolvedExternal{relocation, 0, false});
     auto expectedError = constructLinkerErrorMessage(expectedUnresolvedExternals, std::vector<std::string>{"kernel : " + kernelInfo.name});
-    EXPECT_THAT(buildLog, ::testing::HasSubstr(expectedError));
+    EXPECT_THAT(buildLog.c_str(), ::testing::HasSubstr(expectedError));
 }
 
 TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {

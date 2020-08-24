@@ -51,8 +51,8 @@ TEST_F(ProcessSpirBinaryTests, WhenProcessingSpirBinaryThenIrBinaryIsSetCorrectl
     EXPECT_EQ(binarySize, program->irBinarySize);
 
     // Verify no built log is available
-    auto pBuildLog = program->getBuildLog(program->getDevicePtr());
-    EXPECT_EQ(nullptr, pBuildLog);
+    std::string buildLog = program->getBuildLog(0);
+    EXPECT_TRUE(buildLog.empty());
 }
 
 TEST_F(ProcessSpirBinaryTests, WhenProcessingSpirBinaryThenIsSpirvIsSetBasedonPassedValue) {

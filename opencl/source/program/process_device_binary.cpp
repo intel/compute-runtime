@@ -100,7 +100,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
             kernelNames.push_back("kernel : " + kernelInfo->name);
         }
         auto error = constructLinkerErrorMessage(unresolvedExternalsInfo, kernelNames);
-        updateBuildLog(pDevice, error.c_str(), error.size());
+        updateBuildLog(pDevice->getRootDeviceIndex(), error.c_str(), error.size());
         return CL_INVALID_BINARY;
     } else if (linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
         for (const auto &kernelInfo : this->kernelInfoArray) {

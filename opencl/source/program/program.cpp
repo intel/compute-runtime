@@ -58,6 +58,12 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
     numDevices = 1;
     bool force32BitAddressess = false;
 
+    uint32_t maxRootDeviceIndex = 0u;
+    if (device) {
+        maxRootDeviceIndex = device->getRootDeviceIndex();
+    }
+    buildInfos.resize(maxRootDeviceIndex + 1);
+
     if (pClDevice) {
         auto enabledClVersion = pClDevice->getEnabledClVersion();
         if (enabledClVersion == 30) {
@@ -280,7 +286,7 @@ cl_int Program::getSource(std::string &binary) const {
     return retVal;
 }
 
-void Program::updateBuildLog(const Device *pDevice, const char *pErrorString,
+void Program::updateBuildLog(uint32_t rootDeviceIndex, const char *pErrorString,
                              size_t errorStringSize) {
     if ((pErrorString == nullptr) || (errorStringSize == 0) || (pErrorString[0] == '\0')) {
         return;
@@ -290,27 +296,20 @@ void Program::updateBuildLog(const Device *pDevice, const char *pErrorString,
         --errorStringSize;
     }
 
-    auto it = buildLog.find(pDevice);
+    auto &currentLog = buildInfos[rootDeviceIndex].buildLog;
 
-    if (it == buildLog.end()) {
-        buildLog[pDevice].assign(pErrorString, pErrorString + errorStringSize);
+    if (currentLog.empty()) {
+        currentLog.assign(pErrorString, pErrorString + errorStringSize);
         return;
     }
 
-    buildLog[pDevice].append("\n");
-    buildLog[pDevice].append(pErrorString, pErrorString + errorStringSize);
+    currentLog.append("\n");
+    currentLog.append(pErrorString, pErrorString + errorStringSize);
 }
 
-const char *Program::getBuildLog(const Device *pDevice) const {
-    const char *entry = nullptr;
-
-    auto it = buildLog.find(pDevice);
-
-    if (it != buildLog.end()) {
-        entry = it->second.c_str();
-    }
-
-    return entry;
+const char *Program::getBuildLog(uint32_t rootDeviceIndex) const {
+    auto &currentLog = buildInfos[rootDeviceIndex].buildLog;
+    return currentLog.c_str();
 }
 
 void Program::separateBlockKernels() {

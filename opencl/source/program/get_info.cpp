@@ -184,15 +184,10 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
         break;
 
     case CL_PROGRAM_BUILD_LOG: {
-        const char *pBuildLog = getBuildLog(&pClDev->getDevice());
+        const char *pBuildLog = getBuildLog(pClDev->getRootDeviceIndex());
 
-        if (pBuildLog != nullptr) {
-            pSrc = pBuildLog;
-            srcSize = retSize = strlen(pBuildLog) + 1;
-        } else {
-            pSrc = "";
-            srcSize = retSize = 1;
-        }
+        pSrc = pBuildLog;
+        srcSize = retSize = strlen(pBuildLog) + 1;
     } break;
 
     case CL_PROGRAM_BINARY_TYPE:

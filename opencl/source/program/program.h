@@ -187,9 +187,9 @@ class Program : public BaseObject<_cl_program> {
 
     void processDebugData();
 
-    void updateBuildLog(const Device *pDevice, const char *pErrorString, const size_t errorStringSize);
+    void updateBuildLog(uint32_t rootDeviceIndex, const char *pErrorString, const size_t errorStringSize);
 
-    const char *getBuildLog(const Device *pDevice) const;
+    const char *getBuildLog(uint32_t rootDeviceIndex) const;
 
     cl_uint getProgramBinaryType() const {
         return programBinaryType;
@@ -322,7 +322,11 @@ class Program : public BaseObject<_cl_program> {
     std::unique_ptr<LinkerInput> linkerInput;
     Linker::RelocatedSymbolsMap symbols;
 
-    std::map<const Device *, std::string> buildLog;
+    struct BuildInfo {
+        std::string buildLog{};
+    };
+
+    StackVec<BuildInfo, 1> buildInfos;
 
     bool areSpecializationConstantsInitialized = false;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsIds;

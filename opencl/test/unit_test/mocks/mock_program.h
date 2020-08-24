@@ -65,7 +65,8 @@ class MockProgram : public Program {
     using Program::unpackedDeviceBinary;
     using Program::unpackedDeviceBinarySize;
 
-    MockProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false, nullptr) {}
+    MockProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false, nullptr) {
+    }
 
     ~MockProgram() override {
         if (contextSet)
@@ -102,18 +103,17 @@ class MockProgram : public Program {
         contextSet = true;
     }
 
-    void SetBuildStatus(cl_build_status st) { buildStatus = st; }
-    void SetSourceCode(const char *ptr) { sourceCode = ptr; }
-    void ClearOptions() { options = ""; }
-    void SetCreatedFromBinary(bool createdFromBin) { isCreatedFromBinary = createdFromBin; }
-    void ClearLog() { buildLog.clear(); }
-    void SetDevice(Device *pDev) { pDevice = pDev; }
+    void setBuildStatus(cl_build_status st) { buildStatus = st; }
+    void setSourceCode(const char *ptr) { sourceCode = ptr; }
+    void clearOptions() { options = ""; }
+    void setCreatedFromBinary(bool createdFromBin) { isCreatedFromBinary = createdFromBin; }
+    void clearLog(uint32_t rootDeviceIndex) { buildInfos[rootDeviceIndex].buildLog.clear(); }
 
-    void SetIrBinary(char *ptr, bool isSpirv) {
+    void setIrBinary(char *ptr, bool isSpirv) {
         irBinary.reset(ptr);
         this->isSpirV = isSpirV;
     }
-    void SetIrBinarySize(size_t bsz, bool isSpirv) {
+    void setIrBinarySize(size_t bsz, bool isSpirv) {
         irBinarySize = bsz;
         this->isSpirV = isSpirV;
     }

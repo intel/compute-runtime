@@ -257,7 +257,7 @@ TEST_P(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingNumKern
 
     CreateProgramFromBinary(pContext, &device, BinaryFileName);
     MockProgram *p = pProgram;
-    p->SetBuildStatus(CL_BUILD_NONE);
+    p->setBuildStatus(CL_BUILD_NONE);
 
     retVal = pProgram->getInfo(
         CL_PROGRAM_NUM_KERNELS,
@@ -314,7 +314,7 @@ TEST_P(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingKernelN
 
     CreateProgramFromBinary(pContext, &device, BinaryFileName);
     MockProgram *p = pProgram;
-    p->SetBuildStatus(CL_BUILD_NONE);
+    p->setBuildStatus(CL_BUILD_NONE);
 
     retVal = pProgram->getInfo(
         CL_PROGRAM_KERNEL_NAMES,
@@ -373,7 +373,7 @@ TEST_P(ProgramFromBinaryTest, GivenCorruptedDeviceWhenGettingBuildStatusThenInva
     cl_device_id device = pClDevice;
     CreateProgramFromBinary(pContext, &device, BinaryFileName);
     MockProgram *p = pProgram;
-    p->SetDevice(&pClDevice->getDevice());
+    p->setDevice(&pClDevice->getDevice());
 
     retVal = pProgram->getBuildInfo(
         reinterpret_cast<ClDevice *>(pContext),
@@ -506,8 +506,8 @@ TEST_P(ProgramFromBinaryTest, GivenLogEntriesWhenGetBuildLogThenLogIsApended) {
     EXPECT_STREQ("", (char *)paramValue.get());
 
     // Add more text to the log
-    pProgram->updateBuildLog(&pClDevice->getDevice(), "testing", 8);
-    pProgram->updateBuildLog(&pClDevice->getDevice(), "several", 8);
+    pProgram->updateBuildLog(pClDevice->getRootDeviceIndex(), "testing", 8);
+    pProgram->updateBuildLog(pClDevice->getRootDeviceIndex(), "several", 8);
 
     retVal = pProgram->getBuildInfo(
         device,
@@ -757,10 +757,10 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 
     // fail build - another build is already in progress
-    pMockProgram->SetBuildStatus(CL_BUILD_IN_PROGRESS);
+    pMockProgram->setBuildStatus(CL_BUILD_IN_PROGRESS);
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
-    pMockProgram->SetBuildStatus(CL_BUILD_NONE);
+    pMockProgram->setBuildStatus(CL_BUILD_NONE);
 
     // fail build - CompilerInterface cannot be obtained
 
@@ -795,7 +795,7 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     p3.reset(nullptr);
 
     // build successfully without notifyFunc - build kernel and write it to Kernel Cache
-    pMockProgram->ClearOptions();
+    pMockProgram->clearOptions();
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(CompilerOptions::contains(pProgram->getInternalOptions(), pPlatform->getClDevice(0)->peekCompilerExtensions())) << pProgram->getInternalOptions();
@@ -812,7 +812,7 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     EXPECT_NE(param_value_size_ret, 0u);
 
     // get build log when the log does not exist
-    pMockProgram->ClearLog();
+    pMockProgram->clearLog(device->getRootDeviceIndex());
     retVal = pProgram->getBuildInfo(
         device,
         CL_PROGRAM_BUILD_LOG,
@@ -823,7 +823,7 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     EXPECT_NE(param_value_size_ret, 0u);
 
     // build successfully without notifyFunc - build kernel but do not write it to Kernel Cache (kernel is already in the Cache)
-    pMockProgram->SetBuildStatus(CL_BUILD_NONE);
+    pMockProgram->setBuildStatus(CL_BUILD_NONE);
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -839,8 +839,8 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     // fail build - code to be build does not exist
     pMockProgram->sourceCode = ""; // set source code as non-existent (invalid)
     pMockProgram->createdFrom = Program::CreatedFrom::SOURCE;
-    pMockProgram->SetBuildStatus(CL_BUILD_NONE);
-    pMockProgram->SetCreatedFromBinary(false);
+    pMockProgram->setBuildStatus(CL_BUILD_NONE);
+    pMockProgram->setCreatedFromBinary(false);
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 }
@@ -1031,10 +1031,10 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuc
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 
     // fail compilation - another compilation is already in progress
-    p->SetBuildStatus(CL_BUILD_IN_PROGRESS);
+    p->setBuildStatus(CL_BUILD_IN_PROGRESS);
     retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
-    p->SetBuildStatus(CL_BUILD_NONE);
+    p->setBuildStatus(CL_BUILD_NONE);
 
     // invalid compile parameters: invalid header Program object==nullptr
     retVal = pProgram->compile(0, nullptr, nullptr, 1, &nullprogram, &headerIncludeNames, nullptr, nullptr);
@@ -1248,10 +1248,10 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 
     // fail linking - another linking is already in progress
-    pProgram->SetBuildStatus(CL_BUILD_IN_PROGRESS);
+    pProgram->setBuildStatus(CL_BUILD_IN_PROGRESS);
     retVal = pProgram->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
-    pProgram->SetBuildStatus(CL_BUILD_NONE);
+    pProgram->setBuildStatus(CL_BUILD_NONE);
 
     // invalid link parameters: invalid Program object==nullptr
     retVal = pProgram->link(0, nullptr, nullptr, 1, &nullprogram, nullptr, nullptr);
@@ -1270,16 +1270,16 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     char *pIrBin = pProgram->irBinary.get();
     pProgram->irBinary.release();
     size_t irBinSize = pProgram->irBinarySize;
-    pProgram->SetIrBinary(nullptr, false);
+    pProgram->setIrBinary(nullptr, false);
     retVal = pProgram->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
-    pProgram->SetIrBinary(pIrBin, isSpirvTmp);
+    pProgram->setIrBinary(pIrBin, isSpirvTmp);
 
     // fail linking - size of code to be linked is == 0
-    pProgram->SetIrBinarySize(0, isSpirvTmp);
+    pProgram->setIrBinarySize(0, isSpirvTmp);
     retVal = pProgram->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
-    pProgram->SetIrBinarySize(irBinSize, isSpirvTmp);
+    pProgram->setIrBinarySize(irBinSize, isSpirvTmp);
 
     // fail linking - any link error (here caused by specifying unrecognized option)
     retVal = pProgram->link(0, nullptr, "-invalid-option", 1, &program, nullptr, nullptr);
@@ -2581,9 +2581,9 @@ TEST(SimpleProgramTests, givenDefaultProgramWhenSetDeviceIsCalledThenDeviceIsSet
     MockProgram program(executionEnvironment);
     EXPECT_EQ(nullptr, program.getDevicePtr());
     auto dummyDevice = (Device *)0x1337;
-    program.SetDevice(dummyDevice);
+    program.setDevice(dummyDevice);
     EXPECT_EQ(dummyDevice, program.getDevicePtr());
-    program.SetDevice(nullptr);
+    program.setDevice(nullptr);
     EXPECT_EQ(nullptr, program.getDevicePtr());
 }
 

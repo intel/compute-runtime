@@ -120,8 +120,8 @@ cl_int Program::build(
             inputArgs.allowCaching = enableCaching;
             NEO::TranslationOutput compilerOuput = {};
             auto compilerErr = pCompilerInterface->build(*this->pDevice, inputArgs, compilerOuput);
-            this->updateBuildLog(this->pDevice, compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
-            this->updateBuildLog(this->pDevice, compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
+            this->updateBuildLog(this->pDevice->getRootDeviceIndex(), compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
+            this->updateBuildLog(this->pDevice->getRootDeviceIndex(), compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
             retVal = asClError(compilerErr);
             if (retVal != CL_SUCCESS) {
                 break;

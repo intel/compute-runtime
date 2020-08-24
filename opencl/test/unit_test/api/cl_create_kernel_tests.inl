@@ -168,7 +168,7 @@ TEST_F(clCreateKernelTests, GivenInvalidProgramWhenCreatingNewKernelThenInvalidP
 TEST_F(clCreateKernelTests, GivenProgramWithBuildErrorWhenCreatingNewKernelThenInvalidProgramExecutableErrorIsReturned) {
     cl_kernel kernel = nullptr;
     std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, false, nullptr);
-    pMockProg->SetBuildStatus(CL_BUILD_ERROR);
+    pMockProg->setBuildStatus(CL_BUILD_ERROR);
 
     kernel = clCreateKernel(
         pMockProg.get(),
