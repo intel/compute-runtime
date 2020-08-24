@@ -53,7 +53,11 @@ void DebuggerL0::printTrackedAddresses(uint32_t contextId) {
     auto sba = reinterpret_cast<SbaTrackedAddresses *>(memory);
 
     NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
-                          "Debugger: SBA ssh = %" SCNx64 " gsba = %" SCNx64 " \n", sba->SurfaceStateBaseAddress, sba->GeneralStateBaseAddress);
+                          "Debugger: SBA ssh = %" SCNx64
+                          " gsba = %" SCNx64
+                          " bsurfsba =  %" SCNx64 "\n",
+                          sba->SurfaceStateBaseAddress, sba->GeneralStateBaseAddress,
+                          sba->BindlessSurfaceStateBaseAddress);
 }
 
 DebuggerL0 ::~DebuggerL0() {
@@ -67,12 +71,10 @@ bool DebuggerL0::isDebuggerActive() {
     return true;
 }
 
-void DebuggerL0::captureStateBaseAddress(NEO::CommandContainer &container) {
-    uint64_t ssh = 0;
-    if (container.isHeapDirty(NEO::HeapType::SURFACE_STATE)) {
-        ssh = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getHeapGpuBase();
+void DebuggerL0::captureStateBaseAddress(NEO::CommandContainer &container, SbaAddresses sba) {
+    if (DebuggerL0::isAnyTrackedAddressChanged(sba)) {
+        programSbaTrackingCommands(*container.getCommandStream(), sba);
     }
-    programSbaTrackingCommands(*container.getCommandStream(), 0, ssh);
 }
 
 } // namespace L0

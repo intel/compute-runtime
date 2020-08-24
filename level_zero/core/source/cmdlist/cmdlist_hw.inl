@@ -1606,7 +1606,15 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
     STATE_BASE_ADDRESS sba;
     NEO::EncodeStateBaseAddress<GfxFamily>::encode(commandContainer, sba);
     if (device->getL0Debugger()) {
-        device->getL0Debugger()->captureStateBaseAddress(commandContainer);
+        NEO::Debugger::SbaAddresses sbaAddresses = {};
+        sbaAddresses.BindlessSurfaceStateBaseAddress = sba.getBindlessSurfaceStateBaseAddress();
+        sbaAddresses.DynamicStateBaseAddress = sba.getDynamicStateBaseAddress();
+        sbaAddresses.GeneralStateBaseAddress = sba.getGeneralStateBaseAddress();
+        sbaAddresses.IndirectObjectBaseAddress = sba.getIndirectObjectBaseAddress();
+        sbaAddresses.InstructionBaseAddress = sba.getInstructionBaseAddress();
+        sbaAddresses.SurfaceStateBaseAddress = sba.getSurfaceStateBaseAddress();
+
+        device->getL0Debugger()->captureStateBaseAddress(commandContainer, sbaAddresses);
     }
     commandContainer.setDirtyStateForAllHeaps(false);
 }

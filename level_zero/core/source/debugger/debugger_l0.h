@@ -52,13 +52,19 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
         return sbaTrackingGpuVa.address;
     }
 
-    void captureStateBaseAddress(NEO::CommandContainer &container) override;
+    void captureStateBaseAddress(NEO::CommandContainer &container, SbaAddresses sba) override;
     void printTrackedAddresses(uint32_t contextId);
 
     virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) const = 0;
-    virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, uint64_t generalStateGpuVa, uint64_t surfaceStateGpuVa) const = 0;
+    virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) const = 0;
 
   protected:
+    static bool isAnyTrackedAddressChanged(SbaAddresses sba) {
+        return sba.GeneralStateBaseAddress != 0 ||
+               sba.SurfaceStateBaseAddress != 0 ||
+               sba.BindlessSurfaceStateBaseAddress != 0;
+    }
+
     NEO::Device *device = nullptr;
     NEO::GraphicsAllocation *sbaAllocation = nullptr;
     std::unordered_map<uint32_t, NEO::GraphicsAllocation *> perContextSbaAllocations;
@@ -74,7 +80,7 @@ class DebuggerL0Hw : public DebuggerL0 {
     static DebuggerL0 *allocate(NEO::Device *device);
 
     size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) const override;
-    void programSbaTrackingCommands(NEO::LinearStream &cmdStream, uint64_t generalStateGpuVa, uint64_t surfaceStateGpuVa) const override;
+    void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) const override;
 
   protected:
     DebuggerL0Hw(NEO::Device *device) : DebuggerL0(device){};

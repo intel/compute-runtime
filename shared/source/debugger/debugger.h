@@ -14,11 +14,21 @@ class IndirectHeap;
 
 class Debugger {
   public:
+    struct SbaAddresses {
+        uint64_t GeneralStateBaseAddress = 0;
+        uint64_t SurfaceStateBaseAddress = 0;
+        uint64_t DynamicStateBaseAddress = 0;
+        uint64_t IndirectObjectBaseAddress = 0;
+        uint64_t InstructionBaseAddress = 0;
+        uint64_t BindlessSurfaceStateBaseAddress = 0;
+        uint64_t BindlessSamplerStateBaseAddress = 0;
+    };
+
     static std::unique_ptr<Debugger> create(HardwareInfo *hwInfo);
     virtual ~Debugger() = default;
     virtual bool isDebuggerActive() = 0;
     bool isLegacy() const { return isLegacyMode; }
-    virtual void captureStateBaseAddress(CommandContainer &container) = 0;
+    virtual void captureStateBaseAddress(CommandContainer &container, SbaAddresses sba) = 0;
 
     void *getDebugSurfaceReservedSurfaceState(IndirectHeap &ssh);
 

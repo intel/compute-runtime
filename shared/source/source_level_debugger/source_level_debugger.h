@@ -31,7 +31,7 @@ class SourceLevelDebugger : public Debugger {
     MOCKABLE_VIRTUAL bool notifyKernelDebugData(const DebugData *debugData, const std::string &name, const void *isa, size_t isaSize) const;
     MOCKABLE_VIRTUAL bool initialize(bool useLocalMemory);
 
-    void captureStateBaseAddress(CommandContainer &container) override{};
+    void captureStateBaseAddress(CommandContainer &container, SbaAddresses sba) override{};
 
   protected:
     class SourceLevelDebuggerInterface;

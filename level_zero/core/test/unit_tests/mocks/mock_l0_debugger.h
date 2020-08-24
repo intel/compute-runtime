@@ -25,9 +25,9 @@ class MockDebuggerL0Hw : public L0::DebuggerL0Hw<GfxFamily> {
         return new MockDebuggerL0Hw<GfxFamily>(device);
     }
 
-    void captureStateBaseAddress(NEO::CommandContainer &container) override {
+    void captureStateBaseAddress(NEO::CommandContainer &container, NEO::Debugger::SbaAddresses sba) override {
         captureStateBaseAddressCount++;
-        L0::DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(container);
+        L0::DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(container, sba);
     }
     uint32_t captureStateBaseAddressCount = 0;
 };

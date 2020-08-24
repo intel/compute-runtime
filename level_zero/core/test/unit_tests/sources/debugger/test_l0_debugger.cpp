@@ -485,7 +485,11 @@ HWTEST_F(L0DebuggerSimpleTest, givenNonZeroGpuVasWhenProgrammingSbaTrackingThenC
     uint64_t gsba = 0x60000;
     uint64_t ssba = 0x1234567000;
 
-    debugger->programSbaTrackingCommands(cmdStream, gsba, ssba);
+    NEO::Debugger::SbaAddresses sbaAddresses = {};
+    sbaAddresses.GeneralStateBaseAddress = gsba;
+    sbaAddresses.SurfaceStateBaseAddress = ssba;
+
+    debugger->programSbaTrackingCommands(cmdStream, sbaAddresses);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
@@ -522,7 +526,11 @@ HWTEST_F(L0DebuggerSimpleTest, givenZeroGpuVasWhenProgrammingSbaTrackingThenStre
     uint64_t gsba = 0;
     uint64_t ssba = 0;
 
-    debugger->programSbaTrackingCommands(cmdStream, gsba, ssba);
+    NEO::Debugger::SbaAddresses sbaAddresses = {};
+    sbaAddresses.GeneralStateBaseAddress = gsba;
+    sbaAddresses.SurfaceStateBaseAddress = ssba;
+
+    debugger->programSbaTrackingCommands(cmdStream, sbaAddresses);
 
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
@@ -533,7 +541,7 @@ HWTEST_F(L0DebuggerSimpleTest, whenAllocateCalledThenDebuggerIsCreated) {
     delete debugger;
 }
 
-HWTEST_F(L0DebuggerSimpleTest, givenNotDirtySSHWhenCapturingSBAThenNoTrackingCmdsAreAdded) {
+HWTEST_F(L0DebuggerSimpleTest, givenNotChangedSurfaceStateWhenCapturingSBAThenNoTrackingCmdsAreAdded) {
     auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
 
     debugger->sbaTrackingGpuVa.address = 0x45670000;
@@ -541,16 +549,63 @@ HWTEST_F(L0DebuggerSimpleTest, givenNotDirtySSHWhenCapturingSBAThenNoTrackingCmd
     NEO::CommandContainer container;
     container.initialize(neoDevice);
 
-    debugger->captureStateBaseAddress(container);
+    NEO::Debugger::SbaAddresses sba = {};
+    sba.SurfaceStateBaseAddress = 0x123456000;
+
+    debugger->captureStateBaseAddress(container, sba);
     auto sizeUsed = container.getCommandStream()->getUsed();
 
     EXPECT_NE(0u, sizeUsed);
-    container.setDirtyStateForAllHeaps(false);
+    sba.SurfaceStateBaseAddress = 0;
 
-    debugger->captureStateBaseAddress(container);
+    debugger->captureStateBaseAddress(container, sba);
     auto sizeUsed2 = container.getCommandStream()->getUsed();
 
     EXPECT_EQ(sizeUsed, sizeUsed2);
+}
+
+HWTEST_F(L0DebuggerSimpleTest, givenChangedBaseAddressesWhenCapturingSBAThenNoTrackingCmdsAreAdded) {
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+
+    debugger->sbaTrackingGpuVa.address = 0x45670000;
+    {
+        NEO::CommandContainer container;
+        container.initialize(neoDevice);
+
+        NEO::Debugger::SbaAddresses sba = {};
+        sba.SurfaceStateBaseAddress = 0x123456000;
+
+        debugger->captureStateBaseAddress(container, sba);
+        auto sizeUsed = container.getCommandStream()->getUsed();
+
+        EXPECT_NE(0u, sizeUsed);
+    }
+
+    {
+        NEO::CommandContainer container;
+        container.initialize(neoDevice);
+
+        NEO::Debugger::SbaAddresses sba = {};
+        sba.GeneralStateBaseAddress = 0x123456000;
+
+        debugger->captureStateBaseAddress(container, sba);
+        auto sizeUsed = container.getCommandStream()->getUsed();
+
+        EXPECT_NE(0u, sizeUsed);
+    }
+
+    {
+        NEO::CommandContainer container;
+        container.initialize(neoDevice);
+
+        NEO::Debugger::SbaAddresses sba = {};
+        sba.BindlessSurfaceStateBaseAddress = 0x123456000;
+
+        debugger->captureStateBaseAddress(container, sba);
+        auto sizeUsed = container.getCommandStream()->getUsed();
+
+        EXPECT_NE(0u, sizeUsed);
+    }
 }
 } // namespace ult
 } // namespace L0
