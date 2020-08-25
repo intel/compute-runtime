@@ -13,6 +13,7 @@
 #include <mutex>
 
 namespace NEO {
+class Drm;
 class OsContext;
 class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
@@ -24,7 +25,7 @@ class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
     virtual void mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) = 0;
     virtual std::unique_lock<std::mutex> lockHandlerForExecWA() = 0;
 
-    static std::unique_ptr<DrmMemoryOperationsHandler> create();
+    static std::unique_ptr<DrmMemoryOperationsHandler> create(Drm &drm);
 
   protected:
     std::mutex mutex;

@@ -27,8 +27,9 @@ class DrmMemoryManagerBasic : public ::testing::Test {
     void SetUp() override {
         for (auto i = 0u; i < numRootDevices; i++) {
             executionEnvironment.rootDeviceEnvironments[i]->osInterface = std::make_unique<OSInterface>();
-            executionEnvironment.rootDeviceEnvironments[i]->osInterface->get()->setDrm(Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[i]));
-            executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create();
+            auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[i]);
+            executionEnvironment.rootDeviceEnvironments[i]->osInterface->get()->setDrm(drm);
+            executionEnvironment.rootDeviceEnvironments[i]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm);
         }
     }
     const uint32_t rootDeviceIndex = 1u;
@@ -59,7 +60,7 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
             auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[i].get();
             rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
             rootDeviceEnvironment->osInterface->get()->setDrm(new DrmMockCustom());
-            rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create();
+            rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->get()->getDrm());
         }
 
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex].get();
@@ -132,7 +133,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
             rootDeviceEnvironment->setHwInfo(defaultHwInfo.get());
             rootDeviceEnvironment->osInterface = std::make_unique<OSInterface>();
             rootDeviceEnvironment->osInterface->get()->setDrm(new DrmMockCustom);
-            rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create();
+            rootDeviceEnvironment->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*rootDeviceEnvironment->osInterface->get()->getDrm());
         }
         mock = static_cast<DrmMockCustom *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->getDrm());
         memoryManager.reset(new TestedDrmMemoryManager(*executionEnvironment));

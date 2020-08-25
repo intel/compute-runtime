@@ -321,13 +321,7 @@ class DrmMockCustom : public Drm {
     };
 
     virtual int ioctlExtra(unsigned long request, void *arg) {
-        switch (request) {
-        default:
-            std::cout << "unexpected IOCTL: " << std::hex << request << std::endl;
-            UNRECOVERABLE_IF(true);
-            break;
-        }
-        return 0;
+        return -1;
     }
 
     IoctlResExt NONE = {-1, 0};

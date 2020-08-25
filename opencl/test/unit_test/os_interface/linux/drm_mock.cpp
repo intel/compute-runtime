@@ -172,6 +172,9 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     if (request == DRM_IOCTL_I915_GEM_WAIT) {
         return 0;
     }
+    if (request == DRM_IOCTL_GEM_CLOSE) {
+        return 0;
+    }
     if (request == DRM_IOCTL_I915_QUERY && arg != nullptr) {
         auto queryArg = static_cast<drm_i915_query *>(arg);
         auto queryItemArg = reinterpret_cast<drm_i915_query_item *>(queryArg->items_ptr);
