@@ -8,8 +8,14 @@
 #pragma once
 #include <level_zero/zet_api.h>
 
+#include <map>
+#include <string>
+#include <vector>
+
 namespace L0 {
 struct OsSysman;
+using namespace std;
+
 class OsScheduler {
   public:
     virtual ze_result_t getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) = 0;
@@ -19,8 +25,9 @@ class OsScheduler {
     virtual ze_result_t setTimesliceDuration(uint64_t timeslice) = 0;
     virtual ze_result_t setHeartbeatInterval(uint64_t heartbeat) = 0;
     virtual ze_bool_t canControlScheduler() = 0;
-    virtual bool isSchedulerSupported() = 0;
-    static OsScheduler *create(OsSysman *pOsSysman);
+    virtual ze_result_t getProperties(zes_sched_properties_t &properties) = 0;
+    static OsScheduler *create(OsSysman *pOsSysman, zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines);
+    static ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &listOfEngines, OsSysman *pOsSysman);
     virtual ~OsScheduler() = default;
 };
 

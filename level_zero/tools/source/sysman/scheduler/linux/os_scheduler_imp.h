@@ -26,13 +26,15 @@ class LinuxSchedulerImp : public OsScheduler, NEO::NonCopyableOrMovableClass {
     ze_result_t setTimesliceDuration(uint64_t timeslice) override;
     ze_result_t setHeartbeatInterval(uint64_t heartbeat) override;
     ze_bool_t canControlScheduler() override;
-    bool isSchedulerSupported() override;
+    ze_result_t getProperties(zes_sched_properties_t &properties) override;
     LinuxSchedulerImp() = default;
-    LinuxSchedulerImp(OsSysman *pOsSysman);
+    LinuxSchedulerImp(OsSysman *pOsSysman, zes_engine_type_flag_t type, std::vector<std::string> &listOfEngines);
     ~LinuxSchedulerImp() override = default;
+    static const std::string engineDir;
 
   protected:
     SysfsAccess *pSysfsAccess = nullptr;
+    zes_engine_type_flag_t engineType = ZES_ENGINE_TYPE_FLAG_OTHER;
 
   private:
     static const std::string preemptTimeoutMilliSecs;
@@ -41,7 +43,7 @@ class LinuxSchedulerImp : public OsScheduler, NEO::NonCopyableOrMovableClass {
     static const std::string defaultTimesliceDurationMilliSecs;
     static const std::string heartbeatIntervalMilliSecs;
     static const std::string defaultHeartbeatIntervalMilliSecs;
-    static const std::string computeEngineDir;
+    std::vector<std::string> listOfEngines = {};
 };
 
 } // namespace L0

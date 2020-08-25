@@ -5,21 +5,11 @@
  *
  */
 
-#include "sysman/scheduler/os_scheduler.h"
+#include "level_zero/tools/source/sysman/scheduler/windows/os_scheduler_imp.h"
+
+#include "sysman/scheduler/scheduler_imp.h"
 
 namespace L0 {
-
-class WddmSchedulerImp : public OsScheduler {
-  public:
-    ze_result_t getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) override;
-    ze_result_t getTimesliceDuration(uint64_t &timeslice, ze_bool_t getDefault) override;
-    ze_result_t getHeartbeatInterval(uint64_t &heartbeat, ze_bool_t getDefault) override;
-    ze_result_t setPreemptTimeout(uint64_t timeout) override;
-    ze_result_t setTimesliceDuration(uint64_t timeslice) override;
-    ze_result_t setHeartbeatInterval(uint64_t heartbeat) override;
-    ze_bool_t canControlScheduler() override;
-    bool isSchedulerSupported() override;
-};
 
 ze_result_t WddmSchedulerImp::getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
@@ -49,11 +39,15 @@ ze_bool_t WddmSchedulerImp::canControlScheduler() {
     return 0;
 }
 
-bool WddmSchedulerImp::isSchedulerSupported() {
-    return false;
+ze_result_t WddmSchedulerImp::getProperties(zes_sched_properties_t &properties) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-OsScheduler *OsScheduler::create(OsSysman *pOsSysman) {
+ze_result_t OsScheduler::getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &listOfEngines, OsSysman *pOsSysman) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+OsScheduler *OsScheduler::create(OsSysman *pOsSysman, zes_engine_type_flag_t type, std::vector<std::string> &listOfEngines) {
     WddmSchedulerImp *pWddmSchedulerImp = new WddmSchedulerImp();
     return static_cast<OsScheduler *>(pWddmSchedulerImp);
 }

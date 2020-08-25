@@ -141,17 +141,11 @@ ze_result_t SchedulerImp::schedulerGetProperties(zes_sched_properties_t *pProper
 }
 
 void SchedulerImp::init() {
-    this->initSuccess = pOsScheduler->isSchedulerSupported();
-    properties.onSubdevice = false;
-    properties.canControl = pOsScheduler->canControlScheduler();
-    properties.engines = ZES_ENGINE_TYPE_FLAG_COMPUTE;
-    properties.supportedModes = (1 << ZES_SCHED_MODE_TIMEOUT) | (1 << ZES_SCHED_MODE_TIMESLICE) | (1 << ZES_SCHED_MODE_EXCLUSIVE);
+    pOsScheduler->getProperties(this->properties);
 }
 
-SchedulerImp::SchedulerImp(OsSysman *pOsSysman) {
-    if (pOsScheduler == nullptr) {
-        pOsScheduler = OsScheduler::create(pOsSysman);
-    }
+SchedulerImp::SchedulerImp(OsSysman *pOsSysman, zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines) {
+    pOsScheduler = OsScheduler::create(pOsSysman, engineType, listOfEngines);
     UNRECOVERABLE_IF(nullptr == pOsScheduler);
     init();
 };

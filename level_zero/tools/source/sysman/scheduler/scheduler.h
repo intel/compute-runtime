@@ -10,6 +10,8 @@
 
 #include <level_zero/zes_api.h>
 
+#include <map>
+#include <string>
 #include <vector>
 
 struct _zes_sched_handle_t {
@@ -37,7 +39,7 @@ class Scheduler : _zes_sched_handle_t {
 };
 
 struct SchedulerHandleContext : NEO::NonCopyableOrMovableClass {
-    SchedulerHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
+    SchedulerHandleContext(OsSysman *pOsSysman);
     ~SchedulerHandleContext();
     void init();
     ze_result_t schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler);
@@ -45,6 +47,9 @@ struct SchedulerHandleContext : NEO::NonCopyableOrMovableClass {
     OsSysman *pOsSysman = nullptr;
     std::vector<Scheduler *> handleList = {};
     ze_device_handle_t hCoreDevice = nullptr;
+
+  private:
+    void createHandle(zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines);
 };
 
 } // namespace L0
