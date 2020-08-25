@@ -465,12 +465,9 @@ macro(macro_for_each_gen)
           neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL_STATELESS} "" ${TEST_KERNEL_STATELESS_internal_options})
         endif()
 
-        # Temporarily disable in Debug builds
-        if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-          foreach(file ${TEST_KERNEL_BINDLESS})
-            neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${file} "bindless" ${TEST_KERNEL_BINDLESS_internal_options})
-          endforeach()
-        endif()
+        foreach(file ${TEST_KERNEL_BINDLESS})
+          neo_gen_kernels_with_internal_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${file} "bindless" ${TEST_KERNEL_BINDLESS_internal_options})
+        endforeach()
 
         set(sip_kernel_file_name)
         set(sip_kernel_output_file)
