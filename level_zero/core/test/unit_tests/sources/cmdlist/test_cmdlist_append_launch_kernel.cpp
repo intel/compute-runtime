@@ -316,7 +316,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     {
         auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
         EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-        EXPECT_FALSE(cmd->getDcFlushEnable());
+        EXPECT_TRUE(cmd->getDcFlushEnable());
     }
     itor++;
 

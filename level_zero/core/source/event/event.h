@@ -50,8 +50,8 @@ struct Event : _ze_event_handle_t {
     void *hostAddress = nullptr;
     uint64_t gpuAddress;
 
-    ze_event_scope_flags_t signalScope; // Saving scope for use later
-    ze_event_scope_flags_t waitScope;
+    ze_event_scope_flags_t signalScope = 0u;
+    ze_event_scope_flags_t waitScope = 0u;
 
     bool isTimestampEvent = false;
 

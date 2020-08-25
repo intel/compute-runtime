@@ -1314,14 +1314,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     auto event = Event::fromHandle(hEvent);
 
     commandContainer.addToResidencyContainer(&event->getAllocation());
+    uint64_t baseAddr = event->getGpuAddress();
+    size_t eventSignalOffset = 0;
+    if (event->isTimestampEvent) {
+        eventSignalOffset = offsetof(KernelTimestampEvent, contextEnd);
+    }
+
     if (isCopyOnlyCmdList) {
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), event->getGpuAddress(), Event::STATE_SIGNALED, false, true);
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), ptrOffset(baseAddr, eventSignalOffset), Event::STATE_SIGNALED, false, true);
     } else {
         NEO::PipeControlArgs args;
         args.dcFlushEnable = (!event->signalScope) ? false : true;
         NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
             *commandContainer.getCommandStream(), POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-            event->getGpuAddress(), Event::STATE_SIGNALED,
+            ptrOffset(baseAddr, eventSignalOffset), Event::STATE_SIGNALED,
             commandContainer.getDevice()->getHardwareInfo(),
             args);
     }
@@ -1397,7 +1403,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
             auto contextEndAddr = baseAddr + offsetof(KernelTimestampEvent, contextEnd);
             auto globalEndAddr = baseAddr + offsetof(KernelTimestampEvent, globalEnd);
             NEO::PipeControlArgs args;
-            args.dcFlushEnable = false;
+            args.dcFlushEnable = true;
 
             NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
 
