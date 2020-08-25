@@ -174,6 +174,7 @@ add_dependencies(unit_tests
                  igdrcl_tests
                  test_dynamic_lib
                  prepare_test_kernels
+                 prepare_test_kernel_for_shared
 )
 
 set_target_properties(igdrcl_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})

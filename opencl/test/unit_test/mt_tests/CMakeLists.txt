@@ -58,7 +58,7 @@ if(WIN32)
 endif()
 
 add_dependencies(igdrcl_mt_tests test_dynamic_lib)
-
+add_dependencies(igdrcl_mt_tests prepare_test_kernel_for_shared)
 create_project_source_tree(igdrcl_mt_tests)
 
 set_target_properties(igdrcl_mt_tests PROPERTIES FOLDER ${OPENCL_TEST_PROJECTS_FOLDER})

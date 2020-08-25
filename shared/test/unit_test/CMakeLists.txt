@@ -109,7 +109,7 @@ if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
   endif()
 
   add_subdirectories()
-
+  add_dependencies(${TARGET_NAME} prepare_test_kernel_for_shared)
   create_project_source_tree(${TARGET_NAME})
 
 endif()
