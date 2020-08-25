@@ -14,7 +14,7 @@ components:
   infra:
     branch: infra
     dest_dir: infra
-    revision: 39725e333036d96066d73c4e5cdbd9d713f11786
+    revision: e22f8dae10d18bca37d9ef58c5bc0ecd3a47dee7
     type: git
   internal:
     branch: master
@@ -43,5 +43,5 @@ components:
     type: git
     branch: wdk
     revision: a5f71b6696eb7679ebb263ee226e34520397ed00-1451
-converter: M-1459
+converter: M-1463
 version: '1'
