@@ -1053,4 +1053,118 @@ size_t CommandQueueHw<GfxFamily>::calculateHostPtrSizeForImage(const size_t *reg
 
     return Image::calculateHostPtrSize(region, dstRowPitch, dstSlicePitch, bytesPerPixel, image->getImageDesc().image_type);
 }
+
+template <typename GfxFamily>
+template <uint32_t cmdType>
+void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking) {
+    auto commandStreamRecieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+
+    EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+    TimeStampData queueTimeStamp;
+    EventBuilder eventBuilder;
+
+    if (isProfilingEnabled() && eventsRequest.outEvent) {
+        this->getDevice().getOSTime()->getCpuGpuTime(&queueTimeStamp);
+    }
+    if (eventsRequest.outEvent) {
+        eventBuilder.create<Event>(this, cmdType, CompletionStamp::notReady, 0);
+        *eventsRequest.outEvent = eventBuilder.getEvent();
+        if (eventBuilder.getEvent()->isProfilingEnabled()) {
+            eventBuilder.getEvent()->setQueueTimeStamp(&queueTimeStamp);
+        }
+        DBG_LOG(EventsDebugEnable, "enqueueHandler commandType", cmdType, "output Event", eventBuilder.getEvent());
+    }
+
+    std::unique_ptr<KernelOperation> blockedCommandsData;
+    TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
+
+    auto blockQueue = false;
+    auto taskLevel = 0u;
+    obtainTaskLevelAndBlockedStatus(taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, blockQueue, cmdType);
+    auto clearAllDependencies = queueDependenciesClearRequired();
+
+    DBG_LOG(EventsDebugEnable, "blockQueue", blockQueue, "virtualEvent", virtualEvent, "taskLevel", taskLevel);
+
+    enqueueHandlerHook(cmdType, multiDispatchInfo);
+    aubCaptureHook(blocking, clearAllDependencies, multiDispatchInfo);
+
+    if (DebugManager.flags.MakeEachEnqueueBlocking.get()) {
+        blocking = true;
+    }
+
+    TimestampPacketDependencies timestampPacketDependencies;
+    BlitPropertiesContainer blitPropertiesContainer;
+    CsrDependencies csrDeps;
+
+    eventsRequest.fillCsrDependencies(csrDeps, *getBcsCommandStreamReceiver(), CsrDependencies::DependenciesType::All);
+    auto allocator = getBcsCommandStreamReceiver()->getTimestampPacketAllocator();
+
+    if (isCacheFlushForBcsRequired() && isGpgpuSubmissionForBcsRequired(blockQueue)) {
+        timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
+    }
+
+    if (!blockQueue && getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired()) {
+        timestampPacketDependencies.barrierNodes.add(allocator->getTag());
+    }
+
+    obtainNewTimestampPacketNodes(1, timestampPacketDependencies.previousEnqueueNodes, clearAllDependencies, true);
+    csrDeps.push_back(&timestampPacketDependencies.previousEnqueueNodes);
+
+    auto &commandStream = *obtainCommandStream<cmdType>(csrDeps, true, blockQueue, multiDispatchInfo, eventsRequest, blockedCommandsData, nullptr, 0);
+    auto commandStreamStart = commandStream.getUsed();
+
+    if (eventBuilder.getEvent()) {
+        eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
+    }
+
+    blitPropertiesContainer.push_back(processDispatchForBlitEnqueue(multiDispatchInfo, timestampPacketDependencies,
+                                                                    eventsRequest, commandStream, cmdType, blockQueue));
+
+    CompletionStamp completionStamp = {CompletionStamp::notReady, taskLevel, 0};
+
+    const EnqueueProperties enqueueProperties(true, false, false, false, &blitPropertiesContainer);
+
+    if (!blockQueue) {
+        csrDeps.makeResident(getGpgpuCommandStreamReceiver());
+
+        completionStamp = enqueueCommandWithoutKernel(
+            nullptr,
+            0,
+            commandStream,
+            commandStreamStart,
+            blocking,
+            enqueueProperties,
+            timestampPacketDependencies,
+            eventsRequest,
+            eventBuilder,
+            taskLevel);
+
+        if (eventBuilder.getEvent()) {
+            eventBuilder.getEvent()->flushStamp->replaceStampObject(this->flushStamp->getStampReference());
+        }
+
+        this->latestSentEnqueueType = enqueueProperties.operation;
+    }
+    updateFromCompletionStamp(completionStamp);
+
+    if (eventBuilder.getEvent()) {
+        eventBuilder.getEvent()->updateCompletionStamp(completionStamp.taskCount, bcsTaskCount, completionStamp.taskLevel, completionStamp.flushStamp);
+        FileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "updateCompletionStamp Event", eventBuilder.getEvent(), "taskLevel", eventBuilder.getEvent()->taskLevel.load());
+    }
+
+    if (blockQueue) {
+        enqueueBlocked(cmdType, nullptr, 0, multiDispatchInfo, timestampPacketDependencies, blockedCommandsData, enqueueProperties, eventsRequest, eventBuilder, nullptr);
+    }
+
+    queueOwnership.unlock();
+    commandStreamRecieverOwnership.unlock();
+
+    if (blocking) {
+        if (blockQueue) {
+            while (isQueueBlocked()) {
+            }
+        }
+        waitUntilComplete(taskCount, bcsTaskCount, flushStamp->peekStamp(), false);
+    }
+}
 } // namespace NEO

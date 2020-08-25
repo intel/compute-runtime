@@ -347,6 +347,9 @@ class CommandQueueHw : public CommandQueue {
                         const cl_event *eventWaitList,
                         cl_event *event);
 
+    template <uint32_t cmdType>
+    void enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking);
+
     template <uint32_t commandType>
     CompletionStamp enqueueNonBlocked(Surface **surfacesForResidency,
                                       size_t surfaceCount,
