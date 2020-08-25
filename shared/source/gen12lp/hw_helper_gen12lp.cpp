@@ -169,7 +169,7 @@ void HwHelperHw<Family>::addEngineToEngineGroup(std::vector<std::vector<EngineCo
     if (engine.getEngineType() == aub_stream::ENGINE_CCS) {
         engineGroups[static_cast<uint32_t>(EngineGroupType::Compute)].push_back(engine);
     }
-    if (engine.getEngineType() == aub_stream::ENGINE_BCS) {
+    if (engine.getEngineType() == aub_stream::ENGINE_BCS && DebugManager.flags.EnableBlitterOperationsSupport.get() != 0) {
         engineGroups[static_cast<uint32_t>(EngineGroupType::Copy)].push_back(engine);
     }
 }
