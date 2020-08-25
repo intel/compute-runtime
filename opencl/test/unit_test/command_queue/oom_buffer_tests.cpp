@@ -92,7 +92,7 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
     Buffer *dstBuffer = nullptr;
 };
 
-HWTEST_P(OOMCommandQueueBufferTest, enqueueCopyBuffer) {
+HWTEST_P(OOMCommandQueueBufferTest, WhenCopyingBufferThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
@@ -116,7 +116,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueCopyBuffer) {
     }
 }
 
-HWTEST_P(OOMCommandQueueBufferTest, enqueueFillBuffer) {
+HWTEST_P(OOMCommandQueueBufferTest, WhenFillingBufferThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
@@ -140,7 +140,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueFillBuffer) {
     }
 }
 
-HWTEST_P(OOMCommandQueueBufferTest, enqueueReadBuffer) {
+HWTEST_P(OOMCommandQueueBufferTest, WhenReadingBufferThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
@@ -164,7 +164,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueReadBuffer) {
     }
 }
 
-HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBuffer) {
+HWTEST_P(OOMCommandQueueBufferTest, WhenWritingBufferThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
@@ -188,7 +188,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBuffer) {
     }
 }
 
-HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBufferRect) {
+HWTEST_P(OOMCommandQueueBufferTest, WhenWritingBufferRectThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
@@ -212,7 +212,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBufferRect) {
     }
 }
 
-HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelHelloWorld) {
+HWTEST_P(OOMCommandQueueBufferTest, GivenHelloWorldWhenEnqueingKernelThenMaxAvailableSpaceIsNotExceeded) {
     typedef HelloWorldKernelFixture KernelFixture;
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
@@ -242,7 +242,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelHelloWorld) {
     EXPECT_EQ(CL_SUCCESS, retVal2);
 }
 
-HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelSimpleArg) {
+HWTEST_P(OOMCommandQueueBufferTest, GivenSimpleArgWhenEnqueingKernelThenMaxAvailableSpaceIsNotExceeded) {
     typedef SimpleArgKernelFixture KernelFixture;
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
