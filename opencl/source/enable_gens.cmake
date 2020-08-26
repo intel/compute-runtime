@@ -13,10 +13,6 @@ set(RUNTIME_SRCS_GENX_CPP_LINUX
     linux/command_stream_receiver
 )
 
-set(RUNTIME_SRCS_GENX_H_BASE
-    aub_mapper.h
-)
-
 set(RUNTIME_SRCS_GENX_CPP_BASE
     aub_command_stream_receiver
     aub_mem_dump

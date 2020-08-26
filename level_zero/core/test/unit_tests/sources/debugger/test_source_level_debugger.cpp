@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/gen_common/reg_configs/reg_configs_common.h"
+#include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"

@@ -7,11 +7,11 @@
 
 #pragma once
 #include "opencl/source/command_stream/tbx_command_stream_receiver.h"
-#include "opencl/source/gen_common/aub_mapper.h"
 #include "opencl/source/memory_manager/address_mapper.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/source/memory_manager/page_table.h"
 
+#include "aub_mapper.h"
 #include "command_stream_receiver_simulated_hw.h"
 
 #include <set>

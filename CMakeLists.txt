@@ -843,7 +843,7 @@ include_directories(${NEO_SHARED_DIRECTORY}/built_ins/builtinops${BRANCH_DIR_SUF
 include_directories(${NEO_SHARED_DIRECTORY}/command_stream/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/compiler_interface/compiler_options${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/debug_settings/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${NEO_SHARED_DIRECTORY}/gen_common/reg_configs${BRANCH_DIR_SUFFIX})
+include_directories(${NEO_SHARED_DIRECTORY}/gen_common${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/gmm_helper/client_context${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory${BRANCH_DIR_SUFFIX})
 include_directories(${NEO_SHARED_DIRECTORY}/helpers/definitions${BRANCH_DIR_SUFFIX})

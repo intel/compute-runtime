@@ -8,6 +8,7 @@ set(CORE_SRCS_GENX_H_BASE
     hw_cmds.h
     hw_info.h
     hw_cmds_base.h
+    aub_mapper.h
 )
 
 set(CORE_RUNTIME_SRCS_GENX_CPP_BASE

@@ -12,7 +12,6 @@
 #include "shared/source/helpers/aux_translation.h"
 
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"
-#include "opencl/source/gen_common/aub_mapper.h"
 #include "opencl/source/mem_obj/buffer.h"
 
 #include "hw_cmds.h"

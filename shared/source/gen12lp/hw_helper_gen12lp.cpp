@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gen12lp/aub_mapper.h"
 #include "shared/source/gen12lp/hw_cmds.h"
 
 using Family = NEO::TGLLPFamily;
