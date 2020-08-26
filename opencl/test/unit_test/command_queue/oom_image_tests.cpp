@@ -76,7 +76,7 @@ struct OOMCommandQueueImageTest : public ClDeviceFixture,
     Image *dstImage = nullptr;
 };
 
-HWTEST_P(OOMCommandQueueImageTest, enqueueCopyImage) {
+HWTEST_P(OOMCommandQueueImageTest, WhenCopyingImageThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
@@ -100,7 +100,7 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueCopyImage) {
     EXPECT_EQ(CL_SUCCESS, retVal2);
 }
 
-HWTEST_P(OOMCommandQueueImageTest, enqueueFillImage) {
+HWTEST_P(OOMCommandQueueImageTest, WhenFillingImageThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
@@ -124,7 +124,7 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueFillImage) {
     EXPECT_EQ(CL_SUCCESS, retVal2);
 }
 
-HWTEST_P(OOMCommandQueueImageTest, enqueueReadImage) {
+HWTEST_P(OOMCommandQueueImageTest, WhenReadingImageThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
@@ -148,7 +148,7 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueReadImage) {
     EXPECT_EQ(CL_SUCCESS, retVal2);
 }
 
-HWTEST_P(OOMCommandQueueImageTest, enqueueWriteImage) {
+HWTEST_P(OOMCommandQueueImageTest, WhenWritingImageThenMaxAvailableSpaceIsNotExceeded) {
     CommandQueueHw<FamilyType> cmdQ(context, pClDevice, 0, false);
 
     auto &commandStream = pCmdQ->getCS(1024);
