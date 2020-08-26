@@ -192,6 +192,22 @@ TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCal
     EXPECT_EQ(expectedValue, idx);
 }
 
+TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundInStdStream) {
+    mock->ioctl_expected.total = 1;
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintExecutionBuffer.set(true);
+    drm_i915_gem_exec_object2 execObjectsStorage = {};
+
+    testing::internal::CaptureStdout();
+    auto ret = bo->exec(0, 0, 0, false, osContext.get(), 0, 1, nullptr, 0u, &execObjectsStorage);
+    EXPECT_EQ(0, ret);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    auto idx = output.find("drm_i915_gem_execbuffer2 {");
+    size_t expectedValue = 0;
+    EXPECT_EQ(expectedValue, idx);
+}
+
 TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[256]);
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom);
