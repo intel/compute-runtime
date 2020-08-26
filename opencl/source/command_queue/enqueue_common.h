@@ -153,23 +153,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     auto commandStreamRecieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
 
-    TimeStampData queueTimeStamp;
-    if (isProfilingEnabled() && event) {
-        this->getDevice().getOSTime()->getCpuGpuTime(&queueTimeStamp);
-    }
     EventBuilder eventBuilder;
-    if (event) {
-        eventBuilder.create<Event>(this, commandType, CompletionStamp::notReady, 0);
-        *event = eventBuilder.getEvent();
-        if (eventBuilder.getEvent()->isProfilingEnabled()) {
-            eventBuilder.getEvent()->setQueueTimeStamp(&queueTimeStamp);
-            if (isCommandWithoutKernel(commandType)) {
-                eventBuilder.getEvent()->setCPUProfilingPath(true);
-                eventBuilder.getEvent()->setQueueTimeStamp();
-            }
-        }
-        DBG_LOG(EventsDebugEnable, "enqueueHandler commandType", commandType, "output Event", eventBuilder.getEvent());
-    }
+    setupEvent(eventBuilder, event, commandType);
 
     std::unique_ptr<KernelOperation> blockedCommandsData;
     std::unique_ptr<PrintfHandler> printfHandler;
@@ -179,8 +164,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     auto taskLevel = 0u;
     obtainTaskLevelAndBlockedStatus(taskLevel, numEventsInWaitList, eventWaitList, blockQueue, commandType);
     bool blitEnqueue = blitEnqueueAllowed(commandType);
-
-    DBG_LOG(EventsDebugEnable, "blockQueue", blockQueue, "virtualEvent", virtualEvent, "taskLevel", taskLevel);
 
     if (parentKernel && !blockQueue) {
         while (!devQueueHw->isEMCriticalSectionFree())
@@ -351,12 +334,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
         this->latestSentEnqueueType = enqueueProperties.operation;
     }
-    updateFromCompletionStamp(completionStamp);
-
-    if (eventBuilder.getEvent()) {
-        eventBuilder.getEvent()->updateCompletionStamp(completionStamp.taskCount, bcsTaskCount, completionStamp.taskLevel, completionStamp.flushStamp);
-        FileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "updateCompletionStamp Event", eventBuilder.getEvent(), "taskLevel", eventBuilder.getEvent()->taskLevel.load());
-    }
+    updateFromCompletionStamp(completionStamp, eventBuilder.getEvent());
 
     if (blockQueue) {
         if (parentKernel) {
@@ -618,6 +596,8 @@ void CommandQueueHw<GfxFamily>::obtainTaskLevelAndBlockedStatus(unsigned int &ta
         taskLevel++;
         this->taskLevel = taskLevel;
     }
+
+    DBG_LOG(EventsDebugEnable, "blockQueue", blockQueueStatus, "virtualEvent", virtualEvent, "taskLevel", taskLevel);
 }
 
 template <typename GfxFamily>
@@ -1051,20 +1031,9 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     auto commandStreamRecieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
 
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
-    TimeStampData queueTimeStamp;
     EventBuilder eventBuilder;
 
-    if (isProfilingEnabled() && eventsRequest.outEvent) {
-        this->getDevice().getOSTime()->getCpuGpuTime(&queueTimeStamp);
-    }
-    if (eventsRequest.outEvent) {
-        eventBuilder.create<Event>(this, cmdType, CompletionStamp::notReady, 0);
-        *eventsRequest.outEvent = eventBuilder.getEvent();
-        if (eventBuilder.getEvent()->isProfilingEnabled()) {
-            eventBuilder.getEvent()->setQueueTimeStamp(&queueTimeStamp);
-        }
-        DBG_LOG(EventsDebugEnable, "enqueueHandler commandType", cmdType, "output Event", eventBuilder.getEvent());
-    }
+    setupEvent(eventBuilder, eventsRequest.outEvent, cmdType);
 
     std::unique_ptr<KernelOperation> blockedCommandsData;
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
@@ -1073,8 +1042,6 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     auto taskLevel = 0u;
     obtainTaskLevelAndBlockedStatus(taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, blockQueue, cmdType);
     auto clearAllDependencies = queueDependenciesClearRequired();
-
-    DBG_LOG(EventsDebugEnable, "blockQueue", blockQueue, "virtualEvent", virtualEvent, "taskLevel", taskLevel);
 
     enqueueHandlerHook(cmdType, multiDispatchInfo);
     aubCaptureHook(blocking, clearAllDependencies, multiDispatchInfo);
@@ -1126,12 +1093,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
 
         this->latestSentEnqueueType = enqueueProperties.operation;
     }
-    updateFromCompletionStamp(completionStamp);
-
-    if (eventBuilder.getEvent()) {
-        eventBuilder.getEvent()->updateCompletionStamp(completionStamp.taskCount, bcsTaskCount, completionStamp.taskLevel, completionStamp.flushStamp);
-        FileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "updateCompletionStamp Event", eventBuilder.getEvent(), "taskLevel", eventBuilder.getEvent()->taskLevel.load());
-    }
+    updateFromCompletionStamp(completionStamp, eventBuilder.getEvent());
 
     if (blockQueue) {
         enqueueBlocked(cmdType, nullptr, 0, multiDispatchInfo, timestampPacketDependencies, blockedCommandsData, enqueueProperties, eventsRequest, eventBuilder, nullptr);

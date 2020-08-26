@@ -304,7 +304,7 @@ cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_me
     return status;
 }
 
-void CommandQueue::updateFromCompletionStamp(const CompletionStamp &completionStamp) {
+void CommandQueue::updateFromCompletionStamp(const CompletionStamp &completionStamp, Event *outEvent) {
     DEBUG_BREAK_IF(this->taskLevel > completionStamp.taskLevel);
     DEBUG_BREAK_IF(this->taskCount > completionStamp.taskCount);
     if (completionStamp.taskCount != CompletionStamp::notReady) {
@@ -312,6 +312,11 @@ void CommandQueue::updateFromCompletionStamp(const CompletionStamp &completionSt
     }
     flushStamp->setStamp(completionStamp.flushStamp);
     this->taskLevel = completionStamp.taskLevel;
+
+    if (outEvent) {
+        outEvent->updateCompletionStamp(completionStamp.taskCount, bcsTaskCount, completionStamp.taskLevel, completionStamp.flushStamp);
+        FileLoggerInstance().log(DebugManager.flags.EventsDebugEnable.get(), "updateCompletionStamp Event", outEvent, "taskLevel", outEvent->taskLevel.load());
+    }
 }
 
 bool CommandQueue::setPerfCountersEnabled() {

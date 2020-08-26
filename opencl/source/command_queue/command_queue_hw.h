@@ -483,5 +483,6 @@ class CommandQueueHw : public CommandQueue {
                                    TimestampPacketDependencies &timestampPacketDependencies);
 
     bool isGpgpuSubmissionForBcsRequired(bool queueBlocked) const;
+    void setupEvent(EventBuilder &eventBuilder, cl_event *outEvent, uint32_t cmdType);
 };
 } // namespace NEO

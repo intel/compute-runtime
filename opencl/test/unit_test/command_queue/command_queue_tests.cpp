@@ -162,7 +162,7 @@ TEST(CommandQueue, GivenUpdatedCompletionStampWhenGettingCompletionStampThenUpda
         cmdQ.taskCount + 100,
         cmdQ.taskLevel + 50,
         5};
-    cmdQ.updateFromCompletionStamp(cs);
+    cmdQ.updateFromCompletionStamp(cs, nullptr);
 
     EXPECT_EQ(cs.taskLevel, cmdQ.taskLevel);
     EXPECT_EQ(cs.taskCount, cmdQ.taskCount);
@@ -180,7 +180,7 @@ TEST(CommandQueue, givenTimeStampWithTaskCountNotReadyStatusWhenupdateFromComple
         CompletionStamp::notReady,
         0,
         0};
-    cmdQ.updateFromCompletionStamp(cs);
+    cmdQ.updateFromCompletionStamp(cs, nullptr);
     EXPECT_EQ(1u, cmdQ.taskCount);
 }
 
@@ -195,7 +195,7 @@ TEST(CommandQueue, GivenOOQwhenUpdateFromCompletionStampWithTrueIsCalledThenTask
         cmdQ.taskCount + 100,
         cmdQ.taskLevel + 50,
         5};
-    cmdQ.updateFromCompletionStamp(cs);
+    cmdQ.updateFromCompletionStamp(cs, nullptr);
 
     EXPECT_NE(oldTL, cmdQ.taskLevel);
     EXPECT_EQ(oldTL + 50, cmdQ.taskLevel);

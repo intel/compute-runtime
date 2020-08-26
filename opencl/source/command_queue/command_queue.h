@@ -199,7 +199,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     virtual cl_int flush() = 0;
 
-    MOCKABLE_VIRTUAL void updateFromCompletionStamp(const CompletionStamp &completionStamp);
+    void updateFromCompletionStamp(const CompletionStamp &completionStamp, Event *outEvent);
 
     virtual bool isCacheFlushCommand(uint32_t commandType) const { return false; }
 
