@@ -33,6 +33,7 @@
 #include "opencl/source/helpers/queue_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
+#include "opencl/source/program/printf_handler.h"
 
 #include "CL/cl_ext.h"
 
@@ -695,6 +696,19 @@ void CommandQueue::aubCaptureHook(bool &blocking, bool &clearAllDependencies, co
             auto kernelName = dispatchInfo.getKernel()->getKernelInfo().name;
             getGpgpuCommandStreamReceiver().addAubComment(kernelName.c_str());
         }
+    }
+}
+
+void CommandQueue::waitUntilComplete(bool blockedQueue, PrintfHandler *printfHandler) {
+    if (blockedQueue) {
+        while (isQueueBlocked()) {
+        }
+    }
+
+    waitUntilComplete(taskCount, bcsTaskCount, flushStamp->peekStamp(), false);
+
+    if (printfHandler) {
+        printfHandler->printEnqueueOutput();
     }
 }
 

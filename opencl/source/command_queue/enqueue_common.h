@@ -380,16 +380,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     commandStreamRecieverOwnership.unlock();
 
     if (blocking) {
-        if (blockQueue) {
-            while (isQueueBlocked()) {
-            }
-            waitUntilComplete(taskCount, bcsTaskCount, flushStamp->peekStamp(), false);
-        } else {
-            waitUntilComplete(taskCount, bcsTaskCount, flushStamp->peekStamp(), false);
-            if (printfHandler) {
-                printfHandler->printEnqueueOutput();
-            }
-        }
+        waitUntilComplete(blockQueue, printfHandler.get());
     }
 }
 
@@ -1127,17 +1118,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     if (!blockQueue) {
         csrDeps.makeResident(getGpgpuCommandStreamReceiver());
 
-        completionStamp = enqueueCommandWithoutKernel(
-            nullptr,
-            0,
-            commandStream,
-            commandStreamStart,
-            blocking,
-            enqueueProperties,
-            timestampPacketDependencies,
-            eventsRequest,
-            eventBuilder,
-            taskLevel);
+        completionStamp = enqueueCommandWithoutKernel(nullptr, 0, commandStream, commandStreamStart, blocking, enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, taskLevel);
 
         if (eventBuilder.getEvent()) {
             eventBuilder.getEvent()->flushStamp->replaceStampObject(this->flushStamp->getStampReference());
@@ -1160,11 +1141,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
     commandStreamRecieverOwnership.unlock();
 
     if (blocking) {
-        if (blockQueue) {
-            while (isQueueBlocked()) {
-            }
-        }
-        waitUntilComplete(taskCount, bcsTaskCount, flushStamp->peekStamp(), false);
+        waitUntilComplete(blockQueue, nullptr);
     }
 }
 } // namespace NEO
