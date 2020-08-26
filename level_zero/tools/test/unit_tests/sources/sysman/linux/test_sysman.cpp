@@ -75,5 +75,15 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleVerifyThatSameHandleIsRetrieve
     EXPECT_EQ(pLinuxSysmanImp->getDeviceHandle(), device);
 }
 
+TEST_F(SysmanDeviceFixture, GivenPmuInterfaceHandleWhenCallinggetPmuInterfaceThenCreatedPmuInterfaceHandleWillBeRetrieved) {
+    if (pLinuxSysmanImp->pPmuInterface != nullptr) {
+        //delete previously allocated pPmuInterface
+        delete pLinuxSysmanImp->pPmuInterface;
+        pLinuxSysmanImp->pPmuInterface = nullptr;
+    }
+    pLinuxSysmanImp->pPmuInterface = PmuInterface::create(pLinuxSysmanImp);
+    EXPECT_EQ(pLinuxSysmanImp->getPmuInterface(), pLinuxSysmanImp->pPmuInterface);
+}
+
 } // namespace ult
 } // namespace L0
