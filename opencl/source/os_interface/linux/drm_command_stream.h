@@ -38,7 +38,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
                              gemCloseWorkerMode mode = gemCloseWorkerMode::gemCloseWorkerActive);
 
     bool flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) override;
-    void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
+    MOCKABLE_VIRTUAL void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
 
