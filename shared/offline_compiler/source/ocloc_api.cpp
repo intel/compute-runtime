@@ -58,6 +58,13 @@ Examples:
 )===";
 
 extern "C" {
+void printOclocCmdLine(unsigned int numArgs, const char *argv[], std::unique_ptr<OclocArgHelper> &helper) {
+    helper->printf("Command was:");
+    for (auto i = 0u; i < numArgs; ++i)
+        helper->printf(" %s", argv[i]);
+    helper->printf("\n");
+}
+
 int oclocInvoke(unsigned int numArgs, const char *argv[],
                 const uint32_t numSources, const uint8_t **dataSources, const uint64_t *lenSources, const char **nameSources,
                 const uint32_t numInputHeaders, const uint8_t **dataInputHeaders, const uint64_t *lenInputHeaders, const char **nameInputHeaders,
@@ -118,14 +125,20 @@ int oclocInvoke(unsigned int numArgs, const char *argv[],
                     helper->printf("Build failed with error code: %d\n", retVal);
                 }
             }
+
+            if (retVal != ErrorCode::SUCCESS)
+                printOclocCmdLine(numArgs, argv, helper);
+
             return retVal;
         }
     } catch (const std::exception &e) {
         helper->printf("%s\n", e.what());
+        printOclocCmdLine(numArgs, argv, helper);
         return -1;
     }
     return -1;
 }
+
 int oclocFreeOutput(uint32_t *numOutputs, uint8_t ***dataOutputs, uint64_t **lenOutputs, char ***nameOutputs) {
     for (uint32_t i = 0; i < *numOutputs; i++) {
         delete[](*dataOutputs)[i];
