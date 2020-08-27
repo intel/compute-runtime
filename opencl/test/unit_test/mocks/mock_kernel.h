@@ -356,7 +356,11 @@ class MockKernelWithInternals {
 class MockParentKernel : public Kernel {
   public:
     using Kernel::auxTranslationRequired;
+    using Kernel::kernelInfo;
     using Kernel::patchBlocksCurbeWithConstantValues;
+    using Kernel::pSshLocal;
+    using Kernel::sshLocalSize;
+
     static MockParentKernel *create(Context &context, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
         Device &device = context.getDevice(0)->getDevice();
 

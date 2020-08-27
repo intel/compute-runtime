@@ -68,7 +68,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         auto &device = pKernel->getDevice();
         GFXCORE_FAMILY genFamily = device.getHardwareInfo().platform.eRenderCoreFamily;
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
-        if (!gtpinHelper.addSurfaceState(pKernel)) {
+        if (pKernel->isParentKernel || !gtpinHelper.addSurfaceState(pKernel)) {
             // Kernel with no SSH or Kernel EM, not supported
             return;
         }
@@ -104,7 +104,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
 void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
     if (isGTPinInitialized) {
         auto pKernel = castToObjectOrAbort<Kernel>(kernel);
-        if (pKernel->getSurfaceStateHeapSize() == 0) {
+        if (pKernel->isParentKernel || pKernel->getSurfaceStateHeapSize() == 0) {
             // Kernel with no SSH, not supported
             return;
         }

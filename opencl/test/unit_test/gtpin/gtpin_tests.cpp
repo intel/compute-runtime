@@ -34,9 +34,11 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_device_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/program/program_tests.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
 #include "gtest/gtest.h"
@@ -1037,7 +1039,9 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithExecEnvIsUsedThenKernelCreateCallbacksIsNotCalled) {
+HWCMDTEST_F(IGFX_GEN8_CORE, GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithDeviceEnqueueIsUsedThenKernelCreateAndSubmitCallbacksAreNotCalled) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pDevice);
+
     gtpinCallbacks.onContextCreate = OnContextCreate;
     gtpinCallbacks.onContextDestroy = OnContextDestroy;
     gtpinCallbacks.onKernelCreate = OnKernelCreate;
@@ -1052,6 +1056,17 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithExecEnvIsUsedThen
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
     auto pContext = castToObject<Context>(context);
+
+    cl_queue_properties devQproperties = 0;
+    auto devQ = std::make_unique<DeviceQueueHw<FamilyType>>(pContext, pDevice, devQproperties);
+    pContext->setDefaultDeviceQueue(devQ.get());
+
+    cl_command_queue cmdQ = nullptr;
+    cl_queue_properties properties = 0;
+
+    cmdQ = clCreateCommandQueue(context, device, properties, &retVal);
+    ASSERT_NE(nullptr, cmdQ);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Prepare a kernel with fake Execution Environment
     char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
@@ -1153,11 +1168,28 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithExecEnvIsUsedThen
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(prevCount, KernelCreateCallbackCount);
 
+    int prevCount2 = KernelSubmitCallbackCount;
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
+
+    MockParentKernel *parentKernel = MockParentKernel::create(*pContext);
+
+    retVal = clEnqueueNDRangeKernel(cmdQ, parentKernel, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(prevCount2, KernelSubmitCallbackCount);
+
+    delete parentKernel;
+
     // Cleanup
     retVal = clReleaseKernel(kernel);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseCommandQueue(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseContext(context);
@@ -2116,6 +2148,24 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
     EXPECT_EQ(&NEO::gtpinUnmapBuffer, driverServices.bufferUnMap);
 
     injectFailures(allocBufferFunc);
+}
+
+TEST_F(GTPinTests, givenParentKernelWhenGtPinAddingSurfaceStateThenItIsNotAddedAndFalseIsReturned) {
+    GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
+    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*pContext));
+
+    parentKernel->mockKernelInfo->usesSsh = true;
+    parentKernel->sshLocalSize = 64;
+    parentKernel->pSshLocal.reset(new char[64]);
+
+    size_t sizeSurfaceStates1 = parentKernel->getSurfaceStateHeapSize();
+
+    bool surfaceAdded = gtpinHelper.addSurfaceState(parentKernel.get());
+    EXPECT_FALSE(surfaceAdded);
+
+    size_t sizeSurfaceStates2 = parentKernel->getSurfaceStateHeapSize();
+    EXPECT_EQ(sizeSurfaceStates2, sizeSurfaceStates1);
 }
 
 TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
