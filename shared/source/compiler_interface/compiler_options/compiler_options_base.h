@@ -31,6 +31,7 @@ static constexpr ConstStringRef bindlessImages = "-cl-intel-use-bindless-images"
 static constexpr ConstStringRef uniformWorkgroupSize = "-cl-uniform-work-group-size";
 static constexpr ConstStringRef forceEmuInt32DivRem = "-cl-intel-force-emu-int32divrem";
 static constexpr ConstStringRef forceEmuInt32DivRemSP = "-cl-intel-force-emu-sp-int32divrem";
+static constexpr ConstStringRef allowZebin = "-allow-zebin";
 
 constexpr size_t nullterminateSize = 1U;
 constexpr size_t spaceSeparatorSize = 1U;

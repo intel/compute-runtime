@@ -67,7 +67,7 @@ bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize
     UNRECOVERABLE_IF((nullptr == device) || (nullptr == device->getNEODevice()));
 
     std::string options = buildOptions;
-    std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, NEO::CompilerOptions::hasBufferOffsetArg);
+    std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, NEO::CompilerOptions::hasBufferOffsetArg, NEO::CompilerOptions::allowZebin);
 
     if (device->getNEODevice()->getDeviceInfo().debuggerActive) {
         if (device->getSourceLevelDebugger()->isOptimizationDisabled()) {
