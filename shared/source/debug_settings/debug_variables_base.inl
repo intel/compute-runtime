@@ -101,6 +101,7 @@ DECLARE_DEBUG_VARIABLE(bool, PrintRelocations, false, "prints relocations debug 
 DECLARE_DEBUG_VARIABLE(bool, PrintTimestampPacketContents, false, "prints all timestamps values during profiling data calculation")
 DECLARE_DEBUG_VARIABLE(bool, WddmResidencyLogger, false, "gather Wddm residency statistics to file")
 DECLARE_DEBUG_VARIABLE(bool, PrintBOCreateDestroyResult, false, "tracks the result of creation and destruction of BOs")
+DECLARE_DEBUG_VARIABLE(bool, PrintBOBindingResult, false, "tracks the result of binding and unbinding of BOs")
 
 /*DIRECT SUBMISSION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, EnableDirectSubmission, -1, "-1: default (disabled), 0: disable, 1:enable. Enables direct submission of command buffers bypassing KMD")
