@@ -161,7 +161,6 @@ TEST_F(DrmBufferObjectTest, givenResidentBOWhenPrintExecutionBufferIsSetToTrueTh
     BufferObject *boArray[1] = {bo.get()};
 
     testing::internal::CaptureStdout();
-
     auto ret = bo->pin(boArray, 1, osContext.get(), 0, 1);
     EXPECT_EQ(0, ret);
 
