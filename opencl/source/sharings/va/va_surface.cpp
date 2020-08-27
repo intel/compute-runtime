@@ -165,7 +165,7 @@ bool VASurface::validate(cl_mem_flags flags, cl_uint plane) {
     default:
         return false;
     }
-    if (plane > 1) {
+    if (plane > 1 && !DebugManager.flags.EnableExtendedVaFormats.get()) {
         return false;
     }
     return true;

@@ -288,6 +288,28 @@ TEST_F(VaSharingTests, givenInvalidPlaneInputWhenVaSurfaceIsCreatedThenInvalidVa
     EXPECT_EQ(CL_INVALID_VALUE, errCode);
 }
 
+TEST_F(VaSharingTests, givenValidPlaneInputWhenVaSurfaceIsCreatedAndDebugFlagEnabledThenCLSuccessIsReturned) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableExtendedVaFormats.set(true);
+
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.fourcc = VA_FOURCC_RGBP;
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.objects[1] = {8, 98304, I915_FORMAT_MOD_Y_TILED};
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.objects[2] = {8, 98304, I915_FORMAT_MOD_Y_TILED};
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.num_layers = 3;
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.layers[1] = {DRM_FORMAT_R8, 1, {}, {0, 0, 0, 0}, {256, 0, 0, 0}};
+    vaSharing->sharingFunctions.mockVaSurfaceDesc.layers[2] = {DRM_FORMAT_R8, 1, {}, {0, 0, 0, 0}, {256, 0, 0, 0}};
+
+    vaSharing->sharingFunctions.derivedImageFormatBpp = 8;
+    vaSharing->sharingFunctions.derivedImageFormatFourCC = VA_FOURCC_RGBP;
+
+    sharedClMem = clCreateFromVA_APIMediaSurfaceINTEL(&context, CL_MEM_READ_WRITE, &vaSurfaceId, 2, &errCode);
+    EXPECT_NE(nullptr, sharedClMem);
+    EXPECT_EQ(CL_SUCCESS, errCode);
+
+    errCode = clReleaseMemObject(sharedClMem);
+    EXPECT_EQ(CL_SUCCESS, errCode);
+}
+
 TEST_F(VaSharingTests, givenMockVaWhenVaSurfaceIsCreatedWithNotAlignedWidthAndHeightThenSurfaceOffsetsUseAlignedValues) {
     vaSharing->sharingFunctions.derivedImageWidth = 256 + 16;
     vaSharing->sharingFunctions.derivedImageHeight = 512 + 16;
