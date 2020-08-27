@@ -455,6 +455,33 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, GivenCommandQueueCreatedWithVariou
     }
 }
 
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDeviceQueueCreatedWithVariousPropertiesWhenQueryingPropertiesArrayThenCorrectValuesAreReturned) {
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pContext);
+
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties propertiesArray[5];
+    size_t propertiesArraySize;
+
+    std::vector<std::vector<uint64_t>> propertiesToTest{
+        {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0},
+        {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_SIZE, 16, 0}};
+
+    for (auto properties : propertiesToTest) {
+        auto commandQueue = clCreateCommandQueueWithProperties(pContext, testedClDevice, properties.data(), &retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        retVal = clGetCommandQueueInfo(commandQueue, CL_QUEUE_PROPERTIES_ARRAY,
+                                       sizeof(propertiesArray), propertiesArray, &propertiesArraySize);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(properties.size() * sizeof(cl_queue_properties), propertiesArraySize);
+        for (size_t i = 0; i < properties.size(); i++) {
+            EXPECT_EQ(properties[i], propertiesArray[i]);
+        }
+
+        clReleaseCommandQueue(commandQueue);
+    }
+}
+
 using LowPriorityCommandQueueTest = ::testing::Test;
 HWTEST_F(LowPriorityCommandQueueTest, GivenDeviceWithSubdevicesWhenCreatingLowPriorityCommandQueueThenEngineFromFirstSubdeviceIsTaken) {
     DebugManagerStateRestore restorer;

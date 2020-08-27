@@ -38,6 +38,7 @@ DeviceQueue::DeviceQueue(Context *context,
         queueSize = device->getDeviceInfo().queueOnDevicePreferredSize;
     }
 
+    storeProperties(&properties);
     allocateResources();
     initDeviceQueue();
 }
@@ -99,6 +100,16 @@ cl_int DeviceQueue::getCommandQueueInfo(cl_command_queue_info paramName,
                                         size_t paramValueSize, void *paramValue,
                                         size_t *paramValueSizeRet) {
     return getQueueInfo<DeviceQueue>(this, paramName, paramValueSize, paramValue, paramValueSizeRet);
+}
+
+void DeviceQueue::storeProperties(const cl_queue_properties *properties) {
+    if (properties) {
+        for (size_t i = 0; properties[i] != 0; i += 2) {
+            propertiesVector.push_back(properties[i]);
+            propertiesVector.push_back(properties[i + 1]);
+        }
+        propertiesVector.push_back(0);
+    }
 }
 
 void DeviceQueue::allocateResources() {

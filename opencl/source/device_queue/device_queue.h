@@ -49,6 +49,7 @@ class DeviceQueue : public BaseObject<_device_queue> {
     Context &getContext() { return *context; }
     cl_uint getQueueSize() { return queueSize; }
     cl_command_queue_properties getCommandQueueProperties() const { return commandQueueProperties; }
+    const std::vector<uint64_t> &getPropertiesVector() const { return propertiesVector; }
     GraphicsAllocation *getQueueBuffer() { return queueBuffer; }
     GraphicsAllocation *getEventPoolBuffer() { return eventPoolBuffer; }
     GraphicsAllocation *getSlbBuffer() { return slbBuffer; }
@@ -109,12 +110,14 @@ class DeviceQueue : public BaseObject<_device_queue> {
     static const uint32_t numberOfDeviceEnqueues;
 
   protected:
+    void storeProperties(const cl_queue_properties *properties);
     void allocateResources();
     void initDeviceQueue();
 
     Context *context = nullptr;
     ClDevice *device = nullptr;
     cl_command_queue_properties commandQueueProperties = 0;
+    std::vector<uint64_t> propertiesVector;
     cl_uint queueSize = 0;
 
     GraphicsAllocation *queueBuffer = nullptr;
