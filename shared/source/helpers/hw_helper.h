@@ -123,6 +123,7 @@ class HwHelper {
     virtual uint32_t getGlobalTimeStampBits() const = 0;
     virtual uint32_t getDefaultThreadArbitrationPolicy() const = 0;
     virtual void adjustPlatformCoreFamilyForIgc(HardwareInfo &hwInfo) = 0;
+    virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -211,6 +212,8 @@ class HwHelperHw : public HwHelper {
     SipKernelType getSipKernelType(bool debuggingActive) override;
 
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const override;
+
+    bool heapInLocalMem(const HardwareInfo &hwInfo) const override;
 
     bool hvAlign4Required() const override;
 

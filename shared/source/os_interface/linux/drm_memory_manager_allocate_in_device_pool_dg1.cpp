@@ -9,6 +9,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
@@ -169,7 +170,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         auto cpuAddress = lockResource(allocation.get());
         allocation->setCpuPtrAndGpuAddress(cpuAddress, gpuAddress);
     }
-    if (useInternal32BitAllocator(allocationData.type)) {
+    if (heapAssigner.useInternal32BitHeap(allocationData.type)) {
         allocation->setGpuBaseAddress(GmmHelper::canonize(getInternalHeapBaseAddress(allocationData.rootDeviceIndex, true)));
     }
 

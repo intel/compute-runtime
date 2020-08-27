@@ -619,10 +619,6 @@ TEST(MemoryManagerTest, givenConstantSurfaceTypeWhenGetAllocationDataIsCalledThe
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 
-TEST(MemoryManagerTest, givenInternalHeapTypeThenUseInternal32BitAllocator) {
-    EXPECT_TRUE(MockMemoryManager::useInternal32BitAllocator(GraphicsAllocation::AllocationType::INTERNAL_HEAP));
-}
-
 HWTEST_F(GetAllocationDataTestHw, givenInternalHeapTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsNotRequested) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
@@ -656,10 +652,6 @@ TEST(MemoryManagerTest, givenPrintfAllocationWhenGetAllocationDataIsCalledThenDo
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_FALSE(allocData.flags.useSystemMemory);
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
-}
-
-TEST(MemoryManagerTest, givenKernelIsaTypeThenUseInternal32BitAllocator) {
-    EXPECT_TRUE(MockMemoryManager::useInternal32BitAllocator(GraphicsAllocation::AllocationType::KERNEL_ISA));
 }
 
 TEST(MemoryManagerTest, givenExternalHostMemoryWhenGetAllocationDataIsCalledThenItHasProperFieldsSet) {

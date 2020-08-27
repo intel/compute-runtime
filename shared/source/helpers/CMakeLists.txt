@@ -42,6 +42,9 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/get_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hash.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper.cpp

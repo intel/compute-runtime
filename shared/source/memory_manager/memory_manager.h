@@ -11,6 +11,8 @@
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/engine_control.h"
+#include "shared/source/helpers/heap_assigner.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -165,7 +167,7 @@ class MemoryManager {
     HostPtrManager *getHostPtrManager() const { return hostPtrManager.get(); }
     void setDefaultEngineIndex(uint32_t index) { defaultEngineIndex = index; }
     virtual bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy);
-    static HeapIndex selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM);
+    HeapIndex selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM);
     static std::unique_ptr<MemoryManager> createMemoryManager(ExecutionEnvironment &executionEnvironment);
     virtual void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) { return nullptr; };
     virtual void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex){};
@@ -183,10 +185,6 @@ class MemoryManager {
   protected:
     bool getAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const void *hostPtr, const StorageInfo &storageInfo);
     static void overrideAllocationData(AllocationData &allocationData, const AllocationProperties &properties);
-    static bool useInternal32BitAllocator(GraphicsAllocation::AllocationType allocationType) {
-        return allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA ||
-               allocationType == GraphicsAllocation::AllocationType::INTERNAL_HEAP;
-    }
 
     static bool isCopyRequired(ImageInfo &imgInfo, const void *hostPtr);
 
@@ -230,6 +228,7 @@ class MemoryManager {
     void *reservedMemory = nullptr;
     std::unique_ptr<PageFaultManager> pageFaultManager;
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
+    HeapAssigner heapAssigner;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

@@ -16,6 +16,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
@@ -431,9 +432,12 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         }
         return allocation;
     }
-    if (useInternal32BitAllocator(allocationData.type) ||
+    bool use32Allocator = heapAssigner.use32BitHeap(allocationData.type);
+    if (use32Allocator ||
         (force32bitAllocations && allocationData.flags.allow32Bit && is64bit)) {
-        return allocate32BitGraphicsMemoryImpl(allocationData, false);
+        auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+        bool useLocalMem = heapAssigner.useExternal32BitHeap(allocationData.type) ? HwHelper::get(hwInfo->platform.eRenderCoreFamily).heapInLocalMem(*hwInfo) : false;
+        return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMem);
     }
     if (allocationData.hostPtr) {
         return allocateGraphicsMemoryWithHostPtr(allocationData);
@@ -514,10 +518,10 @@ void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
 
 HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM) {
     if (allocation) {
-        if (useInternal32BitAllocator(allocation->getAllocationType())) {
+        if (heapAssigner.useInternal32BitHeap(allocation->getAllocationType())) {
             return selectInternalHeap(allocation->isAllocatedInLocalMemoryPool());
         }
-        if (allocation->is32BitAllocation()) {
+        if (allocation->is32BitAllocation() || heapAssigner.useExternal32BitHeap(allocation->getAllocationType())) {
             return selectExternalHeap(allocation->isAllocatedInLocalMemoryPool());
         }
     }
