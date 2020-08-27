@@ -116,13 +116,17 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     MultiDispatchInfo dispatchInfo;
     builder.buildDispatchInfos(dispatchInfo, dc);
 
-    enqueueHandler<CL_COMMAND_WRITE_BUFFER>(
-        surfaces,
-        blockingWrite == CL_TRUE,
-        dispatchInfo,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
+    if (blitEnqueueAllowed(cmdType)) {
+        enqueueBlit<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, numEventsInWaitList, eventWaitList, event, blockingWrite);
+    } else {
+        enqueueHandler<CL_COMMAND_WRITE_BUFFER>(
+            surfaces,
+            blockingWrite == CL_TRUE,
+            dispatchInfo,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+    }
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA, static_cast<cl_mem>(buffer));

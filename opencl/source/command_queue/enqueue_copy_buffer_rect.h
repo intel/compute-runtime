@@ -60,13 +60,17 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     MultiDispatchInfo dispatchInfo;
     builder.buildDispatchInfos(dispatchInfo, dc);
 
-    enqueueHandler<CL_COMMAND_COPY_BUFFER_RECT>(
-        surfaces,
-        false,
-        dispatchInfo,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
+    if (blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER_RECT)) {
+        enqueueBlit<CL_COMMAND_COPY_BUFFER_RECT>(dispatchInfo, numEventsInWaitList, eventWaitList, event, false);
+    } else {
+        enqueueHandler<CL_COMMAND_COPY_BUFFER_RECT>(
+            surfaces,
+            false,
+            dispatchInfo,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+    }
 
     return CL_SUCCESS;
 }
