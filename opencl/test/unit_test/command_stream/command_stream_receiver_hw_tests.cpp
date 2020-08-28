@@ -561,6 +561,8 @@ HWTEST_F(BcsTests, givenBltWithBigCopySizeWhenEstimatingCommandSizeForReadBuffer
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
     EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(notAlignedBltSize, rootDeviceEnvironment));
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedBltSize, rootDeviceEnvironment));
 }
 
 HWTEST_F(BcsTests, WhenGetNumberOfBlitsIsCalledThenCorrectValuesAreReturned) {
@@ -642,6 +644,7 @@ HWTEST_F(BcsTests, WhenGetNumberOfBlitsForCopyPerRowIsCalledThenCorrectValuesAre
         size_t expectednBlitsCopyPerRow = 2;
         auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
+        EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment));
     }
 }
 
@@ -1541,6 +1544,8 @@ HWTEST_F(BcsTests, givenBufferWhenBlitOperationCalledThenProgramCorrectGpuAddres
 
     Vec3<size_t> copySizes[2] = {{1, 1, 1},
                                  {1, 2, 1}};
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySizes[0], pDevice->getRootDeviceEnvironment()));
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySizes[1], pDevice->getRootDeviceEnvironment()));
 
     for (auto &copySize : copySizes) {
         {
@@ -1662,6 +1667,9 @@ HWTEST_F(BcsTests, givenMapAllocationWhenDispatchReadWriteOperationThenSetValidG
 
     Vec3<size_t> copySizes[2] = {{4, 1, 1},
                                  {4, 2, 1}};
+
+    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySizes[0], pDevice->getRootDeviceEnvironment()));
+    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySizes[1], pDevice->getRootDeviceEnvironment()));
 
     for (auto &copySize : copySizes) {
         {
