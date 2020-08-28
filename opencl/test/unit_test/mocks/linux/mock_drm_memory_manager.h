@@ -61,6 +61,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::getDefaultDrmContextId;
     using DrmMemoryManager::getDrm;
     using DrmMemoryManager::getRootDeviceIndex;
+    using DrmMemoryManager::getUserptrAlignment;
     using DrmMemoryManager::gfxPartitions;
     using DrmMemoryManager::lockResourceInLocalMemoryImpl;
     using DrmMemoryManager::memoryForPinBBs;

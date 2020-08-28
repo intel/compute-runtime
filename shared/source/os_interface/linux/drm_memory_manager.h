@@ -69,6 +69,7 @@ class DrmMemoryManager : public MemoryManager {
     MOCKABLE_VIRTUAL void releaseGpuRange(void *address, size_t size, uint32_t rootDeviceIndex);
     void emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const;
     uint32_t getDefaultDrmContextId() const;
+    size_t getUserptrAlignment();
 
     DrmAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;

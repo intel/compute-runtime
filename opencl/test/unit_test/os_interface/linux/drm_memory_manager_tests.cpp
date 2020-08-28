@@ -1417,6 +1417,17 @@ TEST_F(DrmMemoryManagerTest, GivenExhaustedInternalHeapWhenAllocate32BitIsCalled
     EXPECT_EQ(nullptr, graphicsAllocation);
 }
 
+TEST_F(DrmMemoryManagerTest, givenSetForceUserptrAlignmentWhenGetUserptrAlignmentThenForcedValueIsReturned) {
+    DebugManagerStateRestore dbgStateRestore;
+    DebugManager.flags.ForceUserptrAlignment.set(123456);
+
+    EXPECT_EQ(123456 * MemoryConstants::kiloByte, memoryManager->getUserptrAlignment());
+}
+
+TEST_F(DrmMemoryManagerTest, whenGetUserptrAlignmentThenDefaultValueIsReturned) {
+    EXPECT_EQ(MemoryConstants::allocationAlignment, memoryManager->getUserptrAlignment());
+}
+
 TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImageIsCalledThenProperIoctlsAreCalledAndUnmapSizeIsNonZero) {
     mock->ioctl_expected.gemCreate = 1;
     mock->ioctl_expected.gemSetTiling = 1;

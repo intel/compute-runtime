@@ -199,3 +199,4 @@ DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "Wit
 DECLARE_DEBUG_VARIABLE(bool, ReturnRawGpuTimestamps, false, "Driver returns raw GPU tiemstamps instead of calculated ones.")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceSemaphoreDelayBetweenWaits, -1, "Specifies the minimum number of microseconds allowed for command streamer to wait before re-fetching the data. 0 - poll interval will be equal to the memory latency of the read completion")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceLocalMemoryAccessMode, -1, "-1: don't override, 0: default rules apply, 1: CPU can access local memory, 3: CPU never accesses local memory")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceUserptrAlignment, -1, "-1: no force (4kb), >0: n kb alignment")
