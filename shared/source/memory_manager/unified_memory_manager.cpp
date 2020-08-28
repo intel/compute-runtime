@@ -119,7 +119,7 @@ void *SVMAllocsManager::createHostUnifiedMemoryAllocation(uint32_t maxRootDevice
     GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
 
     std::vector<uint32_t> rootDeviceIndices;
-    rootDeviceIndices.reserve(maxRootDeviceIndex);
+    rootDeviceIndices.reserve(maxRootDeviceIndex + 1);
     for (auto rootDeviceIndex = 0u; rootDeviceIndex <= maxRootDeviceIndex; rootDeviceIndex++) {
         rootDeviceIndices.push_back(rootDeviceIndex);
     }

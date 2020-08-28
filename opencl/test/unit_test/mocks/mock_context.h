@@ -48,9 +48,10 @@ class MockContext : public Context {
 struct MockDefaultContext : MockContext {
     MockDefaultContext();
 
-    UltClDeviceFactory ultClDeviceFactory{2, 0};
+    UltClDeviceFactory ultClDeviceFactory{3, 0};
     MockClDevice *pRootDevice0;
     MockClDevice *pRootDevice1;
+    MockClDevice *pRootDevice2;
 };
 
 struct MockSpecializedContext : MockContext {

@@ -1401,12 +1401,14 @@ struct createHostUnifiedMemoryAllocationTest : public ::testing::Test {
     void SetUp() override {
         device0 = context.pRootDevice0;
         device1 = context.pRootDevice1;
+        device2 = context.pRootDevice2;
         svmManager = context.getSVMAllocsManager();
         EXPECT_EQ(0u, svmManager->getNumAllocs());
     }
     const size_t allocationSize = 4096u;
-    const uint32_t numDevices = 2u;
+    const uint32_t numDevices = 3u;
     MockDefaultContext context;
+    MockClDevice *device2;
     MockClDevice *device1;
     MockClDevice *device0;
     SVMAllocsManager *svmManager = nullptr;
@@ -1434,6 +1436,102 @@ HWTEST_F(createHostUnifiedMemoryAllocationTest,
     }
 
     svmManager->freeSVMAlloc(unifiedMemoryPtr);
+}
+
+HWTEST_F(createHostUnifiedMemoryAllocationTest,
+         whenCreatingMultiGraphicsAllocationThenGraphicsAllocationPerDeviceIsCreated) {
+
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
+    unifiedMemoryProperties.subdeviceBitfield = device0->getDevice().getDeviceBitfield();
+
+    auto alignedSize = alignUp<size_t>(allocationSize, MemoryConstants::pageSize64k);
+    auto memoryManager = context.getMemoryManager();
+    auto allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    auto maxRootDeviceIndex = numDevices - 1u;
+
+    std::vector<uint32_t> rootDeviceIndices;
+    rootDeviceIndices.reserve(numDevices);
+    rootDeviceIndices.push_back(0u);
+    rootDeviceIndices.push_back(1u);
+    rootDeviceIndices.push_back(2u);
+
+    auto rootDeviceIndex = rootDeviceIndices.at(0);
+    AllocationProperties allocationProperties{rootDeviceIndex,
+                                              true,
+                                              alignedSize,
+                                              allocationType,
+                                              unifiedMemoryProperties.subdeviceBitfield.count() > 1,
+                                              unifiedMemoryProperties.subdeviceBitfield.count() > 1,
+                                              unifiedMemoryProperties.subdeviceBitfield};
+    allocationProperties.flags.shareable = unifiedMemoryProperties.allocationFlags.flags.shareable;
+
+    SvmAllocationData allocData(maxRootDeviceIndex);
+
+    void *unifiedMemoryPtr = memoryManager->createMultiGraphicsAllocation(rootDeviceIndices, allocationProperties, allocData.gpuAllocations);
+
+    EXPECT_NE(nullptr, unifiedMemoryPtr);
+    EXPECT_EQ(numDevices, allocData.gpuAllocations.getGraphicsAllocations().size());
+
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex <= maxRootDeviceIndex; rootDeviceIndex++) {
+        auto alloc = allocData.gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+
+        EXPECT_NE(nullptr, alloc);
+        EXPECT_EQ(rootDeviceIndex, alloc->getRootDeviceIndex());
+    }
+
+    for (auto gpuAllocation : allocData.gpuAllocations.getGraphicsAllocations()) {
+        memoryManager->freeGraphicsMemory(gpuAllocation);
+    }
+}
+
+HWTEST_F(createHostUnifiedMemoryAllocationTest,
+         whenCreatingMultiGraphicsAllocationForSpecificRootDeviceIndicesThenOnlyGraphicsAllocationPerSpecificRootDeviceIndexIsCreated) {
+
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
+    unifiedMemoryProperties.subdeviceBitfield = device0->getDevice().getDeviceBitfield();
+
+    auto alignedSize = alignUp<size_t>(allocationSize, MemoryConstants::pageSize64k);
+    auto memoryManager = context.getMemoryManager();
+    auto allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    auto maxRootDeviceIndex = numDevices - 1u;
+
+    std::vector<uint32_t> rootDeviceIndices;
+    rootDeviceIndices.reserve(numDevices);
+    rootDeviceIndices.push_back(0u);
+    rootDeviceIndices.push_back(2u);
+
+    auto noProgramedRootDeviceIndex = 1u;
+    auto rootDeviceIndex = rootDeviceIndices.at(0);
+    AllocationProperties allocationProperties{rootDeviceIndex,
+                                              true,
+                                              alignedSize,
+                                              allocationType,
+                                              unifiedMemoryProperties.subdeviceBitfield.count() > 1,
+                                              unifiedMemoryProperties.subdeviceBitfield.count() > 1,
+                                              unifiedMemoryProperties.subdeviceBitfield};
+    allocationProperties.flags.shareable = unifiedMemoryProperties.allocationFlags.flags.shareable;
+
+    SvmAllocationData allocData(maxRootDeviceIndex);
+
+    void *unifiedMemoryPtr = memoryManager->createMultiGraphicsAllocation(rootDeviceIndices, allocationProperties, allocData.gpuAllocations);
+
+    EXPECT_NE(nullptr, unifiedMemoryPtr);
+    EXPECT_EQ(numDevices, allocData.gpuAllocations.getGraphicsAllocations().size());
+
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex <= maxRootDeviceIndex; rootDeviceIndex++) {
+        auto alloc = allocData.gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+
+        if (rootDeviceIndex == noProgramedRootDeviceIndex) {
+            EXPECT_EQ(nullptr, alloc);
+        } else {
+            EXPECT_NE(nullptr, alloc);
+            EXPECT_EQ(rootDeviceIndex, alloc->getRootDeviceIndex());
+        }
+    }
+
+    for (auto gpuAllocation : allocData.gpuAllocations.getGraphicsAllocations()) {
+        memoryManager->freeGraphicsMemory(gpuAllocation);
+    }
 }
 
 struct MemoryAllocationTypeArray {
