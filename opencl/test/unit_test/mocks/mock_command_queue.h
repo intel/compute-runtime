@@ -209,6 +209,10 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         commandQueueProperties |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     }
 
+    void setProfilingEnabled() {
+        commandQueueProperties |= CL_QUEUE_PROFILING_ENABLE;
+    }
+
     LinearStream &getCS(size_t minRequiredSize) override {
         requestedCmdStreamSize = minRequiredSize;
         return CommandQueue::getCS(minRequiredSize);

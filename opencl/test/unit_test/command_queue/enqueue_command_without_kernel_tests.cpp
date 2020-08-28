@@ -100,7 +100,7 @@ HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEna
 
 using EnqueueHandlerTimestampDisabledTest = EnqueueHandlerTimestampTest<false>;
 
-HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacketsDisabledWhenEnqueueCommandWithoutKernelThenSubmitTimeStampIsNotSet) {
+HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacketsDisabledWhenEnqueueCommandWithoutKernelThenSubmitTimeStampIsSet) {
     cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_PROFILING_ENABLE, 0};
     std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(context, pClDevice, properties));
 
@@ -122,8 +122,8 @@ HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacke
     mockCmdQ->enqueueCommandWithoutKernel(surfaces, 1, mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
                                           eventsRequest, eventBuilder, 0);
 
-    EXPECT_EQ(ev->submitTimeStamp.CPUTimeinNS, 0u);
-    EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
+    EXPECT_NE(ev->submitTimeStamp.CPUTimeinNS, 0u);
+    EXPECT_NE(ev->submitTimeStamp.GPUTimeStamp, 0u);
 
     delete ev;
 }

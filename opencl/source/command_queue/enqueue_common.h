@@ -932,6 +932,13 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         flushGpgpuCsr = false;
     }
 
+    if (eventBuilder.getEvent() && isProfilingEnabled()) {
+        TimeStampData submitTimeStamp;
+
+        getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
+        eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
+    }
+
     if (flushGpgpuCsr) {
         if (timestampPacketContainer) {
             timestampPacketContainer->makeResident(getGpgpuCommandStreamReceiver());
@@ -941,13 +948,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
 
         for (auto surface : CreateRange(surfaces, surfaceCount)) {
             surface->makeResident(getGpgpuCommandStreamReceiver());
-        }
-
-        TimeStampData submitTimeStamp;
-        if (eventBuilder.getEvent() && isProfilingEnabled() && getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-            this->getDevice().getOSTime()->getCpuGpuTime(&submitTimeStamp);
-            eventBuilder.getEvent()->setSubmitTimeStamp(&submitTimeStamp);
-            eventBuilder.getEvent()->getTimestampPacketNodes()->makeResident(getGpgpuCommandStreamReceiver());
         }
 
         DispatchFlags dispatchFlags(
