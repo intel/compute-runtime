@@ -1106,4 +1106,20 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
         waitUntilComplete(blockQueue, nullptr);
     }
 }
+
+template <typename GfxFamily>
+template <uint32_t cmdType, size_t surfaceCount>
+void CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking) {
+    if (blitEnqueueAllowed(cmdType)) {
+        enqueueBlit<cmdType>(dispatchInfo, numEventsInWaitList, eventWaitList, event, blocking);
+    } else {
+        enqueueHandler<cmdType>(
+            surfaces,
+            blocking,
+            dispatchInfo,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+    }
+}
 } // namespace NEO

@@ -129,17 +129,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
         }
     }
 
-    if (blitEnqueueAllowed(cmdType)) {
-        enqueueBlit<CL_COMMAND_READ_BUFFER>(dispatchInfo, numEventsInWaitList, eventWaitList, event, blockingRead);
-    } else {
-        enqueueHandler<CL_COMMAND_READ_BUFFER>(
-            surfaces,
-            blockingRead == CL_TRUE,
-            dispatchInfo,
-            numEventsInWaitList,
-            eventWaitList,
-            event);
-    }
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER>(dispatchInfo, surfaces, numEventsInWaitList, eventWaitList, event, blockingRead);
 
     return CL_SUCCESS;
 }

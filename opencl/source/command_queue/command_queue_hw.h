@@ -347,6 +347,9 @@ class CommandQueueHw : public CommandQueue {
                         const cl_event *eventWaitList,
                         cl_event *event);
 
+    template <uint32_t cmdType, size_t surfaceCount>
+    void dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking);
+
     template <uint32_t cmdType>
     void enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking);
 

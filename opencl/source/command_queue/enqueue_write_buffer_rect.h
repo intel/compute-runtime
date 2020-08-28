@@ -92,13 +92,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     MultiDispatchInfo dispatchInfo;
     builder.buildDispatchInfos(dispatchInfo, dc);
 
-    enqueueHandler<CL_COMMAND_WRITE_BUFFER_RECT>(
-        surfaces,
-        blockingWrite == CL_TRUE,
-        dispatchInfo,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER_RECT>(dispatchInfo, surfaces, numEventsInWaitList, eventWaitList, event, blockingWrite);
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, CL_ENQUEUE_WRITE_BUFFER_RECT_REQUIRES_COPY_DATA, static_cast<cl_mem>(buffer));

@@ -93,13 +93,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     MultiDispatchInfo dispatchInfo;
     builder.buildDispatchInfos(dispatchInfo, dc);
 
-    enqueueHandler<CL_COMMAND_READ_BUFFER_RECT>(
-        surfaces,
-        blockingRead == CL_TRUE,
-        dispatchInfo,
-        numEventsInWaitList,
-        eventWaitList,
-        event);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER_RECT>(dispatchInfo, surfaces, numEventsInWaitList, eventWaitList, event, blockingRead);
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHintForMemoryTransfer(CL_COMMAND_READ_BUFFER_RECT, true, static_cast<cl_mem>(buffer), ptr);

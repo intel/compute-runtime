@@ -54,17 +54,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBuffer(
     MemObjSurface s2(dstBuffer);
     Surface *surfaces[] = {&s1, &s2};
 
-    if (blitEnqueueAllowed(CL_COMMAND_COPY_BUFFER)) {
-        enqueueBlit<CL_COMMAND_COPY_BUFFER>(dispatchInfo, numEventsInWaitList, eventWaitList, event, false);
-    } else {
-        enqueueHandler<CL_COMMAND_COPY_BUFFER>(
-            surfaces,
-            false,
-            dispatchInfo,
-            numEventsInWaitList,
-            eventWaitList,
-            event);
-    }
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER>(dispatchInfo, surfaces, numEventsInWaitList, eventWaitList, event, false);
 
     return CL_SUCCESS;
 }
