@@ -163,7 +163,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     auto blockQueue = false;
     auto taskLevel = 0u;
     obtainTaskLevelAndBlockedStatus(taskLevel, numEventsInWaitList, eventWaitList, blockQueue, commandType);
-    bool blitEnqueue = blitEnqueueAllowed(commandType);
 
     if (parentKernel && !blockQueue) {
         while (!devQueueHw->isEMCriticalSectionFree())
@@ -185,35 +184,29 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     bool enqueueWithBlitAuxTranslation = HwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(device->getHardwareInfo(), multiDispatchInfo);
 
-    if (blitEnqueue || getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+    if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         eventsRequest.fillCsrDependencies(csrDeps, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
         auto allocator = getGpgpuCommandStreamReceiver().getTimestampPacketAllocator();
 
         size_t nodesCount = 0u;
-        if (blitEnqueue || isCacheFlushCommand(commandType)) {
+        if (isCacheFlushCommand(commandType)) {
             nodesCount = 1;
         } else if (!multiDispatchInfo.empty()) {
             nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);
         }
 
-        if (isCacheFlushForBcsRequired()) {
+        if (isCacheFlushForBcsRequired() && enqueueWithBlitAuxTranslation) {
             // Cache flush for aux translation is always required (if supported)
-            if ((blitEnqueue && isGpgpuSubmissionForBcsRequired(blockQueue)) || (enqueueWithBlitAuxTranslation)) {
-                timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
-            }
-        }
-
-        if (blitEnqueue && !blockQueue && getGpgpuCommandStreamReceiver().isStallingPipeControlOnNextFlushRequired()) {
-            timestampPacketDependencies.barrierNodes.add(allocator->getTag());
+            timestampPacketDependencies.cacheFlushNodes.add(allocator->getTag());
         }
 
         if (nodesCount > 0) {
-            obtainNewTimestampPacketNodes(nodesCount, timestampPacketDependencies.previousEnqueueNodes, clearAllDependencies, blitEnqueue);
+            obtainNewTimestampPacketNodes(nodesCount, timestampPacketDependencies.previousEnqueueNodes, clearAllDependencies, false);
             csrDeps.push_back(&timestampPacketDependencies.previousEnqueueNodes);
         }
     }
 
-    auto &commandStream = *obtainCommandStream<commandType>(csrDeps, blitEnqueue, blockQueue, multiDispatchInfo, eventsRequest,
+    auto &commandStream = *obtainCommandStream<commandType>(csrDeps, false, blockQueue, multiDispatchInfo, eventsRequest,
                                                             blockedCommandsData, surfacesForResidency, numSurfaceForResidency);
     auto commandStreamStart = commandStream.getUsed();
 
@@ -230,10 +223,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     bool flushDependenciesForNonKernelCommand = false;
 
-    if (blitEnqueue) {
-        blitPropertiesContainer.push_back(processDispatchForBlitEnqueue(multiDispatchInfo, timestampPacketDependencies,
-                                                                        eventsRequest, commandStream, commandType, blockQueue));
-    } else if (multiDispatchInfo.empty() == false) {
+    if (multiDispatchInfo.empty() == false) {
         processDispatchForKernels<commandType>(multiDispatchInfo, printfHandler, eventBuilder.getEvent(),
                                                hwTimeStamps, blockQueue, devQueueHw, csrDeps, blockedCommandsData.get(),
                                                timestampPacketDependencies);
@@ -260,7 +250,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     CompletionStamp completionStamp = {CompletionStamp::notReady, taskLevel, 0};
 
-    const EnqueueProperties enqueueProperties(blitEnqueue, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
+    const EnqueueProperties enqueueProperties(false, !multiDispatchInfo.empty(), isCacheFlushCommand(commandType),
                                               flushDependenciesForNonKernelCommand, &blitPropertiesContainer);
 
     if (!blockQueue) {
