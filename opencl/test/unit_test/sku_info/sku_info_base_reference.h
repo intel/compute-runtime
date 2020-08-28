@@ -133,12 +133,13 @@ struct SkuInfoBaseReference {
         refFtrTable.ftrKmdDaf = true;
         refFtrTable.ftrSimulationMode = true;
 
-        refFtrTable.ftrE2ECompression = 1;
-        refFtrTable.ftrLinearCCS = 1;
-        refFtrTable.ftrCCSRing = 1;
-        refFtrTable.ftrCCSNode = 1;
-        refFtrTable.ftrMemTypeMocsDeferPAT = 1;
-        refFtrTable.ftrLocalMemory = 1;
+        refFtrTable.ftrE2ECompression = true;
+        refFtrTable.ftrLinearCCS = true;
+        refFtrTable.ftrCCSRing = true;
+        refFtrTable.ftrCCSNode = true;
+        refFtrTable.ftrRcsNode = true;
+        refFtrTable.ftrMemTypeMocsDeferPAT = true;
+        refFtrTable.ftrLocalMemory = true;
     }
 
     static void fillReferenceWaToReceive(WorkaroundTable &refWaTable) {
@@ -164,9 +165,9 @@ struct SkuInfoBaseReference {
         refWaTable.waCSRUncachable = true;
         refWaTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
         refWaTable.waRestrictPitch128KB = true;
-        refWaTable.waLimit128BMediaCompr = 1;
-        refWaTable.waUntypedBufferCompression = 1;
-        refWaTable.waAuxTable16KGranular = 1;
+        refWaTable.waLimit128BMediaCompr = true;
+        refWaTable.waUntypedBufferCompression = true;
+        refWaTable.waAuxTable16KGranular = true;
         refWaTable.waDisableFusedThreadScheduling = true;
     }
 }; // namespace SkuInfoBaseReference
