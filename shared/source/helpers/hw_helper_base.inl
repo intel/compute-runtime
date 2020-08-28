@@ -480,9 +480,4 @@ uint32_t HwHelperHw<GfxFamily>::getDefaultThreadArbitrationPolicy() const {
     return 0;
 }
 
-template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getDefaultEngineWithWa(const HardwareInfo &hwInfo, uint32_t defaultEngineType) const {
-    return defaultEngineType;
-}
-
 } // namespace NEO

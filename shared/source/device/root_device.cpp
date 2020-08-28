@@ -98,8 +98,6 @@ void RootDevice::initializeRootCommandStreamReceiver() {
 
     auto &hwInfo = getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(hwInfo);
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    defaultEngineType = static_cast<aub_stream::EngineType>(hwHelper.getDefaultEngineWithWa(hwInfo, defaultEngineType));
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 
     auto osContext = getMemoryManager()->createAndRegisterOsContext(rootCommandStreamReceiver.get(), defaultEngineType,
