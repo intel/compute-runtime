@@ -108,8 +108,7 @@ void *SVMAllocsManager::createSVMAlloc(uint32_t rootDeviceIndex, size_t size, co
     if (!memoryManager->isLocalMemorySupported(rootDeviceIndex)) {
         return createZeroCopySvmAllocation(rootDeviceIndex, size, svmProperties, deviceBitfield);
     } else {
-        UnifiedMemoryProperties unifiedMemoryProperties{};
-        unifiedMemoryProperties.subdeviceBitfield = deviceBitfield;
+        UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::NOT_SPECIFIED, deviceBitfield);
         return createUnifiedAllocationWithDeviceStorage(rootDeviceIndex, size, svmProperties, unifiedMemoryProperties);
     }
 }

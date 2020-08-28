@@ -91,8 +91,7 @@ class SVMAllocsManager {
     };
 
     struct UnifiedMemoryProperties {
-        UnifiedMemoryProperties() = default;
-        UnifiedMemoryProperties(InternalMemoryType memoryType) : memoryType(memoryType){};
+        UnifiedMemoryProperties(InternalMemoryType memoryType, DeviceBitfield subdeviceBitfield) : memoryType(memoryType), subdeviceBitfield(subdeviceBitfield){};
         InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
         MemoryProperties allocationFlags;
         void *device = nullptr;

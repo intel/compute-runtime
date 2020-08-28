@@ -1347,9 +1347,7 @@ struct FailCsr : public CommandStreamReceiverHw<GfxFamily> {
 };
 
 HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreMadeResidentThenOnlyNonSvmAllocationsAreAdded) {
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
-    unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
-    unifiedMemoryProperties.subdeviceBitfield = pDevice->getDeviceBitfield();
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, pDevice->getDeviceBitfield());
     unifiedMemoryProperties.device = pDevice;
     auto allocationSize = 4096u;
     auto svmManager = this->context->getSVMAllocsManager();
@@ -1373,9 +1371,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreMadeResidentThenOnlyNonSvmAll
 }
 
 HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThenOnlyExpectedAllocationsAreAdded) {
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties;
-    unifiedMemoryProperties.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
-    unifiedMemoryProperties.subdeviceBitfield = pDevice->getDeviceBitfield();
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, pDevice->getDeviceBitfield());
     unifiedMemoryProperties.device = pDevice;
     auto allocationSize = 4096u;
     auto svmManager = this->context->getSVMAllocsManager();
@@ -1417,8 +1413,7 @@ struct createHostUnifiedMemoryAllocationTest : public ::testing::Test {
 HWTEST_F(createHostUnifiedMemoryAllocationTest,
          whenCreatingHostUnifiedMemoryAllocationThenOneAllocDataIsCreatedWithOneGraphicsAllocationPerDevice) {
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
-    unifiedMemoryProperties.subdeviceBitfield = device0->getDevice().getDeviceBitfield();
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, device0->getDevice().getDeviceBitfield());
 
     EXPECT_EQ(0u, svmManager->getNumAllocs());
     auto unifiedMemoryPtr = svmManager->createHostUnifiedMemoryAllocation(numDevices - 1,
@@ -1441,8 +1436,7 @@ HWTEST_F(createHostUnifiedMemoryAllocationTest,
 HWTEST_F(createHostUnifiedMemoryAllocationTest,
          whenCreatingMultiGraphicsAllocationThenGraphicsAllocationPerDeviceIsCreated) {
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
-    unifiedMemoryProperties.subdeviceBitfield = device0->getDevice().getDeviceBitfield();
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, device0->getDevice().getDeviceBitfield());
 
     auto alignedSize = alignUp<size_t>(allocationSize, MemoryConstants::pageSize64k);
     auto memoryManager = context.getMemoryManager();
@@ -1487,8 +1481,7 @@ HWTEST_F(createHostUnifiedMemoryAllocationTest,
 HWTEST_F(createHostUnifiedMemoryAllocationTest,
          whenCreatingMultiGraphicsAllocationForSpecificRootDeviceIndicesThenOnlyGraphicsAllocationPerSpecificRootDeviceIndexIsCreated) {
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
-    unifiedMemoryProperties.subdeviceBitfield = device0->getDevice().getDeviceBitfield();
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, device0->getDevice().getDeviceBitfield());
 
     auto alignedSize = alignUp<size_t>(allocationSize, MemoryConstants::pageSize64k);
     auto memoryManager = context.getMemoryManager();

@@ -7,6 +7,8 @@
 
 #include "mock_driver_handle.h"
 
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+
 namespace L0 {
 namespace ult {
 
@@ -54,7 +56,7 @@ ze_result_t Mock<DriverHandle>::doGetDevice(uint32_t *pCount, ze_device_handle_t
 
 ze_result_t Mock<DriverHandle>::doAllocHostMem(ze_host_mem_alloc_flags_t flags, size_t size, size_t alignment,
                                                void **ptr) {
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY);
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY, NEO::mockDeviceBitfield);
 
     auto allocation = svmAllocsManager->createUnifiedMemoryAllocation(0u, size, unifiedMemoryProperties);
 
@@ -68,7 +70,7 @@ ze_result_t Mock<DriverHandle>::doAllocHostMem(ze_host_mem_alloc_flags_t flags, 
 }
 
 ze_result_t Mock<DriverHandle>::doAllocDeviceMem(ze_device_handle_t hDevice, ze_device_mem_alloc_flags_t flags, size_t size, size_t alignment, void **ptr) {
-    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, NEO::mockDeviceBitfield);
 
     auto allocation = svmAllocsManager->createUnifiedMemoryAllocation(0u, size, unifiedMemoryProperties);
 

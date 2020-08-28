@@ -356,7 +356,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSetAubWritableIsCalledTh
     void *cmdQ = reinterpret_cast<void *>(0xFFFF);
     auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
     auto unifiedMemoryManager = std::make_unique<SVMAllocsManager>(memoryManager.get());
-    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY);
+    auto properties = SVMAllocsManager::UnifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, mockDeviceBitfield);
     properties.subdeviceBitfield = mockDeviceBitfield;
     void *alloc1 = unifiedMemoryManager->createSharedUnifiedMemoryAllocation(mockRootDeviceIndex, 10, properties, cmdQ);
 
