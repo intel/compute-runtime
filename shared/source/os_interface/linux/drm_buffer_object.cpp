@@ -161,7 +161,7 @@ void BufferObject::unbind(OsContext *osContext, uint32_t vmHandleId) {
     if (this->bindInfo[contextId][vmHandleId]) {
         auto ret = this->drm->unbindBufferObject(osContext, vmHandleId, this);
         auto err = this->drm->getErrno();
-        printDebugString(DebugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d, rande: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n", this->handle, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, ret, err, strerror(err));
+        printDebugString(DebugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n", this->handle, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, ret, err, strerror(err));
         UNRECOVERABLE_IF(ret != 0);
         this->bindInfo[contextId][vmHandleId] = false;
     }
