@@ -116,6 +116,8 @@ void extractZeInfoKernelSections(const NEO::Yaml::YamlParser &parser, const NEO:
             outZeInfoKernelSections.perThreadPayloadArgumentsNd.push_back(&kernelMetadataNd);
         } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::bindingTableIndices == key) {
             outZeInfoKernelSections.bindingTableIndicesNd.push_back(&kernelMetadataNd);
+        } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::perThreadMemoryBuffers == key) {
+            outZeInfoKernelSections.perThreadMemoryBuffersNd.push_back(&kernelMetadataNd);
         } else {
             outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + parser.readKey(kernelMetadataNd).str() + "\" in context of : " + context.str() + "\n");
         }
@@ -128,6 +130,7 @@ DecodeError validateZeInfoKernelSectionsCount(const ZeInfoKernelSections &outZeI
     valid &= validateZebinSectionsCountAtMost(outZeInfoKernelSections.payloadArgumentsNd, NEO::Elf::ZebinKernelMetadata::Tags::Kernel::payloadArguments, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(outZeInfoKernelSections.perThreadPayloadArgumentsNd, NEO::Elf::ZebinKernelMetadata::Tags::Kernel::perThreadPayloadArguments, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(outZeInfoKernelSections.bindingTableIndicesNd, NEO::Elf::ZebinKernelMetadata::Tags::Kernel::bindingTableIndices, 1U, outErrReason, outWarning);
+    valid &= validateZebinSectionsCountAtMost(outZeInfoKernelSections.perThreadMemoryBuffersNd, NEO::Elf::ZebinKernelMetadata::Tags::Kernel::perThreadMemoryBuffers, 1U, outErrReason, outWarning);
 
     return valid ? DecodeError::Success : DecodeError::InvalidBinary;
 }
@@ -306,6 +309,54 @@ bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Ty
     return true;
 }
 
+bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationType &out,
+                     ConstStringRef context, std::string &outErrReason) {
+    if (nullptr == token) {
+        return false;
+    }
+
+    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::AllocationType;
+    using AllocType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationType;
+    auto tokenValue = token->cstrref();
+
+    if (global == tokenValue) {
+        out = AllocType::AllocationTypeGlobal;
+    } else if (scratch == tokenValue) {
+        out = AllocType::AllocationTypeScratch;
+    } else if (slm == tokenValue) {
+        out = AllocType::AllocationTypeSlm;
+    } else {
+        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" per-thread memory buffer allocation type in context of " + context.str() + "\n");
+        return false;
+    }
+
+    return true;
+}
+
+bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage &out,
+                     ConstStringRef context, std::string &outErrReason) {
+    if (nullptr == token) {
+        return false;
+    }
+
+    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::MemoryUsage;
+    using Usage = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage;
+    auto tokenValue = token->cstrref();
+
+    if (privateSpace == tokenValue) {
+        out = Usage::MemoryUsagePrivateSpace;
+    } else if (spillFillSpace == tokenValue) {
+        out = Usage::MemoryUsageSpillFillSpace;
+    } else if (singleSpace == tokenValue) {
+        out = Usage::MemoryUsageSingleSpace;
+    } else {
+        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled \"" + tokenValue.str() + "\" per-thread memory buffer usage type in context of " + context.str() + "\n");
+        return false;
+    }
+
+    return true;
+}
+
 DecodeError readZeInfoPerThreadPayloadArguments(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
                                                 ZeInfoPerThreadPayloadArguments &outPerThreadPayloadArguments,
                                                 ConstStringRef context,
@@ -401,6 +452,32 @@ DecodeError readZeInfoBindingTableIndices(const NEO::Yaml::YamlParser &parser, c
     return validBindingTableEntries ? DecodeError::Success : DecodeError::InvalidBinary;
 }
 
+DecodeError readZeInfoPerThreadMemoryBuffers(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
+                                             ZeInfoPerThreadMemoryBuffers &outPerThreadMemoryBuffers,
+                                             ConstStringRef context,
+                                             std::string &outErrReason, std::string &outWarning) {
+    bool validBuffer = true;
+    for (const auto &perThreadMemoryBufferNd : parser.createChildrenRange(node)) {
+        outPerThreadMemoryBuffers.resize(outPerThreadMemoryBuffers.size() + 1);
+        auto &perThreadMemoryBufferMetadata = *outPerThreadMemoryBuffers.rbegin();
+        for (const auto &perThreadMemoryBufferMemberNd : parser.createChildrenRange(perThreadMemoryBufferNd)) {
+            auto key = parser.readKey(perThreadMemoryBufferMemberNd);
+            if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::allocationType == key) {
+                auto allocationTypeToken = parser.getValueToken(perThreadMemoryBufferMemberNd);
+                validBuffer &= readEnumChecked(allocationTypeToken, perThreadMemoryBufferMetadata.allocationType, context, outErrReason);
+            } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::memoryUsage == key) {
+                auto memoryUsageToken = parser.getValueToken(perThreadMemoryBufferMemberNd);
+                validBuffer &= readEnumChecked(memoryUsageToken, perThreadMemoryBufferMetadata.memoryUsage, context, outErrReason);
+            } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::size == key) {
+                validBuffer &= readZeInfoValueChecked(parser, perThreadMemoryBufferMemberNd, perThreadMemoryBufferMetadata.size, context, outErrReason);
+            } else {
+                outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + key.str() + "\" for per-thread memory buffer in context of " + context.str() + "\n");
+            }
+        }
+    }
+    return validBuffer ? DecodeError::Success : DecodeError::InvalidBinary;
+}
+
 template <typename ElSize, size_t Len>
 bool setVecArgIndicesBasedOnSize(CrossThreadDataOffset (&vec)[Len], size_t vecSize, CrossThreadDataOffset baseOffset) {
     switch (vecSize) {
@@ -423,7 +500,7 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
                                        std::string &outErrReason, std::string &outWarning) {
     switch (src.argType) {
     default:
-        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid arg type in per thread data section in context of : " + dst.kernelMetadata.kernelName + ".\n");
+        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid arg type in per-thread data section in context of : " + dst.kernelMetadata.kernelName + ".\n");
         return DecodeError::InvalidBinary;
     case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeLocalId: {
         if (src.offset != 0) {
@@ -603,6 +680,34 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
     return DecodeError::Success;
 }
 
+NEO::DecodeError populateKernelDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::PerThreadMemoryBufferBaseT &src, NEO::KernelDescriptor &dst,
+                                          std::string &outErrReason, std::string &outWarning) {
+    using namespace NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer;
+    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::AllocationType;
+    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::MemoryUsage;
+    switch (src.allocationType) {
+    default:
+        outErrReason.append("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer allocation type in context of : " + dst.kernelMetadata.kernelName + ".\n");
+        return DecodeError::InvalidBinary;
+    case AllocationTypeGlobal:
+        if (MemoryUsagePrivateSpace != src.memoryUsage) {
+            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer memory usage type for " + global.str() + " allocation type in context of : " + dst.kernelMetadata.kernelName + ". Expected : " + privateSpace.str() + ".\n");
+            return DecodeError::InvalidBinary;
+        }
+
+        dst.kernelAttributes.perThreadPrivateMemorySize = src.size;
+        break;
+    case AllocationTypeScratch:
+        if (0 != dst.kernelAttributes.perThreadScratchSize[0]) {
+            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid duplicated scratch buffer entry in context of : " + dst.kernelMetadata.kernelName + ".\n");
+            return DecodeError::InvalidBinary;
+        }
+        dst.kernelAttributes.perThreadScratchSize[0] = src.size;
+        break;
+    }
+    return DecodeError::Success;
+}
+
 NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> &elf, NEO::ZebinSections &zebinSections,
                                           NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &kernelNd, std::string &outErrReason, std::string &outWarning) {
     auto kernelInfo = std::make_unique<NEO::KernelInfo>();
@@ -639,6 +744,15 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
                                                          kernelDescriptor.kernelMetadata.kernelName, outErrReason, outWarning);
         if (DecodeError::Success != payloadArgsErr) {
             return payloadArgsErr;
+        }
+    }
+
+    ZeInfoPerThreadMemoryBuffers perThreadMemoryBuffers;
+    if (false == zeInfokernelSections.perThreadMemoryBuffersNd.empty()) {
+        auto perThreadMemoryBuffersErr = readZeInfoPerThreadMemoryBuffers(yamlParser, *zeInfokernelSections.perThreadMemoryBuffersNd[0], perThreadMemoryBuffers,
+                                                                          kernelDescriptor.kernelMetadata.kernelName, outErrReason, outWarning);
+        if (DecodeError::Success != perThreadMemoryBuffersErr) {
+            return perThreadMemoryBuffersErr;
         }
     }
 
@@ -679,6 +793,13 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
     uint32_t crossThreadDataSize = 0;
     for (const auto &arg : payloadArguments) {
         auto decodeErr = populateArgDescriptor(arg, kernelDescriptor, crossThreadDataSize, outErrReason, outWarning);
+        if (DecodeError::Success != decodeErr) {
+            return decodeErr;
+        }
+    }
+
+    for (const auto &memBuff : perThreadMemoryBuffers) {
+        auto decodeErr = populateKernelDescriptor(memBuff, kernelDescriptor, outErrReason, outWarning);
         if (DecodeError::Success != decodeErr) {
             return decodeErr;
         }

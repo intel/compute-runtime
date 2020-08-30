@@ -240,6 +240,10 @@ kernels:
     binding_table_indices: 
       - bti_value:       0
         arg_index:       0
+    per_thread_memory_buffers:
+      - type:            scratch
+        usage:           single_space
+        size:            64
 ...
 )===";
 
@@ -261,12 +265,14 @@ kernels:
     ASSERT_FALSE(kernelSections.payloadArgumentsNd.empty());
     ASSERT_FALSE(kernelSections.bindingTableIndicesNd.empty());
     ASSERT_FALSE(kernelSections.perThreadPayloadArgumentsNd.empty());
+    ASSERT_FALSE(kernelSections.perThreadMemoryBuffersNd.empty());
 
     EXPECT_EQ("name", parser.readKey(*kernelSections.nameNd[0])) << parser.readKey(*kernelSections.nameNd[0]).str();
     EXPECT_EQ("execution_env", parser.readKey(*kernelSections.executionEnvNd[0])) << parser.readKey(*kernelSections.executionEnvNd[0]).str();
     EXPECT_EQ("payload_arguments", parser.readKey(*kernelSections.payloadArgumentsNd[0])) << parser.readKey(*kernelSections.payloadArgumentsNd[0]).str();
     EXPECT_EQ("per_thread_payload_arguments", parser.readKey(*kernelSections.perThreadPayloadArgumentsNd[0])) << parser.readKey(*kernelSections.perThreadPayloadArgumentsNd[0]).str();
     EXPECT_EQ("binding_table_indices", parser.readKey(*kernelSections.bindingTableIndicesNd[0])) << parser.readKey(*kernelSections.bindingTableIndicesNd[0]).str();
+    EXPECT_EQ("per_thread_memory_buffers", parser.readKey(*kernelSections.perThreadMemoryBuffersNd[0])) << parser.readKey(*kernelSections.perThreadMemoryBuffersNd[0]).str();
 }
 
 TEST(ExtractZeInfoKernelSections, GivenUnknownSectionThenEmitsAWarning) {
@@ -297,15 +303,25 @@ kernels:
 }
 
 TEST(ValidateZeInfoKernelSectionsCount, GivenCorrectNumberOfSectionsThenReturnSuccess) {
+    std::string errors;
+    std::string warnings;
     NEO::ZeInfoKernelSections kernelSections;
     kernelSections.nameNd.resize(1);
     kernelSections.executionEnvNd.resize(1);
+
+    auto err = NEO::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
     kernelSections.bindingTableIndicesNd.resize(1);
     kernelSections.payloadArgumentsNd.resize(1);
     kernelSections.perThreadPayloadArgumentsNd.resize(1);
-    std::string errors;
-    std::string warnings;
-    auto err = NEO::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
+    kernelSections.perThreadMemoryBuffersNd.resize(1);
+
+    errors.clear();
+    warnings.clear();
+    err = NEO::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
@@ -393,6 +409,19 @@ TEST(ValidateZeInfoKernelSectionsCount, GivenTwoPerThreadPayloadArgumentsSection
     auto err = NEO::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of per_thread_payload_arguments section, got : 2\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST(ValidateZeInfoKernelSectionsCount, GivenTwoPerThreadMemoryBuffersSectionsThenFail) {
+    NEO::ZeInfoKernelSections kernelSections;
+    std::string errors;
+    std::string warnings;
+    kernelSections.nameNd.resize(1);
+    kernelSections.executionEnvNd.resize(1);
+    kernelSections.perThreadMemoryBuffersNd.resize(2);
+    auto err = NEO::validateZeInfoKernelSectionsCount(kernelSections, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of per_thread_memory_buffers section, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
@@ -764,6 +793,106 @@ TEST(ReadEnumCheckedAccessType, GivenUnknownStringRepresentationThenFail) {
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"some_entry\" access type in context of some_kernel\n", errors.c_str());
 }
 
+TEST(ReadEnumCheckedAllocationType, GivenValidStringRepresentationThenParseItCorrectly) {
+    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::AllocationType;
+
+    NEO::Yaml::Token tokGlobal(global, NEO::Yaml::Token::Token::LiteralString);
+    NEO::Yaml::Token tokScratch(scratch, NEO::Yaml::Token::Token::LiteralString);
+    NEO::Yaml::Token tokSlm(slm, NEO::Yaml::Token::Token::LiteralString);
+
+    using AllocationType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationType;
+    AllocationType enumGlobal, enumScratch, enumSlm;
+    std::string errors;
+    bool success;
+
+    success = NEO::readEnumChecked(&tokGlobal, enumGlobal, "some_kernel", errors);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_EQ(AllocationType::AllocationTypeGlobal, enumGlobal);
+
+    success = NEO::readEnumChecked(&tokScratch, enumScratch, "some_kernel", errors);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_EQ(AllocationType::AllocationTypeScratch, enumScratch);
+
+    success = NEO::readEnumChecked(&tokSlm, enumSlm, "some_kernel", errors);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_EQ(AllocationType::AllocationTypeSlm, enumSlm);
+}
+
+TEST(ReadEnumCheckedAllocationType, GivenNullTokenThenFail) {
+    using AllocationType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationType;
+    AllocationType enumRepresentation;
+    std::string errors;
+    bool success;
+
+    success = NEO::readEnumChecked(nullptr, enumRepresentation, "some_kernel", errors);
+    EXPECT_FALSE(success);
+}
+
+TEST(ReadEnumCheckedAllocationType, GivenUnknownStringRepresentationThenFail) {
+    using AllocationType = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationType;
+    AllocationType enumRepresentation;
+    std::string errors;
+    bool success;
+
+    NEO::Yaml::Token someEntry("some_entry", NEO::Yaml::Token::Token::LiteralString);
+    success = NEO::readEnumChecked(&someEntry, enumRepresentation, "some_kernel", errors);
+    EXPECT_FALSE(success);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"some_entry\" per-thread memory buffer allocation type in context of some_kernel\n", errors.c_str());
+}
+
+TEST(ReadEnumCheckedMemoryUsage, GivenValidStringRepresentationThenParseItCorrectly) {
+    using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::MemoryUsage;
+
+    NEO::Yaml::Token tokPrivateSpace(privateSpace, NEO::Yaml::Token::Token::LiteralString);
+    NEO::Yaml::Token tokSpillFillSpace(spillFillSpace, NEO::Yaml::Token::Token::LiteralString);
+    NEO::Yaml::Token tokSingleSpace(singleSpace, NEO::Yaml::Token::Token::LiteralString);
+
+    using MemoryUsage = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage;
+    MemoryUsage enumPrivateSpace, enumSpillFillSpace, enumSingleSpace;
+    std::string errors;
+    bool success;
+
+    success = NEO::readEnumChecked(&tokPrivateSpace, enumPrivateSpace, "some_kernel", errors);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_EQ(MemoryUsage::MemoryUsagePrivateSpace, enumPrivateSpace);
+
+    success = NEO::readEnumChecked(&tokSpillFillSpace, enumSpillFillSpace, "some_kernel", errors);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_EQ(MemoryUsage::MemoryUsageSpillFillSpace, enumSpillFillSpace);
+
+    success = NEO::readEnumChecked(&tokSingleSpace, enumSingleSpace, "some_kernel", errors);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_EQ(MemoryUsage::MemoryUsageSingleSpace, enumSingleSpace);
+}
+
+TEST(ReadEnumCheckedMemoryUsage, GivenNullTokenThenFail) {
+    using MemoryUsage = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage;
+    MemoryUsage enumRepresentation;
+    std::string errors;
+    bool success;
+
+    success = NEO::readEnumChecked(nullptr, enumRepresentation, "some_kernel", errors);
+    EXPECT_FALSE(success);
+}
+
+TEST(ReadEnumCheckedMemoryUsage, GivenUnknownStringRepresentationThenFail) {
+    using MemoryUsage = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage;
+    MemoryUsage enumRepresentation;
+    std::string errors;
+    bool success;
+
+    NEO::Yaml::Token someEntry("some_entry", NEO::Yaml::Token::Token::LiteralString);
+    success = NEO::readEnumChecked(&someEntry, enumRepresentation, "some_kernel", errors);
+    EXPECT_FALSE(success);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled \"some_entry\" per-thread memory buffer usage type in context of some_kernel\n", errors.c_str());
+}
+
 TEST(ReadZeInfoPerThreadPayloadArguments, GivenValidYamlEntriesThenSetProperMembers) {
     NEO::ConstStringRef yaml = R"===(---
 kernels:         
@@ -1090,6 +1219,102 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(warnings.empty()) << warnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read arg_index from : [any] in context of : some_kernel\n", errors.c_str());
+}
+
+TEST(ReadZeInfoPerThreadMemoryBuffers, GivenValidYamlEntriesThenSetProperMembers) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:         
+  - name:            some_kernel
+    per_thread_memory_buffers: 
+      - type:            scratch
+        usage:           single_space
+        size:            64
+      - type:            global
+        usage:           private_space
+        size:            128
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &buffersNode = *parser.findNodeWithKeyDfs("per_thread_memory_buffers");
+    std::string errors;
+    std::string warnings;
+    NEO::ZeInfoPerThreadMemoryBuffers buffers;
+    auto err = NEO::readZeInfoPerThreadMemoryBuffers(parser, buffersNode, buffers, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_EQ(2U, buffers.size());
+
+    EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationTypeScratch, buffers[0].allocationType);
+    EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsageSingleSpace, buffers[0].memoryUsage);
+    EXPECT_EQ(64, buffers[0].size);
+
+    EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationTypeGlobal, buffers[1].allocationType);
+    EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsagePrivateSpace, buffers[1].memoryUsage);
+    EXPECT_EQ(128, buffers[1].size);
+}
+
+TEST(ReadZeInfoPerThreadMemoryBuffers, GivenUnknownEntryThenEmmitsWarning) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:         
+  - name:            some_kernel
+    per_thread_memory_buffers: 
+      - type:            scratch
+        usage:           single_space
+        size:            64
+        something_new : 256
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &buffersNode = *parser.findNodeWithKeyDfs("per_thread_memory_buffers");
+    std::string errors;
+    std::string warnings;
+    NEO::ZeInfoPerThreadMemoryBuffers buffers;
+    auto err = NEO::readZeInfoPerThreadMemoryBuffers(parser, buffersNode, buffers, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unknown entry \"something_new\" for per-thread memory buffer in context of some_kernel\n", warnings.c_str());
+
+    ASSERT_EQ(1U, buffers.size());
+    EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationTypeScratch, buffers[0].allocationType);
+    EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsageSingleSpace, buffers[0].memoryUsage);
+    EXPECT_EQ(64, buffers[0].size);
+}
+
+TEST(ReadZeInfoPerThreadMemoryBuffers, GivenInvalidValueForKnownEntryThenFails) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:         
+  - name:            some_kernel
+    per_thread_memory_buffers: 
+      - type:            scratch
+        usage:           single_space
+        size:            eight
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &buffersNode = *parser.findNodeWithKeyDfs("per_thread_memory_buffers");
+    std::string errors;
+    std::string warnings;
+    NEO::ZeInfoPerThreadMemoryBuffers args;
+    auto err = NEO::readZeInfoPerThreadMemoryBuffers(parser, buffersNode, args, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read size from : [eight] in context of : some_kernel\n", errors.c_str());
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenInvalidElfThenReturnError) {
@@ -1501,6 +1726,34 @@ kernels:
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read offset from : [aaa] in context of : some_kernel\n", decodeErrors.c_str());
 }
 
+TEST(PopulateKernelDescriptor, GivenInvalidPerThreadMemoryBufferYamlEntriesThenFails) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:
+    - name : some_kernel
+      execution_env:   
+        actual_kernel_start_offset: 0
+      per_thread_memory_buffers: 
+        - type:        scratch
+          usage:       spill_fill_space
+          size:        eight
+)===";
+    NEO::ProgramInfo programInfo;
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
+    NEO::Yaml::YamlParser parser;
+    std::string parseErrors;
+    std::string parseWarnings;
+    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
+    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
+    NEO::ZebinSections zebinSections;
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : could not read size from : [eight] in context of : some_kernel\n", decodeErrors.c_str());
+}
+
 TEST(PopulateKernelDescriptor, GivenInvalidSimdSizeThenFails) {
     NEO::ConstStringRef zeinfo = R"===(
 kernels:
@@ -1584,7 +1837,7 @@ kernels:
     auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid arg type in per thread data section in context of : some_kernel.\n", decodeErrors.c_str());
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid arg type in per-thread data section in context of : some_kernel.\n", decodeErrors.c_str());
 }
 
 TEST(PopulateKernelDescriptor, GivenValidPerThreadArgThenPopulatesKernelDescriptor) {
@@ -1811,6 +2064,204 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
     EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid binding table entry for non-pointer and non-image argument idx : 0.\n", decodeErrors.c_str());
+}
+
+TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsGlobalAndUsageIsNotPrivateThenFails) {
+    {
+        NEO::ConstStringRef zeinfo = R"===(
+  kernels:         
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+      per_thread_memory_buffers: 
+          - type:            global
+            usage:           spill_fill_space
+            size:            64
+    ...
+    )===";
+        NEO::ProgramInfo programInfo;
+        NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
+        NEO::Yaml::YamlParser parser;
+        std::string parseErrors;
+        std::string parseWarnings;
+        bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
+        ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
+        NEO::ZebinSections zebinSections;
+        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+        std::string decodeErrors;
+        std::string decodeWarnings;
+        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer memory usage type for global allocation type in context of : some_kernel. Expected : private_space.\n", decodeErrors.c_str());
+    }
+
+    {
+        NEO::ConstStringRef zeinfo = R"===(
+  kernels:         
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+      per_thread_memory_buffers: 
+          - type:            global
+            usage:           single_space
+            size:            64
+    ...
+    )===";
+        NEO::ProgramInfo programInfo;
+        NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
+        NEO::Yaml::YamlParser parser;
+        std::string parseErrors;
+        std::string parseWarnings;
+        bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
+        ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
+        NEO::ZebinSections zebinSections;
+        auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+        std::string decodeErrors;
+        std::string decodeWarnings;
+        auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer memory usage type for global allocation type in context of : some_kernel. Expected : private_space.\n", decodeErrors.c_str());
+    }
+}
+
+TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsSlmThenFails) {
+    NEO::ConstStringRef zeinfo = R"===(
+  kernels:         
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+      per_thread_memory_buffers: 
+          - type:            slm
+            usage:           spill_fill_space
+            size:            64
+    ...
+    )===";
+    NEO::ProgramInfo programInfo;
+    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64> elf;
+    NEO::Yaml::YamlParser parser;
+    std::string parseErrors;
+    std::string parseWarnings;
+    bool parseSuccess = parser.parse(zeinfo, parseErrors, parseWarnings);
+    ASSERT_TRUE(parseSuccess) << parseErrors << " " << parseWarnings;
+    NEO::ZebinSections zebinSections;
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer allocation type in context of : some_kernel.\n", decodeErrors.c_str());
+}
+
+TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsGlobalAndUsageIsPrivateThenSetsProperFieldsInDescriptor) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:         
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+      per_thread_memory_buffers: 
+          - type:            global
+            usage:           private_space
+            size:            256
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_EQ(1U, programInfo.kernelInfos.size());
+    EXPECT_EQ(256U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadPrivateMemorySize);
+}
+
+TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsScratchThenSetsProperFieldsInDescriptor) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:         
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+      per_thread_memory_buffers: 
+          - type:            scratch
+            usage:           private_space
+            size:            512
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_EQ(1U, programInfo.kernelInfos.size());
+    EXPECT_EQ(512U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
+    EXPECT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
+}
+
+TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWithMultipleScratchEntriesThenFails) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:         
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+      per_thread_memory_buffers: 
+          - type:            scratch
+            usage:           private_space
+            size:            512
+          - type:            scratch
+            usage:           spill_fill_space
+            size:            128
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid duplicated scratch buffer entry in context of : some_kernel.\n", decodeErrors.c_str());
 }
 
 TEST(PopulateKernelDescriptor, GivenKernelWithoutCorrespondingTextSectionThenFail) {

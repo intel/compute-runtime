@@ -33,6 +33,7 @@ struct ZeInfoKernelSections {
     UniqueNode payloadArgumentsNd;
     UniqueNode bindingTableIndicesNd;
     UniqueNode perThreadPayloadArgumentsNd;
+    UniqueNode perThreadMemoryBuffersNd;
 };
 
 DecodeError extractZebinSections(NEO::Elf::Elf<Elf::EI_CLASS_64> &elf, ZebinSections &out, std::string &outErrReason, std::string &outWarning);
@@ -49,6 +50,10 @@ bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Ty
 bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AddressSpace &out,
                      ConstStringRef context, std::string &outErrReason);
 bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::AccessType &out,
+                     ConstStringRef context, std::string &outErrReason);
+bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationType &out,
+                     ConstStringRef context, std::string &outErrReason);
+bool readEnumChecked(const Yaml::Token *token, NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage &out,
                      ConstStringRef context, std::string &outErrReason);
 
 using ZeInfoPerThreadPayloadArguments = StackVec<NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadPayloadArgument::PerThreadPayloadArgumentBaseT, 2>;
@@ -69,6 +74,12 @@ DecodeError readZeInfoBindingTableIndices(const NEO::Yaml::YamlParser &parser, c
                                           ZeInfoBindingTableIndices &outBindingTableIndices, ZeInfoBindingTableIndices::value_type &outMaxBindingTableIndex,
                                           ConstStringRef context,
                                           std::string &outErrReason, std::string &outWarning);
+
+using ZeInfoPerThreadMemoryBuffers = StackVec<NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::PerThreadMemoryBufferBaseT, 8>;
+DecodeError readZeInfoPerThreadMemoryBuffers(const NEO::Yaml::YamlParser &parser, const NEO::Yaml::Node &node,
+                                             ZeInfoPerThreadMemoryBuffers &outPerThreadMemoryBuffers,
+                                             ConstStringRef context,
+                                             std::string &outErrReason, std::string &outWarning);
 
 NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadPayloadArgument::PerThreadPayloadArgumentBaseT &src, NEO::KernelDescriptor &dst,
                                        std::string &outErrReason, std::string &outWarning);

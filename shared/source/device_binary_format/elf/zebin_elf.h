@@ -89,6 +89,7 @@ static constexpr ConstStringRef executionEnv("execution_env");
 static constexpr ConstStringRef payloadArguments("payload_arguments");
 static constexpr ConstStringRef bindingTableIndices("binding_table_indices");
 static constexpr ConstStringRef perThreadPayloadArguments("per_thread_payload_arguments");
+static constexpr ConstStringRef perThreadMemoryBuffers("per_thread_memory_buffers");
 
 namespace ExecutionEnv {
 static constexpr ConstStringRef actualKernelStartOffset("actual_kernel_start_offset");
@@ -164,6 +165,22 @@ static constexpr ConstStringRef packedLocalIds("packed_local_ids");
 static constexpr ConstStringRef localId("local_id");
 } // namespace ArgType
 } // namespace PerThreadPayloadArgument
+
+namespace PerThreadMemoryBuffer {
+static constexpr ConstStringRef allocationType("type");
+static constexpr ConstStringRef memoryUsage("usage");
+static constexpr ConstStringRef size("size");
+namespace AllocationType {
+static constexpr ConstStringRef global("global");
+static constexpr ConstStringRef scratch("scratch");
+static constexpr ConstStringRef slm("slm");
+} // namespace AllocationType
+namespace MemoryUsage {
+static constexpr ConstStringRef privateSpace("private_space");
+static constexpr ConstStringRef spillFillSpace("spill_fill_space");
+static constexpr ConstStringRef singleSpace("single_space");
+} // namespace MemoryUsage
+} // namespace PerThreadMemoryBuffer
 } // namespace Kernel
 } // namespace Tags
 
@@ -328,6 +345,32 @@ struct BindingTableEntryBaseT {
     ArgIndexT argIndex = 0U;
 };
 } // namespace BindingTableEntry
+
+namespace PerThreadMemoryBuffer {
+enum AllocationType : uint8_t {
+    AllocationTypeUnknown = 0,
+    AllocationTypeGlobal,
+    AllocationTypeScratch,
+    AllocationTypeSlm
+};
+
+enum MemoryUsage : uint8_t {
+    MemoryUsageUnknown = 0,
+    MemoryUsagePrivateSpace,
+    MemoryUsageSpillFillSpace,
+    MemoryUsageSingleSpace
+};
+
+using SizeT = int32_t;
+using AllocationTypeT = AllocationType;
+using MemoryUsageT = MemoryUsage;
+
+struct PerThreadMemoryBufferBaseT {
+    AllocationType allocationType = AllocationTypeUnknown;
+    MemoryUsageT memoryUsage = MemoryUsageUnknown;
+    SizeT size = 0U;
+};
+} // namespace PerThreadMemoryBuffer
 
 } // namespace Kernel
 
