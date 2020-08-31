@@ -122,6 +122,8 @@ class GLSharingFunctionsWindows : public GLSharingFunctions {
         pfnGlArbSyncObjectWaitServer(osInterface, glSyncInfo);
     }
 
+    LUID getAdapterLuid() const;
+
     // Buffer reuse
     std::mutex mutex;
     std::vector<std::pair<unsigned int, GraphicsAllocation *>> graphicsAllocationsForGlBufferReuse;
@@ -136,6 +138,8 @@ class GLSharingFunctionsWindows : public GLSharingFunctions {
     void createBackupContext();
     bool isOpenGlExtensionSupported(const unsigned char *pExtentionString);
 
+    void initAdapterLuid();
+
     // Handles
     GLType GLHDCType = 0;
     GLContext GLHGLRCHandle = 0;
@@ -143,6 +147,7 @@ class GLSharingFunctionsWindows : public GLSharingFunctions {
     GLDisplay GLHDCHandle = 0;
     OS_HANDLE GLDeviceHandle = 0;
     OS_HANDLE GLContextHandle = 0;
+    LUID adapterLuid{};
 
     // GL functions
     std::unique_ptr<OsLibrary> glLibrary;

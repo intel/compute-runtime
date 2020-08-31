@@ -115,9 +115,6 @@ class WddmMock : public Wddm {
         ++counterVerifySharedHandle;
         return Wddm::verifySharedHandle(osHandle);
     }
-    bool verifyHdcHandle(size_t hdcHandle) const override {
-        return verifyHdcReturnValue;
-    }
 
     void resetGdi(Gdi *gdi);
 
@@ -159,7 +156,6 @@ class WddmMock : public Wddm {
     bool makeResidentStatus = true;
     bool callBaseMakeResident = true;
     bool callBaseCreatePagingLogger = true;
-    bool verifyHdcReturnValue = true;
 };
 
 struct GmockWddm : WddmMock {

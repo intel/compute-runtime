@@ -131,7 +131,7 @@ TEST_F(clGetGLContextInfoKhrTest, GivenIncorrectPropertiesWhenCallclGetGLContext
     EXPECT_EQ(CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR, retVal);
 }
 
-TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfHdcHandleFailsThenInvalidGlReferenceErrorIsReturned) {
+TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfAdapterLuidFailsThenInvalidGlReferenceErrorIsReturned) {
     platformsImpl->clear();
 
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -145,7 +145,7 @@ TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfHdcHandleFails
 
     auto device = nonDefaultPlatform->getClDevice(0);
 
-    static_cast<WddmMock *>(device->getRootDeviceEnvironment().osInterface->get()->getWddm())->verifyHdcReturnValue = false;
+    static_cast<WddmMock *>(device->getRootDeviceEnvironment().osInterface->get()->getWddm())->verifyAdapterLuidReturnValue = false;
     size_t retSize = 0;
     cl_device_id retDevice = 0;
 
@@ -154,7 +154,7 @@ TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfHdcHandleFails
 
     EXPECT_EQ(CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR, retVal);
 }
-TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfHdcHandleFailsForFirstDeviceButSucceedsForSecondOneThenReturnTheSecondDevice) {
+TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfAdapterLuidFailsForFirstDeviceButSucceedsForSecondOneThenReturnTheSecondDevice) {
     platformsImpl->clear();
 
     DebugManagerStateRestore restorer;
@@ -172,8 +172,8 @@ TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfHdcHandleFails
     auto device1 = nonDefaultPlatform->getClDevice(0);
     cl_device_id expectedDevice = device1;
 
-    static_cast<WddmMock *>(device0->getRootDeviceEnvironment().osInterface->get()->getWddm())->verifyHdcReturnValue = false;
-    static_cast<WddmMock *>(device1->getRootDeviceEnvironment().osInterface->get()->getWddm())->verifyHdcReturnValue = true;
+    static_cast<WddmMock *>(device0->getRootDeviceEnvironment().osInterface->get()->getWddm())->verifyAdapterLuidReturnValue = false;
+    static_cast<WddmMock *>(device1->getRootDeviceEnvironment().osInterface->get()->getWddm())->verifyAdapterLuidReturnValue = true;
     size_t retSize = 0;
     cl_device_id retDevice = 0;
 

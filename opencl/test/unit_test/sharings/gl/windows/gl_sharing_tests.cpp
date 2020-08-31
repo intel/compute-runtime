@@ -38,6 +38,10 @@
 
 #include "gl_types.h"
 
+namespace NEO {
+extern uint32_t numRootDevicesToEnum;
+}
+
 using namespace NEO;
 bool MockGLSharingFunctions::SharingEnabled = false;
 
@@ -1312,5 +1316,29 @@ TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenValidInputsWhenGettingForm
 
     for (uint32_t i = 0; i < glFormatsCount; i++) {
         EXPECT_NE(GlSharing::glToCLFormats.end(), GlSharing::glToCLFormats.find(glFormats[i]));
+    }
+}
+
+TEST(GlSharingAdapterLuid, whenInitializingGlSharingThenProperAdapterLuidIsObtained) {
+    LUID expectedLuid;
+    expectedLuid.HighPart = 0x1234;
+    expectedLuid.LowPart = 0x1;
+
+    {
+        VariableBackup<uint32_t> backup{&numRootDevicesToEnum, 0u};
+        MockGLSharingFunctions glSharing;
+        auto luid = glSharing.getAdapterLuid();
+
+        EXPECT_EQ(0u, luid.HighPart);
+        EXPECT_EQ(0u, luid.LowPart);
+    }
+
+    {
+        VariableBackup<uint32_t> backup{&numRootDevicesToEnum, 3u};
+        MockGLSharingFunctions glSharing;
+        auto luid = glSharing.getAdapterLuid();
+
+        EXPECT_EQ(expectedLuid.HighPart, luid.HighPart);
+        EXPECT_EQ(expectedLuid.LowPart, luid.LowPart);
     }
 }

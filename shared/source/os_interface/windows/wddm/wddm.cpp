@@ -1063,23 +1063,4 @@ void Wddm::createPagingFenceLogger() {
         residencyLogger = std::make_unique<WddmResidencyLogger>(device, pagingFenceAddress);
     }
 }
-
-bool Wddm::verifyHdcHandle(size_t hdcHandle) const {
-    D3DKMT_OPENADAPTERFROMHDC openAdapterFromHdcStruct{};
-    openAdapterFromHdcStruct.hDc = reinterpret_cast<HDC>(hdcHandle);
-    auto status = getGdi()->openAdapterFromHdc(&openAdapterFromHdcStruct);
-    if (STATUS_SUCCESS != status) {
-        DEBUG_BREAK_IF(true);
-        return false;
-    }
-
-    auto adapterLuid = openAdapterFromHdcStruct.AdapterLuid;
-    D3DKMT_CLOSEADAPTER closeAdapterStruct{};
-
-    closeAdapterStruct.hAdapter = openAdapterFromHdcStruct.hAdapter;
-    getGdi()->closeAdapter(&closeAdapterStruct);
-
-    return verifyAdapterLuid(adapterLuid);
-}
-
 } // namespace NEO
