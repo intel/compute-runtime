@@ -31,13 +31,14 @@ TEST(AubCenter, GivenUseAubStreamDebugVariableSetWhenAubCenterIsCreatedThenCreat
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseAubStream.set(false);
 
-    MockAubManager *mockAubManager = new MockAubManager(defaultHwInfo->platform.eProductFamily, 4, 8 * MB, true, aub_stream::mode::aubFile, defaultHwInfo->capabilityTable.gpuAddressSpace);
+    MockAubManager *mockAubManager = new MockAubManager(defaultHwInfo->platform.eProductFamily, 4, 8 * MB, defaultHwInfo->platform.usRevId, true, aub_stream::mode::aubFile, defaultHwInfo->capabilityTable.gpuAddressSpace);
     MockAubCenter mockAubCenter(defaultHwInfo.get(), false, "", CommandStreamReceiverType::CSR_AUB);
     mockAubCenter.aubManager = std::unique_ptr<MockAubManager>(mockAubManager);
 
     EXPECT_EQ(defaultHwInfo->platform.eProductFamily, mockAubManager->mockAubManagerParams.productFamily);
     EXPECT_EQ(4, mockAubManager->mockAubManagerParams.devicesCount);
     EXPECT_EQ(8 * MB, mockAubManager->mockAubManagerParams.memoryBankSize);
+    EXPECT_EQ(defaultHwInfo->platform.usRevId, mockAubManager->mockAubManagerParams.stepping);
     EXPECT_EQ(true, mockAubManager->mockAubManagerParams.localMemorySupported);
     EXPECT_EQ(aub_stream::mode::aubFile, mockAubManager->mockAubManagerParams.streamMode);
     EXPECT_EQ(defaultHwInfo->capabilityTable.gpuAddressSpace, mockAubManager->mockAubManagerParams.gpuAddressSpace);

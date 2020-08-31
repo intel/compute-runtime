@@ -17,7 +17,7 @@
 #include "third_party/aub_stream/headers/aubstream.h"
 
 namespace NEO {
-extern aub_stream::AubManager *createAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace);
+extern aub_stream::AubManager *createAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, uint32_t stepping, bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace);
 
 AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType) {
     if (DebugManager.flags.UseAubStream.get()) {
@@ -37,7 +37,7 @@ AubCenter::AubCenter(const HardwareInfo *pHwInfo, bool localMemoryEnabled, const
 
         AubHelper::setTbxConfiguration();
 
-        aubManager.reset(createAubManager(pHwInfo->platform.eProductFamily, devicesCount, memoryBankSize, localMemoryEnabled, aubStreamMode, pHwInfo->capabilityTable.gpuAddressSpace));
+        aubManager.reset(createAubManager(pHwInfo->platform.eProductFamily, devicesCount, memoryBankSize, pHwInfo->platform.usRevId, localMemoryEnabled, aubStreamMode, pHwInfo->capabilityTable.gpuAddressSpace));
     }
     addressMapper = std::make_unique<AddressMapper>();
     streamProvider = std::make_unique<AubFileStreamProvider>();
