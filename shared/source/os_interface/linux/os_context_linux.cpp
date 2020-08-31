@@ -43,7 +43,10 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, DeviceBitfield devi
             this->drmContextIds.push_back(drmContextId);
 
             if (drm.isPerContextVMRequired()) {
-                drmVmId = drm.queryVmId(drmContextId);
+                auto ret = drm.queryVmId(drmContextId, drmVmId);
+                DEBUG_BREAK_IF(drmVmId == 0);
+                DEBUG_BREAK_IF(ret != 0);
+                UNUSED_VARIABLE(ret);
                 this->drmVmIds.push_back(drmVmId);
             }
         }
