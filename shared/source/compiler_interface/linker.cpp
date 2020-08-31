@@ -267,7 +267,7 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
         if (pDevice && initData) {
             auto &hwInfo = pDevice->getHardwareInfo();
             auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-            if (dst->isAllocatedInLocalMemoryPool() && (helper.isBlitCopyRequiredForLocalMemory(hwInfo) || helper.forceBlitterUseForGlobalBuffers(hwInfo))) {
+            if (dst->isAllocatedInLocalMemoryPool() && (helper.isBlitCopyRequiredForLocalMemory(hwInfo) || helper.forceBlitterUseForGlobalBuffers(hwInfo, dst))) {
                 useBlitter = true;
             }
         }

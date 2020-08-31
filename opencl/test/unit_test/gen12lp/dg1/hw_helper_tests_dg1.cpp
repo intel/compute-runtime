@@ -8,6 +8,7 @@
 #include "shared/source/utilities/compiler_support.h"
 
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
+#include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 using HwHelperTestDg1 = HwHelperTest;
 
@@ -76,7 +77,22 @@ DG1TEST_F(HwHelperTestDg1, givenDg1AndVariousSteppingsWhenGettingIsWorkaroundReq
     }
 }
 
-DG1TEST_F(HwHelperTestDg1, givenDg1WhenPatchingGlobalBuffersThenUseBlitter) {
+DG1TEST_F(HwHelperTestDg1, givenDg1WhenPatchingCPUAccessibleGlobalBuffersThenDontUseBlitter) {
+    uint64_t gpuAddress = 0x1000;
+    void *buffer = reinterpret_cast<void *>(gpuAddress);
+    size_t size = 0x1000;
+
+    MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
     HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    EXPECT_TRUE(hwHelper.forceBlitterUseForGlobalBuffers(hardwareInfo));
+    EXPECT_FALSE(hwHelper.forceBlitterUseForGlobalBuffers(hardwareInfo, &mockAllocation));
+}
+
+DG1TEST_F(HwHelperTestDg1, givenDg1WhenPatchingCPUInaccessibleGlobalBuffersThenUseBlitter) {
+    uint64_t gpuAddress = 0x1000;
+    void *buffer = reinterpret_cast<void *>(0x0);
+    size_t size = 0x1000;
+
+    MockGraphicsAllocation mockAllocation(buffer, gpuAddress, size);
+    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    EXPECT_TRUE(hwHelper.forceBlitterUseForGlobalBuffers(hardwareInfo, &mockAllocation));
 }

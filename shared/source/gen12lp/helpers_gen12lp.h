@@ -36,7 +36,7 @@ void setAdditionalPipelineSelectFields(void *pipelineSelectCmd,
 bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo);
 bool isForceEmuInt32DivRemSPWARequired(const HardwareInfo &hwInfo);
 bool is3DPipelineSelectWARequired(const HardwareInfo &hwInfo);
-bool forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo);
+bool forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo, GraphicsAllocation *allocation);
 
 } // namespace Gen12LPHelpers
 } // namespace NEO

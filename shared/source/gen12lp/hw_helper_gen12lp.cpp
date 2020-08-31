@@ -194,8 +194,8 @@ void HwHelperHw<Family>::addEngineToEngineGroup(std::vector<std::vector<EngineCo
 }
 
 template <>
-bool HwHelperHw<Family>::forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo) const {
-    return Gen12LPHelpers::forceBlitterUseForGlobalBuffers(hwInfo);
+bool HwHelperHw<Family>::forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo, GraphicsAllocation *allocation) const {
+    return Gen12LPHelpers::forceBlitterUseForGlobalBuffers(hwInfo, allocation);
 }
 
 template <>
