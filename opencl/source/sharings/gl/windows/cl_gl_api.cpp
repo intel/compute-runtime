@@ -358,7 +358,7 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
         ClDevice *deviceToReturn = nullptr;
         for (auto i = 0u; i < platform->getNumDevices(); i++) {
             auto device = platform->getClDevice(i);
-            if (device->getRootDeviceEnvironment().osInterface->get()->getWddm()->verifyAdapterLuid(glSharing->getAdapterLuid())) {
+            if (device->getRootDeviceEnvironment().osInterface->get()->getWddm()->verifyAdapterLuid(glSharing->getAdapterLuid(reinterpret_cast<GLContext>(static_cast<uintptr_t>(GLHGLRCHandle))))) {
                 deviceToReturn = device;
                 break;
             }

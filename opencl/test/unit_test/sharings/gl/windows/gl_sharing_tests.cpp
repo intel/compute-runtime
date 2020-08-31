@@ -38,11 +38,8 @@
 
 #include "gl_types.h"
 
-namespace NEO {
-extern uint32_t numRootDevicesToEnum;
-}
-
 using namespace NEO;
+
 bool MockGLSharingFunctions::SharingEnabled = false;
 
 class glSharingTests : public ::testing::Test {
@@ -1320,25 +1317,49 @@ TEST_F(clGetSupportedGLTextureFormatsINTELTests, givenValidInputsWhenGettingForm
 }
 
 TEST(GlSharingAdapterLuid, whenInitializingGlSharingThenProperAdapterLuidIsObtained) {
-    LUID expectedLuid;
-    expectedLuid.HighPart = 0x1234;
-    expectedLuid.LowPart = 0x1;
+    GlDllHelper dllParam;
+    dllParam.resetParam("glGetLuidCalled");
+    {
+        dllParam.resetParam("glGetLuidFuncAvailable");
+        MockGLSharingFunctions glSharing;
+        LUID expectedLuid{};
+        expectedLuid.HighPart = 0x1d2e;
+        expectedLuid.LowPart = 0x3f4a;
+        EXPECT_EQ(0, dllParam.getParam("glGetLuidCalled"));
+
+        auto luid = glSharing.getAdapterLuid(reinterpret_cast<GLContext>(0x1));
+        EXPECT_EQ(1, dllParam.getParam("glGetLuidCalled"));
+        EXPECT_EQ(expectedLuid.HighPart, luid.HighPart);
+        EXPECT_EQ(expectedLuid.LowPart, luid.LowPart);
+        dllParam.resetParam("glGetLuidCalled");
+    }
 
     {
-        VariableBackup<uint32_t> backup{&numRootDevicesToEnum, 0u};
+        dllParam.resetParam("glGetLuidFuncAvailable");
         MockGLSharingFunctions glSharing;
-        auto luid = glSharing.getAdapterLuid();
+        LUID expectedLuid{};
+        expectedLuid.HighPart = 0x5d2e;
+        expectedLuid.LowPart = 0x3f4a;
+        EXPECT_EQ(0, dllParam.getParam("glGetLuidCalled"));
+
+        auto luid = glSharing.getAdapterLuid(reinterpret_cast<GLContext>(0x2));
+        EXPECT_EQ(1, dllParam.getParam("glGetLuidCalled"));
+        EXPECT_EQ(expectedLuid.HighPart, luid.HighPart);
+        EXPECT_EQ(expectedLuid.LowPart, luid.LowPart);
+        dllParam.resetParam("glGetLuidCalled");
+    }
+
+    {
+        dllParam.resetParam("glGetLuidFuncNotAvailable");
+        MockGLSharingFunctions glSharing;
+
+        EXPECT_EQ(0, dllParam.getParam("glGetLuidCalled"));
+
+        auto luid = glSharing.getAdapterLuid(reinterpret_cast<GLContext>(0x1));
+        EXPECT_EQ(0, dllParam.getParam("glGetLuidCalled"));
 
         EXPECT_EQ(0u, luid.HighPart);
         EXPECT_EQ(0u, luid.LowPart);
     }
-
-    {
-        VariableBackup<uint32_t> backup{&numRootDevicesToEnum, 3u};
-        MockGLSharingFunctions glSharing;
-        auto luid = glSharing.getAdapterLuid();
-
-        EXPECT_EQ(expectedLuid.HighPart, luid.HighPart);
-        EXPECT_EQ(expectedLuid.LowPart, luid.LowPart);
-    }
+    dllParam.resetParam("glGetLuidFuncAvailable");
 }

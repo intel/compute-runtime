@@ -54,19 +54,6 @@ char *getenv(const char *variableName) {
     }
     return ::getenv(variableName);
 }
-BOOL enumDisplayDevices(LPCWSTR lpDevice, DWORD iDevNum, PDISPLAY_DEVICEW lpDisplayDevice, DWORD dwFlags) {
-    if (iDevNum == 0) {
-        WCHAR deviceName[] = L"Display0";
-        wcscpy_s(lpDisplayDevice->DeviceName, ARRAYSIZE(deviceName), deviceName);
-        lpDisplayDevice->StateFlags = 0u;
-    } else if (iDevNum == 1) {
-        WCHAR deviceName[] = L"Display1";
-        wcscpy_s(lpDisplayDevice->DeviceName, ARRAYSIZE(deviceName), deviceName);
-        lpDisplayDevice->StateFlags = DISPLAY_DEVICE_PRIMARY_DEVICE;
-    }
-
-    return TRUE;
-}
 } // namespace SysCalls
 
 } // namespace NEO

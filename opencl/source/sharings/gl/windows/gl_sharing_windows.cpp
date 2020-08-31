@@ -7,9 +7,6 @@
 
 #include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 
-#include "shared/source/os_interface/windows/sys_calls.h"
-#include "shared/source/os_interface/windows/wddm/wddm.h"
-
 #include "opencl/source/context/context.inl"
 #include "opencl/source/helpers/windows/gl_helper.h"
 #include "opencl/source/sharings/gl/gl_arb_sync_event.h"
@@ -151,72 +148,21 @@ GLboolean GLSharingFunctionsWindows::initGLFunctions() {
         GLReleaseSync = wglLibrary["wglReleaseSyncINTEL"];
         GLGetSynciv = wglLibrary["wglGetSyncivINTEL"];
         glGetStringi = wglLibrary["glGetStringi"];
+        glGetLuid = wglLibrary["wglGetLuidINTEL"];
     }
     this->pfnGlArbSyncObjectCleanup = cleanupArbSyncObject;
     this->pfnGlArbSyncObjectSetup = setupArbSyncObject;
     this->pfnGlArbSyncObjectSignal = signalArbSyncObject;
     this->pfnGlArbSyncObjectWaitServer = serverWaitForArbSyncObject;
 
-    initAdapterLuid();
-
     return 1;
 }
 
-LUID GLSharingFunctionsWindows::getAdapterLuid() const {
-    return adapterLuid;
-}
-void GLSharingFunctionsWindows::initAdapterLuid() {
-    if (adapterLuid.HighPart != 0 || adapterLuid.LowPart != 0) {
-        return;
+LUID GLSharingFunctionsWindows::getAdapterLuid(GLContext glhglrcHandle) const {
+    if (glGetLuid) {
+        return glGetLuid(glhglrcHandle);
     }
-    WCHAR displayName[ARRAYSIZE(DISPLAY_DEVICEW::DeviceName)];
-    UINT iDevNum = 0u;
-    DISPLAY_DEVICEW dispDevice = {0};
-    dispDevice.cb = sizeof(dispDevice);
-    while (SysCalls::enumDisplayDevices(NULL, iDevNum++, &dispDevice, EDD_GET_DEVICE_INTERFACE_NAME)) {
-        if (dispDevice.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) {
-            wcscpy_s(displayName, ARRAYSIZE(DISPLAY_DEVICEW::DeviceName), dispDevice.DeviceName);
-            break;
-        }
-    }
-
-    DXGI_ADAPTER_DESC1 OpenAdapterDesc = {{0}};
-    DXGI_OUTPUT_DESC outputDesc = {0};
-    IDXGIFactory1 *pFactory = nullptr;
-    IDXGIAdapter1 *pAdapter = nullptr;
-    bool found = false;
-
-    HRESULT hr = Wddm::createDxgiFactory(__uuidof(IDXGIFactory), (void **)(&pFactory));
-    if ((hr != S_OK) || (pFactory == nullptr)) {
-        return;
-    }
-    iDevNum = 0u;
-    while (pFactory->EnumAdapters1(iDevNum++, &pAdapter) != DXGI_ERROR_NOT_FOUND) {
-        IDXGIOutput *pOutput = nullptr;
-        UINT outputNum = 0;
-        while (pAdapter->EnumOutputs(outputNum++, &pOutput) != DXGI_ERROR_NOT_FOUND && pOutput) {
-            pOutput->GetDesc(&outputDesc);
-            if (wcscmp(outputDesc.DeviceName, displayName) == 0) {
-
-                hr = pAdapter->GetDesc1(&OpenAdapterDesc);
-                if (hr == S_OK) {
-                    adapterLuid = OpenAdapterDesc.AdapterLuid;
-                    found = true;
-                    break;
-                }
-            }
-        }
-        pAdapter->Release();
-        pAdapter = nullptr;
-        if (found) {
-            break;
-        }
-    }
-
-    if (pFactory != nullptr) {
-        pFactory->Release();
-        pFactory = nullptr;
-    }
+    return {};
 }
 
 template GLSharingFunctionsWindows *Context::getSharing<GLSharingFunctionsWindows>();

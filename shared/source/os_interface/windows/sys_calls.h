@@ -18,7 +18,7 @@ BOOL getSystemPowerStatus(LPSYSTEM_POWER_STATUS systemPowerStatusPtr);
 BOOL getModuleHandle(DWORD dwFlags, LPCWSTR lpModuleName, HMODULE *phModule);
 DWORD getModuleFileName(HMODULE hModule, LPWSTR lpFilename, DWORD nSize);
 char *getenv(const char *variableName);
-BOOL enumDisplayDevices(LPCWSTR lpDevice, DWORD iDevNum, PDISPLAY_DEVICEW lpDisplayDevice, DWORD dwFlags);
+
 } // namespace SysCalls
 
 } // namespace NEO
