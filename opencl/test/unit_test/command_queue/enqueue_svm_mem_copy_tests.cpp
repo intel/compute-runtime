@@ -5,8 +5,10 @@
  *
  */
 
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
@@ -15,6 +17,7 @@
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
+#include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "test.h"
 
 using namespace NEO;
@@ -298,6 +301,61 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     EXPECT_EQ(Vec3<size_t>(0, 0, 0), params->srcOffset);
     EXPECT_EQ(Vec3<size_t>(2, 0, 0), params->dstOffset);
     EXPECT_EQ(Vec3<size_t>(256, 0, 0), params->size);
+
+    alignedFree(dstHostPtr);
+}
+
+HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThenSetAllocDumpable) {
+    if (!pDevice->isFullRangeSvm()) {
+        return;
+    }
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.set(true);
+    DebugManager.flags.AUBDumpBufferFormat.set("BIN");
+
+    auto dstHostPtr = alignedMalloc(256, 64);
+
+    EXPECT_FALSE(srcSvmAlloc->isAllocDumpable());
+
+    auto retVal = pCmdQ->enqueueSVMMemcpy(
+        CL_TRUE,    // cl_bool  blocking_copy
+        dstHostPtr, // void *dst_ptr
+        srcSvmPtr,  // const void *src_ptr
+        256,        // size_t size
+        0,          // cl_uint num_events_in_wait_list
+        nullptr,    // cl_event *event_wait_list
+        nullptr     // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(srcSvmAlloc->isAllocDumpable());
+
+    alignedFree(dstHostPtr);
+}
+
+HWTEST_F(EnqueueSvmMemCopyTest, givenCommandQueueWhenEnqueueSVMMemcpyIsCalledThenItCallsNotifyFunction) {
+    if (!pDevice->isFullRangeSvm()) {
+        return;
+    }
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
+    auto dstHostPtr = alignedMalloc(256, 64);
+
+    auto retVal = mockCmdQ->enqueueSVMMemcpy(
+        CL_TRUE,    // cl_bool  blocking_copy
+        dstHostPtr, // void *dst_ptr
+        srcSvmPtr,  // const void *src_ptr
+        256,        // size_t size
+        0,          // cl_uint num_events_in_wait_list
+        nullptr,    // cl_event *event_wait_list
+        nullptr     // cL_event *event
+    );
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(mockCmdQ->notifyEnqueueSVMMemcpyCalled);
+
+    auto &csr = mockCmdQ->getCommandStreamReceiverByCommandType(CL_COMMAND_SVM_MEMCPY);
+    EXPECT_EQ(EngineHelpers::isBcs(csr.getOsContext().getEngineType()), mockCmdQ->useBcsCsrOnNotifyEnabled);
 
     alignedFree(dstHostPtr);
 }

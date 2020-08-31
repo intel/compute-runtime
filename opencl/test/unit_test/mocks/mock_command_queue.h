@@ -277,6 +277,10 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         notifyEnqueueReadImageCalled = true;
         useBcsCsrOnNotifyEnabled = notifyBcsCsr;
     }
+    void notifyEnqueueSVMMemcpy(GraphicsAllocation *gfxAllocation, bool blockingCopy, bool notifyBcsCsr) override {
+        notifyEnqueueSVMMemcpyCalled = true;
+        useBcsCsrOnNotifyEnabled = notifyBcsCsr;
+    }
 
     void waitUntilComplete(uint32_t gpgpuTaskCountToWait, uint32_t bcsTaskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
         latestTaskCountWaited = gpgpuTaskCountToWait;
@@ -300,6 +304,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     bool storeMultiDispatchInfo = false;
     bool notifyEnqueueReadBufferCalled = false;
     bool notifyEnqueueReadImageCalled = false;
+    bool notifyEnqueueSVMMemcpyCalled = false;
     bool cpuDataTransferHandlerCalled = false;
     bool useBcsCsrOnNotifyEnabled = false;
     struct OverrideReturnValue {

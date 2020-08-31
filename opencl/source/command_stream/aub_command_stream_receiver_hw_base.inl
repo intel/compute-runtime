@@ -735,7 +735,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
         return;
     }
 
-    if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get()) {
+    if (DebugManager.flags.AUBDumpAllocsOnEnqueueReadOnly.get() || DebugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.get()) {
         if (!gfxAllocation.isAllocDumpable()) {
             return;
         }

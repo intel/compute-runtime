@@ -32,6 +32,7 @@ DECLARE_DEBUG_VARIABLE(bool, FlattenBatchBufferForAUBDump, false, "Dump multi-le
 DECLARE_DEBUG_VARIABLE(bool, AddPatchInfoCommentsForAUBDump, false, "Dump comments containing allocations and patching information")
 DECLARE_DEBUG_VARIABLE(bool, UseAubStream, true, "Use aub_stream for aub dumping")
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpAllocsOnEnqueueReadOnly, false, "Force dumping buffers and images on clEnqueueReadBuffer/Image only (blocking calls)")
+DECLARE_DEBUG_VARIABLE(bool, AUBDumpAllocsOnEnqueueSVMMemcpyOnly, false, "Force dumping allocations on clEnqueueSVMMemcpy only (blocking calls)")
 DECLARE_DEBUG_VARIABLE(bool, AUBDumpForceAllToLocalMemory, false, "Force placing every allocation in local memory address space")
 
 /*DEBUG FLAGS*/

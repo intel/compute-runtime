@@ -46,6 +46,13 @@ void CommandQueueHw<Family>::notifyEnqueueReadImage(Image *image, bool blockingR
 }
 
 template <typename Family>
+void CommandQueueHw<Family>::notifyEnqueueSVMMemcpy(GraphicsAllocation *gfxAllocation, bool blockingCopy, bool notifyBcsCsr) {
+    if (DebugManager.flags.AUBDumpAllocsOnEnqueueSVMMemcpyOnly.get()) {
+        gfxAllocation->setAllocDumpable(blockingCopy, notifyBcsCsr);
+    }
+}
+
+template <typename Family>
 cl_int CommandQueueHw<Family>::enqueueReadWriteBufferOnCpuWithMemoryTransfer(cl_command_type commandType, Buffer *buffer,
                                                                              size_t offset, size_t size, void *ptr, cl_uint numEventsInWaitList,
                                                                              const cl_event *eventWaitList, cl_event *event) {

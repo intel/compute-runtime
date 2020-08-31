@@ -90,6 +90,7 @@ class CommandQueueHw : public CommandQueue {
 
     MOCKABLE_VIRTUAL void notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead, bool notifyBcsCsr);
     MOCKABLE_VIRTUAL void notifyEnqueueReadImage(Image *image, bool blockingRead, bool notifyBcsCsr);
+    MOCKABLE_VIRTUAL void notifyEnqueueSVMMemcpy(GraphicsAllocation *gfxAllocation, bool blockingCopy, bool notifyBcsCsr);
 
     cl_int enqueueBarrierWithWaitList(cl_uint numEventsInWaitList,
                                       const cl_event *eventWaitList,

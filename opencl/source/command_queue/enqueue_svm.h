@@ -349,6 +349,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
                 return CL_OUT_OF_RESOURCES;
             }
             dstPtr = reinterpret_cast<void *>(dstHostPtrSurf.getAllocation()->getGpuAddress());
+            notifyEnqueueSVMMemcpy(srcSvmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex), !!blockingCopy, EngineHelpers::isBcs(csr.getOsContext().getEngineType()));
         }
         setOperationParams(operationParams, size, srcPtr, srcSvmData->gpuAllocations.getGraphicsAllocation(rootDeviceIndex), dstPtr, dstHostPtrSurf.getAllocation());
         surfaces[0] = &srcSvmSurf;
