@@ -253,6 +253,114 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndForceSemaphoreDelayBe
     EXPECT_EQ(expectedDifference, actualDifferenceWhenSemaphoreDelayReprogrammed);
 }
 
+HWTEST_F(UltCommandStreamReceiverTest, givenNoBlitterOverrideWhenBlitterNotSupportedThenExpectFalseReturned) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DirectSubmissionProperties properties;
+    properties.engineSupported = false;
+    EXPECT_FALSE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenNoBlitterOverrideWhenBlitterSupportedThenExpectTrueReturned) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DirectSubmissionProperties properties;
+    properties.engineSupported = true;
+    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenBlitterOverrideEnableWhenBlitterNotSupportedThenExpectTrueReturned) {
+    DebugManagerStateRestore debugManagerStateRestore;
+    DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DirectSubmissionProperties properties;
+    properties.engineSupported = false;
+    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenBlitterOverrideDisableWhenBlitterSupportedThenExpectFalseReturned) {
+    DebugManagerStateRestore debugManagerStateRestore;
+    DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(0);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DirectSubmissionProperties properties;
+    properties.engineSupported = true;
+    EXPECT_FALSE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_BCS));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenNoRenderOverrideWhenRenderNotSupportedThenExpectFalseReturned) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DirectSubmissionProperties properties;
+    properties.engineSupported = false;
+    EXPECT_FALSE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenNoRenderOverrideWhenRenderSupportedThenExpectTrueReturned) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DirectSubmissionProperties properties;
+    properties.engineSupported = true;
+    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenRenderOverrideEnableWhenRenderNotSupportedThenExpectTrueReturned) {
+    DebugManagerStateRestore debugManagerStateRestore;
+    DebugManager.flags.DirectSubmissionOverrideRenderSupport.set(1);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DirectSubmissionProperties properties;
+    properties.engineSupported = false;
+    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenRenderOverrideDisableWhenRenderSupportedThenExpectFalseReturned) {
+    DebugManagerStateRestore debugManagerStateRestore;
+    DebugManager.flags.DirectSubmissionOverrideRenderSupport.set(0);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DirectSubmissionProperties properties;
+    properties.engineSupported = true;
+    EXPECT_FALSE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_RCS));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenNoComputeOverrideWhenComputeNotSupportedThenExpectFalseReturned) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DirectSubmissionProperties properties;
+    properties.engineSupported = false;
+    EXPECT_FALSE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenNoComputeOverrideWhenComputeSupportedThenExpectTrueReturned) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DirectSubmissionProperties properties;
+    properties.engineSupported = true;
+    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideEnableWhenComputeNotSupportedThenExpectTrueReturned) {
+    DebugManagerStateRestore debugManagerStateRestore;
+    DebugManager.flags.DirectSubmissionOverrideComputeSupport.set(1);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DirectSubmissionProperties properties;
+    properties.engineSupported = false;
+    EXPECT_TRUE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenComputeOverrideDisableWhenComputeSupportedThenExpectFalseReturned) {
+    DebugManagerStateRestore debugManagerStateRestore;
+    DebugManager.flags.DirectSubmissionOverrideComputeSupport.set(0);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DirectSubmissionProperties properties;
+    properties.engineSupported = true;
+    EXPECT_FALSE(commandStreamReceiver.checkDirectSubmissionSupportsEngine(properties, aub_stream::ENGINE_CCS));
+}
+
 typedef UltCommandStreamReceiverTest CommandStreamReceiverFlushTests;
 
 HWTEST_F(CommandStreamReceiverFlushTests, WhenAddingBatchBufferEndThenBatchBufferEndIsAppendedCorrectly) {

@@ -1070,7 +1070,9 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
             startDirect = directSubmissionProperty.useRootDevice;
         }
 
-        if (directSubmissionProperty.engineSupported && startDirect) {
+        bool engineSupported = checkDirectSubmissionSupportsEngine(directSubmissionProperty,
+                                                                   contextEngineType);
+        if (engineSupported && startDirect) {
             if (contextEngineType == aub_stream::ENGINE_BCS) {
                 blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(device, osContext);
                 ret = blitterDirectSubmission->initialize(directSubmissionProperty.submitOnInit);
@@ -1082,6 +1084,31 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
         }
     }
     return ret;
+}
+
+template <typename GfxFamily>
+inline bool CommandStreamReceiverHw<GfxFamily>::checkDirectSubmissionSupportsEngine(const DirectSubmissionProperties &directSubmissionProperty,
+                                                                                    aub_stream::EngineType contextEngineType) {
+    bool supported = directSubmissionProperty.engineSupported;
+    if (contextEngineType == aub_stream::ENGINE_BCS) {
+        int32_t blitterOverrideKey = DebugManager.flags.DirectSubmissionOverrideBlitterSupport.get();
+        if (blitterOverrideKey != -1) {
+            supported = blitterOverrideKey == 0 ? false : true;
+        }
+    } else if (contextEngineType == aub_stream::ENGINE_RCS) {
+        int32_t renderOverrideKey = DebugManager.flags.DirectSubmissionOverrideRenderSupport.get();
+        if (renderOverrideKey != -1) {
+            supported = renderOverrideKey == 0 ? false : true;
+        }
+    } else {
+        //assume else is CCS
+        int32_t computeOverrideKey = DebugManager.flags.DirectSubmissionOverrideComputeSupport.get();
+        if (computeOverrideKey != -1) {
+            supported = computeOverrideKey == 0 ? false : true;
+        }
+    }
+
+    return supported;
 }
 
 } // namespace NEO
