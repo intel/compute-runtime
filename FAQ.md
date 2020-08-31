@@ -28,6 +28,16 @@ and/or Windows update. Features available in github will be available on Windows
 
 Note: Older platforms (e.g. Broadwell) are considered to be in maintenance mode for Windows.
 
+### How can I enable reading debug environment variables on Linux release builds?
+
+Reading of debug environment variables on Linux release builds can be enabled by specifying
+`NEOReadDebugKeys` environment variable with a value of 1.
+
+E.g. to rebuild precompiled kernels you need to set both `RebuildPrecompiledKernels`
+and `NEOReadDebugKeys` to a value of 1.
+
+List of all debug keys can be found [here](https://github.com/intel/compute-runtime/blob/master/shared/source/debug_settings/debug_variables_base.inl).
+
 ## Platform support
 
 ### Which Intel platforms are supported by the driver?
