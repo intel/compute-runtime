@@ -66,7 +66,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptor
     std::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
                                                                             cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -77,7 +76,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptor
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -138,7 +139,6 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
     std::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
                                                                             cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -149,7 +149,9 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -286,7 +288,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
     std::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
                                                                             cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -297,7 +298,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {1, 1, 1};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -504,7 +507,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
 
     std::unique_ptr<Image> img(Image2dHelper<>::create(pContext));
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
                                                                             cmdQ.getDevice());
 
@@ -512,7 +514,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     dc.srcMemObj = img.get();
     dc.dstMemObj = img.get();
     dc.size = {1, 1, 1};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     ASSERT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -586,7 +590,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
     std::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
     ASSERT_NE(nullptr, dstImage.get());
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
                                                                             cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -598,7 +601,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
     dc.size = {1, 1, 1};
     dc.dstRowPitch = 0;
     dc.dstSlicePitch = 0;
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();

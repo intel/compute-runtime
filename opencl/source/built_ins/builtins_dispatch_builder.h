@@ -61,7 +61,7 @@ class BuiltinDispatchInfoBuilder {
     template <typename... KernelsDescArgsT>
     void populate(Device &device, EBuiltInOps::Type operation, ConstStringRef options, KernelsDescArgsT &&... desc);
 
-    virtual bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const {
+    virtual bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const {
         return false;
     }
 

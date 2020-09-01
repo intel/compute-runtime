@@ -67,7 +67,6 @@ HWTEST_F(GetSizeRequiredImageTest, WhenCopyingImageThenHeapsAndCommandBufferCons
     auto retVal = EnqueueCopyImageHelper<>::enqueueCopyImage(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -78,7 +77,9 @@ HWTEST_F(GetSizeRequiredImageTest, WhenCopyingImageThenHeapsAndCommandBufferCons
     dc.srcOffset = EnqueueCopyImageTraits::srcOrigin;
     dc.dstOffset = EnqueueCopyImageTraits::dstOrigin;
     dc.size = {1, 1, 1};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -170,7 +171,6 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageNonBlockingThenHeapsAndComman
         CL_FALSE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -182,7 +182,9 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageNonBlockingThenHeapsAndComman
     dc.size = EnqueueReadImageTraits::region;
     dc.srcRowPitch = EnqueueReadImageTraits::rowPitch;
     dc.srcSlicePitch = EnqueueReadImageTraits::slicePitch;
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -224,7 +226,6 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageBlockingThenHeapsAndCommandBu
         CL_TRUE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -236,7 +237,9 @@ HWTEST_F(GetSizeRequiredImageTest, WhenReadingImageBlockingThenHeapsAndCommandBu
     dc.size = EnqueueReadImageTraits::region;
     dc.srcRowPitch = EnqueueReadImageTraits::rowPitch;
     dc.srcSlicePitch = EnqueueReadImageTraits::slicePitch;
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -278,7 +281,6 @@ HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageNonBlockingThenHeapsAndComman
         CL_FALSE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -290,7 +292,9 @@ HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageNonBlockingThenHeapsAndComman
     dc.size = EnqueueWriteImageTraits::region;
     dc.dstRowPitch = EnqueueWriteImageTraits::rowPitch;
     dc.dstSlicePitch = EnqueueWriteImageTraits::slicePitch;
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -332,7 +336,6 @@ HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageBlockingThenHeapsAndCommandBu
         CL_TRUE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -344,7 +347,9 @@ HWTEST_F(GetSizeRequiredImageTest, WhenWritingImageBlockingThenHeapsAndCommandBu
     dc.size = EnqueueWriteImageTraits::region;
     dc.dstRowPitch = EnqueueWriteImageTraits::rowPitch;
     dc.dstSlicePitch = EnqueueWriteImageTraits::slicePitch;
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();

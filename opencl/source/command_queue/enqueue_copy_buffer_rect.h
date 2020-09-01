@@ -38,10 +38,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
         eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
     }
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
-                                                                            this->getDevice());
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
-
     MemObjSurface srcBufferSurf(srcBuffer);
     MemObjSurface dstBufferSurf(dstBuffer);
     Surface *surfaces[] = {&srcBufferSurf, &dstBufferSurf};
@@ -57,10 +53,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     dc.dstRowPitch = dstRowPitch;
     dc.dstSlicePitch = dstSlicePitch;
 
-    MultiDispatchInfo dispatchInfo;
-    builder.buildDispatchInfos(dispatchInfo, dc);
+    MultiDispatchInfo dispatchInfo(dc);
 
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER_RECT>(dispatchInfo, surfaces, numEventsInWaitList, eventWaitList, event, false);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, false);
 
     return CL_SUCCESS;
 }

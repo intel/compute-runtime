@@ -135,7 +135,6 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenIndirectDataGetsAdded) {
 
     enqueueCopyBuffer();
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -146,7 +145,9 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenIndirectDataGetsAdded) {
     dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
     dc.dstOffset = {EnqueueCopyBufferTraits::dstOffset, 0, 0};
     dc.size = {EnqueueCopyBufferTraits::size, 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -163,7 +164,6 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessThenStatelessKernelIsU
     auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBufferStateless,
                                                                             pCmdQ->getDevice());
 
@@ -174,7 +174,9 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferStatelessThenStatelessKernelIsU
     dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
     dc.dstOffset = {EnqueueCopyBufferTraits::dstOffset, 0, 0};
     dc.size = {EnqueueCopyBufferTraits::size, 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -253,7 +255,7 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentZeroMatchesSourceAd
     enqueueCopyBufferAndParse<FamilyType>();
 
     // Extract the kernel used
-    MultiDispatchInfo multiDispatchInfo;
+
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -264,7 +266,9 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentZeroMatchesSourceAd
     dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
     dc.dstOffset = {EnqueueCopyBufferTraits::dstOffset, 0, 0};
     dc.size = {EnqueueCopyBufferTraits::size, 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -280,7 +284,6 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
     enqueueCopyBufferAndParse<FamilyType>();
 
     // Extract the kernel used
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -291,7 +294,9 @@ HWTEST_F(EnqueueCopyBufferTest, WhenCopyingBufferThenArgumentOneMatchesDestinati
     dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
     dc.dstOffset = {EnqueueCopyBufferTraits::dstOffset, 0, 0};
     dc.size = {EnqueueCopyBufferTraits::size, 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();

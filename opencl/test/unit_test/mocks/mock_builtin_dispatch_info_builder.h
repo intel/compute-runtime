@@ -20,18 +20,19 @@ class MockBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
 
     virtual void validateInput(const BuiltinOpParams &conf) const {};
 
-    bool buildDispatchInfos(MultiDispatchInfo &mdi, const BuiltinOpParams &conf) const override {
-        validateInput(conf);
-        builtinOpParams = conf;
-        originalBuilder->buildDispatchInfos(mdi, conf);
+    bool buildDispatchInfos(MultiDispatchInfo &mdi) const override {
+        validateInput(mdi.peekBuiltinOpParams());
+
+        originalBuilder->buildDispatchInfos(mdi);
         for (auto &di : mdi) {
             multiDispatchInfo.push(di);
         }
+        multiDispatchInfo.setBuiltinOpParams(mdi.peekBuiltinOpParams());
         return true;
     }
 
     const BuiltinOpParams *getBuiltinOpParams() const {
-        return &builtinOpParams;
+        return &multiDispatchInfo.peekBuiltinOpParams();
     };
     const MultiDispatchInfo *getMultiDispatchInfo() const {
         return &multiDispatchInfo;
@@ -48,7 +49,6 @@ class MockBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
     }
 
   protected:
-    mutable BuiltinOpParams builtinOpParams;
     mutable MultiDispatchInfo multiDispatchInfo;
     BuiltinDispatchInfoBuilder *originalBuilder;
     bool withFailureInjection = false;

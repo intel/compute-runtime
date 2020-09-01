@@ -73,10 +73,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     if (forceStateless(buffer->getSize())) {
         eBuiltInOps = EBuiltInOps::CopyBufferToBufferStateless;
     }
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
-                                                                            this->getDevice());
-
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     void *srcPtr = const_cast<void *>(ptr);
 
@@ -113,10 +109,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     dc.size = {size, 0, 0};
     dc.transferAllocation = mapAllocation ? mapAllocation : hostPtrSurf.getAllocation();
 
-    MultiDispatchInfo dispatchInfo;
-    builder.buildDispatchInfos(dispatchInfo, dc);
+    MultiDispatchInfo dispatchInfo(dc);
 
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, numEventsInWaitList, eventWaitList, event, blockingWrite);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite);
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA, static_cast<cl_mem>(buffer));

@@ -51,9 +51,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     if (forceStateless(buffer->getSize())) {
         eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
     }
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
-                                                                            this->getDevice());
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     size_t hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, hostRowPitch, hostSlicePitch);
     void *srcPtr = const_cast<void *>(ptr);
@@ -89,10 +86,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     dc.dstRowPitch = bufferRowPitch;
     dc.dstSlicePitch = bufferSlicePitch;
 
-    MultiDispatchInfo dispatchInfo;
-    builder.buildDispatchInfos(dispatchInfo, dc);
+    MultiDispatchInfo dispatchInfo(dc);
 
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER_RECT>(dispatchInfo, surfaces, numEventsInWaitList, eventWaitList, event, blockingWrite);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite);
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, CL_ENQUEUE_WRITE_BUFFER_RECT_REQUIRES_COPY_DATA, static_cast<cl_mem>(buffer));

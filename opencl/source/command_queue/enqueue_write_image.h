@@ -35,7 +35,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    MultiDispatchInfo di;
     auto isMemTransferNeeded = true;
     if (dstImage->isMemObjZeroCopy()) {
         size_t hostOffset;
@@ -93,7 +92,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
         dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, origin);
     }
 
-    builder.buildDispatchInfos(di, dc);
+    MultiDispatchInfo di(dc);
+    builder.buildDispatchInfos(di);
 
     enqueueHandler<CL_COMMAND_WRITE_IMAGE>(
         surfaces,

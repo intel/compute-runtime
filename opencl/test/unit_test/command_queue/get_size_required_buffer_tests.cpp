@@ -76,7 +76,6 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenFillingBufferThenHeapsAndCommandBufferCo
     auto retVal = EnqueueFillBufferHelper<>::enqueue(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -88,7 +87,9 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenFillingBufferThenHeapsAndCommandBufferCo
     dc.dstMemObj = dstBuffer;
     dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
     dc.size = {EnqueueFillBufferTraits::size, 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto usedAfterCS = commandStream.getUsed();
@@ -129,7 +130,6 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenCopyingBufferThenHeapsAndCommandBufferCo
     auto retVal = EnqueueCopyBufferHelper<>::enqueue(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -140,7 +140,9 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenCopyingBufferThenHeapsAndCommandBufferCo
     dc.srcOffset = {EnqueueCopyBufferTraits::srcOffset, 0, 0};
     dc.dstOffset = {EnqueueCopyBufferTraits::dstOffset, 0, 0};
     dc.size = {EnqueueCopyBufferTraits::size, 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto usedAfterCS = commandStream.getUsed();
@@ -183,7 +185,6 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferNonBlockingThenHeapsAndComm
         srcBuffer,
         CL_FALSE);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -193,7 +194,9 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferNonBlockingThenHeapsAndComm
     dc.srcMemObj = srcBuffer;
     dc.srcOffset = {EnqueueReadBufferTraits::offset, 0, 0};
     dc.size = {srcBuffer->getSize(), 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto usedAfterCS = commandStream.getUsed();
@@ -237,7 +240,6 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferBlockingThenThenHeapsAndCom
         srcBuffer,
         CL_TRUE);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -247,7 +249,9 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenReadingBufferBlockingThenThenHeapsAndCom
     dc.srcMemObj = srcBuffer;
     dc.srcOffset = {EnqueueReadBufferTraits::offset, 0, 0};
     dc.size = {srcBuffer->getSize(), 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto usedAfterCS = commandStream.getUsed();
@@ -291,7 +295,6 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenWritingBufferNonBlockingThenHeapsAndComm
         CL_FALSE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -301,7 +304,9 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenWritingBufferNonBlockingThenHeapsAndComm
     dc.dstMemObj = dstBuffer;
     dc.dstOffset = {EnqueueWriteBufferTraits::offset, 0, 0};
     dc.size = {dstBuffer->getSize(), 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto usedAfterCS = commandStream.getUsed();
@@ -342,7 +347,6 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenWritingBufferBlockingThenHeapsAndCommand
         CL_TRUE);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -352,7 +356,9 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenWritingBufferBlockingThenHeapsAndCommand
     dc.dstMemObj = dstBuffer;
     dc.dstOffset = {EnqueueWriteBufferTraits::offset, 0, 0};
     dc.size = {dstBuffer->getSize(), 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto usedAfterCS = commandStream.getUsed();
@@ -377,7 +383,6 @@ HWTEST_F(GetSizeRequiredBufferTest, WhenWritingBufferBlockingThenHeapsAndCommand
 }
 
 HWTEST_F(GetSizeRequiredBufferTest, givenMultipleKernelRequiringSshWhenTotalSizeIsComputedThenItIsProperlyAligned) {
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -387,10 +392,13 @@ HWTEST_F(GetSizeRequiredBufferTest, givenMultipleKernelRequiringSshWhenTotalSize
     dc.dstMemObj = dstBuffer;
     dc.dstOffset = {EnqueueWriteBufferTraits::offset, 0, 0};
     dc.size = {dstBuffer->getSize(), 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+
+    builder.buildDispatchInfos(multiDispatchInfo);
+    builder.buildDispatchInfos(multiDispatchInfo);
+    builder.buildDispatchInfos(multiDispatchInfo);
+    builder.buildDispatchInfos(multiDispatchInfo);
 
     auto sizeSSH = multiDispatchInfo.begin()->getKernel()->getSurfaceStateHeapSize();
     sizeSSH += sizeSSH ? FamilyType::BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE : 0;

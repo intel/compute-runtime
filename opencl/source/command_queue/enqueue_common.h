@@ -1099,10 +1099,16 @@ void CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDispat
 
 template <typename GfxFamily>
 template <uint32_t cmdType, size_t surfaceCount>
-void CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking) {
+void CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dispatchInfo, Surface *(&surfaces)[surfaceCount], EBuiltInOps::Type builtInOperation, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking) {
     if (blitEnqueueAllowed(cmdType)) {
         enqueueBlit<cmdType>(dispatchInfo, numEventsInWaitList, eventWaitList, event, blocking);
     } else {
+        auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInOperation,
+                                                                                this->getDevice());
+        BuiltInOwnershipWrapper builtInLock(builder, this->context);
+
+        builder.buildDispatchInfos(dispatchInfo);
+
         enqueueHandler<cmdType>(
             surfaces,
             blocking,

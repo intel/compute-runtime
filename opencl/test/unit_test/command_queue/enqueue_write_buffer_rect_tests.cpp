@@ -146,7 +146,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, WhenWritingBufferThenInd
 
     enqueueWriteBufferRect2D<FamilyType>();
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRect,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -161,7 +160,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, WhenWritingBufferThenInd
     dc.srcSlicePitch = slicePitch;
     dc.dstRowPitch = rowPitch;
     dc.dstSlicePitch = slicePitch;
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();

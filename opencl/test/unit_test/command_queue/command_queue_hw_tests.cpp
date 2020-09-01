@@ -706,14 +706,15 @@ void CloneMdi(MultiDispatchInfo &dst, const MultiDispatchInfo &src) {
     for (auto &srcDi : src) {
         dst.push(srcDi);
     }
+    dst.setBuiltinOpParams(src.peekBuiltinOpParams());
 }
 
 struct MockBuilder : BuiltinDispatchInfoBuilder {
     MockBuilder(NEO::BuiltIns &builtins) : BuiltinDispatchInfoBuilder(builtins) {
     }
-    bool buildDispatchInfos(MultiDispatchInfo &d, const BuiltinOpParams &conf) const override {
+    bool buildDispatchInfos(MultiDispatchInfo &d) const override {
         wasBuildDispatchInfosWithBuiltinOpParamsCalled = true;
-        paramsReceived.multiDispatchInfo.setBuiltinOpParams(conf);
+        paramsReceived.multiDispatchInfo.setBuiltinOpParams(d.peekBuiltinOpParams());
         return true;
     }
     bool buildDispatchInfos(MultiDispatchInfo &d, Kernel *kernel,

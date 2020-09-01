@@ -165,7 +165,6 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBuffer) {
     MockBuffer &src = *srcPtr;
     MockBuffer &dst = *dstPtr;
 
-    MultiDispatchInfo multiDispatchInfo;
     BuiltinOpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &src;
@@ -174,7 +173,8 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBuffer) {
     builtinOpsParams.dstPtr = dst.getCpuAddress();
     builtinOpsParams.size = {dst.getSize(), 0, 0};
 
-    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
+    MultiDispatchInfo multiDispatchInfo(builtinOpsParams);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
 
     size_t leftSize = reinterpret_cast<uintptr_t>(dst.getCpuAddress()) % MemoryConstants::cacheLineSize;
     if (leftSize > 0) {
@@ -608,14 +608,14 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferAligned) {
     AlignedBuffer src;
     AlignedBuffer dst;
 
-    MultiDispatchInfo multiDispatchInfo;
     BuiltinOpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &src;
     builtinOpsParams.dstMemObj = &dst;
     builtinOpsParams.size = {src.getSize(), 0, 0};
 
-    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
+    MultiDispatchInfo multiDispatchInfo(builtinOpsParams);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
 
     EXPECT_EQ(1u, multiDispatchInfo.size());
 
@@ -653,7 +653,6 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferStateless
     MockBuffer dstBuffer;
     dstBuffer.size = static_cast<size_t>(bigSize);
 
-    MultiDispatchInfo multiDispatchInfo;
     BuiltinOpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &srcBuffer;
@@ -662,7 +661,8 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferStateless
     builtinOpsParams.dstOffset = {0, 0, 0};
     builtinOpsParams.size = {static_cast<size_t>(size), 0, 0};
 
-    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
+    MultiDispatchInfo multiDispatchInfo(builtinOpsParams);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
     EXPECT_EQ(1u, multiDispatchInfo.size());
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
 }
@@ -695,8 +695,8 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToBufferRectState
     dc.dstRowPitch = static_cast<size_t>(size);
     dc.dstSlicePitch = 0;
 
-    MultiDispatchInfo multiDispatchInfo;
-    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, dc));
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
     EXPECT_EQ(1u, multiDispatchInfo.size());
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
 }
@@ -724,8 +724,8 @@ TEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderFillBufferStatelessIsUsedTh
     dc.dstOffset = {static_cast<size_t>(bigOffset), 0, 0};
     dc.size = {static_cast<size_t>(size), 0, 0};
 
-    MultiDispatchInfo multiDispatchInfo;
-    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, dc));
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
     EXPECT_EQ(1u, multiDispatchInfo.size());
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
 }
@@ -755,8 +755,8 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyBufferToImageStateles
     dc.dstRowPitch = 0;
     dc.dstSlicePitch = 0;
 
-    MultiDispatchInfo multiDispatchInfo;
-    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, dc));
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
     EXPECT_EQ(1u, multiDispatchInfo.size());
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
 
@@ -789,8 +789,8 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToBufferStateles
     dc.dstOffset = {static_cast<size_t>(bigOffset), 0, 0};
     dc.size = {1, 1, 1};
 
-    MultiDispatchInfo multiDispatchInfo;
-    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, dc));
+    MultiDispatchInfo multiDispatchInfo(dc);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
     EXPECT_EQ(1u, multiDispatchInfo.size());
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), dc));
 
@@ -806,7 +806,6 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffse
     AlignedBuffer src;
     AlignedBuffer dst;
 
-    MultiDispatchInfo multiDispatchInfo;
     BuiltinOpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &src;
@@ -814,7 +813,8 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffse
     builtinOpsParams.dstMemObj = &dst;
     builtinOpsParams.size = {src.getSize(), 0, 0};
 
-    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
+    MultiDispatchInfo multiDispatchInfo(builtinOpsParams);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
 
     EXPECT_EQ(1u, multiDispatchInfo.size());
 
@@ -832,14 +832,14 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReadBufferAligned) {
     auto size = 10 * MemoryConstants::cacheLineSize;
     auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
 
-    MultiDispatchInfo multiDispatchInfo;
     BuiltinOpParams builtinOpsParams;
 
     builtinOpsParams.srcMemObj = &srcMemObj;
     builtinOpsParams.dstPtr = dstPtr;
     builtinOpsParams.size = {size, 0, 0};
 
-    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
+    MultiDispatchInfo multiDispatchInfo(builtinOpsParams);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
 
     EXPECT_EQ(1u, multiDispatchInfo.size());
 
@@ -867,14 +867,14 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderWriteBufferAligned) {
     auto srcPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
     AlignedBuffer dstMemObj;
 
-    MultiDispatchInfo multiDispatchInfo;
     BuiltinOpParams builtinOpsParams;
 
     builtinOpsParams.srcPtr = srcPtr;
     builtinOpsParams.dstMemObj = &dstMemObj;
     builtinOpsParams.size = {size, 0, 0};
 
-    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
+    MultiDispatchInfo multiDispatchInfo(builtinOpsParams);
+    ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo));
 
     EXPECT_EQ(1u, multiDispatchInfo.size());
 
@@ -939,10 +939,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernelForSecondTimeDoesNot
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnFalseIfUnsupportedBuildType) {
     auto &bs = *pDevice->getBuiltIns();
     BuiltinDispatchInfoBuilder bdib{bs};
-    MultiDispatchInfo multiDispatchInfo;
     BuiltinOpParams params;
 
-    auto ret = bdib.buildDispatchInfos(multiDispatchInfo, params);
+    MultiDispatchInfo multiDispatchInfo(params);
+    auto ret = bdib.buildDispatchInfos(multiDispatchInfo);
     EXPECT_FALSE(ret);
     ASSERT_EQ(0U, multiDispatchInfo.size());
 

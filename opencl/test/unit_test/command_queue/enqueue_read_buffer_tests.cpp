@@ -140,7 +140,6 @@ HWTEST_F(EnqueueReadBufferTypeTest, addsIndirectData) {
     srcBuffer->forceDisallowCPUCopy = true;
     EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ, srcBuffer.get(), CL_TRUE);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -150,7 +149,9 @@ HWTEST_F(EnqueueReadBufferTypeTest, addsIndirectData) {
     dc.srcMemObj = srcBuffer.get();
     dc.srcOffset = {EnqueueReadBufferTraits::offset, 0, 0};
     dc.size = {srcBuffer->getSize(), 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();

@@ -53,8 +53,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImageToBuffer(
         dc.srcMipLevel = findMipLevel(srcImage->getImageDesc().image_type, srcOrigin);
     }
 
-    MultiDispatchInfo dispatchInfo;
-    builder.buildDispatchInfos(dispatchInfo, dc);
+    MultiDispatchInfo dispatchInfo(dc);
+    builder.buildDispatchInfos(dispatchInfo);
 
     enqueueHandler<CL_COMMAND_COPY_IMAGE_TO_BUFFER>(
         surfaces,

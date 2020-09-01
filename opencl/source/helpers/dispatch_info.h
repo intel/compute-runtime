@@ -87,6 +87,7 @@ struct MultiDispatchInfo {
     }
 
     explicit MultiDispatchInfo(Kernel *mainKernel) : mainKernel(mainKernel) {}
+    explicit MultiDispatchInfo(const BuiltinOpParams &operationParams) : builtinOpParams(operationParams) {}
     MultiDispatchInfo() = default;
 
     MultiDispatchInfo &operator=(const MultiDispatchInfo &) = delete;

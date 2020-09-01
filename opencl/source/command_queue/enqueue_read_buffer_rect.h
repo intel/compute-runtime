@@ -52,9 +52,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     if (forceStateless(buffer->getSize())) {
         eBuiltInOps = EBuiltInOps::CopyBufferRectStateless;
     }
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOps,
-                                                                            this->getDevice());
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     size_t hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, hostRowPitch, hostSlicePitch);
     void *dstPtr = ptr;
@@ -90,10 +87,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBufferRect(
     dc.dstRowPitch = hostRowPitch;
     dc.dstSlicePitch = hostSlicePitch;
 
-    MultiDispatchInfo dispatchInfo;
-    builder.buildDispatchInfos(dispatchInfo, dc);
+    MultiDispatchInfo dispatchInfo(dc);
 
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER_RECT>(dispatchInfo, surfaces, numEventsInWaitList, eventWaitList, event, blockingRead);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead);
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHintForMemoryTransfer(CL_COMMAND_READ_BUFFER_RECT, true, static_cast<cl_mem>(buffer), ptr);

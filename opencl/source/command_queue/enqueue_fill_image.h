@@ -30,8 +30,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    MultiDispatchInfo di;
-
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillImage3d,
                                                                             this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
@@ -45,7 +43,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = origin;
     dc.size = region;
-    builder.buildDispatchInfos(di, dc);
+
+    MultiDispatchInfo di(dc);
+
+    builder.buildDispatchInfos(di);
 
     enqueueHandler<CL_COMMAND_FILL_IMAGE>(
         surfaces,

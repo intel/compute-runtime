@@ -46,7 +46,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
         notifyEnqueueReadImage(srcImage, !!blockingRead, EngineHelpers::isBcs(csr.getOsContext().getEngineType()));
     }
 
-    MultiDispatchInfo di;
     auto isMemTransferNeeded = true;
     if (srcImage->isMemObjZeroCopy()) {
         size_t hostOffset;
@@ -104,7 +103,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     if (srcImage->getImageDesc().num_mip_levels > 0) {
         dc.srcMipLevel = findMipLevel(srcImage->getImageDesc().image_type, origin);
     }
-    builder.buildDispatchInfos(di, dc);
+
+    MultiDispatchInfo di(dc);
+
+    builder.buildDispatchInfos(di);
 
     enqueueHandler<CL_COMMAND_READ_IMAGE>(
         surfaces,

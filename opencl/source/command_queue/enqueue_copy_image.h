@@ -32,8 +32,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    MultiDispatchInfo di;
-
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
                                                                             this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
@@ -54,7 +52,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
     if (dstImage->getImageDesc().num_mip_levels > 0) {
         dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, dstOrigin);
     }
-    builder.buildDispatchInfos(di, dc);
+
+    MultiDispatchInfo di(dc);
+
+    builder.buildDispatchInfos(di);
 
     enqueueHandler<CL_COMMAND_COPY_IMAGE>(
         surfaces,

@@ -30,17 +30,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBuffer(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    MultiDispatchInfo dispatchInfo;
     auto eBuiltInOpsType = EBuiltInOps::CopyBufferToBuffer;
 
     if (forceStateless(std::max(srcBuffer->getSize(), dstBuffer->getSize()))) {
         eBuiltInOpsType = EBuiltInOps::CopyBufferToBufferStateless;
     }
-
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOpsType,
-                                                                            this->getDevice());
-
-    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     BuiltinOpParams dc;
     dc.srcMemObj = srcBuffer;
@@ -48,13 +42,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBuffer(
     dc.srcOffset = {srcOffset, 0, 0};
     dc.dstOffset = {dstOffset, 0, 0};
     dc.size = {size, 0, 0};
-    builder.buildDispatchInfos(dispatchInfo, dc);
+
+    MultiDispatchInfo dispatchInfo(dc);
 
     MemObjSurface s1(srcBuffer);
     MemObjSurface s2(dstBuffer);
     Surface *surfaces[] = {&s1, &s2};
 
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER>(dispatchInfo, surfaces, numEventsInWaitList, eventWaitList, event, false);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER>(dispatchInfo, surfaces, eBuiltInOpsType, numEventsInWaitList, eventWaitList, event, false);
 
     return CL_SUCCESS;
 }

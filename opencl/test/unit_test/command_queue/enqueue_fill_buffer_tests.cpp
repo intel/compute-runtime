@@ -97,7 +97,6 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -109,7 +108,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenIndirectDataGetsAdded) 
     dc.dstMemObj = buffer;
     dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
     dc.size = {EnqueueFillBufferTraits::size, 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -128,7 +129,6 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferRightLeftover) {
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    MultiDispatchInfo mdi;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -140,7 +140,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferRightLeftover) {
     dc.dstMemObj = buffer;
     dc.dstOffset = {0, 0, 0};
     dc.size = {EnqueueFillBufferTraits::patternSize, 0, 0};
-    builder.buildDispatchInfos(mdi, dc);
+
+    MultiDispatchInfo mdi(dc);
+    builder.buildDispatchInfos(mdi);
     EXPECT_EQ(1u, mdi.size());
 
     auto kernel = mdi.begin()->getKernel();
@@ -154,7 +156,6 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferMiddle) {
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    MultiDispatchInfo mdi;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -166,7 +167,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferMiddle) {
     dc.dstMemObj = buffer;
     dc.dstOffset = {0, 0, 0};
     dc.size = {MemoryConstants::cacheLineSize, 0, 0};
-    builder.buildDispatchInfos(mdi, dc);
+
+    MultiDispatchInfo mdi(dc);
+    builder.buildDispatchInfos(mdi);
     EXPECT_EQ(1u, mdi.size());
 
     auto kernel = mdi.begin()->getKernel();
@@ -180,7 +183,6 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferLeftLeftover) {
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
-    MultiDispatchInfo mdi;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -192,7 +194,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferLeftLeftover) {
     dc.dstMemObj = buffer;
     dc.dstOffset = {EnqueueFillBufferTraits::patternSize, 0, 0};
     dc.size = {EnqueueFillBufferTraits::patternSize, 0, 0};
-    builder.buildDispatchInfos(mdi, dc);
+
+    MultiDispatchInfo mdi(dc);
+    builder.buildDispatchInfos(mdi);
     EXPECT_EQ(1u, mdi.size());
 
     auto kernel = mdi.begin()->getKernel();
@@ -273,7 +277,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
     enqueueFillBuffer<FamilyType>();
 
     // Extract the kernel used
-    MultiDispatchInfo multiDispatchInfo;
+
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -285,7 +289,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentZeroShouldMatch
     dc.dstMemObj = buffer;
     dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
     dc.size = {EnqueueFillBufferTraits::size, 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -308,7 +314,6 @@ HWTEST_F(EnqueueFillBufferCmdTests, DISABLED_WhenFillingBufferThenArgumentOneSho
     enqueueFillBuffer<FamilyType>();
 
     // Extract the kernel used
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -320,7 +325,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, DISABLED_WhenFillingBufferThenArgumentOneSho
     dc.dstMemObj = buffer;
     dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
     dc.size = {EnqueueFillBufferTraits::size, 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -340,7 +347,6 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchP
     enqueueFillBuffer<FamilyType>();
 
     // Extract the kernel used
-    MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
                                                                             pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
@@ -352,7 +358,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferThenArgumentTwoShouldMatchP
     dc.dstMemObj = buffer;
     dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
     dc.size = {EnqueueFillBufferTraits::size, 0, 0};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();
@@ -381,8 +389,8 @@ HWTEST_F(EnqueueFillBufferCmdTests, WhenFillingBufferStatelessThenStatelessKerne
     dc.dstOffset = {EnqueueFillBufferTraits::offset, 0, 0};
     dc.size = {EnqueueFillBufferTraits::size, 0, 0};
 
-    MultiDispatchInfo multiDispatchInfo;
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
+    MultiDispatchInfo multiDispatchInfo(dc);
+    builder.buildDispatchInfos(multiDispatchInfo);
     EXPECT_NE(0u, multiDispatchInfo.size());
 
     auto kernel = multiDispatchInfo.begin()->getKernel();

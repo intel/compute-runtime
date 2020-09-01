@@ -66,8 +66,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     dc.dstOffset = {offset, 0, 0};
     dc.size = {size, 0, 0};
 
-    MultiDispatchInfo dispatchInfo;
-    builder.buildDispatchInfos(dispatchInfo, dc);
+    MultiDispatchInfo dispatchInfo(dc);
+    builder.buildDispatchInfos(dispatchInfo);
 
     MemObjSurface s1(buffer);
     GeneralSurface s2(patternAllocation);
