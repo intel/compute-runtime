@@ -28,6 +28,9 @@
 
 #include <string>
 
+namespace NEO {
+void __attribute__((destructor)) platformsDestructor();
+}
 using namespace NEO;
 
 class DrmTestsFixture {
@@ -519,4 +522,12 @@ TEST_F(DrmTests, whenCreateDrmIsCalledThenProperHwInfoIsSetup) {
     EXPECT_NE(IGFX_UNKNOWN_CORE, currentHwInfo->platform.eRenderCoreFamily);
     EXPECT_LT(0u, currentHwInfo->gtSystemInfo.EUCount);
     EXPECT_LT(0u, currentHwInfo->gtSystemInfo.SubSliceCount);
+}
+
+TEST(PlatformsDestructor, whenGlobalPlatformsDestructorIsCalledThenGlobalPlatformsAreDestroyed) {
+    EXPECT_NE(nullptr, platformsImpl);
+    platformsDestructor();
+
+    EXPECT_EQ(nullptr, platformsImpl);
+    platformsImpl = new std::vector<std::unique_ptr<Platform>>;
 }

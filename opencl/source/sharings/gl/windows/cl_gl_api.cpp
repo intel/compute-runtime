@@ -352,7 +352,7 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
 
     if (paramName == CL_DEVICES_FOR_GL_CONTEXT_KHR || paramName == CL_CURRENT_DEVICE_FOR_GL_CONTEXT_KHR) {
         if (!platform) {
-            platform = platformsImpl[0].get();
+            platform = (*platformsImpl)[0].get();
         }
 
         ClDevice *deviceToReturn = nullptr;

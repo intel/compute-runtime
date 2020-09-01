@@ -375,7 +375,7 @@ TEST_F(PlatformTest, WhenRemovingLastSpaceThenStringDoesNotEndWithSpace) {
     EXPECT_EQ(std::string("x"), xSpaceString);
 }
 TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledTwiceThenTheSamePlatformIsReturned) {
-    platformsImpl.clear();
+    platformsImpl->clear();
     auto platform1 = constructPlatform();
     EXPECT_EQ(platform1, platform());
     auto platform2 = constructPlatform();
@@ -384,15 +384,15 @@ TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledTwiceThenTh
 }
 
 TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledAfterResetThenNewPlatformIsConstructed) {
-    platformsImpl.clear();
+    platformsImpl->clear();
     auto platform = constructPlatform();
-    std::unique_ptr<Platform> temporaryOwnership(std::move(platformsImpl[0]));
-    platformsImpl.clear();
+    std::unique_ptr<Platform> temporaryOwnership(std::move((*platformsImpl)[0]));
+    platformsImpl->clear();
     auto platform2 = constructPlatform();
     EXPECT_NE(platform2, platform);
     EXPECT_NE(platform, nullptr);
     EXPECT_NE(platform2, nullptr);
-    platformsImpl.clear();
+    platformsImpl->clear();
 }
 
 TEST(PlatformInitTest, givenNullptrDeviceInPassedDeviceVectorWhenInitializePlatformThenExceptionIsThrown) {

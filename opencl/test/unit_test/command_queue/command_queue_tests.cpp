@@ -52,7 +52,7 @@ struct CommandQueueMemoryDevice
 
     void TearDown() override {
         ClDeviceFixture::TearDown();
-        platformsImpl.clear();
+        platformsImpl->clear();
         MemoryManagementFixture::TearDown();
     }
 };

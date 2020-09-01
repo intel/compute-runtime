@@ -73,5 +73,5 @@ class Platform : public BaseObject<_cl_platform_id> {
     std::once_flag initializeExtensionsWithVersionOnce;
 };
 
-extern std::vector<std::unique_ptr<Platform>> platformsImpl;
+extern std::vector<std::unique_ptr<Platform>> *platformsImpl;
 } // namespace NEO

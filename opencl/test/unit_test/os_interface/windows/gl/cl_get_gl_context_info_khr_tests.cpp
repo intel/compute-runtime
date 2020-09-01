@@ -28,7 +28,7 @@ TEST_F(clGetGLContextInfoKhrTest, successWithDefaultPlatform) {
 
     auto defaultPlatform = std::make_unique<MockPlatform>();
     defaultPlatform->initializeWithNewDevices();
-    platformsImpl[0] = std::move(defaultPlatform);
+    (*platformsImpl)[0] = std::move(defaultPlatform);
     auto expectedDevice = ::platform()->getClDevice(0);
     cl_device_id retDevice = 0;
     size_t retSize = 0;
@@ -50,7 +50,7 @@ TEST_F(clGetGLContextInfoKhrTest, successWithDefaultPlatform) {
 using clGetGLContextInfoKHRNonDefaultPlatform = ::testing::Test;
 
 TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, successWithNonDefaultPlatform) {
-    platformsImpl.clear();
+    platformsImpl->clear();
 
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
@@ -132,7 +132,7 @@ TEST_F(clGetGLContextInfoKhrTest, GivenIncorrectPropertiesWhenCallclGetGLContext
 }
 
 TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfHdcHandleFailsThenInvalidGlReferenceErrorIsReturned) {
-    platformsImpl.clear();
+    platformsImpl->clear();
 
     VariableBackup<UltHwConfig> backup(&ultHwConfig);
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
@@ -155,7 +155,7 @@ TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfHdcHandleFails
     EXPECT_EQ(CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR, retVal);
 }
 TEST_F(clGetGLContextInfoKHRNonDefaultPlatform, whenVerificationOfHdcHandleFailsForFirstDeviceButSucceedsForSecondOneThenReturnTheSecondDevice) {
-    platformsImpl.clear();
+    platformsImpl->clear();
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(2);

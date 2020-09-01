@@ -85,7 +85,6 @@ std::string getRunPath(char *argv0) {
 std::thread::id tempThreadID;
 
 void applyWorkarounds() {
-    NEO::platformsImpl.reserve(1);
     {
         std::ofstream f;
         const std::string fileName("_tmp_");

@@ -84,7 +84,7 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
 
         static std::mutex mutex;
         std::unique_lock<std::mutex> lock(mutex);
-        if (platformsImpl.empty()) {
+        if (platformsImpl->empty()) {
             auto executionEnvironment = new ClExecutionEnvironment();
             executionEnvironment->incRefInternal();
             auto allDevices = DeviceFactory::createDevices(*executionEnvironment);
@@ -101,19 +101,19 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                     retVal = CL_OUT_OF_HOST_MEMORY;
                     break;
                 }
-                platformsImpl.push_back(std::move(pPlatform));
+                platformsImpl->push_back(std::move(pPlatform));
             }
             if (retVal != CL_SUCCESS) {
                 break;
             }
         }
-        cl_uint numPlatformsToExpose = std::min(numEntries, static_cast<cl_uint>(platformsImpl.size()));
+        cl_uint numPlatformsToExpose = std::min(numEntries, static_cast<cl_uint>(platformsImpl->size()));
         if (numEntries == 0) {
-            numPlatformsToExpose = static_cast<cl_uint>(platformsImpl.size());
+            numPlatformsToExpose = static_cast<cl_uint>(platformsImpl->size());
         }
         if (platforms) {
             for (auto i = 0u; i < numPlatformsToExpose; i++) {
-                platforms[i] = platformsImpl[i].get();
+                platforms[i] = (*platformsImpl)[i].get();
             }
         }
 
@@ -207,7 +207,7 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                 retVal = CL_DEVICE_NOT_FOUND;
                 break;
             }
-            pPlatform = platformsImpl[0].get();
+            pPlatform = (*platformsImpl)[0].get();
         }
 
         DEBUG_BREAK_IF(pPlatform->isInitialized() != true);

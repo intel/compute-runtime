@@ -37,7 +37,7 @@
 #include <map>
 namespace NEO {
 
-std::vector<std::unique_ptr<Platform>> platformsImpl;
+std::vector<std::unique_ptr<Platform>> *platformsImpl = new std::vector<std::unique_ptr<Platform>>;
 
 Platform::Platform(ExecutionEnvironment &executionEnvironmentIn) : executionEnvironment(executionEnvironmentIn) {
     clDevices.reserve(4);

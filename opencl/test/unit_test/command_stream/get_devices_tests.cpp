@@ -62,7 +62,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
             }
 
             DebugManager.flags.ProductFamilyOverride.set(productFamily);
-            platformsImpl.clear();
+            platformsImpl->clear();
             ExecutionEnvironment *exeEnv = constructPlatform()->peekExecutionEnvironment();
 
             const auto ret = prepareDeviceEnvironments(*exeEnv);
@@ -149,7 +149,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
 
         DebugManager.flags.SetCommandStreamReceiver.set(csrType);
         DebugManager.flags.ProductFamilyOverride.set(productFamily);
-        platformsImpl.clear();
+        platformsImpl->clear();
         ExecutionEnvironment *exeEnv = constructPlatform()->peekExecutionEnvironment();
 
         auto ret = prepareDeviceEnvironments(*exeEnv);

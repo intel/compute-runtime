@@ -737,7 +737,7 @@ struct CreateImageHostPtr
     void TearDown() override {
         delete image;
         BaseClass::TearDown();
-        platformsImpl.clear();
+        platformsImpl->clear();
         MemoryManagementFixture::TearDown();
     }
 

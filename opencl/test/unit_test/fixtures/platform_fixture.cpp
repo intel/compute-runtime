@@ -36,7 +36,7 @@ void PlatformFixture::SetUp() {
 }
 
 void PlatformFixture::TearDown() {
-    platformsImpl.clear();
+    platformsImpl->clear();
     delete[] devices;
 }
 } // namespace NEO

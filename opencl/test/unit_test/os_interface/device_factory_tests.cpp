@@ -74,7 +74,7 @@ TEST_F(DeviceFactoryTest, WhenOverridingUsingDebugManagerThenOverridesAreApplied
     DebugManager.flags.OverrideEnableQuickKmdSleepForSporadicWaits.set(!refEnableQuickKmdSleepForSporadicWaits);
     DebugManager.flags.OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds.set(static_cast<int32_t>(refDelayQuickKmdSleepForSporadicWaitsMicroseconds) + 12);
 
-    platformsImpl.clear();
+    platformsImpl->clear();
     executionEnvironment = constructPlatform()->peekExecutionEnvironment();
     success = DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
     ASSERT_TRUE(success);

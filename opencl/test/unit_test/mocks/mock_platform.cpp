@@ -24,18 +24,18 @@ bool MockPlatform::initializeWithNewDevices() {
 }
 
 Platform *platform() {
-    if (platformsImpl.empty()) {
+    if (platformsImpl->empty()) {
         return nullptr;
     }
-    return platformsImpl[0].get();
+    return (*platformsImpl)[0].get();
 }
 
 Platform *constructPlatform() {
     static std::mutex mutex;
     std::unique_lock<std::mutex> lock(mutex);
-    if (platformsImpl.empty()) {
-        platformsImpl.push_back(std::make_unique<Platform>(*(new MockClExecutionEnvironment())));
+    if (platformsImpl->empty()) {
+        platformsImpl->push_back(std::make_unique<Platform>(*(new MockClExecutionEnvironment())));
     }
-    return platformsImpl[0].get();
+    return (*platformsImpl)[0].get();
 }
 } // namespace NEO

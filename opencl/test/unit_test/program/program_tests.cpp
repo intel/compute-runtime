@@ -2595,7 +2595,7 @@ TEST(ProgramDestructionTests, givenProgramUsingDeviceWhenItIsDestroyedAfterPlatf
     auto globalAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
     pProgram->setGlobalSurface(globalAllocation);
 
-    platformsImpl.clear();
+    platformsImpl->clear();
     EXPECT_EQ(1, device->getRefInternalCount());
     EXPECT_EQ(1, pProgram->getRefInternalCount());
     context->decRefInternal();

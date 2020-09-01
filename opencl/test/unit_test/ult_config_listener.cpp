@@ -25,7 +25,7 @@ void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
 }
 void NEO::UltConfigListener::OnTestEnd(const ::testing::TestInfo &testInfo) {
     // Clear global platform that it shouldn't be reused between tests
-    platformsImpl.clear();
+    platformsImpl->clear();
     MemoryManager::maxOsContextCount = 0u;
 
     // Ensure that global state is restored
