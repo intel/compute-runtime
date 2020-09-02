@@ -84,17 +84,15 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device
 }
 
 void DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
+    if (DebugManager.flags.BindAllAllocations.get()) {
+        this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer));
+        residencyContainer.clear();
+        return;
+    }
+
     std::lock_guard<std::mutex> lock(mutex);
     for (auto gfxAllocation = residencyContainer.begin(); gfxAllocation != residencyContainer.end();) {
         if ((*gfxAllocation)->isAlwaysResident(osContext->getContextId())) {
-            gfxAllocation = residencyContainer.erase(gfxAllocation);
-        } else if (DebugManager.flags.BindAllAllocations.get()) {
-            auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
-            auto &drmContextIds = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds();
-            for (uint32_t drmIterator = 0u; drmIterator < drmContextIds.size(); drmIterator++) {
-                drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
-            }
-            drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
             gfxAllocation = residencyContainer.erase(gfxAllocation);
         } else {
             gfxAllocation++;
