@@ -113,7 +113,7 @@ struct WorkGroupSizeChannels : public WorkGroupSizeBase,
                                public ::testing::TestWithParam<std::tuple<uint32_t, size_t>> {
 };
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeWorkSizeNDDefault) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenAllChannelsWhenEnablingComputeWorkSizeNDDefaultThenSizeAndDimAreCorrect) {
     uint32_t simdSize;
     size_t workDim;
     std::tie(simdSize, workDim) = GetParam();
@@ -121,7 +121,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeW
     verify<FamilyType>(simdSize, workDim, workDim, workDim);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeWorkSizeNDEnabled) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenAllChannelsWhenEnablingComputeWorkSizeNDEnabledThenSizeAndDimAreCorrect) {
     bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
     DebugManager.flags.EnableComputeWorkSizeND.set(true);
     uint32_t simdSize;
@@ -133,7 +133,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeW
     DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeWorkSizeNDDisabled) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenAllChannelsWhenEnablingComputeWorkSizeNDDisabledThenSizeAndDimAreCorrect) {
     bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     uint32_t simdSize;
@@ -145,7 +145,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeW
     DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeWorkSizeSquaredDefault) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenAllChannelsWhenEnablingComputeWorkSizeSquaredDefaultThenSizeAndDimAreCorrect) {
     uint32_t simdSize;
     size_t workDim;
     std::tie(simdSize, workDim) = GetParam();
@@ -153,7 +153,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeW
     verify<FamilyType>(simdSize, workDim, workDim, workDim);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeWorkSizeSquaredEnabled) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenAllChannelsWhenEnablingComputeWorkSizeSquaredEnabledThenSizeAndDimAreCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
@@ -164,7 +164,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeW
     verify<FamilyType>(simdSize, workDim, workDim, workDim);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeWorkSizeSquaredDisabled) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenAllChannelsWhenEnablingComputeWorkSizeSquaredDisabledThenSizeAndDimAreCorrect) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
@@ -175,7 +175,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeW
     verify<FamilyType>(simdSize, workDim, workDim, workDim);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justXWithEnableComputeWorkSizeNDDefault) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenOnlyXWhenEnablingComputeWorkSizeNDDefaultThenSizeAndDimAreCorrect) {
     uint32_t simdSize;
     size_t workDim;
     std::tie(simdSize, workDim) = GetParam();
@@ -183,7 +183,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justXWithEnableComputeWorkSiz
     verify<FamilyType>(simdSize, workDim, 1, 1);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justXWithEnableComputeWorkSizeNDEnabled) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenOnlyXWhenEnablingComputeWorkSizeNDEnabledThenSizeAndDimAreCorrect) {
     bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
     DebugManager.flags.EnableComputeWorkSizeND.set(true);
     uint32_t simdSize;
@@ -195,7 +195,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justXWithEnableComputeWorkSiz
     DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justXWithEnableComputeWorkSizeNDDisabled) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenOnlyXWhenEnablingComputeWorkSizeNDDisabledThenSizeAndDimAreCorrect) {
     bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     uint32_t simdSize;
@@ -207,7 +207,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justXWithEnableComputeWorkSiz
     DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justYWithEnableComputeWorkSizeNDDefault) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenOnlyYWhenEnablingComputeWorkSizeNDDefaultThenSizeAndDimAreCorrect) {
     uint32_t simdSize;
     size_t workDim;
     std::tie(simdSize, workDim) = GetParam();
@@ -215,7 +215,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justYWithEnableComputeWorkSiz
     verify<FamilyType>(simdSize, 1, workDim, 1);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justYWithEnableComputeWorkSizeNDEnalbed) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenOnlyYWhenEnablingComputeWorkSizeNDEnabledThenSizeAndDimAreCorrect) {
     bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
     DebugManager.flags.EnableComputeWorkSizeND.set(true);
     uint32_t simdSize;
@@ -227,7 +227,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justYWithEnableComputeWorkSiz
     DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justYWithEnableComputeWorkSizeNDDisabled) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenOnlyYWhenEnablingComputeWorkSizeNDDisabledThenSizeAndDimAreCorrect) {
     bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     uint32_t simdSize;
@@ -239,7 +239,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justYWithEnableComputeWorkSiz
     DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justZWithEnableComputeWorkSizeNDDefault) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenOnlyZWhenEnablingComputeWorkSizeNDDefaultThenSizeAndDimAreCorrect) {
     uint32_t simdSize;
     size_t workDim;
     std::tie(simdSize, workDim) = GetParam();
@@ -247,7 +247,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justZWithEnableComputeWorkSiz
     verify<FamilyType>(simdSize, 1, 1, workDim);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justZWithEnableComputeWorkSizeNDEnabled) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenOnlyZWhenEnablingComputeWorkSizeNDEnabledThenSizeAndDimAreCorrect) {
     bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
     DebugManager.flags.EnableComputeWorkSizeND.set(true);
     uint32_t simdSize;
@@ -259,7 +259,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justZWithEnableComputeWorkSiz
     DebugManager.flags.EnableComputeWorkSizeND.set(isWorkGroupSizeEnabled);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, justZWithEnableComputeWorkSizeNDDisabled) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, GivenOnlyZWhenEnablingComputeWorkSizeNDDisabledThenSizeAndDimAreCorrect) {
     bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
     DebugManager.flags.EnableComputeWorkSizeND.set(false);
     uint32_t simdSize;
@@ -304,7 +304,7 @@ struct WorkGroupSize2D : public WorkGroupSizeBase,
                          public ::testing::TestWithParam<std::tuple<uint32_t, size_t, size_t>> {
 };
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSize2D, XY) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSize2D, GivenUsingXandYWorkGroupDimensionsWhenComputingWorkgroupSizeThenSizeAndDimAreCorrect) {
     uint32_t simdSize;
     size_t dimX, dimY;
     std::tie(simdSize, dimX, dimY) = GetParam();
@@ -330,7 +330,7 @@ struct WorkGroupSizeRegion : public WorkGroupSizeBase,
                              public ::testing::TestWithParam<std::tuple<uint32_t, Region>> {
 };
 
-HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeRegion, allChannels) {
+HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeRegion, GivenUsingAllChannelsWhenComputingWorkgroupSizeThenSizeAndDimAreCorrect) {
     uint32_t simdSize;
     Region region;
     std::tie(simdSize, region) = GetParam();
