@@ -172,7 +172,11 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObj
     auto gpuAddress = 0x1234u;
     auto size = MemoryConstants::pageSize64k;
 
-    auto bo = std::unique_ptr<BufferObject>(createBufferObjectInMemoryRegion(&memoryManager->getDrm(0), gpuAddress, size, (1 << (MemoryBanks::Bank0 - 1)), 1));
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0),
+                                                                                            gpuAddress,
+                                                                                            size,
+                                                                                            (1 << (MemoryBanks::Bank0 - 1)),
+                                                                                            1));
     ASSERT_NE(nullptr, bo);
 
     EXPECT_EQ(1u, mock->ioctlCallsCount);
@@ -201,7 +205,11 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObj
     auto gpuAddress = 0x1234u;
     auto size = MemoryConstants::pageSize;
 
-    auto bo = std::unique_ptr<BufferObject>(createBufferObjectInMemoryRegion(&memoryManager->getDrm(0), gpuAddress, size, MemoryBanks::MainBank, 1));
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0),
+                                                                                            gpuAddress,
+                                                                                            size,
+                                                                                            MemoryBanks::MainBank,
+                                                                                            1));
     EXPECT_EQ(nullptr, bo);
 }
 
@@ -213,7 +221,11 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObj
     auto gpuAddress = 0x1234u;
     auto size = MemoryConstants::pageSize;
 
-    auto bo = std::unique_ptr<BufferObject>(createBufferObjectInMemoryRegion(&memoryManager->getDrm(0), gpuAddress, size, MemoryBanks::MainBank, 1));
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0),
+                                                                                            gpuAddress,
+                                                                                            size,
+                                                                                            MemoryBanks::MainBank,
+                                                                                            1));
     EXPECT_EQ(nullptr, bo);
 }
 
@@ -223,7 +235,11 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObj
     auto gpuAddress = 0x1234u;
     auto size = 0u;
 
-    auto bo = std::unique_ptr<BufferObject>(createBufferObjectInMemoryRegion(&memoryManager->getDrm(0), gpuAddress, size, MemoryBanks::MainBank, 1));
+    auto bo = std::unique_ptr<BufferObject>(memoryManager->createBufferObjectInMemoryRegion(&memoryManager->getDrm(0),
+                                                                                            gpuAddress,
+                                                                                            size,
+                                                                                            MemoryBanks::MainBank,
+                                                                                            1));
     EXPECT_EQ(nullptr, bo);
 }
 
@@ -239,6 +255,70 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenUseSystemMemoryFlagWhenGraphicsAllo
     auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
     EXPECT_EQ(nullptr, allocation);
     EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
+}
+
+class DrmMemoryManagerLocalMemoryMemoryBankMock : public TestedDrmMemoryManager {
+  public:
+    DrmMemoryManagerLocalMemoryMemoryBankMock(bool enableLocalMemory,
+                                              bool allowForcePin,
+                                              bool validateHostPtrMemory,
+                                              ExecutionEnvironment &executionEnvironment) : TestedDrmMemoryManager(enableLocalMemory, allowForcePin, validateHostPtrMemory, executionEnvironment) {
+    }
+
+    BufferObject *createBufferObjectInMemoryRegion(Drm *drm,
+                                                   uint64_t gpuAddress,
+                                                   size_t size,
+                                                   uint32_t memoryBanks,
+                                                   size_t maxOsContextCount) override {
+        memoryBankIsOne = (memoryBanks == 1) ? true : false;
+        return nullptr;
+    }
+
+    bool memoryBankIsOne = false;
+};
+
+class DrmMemoryManagerLocalMemoryMemoryBankTest : public ::testing::Test {
+  public:
+    DrmMockDg1 *mock;
+
+    void SetUp() override {
+        const bool localMemoryEnabled = true;
+        executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment->prepareRootDeviceEnvironments(1);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
+        mock = new DrmMockDg1();
+        mock->memoryInfo.reset(new MockMemoryInfo());
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(mock);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock);
+
+        device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(defaultHwInfo.get(),
+                                                                            executionEnvironment,
+                                                                            rootDeviceIndex));
+        memoryManager = std::make_unique<DrmMemoryManagerLocalMemoryMemoryBankMock>(localMemoryEnabled,
+                                                                                    false,
+                                                                                    false,
+                                                                                    *executionEnvironment);
+    }
+
+  protected:
+    ExecutionEnvironment *executionEnvironment = nullptr;
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<DrmMemoryManagerLocalMemoryMemoryBankMock> memoryManager;
+    const uint32_t rootDeviceIndex = 0u;
+};
+
+TEST_F(DrmMemoryManagerLocalMemoryMemoryBankTest, givenDeviceMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenMemoryBankIsSetToOne) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.useSystemMemory = false;
+    allocData.type = GraphicsAllocation::AllocationType::BUFFER;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_TRUE(memoryManager->memoryBankIsOne);
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedForBufferThenLocalMemoryAllocationIsReturnedFromStandard64KbHeap) {

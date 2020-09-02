@@ -57,6 +57,7 @@ class DrmMemoryManager : public MemoryManager {
     int obtainFdFromHandle(int boHandle, uint32_t rootDeviceindex);
     AddressRange reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) override;
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
+    MOCKABLE_VIRTUAL BufferObject *createBufferObjectInMemoryRegion(Drm *drm, uint64_t gpuAddress, size_t size, uint32_t memoryBanks, size_t maxOsContextCount);
 
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
@@ -87,6 +88,7 @@ class DrmMemoryManager : public MemoryManager {
     void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) override;
     DrmAllocation *allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) override;
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
+    bool createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount);
 
     Drm &getDrm(uint32_t rootDeviceIndex) const;
     uint32_t getRootDeviceIndex(const Drm *drm);

@@ -19,7 +19,11 @@
 
 namespace NEO {
 
-BufferObject *createBufferObjectInMemoryRegion(Drm *drm, uint64_t gpuAddress, size_t size, uint32_t memoryBanks, size_t maxOsContextCount) {
+BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm,
+                                                                 uint64_t gpuAddress,
+                                                                 size_t size,
+                                                                 uint32_t memoryBanks,
+                                                                 size_t maxOsContextCount) {
     auto memoryInfo = static_cast<MemoryInfoImpl *>(drm->getMemoryInfo());
     if (!memoryInfo) {
         return nullptr;
@@ -86,7 +90,7 @@ uint64_t getGpuAddress(GraphicsAllocation::AllocationType allocType, GfxPartitio
     return gpuAddress;
 }
 
-bool createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount) {
+bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount) {
     std::array<std::unique_ptr<BufferObject>, EngineLimits::maxHandleCount> bos{};
     auto &storageInfo = allocation->storageInfo;
     auto boAddress = gpuAddress;

@@ -9,6 +9,14 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 
 namespace NEO {
+bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount) {
+    return false;
+}
+
+BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm, uint64_t gpuAddress, size_t size, uint32_t memoryBanks, size_t maxOsContextCount) {
+    return nullptr;
+}
+
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
     status = AllocationStatus::RetryInNonDevicePool;
     return nullptr;
