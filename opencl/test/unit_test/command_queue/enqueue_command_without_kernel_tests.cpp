@@ -19,6 +19,8 @@
 #include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
+#include "opencl/test/unit_test/mocks/mock_kernel.h"
+#include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
 #include "test.h"
 
@@ -313,6 +315,44 @@ HWTEST_F(DispatchFlagsTests, givenN1EnabledWhenDispatchingWithoutKernelTheAllowO
     mockCmdQ->enqueueCommandWithoutKernel(nullptr, 0, mockCmdQ->getCS(0), 0, blocked, enqueueProperties, timestampPacketDependencies,
                                           eventsRequest, eventBuilder, 0);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.outOfOrderExecutionAllowed);
+}
+
+HWTEST_F(DispatchFlagsTests, givenMockKernelWhenSettingAdditionalKernelExecInfoThenCorrectValueIsSet) {
+    using CsrType = MockCsrHw2<FamilyType>;
+    SetUpImpl<CsrType>();
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
+
+    TimestampPacketDependencies timestampPacketDependencies;
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+
+    EnqueueProperties enqueueProperties(false, false, false, true, nullptr);
+
+    auto cmdStream = new LinearStream(device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), 4096, GraphicsAllocation::AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()}));
+    auto blockedCommandsData = std::make_unique<KernelOperation>(cmdStream, *mockCmdQ->getGpgpuCommandStreamReceiver().getInternalAllocationStorage());
+    MockKernelWithInternals mockKernelWithInternals(*device.get());
+    auto pKernel = mockKernelWithInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(pKernel);
+
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device.get()));
+    IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    mockCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, 4096u, ioh);
+    mockCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, 4096u, ssh);
+    blockedCommandsData->setHeaps(dsh, ioh, ssh);
+    std::vector<Surface *> v;
+
+    pKernel->setAdditionalKernelExecInfo(123u);
+    std::unique_ptr<CommandComputeKernel> cmd(new CommandComputeKernel(*mockCmdQ.get(), blockedCommandsData, v, false, false, false, std::move(printfHandler), PreemptionMode::Disabled, pKernel, 1));
+    cmd->submit(1u, false);
+    EXPECT_EQ(mockCsr->passedDispatchFlags.additionalKernelExecInfo, 123u);
+
+    pKernel->setAdditionalKernelExecInfo(123u);
+    mockCsr->setMediaVFEStateDirty(true);
+    cmd->submit(1u, false);
+    EXPECT_EQ(mockCsr->passedDispatchFlags.additionalKernelExecInfo, 123u);
 }
 
 HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelAndZeroSurfacesWhenEnqueuedHandlerThenProgramPipeControl) {

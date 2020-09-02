@@ -62,7 +62,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, WaOff, IsTGLLP) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_RCS);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable);
 
     parseCommands<FamilyType>(cs);
 
@@ -82,7 +82,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCcsEngineWhenWaIsSetThenAppropriatePipeC
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_CCS);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_CCS, AdditionalKernelExecInfo::NotApplicable);
 
     parseCommands<FamilyType>(cs);
 
@@ -101,7 +101,7 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenRcsEngineWhenWaIsSetThenAppropriatePipeC
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
 
-    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_RCS);
+    PreambleHelper<FamilyType>::programVFEState(&linearStream, pPlatform->getClDevice(0)->getHardwareInfo(), 0, 0, 672u, aub_stream::EngineType::ENGINE_RCS, AdditionalKernelExecInfo::NotApplicable);
 
     parseCommands<FamilyType>(cs);
 

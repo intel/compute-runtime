@@ -20,6 +20,8 @@
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/os_thread.h"
 
+#include "csr_properties_flags.h"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -302,6 +304,7 @@ class CommandStreamReceiver {
 
     bool localMemoryEnabled = false;
     bool pageTableManagerInitialized = false;
+    uint32_t lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::NotApplicable;
 
     bool useNewResourceImplicitFlush = false;
     bool newResources = false;

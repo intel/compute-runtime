@@ -60,6 +60,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
         GrfConfig::NotApplicable,                                                    //numGrfRequired
         L3CachingSettings::NotApplicable,                                            //l3CacheSettings
         ThreadArbitrationPolicy::NotPresent,                                         //threadArbitrationPolicy
+        AdditionalKernelExecInfo::NotApplicable,                                     //additionalKernelExecInfo
         commandQueue.getSliceCount(),                                                //sliceCount
         true,                                                                        //blocking
         true,                                                                        //dcFlush
@@ -217,6 +218,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired,      //numGrfRequired
         L3CachingSettings::l3CacheOn,                                                //l3CacheSettings
         kernel->getThreadArbitrationPolicy(),                                        //threadArbitrationPolicy
+        kernel->getAdditionalKernelExecInfo(),                                       //additionalKernelExecInfo
         commandQueue.getSliceCount(),                                                //sliceCount
         true,                                                                        //blocking
         flushDC,                                                                     //dcFlush
@@ -337,6 +339,7 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
         GrfConfig::NotApplicable,                             //numGrfRequired
         L3CachingSettings::NotApplicable,                     //l3CacheSettings
         ThreadArbitrationPolicy::NotPresent,                  //threadArbitrationPolicy
+        AdditionalKernelExecInfo::NotApplicable,              //additionalKernelExecInfo
         commandQueue.getSliceCount(),                         //sliceCount
         true,                                                 //blocking
         false,                                                //dcFlush

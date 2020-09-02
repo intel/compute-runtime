@@ -738,6 +738,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         numGrfRequired,                                                                             //numGrfRequired
         L3CachingSettings::l3CacheOn,                                                               //l3CacheSettings
         kernel->getThreadArbitrationPolicy(),                                                       //threadArbitrationPolicy
+        kernel->getAdditionalKernelExecInfo(),                                                      //additionalKernelExecInfo
         getSliceCount(),                                                                            //sliceCount
         blocking,                                                                                   //blocking
         shouldFlushDC(commandType, printfHandler) || allocNeedsFlushDC,                             //dcFlush
@@ -950,6 +951,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             GrfConfig::NotApplicable,                                            //numGrfRequired
             L3CachingSettings::NotApplicable,                                    //l3CacheSettings
             ThreadArbitrationPolicy::NotPresent,                                 //threadArbitrationPolicy
+            AdditionalKernelExecInfo::NotApplicable,                             //additionalKernelExecInfo
             getSliceCount(),                                                     //sliceCount
             blocking,                                                            //blocking
             false,                                                               //dcFlush

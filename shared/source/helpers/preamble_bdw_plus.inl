@@ -33,7 +33,8 @@ uint64_t PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream
                                                     int scratchSize,
                                                     uint64_t scratchAddress,
                                                     uint32_t maxFrontEndThreads,
-                                                    aub_stream::EngineType engineType) {
+                                                    aub_stream::EngineType engineType,
+                                                    uint32_t additionalExecInfo) {
     using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
 
     addPipeControlBeforeVfeCmd(pCommandStream, &hwInfo, engineType);

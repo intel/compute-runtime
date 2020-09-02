@@ -2489,4 +2489,12 @@ void Kernel::patchBindlessSurfaceStateOffsets(const size_t sshOffset) {
     }
 }
 
+void Kernel::setAdditionalKernelExecInfo(uint32_t additionalKernelExecInfo) {
+    this->additionalKernelExecInfo = additionalKernelExecInfo;
+}
+
+uint32_t Kernel::getAdditionalKernelExecInfo() const {
+    return this->additionalKernelExecInfo;
+}
+
 } // namespace NEO

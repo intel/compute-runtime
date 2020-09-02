@@ -34,6 +34,7 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/thread_arbitration_policy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/csr_properties_flags.h
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_COMMAND_STREAM ${NEO_CORE_COMMAND_STREAM})

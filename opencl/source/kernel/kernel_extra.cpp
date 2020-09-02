@@ -37,4 +37,8 @@ bool Kernel::requiresLimitedWorkgroupSize() const {
     return this->isBuiltIn;
 }
 
+int32_t Kernel::setAdditionalKernelExecInfoWithParam(uint32_t paramName) {
+    return CL_INVALID_VALUE;
+}
+
 } // namespace NEO

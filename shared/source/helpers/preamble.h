@@ -41,7 +41,8 @@ struct PreambleHelper {
                                     int scratchSize,
                                     uint64_t scratchAddress,
                                     uint32_t maxFrontEndThreads,
-                                    aub_stream::EngineType engineType);
+                                    aub_stream::EngineType engineType,
+                                    uint32_t additionalKernelExecInfo);
     static void programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
                                 uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr, GraphicsAllocation *perDssBackedBuffer);

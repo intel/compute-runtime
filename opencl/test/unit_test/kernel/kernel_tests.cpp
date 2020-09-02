@@ -3126,6 +3126,20 @@ TEST(KernelTest, whenKernelIsInitializedThenThreadArbitrationPolicyIsSetToDefaul
     EXPECT_EQ(hwHelper.getDefaultThreadArbitrationPolicy(), mockKernel.threadArbitrationPolicy);
 }
 
+TEST(KernelTest, givenKernelWhenSettingAdditinalKernelExecInfoThenCorrectValueIsSet) {
+    SPatchExecutionEnvironment sPatchExecutionEnvironment = {};
+    sPatchExecutionEnvironment.SubgroupIndependentForwardProgressRequired = true;
+    UltClDeviceFactory deviceFactory{1, 0};
+    MockKernelWithInternals mockKernelWithInternals{*deviceFactory.rootDevices[0], sPatchExecutionEnvironment};
+
+    auto &mockKernel = *mockKernelWithInternals.mockKernel;
+
+    mockKernel.setAdditionalKernelExecInfo(123u);
+    EXPECT_EQ(123u, mockKernel.getAdditionalKernelExecInfo());
+    mockKernel.setAdditionalKernelExecInfo(AdditionalKernelExecInfo::NotApplicable);
+    EXPECT_EQ(AdditionalKernelExecInfo::NotApplicable, mockKernel.getAdditionalKernelExecInfo());
+}
+
 namespace NEO {
 
 template <typename GfxFamily>

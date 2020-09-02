@@ -24,6 +24,8 @@
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/program/program.h"
 
+#include "csr_properties_flags.h"
+
 #include <vector>
 
 namespace NEO {
@@ -417,6 +419,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool requiresPerDssBackedBuffer() const;
     bool requiresLimitedWorkgroupSize() const;
     bool isKernelDebugEnabled() const { return debugEnabled; }
+    int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName);
+    void setAdditionalKernelExecInfo(uint32_t additionalKernelExecInfo);
+    uint32_t getAdditionalKernelExecInfo() const;
 
   protected:
     struct ObjectCounts {
@@ -551,5 +556,6 @@ class Kernel : public BaseObject<_cl_kernel> {
     UnifiedMemoryControls unifiedMemoryControls;
     bool isUnifiedMemorySyncRequired = true;
     bool debugEnabled = false;
+    uint32_t additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
 };
 } // namespace NEO
