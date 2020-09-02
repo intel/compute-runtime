@@ -68,7 +68,7 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
     MockContext *context;
 };
 
-HWTEST_P(OOMCommandQueueTest, finish) {
+HWTEST_P(OOMCommandQueueTest, WhenFinishingThenMaxAvailableSpaceIsNotExceeded) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
@@ -84,7 +84,7 @@ HWTEST_P(OOMCommandQueueTest, finish) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_P(OOMCommandQueueTest, enqueueMarker) {
+HWTEST_P(OOMCommandQueueTest, WhenEnqueingMarkerThenMaxAvailableSpaceIsNotExceeded) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
@@ -107,7 +107,7 @@ HWTEST_P(OOMCommandQueueTest, enqueueMarker) {
     delete (Event *)eventReturned;
 }
 
-HWTEST_P(OOMCommandQueueTest, enqueueBarrier) {
+HWTEST_P(OOMCommandQueueTest, WhenEnqueingBarrierThenMaxAvailableSpaceIsNotExceeded) {
     auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
