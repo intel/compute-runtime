@@ -16,7 +16,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/os_metrics_library.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/platform_teardown_win.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.inl
 )

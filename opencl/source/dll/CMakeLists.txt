@@ -48,6 +48,7 @@ set(RUNTIME_SRCS_DLL_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/options_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux/os_interface.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
+    ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux/platform_teardown_linux.cpp
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS
@@ -59,6 +60,7 @@ set(RUNTIME_SRCS_DLL_WINDOWS
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_calls.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
+    ${NEO_SOURCE_DIR}/opencl/source/os_interface/windows/platform_teardown_win.cpp
 )
 
 target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_DLL_BASE})

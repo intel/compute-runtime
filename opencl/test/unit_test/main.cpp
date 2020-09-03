@@ -440,5 +440,6 @@ int main(int argc, char **argv) {
     retVal = RUN_ALL_TESTS();
 
     cleanTestHelpers();
+    delete platformsImpl;
     return retVal;
 }

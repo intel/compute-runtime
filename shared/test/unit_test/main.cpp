@@ -433,6 +433,7 @@ int main(int argc, char **argv) {
     retVal = RUN_ALL_TESTS();
 
     GlobalMockSipProgram::shutDownSipProgram();
+    delete platformsImpl;
 
     return retVal;
 }
