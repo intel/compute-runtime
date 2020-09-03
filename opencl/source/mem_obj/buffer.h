@@ -17,6 +17,7 @@
 #include "memory_properties_flags.h"
 
 #include <functional>
+#include <map>
 
 namespace NEO {
 class Device;
@@ -52,6 +53,21 @@ using ValidateInputAndCreateBufferFunc = std::function<cl_mem(cl_context context
                                                               int32_t &retVal)>;
 extern ValidateInputAndCreateBufferFunc validateInputAndCreateBuffer;
 } // namespace BufferFunctions
+
+namespace CreateBuffer {
+struct AllocationInfo {
+    GraphicsAllocation *mapAllocation = nullptr;
+    GraphicsAllocation *memory = nullptr;
+    GraphicsAllocation::AllocationType allocationType = GraphicsAllocation::AllocationType::UNKNOWN;
+
+    bool zeroCopyAllowed = true;
+    bool isHostPtrSVM = false;
+
+    bool alignementSatisfied = true;
+    bool allocateMemory = true;
+    bool copyMemoryFromHostPtr = false;
+};
+} // namespace CreateBuffer
 
 class Buffer : public MemObj {
   public:
@@ -157,6 +173,8 @@ class Buffer : public MemObj {
 
     bool isCompressed(uint32_t rootDeviceIndex) const;
 
+    static void cleanAllGraphicsAllocations(Context &context, MemoryManager &memoryManager, std::map<uint32_t, NEO::CreateBuffer::AllocationInfo> &allocationInfo);
+
   protected:
     Buffer(Context *context,
            MemoryProperties memoryProperties,
@@ -179,7 +197,8 @@ class Buffer : public MemObj {
                             bool &isZeroCopy,
                             bool &copyMemoryFromHostPtr,
                             MemoryManager *memMngr,
-                            uint32_t rootDeviceIndex);
+                            uint32_t rootDeviceIndex,
+                            bool forceCopyHostPtr);
     static GraphicsAllocation::AllocationType getGraphicsAllocationType(const MemoryProperties &properties, Context &context,
                                                                         bool renderCompressedBuffers, bool localMemoryEnabled,
                                                                         bool preferCompression);
