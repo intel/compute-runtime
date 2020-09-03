@@ -43,7 +43,7 @@ struct GetSupportedImageFormatsTest : public PlatformFixture,
     cl_int retVal = CL_SUCCESS;
 };
 
-TEST_P(GetSupportedImageFormatsTest, checkNumImageFormats) {
+TEST_P(GetSupportedImageFormatsTest, WhenGettingNumImageFormatsThenGreaterThanZeroIsReturned) {
     cl_uint numImageFormats = 0;
     uint64_t imageFormatsFlags;
     uint32_t imageFormats;
@@ -60,7 +60,7 @@ TEST_P(GetSupportedImageFormatsTest, checkNumImageFormats) {
     EXPECT_GT(numImageFormats, 0u);
 }
 
-TEST_P(GetSupportedImageFormatsTest, retrieveImageFormats) {
+TEST_P(GetSupportedImageFormatsTest, WhenRetrievingImageFormatsThenListIsNonEmpty) {
     cl_uint numImageFormats = 0;
     uint64_t imageFormatsFlags;
     uint32_t imageFormats;
@@ -103,7 +103,7 @@ TEST_P(GetSupportedImageFormatsTest, retrieveImageFormats) {
     delete[] imageFormatList;
 }
 
-TEST_P(GetSupportedImageFormatsTest, retrieveImageFormatsSRGB) {
+TEST_P(GetSupportedImageFormatsTest, WhenRetrievingImageFormatsSRGBThenListIsNonEmpty) {
     cl_uint numImageFormats = 0;
     uint64_t imageFormatsFlags;
     uint32_t imageFormats;
@@ -156,7 +156,7 @@ TEST_P(GetSupportedImageFormatsTest, retrieveImageFormatsSRGB) {
     delete[] imageFormatList;
 }
 
-TEST(ImageFormats, isDepthFormat) {
+TEST(ImageFormats, WhenCheckingIsDepthFormatThenCorrectValueReturned) {
     for (auto &format : SurfaceFormats::readOnly20()) {
         EXPECT_FALSE(Image::isDepthFormat(format.OCLImageFormat));
     }
@@ -180,7 +180,7 @@ struct PackedYuvExtensionSupportedImageFormatsTest : public ::testing::TestWithP
     cl_int retVal;
 };
 
-TEST_P(PackedYuvExtensionSupportedImageFormatsTest, retrieveImageFormatsPackedYUV) {
+TEST_P(PackedYuvExtensionSupportedImageFormatsTest, WhenRetrievingImageFormatsPackedYUVThenListIsNonEmpty) {
     cl_uint numImageFormats = 0;
     uint64_t imageFormatsFlags;
     uint32_t imageFormats;
@@ -401,7 +401,7 @@ TEST_P(NV12ExtensionUnsupportedImageFormatsTest, givenNV12ExtensionWhenQueriedFo
     delete[] imageFormatList;
 }
 
-TEST_P(NV12ExtensionSupportedImageFormatsTest, retrieveLessImageFormatsThanAvailable) {
+TEST_P(NV12ExtensionSupportedImageFormatsTest, WhenRetrievingLessImageFormatsThanAvailableThenListIsNonEmpty) {
     cl_uint numImageFormats = 0;
     uint64_t imageFormatsFlags;
     uint32_t imageFormats;
