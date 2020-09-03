@@ -45,6 +45,7 @@ namespace SysCalls {
 extern const wchar_t *currentLibraryPath;
 }
 extern uint32_t numRootDevicesToEnum;
+std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid);
 } // namespace NEO
 
 using namespace NEO;
@@ -1449,4 +1450,24 @@ TEST(DiscoverDevices, whenDriverInfoHasIncompatibleDriverStoreThenHwDeviceIdIsNo
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
+}
+
+TEST(VerifyAdapterType, whenAdapterDoesntSupportRenderThenDontCreateHwDeviceId) {
+    auto gdi = std::make_unique<MockGdi>();
+    auto osEnv = std::make_unique<OsEnvironmentWin>();
+    osEnv->gdi.reset(gdi.release());
+
+    LUID shadowAdapterLuid = {0xdd, 0xdd};
+    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnv, shadowAdapterLuid);
+    EXPECT_EQ(nullptr, hwDeviceId.get());
+}
+
+TEST(VerifyAdapterType, whenAdapterSupportsRenderThenCreateHwDeviceId) {
+    auto gdi = std::make_unique<MockGdi>();
+    auto osEnv = std::make_unique<OsEnvironmentWin>();
+    osEnv->gdi.reset(gdi.release());
+
+    LUID adapterLuid = {0x12, 0x1234};
+    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnv, adapterLuid);
+    EXPECT_NE(nullptr, hwDeviceId.get());
 }

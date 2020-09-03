@@ -245,6 +245,20 @@ std::unique_ptr<HwDeviceId> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &os
         return nullptr;
     }
 
+    D3DKMT_ADAPTERTYPE queryAdapterType = {};
+    QueryAdapterInfo.hAdapter = OpenAdapterData.hAdapter;
+    QueryAdapterInfo.Type = KMTQAITYPE_ADAPTERTYPE;
+    QueryAdapterInfo.pPrivateDriverData = &queryAdapterType;
+    QueryAdapterInfo.PrivateDriverDataSize = sizeof(queryAdapterType);
+    status = osEnvironment.gdi->queryAdapterInfo(&QueryAdapterInfo);
+    if (status != STATUS_SUCCESS) {
+        DEBUG_BREAK_IF("queryAdapterInfo failed");
+        return nullptr;
+    }
+    if (0 == queryAdapterType.RenderSupported) {
+        return nullptr;
+    }
+
     return std::make_unique<HwDeviceId>(OpenAdapterData.hAdapter, adapterLuid, &osEnvironment);
 }
 

@@ -56,7 +56,11 @@ NTSTATUS __stdcall D3DKMTOpenAdapterFromLuid(IN OUT CONST D3DKMT_OPENADAPTERFROM
         return STATUS_INVALID_PARAMETER;
     }
     D3DKMT_OPENADAPTERFROMLUID *openAdapterNonConst = const_cast<D3DKMT_OPENADAPTERFROMLUID *>(openAdapter);
-    openAdapterNonConst->hAdapter = ADAPTER_HANDLE;
+    if (openAdapter->AdapterLuid.HighPart == 0xdd) {
+        openAdapterNonConst->hAdapter = SHADOW_ADAPTER_HANDLE;
+    } else {
+        openAdapterNonConst->hAdapter = ADAPTER_HANDLE;
+    }
     return STATUS_SUCCESS;
 }
 
@@ -247,7 +251,7 @@ NTSTATUS __stdcall D3DKMTReserveGpuVirtualAddress(IN OUT D3DDDI_RESERVEGPUVIRTUA
 }
 
 NTSTATUS __stdcall D3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *queryAdapterInfo) {
-    if (queryAdapterInfo == nullptr || queryAdapterInfo->hAdapter != ADAPTER_HANDLE) {
+    if (queryAdapterInfo == nullptr) {
         return STATUS_INVALID_PARAMETER;
     }
     if (queryAdapterInfo->Type == KMTQAITYPE_UMDRIVERPRIVATE) {
@@ -258,38 +262,56 @@ NTSTATUS __stdcall D3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *quer
             return STATUS_INVALID_PARAMETER;
         }
     }
-    ADAPTER_INFO *adapterInfo = reinterpret_cast<ADAPTER_INFO *>(queryAdapterInfo->pPrivateDriverData);
 
-    adapterInfo->GfxPlatform = gAdapterInfo.GfxPlatform;
-    adapterInfo->SystemInfo = gAdapterInfo.SystemInfo;
-    adapterInfo->SkuTable = gAdapterInfo.SkuTable;
-    adapterInfo->WaTable = gAdapterInfo.WaTable;
-    adapterInfo->CacheLineSize = 64;
-    adapterInfo->MinRenderFreq = 350;
-    adapterInfo->MaxRenderFreq = 1150;
+    if (queryAdapterInfo->Type == KMTQAITYPE_ADAPTERTYPE) {
+        D3DKMT_ADAPTERTYPE *adapterType = reinterpret_cast<D3DKMT_ADAPTERTYPE *>(queryAdapterInfo->pPrivateDriverData);
+        if (queryAdapterInfo->hAdapter == ADAPTER_HANDLE) {
+            adapterType->RenderSupported = 1;
+        } else if (queryAdapterInfo->hAdapter == SHADOW_ADAPTER_HANDLE) {
+            adapterType->RenderSupported = 0;
+        } else {
+            return STATUS_INVALID_PARAMETER;
+        }
 
-    adapterInfo->SizeOfDmaBuffer = 32768;
-    adapterInfo->GfxMemorySize = 2181038080;
-    adapterInfo->SystemSharedMemory = 4249540608;
-    adapterInfo->SystemVideoMemory = 0;
+        return STATUS_SUCCESS;
+    }
+    if (queryAdapterInfo->Type == KMTQAITYPE_UMDRIVERPRIVATE) {
+        if (queryAdapterInfo->hAdapter != ADAPTER_HANDLE && queryAdapterInfo->hAdapter != SHADOW_ADAPTER_HANDLE) {
+            return STATUS_INVALID_PARAMETER;
+        }
+        ADAPTER_INFO *adapterInfo = reinterpret_cast<ADAPTER_INFO *>(queryAdapterInfo->pPrivateDriverData);
 
-    adapterInfo->GfxPartition.Standard.Base = gAdapterInfo.GfxPartition.Standard.Base;
-    adapterInfo->GfxPartition.Standard.Limit = gAdapterInfo.GfxPartition.Standard.Limit;
-    adapterInfo->GfxPartition.Standard64KB.Base = gAdapterInfo.GfxPartition.Standard64KB.Base;
-    adapterInfo->GfxPartition.Standard64KB.Limit = gAdapterInfo.GfxPartition.Standard64KB.Limit;
+        adapterInfo->GfxPlatform = gAdapterInfo.GfxPlatform;
+        adapterInfo->SystemInfo = gAdapterInfo.SystemInfo;
+        adapterInfo->SkuTable = gAdapterInfo.SkuTable;
+        adapterInfo->WaTable = gAdapterInfo.WaTable;
+        adapterInfo->CacheLineSize = 64;
+        adapterInfo->MinRenderFreq = 350;
+        adapterInfo->MaxRenderFreq = 1150;
 
-    adapterInfo->GfxPartition.SVM.Base = gAdapterInfo.GfxPartition.SVM.Base;
-    adapterInfo->GfxPartition.SVM.Limit = gAdapterInfo.GfxPartition.SVM.Limit;
-    adapterInfo->GfxPartition.Heap32[0].Base = gAdapterInfo.GfxPartition.Heap32[0].Base;
-    adapterInfo->GfxPartition.Heap32[0].Limit = gAdapterInfo.GfxPartition.Heap32[0].Limit;
-    adapterInfo->GfxPartition.Heap32[1].Base = gAdapterInfo.GfxPartition.Heap32[1].Base;
-    adapterInfo->GfxPartition.Heap32[1].Limit = gAdapterInfo.GfxPartition.Heap32[1].Limit;
-    adapterInfo->GfxPartition.Heap32[2].Base = gAdapterInfo.GfxPartition.Heap32[2].Base;
-    adapterInfo->GfxPartition.Heap32[2].Limit = gAdapterInfo.GfxPartition.Heap32[2].Limit;
-    adapterInfo->GfxPartition.Heap32[3].Base = gAdapterInfo.GfxPartition.Heap32[3].Base;
-    adapterInfo->GfxPartition.Heap32[3].Limit = gAdapterInfo.GfxPartition.Heap32[3].Limit;
+        adapterInfo->SizeOfDmaBuffer = 32768;
+        adapterInfo->GfxMemorySize = 2181038080;
+        adapterInfo->SystemSharedMemory = 4249540608;
+        adapterInfo->SystemVideoMemory = 0;
 
-    return STATUS_SUCCESS;
+        adapterInfo->GfxPartition.Standard.Base = gAdapterInfo.GfxPartition.Standard.Base;
+        adapterInfo->GfxPartition.Standard.Limit = gAdapterInfo.GfxPartition.Standard.Limit;
+        adapterInfo->GfxPartition.Standard64KB.Base = gAdapterInfo.GfxPartition.Standard64KB.Base;
+        adapterInfo->GfxPartition.Standard64KB.Limit = gAdapterInfo.GfxPartition.Standard64KB.Limit;
+
+        adapterInfo->GfxPartition.SVM.Base = gAdapterInfo.GfxPartition.SVM.Base;
+        adapterInfo->GfxPartition.SVM.Limit = gAdapterInfo.GfxPartition.SVM.Limit;
+        adapterInfo->GfxPartition.Heap32[0].Base = gAdapterInfo.GfxPartition.Heap32[0].Base;
+        adapterInfo->GfxPartition.Heap32[0].Limit = gAdapterInfo.GfxPartition.Heap32[0].Limit;
+        adapterInfo->GfxPartition.Heap32[1].Base = gAdapterInfo.GfxPartition.Heap32[1].Base;
+        adapterInfo->GfxPartition.Heap32[1].Limit = gAdapterInfo.GfxPartition.Heap32[1].Limit;
+        adapterInfo->GfxPartition.Heap32[2].Base = gAdapterInfo.GfxPartition.Heap32[2].Base;
+        adapterInfo->GfxPartition.Heap32[2].Limit = gAdapterInfo.GfxPartition.Heap32[2].Limit;
+        adapterInfo->GfxPartition.Heap32[3].Base = gAdapterInfo.GfxPartition.Heap32[3].Base;
+        adapterInfo->GfxPartition.Heap32[3].Limit = gAdapterInfo.GfxPartition.Heap32[3].Limit;
+        return STATUS_SUCCESS;
+    }
+    return STATUS_INVALID_PARAMETER;
 }
 
 NTSTATUS __stdcall D3DKMTMakeResident(IN OUT D3DDDI_MAKERESIDENT *makeResident) {
