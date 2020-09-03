@@ -23,7 +23,8 @@ struct AllocationProperties {
             uint32_t readOnlyMultiStorage : 1;
             uint32_t shareable : 1;
             uint32_t resource48Bit : 1;
-            uint32_t reserved : 23;
+            uint32_t isUSMHostAllocation : 1;
+            uint32_t reserved : 22;
         } flags;
         uint32_t allFlags = 0;
     };
@@ -93,7 +94,8 @@ struct AllocationData {
             uint32_t requiresCpuAccess : 1;
             uint32_t shareable : 1;
             uint32_t resource48Bit : 1;
-            uint32_t reserved : 20;
+            uint32_t isUSMHostAllocation : 1;
+            uint32_t reserved : 19;
         } flags;
         uint32_t allFlags = 0;
     };

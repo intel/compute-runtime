@@ -2750,6 +2750,43 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenAlloc
     mock->ioctl_res_ext = &mock->NONE;
 }
 
+using DrmMemoryManagerUSMHostAllocationTests = Test<DrmMemoryManagerFixture>;
+
+TEST_F(DrmMemoryManagerUSMHostAllocationTests,
+       givenCallToallocateGraphicsMemoryWithAlignmentWithisHostUSMAllocationSetToFalseThenANewHostPointerIsUsedAndAllocationIsCreatedSuccesfully) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    AllocationData allocationData;
+    allocationData.size = 16384;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    NEO::DrmAllocation *alloc = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    EXPECT_NE(nullptr, alloc);
+    memoryManager->freeGraphicsMemoryImpl(alloc);
+}
+
+TEST_F(DrmMemoryManagerUSMHostAllocationTests,
+       givenCallToallocateGraphicsMemoryWithAlignmentWithisHostUSMAllocationSetToTrueThenTheExistingHostPointerIsUsedAndAllocationIsCreatedSuccesfully) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    AllocationData allocationData;
+
+    size_t allocSize = 16384;
+    void *hostPtr = alignedMalloc(allocSize, 0);
+
+    allocationData.size = allocSize;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.isUSMHostAllocation = true;
+    allocationData.hostPtr = hostPtr;
+    NEO::GraphicsAllocation *alloc = memoryManager->allocateGraphicsMemory(allocationData);
+    EXPECT_NE(nullptr, alloc);
+    EXPECT_EQ(hostPtr, alloc->getUnderlyingBuffer());
+
+    memoryManager->freeGraphicsMemoryImpl(alloc);
+    alignedFree(hostPtr);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManagerWhenAskedForVirtualPaddingSupportThenTrueIsReturned) {
     EXPECT_TRUE(memoryManager->peekVirtualPaddingSupport());
 }

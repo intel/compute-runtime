@@ -254,6 +254,49 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
     return allocation;
 }
 
+DrmAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const AllocationData &allocationData) {
+    const size_t minAlignment = getUserptrAlignment();
+    // When size == 0 allocate allocationAlignment
+    // It's needed to prevent overlapping pages with user pointers
+    size_t cSize = std::max(alignUp(allocationData.size, minAlignment), minAlignment);
+
+    void *bufferPtr = const_cast<void *>(allocationData.hostPtr);
+    DEBUG_BREAK_IF(nullptr == bufferPtr);
+
+    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(reinterpret_cast<uintptr_t>(bufferPtr),
+                                                                         cSize,
+                                                                         0,
+                                                                         allocationData.rootDeviceIndex));
+    if (!bo) {
+        return nullptr;
+    }
+
+    // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
+    uint64_t gpuAddress = 0;
+    if (isLimitedRange(allocationData.rootDeviceIndex)) {
+        gpuAddress = acquireGpuRange(cSize, false, allocationData.rootDeviceIndex, false);
+        if (!gpuAddress) {
+            return nullptr;
+        }
+        bo->gpuAddress = gpuAddress;
+    }
+
+    emitPinningRequest(bo.get(), allocationData);
+
+    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex,
+                                        allocationData.type,
+                                        bo.get(),
+                                        bufferPtr,
+                                        bo->gpuAddress,
+                                        cSize,
+                                        MemoryPool::System4KBPages);
+
+    allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), cSize);
+    bo.release();
+
+    return allocation;
+}
+
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
     auto res = static_cast<DrmAllocation *>(MemoryManager::allocateGraphicsMemoryWithHostPtr(allocationData));
 

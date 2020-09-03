@@ -151,6 +151,7 @@ void *MemoryManager::createMultiGraphicsAllocation(std::vector<uint32_t> &rootDe
             ptr = reinterpret_cast<void *>(graphicsAllocation->getGpuAddress());
         } else {
             properties.flags.allocateMemory = false;
+            properties.flags.isUSMHostAllocation = true;
 
             auto graphicsAllocation = allocateGraphicsMemoryWithProperties(properties, ptr);
             if (!graphicsAllocation) {
@@ -396,6 +397,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     AllocationData allocationData;
     getAllocationData(allocationData, properties, hostPtr, createStorageInfoFromProperties(properties));
     overrideAllocationData(allocationData, properties);
+    allocationData.flags.isUSMHostAllocation = properties.flags.isUSMHostAllocation;
 
     AllocationStatus status = AllocationStatus::Error;
     GraphicsAllocation *allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
@@ -438,6 +440,9 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
         bool useLocalMem = heapAssigner.useExternal32BitHeap(allocationData.type) ? HwHelper::get(hwInfo->platform.eRenderCoreFamily).heapInLocalMem(*hwInfo) : false;
         return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMem);
+    }
+    if (allocationData.flags.isUSMHostAllocation) {
+        return allocateUSMHostGraphicsMemory(allocationData);
     }
     if (allocationData.hostPtr) {
         return allocateGraphicsMemoryWithHostPtr(allocationData);
