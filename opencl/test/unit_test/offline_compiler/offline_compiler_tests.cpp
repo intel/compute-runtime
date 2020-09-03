@@ -1226,4 +1226,35 @@ TEST(OfflineCompilerTest, givenNoRevisionIdWhenCompilerIsInitializedThenHwInfoHa
     EXPECT_EQ(SUCCESS, retVal);
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, revId);
 }
+
+struct WorkaroundApplicableForDevice {
+    const char *deviceName;
+    bool applicable;
+};
+
+using OfflineCompilerTestWithParams = testing::TestWithParam<WorkaroundApplicableForDevice>;
+
+TEST_P(OfflineCompilerTestWithParams, givenRklWhenExtraSettingsResolvedThenForceEmuInt32DivRemSPIsApplied) {
+    WorkaroundApplicableForDevice params = GetParam();
+    MockOfflineCompiler mockOfflineCompiler;
+    mockOfflineCompiler.deviceName = params.deviceName;
+
+    mockOfflineCompiler.parseDebugSettings();
+
+    std::string internalOptions = mockOfflineCompiler.internalOptions;
+    size_t found = internalOptions.find(NEO::CompilerOptions::forceEmuInt32DivRemSP.data());
+    if (params.applicable) {
+        EXPECT_NE(std::string::npos, found);
+    } else {
+        EXPECT_EQ(std::string::npos, found);
+    }
+}
+
+WorkaroundApplicableForDevice workaroundApplicableForDeviceArray[] = {{"rkl", true}, {"dg1", false}, {"tgllp", false}};
+
+INSTANTIATE_TEST_CASE_P(
+    WorkaroundApplicable,
+    OfflineCompilerTestWithParams,
+    testing::ValuesIn(workaroundApplicableForDeviceArray));
+
 } // namespace NEO

@@ -96,3 +96,18 @@ DG1TEST_F(HwHelperTestDg1, givenDg1WhenPatchingCPUInaccessibleGlobalBuffersThenU
     HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
     EXPECT_TRUE(hwHelper.forceBlitterUseForGlobalBuffers(hardwareInfo, &mockAllocation));
 }
+
+DG1TEST_F(HwHelperTestDg1, givenDg1WhenSteppingA0ThenIntegerDivisionEmulationIsEnabled) {
+    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    uint32_t stepping = REVISION_A0;
+    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_TRUE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
+}
+
+DG1TEST_F(HwHelperTestDg1, givenDg1WhenSteppingB0ThenIntegerDivisionEmulationIsNotEnabled) {
+    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+    hardwareInfo.platform.usRevId = hwHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(helper.isForceEmuInt32DivRemSPWARequired(hardwareInfo));
+}
