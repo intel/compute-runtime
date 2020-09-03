@@ -4,4 +4,6 @@
 # SPDX-License-Identifier: MIT
 #
 
-add_subdirectories()
+if(NOT SKIP_L0_UNIT_TESTS)
+  add_subdirectories()
+endif()
