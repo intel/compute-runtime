@@ -30,7 +30,7 @@ ze_result_t OsEngine::getNumEngineTypeAndInstances(std::multimap<zes_engine_grou
     for (auto itr = engineInfo->engines.begin(); itr != engineInfo->engines.end(); ++itr) {
         auto L0EngineEntryInMap = i915ToEngineMap.find(static_cast<drm_i915_gem_engine_class>(itr->engine.engine_class));
         if (L0EngineEntryInMap == i915ToEngineMap.end()) {
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+            continue;
         }
         auto L0EngineType = L0EngineEntryInMap->second;
         engineGroupInstance.insert({L0EngineType, static_cast<uint32_t>(itr->engine.engine_instance)});
@@ -51,11 +51,9 @@ ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
     return ZE_RESULT_SUCCESS;
 }
 
-LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance) {
+LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance) : engineGroup(type), engineInstance(engineInstance) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pDrm = &pLinuxSysmanImp->getDrm();
-    engineGroup = type;
-    this->engineInstance = engineInstance;
 }
 
 OsEngine *OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance) {
