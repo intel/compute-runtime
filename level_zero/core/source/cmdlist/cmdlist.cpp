@@ -12,6 +12,7 @@
 #include "shared/source/memory_manager/memory_manager.h"
 
 namespace L0 {
+
 CommandList::~CommandList() {
     if (cmdQImmediate) {
         cmdQImmediate->destroy();

@@ -306,7 +306,7 @@ struct MockCommandList : public CommandList {
     ADDMETHOD_NOBASE(executeCommandListImmediate, ze_result_t, ZE_RESULT_SUCCESS,
                      (bool perforMigration));
 
-    ADDMETHOD_NOBASE(initialize, bool, true,
+    ADDMETHOD_NOBASE(initialize, ze_result_t, ZE_RESULT_SUCCESS,
                      (L0::Device * device,
                       bool onlyCopyBlit));
 

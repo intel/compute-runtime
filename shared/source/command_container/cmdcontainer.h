@@ -25,6 +25,12 @@ using ResidencyContainer = std::vector<GraphicsAllocation *>;
 using CmdBufferContainer = std::vector<GraphicsAllocation *>;
 using HeapType = IndirectHeap::Type;
 
+enum class ErrorCode {
+    SUCCESS = 0,
+    INVALID_DEVICE = 1,
+    OUT_OF_DEVICE_MEMORY = 2
+};
+
 class CommandContainer : public NonCopyableOrMovableClass {
   public:
     static constexpr size_t defaultListCmdBufferSize = MemoryConstants::kiloByte * 256;
@@ -70,7 +76,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     void *getHeapSpaceAllowGrow(HeapType heapType, size_t size);
 
-    bool initialize(Device *device);
+    ErrorCode initialize(Device *device);
 
     virtual ~CommandContainer();
 

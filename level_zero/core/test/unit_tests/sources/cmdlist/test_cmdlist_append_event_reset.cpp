@@ -57,7 +57,8 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenPost
 
 HWTEST_F(CommandListAppendEventReset, givenCopyOnlyCmdlistWhenResetEventAppendedThenMiFlushWithPostSyncIsGenerated) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    commandList.reset(whitebox_cast(CommandList::create(productFamily, device, true)));
+    ze_result_t returnValue;
+    commandList.reset(whitebox_cast(CommandList::create(productFamily, device, true, returnValue)));
 
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
 
@@ -104,8 +105,8 @@ HWTEST2_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventRe
 
     auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
     ASSERT_NE(nullptr, commandList);
-    bool ret = commandList->initialize(device, false);
-    ASSERT_TRUE(ret);
+    ze_result_t ret = commandList->initialize(device, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
     commandList->device = device;
     commandList->cmdQImmediate = &cmdQueue;
     commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;

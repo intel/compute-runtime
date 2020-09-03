@@ -22,7 +22,8 @@ using IsSKLOrKBL = IsWithinProducts<IGFX_SKYLAKE, IGFX_KABYLAKE>;
 HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSLMThenL3IsProgrammedWithSLMValue, IsSKLOrKBL) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     createKernel();
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
     ze_group_count_t groupCount{1, 1, 1};
 
     EXPECT_LE(0u, kernel->kernelImmData->getDescriptor().kernelAttributes.slmInlineSize);

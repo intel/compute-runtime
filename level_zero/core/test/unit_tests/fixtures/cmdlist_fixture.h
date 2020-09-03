@@ -19,7 +19,8 @@ class CommandListFixture : public DeviceFixture {
   public:
     void SetUp() override {
         DeviceFixture::SetUp();
-        commandList.reset(whitebox_cast(CommandList::create(productFamily, device, false)));
+        ze_result_t returnValue;
+        commandList.reset(whitebox_cast(CommandList::create(productFamily, device, false, returnValue)));
 
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;

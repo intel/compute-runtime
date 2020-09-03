@@ -36,7 +36,7 @@ struct CommandListCoreFamily : CommandListImp {
 
     using CommandListImp::CommandListImp;
 
-    bool initialize(Device *device, bool isCopyOnly) override;
+    ze_result_t initialize(Device *device, bool isCopyOnly) override;
     virtual void programL3(bool isSLMused);
 
     ze_result_t close() override;

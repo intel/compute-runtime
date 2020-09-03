@@ -26,8 +26,8 @@ GEN12LPTEST_F(CommandEncoderTest, givenAdjustStateComputeModeStateComputeModeSho
 
     CommandContainer cmdContainer;
 
-    bool ret = cmdContainer.initialize(pDevice);
-    ASSERT_TRUE(ret);
+    auto ret = cmdContainer.initialize(pDevice);
+    ASSERT_EQ(ErrorCode::SUCCESS, ret);
 
     auto usedSpaceBefore = cmdContainer.getCommandStream()->getUsed();
 
@@ -76,8 +76,8 @@ GEN12LPTEST_F(CommandEncoderTest, givenVariousEngineTypesWhenEncodeSBAThenAdditi
 
     CommandContainer cmdContainer;
 
-    bool ret = cmdContainer.initialize(pDevice);
-    ASSERT_TRUE(ret);
+    auto ret = cmdContainer.initialize(pDevice);
+    ASSERT_EQ(ErrorCode::SUCCESS, ret);
 
     {
         STATE_BASE_ADDRESS sba;

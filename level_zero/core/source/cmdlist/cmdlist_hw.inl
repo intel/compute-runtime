@@ -39,21 +39,35 @@ namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct EncodeStateBaseAddress;
 
+inline ze_result_t parseErrorCode(NEO::ErrorCode returnValue) {
+    switch (returnValue) {
+    case NEO::ErrorCode::INVALID_DEVICE:
+        return ZE_RESULT_ERROR_INVALID_NULL_HANDLE;
+    case NEO::ErrorCode::OUT_OF_DEVICE_MEMORY:
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    default:
+        return ZE_RESULT_SUCCESS;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, bool isCopyOnly) {
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, bool isCopyOnly) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     this->device = device;
     this->commandListPreemptionMode = device->getDevicePreemptionMode();
     this->isCopyOnlyCmdList = isCopyOnly;
 
-    if (!commandContainer.initialize(static_cast<DeviceImp *>(device)->neoDevice)) {
-        return false;
-    }
-    if (!isCopyOnly) {
-        programStateBaseAddress(commandContainer);
+    auto returnValue = commandContainer.initialize(static_cast<DeviceImp *>(device)->neoDevice);
+    ze_result_t returnType = parseErrorCode(returnValue);
+    if (returnType == ZE_RESULT_SUCCESS) {
+        if (!isCopyOnly) {
+            programStateBaseAddress(commandContainer);
+        }
     }
 
-    return true;
+    return returnType;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

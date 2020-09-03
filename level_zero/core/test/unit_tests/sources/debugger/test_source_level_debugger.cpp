@@ -33,8 +33,9 @@ HWTEST_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsEx
 
     auto usedSpaceBefore = commandQueue->commandStream->getUsed();
 
+    ze_result_t returnValue;
     ze_command_list_handle_t commandLists[] = {
-        CommandList::create(productFamily, deviceL0, false)->toHandle()};
+        CommandList::create(productFamily, deviceL0, false, returnValue)->toHandle()};
     uint32_t numCommandLists = sizeof(commandLists) / sizeof(commandLists[0]);
 
     auto result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);

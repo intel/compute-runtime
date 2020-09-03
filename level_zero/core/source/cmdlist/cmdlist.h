@@ -128,10 +128,12 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t appendMINoop() = 0;
     virtual ze_result_t appendPipeControl(void *dstPtr, uint64_t value) = 0;
 
-    static CommandList *create(uint32_t productFamily, Device *device, bool isCopyOnly);
+    static CommandList *create(uint32_t productFamily, Device *device, bool isCopyOnly,
+                               ze_result_t &resultValue);
     static CommandList *createImmediate(uint32_t productFamily, Device *device,
                                         const ze_command_queue_desc_t *desc,
-                                        bool internalUsage, bool isCopyOnly);
+                                        bool internalUsage, bool isCopyOnly,
+                                        ze_result_t &resultValue);
 
     static CommandList *fromHandle(ze_command_list_handle_t handle) {
         return static_cast<CommandList *>(handle);
@@ -179,7 +181,7 @@ struct CommandList : _ze_command_list_handle_t {
     std::vector<Kernel *> printfFunctionContainer;
 
     virtual ze_result_t executeCommandListImmediate(bool performMigration) = 0;
-    virtual bool initialize(Device *device, bool isCopyOnly) = 0;
+    virtual ze_result_t initialize(Device *device, bool isCopyOnly) = 0;
     virtual ~CommandList();
     NEO::CommandContainer commandContainer;
 

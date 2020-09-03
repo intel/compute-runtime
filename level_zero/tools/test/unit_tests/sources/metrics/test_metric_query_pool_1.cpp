@@ -446,7 +446,8 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
 
     zet_device_handle_t metricDevice = device->toHandle();
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     Mock<MetricGroup> metricGroup;
@@ -598,7 +599,8 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetCommandListAppendMetri
 
     zet_device_handle_t metricDevice = device->toHandle();
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     ze_event_pool_handle_t eventPoolHandle = {};
@@ -708,7 +710,8 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
 
     zet_device_handle_t metricDevice = device->toHandle();
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     ze_event_pool_handle_t eventPoolHandle = {};
@@ -824,7 +827,8 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
 
     zet_device_handle_t metricDevice = device->toHandle();
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     ze_event_pool_handle_t eventPoolHandle = {};
@@ -939,7 +943,8 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
 
     zet_device_handle_t metricDevice = device->toHandle();
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     ze_event_pool_handle_t eventPoolHandle = {};
@@ -1082,7 +1087,8 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
 
     zet_device_handle_t metricDevice = device->toHandle();
 
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     ze_event_pool_handle_t eventPoolHandle = {};

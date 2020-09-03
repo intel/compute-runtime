@@ -52,7 +52,8 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
                                                           false));
         ASSERT_NE(nullptr, commandQueue->commandStream);
 
-        commandList = CommandList::create(productFamily, device, false);
+        ze_result_t returnValue;
+        commandList = CommandList::create(productFamily, device, false, returnValue);
         ASSERT_NE(nullptr, commandList);
     }
     void TearDown() override {

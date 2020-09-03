@@ -41,10 +41,10 @@ CommandContainer::~CommandContainer() {
     }
 }
 
-bool CommandContainer::initialize(Device *device) {
+ErrorCode CommandContainer::initialize(Device *device) {
     if (!device) {
         DEBUG_BREAK_IF(device);
-        return false;
+        return ErrorCode::INVALID_DEVICE;
     }
     this->device = device;
 
@@ -60,7 +60,9 @@ bool CommandContainer::initialize(Device *device) {
                                     device->getDeviceBitfield()};
 
     auto cmdBufferAllocation = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-    UNRECOVERABLE_IF(!cmdBufferAllocation);
+    if (!cmdBufferAllocation) {
+        return ErrorCode::OUT_OF_DEVICE_MEMORY;
+    }
 
     cmdBufferAllocations.push_back(cmdBufferAllocation);
 
@@ -76,7 +78,9 @@ bool CommandContainer::initialize(Device *device) {
                                                                    heapSize,
                                                                    alignedSize,
                                                                    device->getRootDeviceIndex());
-        UNRECOVERABLE_IF(!allocationIndirectHeaps[i]);
+        if (!allocationIndirectHeaps[i]) {
+            return ErrorCode::OUT_OF_DEVICE_MEMORY;
+        }
         residencyContainer.push_back(allocationIndirectHeaps[i]);
 
         bool requireInternalHeap = (IndirectHeap::INDIRECT_OBJECT == i);
@@ -90,7 +94,7 @@ bool CommandContainer::initialize(Device *device) {
     iddBlock = nullptr;
     nextIddInBlock = this->getNumIddPerBlock();
 
-    return true;
+    return ErrorCode::SUCCESS;
 }
 
 void CommandContainer::addToResidencyContainer(GraphicsAllocation *alloc) {

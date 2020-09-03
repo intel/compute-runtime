@@ -54,7 +54,8 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
                                                           false));
         ASSERT_NE(nullptr, commandQueue->commandStream);
 
-        commandList = CommandList::create(productFamily, device, false);
+        ze_result_t returnValue;
+        commandList = CommandList::create(productFamily, device, false, returnValue);
         ASSERT_NE(nullptr, commandList);
     }
     void TearDown() override {
@@ -195,11 +196,13 @@ HWTEST2_F(CommandQueueGroupMultiDevice,
     desc.ordinal = queueGroupOrdinal;
     desc.index = queueGroupIndex;
 
+    ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
                                                                                device,
                                                                                &desc,
                                                                                false,
-                                                                               false));
+                                                                               false,
+                                                                               returnValue));
     L0::CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
     L0::DeviceImp *deviceImp = reinterpret_cast<L0::DeviceImp *>(device);
     auto expectedCSR = deviceImp->neoDevice->getDeviceById(0)->getEngineGroups()[queueGroupOrdinal][queueGroupIndex].commandStreamReceiver;
