@@ -90,6 +90,49 @@ function(compile_builtin gen_type platform_type builtin bits builtin_options)
   )
 endfunction()
 
+function(generate_cpp_spirv builtin)
+  if(NOT DEFINED cloc_cmd_prefix)
+    if(WIN32)
+      set(cloc_cmd_prefix $<TARGET_FILE:ocloc>)
+    else()
+      if(DEFINED NEO__IGC_LIBRARY_PATH)
+        set(cloc_cmd_prefix LD_LIBRARY_PATH=${NEO__IGC_LIBRARY_PATH}:$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
+      else()
+        set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:ocloc_lib> $<TARGET_FILE:ocloc>)
+      endif()
+    endif()
+  endif()
+
+  get_filename_component(BASENAME ${builtin} NAME_WE)
+  get_filename_component(DIR ${builtin} DIRECTORY)
+
+  set(OUTPUTDIR "${BUILTINS_OUTDIR_WITH_ARCH}/spirv/${DIR}")
+  string(REPLACE "//" "/" OUTPUTDIR ${OUTPUTDIR})
+
+  set(INPUT_FILENAME ${builtin}.builtin_kernel)
+
+  set(GENERATED_SPV_INPUT ${OUTPUTDIR}/${BASENAME}.spv)
+  set(OUTPUT_FILE_CPP
+      ${OUTPUTDIR}/${BASENAME}.cpp
+  )
+
+  set(OUTPUT_LIST_SPV_FILES ${OUTPUT_LIST_SPV_FILES} ${OUTPUT_FILES_FOR_SPV} PARENT_SCOPE)
+  set(OUTPUT_LIST_CPP_FILES ${OUTPUT_LIST_CPP_FILES} ${OUTPUT_FILE_CPP} PARENT_SCOPE)
+  string(TOLOWER ${DEFAULT_SUPPORTED_PLATFORM} DEF_PLATFORM)
+  add_custom_command(
+                     OUTPUT ${GENERATED_SPV_INPUT}
+                     COMMAND ${cloc_cmd_prefix} -q -spv_only -file ${INPUT_FILENAME} -device ${DEF_PLATFORM} -out_dir ${OUTPUTDIR} -output_no_suffix -options "-cl-kernel-arg-info"
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                     DEPENDS ${INPUT_FILENAME} ocloc copy_compiler_files
+  )
+  add_custom_command(
+                     OUTPUT ${OUTPUT_FILE_CPP}
+                     COMMAND $<TARGET_FILE:cpp_generate_tool> --file ${GENERATED_SPV_INPUT} --output ${OUTPUT_FILE_CPP} --array ${BASENAME}
+                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                     DEPENDS ${GENERATED_SPV_INPUT} $<TARGET_FILE:cpp_generate_tool>
+  )
+endfunction()
+
 macro(macro_for_each_gen)
   foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
     if(${GEN_TYPE}_HAS_${PLATFORM_TYPE})
@@ -132,5 +175,22 @@ macro(macro_for_each_gen)
     endif()
   endforeach()
 endmacro()
+
+file(MAKE_DIRECTORY "${BUILTINS_OUTDIR_WITH_ARCH}/spirv")
+foreach(builtin ${GENERATED_BUILTINS})
+  generate_cpp_spirv(${builtin})
+endforeach()
+foreach(builtin_images ${GENERATED_BUILTINS_IMAGES})
+  generate_cpp_spirv(${builtin_images})
+endforeach()
+foreach(builtin_stateless ${GENERATED_BUILTINS_STATELESS})
+  generate_cpp_spirv(${builtin_stateless})
+endforeach()
+foreach(builtin_images_stateless ${GENERATED_BUILTINS_IMAGES_STATELESS})
+  generate_cpp_spirv(${builtin_images_stateless})
+endforeach()
+add_custom_target(spirv_builtins ALL DEPENDS ${OUTPUT_LIST_SPV_FILES} ${OUTPUT_LIST_CPP_FILES})
+add_library(${BUILTINS_SPIRV_LIB_NAME} OBJECT ${OUTPUT_LIST_CPP_FILES})
+set_target_properties(${BUILTINS_SPIRV_LIB_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 apply_macro_for_each_gen("SUPPORTED")

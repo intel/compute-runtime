@@ -119,6 +119,7 @@ endif()
 target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:mock_gmm>
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_mocks>
+               $<TARGET_OBJECTS:${BUILTINS_SPIRV_LIB_NAME}>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>
 )
 

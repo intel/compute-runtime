@@ -10,14 +10,14 @@
 #include <iostream>
 #include <sstream>
 
-constexpr int ARG_COUNT = 9;
+constexpr int MIN_ARG_COUNT = 7;
 
 static void show_usage(std::string name) {
-    std::cerr << "Usage " << name << "<option(s)> - ALL MUST BE SPECIFIED\n"
+    std::cerr << "Usage " << name << "<option(s)> - ALL BUT -p, --platform MUST BE SPECIFIED\n"
               << "Options :\n"
               << "\t -f, --file\t\tA file which content will be parsed into a uint32_t array in a .cpp file\n"
               << "\t -o, --out\t\t.Cpp output file name\n"
-              << "\t -p, --platform\t\tFamily name with type\n"
+              << "\t -p, --platform\t\tOPTIONAL - Family name with type\n"
               << "\t -a, --array\t\tName of an uin32_t type array containing parsed input file" << std::endl;
 }
 std::string parseToCharArray(std::unique_ptr<uint8_t[]> binary, size_t size, std::string &builtinName, std::string &platform, bool isSpirV) {
@@ -59,8 +59,9 @@ std::string parseToCharArray(std::unique_ptr<uint8_t[]> binary, size_t size, std
     out << "static RegisterEmbeddedResource register" << builtinName;
     isSpirV ? out << "Ir(" : out << "Bin(";
     out << std::endl;
-    out << "    \"" << platform << "_0_" << builtinName;
-    isSpirV ? out << ".builtin_kernel.spv\"," : out << ".builtin_kernel.bin\",";
+    out << "    \"";
+    platform != "" ? out << platform << "_0_" << builtinName : out << builtinName;
+    isSpirV ? out << ".builtin_kernel.bc\"," : out << ".builtin_kernel.bin\",";
     out << std::endl;
     out << "    (const char *)" << builtinName << "Binary_" << platform << "," << std::endl;
     out << "    " << builtinName << "BinarySize_" << platform << ");" << std::endl;
@@ -70,14 +71,14 @@ std::string parseToCharArray(std::unique_ptr<uint8_t[]> binary, size_t size, std
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != ARG_COUNT) {
+    if (argc < MIN_ARG_COUNT) {
         show_usage(argv[0]);
         return 1;
     }
     std::string fileName;
     std::string cppOutputName;
     std::string arrayName;
-    std::string platform;
+    std::string platform = "";
     size_t size = 0;
     std::fstream inputFile;
     bool isSpirV;
@@ -94,6 +95,10 @@ int main(int argc, char *argv[]) {
         } else {
             return 1;
         }
+    }
+    if (fileName.empty() || cppOutputName.empty() || arrayName.empty()) {
+        std::cerr << "All three: fileName, cppOutputName and arrayName must be specified!" << std::endl;
+        return 1;
     }
     inputFile.open(fileName.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
 
