@@ -45,7 +45,6 @@ struct Event : _ze_event_handle_t {
     virtual NEO::GraphicsAllocation &getAllocation();
 
     uint64_t getGpuAddress() { return gpuAddress; }
-    uint64_t getOffsetOfEventTimestampRegister(uint32_t eventTimestampReg);
 
     void *hostAddress = nullptr;
     uint64_t gpuAddress;

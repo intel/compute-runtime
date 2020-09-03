@@ -161,12 +161,6 @@ NEO::GraphicsAllocation &Event::getAllocation() {
     return eventImp->eventPool->getAllocation();
 }
 
-uint64_t Event::getOffsetOfEventTimestampRegister(uint32_t eventTimestampReg) {
-    auto eventImp = static_cast<EventImp *>(this);
-    auto eventSize = eventImp->eventPool->getEventSize();
-    return (eventTimestampReg * eventSize);
-}
-
 ze_result_t Event::destroy() {
     auto eventImp = static_cast<EventImp *>(this);
     auto deviceImp = static_cast<DeviceImp *>(eventImp->device);
