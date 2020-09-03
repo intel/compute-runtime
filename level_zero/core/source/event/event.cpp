@@ -28,50 +28,6 @@
 
 namespace L0 {
 
-struct EventImp : public Event {
-    EventImp(EventPool *eventPool, int index, Device *device)
-        : device(device), eventPool(eventPool) {}
-
-    ~EventImp() override {}
-
-    ze_result_t hostSignal() override;
-
-    ze_result_t hostSynchronize(uint64_t timeout) override;
-
-    ze_result_t queryStatus() override {
-        uint64_t *hostAddr = static_cast<uint64_t *>(hostAddress);
-        uint32_t queryVal = Event::STATE_CLEARED;
-
-        if (metricStreamer != nullptr) {
-            *hostAddr = metricStreamer->getNotificationState();
-        }
-
-        this->csr->downloadAllocations();
-
-        if (isTimestampEvent) {
-            auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
-
-            auto timeStampAddress = baseAddr + offsetof(KernelTimestampEvent, contextEnd);
-            hostAddr = reinterpret_cast<uint64_t *>(timeStampAddress);
-        }
-
-        memcpy_s(static_cast<void *>(&queryVal), sizeof(uint32_t), static_cast<void *>(hostAddr), sizeof(uint32_t));
-
-        return queryVal == Event::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t reset() override;
-
-    ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) override;
-
-    Device *device;
-    EventPool *eventPool;
-
-  protected:
-    ze_result_t hostEventSetValue(uint32_t eventValue);
-    ze_result_t hostEventSetValueTimestamps(uint32_t eventVal);
-};
-
 struct EventPoolImp : public EventPool {
     EventPoolImp(DriverHandle *driver, uint32_t numDevices, ze_device_handle_t *phDevices, uint32_t numEvents, ze_event_pool_flags_t flags) : numEvents(numEvents) {
         if (flags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
@@ -165,6 +121,22 @@ ze_result_t Event::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t EventImp::queryStatus() {
+    uint64_t *hostAddr = static_cast<uint64_t *>(hostAddress);
+    uint32_t queryVal = Event::STATE_CLEARED;
+    if (metricStreamer != nullptr) {
+        *hostAddr = metricStreamer->getNotificationState();
+    }
+    this->csr->downloadAllocations();
+    if (isTimestampEvent) {
+        auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
+        auto timeStampAddress = baseAddr + offsetof(KernelTimestampEvent, contextEnd);
+        hostAddr = reinterpret_cast<uint64_t *>(timeStampAddress);
+    }
+    memcpy_s(static_cast<void *>(&queryVal), sizeof(uint32_t), static_cast<void *>(hostAddr), sizeof(uint32_t));
+    return queryVal == Event::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
+}
+
 ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
 
     auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
@@ -256,8 +228,7 @@ ze_result_t EventImp::queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr)
 
     // Ensure timestamps have been written
     if (queryStatus() != ZE_RESULT_SUCCESS) {
-        memcpy_s(dstptr, sizeof(uint64_t), static_cast<void *>(&tsData), sizeof(uint64_t));
-        return ZE_RESULT_SUCCESS;
+        return ZE_RESULT_NOT_READY;
     }
 
     auto eventTsSetFunc = [&](auto tsAddr, uint64_t &timestampField) {
@@ -267,10 +238,17 @@ ze_result_t EventImp::queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr)
         memcpy_s(&(timestampField), sizeof(uint64_t), static_cast<void *>(&tsData), sizeof(uint64_t));
     };
 
-    eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, contextStart), result.context.kernelStart);
-    eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalStart), result.global.kernelStart);
-    eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, contextEnd), result.context.kernelEnd);
-    eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalEnd), result.global.kernelEnd);
+    if (!NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+        eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, contextStart), result.context.kernelStart);
+        eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalStart), result.global.kernelStart);
+        eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, contextEnd), result.context.kernelEnd);
+        eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalEnd), result.global.kernelEnd);
+    } else {
+        eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalStart), result.context.kernelStart);
+        eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalStart), result.global.kernelStart);
+        eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalEnd), result.context.kernelEnd);
+        eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalEnd), result.global.kernelEnd);
+    }
 
     return ZE_RESULT_SUCCESS;
 }

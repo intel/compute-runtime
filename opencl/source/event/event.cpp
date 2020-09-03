@@ -284,11 +284,19 @@ bool Event::calcProfilingData() {
             calculateProfilingDataInternal(globalStartTS, globalEndTS, &globalEndTS, globalStartTS);
 
         } else if (timeStampNode) {
-            calculateProfilingDataInternal(
-                timeStampNode->tagForCpuAccess->ContextStartTS,
-                timeStampNode->tagForCpuAccess->ContextEndTS,
-                &timeStampNode->tagForCpuAccess->ContextCompleteTS,
-                timeStampNode->tagForCpuAccess->GlobalStartTS);
+            if (HwHelper::get(this->cmdQueue->getDevice().getHardwareInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+                calculateProfilingDataInternal(
+                    timeStampNode->tagForCpuAccess->GlobalStartTS,
+                    timeStampNode->tagForCpuAccess->GlobalEndTS,
+                    &timeStampNode->tagForCpuAccess->GlobalEndTS,
+                    timeStampNode->tagForCpuAccess->GlobalStartTS);
+            } else {
+                calculateProfilingDataInternal(
+                    timeStampNode->tagForCpuAccess->ContextStartTS,
+                    timeStampNode->tagForCpuAccess->ContextEndTS,
+                    &timeStampNode->tagForCpuAccess->ContextCompleteTS,
+                    timeStampNode->tagForCpuAccess->GlobalStartTS);
+            }
         }
     }
     return dataCalculated;

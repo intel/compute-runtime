@@ -210,7 +210,7 @@ TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsOfPacketTagBuff
     EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER, allocation->getAllocationType());
 }
 
-TEST_F(TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
+HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
     KernelTimestampEvent data = {};
     data.contextStart = 1u;
     data.contextEnd = 2u;
@@ -228,5 +228,29 @@ TEST_F(TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCor
     EXPECT_EQ(data.globalEnd, result.global.kernelEnd);
 }
 
+HWCMDTEST_EXCLUDE_ADDITIONAL_FAMILY(TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet, IGFX_TIGERLAKE_LP);
+HWCMDTEST_EXCLUDE_ADDITIONAL_FAMILY(TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet, IGFX_DG1);
+
+TEST_F(TimestampEventCreate, givenEventWhenQueryKernelTimestampThenNotReadyReturned) {
+    struct MockEventQuery : public EventImp {
+        MockEventQuery(L0::EventPool *eventPool, int index, L0::Device *device) : EventImp(eventPool, index, device) {}
+
+        ze_result_t queryStatus() override {
+            return ZE_RESULT_NOT_READY;
+        }
+    };
+
+    auto mockEvent = std::make_unique<MockEventQuery>(eventPool.get(), 1u, device);
+
+    ze_kernel_timestamp_result_t resultTimestamp = {};
+
+    auto result = mockEvent->queryKernelTimestamp(&resultTimestamp);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+    EXPECT_EQ(0u, resultTimestamp.context.kernelStart);
+    EXPECT_EQ(0u, resultTimestamp.context.kernelEnd);
+    EXPECT_EQ(0u, resultTimestamp.global.kernelStart);
+    EXPECT_EQ(0u, resultTimestamp.global.kernelEnd);
+}
 } // namespace ult
 } // namespace L0

@@ -228,6 +228,11 @@ void MemorySynchronizationCommands<Family>::setCacheFlushExtraProperties(Family:
     pipeControl.setConstantCacheInvalidationEnable(false);
 }
 
+template <>
+bool HwHelperHw<Family>::useOnlyGlobalTimestamps() const {
+    return true;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

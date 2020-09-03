@@ -1,0 +1,28 @@
+/*
+ * Copyright (C) 2020 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "test.h"
+
+namespace NEO {
+HWCMDTEST_EXCLUDE_FAMILY(ProfilingTests, GivenCommandQueueBlockedWithProfilingWhenWalkerIsDispatchedThenMiStoreRegisterMemIsPresentInCS, IGFX_ROCKETLAKE);
+
+HWCMDTEST_EXCLUDE_FAMILY(ProfilingTests, GivenCommandQueueWithProflingWhenWalkerIsDispatchedThenMiStoreRegisterMemIsPresentInCS, IGFX_ROCKETLAKE);
+
+HWCMDTEST_EXCLUDE_FAMILY(EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEndTimestampInCompleteTimestampAndDoesntCallOsTimeMethods, IGFX_ROCKETLAKE);
+
+HWCMDTEST_EXCLUDE_FAMILY(EventProfilingTests, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawDataIsReturned, IGFX_ROCKETLAKE);
+
+HWCMDTEST_EXCLUDE_FAMILY(EventProfilingTest, givenRawTimestampsDebugModeWhenStartTimeStampLTQueueTimeStampThenIncreaseStartTimeStamp, IGFX_ROCKETLAKE);
+
+HWCMDTEST_EXCLUDE_FAMILY(ProfilingWithPerfCountersTests, GivenCommandQueueWithProfilingPerfCountersWhenWalkerIsDispatchedThenRegisterStoresArePresentInCS, IGFX_ROCKETLAKE);
+
+HWCMDTEST_EXCLUDE_FAMILY(TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet, IGFX_ROCKETLAKE);
+} // namespace NEO
+
+HWCMDTEST_EXCLUDE_FAMILY(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenTimeStampAddressIsProgrammedCorrectly, IGFX_ROCKETLAKE);
+
+HWCMDTEST_EXCLUDE_FAMILY(ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsNotTakenThenTimeStampAddressIsProgrammedCorrectly, IGFX_ROCKETLAKE);

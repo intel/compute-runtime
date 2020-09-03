@@ -124,6 +124,7 @@ class HwHelper {
     virtual uint32_t getDefaultThreadArbitrationPolicy() const = 0;
     virtual void adjustPlatformCoreFamilyForIgc(HardwareInfo &hwInfo) = 0;
     virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
+    virtual bool useOnlyGlobalTimestamps() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -315,6 +316,8 @@ class HwHelperHw : public HwHelper {
     uint32_t getDefaultThreadArbitrationPolicy() const override;
 
     void adjustPlatformCoreFamilyForIgc(HardwareInfo &hwInfo) override;
+
+    bool useOnlyGlobalTimestamps() const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

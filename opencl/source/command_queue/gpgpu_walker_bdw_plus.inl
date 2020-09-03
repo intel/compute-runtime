@@ -228,7 +228,6 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     TagNode<HwTimeStamps> &hwTimeStamps,
     LinearStream *commandStream,
     const HardwareInfo &hwInfo) {
-
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     // PIPE_CONTROL for global timestamp
@@ -257,8 +256,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     TagNode<HwTimeStamps> &hwTimeStamps,
-    LinearStream *commandStream) {
-
+    LinearStream *commandStream,
+    const HardwareInfo &hwInfo) {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     // PIPE_CONTROL for global timestamp

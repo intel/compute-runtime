@@ -48,7 +48,7 @@ inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfEndCommands(
 
     // If hwTimeStamps is passed (not nullptr), then we know that profiling is enabled
     if (hwTimeStamps != nullptr) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(*hwTimeStamps, commandStream);
+        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(*hwTimeStamps, commandStream, commandQueue.getDevice().getHardwareInfo());
     }
     if (hwPerfCounter != nullptr) {
         GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(commandQueue, *hwPerfCounter, commandStream);

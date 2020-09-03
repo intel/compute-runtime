@@ -1356,10 +1356,9 @@ struct ProfilingCommandsTest : public DispatchWalkerTest, ::testing::WithParamIn
     }
 };
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenTimeStampAddressIsProgrammedCorrectly) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsTakenThenTimeStampAddressIsProgrammedCorrectly) {
     using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    bool checkForStart = GetParam();
 
     auto &cmdStream = pCmdQ->getCS(0);
     TagAllocator<HwTimeStamps> timeStampAllocator(pDevice->getRootDeviceIndex(), this->pDevice->getMemoryManager(), 10,
@@ -1367,19 +1366,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingComma
 
     auto hwTimeStamp1 = timeStampAllocator.getTag();
     ASSERT_NE(nullptr, hwTimeStamp1);
-    if (checkForStart) {
-        GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp1, &cmdStream, pDevice->getHardwareInfo());
-    } else {
-        GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp1, &cmdStream);
-    }
+
+    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp1, &cmdStream, pDevice->getHardwareInfo());
 
     auto hwTimeStamp2 = timeStampAllocator.getTag();
     ASSERT_NE(nullptr, hwTimeStamp2);
-    if (checkForStart) {
-        GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp2, &cmdStream, pDevice->getHardwareInfo());
-    } else {
-        GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp2, &cmdStream);
-    }
+
+    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp2, &cmdStream, pDevice->getHardwareInfo());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
@@ -1390,7 +1383,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingComma
     ASSERT_NE(nullptr, storeReg);
 
     uint64_t gpuAddress = storeReg->getMemoryAddress();
-    auto contextTimestampFieldOffset = checkForStart ? offsetof(HwTimeStamps, ContextStartTS) : offsetof(HwTimeStamps, ContextEndTS);
+    auto contextTimestampFieldOffset = offsetof(HwTimeStamps, ContextStartTS);
     uint64_t expectedAddress = hwTimeStamp1->getGpuAddress() + contextTimestampFieldOffset;
     EXPECT_EQ(expectedAddress, gpuAddress);
 
@@ -1404,39 +1397,74 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingComma
     expectedAddress = hwTimeStamp2->getGpuAddress() + contextTimestampFieldOffset;
     EXPECT_EQ(expectedAddress, gpuAddress);
 
-    if (checkForStart) {
-        auto itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-        ASSERT_NE(cmdList.end(), itorPipeCtrl);
-        if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
-            itorPipeCtrl++;
-        }
-        if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
-            itorPipeCtrl++;
-        }
-        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
-        ASSERT_NE(nullptr, pipeControl);
-
-        gpuAddress = static_cast<uint64_t>(pipeControl->getAddress()) | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
-        expectedAddress = hwTimeStamp1->getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
-        EXPECT_EQ(expectedAddress, gpuAddress);
-
+    auto itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorPipeCtrl);
+    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
         itorPipeCtrl++;
-        itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(itorPipeCtrl, cmdList.end());
-        if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
-            itorPipeCtrl++;
-        }
-        if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
-            itorPipeCtrl++;
-        }
-        ASSERT_NE(cmdList.end(), itorPipeCtrl);
-        pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
-        ASSERT_NE(nullptr, pipeControl);
-
-        gpuAddress = static_cast<uint64_t>(pipeControl->getAddress()) | static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32;
-        expectedAddress = hwTimeStamp2->getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
-        EXPECT_EQ(expectedAddress, gpuAddress);
     }
+    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
+        itorPipeCtrl++;
+    }
+    auto pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
+    ASSERT_NE(nullptr, pipeControl);
+
+    gpuAddress = static_cast<uint64_t>(pipeControl->getAddress()) | (static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32);
+    expectedAddress = hwTimeStamp1->getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
+    EXPECT_EQ(expectedAddress, gpuAddress);
+
+    itorPipeCtrl++;
+    itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(itorPipeCtrl, cmdList.end());
+    if (HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
+        itorPipeCtrl++;
+    }
+    if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired(pDevice->getHardwareInfo())) {
+        itorPipeCtrl++;
+    }
+    ASSERT_NE(cmdList.end(), itorPipeCtrl);
+    pipeControl = genCmdCast<PIPE_CONTROL *>(*itorPipeCtrl);
+    ASSERT_NE(nullptr, pipeControl);
+
+    gpuAddress = static_cast<uint64_t>(pipeControl->getAddress()) | static_cast<uint64_t>(pipeControl->getAddressHigh()) << 32;
+    expectedAddress = hwTimeStamp2->getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
+    EXPECT_EQ(expectedAddress, gpuAddress);
 }
 
-INSTANTIATE_TEST_CASE_P(StartEndFlag,
-                        ProfilingCommandsTest, ::testing::Bool());
+HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingCommandStartIsNotTakenThenTimeStampAddressIsProgrammedCorrectly) {
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &cmdStream = pCmdQ->getCS(0);
+    TagAllocator<HwTimeStamps> timeStampAllocator(pDevice->getRootDeviceIndex(), this->pDevice->getMemoryManager(), 10,
+                                                  MemoryConstants::cacheLineSize, sizeof(HwTimeStamps), false, pDevice->getDeviceBitfield());
+
+    auto hwTimeStamp1 = timeStampAllocator.getTag();
+    ASSERT_NE(nullptr, hwTimeStamp1);
+    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp1, &cmdStream, pDevice->getHardwareInfo());
+
+    auto hwTimeStamp2 = timeStampAllocator.getTag();
+    ASSERT_NE(nullptr, hwTimeStamp2);
+    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp2, &cmdStream, pDevice->getHardwareInfo());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
+
+    auto itorStoreReg = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorStoreReg);
+    auto storeReg = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorStoreReg);
+    ASSERT_NE(nullptr, storeReg);
+
+    uint64_t gpuAddress = storeReg->getMemoryAddress();
+    auto contextTimestampFieldOffset = offsetof(HwTimeStamps, ContextEndTS);
+    uint64_t expectedAddress = hwTimeStamp1->getGpuAddress() + contextTimestampFieldOffset;
+    EXPECT_EQ(expectedAddress, gpuAddress);
+
+    itorStoreReg++;
+    itorStoreReg = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(itorStoreReg, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorStoreReg);
+    storeReg = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorStoreReg);
+    ASSERT_NE(nullptr, storeReg);
+
+    gpuAddress = storeReg->getMemoryAddress();
+    expectedAddress = hwTimeStamp2->getGpuAddress() + contextTimestampFieldOffset;
+    EXPECT_EQ(expectedAddress, gpuAddress);
+}

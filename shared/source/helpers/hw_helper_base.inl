@@ -480,4 +480,8 @@ uint32_t HwHelperHw<GfxFamily>::getDefaultThreadArbitrationPolicy() const {
     return 0;
 }
 
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::useOnlyGlobalTimestamps() const {
+    return false;
+}
 } // namespace NEO

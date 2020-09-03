@@ -432,7 +432,9 @@ class MyOSTime : public OSTime {
 
 int MyOSTime::instanceNum = 0;
 
-TEST(EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEndTimestampInCompleteTimestampAndDoesntCallOsTimeMethods) {
+using EventProfilingTest = ProfilingTests;
+
+HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEndTimestampInCompleteTimestampAndDoesntCallOsTimeMethods) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MyOSTime::instanceNum = 0;
     device->setOSTime(new MyOSTime());
@@ -465,7 +467,9 @@ TEST(EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEn
     event.timeStampNode = nullptr;
 }
 
-TEST(EventProfilingTest, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawDataIsReturned) {
+using EventProfilingTests = ProfilingTests;
+
+HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTests, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawDataIsReturned) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ReturnRawGpuTimestamps.set(1);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -518,7 +522,7 @@ TEST(EventProfilingTest, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawData
     event.timeStampNode = nullptr;
 }
 
-TEST(EventProfilingTest, givenRawTimestampsDebugModeWhenStartTimeStampLTQueueTimeStampThenIncreaseStartTimeStamp) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenRawTimestampsDebugModeWhenStartTimeStampLTQueueTimeStampThenIncreaseStartTimeStamp) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ReturnRawGpuTimestamps.set(1);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
