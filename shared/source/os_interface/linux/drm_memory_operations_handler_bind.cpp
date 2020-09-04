@@ -84,20 +84,8 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device
 }
 
 void DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
-    if (DebugManager.flags.BindAllAllocations.get()) {
-        this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer));
-        residencyContainer.clear();
-        return;
-    }
-
-    std::lock_guard<std::mutex> lock(mutex);
-    for (auto gfxAllocation = residencyContainer.begin(); gfxAllocation != residencyContainer.end();) {
-        if ((*gfxAllocation)->isAlwaysResident(osContext->getContextId())) {
-            gfxAllocation = residencyContainer.erase(gfxAllocation);
-        } else {
-            gfxAllocation++;
-        }
-    }
+    this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer));
+    residencyContainer.clear();
 }
 
 std::unique_lock<std::mutex> DrmMemoryOperationsHandlerBind::lockHandlerForExecWA() {
