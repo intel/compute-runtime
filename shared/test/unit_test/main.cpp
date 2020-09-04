@@ -74,6 +74,7 @@ extern std::string lastTest;
 bool generateRandomInput = false;
 
 void applyWorkarounds() {
+    platformsImpl = new std::vector<std::unique_ptr<Platform>>;
     platformsImpl->reserve(1);
     {
         std::ofstream f;

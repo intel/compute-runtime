@@ -72,6 +72,7 @@ extern std::string lastTest;
 bool generateRandomInput = false;
 
 void applyWorkarounds() {
+    platformsImpl = new std::vector<std::unique_ptr<Platform>>;
     platformsImpl->reserve(1);
     {
         std::ofstream f;
@@ -152,6 +153,7 @@ void initializeTestHelpers() {
 
 void cleanTestHelpers() {
     GlobalMockSipProgram::shutDownSipProgram();
+    delete platformsImpl;
 }
 
 std::string getHardwarePrefix() {
@@ -440,6 +442,5 @@ int main(int argc, char **argv) {
     retVal = RUN_ALL_TESTS();
 
     cleanTestHelpers();
-    delete platformsImpl;
     return retVal;
 }
