@@ -124,7 +124,6 @@ GT_SYSTEM_INFO RKL_HW_CONFIG::gtSystemInfo = {0};
 void RKL_HW_CONFIG::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->ThreadCount = gtSysInfo->EUCount * RKL::threadsPerEu;
-    gtSysInfo->SliceCount = gtSysInfo->SliceCount;
     gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount / 2;
     gtSysInfo->L3CacheSizeInKb = 1920;
     gtSysInfo->L3BankCount = 4;
