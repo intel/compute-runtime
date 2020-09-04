@@ -125,6 +125,9 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
     }
 
     bool internalUsage = (deviceCsrIndex == HwHelper::internalUsageEngineIndex);
+    if (internalUsage) {
+        commandStreamReceiver->initializeDefaultsForInternalEngine();
+    }
 
     if (commandStreamReceiver->needsPageTableManager(engineType)) {
         commandStreamReceiver->createPageTableManager();

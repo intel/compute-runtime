@@ -214,6 +214,8 @@ class CommandStreamReceiver {
 
     bool isRcs() const;
 
+    virtual void initializeDefaultsForInternalEngine(){};
+
   protected:
     void cleanupResources();
     void printDeviceIndex();

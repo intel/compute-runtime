@@ -72,3 +72,14 @@ HWTEST_F(DeviceCommandStreamLeaksTest, givenEnableDirectSubmissionWhenCsrIsCreat
 
     EXPECT_EQ(drmCsr->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerInactive);
 }
+
+using DeviceCommandStreamSetInternalUsageTests = DeviceCommandStreamLeaksTest;
+
+HWTEST_F(DeviceCommandStreamSetInternalUsageTests, givenValidDrmCsrThenGemCloseWorkerOperationModeIsSetToInactiveWhenInternalUsageIsSet) {
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0));
+    auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
+    EXPECT_EQ(drmCsr->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerActive);
+
+    drmCsr->initializeDefaultsForInternalEngine();
+    EXPECT_EQ(drmCsr->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerInactive);
+}

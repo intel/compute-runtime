@@ -49,6 +49,10 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
         return this->gemCloseWorkerOperationMode;
     }
 
+    void initializeDefaultsForInternalEngine() override {
+        gemCloseWorkerOperationMode = gemCloseWorkerMode::gemCloseWorkerInactive;
+    }
+
   protected:
     MOCKABLE_VIRTUAL void flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency);
     MOCKABLE_VIRTUAL void exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId);
