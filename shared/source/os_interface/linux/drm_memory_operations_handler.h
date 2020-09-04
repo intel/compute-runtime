@@ -20,7 +20,7 @@ class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
     DrmMemoryOperationsHandler() = default;
     ~DrmMemoryOperationsHandler() override = default;
 
-    virtual MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations) = 0;
+    virtual MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) = 0;
     virtual MemoryOperationsStatus evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) = 0;
     virtual void mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) = 0;
     virtual std::unique_lock<std::mutex> lockHandlerForExecWA() = 0;

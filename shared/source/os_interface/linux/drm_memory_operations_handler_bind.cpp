@@ -24,20 +24,20 @@ DrmMemoryOperationsHandlerBind::~DrmMemoryOperationsHandlerBind() = default;
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     auto engines = device->getEngines();
     for (const auto &engine : engines) {
-        this->makeResidentWithinOsContext(engine.osContext, gfxAllocations);
+        this->makeResidentWithinOsContext(engine.osContext, gfxAllocations, false);
     }
     return MemoryOperationsStatus::SUCCESS;
 }
 
-MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations) {
+MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {
     std::lock_guard<std::mutex> lock(mutex);
     for (auto gfxAllocation = gfxAllocations.begin(); gfxAllocation != gfxAllocations.end(); gfxAllocation++) {
-        if (!(*gfxAllocation)->isAlwaysResident(osContext->getContextId())) {
-            auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
-            auto &drmContextIds = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds();
-            for (uint32_t drmIterator = 0u; drmIterator < drmContextIds.size(); drmIterator++) {
-                drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
-            }
+        auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
+        auto &drmContextIds = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds();
+        for (uint32_t drmIterator = 0u; drmIterator < drmContextIds.size(); drmIterator++) {
+            drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
+        }
+        if (!evictable) {
             drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
         }
     }
@@ -58,14 +58,12 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evict(Device *device, Gra
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
     std::lock_guard<std::mutex> lock(mutex);
-    if (gfxAllocation.isAlwaysResident(osContext->getContextId())) {
-        auto drmAllocation = static_cast<DrmAllocation *>(&gfxAllocation);
-        auto &drmContextIds = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds();
-        for (uint32_t drmIterator = 0u; drmIterator < drmContextIds.size(); drmIterator++) {
-            drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, false);
-        }
-        drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, osContext->getContextId());
+    auto drmAllocation = static_cast<DrmAllocation *>(&gfxAllocation);
+    auto &drmContextIds = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds();
+    for (uint32_t drmIterator = 0u; drmIterator < drmContextIds.size(); drmIterator++) {
+        drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, false);
     }
+    drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectNotResident, osContext->getContextId());
     return MemoryOperationsStatus::SUCCESS;
 }
 
@@ -84,7 +82,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::isResident(Device *device
 }
 
 void DrmMemoryOperationsHandlerBind::mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) {
-    this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer));
+    this->makeResidentWithinOsContext(osContext, ArrayRef<GraphicsAllocation *>(residencyContainer), true);
     residencyContainer.clear();
 }
 

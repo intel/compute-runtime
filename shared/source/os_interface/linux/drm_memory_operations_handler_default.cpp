@@ -16,7 +16,7 @@ namespace NEO {
 DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault() = default;
 DrmMemoryOperationsHandlerDefault::~DrmMemoryOperationsHandlerDefault() = default;
 
-MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations) {
+MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {
     std::lock_guard<std::mutex> lock(mutex);
     this->residency.insert(gfxAllocations.begin(), gfxAllocations.end());
     return MemoryOperationsStatus::SUCCESS;
@@ -24,7 +24,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsCo
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     OsContext *osContext = nullptr;
-    return this->makeResidentWithinOsContext(osContext, gfxAllocations);
+    return this->makeResidentWithinOsContext(osContext, gfxAllocations, false);
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::evictWithinOsContext(OsContext *osContext, GraphicsAllocation &gfxAllocation) {
