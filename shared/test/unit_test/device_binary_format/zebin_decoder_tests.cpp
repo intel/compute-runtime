@@ -2591,7 +2591,7 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenAddresspaceIsKn
     for (auto addressSpace : addresSpaces) {
         std::string zeinfo = R"===(
         kernels:
-            - name : some_kernel
+            - name : 'some_kernel'
               execution_env:   
                 simd_size: 32
               payload_arguments: 
