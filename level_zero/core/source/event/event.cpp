@@ -167,9 +167,7 @@ ze_result_t EventImp::hostEventSetValue(uint32_t eventVal) {
     UNRECOVERABLE_IF(hostAddr == nullptr);
     memcpy_s(static_cast<void *>(hostAddr), sizeof(uint32_t), static_cast<void *>(&eventVal), sizeof(uint32_t));
 
-    if (!this->signalScope) {
-        NEO::CpuIntrinsics::clFlush(hostAddr);
-    }
+    NEO::CpuIntrinsics::clFlush(hostAddr);
 
     return ZE_RESULT_SUCCESS;
 }
