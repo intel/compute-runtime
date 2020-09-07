@@ -1097,7 +1097,7 @@ HWTEST_F(HardwareCommandsHelperTests, whenProgrammingMiAtomicThenSetupAllFields)
 
 typedef ExecutionModelKernelFixture ParentKernelCommandsFromBinaryTest;
 
-HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelForSurfaceStatesReturnsSizeOfBlocksPlusMaxBindingTableSizeForAllIDTEntriesAndSchedulerSSHSize) {
+HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, WhenGettingSizeRequiredForExecutionModelForSurfaceStatesThenReturnSizeOfBlocksPlusMaxBindingTableSizeForAllIdtEntriesAndSchedulerSshSize) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
 
     if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
