@@ -31,7 +31,7 @@ struct GetDeviceInfoSize : public ::testing::TestWithParam<std::pair<uint32_t /*
     std::pair<uint32_t, size_t> param;
 };
 
-TEST_P(GetDeviceInfoSize, sizeIsValid) {
+TEST_P(GetDeviceInfoSize, GivenParamWhenGettingDeviceInfoThenSizeIsValid) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     size_t sizeReturned = GetInfo::invalidSourceSize;
@@ -142,7 +142,7 @@ INSTANTIATE_TEST_CASE_P(
 
 struct GetDeviceInfoForImage : public GetDeviceInfoSize {};
 
-TEST_P(GetDeviceInfoForImage, imageInfoSizeIsValid) {
+TEST_P(GetDeviceInfoForImage, GivenParamWhenGettingDeviceInfoThenSizeIsValid) {
     auto device = std::make_unique<ClDevice>(*MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr), platform());
     if (!device->getSharedDeviceInfo().imageSupport) {
         GTEST_SKIP();
@@ -208,6 +208,7 @@ TEST(GetDeviceInfoForImage, givenNotImageParamWhenCallGetDeviceInfoForImageThenS
     EXPECT_NE(paramSize, srcSize);
     EXPECT_NE(paramSize, retSize);
 }
+
 std::pair<uint32_t, size_t> deviceInfoImageParams[] = {
     {CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t)},
     {CL_DEVICE_IMAGE2D_MAX_WIDTH, sizeof(size_t)},
