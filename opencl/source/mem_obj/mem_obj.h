@@ -12,6 +12,7 @@
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/helpers/base_object.h"
+#include "opencl/source/helpers/destructor_callback.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/map_operations_handler.h"
 #include "opencl/source/sharings/sharing.h"
@@ -20,6 +21,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <list>
 #include <vector>
 
 namespace NEO {
@@ -160,19 +162,6 @@ class MemObj : public BaseObject<_cl_mem> {
     std::shared_ptr<SharingHandler> sharingHandler;
     std::vector<uint64_t> propertiesVector;
 
-    class DestructorCallback {
-      public:
-        DestructorCallback(void(CL_CALLBACK *funcNotify)(cl_mem, void *),
-                           void *userData)
-            : funcNotify(funcNotify), userData(userData){};
-
-        void invoke(cl_mem memObj);
-
-      private:
-        void(CL_CALLBACK *funcNotify)(cl_mem, void *);
-        void *userData;
-    };
-
-    std::vector<DestructorCallback *> destructorCallbacks;
+    std::list<MemObjDestructorCallback *> destructorCallbacks;
 };
 } // namespace NEO

@@ -105,18 +105,12 @@ MemObj::~MemObj() {
             releaseAllocatedMapPtr();
         }
     }
-    if (!destructorCallbacks.empty()) {
-        for (auto iter = destructorCallbacks.rbegin(); iter != destructorCallbacks.rend(); iter++) {
-            (*iter)->invoke(this);
-            delete *iter;
-        }
+    for (auto callback : destructorCallbacks) {
+        callback->invoke(this);
+        delete callback;
     }
 
     context->decRefInternal();
-}
-
-void MemObj::DestructorCallback::invoke(cl_mem memObj) {
-    this->funcNotify(memObj, userData);
 }
 
 cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
@@ -220,10 +214,10 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
 
 cl_int MemObj::setDestructorCallback(void(CL_CALLBACK *funcNotify)(cl_mem, void *),
                                      void *userData) {
-    auto cb = new DestructorCallback(funcNotify, userData);
+    auto cb = new MemObjDestructorCallback(funcNotify, userData);
 
     std::unique_lock<std::mutex> theLock(mtx);
-    destructorCallbacks.push_back(cb);
+    destructorCallbacks.push_front(cb);
     return CL_SUCCESS;
 }
 

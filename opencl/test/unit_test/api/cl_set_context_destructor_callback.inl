@@ -23,12 +23,15 @@ TEST_F(clSetContextDestructorCallbackTests, givenPfnNotifyNullptrWhenSettingCont
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clSetContextDestructorCallbackTests, WhenSettingContextDestructorCallbackThenOutOfHostMemoryErrorIsReturned) {
-    using NotifyFunctionType = void(CL_CALLBACK *)(cl_context, void *);
-    NotifyFunctionType pfnNotify = reinterpret_cast<NotifyFunctionType>(0x1234);
-    void *userData = reinterpret_cast<void *>(0x4321);
-    auto retVal = clSetContextDestructorCallback(pContext, pfnNotify, userData);
-    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
+void CL_CALLBACK callback(cl_context, void *){};
+
+TEST_F(clSetContextDestructorCallbackTests, WhenSettingContextDestructorCallbackThenSucccessIsReturned) {
+    auto retVal = clSetContextDestructorCallback(pContext, callback, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto userData = reinterpret_cast<void *>(0x4321);
+    retVal = clSetContextDestructorCallback(pContext, callback, userData);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 } // namespace ULT

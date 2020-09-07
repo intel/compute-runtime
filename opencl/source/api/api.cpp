@@ -5381,11 +5381,12 @@ cl_int CL_API_CALL clSetProgramReleaseCallback(cl_program program,
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
-    retVal = validateObjects(program,
+    Program *pProgram = nullptr;
+    retVal = validateObjects(WithCastToInternal(program, &pProgram),
                              reinterpret_cast<void *>(pfnNotify));
 
     if (retVal == CL_SUCCESS) {
-        retVal = CL_INVALID_OPERATION;
+        retVal = pProgram->setReleaseCallback(pfnNotify, userData);
     }
 
     return retVal;
@@ -5597,11 +5598,12 @@ cl_int CL_API_CALL clSetContextDestructorCallback(cl_context context,
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
-    retVal = validateObjects(context,
+    Context *pContext = nullptr;
+    retVal = validateObjects(WithCastToInternal(context, &pContext),
                              reinterpret_cast<void *>(pfnNotify));
 
     if (retVal == CL_SUCCESS) {
-        retVal = CL_OUT_OF_HOST_MEMORY;
+        retVal = pContext->setDestructorCallback(pfnNotify, userData);
     }
 
     return retVal;

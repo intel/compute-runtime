@@ -444,3 +444,34 @@ TEST(Context, givenContextWithMultipleSubDevicesWhenGettingDeviceBitfieldForAllo
     EXPECT_EQ(expectedDeviceBitfield.to_ulong(), context->getDeviceBitfieldForAllocation().to_ulong());
     context->release();
 }
+
+TEST(Context, WhenSettingContextDestructorCallbackThenCallOrderIsPreserved) {
+    struct UserDataType {
+        cl_context expectedContext;
+        std::vector<size_t> &vectorToModify;
+        size_t valueToAdd;
+    };
+    auto callback = [](cl_context context, void *userData) -> void {
+        auto pUserData = reinterpret_cast<UserDataType *>(userData);
+        EXPECT_EQ(pUserData->expectedContext, context);
+        pUserData->vectorToModify.push_back(pUserData->valueToAdd);
+    };
+
+    auto pContext = new MockContext{};
+    std::vector<size_t> callbacksReturnValues;
+    UserDataType userDataArray[]{
+        {pContext, callbacksReturnValues, 1},
+        {pContext, callbacksReturnValues, 2},
+        {pContext, callbacksReturnValues, 3}};
+
+    for (auto &userData : userDataArray) {
+        cl_int retVal = clSetContextDestructorCallback(pContext, callback, &userData);
+        ASSERT_EQ(CL_SUCCESS, retVal);
+    }
+    delete pContext;
+
+    ASSERT_EQ(3u, callbacksReturnValues.size());
+    EXPECT_EQ(3u, callbacksReturnValues[0]);
+    EXPECT_EQ(2u, callbacksReturnValues[1]);
+    EXPECT_EQ(1u, callbacksReturnValues[2]);
+}

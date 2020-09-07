@@ -14,6 +14,9 @@
 #include "opencl/source/context/context_type.h"
 #include "opencl/source/context/driver_diagnostics.h"
 #include "opencl/source/helpers/base_object.h"
+#include "opencl/source/helpers/destructor_callback.h"
+
+#include <list>
 
 namespace NEO {
 
@@ -62,6 +65,9 @@ class Context : public BaseObject<_cl_context> {
     Context(const Context &) = delete;
 
     ~Context() override;
+
+    cl_int setDestructorCallback(void(CL_CALLBACK *funcNotify)(cl_context, void *),
+                                 void *userData);
 
     cl_int getInfo(cl_context_info paramName, size_t paramValueSize,
                    void *paramValue, size_t *paramValueSizeRet);
@@ -164,5 +170,7 @@ class Context : public BaseObject<_cl_context> {
     bool interopUserSync = false;
     cl_bool preferD3dSharedResources = 0u;
     ContextType contextType = ContextType::CONTEXT_TYPE_DEFAULT;
+
+    std::list<ContextDestructorCallback *> destructorCallbacks;
 };
 } // namespace NEO

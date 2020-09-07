@@ -62,6 +62,10 @@ Context::~Context() {
         memoryManager->getDeferredDeleter()->removeClient();
     }
     gtpinNotifyContextDestroy((cl_context)this);
+    for (auto callback : destructorCallbacks) {
+        callback->invoke(this);
+        delete callback;
+    }
     for (auto &device : devices) {
         device->decRefInternal();
     }
@@ -69,6 +73,15 @@ Context::~Context() {
     delete schedulerBuiltIn->pProgram;
     schedulerBuiltIn->pKernel = nullptr;
     schedulerBuiltIn->pProgram = nullptr;
+}
+
+cl_int Context::setDestructorCallback(void(CL_CALLBACK *funcNotify)(cl_context, void *),
+                                      void *userData) {
+    auto cb = new ContextDestructorCallback(funcNotify, userData);
+
+    std::unique_lock<std::mutex> theLock(mtx);
+    destructorCallbacks.push_front(cb);
+    return CL_SUCCESS;
 }
 
 DeviceQueue *Context::getDefaultDeviceQueue() {
