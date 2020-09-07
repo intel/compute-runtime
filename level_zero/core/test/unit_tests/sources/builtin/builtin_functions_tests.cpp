@@ -7,6 +7,7 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_compiler_interface.h"
 
 #include "test.h"
@@ -14,6 +15,7 @@
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/module/module.h"
+#include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 #include "gtest/gtest.h"
@@ -41,7 +43,7 @@ class TestBuiltinFunctionsLibImpl : public DeviceFixture, public testing::Test {
     std::unique_ptr<MockBuiltinFunctionsLibImpl> mockBuiltinFunctionsLibImpl;
 };
 
-HWTEST_F(TestBuiltinFunctionsLibImpl, givenInitImageFunctionWhenImageBultinsTableConstainNullptrsAndImageSupportedThenBuiltinsImageFunctionsAreLoaded) {
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenInitImageFunctionWhenImageBultinsTableContainNullptrsAndImageSupportedThenBuiltinsImageFunctionsAreLoaded) {
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(ImageBuiltin::COUNT); builtId++) {
         EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->imageBuiltins[builtId]);
     }
@@ -54,7 +56,7 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenInitImageFunctionWhenImageBultinsTabl
     }
 }
 
-HWTEST_F(TestBuiltinFunctionsLibImpl, givenInitFunctionWhenBultinsTableConstainNullptrsThenBuiltinsFunctionsAreLoaded) {
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenInitFunctionWhenBultinsTableContainNullptrsThenBuiltinsFunctionsAreLoaded) {
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
         EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->builtins[builtId]);
     }
@@ -84,5 +86,78 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceThen
         EXPECT_NE(nullptr, testDevice->getBuiltinFunctionsLib()->getFunction(static_cast<L0::Builtin>(builtId)));
     }
 }
+
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenIntermediateCodeForBuiltinsIsRequested) {
+    struct MockDeviceForRebuildBuilins : public Mock<DeviceImp> {
+        struct MockModuleForRebuildBuiltins : public ModuleImp {
+            MockModuleForRebuildBuiltins(Device *device) : ModuleImp(device, nullptr) {}
+
+            ze_result_t createKernel(const ze_kernel_desc_t *desc,
+                                     ze_kernel_handle_t *phFunction) override {
+                *phFunction = nullptr;
+                return ZE_RESULT_SUCCESS;
+            }
+        };
+
+        MockDeviceForRebuildBuilins(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
+            driverHandle = device->getDriverHandle();
+            builtins = BuiltinFunctionsLib::create(this, neoDevice->getBuiltIns());
+        }
+
+        ze_result_t createModule(const ze_module_desc_t *desc,
+                                 ze_module_handle_t *module,
+                                 ze_module_build_log_handle_t *buildLog) override {
+            EXPECT_EQ(desc->format, ZE_MODULE_FORMAT_IL_SPIRV);
+            EXPECT_GT(desc->inputSize, 0u);
+            EXPECT_NE(desc->pInputModule, nullptr);
+            wasCreatedModuleCalled = true;
+
+            *module = new MockModuleForRebuildBuiltins(this);
+
+            return ZE_RESULT_SUCCESS;
+        }
+
+        bool wasCreatedModuleCalled = false;
+    };
+
+    DebugManagerStateRestore dgbRestorer;
+    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    MockDeviceForRebuildBuilins testDevice(device);
+
+    testDevice.getBuiltinFunctionsLib()->initFunctions();
+
+    EXPECT_TRUE(testDevice.wasCreatedModuleCalled);
+}
+
+HWTEST_F(TestBuiltinFunctionsLibImpl, givenNotToRebuildPrecompiledKernelsDebugFlagWhenInitFuctionsThenNativeCodeForBuiltinsIsRequested) {
+    struct MockDeviceForRebuildBuilins : public Mock<DeviceImp> {
+        MockDeviceForRebuildBuilins(L0::Device *device) : Mock(device->getNEODevice(), static_cast<NEO::ExecutionEnvironment *>(device->getExecEnvironment())) {
+            driverHandle = device->getDriverHandle();
+            builtins = BuiltinFunctionsLib::create(this, neoDevice->getBuiltIns());
+        }
+
+        ze_result_t createModule(const ze_module_desc_t *desc,
+                                 ze_module_handle_t *module,
+                                 ze_module_build_log_handle_t *buildLog) override {
+            EXPECT_EQ(desc->format, ZE_MODULE_FORMAT_NATIVE);
+            EXPECT_GT(desc->inputSize, 0u);
+            EXPECT_NE(desc->pInputModule, nullptr);
+            wasCreatedModuleCalled = true;
+
+            return DeviceImp::createModule(desc, module, buildLog);
+        }
+
+        bool wasCreatedModuleCalled = false;
+    };
+
+    DebugManagerStateRestore dgbRestorer;
+    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(false);
+    MockDeviceForRebuildBuilins testDevice(device);
+
+    testDevice.getBuiltinFunctionsLib()->initFunctions();
+
+    EXPECT_TRUE(testDevice.wasCreatedModuleCalled);
+}
+
 } // namespace ult
 } // namespace L0

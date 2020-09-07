@@ -146,13 +146,16 @@ Kernel *BuiltinFunctionsLibImpl::getPageFaultFunction() {
 }
 
 std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) {
-    auto builtInCode = builtInsLib->getBuiltinsLib().getBuiltinCode(builtin, NEO::BuiltinCode::ECodeType::Binary, *device->getNEODevice());
+    using BuiltInCodeType = NEO::BuiltinCode::ECodeType;
+
+    auto builtInCodeType = NEO::DebugManager.flags.RebuildPrecompiledKernels.get() ? BuiltInCodeType::Intermediate : BuiltInCodeType::Binary;
+    auto builtInCode = builtInsLib->getBuiltinsLib().getBuiltinCode(builtin, builtInCodeType, *device->getNEODevice());
 
     ze_result_t res;
     std::unique_ptr<Module> module;
     ze_module_handle_t moduleHandle;
     ze_module_desc_t moduleDesc = {};
-    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.format = builtInCode.type == BuiltInCodeType::Binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
     moduleDesc.pInputModule = reinterpret_cast<uint8_t *>(&builtInCode.resource[0]);
     moduleDesc.inputSize = builtInCode.resource.size();
     res = device->createModule(&moduleDesc, &moduleHandle, nullptr);
