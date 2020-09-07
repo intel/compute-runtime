@@ -112,6 +112,9 @@ bool LinkerInput::decodeRelocationTable(const void *data, uint32_t numEntries, u
         case vISA::R_SYM_ADDR_32_HI:
             relocInfo.type = RelocationInfo::Type::AddressHigh;
             break;
+        case vISA::R_PER_THREAD_PAYLOAD_OFFSET_32:
+            relocInfo.type = RelocationInfo::Type::PerThreadPayloadOffset;
+            break;
         }
         outRelocInfo.push_back(std::move(relocInfo));
     }
@@ -185,6 +188,9 @@ void Linker::patchInstructionsSegments(const std::vector<PatchableSegment> &inst
         auto &thisSegmentRelocs = *relocsIt;
         const PatchableSegment &instSeg = *segIt;
         for (const auto &relocation : thisSegmentRelocs) {
+            if (shouldIgnoreRelocation(relocation)) {
+                continue;
+            }
             UNRECOVERABLE_IF(nullptr == instSeg.hostPointer);
             auto relocAddress = ptrOffset(instSeg.hostPointer, static_cast<uintptr_t>(relocation.offset));
             auto symbolIt = relocatedSymbols.find(relocation.symbolName);

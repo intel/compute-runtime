@@ -377,8 +377,14 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsThenInstructionSegmentsArePrope
     relocCPartLow.r_offset = 36;
     relocCPartLow.r_type = vISA::GenRelocType::R_SYM_ADDR_32;
 
-    vISA::GenRelocEntry relocs[] = {relocA, relocB, relocC, relocCPartHigh, relocCPartLow};
-    bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, 5, 0);
+    vISA::GenRelocEntry relocIgnore = {};
+    relocIgnore.r_symbol[0] = 'X';
+    relocIgnore.r_offset = 36;
+    relocIgnore.r_type = vISA::GenRelocType::R_PER_THREAD_PAYLOAD_OFFSET_32;
+
+    vISA::GenRelocEntry relocs[] = {relocA, relocB, relocC, relocCPartHigh, relocCPartLow, relocIgnore};
+    constexpr uint32_t numRelocations = sizeof(relocs) / sizeof(relocs[0]);
+    bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
     EXPECT_TRUE(decodeRelocSuccess);
 
     NEO::Linker linker(linkerInput);

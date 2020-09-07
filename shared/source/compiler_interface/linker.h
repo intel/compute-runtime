@@ -78,7 +78,8 @@ struct LinkerInput {
             Unknown,
             Address,
             AddressHigh,
-            AddressLow
+            AddressLow,
+            PerThreadPayloadOffset
         };
 
         std::string symbolName;
@@ -207,5 +208,8 @@ struct Linker {
 
 std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unresolvedExternals, const std::vector<std::string> &instructionsSegmentsNames);
 std::string constructRelocationsDebugMessage(const Linker::RelocatedSymbolsMap &relocatedSymbols);
+constexpr bool shouldIgnoreRelocation(const LinkerInput::RelocationInfo &relocation) {
+    return LinkerInput::RelocationInfo::Type::PerThreadPayloadOffset == relocation.type;
+}
 
 } // namespace NEO
