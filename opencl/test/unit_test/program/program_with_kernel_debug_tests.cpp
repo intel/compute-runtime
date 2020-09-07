@@ -65,12 +65,7 @@ class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
         if (!pDevice->getHardwareInfo().capabilityTable.debuggerSupported) {
             GTEST_SKIP();
         }
-#ifdef _DEBUG
-        // skip test in Debug on gen8
-        if (pDevice->getHardwareInfo().platform.eRenderCoreFamily == IGFX_GEN8_CORE) {
-            GTEST_SKIP();
-        }
-#endif
+
         std::string filename;
         std::string kernelOption(CompilerOptions::debugKernelEnable);
         KernelFilenameHelper::getKernelFilenameFromInternalOption(kernelOption, filename);

@@ -452,7 +452,7 @@ macro(macro_for_each_gen)
         if(NOT "${${PLATFORM_LOWER}_TEST_KERNELS}" STREQUAL "")
           neo_gen_kernels(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${${PLATFORM_LOWER}_TEST_KERNELS})
         endif()
-        # Temporarily disabled debug kernel generation on gen8
+        # Disable debug kernel generation on gen8 - debugger not supported on gen8
         if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
           neo_gen_kernel_with_kernel_debug_options(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNEL})
         endif()
