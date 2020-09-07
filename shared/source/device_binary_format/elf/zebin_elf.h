@@ -25,8 +25,9 @@ enum ELF_TYPE_ZEBIN : uint16_t {
 };
 
 enum SHT_ZEBIN : uint32_t {
-    SHT_ZEBIN_SPIRV = 0xff000009, // .spv.kernel section, value the same as SHT_OPENCL_SPIRV
-    SHT_ZEBIN_ZEINFO = 0xff000011 // .ze_info section
+    SHT_ZEBIN_SPIRV = 0xff000009,     // .spv.kernel section, value the same as SHT_OPENCL_SPIRV
+    SHT_ZEBIN_ZEINFO = 0xff000011,    // .ze_info section
+    SHT_ZEBIN_GTPIN_INFO = 0xff000012 // .gtpin_info section
 };
 
 namespace SectionsNamesZebin {
@@ -38,6 +39,7 @@ static constexpr ConstStringRef relTablePrefix = ".rel.";
 static constexpr ConstStringRef spv = ".spv";
 static constexpr ConstStringRef debugInfo = ".debug_info";
 static constexpr ConstStringRef zeInfo = ".ze_info";
+static constexpr ConstStringRef gtpinInfo = ".gtpin_info";
 } // namespace SectionsNamesZebin
 
 struct ZebinTargetFlags {
