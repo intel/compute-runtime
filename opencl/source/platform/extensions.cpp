@@ -113,10 +113,8 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, StackVec<cl_name_version
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_work_group_collective_functions");
         openclCFeatures.push_back(openClCFeature);
 
-        if (hwInfo.capabilityTable.supportsIndependentForwardProgress) {
-            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_subgroups");
-            openclCFeatures.push_back(openClCFeature);
-        }
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_subgroups");
+        openclCFeatures.push_back(openClCFeature);
     }
 
     auto forceDeviceEnqueueSupport = DebugManager.flags.ForceDeviceEnqueueSupport.get();

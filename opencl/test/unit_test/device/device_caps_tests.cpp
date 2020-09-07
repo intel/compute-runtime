@@ -88,10 +88,7 @@ struct DeviceGetCapsTest : public ::testing::Test {
             EXPECT_STREQ("__opencl_c_program_scope_global_variables", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_read_write_images", (++openclCFeatureIterator)->name);
             EXPECT_STREQ("__opencl_c_work_group_collective_functions", (++openclCFeatureIterator)->name);
-
-            if (hwInfo.capabilityTable.supportsIndependentForwardProgress) {
-                EXPECT_STREQ("__opencl_c_subgroups", (++openclCFeatureIterator)->name);
-            }
+            EXPECT_STREQ("__opencl_c_subgroups", (++openclCFeatureIterator)->name);
         }
         if (hwInfo.capabilityTable.supportsDeviceEnqueue) {
             EXPECT_STREQ("__opencl_c_device_enqueue", (++openclCFeatureIterator)->name);
