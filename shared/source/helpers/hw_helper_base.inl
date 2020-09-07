@@ -211,7 +211,21 @@ void MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncO
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     addPipeControlWA(commandStream, gpuAddress, hwInfo);
 
-    PIPE_CONTROL *pipeControl = commandStream.getSpaceForCmd<PIPE_CONTROL>();
+    setPostSyncExtraProperties(args, hwInfo);
+    addPipeControlWithPostSync(commandStream, operation, gpuAddress, immediateData, args);
+
+    MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, gpuAddress, hwInfo);
+}
+
+template <typename GfxFamily>
+void MemorySynchronizationCommands<GfxFamily>::addPipeControlWithPostSync(
+    LinearStream &commandStream,
+    POST_SYNC_OPERATION operation,
+    uint64_t gpuAddress,
+    uint64_t immediateData,
+    PipeControlArgs &args) {
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
     PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
     setPipeControl(cmd, args);
     cmd.setPostSyncOperation(operation);
@@ -221,10 +235,8 @@ void MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncO
         cmd.setImmediateData(immediateData);
     }
 
-    setPostSyncExtraProperties(cmd, hwInfo);
+    PIPE_CONTROL *pipeControl = commandStream.getSpaceForCmd<PIPE_CONTROL>();
     *pipeControl = cmd;
-
-    MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, gpuAddress, hwInfo);
 }
 
 template <typename GfxFamily>

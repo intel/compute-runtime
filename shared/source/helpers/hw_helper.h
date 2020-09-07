@@ -357,7 +357,12 @@ struct MemorySynchronizationCommands {
                                                           uint64_t immediateData,
                                                           const HardwareInfo &hwInfo,
                                                           PipeControlArgs &args);
-    static void setPostSyncExtraProperties(PIPE_CONTROL &pipeControl, const HardwareInfo &hwInfo);
+    static void addPipeControlWithPostSync(LinearStream &commandStream,
+                                           POST_SYNC_OPERATION operation,
+                                           uint64_t gpuAddress,
+                                           uint64_t immediateData,
+                                           PipeControlArgs &args);
+    static void setPostSyncExtraProperties(PipeControlArgs &args, const HardwareInfo &hwInfo);
 
     static void addPipeControlWA(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
     static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);

@@ -1445,12 +1445,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
 
     NEO::PipeControlArgs args(false);
 
-    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlWithPostSync(
         *commandContainer.getCommandStream(),
         POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
         reinterpret_cast<uint64_t>(dstptr),
         0,
-        commandContainer.getDevice()->getHardwareInfo(),
         args);
 
     if (hSignalEvent) {

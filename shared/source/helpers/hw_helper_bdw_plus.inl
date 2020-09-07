@@ -97,7 +97,7 @@ inline void MemorySynchronizationCommands<GfxFamily>::addPipeControlWA(LinearStr
 }
 
 template <typename GfxFamily>
-inline void MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(PIPE_CONTROL &pipeControl, const HardwareInfo &hwInfo) {
+inline void MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(PipeControlArgs &args, const HardwareInfo &hwInfo) {
 }
 
 template <typename GfxFamily>

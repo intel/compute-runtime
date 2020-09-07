@@ -174,26 +174,22 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalle
     uint32_t timestampAddressHigh = (uint32_t)(timestampAddress >> 32);
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
 
+    const auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
     commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), commandStreamOffset),
+        commandContainer.getCommandStream()->getUsed() - commandStreamOffset));
 
-    auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(0u, itorPC.size());
-    bool postSyncFound = false;
-    for (auto it : itorPC) {
-        auto cmd = genCmdCast<PIPE_CONTROL *>(*it);
-        if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP) {
-            EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_FALSE(cmd->getDcFlushEnable());
-            EXPECT_EQ(cmd->getAddressHigh(), timestampAddressHigh);
-            EXPECT_EQ(cmd->getAddress(), timestampAddressLow);
-            postSyncFound = true;
-        }
-    }
-    EXPECT_TRUE(postSyncFound);
+    auto iterator = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    auto cmd = genCmdCast<PIPE_CONTROL *>(*iterator);
+    EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
+    EXPECT_FALSE(cmd->getDcFlushEnable());
+    EXPECT_EQ(cmd->getAddressHigh(), timestampAddressHigh);
+    EXPECT_EQ(cmd->getAddress(), timestampAddressLow);
+    EXPECT_EQ(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP, cmd->getPostSyncOperation());
 }
 
 HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenAppendWriteGlobalTimestampReturnsSuccess, Platforms) {
