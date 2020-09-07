@@ -558,7 +558,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                 std::string extensionsList = getExtensionsList(hwInfo);
                 CompilerOptions::concatenateAppend(internalOptions, convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str()));
 
-                StackVec<cl_name_version, 12> openclCFeatures;
+                StackVec<cl_name_version, 15> openclCFeatures;
                 getOpenclCFeaturesList(hwInfo, openclCFeatures);
                 CompilerOptions::concatenateAppend(internalOptions, convertEnabledOclCFeaturesToCompilerInternalOptions(openclCFeatures));
             }

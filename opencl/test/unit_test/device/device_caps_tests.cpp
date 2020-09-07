@@ -74,9 +74,11 @@ struct DeviceGetCapsTest : public ::testing::Test {
         auto openclCFeatureIterator = clDevice.getDeviceInfo().openclCFeatures.begin();
 
         EXPECT_STREQ("__opencl_c_atomic_order_acq_rel", openclCFeatureIterator->name);
+        EXPECT_STREQ("__opencl_c_int64", (++openclCFeatureIterator)->name);
 
         if (hwInfo.capabilityTable.supportsImages) {
             EXPECT_STREQ("__opencl_c_3d_image_writes", (++openclCFeatureIterator)->name);
+            EXPECT_STREQ("__opencl_c_images", (++openclCFeatureIterator)->name);
         }
         if (hwInfo.capabilityTable.supportsOcl21Features) {
             EXPECT_STREQ("__opencl_c_atomic_order_seq_cst", (++openclCFeatureIterator)->name);
@@ -96,6 +98,9 @@ struct DeviceGetCapsTest : public ::testing::Test {
         }
         if (hwInfo.capabilityTable.supportsPipes) {
             EXPECT_STREQ("__opencl_c_pipes", (++openclCFeatureIterator)->name);
+        }
+        if (hwInfo.capabilityTable.ftrSupportsFP64) {
+            EXPECT_STREQ("__opencl_c_fp64", (++openclCFeatureIterator)->name);
         }
 
         EXPECT_EQ(clDevice.getDeviceInfo().openclCFeatures.end(), ++openclCFeatureIterator);
@@ -962,17 +967,6 @@ TEST_F(DeviceGetCapsTest, givenNotSupporteImagesWhenCreateExtentionsListThenDevi
     EXPECT_THAT(extensions, testing::Not(testing::HasSubstr(std::string("cl_intel_media_block_io"))));
 }
 
-TEST_F(DeviceGetCapsTest, givenDeviceThatDoesntHaveFp64ThenExtensionIsNotReported) {
-    HardwareInfo nonFp64Device = *defaultHwInfo;
-    nonFp64Device.capabilityTable.ftrSupportsFP64 = false;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&nonFp64Device));
-
-    const auto &caps = device->getDeviceInfo();
-    std::string extensionString = caps.deviceExtensions;
-    EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-    EXPECT_EQ(0u, caps.doubleFpConfig);
-}
-
 TEST_F(DeviceGetCapsTest, givenDeviceWhenGettingHostUnifiedMemoryCapThenItDependsOnLocalMemory) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
@@ -1001,38 +995,42 @@ TEST_F(DeviceGetCapsTest, givenDefaultDeviceWhenQueriedForExtensionsWithVersionT
     EXPECT_STREQ(pClDevice->deviceExtensions.c_str(), allExtensions.c_str());
 }
 
-TEST(DeviceGetCaps, givenDeviceThatDoesntHaveFp64WhenDbgFlagEnablesFp64ThenReportFp64Flags) {
+TEST_F(DeviceGetCapsTest, givenFp64SupportForcedWhenCheckingFp64SupportThenFp64IsCorrectlyReported) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.OverrideDefaultFP64Settings.set(1);
-    HardwareInfo nonFp64Device = *defaultHwInfo;
-    nonFp64Device.capabilityTable.ftrSupportsFP64 = false;
-    nonFp64Device.capabilityTable.ftrSupports64BitMath = false;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&nonFp64Device));
+    int32_t overrideDefaultFP64SettingsValues[] = {-1, 0, 1};
+    auto hwInfo = *defaultHwInfo;
 
-    const auto &caps = device->getDeviceInfo();
-    std::string extensionString = caps.deviceExtensions;
-    EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-    EXPECT_NE(0u, caps.doubleFpConfig);
-    cl_device_fp_config actualSingleFp = caps.singleFpConfig & static_cast<cl_device_fp_config>(CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
-    cl_device_fp_config expectedSingleFp = static_cast<cl_device_fp_config>(CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
-    EXPECT_EQ(expectedSingleFp, actualSingleFp);
-}
+    for (auto isFp64SupportedByHw : ::testing::Bool()) {
+        hwInfo.capabilityTable.ftrSupportsFP64 = isFp64SupportedByHw;
+        hwInfo.capabilityTable.ftrSupports64BitMath = isFp64SupportedByHw;
 
-TEST(DeviceGetCaps, givenDeviceThatDoesHaveFp64WhenDbgFlagDisablesFp64ThenDontReportFp64Flags) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.OverrideDefaultFP64Settings.set(0);
-    HardwareInfo fp64Device = *defaultHwInfo;
-    fp64Device.capabilityTable.ftrSupportsFP64 = true;
-    fp64Device.capabilityTable.ftrSupports64BitMath = true;
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&fp64Device));
+        for (auto overrideDefaultFP64Settings : overrideDefaultFP64SettingsValues) {
+            DebugManager.flags.OverrideDefaultFP64Settings.set(overrideDefaultFP64Settings);
+            auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+            auto &caps = pClDevice->getDeviceInfo();
+            std::string extensionString = pClDevice->getDeviceInfo().deviceExtensions;
 
-    const auto &caps = device->getDeviceInfo();
-    std::string extensionString = caps.deviceExtensions;
-    EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-    EXPECT_EQ(0u, caps.doubleFpConfig);
-    cl_device_fp_config actualSingleFp = caps.singleFpConfig & static_cast<cl_device_fp_config>(CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
-    cl_device_fp_config notExpectedSingleFp = static_cast<cl_device_fp_config>(CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
-    EXPECT_NE(notExpectedSingleFp, actualSingleFp);
+            size_t fp64FeaturesCount = 0;
+            for (auto &openclCFeature : caps.openclCFeatures) {
+                if (0 == strcmp(openclCFeature.name, "__opencl_c_fp64")) {
+                    fp64FeaturesCount++;
+                }
+            }
+
+            bool expectedFp64Support = ((overrideDefaultFP64Settings == -1) ? isFp64SupportedByHw : overrideDefaultFP64Settings);
+            if (expectedFp64Support) {
+                EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
+                EXPECT_NE(0u, caps.doubleFpConfig);
+                EXPECT_EQ(1u, fp64FeaturesCount);
+                EXPECT_TRUE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
+            } else {
+                EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
+                EXPECT_EQ(0u, caps.doubleFpConfig);
+                EXPECT_EQ(0u, fp64FeaturesCount);
+                EXPECT_FALSE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
+            }
+        }
+    }
 }
 
 TEST(DeviceGetCaps, WhenPeekingCompilerFeaturesThenCompilerFeaturesAreReturned) {

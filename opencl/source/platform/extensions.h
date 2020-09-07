@@ -21,9 +21,9 @@ constexpr const char *const sharingFormatQuery = "cl_intel_sharing_format_query 
 extern const char *deviceExtensionsList;
 
 std::string getExtensionsList(const HardwareInfo &hwInfo);
-void getOpenclCFeaturesList(const HardwareInfo &hwInfo, StackVec<cl_name_version, 12> &openclCFeatures);
+void getOpenclCFeaturesList(const HardwareInfo &hwInfo, StackVec<cl_name_version, 15> &openclCFeatures);
 std::string removeLastSpace(std::string &s);
 std::string convertEnabledExtensionsToCompilerInternalOptions(const char *deviceExtensions);
-std::string convertEnabledOclCFeaturesToCompilerInternalOptions(StackVec<cl_name_version, 12> &openclCFeatures);
+std::string convertEnabledOclCFeaturesToCompilerInternalOptions(StackVec<cl_name_version, 15> &openclCFeatures);
 
 } // namespace NEO

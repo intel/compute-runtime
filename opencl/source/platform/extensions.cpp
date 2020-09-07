@@ -73,15 +73,21 @@ std::string getExtensionsList(const HardwareInfo &hwInfo) {
     return allExtensionsList;
 }
 
-void getOpenclCFeaturesList(const HardwareInfo &hwInfo, StackVec<cl_name_version, 12> &openclCFeatures) {
+void getOpenclCFeaturesList(const HardwareInfo &hwInfo, StackVec<cl_name_version, 15> &openclCFeatures) {
     cl_name_version openClCFeature;
     openClCFeature.version = CL_MAKE_VERSION(3, 0, 0);
 
     strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_atomic_order_acq_rel");
     openclCFeatures.push_back(openClCFeature);
 
+    strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_int64");
+    openclCFeatures.push_back(openClCFeature);
+
     if (hwInfo.capabilityTable.supportsImages) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_3d_image_writes");
+        openclCFeatures.push_back(openClCFeature);
+
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_images");
         openclCFeatures.push_back(openClCFeature);
     }
 
@@ -126,6 +132,13 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, StackVec<cl_name_version
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_pipes");
         openclCFeatures.push_back(openClCFeature);
     }
+
+    auto forceFp64Support = DebugManager.flags.OverrideDefaultFP64Settings.get();
+    if ((hwInfo.capabilityTable.ftrSupportsFP64 && (forceFp64Support == -1)) ||
+        (forceFp64Support == 1)) {
+        strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_fp64");
+        openclCFeatures.push_back(openClCFeature);
+    }
 }
 
 std::string removeLastSpace(std::string &processedString) {
@@ -150,7 +163,7 @@ std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enable
     return extensionsList;
 }
 
-std::string convertEnabledOclCFeaturesToCompilerInternalOptions(StackVec<cl_name_version, 12> &openclCFeatures) {
+std::string convertEnabledOclCFeaturesToCompilerInternalOptions(StackVec<cl_name_version, 15> &openclCFeatures) {
     UNRECOVERABLE_IF(openclCFeatures.empty());
     std::string featuresList;
     featuresList.reserve(500);

@@ -201,7 +201,7 @@ TEST(PlatformTestSimple, givenNotCsrHwTypeWhenPlatformIsInitializedThenInitAubCe
 }
 
 TEST(PlatformTestSimple, WhenConvertingCustomOclCFeaturesToCompilerInternalOptionsThenResultIsCorrect) {
-    StackVec<cl_name_version, 12> customOpenclCFeatures;
+    StackVec<cl_name_version, 15> customOpenclCFeatures;
 
     cl_name_version feature;
     strcpy_s(feature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "custom_feature");
