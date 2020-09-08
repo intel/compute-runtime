@@ -123,6 +123,7 @@ class Drm {
 
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
+    std::string generateUUID();
     bool sliceCountChangeSupported = false;
     drm_i915_gem_context_param_sseu sseu{};
     bool preemptionSupported = false;
@@ -133,6 +134,7 @@ class Drm {
     int revisionId = 0;
     GTTYPE eGtType = GTTYPE_UNDEFINED;
     RootDeviceEnvironment &rootDeviceEnvironment;
+    uint64_t uuid = 0;
 
     Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);
     std::unique_ptr<EngineInfo> engineInfo;

@@ -31,6 +31,7 @@ class DrmMock : public Drm {
   public:
     using Drm::checkQueueSliceSupport;
     using Drm::engineInfo;
+    using Drm::generateUUID;
     using Drm::getQueueSliceCount;
     using Drm::memoryInfo;
     using Drm::nonPersistentContextsSupported;
