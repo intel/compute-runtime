@@ -17,6 +17,7 @@
 #include "opencl/source/helpers/destructor_callback.h"
 
 #include <list>
+#include <set>
 
 namespace NEO {
 
@@ -88,6 +89,10 @@ class Context : public BaseObject<_cl_context> {
         return svmAllocsManager;
     }
 
+    const std::set<uint32_t> &getRootDeviceIndices() const;
+
+    uint32_t getMaxRootDeviceIndex() const;
+
     DeviceQueue *getDefaultDeviceQueue();
     void setDefaultDeviceQueue(DeviceQueue *queue);
 
@@ -154,6 +159,9 @@ class Context : public BaseObject<_cl_context> {
 
     cl_int processExtraProperties(cl_context_properties propertyType, cl_context_properties propertyValue);
     void setupContextType();
+
+    std::set<uint32_t> rootDeviceIndices = {};
+    uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
 
     const cl_context_properties *properties = nullptr;
     size_t numProperties = 0u;

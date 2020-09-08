@@ -84,6 +84,14 @@ cl_int Context::setDestructorCallback(void(CL_CALLBACK *funcNotify)(cl_context, 
     return CL_SUCCESS;
 }
 
+const std::set<uint32_t> &Context::getRootDeviceIndices() const {
+    return rootDeviceIndices;
+}
+
+uint32_t Context::getMaxRootDeviceIndex() const {
+    return maxRootDeviceIndex;
+}
+
 DeviceQueue *Context::getDefaultDeviceQueue() {
     return defaultDeviceQueue;
 }
@@ -178,22 +186,21 @@ bool Context::createImpl(const cl_context_properties *properties,
         return false;
     }
 
-    this->driverDiagnostics = driverDiagnostics.release();
-    if (inputDevices.size() > 1) {
-        if (!DebugManager.flags.EnableMultiRootDeviceContexts.get()) {
-            auto rootDeviceIndex = inputDevices[0]->getRootDeviceIndex();
-            for (const auto &device : inputDevices) {
-                if (device->getRootDeviceIndex() != rootDeviceIndex) {
-                    DEBUG_BREAK_IF("No support for context with multiple root devices");
-                    errcodeRet = CL_OUT_OF_HOST_MEMORY;
-                    return false;
-                }
-            }
-        }
+    for (const auto &device : inputDevices) {
+        rootDeviceIndices.insert(device->getRootDeviceIndex());
     }
+
+    this->driverDiagnostics = driverDiagnostics.release();
+    if (rootDeviceIndices.size() > 1 && !DebugManager.flags.EnableMultiRootDeviceContexts.get()) {
+        DEBUG_BREAK_IF("No support for context with multiple root devices");
+        errcodeRet = CL_OUT_OF_HOST_MEMORY;
+        return false;
+    }
+
     this->devices = inputDevices;
 
     if (devices.size() > 0) {
+        maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
         auto device = this->getDevice(0);
         this->memoryManager = device->getMemoryManager();
         if (memoryManager->isAsyncDeleterEnabled()) {

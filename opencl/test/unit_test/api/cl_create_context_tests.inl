@@ -99,6 +99,39 @@ TEST_F(clCreateContextTests, givenEnabledMultipleRootDeviceSupportWhenCreateCont
     clReleaseContext(context);
 }
 
+TEST_F(clCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenRootDeviceIndicesSetIsFilled) {
+    UltClDeviceFactory deviceFactory{3, 2};
+    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1], deviceFactory.rootDevices[2]};
+    auto context = clCreateContext(nullptr, 3u, devices, eventCallBack, nullptr, &retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto pContext = castToObject<Context>(context);
+    auto rootDeviceIndices = pContext->getRootDeviceIndices();
+
+    for (auto numDevice = 0u; numDevice < pContext->getNumDevices(); numDevice++) {
+        auto rootDeviceIndex = rootDeviceIndices.find(pContext->getDevice(numDevice)->getRootDeviceIndex());
+        EXPECT_EQ(*rootDeviceIndex, pContext->getDevice(numDevice)->getRootDeviceIndex());
+    }
+
+    clReleaseContext(context);
+}
+
+TEST_F(clCreateContextTests, givenMultipleRootDevicesWhenCreateContextThenMaxRootDeviceIndexIsProperlyFilled) {
+    UltClDeviceFactory deviceFactory{3, 0};
+    DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
+    cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[2]};
+    auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto pContext = castToObject<Context>(context);
+    EXPECT_EQ(2u, pContext->getMaxRootDeviceIndex());
+
+    clReleaseContext(context);
+}
+
 TEST_F(clCreateContextTests, givenInvalidContextCreationPropertiesThenContextCreationFails) {
     cl_context_properties invalidProperties[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties) nullptr, 0};
     auto context = clCreateContext(invalidProperties, 1u, &testedClDevice, nullptr, nullptr, &retVal);
