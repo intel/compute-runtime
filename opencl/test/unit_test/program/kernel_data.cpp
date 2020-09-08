@@ -1461,7 +1461,7 @@ TEST_F(KernelDataTest, givenSymbolTablePatchTokenThenLinkerInputIsCreated) {
 
     buildAndDecode();
 
-    EXPECT_NE(nullptr, program->linkerInput);
+    EXPECT_NE(nullptr, program->getLinkerInput(pContext->getDevice(0)->getRootDeviceIndex()));
 }
 
 TEST_F(KernelDataTest, givenRelocationTablePatchTokenThenLinkerInputIsCreated) {
@@ -1475,5 +1475,5 @@ TEST_F(KernelDataTest, givenRelocationTablePatchTokenThenLinkerInputIsCreated) {
 
     buildAndDecode();
 
-    EXPECT_NE(nullptr, program->linkerInput);
+    EXPECT_NE(nullptr, program->getLinkerInput(pContext->getDevice(0)->getRootDeviceIndex()));
 }

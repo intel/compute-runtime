@@ -52,6 +52,7 @@ const KernelInfo *Program::getKernelInfo(size_t ordinal) const {
 }
 
 cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData) {
+    auto linkerInput = pDevice ? getLinkerInput(pDevice->getRootDeviceIndex()) : nullptr;
     if (linkerInput == nullptr) {
         return CL_SUCCESS;
     }
@@ -69,9 +70,9 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
         constants.gpuAddress = static_cast<uintptr_t>(constantsForPatching->getGpuAddress());
         constants.segmentSize = constantsForPatching->getUnderlyingBufferSize();
     }
-    if (this->linkerInput->getExportedFunctionsSegmentId() >= 0) {
+    if (linkerInput->getExportedFunctionsSegmentId() >= 0) {
         // Exported functions reside in instruction heap of one of kernels
-        auto exportedFunctionHeapId = this->linkerInput->getExportedFunctionsSegmentId();
+        auto exportedFunctionHeapId = linkerInput->getExportedFunctionsSegmentId();
         this->exportedFunctionsSurface = this->kernelInfoArray[exportedFunctionHeapId]->getGraphicsAllocation();
         exportedFunctions.gpuAddress = static_cast<uintptr_t>(exportedFunctionsSurface->getGpuAddressToPatch());
         exportedFunctions.segmentSize = exportedFunctionsSurface->getUnderlyingBufferSize();
@@ -93,7 +94,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
                                                                  globalsForPatching, constantsForPatching,
                                                                  isaSegmentsForPatching, unresolvedExternalsInfo,
                                                                  pDevice, constantsInitData, variablesInitData);
-    this->symbols = linker.extractRelocatedSymbols();
+    setSymbols(pDevice->getRootDeviceIndex(), linker.extractRelocatedSymbols());
     if (false == linkSuccess) {
         std::vector<std::string> kernelNames;
         for (const auto &kernelInfo : this->kernelInfoArray) {
@@ -114,7 +115,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
                                                                       kernHeapInfo.KernelHeapSize);
         }
     }
-    DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->symbols));
+    DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->getSymbols(pDevice->getRootDeviceIndex())));
     return CL_SUCCESS;
 }
 
@@ -157,6 +158,7 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
     size_t slmNeeded = getMaxInlineSlmNeeded(src);
     size_t slmAvailable = 0U;
     NEO::DeviceInfoKernelPayloadConstants deviceInfoConstants;
+    LinkerInput *linkerInput = nullptr;
     if (this->pDevice) {
         slmAvailable = static_cast<size_t>(this->pDevice->getDeviceInfo().localMemSize);
         deviceInfoConstants.maxWorkGroupSize = (uint32_t)this->pDevice->getDeviceInfo().maxWorkGroupSize;
@@ -165,24 +167,25 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
         if (requiresLocalMemoryWindowVA(src)) {
             deviceInfoConstants.slmWindow = this->executionEnvironment.memoryManager->getReservedMemory(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment);
         }
+        linkerInput = src.linkerInput.get();
+        setLinkerInput(pDevice->getRootDeviceIndex(), std::move(src.linkerInput));
     }
     if (slmNeeded > slmAvailable) {
         return CL_OUT_OF_RESOURCES;
     }
 
-    this->linkerInput = std::move(src.linkerInput);
     this->kernelInfoArray = std::move(src.kernelInfos);
     auto svmAllocsManager = context ? context->getSVMAllocsManager() : nullptr;
     if (src.globalConstants.size != 0) {
         UNRECOVERABLE_IF(nullptr == pDevice);
-        this->constantSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalConstants.size, true, linkerInput.get(), src.globalConstants.initData);
+        this->constantSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalConstants.size, true, linkerInput, src.globalConstants.initData);
     }
 
     this->globalVarTotalSize = src.globalVariables.size;
 
     if (src.globalVariables.size != 0) {
         UNRECOVERABLE_IF(nullptr == pDevice);
-        this->globalSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalVariables.size, false, linkerInput.get(), src.globalVariables.initData);
+        this->globalSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalVariables.size, false, linkerInput, src.globalVariables.initData);
         if (pDevice->getSpecializedDevice<ClDevice>()->areOcl21FeaturesEnabled() == false) {
             this->globalVarTotalSize = 0u;
         }

@@ -2726,12 +2726,6 @@ TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedWithInvalidValuesTh
     EXPECT_EQ(expectedOutput, program.getInternalOptions());
 }
 
-TEST_F(ProgramTests, givenProgramWhenGetSymbolsIsCalledThenMapWithExportedSymbolsIsReturned) {
-    ExecutionEnvironment executionEnvironment;
-    MockProgram program(executionEnvironment);
-    EXPECT_EQ(&program.symbols, &program.getSymbols());
-}
-
 class AdditionalOptionsMockProgram : public MockProgram {
   public:
     AdditionalOptionsMockProgram() : MockProgram(executionEnvironment) {}

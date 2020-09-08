@@ -5320,14 +5320,15 @@ cl_int CL_API_CALL clGetDeviceGlobalVariablePointerINTEL(
     DBG_LOG_INPUTS("device", device, "program", program,
                    "globalVariableName", globalVariableName,
                    "globalVariablePointerRet", globalVariablePointerRet);
-    retVal = validateObjects(device, program);
+    Program *pProgram = nullptr;
+    ClDevice *pDevice = nullptr;
+    retVal = validateObjects(WithCastToInternal(program, &pProgram), WithCastToInternal(device, &pDevice));
     if (globalVariablePointerRet == nullptr) {
         retVal = CL_INVALID_ARG_VALUE;
     }
 
     if (CL_SUCCESS == retVal) {
-        Program *pProgram = (Program *)(program);
-        const auto &symbols = pProgram->getSymbols();
+        const auto &symbols = pProgram->getSymbols(pDevice->getRootDeviceIndex());
         auto symbolIt = symbols.find(globalVariableName);
         if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.segment == NEO::SegmentType::Instructions)) {
             retVal = CL_INVALID_ARG_VALUE;
@@ -5352,14 +5353,16 @@ cl_int CL_API_CALL clGetDeviceFunctionPointerINTEL(
     DBG_LOG_INPUTS("device", device, "program", program,
                    "functionName", functionName,
                    "functionPointerRet", functionPointerRet);
-    retVal = validateObjects(device, program);
+
+    Program *pProgram = nullptr;
+    ClDevice *pDevice = nullptr;
+    retVal = validateObjects(WithCastToInternal(program, &pProgram), WithCastToInternal(device, &pDevice));
     if ((CL_SUCCESS == retVal) && (functionPointerRet == nullptr)) {
         retVal = CL_INVALID_ARG_VALUE;
     }
 
     if (CL_SUCCESS == retVal) {
-        Program *pProgram = (Program *)(program);
-        const auto &symbols = pProgram->getSymbols();
+        const auto &symbols = pProgram->getSymbols(pDevice->getRootDeviceIndex());
         auto symbolIt = symbols.find(functionName);
         if ((symbolIt == symbols.end()) || (symbolIt->second.symbol.segment != NEO::SegmentType::Instructions)) {
             retVal = CL_INVALID_ARG_VALUE;

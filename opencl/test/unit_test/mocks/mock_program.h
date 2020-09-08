@@ -37,6 +37,7 @@ class MockProgram : public Program {
     using Program::applyAdditionalOptions;
     using Program::areSpecializationConstantsInitialized;
     using Program::blockKernelManager;
+    using Program::buildInfos;
     using Program::constantSurface;
     using Program::context;
     using Program::createdFrom;
@@ -49,7 +50,6 @@ class MockProgram : public Program {
     using Program::irBinary;
     using Program::irBinarySize;
     using Program::isSpirV;
-    using Program::linkerInput;
     using Program::options;
     using Program::packDeviceBinary;
     using Program::packedDeviceBinary;
@@ -61,7 +61,6 @@ class MockProgram : public Program {
     using Program::specConstantsIds;
     using Program::specConstantsSizes;
     using Program::specConstantsValues;
-    using Program::symbols;
     using Program::unpackedDeviceBinary;
     using Program::unpackedDeviceBinarySize;
 

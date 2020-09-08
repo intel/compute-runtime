@@ -9,6 +9,7 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/utilities/const_stringref.h"
 
@@ -254,12 +255,19 @@ class Program : public BaseObject<_cl_program> {
         return debugDataSize;
     }
 
-    const Linker::RelocatedSymbolsMap &getSymbols() const {
-        return this->symbols;
+    const Linker::RelocatedSymbolsMap &getSymbols(uint32_t rootDeviceIndex) const {
+        return buildInfos[rootDeviceIndex].symbols;
     }
 
-    LinkerInput *getLinkerInput() const {
-        return this->linkerInput.get();
+    void setSymbols(uint32_t rootDeviceIndex, Linker::RelocatedSymbolsMap &&symbols) {
+        buildInfos[rootDeviceIndex].symbols = std::move(symbols);
+    }
+
+    LinkerInput *getLinkerInput(uint32_t rootDeviceIndex) const {
+        return buildInfos[rootDeviceIndex].linkerInput.get();
+    }
+    void setLinkerInput(uint32_t rootDeviceIndex, std::unique_ptr<LinkerInput> &&linkerInput) {
+        buildInfos[rootDeviceIndex].linkerInput = std::move(linkerInput);
     }
 
     MOCKABLE_VIRTUAL void replaceDeviceBinary(std::unique_ptr<char[]> newBinary, size_t newBinarySize);
@@ -324,14 +332,13 @@ class Program : public BaseObject<_cl_program> {
     uint32_t programOptionVersion = 12U;
     bool allowNonUniform = false;
 
-    std::unique_ptr<LinkerInput> linkerInput;
-    Linker::RelocatedSymbolsMap symbols;
-
-    struct BuildInfo {
+    struct BuildInfo : public NonCopyableClass {
+        std::unique_ptr<LinkerInput> linkerInput;
+        Linker::RelocatedSymbolsMap symbols{};
         std::string buildLog{};
     };
 
-    StackVec<BuildInfo, 1> buildInfos;
+    std::vector<BuildInfo> buildInfos;
 
     bool areSpecializationConstantsInitialized = false;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsIds;
