@@ -359,6 +359,10 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
 }
 
 ze_result_t KernelImp::setIndirectAccess(ze_kernel_indirect_access_flags_t flags) {
+    if (NEO::DebugManager.flags.DisableIndirectAccess.get() == 1) {
+        return ZE_RESULT_SUCCESS;
+    }
+
     if (flags & ZE_KERNEL_INDIRECT_ACCESS_FLAG_DEVICE) {
         this->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
     }
