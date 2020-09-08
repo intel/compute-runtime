@@ -561,7 +561,7 @@ __kernel void CopyImage3dToBuffer16Bytes(__read_only image3d_t input,
     }
 }
 
-__kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* dst) {
+__kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* dst, uint useOnlyGlobalTimestamps) {
     uint gid = get_global_id(0);
     const ulong tsMask = (1ull << 32) - 1;
     uint currentOffset = gid * 4;
@@ -574,11 +574,16 @@ __kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* d
     __global uint *src = (__global uint *) srcPtr;
     dst[currentOffset] = src[1] & tsMask;
     dst[currentOffset + 1] = src[3] & tsMask;
-    dst[currentOffset + 2] = src[0] & tsMask;
-    dst[currentOffset + 3] = src[2] & tsMask;
+    if (useOnlyGlobalTimestamps != 0) {
+        dst[currentOffset + 2] = src[1] & tsMask;
+        dst[currentOffset + 3] = src[3] & tsMask;
+    } else {
+        dst[currentOffset + 2] = src[0] & tsMask;
+        dst[currentOffset + 3] = src[2] & tsMask;
+    }
 }
 
-__kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __global ulong* dst, __global ulong *offsets) {
+__kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __global ulong* dst, __global ulong *offsets, uint useOnlyGlobalTimestamps) {
     uint gid = get_global_id(0);
     const ulong tsMask = (1ull << 32) - 1;
     uint currentOffset = offsets[gid] / 8;
@@ -591,6 +596,11 @@ __kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __glob
     __global uint *src = (__global uint *) srcPtr;
     dst[currentOffset] = src[1] & tsMask;
     dst[currentOffset + 1] = src[3] & tsMask;
-    dst[currentOffset + 2] = src[0] & tsMask;
-    dst[currentOffset + 3] = src[2] & tsMask;
+    if (useOnlyGlobalTimestamps != 0) {
+        dst[currentOffset + 2] = src[1] & tsMask;
+        dst[currentOffset + 3] = src[3] & tsMask;
+    } else {
+        dst[currentOffset + 2] = src[0] & tsMask;
+        dst[currentOffset + 3] = src[2] & tsMask;
+    }
 }

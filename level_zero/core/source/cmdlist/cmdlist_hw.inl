@@ -1505,17 +1505,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     UNRECOVERABLE_IF(!result);
 
     Kernel *builtinFunction = nullptr;
+    auto useOnlyGlobalTimestamps = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u;
 
     auto lock = device->getBuiltinFunctionsLib()->obtainUniqueOwnership();
 
     if (pOffsets == nullptr) {
         builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestamps);
+        builtinFunction->setArgumentValue(2u, sizeof(uint32_t), &useOnlyGlobalTimestamps);
     } else {
         auto pOffsetAllocationStruct = getAlignedAllocation(this->device, pOffsets, sizeof(size_t) * numEvents);
         auto offsetValPtr = static_cast<uintptr_t>(pOffsetAllocationStruct.alloc->getGpuAddress());
         commandContainer.addToResidencyContainer(pOffsetAllocationStruct.alloc);
         builtinFunction = device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestampsWithOffsets);
         builtinFunction->setArgBufferWithAlloc(2, offsetValPtr, pOffsetAllocationStruct.alloc);
+        builtinFunction->setArgumentValue(3u, sizeof(uint32_t), &useOnlyGlobalTimestamps);
         offsetValPtr += sizeof(size_t);
     }
 

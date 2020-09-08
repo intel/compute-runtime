@@ -375,6 +375,7 @@ struct CmdListHelper {
     NEO::ResidencyContainer residencyContainer;
     ze_group_count_t threadGroupDimensions;
     const uint32_t *groupSize = nullptr;
+    uint32_t useOnlyGlobalTimestamp = std::numeric_limits<uint32_t>::max();
 };
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -393,6 +394,20 @@ class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCo
         cmdListHelper.residencyContainer = kernel->getResidencyContainer();
         cmdListHelper.groupSize = kernel->getGroupSize();
         cmdListHelper.threadGroupDimensions = *pThreadGroupDimensions;
+
+        auto kernelName = kernel->getImmutableData()->getDescriptor().kernelMetadata.kernelName;
+        NEO::ArgDescriptor arg;
+        if (kernelName == "QueryKernelTimestamps") {
+            arg = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[2u];
+        } else if (kernelName == "QueryKernelTimestampsWithOffsets") {
+            arg = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[3u];
+        } else {
+            return ZE_RESULT_SUCCESS;
+        }
+        auto corssThreadData = kernel->getCrossThreadData();
+        auto element = arg.as<NEO::ArgDescValue>().elements[0];
+        auto pDst = ptrOffset(corssThreadData, element.offset);
+        cmdListHelper.useOnlyGlobalTimestamp = *(uint32_t *)(pDst);
 
         return ZE_RESULT_SUCCESS;
     }
@@ -421,7 +436,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     bool containsDstPtr = false;
 
     for (auto &a : commandList.cmdListHelper.residencyContainer) {
-        if (a->getGpuAddress() == reinterpret_cast<uint64_t>(alloc)) {
+        if (a != nullptr && a->getGpuAddress() == reinterpret_cast<uint64_t>(alloc)) {
             containsDstPtr = true;
         }
     }
@@ -432,6 +447,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     EXPECT_EQ(2u, commandList.cmdListHelper.groupSize[0]);
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[2]);
+
+    EXPECT_EQ(NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
 
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
@@ -464,7 +481,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     bool containsDstPtr = false;
 
     for (auto &a : commandList.cmdListHelper.residencyContainer) {
-        if (a->getGpuAddress() == reinterpret_cast<uint64_t>(alloc)) {
+        if (a != nullptr && a->getGpuAddress() == reinterpret_cast<uint64_t>(alloc)) {
             containsDstPtr = true;
         }
     }
@@ -474,7 +491,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     bool containOffsetPtr = false;
 
     for (auto &a : commandList.cmdListHelper.residencyContainer) {
-        if (a->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAlloc)) {
+        if (a != nullptr && a->getGpuAddress() == reinterpret_cast<uint64_t>(offsetAlloc)) {
             containOffsetPtr = true;
         }
     }
@@ -485,6 +502,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     EXPECT_EQ(2u, commandList.cmdListHelper.groupSize[0]);
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[2]);
+
+    EXPECT_EQ(NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
 
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
@@ -527,6 +546,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     EXPECT_EQ(groupSizeX, commandList.cmdListHelper.groupSize[0]);
     EXPECT_EQ(groupSizeY, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(groupSizeZ, commandList.cmdListHelper.groupSize[2]);
+
+    EXPECT_EQ(NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
 
     EXPECT_EQ(static_cast<uint32_t>(eventCount) / groupSizeX, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
