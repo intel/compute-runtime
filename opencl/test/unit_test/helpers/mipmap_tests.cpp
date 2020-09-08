@@ -37,7 +37,7 @@ INSTANTIATE_TEST_CASE_P(MipLevel,
 
 typedef ::testing::TestWithParam<std::pair<uint32_t, uint32_t>> MipLevelOriginIdxTest;
 
-TEST_P(MipLevelOriginIdxTest, givenMemObjectTypeReturnProperMipLevelOriginIdx) {
+TEST_P(MipLevelOriginIdxTest, givenMemObjectTypeWhenGettingMipLevelOriginIdxThenCorrectMipLevelIsReturned) {
     auto pair = GetParam();
     EXPECT_EQ(static_cast<uint32_t>(pair.second), getMipLevelOriginIdx(pair.first));
 }
