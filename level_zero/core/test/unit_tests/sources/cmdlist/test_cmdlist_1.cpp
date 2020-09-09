@@ -404,9 +404,9 @@ class MockCommandListForAppendLaunchKernel : public WhiteBox<::L0::CommandListCo
         } else {
             return ZE_RESULT_SUCCESS;
         }
-        auto corssThreadData = kernel->getCrossThreadData();
+        auto crossThreadData = kernel->getCrossThreadData();
         auto element = arg.as<NEO::ArgDescValue>().elements[0];
-        auto pDst = ptrOffset(corssThreadData, element.offset);
+        auto pDst = ptrOffset(crossThreadData, element.offset);
         cmdListHelper.useOnlyGlobalTimestamp = *(uint32_t *)(pDst);
 
         return ZE_RESULT_SUCCESS;
