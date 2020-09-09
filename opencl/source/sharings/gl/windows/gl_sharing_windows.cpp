@@ -187,6 +187,9 @@ void GLSharingFunctionsWindows::initAdapterLuid() {
     bool found = false;
 
     HRESULT hr = Wddm::createDxgiFactory(__uuidof(IDXGIFactory), (void **)(&pFactory));
+    if ((hr != S_OK) || (pFactory == nullptr)) {
+        return;
+    }
     iDevNum = 0u;
     while (pFactory->EnumAdapters1(iDevNum++, &pAdapter) != DXGI_ERROR_NOT_FOUND) {
         IDXGIOutput *pOutput = nullptr;
