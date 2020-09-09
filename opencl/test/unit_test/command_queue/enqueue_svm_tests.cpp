@@ -1607,6 +1607,42 @@ HWTEST_P(UpdateResidencyContainerMultipleDevicesTest, givenAllocationItIsAddedTo
     }
 }
 
+HWTEST_P(UpdateResidencyContainerMultipleDevicesTest,
+         whenUsingRootDeviceIndexGreaterThanMultiGraphicsAllocationSizeThenNoAllocationsAreAdded) {
+    uint32_t pCmdBuffer[1024];
+    MockGraphicsAllocation gfxAllocation(device->getDevice().getRootDeviceIndex(),
+                                         static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
+    SvmAllocationData allocData(maxRootDeviceIndex);
+    allocData.gpuAllocations.addAllocation(&gfxAllocation);
+    allocData.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocData.device = &device->getDevice();
+
+    uint32_t pCmdBufferPeer[1024];
+    MockGraphicsAllocation gfxAllocationPeer(peerDevice->getDevice().getRootDeviceIndex(),
+                                             (void *)pCmdBufferPeer, sizeof(pCmdBufferPeer));
+    SvmAllocationData allocDataPeer(maxRootDeviceIndex);
+    allocDataPeer.gpuAllocations.addAllocation(&gfxAllocationPeer);
+    allocDataPeer.memoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+    allocDataPeer.device = &peerDevice->getDevice();
+
+    svmManager->insertSVMAlloc(allocData);
+    svmManager->insertSVMAlloc(allocDataPeer);
+    EXPECT_EQ(2u, svmManager->getNumAllocs());
+
+    ResidencyContainer residencyContainer;
+    EXPECT_EQ(0u, residencyContainer.size());
+    svmManager->addInternalAllocationsToResidencyContainer(numRootDevices + 1,
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(0u, residencyContainer.size());
+
+    svmManager->addInternalAllocationsToResidencyContainer(device->getDevice().getRootDeviceIndex(),
+                                                           residencyContainer,
+                                                           InternalMemoryType::DEVICE_UNIFIED_MEMORY);
+    EXPECT_EQ(1u, residencyContainer.size());
+    EXPECT_EQ(residencyContainer[0]->getGpuAddress(), gfxAllocation.getGpuAddress());
+}
+
 MemoryAllocationTypeArray memoryTypeArray;
 INSTANTIATE_TEST_SUITE_P(UpdateResidencyContainerMultipleDevicesTests,
                          UpdateResidencyContainerMultipleDevicesTest,

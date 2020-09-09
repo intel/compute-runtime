@@ -75,6 +75,10 @@ void SVMAllocsManager::addInternalAllocationsToResidencyContainer(uint32_t rootD
                                                                   uint32_t requestedTypesMask) {
     std::unique_lock<SpinLock> lock(mtx);
     for (auto &allocation : this->SVMAllocs.allocations) {
+        if (rootDeviceIndex >= allocation.second.gpuAllocations.getGraphicsAllocations().size()) {
+            continue;
+        }
+
         if (!(allocation.second.memoryType & requestedTypesMask) ||
             (nullptr == allocation.second.gpuAllocations.getGraphicsAllocation(rootDeviceIndex))) {
             continue;
