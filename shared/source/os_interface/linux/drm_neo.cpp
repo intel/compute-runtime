@@ -483,7 +483,7 @@ std::string Drm::generateUUID() {
     uint64_t parts[2] = {0, 0};
     parts[0] = uuid & 0xFFFFFFFFFFFF;
     parts[1] = (uuid & 0xFFFF000000000000) >> 48;
-    sprintf(buffer, uuidString, parts[1], parts[0]);
+    snprintf(buffer, sizeof(buffer), uuidString, parts[1], parts[0]);
 
     return std::string(buffer, 36);
 }
