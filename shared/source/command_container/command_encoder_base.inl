@@ -123,7 +123,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
     idd.setSamplerCount(samplerCountState);
 
     auto numGrfCrossThreadData = static_cast<uint32_t>(sizeCrossThreadData / sizeof(float[8]));
-    DEBUG_BREAK_IF(numGrfCrossThreadData <= 0u);
     idd.setCrossThreadConstantDataReadLength(numGrfCrossThreadData);
 
     auto numGrfPerThreadData = static_cast<uint32_t>(sizePerThreadData / sizeof(float[8]));
