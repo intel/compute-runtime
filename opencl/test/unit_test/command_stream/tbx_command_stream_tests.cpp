@@ -50,10 +50,6 @@ namespace NEO {
 extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE];
 } // namespace NEO
 
-namespace Os {
-extern const char *tbxLibName;
-}
-
 struct TbxFixture : public TbxCommandStreamFixture,
                     public ClDeviceFixture,
                     public MockAubCenterFixture {
