@@ -65,12 +65,12 @@ KernelImmutableData::KernelImmutableData(L0::Device *l0device) : device(l0device
 
 KernelImmutableData::~KernelImmutableData() {
     if (nullptr != isaGraphicsAllocation) {
-        this->getDevice()->getDriverHandle()->getMemoryManager()->freeGraphicsMemory(&*isaGraphicsAllocation);
+        this->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(&*isaGraphicsAllocation);
         isaGraphicsAllocation.release();
     }
     crossThreadDataTemplate.reset();
     if (nullptr != privateMemoryGraphicsAllocation) {
-        this->getDevice()->getDriverHandle()->getMemoryManager()->freeGraphicsMemory(&*privateMemoryGraphicsAllocation);
+        this->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(&*privateMemoryGraphicsAllocation);
         privateMemoryGraphicsAllocation.release();
     }
     surfaceStateHeapTemplate.reset();
@@ -199,7 +199,7 @@ KernelImp::~KernelImp() {
         alignedFree(perThreadDataForWholeThreadGroup);
     }
     if (printfBuffer != nullptr) {
-        module->getDevice()->getDriverHandle()->getMemoryManager()->freeGraphicsMemory(printfBuffer);
+        module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(printfBuffer);
     }
     slmArgSizes.clear();
     crossThreadData.reset();

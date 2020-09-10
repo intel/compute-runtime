@@ -49,6 +49,7 @@ target_sources(
                PRIVATE
                ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
                ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/io_functions.cpp
+               ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
                $<TARGET_OBJECTS:${L0_MOCKABLE_LIB_NAME}>
 )
 
@@ -107,6 +108,7 @@ if(UNIX)
   target_link_libraries(${TARGET_NAME} pthread rt)
 else()
   target_link_libraries(${TARGET_NAME} dbghelp)
+  add_dependencies(${TARGET_NAME} mock_gdi)
 endif()
 
 target_link_libraries(

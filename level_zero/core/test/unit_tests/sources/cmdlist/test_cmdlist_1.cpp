@@ -62,6 +62,11 @@ TEST(zeCommandListCreateImmediate, DISABLED_redirectsToObject) {
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(CommandListCreate, givenNonValidProductFamilyWhenCommandListIsCreatedThenNullptrIsReturned) {
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(PRODUCT_FAMILY::IGFX_MAX_PRODUCT, device, false));
+    EXPECT_EQ(nullptr, commandList);
+}
+
 TEST_F(CommandListCreate, whenCommandListIsCreatedThenItIsInitialized) {
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false));
     ASSERT_NE(nullptr, commandList);
@@ -151,6 +156,18 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemoryPrefetchReturnsSuccess) {
 
     res = driverHandle->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
+}
+
+TEST_F(CommandListCreate, givenNonValidProductFamilyWhenCommandListImmediateIsCreatedThenNullptrIsReturned) {
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = false;
+
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(PRODUCT_FAMILY::IGFX_MAX_PRODUCT,
+                                                                               device,
+                                                                               &desc,
+                                                                               internalEngine,
+                                                                               false));
+    EXPECT_EQ(nullptr, commandList0);
 }
 
 TEST_F(CommandListCreate, givenImmediateCommandListThenInternalEngineIsUsedIfRequested) {

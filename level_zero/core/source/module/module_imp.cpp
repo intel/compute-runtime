@@ -331,7 +331,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
     kernelImmDatas.reserve(this->translationUnit->programInfo.kernelInfos.size());
     for (auto &ki : this->translationUnit->programInfo.kernelInfos) {
         std::unique_ptr<KernelImmutableData> kernelImmData{new KernelImmutableData(this->device)};
-        kernelImmData->initialize(ki, *(getDevice()->getDriverHandle()->getMemoryManager()),
+        kernelImmData->initialize(ki, *(device->getNEODevice()->getMemoryManager()),
                                   device->getNEODevice(),
                                   device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
                                   this->translationUnit->globalConstBuffer, this->translationUnit->globalVarBuffer);

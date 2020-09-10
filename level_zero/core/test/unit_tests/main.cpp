@@ -16,6 +16,7 @@
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/source/utilities/logger.h"
 #include "opencl/test/unit_test/custom_event_listener.h"
+#include "opencl/test/unit_test/global_environment.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_client_context.h"
 #include "opencl/test/unit_test/mocks/mock_sip.h"
 
@@ -45,7 +46,7 @@ TEST(Should, pass) { EXPECT_TRUE(true); }
 namespace L0 {
 
 namespace ult {
-::testing::Environment *environment = nullptr;
+TestEnvironment *environment = nullptr;
 }
 } // namespace L0
 
@@ -219,10 +220,6 @@ int main(int argc, char **argv) {
     NEO::GmmHelper::createGmmContextWrapperFunc =
         NEO::GmmClientContextBase::create<NEO::MockGmmClientContext>;
 
-    if (environment) {
-        ::testing::AddGlobalTestEnvironment(environment);
-    }
-
     uint64_t hwInfoConfig = NEO::defaultHardwareInfoConfigTable[productFamily];
     NEO::setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
 
@@ -234,6 +231,13 @@ int main(int argc, char **argv) {
 
     NEO::useKernelDescriptor = true;
     NEO::MockSipData::mockSipKernel.reset(new NEO::MockSipKernel());
+
+    environment = reinterpret_cast<TestEnvironment *>(::testing::AddGlobalTestEnvironment(new TestEnvironment));
+
+    MockCompilerDebugVars fclDebugVars;
+    MockCompilerDebugVars igcDebugVars;
+
+    environment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);
 
     auto retVal = RUN_ALL_TESTS();
 

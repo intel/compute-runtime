@@ -305,6 +305,8 @@ TEST_F(AllocHostMemoryTest,
        whenCallingAllocHostMemThenAllocateGraphicsMemoryWithPropertiesIsCalledTheNumberOfTimesOfRootDevices) {
     void *ptr = nullptr;
 
+    memoryManager->allocateGraphicsMemoryWithPropertiesCount = 0;
+
     ze_result_t result = driverHandle->allocHostMem(0u,
                                                     4096u, 0u, &ptr);
     EXPECT_EQ(memoryManager->allocateGraphicsMemoryWithPropertiesCount, numRootDevices);
@@ -321,6 +323,8 @@ TEST_F(AllocHostMemoryTest,
 
     void *ptr = nullptr;
 
+    memoryManager->allocateGraphicsMemoryWithPropertiesCount = 0;
+
     ze_result_t result = driverHandle->allocHostMem(0u,
                                                     4096u, 0u, &ptr);
     EXPECT_EQ(memoryManager->allocateGraphicsMemoryWithPropertiesCount, 1u);
@@ -334,6 +338,8 @@ TEST_F(AllocHostMemoryTest,
     memoryManager->forceFailureInAllocationWithHostPointer = true;
 
     void *ptr = nullptr;
+
+    memoryManager->allocateGraphicsMemoryWithPropertiesCount = 0;
 
     ze_result_t result = driverHandle->allocHostMem(0u,
                                                     4096u, 0u, &ptr);

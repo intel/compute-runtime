@@ -41,7 +41,4 @@ if(WIN32)
   set_target_properties(mock_gdi PROPERTIES FOLDER "test mocks")
 
   target_compile_definitions(mock_gdi PUBLIC MOCKABLE_VIRTUAL=virtual)
-
-  add_dependencies(unit_tests mock_gdi)
-  add_dependencies(igdrcl_tests mock_gdi)
 endif()
