@@ -6,12 +6,14 @@
  */
 
 #pragma once
+#include "shared/source/helpers/common_types.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 
 namespace NEO {
+struct RootDeviceEnvironment;
 class DrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandler {
   public:
-    DrmMemoryOperationsHandlerBind();
+    DrmMemoryOperationsHandlerBind(RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex);
     ~DrmMemoryOperationsHandlerBind() override;
 
     MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override;
@@ -22,5 +24,14 @@ class DrmMemoryOperationsHandlerBind : public DrmMemoryOperationsHandler {
 
     void mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) override;
     std::unique_lock<std::mutex> lockHandlerForExecWA() override;
+
+    MOCKABLE_VIRTUAL void evictUnusedAllocations();
+
+  protected:
+    void evictImpl(OsContext *osContext, GraphicsAllocation &gfxAllocation, DeviceBitfield deviceBitfield);
+    void evictUnusedAllocationsImpl(std::vector<GraphicsAllocation *> &allocationsForEviction);
+
+    RootDeviceEnvironment &rootDeviceEnvironment;
+    uint32_t rootDeviceIndex = 0;
 };
 } // namespace NEO

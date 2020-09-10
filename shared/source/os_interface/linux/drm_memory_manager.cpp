@@ -47,6 +47,7 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
         getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size());
+        localMemAllocs.emplace_back();
     }
     MemoryManager::virtualPaddingAvailable = true;
     if (mode != gemCloseWorkerMode::gemCloseWorkerInactive) {
@@ -649,6 +650,8 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 }
 
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
+    this->unregisterAllocation(gfxAllocation);
+
     for (auto &engine : this->registeredEngines) {
         auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->memoryOperationsInterface.get());
         memoryOperationsInterface->evictWithinOsContext(engine.osContext, *gfxAllocation);
@@ -874,4 +877,34 @@ void DrmMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootDe
     releaseGpuRange(reinterpret_cast<void *>(addressRange.address), addressRange.size, rootDeviceIndex);
 }
 
+std::unique_lock<std::mutex> DrmMemoryManager::acquireAllocLock() {
+    return std::unique_lock<std::mutex>(this->allocMutex);
+}
+
+std::vector<GraphicsAllocation *> &DrmMemoryManager::getSysMemAllocs() {
+    return this->sysMemAllocs;
+}
+
+std::vector<GraphicsAllocation *> &DrmMemoryManager::getLocalMemAllocs(uint32_t rootDeviceIndex) {
+    return this->localMemAllocs[rootDeviceIndex];
+}
+
+void DrmMemoryManager::registerSysMemAlloc(GraphicsAllocation *allocation) {
+    std::lock_guard<std::mutex> lock(this->allocMutex);
+    this->sysMemAllocs.push_back(allocation);
+}
+
+void DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) {
+    std::lock_guard<std::mutex> lock(this->allocMutex);
+    this->localMemAllocs[rootDeviceIndex].push_back(allocation);
+}
+void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
+    std::lock_guard<std::mutex> lock(this->allocMutex);
+    sysMemAllocs.erase(std::remove(sysMemAllocs.begin(), sysMemAllocs.end(), allocation),
+                       sysMemAllocs.end());
+    localMemAllocs[allocation->getRootDeviceIndex()].erase(std::remove(localMemAllocs[allocation->getRootDeviceIndex()].begin(),
+                                                                       localMemAllocs[allocation->getRootDeviceIndex()].end(),
+                                                                       allocation),
+                                                           localMemAllocs[allocation->getRootDeviceIndex()].end());
+}
 } // namespace NEO

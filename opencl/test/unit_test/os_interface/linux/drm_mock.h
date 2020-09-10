@@ -50,6 +50,12 @@ class DrmMock : public Drm {
     DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(mockFd, rootDeviceEnvironment) {}
 
     int ioctl(unsigned long request, void *arg) override;
+    int getErrno() override {
+        if (baseErrno) {
+            return Drm::getErrno();
+        }
+        return errnoRetVal;
+    }
 
     void writeConfigFile(const char *name, int deviceID) {
         std::ofstream tempfile(name, std::ios::binary);
@@ -83,6 +89,8 @@ class DrmMock : public Drm {
     static const int mockFd = 33;
 
     bool failRetTopology = false;
+    bool baseErrno = true;
+    int errnoRetVal = 0;
     int StoredEUVal = 8;
     int StoredSSVal = 2;
     int StoredSVal = 1;

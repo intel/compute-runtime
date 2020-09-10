@@ -40,13 +40,13 @@ uint32_t OSInterface::getDeviceHandle() const {
     return 0;
 }
 
-bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId) {
+bool RootDeviceEnvironment::initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex) {
     Drm *drm = Drm::create(std::move(hwDeviceId), *this);
     if (!drm) {
         return false;
     }
 
-    memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm);
+    memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex);
     osInterface.reset(new OSInterface());
     osInterface->get()->setDrm(drm);
     auto hardwareInfo = getMutableHardwareInfo();

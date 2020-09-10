@@ -100,7 +100,7 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
     uint32_t rootDeviceIndex = 0u;
 
     for (auto &hwDeviceId : hwDeviceIds) {
-        if (!executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initOsInterface(std::move(hwDeviceId))) {
+        if (!executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initOsInterface(std::move(hwDeviceId), rootDeviceIndex)) {
             return false;
         }
 

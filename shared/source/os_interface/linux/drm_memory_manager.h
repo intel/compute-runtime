@@ -59,6 +59,13 @@ class DrmMemoryManager : public MemoryManager {
     void freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) override;
     MOCKABLE_VIRTUAL BufferObject *createBufferObjectInMemoryRegion(Drm *drm, uint64_t gpuAddress, size_t size, uint32_t memoryBanks, size_t maxOsContextCount);
 
+    std::unique_lock<std::mutex> acquireAllocLock();
+    std::vector<GraphicsAllocation *> &getSysMemAllocs();
+    std::vector<GraphicsAllocation *> &getLocalMemAllocs(uint32_t rootDeviceIndex);
+    void registerSysMemAlloc(GraphicsAllocation *allocation) override;
+    void registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) override;
+    void unregisterAllocation(GraphicsAllocation *allocation);
+
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
     BufferObject *createSharedBufferObject(int boHandle, size_t size, bool requireSpecificBitness, uint32_t rootDeviceIndex);
@@ -106,5 +113,9 @@ class DrmMemoryManager : public MemoryManager {
     decltype(&close) closeFunction = close;
     std::vector<BufferObject *> sharingBufferObjects;
     std::mutex mtx;
+
+    std::vector<std::vector<GraphicsAllocation *>> localMemAllocs;
+    std::vector<GraphicsAllocation *> sysMemAllocs;
+    std::mutex allocMutex;
 };
 } // namespace NEO

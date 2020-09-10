@@ -43,7 +43,7 @@ struct RootDeviceEnvironment {
     bool isFullRangeSvm() const;
 
     MOCKABLE_VIRTUAL void initAubCenter(bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
-    bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId);
+    bool initOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex);
     void initGmm();
     void initDebugger();
     GmmHelper *getGmmHelper() const;

@@ -25,7 +25,7 @@ class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
     virtual void mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) = 0;
     virtual std::unique_lock<std::mutex> lockHandlerForExecWA() = 0;
 
-    static std::unique_ptr<DrmMemoryOperationsHandler> create(Drm &drm);
+    static std::unique_ptr<DrmMemoryOperationsHandler> create(Drm &drm, uint32_t rootDeviceIndex);
 
   protected:
     std::mutex mutex;

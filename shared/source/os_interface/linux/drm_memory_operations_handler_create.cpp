@@ -9,7 +9,7 @@
 
 namespace NEO {
 
-std::unique_ptr<DrmMemoryOperationsHandler> DrmMemoryOperationsHandler::create(Drm &drm) {
+std::unique_ptr<DrmMemoryOperationsHandler> DrmMemoryOperationsHandler::create(Drm &drm, uint32_t rootDeviceIndex) {
     return std::make_unique<DrmMemoryOperationsHandlerDefault>();
 }
 

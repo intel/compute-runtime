@@ -404,9 +404,11 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     GraphicsAllocation *allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
     if (allocation) {
         localMemoryUsageBankSelector[properties.rootDeviceIndex]->reserveOnBanks(allocationData.storageInfo.getMemoryBanks(), allocation->getUnderlyingBufferSize());
+        this->registerLocalMemAlloc(allocation, properties.rootDeviceIndex);
     }
     if (!allocation && status == AllocationStatus::RetryInNonDevicePool) {
         allocation = allocateGraphicsMemory(allocationData);
+        this->registerSysMemAlloc(allocation);
     }
     FileLoggerInstance().logAllocation(allocation);
     return allocation;
