@@ -13,19 +13,14 @@ namespace L0 {
 
 class OsFrequency {
   public:
-    virtual ze_result_t getMin(double &min) = 0;
-    virtual ze_result_t setMin(double min) = 0;
-    virtual ze_result_t getMax(double &max) = 0;
-    virtual ze_result_t setMax(double max) = 0;
-    virtual ze_result_t getRequest(double &request) = 0;
-    virtual ze_result_t getTdp(double &tdp) = 0;
-    virtual ze_result_t getActual(double &actual) = 0;
-    virtual ze_result_t getEfficient(double &efficient) = 0;
-    virtual ze_result_t getMaxVal(double &maxVal) = 0;
-    virtual ze_result_t getMinVal(double &minVal) = 0;
-    virtual ze_result_t getThrottleReasons(uint32_t &throttleReasons) = 0;
+    virtual ze_result_t osFrequencyGetProperties(zes_freq_properties_t &properties) = 0;
+    virtual ze_result_t osFrequencyGetRange(zes_freq_range_t *pLimits) = 0;
+    virtual ze_result_t osFrequencySetRange(const zes_freq_range_t *pLimits) = 0;
+    virtual ze_result_t osFrequencyGetState(zes_freq_state_t *pState) = 0;
+    virtual ze_result_t osFrequencyGetThrottleTime(zes_freq_throttle_time_t *pThrottleTime) = 0;
 
-    static OsFrequency *create(OsSysman *pOsSysman);
+    static OsFrequency *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
+    static uint16_t getHardwareBlockCount(ze_device_handle_t handle);
     virtual ~OsFrequency() {}
 };
 

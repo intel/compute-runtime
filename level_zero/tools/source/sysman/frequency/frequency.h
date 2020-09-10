@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <vector>
@@ -39,12 +40,15 @@ struct FrequencyHandleContext {
     FrequencyHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~FrequencyHandleContext();
 
-    ze_result_t init();
+    ze_result_t init(std::vector<ze_device_handle_t> deviceHandles);
 
     ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency);
 
-    OsSysman *pOsSysman;
+    OsSysman *pOsSysman = nullptr;
     std::vector<Frequency *> handleList = {};
+
+  private:
+    void createHandle(ze_device_handle_t deviceHandle, uint16_t frequencyDomain);
 };
 
 } // namespace L0

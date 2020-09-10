@@ -36,34 +36,122 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
     MOCK_METHOD(ze_result_t, read, (const std::string file, double &val), (override));
     MOCK_METHOD(ze_result_t, write, (const std::string file, const double val), (override));
 
-    ze_result_t getValReturnError(const std::string file, double &val) {
+    ze_result_t getMaxValReturnErrorNotAvailable(const std::string file, double &val) {
+        if (file.compare(maxValFreqFile) == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getMaxValReturnErrorUnknown(const std::string file, double &val) {
+        if (file.compare(maxValFreqFile) == 0) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getMinValReturnErrorNotAvailable(const std::string file, double &val) {
+        if (file.compare(minValFreqFile) == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getMinValReturnErrorUnknown(const std::string file, double &val) {
+        if (file.compare(minValFreqFile) == 0) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValReturnErrorNotAvailable(const std::string file, double &val) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    ze_result_t getValActualReturnError(const std::string file, double &val) {
+    ze_result_t getValActualReturnErrorNotAvailable(const std::string file, double &val) {
         if (file.compare(actualFreqFile) == 0) {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t getValEfficientReturnError(const std::string file, double &val) {
+    ze_result_t getValEfficientReturnErrorNotAvailable(const std::string file, double &val) {
         if (file.compare(efficientFreqFile) == 0) {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t getValTdpReturnError(const std::string file, double &val) {
+    ze_result_t getValTdpReturnErrorNotAvailable(const std::string file, double &val) {
         if (file.compare(tdpFreqFile) == 0) {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
         return ZE_RESULT_SUCCESS;
     }
 
-    ze_result_t getValRequestReturnError(const std::string file, double &val) {
+    ze_result_t getValRequestReturnErrorNotAvailable(const std::string file, double &val) {
         if (file.compare(requestFreqFile) == 0) {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t setValMinReturnErrorNotAvailable(const std::string file, const double val) {
+        if (file.compare(minFreqFile) == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t setValMaxReturnErrorNotAvailable(const std::string file, const double val) {
+        if (file.compare(maxFreqFile) == 0) {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValReturnErrorUnknown(const std::string file, double &val) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    ze_result_t getValActualReturnErrorUnknown(const std::string file, double &val) {
+        if (file.compare(actualFreqFile) == 0) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValEfficientReturnErrorUnknown(const std::string file, double &val) {
+        if (file.compare(efficientFreqFile) == 0) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValTdpReturnErrorUnknown(const std::string file, double &val) {
+        if (file.compare(tdpFreqFile) == 0) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValRequestReturnErrorUnknown(const std::string file, double &val) {
+        if (file.compare(requestFreqFile) == 0) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t setValMinReturnErrorUnknown(const std::string file, const double val) {
+        if (file.compare(minFreqFile) == 0) {
+            return ZE_RESULT_ERROR_UNKNOWN;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t setValMaxReturnErrorUnknown(const std::string file, const double val) {
+        if (file.compare(maxFreqFile) == 0) {
+            return ZE_RESULT_ERROR_UNKNOWN;
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -92,20 +180,6 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
         }
         if (file.compare(minValFreqFile) == 0) {
             val = mockMinVal;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t setValMinReturnError(const std::string file, const double val) {
-        if (file.compare(minFreqFile) == 0) {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t setValMaxReturnError(const std::string file, const double val) {
-        if (file.compare(maxFreqFile) == 0) {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
         return ZE_RESULT_SUCCESS;
     }
@@ -144,6 +218,10 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
 
 class PublicLinuxFrequencyImp : public L0::LinuxFrequencyImp {
   public:
+    PublicLinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : LinuxFrequencyImp(pOsSysman, onSubdevice, subdeviceId) {}
+    using LinuxFrequencyImp::getMaxVal;
+    using LinuxFrequencyImp::getMin;
+    using LinuxFrequencyImp::getMinVal;
     using LinuxFrequencyImp::pSysfsAccess;
 };
 

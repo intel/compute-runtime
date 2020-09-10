@@ -25,18 +25,19 @@ class FrequencyImp : public Frequency, NEO::NonCopyableOrMovableClass {
     ze_result_t frequencyGetThrottleTime(zes_freq_throttle_time_t *pThrottleTime) override;
 
     FrequencyImp() = default;
-    FrequencyImp(OsSysman *pOsSysman);
+    FrequencyImp(OsSysman *pOsSysman, ze_device_handle_t handle, uint16_t frequencyDomain);
     ~FrequencyImp() override;
     OsFrequency *pOsFrequency = nullptr;
     void init();
 
   private:
     static const double step;
-    static const bool canControl;
 
     zes_freq_properties_t zesFrequencyProperties = {};
     double *pClocks = nullptr;
     uint32_t numClocks = 0;
+    ze_device_handle_t deviceHandle = nullptr;
+    uint16_t frequencyDomain = 0;
 };
 
 } // namespace L0

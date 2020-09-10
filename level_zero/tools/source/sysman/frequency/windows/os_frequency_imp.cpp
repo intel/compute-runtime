@@ -11,66 +11,40 @@ namespace L0 {
 
 class WddmFrequencyImp : public OsFrequency {
   public:
-    ze_result_t getMin(double &min) override;
-    ze_result_t setMin(double min) override;
-    ze_result_t getMax(double &max) override;
-    ze_result_t setMax(double max) override;
-    ze_result_t getRequest(double &request) override;
-    ze_result_t getTdp(double &tdp) override;
-    ze_result_t getActual(double &actual) override;
-    ze_result_t getEfficient(double &efficient) override;
-    ze_result_t getMaxVal(double &maxVal) override;
-    ze_result_t getMinVal(double &minVal) override;
-    ze_result_t getThrottleReasons(uint32_t &throttleReasons) override;
+    ze_result_t osFrequencyGetProperties(zes_freq_properties_t &properties) override;
+    ze_result_t osFrequencyGetRange(zes_freq_range_t *pLimits) override;
+    ze_result_t osFrequencySetRange(const zes_freq_range_t *pLimits) override;
+    ze_result_t osFrequencyGetState(zes_freq_state_t *pState) override;
+    ze_result_t osFrequencyGetThrottleTime(zes_freq_throttle_time_t *pThrottleTime) override;
 };
 
-ze_result_t WddmFrequencyImp::getMin(double &min) {
+ze_result_t WddmFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &properties) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmFrequencyImp::setMin(double min) {
+ze_result_t WddmFrequencyImp::osFrequencyGetRange(zes_freq_range_t *pLimits) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmFrequencyImp::getMax(double &max) {
+ze_result_t WddmFrequencyImp::osFrequencySetRange(const zes_freq_range_t *pLimits) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmFrequencyImp::setMax(double max) {
+ze_result_t WddmFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmFrequencyImp::getRequest(double &request) {
+ze_result_t WddmFrequencyImp::osFrequencyGetThrottleTime(zes_freq_throttle_time_t *pThrottleTime) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-ze_result_t WddmFrequencyImp::getTdp(double &tdp) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t WddmFrequencyImp::getActual(double &actual) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t WddmFrequencyImp::getEfficient(double &efficient) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t WddmFrequencyImp::getMaxVal(double &maxVal) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t WddmFrequencyImp::getMinVal(double &minVal) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t WddmFrequencyImp::getThrottleReasons(uint32_t &throttleReasons) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-OsFrequency *OsFrequency::create(OsSysman *pOsSysman) {
+OsFrequency *OsFrequency::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
     WddmFrequencyImp *pWddmFrequencyImp = new WddmFrequencyImp();
     return static_cast<OsFrequency *>(pWddmFrequencyImp);
+}
+
+uint16_t OsFrequency::getHardwareBlockCount(ze_device_handle_t handle) {
+    return 1;
 }
 
 } // namespace L0

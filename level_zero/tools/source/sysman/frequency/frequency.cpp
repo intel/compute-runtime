@@ -10,6 +10,7 @@
 #include "shared/source/helpers/basic_math.h"
 
 #include "level_zero/tools/source/sysman/frequency/frequency_imp.h"
+#include "level_zero/tools/source/sysman/frequency/os_frequency.h"
 
 namespace L0 {
 
@@ -19,9 +20,18 @@ FrequencyHandleContext::~FrequencyHandleContext() {
     }
 }
 
-ze_result_t FrequencyHandleContext::init() {
-    Frequency *pFrequency = new FrequencyImp(pOsSysman);
+void FrequencyHandleContext::createHandle(ze_device_handle_t deviceHandle, uint16_t frequencyDomain) {
+    Frequency *pFrequency = new FrequencyImp(pOsSysman, deviceHandle, frequencyDomain);
     handleList.push_back(pFrequency);
+}
+
+ze_result_t FrequencyHandleContext::init(std::vector<ze_device_handle_t> deviceHandles) {
+    for (auto deviceHandle : deviceHandles) {
+        auto totalDomains = OsFrequency::getHardwareBlockCount(deviceHandle);
+        for (uint16_t frequencyDomain = 0; frequencyDomain < totalDomains; frequencyDomain++) {
+            createHandle(deviceHandle, frequencyDomain);
+        }
+    }
     return ZE_RESULT_SUCCESS;
 }
 
