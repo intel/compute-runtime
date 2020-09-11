@@ -23,7 +23,10 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     // Log file not created
     bool logFileCreated = fileExists(fileLogger.getLogFileName());
     EXPECT_FALSE(logFileCreated);
-    DrmMock drm{};
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
     MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER, MemoryPool::System64KBPages);
 
     MockBufferObject bo(&drm);

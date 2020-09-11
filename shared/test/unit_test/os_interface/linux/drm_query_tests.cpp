@@ -16,9 +16,11 @@
 using namespace NEO;
 
 TEST(DrmQueryTest, GivenGtMaxFreqFileExistsWhenFrequencyIsQueriedThenValidValueIsReturned) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
     int expectedMaxFrequency = 1000;
 
-    DrmMock drm{};
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto hwInfo = *defaultHwInfo;
 
     std::string gtMaxFreqFile = "test_files/linux/devices/device/drm/card1/gt_max_freq_mhz";

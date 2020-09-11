@@ -72,7 +72,10 @@ typedef ::testing::Types<ICLLP_1x8x8, ICLLP_1x4x8, ICLLP_1x6x8> icllpTestTypes;
 TYPED_TEST_CASE(IcllpHwInfoTests, icllpTestTypes);
 TYPED_TEST(IcllpHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo;
-    DrmMock drm;
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
 

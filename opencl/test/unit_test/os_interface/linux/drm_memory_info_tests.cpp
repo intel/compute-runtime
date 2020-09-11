@@ -19,7 +19,9 @@ struct MemoryInfoImpl : public NEO::MemoryInfo {
 };
 
 TEST(DrmTest, whenQueryingMemoryInfoThenMemoryInfoIsNotCreatedAndNoIoctlsAreCalled) {
-    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_NE(nullptr, drm);
 
     EXPECT_TRUE(drm->queryMemoryInfo());
@@ -29,7 +31,9 @@ TEST(DrmTest, whenQueryingMemoryInfoThenMemoryInfoIsNotCreatedAndNoIoctlsAreCall
 }
 
 TEST(DrmTest, givenMemoryInfoWhenGetMemoryInfoIsCalledThenValidPtrIsReturned) {
-    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_NE(nullptr, drm);
 
     drm->memoryInfo.reset(new MemoryInfoImpl);
@@ -42,7 +46,9 @@ TEST(MemoryInfo, givenMemoryInfoImplementationWhenDestructingThenDestructorIsCal
 }
 
 TEST(MemoryInfo, givenMemoryRegionIdWhenGetMemoryTypeFromRegionAndGetInstanceFromRegionAreCalledThenMemoryTypeAndInstanceAreReturned) {
-    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_NE(nullptr, drm);
 
     auto regionSmem = drm->createMemoryRegionId(0, 0);

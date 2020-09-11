@@ -23,6 +23,8 @@ struct clCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiver
         UltCommandStreamReceiverTest::SetUp();
         ExecutionEnvironment *executionEnvironment = new MockExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
+        drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+
         auto osInterface = new OSInterface();
         osInterface->get()->setDrm(drm);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface.reset(osInterface);
@@ -37,7 +39,7 @@ struct clCreateCommandQueueWithPropertiesLinux : public UltCommandStreamReceiver
     void TearDown() override {
         UltCommandStreamReceiverTest::TearDown();
     }
-    DrmMock *drm = new DrmMock();
+    DrmMock *drm = nullptr;
     std::unique_ptr<MockClDevice> mdevice = nullptr;
     std::unique_ptr<Context> context;
     cl_device_id clDevice = nullptr;

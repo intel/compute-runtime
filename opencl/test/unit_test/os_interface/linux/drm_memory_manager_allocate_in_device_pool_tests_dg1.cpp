@@ -121,7 +121,7 @@ class DrmMemoryManagerLocalMemoryTest : public ::testing::Test {
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
-        mock = new DrmMockDg1();
+        mock = new DrmMockDg1(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         mock->memoryInfo.reset(new MockMemoryInfo());
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(mock);
@@ -286,7 +286,7 @@ class DrmMemoryManagerLocalMemoryMemoryBankTest : public ::testing::Test {
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
-        mock = new DrmMockDg1();
+        mock = new DrmMockDg1(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
         mock->memoryInfo.reset(new MockMemoryInfo());
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->osInterface->get()->setDrm(mock);
@@ -959,10 +959,10 @@ TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAll
 }
 
 TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledForMemoryInfoThenReturnMemoryRegionSize) {
-    auto drm = new DrmMock();
-    drm->memoryInfo.reset(new MockMemoryInfo());
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+    drm->memoryInfo.reset(new MockMemoryInfo());
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
     TestedDrmMemoryManager memoryManager(executionEnvironment);
 
@@ -972,9 +972,9 @@ TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCal
 }
 
 TEST_F(DrmMemoryManagerTestDg1, givenDrmMemoryManagerWhenGetLocalMemorySizeIsCalledButMemoryInfoIsNotAvailableThenSizeZeroIsReturned) {
-    auto drm = new DrmMock();
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->get()->setDrm(drm);
     TestedDrmMemoryManager memoryManager(executionEnvironment);
 

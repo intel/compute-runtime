@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/execution_environment/execution_environment.h"
+
 #include "opencl/test/unit_test/helpers/gtest_helpers.h"
 #include "opencl/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
@@ -178,7 +180,10 @@ typedef ::testing::Types<CFL_1x2x6, CFL_1x3x6, CFL_1x3x8, CFL_2x3x8, CFL_3x3x8> 
 TYPED_TEST_CASE(CflHwInfoTests, cflTestTypes);
 TYPED_TEST(CflHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo;
-    DrmMock drm;
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
 

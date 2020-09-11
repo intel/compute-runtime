@@ -15,7 +15,6 @@
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/linux/mock_os_layer.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "drm/i915_drm.h"
 #include "gtest/gtest.h"
@@ -48,7 +47,6 @@ class DrmMock : public Drm {
         }
     }
     DrmMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(mockFd, rootDeviceEnvironment) {}
-    DrmMock() : DrmMock(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]) {}
 
     int ioctl(unsigned long request, void *arg) override;
 
@@ -154,6 +152,8 @@ class DrmMockEngine : public DrmMock {
   public:
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();
     uint32_t queryEngineInfoSuccessCount = std::numeric_limits<uint32_t>::max();
+
+    DrmMockEngine(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {}
 
     virtual int handleRemainingRequests(unsigned long request, void *arg) {
         if ((request == DRM_IOCTL_I915_QUERY) && (arg != nullptr)) {

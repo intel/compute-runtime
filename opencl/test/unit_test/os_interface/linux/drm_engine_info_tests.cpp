@@ -14,14 +14,18 @@
 using namespace NEO;
 
 TEST(DrmTest, whenQueryingEngineInfoThenSingleIoctlIsCalled) {
-    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>();
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    std::unique_ptr<DrmMock> drm = std::make_unique<DrmMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     EXPECT_NE(nullptr, drm);
 
     drm->queryEngineInfo();
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 TEST(EngineInfoTest, givenEngineInfoQuerySupportedWhenQueryingEngineInfoThenEngineInfoIsCreatedWithEngines) {
-    auto drm = std::make_unique<DrmMockEngine>();
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmMockEngine>(*executionEnvironment->rootDeviceEnvironments[0]);
     ASSERT_NE(nullptr, drm);
 
     drm->queryEngineInfo();

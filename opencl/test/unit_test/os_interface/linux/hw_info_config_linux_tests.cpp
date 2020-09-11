@@ -88,9 +88,12 @@ void mockCpuidex(int *cpuInfo, int functionId, int subfunctionId);
 
 void HwInfoConfigTestLinux::SetUp() {
     HwInfoConfigTest::SetUp();
+    executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
 
     osInterface = new OSInterface();
-    drm = new DrmMock();
+    drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     osInterface->get()->setDrm(static_cast<Drm *>(drm));
 
     drm->StoredDeviceID = pInHwInfo.platform.usDeviceID;

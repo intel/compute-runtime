@@ -70,7 +70,10 @@ template <typename T>
 class EhlHwInfoTests : public ::testing::Test {};
 TEST(EhlHwInfoTests, WhenGtIsSetupThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo;
-    DrmMock drm;
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     DeviceDescriptor device = {0, &hwInfo, &EHL_HW_CONFIG::setupHardwareInfo, GTTYPE_GT1};
 

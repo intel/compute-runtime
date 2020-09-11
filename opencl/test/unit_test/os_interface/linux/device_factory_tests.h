@@ -26,7 +26,7 @@ using namespace NEO;
 
 struct DeviceFactoryLinuxTest : public ::testing::Test {
     void SetUp() override {
-        pDrm = new DrmMock;
+        pDrm = new DrmMock(*executionEnvironment.rootDeviceEnvironments[0]);
         pDrmToReturnFromCreateFunc = reinterpret_cast<Drm **>(&pDrm);
         pDrm->setGtType(GTTYPE_GT2);
     }

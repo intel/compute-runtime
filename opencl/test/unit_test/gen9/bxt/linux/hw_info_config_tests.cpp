@@ -225,7 +225,10 @@ typedef ::testing::Types<BXT_1x2x6, BXT_1x3x6> bxtTestTypes;
 TYPED_TEST_CASE(BxtHwInfoTests, bxtTestTypes);
 TYPED_TEST(BxtHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo;
-    DrmMock drm;
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
 

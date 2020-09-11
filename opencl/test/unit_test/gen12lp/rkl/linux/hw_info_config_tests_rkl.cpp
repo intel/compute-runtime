@@ -18,7 +18,7 @@ struct HwInfoConfigTestLinuxRkl : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
 
-        drm = new DrmMock();
+        drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
         osInterface->get()->setDrm(drm);
 
         drm->StoredDeviceID = DEVICE_ID_4C8A;
@@ -83,7 +83,10 @@ RKLTEST_F(HwInfoConfigTestLinuxRkl, negative) {
 
 TEST(RklHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo{};
-    DrmMock drm;
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     DeviceDescriptor device = {0, &hwInfo, &RKL_HW_CONFIG::setupHardwareInfo, GTTYPE_GT1};
 

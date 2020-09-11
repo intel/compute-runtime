@@ -72,7 +72,10 @@ typedef ::testing::Types<LKF_1x8x8> lkfTestTypes;
 TYPED_TEST_CASE(LkfHwInfoTests, lkfTestTypes);
 TYPED_TEST(LkfHwInfoTests, gtSetupIsCorrect) {
     HardwareInfo hwInfo;
-    DrmMock drm;
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     DeviceDescriptor device = {0, &hwInfo, &TypeParam::setupHardwareInfo, GTTYPE_GT1};
 

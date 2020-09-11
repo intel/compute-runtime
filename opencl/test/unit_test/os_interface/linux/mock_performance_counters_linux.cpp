@@ -49,7 +49,7 @@ void PerformanceCountersFixture::SetUp() {
     context = std::make_unique<MockContext>(device.get());
     queue = std::make_unique<MockCommandQueue>(context.get(), device.get(), &queueProperties);
     osInterface = std::unique_ptr<OSInterface>(new OSInterface());
-    osInterface->get()->setDrm(new DrmMock());
+    osInterface->get()->setDrm(new DrmMock(*device->getExecutionEnvironment()->rootDeviceEnvironments[0]));
     device->setOSTime(new MockOSTimeLinux(osInterface.get()));
 }
 

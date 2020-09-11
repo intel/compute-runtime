@@ -15,6 +15,8 @@ using namespace NEO;
 
 class DrmMockDg1 : public DrmMock {
   public:
+    DrmMockDg1(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {}
+
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();
     uint32_t queryMemoryRegionInfoSuccessCount = std::numeric_limits<uint32_t>::max();
 
