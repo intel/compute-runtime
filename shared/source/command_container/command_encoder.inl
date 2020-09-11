@@ -294,6 +294,7 @@ void EncodeSurfaceState<Family>::encodeBuffer(void *dst, uint64_t address, size_
                                      : R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
     ss->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
 }
+
 template <typename Family>
 void EncodeSurfaceState<Family>::encodeExtraBufferParams(GraphicsAllocation *allocation, GmmHelper *gmmHelper, void *memory, bool forceNonAuxMode, bool isReadOnlyArgument) {
     using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
@@ -302,8 +303,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(GraphicsAllocation *all
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
     Gmm *gmm = allocation ? allocation->getDefaultGmm() : nullptr;
 
-    if (gmm && gmm->isRenderCompressed && !forceNonAuxMode &&
-        GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == allocation->getAllocationType()) {
+    if (gmm && gmm->isRenderCompressed && !forceNonAuxMode) {
         // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
         surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);

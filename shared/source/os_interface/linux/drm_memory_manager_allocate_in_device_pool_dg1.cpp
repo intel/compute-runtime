@@ -133,14 +133,18 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), *allocationData.imgInfo, allocationData.storageInfo);
         sizeAligned = alignUp(allocationData.imgInfo->size, MemoryConstants::pageSize64k);
     } else {
-        bool preferRenderCompressed = (allocationData.type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
         if (allocationData.type == GraphicsAllocation::AllocationType::WRITE_COMBINED) {
             sizeAligned = alignUp(allocationData.size + MemoryConstants::pageSize64k, 2 * MemoryConstants::megaByte) + 2 * MemoryConstants::megaByte;
         } else {
             sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
         }
-        gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), nullptr, sizeAligned, allocationData.flags.uncacheable,
-                                    preferRenderCompressed, false, allocationData.storageInfo);
+        gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(),
+                                    nullptr,
+                                    sizeAligned,
+                                    allocationData.flags.uncacheable,
+                                    allocationData.flags.preferRenderCompressed,
+                                    false,
+                                    allocationData.storageInfo);
     }
 
     auto sizeAllocated = sizeAligned;

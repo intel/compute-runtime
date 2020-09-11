@@ -24,7 +24,8 @@ struct AllocationProperties {
             uint32_t shareable : 1;
             uint32_t resource48Bit : 1;
             uint32_t isUSMHostAllocation : 1;
-            uint32_t reserved : 22;
+            uint32_t isUSMDeviceAllocation : 1;
+            uint32_t reserved : 21;
         } flags;
         uint32_t allFlags = 0;
     };

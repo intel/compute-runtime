@@ -64,6 +64,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/memory/memory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory/memory_operations_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory/cpu_page_fault_memory_manager.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager/compression_selector_l0.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module.h
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_build_log.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_build_log.h
