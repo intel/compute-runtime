@@ -27,6 +27,10 @@ bool TestChecks::supportsOcl21(const Context *pContext) {
     return pContext->getDevice(0)->areOcl21FeaturesEnabled();
 }
 
+bool TestChecks::supportsOcl21(const std::unique_ptr<HardwareInfo> &pHardwareInfo) {
+    return pHardwareInfo->capabilityTable.supportsOcl21Features;
+}
+
 bool TestChecks::supportsDeviceEnqueue(const ClDevice *pClDevice) {
     return pClDevice->getHardwareInfo().capabilityTable.supportsDeviceEnqueue;
 }

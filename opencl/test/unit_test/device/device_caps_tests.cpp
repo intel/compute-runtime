@@ -18,6 +18,7 @@
 #include "opencl/test/unit_test/mocks/mock_builtins.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "driver_version.h"
 #include "gtest/gtest.h"
@@ -211,7 +212,8 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
         EXPECT_EQ(expectedDeviceSubgroups[i], sharedCaps.maxSubGroups[i]);
     }
 
-    EXPECT_EQ(sharedCaps.maxWorkGroupSize / hwHelper.getMinimalSIMDSize(), caps.maxNumOfSubGroups);
+    auto expectedMaxNumOfSubGroups = device->areOcl21FeaturesEnabled() ? sharedCaps.maxWorkGroupSize / hwHelper.getMinimalSIMDSize() : 0u;
+    EXPECT_EQ(expectedMaxNumOfSubGroups, caps.maxNumOfSubGroups);
 
     if (defaultHwInfo->capabilityTable.supportsDeviceEnqueue || (defaultHwInfo->capabilityTable.clVersionSupport == 21)) {
         EXPECT_EQ(1024u, caps.maxOnDeviceEvents);
@@ -1108,6 +1110,8 @@ HWTEST_F(DeviceGetCapsTest, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThen
 }
 
 TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCapsAreCreatedThen1024WorkgroupSizeIsReturned) {
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
+
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.set(true);
 
@@ -1157,6 +1161,8 @@ TEST(DeviceGetCaps, givenDebugFlagToDisableDeviceEnqueuesWhenCreatingDeviceThenD
 }
 
 HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedItIsLimitedTo1024) {
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
+
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     auto &hwHelper = HwHelper::get(myHwInfo.platform.eRenderCoreFamily);

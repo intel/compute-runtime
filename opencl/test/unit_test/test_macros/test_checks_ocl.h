@@ -18,6 +18,7 @@ namespace TestChecks {
 bool supportsSvm(const ClDevice *pClDevice);
 bool supportsImages(const Context *pContext);
 bool supportsOcl21(const Context *pContext);
+bool supportsOcl21(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
 bool supportsDeviceEnqueue(const ClDevice *pClDevice);
 bool supportsDeviceEnqueue(const Context *pContext);
 bool supportsDeviceEnqueue(const std::unique_ptr<HardwareInfo> &pHardwareInfo);

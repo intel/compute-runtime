@@ -128,8 +128,17 @@ void ClDevice::initializeCaps() {
     deviceInfo.independentForwardProgress = hwInfo.capabilityTable.supportsIndependentForwardProgress;
     deviceInfo.ilsWithVersion[0].name[0] = 0;
     deviceInfo.ilsWithVersion[0].version = 0;
+    deviceInfo.maxNumOfSubGroups = 0;
 
     if (ocl21FeaturesEnabled) {
+
+        auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
+                                ? CommonConstants::maximalSimdSize
+                                : hwHelper.getMinimalSIMDSize();
+
+        // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
+        deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(sharedDeviceInfo.maxWorkGroupSize / simdSizeUsed);
+
         if (deviceInfo.independentForwardProgress) {
             deviceExtensions += "cl_khr_subgroups ";
         }
@@ -288,12 +297,6 @@ void ClDevice::initializeCaps() {
     deviceInfo.maxComputUnits = systemInfo.EUCount * getNumAvailableDevices();
     deviceInfo.maxConstantArgs = 8;
     deviceInfo.maxSliceCount = systemInfo.SliceCount;
-    auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
-                            ? CommonConstants::maximalSimdSize
-                            : hwHelper.getMinimalSIMDSize();
-
-    // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
-    deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(sharedDeviceInfo.maxWorkGroupSize / simdSizeUsed);
 
     deviceInfo.singleFpConfig |= defaultFpFlags;
 
