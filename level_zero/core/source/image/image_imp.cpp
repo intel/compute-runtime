@@ -26,7 +26,8 @@ ze_result_t ImageImp::destroy() {
     return ZE_RESULT_SUCCESS;
 }
 
-Image *Image::create(uint32_t productFamily, Device *device, const ze_image_desc_t *desc) {
+ze_result_t Image::create(uint32_t productFamily, Device *device, const ze_image_desc_t *desc, Image **pImage) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
     ImageAllocatorFn allocator = nullptr;
     if (productFamily < IGFX_MAX_PRODUCT) {
         allocator = imageFactory[productFamily];
@@ -35,12 +36,16 @@ Image *Image::create(uint32_t productFamily, Device *device, const ze_image_desc
     ImageImp *image = nullptr;
     if (allocator) {
         image = static_cast<ImageImp *>((*allocator)());
-        if (!image->initialize(device, desc)) {
+        result = image->initialize(device, desc);
+        if (result != ZE_RESULT_SUCCESS) {
             image->destroy();
             image = nullptr;
         }
+    } else {
+        result = ZE_RESULT_ERROR_UNKNOWN;
     }
+    *pImage = image;
 
-    return image;
+    return result;
 }
 } // namespace L0

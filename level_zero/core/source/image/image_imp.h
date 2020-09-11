@@ -16,7 +16,7 @@ namespace L0 {
 struct ImageImp : public Image {
     ze_result_t destroy() override;
 
-    virtual bool initialize(Device *device, const ze_image_desc_t *desc) = 0;
+    virtual ze_result_t initialize(Device *device, const ze_image_desc_t *desc) = 0;
 
     ~ImageImp() override;
 

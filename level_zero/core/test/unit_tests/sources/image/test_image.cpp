@@ -90,7 +90,10 @@ HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateThenImageIsCreat
                      ZE_IMAGE_FORMAT_SWIZZLE_B,
                      ZE_IMAGE_FORMAT_SWIZZLE_A};
 
-    std::unique_ptr<L0::Image> image(Image::create(productFamily, device, &zeDesc));
+    Image *image_ptr;
+    auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    std::unique_ptr<L0::Image> image(image_ptr);
 
     ASSERT_NE(image, nullptr);
 
@@ -124,9 +127,11 @@ HWTEST2_F(ImageCreate, givenValidImageDescriptionWhenImageCreateWithUnsupportedI
 
     zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_Y216};
 
-    std::unique_ptr<L0::Image> image(Image::create(productFamily, device, &zeDesc));
+    Image *image_ptr;
+    auto result = Image::create(productFamily, device, &zeDesc, &image_ptr);
 
-    ASSERT_EQ(image, nullptr);
+    ASSERT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT);
+    ASSERT_EQ(image_ptr, nullptr);
 }
 
 class TestImageFormats : public DeviceFixture, public testing::TestWithParam<std::pair<ze_image_format_layout_t, ze_image_format_type_t>> {
@@ -165,8 +170,8 @@ HWTEST2_F(ImageCreate, givenDifferentSwizzleFormatWhenImageInitializeThenCorrect
     desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
 
     auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
-    bool ret = imageHW->initialize(device, &desc);
-    ASSERT_TRUE(ret);
+    auto ret = imageHW->initialize(device, &desc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
     auto surfaceState = &imageHW->surfaceState;
 

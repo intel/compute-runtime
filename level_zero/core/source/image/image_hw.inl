@@ -21,7 +21,7 @@
 
 namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_desc_t *desc) {
+ze_result_t ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_desc_t *desc) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
 
     bool isMediaFormatLayout = isMediaFormat(desc->format.layout);
@@ -36,7 +36,7 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
     this->device = device;
 
     if (imgInfo.surfaceFormat->GMMSurfaceFormat == GMM_FORMAT_INVALID) {
-        return false;
+        return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
     }
 
     typename RENDER_SURFACE_STATE::SURFACE_TYPE surfaceType;
@@ -53,7 +53,7 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
         surfaceType = RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_3D;
         break;
     default:
-        return false;
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     imgInfo.linearStorage = surfaceType == RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D;
@@ -148,7 +148,7 @@ bool ImageCoreFamily<gfxCoreFamily>::initialize(Device *device, const ze_image_d
         }
     }
 
-    return true;
+    return ZE_RESULT_SUCCESS;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

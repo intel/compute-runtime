@@ -108,7 +108,7 @@ HWTEST2_F(SetKernelArg, givenImageAndKernelWhenSetArgImageThenCrossThreadDataIsS
 
     auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
     auto ret = imageHW->initialize(device, &desc);
-    ASSERT_EQ(true, ret);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
 
     auto handle = imageHW->toHandle();
     auto imgInfo = imageHW->getImageInfo();

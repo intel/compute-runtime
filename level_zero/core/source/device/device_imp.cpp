@@ -173,13 +173,13 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
 
 ze_result_t DeviceImp::createImage(const ze_image_desc_t *desc, ze_image_handle_t *phImage) {
     auto productFamily = neoDevice->getHardwareInfo().platform.eProductFamily;
-    *phImage = Image::create(productFamily, this, desc);
-
-    if (!*phImage) {
-        return ZE_RESULT_ERROR_UNSUPPORTED_IMAGE_FORMAT;
+    Image *pImage = nullptr;
+    auto result = Image::create(productFamily, this, desc, &pImage);
+    if (result == ZE_RESULT_SUCCESS) {
+        *phImage = pImage->toHandle();
     }
 
-    return ZE_RESULT_SUCCESS;
+    return result;
 }
 
 ze_result_t DeviceImp::createSampler(const ze_sampler_desc_t *desc,
