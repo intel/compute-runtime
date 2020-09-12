@@ -67,6 +67,7 @@ struct DriverHandleImp : public DriverHandle {
     std::vector<Device *> devices;
     NEO::MemoryManager *memoryManager = nullptr;
     NEO::SVMAllocsManager *svmAllocsManager = nullptr;
+    uint64_t uuidTimestamp = 0u;
 
     // Environment Variables
     std::string affinityMaskString = "";
