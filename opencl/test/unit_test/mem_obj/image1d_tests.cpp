@@ -70,7 +70,7 @@ class CreateImage1DTest : public ClDeviceFixture,
 
 typedef CreateImage1DTest CreateImage1DType;
 
-HWTEST_P(CreateImage1DType, validTypes) {
+HWTEST_P(CreateImage1DType, GivenValidTypeWhenCreatingImageThenImageParamsAreCorrect) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
     auto image = Image::create(
@@ -137,6 +137,6 @@ static cl_mem_object_type Image1DTypes[] = {
     CL_MEM_OBJECT_IMAGE1D_ARRAY};
 
 INSTANTIATE_TEST_CASE_P(
-    CreateImage1DTest_Create,
+    CreateImage1DTestCreate,
     CreateImage1DType,
     testing::ValuesIn(Image1DTypes));
