@@ -36,6 +36,8 @@ HWTEST_F(UnifiedMemoryAubTest, givenDeviceMemoryAllocWhenWriteIntoItThenValuesMa
 HWTEST_F(UnifiedMemoryAubTest, givenSharedMemoryAllocWhenWriteIntoCPUPartThenValuesMatchAfterUsingAllocAsKernelParam) {
     auto unifiedMemoryType = InternalMemoryType::SHARED_UNIFIED_MEMORY;
     auto unifiedMemoryPtr = allocateUSM(unifiedMemoryType);
+    retVal = clEnqueueMemsetINTEL(this->pCmdQ, unifiedMemoryPtr, 0, dataSize, 0, nullptr, nullptr);
+    EXPECT_EQ(retVal, CL_SUCCESS);
 
     writeToUsmMemory(values, unifiedMemoryPtr, unifiedMemoryType);
 

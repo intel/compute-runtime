@@ -17,7 +17,6 @@ namespace NEO {
 void PageFaultManager::insertAllocation(void *ptr, size_t size, SVMAllocsManager *unifiedMemoryManager, void *cmdQ) {
     std::unique_lock<SpinLock> lock{mtx};
     this->memoryData.insert(std::make_pair(ptr, PageFaultData{size, unifiedMemoryManager, cmdQ, false}));
-    this->transferToCpu(ptr, size, cmdQ);
 }
 
 void PageFaultManager::removeAllocation(void *ptr) {

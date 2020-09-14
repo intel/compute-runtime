@@ -912,7 +912,7 @@ TEST(UnfiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithLocalMemoryWhe
     auto neoQueue = castToObject<CommandQueue>(commandQueue);
     auto osContextId = neoQueue->getGpgpuCommandStreamReceiver().getOsContext().getContextId();
 
-    EXPECT_EQ(1u, svmAllocation->cpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(GraphicsAllocation::objectNotUsed, svmAllocation->cpuAllocation->getTaskCount(osContextId));
 
     status = clEnqueueWriteBuffer(commandQueue, buffer, false, 0u, 4096u, sharedMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
@@ -920,12 +920,12 @@ TEST(UnfiedSharedMemoryTransferCalls, givenSharedUsmAllocationWithLocalMemoryWhe
     auto &temporaryAllocations = neoQueue->getGpgpuCommandStreamReceiver().getTemporaryAllocations();
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
 
-    EXPECT_EQ(2u, svmAllocation->cpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(1u, svmAllocation->cpuAllocation->getTaskCount(osContextId));
 
     status = clEnqueueReadBuffer(commandQueue, buffer, false, 0u, 4096u, sharedMemory, 0u, nullptr, nullptr);
     ASSERT_EQ(CL_SUCCESS, status);
     EXPECT_TRUE(temporaryAllocations.peekIsEmpty());
-    EXPECT_EQ(3u, svmAllocation->cpuAllocation->getTaskCount(osContextId));
+    EXPECT_EQ(2u, svmAllocation->cpuAllocation->getTaskCount(osContextId));
 
     status = clReleaseMemObject(buffer);
     ASSERT_EQ(CL_SUCCESS, status);

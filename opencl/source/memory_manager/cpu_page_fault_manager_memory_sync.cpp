@@ -19,6 +19,7 @@ void PageFaultManager::transferToCpu(void *ptr, size_t size, void *cmdQ) {
 }
 void PageFaultManager::transferToGpu(void *ptr, void *cmdQ) {
     auto commandQueue = static_cast<CommandQueue *>(cmdQ);
+    memoryData[ptr].unifiedMemoryManager->insertSvmMapOperation(ptr, memoryData[ptr].size, ptr, 0, false);
     auto retVal = commandQueue->enqueueSVMUnmap(ptr, 0, nullptr, nullptr, false);
     UNRECOVERABLE_IF(retVal);
     retVal = commandQueue->finish();
