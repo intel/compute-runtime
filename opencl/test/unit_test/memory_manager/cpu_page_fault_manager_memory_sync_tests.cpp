@@ -53,7 +53,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSynchronizeMemoryThenEnq
     void *alloc = svmAllocsManager->createSVMAlloc(mockRootDeviceIndex, 256, {}, mockDeviceBitfield);
 
     auto cmdQ = std::make_unique<CommandQueueMock>();
-    pageFaultManager->insertAllocation(alloc, 256, svmAllocsManager.get(), cmdQ.get());
+    pageFaultManager->insertAllocation(alloc, 256, svmAllocsManager.get(), cmdQ.get(), {});
 
     pageFaultManager->baseCpuTransfer(alloc, 10, cmdQ.get());
     EXPECT_EQ(cmdQ->transferToCpuCalled, 1);
@@ -84,7 +84,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenGpuTransferIsInvokedThen
     auto svmAllocsManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
     void *alloc = svmAllocsManager->createSVMAlloc(mockRootDeviceIndex, 256, {}, mockDeviceBitfield);
     auto cmdQ = std::make_unique<CommandQueueMock>();
-    pageFaultManager->insertAllocation(alloc, 256, svmAllocsManager.get(), cmdQ.get());
+    pageFaultManager->insertAllocation(alloc, 256, svmAllocsManager.get(), cmdQ.get(), {});
 
     EXPECT_EQ(svmAllocsManager->insertSvmMapOperationCalled, 0);
     pageFaultManager->baseGpuTransfer(alloc, cmdQ.get());

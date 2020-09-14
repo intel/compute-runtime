@@ -59,7 +59,7 @@ TEST_F(PageFaultManagerLinuxTest, whenVeryfyingPageFaultThenUserSignalIsSentToOt
     auto pageFaultManager = std::make_unique<UserSignalMockPageFaultManagerLinux>();
 
     auto alloc = reinterpret_cast<void *>(0x1);
-    pageFaultManager->insertAllocation(alloc, 10, nullptr, nullptr);
+    pageFaultManager->insertAllocation(alloc, 10, nullptr, nullptr, {});
     pageFaultManager->verifyPageFault(alloc);
     pageFaultManager->ownThread.join();
 

@@ -14,9 +14,16 @@
 #include <mutex>
 
 namespace NEO {
-void PageFaultManager::insertAllocation(void *ptr, size_t size, SVMAllocsManager *unifiedMemoryManager, void *cmdQ) {
+void PageFaultManager::insertAllocation(void *ptr, size_t size, SVMAllocsManager *unifiedMemoryManager, void *cmdQ, const MemoryProperties &memoryProperties) {
+    const bool initialPlacementCpu = !memoryProperties.flags.usmInitialPlacementGpu;
+    const auto domain = initialPlacementCpu ? AllocationDomain::Cpu : AllocationDomain::None;
+
     std::unique_lock<SpinLock> lock{mtx};
-    this->memoryData.insert(std::make_pair(ptr, PageFaultData{size, unifiedMemoryManager, cmdQ, false}));
+    this->memoryData.insert(std::make_pair(ptr, PageFaultData{size, unifiedMemoryManager, cmdQ, domain}));
+    if (!initialPlacementCpu) {
+        this->setAubWritable(false, ptr, unifiedMemoryManager);
+        this->protectCPUMemoryAccess(ptr, size);
+    }
 }
 
 void PageFaultManager::removeAllocation(void *ptr) {
@@ -24,7 +31,7 @@ void PageFaultManager::removeAllocation(void *ptr) {
     auto alloc = memoryData.find(ptr);
     if (alloc != memoryData.end()) {
         auto &pageFaultData = alloc->second;
-        if (pageFaultData.isInGpuDomain) {
+        if (pageFaultData.domain == AllocationDomain::Gpu) {
             allowCPUMemoryAccess(ptr, pageFaultData.size);
         }
         this->memoryData.erase(ptr);
@@ -36,11 +43,13 @@ void PageFaultManager::moveAllocationToGpuDomain(void *ptr) {
     auto alloc = memoryData.find(ptr);
     if (alloc != memoryData.end()) {
         auto &pageFaultData = alloc->second;
-        if (pageFaultData.isInGpuDomain == false) {
+        if (pageFaultData.domain != AllocationDomain::Gpu) {
             this->setAubWritable(false, ptr, pageFaultData.unifiedMemoryManager);
-            this->transferToGpu(ptr, pageFaultData.cmdQ);
-            this->protectCPUMemoryAccess(ptr, pageFaultData.size);
-            pageFaultData.isInGpuDomain = true;
+            if (pageFaultData.domain == AllocationDomain::Cpu) {
+                this->transferToGpu(ptr, pageFaultData.cmdQ);
+                this->protectCPUMemoryAccess(ptr, pageFaultData.size);
+            }
+            pageFaultData.domain = AllocationDomain::Gpu;
         }
     }
 }
@@ -50,11 +59,13 @@ void PageFaultManager::moveAllocationsWithinUMAllocsManagerToGpuDomain(SVMAllocs
     for (auto &alloc : this->memoryData) {
         auto allocPtr = alloc.first;
         auto &pageFaultData = alloc.second;
-        if (pageFaultData.unifiedMemoryManager == unifiedMemoryManager && pageFaultData.isInGpuDomain == false) {
+        if (pageFaultData.unifiedMemoryManager == unifiedMemoryManager && pageFaultData.domain != AllocationDomain::Gpu) {
             this->setAubWritable(false, allocPtr, pageFaultData.unifiedMemoryManager);
-            this->transferToGpu(allocPtr, pageFaultData.cmdQ);
-            this->protectCPUMemoryAccess(allocPtr, pageFaultData.size);
-            pageFaultData.isInGpuDomain = true;
+            if (pageFaultData.domain == AllocationDomain::Cpu) {
+                this->transferToGpu(allocPtr, pageFaultData.cmdQ);
+                this->protectCPUMemoryAccess(allocPtr, pageFaultData.size);
+            }
+            pageFaultData.domain = AllocationDomain::Gpu;
         }
     }
 }
@@ -68,8 +79,10 @@ bool PageFaultManager::verifyPageFault(void *ptr) {
             this->broadcastWaitSignal();
             this->allowCPUMemoryAccess(allocPtr, pageFaultData.size);
             this->setAubWritable(true, allocPtr, pageFaultData.unifiedMemoryManager);
-            this->transferToCpu(allocPtr, pageFaultData.size, pageFaultData.cmdQ);
-            pageFaultData.isInGpuDomain = false;
+            if (pageFaultData.domain == AllocationDomain::Gpu) {
+                this->transferToCpu(allocPtr, pageFaultData.size, pageFaultData.cmdQ);
+            }
+            pageFaultData.domain = AllocationDomain::Cpu;
             return true;
         }
     }

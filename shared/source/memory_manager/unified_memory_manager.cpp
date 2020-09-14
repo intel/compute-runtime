@@ -221,7 +221,7 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(uint32_t rootDeviceI
 
         UNRECOVERABLE_IF(cmdQ == nullptr);
         auto pageFaultManager = this->memoryManager->getPageFaultManager();
-        pageFaultManager->insertAllocation(unifiedMemoryPointer, size, this, cmdQ);
+        pageFaultManager->insertAllocation(unifiedMemoryPointer, size, this, cmdQ, memoryProperties.allocationFlags);
 
         return unifiedMemoryPointer;
     }
