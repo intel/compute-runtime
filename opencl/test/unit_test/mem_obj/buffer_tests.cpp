@@ -920,6 +920,7 @@ TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithZeroF
     retVal = clReleaseMemObject(clBuffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
 TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithParentFlagsThenItIsCreatedSuccesfuly) {
     auto retVal = CL_SUCCESS;
     auto clBuffer = clCreateBuffer(context.get(),
@@ -991,7 +992,7 @@ TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithInval
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(ValidHostPtr, failedAllocationInjection) {
+TEST_P(ValidHostPtr, GivenFailedAllocationWhenCreatingBufferThenBufferIsNotCreated) {
     InjectedFunction method = [this](size_t failureIndex) {
         delete buffer;
         buffer = nullptr;
@@ -1002,7 +1003,9 @@ TEST_P(ValidHostPtr, failedAllocationInjection) {
         if (MemoryManagement::nonfailingAllocation == failureIndex) {
             EXPECT_EQ(CL_SUCCESS, retVal);
             EXPECT_NE(nullptr, buffer);
-        }
+        } else {
+            EXPECT_EQ(nullptr, buffer);
+        };
     };
     injectFailures(method);
 }
@@ -1800,7 +1803,7 @@ TEST_F(BufferTransferTests, givenBufferWhenTransferFromHostPtrCalledThenCopyRequ
 
 using MultiRootDeviceBufferTest = MultiRootDeviceFixture;
 
-TEST_F(MultiRootDeviceBufferTest, bufferGraphicsAllocationHasCorrectRootDeviceIndex) {
+TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedThenBufferGraphicsAllocationHasCorrectRootDeviceIndex) {
     cl_int retVal = 0;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
