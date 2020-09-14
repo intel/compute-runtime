@@ -395,6 +395,44 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetIndi
     EXPECT_EQ(2u * sizeof(MI_STORE_DATA_IMM), indirectPatchCommandsSize);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, GivenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledFor64BitAddressingModeThenDwordLengthAndStoreQwordAreSetCorrectly) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex()));
+
+    PatchInfoData patchInfo(0xA000, 0u, PatchInfoAllocationType::KernelArg, 0x6000, 0x100, PatchInfoAllocationType::IndirectObjectHeap, sizeof(uint64_t));
+    aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfo);
+
+    size_t indirectPatchCommandsSize = 0u;
+    std::vector<PatchInfoData> indirectPatchInfo;
+
+    std::unique_ptr<char> commandBuffer(aubCsr->getFlatBatchBufferHelper().getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
+    ASSERT_EQ(sizeof(MI_STORE_DATA_IMM), indirectPatchCommandsSize);
+    ASSERT_EQ(2u, indirectPatchInfo.size());
+
+    auto cmd = reinterpret_cast<MI_STORE_DATA_IMM *>(commandBuffer.get());
+    EXPECT_TRUE(cmd->getStoreQword());
+    EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_QWORD, cmd->getDwordLength());
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, GivenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledFor32BitAddressingModeThenDwordLengthAndSetStoreDwordAreSetCorrectly) {
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex()));
+
+    PatchInfoData patchInfo(0xA000, 0u, PatchInfoAllocationType::KernelArg, 0x6000, 0x100, PatchInfoAllocationType::IndirectObjectHeap, sizeof(uint32_t));
+    aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfo);
+
+    size_t indirectPatchCommandsSize = 0u;
+    std::vector<PatchInfoData> indirectPatchInfo;
+
+    std::unique_ptr<char> commandBuffer(aubCsr->getFlatBatchBufferHelper().getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
+    ASSERT_EQ(sizeof(MI_STORE_DATA_IMM), indirectPatchCommandsSize);
+    ASSERT_EQ(2u, indirectPatchInfo.size());
+
+    auto cmd = reinterpret_cast<MI_STORE_DATA_IMM *>(commandBuffer.get());
+    EXPECT_FALSE(cmd->getStoreQword());
+    EXPECT_EQ(MI_STORE_DATA_IMM::DWORD_LENGTH::DWORD_LENGTH_STORE_DWORD, cmd->getDwordLength());
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddBatchBufferStartCalledAndBatchBUfferFlatteningEnabledThenBatchBufferStartAddressIsRegistered) {
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     DebugManagerStateRestore dbgRestore;
