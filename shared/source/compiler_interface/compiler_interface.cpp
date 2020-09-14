@@ -330,7 +330,6 @@ TranslationOutput::ErrorCode CompilerInterface::getSipKernelBinary(NEO::Device &
 
 bool CompilerInterface::loadFcl() {
     return NEO::loadCompiler<IGC::FclOclDeviceCtx>(Os::frontEndDllName, fclLib, fclMain);
-    ;
 }
 
 bool CompilerInterface::loadIgc() {
