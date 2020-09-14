@@ -708,7 +708,7 @@ class BufferTest : public ClDeviceFixture,
 
 typedef BufferTest NoHostPtr;
 
-TEST_P(NoHostPtr, ValidFlags) {
+TEST_P(NoHostPtr, GivenValidFlagsWhenCreatingBufferThenBufferIsCreated) {
     auto buffer = Buffer::create(
         context.get(),
         flags,
@@ -759,7 +759,7 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
     }
 }
 
-TEST_P(NoHostPtr, WithUseHostPtr_returnsError) {
+TEST_P(NoHostPtr, GivenNoHostPtrWhenCreatingBufferWithMemUseHostPtrThenInvalidHostPtrErrorIsReturned) {
     auto buffer = Buffer::create(
         context.get(),
         flags | CL_MEM_USE_HOST_PTR,
@@ -772,7 +772,7 @@ TEST_P(NoHostPtr, WithUseHostPtr_returnsError) {
     delete buffer;
 }
 
-TEST_P(NoHostPtr, WithCopyHostPtr_returnsError) {
+TEST_P(NoHostPtr, GivenNoHostPtrWhenCreatingBufferWithMemCopyHostPtrThenInvalidHostPtrErrorIsReturned) {
     auto buffer = Buffer::create(
         context.get(),
         flags | CL_MEM_COPY_HOST_PTR,
@@ -785,7 +785,7 @@ TEST_P(NoHostPtr, WithCopyHostPtr_returnsError) {
     delete buffer;
 }
 
-TEST_P(NoHostPtr, withBufferGraphicsAllocationReportsBufferType) {
+TEST_P(NoHostPtr, WhenGettingAllocationTypeThenCorrectBufferTypeIsReturned) {
     auto buffer = Buffer::create(
         context.get(),
         flags,
@@ -861,14 +861,14 @@ struct ValidHostPtr
     Buffer *buffer = nullptr;
 };
 
-TEST_P(ValidHostPtr, isResident_defaultsToFalseAfterCreate) {
+TEST_P(ValidHostPtr, WhenBufferIsCreatedThenItIsNotResident) {
     buffer = createBuffer();
     ASSERT_NE(nullptr, buffer);
 
     EXPECT_FALSE(buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->isResident(pDevice->getDefaultEngine().osContext->getContextId()));
 }
 
-TEST_P(ValidHostPtr, getAddress) {
+TEST_P(ValidHostPtr, WhenBufferIsCreatedThenAddressMatechesOnlyForHostPtr) {
     buffer = createBuffer();
     ASSERT_NE(nullptr, buffer);
 
@@ -890,7 +890,7 @@ TEST_P(ValidHostPtr, getAddress) {
     }
 }
 
-TEST_P(ValidHostPtr, getSize) {
+TEST_P(ValidHostPtr, WhenGettingBufferSizeThenSizeIsCorrect) {
     buffer = createBuffer();
     ASSERT_NE(nullptr, buffer);
 
@@ -1007,7 +1007,7 @@ TEST_P(ValidHostPtr, failedAllocationInjection) {
     injectFailures(method);
 }
 
-TEST_P(ValidHostPtr, SvmHostPtr) {
+TEST_P(ValidHostPtr, GivenSvmHostPtrWhenCreatingBufferThenBufferIsCreatedCorrectly) {
     const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         auto ptr = context->getSVMAllocsManager()->createSVMAlloc(pDevice->getRootDeviceIndex(), 64, {}, pDevice->getDeviceBitfield());
@@ -1081,7 +1081,7 @@ static std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, size_t, size_t
                                                                                                       std::make_tuple(1, 1, 1, 7, 1, 3, 10, 30, 67 + 41),
                                                                                                       std::make_tuple(2, 0, 2, 7, 2, 3, 10, 30, 77 + 62)};
 
-TEST_P(BufferCalculateHostPtrSize, CheckReturnedSize) {
+TEST_P(BufferCalculateHostPtrSize, WhenCalculatingHostPtrSizeThenItIsCorrect) {
     size_t calculatedSize = Buffer::calculateHostPtrSize(origin, region, rowPitch, slicePitch);
     EXPECT_EQ(hostPtrSize, calculatedSize);
 }
