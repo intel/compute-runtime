@@ -12,6 +12,7 @@
 namespace NEO {
 class BufferObject;
 class OsContext;
+class Drm;
 
 struct OsHandle {
     BufferObject *bo = nullptr;
@@ -65,6 +66,7 @@ class DrmAllocation : public GraphicsAllocation {
     void makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
     void bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
     void bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
+    void registerBOBindExtHandle(Drm *drm);
 
   protected:
     BufferObjects bufferObjects{};

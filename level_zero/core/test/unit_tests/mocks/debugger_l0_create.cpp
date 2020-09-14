@@ -15,7 +15,9 @@ DebugerL0CreateFn mockDebuggerL0HwFactory[IGFX_MAX_CORE];
 
 namespace L0 {
 std::unique_ptr<NEO::Debugger> DebuggerL0::create(NEO::Device *device) {
-    return std::unique_ptr<DebuggerL0>(ult::mockDebuggerL0HwFactory[device->getHardwareInfo().platform.eRenderCoreFamily](device));
+    auto debugger = ult::mockDebuggerL0HwFactory[device->getHardwareInfo().platform.eRenderCoreFamily](device);
+    debugger->registerResourceClasses();
+    return std::unique_ptr<DebuggerL0>(debugger);
 }
 
 } // namespace L0

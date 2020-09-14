@@ -56,6 +56,12 @@ constexpr const char *getIoctlParamString(int param) {
 
 } // namespace IoctlHelper
 
+const std::array<const char *, size_t(Drm::ResourceClass::MaxSize)> Drm::classNames = {"I915_CLASS_ELF_FILE",
+                                                                                       "I915_CLASS_ISA",
+                                                                                       "I915_CLASS_MODULE_HEAP_DEBUG_AREA",
+                                                                                       "I915_CLASS_CONTEXT_SAVE_AREA",
+                                                                                       "I915_CLASS_SBA_TRACKING_BUFFER"};
+
 Drm::Drm(std::unique_ptr<HwDeviceId> hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment) : hwDeviceId(std::move(hwDeviceIdIn)), rootDeviceEnvironment(rootDeviceEnvironment) {
     requirePerContextVM = rootDeviceEnvironment.executionEnvironment.isPerContextMemorySpaceRequired();
 }

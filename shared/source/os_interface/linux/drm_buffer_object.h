@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/utilities/stackvec.h"
+
 #include "drm/i915_drm.h"
 #include "engine_limits.h"
 
@@ -30,7 +32,7 @@ class BufferObject {
 
   public:
     BufferObject(Drm *drm, int handle, size_t size, size_t maxOsContextCount);
-    MOCKABLE_VIRTUAL ~BufferObject(){};
+    MOCKABLE_VIRTUAL ~BufferObject();
 
     struct Deleter {
         void operator()(BufferObject *bo) {
@@ -67,6 +69,7 @@ class BufferObject {
     void setUnmapSize(uint64_t unmapSize) { this->unmapSize = unmapSize; }
     uint64_t peekUnmapSize() const { return unmapSize; }
     bool peekIsReusableAllocation() const { return this->isReused; }
+    void addBindExtHandle(uint32_t handle);
 
   protected:
     Drm *drm = nullptr;
@@ -90,5 +93,6 @@ class BufferObject {
     uint64_t unmapSize = 0;
 
     std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
+    StackVec<uint32_t, 2> bindExtHandles;
 };
 } // namespace NEO

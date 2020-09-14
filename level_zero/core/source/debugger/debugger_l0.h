@@ -65,6 +65,8 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
                sba.BindlessSurfaceStateBaseAddress != 0;
     }
 
+    MOCKABLE_VIRTUAL void registerResourceClasses();
+
     NEO::Device *device = nullptr;
     NEO::GraphicsAllocation *sbaAllocation = nullptr;
     std::unordered_map<uint32_t, NEO::GraphicsAllocation *> perContextSbaAllocations;

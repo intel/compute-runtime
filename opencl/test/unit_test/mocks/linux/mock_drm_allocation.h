@@ -13,6 +13,7 @@ namespace NEO {
 
 class MockBufferObject : public BufferObject {
   public:
+    using BufferObject::bindExtHandles;
     using BufferObject::bindInfo;
     using BufferObject::BufferObject;
     using BufferObject::handle;

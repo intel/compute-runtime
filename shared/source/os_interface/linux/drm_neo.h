@@ -11,11 +11,13 @@
 #include "shared/source/os_interface/linux/hw_device_id.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/utilities/api_intercept.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "drm/i915_drm.h"
 #include "engine_node.h"
 #include "igfxfmid.h"
 
+#include <array>
 #include <cerrno>
 #include <fcntl.h>
 #include <memory>
@@ -48,6 +50,16 @@ class Drm {
     friend DeviceFactory;
 
   public:
+    enum class ResourceClass : uint32_t {
+        Elf,
+        Isa,
+        ModuleHeapDebugArea,
+        ContextSaveArea,
+        SbaTrackingBuffer,
+        MaxSize
+    };
+
+    static const std::array<const char *, size_t(ResourceClass::MaxSize)> classNames;
     virtual ~Drm();
 
     virtual int ioctl(unsigned long request, void *arg);
@@ -100,6 +112,11 @@ class Drm {
         return requirePerContextVM;
     }
 
+    MOCKABLE_VIRTUAL bool registerResourceClasses();
+
+    MOCKABLE_VIRTUAL uint32_t registerResource(ResourceClass classType, void *data, size_t size);
+    MOCKABLE_VIRTUAL void unregisterResource(uint32_t handle);
+
     MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();
     }
@@ -109,6 +126,10 @@ class Drm {
     }
     RootDeviceEnvironment &getRootDeviceEnvironment() {
         return rootDeviceEnvironment;
+    }
+
+    bool resourceRegistrationEnabled() {
+        return classHandles.size() > 0;
     }
 
     static inline uint32_t createMemoryRegionId(uint16_t type, uint16_t instance) {
@@ -143,6 +164,8 @@ class Drm {
 
     std::string getSysFsPciPath();
     std::unique_ptr<uint8_t[]> query(uint32_t queryId, int32_t &length);
+
+    StackVec<uint32_t, size_t(ResourceClass::MaxSize)> classHandles;
 
 #pragma pack(1)
     struct PCIConfig {

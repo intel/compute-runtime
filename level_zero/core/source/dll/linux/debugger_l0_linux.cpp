@@ -9,7 +9,9 @@
 
 namespace L0 {
 std::unique_ptr<NEO::Debugger> DebuggerL0::create(NEO::Device *device) {
-    return std::unique_ptr<DebuggerL0>(debuggerL0Factory[device->getHardwareInfo().platform.eRenderCoreFamily](device));
+    auto debugger = debuggerL0Factory[device->getHardwareInfo().platform.eRenderCoreFamily](device);
+    debugger->registerResourceClasses();
+    return std::unique_ptr<DebuggerL0>(debugger);
 }
 
 } // namespace L0

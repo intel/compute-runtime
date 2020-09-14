@@ -13,6 +13,7 @@
 #include <cstring>
 
 const int DrmMock::mockFd;
+const uint32_t DrmMockResources::registerResourceReturnHandle = 3;
 
 int DrmMock::ioctl(unsigned long request, void *arg) {
     ioctlCallsCount++;

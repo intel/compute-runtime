@@ -33,11 +33,13 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
 #include "opencl/test/unit_test/helpers/unit_test_helper.h"
+#include "opencl/test/unit_test/mocks/linux/mock_drm_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/os_interface/linux/drm_mock.h"
 #include "test.h"
 
 #include "drm/i915_drm.h"
@@ -3803,4 +3805,69 @@ TEST(DrmMemoryMangerTest, givenMultipleRootDeviceWhenMemoryManagerGetsDrmThenDrm
     }
     EXPECT_EQ(CommonConstants::unspecifiedDeviceIndex, drmMemoryManager.getRootDeviceIndex(nullptr));
 }
+
+TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationTypeShouldBeRegisteredThenBoHasBindExtHandleAdded) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(Drm::ResourceClass::MaxSize); i++) {
+        drm.classHandles.push_back(i);
+    }
+
+    {
+        MockBufferObject bo(&drm, 0, 0, 1);
+        MockDrmAllocation allocation(GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, MemoryPool::System4KBPages);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(&drm);
+        EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
+        EXPECT_EQ(Drm::ResourceClass::ContextSaveArea, drm.registeredClass);
+    }
+    drm.registeredClass = Drm::ResourceClass::MaxSize;
+
+    {
+        MockBufferObject bo(&drm, 0, 0, 1);
+        MockDrmAllocation allocation(GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER, MemoryPool::System4KBPages);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(&drm);
+        EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
+        EXPECT_EQ(Drm::ResourceClass::SbaTrackingBuffer, drm.registeredClass);
+    }
+    drm.registeredClass = Drm::ResourceClass::MaxSize;
+
+    {
+        MockBufferObject bo(&drm, 0, 0, 1);
+        MockDrmAllocation allocation(GraphicsAllocation::AllocationType::KERNEL_ISA, MemoryPool::System4KBPages);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(&drm);
+        EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
+        EXPECT_EQ(Drm::ResourceClass::Isa, drm.registeredClass);
+    }
+
+    drm.registeredClass = Drm::ResourceClass::MaxSize;
+
+    {
+        MockBufferObject bo(&drm, 0, 0, 1);
+        MockDrmAllocation allocation(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, MemoryPool::System4KBPages);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(&drm);
+        EXPECT_EQ(0u, bo.bindExtHandles.size());
+        EXPECT_EQ(Drm::ResourceClass::MaxSize, drm.registeredClass);
+    }
+}
+TEST(DrmAllocationTest, givenResourceRegistrationNotEnabledWhenRegisteringBindExtHandleThenHandleIsNotAddedToBo) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
+    EXPECT_EQ(0u, drm.classHandles.size());
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    MockDrmAllocation allocation(GraphicsAllocation::AllocationType::DEBUG_CONTEXT_SAVE_AREA, MemoryPool::System4KBPages);
+    allocation.bufferObjects[0] = &bo;
+    allocation.registerBOBindExtHandle(&drm);
+    EXPECT_EQ(0u, bo.bindExtHandles.size());
+    EXPECT_EQ(Drm::ResourceClass::MaxSize, drm.registeredClass);
+}
+
 } // namespace NEO

@@ -29,6 +29,7 @@ using namespace NEO;
 class DrmMock : public Drm {
   public:
     using Drm::checkQueueSliceSupport;
+    using Drm::classHandles;
     using Drm::engineInfo;
     using Drm::generateUUID;
     using Drm::getQueueSliceCount;
@@ -198,4 +199,31 @@ class DrmMockEngine : public DrmMock {
             break;
         }
     }
+};
+
+class DrmMockResources : public DrmMock {
+  public:
+    using DrmMock::DrmMock;
+
+    bool registerResourceClasses() override {
+        registerClassesCalled = true;
+        return true;
+    }
+
+    uint32_t registerResource(ResourceClass classType, void *data, size_t size) override {
+        registeredClass = classType;
+        return registerResourceReturnHandle;
+    }
+
+    void unregisterResource(uint32_t handle) override {
+        unregisterCalledCount++;
+        unregisteredHandle = handle;
+    }
+
+    static const uint32_t registerResourceReturnHandle;
+
+    uint32_t unregisteredHandle = 0;
+    uint32_t unregisterCalledCount = 0;
+    ResourceClass registeredClass = ResourceClass::MaxSize;
+    bool registerClassesCalled = false;
 };

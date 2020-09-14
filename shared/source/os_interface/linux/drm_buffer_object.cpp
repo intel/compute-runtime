@@ -47,6 +47,12 @@ BufferObject::BufferObject(Drm *drm, int handle, size_t size, size_t maxOsContex
     }
 }
 
+BufferObject::~BufferObject() {
+    for (auto &i : bindExtHandles) {
+        drm->unregisterResource(i);
+    }
+};
+
 uint32_t BufferObject::getRefCount() const {
     return this->refCount.load();
 }
@@ -198,6 +204,10 @@ void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const
 int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {
     StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
     return this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
+}
+
+void BufferObject::addBindExtHandle(uint32_t handle) {
+    bindExtHandles.push_back(handle);
 }
 
 } // namespace NEO
