@@ -11,6 +11,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gdi_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gdi_interface.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_preemption_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm_special_heap_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_tests.cpp
 )
 

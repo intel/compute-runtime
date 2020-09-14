@@ -38,7 +38,7 @@ HWTEST2_F(AlocationHelperTests, givenLinearStreamTypeWhenUseIternalAllocatorThen
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
     HeapAssigner heapAssigner = {};
-    auto heapIndex = heapAssigner.get32BitHeapIndex(GraphicsAllocation::AllocationType::LINEAR_STREAM, true, *defaultHwInfo.get());
+    auto heapIndex = heapAssigner.get32BitHeapIndex(GraphicsAllocation::AllocationType::LINEAR_STREAM, true, *defaultHwInfo.get(), false);
     EXPECT_EQ(heapIndex, NEO::HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY);
 }
 struct MockMemoryManagerAllocationHelper : public MemoryManagerMock {
@@ -75,7 +75,19 @@ TEST_F(AlocationHelperTests, givenLinearStreamAllocationWhenSelectingHeapWithUse
     std::unique_ptr<MockMemoryManagerAllocationHelper> mockMemoryManager(new MockMemoryManagerAllocationHelper(*device->getNEODevice()->getExecutionEnvironment()));
     GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::LINEAR_STREAM, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     allocation.set32BitAllocation(false);
-    EXPECT_EQ(MemoryManager::selectExternalHeap(allocation.isAllocatedInLocalMemoryPool()), mockMemoryManager->selectHeap(&allocation, false, false));
+    EXPECT_EQ(MemoryManager::selectExternalHeap(allocation.isAllocatedInLocalMemoryPool()), mockMemoryManager->selectHeap(&allocation, false, false, false));
+}
+
+TEST_F(AlocationHelperTests, givenExternalHeapIndexWhenMapingToExternalFrontWindowThenEternalFrontWindowReturned) {
+    EXPECT_EQ(HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW, HeapAssigner::mapExternalWindowIndex(HeapIndex::HEAP_EXTERNAL));
+}
+
+TEST_F(AlocationHelperTests, givenExternalDeviceHeapIndexWhenMapingToExternalFrontWindowThenEternalDeviceFrontWindowReturned) {
+    EXPECT_EQ(HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW, HeapAssigner::mapExternalWindowIndex(HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY));
+}
+
+TEST_F(AlocationHelperTests, givenOtherThanExternalHeapIndexWhenMapingToExternalFrontWindowThenAbortHasBeenThrown) {
+    EXPECT_THROW(HeapAssigner::mapExternalWindowIndex(HeapIndex::HEAP_STANDARD), std::exception);
 }
 
 } // namespace ult

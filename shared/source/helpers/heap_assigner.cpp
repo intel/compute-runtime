@@ -23,11 +23,11 @@ bool HeapAssigner::useInternal32BitHeap(GraphicsAllocation::AllocationType alloc
 bool HeapAssigner::use32BitHeap(GraphicsAllocation::AllocationType allocType) {
     return useExternal32BitHeap(allocType) || useInternal32BitHeap(allocType);
 }
-HeapIndex HeapAssigner::get32BitHeapIndex(GraphicsAllocation::AllocationType allocType, bool useLocalMem, const HardwareInfo &hwInfo) {
+HeapIndex HeapAssigner::get32BitHeapIndex(GraphicsAllocation::AllocationType allocType, bool useLocalMem, const HardwareInfo &hwInfo, bool useExternalWindow) {
     if (useInternal32BitHeap(allocType)) {
         return MemoryManager::selectInternalHeap(useLocalMem);
     }
-    return MemoryManager::selectExternalHeap(useLocalMem);
+    return useExternalWindow ? mapExternalWindowIndex(MemoryManager::selectExternalHeap(useLocalMem)) : MemoryManager::selectExternalHeap(useLocalMem);
 }
 bool HeapAssigner::useExternal32BitHeap(GraphicsAllocation::AllocationType allocType) {
     if (apiAllowExternalHeapForSshAndDsh) {
@@ -35,4 +35,25 @@ bool HeapAssigner::useExternal32BitHeap(GraphicsAllocation::AllocationType alloc
     }
     return false;
 }
+
+bool HeapAssigner::heapTypeWithFrontWindowPool(HeapIndex heap) {
+    return heap == HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY || heap == HeapIndex::HEAP_EXTERNAL;
+}
+
+HeapIndex HeapAssigner::mapExternalWindowIndex(HeapIndex index) {
+    auto retIndex = HeapIndex::TOTAL_HEAPS;
+    switch (index) {
+    case HeapIndex::HEAP_EXTERNAL:
+        retIndex = HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW;
+        break;
+    case HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY:
+        retIndex = HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW;
+        break;
+    default:
+        UNRECOVERABLE_IF(true);
+        break;
+    };
+    return retIndex;
+}
+
 } // namespace NEO

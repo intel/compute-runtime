@@ -16,8 +16,10 @@ struct HeapAssigner {
     bool useExternal32BitHeap(GraphicsAllocation::AllocationType allocType);
     bool useInternal32BitHeap(GraphicsAllocation::AllocationType allocType);
     bool use32BitHeap(GraphicsAllocation::AllocationType allocType);
-    HeapIndex get32BitHeapIndex(GraphicsAllocation::AllocationType allocType, bool useLocalMem, const HardwareInfo &hwInfo);
+    HeapIndex get32BitHeapIndex(GraphicsAllocation::AllocationType allocType, bool useLocalMem, const HardwareInfo &hwInfo, bool useExternalWindow);
+    static bool heapTypeWithFrontWindowPool(HeapIndex heap);
 
+    static HeapIndex mapExternalWindowIndex(HeapIndex index);
     bool apiAllowExternalHeapForSshAndDsh = false;
 };
 } // namespace NEO

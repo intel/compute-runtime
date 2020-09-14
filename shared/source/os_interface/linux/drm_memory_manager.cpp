@@ -45,7 +45,7 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
-        getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size());
+        getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigner.apiAllowExternalHeapForSshAndDsh);
         localMemAllocs.emplace_back();
     }
     MemoryManager::virtualPaddingAvailable = true;
@@ -444,7 +444,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
 
 DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-    auto allocatorToUse = heapAssigner.get32BitHeapIndex(allocationData.type, useLocalMemory, *hwInfo);
+    auto allocatorToUse = heapAssigner.get32BitHeapIndex(allocationData.type, useLocalMemory, *hwInfo, allocationData.flags.use32BitExtraPool);
 
     if (allocationData.hostPtr) {
         uintptr_t inputPtr = reinterpret_cast<uintptr_t>(allocationData.hostPtr);

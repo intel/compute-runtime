@@ -8,6 +8,8 @@
 #include "shared/source/memory_manager/gfx_partition.h"
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/heap_assigner.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 namespace NEO {
 
@@ -43,6 +45,15 @@ void GfxPartition::Heap::init(uint64_t base, uint64_t size) {
     alloc = std::make_unique<HeapAllocator>(base + GfxPartition::heapGranularity, size);
 }
 
+void GfxPartition::Heap::initExternalWithFrontWindow(uint64_t base, uint64_t size) {
+    this->base = base;
+    this->size = size;
+
+    size -= GfxPartition::heapGranularity;
+
+    alloc = std::make_unique<HeapAllocator>(base, size, 0u);
+}
+
 void GfxPartition::freeGpuAddressRange(uint64_t ptr, size_t size) {
     for (auto heapName : GfxPartition::heapNonSvmNames) {
         auto &heap = getHeap(heapName);
@@ -53,7 +64,7 @@ void GfxPartition::freeGpuAddressRange(uint64_t ptr, size_t size) {
     }
 }
 
-void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices) {
+void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useFrontWindowPool) {
 
     /*
      * I. 64-bit builds:
@@ -131,7 +142,14 @@ void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
     }
 
     for (auto heap : GfxPartition::heap32Names) {
-        heapInit(heap, gfxBase, gfxHeap32Size);
+        if (useFrontWindowPool && HeapAssigner::heapTypeWithFrontWindowPool(heap)) {
+            heapInitExternalWithFrontWindow(heap, gfxBase, gfxHeap32Size);
+            size_t externalFrontWindowSize = GfxPartition::frontWindowPoolSize;
+            heapInitExternalWithFrontWindow(HeapAssigner::mapExternalWindowIndex(heap), heapAllocate(heap, externalFrontWindowSize),
+                                            externalFrontWindowSize);
+        } else {
+            heapInit(heap, gfxBase, gfxHeap32Size);
+        }
         gfxBase += gfxHeap32Size;
     }
 

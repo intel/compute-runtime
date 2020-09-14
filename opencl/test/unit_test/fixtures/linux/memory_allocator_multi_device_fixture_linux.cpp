@@ -5,8 +5,9 @@
  *
  */
 
+#include "shared/test/unit_test/mocks/linux/mock_drm_memory_manager.h"
+
 #include "opencl/test/unit_test/fixtures/memory_allocator_multi_device_fixture.h"
-#include "opencl/test/unit_test/mocks/linux/mock_drm_memory_manager.h"
 
 using namespace NEO;
 

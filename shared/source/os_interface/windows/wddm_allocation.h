@@ -100,6 +100,7 @@ class WddmAllocation : public GraphicsAllocation {
     D3DGPU_VIRTUAL_ADDRESS reservedGpuVirtualAddress = 0u;
     uint64_t reservedSizeForGpuVirtualAddress = 0u;
     uint32_t shareable = 0u;
+    bool allocInFrontWindowPool = false;
 
   protected:
     std::string getHandleInfoString() const {

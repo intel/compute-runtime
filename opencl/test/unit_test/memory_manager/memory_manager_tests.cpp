@@ -2099,29 +2099,29 @@ class HeapSelectorTest : public Test<ClDeviceFixture> {
 TEST_F(HeapSelectorTest, given32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::KERNEL_ISA, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     allocation.set32BitAllocation(true);
-    EXPECT_EQ(MemoryManager::selectInternalHeap(allocation.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation, false, false));
+    EXPECT_EQ(MemoryManager::selectInternalHeap(allocation.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation, false, false, false));
 }
 
 TEST_F(HeapSelectorTest, givenNon32bitInternalAllocationWhenSelectingHeapThenInternalHeapIsUsed) {
     GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::KERNEL_ISA, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     allocation.set32BitAllocation(false);
-    EXPECT_EQ(MemoryManager::selectInternalHeap(allocation.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation, false, false));
+    EXPECT_EQ(MemoryManager::selectInternalHeap(allocation.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation, false, false, false));
 }
 
 TEST_F(HeapSelectorTest, given32bitExternalAllocationWhenSelectingHeapThenExternalHeapIsUsed) {
     GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
     allocation.set32BitAllocation(true);
-    EXPECT_EQ(MemoryManager::selectExternalHeap(allocation.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation, false, false));
+    EXPECT_EQ(MemoryManager::selectExternalHeap(allocation.isAllocatedInLocalMemoryPool()), memoryManager->selectHeap(&allocation, false, false, false));
 }
 
 TEST_F(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForExternalAllocationThenStandardHeapIsUsed) {
     GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
-    EXPECT_EQ(HeapIndex::HEAP_STANDARD, memoryManager->selectHeap(&allocation, true, false));
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD, memoryManager->selectHeap(&allocation, true, false, false));
 }
 
 TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithPtrThenSvmHeapIsUsed) {
     GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::UNKNOWN, nullptr, 0, 0, 0, MemoryPool::MemoryNull};
-    EXPECT_EQ(HeapIndex::HEAP_SVM, memoryManager->selectHeap(&allocation, true, true));
+    EXPECT_EQ(HeapIndex::HEAP_SVM, memoryManager->selectHeap(&allocation, true, true, false));
 }
 
 TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIs64KSuitableThenStandard64kHeapIsUsed) {
@@ -2131,7 +2131,7 @@ TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAlloca
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = true;
     allocation.setDefaultGmm(gmm.get());
-    EXPECT_EQ(HeapIndex::HEAP_STANDARD64KB, memoryManager->selectHeap(&allocation, false, true));
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD64KB, memoryManager->selectHeap(&allocation, false, true, false));
 }
 
 TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAllocationWithoutPtrAndResourceIsNot64KSuitableThenStandardHeapIsUsed) {
@@ -2141,15 +2141,15 @@ TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForExternalAlloca
     auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     resourceInfo->is64KBPageSuitableValue = false;
     allocation.setDefaultGmm(gmm.get());
-    EXPECT_EQ(HeapIndex::HEAP_STANDARD, memoryManager->selectHeap(&allocation, false, true));
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD, memoryManager->selectHeap(&allocation, false, true, false));
 }
 
 TEST_F(HeapSelectorTest, givenFullAddressSpaceWhenSelectingHeapForNullAllocationWithoutPtrThenStandardHeapIsUsed) {
-    EXPECT_EQ(HeapIndex::HEAP_STANDARD, memoryManager->selectHeap(nullptr, false, true));
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD, memoryManager->selectHeap(nullptr, false, true, false));
 }
 
 TEST_F(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForNullAllocationWithoutPtrThenStandardHeapIsUsed) {
-    EXPECT_EQ(HeapIndex::HEAP_STANDARD, memoryManager->selectHeap(nullptr, false, false));
+    EXPECT_EQ(HeapIndex::HEAP_STANDARD, memoryManager->selectHeap(nullptr, false, false, false));
 }
 
 TEST(MemoryAllocationTest, givenAllocationTypeWhenPassedToMemoryAllocationConstructorThenAllocationTypeIsStored) {

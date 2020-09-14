@@ -10,10 +10,10 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_interface.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+#include "shared/test/unit_test/mocks/linux/mock_drm_memory_manager.h"
 
 #include "opencl/source/os_interface/linux/drm_command_stream.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/mocks/linux/mock_drm_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
 #include "opencl/test/unit_test/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"

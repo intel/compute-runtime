@@ -25,6 +25,11 @@ if(WIN32)
   list(APPEND NEO_CORE_tests_mocks
        ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_wddm_direct_submission.h
   )
+else()
+  list(APPEND NEO_CORE_tests_mocks
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
+  )
 endif()
 
 set_property(GLOBAL PROPERTY NEO_CORE_tests_mocks ${NEO_CORE_tests_mocks})

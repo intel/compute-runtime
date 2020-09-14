@@ -379,6 +379,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         (mayRequireL3Flush ? properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite : 0u);
     allocationData.flags.preferRenderCompressed = CompressionSelector::preferRenderCompressedBuffer(properties);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
+    allocationData.flags.use32BitExtraPool = properties.flags.use32BitExtraPool;
 
     allocationData.hostPtr = hostPtr;
     allocationData.size = properties.size;
@@ -531,13 +532,14 @@ void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
     graphicsAllocation->unlock();
 }
 
-HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM) {
+HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM, bool useExternalWindow) {
     if (allocation) {
         if (heapAssigner.useInternal32BitHeap(allocation->getAllocationType())) {
             return selectInternalHeap(allocation->isAllocatedInLocalMemoryPool());
         }
         if (allocation->is32BitAllocation() || heapAssigner.useExternal32BitHeap(allocation->getAllocationType())) {
-            return selectExternalHeap(allocation->isAllocatedInLocalMemoryPool());
+            return useExternalWindow ? HeapAssigner::mapExternalWindowIndex(selectExternalHeap(allocation->isAllocatedInLocalMemoryPool()))
+                                     : selectExternalHeap(allocation->isAllocatedInLocalMemoryPool());
         }
     }
     if (isFullRangeSVM) {

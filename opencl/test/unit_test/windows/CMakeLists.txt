@@ -19,6 +19,7 @@ if(WIN32)
                  ${NEO_SOURCE_DIR}/opencl/source/dll/create_command_stream.cpp
                  ${NEO_SOURCE_DIR}/opencl/source/dll${BRANCH_DIR_SUFFIX}/get_devices.cpp
                  ${NEO_SOURCE_DIR}/opencl/source/dll/windows/os_interface.cpp
+                 ${NEO_SOURCE_DIR}/opencl/source/helpers/heap_assigner_config_ocl.cpp
                  ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_configuration.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_devices_tests.cpp

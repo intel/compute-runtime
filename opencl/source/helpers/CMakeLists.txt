@@ -29,7 +29,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_bdw_plus.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_context_controller.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_config_ocl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/helper_options.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/memory_properties_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_helpers.h

@@ -1099,7 +1099,7 @@ TEST_F(WddmGfxPartitionTest, WhenInitializingGfxPartitionThenAllHeapsAreInitiali
         ASSERT_FALSE(gfxPartition.heapInitialized(heap));
     }
 
-    wddm->initGfxPartition(gfxPartition, 0, 1);
+    wddm->initGfxPartition(gfxPartition, 0, 1, false);
 
     for (auto heap : MockGfxPartition::allHeapNames) {
         if (!gfxPartition.heapInitialized(heap)) {
@@ -1125,7 +1125,7 @@ TEST(WddmGfxPartitionTests, WhenInitializingGfxPartitionThen64KBHeapsAreUsed) {
 
     MockGfxPartition gfxPartition;
     wddm->init();
-    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices);
+    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, false);
 
     auto heapStandard64KBSize = alignDown((wddm->gfxPartition.Standard64KB.Limit - wddm->gfxPartition.Standard64KB.Base + 1) / numRootDevices, GfxPartition::heapGranularity);
     EXPECT_EQ(heapStandard64KBSize, gfxPartition.getHeapSize(HeapIndex::HEAP_STANDARD64KB));

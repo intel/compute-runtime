@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/test/unit_test/mocks/linux/mock_drm_memory_manager.h"
+#include "shared/test/unit_test/mocks/linux/mock_drm_memory_manager.h"
 
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"

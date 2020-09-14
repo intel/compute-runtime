@@ -57,6 +57,7 @@ class MemoryAllocation : public GraphicsAllocation {
 class OsAgnosticMemoryManager : public MemoryManager {
   public:
     using MemoryManager::allocateGraphicsMemory;
+    using MemoryManager::heapAssigner;
 
     OsAgnosticMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, executionEnvironment) {}
     OsAgnosticMemoryManager(bool aubUsage, ExecutionEnvironment &executionEnvironment);

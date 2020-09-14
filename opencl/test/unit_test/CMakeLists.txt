@@ -48,6 +48,7 @@ set(IGDRCL_SRCS_tests_local
     ${CMAKE_CURRENT_SOURCE_DIR}/libult/os_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_configuration.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
+    ${NEO_SOURCE_DIR}/opencl/source/helpers/heap_assigner_config_ocl.cpp
 )
 
 if(WIN32)

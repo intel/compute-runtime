@@ -77,6 +77,7 @@ bool RootDevice::createDeviceImpl() {
     if (!status) {
         return status;
     }
+
     return true;
 }
 DeviceBitfield RootDevice::getDeviceBitfield() const {

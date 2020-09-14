@@ -36,7 +36,7 @@ OsAgnosticMemoryManager::OsAgnosticMemoryManager(bool aubUsage, ExecutionEnviron
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
-        getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, reservedCpuAddressRangeSize, rootDeviceIndex, gfxPartitions.size());
+        getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, reservedCpuAddressRangeSize, rootDeviceIndex, gfxPartitions.size(), heapAssigner.apiAllowExternalHeapForSshAndDsh);
     }
 }
 
@@ -116,7 +116,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-    auto heap = heapAssigner.get32BitHeapIndex(allocationData.type, useLocalMemory, *hwInfo);
+    auto heap = heapAssigner.get32BitHeapIndex(allocationData.type, useLocalMemory, *hwInfo, allocationData.flags.use32BitExtraPool);
     auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
     if (allocationData.hostPtr) {
         auto allocationSize = alignSizeWholePage(allocationData.hostPtr, allocationData.size);

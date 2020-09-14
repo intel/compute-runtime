@@ -59,6 +59,7 @@ if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
                  ${NEO_SOURCE_DIR}/shared/source/helpers/allow_deferred_deleter.cpp
                  ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.cpp
                  ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_leak_listener.cpp
+                 ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/heap_assigner_config_shared_tests.cpp
                  $<TARGET_OBJECTS:mock_gmm>
   )
 
@@ -69,6 +70,8 @@ if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/drm_neo_create.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/options.cpp
                    ${NEO_SOURCE_DIR}/opencl/test/unit_test/os_interface/linux/sys_calls_linux_ult.cpp
+                   ${NEO_SOURCE_DIR}/shared/test/unit_test/mocks/linux/mock_drm_memory_manager.cpp
+                   ${NEO_SOURCE_DIR}/shared/test/unit_test/mocks/linux/mock_drm_memory_manager.h
     )
   else()
     target_sources(${TARGET_NAME} PRIVATE

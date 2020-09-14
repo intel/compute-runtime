@@ -18,6 +18,7 @@ add_custom_target(run_mt_unit_tests)
 add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${NEO_SOURCE_DIR}/shared/test/unit_test/test_macros/test_checks_shared.cpp
+               ${NEO_SOURCE_DIR}/opencl/source/helpers/heap_assigner_config_ocl.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/libult/os_interface.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_macros/test_checks_ocl.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_configuration.cpp
