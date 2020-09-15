@@ -206,7 +206,6 @@ class BufferHw : public Buffer {
                  zeroCopy, isHostPtrSVM, isObjectRedescribed) {}
 
     void setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument, const Device &device) override;
-    void appendBufferState(void *memory, const Device &device, bool isReadOnlyArgument);
     void appendSurfaceStateExt(void *memory);
 
     static Buffer *create(Context *context,

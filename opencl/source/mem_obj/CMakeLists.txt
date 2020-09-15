@@ -9,7 +9,6 @@ set(RUNTIME_SRCS_MEM_OBJ
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/buffer_bdw_plus.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_factory_init.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/image.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image.h

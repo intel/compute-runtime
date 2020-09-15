@@ -388,4 +388,9 @@ inline size_t EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(Device &devic
     return 0;
 }
 
+template <typename GfxFamily>
+void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
+                                                            uint32_t numAvailableDevices) {
+}
+
 } // namespace NEO

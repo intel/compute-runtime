@@ -38,11 +38,9 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, boo
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
     EncodeSurfaceState<GfxFamily>::encodeBuffer(memory, getBufferAddress(rootDeviceIndex),
                                                 getSurfaceSize(alignSizeForAuxTranslation, rootDeviceIndex),
-                                                getMocsValue(disableL3, isReadOnlyArgument, rootDeviceIndex), true);
-    EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(graphicsAllocation,
-                                                           device.getGmmHelper(), memory, forceNonAuxMode, isReadOnlyArgument);
-
-    appendBufferState(memory, device, isReadOnlyArgument);
+                                                getMocsValue(disableL3, isReadOnlyArgument, rootDeviceIndex),
+                                                true, forceNonAuxMode, device.getNumAvailableDevices(),
+                                                graphicsAllocation, device.getGmmHelper());
     appendSurfaceStateExt(memory);
 }
 } // namespace NEO

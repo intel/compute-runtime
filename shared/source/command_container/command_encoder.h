@@ -194,8 +194,10 @@ struct EncodeSurfaceState {
     using AUXILIARY_SURFACE_MODE = typename R_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
     static void encodeBuffer(void *dst, uint64_t address, size_t size, uint32_t mocs,
-                             bool cpuCoherent);
-    static void encodeExtraBufferParams(GraphicsAllocation *allocation, GmmHelper *gmmHelper, void *memory, bool forceNonAuxMode, bool isReadOnlyArgument);
+                             bool cpuCoherent, bool forceNonAuxMode, uint32_t numAvailableDevices,
+                             GraphicsAllocation *allocation, GmmHelper *gmmHelper);
+    static void encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
+                                        uint32_t numAvailableDevices);
 
     static constexpr uintptr_t getSurfaceBaseAddressAlignmentMask() {
         return ~(getSurfaceBaseAddressAlignment() - 1);

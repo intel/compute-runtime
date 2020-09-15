@@ -51,10 +51,10 @@ struct KernelHw : public KernelImp {
         bufferSizeForSsh = alignUp(bufferSizeForSsh, alignment);
 
         auto mocs = this->module->getDevice()->getMOCS(true, false);
-        bool requiresCoherency;
-        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(surfaceStateAddress,
-                                                         bufferAddressForSsh, bufferSizeForSsh, mocs,
-                                                         requiresCoherency = false);
+        NEO::Device *neoDevice = module->getDevice()->getNEODevice();
+        NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(surfaceStateAddress, bufferAddressForSsh, bufferSizeForSsh, mocs,
+                                                         true, false, neoDevice->getNumAvailableDevices(),
+                                                         alloc, neoDevice->getGmmHelper());
     }
 
     std::unique_ptr<Kernel> clone() const override {

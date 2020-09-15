@@ -267,52 +267,48 @@ void EncodeStoreMMIO<Family>::encode(LinearStream &csr, uint32_t offset, uint64_
 
 template <typename Family>
 void EncodeSurfaceState<Family>::encodeBuffer(void *dst, uint64_t address, size_t size, uint32_t mocs,
-                                              bool cpuCoherent) {
-    auto ss = reinterpret_cast<R_SURFACE_STATE *>(dst);
+                                              bool cpuCoherent, bool forceNonAuxMode, uint32_t numAvailableDevices,
+                                              GraphicsAllocation *allocation, GmmHelper *gmmHelper) {
+    auto surfaceState = reinterpret_cast<R_SURFACE_STATE *>(dst);
     UNRECOVERABLE_IF(!isAligned<getSurfaceBaseAddressAlignment()>(size));
 
     SURFACE_STATE_BUFFER_LENGTH Length = {0};
     Length.Length = static_cast<uint32_t>(size - 1);
 
-    ss->setWidth(Length.SurfaceState.Width + 1);
-    ss->setHeight(Length.SurfaceState.Height + 1);
-    ss->setDepth(Length.SurfaceState.Depth + 1);
+    surfaceState->setWidth(Length.SurfaceState.Width + 1);
+    surfaceState->setHeight(Length.SurfaceState.Height + 1);
+    surfaceState->setDepth(Length.SurfaceState.Depth + 1);
 
-    ss->setSurfaceType((address != 0) ? R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER
-                                      : R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
-    ss->setSurfaceFormat(SURFACE_FORMAT::SURFACE_FORMAT_RAW);
-    ss->setSurfaceVerticalAlignment(R_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
-    ss->setSurfaceHorizontalAlignment(R_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4);
+    surfaceState->setSurfaceType((address != 0) ? R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER
+                                                : R_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
+    surfaceState->setSurfaceFormat(SURFACE_FORMAT::SURFACE_FORMAT_RAW);
+    surfaceState->setSurfaceVerticalAlignment(R_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4);
+    surfaceState->setSurfaceHorizontalAlignment(R_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4);
 
-    ss->setTileMode(R_SURFACE_STATE::TILE_MODE_LINEAR);
-    ss->setVerticalLineStride(0);
-    ss->setVerticalLineStrideOffset(0);
-    ss->setMemoryObjectControlState(mocs);
-    ss->setSurfaceBaseAddress(address);
+    surfaceState->setTileMode(R_SURFACE_STATE::TILE_MODE_LINEAR);
+    surfaceState->setVerticalLineStride(0);
+    surfaceState->setVerticalLineStrideOffset(0);
+    surfaceState->setMemoryObjectControlState(mocs);
+    surfaceState->setSurfaceBaseAddress(address);
 
-    ss->setCoherencyType(cpuCoherent ? R_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT
-                                     : R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
-    ss->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
-}
+    surfaceState->setCoherencyType(cpuCoherent ? R_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT
+                                               : R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+    surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
 
-template <typename Family>
-void EncodeSurfaceState<Family>::encodeExtraBufferParams(GraphicsAllocation *allocation, GmmHelper *gmmHelper, void *memory, bool forceNonAuxMode, bool isReadOnlyArgument) {
-    using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
-    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
-
-    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
     Gmm *gmm = allocation ? allocation->getDefaultGmm() : nullptr;
-
     if (gmm && gmm->isRenderCompressed && !forceNonAuxMode) {
         // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
-        surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
+        surfaceState->setCoherencyType(R_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
     }
 
     if (DebugManager.flags.DisableCachingForStatefulBufferAccess.get()) {
         surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
+
+    EncodeSurfaceState<Family>::encodeExtraBufferParams(surfaceState, allocation, gmmHelper, numAvailableDevices);
 }
+
 template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset) {
 
