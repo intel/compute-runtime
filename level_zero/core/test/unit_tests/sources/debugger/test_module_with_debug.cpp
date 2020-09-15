@@ -37,9 +37,9 @@ TEST_F(DeviceWithDebuggerEnabledTest, givenDebuggingEnabledWhenModuleIsCreatedTh
     ASSERT_NE(nullptr, module.get());
     module->initialize(&moduleDesc, device);
 
-    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, NEO::CompilerOptions::debugKernelEnable));
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, L0::BuildOptions::debugKernelEnable));
     EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, NEO::CompilerOptions::generateDebugInfo));
-    EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, NEO::CompilerOptions::optDisable));
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildOptions, L0::BuildOptions::optDisable));
 };
 
 TEST_F(DeviceWithDebuggerEnabledTest, GivenDebuggeableKernelWhenModuleIsInitializedThenDebugEnabledIsTrue) {

@@ -32,6 +32,8 @@ namespace L0 {
 namespace BuildOptions {
 NEO::ConstStringRef optDisable = "-ze-opt-disable";
 NEO::ConstStringRef greaterThan4GbRequired = "-ze-opt-greater-than-4GB-buffer-required";
+NEO::ConstStringRef hasBufferOffsetArg = "-ze-intel-has-buffer-offset-arg";
+NEO::ConstStringRef debugKernelEnable = "-ze-kernel-debug-enable";
 } // namespace BuildOptions
 
 ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
@@ -67,14 +69,14 @@ bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize
     UNRECOVERABLE_IF((nullptr == device) || (nullptr == device->getNEODevice()));
 
     std::string options = buildOptions;
-    std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, NEO::CompilerOptions::hasBufferOffsetArg);
+    std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, BuildOptions::hasBufferOffsetArg);
 
     if (device->getNEODevice()->getDeviceInfo().debuggerActive) {
         if (device->getSourceLevelDebugger()->isOptimizationDisabled()) {
-            NEO::CompilerOptions::concatenateAppend(options, NEO::CompilerOptions::optDisable);
+            NEO::CompilerOptions::concatenateAppend(options, BuildOptions::optDisable);
         }
         options = NEO::CompilerOptions::concatenate(options, NEO::CompilerOptions::generateDebugInfo);
-        internalOptions = NEO::CompilerOptions::concatenate(internalOptions, NEO::CompilerOptions::debugKernelEnable);
+        internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
     }
 
     NEO::TranslationInput inputArgs = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};

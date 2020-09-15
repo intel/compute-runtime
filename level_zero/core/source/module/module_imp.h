@@ -22,6 +22,13 @@
 
 namespace L0 {
 
+namespace BuildOptions {
+extern NEO::ConstStringRef optDisable;
+extern NEO::ConstStringRef greaterThan4GbRequired;
+extern NEO::ConstStringRef hasBufferOffsetArg;
+extern NEO::ConstStringRef debugKernelEnable;
+} // namespace BuildOptions
+
 struct ModuleTranslationUnit {
     ModuleTranslationUnit(L0::Device *device);
     virtual ~ModuleTranslationUnit();
