@@ -68,7 +68,7 @@ class CreateImage2DTest : public ClDeviceFixture,
 
 typedef CreateImage2DTest CreateImage2DType;
 
-HWTEST_P(CreateImage2DType, validTypes) {
+HWTEST_P(CreateImage2DType, GivenValidTypeWhenCreatingImageThenImageCreatedWithCorrectParams) {
     auto image = createImageWithFlags(CL_MEM_READ_WRITE);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -113,6 +113,6 @@ static cl_mem_object_type Image2DTypes[] = {
     CL_MEM_OBJECT_IMAGE2D_ARRAY};
 
 INSTANTIATE_TEST_CASE_P(
-    CreateImage2DTest_Create,
+    CreateImage2DTestCreate,
     CreateImage2DType,
     testing::ValuesIn(Image2DTypes));
