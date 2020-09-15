@@ -106,8 +106,6 @@ void RootDevice::initializeRootCommandStreamReceiver() {
     rootCommandStreamReceiver->setupContext(*osContext);
     rootCommandStreamReceiver->initializeTagAllocation();
     rootCommandStreamReceiver->createGlobalFenceAllocation();
-    bool ret = rootCommandStreamReceiver->initDirectSubmission(*this, *osContext);
-    UNRECOVERABLE_IF(!ret);
     commandStreamReceivers.push_back(std::move(rootCommandStreamReceiver));
     engines.emplace_back(commandStreamReceivers.back().get(), osContext);
 }

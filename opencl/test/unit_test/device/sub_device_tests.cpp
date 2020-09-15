@@ -262,3 +262,11 @@ TEST(SubDevicesTest, givenRootDeviceWithSubDevicesWhenGettingGlobalMemorySizeThe
         EXPECT_EQ(expectedGlobalMemorySize, static_cast<MockSubDevice *>(subDevice)->getGlobalMemorySize());
     }
 }
+
+TEST(SubDevicesTest, whenInitializeRootCsrThenDirectSubmissionIsNotInitialized) {
+    auto device = std::make_unique<MockDevice>();
+    device->initializeRootCommandStreamReceiver();
+
+    auto csr = device->getEngine(1u).commandStreamReceiver;
+    EXPECT_FALSE(csr->isDirectSubmissionEnabled());
+}
