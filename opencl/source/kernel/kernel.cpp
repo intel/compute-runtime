@@ -288,21 +288,21 @@ cl_int Kernel::initialize() {
             const auto &patch = patchInfo.pAllocateStatelessPrivateSurface;
             patchWithImplicitSurface(reinterpret_cast<void *>(privateSurface->getGpuAddressToPatch()), *privateSurface, *patch);
         }
-
+        auto rootDeviceIndex = device.getRootDeviceIndex();
         if (patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization) {
-            DEBUG_BREAK_IF(program->getConstantSurface() == nullptr);
-            uintptr_t constMemory = isBuiltIn ? (uintptr_t)program->getConstantSurface()->getUnderlyingBuffer() : (uintptr_t)program->getConstantSurface()->getGpuAddressToPatch();
+            DEBUG_BREAK_IF(program->getConstantSurface(rootDeviceIndex) == nullptr);
+            uintptr_t constMemory = isBuiltIn ? (uintptr_t)program->getConstantSurface(rootDeviceIndex)->getUnderlyingBuffer() : (uintptr_t)program->getConstantSurface(rootDeviceIndex)->getGpuAddressToPatch();
 
             const auto &patch = patchInfo.pAllocateStatelessConstantMemorySurfaceWithInitialization;
-            patchWithImplicitSurface(reinterpret_cast<void *>(constMemory), *program->getConstantSurface(), *patch);
+            patchWithImplicitSurface(reinterpret_cast<void *>(constMemory), *program->getConstantSurface(rootDeviceIndex), *patch);
         }
 
         if (patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization) {
-            DEBUG_BREAK_IF(program->getGlobalSurface() == nullptr);
-            uintptr_t globalMemory = isBuiltIn ? (uintptr_t)program->getGlobalSurface()->getUnderlyingBuffer() : (uintptr_t)program->getGlobalSurface()->getGpuAddressToPatch();
+            DEBUG_BREAK_IF(program->getGlobalSurface(rootDeviceIndex) == nullptr);
+            uintptr_t globalMemory = isBuiltIn ? (uintptr_t)program->getGlobalSurface(rootDeviceIndex)->getUnderlyingBuffer() : (uintptr_t)program->getGlobalSurface(rootDeviceIndex)->getGpuAddressToPatch();
 
             const auto &patch = patchInfo.pAllocateStatelessGlobalMemorySurfaceWithInitialization;
-            patchWithImplicitSurface(reinterpret_cast<void *>(globalMemory), *program->getGlobalSurface(), *patch);
+            patchWithImplicitSurface(reinterpret_cast<void *>(globalMemory), *program->getGlobalSurface(rootDeviceIndex), *patch);
         }
 
         if (patchInfo.pAllocateStatelessEventPoolSurface) {
@@ -1111,20 +1111,21 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
 }
 
 void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
+    auto rootDeviceIndex = device.getRootDeviceIndex();
     if (privateSurface) {
         commandStreamReceiver.makeResident(*privateSurface);
     }
 
-    if (program->getConstantSurface()) {
-        commandStreamReceiver.makeResident(*(program->getConstantSurface()));
+    if (program->getConstantSurface(rootDeviceIndex)) {
+        commandStreamReceiver.makeResident(*(program->getConstantSurface(rootDeviceIndex)));
     }
 
-    if (program->getGlobalSurface()) {
-        commandStreamReceiver.makeResident(*(program->getGlobalSurface()));
+    if (program->getGlobalSurface(rootDeviceIndex)) {
+        commandStreamReceiver.makeResident(*(program->getGlobalSurface(rootDeviceIndex)));
     }
 
-    if (program->getExportedFunctionsSurface()) {
-        commandStreamReceiver.makeResident(*(program->getExportedFunctionsSurface()));
+    if (program->getExportedFunctionsSurface(rootDeviceIndex)) {
+        commandStreamReceiver.makeResident(*(program->getExportedFunctionsSurface(rootDeviceIndex)));
     }
 
     for (auto gfxAlloc : kernelSvmGfxAllocations) {
@@ -1160,23 +1161,24 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 }
 
 void Kernel::getResidency(std::vector<Surface *> &dst) {
+    auto rootDeviceIndex = device.getRootDeviceIndex();
     if (privateSurface) {
         GeneralSurface *surface = new GeneralSurface(privateSurface);
         dst.push_back(surface);
     }
 
-    if (program->getConstantSurface()) {
-        GeneralSurface *surface = new GeneralSurface(program->getConstantSurface());
+    if (program->getConstantSurface(rootDeviceIndex)) {
+        GeneralSurface *surface = new GeneralSurface(program->getConstantSurface(rootDeviceIndex));
         dst.push_back(surface);
     }
 
-    if (program->getGlobalSurface()) {
-        GeneralSurface *surface = new GeneralSurface(program->getGlobalSurface());
+    if (program->getGlobalSurface(rootDeviceIndex)) {
+        GeneralSurface *surface = new GeneralSurface(program->getGlobalSurface(rootDeviceIndex));
         dst.push_back(surface);
     }
 
-    if (program->getExportedFunctionsSurface()) {
-        GeneralSurface *surface = new GeneralSurface(program->getExportedFunctionsSurface());
+    if (program->getExportedFunctionsSurface(rootDeviceIndex)) {
+        GeneralSurface *surface = new GeneralSurface(program->getExportedFunctionsSurface(rootDeviceIndex));
         dst.push_back(surface);
     }
 
@@ -1825,12 +1827,12 @@ size_t Kernel::getInstructionHeapSizeForExecutionModel() const {
 }
 
 void Kernel::patchBlocksCurbeWithConstantValues() {
-
+    auto rootDeviceIndex = device.getRootDeviceIndex();
     BlockKernelManager *blockManager = program->getBlockKernelManager();
     uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
 
-    uint64_t globalMemoryGpuAddress = program->getGlobalSurface() != nullptr ? program->getGlobalSurface()->getGpuAddressToPatch() : 0;
-    uint64_t constantMemoryGpuAddress = program->getConstantSurface() != nullptr ? program->getConstantSurface()->getGpuAddressToPatch() : 0;
+    uint64_t globalMemoryGpuAddress = program->getGlobalSurface(rootDeviceIndex) != nullptr ? program->getGlobalSurface(rootDeviceIndex)->getGpuAddressToPatch() : 0;
+    uint64_t constantMemoryGpuAddress = program->getConstantSurface(rootDeviceIndex) != nullptr ? program->getConstantSurface(rootDeviceIndex)->getGpuAddressToPatch() : 0;
 
     for (uint32_t blockID = 0; blockID < blockCount; blockID++) {
         const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(blockID);
@@ -2398,7 +2400,7 @@ void Kernel::getAllocationsForCacheFlush(CacheFlushAllocationsVec &out) const {
         out.push_back(alloc);
     }
 
-    auto global = getProgram()->getGlobalSurface();
+    auto global = getProgram()->getGlobalSurface(device.getRootDeviceIndex());
     if (global != nullptr) {
         out.push_back(global);
     }

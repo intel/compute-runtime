@@ -171,6 +171,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
     }
 
     auto pClDev = castToObject<ClDevice>(device);
+    auto rootDeviceIndex = pClDev->getRootDeviceIndex();
 
     switch (paramName) {
     case CL_PROGRAM_BUILD_STATUS:
@@ -196,7 +197,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
         break;
 
     case CL_PROGRAM_BUILD_GLOBAL_VARIABLE_TOTAL_SIZE:
-        pSrc = &globalVarTotalSize;
+        pSrc = &buildInfos[rootDeviceIndex].globalVarTotalSize;
         retSize = srcSize = sizeof(size_t);
         break;
 

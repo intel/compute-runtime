@@ -38,15 +38,12 @@ class MockProgram : public Program {
     using Program::areSpecializationConstantsInitialized;
     using Program::blockKernelManager;
     using Program::buildInfos;
-    using Program::constantSurface;
     using Program::context;
     using Program::createdFrom;
     using Program::debugData;
     using Program::debugDataSize;
-    using Program::exportedFunctionsSurface;
     using Program::extractInternalOptions;
     using Program::getKernelInfo;
-    using Program::globalSurface;
     using Program::irBinary;
     using Program::irBinarySize;
     using Program::isSpirV;
@@ -77,10 +74,22 @@ class MockProgram : public Program {
     }
     std::string &getInternalOptions() { return internalOptions; };
     void setConstantSurface(GraphicsAllocation *gfxAllocation) {
-        constantSurface = gfxAllocation;
+        if (gfxAllocation) {
+            buildInfos[gfxAllocation->getRootDeviceIndex()].constantSurface = gfxAllocation;
+        } else {
+            for (auto &buildInfo : buildInfos) {
+                buildInfo.constantSurface = nullptr;
+            }
+        }
     }
     void setGlobalSurface(GraphicsAllocation *gfxAllocation) {
-        globalSurface = gfxAllocation;
+        if (gfxAllocation) {
+            buildInfos[gfxAllocation->getRootDeviceIndex()].globalSurface = gfxAllocation;
+        } else {
+            for (auto &buildInfo : buildInfos) {
+                buildInfo.globalSurface = nullptr;
+            }
+        }
     }
     void setDevice(Device *device) {
         this->pDevice = device;

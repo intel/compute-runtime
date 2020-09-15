@@ -205,16 +205,16 @@ class Program : public BaseObject<_cl_program> {
         return isSpirV;
     }
 
-    GraphicsAllocation *getConstantSurface() const {
-        return constantSurface;
+    GraphicsAllocation *getConstantSurface(uint32_t rootDeviceIndex) const {
+        return buildInfos[rootDeviceIndex].constantSurface;
     }
 
-    GraphicsAllocation *getGlobalSurface() const {
-        return globalSurface;
+    GraphicsAllocation *getGlobalSurface(uint32_t rootDeviceIndex) const {
+        return buildInfos[rootDeviceIndex].globalSurface;
     }
 
-    GraphicsAllocation *getExportedFunctionsSurface() const {
-        return exportedFunctionsSurface;
+    GraphicsAllocation *getExportedFunctionsSurface(uint32_t rootDeviceIndex) const {
+        return buildInfos[rootDeviceIndex].exportedFunctionsSurface;
     }
 
     BlockKernelManager *getBlockKernelManager() const {
@@ -315,12 +315,6 @@ class Program : public BaseObject<_cl_program> {
     std::vector<KernelInfo *> parentKernelInfoArray;
     std::vector<KernelInfo *> subgroupKernelInfoArray;
 
-    GraphicsAllocation *constantSurface = nullptr;
-    GraphicsAllocation *globalSurface = nullptr;
-    GraphicsAllocation *exportedFunctionsSurface = nullptr;
-
-    size_t globalVarTotalSize = 0U;
-
     cl_build_status buildStatus = CL_BUILD_NONE;
     bool isCreatedFromBinary = false;
 
@@ -333,6 +327,10 @@ class Program : public BaseObject<_cl_program> {
     bool allowNonUniform = false;
 
     struct BuildInfo : public NonCopyableClass {
+        GraphicsAllocation *constantSurface = nullptr;
+        GraphicsAllocation *globalSurface = nullptr;
+        GraphicsAllocation *exportedFunctionsSurface = nullptr;
+        size_t globalVarTotalSize = 0U;
         std::unique_ptr<LinkerInput> linkerInput;
         Linker::RelocatedSymbolsMap symbols{};
         std::string buildLog{};

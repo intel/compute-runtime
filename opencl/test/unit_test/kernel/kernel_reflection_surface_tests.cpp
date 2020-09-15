@@ -2007,8 +2007,8 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryAn
     MockContext context(pClDevice);
     MockParentKernel *parentKernel = MockParentKernel::create(context, false, true, false);
 
-    if (parentKernel->mockProgram->getGlobalSurface()) {
-        pDevice->getMemoryManager()->freeGraphicsMemory(parentKernel->mockProgram->getGlobalSurface());
+    if (parentKernel->mockProgram->getGlobalSurface(pClDevice->getRootDeviceIndex())) {
+        pDevice->getMemoryManager()->freeGraphicsMemory(parentKernel->mockProgram->getGlobalSurface(pClDevice->getRootDeviceIndex()));
         parentKernel->mockProgram->setGlobalSurface(nullptr);
     }
 
@@ -2083,8 +2083,8 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
     MockContext context(pClDevice);
     MockParentKernel *parentKernel = MockParentKernel::create(context, false, false, true);
 
-    if (parentKernel->mockProgram->getConstantSurface()) {
-        pDevice->getMemoryManager()->freeGraphicsMemory(parentKernel->mockProgram->getConstantSurface());
+    if (parentKernel->mockProgram->getConstantSurface(pClDevice->getRootDeviceIndex())) {
+        pDevice->getMemoryManager()->freeGraphicsMemory(parentKernel->mockProgram->getConstantSurface(pClDevice->getRootDeviceIndex()));
         parentKernel->mockProgram->setConstantSurface(nullptr);
     }
 
@@ -2127,7 +2127,7 @@ using KernelReflectionMultiDeviceTest = MultiRootDeviceFixture;
 TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelReflectionSurfaceThenParamsAreCorrect) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device.get());
 
-    MockProgram program(*device->getExecutionEnvironment());
+    MockProgram program(*device->getExecutionEnvironment(), context.get(), false, &device->getDevice());
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;
     cl_queue_properties properties[1] = {0};
@@ -2176,7 +2176,7 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelRefl
 TEST_F(KernelReflectionMultiDeviceTest, GivenDeviceQueueKernelArgWhenObtainingKernelReflectionSurfaceThenParamsAreCorrect) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device.get());
 
-    MockProgram program(*device->getExecutionEnvironment());
+    MockProgram program(*device->getExecutionEnvironment(), context.get(), false, &device->getDevice());
 
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;

@@ -56,12 +56,13 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     if (linkerInput == nullptr) {
         return CL_SUCCESS;
     }
+    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     Linker linker(*linkerInput);
     Linker::SegmentInfo globals;
     Linker::SegmentInfo constants;
     Linker::SegmentInfo exportedFunctions;
-    GraphicsAllocation *globalsForPatching = this->globalSurface;
-    GraphicsAllocation *constantsForPatching = this->constantSurface;
+    GraphicsAllocation *globalsForPatching = getGlobalSurface(rootDeviceIndex);
+    GraphicsAllocation *constantsForPatching = getConstantSurface(rootDeviceIndex);
     if (globalsForPatching != nullptr) {
         globals.gpuAddress = static_cast<uintptr_t>(globalsForPatching->getGpuAddress());
         globals.segmentSize = globalsForPatching->getUnderlyingBufferSize();
@@ -73,9 +74,9 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     if (linkerInput->getExportedFunctionsSegmentId() >= 0) {
         // Exported functions reside in instruction heap of one of kernels
         auto exportedFunctionHeapId = linkerInput->getExportedFunctionsSegmentId();
-        this->exportedFunctionsSurface = this->kernelInfoArray[exportedFunctionHeapId]->getGraphicsAllocation();
-        exportedFunctions.gpuAddress = static_cast<uintptr_t>(exportedFunctionsSurface->getGpuAddressToPatch());
-        exportedFunctions.segmentSize = exportedFunctionsSurface->getUnderlyingBufferSize();
+        buildInfos[rootDeviceIndex].exportedFunctionsSurface = this->kernelInfoArray[exportedFunctionHeapId]->getGraphicsAllocation();
+        exportedFunctions.gpuAddress = static_cast<uintptr_t>(buildInfos[rootDeviceIndex].exportedFunctionsSurface->getGpuAddressToPatch());
+        exportedFunctions.segmentSize = buildInfos[rootDeviceIndex].exportedFunctionsSurface->getUnderlyingBufferSize();
     }
     Linker::PatchableSegments isaSegmentsForPatching;
     std::vector<std::vector<char>> patchedIsaTempStorage;
@@ -125,11 +126,13 @@ cl_int Program::processGenBinary() {
     }
 
     cleanCurrentKernelInfo();
-    if (this->constantSurface || this->globalSurface) {
-        pDevice->getMemoryManager()->freeGraphicsMemory(this->constantSurface);
-        pDevice->getMemoryManager()->freeGraphicsMemory(this->globalSurface);
-        this->constantSurface = nullptr;
-        this->globalSurface = nullptr;
+    for (auto &buildInfo : buildInfos) {
+        if (buildInfo.constantSurface || buildInfo.globalSurface) {
+            pDevice->getMemoryManager()->freeGraphicsMemory(buildInfo.constantSurface);
+            pDevice->getMemoryManager()->freeGraphicsMemory(buildInfo.globalSurface);
+            buildInfo.constantSurface = nullptr;
+            buildInfo.globalSurface = nullptr;
+        }
     }
 
     ProgramInfo programInfo;
@@ -176,18 +179,19 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
 
     this->kernelInfoArray = std::move(src.kernelInfos);
     auto svmAllocsManager = context ? context->getSVMAllocsManager() : nullptr;
+    auto rootDeviceIndex = pDevice ? pDevice->getRootDeviceIndex() : 0u;
     if (src.globalConstants.size != 0) {
         UNRECOVERABLE_IF(nullptr == pDevice);
-        this->constantSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalConstants.size, true, linkerInput, src.globalConstants.initData);
+        buildInfos[rootDeviceIndex].constantSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalConstants.size, true, linkerInput, src.globalConstants.initData);
     }
 
-    this->globalVarTotalSize = src.globalVariables.size;
+    buildInfos[rootDeviceIndex].globalVarTotalSize = src.globalVariables.size;
 
     if (src.globalVariables.size != 0) {
         UNRECOVERABLE_IF(nullptr == pDevice);
-        this->globalSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalVariables.size, false, linkerInput, src.globalVariables.initData);
+        buildInfos[rootDeviceIndex].globalSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalVariables.size, false, linkerInput, src.globalVariables.initData);
         if (pDevice->getSpecializedDevice<ClDevice>()->areOcl21FeaturesEnabled() == false) {
-            this->globalVarTotalSize = 0u;
+            buildInfos[rootDeviceIndex].globalVarTotalSize = 0u;
         }
     }
 
