@@ -194,11 +194,7 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
     uint32_t affinityMask = std::numeric_limits<uint32_t>::max();
 
     if (this->affinityMaskString.length() > 0) {
-        if (NEO::DebugManager.flags.UseLegacyLevelZeroAffinity.get()) {
-            affinityMask = static_cast<uint32_t>(strtoul(this->affinityMaskString.c_str(), nullptr, 16));
-        } else {
-            affinityMask = parseAffinityMask(neoDevices);
-        }
+        affinityMask = parseAffinityMask(neoDevices);
     }
 
     uint32_t currentMaskOffset = 0;
