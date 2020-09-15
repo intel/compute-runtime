@@ -1456,6 +1456,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent);
     }
 
+    auto allocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(uint64_t));
+    commandContainer.addToResidencyContainer(allocationStruct.alloc);
+
     return ZE_RESULT_SUCCESS;
 }
 
