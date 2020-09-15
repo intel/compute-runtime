@@ -19,6 +19,7 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_memory_operations_handler.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
@@ -42,6 +43,7 @@ class AUBFixture : public CommandQueueHwFixture {
         executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1u);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+        executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MockMemoryOperationsHandler>();
 
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, rootDeviceIndex));
 

@@ -16,6 +16,8 @@
 #include <unordered_map>
 
 namespace NEO {
+class GraphicsAllocation;
+class Device;
 class SVMAllocsManager;
 
 class PageFaultManager : public NonCopyableOrMovableClass {
@@ -46,6 +48,7 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     virtual void allowCPUMemoryAccess(void *ptr, size_t size) = 0;
     virtual void protectCPUMemoryAccess(void *ptr, size_t size) = 0;
 
+    virtual void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) = 0;
     virtual void broadcastWaitSignal() = 0;
     MOCKABLE_VIRTUAL void waitForCopy();
 

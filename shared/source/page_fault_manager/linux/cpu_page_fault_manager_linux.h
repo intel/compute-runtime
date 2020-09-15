@@ -24,6 +24,7 @@ class PageFaultManagerLinux : public PageFaultManager {
     void allowCPUMemoryAccess(void *ptr, size_t size) override;
     void protectCPUMemoryAccess(void *ptr, size_t size) override;
 
+    void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override;
     void broadcastWaitSignal() override;
     MOCKABLE_VIRTUAL void sendSignalToThread(int threadId);
 
@@ -34,5 +35,7 @@ class PageFaultManagerLinux : public PageFaultManager {
 
     struct sigaction previousPageFaultHandler = {};
     struct sigaction previousUserSignalHandler = {};
+
+    bool evictMemoryAfterCopy = false;
 };
 } // namespace NEO

@@ -51,6 +51,8 @@ void PageFaultManagerWindows::protectCPUMemoryAccess(void *ptr, size_t size) {
     UNRECOVERABLE_IF(!retVal);
 }
 
+void PageFaultManagerWindows::evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) {}
+
 void PageFaultManagerWindows::broadcastWaitSignal() {}
 
 } // namespace NEO

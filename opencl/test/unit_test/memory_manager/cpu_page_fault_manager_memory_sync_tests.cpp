@@ -10,6 +10,7 @@
 #include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
@@ -52,7 +53,9 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSynchronizeMemoryThenEnq
     auto svmAllocsManager = std::make_unique<SVMAllocsManager>(memoryManager.get());
     void *alloc = svmAllocsManager->createSVMAlloc(mockRootDeviceIndex, 256, {}, mockDeviceBitfield);
 
+    auto device = std::unique_ptr<MockClDevice>(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     auto cmdQ = std::make_unique<CommandQueueMock>();
+    cmdQ->device = device.get();
     pageFaultManager->insertAllocation(alloc, 256, svmAllocsManager.get(), cmdQ.get(), {});
 
     pageFaultManager->baseCpuTransfer(alloc, 10, cmdQ.get());
@@ -66,6 +69,7 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenSynchronizeMemoryThenEnq
     EXPECT_EQ(cmdQ->finishCalled, 1);
 
     svmAllocsManager->freeSVMAlloc(alloc);
+    cmdQ->device = nullptr;
 }
 
 TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenGpuTransferIsInvokedThenInsertMapOperation) {
@@ -83,7 +87,9 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenGpuTransferIsInvokedThen
     auto memoryManager = std::make_unique<MockMemoryManager>(executionEnvironment);
     auto svmAllocsManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get());
     void *alloc = svmAllocsManager->createSVMAlloc(mockRootDeviceIndex, 256, {}, mockDeviceBitfield);
+    auto device = std::unique_ptr<MockClDevice>(new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)});
     auto cmdQ = std::make_unique<CommandQueueMock>();
+    cmdQ->device = device.get();
     pageFaultManager->insertAllocation(alloc, 256, svmAllocsManager.get(), cmdQ.get(), {});
 
     EXPECT_EQ(svmAllocsManager->insertSvmMapOperationCalled, 0);
@@ -91,4 +97,5 @@ TEST_F(PageFaultManagerTest, givenUnifiedMemoryAllocWhenGpuTransferIsInvokedThen
     EXPECT_EQ(svmAllocsManager->insertSvmMapOperationCalled, 1);
 
     svmAllocsManager->freeSVMAlloc(alloc);
+    cmdQ->device = nullptr;
 }

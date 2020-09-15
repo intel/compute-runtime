@@ -24,5 +24,8 @@ void PageFaultManager::transferToGpu(void *ptr, void *cmdQ) {
     UNRECOVERABLE_IF(retVal);
     retVal = commandQueue->finish();
     UNRECOVERABLE_IF(retVal);
+
+    auto allocData = memoryData[ptr].unifiedMemoryManager->getSVMAlloc(ptr);
+    this->evictMemoryAfterImplCopy(allocData->cpuAllocation, &commandQueue->getDevice());
 }
 } // namespace NEO

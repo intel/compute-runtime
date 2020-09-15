@@ -36,5 +36,7 @@ void PageFaultManager::transferToGpu(void *ptr, void *device) {
                                                              allocData->cpuAllocation,
                                                              allocData->size, false);
     UNRECOVERABLE_IF(ret);
+
+    this->evictMemoryAfterImplCopy(allocData->cpuAllocation, deviceImp->getNEODevice());
 }
 } // namespace NEO

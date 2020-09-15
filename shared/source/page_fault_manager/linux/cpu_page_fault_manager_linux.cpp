@@ -7,7 +7,10 @@
 
 #include "shared/source/page_fault_manager/linux/cpu_page_fault_manager_linux.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/memory_manager/memory_operations_handler.h"
 
 #include <dirent.h>
 #include <sys/mman.h>
@@ -40,6 +43,9 @@ PageFaultManagerLinux::PageFaultManagerLinux() {
 
     retVal = sigaction(SIGUSR1, &pageFaultManagerHandler, &previousUserSignalHandler);
     UNRECOVERABLE_IF(retVal != 0);
+
+    this->evictMemoryAfterCopy = DebugManager.flags.EnableDirectSubmission.get() &&
+                                 DebugManager.flags.USMEvictAfterMigration.get();
 }
 
 PageFaultManagerLinux::~PageFaultManagerLinux() {
@@ -112,5 +118,11 @@ void PageFaultManagerLinux::broadcastWaitSignal() {
 void PageFaultManagerLinux::sendSignalToThread(int threadId) {
     syscall(SYS_tkill, threadId, SIGUSR1);
 }
+
+void PageFaultManagerLinux::evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) {
+    if (evictMemoryAfterCopy) {
+        device->getRootDeviceEnvironment().memoryOperationsInterface->evict(device, *allocation);
+    }
+};
 
 } // namespace NEO
