@@ -25,7 +25,7 @@ void MemoryManagerWithCsrFixture::SetUp() {
     csr->tagAddress = &currentGpuTag;
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     auto engine = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
-    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), engine, 1,
+    auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), engine.first, 1,
                                                                PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
                                                                false, false, false);
     csr->setupContext(*osContext);

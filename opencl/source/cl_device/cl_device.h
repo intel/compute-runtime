@@ -65,7 +65,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     bool getDeviceAndHostTimer(uint64_t *deviceTimestamp, uint64_t *hostTimestamp) const;
     bool getHostTimer(uint64_t *hostTimestamp) const;
     const HardwareInfo &getHardwareInfo() const;
-    EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority);
+    EngineControl &getEngine(aub_stream::EngineType engineType, bool lowPriority, bool internalUsage);
     EngineControl &getDefaultEngine();
     EngineControl &getInternalEngine();
     std::atomic<uint32_t> &getSelectorCopyEngine();

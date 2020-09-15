@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/commands/bxml_generator_glue.h"
 #include "shared/source/helpers/aux_translation.h"
+#include "shared/source/helpers/engine_node_helper.h"
 
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -44,7 +45,7 @@ enum class EngineGroupType : uint32_t {
 
 class HwHelper {
   public:
-    using EngineInstancesContainer = StackVec<aub_stream::EngineType, 32>;
+    using EngineInstancesContainer = StackVec<EngineTypeUsage, 32>;
     static HwHelper &get(GFXCORE_FAMILY gfxCore);
     virtual uint32_t getBindingTableStateSurfaceStatePointer(const void *pBindingTable, uint32_t index) = 0;
     virtual size_t getBindingTableStateSize() const = 0;
@@ -56,7 +57,6 @@ class HwHelper {
     virtual uint32_t getMaxNumSamplers() const = 0;
     virtual void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
-    virtual uint32_t getComputeEngineIndexByOrdinal(const HardwareInfo &hwInfo, uint32_t ordinal) const = 0;
     virtual void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) = 0;
     virtual bool isL3Configurable(const HardwareInfo &hwInfo) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) = 0;
@@ -129,9 +129,6 @@ class HwHelper {
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
     static uint32_t getCopyEnginesCount(const HardwareInfo &hwInfo);
 
-    static constexpr uint32_t lowPriorityGpgpuEngineIndex = 1;
-    static constexpr uint32_t internalUsageEngineIndex = 2;
-
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
 
@@ -197,13 +194,6 @@ class HwHelperHw : public HwHelper {
     void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) override;
 
     void adjustDefaultEngineType(HardwareInfo *pHwInfo) override;
-
-    uint32_t getComputeEngineIndexByOrdinal(const HardwareInfo &hwInfo, uint32_t ordinal) const override {
-        if (hwInfo.featureTable.ftrCCSNode && ordinal < hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled) {
-            return ordinal + internalUsageEngineIndex + 1;
-        }
-        return 0;
-    }
 
     void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) override;
 

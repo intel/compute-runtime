@@ -10,9 +10,18 @@
 #include "engine_node.h"
 
 #include <atomic>
+#include <utility>
 
 namespace NEO {
 struct HardwareInfo;
+
+enum class EngineUsage : uint32_t {
+    Regular,
+    LowPriority,
+    Internal
+};
+
+using EngineTypeUsage = std::pair<aub_stream::EngineType, EngineUsage>;
 
 namespace EngineHelpers {
 bool isCcs(aub_stream::EngineType engineType);

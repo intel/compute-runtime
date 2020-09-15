@@ -212,7 +212,7 @@ bool MetricsLibrary::createContext() {
 
     // Check if compute command streamer is used.
     auto asyncComputeEngine = std::find_if(asyncComputeEngines.begin(), asyncComputeEngines.end(), [&](const auto &engine) {
-        return engine == aub_stream::ENGINE_CCS;
+        return engine.first == aub_stream::ENGINE_CCS;
     });
 
     const auto &deviceImp = *static_cast<DeviceImp *>(&device);

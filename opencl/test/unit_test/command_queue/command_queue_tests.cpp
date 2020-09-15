@@ -241,13 +241,13 @@ HWTEST_P(CommandQueueWithBlitOperationsTests, givenDeviceWithSubDevicesSupportin
 
     auto subDevice = device->getDeviceById(0);
     if (createBcsEngine) {
-        auto &engine = subDevice->getEngine(HwHelperHw<FamilyType>::lowPriorityEngineType, true);
+        auto &engine = subDevice->getEngine(HwHelperHw<FamilyType>::lowPriorityEngineType, true, false);
         bcsOsContext.reset(OsContext::create(nullptr, 1, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
                                              false, false, false));
         engine.osContext = bcsOsContext.get();
         engine.commandStreamReceiver->setupContext(*bcsOsContext);
     }
-    auto bcsEngine = subDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, false);
+    auto bcsEngine = subDevice->getEngine(aub_stream::EngineType::ENGINE_BCS, false, false);
 
     MockCommandQueue cmdQ(nullptr, device.get(), 0);
     auto cmdType = GetParam();

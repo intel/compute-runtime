@@ -132,7 +132,7 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
         csr.reset(createCommandStream(*executionEnvironment, 0u));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
-                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0], 1, preemptionMode,
+                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first, 1, preemptionMode,
                                                               false, false, false);
 
         osContext->incRefInternal();
@@ -168,7 +168,7 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
         csr.reset(createCommandStream(*executionEnvironment, 0u));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
-                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first,
                                                               1, PreemptionHelper::getDefaultPreemptionMode(*hwInfo),
                                                               false, false, false);
 

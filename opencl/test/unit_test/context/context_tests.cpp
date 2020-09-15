@@ -362,7 +362,10 @@ class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
         memoryManager = new MockMemoryManager();
         device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};
         deleter = new MockDeferredDeleter();
+
+        device->engines.clear();
         device->injectMemoryManager(memoryManager);
+        device->createEngines();
         memoryManager->setDeferredDeleter(deleter);
     }
     void TearDown() override {

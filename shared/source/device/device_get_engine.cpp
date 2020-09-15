@@ -15,6 +15,9 @@ EngineControl &Device::getInternalEngine() {
     if (this->engines[0].commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
         return this->getDefaultEngine();
     }
-    return this->getDeviceById(0)->engines[HwHelper::internalUsageEngineIndex];
+
+    auto engineType = getChosenEngineType(getHardwareInfo());
+
+    return this->getDeviceById(0)->getEngine(engineType, false, true);
 }
 } // namespace NEO

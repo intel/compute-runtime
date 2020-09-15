@@ -57,9 +57,11 @@ bool HwHelperHw<Family>::obtainBlitterPreference(const HardwareInfo &hwInfo) con
 
 template <typename GfxFamily>
 const HwHelper::EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
-    return {aub_stream::ENGINE_RCS,
-            aub_stream::ENGINE_RCS,  // low priority
-            aub_stream::ENGINE_RCS}; // internal usage
+    return {
+        {aub_stream::ENGINE_RCS, EngineUsage::Regular},
+        {aub_stream::ENGINE_RCS, EngineUsage::LowPriority},
+        {aub_stream::ENGINE_RCS, EngineUsage::Internal},
+    };
 }
 
 template <typename GfxFamily>

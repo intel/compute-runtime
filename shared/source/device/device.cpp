@@ -115,7 +115,7 @@ std::unique_ptr<CommandStreamReceiver> Device::createCommandStreamReceiver() con
     return std::unique_ptr<CommandStreamReceiver>(createCommandStream(*executionEnvironment, getRootDeviceIndex()));
 }
 
-bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engineType) {
+bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage) {
     auto &hwInfo = getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(hwInfo);
 
@@ -124,7 +124,9 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
         return false;
     }
 
-    bool internalUsage = (deviceCsrIndex == HwHelper::internalUsageEngineIndex);
+    auto engineType = engineTypeUsage.first;
+
+    bool internalUsage = (engineTypeUsage.second == EngineUsage::Internal);
     if (internalUsage) {
         commandStreamReceiver->initializeDefaultsForInternalEngine();
     }
@@ -133,7 +135,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, aub_stream::EngineType engine
         commandStreamReceiver->createPageTableManager();
     }
 
-    bool lowPriority = (deviceCsrIndex == HwHelper::lowPriorityGpgpuEngineIndex);
+    bool lowPriority = (engineTypeUsage.second == EngineUsage::LowPriority);
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineType,
                                                                                      getDeviceBitfield(), preemptionMode,
                                                                                      lowPriority, internalUsage, false);
@@ -208,10 +210,11 @@ bool Device::isDebuggerActive() const {
     return deviceInfo.debuggerActive;
 }
 
-EngineControl &Device::getEngine(aub_stream::EngineType engineType, bool lowPriority) {
+EngineControl &Device::getEngine(aub_stream::EngineType engineType, bool lowPriority, bool internalUsage) {
     for (auto &engine : engines) {
         if (engine.osContext->getEngineType() == engineType &&
-            engine.osContext->isLowPriority() == lowPriority) {
+            engine.osContext->isLowPriority() == lowPriority &&
+            engine.osContext->isInternalEngine() == internalUsage) {
             return engine;
         }
     }

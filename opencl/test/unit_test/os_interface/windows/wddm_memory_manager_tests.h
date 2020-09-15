@@ -68,7 +68,7 @@ class MockWddmMemoryManagerFixture {
         csr.reset(createCommandStream(*executionEnvironment, 0u));
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
-                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first,
                                                               1, PreemptionHelper::getDefaultPreemptionMode(*hwInfo), false, false, false);
 
         osContext->incRefInternal();
@@ -120,7 +120,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public ExecutionEnvironmentFixture
         csr.reset(createCommandStream(*executionEnvironment, 0u));
         auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         osContext = memoryManager->createAndRegisterOsContext(csr.get(),
-                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+                                                              HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0].first,
                                                               1, preemptionMode, false, false, false);
 
         osContext->incRefInternal();

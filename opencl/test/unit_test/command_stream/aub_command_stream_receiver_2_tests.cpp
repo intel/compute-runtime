@@ -501,7 +501,7 @@ HWTEST_F(AubCommandStreamReceiverNoHostPtrTests, givenAubCommandStreamReceiverWh
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
     auto engineInstance = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
 
-    MockOsContext osContext(0, 1, engineInstance, PreemptionMode::Disabled,
+    MockOsContext osContext(0, 1, engineInstance.first, PreemptionMode::Disabled,
                             false, false, false);
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>("", true, *executionEnvironment, 0));
     aubCsr->setupContext(osContext);
@@ -751,7 +751,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenEngineI
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     auto engineInstance = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
-    MockOsContext osContext(0, 1, engineInstance, PreemptionMode::Disabled,
+    MockOsContext osContext(0, 1, engineInstance.first, PreemptionMode::Disabled,
                             false, false, false);
     executionEnvironment.initializeMemoryManager();
 
