@@ -36,7 +36,7 @@ struct BcsBufferTests : public ::testing::Test {
             bcsCsr->initializeTagAllocation();
             bcsCsr->createGlobalFenceAllocation();
 
-            auto mockBlitMemoryToAllocation = [this](Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+            auto mockBlitMemoryToAllocation = [this](const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                                      Vec3<size_t> size) -> BlitOperationResult {
                 auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                             *bcsCsr, memory, nullptr,

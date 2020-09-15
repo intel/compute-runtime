@@ -36,7 +36,7 @@ struct BlitEnqueueTests : public ::testing::Test {
             bcsCsr->setupContext(*bcsOsContext);
             bcsCsr->initializeTagAllocation();
 
-            auto mockBlitMemoryToAllocation = [this](Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+            auto mockBlitMemoryToAllocation = [this](const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                                      Vec3<size_t> size) -> BlitOperationResult {
                 auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                                             *bcsCsr, memory, nullptr,
@@ -70,6 +70,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         DebugManager.flags.ForceAuxTranslationMode.set(1);
         DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
         DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
+        DebugManager.flags.EnableLocalMemory.set(1);
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
         auto &capabilityTable = device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
         bool createBcsEngine = !capabilityTable.blitterOperationsSupported;
@@ -1459,6 +1460,48 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenSubmissionT
         mockCommandQueue->obtainNewTimestampPacketNodes(1, previousNodes, clearDependencies, blitEnqueue);
         EXPECT_EQ(0u, previousNodes.peekNodes().size());
     }
+}
+
+using BlitCopyTests = BlitEnqueueTests<1>;
+
+HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllowedCpuAccessThenUseBcsForTransfer) {
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+
+    uint32_t kernelHeap = 0;
+    KernelInfo kernelInfo;
+    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
+
+    auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
+
+    kernelInfo.createKernelAllocation(device->getDevice());
+
+    if (kernelInfo.kernelAllocation->isAllocatedInLocalMemoryPool()) {
+        EXPECT_EQ(initialTaskCount + 1, bcsMockContext->bcsCsr->peekTaskCount());
+    } else {
+        EXPECT_EQ(initialTaskCount, bcsMockContext->bcsCsr->peekTaskCount());
+    }
+
+    device->getMemoryManager()->freeGraphicsMemory(kernelInfo.kernelAllocation);
+}
+
+HWTEST_TEMPLATED_F(BlitCopyTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowedCpuAccessThenDontUseBcsForTransfer) {
+    DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessAllowed));
+    DebugManager.flags.ForceNonSystemMemoryPlacement.set(1 << (static_cast<int64_t>(GraphicsAllocation::AllocationType::KERNEL_ISA) - 1));
+
+    uint32_t kernelHeap = 0;
+    KernelInfo kernelInfo;
+    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
+
+    auto initialTaskCount = bcsMockContext->bcsCsr->peekTaskCount();
+
+    kernelInfo.createKernelAllocation(device->getDevice());
+
+    EXPECT_EQ(initialTaskCount, bcsMockContext->bcsCsr->peekTaskCount());
+
+    device->getMemoryManager()->freeGraphicsMemory(kernelInfo.kernelAllocation);
 }
 
 } // namespace NEO

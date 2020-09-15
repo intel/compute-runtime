@@ -9,7 +9,7 @@
 
 namespace NEO {
 
-BlitOperationResult BlitHelper::blitMemoryToAllocation(Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+BlitOperationResult BlitHelper::blitMemoryToAllocation(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                                        Vec3<size_t> size) {
     return BlitOperationResult::Unsupported;
 }

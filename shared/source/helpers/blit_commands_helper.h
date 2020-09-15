@@ -86,7 +86,7 @@ enum class BlitOperationResult {
 };
 
 namespace BlitHelperFunctions {
-using BlitMemoryToAllocationFunc = std::function<BlitOperationResult(Device &device,
+using BlitMemoryToAllocationFunc = std::function<BlitOperationResult(const Device &device,
                                                                      GraphicsAllocation *memory,
                                                                      size_t offset,
                                                                      const void *hostPtr,
@@ -96,9 +96,9 @@ extern BlitMemoryToAllocationFunc blitAllocationToMemory;
 } // namespace BlitHelperFunctions
 
 struct BlitHelper {
-    static BlitOperationResult blitMemoryToAllocation(Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+    static BlitOperationResult blitMemoryToAllocation(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                                       Vec3<size_t> size);
-    static BlitOperationResult blitAllocationToMemory(Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+    static BlitOperationResult blitAllocationToMemory(const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
                                                       Vec3<size_t> size);
 };
 
