@@ -137,7 +137,7 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
     auto event = std::unique_ptr<L0::Event>(L0::Event::create(eventPool.get(), &eventDesc, device));
 
     commandList->appendEventReset(event->toHandle());
-    auto contextOffset = offsetof(KernelTimestampEvent, contextEnd);
+    auto contextOffset = offsetof(TimestampPacketStorage::Packet, contextEnd);
     auto baseAddr = event->getGpuAddress();
     auto gpuAddress = ptrOffset(baseAddr, contextOffset);
 

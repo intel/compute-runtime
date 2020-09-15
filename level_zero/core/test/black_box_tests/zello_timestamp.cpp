@@ -11,7 +11,7 @@ extern bool verbose;
 bool verbose = false;
 
 inline std::vector<uint8_t> loadBinaryFile(const std::string &filePath) {
-    std::ifstream stream(filePath, std::ios::in);
+    std::ifstream stream(filePath, std::ios::binary);
     if (!stream.good()) {
         std::cerr << "Failed to load binary file: " << filePath << " " << strerror(errno) << "\n";
         return {};

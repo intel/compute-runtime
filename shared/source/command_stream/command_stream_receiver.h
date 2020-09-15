@@ -44,7 +44,9 @@ class OSInterface;
 class ScratchSpaceController;
 struct HwPerfCounter;
 struct HwTimeStamps;
-struct TimestampPacketStorage;
+
+template <typename TSize>
+struct TimestampPackets;
 
 template <typename T1>
 class TagAllocator;

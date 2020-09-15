@@ -42,7 +42,8 @@ class MockCommandListHw : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFam
                                              uint64_t srcOffset,
                                              uint32_t size,
                                              uint32_t elementSize,
-                                             Builtin builtin) override {
+                                             Builtin builtin,
+                                             ze_event_handle_t hSignalEvent) override {
         appendMemoryCopyKernelWithGACalledTimes++;
         return ZE_RESULT_SUCCESS;
     }

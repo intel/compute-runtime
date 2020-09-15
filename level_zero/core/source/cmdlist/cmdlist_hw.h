@@ -17,6 +17,11 @@ enum class ImageType;
 }
 
 namespace L0 {
+struct EventData {
+    uint64_t address;
+    uint64_t packetsInUse;
+};
+
 struct AlignedAllocationData {
     uintptr_t alignedAllocationPtr = 0u;
     size_t offset = 0u;
@@ -140,7 +145,8 @@ struct CommandListCoreFamily : CommandListImp {
                                                               uint64_t dstOffset, void *srcPtr,
                                                               NEO::GraphicsAllocation *srcPtrAlloc,
                                                               uint64_t srcOffset, uint32_t size,
-                                                              uint32_t elementSize, Builtin builtin);
+                                                              uint32_t elementSize, Builtin builtin,
+                                                              ze_event_handle_t hSignalEvent);
 
     MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlit(uintptr_t dstPtr,
                                                       NEO::GraphicsAllocation *dstPtrAlloc,
@@ -198,6 +204,7 @@ struct CommandListCoreFamily : CommandListImp {
                                   const void **pRanges);
 
     ze_result_t setGlobalWorkSizeIndirect(NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, uint32_t lws[3]);
+    void appendWriteKernelTimestamp(ze_event_handle_t hEvent, bool beforeWalker);
     void appendEventForProfiling(ze_event_handle_t hEvent, bool beforeWalker);
     void appendEventForProfilingCopyCommand(ze_event_handle_t hEvent, bool beforeWalker);
     void appendSignalEventPostWalker(ze_event_handle_t hEvent);

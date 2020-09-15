@@ -42,7 +42,7 @@ struct TimestampEvent : public Test<DeviceFixture> {
 };
 
 GEN12LPTEST_F(TimestampEvent, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
-    KernelTimestampEvent data = {};
+    TimestampPacketStorage::Packet data = {};
     data.contextStart = 1u;
     data.contextEnd = 2u;
     data.globalStart = 3u;
@@ -50,6 +50,7 @@ GEN12LPTEST_F(TimestampEvent, givenEventTimestampsWhenQueryKernelTimestampThenCo
 
     event->hostAddress = &data;
 
+    event->packetsInUse = 1;
     ze_kernel_timestamp_result_t result = {};
 
     event->queryKernelTimestamp(&result);
@@ -57,6 +58,32 @@ GEN12LPTEST_F(TimestampEvent, givenEventTimestampsWhenQueryKernelTimestampThenCo
     EXPECT_EQ(data.globalEnd, result.context.kernelEnd);
     EXPECT_EQ(data.globalStart, result.global.kernelStart);
     EXPECT_EQ(data.globalEnd, result.global.kernelEnd);
+}
+
+GEN12LPTEST_F(TimestampEvent, givenEventMoreThanOneTimestampsPacketWhenQueryKernelTimestampThenCorrectCalculationAreMade) {
+    TimestampPacketStorage::Packet data[3] = {};
+    data[0].contextStart = 3u;
+    data[0].contextEnd = 4u;
+    data[0].globalStart = 5u;
+    data[0].globalEnd = 6u;
+    data[1].contextStart = 2u;
+    data[1].contextEnd = 6u;
+    data[1].globalStart = 4u;
+    data[1].globalEnd = 8u;
+    data[2].contextStart = 4u;
+    data[2].contextEnd = 5u;
+    data[2].globalStart = 6u;
+    data[2].globalEnd = 7u;
+
+    event->hostAddress = &data;
+    event->packetsInUse = 3;
+    ze_kernel_timestamp_result_t result = {};
+
+    event->queryKernelTimestamp(&result);
+    EXPECT_EQ(data[1].globalStart, result.context.kernelStart);
+    EXPECT_EQ(data[1].globalEnd, result.context.kernelEnd);
+    EXPECT_EQ(data[1].globalStart, result.global.kernelStart);
+    EXPECT_EQ(data[1].globalEnd, result.global.kernelEnd);
 }
 } // namespace ult
 } // namespace L0

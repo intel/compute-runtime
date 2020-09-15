@@ -29,12 +29,13 @@ constexpr uint32_t preferredPacketCount = 16u;
 }
 
 #pragma pack(1)
-struct TimestampPacketStorage {
+template <typename TSize>
+struct TimestampPackets {
     struct Packet {
-        uint32_t contextStart = 1u;
-        uint32_t globalStart = 1u;
-        uint32_t contextEnd = 1u;
-        uint32_t globalEnd = 1u;
+        TSize contextStart = 1u;
+        TSize globalStart = 1u;
+        TSize contextEnd = 1u;
+        TSize globalEnd = 1u;
     };
 
     static GraphicsAllocation::AllocationType getAllocationType() {
@@ -74,12 +75,15 @@ struct TimestampPacketStorage {
 };
 #pragma pack()
 
+using TimestampPacketStorage = TimestampPackets<uint32_t>;
+
 static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount + 2) * sizeof(uint32_t)) == sizeof(TimestampPacketStorage),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
 class TimestampPacketContainer : public NonCopyableClass {
   public:
     using Node = TagNode<TimestampPacketStorage>;
+
     TimestampPacketContainer() = default;
     TimestampPacketContainer(TimestampPacketContainer &&) = default;
     TimestampPacketContainer &operator=(TimestampPacketContainer &&) = default;

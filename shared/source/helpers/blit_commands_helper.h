@@ -22,16 +22,20 @@ class CommandStreamReceiver;
 class Device;
 class GraphicsAllocation;
 class LinearStream;
-struct TimestampPacketStorage;
+
 struct RootDeviceEnvironment;
 
 template <typename TagType>
 struct TagNode;
 
+template <typename TSize>
+struct TimestampPackets;
+
 struct BlitProperties;
 struct HardwareInfo;
 struct TimestampPacketDependencies;
 using BlitPropertiesContainer = StackVec<BlitProperties, 16>;
+using TimestampPacketStorage = TimestampPackets<uint32_t>;
 
 struct BlitProperties {
     static BlitProperties constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection blitDirection,

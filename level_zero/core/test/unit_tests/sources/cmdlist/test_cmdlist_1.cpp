@@ -979,8 +979,8 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCo
 
     commandList->appendEventForProfilingCopyCommand(event->toHandle(), true);
 
-    auto contextOffset = offsetof(KernelTimestampEvent, contextStart);
-    auto globalOffset = offsetof(KernelTimestampEvent, globalStart);
+    auto contextOffset = offsetof(TimestampPacketStorage::Packet, contextStart);
+    auto globalOffset = offsetof(TimestampPacketStorage::Packet, globalStart);
     auto baseAddr = event->getGpuAddress();
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -1012,8 +1012,8 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingAfterCommandForCop
 
     commandList->appendEventForProfilingCopyCommand(event->toHandle(), false);
 
-    auto contextOffset = offsetof(KernelTimestampEvent, contextEnd);
-    auto globalOffset = offsetof(KernelTimestampEvent, globalEnd);
+    auto contextOffset = offsetof(TimestampPacketStorage::Packet, contextEnd);
+    auto globalOffset = offsetof(TimestampPacketStorage::Packet, globalEnd);
     auto baseAddr = event->getGpuAddress();
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(

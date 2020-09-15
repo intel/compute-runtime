@@ -8,45 +8,99 @@
 R"===(
 __kernel void QueryKernelTimestamps(__global ulong* srcEvents, __global ulong* dst, uint useOnlyGlobalTimestamps) {
     uint gid = get_global_id(0);
-    const ulong tsMask = (1ull << 32) - 1;
     uint currentOffset = gid * 4;
     dst[currentOffset] = 0;
     dst[currentOffset + 1] = 0;
     dst[currentOffset + 2] = 0;
     dst[currentOffset + 3] = 0;
 
-    ulong srcPtr = srcEvents[gid];
+    uint eventOffsetData = 2*gid;
+    ulong srcPtr = srcEvents[eventOffsetData];
     __global uint *src = (__global uint *) srcPtr;
-    dst[currentOffset] = src[1] & tsMask;
-    dst[currentOffset + 1] = src[3] & tsMask;
-    if (useOnlyGlobalTimestamps != 0) {
-        dst[currentOffset + 2] = src[1] & tsMask;
-        dst[currentOffset + 3] = src[3] & tsMask;
-    } else {
-        dst[currentOffset + 2] = src[0] & tsMask;
-        dst[currentOffset + 3] = src[2] & tsMask;
+    ulong packetUsed = srcEvents[eventOffsetData + 1];
+
+    uint contextStart = src[0];
+    uint globalStart = src[1];
+    uint contextEnd = src[2];
+    uint globalEnd = src[3];
+
+    if(packetUsed > 1) {
+      uint timestampsOffsets = 4;
+        for(uint i = 1; i < packetUsed; i++) {
+            timestampsOffsets *= i;
+            if(contextStart > src[timestampsOffsets]) {
+              contextStart = src[timestampsOffsets];
+            }
+            if(globalStart > src[timestampsOffsets + 1]) {
+              globalStart = src[timestampsOffsets + 1];
+            }
+            if(contextEnd < src[timestampsOffsets + 2]) {
+              contextEnd = src[timestampsOffsets + 2];
+            }
+            if(globalEnd < src[timestampsOffsets + 3]) {
+              globalEnd = src[timestampsOffsets + 3];
+        }
+      }
     }
+
+    dst[currentOffset] = globalStart;
+    dst[currentOffset + 1] = globalEnd;
+    if (useOnlyGlobalTimestamps != 0) {
+        dst[currentOffset + 2] = globalStart;
+        dst[currentOffset + 3] = globalEnd;
+    } else {
+        dst[currentOffset + 2] = contextStart;
+        dst[currentOffset + 3] = contextEnd;
+    }
+
 }
 
 __kernel void QueryKernelTimestampsWithOffsets(__global ulong* srcEvents, __global ulong* dst, __global ulong *offsets, uint useOnlyGlobalTimestamps) {
     uint gid = get_global_id(0);
-    const ulong tsMask = (1ull << 32) - 1;
     uint currentOffset = offsets[gid] / 8;
     dst[currentOffset] = 0;
     dst[currentOffset + 1] = 0;
     dst[currentOffset + 2] = 0;
     dst[currentOffset + 3] = 0;
 
-    ulong srcPtr = srcEvents[gid];
+    uint eventOffsetData = 2*gid;
+    ulong srcPtr = srcEvents[eventOffsetData];
     __global uint *src = (__global uint *) srcPtr;
-    dst[currentOffset] = src[1] & tsMask;
-    dst[currentOffset + 1] = src[3] & tsMask;
-    if (useOnlyGlobalTimestamps != 0) {
-        dst[currentOffset + 2] = src[1] & tsMask;
-        dst[currentOffset + 3] = src[3] & tsMask;
-    } else {
-        dst[currentOffset + 2] = src[0] & tsMask;
-        dst[currentOffset + 3] = src[2] & tsMask;
+    ulong packetUsed = srcEvents[eventOffsetData + 1];
+
+    uint contextStart = src[0];
+    uint globalStart = src[1];
+    uint contextEnd = src[2];
+    uint globalEnd = src[3];
+
+    if(packetUsed > 1) {
+      uint timestampsOffsets = 4;
+        for(uint i = 1; i < packetUsed; i++) {
+            timestampsOffsets *= i;
+            if(contextStart > src[timestampsOffsets]) {
+              contextStart = src[timestampsOffsets];
+            }
+            if(globalStart > src[timestampsOffsets + 1]) {
+              globalStart = src[timestampsOffsets + 1];
+            }
+            if(contextEnd < src[timestampsOffsets + 2]) {
+              contextEnd = src[timestampsOffsets + 2];
+            }
+            if(globalEnd < src[timestampsOffsets + 3]) {
+              globalEnd = src[timestampsOffsets + 3];
+        }
+      }
     }
+
+    dst[currentOffset] = globalStart;
+    dst[currentOffset + 1] = globalEnd;
+    if (useOnlyGlobalTimestamps != 0) {
+        dst[currentOffset + 2] = globalStart;
+        dst[currentOffset + 3] = globalEnd;
+    } else {
+        dst[currentOffset + 2] = contextStart;
+        dst[currentOffset + 3] = contextEnd;
+    }
+
 }
 )==="

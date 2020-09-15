@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/timestamp_packet.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -20,6 +22,7 @@ namespace L0 {
 typedef uint64_t FlushStamp;
 struct EventPool;
 struct MetricStreamer;
+using TimestampPacketStorage = NEO::TimestampPackets<uint32_t>;
 
 struct Event : _ze_event_handle_t {
     virtual ~Event() = default;
@@ -29,7 +32,6 @@ struct Event : _ze_event_handle_t {
     virtual ze_result_t queryStatus() = 0;
     virtual ze_result_t reset() = 0;
     virtual ze_result_t queryKernelTimestamp(ze_kernel_timestamp_result_t *dstptr) = 0;
-
     enum State : uint32_t {
         STATE_SIGNALED = 0u,
         STATE_CLEARED = static_cast<uint32_t>(-1),
@@ -48,15 +50,22 @@ struct Event : _ze_event_handle_t {
 
     void *hostAddress = nullptr;
     uint64_t gpuAddress;
+    uint32_t getPacketsInUse() { return packetsInUse; }
 
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
-
     bool isTimestampEvent = false;
+
+    std::unique_ptr<TimestampPacketStorage> timestampsData = nullptr;
+    uint64_t globalStartTS;
+    uint64_t globalEndTS;
+    uint64_t contextStartTS;
+    uint64_t contextEndTS;
+
+    uint32_t packetsInUse = 1;
 
     // Metric streamer instance associated with the event.
     MetricStreamer *metricStreamer = nullptr;
-
     NEO::CommandStreamReceiver *csr = nullptr;
 
   protected:
@@ -83,16 +92,11 @@ struct EventImp : public Event {
     EventPool *eventPool;
 
   protected:
+    ze_result_t calculateProfilingData();
     ze_result_t hostEventSetValue(uint32_t eventValue);
     ze_result_t hostEventSetValueTimestamps(uint32_t eventVal);
+    void assignTimestampData(void *address);
     void makeAllocationResident();
-};
-
-struct KernelTimestampEvent {
-    uint32_t contextStart = Event::STATE_INITIAL;
-    uint32_t globalStart = Event::STATE_INITIAL;
-    uint32_t contextEnd = Event::STATE_INITIAL;
-    uint32_t globalEnd = Event::STATE_INITIAL;
 };
 
 struct EventPool : _ze_event_pool_handle_t {
@@ -151,8 +155,8 @@ struct EventPoolImp : public EventPool {
     size_t numEvents;
 
   protected:
-    const uint32_t eventSize = static_cast<uint32_t>(alignUp(sizeof(struct KernelTimestampEvent),
-                                                             MemoryConstants::cacheLineSize));
+    const uint32_t eventSize = static_cast<uint32_t>(NEO::TimestampPacketSizeControl::preferredPacketCount * alignUp(sizeof(struct TimestampPacketStorage::Packet),
+                                                                                                                     MemoryConstants::cacheLineSize));
     const uint32_t eventAlignment = MemoryConstants::cacheLineSize;
 };
 

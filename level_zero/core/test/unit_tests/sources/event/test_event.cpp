@@ -43,8 +43,8 @@ TEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelT
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
 
-    uint32_t kernelTimestampsSize = static_cast<uint32_t>(alignUp(sizeof(struct KernelTimestampEvent),
-                                                                  MemoryConstants::cacheLineSize));
+    uint32_t kernelTimestampsSize = static_cast<uint32_t>(NEO::TimestampPacketSizeControl::preferredPacketCount *
+                                                          alignUp(sizeof(struct TimestampPacketStorage::Packet), MemoryConstants::cacheLineSize));
     EXPECT_EQ(kernelTimestampsSize, eventPool->getEventSize());
 }
 
@@ -213,7 +213,7 @@ TEST_F(TimestampEventCreate, givenTimestampEventThenAllocationsIsOfPacketTagBuff
 }
 
 HWCMDTEST_F(IGFX_GEN9_CORE, TimestampEventCreate, givenEventTimestampsWhenQueryKernelTimestampThenCorrectDataAreSet) {
-    KernelTimestampEvent data = {};
+    TimestampPacketStorage::Packet data = {};
     data.contextStart = 1u;
     data.contextEnd = 2u;
     data.globalStart = 3u;
