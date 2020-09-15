@@ -69,7 +69,7 @@ class ImageArraySizeTest : public ClDeviceFixture,
 
 typedef ImageArraySizeTest CreateImageArraySize;
 
-HWTEST_P(CreateImageArraySize, arrayTypes) {
+HWTEST_P(CreateImageArraySize, GivenArrayTypeWhenCreatingImageThenImageCreatedWithCorrectParams) {
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
@@ -104,13 +104,13 @@ static cl_mem_object_type ArrayImageTypes[] = {
     CL_MEM_OBJECT_IMAGE2D_ARRAY};
 
 INSTANTIATE_TEST_CASE_P(
-    ImageArraySizeTest_Create,
+    ImageArraySizeTestCreate,
     CreateImageArraySize,
     testing::ValuesIn(ArrayImageTypes));
 
 typedef ImageArraySizeTest CreateImageNonArraySize;
 
-HWTEST_P(CreateImageNonArraySize, NonArrayTypes) {
+HWTEST_P(CreateImageNonArraySize, GivenNonArrayTypeWhenCreatingImageThenImageCreatedWithCorrectParams) {
 
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
