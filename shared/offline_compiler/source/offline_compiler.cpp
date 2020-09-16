@@ -730,6 +730,9 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 
   -options <options>            Optional OpenCL C compilation options
                                 as defined by OpenCL specification.
+                                Also you may use here special options for Vector Compute:
+                                -vc-codegen <vc options> to compile from SPIRV with VC extensions
+                                -cmc <cm-options> to compile from CM sources
 
   -32                           Forces target architecture to 32-bit pointers.
                                 Default pointer size is inherited from
