@@ -9,6 +9,8 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 
+#include "level_zero/tools/source/sysman/sysman_const.h"
+
 #include "sysman/engine/os_engine.h"
 namespace L0 {
 class PmuInterface;
@@ -35,7 +37,6 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
 
   private:
     void init();
-    const uint32_t microSecondsToNanoSeconds = 1000u;
     int64_t fd = -1;
 };
 

@@ -12,8 +12,6 @@
 #include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
-constexpr uint64_t numSocTemperatureEntries = 7;
-constexpr uint32_t numCoreTemperatureEntries = 4;
 
 ze_result_t LinuxTemperatureImp::getProperties(zes_temp_properties_t *pProperties) {
     pProperties->type = type;

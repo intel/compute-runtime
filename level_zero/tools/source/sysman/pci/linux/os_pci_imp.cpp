@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/pci/linux/os_pci_imp.h"
 
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/sysman_const.h"
 
 #include "sysman/linux/os_sysman_imp.h"
 #include "sysman/pci/pci_imp.h"
@@ -18,9 +19,6 @@ const std::string LinuxPciImp::deviceDir("device");
 const std::string LinuxPciImp::resourceFile("device/resource");
 const std::string LinuxPciImp::maxLinkSpeedFile("device/max_link_speed");
 const std::string LinuxPciImp::maxLinkWidthFile("device/max_link_width");
-constexpr uint8_t maxPciBars = 6;
-// Linux kernel would report 255 link width, as an indication of unknown.
-constexpr uint32_t unknownPcieLinkWidth = 255u;
 
 std::string LinuxPciImp::changeDirNLevelsUp(std::string realRootPath, uint8_t nLevel) {
     size_t loc;

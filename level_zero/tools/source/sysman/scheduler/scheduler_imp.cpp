@@ -9,10 +9,9 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
-namespace L0 {
+#include "level_zero/tools/source/sysman/sysman_const.h"
 
-constexpr uint64_t minTimeoutModeHeartbeat = 5000u;
-constexpr uint64_t minTimeoutInMicroSeconds = 1000u;
+namespace L0 {
 
 ze_result_t SchedulerImp::setExclusiveMode(ze_bool_t *pNeedReload) {
     uint64_t timeslice = 0, timeout = 0, heartbeat = 0;

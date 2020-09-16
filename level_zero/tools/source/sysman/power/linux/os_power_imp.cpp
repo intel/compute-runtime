@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/power/linux/os_power_imp.h"
 
 #include "level_zero/tools/source/sysman/linux/pmt.h"
+#include "level_zero/tools/source/sysman/sysman_const.h"
 
 #include "sysman/linux/os_sysman_imp.h"
 

@@ -10,15 +10,13 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/sysman_const.h"
 #include <level_zero/zet_api.h>
 
 #include <csignal>
 
 namespace L0 {
 
-const std::string vendorIntel("Intel(R) Corporation");
-const std::string unknown("Unknown");
-const std::string intelPciId("0x8086");
 const std::string LinuxGlobalOperationsImp::deviceDir("device");
 const std::string LinuxGlobalOperationsImp::vendorFile("device/vendor");
 const std::string LinuxGlobalOperationsImp::deviceFile("device/device");
@@ -33,7 +31,7 @@ const std::string LinuxGlobalOperationsImp::agamaVersionFile("/sys/module/i915/a
 // with engine enum defined in leve-zero spec
 // Note that entries with int 2 and 3(represented by i915 as CLASS_VIDEO and CLASS_VIDEO_ENHANCE)
 // are both mapped to MEDIA, as CLASS_VIDEO represents any media fixed-function hardware.
-const std::map<int, zes_engine_type_flags_t> engineMap = {
+static const std::map<int, zes_engine_type_flags_t> engineMap = {
     {0, ZES_ENGINE_TYPE_FLAG_3D},
     {1, ZES_ENGINE_TYPE_FLAG_DMA},
     {2, ZES_ENGINE_TYPE_FLAG_MEDIA},

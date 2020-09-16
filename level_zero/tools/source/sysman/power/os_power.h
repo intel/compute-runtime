@@ -26,6 +26,4 @@ class OsPower {
     virtual ~OsPower() = default;
 };
 
-constexpr uint64_t convertJouleToMicroJoule = 1000000u;
-
 } // namespace L0

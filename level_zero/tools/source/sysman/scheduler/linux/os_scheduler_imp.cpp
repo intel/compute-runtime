@@ -18,7 +18,6 @@ const std::string LinuxSchedulerImp::defaultTimesliceDurationMilliSecs(".default
 const std::string LinuxSchedulerImp::heartbeatIntervalMilliSecs("heartbeat_interval_ms");
 const std::string LinuxSchedulerImp::defaultHeartbeatIntervalMilliSecs(".defaults/heartbeat_interval_ms");
 const std::string LinuxSchedulerImp::engineDir("engine");
-constexpr uint16_t milliSecsToMicroSecs = 1000;
 
 ze_result_t LinuxSchedulerImp::getProperties(zes_sched_properties_t &schedProperties) {
     schedProperties.onSubdevice = false;
