@@ -74,7 +74,7 @@ class CommandQueueHw : public CommandQueue {
             getGpgpuCommandStreamReceiver().enableNTo1SubmissionModel();
         }
 
-        if (device->getDevice().getDebugger()) {
+        if (device->getDevice().getDebugger() && !getGpgpuCommandStreamReceiver().getDebugSurfaceAllocation()) {
             getGpgpuCommandStreamReceiver().allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
         }
 
