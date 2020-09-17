@@ -14,7 +14,6 @@
 #include <string>
 
 namespace NEO {
-
 const char *deviceExtensionsList = "cl_khr_byte_addressable_store "
                                    "cl_khr_fp16 "
                                    "cl_khr_global_int32_base_atomics "
@@ -33,7 +32,8 @@ const char *deviceExtensionsList = "cl_khr_byte_addressable_store "
                                    "cl_khr_create_command_queue "
                                    "cl_intel_subgroups_char "
                                    "cl_intel_subgroups_long "
-                                   "cl_khr_il_program ";
+                                   "cl_khr_il_program "
+                                   "cl_intel_mem_force_host_memory ";
 
 std::string getExtensionsList(const HardwareInfo &hwInfo) {
     std::string allExtensionsList;
