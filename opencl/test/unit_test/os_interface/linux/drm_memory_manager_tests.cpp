@@ -476,7 +476,7 @@ TEST_F(DrmMemoryManagerTest, whenPrintBOCreateDestroyResultIsSetAndAllocUserptrI
     ASSERT_NE(nullptr, bo);
 
     std::string output = testing::internal::GetCapturedStdout();
-    size_t idx = output.find("Created new BO with GEM_USERPTR, BO handle - ");
+    size_t idx = output.find("Created new BO with GEM_USERPTR, handle: BO-");
     size_t expectedValue = 0;
     EXPECT_EQ(expectedValue, idx);
 

@@ -169,10 +169,10 @@ TEST_F(DrmBufferObjectTest, givenResidentBOWhenPrintExecutionBufferIsSetToTrueTh
     size_t expectedValue = 0;
     EXPECT_EQ(expectedValue, idx);
 
-    idx = output.find("Buffer Object = { handle: ");
+    idx = output.find("Buffer Object = { handle: BO-");
     EXPECT_NE(std::string::npos, idx);
 
-    idx = output.find("Command Buffer Object = { handle: ");
+    idx = output.find("Command Buffer Object = { handle: BO-");
     EXPECT_NE(std::string::npos, idx);
 }
 
@@ -186,7 +186,7 @@ TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCal
     EXPECT_EQ(true, result);
 
     std::string output = testing::internal::GetCapturedStdout();
-    size_t idx = output.find("Calling gem close on BO handle");
+    size_t idx = output.find("Calling gem close on handle: BO-");
     size_t expectedValue = 0;
     EXPECT_EQ(expectedValue, idx);
 }

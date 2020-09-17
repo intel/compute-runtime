@@ -177,7 +177,7 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
         return nullptr;
     }
 
-    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Created new BO with GEM_USERPTR, BO handle - %d\n", userptr.handle);
+    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Created new BO with GEM_USERPTR, handle: BO-%d\n", userptr.handle);
 
     auto res = new (std::nothrow) BufferObject(&getDrm(rootDeviceIndex), userptr.handle, size, maxOsContextCount);
     if (!res) {

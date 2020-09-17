@@ -61,7 +61,7 @@ bool BufferObject::close() {
     drm_gem_close close = {};
     close.handle = this->handle;
 
-    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on BO handle %d\n", this->handle);
+    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle);
 
     int ret = this->drm->ioctl(DRM_IOCTL_GEM_CLOSE, &close);
     if (ret != 0) {
@@ -186,13 +186,13 @@ void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const
 
     size_t i;
     for (i = 0; i < residencyCount; i++) {
-        logger << "Buffer Object = { handle: " << execObjectsStorage[i].handle
+        logger << "Buffer Object = { handle: BO-" << execObjectsStorage[i].handle
                << ", address range: 0x" << (void *)execObjectsStorage[i].offset
                << " - 0x" << (void *)ptrOffset(execObjectsStorage[i].offset, residency[i]->peekSize())
                << ", flags: " << execObjectsStorage[i].flags
                << ", size: " << residency[i]->peekSize() << " }\n";
     }
-    logger << "Command Buffer Object = { handle: " << execObjectsStorage[i].handle
+    logger << "Command Buffer Object = { handle: BO-" << execObjectsStorage[i].handle
            << ", address range: 0x" << (void *)execObjectsStorage[i].offset
            << " - 0x" << (void *)ptrOffset(execObjectsStorage[i].offset, this->peekSize())
            << ", flags: " << execObjectsStorage[i].flags
