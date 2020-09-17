@@ -60,7 +60,7 @@ ze_result_t LinuxEngineImp::getActivity(zes_engine_stats_t *pStats) {
 
 ze_result_t LinuxEngineImp::getProperties(zes_engine_properties_t &properties) {
     properties.type = engineGroup;
-    properties.onSubdevice = false;
+    properties.onSubdevice = 0;
     properties.subdeviceId = 0;
     return ZE_RESULT_SUCCESS;
 }
@@ -73,6 +73,8 @@ void LinuxEngineImp::init() {
 
 LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance) : engineGroup(type), engineInstance(engineInstance) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    pDrm = &pLinuxSysmanImp->getDrm();
+    pDevice = pLinuxSysmanImp->getDeviceHandle();
     pPmuInterface = pLinuxSysmanImp->getPmuInterface();
     init();
 }

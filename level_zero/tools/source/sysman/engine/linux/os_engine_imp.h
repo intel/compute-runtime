@@ -12,6 +12,7 @@
 #include "sysman/engine/os_engine.h"
 namespace L0 {
 class PmuInterface;
+struct Device;
 class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getActivity(zes_engine_stats_t *pStats) override;
@@ -29,6 +30,8 @@ class LinuxEngineImp : public OsEngine, NEO::NonCopyableOrMovableClass {
     zes_engine_group_t engineGroup = ZES_ENGINE_GROUP_ALL;
     uint32_t engineInstance = 0;
     PmuInterface *pPmuInterface = nullptr;
+    NEO::Drm *pDrm = nullptr;
+    Device *pDevice = nullptr;
 
   private:
     void init();
