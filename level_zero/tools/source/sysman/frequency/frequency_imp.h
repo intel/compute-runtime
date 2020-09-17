@@ -24,8 +24,21 @@ class FrequencyImp : public Frequency, NEO::NonCopyableOrMovableClass {
     ze_result_t frequencyGetState(zes_freq_state_t *pState) override;
     ze_result_t frequencyGetThrottleTime(zes_freq_throttle_time_t *pThrottleTime) override;
 
+    // Overclocking
+    ze_result_t frequencyOcGetCapabilities(zes_oc_capabilities_t *pOcCapabilities) override;
+    ze_result_t frequencyOcGetFrequencyTarget(double *pCurrentOcFrequency) override;
+    ze_result_t frequencyOcSetFrequencyTarget(double currentOcFrequency) override;
+    ze_result_t frequencyOcGetVoltageTarget(double *pCurrentVoltageTarget, double *pCurrentVoltageOffset) override;
+    ze_result_t frequencyOcSetVoltageTarget(double currentVoltageTarget, double currentVoltageOffset) override;
+    ze_result_t frequencyOcGetMode(zes_oc_mode_t *pCurrentOcMode) override;
+    ze_result_t frequencyOcSetMode(zes_oc_mode_t currentOcMode) override;
+    ze_result_t frequencyOcGetIccMax(double *pOcIccMax) override;
+    ze_result_t frequencyOcSetIccMax(double ocIccMax) override;
+    ze_result_t frequencyOcGeTjMax(double *pOcTjMax) override;
+    ze_result_t frequencyOcSetTjMax(double ocTjMax) override;
+
     FrequencyImp() = default;
-    FrequencyImp(OsSysman *pOsSysman, ze_device_handle_t handle, uint16_t frequencyDomain);
+    FrequencyImp(OsSysman *pOsSysman, ze_device_handle_t handle, zes_freq_domain_t frequencyDomainNumber);
     ~FrequencyImp() override;
     OsFrequency *pOsFrequency = nullptr;
     void init();
@@ -37,7 +50,6 @@ class FrequencyImp : public Frequency, NEO::NonCopyableOrMovableClass {
     double *pClocks = nullptr;
     uint32_t numClocks = 0;
     ze_device_handle_t deviceHandle = nullptr;
-    uint16_t frequencyDomain = 0;
 };
 
 } // namespace L0

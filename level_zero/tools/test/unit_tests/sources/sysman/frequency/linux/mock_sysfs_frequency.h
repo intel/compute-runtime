@@ -218,7 +218,7 @@ struct Mock<FrequencySysfsAccess> : public FrequencySysfsAccess {
 
 class PublicLinuxFrequencyImp : public L0::LinuxFrequencyImp {
   public:
-    PublicLinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : LinuxFrequencyImp(pOsSysman, onSubdevice, subdeviceId) {}
+    PublicLinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t type) : LinuxFrequencyImp(pOsSysman, onSubdevice, subdeviceId, type) {}
     using LinuxFrequencyImp::getMaxVal;
     using LinuxFrequencyImp::getMin;
     using LinuxFrequencyImp::getMinVal;

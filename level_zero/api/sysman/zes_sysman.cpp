@@ -244,14 +244,14 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFrequencyOcGetFrequencyTarget(
     zes_freq_handle_t hFrequency,
     double *pCurrentOcFrequency) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetFrequencyTarget(pCurrentOcFrequency);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFrequencyOcSetFrequencyTarget(
     zes_freq_handle_t hFrequency,
     double currentOcFrequency) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetFrequencyTarget(currentOcFrequency);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -259,7 +259,7 @@ zesFrequencyOcGetVoltageTarget(
     zes_freq_handle_t hFrequency,
     double *pCurrentVoltageTarget,
     double *pCurrentVoltageOffset) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetVoltageTarget(pCurrentVoltageTarget, pCurrentVoltageOffset);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -267,56 +267,56 @@ zesFrequencyOcSetVoltageTarget(
     zes_freq_handle_t hFrequency,
     double currentVoltageTarget,
     double currentVoltageOffset) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetVoltageTarget(currentVoltageTarget, currentVoltageOffset);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFrequencyOcSetMode(
     zes_freq_handle_t hFrequency,
     zes_oc_mode_t currentOcMode) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetMode(currentOcMode);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFrequencyOcGetMode(
     zes_freq_handle_t hFrequency,
     zes_oc_mode_t *pCurrentOcMode) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetMode(pCurrentOcMode);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFrequencyOcGetCapabilities(
     zes_freq_handle_t hFrequency,
     zes_oc_capabilities_t *pOcCapabilities) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetCapabilities(pOcCapabilities);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFrequencyOcGetIccMax(
     zes_freq_handle_t hFrequency,
     double *pOcIccMax) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetIccMax(pOcIccMax);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFrequencyOcSetIccMax(
     zes_freq_handle_t hFrequency,
     double ocIccMax) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetIccMax(ocIccMax);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFrequencyOcGetTjMax(
     zes_freq_handle_t hFrequency,
     double *pOcTjMax) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyOcGeTjMax(pOcTjMax);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
 zesFrequencyOcSetTjMax(
     zes_freq_handle_t hFrequency,
     double ocTjMax) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetTjMax(ocTjMax);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

@@ -21,8 +21,19 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     ze_result_t osFrequencySetRange(const zes_freq_range_t *pLimits) override;
     ze_result_t osFrequencyGetState(zes_freq_state_t *pState) override;
     ze_result_t osFrequencyGetThrottleTime(zes_freq_throttle_time_t *pThrottleTime) override;
+    ze_result_t getOcCapabilities(zes_oc_capabilities_t *pOcCapabilities) override;
+    ze_result_t getOcFrequencyTarget(double *pCurrentOcFrequency) override;
+    ze_result_t setOcFrequencyTarget(double currentOcFrequency) override;
+    ze_result_t getOcVoltageTarget(double *pCurrentVoltageTarget, double *pCurrentVoltageOffset) override;
+    ze_result_t setOcVoltageTarget(double currentVoltageTarget, double currentVoltageOffset) override;
+    ze_result_t getOcMode(zes_oc_mode_t *pCurrentOcMode) override;
+    ze_result_t setOcMode(zes_oc_mode_t currentOcMode) override;
+    ze_result_t getOcIccMax(double *pOcIccMax) override;
+    ze_result_t setOcIccMax(double ocIccMax) override;
+    ze_result_t getOcTjMax(double *pOcTjMax) override;
+    ze_result_t setOcTjMax(double ocTjMax) override;
     LinuxFrequencyImp() = default;
-    LinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
+    LinuxFrequencyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId, zes_freq_domain_t frequencyDomainNumber);
     ~LinuxFrequencyImp() override = default;
 
   protected:
@@ -50,6 +61,7 @@ class LinuxFrequencyImp : public OsFrequency, NEO::NonCopyableOrMovableClass {
     static const bool canControl;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
+    zes_freq_domain_t frequencyDomainNumber = ZES_FREQ_DOMAIN_GPU;
     void init();
 };
 

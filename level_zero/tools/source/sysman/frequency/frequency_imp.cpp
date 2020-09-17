@@ -65,8 +65,51 @@ ze_result_t FrequencyImp::frequencyGetThrottleTime(zes_freq_throttle_time_t *pTh
     return pOsFrequency->osFrequencyGetThrottleTime(pThrottleTime);
 }
 
+ze_result_t FrequencyImp::frequencyOcGetCapabilities(zes_oc_capabilities_t *pOcCapabilities) {
+    return pOsFrequency->getOcCapabilities(pOcCapabilities);
+}
+
+ze_result_t FrequencyImp::frequencyOcGetFrequencyTarget(double *pCurrentOcFrequency) {
+    return pOsFrequency->getOcFrequencyTarget(pCurrentOcFrequency);
+}
+
+ze_result_t FrequencyImp::frequencyOcSetFrequencyTarget(double currentOcFrequency) {
+    return pOsFrequency->setOcFrequencyTarget(currentOcFrequency);
+}
+
+ze_result_t FrequencyImp::frequencyOcGetVoltageTarget(double *pCurrentVoltageTarget, double *pCurrentVoltageOffset) {
+    return pOsFrequency->getOcVoltageTarget(pCurrentVoltageTarget, pCurrentVoltageOffset);
+}
+
+ze_result_t FrequencyImp::frequencyOcSetVoltageTarget(double currentVoltageTarget, double currentVoltageOffset) {
+    return pOsFrequency->setOcVoltageTarget(currentVoltageTarget, currentVoltageOffset);
+}
+
+ze_result_t FrequencyImp::frequencyOcGetMode(zes_oc_mode_t *pCurrentOcMode) {
+    return pOsFrequency->getOcMode(pCurrentOcMode);
+}
+
+ze_result_t FrequencyImp::frequencyOcSetMode(zes_oc_mode_t currentOcMode) {
+    return pOsFrequency->setOcMode(currentOcMode);
+}
+
+ze_result_t FrequencyImp::frequencyOcGetIccMax(double *pOcIccMax) {
+    return pOsFrequency->getOcIccMax(pOcIccMax);
+}
+
+ze_result_t FrequencyImp::frequencyOcSetIccMax(double ocIccMax) {
+    return pOsFrequency->setOcIccMax(ocIccMax);
+}
+
+ze_result_t FrequencyImp::frequencyOcGeTjMax(double *pOcTjMax) {
+    return pOsFrequency->getOcTjMax(pOcTjMax);
+}
+
+ze_result_t FrequencyImp::frequencyOcSetTjMax(double ocTjMax) {
+    return pOsFrequency->setOcTjMax(ocTjMax);
+}
+
 void FrequencyImp::init() {
-    zesFrequencyProperties.type = static_cast<zes_freq_domain_t>(frequencyDomain);
     pOsFrequency->osFrequencyGetProperties(zesFrequencyProperties);
     double freqRange = zesFrequencyProperties.max - zesFrequencyProperties.min;
     numClocks = static_cast<uint32_t>(round(freqRange / step)) + 1;
@@ -76,10 +119,10 @@ void FrequencyImp::init() {
     }
 }
 
-FrequencyImp::FrequencyImp(OsSysman *pOsSysman, ze_device_handle_t handle, uint16_t frequencyDomain) : deviceHandle(handle), frequencyDomain(frequencyDomain) {
+FrequencyImp::FrequencyImp(OsSysman *pOsSysman, ze_device_handle_t handle, zes_freq_domain_t frequencyDomainNumber) : deviceHandle(handle) {
     ze_device_properties_t deviceProperties = {};
     Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    pOsFrequency = OsFrequency::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
+    pOsFrequency = OsFrequency::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId, frequencyDomainNumber);
     UNRECOVERABLE_IF(nullptr == pOsFrequency);
 
     init();

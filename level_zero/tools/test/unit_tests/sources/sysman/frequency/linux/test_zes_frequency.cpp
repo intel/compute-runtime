@@ -120,8 +120,8 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroAndValidPtrWhenEnume
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenActualComponentCountTwoWhenTryingToGetOneComponentOnlyThenOneComponentIsReturnedAndCountUpdated) {
     auto pFrequencyHandleContextTest = std::make_unique<FrequencyHandleContext>(pOsSysman);
-    pFrequencyHandleContextTest->handleList.push_back(new FrequencyImp(pOsSysman, device->toHandle(), 0));
-    pFrequencyHandleContextTest->handleList.push_back(new FrequencyImp(pOsSysman, device->toHandle(), 0));
+    pFrequencyHandleContextTest->handleList.push_back(new FrequencyImp(pOsSysman, device->toHandle(), ZES_FREQ_DOMAIN_GPU));
+    pFrequencyHandleContextTest->handleList.push_back(new FrequencyImp(pOsSysman, device->toHandle(), ZES_FREQ_DOMAIN_GPU));
 
     uint32_t count = 1;
     std::vector<zes_freq_handle_t> phFrequency(count, nullptr);
@@ -173,7 +173,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndCorrectCountWhe
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidateFrequencyGetRangeWhengetMaxFailsThenFrequencyGetRangeCallShouldFail) {
-    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), 0);
+    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), ZES_FREQ_DOMAIN_GPU);
     zes_freq_range_t limit = {};
     ON_CALL(*pSysfsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getValReturnErrorNotAvailable));
@@ -195,7 +195,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures1ThenAPIExitsGracefully) {
-    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), 0);
+    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), ZES_FREQ_DOMAIN_GPU);
     zes_freq_range_t limits = {};
 
     // Verify that Max must be within range.
@@ -211,7 +211,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFrequen
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyLimitsWhenCallingFrequencySetRangeForFailures2ThenAPIExitsGracefully) {
-    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), 0);
+    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), ZES_FREQ_DOMAIN_GPU);
     zes_freq_range_t limits = {};
 
     // Verify that Max must be within range.
@@ -265,7 +265,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenInvalidFrequencyLimitsWhenCallingFrequencySetRangeThenVerifyFrequencySetRangeTest1ReturnsError) {
-    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), 0);
+    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), ZES_FREQ_DOMAIN_GPU);
     zes_freq_range_t limits;
 
     // Verify that Max must be within range.
@@ -275,7 +275,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenInvalidFrequencyLimitsWhenCallingFrequ
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenInvalidFrequencyLimitsWhenCallingFrequencySetRangeThenVerifyFrequencySetRangeTest2ReturnsError) {
-    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), 0);
+    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), ZES_FREQ_DOMAIN_GPU);
     zes_freq_range_t limits;
 
     // Verify that Min must be within range.
@@ -285,7 +285,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenInvalidFrequencyLimitsWhenCallingFrequ
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenInvalidFrequencyLimitsWhenCallingFrequencySetRangeThenVerifyFrequencySetRangeTest3ReturnsError) {
-    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), 0);
+    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), ZES_FREQ_DOMAIN_GPU);
     zes_freq_range_t limits;
 
     // Verify that values must be multiples of step.
@@ -295,7 +295,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenInvalidFrequencyLimitsWhenCallingFrequ
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenInvalidFrequencyLimitsWhenCallingFrequencySetRangeThenVerifyFrequencySetRangeTest4ReturnsError) {
-    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), 0);
+    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), ZES_FREQ_DOMAIN_GPU);
     zes_freq_range_t limits;
 
     // Verify that Max must be greater than min range.
@@ -329,7 +329,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidStatePointerWhenValidatingfrequencyGetStateForFailuresThenAPIExitsGracefully) {
-    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), 0);
+    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), ZES_FREQ_DOMAIN_GPU);
     zes_freq_state_t state = {};
     ON_CALL(*pSysfsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getValRequestReturnErrorNotAvailable));
@@ -365,13 +365,13 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidStatePointerWhenValidatingfrequen
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenThrottleTimeStructPointerWhenCallingfrequencyGetThrottleTimeThenUnsupportedIsReturned) {
-    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), 0);
+    auto pFrequencyImp = std::make_unique<FrequencyImp>(pOsSysman, device->toHandle(), ZES_FREQ_DOMAIN_GPU);
     zes_freq_throttle_time_t throttleTime = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pFrequencyImp->frequencyGetThrottleTime(&throttleTime));
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivengetMinFunctionReturnsErrorWhenValidatinggetMinFailuresThenAPIReturnsErrorAccordingly) {
-    PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 0, 0);
+    PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 0, 0, ZES_FREQ_DOMAIN_GPU);
     double min = 0;
     ON_CALL(*pSysfsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getValReturnErrorNotAvailable));
@@ -383,7 +383,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivengetMinFunctionReturnsErrorWhenValidati
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivengetMinValFunctionReturnsErrorWhenValidatinggetMinValFailuresThenAPIReturnsErrorAccordingly) {
-    PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 0, 0);
+    PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 0, 0, ZES_FREQ_DOMAIN_GPU);
     double val = 0;
     ON_CALL(*pSysfsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getMinValReturnErrorNotAvailable));
@@ -395,7 +395,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivengetMinValFunctionReturnsErrorWhenValid
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivengetMaxValFunctionReturnsErrorWhenValidatinggetMaxValFailuresThenAPIReturnsErrorAccordingly) {
-    PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 0, 0);
+    PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 0, 0, ZES_FREQ_DOMAIN_GPU);
     double val = 0;
     ON_CALL(*pSysfsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getMaxValReturnErrorNotAvailable));
@@ -408,7 +408,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivengetMaxValFunctionReturnsErrorWhenValid
 
 TEST_F(SysmanDeviceFrequencyFixture, GivengetMaxValFunctionReturnsErrorWhenValidatingosFrequencyGetPropertiesThenAPIBehavesAsExpected) {
     zes_freq_properties_t properties = {};
-    PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 0, 0);
+    PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 0, 0, ZES_FREQ_DOMAIN_GPU);
     ON_CALL(*pSysfsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getMaxValReturnErrorNotAvailable));
     EXPECT_EQ(ZE_RESULT_SUCCESS, linuxFrequencyImp.osFrequencyGetProperties(properties));
@@ -417,7 +417,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivengetMaxValFunctionReturnsErrorWhenValid
 
 TEST_F(SysmanDeviceFrequencyFixture, GivengetMinValFunctionReturnsErrorWhenValidatingosFrequencyGetPropertiesThenAPIBehavesAsExpected) {
     zes_freq_properties_t properties = {};
-    PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 0, 0);
+    PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 0, 0, ZES_FREQ_DOMAIN_GPU);
     ON_CALL(*pSysfsAccess.get(), read(_, _))
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::getMinValReturnErrorNotAvailable));
     EXPECT_EQ(ZE_RESULT_SUCCESS, linuxFrequencyImp.osFrequencyGetProperties(properties));
@@ -426,7 +426,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivengetMinValFunctionReturnsErrorWhenValid
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenOnSubdeviceSetWhenValidatingAnyFrequencyAPIThenSuccessIsReturned) {
     zes_freq_properties_t properties = {};
-    PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 1, 0);
+    PublicLinuxFrequencyImp linuxFrequencyImp(pOsSysman, 1, 0, ZES_FREQ_DOMAIN_GPU);
     EXPECT_EQ(ZE_RESULT_SUCCESS, linuxFrequencyImp.osFrequencyGetProperties(properties));
     EXPECT_EQ(1, properties.canControl);
 }
@@ -446,6 +446,94 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
         ON_CALL(*pSysfsAccess.get(), read(_, _))
             .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<FrequencySysfsAccess>::setValMaxReturnErrorNotAvailable));
         EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencySetRange(handle, &limits));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetFrequencyTargetThenVerifyTestCallFail) {
+    auto handles = get_freq_handles(handleComponentCount);
+    for (auto handle : handles) {
+        double freqTarget = 0.0;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyOcGetFrequencyTarget(handle, &freqTarget));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcSetFrequencyTargetThenVerifyTestCallFail) {
+    auto handles = get_freq_handles(handleComponentCount);
+    for (auto handle : handles) {
+        double freqTarget = 0.0;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyOcSetFrequencyTarget(handle, freqTarget));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetVoltageTargetThenVerifyTestCallFail) {
+    auto handles = get_freq_handles(handleComponentCount);
+    for (auto handle : handles) {
+        double voltTarget = 0.0, voltOffset = 0.0;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyOcGetVoltageTarget(handle, &voltTarget, &voltOffset));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcSetVoltageTargetThenVerifyTestCallFail) {
+    auto handles = get_freq_handles(handleComponentCount);
+    for (auto handle : handles) {
+        double voltTarget = 0.0, voltOffset = 0.0;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyOcSetVoltageTarget(handle, voltTarget, voltOffset));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcSetModeThenVerifyTestCallFail) {
+    auto handles = get_freq_handles(handleComponentCount);
+    for (auto handle : handles) {
+        zes_oc_mode_t mode = ZES_OC_MODE_OFF;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyOcSetMode(handle, mode));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetModeThenVerifyTestCallFail) {
+    auto handles = get_freq_handles(handleComponentCount);
+    for (auto handle : handles) {
+        zes_oc_mode_t mode = ZES_OC_MODE_OFF;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyOcGetMode(handle, &mode));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetCapabilitiesThenVerifyTestCallFail) {
+    auto handles = get_freq_handles(handleComponentCount);
+    for (auto handle : handles) {
+        zes_oc_capabilities_t caps = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyOcGetCapabilities(handle, &caps));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetIccMaxThenVerifyTestCallFail) {
+    auto handles = get_freq_handles(handleComponentCount);
+    for (auto handle : handles) {
+        double iccMax = 0.0;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyOcGetIccMax(handle, &iccMax));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcSetIccMaxThenVerifyTestCallFail) {
+    auto handles = get_freq_handles(handleComponentCount);
+    for (auto handle : handles) {
+        double iccMax = 0.0;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyOcSetIccMax(handle, iccMax));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetTjMaxThenVerifyTestCallFail) {
+    auto handles = get_freq_handles(handleComponentCount);
+    for (auto handle : handles) {
+        double tjMax = 0.0;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyOcGetTjMax(handle, &tjMax));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcSetTjMaxThenVerifyTestCallFail) {
+    auto handles = get_freq_handles(handleComponentCount);
+    for (auto handle : handles) {
+        double tjMax = 0.0;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyOcSetTjMax(handle, tjMax));
     }
 }
 

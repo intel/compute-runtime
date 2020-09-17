@@ -20,16 +20,17 @@ FrequencyHandleContext::~FrequencyHandleContext() {
     }
 }
 
-void FrequencyHandleContext::createHandle(ze_device_handle_t deviceHandle, uint16_t frequencyDomain) {
+void FrequencyHandleContext::createHandle(ze_device_handle_t deviceHandle, zes_freq_domain_t frequencyDomain) {
     Frequency *pFrequency = new FrequencyImp(pOsSysman, deviceHandle, frequencyDomain);
     handleList.push_back(pFrequency);
 }
 
 ze_result_t FrequencyHandleContext::init(std::vector<ze_device_handle_t> deviceHandles) {
     for (auto deviceHandle : deviceHandles) {
-        auto totalDomains = OsFrequency::getHardwareBlockCount(deviceHandle);
-        for (uint16_t frequencyDomain = 0; frequencyDomain < totalDomains; frequencyDomain++) {
-            createHandle(deviceHandle, frequencyDomain);
+        auto totalDomains = OsFrequency::getNumberOfFreqDoainsSupported(pOsSysman);
+        UNRECOVERABLE_IF(totalDomains > 2);
+        for (uint32_t frequencyDomain = 0; frequencyDomain < totalDomains; frequencyDomain++) {
+            createHandle(deviceHandle, static_cast<zes_freq_domain_t>(frequencyDomain));
         }
     }
     return ZE_RESULT_SUCCESS;
