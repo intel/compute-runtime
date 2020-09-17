@@ -77,7 +77,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     void setHostPtrMinSize(size_t size);
     void releaseAllocatedMapPtr();
-    void releaseMapAllocation(uint32_t rootDeviceIndex);
+    void releaseMapAllocation(uint32_t rootDeviceIndex, bool asyncDestroy);
 
     bool isMemObjZeroCopy() const;
     bool isMemObjWithHostPtrSVM() const;

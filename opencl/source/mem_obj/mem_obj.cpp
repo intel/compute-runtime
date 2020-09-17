@@ -76,9 +76,9 @@ MemObj::~MemObj() {
 
         for (auto graphicsAllocation : multiGraphicsAllocation.getGraphicsAllocations()) {
             auto rootDeviceIndex = graphicsAllocation ? graphicsAllocation->getRootDeviceIndex() : 0;
+            bool doAsyncDestructions = DebugManager.flags.EnableAsyncDestroyAllocations.get();
             if (graphicsAllocation && !associatedMemObject && !isHostPtrSVM && graphicsAllocation->peekReuseCount() == 0) {
                 memoryManager->removeAllocationFromHostPtrManager(graphicsAllocation);
-                bool doAsyncDestructions = DebugManager.flags.EnableAsyncDestroyAllocations.get();
                 if (!doAsyncDestructions) {
                     needWait = true;
                 }
@@ -89,7 +89,7 @@ MemObj::~MemObj() {
                 graphicsAllocation = nullptr;
             }
             if (!associatedMemObject) {
-                releaseMapAllocation(rootDeviceIndex);
+                releaseMapAllocation(rootDeviceIndex, doAsyncDestructions);
             }
             if (mcsAllocation) {
                 destroyGraphicsAllocation(mcsAllocation, false);
@@ -319,9 +319,17 @@ void MemObj::releaseAllocatedMapPtr() {
     allocatedMapPtr = nullptr;
 }
 
-void MemObj::releaseMapAllocation(uint32_t rootDeviceIndex) {
-    if (mapAllocations.getGraphicsAllocation(rootDeviceIndex) && !isHostPtrSVM) {
-        destroyGraphicsAllocation(mapAllocations.getGraphicsAllocation(rootDeviceIndex), false);
+void MemObj::releaseMapAllocation(uint32_t rootDeviceIndex, bool asyncDestroy) {
+    auto mapAllocation = mapAllocations.getGraphicsAllocation(rootDeviceIndex);
+    if (mapAllocation && !isHostPtrSVM) {
+        if (asyncDestroy && !isValueSet(flags, CL_MEM_USE_HOST_PTR)) {
+            destroyGraphicsAllocation(mapAllocation, true);
+        } else {
+            if (mapAllocation->isUsed()) {
+                memoryManager->waitForEnginesCompletion(*mapAllocation);
+            }
+            destroyGraphicsAllocation(mapAllocation, false);
+        }
     }
 }
 

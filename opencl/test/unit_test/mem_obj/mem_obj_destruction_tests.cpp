@@ -313,6 +313,156 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     EXPECT_TRUE(allocationList.peekIsEmpty());
 }
 
+HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestructionsAreDisabledThenWaitForCompletionWithTimeoutOnMapAllocation) {
+    auto isMapAllocationUsed = GetParam();
+
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    device->resetCommandStreamReceiver(mockCsr);
+    *mockCsr->getTagAddress() = 0;
+
+    GraphicsAllocation *mapAllocation = nullptr;
+    AllocationProperties properties{device->getRootDeviceIndex(),
+                                    true,
+                                    MemoryConstants::pageSize,
+                                    GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+                                    false,
+                                    context->getDeviceBitfieldForAllocation()};
+    mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, nullptr);
+    memObj->setMapAllocation(mapAllocation);
+
+    if (isMapAllocationUsed) {
+        memObj->getMapAllocation(device->getRootDeviceIndex())->updateTaskCount(taskCountReady, contextId);
+    }
+
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return true; };
+    auto osContextId = mockCsr->getOsContext().getContextId();
+
+    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
+
+    if (isMapAllocationUsed) {
+        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, mapAllocation->getTaskCount(osContextId)))
+            .Times(1);
+    } else {
+        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+            .Times(0);
+    }
+
+    delete memObj;
+}
+
+HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestructionsAreDisabledThenMapAllocationIsNotDeferred) {
+    auto hasMapAllocation = GetParam();
+
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    device->resetCommandStreamReceiver(mockCsr);
+    *mockCsr->getTagAddress() = 0;
+
+    GraphicsAllocation *mapAllocation = nullptr;
+    if (hasMapAllocation) {
+        AllocationProperties properties{device->getRootDeviceIndex(),
+                                        true,
+                                        MemoryConstants::pageSize,
+                                        GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+                                        false,
+                                        context->getDeviceBitfieldForAllocation()};
+        mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, nullptr);
+        memObj->setMapAllocation(mapAllocation);
+
+        memObj->getMapAllocation(device->getRootDeviceIndex())->updateTaskCount(taskCountReady, contextId);
+    }
+
+    makeMemObjUsed();
+
+    auto &allocationList = mockCsr->getTemporaryAllocations();
+    EXPECT_TRUE(allocationList.peekIsEmpty());
+
+    delete memObj;
+
+    EXPECT_TRUE(allocationList.peekIsEmpty());
+}
+
+HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithoutMemUseHostPtrFlagWhenAsyncDestructionsAreEnabledThenMapAllocationIsDeferred) {
+    auto hasMapAllocation = GetParam();
+
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    device->resetCommandStreamReceiver(mockCsr);
+    *mockCsr->getTagAddress() = 0;
+
+    GraphicsAllocation *mapAllocation = nullptr;
+    if (hasMapAllocation) {
+        AllocationProperties properties{device->getRootDeviceIndex(),
+                                        true,
+                                        MemoryConstants::pageSize,
+                                        GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+                                        false,
+                                        context->getDeviceBitfieldForAllocation()};
+        mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, nullptr);
+        memObj->setMapAllocation(mapAllocation);
+
+        memObj->getMapAllocation(device->getRootDeviceIndex())->updateTaskCount(taskCountReady, contextId);
+    }
+
+    makeMemObjUsed();
+
+    auto &allocationList = mockCsr->getTemporaryAllocations();
+    EXPECT_TRUE(allocationList.peekIsEmpty());
+
+    delete memObj;
+
+    EXPECT_FALSE(allocationList.peekIsEmpty());
+
+    if (hasMapAllocation) {
+        EXPECT_EQ(allocation, allocationList.peekHead());
+        EXPECT_EQ(mapAllocation, allocationList.peekTail());
+    } else {
+        EXPECT_EQ(allocation, allocationList.peekHead());
+        EXPECT_EQ(allocation, allocationList.peekTail());
+    }
+}
+
+HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithMemUseHostPtrFlagWhenAsyncDestructionsAreEnabledThenMapAllocationIsNotDeferred) {
+    auto hasMapAllocation = GetParam();
+
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(*device->executionEnvironment);
+    device->resetCommandStreamReceiver(mockCsr);
+    *mockCsr->getTagAddress() = 0;
+
+    GraphicsAllocation *mapAllocation = nullptr;
+    char *hostPtr = (char *)alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize64k);
+    if (hasMapAllocation) {
+        AllocationProperties properties{device->getRootDeviceIndex(),
+                                        false,
+                                        MemoryConstants::pageSize,
+                                        GraphicsAllocation::AllocationType::MAP_ALLOCATION,
+                                        false,
+                                        context->getDeviceBitfieldForAllocation()};
+        mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
+        memObj->setMapAllocation(mapAllocation);
+
+        memObj->getMapAllocation(device->getRootDeviceIndex())->updateTaskCount(taskCountReady, contextId);
+    }
+
+    makeMemObjUsed();
+
+    auto &allocationList = mockCsr->getTemporaryAllocations();
+    EXPECT_TRUE(allocationList.peekIsEmpty());
+
+    delete memObj;
+
+    EXPECT_FALSE(allocationList.peekIsEmpty());
+
+    if (hasMapAllocation) {
+        EXPECT_EQ(allocation, allocationList.peekHead());
+        EXPECT_EQ(allocation, allocationList.peekHead());
+    } else {
+        EXPECT_EQ(allocation, allocationList.peekHead());
+        EXPECT_EQ(allocation, allocationList.peekTail());
+    }
+
+    alignedFree(hostPtr);
+}
+
 INSTANTIATE_TEST_CASE_P(
     MemObjTests,
     MemObjAsyncDestructionTest,
