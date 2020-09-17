@@ -341,18 +341,3 @@ TEST(DrmBufferObject, whenBindExtHandleAddedThenItIsStored) {
     EXPECT_EQ(1u, bo.bindExtHandles.size());
     EXPECT_EQ(4u, bo.bindExtHandles[0]);
 }
-
-TEST(DrmBufferObject, givenBoWithBindExtHandlesWhenBoIsDestructedThenHandlesAreUnregistered) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
-
-    {
-        MockBufferObject bo(&drm, 0, 0, 1);
-        bo.addBindExtHandle(4);
-        bo.addBindExtHandle(5);
-        bo.addBindExtHandle(6);
-    }
-    EXPECT_EQ(6u, drm.unregisteredHandle);
-    EXPECT_EQ(3u, drm.unregisterCalledCount);
-}

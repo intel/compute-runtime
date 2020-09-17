@@ -650,6 +650,7 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 }
 
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
+    DrmAllocation *drmAlloc = static_cast<DrmAllocation *>(gfxAllocation);
     this->unregisterAllocation(gfxAllocation);
 
     for (auto &engine : this->registeredEngines) {
@@ -675,6 +676,8 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
 
     releaseGpuRange(gfxAllocation->getReservedAddressPtr(), gfxAllocation->getReservedAddressSize(), gfxAllocation->getRootDeviceIndex());
     alignedFreeWrapper(gfxAllocation->getDriverAllocatedCpuPtr());
+
+    drmAlloc->freeRegisteredBOBindExtHandles(&getDrm(drmAlloc->getRootDeviceIndex()));
 
     delete gfxAllocation;
 }
@@ -906,5 +909,12 @@ void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
                                                                        localMemAllocs[allocation->getRootDeviceIndex()].end(),
                                                                        allocation),
                                                            localMemAllocs[allocation->getRootDeviceIndex()].end());
+}
+
+void DrmMemoryManager::registerAllocation(GraphicsAllocation *allocation) {
+    if (allocation) {
+        auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+        drmAllocation->registerBOBindExtHandle(&getDrm(drmAllocation->getRootDeviceIndex()));
+    }
 }
 } // namespace NEO

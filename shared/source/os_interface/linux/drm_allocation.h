@@ -67,8 +67,10 @@ class DrmAllocation : public GraphicsAllocation {
     void bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
     void bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
     void registerBOBindExtHandle(Drm *drm);
+    void freeRegisteredBOBindExtHandles(Drm *drm);
 
   protected:
     BufferObjects bufferObjects{};
+    StackVec<uint32_t, 1> registeredBoBindHandles;
 };
 } // namespace NEO

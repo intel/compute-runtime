@@ -212,6 +212,7 @@ class MemoryManager {
     virtual void *lockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void unlockResourceImpl(GraphicsAllocation &graphicsAllocation) = 0;
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };
+    virtual void registerAllocation(GraphicsAllocation *allocation) {}
 
     bool forceNonSvmForExternalHostPtr = false;
     bool force32bitAllocations = false;

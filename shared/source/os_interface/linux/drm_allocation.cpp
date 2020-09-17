@@ -89,12 +89,20 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     if (resourceClass != Drm::ResourceClass::MaxSize) {
         uint64_t gpuAddress = getGpuAddress();
         auto handle = drm->registerResource(resourceClass, &gpuAddress, sizeof(gpuAddress));
+        registeredBoBindHandles.push_back(handle);
         auto &bos = getBOs();
 
         for (auto bo : bos) {
-            bo->addBindExtHandle(handle);
+            if (bo) {
+                bo->addBindExtHandle(handle);
+            }
         }
     }
 }
 
+void DrmAllocation::freeRegisteredBOBindExtHandles(Drm *drm) {
+    for (auto &i : registeredBoBindHandles) {
+        drm->unregisterResource(i);
+    }
+}
 } // namespace NEO

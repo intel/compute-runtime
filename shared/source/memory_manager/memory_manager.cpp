@@ -411,6 +411,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
         this->registerSysMemAlloc(allocation);
     }
     FileLoggerInstance().logAllocation(allocation);
+    registerAllocation(allocation);
     return allocation;
 }
 

@@ -68,6 +68,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::pinBBs;
     using DrmMemoryManager::pinThreshold;
     using DrmMemoryManager::pushSharedBufferObject;
+    using DrmMemoryManager::registerAllocation;
     using DrmMemoryManager::releaseGpuRange;
     using DrmMemoryManager::setDomainCpu;
     using DrmMemoryManager::sharingBufferObjects;

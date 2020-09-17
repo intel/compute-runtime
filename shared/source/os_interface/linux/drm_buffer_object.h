@@ -32,7 +32,7 @@ class BufferObject {
 
   public:
     BufferObject(Drm *drm, int handle, size_t size, size_t maxOsContextCount);
-    MOCKABLE_VIRTUAL ~BufferObject();
+    MOCKABLE_VIRTUAL ~BufferObject() = default;
 
     struct Deleter {
         void operator()(BufferObject *bo) {

@@ -11,6 +11,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 
 #include "opencl/source/platform/platform.h"
@@ -220,6 +221,8 @@ class DrmMockResources : public DrmMock {
 
     uint32_t registerResource(ResourceClass classType, void *data, size_t size) override {
         registeredClass = classType;
+        memcpy_s(registeredData, sizeof(registeredData), data, size);
+        registeredDataSize = size;
         return registerResourceReturnHandle;
     }
 
@@ -234,4 +237,6 @@ class DrmMockResources : public DrmMock {
     uint32_t unregisterCalledCount = 0;
     ResourceClass registeredClass = ResourceClass::MaxSize;
     bool registerClassesCalled = false;
+    uint64_t registeredData[128];
+    size_t registeredDataSize;
 };

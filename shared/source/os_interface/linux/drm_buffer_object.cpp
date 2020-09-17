@@ -47,12 +47,6 @@ BufferObject::BufferObject(Drm *drm, int handle, size_t size, size_t maxOsContex
     }
 }
 
-BufferObject::~BufferObject() {
-    for (auto &i : bindExtHandles) {
-        drm->unregisterResource(i);
-    }
-};
-
 uint32_t BufferObject::getRefCount() const {
     return this->refCount.load();
 }
