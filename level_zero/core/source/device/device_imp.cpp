@@ -86,7 +86,7 @@ ze_result_t DeviceImp::createCommandList(const ze_command_list_desc_t *desc,
     uint32_t engineGroupIndex = desc->commandQueueGroupOrdinal;
     mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
     bool useBliter = engineGroupIndex == static_cast<uint32_t>(NEO::EngineGroupType::Copy);
-    ze_result_t returnValue;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
     *commandList = CommandList::create(productFamily, this, useBliter, returnValue);
 
     return returnValue;
@@ -98,7 +98,7 @@ ze_result_t DeviceImp::createCommandListImmediate(const ze_command_queue_desc_t 
     uint32_t engineGroupIndex = desc->ordinal;
     mapOrdinalForAvailableEngineGroup(&engineGroupIndex);
     bool useBliter = engineGroupIndex == static_cast<uint32_t>(NEO::EngineGroupType::Copy);
-    ze_result_t returnValue;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
     *phCommandList = CommandList::createImmediate(productFamily, this, desc, false, useBliter, returnValue);
 
     return returnValue;
@@ -613,7 +613,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         cmdQueueDesc.flags = 0;
         cmdQueueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
         cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
-        ze_result_t returnValue;
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
         device->pageFaultCommandList =
             CommandList::createImmediate(
                 device->neoDevice->getHardwareInfo().platform.eProductFamily, device, &cmdQueueDesc, true, false, returnValue);
