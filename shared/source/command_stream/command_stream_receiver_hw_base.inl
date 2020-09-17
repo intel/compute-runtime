@@ -179,15 +179,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskLevel", taskLevel);
 
     auto levelClosed = false;
+    bool implicitFlush = dispatchFlags.implicitFlush || dispatchFlags.blocking || DebugManager.flags.ForceImplicitFlush.get();
     void *currentPipeControlForNooping = nullptr;
     void *epiloguePipeControlLocation = nullptr;
 
     if (DebugManager.flags.ForceCsrFlushing.get()) {
         flushBatchedSubmissions();
-    }
-
-    if (DebugManager.flags.ForceImplicitFlush.get()) {
-        dispatchFlags.implicitFlush = true;
     }
 
     if (detectInitProgrammingFlagsRequired(dispatchFlags)) {
@@ -547,11 +544,17 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     //check if we are not over the budget, if we are do implicit flush
     if (getMemoryManager()->isMemoryBudgetExhausted()) {
         if (this->totalMemoryUsed >= device.getDeviceInfo().globalMemSize / 4) {
-            dispatchFlags.implicitFlush = true;
+            implicitFlush = true;
         }
     }
 
-    if (this->dispatchMode == DispatchMode::BatchedDispatch && (dispatchFlags.blocking || dispatchFlags.implicitFlush)) {
+    if (DebugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() != -1) {
+        if ((taskCount + 1) % DebugManager.flags.PerformImplicitFlushEveryEnqueueCount.get() == 0) {
+            implicitFlush = true;
+        }
+    }
+
+    if (this->dispatchMode == DispatchMode::BatchedDispatch && implicitFlush) {
         this->flushBatchedSubmissions();
     }
 

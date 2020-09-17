@@ -535,6 +535,60 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeWhenFlushTask
     EXPECT_EQ(1u, csr.peekLatestFlushedTaskCount());
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTaskIsCalledGivenNumberOfTimesThenFlushIsCalled) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PerformImplicitFlushEveryEnqueueCount.set(2);
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+    dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
+    dispatchFlags.guardCommandBufferWithPipeControl = true;
+
+    auto &csr = commandQueue.getGpgpuCommandStreamReceiver();
+    csr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    dispatchFlags.implicitFlush = false;
+
+    csr.flushTask(commandStream,
+                  0,
+                  dsh,
+                  ioh,
+                  ssh,
+                  taskLevel,
+                  dispatchFlags,
+                  *pDevice);
+
+    EXPECT_EQ(1u, csr.peekLatestSentTaskCount());
+    EXPECT_EQ(0u, csr.peekLatestFlushedTaskCount());
+    dispatchFlags.implicitFlush = false;
+
+    csr.flushTask(commandStream,
+                  0,
+                  dsh,
+                  ioh,
+                  ssh,
+                  taskLevel,
+                  dispatchFlags,
+                  *pDevice);
+
+    EXPECT_EQ(2u, csr.peekLatestSentTaskCount());
+    EXPECT_EQ(2u, csr.peekLatestFlushedTaskCount());
+
+    dispatchFlags.implicitFlush = false;
+
+    csr.flushTask(commandStream,
+                  0,
+                  dsh,
+                  ioh,
+                  ssh,
+                  taskLevel,
+                  dispatchFlags,
+                  *pDevice);
+
+    EXPECT_EQ(3u, csr.peekLatestSentTaskCount());
+    EXPECT_EQ(2u, csr.peekLatestFlushedTaskCount());
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenWaitForTaskCountIsCalledWithTaskCountThatWasNotYetFlushedThenBatchedCommandBuffersAreSubmitted) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pClDevice, 0, false);
     auto &commandStream = commandQueue.getCS(4096u);
