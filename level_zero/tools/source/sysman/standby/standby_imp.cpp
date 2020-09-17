@@ -27,14 +27,14 @@ ze_result_t StandbyImp::standbySetMode(const zes_standby_promo_mode_t mode) {
 }
 
 void StandbyImp::init() {
-    standbyProperties.type = ZES_STANDBY_TYPE_GLOBAL; // Currently the only defined type
-    standbyProperties.onSubdevice = false;
-    standbyProperties.subdeviceId = 0;
+    pOsStandby->osStandbyGetProperties(standbyProperties);
     this->isStandbyEnabled = pOsStandby->isStandbySupported();
 }
 
-StandbyImp::StandbyImp(OsSysman *pOsSysman) {
-    pOsStandby = OsStandby::create(pOsSysman);
+StandbyImp::StandbyImp(OsSysman *pOsSysman, ze_device_handle_t handle) : deviceHandle(handle) {
+    ze_device_properties_t deviceProperties = {};
+    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+    pOsStandby = OsStandby::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
     UNRECOVERABLE_IF(nullptr == pOsStandby);
     init();
 }

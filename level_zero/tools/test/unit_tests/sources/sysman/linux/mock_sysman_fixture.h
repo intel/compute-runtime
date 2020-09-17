@@ -79,6 +79,7 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         pSysmanDeviceImp = static_cast<SysmanDeviceImp *>(pSysmanDevice);
         pOsSysman = pSysmanDeviceImp->pOsSysman;
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
+        subDeviceCount = numSubDevices;
     }
     void TearDown() override {
         unsetenv("ZES_ENABLE_SYSMAN");
@@ -91,6 +92,7 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
     PublicLinuxSysmanImp *pLinuxSysmanImp = nullptr;
     NEO::Device *neoDevice = nullptr;
     L0::Device *device = nullptr;
+    uint32_t subDeviceCount = 0u;
 };
 
 } // namespace ult

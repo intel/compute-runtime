@@ -22,7 +22,7 @@ class StandbyImp : public Standby, NEO::NonCopyableOrMovableClass {
     ze_result_t standbySetMode(const zes_standby_promo_mode_t mode) override;
 
     StandbyImp() = default;
-    StandbyImp(OsSysman *pOsSysman);
+    StandbyImp(OsSysman *pOsSysman, ze_device_handle_t handle);
     ~StandbyImp() override;
     OsStandby *pOsStandby = nullptr;
 
@@ -30,6 +30,7 @@ class StandbyImp : public Standby, NEO::NonCopyableOrMovableClass {
 
   private:
     zes_standby_properties_t standbyProperties = {};
+    ze_device_handle_t deviceHandle = nullptr;
 };
 
 } // namespace L0

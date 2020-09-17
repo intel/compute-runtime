@@ -82,7 +82,7 @@ void SysmanDeviceImp::init() {
         pPci->init();
     }
     if (pStandbyHandleContext) {
-        pStandbyHandleContext->init();
+        pStandbyHandleContext->init(deviceHandles);
     }
     if (pEngineHandleContext) {
         pEngineHandleContext->init();

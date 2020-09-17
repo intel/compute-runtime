@@ -19,13 +19,20 @@ StandbyHandleContext::~StandbyHandleContext() {
     }
 }
 
-void StandbyHandleContext::init() {
-    Standby *pStandby = new StandbyImp(pOsSysman);
+void StandbyHandleContext::createHandle(ze_device_handle_t deviceHandle) {
+    Standby *pStandby = new StandbyImp(pOsSysman, deviceHandle);
     if (pStandby->isStandbyEnabled == true) {
         handleList.push_back(pStandby);
     } else {
         delete pStandby;
     }
+}
+
+ze_result_t StandbyHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
+    for (const auto &deviceHandle : deviceHandles) {
+        createHandle(deviceHandle);
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t StandbyHandleContext::standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) {

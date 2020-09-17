@@ -18,11 +18,12 @@ class LinuxStandbyImp : public OsStandby, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t getMode(zes_standby_promo_mode_t &mode) override;
     ze_result_t setMode(zes_standby_promo_mode_t mode) override;
+    ze_result_t osStandbyGetProperties(zes_standby_properties_t &properties) override;
 
     bool isStandbySupported(void) override;
 
     LinuxStandbyImp() = default;
-    LinuxStandbyImp(OsSysman *pOsSysman);
+    LinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     ~LinuxStandbyImp() override = default;
 
   protected:
@@ -32,6 +33,8 @@ class LinuxStandbyImp : public OsStandby, NEO::NonCopyableOrMovableClass {
     static const std::string standbyModeFile;
     static const int standbyModeDefault = 1;
     static const int standbyModeNever = 0;
+    bool isSubdevice = false;
+    uint32_t subdeviceId = 0;
 };
 
 } // namespace L0

@@ -57,6 +57,7 @@ struct Mock<StandbySysfsAccess> : public StandbySysfsAccess {
 
 class PublicLinuxStandbyImp : public L0::LinuxStandbyImp {
   public:
+    PublicLinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : LinuxStandbyImp(pOsSysman, onSubdevice, subdeviceId) {}
     using LinuxStandbyImp::pSysfsAccess;
 };
 } // namespace ult

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <vector>
@@ -37,12 +38,15 @@ struct StandbyHandleContext {
     StandbyHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~StandbyHandleContext();
 
-    void init();
+    ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles);
 
     ze_result_t standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby);
 
     OsSysman *pOsSysman;
     std::vector<Standby *> handleList = {};
+
+  private:
+    void createHandle(ze_device_handle_t deviceHandle);
 };
 
 } // namespace L0

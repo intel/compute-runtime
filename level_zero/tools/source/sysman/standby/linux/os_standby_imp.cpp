@@ -11,6 +11,14 @@ namespace L0 {
 
 const std::string LinuxStandbyImp::standbyModeFile("power/rc6_enable");
 
+ze_result_t LinuxStandbyImp::osStandbyGetProperties(zes_standby_properties_t &properties) {
+    properties.pNext = nullptr;
+    properties.type = ZES_STANDBY_TYPE_GLOBAL;
+    properties.onSubdevice = isSubdevice;
+    properties.subdeviceId = subdeviceId;
+    return ZE_RESULT_SUCCESS;
+}
+
 bool LinuxStandbyImp::isStandbySupported(void) {
     if (ZE_RESULT_SUCCESS == pSysfsAccess->canRead(standbyModeFile)) {
         return true;
@@ -47,14 +55,14 @@ ze_result_t LinuxStandbyImp::setMode(zes_standby_promo_mode_t mode) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-LinuxStandbyImp::LinuxStandbyImp(OsSysman *pOsSysman) {
+LinuxStandbyImp::LinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
 
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
 }
 
-OsStandby *OsStandby::create(OsSysman *pOsSysman) {
-    LinuxStandbyImp *pLinuxStandbyImp = new LinuxStandbyImp(pOsSysman);
+OsStandby *OsStandby::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
+    LinuxStandbyImp *pLinuxStandbyImp = new LinuxStandbyImp(pOsSysman, onSubdevice, subdeviceId);
     return static_cast<OsStandby *>(pLinuxStandbyImp);
 }
 
