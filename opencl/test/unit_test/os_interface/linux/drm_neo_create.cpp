@@ -40,4 +40,12 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
     }
     return drm;
 }
+
+void Drm::overrideBindSupport(bool &useVmBind) {
+    useVmBind = false;
+    if (DebugManager.flags.UseVmBind.get() == 1) {
+        useVmBind = true;
+    }
+}
+
 } // namespace NEO

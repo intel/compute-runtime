@@ -110,4 +110,11 @@ Drm *Drm::create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &
     }
     return drmObject.release();
 }
+
+void Drm::overrideBindSupport(bool &useVmBind) {
+    if (DebugManager.flags.UseVmBind.get() != -1) {
+        useVmBind = DebugManager.flags.UseVmBind.get();
+    }
+}
+
 } // namespace NEO

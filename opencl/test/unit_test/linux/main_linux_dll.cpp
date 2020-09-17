@@ -215,6 +215,23 @@ TEST(DrmTest, GivenSelectedIncorectDeviceWhenGetDeviceFdThenFail) {
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 
+TEST(DrmTest, givenUseVmBindFlagWhenOverrideBindSupportThenReturnProperValue) {
+    DebugManagerStateRestore dbgRestorer;
+    bool useVmBind = false;
+
+    DebugManager.flags.UseVmBind.set(1);
+    Drm::overrideBindSupport(useVmBind);
+    EXPECT_TRUE(useVmBind);
+
+    DebugManager.flags.UseVmBind.set(0);
+    Drm::overrideBindSupport(useVmBind);
+    EXPECT_FALSE(useVmBind);
+
+    DebugManager.flags.UseVmBind.set(-1);
+    Drm::overrideBindSupport(useVmBind);
+    EXPECT_FALSE(useVmBind);
+}
+
 TEST_F(DrmTests, createReturnsDrm) {
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);

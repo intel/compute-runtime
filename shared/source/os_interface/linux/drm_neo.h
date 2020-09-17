@@ -141,6 +141,7 @@ class Drm {
     static bool isi915Version(int fd);
 
     static Drm *create(std::unique_ptr<HwDeviceId> hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
+    static void overrideBindSupport(bool &useVmBind);
 
   protected:
     int getQueueSliceCount(drm_i915_gem_context_param_sseu *sseu);
