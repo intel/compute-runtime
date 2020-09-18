@@ -21,14 +21,22 @@ TEST_F(FenceTest, whenQueryingStatusThenCsrAllocationsAreDownloaded) {
     auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0);
 
     Mock<CommandQueue> cmdQueue(device, csr.get());
-    std::unique_ptr<L0::FenceImp> fence = std::make_unique<L0::FenceImp>(&cmdQueue);
+    auto fence = Fence::create(&cmdQueue, nullptr);
 
-    bool result = fence->initialize();
-    ASSERT_TRUE(result);
+    EXPECT_NE(nullptr, fence);
+
+    auto &graphicsAllocation = fence->getAllocation();
+
+    EXPECT_EQ(neoDevice->getRootDeviceIndex(), graphicsAllocation.getRootDeviceIndex());
+
     EXPECT_FALSE(csr->downloadAllocationsCalled);
 
-    fence->queryStatus();
+    auto status = fence->queryStatus();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, status);
     EXPECT_TRUE(csr->downloadAllocationsCalled);
+
+    status = fence->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, status);
 }
 
 } // namespace ult

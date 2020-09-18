@@ -40,7 +40,7 @@ ze_result_t FenceImp::queryStatus() {
     return *hostAddr == Fence::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
 }
 
-bool FenceImp::initialize() {
+void FenceImp::initialize() {
     NEO::AllocationProperties properties(
         cmdQueue->getDevice()->getRootDeviceIndex(), MemoryConstants::cacheLineSize, NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, cmdQueue->getDevice()->getNEODevice()->getDeviceBitfield());
     properties.alignment = MemoryConstants::cacheLineSize;
@@ -48,8 +48,6 @@ bool FenceImp::initialize() {
     UNRECOVERABLE_IF(allocation == nullptr);
 
     reset();
-
-    return true;
 }
 
 ze_result_t FenceImp::reset() {

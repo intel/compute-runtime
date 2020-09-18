@@ -40,7 +40,7 @@ struct Fence : _ze_fence_handle_t {
     enum EnqueueState : uint32_t { ENQUEUE_NOT_READY = 0u,
                                    ENQUEUE_READY };
 
-    NEO::GraphicsAllocation &getAllocation() { return *allocation; }
+    NEO::GraphicsAllocation &getAllocation() const { return *allocation; }
 
     uint64_t getGpuAddress() {
         UNRECOVERABLE_IF(allocation == nullptr);
@@ -67,11 +67,7 @@ struct FenceImp : public Fence {
 
     ze_result_t reset() override;
 
-    static Fence *fromHandle(ze_fence_handle_t handle) { return static_cast<Fence *>(handle); }
-
-    inline ze_fence_handle_t toHandle() { return this; }
-
-    bool initialize();
+    void initialize();
 
   protected:
     CommandQueueImp *cmdQueue;
