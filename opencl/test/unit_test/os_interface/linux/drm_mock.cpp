@@ -181,11 +181,11 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         auto queryItemArg = reinterpret_cast<drm_i915_query_item *>(queryArg->items_ptr);
 
         auto realEuCount = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.EUCount;
-        auto dataSize = std::ceil(realEuCount / 8.0);
+        auto dataSize = static_cast<size_t>(std::ceil(realEuCount / 8.0));
 
         if (queryItemArg->length == 0) {
             if (queryItemArg->query_id == DRM_I915_QUERY_TOPOLOGY_INFO) {
-                queryItemArg->length = sizeof(drm_i915_query_topology_info) + dataSize;
+                queryItemArg->length = static_cast<int32_t>(sizeof(drm_i915_query_topology_info) + dataSize);
                 return 0;
             }
         } else {

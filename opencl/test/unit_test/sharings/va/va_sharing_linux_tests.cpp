@@ -63,7 +63,7 @@ TEST(VASharingFunctions, GivenInitFunctionsWhenDLOpenFailsThenFunctionsAreNull) 
 }
 
 void *GetLibFunc(VADisplay vaDisplay, const char *func) {
-    return (void *)0xdeadbeef;
+    return reinterpret_cast<void *>(uintptr_t(0xdeadbeef));
 }
 
 TEST(VASharingFunctions, GivenInitFunctionsWhenDLOpenSuccedsThenFunctionsAreNotNull) {

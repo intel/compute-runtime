@@ -136,7 +136,7 @@ double OSTimeLinux::getHostTimerResolution() const {
     if (resolutionFunc(CLOCK_MONOTONIC_RAW, &ts)) {
         return 0;
     }
-    return ts.tv_nsec + ts.tv_sec * NSEC_PER_SEC;
+    return static_cast<double>(ts.tv_nsec + ts.tv_sec * NSEC_PER_SEC);
 }
 
 double OSTimeLinux::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const {
@@ -161,7 +161,7 @@ uint64_t OSTimeLinux::getCpuRawTimestamp() {
     if (!getCpuTime(&timesInNsec)) {
         return 0;
     }
-    ticksInNsec = getHostTimerResolution();
+    ticksInNsec = static_cast<uint64_t>(getHostTimerResolution());
     if (ticksInNsec == 0) {
         return 0;
     }

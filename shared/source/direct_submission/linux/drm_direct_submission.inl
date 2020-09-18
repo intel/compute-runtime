@@ -59,16 +59,16 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
     uint32_t drmContextId = 0u;
     for (auto drmIterator = 0u; drmIterator < osContextLinux->getDeviceBitfield().size(); drmIterator++) {
         if (osContextLinux->getDeviceBitfield().test(drmIterator)) {
-            ret |= bb->exec(static_cast<uint32_t>(size),
-                            0,
-                            execFlags,
-                            false,
-                            &this->osContext,
-                            drmIterator,
-                            drmContextIds[drmContextId],
-                            nullptr,
-                            0,
-                            &execObject);
+            ret |= !!bb->exec(static_cast<uint32_t>(size),
+                              0,
+                              execFlags,
+                              false,
+                              &this->osContext,
+                              drmIterator,
+                              drmContextIds[drmContextId],
+                              nullptr,
+                              0,
+                              &execObject);
             drmContextId++;
         }
     }
