@@ -43,8 +43,4 @@ Image *Image::create(uint32_t productFamily, Device *device, const ze_image_desc
 
     return image;
 }
-
-bool ImageImp::initialize(Device *device, const ze_image_desc_t *desc) {
-    return true;
-}
 } // namespace L0
