@@ -70,6 +70,7 @@ class BufferObject {
     uint64_t peekUnmapSize() const { return unmapSize; }
     bool peekIsReusableAllocation() const { return this->isReused; }
     void addBindExtHandle(uint32_t handle);
+    StackVec<uint32_t, 2> &getBindExtHandles() { return bindExtHandles; }
 
   protected:
     Drm *drm = nullptr;

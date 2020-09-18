@@ -340,4 +340,7 @@ TEST(DrmBufferObject, whenBindExtHandleAddedThenItIsStored) {
 
     EXPECT_EQ(1u, bo.bindExtHandles.size());
     EXPECT_EQ(4u, bo.bindExtHandles[0]);
+
+    EXPECT_EQ(1u, bo.getBindExtHandles().size());
+    EXPECT_EQ(4u, bo.getBindExtHandles()[0]);
 }
