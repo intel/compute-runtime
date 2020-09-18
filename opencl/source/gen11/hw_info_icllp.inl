@@ -77,7 +77,9 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     true,                                            // supportsIndependentForwardProgress
     true,                                            // hostPtrTrackingEnabled
     true,                                            // levelZeroSupported
-    true                                             // isIntegratedDevice
+    true,                                            // isIntegratedDevice
+    36u,                                             // timestampValidBits
+    32u                                              // kernelTimestampValidBits
 };
 
 WorkaroundTable ICLLP::workaroundTable = {};

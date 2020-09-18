@@ -74,7 +74,9 @@ const RuntimeCapabilityTable RKL::capabilityTable{
     false,                                           // supportsIndependentForwardProgress
     false,                                           // hostPtrTrackingEnabled
     false,                                           // levelZeroSupported
-    true                                             // isIntegratedDevice
+    true,                                            // isIntegratedDevice
+    36u,                                             // timestampValidBits
+    32u                                              // kernelTimestampValidBits
 };
 
 WorkaroundTable RKL::workaroundTable = {};

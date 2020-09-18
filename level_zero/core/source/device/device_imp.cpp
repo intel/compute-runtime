@@ -359,6 +359,8 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->coreClockRate = deviceInfo.maxClockFrequency;
 
+    pDeviceProperties->maxMemAllocSize = this->neoDevice->getDeviceInfo().maxMemAllocSize;
+
     pDeviceProperties->maxCommandQueuePriority = 0;
 
     pDeviceProperties->numThreadsPerEU = deviceInfo.numThreadsPerEU;
@@ -373,7 +375,9 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     pDeviceProperties->timerResolution = this->neoDevice->getDeviceInfo().outProfilingTimerResolution;
 
-    pDeviceProperties->maxMemAllocSize = this->neoDevice->getDeviceInfo().maxMemAllocSize;
+    pDeviceProperties->timestampValidBits = hardwareInfo.capabilityTable.timestampValidBits;
+
+    pDeviceProperties->kernelTimestampValidBits = hardwareInfo.capabilityTable.kernelTimestampValidBits;
 
     if (hardwareInfo.capabilityTable.isIntegratedDevice) {
         pDeviceProperties->flags |= ZE_DEVICE_PROPERTY_FLAG_INTEGRATED;

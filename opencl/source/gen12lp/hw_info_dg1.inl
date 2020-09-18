@@ -80,7 +80,9 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     false,                                         // supportsIndependentForwardProgress
     false,                                         // hostPtrTrackingEnabled
     true,                                          // levelZeroSupported
-    false                                          // isIntegratedDevice
+    false,                                         // isIntegratedDevice
+    36u,                                           // timestampValidBits
+    32u                                            // kernelTimestampValidBits
 };
 
 WorkaroundTable DG1::workaroundTable = {};

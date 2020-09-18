@@ -61,6 +61,8 @@ struct RuntimeCapabilityTable {
     bool hostPtrTrackingEnabled;
     bool levelZeroSupported;
     bool isIntegratedDevice;
+    uint32_t timestampValidBits;
+    uint32_t kernelTimestampValidBits;
 };
 
 struct HardwareCapabilities {

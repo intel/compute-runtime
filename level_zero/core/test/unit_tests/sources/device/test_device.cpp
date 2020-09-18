@@ -126,6 +126,8 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     memset(&deviceProperties.numSubslicesPerSlice, std::numeric_limits<int>::max(), sizeof(deviceProperties.numSubslicesPerSlice));
     memset(&deviceProperties.numSlices, std::numeric_limits<int>::max(), sizeof(deviceProperties.numSlices));
     memset(&deviceProperties.timerResolution, std::numeric_limits<int>::max(), sizeof(deviceProperties.timerResolution));
+    memset(&deviceProperties.timestampValidBits, std::numeric_limits<uint32_t>::max(), sizeof(deviceProperties.timestampValidBits));
+    memset(&deviceProperties.kernelTimestampValidBits, std::numeric_limits<uint32_t>::max(), sizeof(deviceProperties.kernelTimestampValidBits));
     memset(&deviceProperties.name, std::numeric_limits<int>::max(), sizeof(deviceProperties.name));
     deviceProperties.maxMemAllocSize = 0;
 
@@ -145,6 +147,8 @@ TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenA
     EXPECT_NE(deviceProperties.numSubslicesPerSlice, devicePropertiesBefore.numSubslicesPerSlice);
     EXPECT_NE(deviceProperties.numSlices, devicePropertiesBefore.numSlices);
     EXPECT_NE(deviceProperties.timerResolution, devicePropertiesBefore.timerResolution);
+    EXPECT_NE(deviceProperties.timestampValidBits, devicePropertiesBefore.timestampValidBits);
+    EXPECT_NE(deviceProperties.kernelTimestampValidBits, devicePropertiesBefore.kernelTimestampValidBits);
     EXPECT_NE(0, memcmp(&deviceProperties.name, &devicePropertiesBefore.name, sizeof(devicePropertiesBefore.name)));
     EXPECT_NE(deviceProperties.maxMemAllocSize, devicePropertiesBefore.maxMemAllocSize);
 }
@@ -173,6 +177,14 @@ TEST_F(DeviceTest, givenCommandQueuePropertiesCallThenCallSucceeds) {
     std::vector<ze_command_queue_group_properties_t> queueProperties(count);
     res = device->getCommandQueueGroupProperties(&count, queueProperties.data());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(DeviceTest, givenCallToDevicePropertiesThenTimestampValidBitsAreCorrectlyAssigned) {
+    ze_device_properties_t deviceProps;
+
+    device->getProperties(&deviceProps);
+    EXPECT_EQ(36u, deviceProps.timestampValidBits);
+    EXPECT_EQ(32u, deviceProps.kernelTimestampValidBits);
 }
 
 struct DeviceHasNoDoubleFp64Test : public ::testing::Test {

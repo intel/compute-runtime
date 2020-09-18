@@ -76,7 +76,9 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     false,                                         // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
     false,                                         // levelZeroSupported
-    true                                           // isIntegratedDevice
+    true,                                          // isIntegratedDevice
+    36u,                                           // timestampValidBits
+    32u                                            // kernelTimestampValidBits
 };
 
 WorkaroundTable EHL::workaroundTable = {};

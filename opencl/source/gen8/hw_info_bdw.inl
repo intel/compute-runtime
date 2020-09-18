@@ -81,7 +81,9 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     true,                                          // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
     false,                                         // levelZeroSupported
-    true                                           // isIntegratedDevice
+    true,                                          // isIntegratedDevice
+    36u,                                           // timestampValidBits
+    32u                                            // kernelTimestampValidBits
 };
 
 WorkaroundTable BDW::workaroundTable = {};

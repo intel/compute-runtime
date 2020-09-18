@@ -78,7 +78,9 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     false,                                           // supportsIndependentForwardProgress
     false,                                           // hostPtrTrackingEnabled
     true,                                            // levelZeroSupported
-    true                                             // isIntegratedDevice
+    true,                                            // isIntegratedDevice
+    36u,                                             // timestampValidBits
+    32u                                              // kernelTimestampValidBits
 };
 
 WorkaroundTable TGLLP::workaroundTable = {};
