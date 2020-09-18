@@ -28,7 +28,7 @@ Neo requires:
 Please visit their repositories for building and instalation instructions or use prebuilt packages:
 - Ubuntu: [launchpad repository](https://launchpad.net/~intel-opencl/+archive/ubuntu/intel-opencl)
   - libigc-dev
-  - libigdgmm-dev
+  - intel-gmmlib-dev
 - CentOS: [copr repository](https://copr.fedorainfracloud.org/coprs/jdanecki/intel-opencl)
   - intel-igc-opencl-devel
   - intel-gmmlib-devel
