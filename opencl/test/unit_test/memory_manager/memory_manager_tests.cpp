@@ -39,6 +39,7 @@
 #include "opencl/test/unit_test/mocks/mock_deferrable_deletion.h"
 #include "opencl/test/unit_test/mocks/mock_deferred_deleter.h"
 #include "opencl/test/unit_test/mocks/mock_execution_environment.h"
+#include "opencl/test/unit_test/mocks/mock_gfx_partition.h"
 #include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -627,6 +628,35 @@ TEST_F(MemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitA
 
         DebugManager.flags.Force32bitAddressing.set(false);
     }
+}
+
+TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedThenItIsInitialized) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    EXPECT_TRUE(memoryManager.isInitialized());
+}
+
+TEST(OsAgnosticMemoryManager, givenDefaultAubUsageMemoryManagerWhenItIsCreatedThenItIsInitialized) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(true, executionEnvironment);
+    EXPECT_TRUE(memoryManager.isInitialized());
+}
+
+TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedAndGfxPartitionInitIsFailedThenItIsNotInitialized) {
+    class TestedOsAgnosticMemoryManager : public OsAgnosticMemoryManager {
+      public:
+        using OsAgnosticMemoryManager::gfxPartitions;
+        using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
+    };
+
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    TestedOsAgnosticMemoryManager memoryManager(executionEnvironment);
+    EXPECT_TRUE(memoryManager.isInitialized());
+
+    auto failedInitGfxPartition = std::make_unique<FailedInitGfxPartition>();
+    memoryManager.gfxPartitions[0].reset(failedInitGfxPartition.release());
+    memoryManager.initialize(false /*aubUsage*/);
+    EXPECT_FALSE(memoryManager.isInitialized());
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedThenForce32BitAllocationsIsFalse) {

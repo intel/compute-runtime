@@ -123,7 +123,7 @@ TEST(GfxPartitionTest, testGfxPartitionUnsupportedRange) {
     }
 
     MockGfxPartition gfxPartition;
-    EXPECT_THROW(gfxPartition.init(maxNBitValue(48 + 1), reservedCpuAddressRangeSize, 0, 1), std::exception);
+    EXPECT_FALSE(gfxPartition.init(maxNBitValue(48 + 1), reservedCpuAddressRangeSize, 0, 1));
 }
 
 TEST(GfxPartitionTest, testGfxPartitionFullRange48BitSVMHeap64KBSplit) {
@@ -178,7 +178,7 @@ class MockOsMemory : public OSMemory {
 
     OSMemory::ReservedCpuAddressRange reserveCpuAddressRange(void *baseAddress, size_t sizeToReserve, size_t alignment) override {
         reserveCount++;
-        return MockOSMemoryReservedCpuAddressRange(reinterpret_cast<void *>(0x10000), sizeToReserve, alignment);
+        return MockOSMemoryReservedCpuAddressRange(returnAddress, sizeToReserve, alignment);
     };
 
     void getMemoryMaps(MemoryMaps &outMemoryMaps) override {}
@@ -188,6 +188,7 @@ class MockOsMemory : public OSMemory {
     void *osReserveCpuAddressRange(void *baseAddress, size_t sizeToReserve) override { return nullptr; }
     void osReleaseCpuAddressRange(void *reservedCpuAddressRange, size_t reservedSize) override {}
 
+    void *returnAddress = reinterpret_cast<void *>(0x10000);
     static uint32_t reserveCount;
 };
 
@@ -207,4 +208,37 @@ TEST(GfxPartitionTest, given47bitGpuAddressSpaceWhenInitializingMultipleGfxParti
     }
 
     EXPECT_EQ(1u, static_cast<MockOsMemory *>(gfxPartitions[0]->osMemory.get())->getReserveCount());
+}
+
+TEST(GfxPartitionTest, testGfxPartitionFullRange47BitSVMFailedIfReservedCpuRangeSizeIsZero) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    MockGfxPartition gfxPartition;
+    EXPECT_FALSE(gfxPartition.init(maxNBitValue(47), 0, 0, 1));
+}
+
+TEST(GfxPartitionTest, testGfxPartitionFullRange47BitSVMFailedIfReturnedReservedCpuRangeIsNull) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto mockOsMemory = new MockOsMemory;
+    mockOsMemory->returnAddress = nullptr;
+    MockGfxPartition gfxPartition;
+    gfxPartition.osMemory.reset(mockOsMemory);
+    EXPECT_FALSE(gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, 0, 1));
+}
+
+TEST(GfxPartitionTest, testGfxPartitionFullRange47BitSVMFailedIfReturnedReservedCpuRangeIsNotAligned) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto mockOsMemory = new MockOsMemory;
+    mockOsMemory->returnAddress = reinterpret_cast<void *>(0x10001);
+    MockGfxPartition gfxPartition;
+    gfxPartition.osMemory.reset(mockOsMemory);
+    EXPECT_FALSE(gfxPartition.init(maxNBitValue(47), reservedCpuAddressRangeSize, 0, 1));
 }

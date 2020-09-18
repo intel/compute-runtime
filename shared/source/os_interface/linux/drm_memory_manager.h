@@ -29,6 +29,7 @@ class DrmMemoryManager : public MemoryManager {
                      ExecutionEnvironment &executionEnvironment);
     ~DrmMemoryManager() override;
 
+    void initialize(gemCloseWorkerMode mode);
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;

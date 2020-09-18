@@ -9,8 +9,8 @@
 
 namespace NEO {
 
-void GfxPartition::initAdditionalRange(uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, size_t numRootDevices) {
-    UNRECOVERABLE_IF("Invalid GPU Address Range!");
+bool GfxPartition::initAdditionalRange(uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, size_t numRootDevices) {
+    return false;
 }
 
 } // namespace NEO

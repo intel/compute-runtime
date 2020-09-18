@@ -64,7 +64,7 @@ void GfxPartition::freeGpuAddressRange(uint64_t ptr, size_t size) {
     }
 }
 
-void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useFrontWindowPool) {
+bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useFrontWindowPool) {
 
     /*
      * I. 64-bit builds:
@@ -125,10 +125,16 @@ void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             heapInit(HeapIndex::HEAP_SVM, 0ull, gfxBase);
         } else if (gpuAddressSpace == maxNBitValue(47)) {
             if (reservedCpuAddressRange.alignedPtr == nullptr) {
-                UNRECOVERABLE_IF(cpuAddressRangeSizeToReserve == 0);
+                if (cpuAddressRangeSizeToReserve == 0) {
+                    return false;
+                }
                 reservedCpuAddressRange = osMemory->reserveCpuAddressRange(cpuAddressRangeSizeToReserve, GfxPartition::heapGranularity);
-                UNRECOVERABLE_IF(reservedCpuAddressRange.originalPtr == nullptr);
-                UNRECOVERABLE_IF(!isAligned<GfxPartition::heapGranularity>(reservedCpuAddressRange.alignedPtr));
+                if (reservedCpuAddressRange.originalPtr == nullptr) {
+                    return false;
+                }
+                if (!isAligned<GfxPartition::heapGranularity>(reservedCpuAddressRange.alignedPtr)) {
+                    return false;
+                }
             }
             gfxBase = reinterpret_cast<uint64_t>(reservedCpuAddressRange.alignedPtr);
             gfxTop = gfxBase + cpuAddressRangeSizeToReserve;
@@ -137,7 +143,9 @@ void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
             gfxBase = 0ull;
             heapInit(HeapIndex::HEAP_SVM, 0ull, 0ull);
         } else {
-            initAdditionalRange(gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex, numRootDevices);
+            if (!initAdditionalRange(gpuAddressSpace, gfxBase, gfxTop, rootDeviceIndex, numRootDevices)) {
+                return false;
+            }
         }
     }
 
@@ -161,6 +169,8 @@ void GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
     // Split HEAP_STANDARD64K among root devices
     auto gfxStandard64KBSize = alignDown(gfxStandardSize / numRootDevices, GfxPartition::heapGranularity);
     heapInit(HeapIndex::HEAP_STANDARD64KB, gfxBase + rootDeviceIndex * gfxStandard64KBSize, gfxStandard64KBSize);
+
+    return true;
 }
 
 } // namespace NEO

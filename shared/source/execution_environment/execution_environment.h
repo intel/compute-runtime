@@ -21,7 +21,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     ExecutionEnvironment();
     ~ExecutionEnvironment() override;
 
-    void initializeMemoryManager();
+    MOCKABLE_VIRTUAL bool initializeMemoryManager();
     void calculateMaxOsContextCount();
     void prepareRootDeviceEnvironments(uint32_t numRootDevices);
     void setPerContextMemorySpace() {

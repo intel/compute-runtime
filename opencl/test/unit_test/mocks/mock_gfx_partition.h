@@ -40,3 +40,10 @@ class MockGfxPartition : public GfxPartition {
 
     OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
 };
+
+class FailedInitGfxPartition : public MockGfxPartition {
+  public:
+    virtual bool init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useFrontWindowPool) override {
+        return false;
+    }
+};

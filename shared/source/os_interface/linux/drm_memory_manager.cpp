@@ -38,9 +38,16 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                    ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment),
                                                                                  forcePinEnabled(forcePinAllowed),
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {
+    initialize(mode);
+}
+
+void DrmMemoryManager::initialize(gemCloseWorkerMode mode) {
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
-        getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigner.apiAllowExternalHeapForSshAndDsh);
+        if (!getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigner.apiAllowExternalHeapForSshAndDsh)) {
+            initialized = false;
+            return;
+        }
         localMemAllocs.emplace_back();
     }
     MemoryManager::virtualPaddingAvailable = true;
@@ -78,6 +85,8 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
 
         pinBBs.push_back(bo);
     }
+
+    initialized = true;
 }
 
 DrmMemoryManager::~DrmMemoryManager() {

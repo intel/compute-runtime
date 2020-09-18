@@ -37,10 +37,10 @@ class GfxPartition {
     GfxPartition(OSMemory::ReservedCpuAddressRange &sharedReservedCpuAddressRange);
     MOCKABLE_VIRTUAL ~GfxPartition();
 
-    void init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices) {
-        init(gpuAddressSpace, cpuAddressRangeSizeToReserve, rootDeviceIndex, numRootDevices, false);
+    bool init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices) {
+        return init(gpuAddressSpace, cpuAddressRangeSizeToReserve, rootDeviceIndex, numRootDevices, false);
     }
-    void init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useFrontWindowPool);
+    MOCKABLE_VIRTUAL bool init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices, bool useFrontWindowPool);
 
     void heapInit(HeapIndex heapIndex, uint64_t base, uint64_t size) {
         getHeap(heapIndex).init(base, size);
@@ -91,7 +91,7 @@ class GfxPartition {
     static const std::array<HeapIndex, 7> heapNonSvmNames;
 
   protected:
-    void initAdditionalRange(uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, size_t numRootDevices);
+    bool initAdditionalRange(uint64_t gpuAddressSpace, uint64_t &gfxBase, uint64_t &gfxTop, uint32_t rootDeviceIndex, size_t numRootDevices);
 
     class Heap {
       public:

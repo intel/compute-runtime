@@ -92,6 +92,17 @@ TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManage
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
 
+TEST(ExecutionEnvironment, givenMemoryManagerIsNotInitializedInExecutionEnvironmentThanCreateDevicesReturnsEmptyDeviceVector) {
+    class FailedInitializeMemoryManagerExecutionEnvironment : public MockExecutionEnvironment {
+        bool initializeMemoryManager() override { return false; }
+    };
+
+    auto executionEnvironment = std::make_unique<FailedInitializeMemoryManagerExecutionEnvironment>();
+    prepareDeviceEnvironments(*executionEnvironment);
+    auto devices = DeviceFactory::createDevices(*executionEnvironment);
+    EXPECT_TRUE(devices.empty());
+}
+
 TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillAvailable) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();

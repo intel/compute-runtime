@@ -24,9 +24,9 @@ ExecutionEnvironment::~ExecutionEnvironment() {
     rootDeviceEnvironments.clear();
 }
 
-void ExecutionEnvironment::initializeMemoryManager() {
+bool ExecutionEnvironment::initializeMemoryManager() {
     if (this->memoryManager) {
-        return;
+        return memoryManager->isInitialized();
     }
 
     int32_t setCommandStreamReceiverType = CommandStreamReceiverType::CSR_HW;
@@ -46,7 +46,8 @@ void ExecutionEnvironment::initializeMemoryManager() {
         memoryManager = MemoryManager::createMemoryManager(*this);
         break;
     }
-    DEBUG_BREAK_IF(!this->memoryManager);
+
+    return memoryManager->isInitialized();
 }
 
 void ExecutionEnvironment::calculateMaxOsContextCount() {

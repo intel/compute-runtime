@@ -61,6 +61,7 @@ class MemoryManager {
     };
 
     MemoryManager(ExecutionEnvironment &executionEnvironment);
+    bool isInitialized() const { return initialized; }
 
     virtual ~MemoryManager();
     MOCKABLE_VIRTUAL void *allocateSystemMemory(size_t size, size_t alignment);
@@ -216,6 +217,7 @@ class MemoryManager {
     virtual void freeAssociatedResourceImpl(GraphicsAllocation &graphicsAllocation) { return unlockResourceImpl(graphicsAllocation); };
     virtual void registerAllocation(GraphicsAllocation *allocation) {}
 
+    bool initialized = false;
     bool forceNonSvmForExternalHostPtr = false;
     bool force32bitAllocations = false;
     bool virtualPaddingAvailable = false;
