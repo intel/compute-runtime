@@ -53,7 +53,7 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
         ASSERT_NE(nullptr, commandQueue->commandStream);
 
         ze_result_t returnValue;
-        commandList = CommandList::create(productFamily, device, false, returnValue);
+        commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue);
         ASSERT_NE(nullptr, commandList);
     }
     void TearDown() override {

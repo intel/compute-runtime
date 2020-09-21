@@ -106,7 +106,7 @@ void CommandList::eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocati
 }
 
 bool CommandList::isCopyOnly() const {
-    return isCopyOnlyCmdList;
+    return NEO::EngineGroupType::Copy == engineGroupType;
 }
 
 NEO::PreemptionMode CommandList::obtainFunctionPreemptionMode(Kernel *kernel) {

@@ -49,8 +49,7 @@ ze_result_t CommandListImp::appendMetricQueryEnd(zet_metric_query_handle_t hMetr
     return MetricQuery::fromHandle(hMetricQuery)->appendEnd(*this, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
-CommandList *CommandList::create(uint32_t productFamily, Device *device, bool isCopyOnly,
-                                 ze_result_t &returnValue) {
+CommandList *CommandList::create(uint32_t productFamily, Device *device, NEO::EngineGroupType engineGroupType, ze_result_t &returnValue) {
     CommandListAllocatorFn allocator = nullptr;
     if (productFamily < IGFX_MAX_PRODUCT) {
         allocator = commandListFactory[productFamily];
@@ -61,7 +60,7 @@ CommandList *CommandList::create(uint32_t productFamily, Device *device, bool is
 
     if (allocator) {
         commandList = static_cast<CommandListImp *>((*allocator)(CommandList::defaultNumIddsPerBlock));
-        returnValue = commandList->initialize(device, isCopyOnly);
+        returnValue = commandList->initialize(device, engineGroupType);
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
             commandList = nullptr;
@@ -72,7 +71,7 @@ CommandList *CommandList::create(uint32_t productFamily, Device *device, bool is
 
 CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device,
                                           const ze_command_queue_desc_t *desc,
-                                          bool internalUsage, bool isCopyOnly,
+                                          bool internalUsage, NEO::EngineGroupType engineGroupType,
                                           ze_result_t &returnValue) {
 
     CommandListAllocatorFn allocator = nullptr;
@@ -85,7 +84,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
     if (allocator) {
         commandList = static_cast<CommandListImp *>((*allocator)(CommandList::commandListimmediateIddsPerBlock));
-        returnValue = commandList->initialize(device, isCopyOnly);
+        returnValue = commandList->initialize(device, engineGroupType);
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
             commandList = nullptr;
@@ -102,7 +101,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
         UNRECOVERABLE_IF(nullptr == csr);
 
-        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, isCopyOnly);
+        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, NEO::EngineGroupType::Copy == engineGroupType);
         if (!commandQueue) {
             commandList->destroy();
             commandList = nullptr;

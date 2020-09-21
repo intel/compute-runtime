@@ -308,7 +308,7 @@ struct MockCommandList : public CommandList {
 
     ADDMETHOD_NOBASE(initialize, ze_result_t, ZE_RESULT_SUCCESS,
                      (L0::Device * device,
-                      bool onlyCopyBlit));
+                      NEO::EngineGroupType engineGroupType));
 
     uint8_t *batchBuffer = nullptr;
     NEO::GraphicsAllocation *mockAllocation = nullptr;

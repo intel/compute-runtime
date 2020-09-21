@@ -275,7 +275,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetCommandListAppendMetricQ
     zet_device_handle_t metricDevice = device->toHandle();
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     ze_event_pool_handle_t eventPoolHandle = {};
@@ -391,7 +391,7 @@ TEST_F(MetricQueryPoolTest, givenIncorrectArgumentsWhenZetMetricQueryGetDataIsCa
     zet_device_handle_t metricDevice = device->toHandle();
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     ze_event_pool_handle_t eventPoolHandle = {};
@@ -507,7 +507,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenZetMetricQueryGetDataIsCall
     zet_device_handle_t metricDevice = device->toHandle();
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     ze_event_pool_handle_t eventPoolHandle = {};
@@ -674,7 +674,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeWhenAppendMetricQueryBeginAnd
     poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_EXECUTION;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     TypedValue_1_0 value = {};
@@ -736,7 +736,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeAndCompletionEventWhenAppendM
     poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_EXECUTION;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     TypedValue_1_0 value = {};
@@ -820,7 +820,7 @@ TEST_F(MetricQueryPoolTest, givenExecutionQueryTypeAndMetricsLibraryWillFailWhen
     poolDesc.type = ZET_METRIC_QUERY_POOL_TYPE_EXECUTION;
 
     ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, false, returnValue));
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
     zet_command_list_handle_t commandListHandle = commandList->toHandle();
 
     TypedValue_1_0 value = {};
