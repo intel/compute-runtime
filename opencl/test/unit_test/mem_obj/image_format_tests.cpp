@@ -19,7 +19,7 @@ typedef ::testing::TestWithParam<std::tuple<uint32_t /*channel order*/,
                                             bool /*has alpha channel*/>>
     HasAlphaChannelTest;
 
-TEST_P(HasAlphaChannelTest, imageFormatHasAlphaChannel) {
+TEST_P(HasAlphaChannelTest, GivenImageFormatWhenCheckingForAlphaChannelThenReturnCorrectValue) {
     cl_image_format imageFormat;
     bool expectedValue;
     std::tie(imageFormat.image_channel_order, expectedValue) = GetParam();
