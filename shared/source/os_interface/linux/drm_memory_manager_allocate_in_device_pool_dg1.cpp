@@ -212,7 +212,7 @@ void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
         return nullptr;
     }
 
-    auto addr = mmapFunction(nullptr, bo->peekSize(), PROT_WRITE | PROT_READ, MAP_SHARED, getDrm(rootDeviceIndex).getFileDescriptor(), mmapOffset.offset);
+    auto addr = mmapFunction(nullptr, bo->peekSize(), PROT_WRITE | PROT_READ, MAP_SHARED, getDrm(rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(mmapOffset.offset));
     DEBUG_BREAK_IF(addr == MAP_FAILED);
 
     bo->setLockedAddress(addr);
