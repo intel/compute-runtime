@@ -491,4 +491,9 @@ template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::useOnlyGlobalTimestamps() const {
     return false;
 }
+
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const {
+    return false;
+}
 } // namespace NEO

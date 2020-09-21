@@ -255,6 +255,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     UNRECOVERABLE_IF(hostPtr == nullptr && !properties.flags.allocateMemory);
     UNRECOVERABLE_IF(properties.allocationType == GraphicsAllocation::AllocationType::UNKNOWN);
 
+    auto hwInfo = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+
     bool allow64KbPages = false;
     bool allow32Bit = false;
     bool forcePin = properties.flags.forcePin;
@@ -339,6 +342,10 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         break;
     }
 
+    if (properties.allocationType == GraphicsAllocation::AllocationType::KERNEL_ISA) {
+        allocationData.flags.useSystemMemory = hwHelper.useSystemMemoryPlacementForISA(*hwInfo);
+    }
+
     switch (properties.allocationType) {
     case GraphicsAllocation::AllocationType::COMMAND_BUFFER:
     case GraphicsAllocation::AllocationType::DEVICE_QUEUE_BUFFER:
@@ -388,8 +395,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.osContext = properties.osContext;
     allocationData.rootDeviceIndex = properties.rootDeviceIndex;
 
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo();
-    HwHelper::get(hwInfo->platform.eRenderCoreFamily).setExtraAllocationData(allocationData, properties, *hwInfo);
+    hwHelper.setExtraAllocationData(allocationData, properties, *hwInfo);
 
     return true;
 }
