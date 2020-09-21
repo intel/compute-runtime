@@ -8,7 +8,7 @@
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
 #include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/string.h"
@@ -105,8 +105,17 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
     auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(
         {device->getRootDeviceIndex(), kernelIsaSize, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, device->getDeviceBitfield()});
     UNRECOVERABLE_IF(allocation == nullptr);
+
+    auto &hwInfo = device->getHardwareInfo();
+    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
     if (kernelInfo->heapInfo.pKernelHeap != nullptr) {
-        memoryManager.copyMemoryToAllocation(allocation, kernelInfo->heapInfo.pKernelHeap, kernelIsaSize);
+        if (allocation->isAllocatedInLocalMemoryPool() && hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo)) {
+            auto status = NEO::BlitHelperFunctions::blitMemoryToAllocation(*device, allocation, 0, kernelInfo->heapInfo.pKernelHeap, {kernelIsaSize, 1, 1});
+            UNRECOVERABLE_IF(status != NEO::BlitOperationResult::Success);
+        } else {
+            memoryManager.copyMemoryToAllocation(allocation, kernelInfo->heapInfo.pKernelHeap, kernelIsaSize);
+        }
     }
     isaGraphicsAllocation.reset(allocation);
 
