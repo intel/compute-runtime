@@ -48,6 +48,27 @@ HWTEST_F(ModuleTest, givenKernelCreateReturnsSuccess) {
     Kernel::fromHandle(kernelHandle)->destroy();
 }
 
+HWTEST_F(ModuleTest, givenZeroCountWhenGettingKernelNamesThenCountIsFilled) {
+    uint32_t count = 0;
+    auto result = module->getKernelNames(&count, nullptr);
+
+    auto whiteboxModule = whitebox_cast(module.get());
+    EXPECT_EQ(whiteboxModule->kernelImmDatas.size(), count);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST_F(ModuleTest, givenNonZeroCountWhenGettingKernelNamesThenNamesAreReturned) {
+    uint32_t count = 1;
+    const char *kernelNames = nullptr;
+    auto result = module->getKernelNames(&count, &kernelNames);
+
+    EXPECT_EQ(1u, count);
+    EXPECT_STREQ(this->kernelName.c_str(), kernelNames);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
 using ModuleTestSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
 
 HWTEST2_F(ModuleTest, givenNonPatchedTokenThenSurfaceBaseAddressIsCorrectlySet, ModuleTestSupport) {
@@ -394,6 +415,25 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
     L0::ModuleTranslationUnit moduleTuInvalid(this->device);
     success = moduleTuInvalid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
     EXPECT_FALSE(success);
+}
+
+TEST(BuildOptions, givenNoSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenFalseIsReturned) {
+    std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, NEO::CompilerOptions::finiteMathOnly);
+    std::string dstNames;
+
+    auto result = moveBuildOption(dstNames, srcNames, BuildOptions::optDisable, NEO::CompilerOptions::optDisable);
+    EXPECT_FALSE(result);
+}
+
+TEST(BuildOptions, givenSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenOptionIsRemovedFromSrcNamesAndTranslatedOptionsStoredInDstNames) {
+    std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, NEO::CompilerOptions::optDisable);
+    std::string dstNames;
+
+    auto result = moveBuildOption(dstNames, srcNames, BuildOptions::optDisable, NEO::CompilerOptions::optDisable);
+    EXPECT_TRUE(result);
+
+    EXPECT_EQ(BuildOptions::optDisable, dstNames);
+    EXPECT_EQ(std::string::npos, srcNames.find(NEO::CompilerOptions::optDisable.str()));
 }
 
 } // namespace ult
