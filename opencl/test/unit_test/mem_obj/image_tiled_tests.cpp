@@ -67,7 +67,7 @@ class CreateTiledImageTest : public ClDeviceFixture,
     cl_mem_object_type type = 0;
 };
 
-HWTEST_P(CreateTiledImageTest, isTiledImageIsSetForTiledImages) {
+HWTEST_P(CreateTiledImageTest, GivenImageTypeWhenCheckingIsTiledThenTrueReturnedForTiledImage) {
     MockContext context;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
@@ -87,7 +87,7 @@ HWTEST_P(CreateTiledImageTest, isTiledImageIsSetForTiledImages) {
     delete image;
 }
 
-TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
+TEST_P(CreateTiledImageTest, GivenSharedTiledImageWhenCheckingIsTiledThenTrueReturned) {
     MockContext context;
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation(0, 0x1000);
     ImageInfo info = {};
@@ -124,7 +124,7 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
 
 typedef CreateTiledImageTest CreateNonTiledImageTest;
 
-TEST_P(CreateNonTiledImageTest, isTiledImageIsNotSetForNonTiledSharedImage) {
+TEST_P(CreateNonTiledImageTest, GivenSharedNonTiledImageWhenCheckingIsTiledThenFalseReturned) {
     MockContext context;
     MockGraphicsAllocation *alloc = new MockGraphicsAllocation(0, 0x1000);
     ImageInfo info = {};
