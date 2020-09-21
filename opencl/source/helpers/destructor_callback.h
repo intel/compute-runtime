@@ -28,6 +28,5 @@ class DestructorCallback {
 
 using ContextDestructorCallback = DestructorCallback<cl_context>;
 using MemObjDestructorCallback = DestructorCallback<cl_mem>;
-using ProgramReleaseCallback = DestructorCallback<cl_program>;
 
 } // namespace NEO

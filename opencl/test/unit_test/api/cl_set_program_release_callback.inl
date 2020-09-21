@@ -25,13 +25,13 @@ TEST_F(clSetProgramReleaseCallbackTests, givenPfnNotifyNullptrWhenSettingProgram
 
 void CL_CALLBACK callback(cl_program, void *){};
 
-TEST_F(clSetProgramReleaseCallbackTests, WhenSettingProgramReleaseCallbackThenSucccessIsReturned) {
+TEST_F(clSetProgramReleaseCallbackTests, WhenSettingProgramReleaseCallbackThenInvalidOperationErrorIsReturned) {
     auto retVal = clSetProgramReleaseCallback(pProgram, callback, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 
     auto userData = reinterpret_cast<void *>(0x4321);
     retVal = clSetProgramReleaseCallback(pProgram, callback, userData);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
 } // namespace ULT

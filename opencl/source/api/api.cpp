@@ -5389,7 +5389,7 @@ cl_int CL_API_CALL clSetProgramReleaseCallback(cl_program program,
                              reinterpret_cast<void *>(pfnNotify));
 
     if (retVal == CL_SUCCESS) {
-        retVal = pProgram->setReleaseCallback(pfnNotify, userData);
+        retVal = CL_INVALID_OPERATION;
     }
 
     return retVal;

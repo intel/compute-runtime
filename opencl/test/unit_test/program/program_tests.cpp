@@ -3115,35 +3115,3 @@ TEST(ProgramReplaceDeviceBinary, GivenBinaryZebinThenUseAsBothPackedAndUnpackedB
     EXPECT_EQ(0, memcmp(program.packedDeviceBinary.get(), zebin.storage.data(), program.packedDeviceBinarySize));
     EXPECT_EQ(0, memcmp(program.unpackedDeviceBinary.get(), zebin.storage.data(), program.unpackedDeviceBinarySize));
 }
-
-TEST(Program, WhenSettingProgramReleaseCallbackThenCallOrderIsPreserved) {
-    struct UserDataType {
-        cl_program expectedProgram;
-        std::vector<size_t> &vectorToModify;
-        size_t valueToAdd;
-    };
-    auto callback = [](cl_program program, void *userData) -> void {
-        auto pUserData = reinterpret_cast<UserDataType *>(userData);
-        EXPECT_EQ(pUserData->expectedProgram, program);
-        pUserData->vectorToModify.push_back(pUserData->valueToAdd);
-    };
-
-    MockExecutionEnvironment executionEnvironment;
-    auto pProgram = new MockProgram{executionEnvironment};
-    std::vector<size_t> callbacksReturnValues;
-    UserDataType userDataArray[]{
-        {pProgram, callbacksReturnValues, 1},
-        {pProgram, callbacksReturnValues, 2},
-        {pProgram, callbacksReturnValues, 3}};
-
-    for (auto &userData : userDataArray) {
-        cl_int retVal = clSetProgramReleaseCallback(pProgram, callback, &userData);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-    }
-    delete pProgram;
-
-    ASSERT_EQ(3u, callbacksReturnValues.size());
-    EXPECT_EQ(3u, callbacksReturnValues[0]);
-    EXPECT_EQ(2u, callbacksReturnValues[1]);
-    EXPECT_EQ(1u, callbacksReturnValues[2]);
-}

@@ -151,9 +151,6 @@ class Program : public BaseObject<_cl_program> {
     cl_int setProgramSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue);
     MOCKABLE_VIRTUAL cl_int updateSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue);
 
-    cl_int setReleaseCallback(void(CL_CALLBACK *funcNotify)(cl_program, void *),
-                              void *userData);
-
     size_t getNumKernels() const;
     const KernelInfo *getKernelInfo(const char *kernelName) const;
     const KernelInfo *getKernelInfo(size_t ordinal) const;
@@ -351,8 +348,6 @@ class Program : public BaseObject<_cl_program> {
 
     bool isBuiltIn = false;
     bool kernelDebugEnabled = false;
-
-    std::list<ProgramReleaseCallback *> releaseCallbacks;
 };
 
 } // namespace NEO
