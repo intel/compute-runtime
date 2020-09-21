@@ -128,6 +128,7 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
     if (request == DRM_IOCTL_I915_GEM_EXECBUFFER2) {
         auto execbuf = static_cast<drm_i915_gem_execbuffer2 *>(arg);
         this->execBuffer = *execbuf;
+        this->bbFlags = reinterpret_cast<drm_i915_gem_exec_object2 *>(execbuf->buffers_ptr)[execbuf->buffer_count - 1].flags;
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_USERPTR) {

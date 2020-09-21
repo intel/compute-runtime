@@ -129,6 +129,7 @@ class DrmMock : public Drm {
 
     //DRM_IOCTL_I915_GEM_EXECBUFFER2
     drm_i915_gem_execbuffer2 execBuffer = {0};
+    uint64_t bbFlags;
 
     //DRM_IOCTL_I915_GEM_CREATE
     __u64 createParamsSize = 0;
