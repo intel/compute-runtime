@@ -323,7 +323,7 @@ HWTEST_F(CommandStreamReceiverTest, whenDirectSubmissionDisabledThenExpectNoFeat
 }
 
 struct InitDirectSubmissionTest : public ::testing::Test {
-    void SetUp() {
+    void SetUp() override {
         DebugManager.flags.EnableDirectSubmission.set(1);
         executionEnvironment = new MockExecutionEnvironment();
         DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
