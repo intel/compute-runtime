@@ -14,7 +14,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     STATE_BASE_ADDRESS *stateBaseAddress,
     const IndirectHeap *ssh,
     bool setGeneralStateBaseAddress,
-    uint64_t internalHeapBase,
+    uint64_t indirectObjectHeapBaseAddress,
     GmmHelper *gmmHelper,
     bool isMultiOsContextCapable) {
 

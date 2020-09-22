@@ -74,6 +74,8 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     uint64_t getInstructionHeapBaseAddress() const { return instructionHeapBaseAddress; }
 
+    uint64_t getIndirectObjectHeapBaseAddress() const { return indirectObjectHeapBaseAddress; }
+
     void *getHeapSpaceAllowGrow(HeapType heapType, size_t size);
 
     ErrorCode initialize(Device *device);
@@ -108,6 +110,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     CmdBufferContainer cmdBufferAllocations;
     GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
     uint64_t instructionHeapBaseAddress = 0u;
+    uint64_t indirectObjectHeapBaseAddress = 0u;
     uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
     uint32_t numIddsPerBlock = 64;
 

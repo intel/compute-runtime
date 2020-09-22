@@ -342,9 +342,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
 
     auto mocsIndex = latestSentStatelessMocsConfig;
+    auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
 
     if (dispatchFlags.l3CacheSettings != L3CachingSettings::NotApplicable) {
-        auto &hwHelper = HwHelper::get(peekHwInfo().platform.eRenderCoreFamily);
         auto l3On = dispatchFlags.l3CacheSettings != L3CachingSettings::l3CacheOff;
         auto l1On = dispatchFlags.l3CacheSettings == L3CachingSettings::l3AndL1On;
         mocsIndex = hwHelper.getMocsIndex(*device.getGmmHelper(), l3On, l1On);
@@ -375,6 +375,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         auto stateBaseAddressCmdOffset = commandStreamCSR.getUsed();
         auto pCmd = static_cast<STATE_BASE_ADDRESS *>(commandStreamCSR.getSpace(sizeof(STATE_BASE_ADDRESS)));
         STATE_BASE_ADDRESS cmd;
+        auto instructionHeapBaseAddress = getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, !hwHelper.useSystemMemoryPlacementForISA(peekHwInfo()));
         StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
             &cmd,
             &dsh,
@@ -384,6 +385,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             true,
             mocsIndex,
             getMemoryManager()->getInternalHeapBaseAddress(rootDeviceIndex, ioh.getGraphicsAllocation()->isAllocatedInLocalMemoryPool()),
+            instructionHeapBaseAddress,
             true,
             device.getGmmHelper(),
             isMultiOsContextCapable());

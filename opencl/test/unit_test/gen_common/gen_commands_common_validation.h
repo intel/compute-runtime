@@ -19,7 +19,9 @@
 
 namespace NEO {
 template <typename FamilyType>
-void validateStateBaseAddress(uint64_t internalHeapBase, IndirectHeap *pDSH,
+void validateStateBaseAddress(uint64_t indirectObjectHeapBase,
+                              uint64_t instructionHeapBaseAddress,
+                              IndirectHeap *pDSH,
                               IndirectHeap *pIOH,
                               IndirectHeap *pSSH,
                               GenCmdList::iterator &startCommand,
@@ -45,7 +47,7 @@ void validateStateBaseAddress(uint64_t internalHeapBase, IndirectHeap *pDSH,
     EXPECT_EQ(expectedGeneralStateHeapBaseAddress, cmd->getGeneralStateBaseAddress());
     EXPECT_EQ(pSSH->getGraphicsAllocation()->getGpuAddress(), cmd->getSurfaceStateBaseAddress());
     EXPECT_EQ(pIOH->getGraphicsAllocation()->getGpuBaseAddress(), cmd->getIndirectObjectBaseAddress());
-    EXPECT_EQ(internalHeapBase, cmd->getInstructionBaseAddress());
+    EXPECT_EQ(instructionHeapBaseAddress, cmd->getInstructionBaseAddress());
 
     // Verify all sizes are getting programmed
     EXPECT_TRUE(cmd->getDynamicStateBufferSizeModifyEnable());

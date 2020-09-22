@@ -23,7 +23,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     uint64_t generalStateBase,
     bool setGeneralStateBaseAddress,
     uint32_t statelessMocsIndex,
-    uint64_t internalHeapBase,
+    uint64_t indirectObjectHeapBaseAddress,
+    uint64_t instructionHeapBaseAddress,
     bool setInstructionStateBaseAddress,
     GmmHelper *gmmHelper,
     bool isMultiOsContextCapable) {
@@ -51,7 +52,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     if (setInstructionStateBaseAddress) {
         stateBaseAddress->setInstructionBaseAddressModifyEnable(true);
-        stateBaseAddress->setInstructionBaseAddress(internalHeapBase);
+        stateBaseAddress->setInstructionBaseAddress(instructionHeapBaseAddress);
         stateBaseAddress->setInstructionBufferSizeModifyEnable(true);
         stateBaseAddress->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
         stateBaseAddress->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
@@ -73,7 +74,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     stateBaseAddress->setStatelessDataPortAccessMemoryObjectControlState(statelessMocsIndex);
 
-    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, internalHeapBase, gmmHelper, isMultiOsContextCapable);
+    appendStateBaseAddressParameters(stateBaseAddress, ssh, setGeneralStateBaseAddress, indirectObjectHeapBaseAddress, gmmHelper, isMultiOsContextCapable);
 }
 
 } // namespace NEO

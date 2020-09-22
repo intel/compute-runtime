@@ -351,6 +351,7 @@ void EncodeStateBaseAddress<Family>::encode(CommandContainer &container, STATE_B
         0,
         false,
         (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1),
+        container.getIndirectObjectHeapBaseAddress(),
         container.getInstructionHeapBaseAddress(),
         false,
         gmmHelper,

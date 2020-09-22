@@ -994,10 +994,14 @@ TEST(HwInfoConfigCommonHelperTest, givenBlitterPreferenceWhenEnablingBlitterOper
     EXPECT_EQ(expectedBlitterSupport, hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
-HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForIsaSystemMemoryPlacementThenReturnFalse) {
+HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForIsaSystemMemoryPlacementThenReturnFalseIfLocalMemorySupported) {
     HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
+    hardwareInfo.featureTable.ftrLocalMemory = true;
     EXPECT_FALSE(hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
+
+    hardwareInfo.featureTable.ftrLocalMemory = false;
+    EXPECT_TRUE(hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
 }
 
 TEST(HwInfoConfigCommonHelperTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag) {

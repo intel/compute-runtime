@@ -55,6 +55,7 @@ HWTEST2_F(SBATest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
         false,
         0,
         0,
+        0,
         false,
         pDevice->getGmmHelper(),
         true);

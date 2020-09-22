@@ -28,7 +28,8 @@ struct StateBaseAddressHelper {
         uint64_t generalStateBase,
         bool setGeneralStateBaseAddress,
         uint32_t statelessMocsIndex,
-        uint64_t internalHeapBase,
+        uint64_t indirectObjectHeapBaseAddress,
+        uint64_t instructionHeapBaseAddress,
         bool setInstructionStateBaseAddress,
         GmmHelper *gmmHelper,
         bool isMultiOsContextCapable);
@@ -37,7 +38,7 @@ struct StateBaseAddressHelper {
         STATE_BASE_ADDRESS *stateBaseAddress,
         const IndirectHeap *ssh,
         bool setGeneralStateBaseAddress,
-        uint64_t internalHeapBase,
+        uint64_t indirectObjectHeapBaseAddress,
         GmmHelper *gmmHelper,
         bool isMultiOsContextCapable);
 

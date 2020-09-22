@@ -108,13 +108,38 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
     uint32_t alignedSize = 4096u;
     NEO::LinearStream child(commandQueue->commandStream->getSpace(alignedSize), alignedSize);
 
-    EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, true))
-        .Times(1);
+    auto &hwHelper = HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    bool isaInLocalMemory = !hwHelper.useSystemMemoryPlacementForISA(neoDevice->getHardwareInfo());
+
+    if (isaInLocalMemory) {
+        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, true))
+            .Times(2);
+
+        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
+            .Times(0);
+    } else {
+        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, true))
+            .Times(1); // IOH
+
+        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
+            .Times(1); // instruction heap
+    }
 
     commandQueue->programGeneralStateBaseAddress(0u, true, child);
 
-    EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
-        .Times(1);
+    if (isaInLocalMemory) {
+        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
+            .Times(1); // IOH
+
+        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, true))
+            .Times(1); // instruction heap
+    } else {
+        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, true))
+            .Times(0);
+
+        EXPECT_CALL(*memoryManager, getInternalHeapBaseAddress(rootDeviceIndex, false))
+            .Times(2);
+    }
 
     commandQueue->programGeneralStateBaseAddress(0u, false, child);
 
