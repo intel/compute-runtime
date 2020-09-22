@@ -94,4 +94,14 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateBaseAdd
     addPipeControlCmd(commandStream, args);
 }
 
+template <typename GfxFamily>
+bool CommandStreamReceiverHw<GfxFamily>::checkPlatformSupportsNewResourceImplicitFlush() const {
+    return false;
+}
+
+template <typename GfxFamily>
+bool CommandStreamReceiverHw<GfxFamily>::checkPlatformSupportsGpuIdleImplicitFlush() const {
+    return false;
+}
+
 } // namespace NEO

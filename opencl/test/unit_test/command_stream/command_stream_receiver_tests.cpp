@@ -708,6 +708,107 @@ TEST(CommandStreamReceiverSimpleTest, givenVariousDataSetsWhenVerifyingMemoryThe
     EXPECT_TRUE(csr.expectMemory(setA2, setB2, setSize, compareNotEqual));
 }
 
+TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushDisabledWhenProvidingNeverUsedAllocationTaskCountThenDoNotMarkNewResourceTrue) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
+    MockGraphicsAllocation mockAllocation;
+
+    csr.useNewResourceImplicitFlush = false;
+    csr.newResources = false;
+    csr.checkForNewResources(10u, GraphicsAllocation::objectNotUsed, mockAllocation);
+    EXPECT_FALSE(csr.newResources);
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingNeverUsedAllocationTaskCountThenMarkNewResourceTrue) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
+    MockGraphicsAllocation mockAllocation;
+
+    csr.useNewResourceImplicitFlush = true;
+    csr.newResources = false;
+    csr.checkForNewResources(10u, GraphicsAllocation::objectNotUsed, mockAllocation);
+    EXPECT_TRUE(csr.newResources);
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingAlreadyUsedAllocationTaskCountThenDoNotMarkNewResource) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
+    MockGraphicsAllocation mockAllocation;
+
+    csr.useNewResourceImplicitFlush = true;
+    csr.newResources = false;
+    csr.checkForNewResources(10u, 10u, mockAllocation);
+    EXPECT_FALSE(csr.newResources);
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingNewAllocationAndVerbosityEnabledThenProvidePrintOfNewAllocationType) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ProvideVerboseImplicitFlush.set(true);
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
+    MockGraphicsAllocation mockAllocation;
+
+    csr.useNewResourceImplicitFlush = true;
+    csr.newResources = false;
+    testing::internal::CaptureStdout();
+    csr.checkForNewResources(10u, GraphicsAllocation::objectNotUsed, mockAllocation);
+    EXPECT_TRUE(csr.newResources);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(0u, output.size());
+    EXPECT_STREQ("New resource detected of type 0\n", output.c_str());
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckDisabledWhenGpuIsIdleThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
+    csr.callParentGetTagAddress = false;
+
+    csr.useGpuIdleImplicitFlush = false;
+    csr.mockTagAddress = 1u;
+    csr.taskCount = 1u;
+    EXPECT_FALSE(csr.checkImplicitFlushForGpuIdle());
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckEnabledWhenGpuIsIdleThenReturnTrue) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
+    csr.callParentGetTagAddress = false;
+
+    csr.useGpuIdleImplicitFlush = true;
+    csr.mockTagAddress = 1u;
+    csr.taskCount = 1u;
+    EXPECT_TRUE(csr.checkImplicitFlushForGpuIdle());
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenGpuNotIdleImplicitFlushCheckEnabledWhenGpuIsIdleThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
+    csr.callParentGetTagAddress = false;
+
+    csr.useGpuIdleImplicitFlush = true;
+    csr.mockTagAddress = 1u;
+    csr.taskCount = 2u;
+    EXPECT_FALSE(csr.checkImplicitFlushForGpuIdle());
+
+    csr.mockTagAddress = 2u;
+}
+
 TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesAreUsedThenResidencyIsProperlyHandled) {
     auto executionEnvironment = platform()->peekExecutionEnvironment();
 

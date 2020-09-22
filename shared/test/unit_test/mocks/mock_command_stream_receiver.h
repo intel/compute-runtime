@@ -25,20 +25,19 @@ using namespace NEO;
 
 class MockCommandStreamReceiver : public CommandStreamReceiver {
   public:
+    using CommandStreamReceiver::checkForNewResources;
+    using CommandStreamReceiver::checkImplicitFlushForGpuIdle;
     using CommandStreamReceiver::CommandStreamReceiver;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::internalAllocationStorage;
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::latestSentTaskCount;
+    using CommandStreamReceiver::newResources;
     using CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using CommandStreamReceiver::tagAddress;
-
-    std::vector<char> instructionHeapReserveredData;
-    int *flushBatchedSubmissionsCallCounter = nullptr;
-    uint32_t waitForCompletionWithTimeoutCalled = 0;
-    bool multiOsContextCapable = false;
-    bool downloadAllocationsCalled = false;
-    bool programHardwareContextCalled = false;
+    using CommandStreamReceiver::taskCount;
+    using CommandStreamReceiver::useGpuIdleImplicitFlush;
+    using CommandStreamReceiver::useNewResourceImplicitFlush;
 
     bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
@@ -84,6 +83,22 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     size_t getCmdsSizeForHardwareContext() const override {
         return 0;
     }
+
+    volatile uint32_t *getTagAddress() const override {
+        if (callParentGetTagAddress) {
+            return CommandStreamReceiver::getTagAddress();
+        }
+        return const_cast<volatile uint32_t *>(&mockTagAddress);
+    }
+
+    std::vector<char> instructionHeapReserveredData;
+    int *flushBatchedSubmissionsCallCounter = nullptr;
+    uint32_t waitForCompletionWithTimeoutCalled = 0;
+    uint32_t mockTagAddress = 0;
+    bool multiOsContextCapable = false;
+    bool downloadAllocationsCalled = false;
+    bool programHardwareContextCalled = false;
+    bool callParentGetTagAddress = true;
 };
 
 template <typename GfxFamily>
@@ -107,6 +122,8 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::taskLevel;
     using CommandStreamReceiver::timestampPacketWriteEnabled;
+    using CommandStreamReceiver::useGpuIdleImplicitFlush;
+    using CommandStreamReceiver::useNewResourceImplicitFlush;
 
     MockCsrHw2(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(executionEnvironment, rootDeviceIndex) {}
 

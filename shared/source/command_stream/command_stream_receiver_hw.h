@@ -132,6 +132,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     static void emitNoop(LinearStream &commandStream, size_t bytesToUpdate);
 
     bool detectInitProgrammingFlagsRequired(const DispatchFlags &dispatchFlags) const;
+    bool checkPlatformSupportsNewResourceImplicitFlush() const;
+    bool checkPlatformSupportsGpuIdleImplicitFlush() const;
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

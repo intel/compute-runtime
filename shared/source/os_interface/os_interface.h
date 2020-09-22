@@ -29,6 +29,8 @@ class OSInterface {
     static bool osEnabled64kbPages;
     static bool osEnableLocalMemory;
     static bool are64kbPagesEnabled();
+    static bool newResourceImplicitFlush;
+    static bool gpuIdleImplicitFlush;
     uint32_t getDeviceHandle() const;
     void setGmmInputArgs(void *args);
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);

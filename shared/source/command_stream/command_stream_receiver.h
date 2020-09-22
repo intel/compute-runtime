@@ -219,6 +219,8 @@ class CommandStreamReceiver {
   protected:
     void cleanupResources();
     void printDeviceIndex();
+    void checkForNewResources(uint32_t submittedTaskCount, uint32_t allocationTaskCount, GraphicsAllocation &gfxAllocation);
+    bool checkImplicitFlushForGpuIdle();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;
@@ -300,6 +302,10 @@ class CommandStreamReceiver {
 
     bool localMemoryEnabled = false;
     bool pageTableManagerInitialized = false;
+
+    bool useNewResourceImplicitFlush = false;
+    bool newResources = false;
+    bool useGpuIdleImplicitFlush = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex);

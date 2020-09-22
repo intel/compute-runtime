@@ -29,6 +29,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass = CommandStreamReceiverHw<GfxFamily>;
 
   public:
+    using BaseClass::checkPlatformSupportsGpuIdleImplicitFlush;
+    using BaseClass::checkPlatformSupportsNewResourceImplicitFlush;
     using BaseClass::dshState;
     using BaseClass::getCmdSizeForPrologue;
     using BaseClass::getScratchPatchAddress;
@@ -45,6 +47,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::rootDeviceIndex;
     using BaseClass::sshState;
     using BaseClass::CommandStreamReceiver::bindingTableBaseAddressRequired;
+    using BaseClass::CommandStreamReceiver::checkForNewResources;
+    using BaseClass::CommandStreamReceiver::checkImplicitFlushForGpuIdle;
     using BaseClass::CommandStreamReceiver::cleanupResources;
     using BaseClass::CommandStreamReceiver::commandStream;
     using BaseClass::CommandStreamReceiver::debugConfirmationFunction;
@@ -72,6 +76,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::latestSentStatelessMocsConfig;
     using BaseClass::CommandStreamReceiver::latestSentTaskCount;
     using BaseClass::CommandStreamReceiver::mediaVfeStateDirty;
+    using BaseClass::CommandStreamReceiver::newResources;
     using BaseClass::CommandStreamReceiver::osContext;
     using BaseClass::CommandStreamReceiver::perfCounterAllocator;
     using BaseClass::CommandStreamReceiver::profilingTimeStampAllocator;
@@ -86,6 +91,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::taskLevel;
     using BaseClass::CommandStreamReceiver::timestampPacketAllocator;
     using BaseClass::CommandStreamReceiver::timestampPacketWriteEnabled;
+    using BaseClass::CommandStreamReceiver::useGpuIdleImplicitFlush;
+    using BaseClass::CommandStreamReceiver::useNewResourceImplicitFlush;
     using BaseClass::CommandStreamReceiver::userPauseConfirmation;
     using BaseClass::CommandStreamReceiver::waitForTaskCountAndCleanAllocationList;
 

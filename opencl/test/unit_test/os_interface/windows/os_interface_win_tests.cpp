@@ -38,3 +38,11 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
     EXPECT_EQ(osContext->getWddm(), wddm);
     EXPECT_EQ(1u, wddm->registerTrimCallbackResult.called);
 }
+
+TEST_F(OsInterfaceTest, GivenWindowsOsWhenCheckForNewResourceImplicitFlushSupportThenReturnFalse) {
+    EXPECT_FALSE(OSInterface::newResourceImplicitFlush);
+}
+
+TEST_F(OsInterfaceTest, GivenWindowsOsWhenCheckForGpuIdleImplicitFlushSupportThenReturnFalse) {
+    EXPECT_FALSE(OSInterface::gpuIdleImplicitFlush);
+}

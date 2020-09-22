@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
+
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_csr.h"
@@ -17,6 +19,12 @@ struct OOQFixtureFactory : public HelloWorldFixtureFactory {
 
 template <typename TypeParam>
 struct OOQTaskTypedTests : public HelloWorldTest<OOQFixtureFactory> {
+    void SetUp() override {
+        DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
+        DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
+        HelloWorldTest<OOQFixtureFactory>::SetUp();
+    }
+    DebugManagerStateRestore stateRestore;
 };
 
 TYPED_TEST_CASE_P(OOQTaskTypedTests);
@@ -115,6 +123,10 @@ TEST_F(OOQTaskTests, enqueueKernel_changesTaskCount) {
 
 HWTEST_F(OOQTaskTests, givenCommandQueueWithLowerTaskLevelThenCsrWhenItIsSubmittedThenCommandQueueObtainsTaskLevelFromCsrWithoutSendingPipeControl) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    UltCommandStreamReceiver<FamilyType> &mockCsr =
+        reinterpret_cast<UltCommandStreamReceiver<FamilyType> &>(commandStreamReceiver);
+    mockCsr.useNewResourceImplicitFlush = false;
+    mockCsr.useGpuIdleImplicitFlush = false;
     commandStreamReceiver.taskLevel = 100;
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ, pKernel);
     EXPECT_EQ(100u, this->pCmdQ->taskLevel);
@@ -124,6 +136,8 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenMultipleEnqueueAreDone
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->taskLevel = 100;
 
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ, pKernel);
@@ -139,6 +153,8 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->taskLevel = 100;
 
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ, pKernel);
@@ -158,6 +174,8 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->taskLevel = 100;
 
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ, pKernel);
@@ -178,6 +196,8 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
     mockCsr->taskLevel = 100;
 
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ, pKernel);
@@ -198,6 +218,9 @@ HWTEST_F(OOQTaskTests, givenTwoEnqueueCommandSynchronizedByEventsWhenTheyAreEnqu
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockCsr->useNewResourceImplicitFlush = false;
+    mockCsr->useGpuIdleImplicitFlush = false;
+
     auto currentTaskLevel = this->pCmdQ->taskLevel;
     cl_event retEvent;
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ, pKernel, EnqueueKernelTraits::workDim,
@@ -220,15 +243,24 @@ HWTEST_F(OOQTaskTests, givenTwoEnqueueCommandSynchronizedByEventsWhenTheyAreEnqu
     clReleaseEvent(retEvent);
 }
 
-TEST_F(OOQTaskTests, WhenEnqueingKernelThenTaskLevelIsNotIncremented) {
+HWTEST_F(OOQTaskTests, WhenEnqueingKernelThenTaskLevelIsNotIncremented) {
     auto previousTaskLevel = this->pCmdQ->taskLevel;
+    UltCommandStreamReceiver<FamilyType> &mockCsr =
+        reinterpret_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ->getGpgpuCommandStreamReceiver());
+    mockCsr.useNewResourceImplicitFlush = false;
+    mockCsr.useGpuIdleImplicitFlush = false;
 
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ,
                                          pKernel);
     EXPECT_EQ(previousTaskLevel, this->pCmdQ->taskLevel);
 }
 
-TEST_F(OOQTaskTests, GivenBlockingAndNonBlockedOnUserEventWhenReadingBufferThenTaskCountIsIncrementedAndTaskLevelIsUnchanged) {
+HWTEST_F(OOQTaskTests, GivenBlockingAndNonBlockedOnUserEventWhenReadingBufferThenTaskCountIsIncrementedAndTaskLevelIsUnchanged) {
+    UltCommandStreamReceiver<FamilyType> &mockCsr =
+        reinterpret_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ->getGpgpuCommandStreamReceiver());
+    mockCsr.useNewResourceImplicitFlush = false;
+    mockCsr.useGpuIdleImplicitFlush = false;
+
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
     auto alignedReadPtr = alignedMalloc(BufferDefaults::sizeInBytes, MemoryConstants::cacheLineSize);
@@ -269,7 +301,6 @@ TEST_F(OOQTaskTests, GivenBlockingAndNonBlockedOnUserEventWhenReadingBufferThenT
 }
 
 TEST_F(OOQTaskTests, givenOutOfOrderCommandQueueWhenBarrierIsCalledThenTaskLevelIsUpdated) {
-
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ,
                                          pKernel);
     auto currentTaskLevel = this->pCmdQ->taskLevel;

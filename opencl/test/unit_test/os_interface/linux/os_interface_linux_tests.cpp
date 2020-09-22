@@ -27,4 +27,12 @@ TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenDeviceHandleQueriedthenZeroIsRetu
     EXPECT_EQ(0u, osInterface.getDeviceHandle());
 }
 
+TEST(OsInterfaceTest, GivenLinuxOsWhenCheckForNewResourceImplicitFlushSupportThenReturnTrue) {
+    EXPECT_TRUE(OSInterface::newResourceImplicitFlush);
+}
+
+TEST(OsInterfaceTest, GivenLinuxOsWhenCheckForGpuIdleImplicitFlushSupportThenReturnFalse) {
+    EXPECT_TRUE(OSInterface::gpuIdleImplicitFlush);
+}
+
 } // namespace NEO

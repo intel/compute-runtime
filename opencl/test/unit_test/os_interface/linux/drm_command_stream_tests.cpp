@@ -746,6 +746,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSe
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+    testedCsr->useNewResourceImplicitFlush = false;
+    testedCsr->useGpuIdleImplicitFlush = false;
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     auto dummyAllocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
@@ -805,6 +807,8 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhen
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     auto testedCsr = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr);
     testedCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+    testedCsr->useNewResourceImplicitFlush = false;
+    testedCsr->useGpuIdleImplicitFlush = false;
 
     auto commandBuffer = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     IndirectHeap cs(commandBuffer);

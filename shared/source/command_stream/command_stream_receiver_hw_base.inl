@@ -55,6 +55,17 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(ExecutionEnvironment
         timestampPacketWriteEnabled = !!DebugManager.flags.EnableTimestampPacket.get();
     }
     createScratchSpaceController();
+
+    useNewResourceImplicitFlush = checkPlatformSupportsNewResourceImplicitFlush();
+    int32_t overrideNewResourceImplicitFlush = DebugManager.flags.PerformImplicitFlushForNewResource.get();
+    if (overrideNewResourceImplicitFlush != -1) {
+        useNewResourceImplicitFlush = overrideNewResourceImplicitFlush == 0 ? false : true;
+    }
+    useGpuIdleImplicitFlush = checkPlatformSupportsGpuIdleImplicitFlush();
+    int32_t overrideGpuIdleImplicitFlush = DebugManager.flags.PerformImplicitFlushForIdleGpu.get();
+    if (overrideGpuIdleImplicitFlush != -1) {
+        useGpuIdleImplicitFlush = overrideGpuIdleImplicitFlush == 0 ? false : true;
+    }
 }
 
 template <typename GfxFamily>
@@ -553,6 +564,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             implicitFlush = true;
         }
     }
+
+    if (this->newResources) {
+        implicitFlush = true;
+        this->newResources = false;
+    }
+    implicitFlush |= checkImplicitFlushForGpuIdle();
 
     if (this->dispatchMode == DispatchMode::BatchedDispatch && implicitFlush) {
         this->flushBatchedSubmissions();

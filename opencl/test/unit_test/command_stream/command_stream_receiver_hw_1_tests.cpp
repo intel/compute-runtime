@@ -470,142 +470,54 @@ HWTEST_F(CommandStreamReceiverHwTest, WhenScratchSpaceIsNotRequiredThenGshAddres
     EXPECT_EQ(0u, scratchController->calculateNewGSH());
 }
 
-HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeThenAddAllRequiredCommands) {
-    constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
-    constexpr auto cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK);
-    size_t notAlignedBltSize = (3 * max2DBlitSize) + 1;
-    size_t alignedBltSize = (3 * max2DBlitSize);
-    uint32_t alignedNumberOfBlts = 3;
-    uint32_t notAlignedNumberOfBlts = 4;
-
-    auto expectedAlignedSize = cmdsSizePerBlit * alignedNumberOfBlts;
-    auto expectedNotAlignedSize = cmdsSizePerBlit * notAlignedNumberOfBlts;
-    auto alignedCopySize = Vec3<size_t>{alignedBltSize, 1, 1};
-    auto notAlignedCopySize = Vec3<size_t>{notAlignedBltSize, 1, 1};
-
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        alignedCopySize, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
-    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        notAlignedCopySize, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
-
-    EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
-    EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedCopySize, pClDevice->getRootDeviceEnvironment()));
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(notAlignedCopySize, pClDevice->getRootDeviceEnvironment()));
-}
-
-HWTEST_F(BcsTests, givenDebugCapabilityWhenEstimatingCommandSizeThenAddAllRequiredCommands) {
-    constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
-    constexpr auto cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK);
-    const size_t debugCommandsSize = (EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() + EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait()) * 2;
-
-    constexpr uint32_t numberOfBlts = 3;
-    constexpr size_t bltSize = (numberOfBlts * max2DBlitSize);
-
-    auto expectedSize = (cmdsSizePerBlit * numberOfBlts) + debugCommandsSize + MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getHardwareInfo()) +
-                        EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
-    expectedSize = alignUp(expectedSize, MemoryConstants::cacheLineSize);
-
-    BlitProperties blitProperties;
-    blitProperties.copySize = {bltSize, 1, 1};
-    BlitPropertiesContainer blitPropertiesContainer;
-    blitPropertiesContainer.push_back(blitProperties);
-
-    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        blitPropertiesContainer, false, true, pClDevice->getRootDeviceEnvironment());
-
-    EXPECT_EQ(expectedSize, estimatedSize);
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(blitProperties.copySize, pClDevice->getRootDeviceEnvironment()));
-}
-
-HWTEST_F(BcsTests, givenBltSizeWhenEstimatingCommandSizeForReadBufferRectThenAddAllRequiredCommands) {
-    constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
-    constexpr auto cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK);
-    Vec3<size_t> notAlignedBltSize = {(3 * max2DBlitSize) + 1, 4, 2};
-    Vec3<size_t> alignedBltSize = {(3 * max2DBlitSize), 4, 2};
-    size_t alignedNumberOfBlts = 3 * alignedBltSize.y * alignedBltSize.z;
-    size_t notAlignedNumberOfBlts = 4 * notAlignedBltSize.y * notAlignedBltSize.z;
-
-    auto expectedAlignedSize = cmdsSizePerBlit * alignedNumberOfBlts;
-    auto expectedNotAlignedSize = cmdsSizePerBlit * notAlignedNumberOfBlts;
-
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        alignedBltSize, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
-    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        notAlignedBltSize, csrDependencies, false, false, pClDevice->getRootDeviceEnvironment());
-
-    EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
-    EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(notAlignedBltSize, pClDevice->getRootDeviceEnvironment()));
-    EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedBltSize, pClDevice->getRootDeviceEnvironment()));
-}
-
-HWTEST_F(BcsTests, givenBltWithBigCopySizeWhenEstimatingCommandSizeForReadBufferRectThenAddAllRequiredCommands) {
-    auto &rootDeviceEnvironment = pClDevice->getRootDeviceEnvironment();
-    auto maxWidthToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(rootDeviceEnvironment));
-    auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment));
-
-    constexpr auto cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK);
-    Vec3<size_t> alignedBltSize = {(3 * maxWidthToCopy), (4 * maxHeightToCopy), 2};
-    Vec3<size_t> notAlignedBltSize = {(3 * maxWidthToCopy + 1), (4 * maxHeightToCopy), 2};
-
-    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedBltSize, rootDeviceEnvironment));
-
-    size_t alignedNumberOfBlts = (3 * 4 * alignedBltSize.z);
-    size_t notAlignedNumberOfBlts = (4 * 4 * notAlignedBltSize.z);
-
-    auto expectedAlignedSize = cmdsSizePerBlit * alignedNumberOfBlts;
-    auto expectedNotAlignedSize = cmdsSizePerBlit * notAlignedNumberOfBlts;
-
-    auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        alignedBltSize, csrDependencies, false, false, rootDeviceEnvironment);
-    auto notAlignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        notAlignedBltSize, csrDependencies, false, false, rootDeviceEnvironment);
-
-    EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
-    EXPECT_EQ(expectedNotAlignedSize, notAlignedEstimatedSize);
-    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(notAlignedBltSize, rootDeviceEnvironment));
-    EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(alignedBltSize, rootDeviceEnvironment));
-}
-
-HWTEST_F(BcsTests, WhenGetNumberOfBlitsIsCalledThenCorrectValuesAreReturned) {
-    auto &rootDeviceEnvironment = pClDevice->getRootDeviceEnvironment();
-    auto maxWidthToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(rootDeviceEnvironment));
-    auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment));
-
-    {
-        Vec3<size_t> copySize = {maxWidthToCopy * maxHeightToCopy, 1, 3};
-        size_t expectednBlitsCopyRegion = maxHeightToCopy * 3;
-        size_t expectednBlitsCopyPerRow = 3;
-        auto nBlitsCopyRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment);
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
-
-        EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
-        EXPECT_EQ(expectednBlitsCopyRegion, nBlitsCopyRegion);
-        EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment));
+HWTEST_F(CommandStreamReceiverHwTest, givenDefaultPlatformCapabilityWhenNoDebugKeysSetThenExpectDefaultPlatformSettings) {
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    if (commandStreamReceiver->checkPlatformSupportsNewResourceImplicitFlush()) {
+        EXPECT_TRUE(commandStreamReceiver->useNewResourceImplicitFlush);
+    } else {
+        EXPECT_FALSE(commandStreamReceiver->useNewResourceImplicitFlush);
     }
-    {
-        Vec3<size_t> copySize = {2 * maxWidthToCopy, 16, 3};
-        size_t expectednBlitsCopyRegion = 2 * 3;
-        size_t expectednBlitsCopyPerRow = 16 * 3;
-        auto nBlitsCopyRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment);
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+}
 
-        EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
-        EXPECT_EQ(expectednBlitsCopyRegion, nBlitsCopyRegion);
-        EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment));
+HWTEST_F(CommandStreamReceiverHwTest, givenDefaultGpuIdleImplicitFlushWhenNoDebugKeysSetThenExpectDefaultPlatformSettings) {
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    if (commandStreamReceiver->checkPlatformSupportsGpuIdleImplicitFlush()) {
+        EXPECT_TRUE(commandStreamReceiver->useGpuIdleImplicitFlush);
+    } else {
+        EXPECT_FALSE(commandStreamReceiver->useGpuIdleImplicitFlush);
     }
-    {
-        Vec3<size_t> copySize = {2 * maxWidthToCopy, 3 * maxHeightToCopy, 4};
-        size_t expectednBlitsCopyRegion = 2 * 3 * 4;
-        size_t expectednBlitsCopyPerRow = 3 * maxHeightToCopy * 4;
-        auto nBlitsCopyRegion = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyRegion(copySize, rootDeviceEnvironment);
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+}
 
-        EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
-        EXPECT_EQ(expectednBlitsCopyRegion, nBlitsCopyRegion);
-        EXPECT_TRUE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment));
-    }
+HWTEST_F(CommandStreamReceiverHwTest, WhenForceDisableNewResourceImplicitFlushThenExpectFlagSetFalse) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PerformImplicitFlushForNewResource.set(0);
+
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    EXPECT_FALSE(commandStreamReceiver->useNewResourceImplicitFlush);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, WhenForceEnableNewResourceImplicitFlushThenExpectFlagSetTrue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PerformImplicitFlushForNewResource.set(1);
+
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    EXPECT_TRUE(commandStreamReceiver->useNewResourceImplicitFlush);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, WhenForceDisableGpuIdleImplicitFlushThenExpectFlagSetFalse) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PerformImplicitFlushForIdleGpu.set(0);
+
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    EXPECT_FALSE(commandStreamReceiver->useGpuIdleImplicitFlush);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, WhenForceEnableGpuIdleImplicitFlushThenExpectFlagSetTrue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PerformImplicitFlushForIdleGpu.set(1);
+
+    auto commandStreamReceiver = std::make_unique<MockCsrHw<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex());
+    EXPECT_TRUE(commandStreamReceiver->useGpuIdleImplicitFlush);
 }
 
 HWTEST_F(BcsTests, WhenGetNumberOfBlitsForCopyPerRowIsCalledThenCorrectValuesAreReturned) {

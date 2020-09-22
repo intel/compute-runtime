@@ -15,6 +15,8 @@
 namespace NEO {
 
 bool OSInterface::osEnabled64kbPages = true;
+bool OSInterface::newResourceImplicitFlush = false;
+bool OSInterface::gpuIdleImplicitFlush = false;
 
 OSInterface::OSInterface() {
     osInterfaceImpl = new OSInterfaceImpl();

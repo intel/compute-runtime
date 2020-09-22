@@ -84,6 +84,7 @@ void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
     auto submissionTaskCount = this->taskCount + 1;
     if (gfxAllocation.isResidencyTaskCountBelow(submissionTaskCount, osContext->getContextId())) {
         this->getResidencyAllocations().push_back(&gfxAllocation);
+        checkForNewResources(submissionTaskCount, gfxAllocation.getTaskCount(osContext->getContextId()), gfxAllocation);
         gfxAllocation.updateTaskCount(submissionTaskCount, osContext->getContextId());
         if (!gfxAllocation.isResident(osContext->getContextId())) {
             this->totalMemoryUsed += gfxAllocation.getUnderlyingBufferSize();
@@ -558,6 +559,26 @@ void CommandStreamReceiver::printDeviceIndex() {
     if (DebugManager.flags.PrintDeviceAndEngineIdOnSubmission.get()) {
         printf("Submission to RootDevice Index: %u, Sub-Devices Mask: %lu, EngineId: %u\n", this->getRootDeviceIndex(), this->osContext->getDeviceBitfield().to_ulong(), this->osContext->getEngineType());
     }
+}
+
+void CommandStreamReceiver::checkForNewResources(uint32_t submittedTaskCount, uint32_t allocationTaskCount, GraphicsAllocation &gfxAllocation) {
+    if (useNewResourceImplicitFlush) {
+        if (allocationTaskCount == GraphicsAllocation::objectNotUsed) {
+            newResources = true;
+            if (DebugManager.flags.ProvideVerboseImplicitFlush.get()) {
+                printf("New resource detected of type %llu\n", static_cast<unsigned long long>(gfxAllocation.getAllocationType()));
+            }
+        }
+    }
+}
+
+bool CommandStreamReceiver::checkImplicitFlushForGpuIdle() {
+    if (useGpuIdleImplicitFlush) {
+        if (this->taskCount == *getTagAddress()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 } // namespace NEO

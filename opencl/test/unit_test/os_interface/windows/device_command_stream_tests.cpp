@@ -93,6 +93,8 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::getCS;
     using CommandStreamReceiver::globalFenceAllocation;
+    using CommandStreamReceiver::useGpuIdleImplicitFlush;
+    using CommandStreamReceiver::useNewResourceImplicitFlush;
     using CommandStreamReceiverHw<GfxFamily>::blitterDirectSubmission;
     using CommandStreamReceiverHw<GfxFamily>::directSubmission;
     using WddmCommandStreamReceiver<GfxFamily>::commandBufferHeader;
@@ -810,6 +812,8 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     csrSurfaceCount += csr->globalFenceAllocation ? 1 : 0;
 
     csr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    csr->useNewResourceImplicitFlush = false;
+    csr->useGpuIdleImplicitFlush = false;
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     csr->overrideSubmissionAggregator(mockedSubmissionsAggregator);

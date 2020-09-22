@@ -16,6 +16,8 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::makeResident;
+    using CommandStreamReceiver::useGpuIdleImplicitFlush;
+    using CommandStreamReceiver::useNewResourceImplicitFlush;
     using DrmCommandStreamReceiver<GfxFamily>::residency;
     using CommandStreamReceiverHw<GfxFamily>::directSubmission;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::lastSentSliceCount;
