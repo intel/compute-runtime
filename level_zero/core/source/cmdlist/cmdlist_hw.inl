@@ -1592,7 +1592,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     removeHostPtrAllocations();
     commandContainer.reset();
 
-    programStateBaseAddress(commandContainer);
+    if (!isCopyOnly()) {
+        programStateBaseAddress(commandContainer);
+    }
 
     return ZE_RESULT_SUCCESS;
 }
