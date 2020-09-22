@@ -16,9 +16,6 @@ Example (CentOS):
 sudo dnf install gcc-c++ cmake git make
 ```
 
-See [LIMITATIONS.md](https://github.com/intel/compute-runtime/blob/master/opencl/doc/LIMITATIONS.md)
-for other requirements and dependencies, when building and installing NEO.
-
 2. Install required dependencies
 
 Neo requires:
