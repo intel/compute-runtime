@@ -18,15 +18,15 @@ RasHandleContext::~RasHandleContext() {
 }
 void RasHandleContext::createHandle(zes_ras_error_type_t type) {
     Ras *pRas = new RasImp(pOsSysman, type);
-    if (pRas->isRasErrorSupported == true) {
-        handleList.push_back(pRas);
-    } else {
-        delete pRas;
-    }
+    handleList.push_back(pRas);
 }
+
 void RasHandleContext::init() {
-    createHandle(ZES_RAS_ERROR_TYPE_UNCORRECTABLE);
-    createHandle(ZES_RAS_ERROR_TYPE_CORRECTABLE);
+    std::vector<zes_ras_error_type_t> errorType = {};
+    OsRas::getSupportedRasErrorTypes(errorType, pOsSysman);
+    for (const auto &type : errorType) {
+        createHandle(type);
+    }
 }
 ze_result_t RasHandleContext::rasGet(uint32_t *pCount,
                                      zes_ras_handle_t *phRas) {

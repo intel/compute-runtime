@@ -11,32 +11,22 @@
 
 namespace L0 {
 
-const std::string LinuxRasImp::rasCounterDir("/var/lib/libze_intel_gpu/");
-const std::string LinuxRasImp::resetCounter("ras_reset_count");
-const std::string LinuxRasImp::resetCounterFile = rasCounterDir + resetCounter;
-
-void LinuxRasImp::setRasErrorType(zes_ras_error_type_t type) {
-    osRasErrorType = type;
-}
-bool LinuxRasImp::isRasSupported(void) {
-    if (false == pFsAccess->fileExists(rasCounterDir)) {
-        return false;
-    }
-    if (osRasErrorType == ZES_RAS_ERROR_TYPE_CORRECTABLE) {
-        return false;
-    } else {
-        return false;
-    }
+ze_result_t OsRas::getSupportedRasErrorTypes(std::vector<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-LinuxRasImp::LinuxRasImp(OsSysman *pOsSysman) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    pFsAccess = &pLinuxSysmanImp->getFsAccess();
-    osRasErrorType = ZES_RAS_ERROR_TYPE_UNCORRECTABLE;
+ze_result_t LinuxRasImp::osRasGetProperties(zes_ras_properties_t &properties) {
+    properties.pNext = nullptr;
+    properties.type = osRasErrorType;
+    properties.onSubdevice = false;
+    properties.subdeviceId = 0;
+    return ZE_RESULT_SUCCESS;
+}
+LinuxRasImp::LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type) : osRasErrorType(type) {
 }
 
-OsRas *OsRas::create(OsSysman *pOsSysman) {
-    LinuxRasImp *pLinuxRasImp = new LinuxRasImp(pOsSysman);
+OsRas *OsRas::create(OsSysman *pOsSysman, zes_ras_error_type_t type) {
+    LinuxRasImp *pLinuxRasImp = new LinuxRasImp(pOsSysman, type);
     return static_cast<OsRas *>(pLinuxRasImp);
 }
 

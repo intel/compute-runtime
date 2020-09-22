@@ -18,21 +18,13 @@ namespace L0 {
 class FsAccess;
 class LinuxRasImp : public OsRas, NEO::NonCopyableOrMovableClass {
   public:
-    LinuxRasImp(OsSysman *pOsSysman);
+    ze_result_t osRasGetProperties(zes_ras_properties_t &properties) override;
+    LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type);
     LinuxRasImp() = default;
     ~LinuxRasImp() override = default;
-    bool isRasSupported(void) override;
-    void setRasErrorType(zes_ras_error_type_t rasErrorType) override;
 
   protected:
-    FsAccess *pFsAccess = nullptr;
-    zes_ras_error_type_t osRasErrorType;
-
-  private:
-    static const std::string rasCounterDir;
-    static const std::string resetCounter;
-    static const std::string resetCounterFile;
-    std::vector<std::string> rasCounterDirFileList = {};
+    zes_ras_error_type_t osRasErrorType = {};
 };
 
 } // namespace L0

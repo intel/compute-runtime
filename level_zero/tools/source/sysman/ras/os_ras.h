@@ -9,14 +9,16 @@
 
 #include <level_zero/zes_api.h>
 
+#include <vector>
+
 namespace L0 {
 
 struct OsSysman;
 class OsRas {
   public:
-    virtual bool isRasSupported(void) = 0;
-    virtual void setRasErrorType(zes_ras_error_type_t type) = 0;
-    static OsRas *create(OsSysman *pOsSysman);
+    virtual ze_result_t osRasGetProperties(zes_ras_properties_t &properties) = 0;
+    static OsRas *create(OsSysman *pOsSysman, zes_ras_error_type_t type);
+    static ze_result_t getSupportedRasErrorTypes(std::vector<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman);
     virtual ~OsRas() = default;
 };
 

@@ -15,9 +15,6 @@
 namespace L0 {
 
 ze_result_t RasImp::rasGetProperties(zes_ras_properties_t *pProperties) {
-    rasProperties.type = this->rasErrorType;
-    rasProperties.onSubdevice = false;
-    rasProperties.subdeviceId = 0;
     *pProperties = rasProperties;
     return ZE_RESULT_SUCCESS;
 }
@@ -35,13 +32,11 @@ ze_result_t RasImp::rasGetState(const zes_ras_state_t *pState) {
 }
 
 void RasImp::init() {
-    pOsRas->setRasErrorType(this->rasErrorType);
-    isRasErrorSupported = pOsRas->isRasSupported();
+    pOsRas->osRasGetProperties(rasProperties);
 }
 
 RasImp::RasImp(OsSysman *pOsSysman, zes_ras_error_type_t type) {
-    pOsRas = OsRas::create(pOsSysman);
-    this->rasErrorType = type;
+    pOsRas = OsRas::create(pOsSysman, type);
     init();
 }
 

@@ -44,7 +44,7 @@ class FsAccess {
 
     virtual ze_result_t readSymLink(const std::string path, std::string &buf);
     virtual ze_result_t getRealPath(const std::string path, std::string &buf);
-    ze_result_t listDirectory(const std::string path, std::vector<std::string> &list);
+    virtual ze_result_t listDirectory(const std::string path, std::vector<std::string> &list);
     std::string getBaseName(const std::string path);
     std::string getDirName(const std::string path);
     virtual bool fileExists(const std::string file);
