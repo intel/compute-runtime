@@ -171,7 +171,7 @@ Int8Params byteValues[] = {
 class PrintfInt8Test : public PrintFormatterTest,
                        public ::testing::WithParamInterface<Int8Params> {};
 
-TEST_P(PrintfInt8Test, GivenPrintfFormatWhenConatinsIntThenInstertValueIntoString) {
+TEST_P(PrintfInt8Test, GivenFormatContainingIntWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
@@ -211,7 +211,7 @@ Int32Params intValues[] = {
 class PrintfInt32Test : public PrintFormatterTest,
                         public ::testing::WithParamInterface<Int32Params> {};
 
-TEST_P(PrintfInt32Test, GivenPrintfFormatWhenConatinsIntThenInstertValueIntoString) {
+TEST_P(PrintfInt32Test, GivenFormatContainingIntWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
@@ -252,7 +252,7 @@ Uint32Params uintValues[] = {
 class PrintfUint32Test : public PrintFormatterTest,
                          public ::testing::WithParamInterface<Uint32Params> {};
 
-TEST_P(PrintfUint32Test, GivenPrintfFormatWhenConatinsUintThenInstertValueIntoString) {
+TEST_P(PrintfUint32Test, GivenFormatContainingUintWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
@@ -269,7 +269,7 @@ TEST_P(PrintfUint32Test, GivenPrintfFormatWhenConatinsUintThenInstertValueIntoSt
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-TEST_P(PrintfUint32Test, GivenPrintfFormatWhenBufferSizeExceedsPrintfBufferCapacityThenUseSmallerValue) {
+TEST_P(PrintfUint32Test, GivenBufferSizeGreaterThanPrintBufferWhenPrintingThenBufferIsTrimmed) {
     auto input = GetParam();
     printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), 0, is32bit, kernelInfo->patchInfo.stringDataMap));
 
@@ -304,7 +304,7 @@ FloatParams floatValues[] = {
 class PrintfFloatTest : public PrintFormatterTest,
                         public ::testing::WithParamInterface<FloatParams> {};
 
-TEST_P(PrintfFloatTest, GivenPrintfFormatWhenConatinsFloatThenInstertValueIntoString) {
+TEST_P(PrintfFloatTest, GivenFormatContainingFloatWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
@@ -347,7 +347,7 @@ DoubleParams doubleToFloatValues[] = {
     {"%.6a", 0.1},
     {"%10.2a", 9990.235}};
 
-TEST_P(PrintfDoubleToFloatTest, GivenPrintfFormatWhenConatinsFloatFormatAndDoubleValueThenInstertValueIntoString) {
+TEST_P(PrintfDoubleToFloatTest, GivenFormatContainingFloatAndDoubleWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
@@ -392,7 +392,7 @@ DoubleParams doubleValues[] = {
 class PrintfDoubleTest : public PrintFormatterTest,
                          public ::testing::WithParamInterface<DoubleParams> {};
 
-TEST_P(PrintfDoubleTest, GivenPrintfFormatWhenConatinsDoubleThenInstertValueIntoString) {
+TEST_P(PrintfDoubleTest, GivenFormatContainingDoubleWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
@@ -424,7 +424,7 @@ std::pair<std::string, std::string> specialValues[] = {
 class PrintfSpecialTest : public PrintFormatterTest,
                           public ::testing::WithParamInterface<std::pair<std::string, std::string>> {};
 
-TEST_P(PrintfSpecialTest, DoublePercentageIntoOne) {
+TEST_P(PrintfSpecialTest, GivenFormatContainingDoublePercentageWhenPrintingThenValueIsInsertedCorrectly) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.first);
@@ -454,7 +454,7 @@ std::pair<std::string, std::string> stringValues[] = {
     {R"(test\n)", "test\n"},
 };
 
-TEST_P(PrintfNoArgumentsTest, GivenPrintfFormatWhenNoArgumentsThenEscapeChars) {
+TEST_P(PrintfNoArgumentsTest, GivenNoArgumentsWhenPrintingThenCharsAreEscaped) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.first);
@@ -478,7 +478,7 @@ StringParams stringValues2[] = {
 class PrintfStringTest : public PrintFormatterTest,
                          public ::testing::WithParamInterface<StringParams> {};
 
-TEST_P(PrintfStringTest, GivenPrintfFormatWhenStringArgumentThenInsertValue) {
+TEST_P(PrintfStringTest, GivenFormatContainingStringWhenPrintingThenValueIsInserted) {
     auto input = GetParam();
 
     auto stringIndex = injectFormatString(input.format);
@@ -501,7 +501,7 @@ INSTANTIATE_TEST_CASE_P(PrintfStringTest,
                         PrintfStringTest,
                         ::testing::ValuesIn(stringValues2));
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenStringArgumentButNullTokenThenPrintNull) {
+TEST_F(PrintFormatterTest, GivenNullTokenWhenPrintingThenNullIsInserted) {
     auto stringIndex = injectFormatString("%s");
     storeData(stringIndex);
 
@@ -516,7 +516,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenStringArgumentButNullTokenThenPr
 }
 
 // ----------------------- Vector channel count ---------------------------------
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector2ThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVector2WhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2d");
@@ -537,7 +537,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector2ThenInsertAllValues) {
     EXPECT_STREQ("1,2", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector4ThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVector4WhenPrintingThenAllValuesAreInserted) {
     int channelCount = 4;
 
     auto stringIndex = injectFormatString("%v4d");
@@ -558,7 +558,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector4ThenInsertAllValues) {
     EXPECT_STREQ("1,2,3,4", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector8ThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVector8WhenPrintingThenAllValuesAreInserted) {
     int channelCount = 8;
 
     auto stringIndex = injectFormatString("%v8d");
@@ -579,7 +579,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector8ThenInsertAllValues) {
     EXPECT_STREQ("1,2,3,4,5,6,7,8", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector16ThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVector16WhenPrintingThenAllValuesAreInserted) {
     int channelCount = 16;
 
     auto stringIndex = injectFormatString("%v16d");
@@ -601,7 +601,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVector16ThenInsertAllValues) {
 }
 
 // ------------------- vector types ----------------------------
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfBytesThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVectorOfBytesWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2hhd");
@@ -621,7 +621,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfBytesThenInsertAllValues
     EXPECT_STREQ("1,2", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfShortsThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVectorOfShortsWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2hd");
@@ -641,7 +641,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfShortsThenInsertAllValue
     EXPECT_STREQ("1,2", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfIntsThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVectorOfIntsWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2d");
@@ -661,7 +661,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfIntsThenInsertAllValues)
     EXPECT_STREQ("1,2", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfSpecialVectorFormatWhenVectorOfIntsThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenSpecialVectorWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2hld");
@@ -680,7 +680,7 @@ TEST_F(PrintFormatterTest, GivenPrintfSpecialVectorFormatWhenVectorOfIntsThenIns
 
     EXPECT_STREQ("1,2", actualOutput);
 }
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfLongsThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVectorOfLongsWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2lld");
@@ -700,7 +700,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfLongsThenInsertAllValues
     EXPECT_STREQ("1,2", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfFloatsThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVectorOfFloatsWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2f");
@@ -720,7 +720,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfFloatsThenInsertAllValue
     EXPECT_STREQ("1.000000,2.000000", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfDoublesThenInsertAllValues) {
+TEST_F(PrintFormatterTest, GivenVectorOfDoublesWhenPrintingThenAllValuesAreInserted) {
     int channelCount = 2;
 
     auto stringIndex = injectFormatString("%v2f");
@@ -740,7 +740,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenVectorOfDoublesThenInsertAllValu
     EXPECT_STREQ("1.000000,2.000000", actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenPointerThenInsertAddress) {
+TEST_F(PrintFormatterTest, GivenPointerWhenPrintingThenValueIsInserted) {
     auto stringIndex = injectFormatString("%p");
     storeData(stringIndex);
 
@@ -766,7 +766,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenPointerThenInsertAddress) {
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhenPointerWith32BitKernelThenPrint32BitPointer) {
+TEST_F(PrintFormatterTest, GivenPointerWith32BitKernelWhenPrintingThen32BitPointerIsPrinted) {
     printFormatter.reset(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), PrintFormatter::maxPrintfOutputLength, true, kernelInfo->patchInfo.stringDataMap));
     auto stringIndex = injectFormatString("%p");
     storeData(stringIndex);
@@ -794,7 +794,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenPointerWith32BitKernelThenPrint3
     EXPECT_STREQ(referenceOutput, actualOutput);
 }
 
-TEST_F(PrintFormatterTest, GivenPrintfFormatWhen2ByteVectorsThenParseDataBufferProperly) {
+TEST_F(PrintFormatterTest, Given2ByteVectorsWhenPrintingThenDataBufferParsedProperly) {
     int channelCount = 4;
 
     auto stringIndex = injectFormatString("%v4hhd %v4hhd");
@@ -838,7 +838,7 @@ TEST_F(PrintFormatterTest, GivenEmptyBufferWhenPrintingThenFailSafely) {
     EXPECT_STREQ("", actualOutput);
 }
 
-TEST(printToSTDOUTTest, GivenStringWhenPrintingToSTDOUTThenExpectOutput) {
+TEST(printToSTDOUTTest, GivenStringWhenPrintingToStdoutThenOutputOccurs) {
     testing::internal::CaptureStdout();
     printToSTDOUT("test");
     std::string output = testing::internal::GetCapturedStdout();
