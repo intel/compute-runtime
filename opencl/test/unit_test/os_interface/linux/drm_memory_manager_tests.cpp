@@ -2857,7 +2857,6 @@ TEST_F(DrmMemoryManagerBasic, givenEnabledDirectSubmissionWhenMemoryManagerIsCre
 
     EXPECT_FALSE(memoryManager.isValidateHostMemoryEnabled());
     EXPECT_FALSE(memoryManager.forcePinEnabled);
-    EXPECT_EQ(memoryManager.peekGemCloseWorker(), nullptr);
 }
 
 TEST_F(DrmMemoryManagerBasic, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {

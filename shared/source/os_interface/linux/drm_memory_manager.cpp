@@ -39,7 +39,6 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                                                                  forcePinEnabled(forcePinAllowed),
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {
     if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
-        mode = gemCloseWorkerMode::gemCloseWorkerInactive;
         this->forcePinEnabled = false;
         this->validateHostPtrMemory = false;
     }
