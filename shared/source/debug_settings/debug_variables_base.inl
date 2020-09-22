@@ -140,8 +140,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDiagnosticExecutionCount, 30, "N
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionOverrideBlitterSupport, -1, "Overrides default blitter support: -1: do not override, 0: disable engine support, 1: enable engine support with init start, 2: enable engine support without init start")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionOverrideRenderSupport, -1, "Overrides default render support: -1: do not override, 0: disable engine support, 1: enable engine support with init start, 2: enable engine support without init start")
 DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionOverrideComputeSupport, -1, "Overrides default compute support: -1: do not override, 0: disable engine support, 1: enable engine support with init start, 2: enable engine support without init start")
+DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionDisableCacheFlush, -1, "-1: driver default, 0: additional cache flush is present 1: disable dispatching cache flush commands")
 DECLARE_DEBUG_VARIABLE(bool, USMEvictAfterMigration, true, "Evict USM allocation after implicit migration to GPU")
-DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionDisableCacheFlush, false, "Disable dispatching cache flush commands")
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionDisableMonitorFence, false, "Disable dispatching monitor fence commands")
 
 /*FEATURE FLAGS*/

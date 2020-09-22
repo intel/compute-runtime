@@ -31,8 +31,12 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(Device &device,
     : device(device), osContext(osContext) {
     UNRECOVERABLE_IF(!CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureClflush));
 
-    disableCacheFlush = defaultDisableCacheFlush;
-    disableMonitorFence = defaultDisableMonitorFence;
+    disableCacheFlush = UllsDefaults::defaultDisableCacheFlush;
+    disableMonitorFence = UllsDefaults::defaultDisableMonitorFence;
+
+    if (DebugManager.flags.DirectSubmissionDisableCacheFlush.get() != -1) {
+        disableCacheFlush = !!DebugManager.flags.DirectSubmissionDisableCacheFlush.get();
+    }
 
     int32_t disableCacheFlushKey = DebugManager.flags.DirectSubmissionDisableCpuCacheFlush.get();
     if (disableCacheFlushKey != -1) {
@@ -469,8 +473,8 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::performDiagnosticMode() {
                 }
             }
             workloadMode = 0;
-            disableCacheFlush = defaultDisableCacheFlush;
-            disableMonitorFence = defaultDisableMonitorFence;
+            disableCacheFlush = UllsDefaults::defaultDisableCacheFlush;
+            disableMonitorFence = UllsDefaults::defaultDisableMonitorFence;
             diagnostic.reset(nullptr);
         }
     }

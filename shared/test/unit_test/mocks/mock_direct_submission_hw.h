@@ -21,8 +21,6 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::currentQueueWorkCount;
     using BaseClass::currentRingBuffer;
     using BaseClass::deallocateResources;
-    using BaseClass::defaultDisableCacheFlush;
-    using BaseClass::defaultDisableMonitorFence;
     using BaseClass::device;
     using BaseClass::diagnostic;
     using BaseClass::DirectSubmissionHw;
