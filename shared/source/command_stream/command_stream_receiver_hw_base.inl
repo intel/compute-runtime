@@ -698,6 +698,8 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(flushDcInEpilogue);
             }
 
+            primaryCmdBuffer->batchBuffer.endCmdPtr = currentBBendLocation;
+
             if (!this->flush(primaryCmdBuffer->batchBuffer, surfacesForSubmit)) {
                 submitResult = false;
                 break;
