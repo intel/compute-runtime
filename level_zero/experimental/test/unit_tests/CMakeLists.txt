@@ -32,6 +32,9 @@ add_executable(
                ${NEO_SOURCE_DIR}/shared/test/unit_test/mocks/ult_device_factory.cpp
                ${NEO_SOURCE_DIR}/shared/test/unit_test/mocks/ult_device_factory.h
                ${L0_CORE_ENABLERS}
+               ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp
+               ${NEO_SOURCE_DIR}/opencl/test/unit_test/helpers/kernel_binary_helper_hash_value.cpp
+               ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/sources/builtin/create_ult_builtin_functions_lib.cpp
 )
 
 target_sources(

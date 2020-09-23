@@ -7,6 +7,7 @@
 set(L0_SRCS_DLL
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/disallow_deferred_deleter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/create_builtin_functions_lib.cpp
 )
 add_subdirectories()
 if(WIN32)

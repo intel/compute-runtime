@@ -607,6 +607,31 @@ TEST_F(KernelIsaTests, givenDebugONAndKernelDegugInfoWhenInitializingImmutableDa
     EXPECT_EQ(kernelInfo.kernelDescriptor.external.debugData->vIsaSize, static_cast<uint32_t>(123));
 }
 
+TEST_F(KernelIsaTests, givenDebugONAndNoKernelDegugInfoWhenInitializingImmutableDataThenDoNotRegisterElf) {
+    uint32_t kernelHeap = 0;
+    KernelInfo kernelInfo;
+    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
+    kernelInfo.kernelDescriptor.external.debugData.reset(nullptr);
+    class MockDebugger : public DebuggerL0 {
+      public:
+        MockDebugger(NEO::Device *neodev) : DebuggerL0(neodev) {
+        }
+        void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) override {
+            debugData->vIsaSize = 123;
+        };
+        size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override { return static_cast<size_t>(0); };
+        void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) override{};
+    };
+    MockDebugger *debugger = new MockDebugger(neoDevice);
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(static_cast<NEO::Debugger *>(debugger));
+    KernelImmutableData kernelImmutableData(device);
+
+    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
+    EXPECT_EQ(kernelInfo.kernelDescriptor.external.debugData, nullptr);
+}
+
 using KernelImpPatchBindlessTest = Test<ModuleFixture>;
 
 TEST_F(KernelImpPatchBindlessTest, GivenKernelImpWhenPatchBindlessOffsetCalledThenOffsetPatchedCorrectly) {
@@ -700,9 +725,11 @@ struct MyMockKernel : public Mock<Kernel> {
     void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) override {
         setSurfaceStateCalled = true;
     }
+    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation) override {
+        return KernelImp::setArgBufferWithAlloc(argIndex, argVal, allocation);
+    }
     bool setSurfaceStateCalled = false;
 };
-
 TEST_F(KernelImpPatchBindlessTest, GivenValidBindlessOffsetWhenSetArgBufferWithAllocThensetBufferSurfaceStateCalled) {
     ze_kernel_desc_t desc = {};
     desc.pKernelName = kernelName.c_str();

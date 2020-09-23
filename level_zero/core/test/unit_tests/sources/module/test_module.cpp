@@ -257,7 +257,7 @@ struct ModuleSpecConstantsTests : public DeviceFixture,
 
 HWTEST_F(ModuleSpecConstantsTests, givenSpecializationConstantsSetInDescriptorTheModuleCorrectlyPassesThemToTheCompiler) {
     std::string testFile;
-    retrieveBinaryKernelFilename(testFile, binaryFilename + "_", ".spv");
+    retrieveBinaryKernelFilenameNoRevision(testFile, binaryFilename + "_", ".spv");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -610,7 +610,7 @@ using ContextModuleCreateTest = Test<ContextFixture>;
 
 HWTEST_F(ContextModuleCreateTest, givenCallToCreateModuleThenModuleIsReturned) {
     std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "test_kernel_", ".bin");
+    retrieveBinaryKernelFilenameNoRevision(testFile, "test_kernel_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
@@ -658,7 +658,8 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
 
     std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "test_kernel_", ".gen");
+    retrieveBinaryKernelFilenameNoRevision(testFile, "test_kernel_", ".gen");
+
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
 
@@ -685,7 +686,8 @@ HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWit
     NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
 
     std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "test_kernel_", ".bin");
+    retrieveBinaryKernelFilenameNoRevision(testFile, "test_kernel_", ".bin");
+
     size_t size = 0;
     auto src = loadDataFromFile(testFile.c_str(), size);
 

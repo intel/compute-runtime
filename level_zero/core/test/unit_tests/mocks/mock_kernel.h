@@ -102,6 +102,7 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
         kernelTokens.header = &kernelHeader;
 
         iOpenCL::SPatchExecutionEnvironment execEnv = {};
+        execEnv.LargestCompiledSIMDSize = 8;
         kernelTokens.tokens.executionEnvironment = &execEnv;
 
         this->kernelImmData = &immutableData;
@@ -124,6 +125,9 @@ struct Mock<::L0::Kernel> : public WhiteBox<::L0::Kernel> {
     void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {}
     std::unique_ptr<Kernel> clone() const override {
         return nullptr;
+    }
+    ze_result_t setArgBufferWithAlloc(uint32_t argIndex, uintptr_t argVal, NEO::GraphicsAllocation *allocation) override {
+        return ZE_RESULT_SUCCESS;
     }
 
     void printPrintfOutput() override {

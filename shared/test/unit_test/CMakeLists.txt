@@ -5,7 +5,7 @@
 #
 
 set(SHARED_TEST_PROJECTS_FOLDER "neo shared")
-if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
+if(NOT SKIP_UNIT_TESTS)
 
   set(TARGET_NAME neo_shared_tests)
 

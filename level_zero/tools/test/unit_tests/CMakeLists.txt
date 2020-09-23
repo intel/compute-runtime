@@ -36,10 +36,12 @@ target_sources(${TARGET_NAME} PRIVATE
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/test_mode.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/ult_configuration.cpp
                ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/white_box.h
+               ${NEO_SOURCE_DIR}/level_zero/core/source/dll/create_builtin_functions_lib.cpp
                ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
 )
 
 target_sources(${TARGET_NAME} PRIVATE
+               ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/helpers${BRANCH_DIR_SUFFIX}/kernel_binary_helper_hash_value.cpp
                ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/create_command_stream.cpp
                ${COMPUTE_RUNTIME_DIR}/opencl/test/unit_test/libult/io_functions.cpp
                ${NEO_SOURCE_DIR}/opencl/test/unit_test/global_environment.cpp

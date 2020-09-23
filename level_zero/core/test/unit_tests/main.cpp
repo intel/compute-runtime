@@ -54,6 +54,7 @@ using namespace L0::ult;
 
 PRODUCT_FAMILY productFamily = NEO::DEFAULT_TEST_PLATFORM::hwInfo.platform.eProductFamily;
 GFXCORE_FAMILY renderCoreFamily = NEO::DEFAULT_TEST_PLATFORM::hwInfo.platform.eRenderCoreFamily;
+int32_t revId = -1;
 
 namespace NEO {
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
@@ -187,6 +188,7 @@ int main(int argc, char **argv) {
     }
     productFamily = hwInfoForTests.platform.eProductFamily;
     renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
+    revId = hwInfoForTests.platform.usRevId;
 
     // Platforms with uninitialized factory are not supported
     if (L0::commandListFactory[productFamily] == nullptr) {
@@ -209,12 +211,17 @@ int main(int argc, char **argv) {
     binaryNameSuffix.append(hwInfoForTests.capabilityTable.platformType);
 
     std::string testBinaryFiles = getRunPath(argv[0]);
-    testBinaryFiles.append("/level_zero/");
-    testBinaryFiles.append(binaryNameSuffix);
+    std::string testBinaryFilesNoRev = testBinaryFiles;
+    testBinaryFilesNoRev.append("/level_zero/");
+    testBinaryFiles.append("/" + binaryNameSuffix + "/");
+    testBinaryFilesNoRev.append(binaryNameSuffix + "/");
+
+    testBinaryFiles.append(std::to_string(revId));
     testBinaryFiles.append("/");
     testBinaryFiles.append(testFiles);
+    testBinaryFilesNoRev.append(testFiles);
     testFiles = testBinaryFiles;
-
+    testFilesNoRev = testBinaryFilesNoRev;
     listeners.Append(new NEO::MemoryLeakListener);
 
     NEO::GmmHelper::createGmmContextWrapperFunc =

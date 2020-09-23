@@ -17,7 +17,9 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_builtin_functions_lib_impl_timestamps.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device_for_spirv.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 namespace L0 {
@@ -519,17 +521,24 @@ using AppendQueryKernelTimestamps = CommandListCreate;
 using TestPlatforms = IsAtLeastProduct<IGFX_SKYLAKE>;
 
 HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithoutOffsetsThenProperBuiltinWasAdded, TestPlatforms) {
+    std::unique_ptr<MockDeviceForSpv<false>> testDevice = std::unique_ptr<MockDeviceForSpv<false>>(new MockDeviceForSpv<false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
+    testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
+    testDevice->getBuiltinFunctionsLib()->initFunctions();
+
+    device = testDevice.get();
+
     MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::RenderCompute);
 
-    device->getBuiltinFunctionsLib()->initFunctions();
     MockEvent event;
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
 
     void *alloc;
+
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = driverHandle->allocDeviceMem(device, &deviceDesc, 128, 1, &alloc);
+
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     ze_event_handle_t events[2] = {event.toHandle(), event.toHandle()};
 
@@ -546,7 +555,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 
     EXPECT_TRUE(containsDstPtr);
 
-    EXPECT_EQ(device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestamps)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
+    EXPECT_EQ(testDevice->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestamps)->getIsaAllocation()->getGpuAddress(), commandList.cmdListHelper.isaAllocation->getGpuAddress());
     EXPECT_EQ(2u, commandList.cmdListHelper.groupSize[0]);
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[2]);
@@ -561,10 +570,15 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 }
 
 HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithOffsetsThenProperBuiltinWasAdded, TestPlatforms) {
+    std::unique_ptr<MockDeviceForSpv<false>> testDevice = std::unique_ptr<MockDeviceForSpv<false>>(new MockDeviceForSpv<false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
+    testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
+    testDevice->getBuiltinFunctionsLib()->initFunctions();
+
+    device = testDevice.get();
+
     MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::RenderCompute);
 
-    device->getBuiltinFunctionsLib()->initFunctions();
     MockEvent event;
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;
@@ -618,10 +632,15 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
 }
 
 HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTimestampsWithEventsNumberBiggerThanMaxWorkItemSizeThenProperGroupSizeAndGroupCountIsSet, TestPlatforms) {
+    std::unique_ptr<MockDeviceForSpv<false>> testDevice = std::unique_ptr<MockDeviceForSpv<false>>(new MockDeviceForSpv<false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
+    testDevice->builtins.reset(new MockBuiltinFunctionsLibImplTimestamps(testDevice.get(), testDevice->getNEODevice()->getBuiltIns()));
+    testDevice->getBuiltinFunctionsLib()->initFunctions();
+
+    device = testDevice.get();
+
     MockCommandListForAppendLaunchKernel<gfxCoreFamily> commandList;
     commandList.initialize(device, NEO::EngineGroupType::RenderCompute);
 
-    device->getBuiltinFunctionsLib()->initFunctions();
     MockEvent event;
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     event.signalScope = ZE_EVENT_SCOPE_FLAG_HOST;

@@ -11,11 +11,6 @@
 
 namespace L0 {
 
-std::unique_ptr<BuiltinFunctionsLib> BuiltinFunctionsLib::create(Device *device,
-                                                                 NEO::BuiltIns *builtins) {
-    return std::unique_ptr<BuiltinFunctionsLib>(new BuiltinFunctionsLibImpl(device, builtins));
-}
-
 std::unique_lock<BuiltinFunctionsLib::MutexType> BuiltinFunctionsLib::obtainUniqueOwnership() {
     return std::unique_lock<BuiltinFunctionsLib::MutexType>(this->ownershipMutex);
 }
