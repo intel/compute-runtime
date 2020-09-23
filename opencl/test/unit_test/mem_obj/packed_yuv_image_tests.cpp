@@ -70,7 +70,7 @@ class PackedYuvImageTest : public testing::Test,
 
 cl_channel_order packedYuvChannels[] = {CL_YUYV_INTEL, CL_UYVY_INTEL, CL_YVYU_INTEL, CL_VYUY_INTEL};
 
-TEST_P(PackedYuvImageTest, isPackedYuvImageReturnsTrue) {
+TEST_P(PackedYuvImageTest, GivenValidPackedYuvImageFormatAndDescriptorWhenCreatingImageThenIsPackYuvImageReturnsTrue) {
 
     flags = CL_MEM_READ_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(
@@ -89,20 +89,20 @@ TEST_P(PackedYuvImageTest, isPackedYuvImageReturnsTrue) {
     delete image;
 }
 
-TEST_P(PackedYuvImageTest, validPackedYuvImageFormatAndDescriptor) {
+TEST_P(PackedYuvImageTest, GivenValidPackedYuvImageFormatAndDescriptorWhenValidatingImageFormatThenValidImageIsReturned) {
     flags = CL_MEM_READ_ONLY;
     validateFormat();
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_P(PackedYuvImageTest, invalidPackedYuvImageFormat) {
+TEST_P(PackedYuvImageTest, GivenInvalidFormatWhenValidatingImageFormatThenInvalidFormatDescriptorErrorIsReturned) {
     imageFormat.image_channel_data_type = CL_SNORM_INT16;
     flags = CL_MEM_READ_ONLY;
     validateFormat();
     EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
 }
 
-TEST_P(PackedYuvImageTest, invalidPackedYuvImageWidth) {
+TEST_P(PackedYuvImageTest, GivenInvalidWidthWhenValidatingImageFormatThenInvalidImageDescriptorErrorIsReturned) {
     imageDesc.image_width = 17;
     flags = CL_MEM_READ_ONLY;
     validateFormat();
