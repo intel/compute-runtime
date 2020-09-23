@@ -83,23 +83,6 @@ HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenComma
     retVal = clReleaseCommandQueue(cmdq);
 }
 
-HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersAndDirectSubmissionEnabledWhenQueueIsCreatedThenCommandStreamReceiverDoesNotSwitchToBatchingMode) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.EnableDirectSubmission.set(1);
-
-    cl_int retVal = CL_SUCCESS;
-    cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
-    auto clDevice = castToObject<ClDevice>(testedClDevice);
-    auto mockDevice = reinterpret_cast<MockDevice *>(&clDevice->getDevice());
-    auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
-    csr.directSubmissionAvailable = true;
-    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
-
-    auto cmdq = clCreateCommandQueue(pContext, testedClDevice, ooq, &retVal);
-    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
-    retVal = clReleaseCommandQueue(cmdq);
-}
-
 HWTEST_F(clCreateCommandQueueTest, GivenForcedDispatchModeAndOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverDoesntSwitchToBatchingMode) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
