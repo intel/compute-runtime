@@ -364,3 +364,8 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenUnknownProductFamilyWhenGettingIsWorkaro
         EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
     }
 }
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12WhenCallIsPackedSupportedThenReturnTrue) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_TRUE(helper.packedFormatsSupported());
+}

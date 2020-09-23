@@ -496,4 +496,10 @@ template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const {
     return !hwInfo.featureTable.ftrLocalMemory;
 }
+
+template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::packedFormatsSupported() const {
+    return false;
+}
+
 } // namespace NEO

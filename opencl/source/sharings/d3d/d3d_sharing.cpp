@@ -82,13 +82,22 @@ void D3DSharing<D3D>::updateImgInfoAndDesc(Gmm *gmm, ImageInfo &imgInfo, ImagePl
 }
 
 template <typename D3D>
-const ClSurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags, bool supportsOcl20Features) {
+const ClSurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags, bool supportsOcl20Features, bool packedSupported) {
     ArrayRef<const ClSurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, supportsOcl20Features);
     for (auto &format : formats) {
         if (gmmFormat == format.surfaceFormat.GMMSurfaceFormat) {
             return &format;
         }
     }
+    if (packedSupported) {
+        formats = SurfaceFormats::packed();
+        for (auto &format : formats) {
+            if (gmmFormat == format.surfaceFormat.GMMSurfaceFormat) {
+                return &format;
+            }
+        }
+    }
+
     return nullptr;
 }
 

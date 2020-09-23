@@ -30,6 +30,7 @@ class SurfaceFormats {
 
     static const ClSurfaceFormatInfo packedYuvSurfaceFormats[];
     static const ClSurfaceFormatInfo planarYuvSurfaceFormats[];
+    static const ClSurfaceFormatInfo packedSurfaceFormats[];
 
   public:
     static ArrayRef<const ClSurfaceFormatInfo> readOnly12() noexcept;
@@ -38,6 +39,7 @@ class SurfaceFormats {
     static ArrayRef<const ClSurfaceFormatInfo> readWrite() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> packedYuv() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> planarYuv() noexcept;
+    static ArrayRef<const ClSurfaceFormatInfo> packed() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> readOnlyDepth() noexcept;
     static ArrayRef<const ClSurfaceFormatInfo> readWriteDepth() noexcept;
 

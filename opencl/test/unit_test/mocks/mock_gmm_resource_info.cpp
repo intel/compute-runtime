@@ -117,6 +117,7 @@ void MockGmmResourceInfo::setSurfaceFormat() {
 
     iterate(SurfaceFormats::packedYuv());
     iterate(SurfaceFormats::planarYuv());
+    iterate(SurfaceFormats::packed());
 
     iterate(SurfaceFormats::readOnlyDepth());
     iterate(SurfaceFormats::readWriteDepth());

@@ -680,6 +680,26 @@ TYPED_TEST_P(D3DTests, givenInvalidSubresourceWhenCreateTexture3dIsCalledThenFai
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
+TYPED_TEST_P(D3DTests, givenPackedFormatWhenLookingForSurfaceFormatWithPackedNotSupportedThenReturnNull) {
+    EXPECT_GT(SurfaceFormats::packed().size(), 0u);
+    for (auto &format : SurfaceFormats::packed()) {
+        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */, false /* packedSupported */);
+        ASSERT_EQ(nullptr, surfaceFormat);
+    }
+}
+
+TYPED_TEST_P(D3DTests, givenPackedFormatWhenLookingForSurfaceFormatWithPackedSupportedThenReturnValidFormat) {
+    EXPECT_GT(SurfaceFormats::packed().size(), 0u);
+    uint32_t counter = 0;
+    for (auto &format : SurfaceFormats::packed()) {
+        auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */, true /* packedSupported */);
+        ASSERT_NE(nullptr, surfaceFormat);
+        counter++;
+        EXPECT_EQ(&format, surfaceFormat);
+    }
+    EXPECT_NE(counter, 0U);
+}
+
 TYPED_TEST_P(D3DTests, givenReadonlyFormatWhenLookingForSurfaceFormatThenReturnValidFormat) {
     EXPECT_GT(SurfaceFormats::readOnly12().size(), 0u);
     for (auto &format : SurfaceFormats::readOnly12()) {
@@ -688,7 +708,7 @@ TYPED_TEST_P(D3DTests, givenReadonlyFormatWhenLookingForSurfaceFormatThenReturnV
             format.OCLImageFormat.image_channel_order == CL_BGRA ||
             format.OCLImageFormat.image_channel_order == CL_RG ||
             format.OCLImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_ONLY, false /* supportsOcl20Features */, true);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -703,7 +723,7 @@ TYPED_TEST_P(D3DTests, givenWriteOnlyFormatWhenLookingForSurfaceFormatThenReturn
             format.OCLImageFormat.image_channel_order == CL_BGRA ||
             format.OCLImageFormat.image_channel_order == CL_RG ||
             format.OCLImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_WRITE_ONLY, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_WRITE_ONLY, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, true);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -718,7 +738,7 @@ TYPED_TEST_P(D3DTests, givenReadWriteFormatWhenLookingForSurfaceFormatThenReturn
             format.OCLImageFormat.image_channel_order == CL_BGRA ||
             format.OCLImageFormat.image_channel_order == CL_RG ||
             format.OCLImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_WRITE, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(format.surfaceFormat.GMMSurfaceFormat, CL_MEM_READ_WRITE, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, true);
             ASSERT_NE(nullptr, surfaceFormat);
             EXPECT_EQ(&format, surfaceFormat);
         }
@@ -756,7 +776,9 @@ REGISTER_TYPED_TEST_CASE_P(D3DTests,
                            givenP016FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParams,
                            givenNV12FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
                            givenP010FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
-                           givenP016FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams);
+                           givenP016FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams,
+                           givenPackedFormatWhenLookingForSurfaceFormatWithPackedNotSupportedThenReturnNull,
+                           givenPackedFormatWhenLookingForSurfaceFormatWithPackedSupportedThenReturnValidFormat);
 
 INSTANTIATE_TYPED_TEST_CASE_P(D3DSharingTests, D3DTests, D3DTypes);
 

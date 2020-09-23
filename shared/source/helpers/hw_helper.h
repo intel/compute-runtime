@@ -125,6 +125,7 @@ class HwHelper {
     virtual bool heapInLocalMem(const HardwareInfo &hwInfo) const = 0;
     virtual bool useOnlyGlobalTimestamps() const = 0;
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
+    virtual bool packedFormatsSupported() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -308,6 +309,8 @@ class HwHelperHw : public HwHelper {
     bool useOnlyGlobalTimestamps() const override;
 
     bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const override;
+
+    bool packedFormatsSupported() const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

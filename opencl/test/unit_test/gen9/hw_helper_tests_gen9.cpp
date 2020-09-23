@@ -17,6 +17,11 @@ GEN9TEST_F(HwHelperTestGen9, getMaxBarriersPerSliceReturnsCorrectSize) {
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
 
+GEN9TEST_F(HwHelperTestGen9, givenGen9WhenCallIsPackedSupportedThenReturnFalse) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_FALSE(helper.packedFormatsSupported());
+}
+
 GEN9TEST_F(HwHelperTestGen9, setCapabilityCoherencyFlag) {
     auto &helper = HwHelper::get(renderCoreFamily);
 

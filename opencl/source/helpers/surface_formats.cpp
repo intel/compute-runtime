@@ -103,6 +103,11 @@ const ClSurfaceFormatInfo SurfaceFormats::planarYuvSurfaceFormats[] = {
     {{CL_NV12_INTEL,      CL_UNORM_INT8},     {GMM_FORMAT_NV12,                     GFX3DSTATE_SURFACEFORMAT_NV12                    , 0, 1, 1, 1}}
 };
 
+const ClSurfaceFormatInfo SurfaceFormats::packedSurfaceFormats[] = {
+    {{CL_RG,            CL_UNORM_INT16},    {GMM_FORMAT_Y210,                       GFX3DSTATE_SURFACEFORMAT_PACKED_422_16           , 0, 2, 2, 4}},
+    {{CL_RG,            CL_UNORM_INT16},    {GMM_FORMAT_YUY2_2x1,                   GFX3DSTATE_SURFACEFORMAT_R10G10B10A2_UNORM       , 0, 2, 2, 4}}
+ };
+
 const ClSurfaceFormatInfo SurfaceFormats::readOnlyDepthSurfaceFormats[] = { DEPTHFORMATS, DEPTHSTENCILFORMATS };
 
 const ClSurfaceFormatInfo SurfaceFormats::readWriteDepthSurfaceFormats[] = { DEPTHFORMATS };
@@ -129,6 +134,11 @@ ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::packedYuv() noexcept {
 
 ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::planarYuv() noexcept {
     return ArrayRef<const ClSurfaceFormatInfo>(planarYuvSurfaceFormats);
+}
+
+ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::packed() noexcept
+{
+    return ArrayRef<const ClSurfaceFormatInfo>(packedSurfaceFormats);
 }
 
 ArrayRef<const ClSurfaceFormatInfo> SurfaceFormats::readOnlyDepth() noexcept {

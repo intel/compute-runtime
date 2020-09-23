@@ -27,4 +27,9 @@ void LriHelper<Family>::program(LinearStream *cmdStream, uint32_t address, uint3
     *lri = cmd;
 }
 
+template <>
+bool HwHelperHw<Family>::packedFormatsSupported() const {
+    return true;
+}
+
 } // namespace NEO
