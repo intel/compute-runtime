@@ -110,13 +110,20 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     if (kernelInfo->heapInfo.pKernelHeap != nullptr) {
+        bool doCpuIsaCopy = true;
+
         if (allocation->isAllocatedInLocalMemoryPool() && hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo)) {
             auto status = NEO::BlitHelperFunctions::blitMemoryToAllocation(*device, allocation, 0, kernelInfo->heapInfo.pKernelHeap, {kernelIsaSize, 1, 1});
-            UNRECOVERABLE_IF(status != NEO::BlitOperationResult::Success);
-        } else {
+            UNRECOVERABLE_IF(status == NEO::BlitOperationResult::Fail);
+
+            doCpuIsaCopy = (status == NEO::BlitOperationResult::Unsupported);
+        }
+
+        if (doCpuIsaCopy) {
             memoryManager.copyMemoryToAllocation(allocation, kernelInfo->heapInfo.pKernelHeap, kernelIsaSize);
         }
     }
+
     isaGraphicsAllocation.reset(allocation);
 
     this->crossThreadDataSize = this->kernelDescriptor->kernelAttributes.crossThreadDataSize;
