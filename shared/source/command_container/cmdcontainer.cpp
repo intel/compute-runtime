@@ -136,6 +136,8 @@ void CommandContainer::reset() {
     }
 
     reserveBindlessOffsets(*indirectHeaps[HeapType::SURFACE_STATE]);
+    iddBlock = nullptr;
+    nextIddInBlock = this->getNumIddPerBlock();
 }
 
 void *CommandContainer::getHeapSpaceAllowGrow(HeapType heapType,

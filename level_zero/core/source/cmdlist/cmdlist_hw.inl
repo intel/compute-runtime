@@ -63,7 +63,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     ze_result_t returnType = parseErrorCode(returnValue);
     if (returnType == ZE_RESULT_SUCCESS) {
         if (!isCopyOnly()) {
-            programStateBaseAddress(commandContainer);
+            programStateBaseAddress(commandContainer, false);
         }
     }
 
@@ -1593,7 +1593,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     commandContainer.reset();
 
     if (!isCopyOnly()) {
-        programStateBaseAddress(commandContainer);
+        programStateBaseAddress(commandContainer, true);
     }
 
     return ZE_RESULT_SUCCESS;
@@ -1631,10 +1631,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::setGlobalWorkSizeIndirect(NEO:
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandContainer &container) {
+void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired) {
     NEO::PipeControlArgs args(true);
     args.hdcPipelineFlush = true;
     args.textureCacheInvalidationEnable = true;
+    if (genericMediaStateClearRequired) {
+        args.genericMediaStateClear = true;
+    }
     NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
 
     STATE_BASE_ADDRESS sba;
