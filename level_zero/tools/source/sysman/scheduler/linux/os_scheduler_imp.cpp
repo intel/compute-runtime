@@ -20,7 +20,8 @@ const std::string LinuxSchedulerImp::defaultHeartbeatIntervalMilliSecs(".default
 const std::string LinuxSchedulerImp::engineDir("engine");
 
 ze_result_t LinuxSchedulerImp::getProperties(zes_sched_properties_t &schedProperties) {
-    schedProperties.onSubdevice = false;
+    schedProperties.onSubdevice = onSubdevice;
+    schedProperties.subdeviceId = subdeviceId;
     schedProperties.canControl = canControlScheduler();
     schedProperties.engines = this->engineType;
     schedProperties.supportedModes = (1 << ZES_SCHED_MODE_TIMEOUT) | (1 << ZES_SCHED_MODE_TIMESLICE) | (1 << ZES_SCHED_MODE_EXCLUSIVE);
@@ -175,9 +176,7 @@ static const std::multimap<zes_engine_type_flag_t, std::string> level0EngineType
     {ZES_ENGINE_TYPE_FLAG_MEDIA, "vcs"},
     {ZES_ENGINE_TYPE_FLAG_OTHER, "vecs"}};
 
-ze_result_t OsScheduler::getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines, OsSysman *pOsSysman) {
-    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
-    auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+static ze_result_t getNumEngineTypeAndInstancesForDevice(std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines, SysfsAccess *pSysfsAccess) {
     std::vector<std::string> localListOfAllEngines = {};
     auto result = pSysfsAccess->scanDirEntries(LinuxSchedulerImp::engineDir, localListOfAllEngines);
     if (ZE_RESULT_SUCCESS != result) {
@@ -206,15 +205,24 @@ ze_result_t OsScheduler::getNumEngineTypeAndInstances(std::map<zes_engine_type_f
     return result;
 }
 
-LinuxSchedulerImp::LinuxSchedulerImp(OsSysman *pOsSysman, zes_engine_type_flag_t type, std::vector<std::string> &listOfEngines) {
+ze_result_t OsScheduler::getNumEngineTypeAndInstances(
+    std::map<zes_engine_type_flag_t, std::vector<std::string>> &mapOfEngines, OsSysman *pOsSysman, ze_device_handle_t subdeviceHandle) {
+    LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+    auto pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    return getNumEngineTypeAndInstancesForDevice(mapOfEngines, pSysfsAccess);
+}
+
+LinuxSchedulerImp::LinuxSchedulerImp(
+    OsSysman *pOsSysman, zes_engine_type_flag_t type, std::vector<std::string> &listOfEngines, ze_bool_t isSubdevice,
+    uint32_t subdeviceId) : engineType(type), onSubdevice(isSubdevice), subdeviceId(subdeviceId) {
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-    engineType = type;
     this->listOfEngines = listOfEngines;
 }
 
-OsScheduler *OsScheduler::create(OsSysman *pOsSysman, zes_engine_type_flag_t type, std::vector<std::string> &listOfEngines) {
-    LinuxSchedulerImp *pLinuxSchedulerImp = new LinuxSchedulerImp(pOsSysman, type, listOfEngines);
+OsScheduler *OsScheduler::create(
+    OsSysman *pOsSysman, zes_engine_type_flag_t type, std::vector<std::string> &listOfEngines, ze_bool_t isSubdevice, uint32_t subdeviceId) {
+    LinuxSchedulerImp *pLinuxSchedulerImp = new LinuxSchedulerImp(pOsSysman, type, listOfEngines, isSubdevice, subdeviceId);
     return static_cast<OsScheduler *>(pLinuxSchedulerImp);
 }
 

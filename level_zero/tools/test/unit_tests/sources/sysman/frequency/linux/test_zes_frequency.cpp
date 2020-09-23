@@ -537,5 +537,17 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
+TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingFrequencyPropertiesThenValidSchedPropertiesRetrieved) {
+    zes_freq_properties_t properties = {};
+    ze_device_properties_t deviceProperties = {};
+    Device::fromHandle(device)->getProperties(&deviceProperties);
+    LinuxFrequencyImp *pLinuxFrequencyImp = new LinuxFrequencyImp(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE,
+                                                                  deviceProperties.subdeviceId, ZES_FREQ_DOMAIN_GPU);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxFrequencyImp->osFrequencyGetProperties(properties));
+    EXPECT_EQ(properties.subdeviceId, deviceProperties.subdeviceId);
+    EXPECT_EQ(properties.onSubdevice, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
+    delete pLinuxFrequencyImp;
+}
+
 } // namespace ult
 } // namespace L0

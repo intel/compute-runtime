@@ -26,8 +26,10 @@ class OsScheduler {
     virtual ze_result_t setHeartbeatInterval(uint64_t heartbeat) = 0;
     virtual ze_bool_t canControlScheduler() = 0;
     virtual ze_result_t getProperties(zes_sched_properties_t &properties) = 0;
-    static OsScheduler *create(OsSysman *pOsSysman, zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines);
-    static ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &listOfEngines, OsSysman *pOsSysman);
+    static OsScheduler *create(OsSysman *pOsSysman, zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines,
+                               ze_bool_t isSubdevice, uint32_t subdeviceId);
+    static ze_result_t getNumEngineTypeAndInstances(std::map<zes_engine_type_flag_t, std::vector<std::string>> &listOfEngines,
+                                                    OsSysman *pOsSysman, ze_device_handle_t subdeviceHandle);
     virtual ~OsScheduler() = default;
 };
 

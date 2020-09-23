@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
+#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <map>
@@ -41,7 +42,7 @@ class Scheduler : _zes_sched_handle_t {
 struct SchedulerHandleContext : NEO::NonCopyableOrMovableClass {
     SchedulerHandleContext(OsSysman *pOsSysman);
     ~SchedulerHandleContext();
-    void init();
+    void init(std::vector<ze_device_handle_t> &deviceHandles);
     ze_result_t schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler);
 
     OsSysman *pOsSysman = nullptr;
@@ -49,7 +50,7 @@ struct SchedulerHandleContext : NEO::NonCopyableOrMovableClass {
     ze_device_handle_t hCoreDevice = nullptr;
 
   private:
-    void createHandle(zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines);
+    void createHandle(zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines, ze_device_handle_t deviceHandle);
 };
 
 } // namespace L0

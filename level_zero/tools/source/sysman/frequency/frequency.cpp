@@ -25,8 +25,8 @@ void FrequencyHandleContext::createHandle(ze_device_handle_t deviceHandle, zes_f
     handleList.push_back(pFrequency);
 }
 
-ze_result_t FrequencyHandleContext::init(std::vector<ze_device_handle_t> deviceHandles) {
-    for (auto deviceHandle : deviceHandles) {
+ze_result_t FrequencyHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
+    for (const auto &deviceHandle : deviceHandles) {
         auto totalDomains = OsFrequency::getNumberOfFreqDoainsSupported(pOsSysman);
         UNRECOVERABLE_IF(totalDomains > 2);
         for (uint32_t frequencyDomain = 0; frequencyDomain < totalDomains; frequencyDomain++) {

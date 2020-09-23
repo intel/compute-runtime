@@ -366,6 +366,9 @@ void testSysmanScheduler(ze_device_handle_t &device) {
         std::cout << "Could not retrieve scheduler domains" << std::endl;
         return;
     }
+    if (verbose) {
+        std::cout << "Number of  scheduler domains = " << count << std::endl;
+    }
     std::vector<zes_sched_handle_t> handles(count, nullptr);
     VALIDATECALL(zesDeviceEnumSchedulers(device, &count, handles.data()));
 
@@ -375,6 +378,19 @@ void testSysmanScheduler(ze_device_handle_t &device) {
         if (verbose) {
             std::cout << "Current Mode = " << getSchedulerModeName(currentMode) << std::endl;
         }
+
+        zes_sched_properties_t schedProperties = {};
+        VALIDATECALL(zesSchedulerGetProperties(handle, &schedProperties));
+        if (verbose) {
+            std::cout << "Scheduler properties: onSubdevice  = " << schedProperties.onSubdevice << std::endl;
+            if (schedProperties.onSubdevice) {
+                std::cout << "Scheduler properties: subdeviceId  = " << schedProperties.subdeviceId << std::endl;
+            }
+            std::cout << "Scheduler properties: canControl  = " << schedProperties.canControl << std::endl;
+            std::cout << "Scheduler properties: engines  = " << schedProperties.engines << std::endl;
+            std::cout << "Scheduler properties: supportedModes  = " << schedProperties.supportedModes << std::endl;
+        }
+
         zes_sched_timeout_properties_t timeoutProperties = {};
         zes_sched_timeslice_properties_t timesliceProperties = {};
 

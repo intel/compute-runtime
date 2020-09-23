@@ -55,7 +55,7 @@ struct FrequencyHandleContext {
     FrequencyHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~FrequencyHandleContext();
 
-    ze_result_t init(std::vector<ze_device_handle_t> deviceHandles);
+    ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles);
 
     ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency);
 

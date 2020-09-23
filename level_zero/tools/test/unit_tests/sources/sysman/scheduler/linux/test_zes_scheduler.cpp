@@ -34,6 +34,7 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<Mock<SchedulerSysfsAccess>> pSysfsAccess;
     SysfsAccess *pSysfsAccessOld = nullptr;
+    std::vector<ze_device_handle_t> deviceHandles;
 
     void SetUp() override {
         SysmanDeviceFixture::SetUp();
@@ -56,7 +57,22 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
         ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
             .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<SchedulerSysfsAccess>::getscanDirEntries));
 
-        pSysmanDeviceImp->pSchedulerHandleContext->init();
+        // delete handles created in initial SysmanDeviceHandleContext::init() call
+        for (auto handle : pSysmanDeviceImp->pSchedulerHandleContext->handleList) {
+            delete handle;
+        }
+        pSysmanDeviceImp->pSchedulerHandleContext->handleList.clear();
+        uint32_t subDeviceCount = 0;
+
+        // We received a device handle. Check for subdevices in this device
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+        pSysmanDeviceImp->pSchedulerHandleContext->init(deviceHandles);
     }
 
     void TearDown() override {
@@ -98,7 +114,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenComponentCountZeroWhenCallingzesDevice
         .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<SchedulerSysfsAccess>::getscanDirEntriesStatusReturnError));
 
     auto pSchedulerHandleContextTest = std::make_unique<SchedulerHandleContext>(pOsSysman);
-    pSchedulerHandleContextTest->init();
+    pSchedulerHandleContextTest->init(deviceHandles);
     EXPECT_EQ(0u, static_cast<uint32_t>(pSchedulerHandleContextTest->handleList.size()));
 }
 
@@ -429,6 +445,19 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
         EXPECT_LE(properties.engines, ZES_ENGINE_TYPE_FLAG_DMA);
         EXPECT_EQ(properties.supportedModes, static_cast<uint32_t>((1 << ZES_SCHED_MODE_TIMEOUT) | (1 << ZES_SCHED_MODE_TIMESLICE) | (1 << ZES_SCHED_MODE_EXCLUSIVE)));
     }
+}
+
+TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingSchedPropertiesThenValidSchedPropertiesRetrieved) {
+    zes_sched_properties_t properties = {};
+    std::vector<std::string> listOfEngines;
+    ze_device_properties_t deviceProperties = {};
+    Device::fromHandle(device)->getProperties(&deviceProperties);
+    LinuxSchedulerImp *pLinuxSchedulerImp = new LinuxSchedulerImp(pOsSysman, ZES_ENGINE_TYPE_FLAG_COMPUTE, listOfEngines,
+                                                                  deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSchedulerImp->getProperties(properties));
+    EXPECT_EQ(properties.subdeviceId, deviceProperties.subdeviceId);
+    EXPECT_EQ(properties.onSubdevice, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
+    delete pLinuxSchedulerImp;
 }
 
 } // namespace ult

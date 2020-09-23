@@ -23,16 +23,18 @@ SchedulerHandleContext::~SchedulerHandleContext() {
     }
     handleList.clear();
 }
-void SchedulerHandleContext::createHandle(zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines) {
-    Scheduler *pScheduler = new SchedulerImp(pOsSysman, engineType, listOfEngines);
+void SchedulerHandleContext::createHandle(zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines, ze_device_handle_t deviceHandle) {
+    Scheduler *pScheduler = new SchedulerImp(pOsSysman, engineType, listOfEngines, deviceHandle);
     handleList.push_back(pScheduler);
 }
 
-void SchedulerHandleContext::init() {
-    std::map<zes_engine_type_flag_t, std::vector<std::string>> engineTypeInstance = {};
-    OsScheduler::getNumEngineTypeAndInstances(engineTypeInstance, pOsSysman);
-    for (auto itr = engineTypeInstance.begin(); itr != engineTypeInstance.end(); ++itr) {
-        createHandle(itr->first, itr->second);
+void SchedulerHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
+    for (const auto &deviceHandle : deviceHandles) {
+        std::map<zes_engine_type_flag_t, std::vector<std::string>> engineTypeInstance = {};
+        OsScheduler::getNumEngineTypeAndInstances(engineTypeInstance, pOsSysman, deviceHandle);
+        for (auto itr = engineTypeInstance.begin(); itr != engineTypeInstance.end(); ++itr) {
+            createHandle(itr->first, itr->second, deviceHandle);
+        }
     }
 }
 
