@@ -30,7 +30,10 @@ You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 |Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake)| 2.1 | Y |
 |Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake)| 1.2 | - |
 |Intel Core Processors with Gen11 graphics devices (formerly Ice Lake)| 2.1 | Y |
+|Intel Atom Processors with Gen11 graphics devices (formerly Elkhart Lake)| 1.2 | - |
 |Intel Core Processors with Gen12 graphics devices (formerly Tiger Lake)| 3.0 | Y |
+
+Note: All platforms are expected to move to OpenCL 3.0 in 2020. 
 
 ## Release cadence
 
