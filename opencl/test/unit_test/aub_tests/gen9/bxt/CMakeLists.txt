@@ -5,6 +5,6 @@
 #
 
 if(TESTS_BXT)
-  set(aub_test_config "bxt/1/3/6")
+  set(aub_test_config "bxt/1/3/6/0")
   include(${OPENCL_AUB_TEST_DIR}/cmake/run_aub_test_target.cmake)
 endif()

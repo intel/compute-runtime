@@ -16,9 +16,9 @@ if(NOT DEFINED cloc_cmd_prefix)
   endif()
 endif()
 
-function(compile_kernels_gen platform_name_with_type platform_name suffix)
+function(compile_kernels_gen platform_name_with_type revision_id platform_name suffix)
 
-  set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}/")
+  set(outputdir "${TargetDir}/${suffix}/${revision_id}/test_files/${NEO_ARCH}/")
   set(compiled_kernels)
 
   foreach(filepath ${ARGN})
@@ -36,7 +36,7 @@ function(compile_kernels_gen platform_name_with_type platform_name suffix)
 
     add_custom_command(
                        OUTPUT ${output_files}
-                       COMMAND ${cloc_cmd_prefix} -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir}
+                       COMMAND ${cloc_cmd_prefix} -file ${filename} -device ${platform_name} -${NEO_BITS} -out_dir ${outputdir} -revision_id ${revision_id}
                        WORKING_DIRECTORY ${workdir}
                        DEPENDS ${filepath} ocloc copy_compiler_files
     )
@@ -44,13 +44,13 @@ function(compile_kernels_gen platform_name_with_type platform_name suffix)
     list(APPEND compiled_kernels ${output_files})
 
   endforeach()
-  list(APPEND compiled_kernels_${platform_name_with_type} ${compiled_kernels})
-  set(compiled_kernels_${platform_name_with_type} ${compiled_kernels_${platform_name_with_type}} PARENT_SCOPE)
+  list(APPEND compiled_kernels_${platform_name_with_type}_${revision_id} ${compiled_kernels})
+  set(compiled_kernels_${platform_name_with_type}_${revision_id} ${compiled_kernels_${platform_name_with_type}_${revision_id}} PARENT_SCOPE)
 endfunction()
 
-function(neo_shared_copy_test_files target product)
+function(neo_shared_copy_test_files target product revision_id)
   string(TOLOWER ${product} product)
-  set(dest_dir "${TargetDir}/${product}/test_files")
+  set(dest_dir "${TargetDir}/${product}/${revision_id}/test_files")
   set(source_dir "${NEO_SOURCE_DIR}/shared/test/unit_test/test_files")
   add_custom_target(${target})
   add_custom_command(
@@ -62,15 +62,17 @@ function(neo_shared_copy_test_files target product)
                      DEPENDS ${source_dir}
   )
   add_dependencies(${target} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}")
+  set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
 endfunction()
 
 file(GLOB_RECURSE TEST_KERNELS *.cl)
 add_custom_target(prepare_test_kernel_for_shared)
 
 macro(macro_for_each_platform)
-  neo_shared_copy_test_files(copy_test_kernel_${PLATFORM_IT} ${PLATFORM_IT})
-  add_dependencies(prepare_test_kernel_for_shared copy_test_kernel_${PLATFORM_IT})
+  foreach(REVISION_ID ${${GEN_TYPE}_REVISIONS})
+    neo_shared_copy_test_files(copy_test_kernel_${PLATFORM_IT}_${REVISION_ID} ${PLATFORM_IT} ${REVISION_ID})
+    add_dependencies(prepare_test_kernel_for_shared copy_test_kernel_${PLATFORM_IT}_${REVISION_ID})
+  endforeach()
 endmacro()
 
 macro(macro_for_each_gen)
@@ -81,13 +83,13 @@ macro(macro_for_each_gen)
 
       get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
       set(PLATFORM_LOWER ${DEFAULT_SUPPORTED_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
+      foreach(REVISION_ID ${${GEN_TYPE}_REVISIONS})
+        compile_kernels_gen(${family_name_with_type} ${REVISION_ID} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNELS})
 
-      compile_kernels_gen(${family_name_with_type} ${PLATFORM_LOWER} ${family_name_with_type} ${TEST_KERNELS})
-
-      add_custom_target(prepare_test_kernel_for_shared_${family_name_with_type} DEPENDS ${compiled_kernels_${family_name_with_type}})
-      set_target_properties(prepare_test_kernel_for_shared_${family_name_with_type} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${family_name_with_type}")
-      add_dependencies(prepare_test_kernel_for_shared prepare_test_kernel_for_shared_${family_name_with_type})
-
+        add_custom_target(prepare_test_kernel_for_shared_${family_name_with_type}_${REVISION_ID} DEPENDS ${compiled_kernels_${family_name_with_type}_${REVISION_ID}})
+        set_target_properties(prepare_test_kernel_for_shared_${family_name_with_type}_${REVISION_ID} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${family_name_with_type}/${REVISION_ID}")
+        add_dependencies(prepare_test_kernel_for_shared prepare_test_kernel_for_shared_${family_name_with_type}_${REVISION_ID})
+      endforeach()
     endif()
   endforeach()
 endmacro()

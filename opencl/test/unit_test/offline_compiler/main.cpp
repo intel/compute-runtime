@@ -39,6 +39,7 @@ int main(int argc, char **argv) {
     bool useDefaultListener = false;
     std::string devicePrefix("skl");
     std::string familyNameWithType("Gen9core");
+    std::string revId("0");
 
 #if defined(__linux__)
     if (getenv("CLOC_SELFTEST") == nullptr) {
@@ -72,6 +73,9 @@ int main(int argc, char **argv) {
             } else if (strcmp("--family_type", argv[i]) == 0) {
                 ++i;
                 familyNameWithType = argv[i];
+            } else if (strcmp("--rev_id", argv[i]) == 0) {
+                ++i;
+                revId = argv[i];
             }
         }
     }
@@ -82,6 +86,8 @@ int main(int argc, char **argv) {
     std::string nTestFiles = getRunPath();
     nTestFiles.append("/");
     nTestFiles.append(familyNameWithType);
+    nTestFiles.append("/");
+    nTestFiles.append(revId);
     nTestFiles.append("/");
     nTestFiles.append(testFiles);
     testFiles = nTestFiles;

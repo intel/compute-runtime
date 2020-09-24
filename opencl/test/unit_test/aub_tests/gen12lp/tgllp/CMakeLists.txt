@@ -5,6 +5,6 @@
 #
 
 if(TESTS_TGLLP)
-  set(aub_test_config "tgllp/1/6/16")
+  set(aub_test_config "tgllp/1/6/16/0")
   include(${OPENCL_AUB_TEST_DIR}/cmake/run_aub_test_target.cmake)
 endif()
