@@ -163,6 +163,40 @@ HWTEST2_F(CommandListCreate, givenCommandListAnd3DWhbufferenMemoryCopyRegionCall
     EXPECT_GT(cmdList.appendMemoryCopyKernel3dCalledTimes, 0u);
 }
 
+HWTEST2_F(CommandListCreate, givenCopyOnlyCommandListWhenAppendWriteGlobalTimestampCalledThenMiFlushDWWithTimestampEncoded, Platforms) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, returnValue));
+    auto &commandContainer = commandList->commandContainer;
+
+    uint64_t timestampAddress = 0xfffffffffff0L;
+    uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
+
+    const auto commandStreamOffset = commandContainer.getCommandStream()->getUsed();
+    commandList->appendWriteGlobalTimestamp(dstptr, nullptr, 0, nullptr);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(commandContainer.getCommandStream()->getCpuBase(), commandStreamOffset),
+        commandContainer.getCommandStream()->getUsed() - commandStreamOffset));
+
+    auto iterator = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    bool postSyncFound = false;
+    ASSERT_NE(0u, iterator.size());
+    for (auto it : iterator) {
+        auto cmd = genCmdCast<MI_FLUSH_DW *>(*it);
+
+        if ((cmd->getPostSyncOperation(), MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_TIMESTAMP_REGISTER) &&
+            (cmd->getDestinationAddress(), timestampAddress)) {
+            postSyncFound = true;
+        }
+    }
+    ASSERT_TRUE(postSyncFound);
+}
+
 HWTEST2_F(CommandListCreate, givenCommandListWhenAppendWriteGlobalTimestampCalledThenPipeControlWithTimestampWriteEncoded, Platforms) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;

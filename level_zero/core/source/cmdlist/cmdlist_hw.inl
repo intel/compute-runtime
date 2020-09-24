@@ -1457,14 +1457,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         }
     }
 
-    NEO::PipeControlArgs args(false);
+    if (isCopyOnly()) {
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(),
+                                                          reinterpret_cast<uint64_t>(dstptr),
+                                                          0,
+                                                          true,
+                                                          true);
+    } else {
+        NEO::PipeControlArgs args(false);
 
-    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlWithPostSync(
-        *commandContainer.getCommandStream(),
-        POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
-        reinterpret_cast<uint64_t>(dstptr),
-        0,
-        args);
+        NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControlWithPostSync(
+            *commandContainer.getCommandStream(),
+            POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_TIMESTAMP,
+            reinterpret_cast<uint64_t>(dstptr),
+            0,
+            args);
+    }
 
     if (hSignalEvent) {
         CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEvent);
