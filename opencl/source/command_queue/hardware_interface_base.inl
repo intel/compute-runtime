@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
@@ -121,7 +122,10 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     DEBUG_BREAK_IF(offsetInterfaceDescriptorTable % 64 != 0);
 
     dispatchProfilingPerfStartCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
-    dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserStartConfirmation, DebugPauseState::hasUserStartConfirmation);
+
+    if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnEnqueue.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount(), PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
+        dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserStartConfirmation, DebugPauseState::hasUserStartConfirmation);
+    }
 
     size_t currentDispatchIndex = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
@@ -144,7 +148,10 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, commandQueue, mainKernel, postSyncAddress);
     }
 
-    dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserEndConfirmation, DebugPauseState::hasUserEndConfirmation);
+    if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnEnqueue.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount(), PauseOnGpuProperties::PauseMode::AfterWorkload)) {
+        dispatchDebugPauseCommands(commandStream, commandQueue, DebugPauseState::waitingForUserEndConfirmation, DebugPauseState::hasUserEndConfirmation);
+    }
+
     dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
 }
 
@@ -283,8 +290,7 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
     DebugPauseState confirmationTrigger,
     DebugPauseState waitCondition) {
 
-    if (static_cast<int32_t>(commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount()) == DebugManager.flags.PauseOnEnqueue.get() &&
-        !commandQueue.isSpecial()) {
+    if (!commandQueue.isSpecial()) {
         auto address = commandQueue.getGpgpuCommandStreamReceiver().getDebugPauseStateGPUAddress();
         {
             using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;

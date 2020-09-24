@@ -64,6 +64,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/non_copyable_or_moveable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/options.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/pause_on_gpu_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_args.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble.h
