@@ -570,6 +570,13 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
     default:
         outErrReason.append("DeviceBinaryFormat::Zebin : Invalid arg type in cross thread data section in context of : " + dst.kernelMetadata.kernelName + ".\n");
         return DecodeError::InvalidBinary; // unsupported
+
+    case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypePrivateBaseStateless: {
+        dst.payloadMappings.implicitArgs.privateMemoryAddress.stateless = src.offset;
+        dst.payloadMappings.implicitArgs.privateMemoryAddress.pointerSize = src.size;
+        break;
+    }
+
     case NEO::Elf::ZebinKernelMetadata::Types::Kernel::ArgTypeArgBypointer: {
         auto &argTraits = dst.payloadMappings.explicitArgs[src.argIndex].getTraits();
         auto &argAsPointer = dst.payloadMappings.explicitArgs[src.argIndex].as<ArgDescPointer>(true);
