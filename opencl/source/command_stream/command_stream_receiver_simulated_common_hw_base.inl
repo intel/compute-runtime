@@ -104,7 +104,10 @@ uint32_t CommandStreamReceiverSimulatedCommonHw<GfxFamily>::getDeviceIndex() con
     return osContext->getDeviceBitfield().any() ? static_cast<uint32_t>(Math::log2(static_cast<uint32_t>(osContext->getDeviceBitfield().to_ulong()))) : 0u;
 }
 template <typename GfxFamily>
-CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulatedCommonHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex) {}
+CommandStreamReceiverSimulatedCommonHw<GfxFamily>::CommandStreamReceiverSimulatedCommonHw(ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex) : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex) {
+    this->useNewResourceImplicitFlush = false;
+    this->useGpuIdleImplicitFlush = false;
+}
 template <typename GfxFamily>
 CommandStreamReceiverSimulatedCommonHw<GfxFamily>::~CommandStreamReceiverSimulatedCommonHw() = default;
 } // namespace NEO

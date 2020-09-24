@@ -1171,6 +1171,17 @@ HWTEST_F(AubCommandStreamReceiverTests, WhenBlitBufferIsCalledThenCounterIsCorre
     EXPECT_EQ(1u, aubCsr->blitBufferCalled);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenDebugOverwritesForImplicitFlushesWhenTheyAreUsedTheyDoNotAffectAubCapture) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.PerformImplicitFlushForIdleGpu.set(1);
+    DebugManager.flags.PerformImplicitFlushForNewResource.set(1);
+
+    auto aubExecutionEnvironment = getEnvironment<UltAubCommandStreamReceiver<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<UltAubCommandStreamReceiver<FamilyType>>();
+    EXPECT_FALSE(aubCsr->useGpuIdleImplicitFlush);
+    EXPECT_FALSE(aubCsr->useNewResourceImplicitFlush);
+}
+
 using HardwareContextContainerTests = ::testing::Test;
 
 TEST_F(HardwareContextContainerTests, givenOsContextWithMultipleDevicesSupportedThenInitialzeHwContextsWithValidIndexes) {

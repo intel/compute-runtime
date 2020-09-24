@@ -20,6 +20,8 @@ class UltAubCommandStreamReceiver : public AUBCommandStreamReceiverHw<GfxFamily>
 
   public:
     using BaseClass::osContext;
+    using BaseClass::useGpuIdleImplicitFlush;
+    using BaseClass::useNewResourceImplicitFlush;
 
     UltAubCommandStreamReceiver(const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment, uint32_t rootDeviceIndex)
         : BaseClass(fileName, standalone, executionEnvironment, rootDeviceIndex) {
