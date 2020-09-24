@@ -328,6 +328,67 @@ TEST_F(ModuleDynamicLinkTests, givenModuleWithUnresolvedSymbolWhenTheOtherModule
     EXPECT_EQ(gpuAddress, *reinterpret_cast<uint64_t *>(ptrOffset(isaPtr, offset)));
 }
 
+class DeviceModuleSetArgBufferTest : public ModuleFixture, public ::testing::Test {
+  public:
+    void SetUp() override {
+        ModuleFixture::SetUp();
+    }
+
+    void TearDown() override {
+        ModuleFixture::TearDown();
+    }
+
+    void createKernelAndAllocMemory(uint32_t rootDeviceIndex, void **ptr, ze_kernel_handle_t *kernelHandle) {
+        ze_kernel_desc_t kernelDesc = {};
+        kernelDesc.pKernelName = kernelName.c_str();
+        ze_result_t res = module.get()->createKernel(&kernelDesc, kernelHandle);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        res = driverHandle->allocHostMem(0u, 4096u, rootDeviceIndex, ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    }
+};
+
+HWTEST_F(DeviceModuleSetArgBufferTest,
+         givenValidMemoryUsedinFirstCallToSetArgBufferThenNullptrSetOnTheSecondCallThenArgBufferisUpdatedInEachCallAndSuccessIsReturned) {
+    uint32_t rootDeviceIndex = 0;
+    createModuleFromBinary();
+
+    ze_kernel_handle_t kernelHandle;
+    void *validBufferPtr = nullptr;
+    createKernelAndAllocMemory(rootDeviceIndex, &validBufferPtr, &kernelHandle);
+
+    L0::KernelImp *kernel = reinterpret_cast<L0::KernelImp *>(Kernel::fromHandle(kernelHandle));
+    ze_result_t res = kernel->setArgBuffer(0, sizeof(validBufferPtr), &validBufferPtr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    auto arg = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
+    auto crossThreadData = kernel->getCrossThreadData();
+    auto argBufferPtr = ptrOffset(crossThreadData, arg.stateless);
+    auto argBufferValue = *reinterpret_cast<uint64_t *>(const_cast<uint8_t *>(argBufferPtr));
+    EXPECT_EQ(argBufferValue, reinterpret_cast<uint64_t>(validBufferPtr));
+
+    for (auto alloc : kernel->getResidencyContainer()) {
+        if (alloc && alloc->getGpuAddress() == reinterpret_cast<uint64_t>(validBufferPtr)) {
+            EXPECT_EQ(rootDeviceIndex, alloc->getRootDeviceIndex());
+        }
+    }
+
+    res = kernel->setArgBuffer(0, sizeof(validBufferPtr), nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    arg = kernel->getImmutableData()->getDescriptor().payloadMappings.explicitArgs[0].as<NEO::ArgDescPointer>();
+    crossThreadData = kernel->getCrossThreadData();
+    argBufferPtr = ptrOffset(crossThreadData, arg.stateless);
+    argBufferValue = *reinterpret_cast<uint64_t *>(const_cast<uint8_t *>(argBufferPtr));
+    EXPECT_NE(argBufferValue, reinterpret_cast<uint64_t>(validBufferPtr));
+
+    driverHandle->freeMem(validBufferPtr);
+    Kernel::fromHandle(kernelHandle)->destroy();
+}
+
 class MultiDeviceModuleSetArgBufferTest : public MultiDeviceModuleFixture, public ::testing::Test {
   public:
     void SetUp() override {

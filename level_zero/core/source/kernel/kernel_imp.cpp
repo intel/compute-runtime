@@ -502,6 +502,9 @@ ze_result_t KernelImp::setArgBuffer(uint32_t argIndex, size_t argSize, const voi
 
     if (nullptr == argVal) {
         residencyContainer[argIndex] = nullptr;
+        const auto &arg = kernelImmData->getDescriptor().payloadMappings.explicitArgs[argIndex].as<NEO::ArgDescPointer>();
+        uintptr_t nullBufferValue = 0;
+        NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize), arg, nullBufferValue);
         return ZE_RESULT_SUCCESS;
     }
 
