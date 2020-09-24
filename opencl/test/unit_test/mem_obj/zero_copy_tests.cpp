@@ -68,7 +68,7 @@ std::tuple<uint64_t , size_t, size_t, int, bool, bool> Inputs[] = {std::make_tup
                                                                            std::make_tuple((cl_mem_flags)NULL, 0, 0, CacheLinedAlignedSize, true, true)};
 // clang-format on
 
-TEST_P(ZeroCopyBufferTest, CheckCacheAlignedPointerResultsInZeroCopy) {
+TEST_P(ZeroCopyBufferTest, GivenCacheAlignedPointerWhenCreatingBufferThenZeroCopy) {
 
     char *PassedPtr = (char *)host_ptr;
     //misalign the pointer
