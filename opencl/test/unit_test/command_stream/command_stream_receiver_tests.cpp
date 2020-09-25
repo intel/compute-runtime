@@ -768,6 +768,31 @@ TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingN
     EXPECT_STREQ("New resource detected of type 0\n", output.c_str());
 }
 
+TEST(CommandStreamReceiverSimpleTest, givenPrintfTagAllocationAddressFlagEnabledWhenCreatingTagAllocationThenPrintItsAddress) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintTagAllocationAddress.set(true);
+
+    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0, aub_stream::EngineType::ENGINE_BCS, PreemptionMode::Disabled, false, false, false));
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
+    csr.setupContext(*osContext);
+
+    testing::internal::CaptureStdout();
+
+    csr.initializeTagAllocation();
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(0u, output.size());
+
+    char expectedStr[128];
+    snprintf(expectedStr, 128, "\nCreated tag allocation %p for engine %u\n", csr.getTagAddress(), csr.getOsContext().getEngineType());
+
+    EXPECT_THAT(output, testing::HasSubstr(std::string(expectedStr)));
+}
+
 TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckDisabledWhenGpuIsIdleThenReturnFalse) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
