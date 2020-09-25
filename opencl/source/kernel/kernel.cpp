@@ -382,6 +382,9 @@ cl_int Kernel::initialize() {
         } else {
             auxTranslationRequired &= hwHelper.requiresAuxResolves();
         }
+        if (auxTranslationRequired) {
+            program->getContextPtr()->setResolvesRequiredInKernels(true);
+        }
 
         if (usingImages && !usingBuffers) {
             usingImagesOnly = true;

@@ -2755,6 +2755,46 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
     EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
 }
 
+TEST(KernelTest, WhenAuxTranslationIsRequiredThenKernelSetsRequiredResolvesInContext) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceAuxTranslationEnabled.set(1);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
+
+    auto context = clUniquePtr(new MockContext(device.get()));
+    context->contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
+    MockKernelWithInternals kernel(*device, context.get());
+    kernel.kernelInfo.kernelArgInfo.resize(1);
+    kernel.kernelInfo.kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
+    kernel.kernelInfo.kernelArgInfo[0].metadataExtended->type = "char *";
+    kernel.kernelInfo.kernelArgInfo[0].isBuffer = true;
+    kernel.kernelInfo.kernelArgInfo[0].pureStatefulBufferAccess = false;
+
+    kernel.mockKernel->initialize();
+    EXPECT_TRUE(context->getResolvesRequiredInKernels());
+}
+
+TEST(KernelTest, WhenAuxTranslationIsNotRequiredThenKernelDoesNotSetRequiredResolvesInContext) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceAuxTranslationEnabled.set(0);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
+
+    auto context = clUniquePtr(new MockContext(device.get()));
+    context->contextType = ContextType::CONTEXT_TYPE_UNRESTRICTIVE;
+    MockKernelWithInternals kernel(*device, context.get());
+    kernel.kernelInfo.kernelArgInfo.resize(1);
+    kernel.kernelInfo.kernelArgInfo[0].metadataExtended = std::make_unique<NEO::ArgTypeMetadataExtended>();
+    kernel.kernelInfo.kernelArgInfo[0].metadataExtended->type = "char *";
+    kernel.kernelInfo.kernelArgInfo[0].isBuffer = true;
+    kernel.kernelInfo.kernelArgInfo[0].pureStatefulBufferAccess = true;
+
+    kernel.mockKernel->initialize();
+    EXPECT_FALSE(context->getResolvesRequiredInKernels());
+}
+
 TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkKernelForAuxTranslation) {
     DebugManagerStateRestore restore;
     DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
