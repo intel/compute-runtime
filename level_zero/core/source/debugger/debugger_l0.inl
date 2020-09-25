@@ -25,12 +25,12 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(NEO::LinearStream &cmdS
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
     auto gpuAddress = NEO::GmmHelper::decanonize(sbaTrackingGpuVa.address);
 
-    NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
-                          "Debugger: SBA stored ssh = %" SCNx64
-                          " gsba = %" SCNx64
-                          " bsurfsba =  %" SCNx64 "\n",
-                          sba.SurfaceStateBaseAddress, sba.GeneralStateBaseAddress,
-                          sba.BindlessSurfaceStateBaseAddress);
+    PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+                       "Debugger: SBA stored ssh = %" SCNx64
+                       " gsba = %" SCNx64
+                       " bsurfsba =  %" SCNx64 "\n",
+                       sba.SurfaceStateBaseAddress, sba.GeneralStateBaseAddress,
+                       sba.BindlessSurfaceStateBaseAddress);
 
     if (sba.GeneralStateBaseAddress) {
         MI_STORE_DATA_IMM storeDataImmediate = GfxFamily::cmdInitStoreDataImm;

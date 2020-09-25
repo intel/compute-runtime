@@ -38,7 +38,7 @@ ExperimentalCommandBuffer::~ExperimentalCommandBuffer() {
         auto stop = static_cast<uint64_t>(*(timestamp + 1) * timerResolution);
         auto start = static_cast<uint64_t>(*timestamp * timerResolution);
         auto delta = stop - start;
-        printDebugString(defaultPrint, stdout, "#%u: delta %llu start %llu stop %llu\n", i, delta, start, stop);
+        PRINT_DEBUG_STRING(defaultPrint, stdout, "#%u: delta %llu start %llu stop %llu\n", i, delta, start, stop);
         timestamp += 2;
     }
     MemoryManager *memoryManager = commandStreamReceiver->getMemoryManager();

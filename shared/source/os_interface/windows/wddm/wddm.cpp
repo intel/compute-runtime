@@ -780,9 +780,9 @@ bool Wddm::createContext(OsContextWin &osContext) {
     status = getGdi()->createContext(&CreateContext);
     osContext.setWddmContextHandle(CreateContext.hContext);
 
-    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stdout,
-                     "\nCreated Wddm context. Status: :%lu, engine: %u, contextId: %u, deviceBitfield: %lu \n",
-                     status, osContext.getEngineType(), osContext.getContextId(), osContext.getDeviceBitfield().to_ulong());
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout,
+                       "\nCreated Wddm context. Status: :%lu, engine: %u, contextId: %u, deviceBitfield: %lu \n",
+                       status, osContext.getEngineType(), osContext.getContextId(), osContext.getDeviceBitfield().to_ulong());
 
     return status == STATUS_SUCCESS;
 }

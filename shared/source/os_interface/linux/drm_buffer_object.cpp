@@ -55,12 +55,12 @@ bool BufferObject::close() {
     drm_gem_close close = {};
     close.handle = this->handle;
 
-    printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle);
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle);
 
     int ret = this->drm->ioctl(DRM_IOCTL_GEM_CLOSE, &close);
     if (ret != 0) {
         int err = errno;
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(GEM_CLOSE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(GEM_CLOSE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
         DEBUG_BREAK_IF(true);
         return false;
     }
@@ -78,7 +78,7 @@ int BufferObject::wait(int64_t timeoutNs) {
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_WAIT, &wait);
     if (ret != 0) {
         int err = errno;
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_WAIT) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_WAIT) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
     }
     UNRECOVERABLE_IF(ret != 0);
 
@@ -141,7 +141,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     }
 
     int err = this->drm->getErrno();
-    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
     return err;
 }
 
@@ -150,7 +150,7 @@ void BufferObject::bind(OsContext *osContext, uint32_t vmHandleId) {
     if (!this->bindInfo[contextId][vmHandleId]) {
         auto ret = this->drm->bindBufferObject(osContext, vmHandleId, this);
         auto err = this->drm->getErrno();
-        printDebugString(DebugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n", this->handle, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, ret, err, strerror(err));
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n", this->handle, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, ret, err, strerror(err));
         UNRECOVERABLE_IF(ret != 0);
         this->bindInfo[contextId][vmHandleId] = true;
     }
@@ -161,7 +161,7 @@ void BufferObject::unbind(OsContext *osContext, uint32_t vmHandleId) {
     if (this->bindInfo[contextId][vmHandleId]) {
         auto ret = this->drm->unbindBufferObject(osContext, vmHandleId, this);
         auto err = this->drm->getErrno();
-        printDebugString(DebugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n", this->handle, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, ret, err, strerror(err));
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n", this->handle, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, ret, err, strerror(err));
         UNRECOVERABLE_IF(ret != 0);
         this->bindInfo[contextId][vmHandleId] = false;
     }

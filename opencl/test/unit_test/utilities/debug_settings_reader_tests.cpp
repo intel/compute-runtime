@@ -89,7 +89,7 @@ TEST(SettingsReader, GivenRegKeyWhenCreatingOsReaderThenReaderIsCreated) {
 TEST(SettingsReader, GivenTrueWhenPrintingDebugStringThenPrintsToOutput) {
     int i = 4;
     testing::internal::CaptureStdout();
-    printDebugString(true, stdout, "testing error %d", i);
+    PRINT_DEBUG_STRING(true, stdout, "testing error %d", i);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
 }
@@ -97,7 +97,7 @@ TEST(SettingsReader, GivenTrueWhenPrintingDebugStringThenPrintsToOutput) {
 TEST(SettingsReader, GivenFalseWhenPrintingDebugStringThenNoOutput) {
     int i = 4;
     testing::internal::CaptureStdout();
-    printDebugString(false, stderr, "Error String %d", i);
+    PRINT_DEBUG_STRING(false, stderr, "Error String %d", i);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ(output.c_str(), "");
 }

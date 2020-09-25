@@ -83,9 +83,9 @@ int Drm::getParamIoctl(int param, int *dstValue) {
 
     int retVal = ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
 
-    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stdout,
-                     "\nDRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode: %d\n",
-                     IoctlHelper::getIoctlParamString(param), *getParam.value, retVal);
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout,
+                       "\nDRM_IOCTL_I915_GETPARAM: param: %s, output value: %d, retCode: %d\n",
+                       IoctlHelper::getIoctlParamString(param), *getParam.value, retVal);
 
     return retVal;
 }
@@ -287,19 +287,19 @@ int Drm::setupHardwareInfo(DeviceDescriptor *device, bool setupFeatureTableAndWo
     bool status = queryTopology(sliceTotal, subSliceTotal, euTotal);
 
     if (!status) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
 
         sliceTotal = hwInfo->gtSystemInfo.SliceCount;
 
         ret = getEuTotal(euTotal);
         if (ret != 0) {
-            printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
             return ret;
         }
 
         ret = getSubsliceTotal(subSliceTotal);
         if (ret != 0) {
-            printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
             return ret;
         }
     }

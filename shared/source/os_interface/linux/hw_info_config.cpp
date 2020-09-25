@@ -97,20 +97,20 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     bool status = drm->queryTopology(sliceCount, subSliceCount, euCount);
 
     if (!status) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Topology query failed!\n");
 
         sliceCount = gtSystemInfo->SliceCount;
 
         ret = drm->getEuTotal(euCount);
         if (ret != 0) {
-            printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query EU total parameter!\n");
             *outHwInfo = {};
             return ret;
         }
 
         ret = drm->getSubsliceTotal(subSliceCount);
         if (ret != 0) {
-            printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
+            PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Cannot query subslice total parameter!\n");
             *outHwInfo = {};
             return ret;
         }

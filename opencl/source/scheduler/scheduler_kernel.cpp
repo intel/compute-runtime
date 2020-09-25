@@ -62,7 +62,7 @@ void SchedulerKernel::computeGws() {
     }
 
     DBG_LOG(PrintEMDebugInformation, "Scheduler GWS: ", gws);
-    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Scheduler GWS: %" PRIu64, static_cast<uint64_t>(gws));
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Scheduler GWS: %" PRIu64, static_cast<uint64_t>(gws));
 }
 BuiltinCode SchedulerKernel::loadSchedulerKernel(Device *device) {
     std::string schedulerResourceName = getFamilyNameWithType(device->getHardwareInfo()) + "_0_scheduler.builtin_kernel.bin";

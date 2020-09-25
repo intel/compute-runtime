@@ -302,14 +302,14 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.halfFpConfig = defaultFpFlags;
 
-    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "computeUnitsUsedForScratch: %d\n", sharedDeviceInfo.computeUnitsUsedForScratch);
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "computeUnitsUsedForScratch: %d\n", sharedDeviceInfo.computeUnitsUsedForScratch);
 
-    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "hwInfo: {%d, %d}: (%d, %d, %d)\n",
-                     systemInfo.EUCount,
-                     systemInfo.ThreadCount,
-                     systemInfo.MaxEuPerSubSlice,
-                     systemInfo.MaxSlicesSupported,
-                     systemInfo.MaxSubSlicesSupported);
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "hwInfo: {%d, %d}: (%d, %d, %d)\n",
+                       systemInfo.EUCount,
+                       systemInfo.ThreadCount,
+                       systemInfo.MaxEuPerSubSlice,
+                       systemInfo.MaxSlicesSupported,
+                       systemInfo.MaxSubSlicesSupported);
 
     deviceInfo.localMemType = CL_LOCAL;
 

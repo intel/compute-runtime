@@ -28,6 +28,10 @@ constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctiona
 constexpr DebugFunctionalityLevel globalDebugFunctionalityLevel = DebugFunctionalityLevel::None;
 #endif
 
+#define PRINT_DEBUG_STRING(flag, ...) \
+    if (flag)                         \
+        NEO::printDebugString(flag, __VA_ARGS__);
+
 namespace NEO {
 template <typename... Args>
 void printDebugString(bool showDebugLogs, Args &&... args) {

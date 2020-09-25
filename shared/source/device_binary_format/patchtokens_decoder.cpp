@@ -316,7 +316,7 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
 inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &out) {
     switch (token->Token) {
     default: {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Unknown kernel-scope Patch Token: %d\n", token->Token);
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Unknown kernel-scope Patch Token: %d\n", token->Token);
         DEBUG_BREAK_IF(true);
         out.unhandledTokens.push_back(token);
         break;
@@ -432,7 +432,7 @@ inline bool decodeToken(const SPatchItemHeader *token, ProgramFromPatchtokens &o
     auto &progTok = out.programScopeTokens;
     switch (token->Token) {
     default: {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Unknown program-scope Patch Token: %d\n", token->Token);
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "Unknown program-scope Patch Token: %d\n", token->Token);
         DEBUG_BREAK_IF(true);
         out.unhandledTokens.push_back(token);
         break;

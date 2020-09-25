@@ -808,9 +808,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
     int64_t waitTimeout = 0;
     bool enableTimeout = kmdNotifyHelper->obtainTimeoutParams(waitTimeout, useQuickKmdSleep, *getTagAddress(), taskCountToWait, flushStampToWait, forcePowerSavingMode);
 
-    printDebugString(DebugManager.flags.LogWaitingForCompletion.get(), stdout,
-                     "\nWaiting for task count %u at location %p. Current value: %u\n",
-                     taskCountToWait, getTagAddress(), *getTagAddress());
+    PRINT_DEBUG_STRING(DebugManager.flags.LogWaitingForCompletion.get(), stdout,
+                       "\nWaiting for task count %u at location %p. Current value: %u\n",
+                       taskCountToWait, getTagAddress(), *getTagAddress());
 
     auto status = waitForCompletionWithTimeout(enableTimeout, waitTimeout, taskCountToWait);
     if (!status) {
@@ -824,8 +824,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
         kmdNotifyHelper->updateLastWaitForCompletionTimestamp();
     }
 
-    printDebugString(DebugManager.flags.LogWaitingForCompletion.get(), stdout,
-                     "\nWaiting completed. Current value: %u\n", *getTagAddress());
+    PRINT_DEBUG_STRING(DebugManager.flags.LogWaitingForCompletion.get(), stdout,
+                       "\nWaiting completed. Current value: %u\n", *getTagAddress());
 }
 
 template <typename GfxFamily>
