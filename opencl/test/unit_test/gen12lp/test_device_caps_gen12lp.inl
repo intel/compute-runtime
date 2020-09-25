@@ -16,8 +16,9 @@ typedef Test<ClDeviceFixture> Gen12LpDeviceCaps;
 
 GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenQueryingDeviceInfoThenOcl30IsReported) {
     const auto &caps = pClDevice->getDeviceInfo();
+    auto expectedClCVersion = (pClDevice->isOcl21Conformant() ? "OpenCL C 3.0 " : "OpenCL C 1.2 ");
     EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 3.0 ", caps.clCVersion);
+    EXPECT_STREQ(expectedClCVersion, caps.clCVersion);
 }
 
 HWTEST2_F(Gen12LpDeviceCaps, lpSkusDontSupportFP64, IsTGLLP) {

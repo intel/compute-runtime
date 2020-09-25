@@ -103,7 +103,7 @@ void ClDevice::initializeCaps() {
     switch (enabledClVersion) {
     case 30:
         deviceInfo.clVersion = "OpenCL 3.0 NEO ";
-        deviceInfo.clCVersion = "OpenCL C 3.0 ";
+        deviceInfo.clCVersion = (isOcl21Conformant() ? "OpenCL C 3.0 " : "OpenCL C 1.2 ");
         deviceInfo.numericClVersion = CL_MAKE_VERSION(3, 0, 0);
         break;
     case 21:
