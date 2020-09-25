@@ -358,6 +358,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool perfCountersEnabled = false;
 
+    bool isCopyOnly = false;
+
     LinearStream *commandStream = nullptr;
 
     bool isSpecialCommandQueue = false;

@@ -41,6 +41,7 @@ class MockDevice : public RootDevice {
     using Device::createDeviceInternals;
     using Device::createEngine;
     using Device::deviceInfo;
+    using Device::engineGroups;
     using Device::engines;
     using Device::executionEnvironment;
     using Device::getGlobalMemorySize;

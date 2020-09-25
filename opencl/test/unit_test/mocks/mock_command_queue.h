@@ -18,9 +18,11 @@
 namespace NEO {
 class MockCommandQueue : public CommandQueue {
   public:
+    using CommandQueue::blitEnqueueAllowed;
     using CommandQueue::bufferCpuCopyAllowed;
     using CommandQueue::device;
     using CommandQueue::gpgpuEngine;
+    using CommandQueue::isCopyOnly;
     using CommandQueue::obtainNewTimestampPacketNodes;
     using CommandQueue::requiresCacheFlushAfterWalker;
     using CommandQueue::throttle;

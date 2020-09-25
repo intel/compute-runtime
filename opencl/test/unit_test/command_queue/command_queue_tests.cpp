@@ -1137,3 +1137,16 @@ TEST(CommandQueue, givenBlitterOperationsSupportedWhenCreatingQueueThenTimestamp
     MockCommandQueue cmdQ(&context, context.getDevice(0), 0);
     EXPECT_NE(nullptr, cmdQ.timestampPacketContainer);
 }
+
+TEST(CommandQueue, givenCopyOnlyQueueWhenCallingBlitEnqueueAllowedThenReturnTrue) {
+    MockContext context{};
+    HardwareInfo *hwInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
+    MockCommandQueue queue(&context, context.getDevice(0), 0);
+    hwInfo->capabilityTable.blitterOperationsSupported = false;
+
+    queue.isCopyOnly = false;
+    EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
+
+    queue.isCopyOnly = true;
+    EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_READ_BUFFER));
+}
