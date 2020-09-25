@@ -100,8 +100,13 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(const Allocati
                                                            0u, // shareable
                                                            maxOsContextCount);
 
-    auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), nullptr, sizeAligned, false, allocationData.flags.preferRenderCompressed, true, {});
+    auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmClientContext(), nullptr,
+                       sizeAligned, allocationData.flags.uncacheable,
+                       allocationData.flags.preferRenderCompressed, true,
+                       allocationData.storageInfo);
     wddmAllocation->setDefaultGmm(gmm);
+    wddmAllocation->setFlushL3Required(allocationData.flags.flushL3);
+    wddmAllocation->storageInfo = allocationData.storageInfo;
 
     if (!getWddm(allocationData.rootDeviceIndex).createAllocation64k(gmm, wddmAllocation->getHandleToModify(0u))) {
         delete gmm;
