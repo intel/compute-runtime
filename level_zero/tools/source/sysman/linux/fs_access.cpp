@@ -186,6 +186,13 @@ ze_result_t FsAccess::canWrite(const std::string file) {
     return ZE_RESULT_SUCCESS;
 }
 
+ze_result_t FsAccess::exists(const std::string file) {
+    if (access(file.c_str(), F_OK)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
 ze_result_t FsAccess::getFileMode(const std::string file, ::mode_t &mode) {
     struct stat sb;
     if (0 != stat(file.c_str(), &sb)) {
@@ -225,19 +232,25 @@ ze_result_t FsAccess::listDirectory(const std::string path, std::vector<std::str
         return getResult(errno);
     }
     struct ::dirent *ent;
+    int err = 0;
+    // readdir doesn't clear errno, so make sure it is clear
+    errno = 0;
     while (NULL != (ent = ::readdir(procDir))) {
         // Ignore . and ..
         std::string name = std::string(ent->d_name);
         if (!name.compare(".") || !name.compare("..")) {
+            errno = 0;
             continue;
         }
         list.push_back(std::string(ent->d_name));
+        errno = 0;
     }
+    err = errno;
     ::closedir(procDir);
     // Check if in above while loop, readdir encountered any error.
-    if ((errno != 0) && (errno != ENOENT)) {
+    if ((err != 0) && (err != ENOENT)) {
         list.clear();
-        return getResult(errno);
+        return getResult(err);
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -339,6 +352,10 @@ ze_result_t ProcfsAccess::getFileName(const ::pid_t pid, const int fd, std::stri
     // return full name of the open file.
     // NOTE: For sockets, the name will be of the format "socket:[nnnnnnn]"
     return FsAccess::readSymLink(fullFdPath(pid, fd), val);
+}
+
+ze_result_t ProcfsAccess::isAlive(const ::pid_t pid) {
+    return FsAccess::exists(fullPath(pid));
 }
 
 ::pid_t ProcfsAccess::myProcessId() {

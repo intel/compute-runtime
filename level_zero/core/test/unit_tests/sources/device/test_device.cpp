@@ -619,6 +619,19 @@ TEST_F(DeviceTest, givenNoL0DebuggerWhenGettingL0DebuggerThenNullptrReturned) {
     EXPECT_EQ(nullptr, device->getL0Debugger());
 }
 
+TEST_F(DeviceTest, givenValidDeviceWhenCallingReleaseResourcesThenResourcesReleased) {
+    auto deviceImp = static_cast<DeviceImp *>(device);
+    EXPECT_FALSE(deviceImp->resourcesReleased);
+    EXPECT_FALSE(nullptr == deviceImp->neoDevice);
+    deviceImp->releaseResources();
+    EXPECT_TRUE(deviceImp->resourcesReleased);
+    EXPECT_TRUE(nullptr == deviceImp->neoDevice);
+    EXPECT_TRUE(nullptr == deviceImp->pageFaultCommandList);
+    EXPECT_TRUE(nullptr == deviceImp->getDebugSurface());
+    deviceImp->releaseResources();
+    EXPECT_TRUE(deviceImp->resourcesReleased);
+}
+
 TEST(DevicePropertyFlagIsIntegratedTest, givenIntegratedDeviceThenCorrectDevicePropertyFlagSet) {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();

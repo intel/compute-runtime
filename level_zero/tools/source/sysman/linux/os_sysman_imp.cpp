@@ -75,6 +75,10 @@ Device *LinuxSysmanImp::getDeviceHandle() {
     return pDevice;
 }
 
+SysmanDeviceImp *LinuxSysmanImp::getSysmanDeviceImp() {
+    return pParentSysmanDeviceImp;
+}
+
 PlatformMonitoringTech &LinuxSysmanImp::getPlatformMonitoringTechAccess() {
     UNRECOVERABLE_IF(nullptr == pPmt);
     return *pPmt;

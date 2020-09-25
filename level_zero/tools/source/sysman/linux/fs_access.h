@@ -30,6 +30,7 @@ class FsAccess {
 
     virtual ze_result_t canRead(const std::string file);
     virtual ze_result_t canWrite(const std::string file);
+    ze_result_t exists(const std::string file);
     virtual ze_result_t getFileMode(const std::string file, ::mode_t &mode);
 
     virtual ze_result_t read(const std::string file, uint64_t &val);
@@ -61,6 +62,7 @@ class ProcfsAccess : private FsAccess {
     ::pid_t myProcessId();
     ze_result_t getFileDescriptors(const ::pid_t pid, std::vector<int> &list);
     ze_result_t getFileName(const ::pid_t pid, const int fd, std::string &val);
+    ze_result_t isAlive(const ::pid_t pid);
 
   private:
     ProcfsAccess() = default;

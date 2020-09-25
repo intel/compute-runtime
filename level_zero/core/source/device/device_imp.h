@@ -92,6 +92,9 @@ struct DeviceImp : public Device {
     DriverHandle *driverHandle = nullptr;
     CommandList *pageFaultCommandList = nullptr;
 
+    bool resourcesReleased = false;
+    void releaseResources();
+
   protected:
     NEO::GraphicsAllocation *debugSurface = nullptr;
     SysmanDevice *pSysmanDevice = nullptr;

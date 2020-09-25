@@ -134,10 +134,6 @@ ze_result_t DriverHandleImp::getMemAllocProperties(const void *ptr,
 
 DriverHandleImp::~DriverHandleImp() {
     for (auto &device : this->devices) {
-        if (device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->debugger.get() &&
-            !device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->debugger->isLegacy()) {
-            device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->debugger.reset(nullptr);
-        }
         delete device;
     }
     if (this->svmAllocsManager) {

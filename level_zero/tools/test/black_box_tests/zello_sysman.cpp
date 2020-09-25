@@ -41,6 +41,7 @@ void usage() {
                  "\n  -o, --power                  selectively run power black box test"
                  "\n  -m, --memory                 selectively run memory black box test"
                  "\n  -g, --global                 selectively run device/global operations black box test"
+                 "\n  -r, --reset force|noforce  selectively run device reset test"
                  "\n  -h, --help                   display help message"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
@@ -520,6 +521,11 @@ void testSysmanMemory(ze_device_handle_t &device) {
         }
     }
 }
+void testSysmanReset(ze_device_handle_t &device, bool force) {
+    std::cout << std::endl
+              << " ----  Reset test (force = " << (force ? "true" : "false") << ") ---- " << std::endl;
+    VALIDATECALL(zesDeviceReset(device, force));
+}
 void testSysmanGlobalOperations(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Global Operations tests ---- " << std::endl;
@@ -574,9 +580,11 @@ int main(int argc, char *argv[]) {
         {"power", no_argument, nullptr, 'o'},
         {"global", no_argument, nullptr, 'g'},
         {"memory", no_argument, nullptr, 'm'},
+        {"reset", required_argument, nullptr, 'r'},
         {nullptr, no_argument, nullptr, 0},
     };
-    while ((opt = getopt_long(argc, argv, "hpfsectogm", long_opts, nullptr)) != -1) {
+    bool force = false;
+    while ((opt = getopt_long(argc, argv, "hpfsectogmr:", long_opts, nullptr)) != -1) {
         switch (opt) {
         case 'h':
             usage();
@@ -625,6 +633,19 @@ int main(int argc, char *argv[]) {
         case 'm':
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
                 testSysmanMemory(device);
+            });
+            break;
+        case 'r':
+            if (!strcmp(optarg, "force")) {
+                force = true;
+            } else if (!strcmp(optarg, "noforce")) {
+                force = false;
+            } else {
+                usage();
+                exit(0);
+            }
+            std::for_each(devices.begin(), devices.end(), [&](auto device) {
+                testSysmanReset(device, force);
             });
             break;
 

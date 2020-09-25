@@ -35,6 +35,7 @@ struct EngineHandleContext {
     ~EngineHandleContext();
 
     void init();
+    void releaseEngines();
 
     ze_result_t engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine);
 

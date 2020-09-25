@@ -183,6 +183,10 @@ struct Mock<GlobalOperationsFsAccess> : public GlobalOperationsFsAccess {
         return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
     }
 
+    ze_result_t getSuccess(const std::string file) {
+        return ZE_RESULT_SUCCESS;
+    }
+
     Mock<GlobalOperationsFsAccess>() = default;
 
     MOCK_METHOD(ze_result_t, read, (const std::string file, std::string &val), (override));

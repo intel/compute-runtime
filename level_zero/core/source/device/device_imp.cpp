@@ -632,10 +632,19 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
     return device;
 }
 
-DeviceImp::~DeviceImp() {
+void DeviceImp::releaseResources() {
+    if (resourcesReleased) {
+        return;
+    }
+    if (neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.get() &&
+        !neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger->isLegacy()) {
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(nullptr);
+    }
     for (uint32_t i = 0; i < this->numSubDevices; i++) {
         delete this->subDevices[i];
     }
+    this->numSubDevices = 0;
+
     if (this->pageFaultCommandList) {
         this->pageFaultCommandList->destroy();
         this->pageFaultCommandList = nullptr;
@@ -654,13 +663,20 @@ DeviceImp::~DeviceImp() {
         }
     }
 
+    if (neoDevice) {
+        neoDevice->decRefInternal();
+        neoDevice = nullptr;
+    }
+
+    resourcesReleased = true;
+}
+
+DeviceImp::~DeviceImp() {
+    releaseResources();
+
     if (pSysmanDevice != nullptr) {
         delete pSysmanDevice;
         pSysmanDevice = nullptr;
-    }
-
-    if (neoDevice) {
-        neoDevice->decRefInternal();
     }
 }
 

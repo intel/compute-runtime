@@ -19,10 +19,7 @@ EngineHandleContext::EngineHandleContext(OsSysman *pOsSysman) {
 }
 
 EngineHandleContext::~EngineHandleContext() {
-    for (Engine *pEngine : handleList) {
-        delete pEngine;
-    }
-    handleList.clear();
+    releaseEngines();
 }
 
 void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t engineInstance) {
@@ -39,6 +36,13 @@ void EngineHandleContext::init() {
     for (auto itr = engineGroupInstance.begin(); itr != engineGroupInstance.end(); ++itr) {
         createHandle(itr->first, itr->second);
     }
+}
+
+void EngineHandleContext::releaseEngines() {
+    for (Engine *pEngine : handleList) {
+        delete pEngine;
+    }
+    handleList.clear();
 }
 
 ze_result_t EngineHandleContext::engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) {

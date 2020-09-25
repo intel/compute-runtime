@@ -35,6 +35,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     NEO::Drm &getDrm();
     PlatformMonitoringTech &getPlatformMonitoringTechAccess();
     Device *getDeviceHandle();
+    SysmanDeviceImp *getSysmanDeviceImp();
 
   protected:
     XmlParser *pXmlParser = nullptr;

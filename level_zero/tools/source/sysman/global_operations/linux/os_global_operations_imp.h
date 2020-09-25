@@ -35,6 +35,8 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
     Device *pDevice = nullptr;
 
   private:
+    static const int resetTimeout = 10;
+
     static const std::string deviceDir;
     static const std::string vendorFile;
     static const std::string deviceFile;
