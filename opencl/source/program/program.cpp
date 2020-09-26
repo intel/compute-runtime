@@ -13,6 +13,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
@@ -31,8 +32,6 @@
 #include <sstream>
 
 namespace NEO {
-
-const std::string Program::clOptNameClVer("-cl-std=CL");
 
 Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn, Device *device) : executionEnvironment(executionEnvironment),
                                                                                                                  context(context),
@@ -403,11 +402,11 @@ void Program::cleanCurrentKernelInfo() {
 
 void Program::updateNonUniformFlag() {
     //Look for -cl-std=CL substring and extract value behind which can be 1.2 2.0 2.1 and convert to value
-    auto pos = options.find(clOptNameClVer);
+    auto pos = options.find(clStdOptionName);
     if (pos == std::string::npos) {
         programOptionVersion = 12u; //Default is 1.2
     } else {
-        std::stringstream ss{options.c_str() + pos + clOptNameClVer.size()};
+        std::stringstream ss{options.c_str() + pos + clStdOptionName.size()};
         uint32_t majorV = 0u, minorV = 0u;
         char dot = 0u;
         ss >> majorV;

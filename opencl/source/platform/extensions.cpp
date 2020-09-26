@@ -73,7 +73,7 @@ std::string getExtensionsList(const HardwareInfo &hwInfo) {
     return allExtensionsList;
 }
 
-void getOpenclCFeaturesList(const HardwareInfo &hwInfo, StackVec<cl_name_version, 15> &openclCFeatures) {
+void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer &openclCFeatures) {
     cl_name_version openClCFeature;
     openClCFeature.version = CL_MAKE_VERSION(3, 0, 0);
 
@@ -139,29 +139,31 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, StackVec<cl_name_version
     }
 }
 
-std::string removeLastSpace(std::string &processedString) {
-    if (processedString.size() > 0) {
-        if (*processedString.rbegin() == ' ') {
-            processedString.pop_back();
-        }
-    }
-    return processedString;
-}
+std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enabledExtensions,
+                                                              OpenClCFeaturesContainer &openclCFeatures) {
 
-std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enabledExtensions) {
     std::string extensionsList = enabledExtensions;
-    extensionsList.reserve(1000);
-    removeLastSpace(extensionsList);
-    std::string::size_type pos = 0;
-    while ((pos = extensionsList.find(" ", pos)) != std::string::npos) {
-        extensionsList.replace(pos, 1, ",+");
+    extensionsList.reserve(1500);
+    extensionsList = " -cl-ext=-all,";
+    std::istringstream extensionsStringStream(enabledExtensions);
+    std::string extension;
+    while (extensionsStringStream >> extension) {
+        extensionsList.append("+");
+        extensionsList.append(extension);
+        extensionsList.append(",");
     }
-    extensionsList = " -cl-ext=-all,+" + extensionsList + ",+cl_khr_3d_image_writes ";
+    extensionsList.append("+cl_khr_3d_image_writes,");
+    for (auto &feature : openclCFeatures) {
+        extensionsList.append("+");
+        extensionsList.append(feature.name);
+        extensionsList.append(",");
+    }
+    extensionsList[extensionsList.size() - 1] = ' ';
 
     return extensionsList;
 }
 
-std::string convertEnabledOclCFeaturesToCompilerInternalOptions(StackVec<cl_name_version, 15> &openclCFeatures) {
+std::string convertEnabledOclCFeaturesToCompilerInternalOptions(OpenClCFeaturesContainer &openclCFeatures) {
     UNRECOVERABLE_IF(openclCFeatures.empty());
     std::string featuresList;
     featuresList.reserve(500);

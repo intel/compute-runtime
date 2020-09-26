@@ -11,6 +11,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
@@ -556,11 +557,18 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
                 argHelper->printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
             } else {
                 std::string extensionsList = getExtensionsList(hwInfo);
-                CompilerOptions::concatenateAppend(internalOptions, convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str()));
-
-                StackVec<cl_name_version, 15> openclCFeatures;
-                getOpenclCFeaturesList(hwInfo, openclCFeatures);
-                CompilerOptions::concatenateAppend(internalOptions, convertEnabledOclCFeaturesToCompilerInternalOptions(openclCFeatures));
+                if (requiresOpenClCFeatures(options)) {
+                    OpenClCFeaturesContainer openclCFeatures;
+                    getOpenclCFeaturesList(hwInfo, openclCFeatures);
+                    auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), openclCFeatures);
+                    auto compilerFeatures = convertEnabledOclCFeaturesToCompilerInternalOptions(openclCFeatures);
+                    CompilerOptions::concatenateAppend(internalOptions, compilerExtensions);
+                    CompilerOptions::concatenateAppend(internalOptions, compilerFeatures);
+                } else {
+                    OpenClCFeaturesContainer emptyOpenClCFeatures;
+                    auto compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), emptyOpenClCFeatures);
+                    CompilerOptions::concatenateAppend(internalOptions, compilerExtensions);
+                }
             }
         }
     }

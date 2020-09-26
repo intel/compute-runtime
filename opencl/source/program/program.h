@@ -289,8 +289,6 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL bool appendKernelDebugOptions();
     void notifyDebuggerWithSourceCode(std::string &filename);
 
-    static const std::string clOptNameClVer;
-
     cl_program_binary_type programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     bool isSpirV = false;
 

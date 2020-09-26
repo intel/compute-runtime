@@ -46,6 +46,8 @@ struct DeviceGetCapsTest : public ::testing::Test {
     }
 
     void verifyOpenclCAllVersions(MockClDevice &clDevice) {
+        EXPECT_FALSE(clDevice.getDeviceInfo().openclCAllVersions.usesDynamicMem());
+
         for (auto &openclCVersion : clDevice.getDeviceInfo().openclCAllVersions) {
             EXPECT_STREQ("OpenCL C", openclCVersion.name);
         }
@@ -67,6 +69,8 @@ struct DeviceGetCapsTest : public ::testing::Test {
     }
 
     void verifyOpenclCFeatures(MockClDevice &clDevice) {
+        EXPECT_FALSE(clDevice.getDeviceInfo().openclCFeatures.usesDynamicMem());
+
         for (auto &openclCFeature : clDevice.getDeviceInfo().openclCFeatures) {
             EXPECT_EQ(CL_MAKE_VERSION(3u, 0u, 0u), openclCFeature.version);
         }
@@ -833,6 +837,8 @@ TEST_F(DeviceGetCapsTest, givenVmeRelatedFlagsSetWhenCapsAreCreatedThenDeviceRep
 
             UltClDeviceFactory deviceFactory{1, 0};
             const auto &caps = deviceFactory.rootDevices[0]->getDeviceInfo();
+            EXPECT_FALSE(caps.builtInKernelsWithVersion.usesDynamicMem());
+
             auto builtInKernelWithVersion = caps.builtInKernelsWithVersion.begin();
 
             if (isVmeEnabled) {
@@ -1051,6 +1057,45 @@ TEST(DeviceGetCaps, WhenCheckingCompilerFeaturesThenValueIsCorrect) {
     auto pClDevice = deviceFactory.rootDevices[0];
     auto expectedCompilerFeatures = convertEnabledOclCFeaturesToCompilerInternalOptions(pClDevice->deviceInfo.openclCFeatures);
     EXPECT_STREQ(expectedCompilerFeatures.c_str(), pClDevice->compilerFeatures.c_str());
+}
+
+TEST(DeviceGetCaps, WhenPeekingCompilerExtensionsThenCompilerExtensionsAreReturned) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    EXPECT_EQ(&pClDevice->compilerExtensions, &pClDevice->peekCompilerExtensions());
+}
+
+TEST(DeviceGetCaps, WhenCheckingCompilerExtensionsThenValueIsCorrect) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    OpenClCFeaturesContainer emptyOpenClCFeatures;
+    auto expectedCompilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(pClDevice->deviceInfo.deviceExtensions,
+                                                                                        emptyOpenClCFeatures);
+    EXPECT_STREQ(expectedCompilerExtensions.c_str(), pClDevice->compilerExtensions.c_str());
+}
+
+TEST(DeviceGetCaps, WhenPeekingCompilerExtensionsWithFeaturesThenCompilerExtensionsWithFeaturesAreReturned) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    EXPECT_EQ(&pClDevice->compilerExtensionsWithFeatures, &pClDevice->peekCompilerExtensionsWithFeatures());
+}
+
+TEST(DeviceGetCaps, WhenCheckingCompilerExtensionsWithFeaturesThenValueIsCorrect) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    auto expectedCompilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(pClDevice->deviceInfo.deviceExtensions,
+                                                                                        pClDevice->deviceInfo.openclCFeatures);
+    EXPECT_STREQ(expectedCompilerExtensions.c_str(), pClDevice->compilerExtensionsWithFeatures.c_str());
+}
+
+TEST(DeviceGetCaps, WhenComparingCompilerExtensionsAndCompilerExtensionsWithFeaturesThenValuesMatch) {
+    UltClDeviceFactory deviceFactory{1, 0};
+    auto pClDevice = deviceFactory.rootDevices[0];
+    auto compilerExtensions = pClDevice->compilerExtensions;
+    auto compilerExtensionsWithFeatures = pClDevice->compilerExtensionsWithFeatures;
+
+    compilerExtensions.erase(compilerExtensions.size() - 1);
+    EXPECT_STREQ(compilerExtensions.c_str(), compilerExtensionsWithFeatures.substr(0, compilerExtensions.size()).c_str());
 }
 
 TEST(DeviceGetCaps, givenOclVersionLessThan21WhenCapsAreCreatedThenDeviceReportsNoSupportedIlVersions) {

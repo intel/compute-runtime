@@ -11,6 +11,7 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -131,10 +132,13 @@ cl_int Program::compile(
         // set parameters for compilation
         auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
         UNRECOVERABLE_IF(clDevice == nullptr);
-        auto compilerExtensionsOptions = clDevice->peekCompilerExtensions();
-        CompilerOptions::concatenateAppend(internalOptions, compilerExtensionsOptions);
-        auto compilerFeaturesOptions = clDevice->peekCompilerFeatures();
-        CompilerOptions::concatenateAppend(internalOptions, compilerFeaturesOptions);
+
+        if (requiresOpenClCFeatures(options)) {
+            CompilerOptions::concatenateAppend(internalOptions, clDevice->peekCompilerExtensionsWithFeatures());
+            CompilerOptions::concatenateAppend(internalOptions, clDevice->peekCompilerFeatures());
+        } else {
+            CompilerOptions::concatenateAppend(internalOptions, clDevice->peekCompilerExtensions());
+        }
 
         if (isKernelDebugEnabled()) {
             std::string filename;

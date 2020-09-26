@@ -24,6 +24,8 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/elf_encoder.h
     ${NEO_SHARED_DIRECTORY}/device_binary_format/elf/ocl_elf.h
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.h
     ${NEO_SHARED_DIRECTORY}/helpers/debug_helpers.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/hw_info.cpp

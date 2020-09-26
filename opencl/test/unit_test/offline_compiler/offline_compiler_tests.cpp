@@ -235,7 +235,7 @@ TEST_F(OfflineCompilerTests, GoodArgTest) {
 
     delete pOfflineCompiler;
 }
-TEST_F(OfflineCompilerTests, TestExtensions) {
+TEST_F(OfflineCompilerTests, WhenCompilingSourceThenCorrectExtensionsArePassed) {
     std::vector<std::string> argv = {
         "ocloc",
         "-file",
@@ -246,13 +246,39 @@ TEST_F(OfflineCompilerTests, TestExtensions) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
     mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+
     std::string internalOptions = mockOfflineCompiler->internalOptions;
     EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
 
-    StackVec<cl_name_version, 15> openclCFeatures;
+    OpenClCFeaturesContainer openclCFeatures;
     getOpenclCFeaturesList(DEFAULT_PLATFORM::hwInfo, openclCFeatures);
-    auto expectedFeaturesOption = convertEnabledOclCFeaturesToCompilerInternalOptions(openclCFeatures);
-    EXPECT_THAT(internalOptions, ::testing::HasSubstr(expectedFeaturesOption));
+    for (auto &feature : openclCFeatures) {
+        EXPECT_THAT(internalOptions, ::testing::Not(::testing::HasSubstr(std::string{feature.name})));
+    }
+}
+TEST_F(OfflineCompilerTests, givenClStd30OptionWhenCompilingSourceThenCorrectExtensionsArePassed) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-options",
+        "-cl-std=CL3.0"};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+    mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+
+    std::string internalOptions = mockOfflineCompiler->internalOptions;
+    EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
+
+    OpenClCFeaturesContainer openclCFeatures;
+    getOpenclCFeaturesList(DEFAULT_PLATFORM::hwInfo, openclCFeatures);
+    for (auto &feature : openclCFeatures) {
+        auto expectedRegex = std::string{feature.name} + ".*" + std::string{feature.name};
+        EXPECT_THAT(internalOptions, ::testing::ContainsRegex(expectedRegex));
+    }
 }
 TEST_F(OfflineCompilerTests, GoodBuildTest) {
     std::vector<std::string> argv = {

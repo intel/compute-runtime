@@ -29,7 +29,9 @@ ClDevice::ClDevice(Device &device, Platform *platform) : device(device), platfor
     auto osInterface = getRootDeviceEnvironment().osInterface.get();
     driverInfo.reset(DriverInfo::create(&device.getHardwareInfo(), osInterface));
     initializeCaps();
-    compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions);
+    OpenClCFeaturesContainer emptyOpenClCFeatures;
+    compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions, emptyOpenClCFeatures);
+    compilerExtensionsWithFeatures = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions, deviceInfo.openclCFeatures);
     compilerFeatures = convertEnabledOclCFeaturesToCompilerInternalOptions(deviceInfo.openclCFeatures);
 
     auto numAvailableDevices = device.getNumAvailableDevices();
@@ -178,6 +180,9 @@ void ClDeviceVector::toDeviceIDs(std::vector<cl_device_id> &devIDs) {
 }
 const std::string &ClDevice::peekCompilerExtensions() const {
     return compilerExtensions;
+}
+const std::string &ClDevice::peekCompilerExtensionsWithFeatures() const {
+    return compilerExtensionsWithFeatures;
 }
 const std::string &ClDevice::peekCompilerFeatures() const {
     return compilerFeatures;

@@ -201,35 +201,54 @@ TEST(PlatformTestSimple, givenNotCsrHwTypeWhenPlatformIsInitializedThenInitAubCe
 }
 
 TEST(PlatformTestSimple, WhenConvertingCustomOclCFeaturesToCompilerInternalOptionsThenResultIsCorrect) {
-    StackVec<cl_name_version, 15> customOpenclCFeatures;
+    OpenClCFeaturesContainer customOpenclCFeatures;
 
     cl_name_version feature;
     strcpy_s(feature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "custom_feature");
     customOpenclCFeatures.push_back(feature);
     auto compilerOption = convertEnabledOclCFeaturesToCompilerInternalOptions(customOpenclCFeatures);
     EXPECT_STREQ(" -cl-feature=+custom_feature ", compilerOption.c_str());
+    compilerOption = convertEnabledExtensionsToCompilerInternalOptions("", customOpenclCFeatures);
+    EXPECT_STREQ(" -cl-ext=-all,+cl_khr_3d_image_writes,+custom_feature ", compilerOption.c_str());
 
     strcpy_s(feature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "other_extra_feature");
     customOpenclCFeatures.push_back(feature);
     compilerOption = convertEnabledOclCFeaturesToCompilerInternalOptions(customOpenclCFeatures);
     EXPECT_STREQ(" -cl-feature=+custom_feature,+other_extra_feature ", compilerOption.c_str());
+    compilerOption = convertEnabledExtensionsToCompilerInternalOptions("", customOpenclCFeatures);
+    EXPECT_STREQ(" -cl-ext=-all,+cl_khr_3d_image_writes,+custom_feature,+other_extra_feature ", compilerOption.c_str());
 }
 
 TEST(PlatformTestSimple, WhenConvertingOclCFeaturesToCompilerInternalOptionsThenResultIsCorrect) {
     UltClDeviceFactory deviceFactory{1, 0};
     auto pClDevice = deviceFactory.rootDevices[0];
 
-    std::string expectedCompilerOption = " -cl-feature=";
-    for (auto &openclCFeature : pClDevice->deviceInfo.openclCFeatures) {
-        expectedCompilerOption += "+";
-        expectedCompilerOption += openclCFeature.name;
-        expectedCompilerOption += ",";
-    }
-    expectedCompilerOption.erase(expectedCompilerOption.size() - 1, 1);
-    expectedCompilerOption += " ";
+    {
+        std::string expectedCompilerOption = " -cl-feature=";
+        for (auto &openclCFeature : pClDevice->deviceInfo.openclCFeatures) {
+            expectedCompilerOption += "+";
+            expectedCompilerOption += openclCFeature.name;
+            expectedCompilerOption += ",";
+        }
+        expectedCompilerOption.erase(expectedCompilerOption.size() - 1, 1);
+        expectedCompilerOption += " ";
 
-    auto compilerOption = convertEnabledOclCFeaturesToCompilerInternalOptions(pClDevice->deviceInfo.openclCFeatures);
-    EXPECT_STREQ(expectedCompilerOption.c_str(), compilerOption.c_str());
+        auto compilerOption = convertEnabledOclCFeaturesToCompilerInternalOptions(pClDevice->deviceInfo.openclCFeatures);
+        EXPECT_STREQ(expectedCompilerOption.c_str(), compilerOption.c_str());
+    }
+    {
+        std::string expectedCompilerOption = " -cl-ext=-all,+cl_khr_3d_image_writes,";
+        for (auto &openclCFeature : pClDevice->deviceInfo.openclCFeatures) {
+            expectedCompilerOption += "+";
+            expectedCompilerOption += openclCFeature.name;
+            expectedCompilerOption += ",";
+        }
+        expectedCompilerOption.erase(expectedCompilerOption.size() - 1, 1);
+        expectedCompilerOption += " ";
+
+        auto compilerOption = convertEnabledExtensionsToCompilerInternalOptions("", pClDevice->deviceInfo.openclCFeatures);
+        EXPECT_STREQ(expectedCompilerOption.c_str(), compilerOption.c_str());
+    }
 }
 
 namespace NEO {
@@ -274,8 +293,10 @@ TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatching
     const HardwareInfo *hwInfo;
     hwInfo = defaultHwInfo.get();
     std::string extensionsList = getExtensionsList(*hwInfo);
+    OpenClCFeaturesContainer features;
+    getOpenclCFeaturesList(*hwInfo, features);
 
-    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
     EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string(" -cl-ext=-all,+cl")));
 
     if (hwInfo->capabilityTable.supportsOcl21Features) {
@@ -312,11 +333,13 @@ TEST_F(PlatformTest, givenNotSupportingCl21WhenPlatformNotSupportFp64ThenNotFill
     TesthwInfo.capabilityTable.supportsOcl21Features = false;
 
     std::string extensionsList = getExtensionsList(TesthwInfo);
+    OpenClCFeaturesContainer features;
+    getOpenclCFeaturesList(*defaultHwInfo, features);
     if (TesthwInfo.capabilityTable.supportsImages) {
         EXPECT_THAT(extensionsList, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
     }
 
-    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
     EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("-cl-ext=-all,+cl")));
 
     EXPECT_THAT(compilerExtensions, ::testing::Not(::testing::HasSubstr(std::string("cl_khr_fp64"))));
@@ -329,7 +352,9 @@ TEST_F(PlatformTest, givenFtrSupportAtomicsWhenCreateExtentionsListThenGetMatchi
     const HardwareInfo *hwInfo;
     hwInfo = defaultHwInfo.get();
     std::string extensionsList = getExtensionsList(*hwInfo);
-    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
+    OpenClCFeaturesContainer features;
+    getOpenclCFeaturesList(*hwInfo, features);
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     if (hwInfo->capabilityTable.ftrSupportsInteger64BitAtomics) {
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_int64_base_atomics")));
@@ -346,7 +371,9 @@ TEST_F(PlatformTest, givenSupporteImagesAndClVersion21WhenCreateExtentionsListTh
     hwInfo.capabilityTable.clVersionSupport = 21;
     hwInfo.capabilityTable.supportsOcl21Features = true;
     std::string extensionsList = getExtensionsList(hwInfo);
-    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
+    OpenClCFeaturesContainer features;
+    getOpenclCFeaturesList(*defaultHwInfo, features);
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_THAT(compilerExtensions, testing::HasSubstr(std::string("cl_intel_spirv_media_block_io")));
 }
@@ -356,24 +383,13 @@ TEST_F(PlatformTest, givenNotSupporteImagesAndClVersion21WhenCreateExtentionsLis
     hwInfo.capabilityTable.supportsImages = false;
     hwInfo.capabilityTable.clVersionSupport = 21;
     std::string extensionsList = getExtensionsList(hwInfo);
-    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
+    OpenClCFeaturesContainer features;
+    getOpenclCFeaturesList(*defaultHwInfo, features);
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
 
     EXPECT_THAT(compilerExtensions, testing::Not(testing::HasSubstr(std::string("cl_intel_spirv_media_block_io"))));
 }
 
-TEST_F(PlatformTest, WhenRemovingLastSpaceThenStringDoesNotEndWithSpace) {
-    std::string emptyString = "";
-    removeLastSpace(emptyString);
-    EXPECT_EQ(std::string(""), emptyString);
-
-    std::string xString = "x";
-    removeLastSpace(xString);
-    EXPECT_EQ(std::string("x"), xString);
-
-    std::string xSpaceString = "x ";
-    removeLastSpace(xSpaceString);
-    EXPECT_EQ(std::string("x"), xSpaceString);
-}
 TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledTwiceThenTheSamePlatformIsReturned) {
     platformsImpl->clear();
     auto platform1 = constructPlatform();
