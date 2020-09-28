@@ -185,7 +185,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
     blitCmd.setColorDepth(depth);
 
     uint64_t offset = 0;
-    uint64_t sizeToFill = size;
+    uint64_t sizeToFill = size / patternSize;
     while (sizeToFill != 0) {
         auto tmpCmd = blitCmd;
         tmpCmd.setDestinationBaseAddress(ptrOffset(dstAlloc->getGpuAddress(), static_cast<size_t>(offset)));
@@ -203,14 +203,14 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
         }
         tmpCmd.setTransferWidth(static_cast<uint32_t>(width));
         tmpCmd.setTransferHeight(static_cast<uint32_t>(height));
-        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width));
+        tmpCmd.setDestinationPitch(static_cast<uint32_t>(width * patternSize));
 
         appendBlitCommandsForFillBuffer(dstAlloc, tmpCmd, rootDeviceEnvironment);
 
         auto cmd = linearStream.getSpaceForCmd<XY_COLOR_BLT>();
         *cmd = tmpCmd;
         auto blitSize = width * height;
-        offset += (blitSize);
+        offset += (blitSize * patternSize);
         sizeToFill -= blitSize;
     }
 }
