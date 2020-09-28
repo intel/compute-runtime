@@ -19,13 +19,17 @@ class AsyncEventsHandler;
 class MockContext : public Context {
   public:
     using Context::contextType;
+    using Context::deviceBitfields;
     using Context::driverDiagnostics;
+    using Context::maxRootDeviceIndex;
     using Context::memoryManager;
     using Context::preferD3dSharedResources;
     using Context::resolvesRequiredInKernels;
+    using Context::rootDeviceIndices;
     using Context::setupContextType;
     using Context::sharingFunctions;
     using Context::svmAllocsManager;
+
     MockContext(ClDevice *pDevice, bool noSpecialQueue = false);
     MockContext(const ClDeviceVector &clDeviceVector);
     MockContext(

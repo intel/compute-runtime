@@ -64,7 +64,7 @@ Pipe *Pipe::create(Context *context,
                                                             true, // allocateMemory
                                                             size, GraphicsAllocation::AllocationType::PIPE,
                                                             false, // isMultiStorageAllocation
-                                                            context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation());
+                                                            context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         GraphicsAllocation *memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
         if (!memory) {
             errcodeRet = CL_OUT_OF_HOST_MEMORY;

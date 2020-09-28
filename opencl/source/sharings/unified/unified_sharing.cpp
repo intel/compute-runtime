@@ -45,7 +45,7 @@ GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, U
                                               0u,    // size
                                               allocationType,
                                               false, // isMultiStorageAllocation
-                                              context->getDeviceBitfieldForAllocation()};
+                                              context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex())};
         return memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(description.handle), properties, false);
     }
     default:

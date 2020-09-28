@@ -255,7 +255,7 @@ Buffer *Buffer::create(Context *context,
     if (!memory) {
         AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
                                                                                                allocateMemory, size, allocationType, context->areMultiStorageAllocationsPreferred(),
-                                                                                               context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation());
+                                                                                               context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties, hostPtr);
     }
 
@@ -271,7 +271,7 @@ Buffer *Buffer::create(Context *context,
         AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
                                                                                                true, // allocateMemory
                                                                                                size, allocationType, context->areMultiStorageAllocationsPreferred(),
-                                                                                               context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation());
+                                                                                               context->getDevice(0)->getHardwareInfo(), context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
     }
 
@@ -326,7 +326,7 @@ Buffer *Buffer::create(Context *context,
                                             false, // allocateMemory
                                             size, GraphicsAllocation::AllocationType::MAP_ALLOCATION,
                                             false, // isMultiStorageAllocation
-                                            context->getDeviceBitfieldForAllocation()};
+                                            context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
             properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
             mapAllocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, hostPtr);
         }

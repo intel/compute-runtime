@@ -540,28 +540,28 @@ TEST_F(MemObjMultiRootDeviceTests, WhenMemObjIsCreatedWithMultiGraphicsAllocatio
 }
 
 TEST_F(MemObjMultiRootDeviceTests, WhenMemObjMapAreCreatedThenAllAllocationAreDestroyedProperly) {
-    auto allocation0 = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, MemoryConstants::pageSize});
+    auto allocation0 = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{2, MemoryConstants::pageSize});
     auto allocation1 = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{1, MemoryConstants::pageSize});
 
-    auto multiGraphicsAllocation = MultiGraphicsAllocation(1);
+    auto multiGraphicsAllocation = MultiGraphicsAllocation(2);
     multiGraphicsAllocation.addAllocation(allocation0);
     multiGraphicsAllocation.addAllocation(allocation1);
 
-    auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(0)->getDevice());
+    auto memoryProperties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &context->getDevice(1)->getDevice());
     std::unique_ptr<MemObj> memObj(
         new MemObj(context.get(), CL_MEM_OBJECT_BUFFER, memoryProperties, CL_MEM_READ_WRITE, 0,
                    1, nullptr, nullptr, multiGraphicsAllocation, true, false, false));
 
-    auto mapAllocation0 = memObj->getMapAllocation(0);
+    auto mapAllocation0 = memObj->getMapAllocation(2);
     auto mapAllocation1 = memObj->getMapAllocation(1);
 
     EXPECT_EQ(nullptr, mapAllocation0);
     EXPECT_EQ(nullptr, mapAllocation1);
 
-    EXPECT_NE(nullptr, memObj->getBasePtrForMap(0));
-    EXPECT_EQ(memObj->getBasePtrForMap(0), memObj->getBasePtrForMap(1));
+    EXPECT_NE(nullptr, memObj->getBasePtrForMap(2));
+    EXPECT_EQ(memObj->getBasePtrForMap(2), memObj->getBasePtrForMap(1));
 
-    mapAllocation0 = memObj->getMapAllocation(0);
+    mapAllocation0 = memObj->getMapAllocation(2);
     mapAllocation1 = memObj->getMapAllocation(1);
 
     ASSERT_NE(nullptr, mapAllocation0);

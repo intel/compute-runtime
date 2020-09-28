@@ -244,7 +244,7 @@ TEST(clSvmAllocTest, givenSubDeviceWhenCreatingSvmAllocThenProperDeviceBitfieldI
     std::swap(memoryManagerBackup, executionEnvironment->memoryManager);
 
     MockContext context(device);
-    auto expectedDeviceBitfield = context.getDeviceBitfieldForAllocation();
+    auto expectedDeviceBitfield = context.getDeviceBitfieldForAllocation(device->getRootDeviceIndex());
     EXPECT_NE(expectedDeviceBitfield, memoryManager->recentlyPassedDeviceBitfield);
     auto svmPtr = clSVMAlloc(&context, CL_MEM_READ_WRITE, MemoryConstants::pageSize, MemoryConstants::cacheLineSize);
     EXPECT_NE(nullptr, svmPtr);

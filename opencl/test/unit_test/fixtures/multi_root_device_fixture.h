@@ -17,15 +17,22 @@ namespace NEO {
 class MultiRootDeviceFixture : public ::testing::Test {
   public:
     void SetUp() override {
-        DebugManager.flags.CreateMultipleRootDevices.set(2 * expectedRootDeviceIndex);
+        DebugManager.flags.CreateMultipleRootDevices.set(3 * expectedRootDeviceIndex);
+
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, expectedRootDeviceIndex));
-        context.reset(new MockContext(device.get()));
+        device2 = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, 2u));
+
+        cl_device_id devices[] = {
+            device.get(), device2.get()};
+
+        context.reset(new MockContext(ClDeviceVector(devices, 2)));
         mockMemoryManager = reinterpret_cast<MockMemoryManager *>(device->getMemoryManager());
     }
 
     const uint32_t expectedRootDeviceIndex = 1;
     DebugManagerStateRestore restorer;
     std::unique_ptr<MockClDevice> device;
+    std::unique_ptr<MockClDevice> device2;
     std::unique_ptr<MockContext> context;
     MockMemoryManager *mockMemoryManager;
 };

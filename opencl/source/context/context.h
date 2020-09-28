@@ -17,6 +17,7 @@
 #include "opencl/source/helpers/destructor_callback.h"
 
 #include <list>
+#include <map>
 #include <set>
 
 namespace NEO {
@@ -148,7 +149,7 @@ class Context : public BaseObject<_cl_context> {
 
     AsyncEventsHandler &getAsyncEventsHandler() const;
 
-    DeviceBitfield getDeviceBitfieldForAllocation() const;
+    DeviceBitfield getDeviceBitfieldForAllocation(uint32_t rootDeviceIndex) const;
     bool getResolvesRequiredInKernels() const {
         return resolvesRequiredInKernels;
     }
@@ -167,6 +168,7 @@ class Context : public BaseObject<_cl_context> {
     void setupContextType();
 
     std::set<uint32_t> rootDeviceIndices = {};
+    std::map<uint32_t, DeviceBitfield> deviceBitfields;
     std::vector<std::unique_ptr<SharingFunctions>> sharingFunctions;
     ClDeviceVector devices;
     std::list<ContextDestructorCallback *> destructorCallbacks;

@@ -198,6 +198,15 @@ bool Context::createImpl(const cl_context_properties *properties,
     }
 
     this->devices = inputDevices;
+    for (auto &rootDeviceIndex : rootDeviceIndices) {
+        DeviceBitfield deviceBitfield{};
+        for (const auto &pDevice : devices) {
+            if (pDevice->getRootDeviceIndex() == rootDeviceIndex) {
+                deviceBitfield |= pDevice->getDeviceBitfield();
+            }
+        }
+        deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
+    }
 
     if (devices.size() > 0) {
         maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
@@ -438,13 +447,8 @@ AsyncEventsHandler &Context::getAsyncEventsHandler() const {
     return *static_cast<ClExecutionEnvironment *>(devices[0]->getExecutionEnvironment())->getAsyncEventsHandler();
 }
 
-DeviceBitfield Context::getDeviceBitfieldForAllocation() const {
-    DeviceBitfield deviceBitfield{};
-    for (const auto &pDevice : devices) {
-        deviceBitfield |= pDevice->getDeviceBitfield();
-    }
-
-    return deviceBitfield;
+DeviceBitfield Context::getDeviceBitfieldForAllocation(uint32_t rootDeviceIndex) const {
+    return deviceBitfields.at(rootDeviceIndex);
 }
 
 void Context::setupContextType() {

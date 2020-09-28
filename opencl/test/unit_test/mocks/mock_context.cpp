@@ -43,6 +43,9 @@ MockContext::MockContext(
     specialQueue = nullptr;
     defaultDeviceQueue = nullptr;
     driverDiagnostics = nullptr;
+    rootDeviceIndices = {};
+    maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
+    deviceBitfields = {};
 }
 
 MockContext::~MockContext() {
@@ -91,10 +94,24 @@ std::unique_ptr<AsyncEventsHandler> &MockContext::getAsyncEventsHandlerUniquePtr
 void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSpecialQueue) {
     for (auto &pClDevice : devices) {
         pClDevice->incRefInternal();
+        rootDeviceIndices.insert(pClDevice->getRootDeviceIndex());
     }
+    maxRootDeviceIndex = *std::max_element(rootDeviceIndices.begin(), rootDeviceIndices.end(), std::less<uint32_t const>());
+
     this->devices = devices;
     memoryManager = devices[0]->getMemoryManager();
     svmAllocsManager = new SVMAllocsManager(memoryManager);
+
+    for (auto &rootDeviceIndex : rootDeviceIndices) {
+        DeviceBitfield deviceBitfield{};
+        for (const auto &pDevice : devices) {
+            if (pDevice->getRootDeviceIndex() == rootDeviceIndex) {
+                deviceBitfield |= pDevice->getDeviceBitfield();
+            }
+        }
+        deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
+    }
+
     cl_int retVal;
     if (!noSpecialQueue) {
         auto commandQueue = CommandQueue::create(this, devices[0], nullptr, false, retVal);

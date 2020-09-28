@@ -82,7 +82,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
                                              0u,    // size
                                              GraphicsAllocation::AllocationType::SHARED_IMAGE,
                                              false, // isMultiStorageAllocation
-                                             context->getDeviceBitfieldForAllocation());
+                                             context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         if (memoryManager->verifyHandle(toOsHandle(sharedHandle), rootDeviceIndex, false)) {
             alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false);
         } else {
@@ -167,7 +167,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
                                              0u,    // size
                                              GraphicsAllocation::AllocationType::SHARED_IMAGE,
                                              false, // isMultiStorageAllocation
-                                             context->getDeviceBitfieldForAllocation());
+                                             context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         if (memoryManager->verifyHandle(toOsHandle(sharedHandle), rootDeviceIndex, false)) {
             alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false);
         } else {
