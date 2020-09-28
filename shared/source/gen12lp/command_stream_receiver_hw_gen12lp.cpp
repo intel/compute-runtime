@@ -85,86 +85,44 @@ void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProp
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename Family::XY_COPY_BLT &blitCmd) {
-    using XY_COPY_BLT = typename Family::XY_COPY_BLT;
-    if (srcTilingType == GMM_TILED_Y) {
-        blitCmd.setSourceTiling(XY_COPY_BLT::SOURCE_TILING::SOURCE_TILING_YMAJOR);
-    }
-    if (dstTilingType == GMM_TILED_Y) {
-        blitCmd.setDestinationTiling(XY_COPY_BLT::DESTINATION_TILING::DESTINATION_TILING_YMAJOR);
-    }
-}
-
-template <>
-void BlitCommandsHelper<Family>::appendSurfaceType(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
-}
-
-template <>
-void BlitCommandsHelper<Family>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, GMM_TILE_TYPE &tileType, uint32_t &mipTailLod) {
-    constexpr uint32_t TILED_Y_PITCH_ALIGNMENT = 128;
-    constexpr uint32_t NON_TILED_PITCH_ALIGNMENT = 16;
-
+void BlitCommandsHelper<Family>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (allocation.getDefaultGmm()) {
-        auto gmmResInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
-        auto resInfo = gmmResInfo->getResourceFlags()->Info;
-        if (resInfo.TiledY) {
-            tileType = GMM_TILED_Y;
-            pitch = static_cast<uint32_t>(gmmResInfo->getRenderPitch());
-            pitch = alignUp<uint32_t>(pitch, TILED_Y_PITCH_ALIGNMENT);
-            qPitch = static_cast<uint32_t>(gmmResInfo->getQPitch());
-        } else {
-            pitch = alignUp<uint32_t>(pitch, NON_TILED_PITCH_ALIGNMENT);
-        }
+        auto gmmResourceInfo = allocation.getDefaultGmm()->gmmResourceInfo.get();
+        qPitch = gmmResourceInfo->getQPitch() ? static_cast<uint32_t>(gmmResourceInfo->getQPitch()) : qPitch;
+        pitch = gmmResourceInfo->getRenderPitch() ? static_cast<uint32_t>(gmmResourceInfo->getRenderPitch()) : pitch;
     }
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, uint32_t sliceIndex) {
+void BlitCommandsHelper<Family>::appendSliceOffsets(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, uint32_t sliceIndex, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t srcSlicePitch, uint32_t dstSlicePitch) {
     using XY_COPY_BLT = typename Family::XY_COPY_BLT;
-    auto srcAllocation = blitProperties.srcAllocation;
-    auto dstAllocation = blitProperties.dstAllocation;
-    auto srcQPitch = blitProperties.srcSize.y;
-    auto dstQPitch = blitProperties.dstSize.y;
-    auto srcPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
-    auto dstPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
-    auto tileType = GMM_NOT_TILED;
-    uint32_t mipTailLod = 0;
+    auto srcAddress = blitProperties.srcGpuAddress;
+    auto dstAddress = blitProperties.dstGpuAddress;
 
-    getBlitAllocationProperties(*srcAllocation, srcPitch, srcQPitch, tileType, mipTailLod);
-    getBlitAllocationProperties(*dstAllocation, dstPitch, dstQPitch, tileType, mipTailLod);
-
-    auto srcSlicePitch = srcPitch * srcQPitch;
-    auto dstSlicePitch = dstPitch * dstQPitch;
-
-    size_t srcOffset = srcSlicePitch * (sliceIndex + blitProperties.srcOffset.z);
-    size_t dstOffset = dstSlicePitch * (sliceIndex + blitProperties.dstOffset.z);
-
-    blitCmd.setSourceBaseAddress(ptrOffset(srcAllocation->getGpuAddress(), srcOffset));
-    blitCmd.setDestinationBaseAddress(ptrOffset(dstAllocation->getGpuAddress(), dstOffset));
+    blitCmd.setSourceBaseAddress(ptrOffset(srcAddress, srcSlicePitch * (sliceIndex + blitProperties.srcOffset.z)));
+    blitCmd.setDestinationBaseAddress(ptrOffset(dstAddress, dstSlicePitch * (sliceIndex + blitProperties.dstOffset.z)));
 }
 
 template <>
-void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd) {
-    auto srcTileType = GMM_NOT_TILED;
-    auto dstTileType = GMM_NOT_TILED;
+void BlitCommandsHelper<Family>::appendBlitCommandsForImages(const BlitProperties &blitProperties, typename Family::XY_COPY_BLT &blitCmd, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t &srcSlicePitch, uint32_t &dstSlicePitch) {
+    auto tileType = GMM_NOT_TILED;
     auto srcAllocation = blitProperties.srcAllocation;
     auto dstAllocation = blitProperties.dstAllocation;
     auto srcQPitch = blitProperties.srcSize.y;
     auto dstQPitch = blitProperties.dstSize.y;
-    auto srcPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
-    auto dstPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
+    auto srcRowPitch = static_cast<uint32_t>(blitProperties.srcRowPitch);
+    auto dstRowPitch = static_cast<uint32_t>(blitProperties.dstRowPitch);
     uint32_t mipTailLod = 0;
+    auto compressionDetails = 0u;
 
-    getBlitAllocationProperties(*srcAllocation, srcPitch, srcQPitch, srcTileType, mipTailLod);
-    getBlitAllocationProperties(*dstAllocation, dstPitch, dstQPitch, dstTileType, mipTailLod);
+    getBlitAllocationProperties(*srcAllocation, srcRowPitch, srcQPitch, tileType, mipTailLod, compressionDetails, rootDeviceEnvironment);
+    getBlitAllocationProperties(*dstAllocation, dstRowPitch, dstQPitch, tileType, mipTailLod, compressionDetails, rootDeviceEnvironment);
 
-    srcPitch = (srcTileType == GMM_NOT_TILED) ? srcPitch : srcPitch / 4;
-    dstPitch = (dstTileType == GMM_NOT_TILED) ? dstPitch : dstPitch / 4;
+    blitCmd.setSourcePitch(srcRowPitch);
+    blitCmd.setDestinationPitch(dstRowPitch);
 
-    blitCmd.setSourcePitch(srcPitch);
-    blitCmd.setDestinationPitch(dstPitch);
-
-    appendTilingType(srcTileType, dstTileType, blitCmd);
+    srcSlicePitch = std::max(srcSlicePitch, srcRowPitch * srcQPitch);
+    dstSlicePitch = std::max(dstSlicePitch, dstRowPitch * dstQPitch);
 }
 
 template <>
