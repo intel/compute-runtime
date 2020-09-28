@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/frequency/windows/os_frequency_imp.h"
 
+#include "level_zero/tools/source/sysman/sysman_const.h"
+
 namespace L0 {
 
 ze_result_t WddmFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &properties) {
@@ -108,6 +110,7 @@ ze_result_t WddmFrequencyImp::osFrequencyGetState(zes_freq_state_t *pState) {
     if (pKmdSysManager->requestSingle(request, response) == ZE_RESULT_SUCCESS) {
         memcpy_s(&value, sizeof(uint32_t), response.dataBuffer, sizeof(uint32_t));
         pState->currentVoltage = static_cast<double>(value);
+        pState->currentVoltage /= milliVoltsFactor;
     }
 
     request.requestId = KmdSysman::Requests::Frequency::CurrentThrottleReasons;

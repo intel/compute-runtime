@@ -6,6 +6,7 @@
  */
 
 #include "level_zero/tools/source/sysman/frequency/windows/os_frequency_imp.h"
+#include "level_zero/tools/source/sysman/sysman_const.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/frequency/windows/mock_frequency.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_sysman_fixture.h"
 
@@ -292,7 +293,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
 
         if (domainIndex == ZES_FREQ_DOMAIN_GPU) {
             EXPECT_DOUBLE_EQ(static_cast<double>(pKmdSysManager->mockResolvedFrequency[domainIndex]), state.actual);
-            EXPECT_DOUBLE_EQ(static_cast<double>(pKmdSysManager->mockCurrentVoltage), state.currentVoltage);
+            EXPECT_DOUBLE_EQ(static_cast<double>(pKmdSysManager->mockCurrentVoltage) / milliVoltsFactor, state.currentVoltage);
             EXPECT_DOUBLE_EQ(static_cast<double>(pKmdSysManager->mockEfficientFrequency), state.efficient);
             EXPECT_DOUBLE_EQ(static_cast<double>(pKmdSysManager->mockRequestedFrequency), state.request);
             EXPECT_DOUBLE_EQ(static_cast<double>(pKmdSysManager->mockTdpFrequency), state.tdp);
