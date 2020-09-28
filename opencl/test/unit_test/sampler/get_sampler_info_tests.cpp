@@ -38,7 +38,7 @@ struct GetSamplerInfo : public ::testing::TestWithParam<uint32_t /*cl_sampler_in
     cl_sampler_info param;
 };
 
-TEST_P(GetSamplerInfo, valid_returnsSuccess) {
+TEST_P(GetSamplerInfo, GivenValidParamWhenGettingInfoThenSuccessIsReturned) {
     MockContext context;
     auto retVal = CL_INVALID_VALUE;
     auto normalizedCoords = CL_TRUE;
