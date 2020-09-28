@@ -149,6 +149,7 @@ TEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingImageWit
     auto image = clCreateImageWithPropertiesINTEL(
         &mockContext,
         nullptr,
+        0,
         &imageFormat,
         &imageDesc,
         nullptr,
@@ -399,6 +400,7 @@ TEST_F(clCreateImageTest, GivenDeviceNotSupportingImagesWhenCreatingImageFromBuf
     auto image = clCreateImageWithPropertiesINTEL(
         pContext.get(),
         nullptr,
+        0,
         &imageFormat,
         &imageDesc,
         nullptr,
@@ -704,12 +706,14 @@ TEST_P(clCreateImageInvalidFlags, GivenInvalidFlagsCombinationsWhenCreatingImage
 
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
     EXPECT_EQ(nullptr, image);
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 
     cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, flags, 0};
-
     image = clCreateImageWithPropertiesINTEL(
         pContext,
         properties,
+        0,
         &imageFormat,
         &imageDesc,
         ptr,
@@ -717,7 +721,20 @@ TEST_P(clCreateImageInvalidFlags, GivenInvalidFlagsCombinationsWhenCreatingImage
 
     ASSERT_EQ(CL_INVALID_PROPERTY, retVal);
     EXPECT_EQ(nullptr, image);
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 
+    image = clCreateImageWithPropertiesINTEL(
+        pContext,
+        nullptr,
+        flags,
+        &imageFormat,
+        &imageDesc,
+        ptr,
+        &retVal);
+
+    ASSERT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, image);
     retVal = clReleaseMemObject(image);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
@@ -1079,6 +1096,7 @@ TEST_F(clCreateImageWithPropertiesINTELTest, GivenInvalidContextWhenCreatingImag
     auto image = clCreateImageWithPropertiesINTEL(
         nullptr,
         nullptr,
+        0,
         nullptr,
         nullptr,
         nullptr,
@@ -1091,10 +1109,25 @@ TEST_F(clCreateImageWithPropertiesINTELTest, GivenInvalidContextWhenCreatingImag
 TEST_F(clCreateImageWithPropertiesINTELTest, GivenValidParametersWhenCreatingImageWithPropertiesThenImageIsCreatedAndSuccessReturned) {
 
     cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, CL_MEM_READ_WRITE, 0};
-
     auto image = clCreateImageWithPropertiesINTEL(
         pContext,
         properties,
+        0,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, image);
+
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    image = clCreateImageWithPropertiesINTEL(
+        pContext,
+        nullptr,
+        CL_MEM_READ_WRITE,
         &imageFormat,
         &imageDesc,
         nullptr,
@@ -1114,6 +1147,7 @@ TEST_F(clCreateImageWithPropertiesINTELTest, GivenInvalidPropertyKeyWhenCreating
     auto image = clCreateImageWithPropertiesINTEL(
         pContext,
         properties,
+        0,
         &imageFormat,
         &imageDesc,
         nullptr,

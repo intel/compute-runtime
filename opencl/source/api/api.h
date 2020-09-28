@@ -126,6 +126,7 @@ cl_mem CL_API_CALL clCreateBuffer(
 cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(
     cl_context context,
     const cl_mem_properties_intel *properties,
+    cl_mem_flags flags,
     size_t size,
     void *hostPtr,
     cl_int *errcodeRet);
@@ -148,6 +149,7 @@ cl_mem CL_API_CALL clCreateImage(
 cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(
     cl_context context,
     const cl_mem_properties_intel *properties,
+    cl_mem_flags flags,
     const cl_image_format *imageFormat,
     const cl_image_desc *imageDesc,
     void *hostPtr,

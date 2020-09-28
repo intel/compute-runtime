@@ -302,3 +302,29 @@ TEST_F(MemoryPropertiesHelperTests, givenDifferentParametersWhenCallingFillCache
         }
     }
 }
+
+TEST_F(MemoryPropertiesHelperTests, givenMemFlagsWithFlagsAndPropertiesWhenParsingMemoryPropertiesThenTheyAreCorrectlyParsed) {
+    struct TestInput {
+        cl_mem_flags flagsParameter;
+        cl_mem_properties_intel flagsProperties;
+        cl_mem_flags expectedResult;
+    };
+
+    TestInput testInputs[] = {
+        {0b0, 0b0, 0b0},
+        {0b0, 0b1010, 0b1010},
+        {0b1010, 0b0, 0b1010},
+        {0b1010, 0b101, 0b1111},
+        {0b1010, 0b1010, 0b1010},
+        {0b1111, 0b1111, 0b1111}};
+
+    for (auto &testInput : testInputs) {
+        flags = testInput.flagsParameter;
+        cl_mem_properties_intel properties[] = {
+            CL_MEM_FLAGS, testInput.flagsProperties,
+            0};
+        EXPECT_TRUE(MemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
+                                                                  MemoryPropertiesHelper::ObjType::UNKNOWN, context));
+        EXPECT_EQ(testInput.expectedResult, flags);
+    }
+}

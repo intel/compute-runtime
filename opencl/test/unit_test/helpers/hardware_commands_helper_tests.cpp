@@ -1326,7 +1326,7 @@ HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocations
     auto kernel = clUniquePtr(Kernel::create(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal));
 
     cl_mem_properties_intel bufferPropertiesUncachedResource[] = {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0};
-    auto bufferLocallyUncached = clCreateBufferWithPropertiesINTEL(context, bufferPropertiesUncachedResource, 1, nullptr, nullptr);
+    auto bufferLocallyUncached = clCreateBufferWithPropertiesINTEL(context, bufferPropertiesUncachedResource, 0, 1, nullptr, nullptr);
     kernel->setArg(0, sizeof(bufferLocallyUncached), &bufferLocallyUncached);
 
     using CacheFlushAllocationsVec = StackVec<GraphicsAllocation *, 32>;
@@ -1334,7 +1334,7 @@ HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocations
     kernel->getAllocationsForCacheFlush(cacheFlushVec);
     EXPECT_EQ(0u, cacheFlushVec.size());
 
-    auto bufferRegular = clCreateBufferWithPropertiesINTEL(context, nullptr, 1, nullptr, nullptr);
+    auto bufferRegular = clCreateBufferWithPropertiesINTEL(context, nullptr, 0, 1, nullptr, nullptr);
     kernel->setArg(1, sizeof(bufferRegular), &bufferRegular);
 
     kernel->getAllocationsForCacheFlush(cacheFlushVec);

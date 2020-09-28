@@ -685,18 +685,19 @@ cl_mem CL_API_CALL clCreateBufferWithProperties(cl_context context,
 
 cl_mem CL_API_CALL clCreateBufferWithPropertiesINTEL(cl_context context,
                                                      const cl_mem_properties_intel *properties,
+                                                     cl_mem_flags flags,
                                                      size_t size,
                                                      void *hostPtr,
                                                      cl_int *errcodeRet) {
     DBG_LOG_INPUTS("cl_context", context,
                    "cl_mem_properties_intel", properties,
+                   "cl_mem_flags", flags,
                    "size", size,
                    "hostPtr", NEO::FileLoggerInstance().infoPointerToString(hostPtr, size));
 
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
-    cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem buffer = BufferFunctions::validateInputAndCreateBuffer(context, properties, flags, flagsIntel, size, hostPtr, retVal);
 
@@ -887,6 +888,7 @@ cl_mem CL_API_CALL clCreateImageWithProperties(cl_context context,
 
 cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(cl_context context,
                                                     const cl_mem_properties_intel *properties,
+                                                    cl_mem_flags flags,
                                                     const cl_image_format *imageFormat,
                                                     const cl_image_desc *imageDesc,
                                                     void *hostPtr,
@@ -894,6 +896,7 @@ cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(cl_context context,
 
     DBG_LOG_INPUTS("cl_context", context,
                    "cl_mem_properties_intel", properties,
+                   "cl_mem_flags", flags,
                    "cl_image_format.channel_data_type", imageFormat->image_channel_data_type,
                    "cl_image_format.channel_order", imageFormat->image_channel_order,
                    "cl_image_desc.width", imageDesc->image_width,
@@ -906,7 +909,6 @@ cl_mem CL_API_CALL clCreateImageWithPropertiesINTEL(cl_context context,
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
-    cl_mem_flags flags = 0;
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem image = ImageFunctions::validateAndCreateImage(context, properties, flags, flagsIntel, imageFormat, imageDesc, hostPtr, retVal);
 

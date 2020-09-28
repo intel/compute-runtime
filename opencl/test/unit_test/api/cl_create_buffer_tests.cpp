@@ -44,15 +44,17 @@ TEST_P(clCreateBufferValidFlagsTests, GivenValidFlagsWhenCreatingBufferThenBuffe
     auto buffer = clCreateBuffer(pContext, flags, 64, pHostPtr, &retVal);
     EXPECT_NE(nullptr, buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
     clReleaseMemObject(buffer);
 
     cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, flags, 0};
-
-    buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, pHostPtr, &retVal);
+    buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, pHostPtr, &retVal);
     EXPECT_NE(nullptr, buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    clReleaseMemObject(buffer);
 
+    buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, flags, 64, pHostPtr, &retVal);
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
     clReleaseMemObject(buffer);
 };
 
@@ -80,10 +82,13 @@ TEST_P(clCreateBufferInvalidFlagsTests, GivenInvalidFlagsWhenCreatingBufferThenB
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     cl_mem_properties_intel properties[] = {CL_MEM_FLAGS, flags, 0};
-
-    buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
+    buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, nullptr, &retVal);
     EXPECT_EQ(nullptr, buffer);
     EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
+
+    buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, flags, 64, nullptr, &retVal);
+    EXPECT_EQ(nullptr, buffer);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
 };
 
 cl_mem_flags invalidFlags[] = {
@@ -108,7 +113,7 @@ using clCreateBufferValidFlagsIntelTests = clCreateBufferTemplateTests;
 TEST_P(clCreateBufferValidFlagsIntelTests, GivenValidFlagsIntelWhenCreatingBufferThenBufferIsCreated) {
     cl_mem_properties_intel properties[] = {CL_MEM_FLAGS_INTEL, GetParam(), 0};
 
-    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, nullptr, &retVal);
     EXPECT_NE(nullptr, buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -130,7 +135,7 @@ using clCreateBufferInvalidFlagsIntelTests = clCreateBufferTemplateTests;
 TEST_P(clCreateBufferInvalidFlagsIntelTests, GivenInvalidFlagsIntelWhenCreatingBufferThenBufferIsNotCreated) {
     cl_mem_properties_intel properties[] = {CL_MEM_FLAGS_INTEL, GetParam(), 0};
 
-    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, nullptr, &retVal);
     EXPECT_EQ(nullptr, buffer);
     EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
 };
@@ -149,7 +154,7 @@ using clCreateBufferInvalidProperties = clCreateBufferTemplateTests;
 TEST_F(clCreateBufferInvalidProperties, GivenInvalidPropertyKeyWhenCreatingBufferThenBufferIsNotCreated) {
     cl_mem_properties_intel properties[] = {(cl_mem_properties_intel(1) << 31), 0, 0};
 
-    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 64, nullptr, &retVal);
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, 64, nullptr, &retVal);
     EXPECT_EQ(nullptr, buffer);
     EXPECT_EQ(CL_INVALID_PROPERTY, retVal);
 };
@@ -179,7 +184,7 @@ TEST_F(clCreateBufferTests, GivenNullContextWhenCreatingBufferThenInvalidContext
     clCreateBuffer(nullptr, flags, bufferSize, pHostMem, &retVal);
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
 
-    clCreateBufferWithPropertiesINTEL(nullptr, nullptr, bufferSize, pHostMem, &retVal);
+    clCreateBufferWithPropertiesINTEL(nullptr, nullptr, 0, bufferSize, pHostMem, &retVal);
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
@@ -227,7 +232,7 @@ TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeWhenCreateBufferWi
     auto pDevice = pContext->getDevice(0);
     size_t size = static_cast<size_t>(pDevice->getHardwareCapabilities().maxMemAllocSize) + 1;
 
-    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, size, nullptr, &retVal);
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, 0, size, nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_BUFFER_SIZE, retVal);
     EXPECT_EQ(nullptr, buffer);
 }
@@ -265,7 +270,7 @@ TEST_F(clCreateBufferTests, GivenBufferSizeOverMaxMemAllocSizeAndClMemAllowUnres
         GTEST_SKIP();
     }
 
-    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, size, nullptr, &retVal);
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, properties, 0, size, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 
@@ -356,7 +361,7 @@ TEST_F(clCreateBufferTests, WhenCreatingBufferWithPropertiesThenErrorCodeIsCorre
 TEST_F(clCreateBufferTests, GivenBufferCreatedWithNullPropertiesWhenQueryingPropertiesThenNothingIsReturned) {
     cl_int retVal = CL_SUCCESS;
     size_t size = 10;
-    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, size, nullptr, &retVal);
+    auto buffer = clCreateBufferWithPropertiesINTEL(pContext, nullptr, 0, size, nullptr, &retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
     EXPECT_NE(nullptr, buffer);
 
@@ -381,7 +386,7 @@ TEST_F(clCreateBufferTests, WhenCreatingBufferWithPropertiesThenPropertiesAreCor
         {CL_MEM_FLAGS, CL_MEM_WRITE_ONLY, CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0}};
 
     for (auto testProperties : propertiesToTest) {
-        auto buffer = clCreateBufferWithPropertiesINTEL(pContext, testProperties.data(), size, nullptr, &retVal);
+        auto buffer = clCreateBufferWithPropertiesINTEL(pContext, testProperties.data(), 0, size, nullptr, &retVal);
         EXPECT_EQ(CL_SUCCESS, retVal);
         EXPECT_NE(nullptr, buffer);
 

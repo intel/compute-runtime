@@ -67,14 +67,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, GivenAtLeastOne
 
     auto kernel = mockKernel.mockKernel;
 
-    auto bufferCacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferCacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferCacheable1 = clUniquePtr(castToObject<Buffer>(bufferCacheable1));
-    auto bufferCacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferCacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferCacheable2 = clUniquePtr(castToObject<Buffer>(bufferCacheable2));
 
-    auto bufferUncacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferUncacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferUncacheable1 = clUniquePtr(castToObject<Buffer>(bufferUncacheable1));
-    auto bufferUncacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferUncacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferUncacheable2 = clUniquePtr(castToObject<Buffer>(bufferUncacheable2));
 
     auto mocsCacheable = kernel->getDevice().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
@@ -145,14 +145,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersTha
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto bufferCacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferCacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferCacheable1 = clUniquePtr(castToObject<Buffer>(bufferCacheable1));
-    auto bufferCacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferCacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferCacheable2 = clUniquePtr(castToObject<Buffer>(bufferCacheable2));
 
-    auto bufferUncacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheableInSurfaceState, n * sizeof(float), nullptr, nullptr);
+    auto bufferUncacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheableInSurfaceState, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferUncacheable1 = clUniquePtr(castToObject<Buffer>(bufferUncacheable1));
-    auto bufferUncacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheableInSurfaceState, n * sizeof(float), nullptr, nullptr);
+    auto bufferUncacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheableInSurfaceState, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferUncacheable2 = clUniquePtr(castToObject<Buffer>(bufferUncacheable2));
 
     auto mocsCacheable = kernel->getDevice().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
@@ -222,14 +222,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersTha
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto bufferCacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferCacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferCacheable1 = clUniquePtr(castToObject<Buffer>(bufferCacheable1));
-    auto bufferCacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferCacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferCacheable2 = clUniquePtr(castToObject<Buffer>(bufferCacheable2));
 
-    auto bufferUncacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferUncacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferUncacheable1 = clUniquePtr(castToObject<Buffer>(bufferUncacheable1));
-    auto bufferUncacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferUncacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferUncacheable2 = clUniquePtr(castToObject<Buffer>(bufferUncacheable2));
 
     auto mocsCacheable = kernel->getDevice().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
@@ -299,12 +299,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, WhenUnsettingUn
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto bufferCacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferCacheable1 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferCacheable1 = clUniquePtr(castToObject<Buffer>(bufferCacheable1));
-    auto bufferCacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferCacheable2 = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferCacheable2 = clUniquePtr(castToObject<Buffer>(bufferCacheable2));
 
-    auto bufferUncacheable = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferUncacheable = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, 0, n * sizeof(float), nullptr, nullptr);
     auto pBufferUncacheable = clUniquePtr(castToObject<Buffer>(bufferUncacheable));
 
     auto mocsCacheable = kernel->getDevice().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
@@ -367,10 +367,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, clMemLocallyUncachedResourceFixture, givenBuffersTha
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto bufferCacheable = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferCacheable = clCreateBufferWithPropertiesINTEL(context, propertiesCacheable, 0, n * sizeof(float), nullptr, nullptr);
 
-    auto bufferUncacheableInSurfaceState = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheableInSurfaceState, n * sizeof(float), nullptr, nullptr);
-    auto bufferUncacheable = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, n * sizeof(float), nullptr, nullptr);
+    auto bufferUncacheableInSurfaceState = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheableInSurfaceState, 0, n * sizeof(float), nullptr, nullptr);
+    auto bufferUncacheable = clCreateBufferWithPropertiesINTEL(context, propertiesUncacheable, 0, n * sizeof(float), nullptr, nullptr);
 
     retVal = clSetKernelArg(kernel, 0, sizeof(cl_mem), &bufferUncacheableInSurfaceState);
     EXPECT_EQ(CL_SUCCESS, retVal);
