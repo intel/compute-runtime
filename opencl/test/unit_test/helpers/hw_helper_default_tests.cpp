@@ -24,11 +24,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenAskedForHvAlign4Requi
     EXPECT_TRUE(hwHelper.hvAlign4Required());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenAskedForLowPriorityEngineTypeThenReturnRcs) {
-    auto hwHelperEngineType = HwHelperHw<FamilyType>::lowPriorityEngineType;
-    EXPECT_EQ(aub_stream::EngineType::ENGINE_RCS, hwHelperEngineType);
-}
-
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, givenHwHelperWhenGettingBindlessSurfaceExtendedMessageDescriptorValueThenCorrectValueIsReturned) {
     auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     auto value = hwHelper.getBindlessSurfaceExtendedMessageDescriptorValue(0x200);

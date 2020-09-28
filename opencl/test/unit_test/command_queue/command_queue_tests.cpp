@@ -241,7 +241,7 @@ HWTEST_P(CommandQueueWithBlitOperationsTests, givenDeviceWithSubDevicesSupportin
 
     auto subDevice = device->getDeviceById(0);
     if (createBcsEngine) {
-        auto &engine = subDevice->getEngine(HwHelperHw<FamilyType>::lowPriorityEngineType, true, false);
+        auto &engine = subDevice->getEngine(getChosenEngineType(subDevice->getHardwareInfo()), true, false);
         bcsOsContext.reset(OsContext::create(nullptr, 1, 0, aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
                                              false, false, false));
         engine.osContext = bcsOsContext.get();

@@ -145,8 +145,6 @@ class HwHelperHw : public HwHelper {
         return hwHelper;
     }
 
-    static const aub_stream::EngineType lowPriorityEngineType;
-
     uint32_t getBindingTableStateSurfaceStatePointer(const void *pBindingTable, uint32_t index) override {
         using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
