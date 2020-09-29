@@ -1643,9 +1643,6 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
     NEO::PipeControlArgs args(true);
     args.hdcPipelineFlush = true;
     args.textureCacheInvalidationEnable = true;
-    if (genericMediaStateClearRequired) {
-        args.genericMediaStateClear = true;
-    }
     NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
 
     STATE_BASE_ADDRESS sba;

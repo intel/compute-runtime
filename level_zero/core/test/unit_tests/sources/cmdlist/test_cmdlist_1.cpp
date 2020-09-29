@@ -334,43 +334,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListCreate, whenCommandListIsCreatedThenPCAnd
     EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), cmdSba->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
-HWTEST_F(CommandListCreate, givenCommandListWhenCreatedThenGenericMediaStateClearBitIsNotSetInThePipeControlCommand) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
-    auto &commandContainer = commandList->commandContainer;
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-    auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-
-    ASSERT_NE(cmdList.end(), itor);
-
-    auto cmdPc = genCmdCast<PIPE_CONTROL *>(*itor);
-    EXPECT_FALSE(cmdPc->getGenericMediaStateClear());
-}
-
-HWTEST_F(CommandListCreate, givenCommandListWhenResetThenGenericMediaStateClearBitIsSetInThePipeControlCommand) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
-    auto &commandContainer = commandList->commandContainer;
-    commandList->reset();
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
-    auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-
-    ASSERT_NE(cmdList.end(), itor);
-
-    auto cmdPc = genCmdCast<PIPE_CONTROL *>(*itor);
-    EXPECT_TRUE(cmdPc->getGenericMediaStateClear());
-}
-
 HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenCreatedThenStateBaseAddressCmdIsNotProgrammed) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
