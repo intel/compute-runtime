@@ -77,7 +77,7 @@ class MediaImageSetArgTest : public ClDeviceFixture,
     Image *srcImage = nullptr;
 };
 
-HWTEST_F(MediaImageSetArgTest, setKernelArgImage) {
+HWTEST_F(MediaImageSetArgTest, WhenSettingMediaImageArgThenArgsSetCorrectly) {
     typedef typename FamilyType::MEDIA_SURFACE_STATE MEDIA_SURFACE_STATE;
 
     auto pSurfaceState = reinterpret_cast<const MEDIA_SURFACE_STATE *>(
@@ -97,7 +97,7 @@ HWTEST_F(MediaImageSetArgTest, setKernelArgImage) {
     EXPECT_EQ(0u, surfaces.size());
 }
 
-HWTEST_F(MediaImageSetArgTest, clSetKernelArgImage) {
+HWTEST_F(MediaImageSetArgTest, WhenSettingKernelArgImageThenArgsSetCorrectly) {
     typedef typename FamilyType::MEDIA_SURFACE_STATE MEDIA_SURFACE_STATE;
     cl_mem memObj = srcImage;
 
