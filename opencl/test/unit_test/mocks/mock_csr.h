@@ -89,6 +89,7 @@ class MockCsr : public MockCsrBase<GfxFamily> {
   public:
     using BaseClass = MockCsrBase<GfxFamily>;
     using CommandStreamReceiver::mediaVfeStateDirty;
+    using MockCsrBase<GfxFamily>::lastAdditionalKernelExecInfo;
 
     MockCsr() = delete;
     MockCsr(const HardwareInfo &hwInfoIn) = delete;

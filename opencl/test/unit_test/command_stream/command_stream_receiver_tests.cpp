@@ -1125,6 +1125,12 @@ HWTEST_F(CommandStreamReceiverTest, givenDebugPauseThreadWhenTerminatingAtFirstS
     EXPECT_EQ(0u, output.length());
 }
 
+HWTEST_F(CommandStreamReceiverTest, whenCreatingCommandStreamReceiverThenLastAddtionalKernelExecInfoValueIsCorrect) {
+    int32_t executionStamp = 0;
+    std::unique_ptr<MockCsr<FamilyType>> mockCSR(new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex()));
+    EXPECT_EQ(AdditionalKernelExecInfo::NotSet, mockCSR->lastAdditionalKernelExecInfo);
+}
+
 HWTEST_F(CommandStreamReceiverTest, givenDebugPauseThreadWhenTerminatingAtSecondStageThenFunctionEndsCorrectly) {
     DebugManagerStateRestore restore;
     DebugManager.flags.PauseOnEnqueue.set(0);

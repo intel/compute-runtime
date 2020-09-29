@@ -304,7 +304,7 @@ class CommandStreamReceiver {
 
     bool localMemoryEnabled = false;
     bool pageTableManagerInitialized = false;
-    uint32_t lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::NotApplicable;
+    uint32_t lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
 
     bool useNewResourceImplicitFlush = false;
     bool newResources = false;
