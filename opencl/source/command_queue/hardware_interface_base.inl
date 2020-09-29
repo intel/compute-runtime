@@ -143,6 +143,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         uint64_t postSyncAddress = 0;
         if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             auto timestampPacketNodeForPostSync = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
+            timestampPacketNodeForPostSync->setProfilingCapable(false);
             postSyncAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNodeForPostSync);
         }
         HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(commandStream, commandQueue, mainKernel, postSyncAddress);

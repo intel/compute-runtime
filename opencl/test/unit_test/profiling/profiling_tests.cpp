@@ -1123,6 +1123,30 @@ TEST_F(ProfilingTimestampPacketsTest, givenMultiOsContextCapableSetToTrueWhenCal
     EXPECT_EQ(350u, ev->getEndTimeStamp());
 }
 
+TEST_F(ProfilingTimestampPacketsTest, givenTimestampPacketWithoutProfilingDataWhenCalculatingThenDontUseThatPacket) {
+    int globalStart0 = 20;
+    int globalEnd0 = 51;
+    int contextStart0 = 21;
+    int contextEnd0 = 50;
+
+    int globalStart1 = globalStart0 - 1;
+    int globalEnd1 = globalEnd0 + 1;
+    int contextStart1 = contextStart0 - 1;
+    int contextEnd1 = contextEnd0 + 1;
+
+    addTimestampNodeMultiOsContext(&globalStart0, &globalEnd0, &contextStart0, &contextEnd0, 1);
+    addTimestampNodeMultiOsContext(&globalStart1, &globalEnd1, &contextStart1, &contextEnd1, 1);
+    auto &device = reinterpret_cast<MockDevice &>(cmdQ->getDevice());
+    auto &csr = device.getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
+    csr.multiOsContextCapable = true;
+
+    ev->timestampPacketContainer->peekNodes()[1]->setProfilingCapable(false);
+
+    ev->calcProfilingData();
+    EXPECT_EQ(static_cast<uint64_t>(globalStart0), ev->getStartTimeStamp());
+    EXPECT_EQ(static_cast<uint64_t>(globalEnd0), ev->getEndTimeStamp());
+}
+
 TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCalcProfilingDataThenTimeStampsArePrinted) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintTimestampPacketContents.set(true);
@@ -1148,8 +1172,10 @@ TEST_F(ProfilingTimestampPacketsTest, givenPrintTimestampPacketContentsSetWhenCa
 
     std::string output = testing::internal::GetCapturedStdout();
     std::stringstream expected;
+
+    expected << "Timestamp 0, profiling capable: " << ev->timestampPacketContainer->peekNodes()[0]->isProfilingCapable() << ", ";
     for (int i = 0; i < 16; i++) {
-        expected << "Timestamp 0, packet " << i << ": "
+        expected << "packet " << i << ": "
                  << "global start: " << globalStart[i] << ", "
                  << "global end: " << globalEnd[i] << ", "
                  << "context start: " << contextStart[i] << ", "

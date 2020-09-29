@@ -310,10 +310,12 @@ TEST_F(TagAllocatorTest, whenNewTagIsTakenThenItIsInitialized) {
     MockTagAllocator<TimeStamps> tagAllocator(memoryManager, 1, 2, deviceBitfield);
     tagAllocator.getFreeTagsHead()->tagForCpuAccess->start = 3;
     tagAllocator.getFreeTagsHead()->tagForCpuAccess->end = 4;
+    tagAllocator.getFreeTagsHead()->setProfilingCapable(false);
 
     auto node = tagAllocator.getTag();
     EXPECT_EQ(1u, node->tagForCpuAccess->start);
     EXPECT_EQ(2u, node->tagForCpuAccess->end);
+    EXPECT_TRUE(node->isProfilingCapable());
 }
 
 TEST_F(TagAllocatorTest, givenMultipleReferencesOnTagWhenReleasingThenReturnWhenAllRefCountsAreReleased) {

@@ -256,9 +256,11 @@ bool Event::calcProfilingData() {
 
             if (DebugManager.flags.PrintTimestampPacketContents.get()) {
                 for (auto i = 0u; i < timestamps.size(); i++) {
+                    std::cout << "Timestamp " << i << ", "
+                              << "profiling capable: " << timestamps[i]->isProfilingCapable() << ", ";
                     for (auto j = 0u; j < timestamps[i]->tagForCpuAccess->packetsUsed; j++) {
                         const auto &packet = timestamps[i]->tagForCpuAccess->packets[j];
-                        std::cout << "Timestamp " << i << ", packet " << j << ": "
+                        std::cout << "packet " << j << ": "
                                   << "global start: " << packet.globalStart << ", "
                                   << "global end: " << packet.globalEnd << ", "
                                   << "context start: " << packet.contextStart << ", "
@@ -271,6 +273,9 @@ bool Event::calcProfilingData() {
             uint64_t globalEndTS = timestamps[0]->tagForCpuAccess->packets[0].globalEnd;
 
             for (const auto &timestamp : timestamps) {
+                if (!timestamp->isProfilingCapable()) {
+                    continue;
+                }
                 for (auto i = 0u; i < timestamp->tagForCpuAccess->packetsUsed; ++i) {
                     const auto &packet = timestamp->tagForCpuAccess->packets[i];
                     if (globalStartTS > packet.globalStart) {

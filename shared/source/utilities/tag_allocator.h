@@ -46,11 +46,16 @@ struct TagNode : public IDNode<TagNode<TagType>>, NonCopyableOrMovableClass {
         doNotReleaseNodes = doNotRelease;
     }
 
+    void setProfilingCapable(bool capable) { profilingCapable = capable; }
+
+    bool isProfilingCapable() const { return profilingCapable; }
+
     void incImplicitCpuDependenciesCount() { implicitCpuDependenciesCount++; }
 
     void initialize() {
         tagForCpuAccess->initialize();
         implicitCpuDependenciesCount.store(0);
+        setProfilingCapable(true);
     }
 
     uint32_t getImplicitCpuDependenciesCount() const { return implicitCpuDependenciesCount.load(); }
@@ -64,6 +69,7 @@ struct TagNode : public IDNode<TagNode<TagType>>, NonCopyableOrMovableClass {
     std::atomic<uint32_t> refCount{0};
     std::atomic<uint32_t> implicitCpuDependenciesCount{0};
     bool doNotReleaseNodes = false;
+    bool profilingCapable = true;
 
     template <typename TagType2>
     friend class TagAllocator;
