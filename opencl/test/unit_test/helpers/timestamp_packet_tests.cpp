@@ -57,6 +57,8 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
     };
 
     void SetUp() override {
+        DebugManager.flags.EnableTimestampPacket.set(1);
+
         executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(2);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {

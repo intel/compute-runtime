@@ -65,7 +65,7 @@ Event::Event(
 
     if ((this->ctx == nullptr) && (cmdQueue != nullptr)) {
         this->ctx = &cmdQueue->getContext();
-        if (cmdQueue->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        if (cmdQueue->getTimestampPacketContainer()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         }
     }

@@ -1555,3 +1555,17 @@ TEST(EventsDebug, givenEventWhenTrackingOfParentsIsOffThenDoNotTrackParents) {
     EXPECT_EQ(0u, parentEvents2.size());
     event.setStatus(CL_COMPLETE);
 }
+
+TEST(CommandQueue, givenTimestampPacketWritesDisabledAndQueueHasTimestampPacketContainerThenCreateTheContainerForEvent) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.EnableTimestampPacket.set(0);
+
+    MockContext context{};
+    MockCommandQueue queue{&context, context.getDevice(0), nullptr};
+    ASSERT_FALSE(queue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled());
+    ASSERT_EQ(nullptr, queue.timestampPacketContainer.get());
+    queue.timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+
+    MockEvent<Event> event{&queue, CL_COMMAND_MARKER, 0, 0};
+    EXPECT_NE(nullptr, event.timestampPacketContainer);
+}
