@@ -41,7 +41,17 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         }
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
-        pSysmanDeviceImp->pMemoryHandleContext->init();
+        uint32_t subDeviceCount = 0;
+        std::vector<ze_device_handle_t> deviceHandles;
+        // We received a device handle. Check for subdevices in this device
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+        pSysmanDeviceImp->pMemoryHandleContext->init(deviceHandles);
     }
 
     void TearDown() override {
@@ -66,7 +76,17 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         }
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
-        pSysmanDeviceImp->pMemoryHandleContext->init();
+        uint32_t subDeviceCount = 0;
+        std::vector<ze_device_handle_t> deviceHandles;
+        // We received a device handle. Check for subdevices in this device
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+        pSysmanDeviceImp->pMemoryHandleContext->init(deviceHandles);
     }
 
     std::vector<zes_mem_handle_t> get_memory_handles(uint32_t count) {

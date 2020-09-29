@@ -19,8 +19,8 @@ MemoryHandleContext::~MemoryHandleContext() {
     }
 }
 
-void MemoryHandleContext::createHandle() {
-    Memory *pMemory = new MemoryImp(pOsSysman);
+void MemoryHandleContext::createHandle(ze_device_handle_t deviceHandle) {
+    Memory *pMemory = new MemoryImp(pOsSysman, deviceHandle);
     if (pMemory->initSuccess == true) {
         handleList.push_back(pMemory);
     } else {
@@ -28,8 +28,10 @@ void MemoryHandleContext::createHandle() {
     }
 }
 
-ze_result_t MemoryHandleContext::init() {
-    createHandle();
+ze_result_t MemoryHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
+    for (auto deviceHandle : deviceHandles) {
+        createHandle(deviceHandle);
+    }
     return ZE_RESULT_SUCCESS;
 }
 

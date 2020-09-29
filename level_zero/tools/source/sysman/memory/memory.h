@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <vector>
@@ -35,7 +36,7 @@ struct MemoryHandleContext {
     MemoryHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~MemoryHandleContext();
 
-    ze_result_t init();
+    ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles);
 
     ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory);
 
@@ -44,7 +45,7 @@ struct MemoryHandleContext {
     std::vector<Memory *> handleList = {};
 
   private:
-    void createHandle();
+    void createHandle(ze_device_handle_t deviceHandle);
 };
 
 } // namespace L0

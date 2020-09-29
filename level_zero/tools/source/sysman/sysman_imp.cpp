@@ -94,7 +94,7 @@ void SysmanDeviceImp::init() {
         pRasHandleContext->init();
     }
     if (pMemoryHandleContext) {
-        pMemoryHandleContext->init();
+        pMemoryHandleContext->init(deviceHandles);
     }
     if (pGlobalOperations) {
         pGlobalOperations->init();

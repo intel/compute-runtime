@@ -18,8 +18,8 @@ ze_result_t WddmMemoryImp::getProperties(zes_mem_properties_t *pProperties) {
     KmdSysman::RequestProperty request;
     KmdSysman::ResponseProperty response;
 
-    pProperties->onSubdevice = false;
-    pProperties->subdeviceId = 0;
+    pProperties->onSubdevice = isSubdevice;
+    pProperties->subdeviceId = subdeviceId;
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::MemoryComponent;
@@ -176,14 +176,14 @@ ze_result_t WddmMemoryImp::getState(zes_mem_state_t *pState) {
     return ZE_RESULT_SUCCESS;
 }
 
-WddmMemoryImp::WddmMemoryImp(OsSysman *pOsSysman) {
+WddmMemoryImp::WddmMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) : isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
     WddmSysmanImp *pWddmSysmanImp = static_cast<WddmSysmanImp *>(pOsSysman);
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
     pDevice = pWddmSysmanImp->getDeviceHandle();
 }
 
-OsMemory *OsMemory::create(OsSysman *pOsSysman) {
-    WddmMemoryImp *pWddmMemoryImp = new WddmMemoryImp(pOsSysman);
+OsMemory *OsMemory::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
+    WddmMemoryImp *pWddmMemoryImp = new WddmMemoryImp(pOsSysman, onSubdevice, subdeviceId);
     return static_cast<OsMemory *>(pWddmMemoryImp);
 }
 

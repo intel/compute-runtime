@@ -22,13 +22,15 @@ class WddmMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
     ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) override;
     ze_result_t getState(zes_mem_state_t *pState) override;
     bool isMemoryModuleSupported() override;
-    WddmMemoryImp(OsSysman *pOsSysman);
+    WddmMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     WddmMemoryImp() = default;
     ~WddmMemoryImp() override = default;
 
   protected:
     KmdSysManager *pKmdSysManager = nullptr;
     Device *pDevice = nullptr;
+    bool isSubdevice = false;
+    uint32_t subdeviceId = 0;
 };
 
 } // namespace L0

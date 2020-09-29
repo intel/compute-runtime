@@ -20,7 +20,7 @@ class MemoryImp : public Memory, NEO::NonCopyableOrMovableClass {
     ze_result_t memoryGetBandwidth(zes_mem_bandwidth_t *pBandwidth) override;
     ze_result_t memoryGetState(zes_mem_state_t *pState) override;
 
-    MemoryImp(OsSysman *pOsSysman);
+    MemoryImp(OsSysman *pOsSysman, ze_device_handle_t handle);
     ~MemoryImp() override;
 
     MemoryImp() = default;
@@ -29,6 +29,7 @@ class MemoryImp : public Memory, NEO::NonCopyableOrMovableClass {
 
   private:
     zes_mem_properties_t memoryProperties = {};
+    ze_device_handle_t deviceHandle = nullptr;
 };
 
 } // namespace L0

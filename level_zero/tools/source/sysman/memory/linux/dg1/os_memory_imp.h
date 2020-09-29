@@ -22,12 +22,16 @@ class LinuxMemoryImp : public OsMemory, NEO::NonCopyableOrMovableClass {
     ze_result_t getBandwidth(zes_mem_bandwidth_t *pBandwidth) override;
     ze_result_t getState(zes_mem_state_t *pState) override;
     bool isMemoryModuleSupported() override;
-    LinuxMemoryImp(OsSysman *pOsSysman);
+    LinuxMemoryImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxMemoryImp() = default;
     ~LinuxMemoryImp() override = default;
 
   protected:
     NEO::Drm *pDrm = nullptr;
     Device *pDevice = nullptr;
+
+  private:
+    bool isSubdevice = false;
+    uint32_t subdeviceId = 0;
 };
 } // namespace L0

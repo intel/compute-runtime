@@ -5,6 +5,7 @@
  *
  */
 
+#include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
@@ -33,7 +34,17 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         }
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
-        pSysmanDeviceImp->pMemoryHandleContext->init();
+        uint32_t subDeviceCount = 0;
+        std::vector<ze_device_handle_t> deviceHandles;
+        // We received a device handle. Check for subdevices in this device
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+        pSysmanDeviceImp->pMemoryHandleContext->init(deviceHandles);
     }
 
     void TearDown() override {
@@ -53,7 +64,17 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         }
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
-        pSysmanDeviceImp->pMemoryHandleContext->init();
+        uint32_t subDeviceCount = 0;
+        std::vector<ze_device_handle_t> deviceHandles;
+        // We received a device handle. Check for subdevices in this device
+        Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
+        if (subDeviceCount == 0) {
+            deviceHandles.resize(1, device->toHandle());
+        } else {
+            deviceHandles.resize(subDeviceCount, nullptr);
+            Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
+        }
+        pSysmanDeviceImp->pMemoryHandleContext->init(deviceHandles);
     }
 
     std::vector<zes_mem_handle_t> get_memory_handles(uint32_t count) {
@@ -143,6 +164,18 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzetSysmanMemo
         zes_mem_bandwidth_t bandwidth;
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
     }
+}
+
+TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingMemoryPropertiesThenValidMemoryPropertiesRetrieved) {
+    zes_mem_properties_t properties = {};
+    ze_device_properties_t deviceProperties = {};
+    ze_bool_t isSubDevice = deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
+    Device::fromHandle(device)->getProperties(&deviceProperties);
+    LinuxMemoryImp *pLinuxMemoryImp = new LinuxMemoryImp(pOsSysman, isSubDevice, deviceProperties.subdeviceId);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxMemoryImp->getProperties(&properties));
+    EXPECT_EQ(properties.subdeviceId, deviceProperties.subdeviceId);
+    EXPECT_EQ(properties.onSubdevice, isSubDevice);
+    delete pLinuxMemoryImp;
 }
 
 } // namespace ult
