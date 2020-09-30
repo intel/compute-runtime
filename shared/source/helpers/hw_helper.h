@@ -362,7 +362,7 @@ struct MemorySynchronizationCommands {
     static void addPipeControlWithCSStallOnly(LinearStream &commandStream, PipeControlArgs &args);
 
     static void addFullCacheFlush(LinearStream &commandStream);
-    static void setCacheFlushExtraProperties(PIPE_CONTROL &pipeControl);
+    static void setCacheFlushExtraProperties(PipeControlArgs &args);
 
     static size_t getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo);
     static size_t getSizeForSinglePipeControl();

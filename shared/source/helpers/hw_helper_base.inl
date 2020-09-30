@@ -256,6 +256,16 @@ void MemorySynchronizationCommands<GfxFamily>::setPipeControl(typename GfxFamily
         pipeControl.setConstantCacheInvalidationEnable(true);
         pipeControl.setStateCacheInvalidationEnable(true);
     }
+    if (DebugManager.flags.DoNotFlushCaches.get()) {
+        pipeControl.setDcFlushEnable(false);
+        pipeControl.setRenderTargetCacheFlushEnable(false);
+        pipeControl.setInstructionCacheInvalidateEnable(false);
+        pipeControl.setTextureCacheInvalidationEnable(false);
+        pipeControl.setPipeControlFlushEnable(false);
+        pipeControl.setVfCacheInvalidationEnable(false);
+        pipeControl.setConstantCacheInvalidationEnable(false);
+        pipeControl.setStateCacheInvalidationEnable(false);
+    }
 }
 
 template <typename GfxFamily>
@@ -456,8 +466,8 @@ void MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(LinearStream &c
     args.pipeControlFlushEnable = true;
     args.constantCacheInvalidationEnable = true;
     args.stateCacheInvalidationEnable = true;
+    MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperties(args);
     MemorySynchronizationCommands<GfxFamily>::setPipeControl(cmd, args);
-    MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperties(cmd);
     *pipeControl = cmd;
 }
 

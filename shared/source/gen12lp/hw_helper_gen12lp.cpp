@@ -220,12 +220,19 @@ std::string HwHelperHw<Family>::getExtensions() const {
 template <>
 inline void MemorySynchronizationCommands<Family>::setPipeControlExtraProperties(PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
     pipeControl.setHdcPipelineFlush(args.hdcPipelineFlush);
+
+    if (DebugManager.flags.FlushAllCaches.get()) {
+        pipeControl.setHdcPipelineFlush(true);
+    }
+    if (DebugManager.flags.DoNotFlushCaches.get()) {
+        pipeControl.setHdcPipelineFlush(false);
+    }
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::setCacheFlushExtraProperties(Family::PIPE_CONTROL &pipeControl) {
-    pipeControl.setHdcPipelineFlush(true);
-    pipeControl.setConstantCacheInvalidationEnable(false);
+void MemorySynchronizationCommands<Family>::setCacheFlushExtraProperties(PipeControlArgs &args) {
+    args.hdcPipelineFlush = true;
+    args.constantCacheInvalidationEnable = false;
 }
 
 template <>

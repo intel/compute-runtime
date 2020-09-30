@@ -72,3 +72,56 @@ GEN12LPTEST_F(UltCommandStreamReceiverTest, givenStateBaseAddressWhenItIsRequire
     EXPECT_TRUE(pipeControlCmd->getDcFlushEnable());
     EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
 }
+
+using UltCommandStreamReceiverTestGen12Lp = UltCommandStreamReceiverTest;
+
+GEN12LPTEST_F(UltCommandStreamReceiverTestGen12Lp, givenDebugEnablingCacheFlushWhenAddingPipeControlWithoutCacheFlushThenOverrideRequestAndEnableCacheFlushFlags) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.FlushAllCaches.set(true);
+
+    char buff[sizeof(PIPE_CONTROL) * 3];
+    LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);
+
+    PipeControlArgs args;
+    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+
+    parseCommands<FamilyType>(stream, 0);
+
+    PIPE_CONTROL *pipeControl = getCommand<PIPE_CONTROL>();
+
+    ASSERT_NE(nullptr, pipeControl);
+
+    // WA pipeControl added
+    if (cmdList.size() == 2) {
+        pipeControl++;
+    }
+
+    EXPECT_TRUE(pipeControl->getHdcPipelineFlush());
+}
+
+GEN12LPTEST_F(UltCommandStreamReceiverTestGen12Lp, givenDebugDisablingCacheFlushWhenAddingPipeControlWithCacheFlushThenOverrideRequestAndDisableCacheFlushFlags) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.DoNotFlushCaches.set(true);
+
+    char buff[sizeof(PIPE_CONTROL) * 3];
+    LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);
+
+    PipeControlArgs args(true);
+    args.hdcPipelineFlush = true;
+    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+
+    parseCommands<FamilyType>(stream, 0);
+
+    PIPE_CONTROL *pipeControl = getCommand<PIPE_CONTROL>();
+
+    ASSERT_NE(nullptr, pipeControl);
+
+    // WA pipeControl added
+    if (cmdList.size() == 2) {
+        pipeControl++;
+    }
+
+    EXPECT_FALSE(pipeControl->getHdcPipelineFlush());
+}

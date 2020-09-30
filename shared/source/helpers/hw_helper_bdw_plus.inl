@@ -103,7 +103,7 @@ inline void MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties
 }
 
 template <typename GfxFamily>
-inline void MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperties(PIPE_CONTROL &pipeControl) {
+inline void MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperties(PipeControlArgs &args) {
 }
 
 template <typename GfxFamily>

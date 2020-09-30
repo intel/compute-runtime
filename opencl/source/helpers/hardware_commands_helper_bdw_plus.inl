@@ -11,6 +11,8 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 
+#include "pipe_control_args.h"
+
 namespace NEO {
 
 template <typename GfxFamily>
@@ -153,12 +155,8 @@ void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
 
 template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress) {
-    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    auto pipeControl = commandStream->getSpaceForCmd<PIPE_CONTROL>();
-    PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
-    cmd.setCommandStreamerStallEnable(true);
-    cmd.setDcFlushEnable(true);
-    *pipeControl = cmd;
+    PipeControlArgs args(true);
+    MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandStream, args);
 }
 
 } // namespace NEO

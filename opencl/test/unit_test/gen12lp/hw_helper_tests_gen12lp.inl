@@ -338,12 +338,12 @@ GEN12LPTEST_F(LriHelperTestsGen12Lp, whenProgrammingLriCommandThenExpectMmioRema
 using MemorySynchronizatiopCommandsTests = ::testing::Test;
 
 GEN12LPTEST_F(MemorySynchronizatiopCommandsTests, whenSettingCacheFlushExtraFieldsThenExpectHdcFlushSet) {
-    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    PIPE_CONTROL pipeControl = FamilyType::cmdInitPipeControl;
-    pipeControl.setConstantCacheInvalidationEnable(true);
-    MemorySynchronizationCommands<FamilyType>::setCacheFlushExtraProperties(pipeControl);
-    EXPECT_TRUE(pipeControl.getHdcPipelineFlush());
-    EXPECT_FALSE(pipeControl.getConstantCacheInvalidationEnable());
+    PipeControlArgs args;
+    args.constantCacheInvalidationEnable = true;
+
+    MemorySynchronizationCommands<FamilyType>::setCacheFlushExtraProperties(args);
+    EXPECT_TRUE(args.hdcPipelineFlush);
+    EXPECT_FALSE(args.constantCacheInvalidationEnable);
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenUnknownProductFamilyWhenGettingIsWorkaroundRequiredThenFalseIsReturned) {
