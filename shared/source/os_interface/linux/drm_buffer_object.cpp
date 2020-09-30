@@ -196,8 +196,20 @@ void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const
 }
 
 int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {
-    StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
-    return this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
+    auto retVal = 0;
+    if (this->drm->isBindAvailable()) {
+        for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
+            if (osContext->getDeviceBitfield().test(drmIterator)) {
+                for (size_t i = 0; i < numberOfBos; i++) {
+                    boToPin[i]->bind(osContext, drmIterator);
+                }
+            }
+        }
+    } else {
+        StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
+        retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
+    }
+    return retVal;
 }
 
 void BufferObject::addBindExtHandle(uint32_t handle) {
