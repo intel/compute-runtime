@@ -53,6 +53,8 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     1,                                               // extraQuantityThreadsPerEU
     64,                                              // slmSize
     sizeof(TGLLP::GRF),                              // grfSize
+    36u,                                             // timestampValidBits
+    32u,                                             // kernelTimestampValidBits
     false,                                           // blitterOperationsSupported
     true,                                            // ftrSupportsInteger64BitAtomics
     false,                                           // ftrSupportsFP64
@@ -78,9 +80,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     false,                                           // supportsIndependentForwardProgress
     false,                                           // hostPtrTrackingEnabled
     true,                                            // levelZeroSupported
-    true,                                            // isIntegratedDevice
-    36u,                                             // timestampValidBits
-    32u                                              // kernelTimestampValidBits
+    true                                             // isIntegratedDevice
 };
 
 WorkaroundTable TGLLP::workaroundTable = {};

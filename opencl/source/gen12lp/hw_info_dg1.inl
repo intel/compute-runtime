@@ -54,7 +54,9 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     CmdServicesMemTraceVersion::DeviceValues::Dg1, // aubDeviceId
     1,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
-    sizeof(DG1::GRF),                              // slmSize
+    sizeof(DG1::GRF),                              // grfSize
+    36u,                                           // timestampValidBits
+    32u,                                           // kernelTimestampValidBits
     false,                                         // blitterOperationsSupported
     true,                                          // ftrSupportsInteger64BitAtomics
     false,                                         // ftrSupportsFP64
@@ -80,9 +82,7 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     false,                                         // supportsIndependentForwardProgress
     false,                                         // hostPtrTrackingEnabled
     true,                                          // levelZeroSupported
-    false,                                         // isIntegratedDevice
-    36u,                                           // timestampValidBits
-    32u                                            // kernelTimestampValidBits
+    false                                          // isIntegratedDevice
 };
 
 WorkaroundTable DG1::workaroundTable = {};

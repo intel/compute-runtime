@@ -56,6 +56,8 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
     sizeof(SKL::GRF),                              // grfSize
+    36u,                                           // timestampValidBits
+    32u,                                           // kernelTimestampValidBits
     false,                                         // blitterOperationsSupported
     true,                                          // ftrSupportsInteger64BitAtomics
     true,                                          // ftrSupportsFP64
@@ -81,9 +83,7 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     true,                                          // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
     true,                                          // levelZeroSupported
-    true,                                          // isIntegratedDevice
-    36u,                                           // timestampValidBits
-    32u                                            // kernelTimestampValidBits
+    true                                           // isIntegratedDevice
 };
 WorkaroundTable SKL::workaroundTable = {};
 FeatureTable SKL::featureTable = {};

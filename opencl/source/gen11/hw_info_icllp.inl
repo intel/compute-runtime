@@ -52,6 +52,8 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     1,                                               // extraQuantityThreadsPerEU
     64,                                              // slmSize
     sizeof(ICLLP::GRF),                              // grfSize
+    36u,                                             // timestampValidBits
+    32u,                                             // kernelTimestampValidBits
     false,                                           // blitterOperationsSupported
     true,                                            // ftrSupportsInteger64BitAtomics
     false,                                           // ftrSupportsFP64
@@ -77,9 +79,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     true,                                            // supportsIndependentForwardProgress
     true,                                            // hostPtrTrackingEnabled
     true,                                            // levelZeroSupported
-    true,                                            // isIntegratedDevice
-    36u,                                             // timestampValidBits
-    32u                                              // kernelTimestampValidBits
+    true                                             // isIntegratedDevice
 };
 
 WorkaroundTable ICLLP::workaroundTable = {};

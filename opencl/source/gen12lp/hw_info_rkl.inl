@@ -49,6 +49,8 @@ const RuntimeCapabilityTable RKL::capabilityTable{
     1,                                               // extraQuantityThreadsPerEU
     64,                                              // slmSize
     sizeof(RKL::GRF),                                // grfSize
+    36u,                                             // timestampValidBits
+    32u,                                             // kernelTimestampValidBits
     false,                                           // blitterOperationsSupported
     true,                                            // ftrSupportsInteger64BitAtomics
     false,                                           // ftrSupportsFP64
@@ -74,9 +76,7 @@ const RuntimeCapabilityTable RKL::capabilityTable{
     false,                                           // supportsIndependentForwardProgress
     false,                                           // hostPtrTrackingEnabled
     false,                                           // levelZeroSupported
-    true,                                            // isIntegratedDevice
-    36u,                                             // timestampValidBits
-    32u                                              // kernelTimestampValidBits
+    true                                             // isIntegratedDevice
 };
 
 WorkaroundTable RKL::workaroundTable = {};

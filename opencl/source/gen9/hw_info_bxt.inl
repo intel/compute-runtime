@@ -53,6 +53,8 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
     sizeof(BXT::GRF),                              // grfSize
+    36u,                                           // timestampValidBits
+    32u,                                           // kernelTimestampValidBits
     false,                                         // blitterOperationsSupported
     false,                                         // ftrSupportsInteger64BitAtomics
     true,                                          // ftrSupportsFP64
@@ -78,9 +80,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     false,                                         // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
     false,                                         // levelZeroSupported
-    true,                                          // isIntegratedDevice
-    36u,                                           // timestampValidBits
-    32u                                            // kernelTimestampValidBits
+    true                                           // isIntegratedDevice
 };
 
 WorkaroundTable BXT::workaroundTable = {};

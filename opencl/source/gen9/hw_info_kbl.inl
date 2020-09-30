@@ -48,6 +48,8 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize
     sizeof(KBL::GRF),                              // grfSize
+    36u,                                           // timestampValidBits
+    32u,                                           // kernelTimestampValidBits
     false,                                         // blitterOperationsSupported
     true,                                          // ftrSupportsInteger64BitAtomics
     true,                                          // ftrSupportsFP64
@@ -73,9 +75,7 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     true,                                          // supportsIndependentForwardProgress
     true,                                          // hostPtrTrackingEnabled
     true,                                          // levelZeroSupported
-    true,                                          // isIntegratedDevice
-    36u,                                           // timestampValidBits
-    32u                                            // kernelTimestampValidBits
+    true                                           // isIntegratedDevice
 };
 
 WorkaroundTable KBL::workaroundTable = {};
