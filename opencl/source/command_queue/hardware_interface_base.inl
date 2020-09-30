@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 
@@ -14,6 +16,8 @@
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/source/mem_obj/buffer.h"
+
+#include "pipe_control_args.h"
 
 namespace NEO {
 
@@ -297,27 +301,23 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
             using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
             using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
-            auto pCmd = (PIPE_CONTROL *)commandStream->getSpace(sizeof(PIPE_CONTROL));
-            *pCmd = GfxFamily::cmdInitPipeControl;
-
-            pCmd->setCommandStreamerStallEnable(true);
-            pCmd->setDcFlushEnable(true);
-            pCmd->setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
-            pCmd->setAddressHigh(static_cast<uint32_t>(address >> 32));
-            pCmd->setPostSyncOperation(POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
-            pCmd->setImmediateData(static_cast<uint32_t>(confirmationTrigger));
+            PipeControlArgs args(true);
+            MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+                *commandStream,
+                POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                address,
+                static_cast<uint64_t>(confirmationTrigger),
+                commandQueue.getDevice().getHardwareInfo(),
+                args);
         }
 
         {
             using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-
-            auto pCmd = (MI_SEMAPHORE_WAIT *)commandStream->getSpace(sizeof(MI_SEMAPHORE_WAIT));
-            *pCmd = GfxFamily::cmdInitMiSemaphoreWait;
-
-            pCmd->setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
-            pCmd->setSemaphoreDataDword(static_cast<uint32_t>(waitCondition));
-            pCmd->setSemaphoreGraphicsAddress(address);
-            pCmd->setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+            using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+            EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandStream,
+                                                                  address,
+                                                                  static_cast<uint32_t>(waitCondition),
+                                                                  COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
         }
     }
 }
