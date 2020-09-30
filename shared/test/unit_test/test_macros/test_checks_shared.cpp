@@ -8,11 +8,22 @@
 #include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 
 #include "test.h"
 
 using namespace NEO;
+
+bool NEO::TestChecks::supportsBlitter(const HardwareInfo *pHardwareInfo) {
+    auto engines = HwHelper::get(::renderCoreFamily).getGpgpuEngineInstances(*pHardwareInfo);
+    for (const auto &engine : engines) {
+        if (engine.first == aub_stream::EngineType::ENGINE_BCS) {
+            return true;
+        }
+    }
+    return false;
+}
 
 bool TestChecks::supportsSvm(const HardwareInfo *pHardwareInfo) {
     return pHardwareInfo->capabilityTable.ftrSvm;

@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_os_library.h"
+#include "shared/test/unit_test/test_macros/test_checks_shared.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
@@ -1349,4 +1350,84 @@ HWTEST_F(CommandQueueHwTest, WhenForcePerDssBackedBufferProgrammingSetThenDispat
     cl_int status = pCmdQ->enqueueKernel(mockKernel, 1, &offset, &gws, &lws, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, status);
     EXPECT_TRUE(csr.recordedDispatchFlags.usePerDssBackedBuffer);
+}
+
+struct CommandQueueHwBlitTest : ClDeviceFixture, ContextFixture, CommandQueueHwFixture, ::testing::Test {
+    using ContextFixture::SetUp;
+
+    void SetUp() override {
+        REQUIRE_BLITTER_OR_SKIP(defaultHwInfo.get());
+
+        DebugManager.flags.EnableBlitterOperationsSupport.set(1);
+        DebugManager.flags.EnableTimestampPacket.set(1);
+        ClDeviceFixture::SetUp();
+        pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+        cl_device_id device = pClDevice;
+        ContextFixture::SetUp(1, &device);
+        CommandQueueHwFixture::SetUp(pClDevice, 0);
+    }
+
+    void TearDown() override {
+        CommandQueueHwFixture::TearDown();
+        ContextFixture::TearDown();
+        ClDeviceFixture::TearDown();
+    }
+
+    DebugManagerStateRestore state{};
+};
+
+HWTEST_F(CommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingSubsequentBlitsThenGpgpuCommandStreamIsNotObtained) {
+    auto &gpgpuCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto srcBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+    auto dstBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+
+    cl_int retVal = pCmdQ->enqueueCopyBuffer(
+        srcBuffer.get(),
+        dstBuffer.get(),
+        0,
+        0,
+        1,
+        0,
+        nullptr,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0, gpgpuCsr.ensureCommandBufferAllocationCalled);
+
+    retVal = pCmdQ->enqueueCopyBuffer(
+        srcBuffer.get(),
+        dstBuffer.get(),
+        0,
+        0,
+        1,
+        0,
+        nullptr,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0, gpgpuCsr.ensureCommandBufferAllocationCalled);
+}
+
+HWTEST_F(CommandQueueHwBlitTest, givenGpgpuCsrWhenEnqueueingBlitAfterKernelThenGpgpuCommandStreamIsObtained) {
+    auto &gpgpuCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto srcBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+    auto dstBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(pContext)};
+
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    size_t offset = 0;
+    size_t size = 1;
+    cl_int retVal = pCmdQ->enqueueKernel(mockKernelWithInternals.mockKernel, 1, &offset, &size, &size, 0, nullptr, nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(0, gpgpuCsr.ensureCommandBufferAllocationCalled);
+    const auto ensureCommandBufferAllocationCalledAfterKernel = gpgpuCsr.ensureCommandBufferAllocationCalled;
+
+    retVal = pCmdQ->enqueueCopyBuffer(
+        srcBuffer.get(),
+        dstBuffer.get(),
+        0,
+        0,
+        1,
+        0,
+        nullptr,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(ensureCommandBufferAllocationCalledAfterKernel, gpgpuCsr.ensureCommandBufferAllocationCalled);
 }

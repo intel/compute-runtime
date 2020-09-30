@@ -15,6 +15,7 @@ class Device;
 struct HardwareInfo;
 
 namespace TestChecks {
+bool supportsBlitter(const HardwareInfo *pHardwareInfo);
 bool supportsSvm(const HardwareInfo *pHardwareInfo);
 bool supportsSvm(const std::unique_ptr<HardwareInfo> &pHardwareInfo);
 bool supportsSvm(const Device *pDevice);
@@ -25,4 +26,9 @@ bool supportsSvm(const Device *pDevice);
 #define REQUIRE_SVM_OR_SKIP(param)                      \
     if (NEO::TestChecks::supportsSvm(param) == false) { \
         GTEST_SKIP();                                   \
+    }
+
+#define REQUIRE_BLITTER_OR_SKIP(param)                      \
+    if (NEO::TestChecks::supportsBlitter(param) == false) { \
+        GTEST_SKIP();                                       \
     }

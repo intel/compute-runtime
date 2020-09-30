@@ -381,7 +381,7 @@ class CommandQueueHw : public CommandQueue {
 
     CompletionStamp enqueueCommandWithoutKernel(Surface **surfaces,
                                                 size_t surfaceCount,
-                                                LinearStream &commandStream,
+                                                LinearStream *commandStream,
                                                 size_t commandStreamStart,
                                                 bool &blocking,
                                                 const EnqueueProperties &enqueueProperties,
@@ -396,7 +396,7 @@ class CommandQueueHw : public CommandQueue {
     BlitProperties processDispatchForBlitEnqueue(const MultiDispatchInfo &multiDispatchInfo,
                                                  TimestampPacketDependencies &timestampPacketDependencies,
                                                  const EventsRequest &eventsRequest,
-                                                 LinearStream &commandStream,
+                                                 LinearStream *commandStream,
                                                  uint32_t commandType, bool queueBlocked);
     void submitCacheFlush(Surface **surfaces,
                           size_t numSurfaces,
