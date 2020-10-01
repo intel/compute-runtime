@@ -735,12 +735,18 @@ NEO::GraphicsAllocation *DeviceImp::allocateManagedMemoryFromHostPtr(void *buffe
 }
 
 NEO::GraphicsAllocation *DeviceImp::allocateMemoryFromHostPtr(const void *buffer, size_t size) {
-    NEO::AllocationProperties properties = {getRootDeviceIndex(), false, size, NEO::GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR, false, neoDevice->getDeviceBitfield()};
+    NEO::AllocationProperties properties = {getRootDeviceIndex(), false, size,
+                                            NEO::GraphicsAllocation::AllocationType::EXTERNAL_HOST_PTR,
+                                            false, neoDevice->getDeviceBitfield()};
     properties.flags.flushL3RequiredForRead = properties.flags.flushL3RequiredForWrite = true;
     auto allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties,
                                                                                           buffer);
-
-    UNRECOVERABLE_IF(allocation == nullptr);
+    if (allocation == nullptr) {
+        allocation = neoDevice->getMemoryManager()->allocateInternalGraphicsMemoryWithHostCopy(neoDevice->getRootDeviceIndex(),
+                                                                                               neoDevice->getDeviceBitfield(),
+                                                                                               buffer,
+                                                                                               size);
+    }
 
     return allocation;
 }

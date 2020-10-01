@@ -90,6 +90,65 @@ TEST_F(DeviceTest, givenEmptySVmAllocStorageWhenAllocateMemoryFromHostPtrThenVal
     neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
 }
 
+struct MemoryManagerHostPointer : public NEO::OsAgnosticMemoryManager {
+    MemoryManagerHostPointer(NEO::ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties,
+                                                             const void *ptr) override {
+        return nullptr;
+    }
+};
+
+struct DeviceHostPointerTest : public ::testing::Test {
+    void SetUp() override {
+        executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        for (uint32_t i = 0; i < numRootDevices; i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
+        }
+
+        memoryManager = new MemoryManagerHostPointer(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+
+        neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, rootDeviceIndex);
+        std::vector<std::unique_ptr<NEO::Device>> devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+
+        device = driverHandle->devices[0];
+    }
+    void TearDown() override {
+    }
+
+    NEO::ExecutionEnvironment *executionEnvironment = nullptr;
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    MemoryManagerHostPointer *memoryManager = nullptr;
+    const uint32_t rootDeviceIndex = 1u;
+    const uint32_t numRootDevices = 2u;
+};
+
+TEST_F(DeviceHostPointerTest, givenHostPointerNotAcceptedByKernelThenNewAllocationIsCreatedAndHostPointerCopied) {
+    size_t size = 55;
+    uint64_t *buffer = new uint64_t[size];
+    for (uint32_t i = 0; i < size; i++) {
+        buffer[i] = i + 10;
+    }
+
+    auto allocation = device->allocateMemoryFromHostPtr(buffer, size);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, allocation->getAllocationType());
+    EXPECT_EQ(rootDeviceIndex, allocation->getRootDeviceIndex());
+    EXPECT_NE(allocation->getUnderlyingBuffer(), reinterpret_cast<void *>(buffer));
+    EXPECT_EQ(allocation->getUnderlyingBufferSize(), size);
+    EXPECT_EQ(0, memcmp(buffer, allocation->getUnderlyingBuffer(), size));
+
+    neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
+    delete[] buffer;
+}
+
 TEST_F(DeviceTest, givenKernelPropertiesStructureWhenKernelPropertiesCalledThenAllPropertiesAreAssigned) {
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
 

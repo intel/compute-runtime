@@ -422,6 +422,22 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     return allocation;
 }
 
+GraphicsAllocation *MemoryManager::allocateInternalGraphicsMemoryWithHostCopy(uint32_t rootDeviceIndex,
+                                                                              DeviceBitfield bitField,
+                                                                              const void *ptr,
+                                                                              size_t size) {
+    NEO::AllocationProperties copyProperties{rootDeviceIndex,
+                                             size,
+                                             NEO::GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY,
+                                             bitField};
+    copyProperties.alignment = MemoryConstants::pageSize;
+    auto allocation = this->allocateGraphicsMemoryWithProperties(copyProperties);
+    if (allocation) {
+        memcpy_s(allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), ptr, size);
+    }
+    return allocation;
+}
+
 bool MemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
     auto index = graphicsAllocation->getRootDeviceIndex();
     if (executionEnvironment.rootDeviceEnvironments[index]->pageTableManager.get()) {

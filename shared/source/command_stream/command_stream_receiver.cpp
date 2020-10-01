@@ -483,12 +483,10 @@ bool CommandStreamReceiver::createAllocationForHostSurface(HostPtrSurface &surfa
         allocation.reset(memoryManager->allocateGraphicsMemoryWithProperties(properties, surface.getMemoryPointer()));
         if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
             // Try with no host pointer allocation and copy
-            AllocationProperties copyProperties{rootDeviceIndex, surface.getSurfaceSize(), GraphicsAllocation::AllocationType::INTERNAL_HOST_MEMORY, internalAllocationStorage->getDeviceBitfield()};
-            copyProperties.alignment = MemoryConstants::pageSize;
-            allocation.reset(memoryManager->allocateGraphicsMemoryWithProperties(copyProperties));
-            if (allocation) {
-                memcpy_s(allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), surface.getMemoryPointer(), surface.getSurfaceSize());
-            }
+            allocation.reset(memoryManager->allocateInternalGraphicsMemoryWithHostCopy(rootDeviceIndex,
+                                                                                       internalAllocationStorage->getDeviceBitfield(),
+                                                                                       surface.getMemoryPointer(),
+                                                                                       surface.getSurfaceSize()));
         }
     }
 
