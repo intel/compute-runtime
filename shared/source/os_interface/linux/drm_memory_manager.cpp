@@ -44,6 +44,11 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
         localMemAllocs.emplace_back();
     }
     MemoryManager::virtualPaddingAvailable = true;
+
+    if (DebugManager.flags.EnableGemCloseWorker.get() != -1) {
+        mode = DebugManager.flags.EnableGemCloseWorker.get() ? gemCloseWorkerMode::gemCloseWorkerActive : gemCloseWorkerMode::gemCloseWorkerInactive;
+    }
+
     if (mode != gemCloseWorkerMode::gemCloseWorkerInactive) {
         gemCloseWorker.reset(new DrmGemCloseWorker(*this));
     }

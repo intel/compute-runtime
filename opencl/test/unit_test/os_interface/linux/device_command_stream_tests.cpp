@@ -62,6 +62,33 @@ HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultDrmCsrWhenOsInterfaceIsNullpt
     EXPECT_EQ(drmCsr->getOSInterface()->get()->getDrm(), executionEnvironment->rootDeviceEnvironments[0]->osInterface->get()->getDrm());
 }
 
+HWTEST_F(DeviceCommandStreamLeaksTest, givenDisabledGemCloseWorkerWhenCsrIsCreatedThenGemCloseWorkerInactiveModeIsSelected) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableGemCloseWorker.set(0u);
+
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0));
+    auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
+
+    EXPECT_EQ(drmCsr->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerInactive);
+}
+
+HWTEST_F(DeviceCommandStreamLeaksTest, givenEnabledGemCloseWorkerWhenCsrIsCreatedThenGemCloseWorkerActiveModeIsSelected) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableGemCloseWorker.set(1u);
+
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0));
+    auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
+
+    EXPECT_EQ(drmCsr->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerActive);
+}
+
+HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultGemCloseWorkerWhenCsrIsCreatedThenGemCloseWorkerActiveModeIsSelected) {
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(false, *executionEnvironment, 0));
+    auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
+
+    EXPECT_EQ(drmCsr->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerActive);
+}
+
 using DeviceCommandStreamSetInternalUsageTests = DeviceCommandStreamLeaksTest;
 
 HWTEST_F(DeviceCommandStreamSetInternalUsageTests, givenValidDrmCsrThenGemCloseWorkerOperationModeIsSetToInactiveWhenInternalUsageIsSet) {

@@ -2849,6 +2849,30 @@ TEST_F(DrmMemoryManagerBasic, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncD
     memoryManager.commonCleanup();
 }
 
+TEST_F(DrmMemoryManagerBasic, givenDisabledGemCloseWorkerWhenMemoryManagerIsCreatedThenNoGemCloseWorker) {
+    DebugManagerStateRestore dbgStateRestore;
+    DebugManager.flags.EnableGemCloseWorker.set(0u);
+
+    TestedDrmMemoryManager memoryManager(true, true, true, executionEnvironment);
+
+    EXPECT_EQ(memoryManager.peekGemCloseWorker(), nullptr);
+}
+
+TEST_F(DrmMemoryManagerBasic, givenEnabledGemCloseWorkerWhenMemoryManagerIsCreatedThenGemCloseWorker) {
+    DebugManagerStateRestore dbgStateRestore;
+    DebugManager.flags.EnableGemCloseWorker.set(1u);
+
+    TestedDrmMemoryManager memoryManager(true, true, true, executionEnvironment);
+
+    EXPECT_NE(memoryManager.peekGemCloseWorker(), nullptr);
+}
+
+TEST_F(DrmMemoryManagerBasic, givenDefaultGemCloseWorkerWhenMemoryManagerIsCreatedThenGemCloseWorker) {
+    MemoryManagerCreate<DrmMemoryManager> memoryManager(false, false, gemCloseWorkerMode::gemCloseWorkerActive, false, false, executionEnvironment);
+
+    EXPECT_NE(memoryManager.peekGemCloseWorker(), nullptr);
+}
+
 TEST_F(DrmMemoryManagerBasic, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
     DebugManagerStateRestore dbgStateRestore;
     DebugManager.flags.EnableDeferredDeleter.set(true);
