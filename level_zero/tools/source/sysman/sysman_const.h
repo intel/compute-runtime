@@ -41,3 +41,4 @@ constexpr uint64_t minTimeoutInMicroSeconds = 1000u;
 constexpr uint16_t milliSecsToMicroSecs = 1000;
 constexpr uint64_t numSocTemperatureEntries = 7;
 constexpr uint32_t numCoreTemperatureEntries = 4;
+constexpr uint32_t milliFactor = 1000u;

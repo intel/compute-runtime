@@ -4,10 +4,19 @@
 # SPDX-License-Identifier: MIT
 #
 
-set(L0_SRCS_TOOLS_SYSMAN_POWER_LINUX
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_power_imp.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/os_power_imp.h
-)
+if(SUPPORT_DG1)
+  set(L0_SRCS_TOOLS_SYSMAN_POWER_LINUX
+      ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/dg1/os_power_imp.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/dg1/os_power_imp.h
+  )
+else()
+  set(L0_SRCS_TOOLS_SYSMAN_POWER_LINUX
+      ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+      ${CMAKE_CURRENT_SOURCE_DIR}/os_power_imp.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/os_power_imp.h
+  )
+endif()
 
 if(UNIX)
   target_sources(${L0_STATIC_LIB_NAME}

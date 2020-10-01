@@ -132,6 +132,7 @@ void getDeviceHandles(std::vector<ze_device_handle_t> &devices, int argc, char *
 void testSysmanPower(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Power tests ---- " << std::endl;
+    bool iamroot = (geteuid() == 0);
     uint32_t count = 0;
     VALIDATECALL(zesDeviceEnumPowerDomains(device, &count, nullptr));
     if (count == 0) {
@@ -147,6 +148,35 @@ void testSysmanPower(ze_device_handle_t &device) {
         if (verbose) {
             std::cout << "energyCounter.energy = " << energyCounter.energy << std::endl;
             std::cout << "energyCounter.timestamp = " << energyCounter.timestamp << std::endl;
+        }
+        zes_power_sustained_limit_t sustainedGetDefault = {};
+        zes_power_burst_limit_t burstGetDefault = {};
+        VALIDATECALL(zesPowerGetLimits(handle, &sustainedGetDefault, &burstGetDefault, nullptr));
+        if (verbose) {
+            std::cout << "sustainedGetDefault.enabled = " << sustainedGetDefault.enabled << std::endl;
+            if (sustainedGetDefault.enabled) {
+                std::cout << "sustainedGetDefault.power = " << sustainedGetDefault.power << std::endl;
+                std::cout << "sustainedGetDefault.interval = " << sustainedGetDefault.interval << std::endl;
+            }
+            std::cout << "burstGetDefault.enabled = " << burstGetDefault.enabled << std::endl;
+            if (burstGetDefault.enabled) {
+                std::cout << "burstGetDefault.power = " << burstGetDefault.power << std::endl;
+            }
+        }
+        if (iamroot) {
+            zes_power_sustained_limit_t sustainedSet = {};
+            sustainedSet.power = sustainedGetDefault.power - sustainedGetDefault.power / 10; //Randomly try to reduce power
+            sustainedSet.interval = sustainedGetDefault.interval - sustainedGetDefault.interval / 10;
+            zes_power_burst_limit_t burstSet = {};
+            if (burstGetDefault.enabled) {
+                burstSet.enabled = 0;
+            }
+            VALIDATECALL(zesPowerSetLimits(handle, &sustainedSet, &burstSet, nullptr));
+            if (verbose) {
+                std::cout << "zesPowerSetLimits success" << std::endl;
+                std::cout << "Now restore the power values to default ones" << std::endl;
+            }
+            VALIDATECALL(zesPowerSetLimits(handle, &sustainedGetDefault, &burstGetDefault, nullptr));
         }
     }
 }
