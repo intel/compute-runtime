@@ -424,16 +424,32 @@ size_t EncodeSempahore<Family>::getSizeMiSemaphoreWait() {
 }
 
 template <typename Family>
-void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic, uint64_t writeAddress,
+void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic,
+                                           uint64_t writeAddress,
                                            ATOMIC_OPCODES opcode,
-                                           DATA_SIZE dataSize) {
+                                           DATA_SIZE dataSize,
+                                           uint32_t returnDataControl,
+                                           uint32_t csStall) {
     MI_ATOMIC cmd = Family::cmdInitAtomic;
     cmd.setAtomicOpcode(opcode);
     cmd.setDataSize(dataSize);
     cmd.setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
     cmd.setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
+    cmd.setReturnDataControl(returnDataControl);
+    cmd.setCsStall(csStall);
 
     *atomic = cmd;
+}
+
+template <typename GfxFamily>
+void EncodeAtomic<GfxFamily>::programMiAtomic(LinearStream &commandStream,
+                                              uint64_t writeAddress,
+                                              ATOMIC_OPCODES opcode,
+                                              DATA_SIZE dataSize,
+                                              uint32_t returnDataControl,
+                                              uint32_t csStall) {
+    auto miAtomic = commandStream.getSpaceForCmd<MI_ATOMIC>();
+    EncodeAtomic<GfxFamily>::programMiAtomic(miAtomic, writeAddress, opcode, dataSize, returnDataControl, csStall);
 }
 
 template <typename Family>

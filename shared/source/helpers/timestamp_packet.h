@@ -145,10 +145,10 @@ struct TimestampPacketHelper {
             for (uint32_t i = 0; i < numSupportedDevices; i++) {
                 timestampPacketNode.incImplicitCpuDependenciesCount();
             }
-            auto miAtomic = cmdStream.getSpaceForCmd<MI_ATOMIC>();
-            EncodeAtomic<GfxFamily>::programMiAtomic(miAtomic, dependenciesCountAddress,
+            EncodeAtomic<GfxFamily>::programMiAtomic(cmdStream, dependenciesCountAddress,
                                                      MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_INCREMENT,
-                                                     MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
+                                                     MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD,
+                                                     0u, 0u);
         }
     }
 

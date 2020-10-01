@@ -248,9 +248,19 @@ struct EncodeAtomic {
     using ATOMIC_OPCODES = typename GfxFamily::MI_ATOMIC::ATOMIC_OPCODES;
     using DATA_SIZE = typename GfxFamily::MI_ATOMIC::DATA_SIZE;
 
-    static void programMiAtomic(MI_ATOMIC *atomic, uint64_t writeAddress,
+    static void programMiAtomic(LinearStream &commandStream,
+                                uint64_t writeAddress,
                                 ATOMIC_OPCODES opcode,
-                                DATA_SIZE dataSize);
+                                DATA_SIZE dataSize,
+                                uint32_t returnDataControl,
+                                uint32_t csStall);
+
+    static void programMiAtomic(MI_ATOMIC *atomic,
+                                uint64_t writeAddress,
+                                ATOMIC_OPCODES opcode,
+                                DATA_SIZE dataSize,
+                                uint32_t returnDataControl,
+                                uint32_t csStall);
 };
 
 template <typename GfxFamily>

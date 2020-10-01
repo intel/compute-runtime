@@ -1051,28 +1051,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
     delete[] mockDsh;
 }
 
-using HardwareCommandsHelperTests = ::testing::Test;
-
-HWTEST_F(HardwareCommandsHelperTests, whenProgrammingMiAtomicThenSetupAllFields) {
-    using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
-    uint64_t writeAddress = 0x10000;
-    auto opcode = MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT;
-    auto dataSize = MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD;
-
-    uint8_t buffer[1024] = {};
-    LinearStream cmdStream(buffer, 1024);
-
-    MI_ATOMIC referenceCommand = FamilyType::cmdInitAtomic;
-    HardwareCommandsHelper<FamilyType>::programMiAtomic(referenceCommand, writeAddress, opcode, dataSize);
-
-    HardwareCommandsHelper<FamilyType>::programMiAtomic(cmdStream, writeAddress, opcode, dataSize);
-    auto miAtomic = genCmdCast<MI_ATOMIC *>(cmdStream.getCpuBase());
-    ASSERT_NE(nullptr, miAtomic);
-
-    EXPECT_EQ(sizeof(MI_ATOMIC), cmdStream.getUsed());
-    EXPECT_EQ(0, memcmp(&referenceCommand, miAtomic, sizeof(MI_ATOMIC)));
-}
-
 typedef ExecutionModelKernelFixture ParentKernelCommandsFromBinaryTest;
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, WhenGettingSizeRequiredForExecutionModelForSurfaceStatesThenReturnSizeOfBlocksPlusMaxBindingTableSizeForAllIdtEntriesAndSchedulerSshSize) {

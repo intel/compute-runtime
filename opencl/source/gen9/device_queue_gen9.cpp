@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gen9/hw_cmds.h"
 
 #include "opencl/source/device_queue/device_queue_hw.h"
@@ -38,14 +39,11 @@ void DeviceQueueHw<Family>::addArbCheckCmdWa() {
 
 template <>
 void DeviceQueueHw<Family>::addMiAtomicCmdWa(uint64_t atomicOpPlaceholder) {
-    auto miAtomic = slbCS.getSpaceForCmd<Family::MI_ATOMIC>();
-    *miAtomic = Family::cmdInitAtomic;
-    miAtomic->setAtomicOpcode(Family::MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT);
-    miAtomic->setReturnDataControl(0x1);
-    miAtomic->setCsStall(0x1);
-    miAtomic->setDataSize(Family::MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD);
-    miAtomic->setMemoryAddress(static_cast<uint32_t>(atomicOpPlaceholder & 0x0000FFFFFFFFULL));
-    miAtomic->setMemoryAddressHigh(static_cast<uint32_t>((atomicOpPlaceholder >> 32) & 0x0000FFFFFFFFULL));
+    EncodeAtomic<Family>::programMiAtomic(slbCS,
+                                          atomicOpPlaceholder,
+                                          Family::MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT,
+                                          Family::MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD,
+                                          0x1u, 0x1u);
 }
 
 template <>

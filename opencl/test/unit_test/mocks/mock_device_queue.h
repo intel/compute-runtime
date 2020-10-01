@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/command_container/command_encoder.h"
+
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
@@ -109,13 +111,13 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
         auto placeholder = (uint64_t)&igilCmdQueue->m_controls.m_DummyAtomicOperationPlaceholder;
 
         MI_ATOMIC miAtomic = GfxFamily::cmdInitAtomic;
-        miAtomic.setReturnDataControl(0x1);
-        miAtomic.setCsStall(0x1);
-        HardwareCommandsHelper<GfxFamily>::programMiAtomic(miAtomic, placeholder, MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT,
-                                                           MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD);
-
+        EncodeAtomic<GfxFamily>::programMiAtomic(&miAtomic,
+                                                 placeholder,
+                                                 MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_8B_INCREMENT,
+                                                 MI_ATOMIC::DATA_SIZE::DATA_SIZE_QWORD,
+                                                 0x1u, 0x1u);
         return miAtomic;
-    };
+    }
 
     MI_LOAD_REGISTER_IMM getExpectedLriCmd(bool arbCheck) {
         MI_LOAD_REGISTER_IMM lri = GfxFamily::cmdInitLoadRegisterImm;

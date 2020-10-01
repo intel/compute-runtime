@@ -383,27 +383,6 @@ void HardwareCommandsHelper<GfxFamily>::updatePerThreadDataTotal(
 }
 
 template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::programMiAtomic(LinearStream &commandStream, uint64_t writeAddress,
-                                                        typename MI_ATOMIC::ATOMIC_OPCODES opcode,
-                                                        typename MI_ATOMIC::DATA_SIZE dataSize) {
-    auto miAtomic = commandStream.getSpaceForCmd<MI_ATOMIC>();
-    MI_ATOMIC cmd = GfxFamily::cmdInitAtomic;
-
-    HardwareCommandsHelper<GfxFamily>::programMiAtomic(cmd, writeAddress, opcode, dataSize);
-    *miAtomic = cmd;
-}
-
-template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::programMiAtomic(MI_ATOMIC &atomic, uint64_t writeAddress,
-                                                        typename MI_ATOMIC::ATOMIC_OPCODES opcode,
-                                                        typename MI_ATOMIC::DATA_SIZE dataSize) {
-    atomic.setAtomicOpcode(opcode);
-    atomic.setDataSize(dataSize);
-    atomic.setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
-    atomic.setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
-}
-
-template <typename GfxFamily>
 bool HardwareCommandsHelper<GfxFamily>::doBindingTablePrefetch() {
     return true;
 }
