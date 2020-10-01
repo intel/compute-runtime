@@ -27,7 +27,7 @@ static std::string vendor = "Intel(R) Corporation";
 static std::string profile = "FULL_PROFILE";
 static std::string spirVersions = "1.2 ";
 static std::string spirvName = "SPIR-V";
-const char *latestConformanceVersionPassed = "1.0";
+const char *latestConformanceVersionPassed = "v2020-10-01-00";
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
 static std::string driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
