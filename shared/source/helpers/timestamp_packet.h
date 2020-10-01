@@ -131,8 +131,7 @@ struct TimestampPacketHelper {
 
         for (uint32_t packetId = 0; packetId < timestampPacketNode.tagForCpuAccess->packetsUsed; packetId++) {
             uint64_t compareOffset = packetId * sizeof(TimestampPacketStorage::Packet);
-            auto miSemaphoreCmd = cmdStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-            EncodeSempahore<GfxFamily>::programMiSemaphoreWait(miSemaphoreCmd, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+            EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         }
 
         bool trackPostSyncDependencies = true;

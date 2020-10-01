@@ -1053,28 +1053,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithSamplersWhenInd
 
 using HardwareCommandsHelperTests = ::testing::Test;
 
-HWTEST_F(HardwareCommandsHelperTests, givenCompareAddressAndDataWhenProgrammingSemaphoreWaitThenSetupAllFields) {
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    using COMPARE_OPERATION = typename FamilyType::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-
-    uint64_t compareAddress = 0x10000;
-    uint32_t compareData = 1234;
-
-    uint8_t buffer[1024] = {};
-    LinearStream cmdStream(buffer, 1024);
-
-    MI_SEMAPHORE_WAIT referenceCommand = FamilyType::cmdInitMiSemaphoreWait;
-    referenceCommand.setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-    referenceCommand.setSemaphoreDataDword(compareData);
-    referenceCommand.setSemaphoreGraphicsAddress(compareAddress);
-    referenceCommand.setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
-
-    COMPARE_OPERATION compareMode = COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD;
-    HardwareCommandsHelper<FamilyType>::programMiSemaphoreWait(cmdStream, compareAddress, compareData, compareMode);
-    EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), cmdStream.getUsed());
-    EXPECT_EQ(0, memcmp(&referenceCommand, buffer, sizeof(MI_SEMAPHORE_WAIT)));
-}
-
 HWTEST_F(HardwareCommandsHelperTests, whenProgrammingMiAtomicThenSetupAllFields) {
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     uint64_t writeAddress = 0x10000;

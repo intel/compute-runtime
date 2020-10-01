@@ -22,8 +22,6 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
-
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/event/event.h"
@@ -882,13 +880,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     size_t srcSize = 0;
 
     if (srcRegion->depth > 1) {
-        uint hostPtrDstOffset = dstRegion->originX + ((dstRegion->originY) * dstPitch) + ((dstRegion->originZ) * dstSlicePitch);
-        uint hostPtrSrcOffset = srcRegion->originX + ((srcRegion->originY) * srcPitch) + ((srcRegion->originZ) * srcSlicePitch);
+        uint32_t hostPtrDstOffset = dstRegion->originX + ((dstRegion->originY) * dstPitch) + ((dstRegion->originZ) * dstSlicePitch);
+        uint32_t hostPtrSrcOffset = srcRegion->originX + ((srcRegion->originY) * srcPitch) + ((srcRegion->originZ) * srcSlicePitch);
         dstSize = (dstRegion->width * dstRegion->height * dstRegion->depth) + hostPtrDstOffset;
         srcSize = (srcRegion->width * srcRegion->height * srcRegion->depth) + hostPtrSrcOffset;
     } else {
-        uint hostPtrDstOffset = dstRegion->originX + ((dstRegion->originY) * dstPitch);
-        uint hostPtrSrcOffset = srcRegion->originX + ((srcRegion->originY) * srcPitch);
+        uint32_t hostPtrDstOffset = dstRegion->originX + ((dstRegion->originY) * dstPitch);
+        uint32_t hostPtrSrcOffset = srcRegion->originX + ((srcRegion->originY) * srcPitch);
         dstSize = (dstRegion->width * dstRegion->height) + hostPtrDstOffset;
         srcSize = (srcRegion->width * srcRegion->height) + hostPtrSrcOffset;
     }
@@ -976,10 +974,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(NEO::
     ze_group_count_t dispatchFuncArgs{srcRegion->width / groupSizeX, srcRegion->height / groupSizeY,
                                       srcRegion->depth / groupSizeZ};
 
-    uint srcOrigin[3] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY), (srcRegion->originZ)};
-    uint dstOrigin[3] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY), (dstRegion->originZ)};
-    uint srcPitches[2] = {(srcPitch), (srcSlicePitch)};
-    uint dstPitches[2] = {(dstPitch), (dstSlicePitch)};
+    uint32_t srcOrigin[3] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY), (srcRegion->originZ)};
+    uint32_t dstOrigin[3] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY), (dstRegion->originZ)};
+    uint32_t srcPitches[2] = {(srcPitch), (srcSlicePitch)};
+    uint32_t dstPitches[2] = {(dstPitch), (dstSlicePitch)};
 
     auto dstValPtr = static_cast<uintptr_t>(dstGA->getGpuAddress());
     auto srcValPtr = static_cast<uintptr_t>(srcGA->getGpuAddress());
@@ -1035,8 +1033,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel2d(NEO::
 
     ze_group_count_t dispatchFuncArgs{srcRegion->width / groupSizeX, srcRegion->height / groupSizeY, 1u};
 
-    uint srcOrigin[2] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY)};
-    uint dstOrigin[2] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY)};
+    uint32_t srcOrigin[2] = {(srcRegion->originX + static_cast<uint32_t>(srcOffset)), (srcRegion->originY)};
+    uint32_t dstOrigin[2] = {(dstRegion->originX + static_cast<uint32_t>(dstOffset)), (dstRegion->originY)};
 
     auto dstValPtr = static_cast<uintptr_t>(dstGA->getGpuAddress());
     auto srcValPtr = static_cast<uintptr_t>(srcGA->getGpuAddress());
@@ -1374,11 +1372,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         if (event->isTimestampEvent) {
             gpuAddr += offsetof(KernelTimestampEvent, contextEnd);
         }
-
-        NEO::HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(*(commandContainer.getCommandStream()),
-                                                                       gpuAddr,
-                                                                       eventStateClear,
-                                                                       COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+        NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
+                                                                   gpuAddr,
+                                                                   eventStateClear,
+                                                                   COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
 
         bool dcFlushEnable = (!event->waitScope) ? false : true;
         if (dcFlushEnable) {

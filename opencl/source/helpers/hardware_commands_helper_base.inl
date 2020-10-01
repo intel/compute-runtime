@@ -383,23 +383,6 @@ void HardwareCommandsHelper<GfxFamily>::updatePerThreadDataTotal(
 }
 
 template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &commandStream,
-                                                               uint64_t compareAddress,
-                                                               uint32_t compareData,
-                                                               COMPARE_OPERATION compareMode) {
-    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-
-    auto miSemaphoreCmd = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-    MI_SEMAPHORE_WAIT cmd = GfxFamily::cmdInitMiSemaphoreWait;
-
-    cmd.setCompareOperation(compareMode);
-    cmd.setSemaphoreDataDword(compareData);
-    cmd.setSemaphoreGraphicsAddress(compareAddress);
-    cmd.setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
-    *miSemaphoreCmd = cmd;
-}
-
-template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::programMiAtomic(LinearStream &commandStream, uint64_t writeAddress,
                                                         typename MI_ATOMIC::ATOMIC_OPCODES opcode,
                                                         typename MI_ATOMIC::DATA_SIZE dataSize) {
