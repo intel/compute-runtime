@@ -41,6 +41,10 @@ struct KernelImmutableData {
         return residencyContainer;
     }
 
+    std::vector<NEO::GraphicsAllocation *> &getResidencyContainer() {
+        return residencyContainer;
+    }
+
     uint32_t getIsaSize() const;
     NEO::GraphicsAllocation *getIsaGraphicsAllocation() const { return isaGraphicsAllocation.get(); }
 

@@ -114,8 +114,6 @@ struct ModuleImp : public Module {
         return this->translationUnit.get();
     }
 
-    const std::set<NEO::GraphicsAllocation *> &getImportedSymbolAllocations() const override { return importedSymbolAllocations; }
-
   protected:
     void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);
     void verifyDebugCapabilities();

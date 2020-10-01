@@ -23,6 +23,7 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass = ::L0::ModuleImp;
     using BaseClass::BaseClass;
     using BaseClass::device;
+    using BaseClass::exportedFunctionsSurface;
     using BaseClass::isFullyLinked;
     using BaseClass::kernelImmDatas;
     using BaseClass::symbols;
@@ -34,7 +35,6 @@ using Module = WhiteBox<::L0::Module>;
 
 template <>
 struct Mock<Module> : public Module {
-    Mock() = delete;
     Mock(::L0::Device *device, ModuleBuildLog *moduleBuildLog);
 
     MOCK_METHOD(ze_result_t, createKernel, (const ze_kernel_desc_t *desc, ze_kernel_handle_t *phFunction), (override));

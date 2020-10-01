@@ -481,6 +481,16 @@ bool ModuleImp::linkBinary() {
     }
     DBG_LOG(PrintRelocations, NEO::constructRelocationsDebugMessage(this->symbols));
     isFullyLinked = true;
+    for (auto &kernImmData : this->kernelImmDatas) {
+        kernImmData->getResidencyContainer().reserve(kernImmData->getResidencyContainer().size() +
+                                                     ((this->exportedFunctionsSurface != nullptr) ? 1 : 0) + this->importedSymbolAllocations.size());
+
+        if (nullptr != this->exportedFunctionsSurface) {
+            kernImmData->getResidencyContainer().push_back(this->exportedFunctionsSurface);
+        }
+        kernImmData->getResidencyContainer().insert(kernImmData->getResidencyContainer().end(), this->importedSymbolAllocations.begin(),
+                                                    this->importedSymbolAllocations.end());
+    }
     return true;
 }
 
