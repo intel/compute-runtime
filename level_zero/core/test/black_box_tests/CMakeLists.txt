@@ -7,7 +7,7 @@
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   set(L0_BLACK_BOX_TEST_PROJECT_FOLDER "ze_intel_gpu/black_box_tests")
   set(TEST_TARGETS
-      zello_world
+      zello_world_gpu
       zello_timestamp
   )
 
