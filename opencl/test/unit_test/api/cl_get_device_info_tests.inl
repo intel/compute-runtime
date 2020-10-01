@@ -212,7 +212,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     std::string extensionString(paramValue.get());
-    std::string supportedExtensions[] = {
+    static const char *const supportedExtensions[] = {
         "cl_khr_byte_addressable_store ",
         "cl_khr_fp16 ",
         "cl_khr_global_int32_base_atomics ",
@@ -230,11 +230,18 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
         "cl_khr_throttle_hints ",
         "cl_khr_create_command_queue ",
         "cl_intel_subgroups_char ",
-        "cl_intel_subgroups_long "
-        "cl_khr_il_program "};
+        "cl_intel_subgroups_long ",
+        "cl_khr_il_program ",
+        "cl_khr_subgroup_extended_types ",
+        "cl_khr_subgroup_non_uniform_vote ",
+        "cl_khr_subgroup_ballot ",
+        "cl_khr_subgroup_non_uniform_arithmetic ",
+        "cl_khr_subgroup_shuffle ",
+        "cl_khr_subgroup_shuffle_relative ",
+        "cl_khr_subgroup_clustered_reduce "};
 
-    for (auto element = 0u; element < sizeof(supportedExtensions) / sizeof(supportedExtensions[0]); element++) {
-        auto foundOffset = extensionString.find(supportedExtensions[element]);
+    for (auto extension : supportedExtensions) {
+        auto foundOffset = extensionString.find(extension);
         EXPECT_TRUE(foundOffset != std::string::npos);
     }
 }

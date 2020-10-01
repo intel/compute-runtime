@@ -33,7 +33,14 @@ const char *deviceExtensionsList = "cl_khr_byte_addressable_store "
                                    "cl_intel_subgroups_char "
                                    "cl_intel_subgroups_long "
                                    "cl_khr_il_program "
-                                   "cl_intel_mem_force_host_memory ";
+                                   "cl_intel_mem_force_host_memory "
+                                   "cl_khr_subgroup_extended_types "
+                                   "cl_khr_subgroup_non_uniform_vote "
+                                   "cl_khr_subgroup_ballot "
+                                   "cl_khr_subgroup_non_uniform_arithmetic "
+                                   "cl_khr_subgroup_shuffle "
+                                   "cl_khr_subgroup_shuffle_relative "
+                                   "cl_khr_subgroup_clustered_reduce ";
 
 std::string getExtensionsList(const HardwareInfo &hwInfo) {
     std::string allExtensionsList;
