@@ -47,7 +47,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationPr
     length.Length = static_cast<uint32_t>(allocSize - 1);
     GraphicsAllocation allocation(0, GraphicsAllocation::AllocationType::UNKNOWN, cpuAddr, gpuAddr, 0u, allocSize, MemoryPool::MemoryNull, 1);
     EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, gpuAddr, allocSize, 1,
-                                                 false, false, 1u,
+                                                 false, false, false, 1u,
                                                  &allocation, pDevice->getGmmHelper());
     EXPECT_EQ(length.SurfaceState.Depth + 1u, state->getDepth());
     EXPECT_EQ(length.SurfaceState.Width + 1u, state->getWidth());
@@ -74,7 +74,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenAllocationNo
     length.Length = static_cast<uint32_t>(allocSize - 1);
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, gpuAddr, allocSize, 1,
-                                                 true, false, 1u,
+                                                 true, false, false, 1u,
                                                  nullptr, pDevice->getGmmHelper());
 
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, state->getSurfaceType());
@@ -100,7 +100,7 @@ HWTEST_F(CommandEncodeStatesTest, givenCreatedSurfaceStateBufferWhenGpuCoherency
     length.Length = static_cast<uint32_t>(allocSize - 1);
 
     EncodeSurfaceState<FamilyType>::encodeBuffer(stateBuffer, gpuAddr, allocSize, 1,
-                                                 false, false, 1u,
+                                                 false, false, false, 1u,
                                                  nullptr, pDevice->getGmmHelper());
 
     EXPECT_EQ(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT, state->getCoherencyType());

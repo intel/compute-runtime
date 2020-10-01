@@ -53,7 +53,7 @@ struct KernelHw : public KernelImp {
         auto mocs = this->module->getDevice()->getMOCS(true, false);
         NEO::Device *neoDevice = module->getDevice()->getNEODevice();
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(surfaceStateAddress, bufferAddressForSsh, bufferSizeForSsh, mocs,
-                                                         false, false, neoDevice->getNumAvailableDevices(),
+                                                         false, false, false, neoDevice->getNumAvailableDevices(),
                                                          alloc, neoDevice->getGmmHelper());
     }
 

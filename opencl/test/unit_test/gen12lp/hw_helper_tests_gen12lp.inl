@@ -378,3 +378,49 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12WhenCallIsPackedSupportedThenReturn
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_TRUE(helper.packedFormatsSupported());
 }
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, whenRequestingMocsThenProperMocsIndicesAreBeingReturned) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    auto gmmHelper = this->pDevice->getGmmHelper();
+
+    const auto mocsNoCache = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    const auto mocsL3 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+    const auto mocsL1 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
+
+    EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, false));
+    EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, true));
+    EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, false));
+    EXPECT_EQ(mocsL1, helper.getMocsIndex(*gmmHelper, true, true));
+}
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenL1ForceEnabledWhenRequestingMocsThenProperMocsIndicesAreBeingReturned) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.ForceL1Caching.set(1);
+
+    auto &helper = HwHelper::get(renderCoreFamily);
+    auto gmmHelper = this->pDevice->getGmmHelper();
+
+    const auto mocsNoCache = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    const auto mocsL1 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
+
+    EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, false));
+    EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, true));
+    EXPECT_EQ(mocsL1, helper.getMocsIndex(*gmmHelper, true, false));
+    EXPECT_EQ(mocsL1, helper.getMocsIndex(*gmmHelper, true, true));
+}
+
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenL1ForceDisabledWhenRequestingMocsThenProperMocsIndicesAreBeingReturned) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.ForceL1Caching.set(0);
+
+    auto &helper = HwHelper::get(renderCoreFamily);
+    auto gmmHelper = this->pDevice->getGmmHelper();
+
+    const auto mocsNoCache = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    const auto mocsL3 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+
+    EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, false));
+    EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, true));
+    EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, false));
+    EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, true));
+}

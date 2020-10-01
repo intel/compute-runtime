@@ -36,10 +36,11 @@ template <typename GfxFamily>
 void BufferHw<GfxFamily>::setArgStateful(void *memory, bool forceNonAuxMode, bool disableL3, bool alignSizeForAuxTranslation, bool isReadOnlyArgument, const Device &device) {
     auto rootDeviceIndex = device.getRootDeviceIndex();
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
+    const auto isReadOnly = isValueSet(getFlags(), CL_MEM_READ_ONLY) || isReadOnlyArgument;
     EncodeSurfaceState<GfxFamily>::encodeBuffer(memory, getBufferAddress(rootDeviceIndex),
                                                 getSurfaceSize(alignSizeForAuxTranslation, rootDeviceIndex),
-                                                getMocsValue(disableL3, isReadOnlyArgument, rootDeviceIndex),
-                                                true, forceNonAuxMode, device.getNumAvailableDevices(),
+                                                getMocsValue(disableL3, isReadOnly, rootDeviceIndex),
+                                                true, forceNonAuxMode, isReadOnly, device.getNumAvailableDevices(),
                                                 graphicsAllocation, device.getGmmHelper());
     appendSurfaceStateExt(memory);
 }

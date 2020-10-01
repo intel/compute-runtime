@@ -81,7 +81,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
         auto mocs = device->getMOCS(true, false);
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(surfaceState, debugSurface->getGpuAddress(),
                                                          debugSurface->getUnderlyingBufferSize(), mocs,
-                                                         false, false, neoDevice->getNumAvailableDevices(),
+                                                         false, false, false, neoDevice->getNumAvailableDevices(),
                                                          debugSurface, neoDevice->getGmmHelper());
     }
 

@@ -240,6 +240,23 @@ bool HwHelperHw<Family>::useOnlyGlobalTimestamps() const {
     return true;
 }
 
+template <>
+uint32_t HwHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
+    if (l3enabled) {
+        if (DebugManager.flags.ForceL1Caching.get() != -1) {
+            l1enabled = !!DebugManager.flags.ForceL1Caching.get();
+        }
+
+        if (l1enabled) {
+            return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
+        } else {
+            return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
+        }
+    }
+
+    return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+}
+
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;

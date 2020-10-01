@@ -6,6 +6,7 @@
  */
 
 #include "opencl/test/unit_test/gen12lp/aub_command_stream_receiver_tests_gen12lp.inl"
+#include "opencl/test/unit_test/gen12lp/buffer_tests_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/coherency_tests_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/command_stream_receiver_hw_tests_gen12lp.inl"
 #include "opencl/test/unit_test/gen12lp/command_stream_receiver_simulated_common_hw_tests_gen12lp.inl"

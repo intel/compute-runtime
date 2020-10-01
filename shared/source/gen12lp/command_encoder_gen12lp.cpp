@@ -47,6 +47,24 @@ void EncodeWA<Family>::encodeAdditionalPipelineSelect(Device &device, LinearStre
     }
 }
 
+template <>
+void EncodeSurfaceState<Family>::encodeExtraBufferParams(R_SURFACE_STATE *surfaceState, GraphicsAllocation *allocation, GmmHelper *gmmHelper,
+                                                         bool isReadOnly, uint32_t numAvailableDevices) {
+    const bool isL3Allowed = surfaceState->getMemoryObjectControlState() == gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    if (isL3Allowed) {
+        const bool isConstantSurface = allocation && allocation->getAllocationType() == GraphicsAllocation::AllocationType::CONSTANT_SURFACE;
+        bool useL1 = isReadOnly || isConstantSurface;
+
+        if (DebugManager.flags.ForceL1Caching.get() != -1) {
+            useL1 = !!DebugManager.flags.ForceL1Caching.get();
+        }
+
+        if (useL1) {
+            surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST));
+        }
+    }
+}
+
 template struct EncodeDispatchKernel<Family>;
 template struct EncodeStates<Family>;
 template struct EncodeMath<Family>;
