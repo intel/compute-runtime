@@ -9,6 +9,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/abort.h
     ${CMAKE_CURRENT_SOURCE_DIR}/address_patch.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/array_count.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aux_translation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/basic_math.h
@@ -46,7 +47,6 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/hash.h
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_config.h
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper.cpp

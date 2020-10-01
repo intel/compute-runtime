@@ -29,8 +29,8 @@ set(RUNTIME_SRCS_DLL_BASE
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
     ${NEO_SOURCE_DIR}/opencl/source/api/api.cpp
     ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
+    ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
     ${NEO_SOURCE_DIR}/opencl/source/helpers/built_ins_helper.cpp
-    ${NEO_SOURCE_DIR}/opencl/source/helpers/heap_assigner_config_ocl.cpp
 
     ${GTPIN_INIT_FILE}
     ${HW_SRC_LINK}

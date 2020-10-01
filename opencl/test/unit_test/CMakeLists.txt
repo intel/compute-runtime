@@ -48,7 +48,7 @@ set(IGDRCL_SRCS_tests_local
     ${CMAKE_CURRENT_SOURCE_DIR}/libult/os_interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ult_configuration.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
-    ${NEO_SOURCE_DIR}/opencl/source/helpers/heap_assigner_config_ocl.cpp
+    ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
 )
 
 if(WIN32)
@@ -87,7 +87,7 @@ set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
     $<TARGET_OBJECTS:${SHARINGS_ENABLE_LIB_NAME}>
     $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
     $<TARGET_OBJECTS:${BUILTINS_VME_LIB_NAME}>
-    $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>
+    $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
     $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
 )
 

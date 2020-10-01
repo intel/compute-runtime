@@ -10,6 +10,7 @@ set(IGDRCL_SRCS_tests_built_in
     ${CMAKE_CURRENT_SOURCE_DIR}/built_ins_file_names.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/built_in_kernels_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/built_in_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/built_in_tests_ocl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_built_ins_file_names.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sip_tests.cpp
 )

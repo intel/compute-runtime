@@ -8,6 +8,7 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/api_specific_config.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 
@@ -80,7 +81,9 @@ std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::stri
         ret += "_" + std::to_string(deviceRevId);
         ret += "_";
     }
-
+    if (extension == ".bin") {
+        ret += ApiSpecificConfig::getBindelssConfiguration() ? "bindless_" : "bindful_";
+    }
     ret += getBuiltinAsString(builtin);
 
     if (extension.size() > 0) {

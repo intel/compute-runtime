@@ -7,7 +7,8 @@
 
 #pragma once
 namespace NEO {
-struct HeapAssignerConfig {
-    static bool getConfiguration();
+struct ApiSpecificConfig {
+    static bool getHeapConfiguration();
+    static bool getBindelssConfiguration();
 };
 } // namespace NEO

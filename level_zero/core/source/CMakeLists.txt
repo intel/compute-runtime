@@ -46,7 +46,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/event/event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/fence/fence.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fence/fence.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/helpers/heap_assigner_config_l0.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/helpers/api_specific_config_l0.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers${BRANCH_DIR_SUFFIX}/hw_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel.h

@@ -57,9 +57,9 @@ if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_configuration.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_config_listener.cpp
                  ${NEO_SOURCE_DIR}/shared/source/helpers/allow_deferred_deleter.cpp
+                 ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/api_specific_config_shared_tests.cpp
                  ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.cpp
                  ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_leak_listener.cpp
-                 ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/heap_assigner_config_shared_tests.cpp
                  $<TARGET_OBJECTS:mock_gmm>
   )
 
