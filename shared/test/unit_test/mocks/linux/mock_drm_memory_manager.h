@@ -57,7 +57,6 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::createGraphicsAllocation;
     using DrmMemoryManager::createSharedBufferObject;
     using DrmMemoryManager::eraseSharedBufferObject;
-    using DrmMemoryManager::forcePinEnabled;
     using DrmMemoryManager::getDefaultDrmContextId;
     using DrmMemoryManager::getDrm;
     using DrmMemoryManager::getRootDeviceIndex;

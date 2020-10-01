@@ -106,7 +106,7 @@ class DrmMemoryManager : public MemoryManager {
     std::vector<void *> memoryForPinBBs;
     size_t pinThreshold = 8 * 1024 * 1024;
     bool forcePinEnabled = false;
-    bool validateHostPtrMemory;
+    const bool validateHostPtrMemory;
     std::unique_ptr<DrmGemCloseWorker> gemCloseWorker;
     decltype(&mmap) mmapFunction = mmap;
     decltype(&munmap) munmapFunction = munmap;

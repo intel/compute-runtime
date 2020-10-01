@@ -38,11 +38,6 @@ DrmMemoryManager::DrmMemoryManager(gemCloseWorkerMode mode,
                                    ExecutionEnvironment &executionEnvironment) : MemoryManager(executionEnvironment),
                                                                                  forcePinEnabled(forcePinAllowed),
                                                                                  validateHostPtrMemory(validateHostPtrMemory) {
-    if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
-        this->forcePinEnabled = false;
-        this->validateHostPtrMemory = false;
-    }
-
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < gfxPartitions.size(); ++rootDeviceIndex) {
         auto gpuAddressSpace = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->capabilityTable.gpuAddressSpace;
         getGfxPartition(rootDeviceIndex)->init(gpuAddressSpace, getSizeToReserve(), rootDeviceIndex, gfxPartitions.size(), heapAssigner.apiAllowExternalHeapForSshAndDsh);
