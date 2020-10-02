@@ -27,7 +27,7 @@ const PLATFORM KBL::platform = {
     IGFX_GEN9_CORE,
     PLATFORM_NONE, // default init
     0,             // usDeviceID
-    0,             // usRevId. 0 sets the stepping to A0
+    9,             // usRevId. 0 sets the stepping to A0
     0,             // usDeviceID_PCH
     0,             // usRevId_PCH
     GTTYPE_UNDEFINED};

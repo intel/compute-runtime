@@ -18,6 +18,6 @@ if(TESTS_SKL)
 
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen9_skl})
   add_subdirectories()
-  neo_copy_test_files_with_revision(copy_test_files_skl_0 skl 0)
-  add_dependencies(unit_tests copy_test_files_skl_0)
+  neo_copy_test_files_with_revision(copy_test_files_skl_9 skl 9)
+  add_dependencies(unit_tests copy_test_files_skl_9)
 endif()

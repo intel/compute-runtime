@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
     uint32_t euPerSubSlice = 0;
     uint32_t sliceCount = 0;
     uint32_t subSlicePerSliceCount = 0;
-    int32_t revId = 0;
+    int32_t revId = -1;
     int dieRecovery = 0;
 
     for (int i = 1; i < argc; ++i) {
@@ -305,8 +305,11 @@ int main(int argc, char **argv) {
     renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
     uint32_t threadsPerEu = hwInfoConfigFactory[productFamily]->threadsPerEu;
     PLATFORM &platform = hwInfoForTests.platform;
-    platform.usRevId = revId;
-
+    if (revId != -1) {
+        platform.usRevId = revId;
+    } else {
+        revId = platform.usRevId;
+    }
     uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
     setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
 
