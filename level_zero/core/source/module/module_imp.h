@@ -32,9 +32,9 @@ extern NEO::ConstStringRef debugKernelEnable;
 struct ModuleTranslationUnit {
     ModuleTranslationUnit(L0::Device *device);
     virtual ~ModuleTranslationUnit();
-    bool buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
-                        const ze_module_constants_t *pConstants);
-    bool createFromNativeBinary(const char *input, size_t inputSize);
+    MOCKABLE_VIRTUAL bool buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
+                                         const ze_module_constants_t *pConstants);
+    MOCKABLE_VIRTUAL bool createFromNativeBinary(const char *input, size_t inputSize);
     MOCKABLE_VIRTUAL bool processUnpackedBinary();
     void updateBuildLog(const std::string &newLogEntry);
     void processDebugData();

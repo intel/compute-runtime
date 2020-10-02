@@ -475,6 +475,78 @@ HWTEST_F(ContextModuleCreateTest, givenCallToCreateModuleThenModuleIsReturned) {
 
 using ModuleTranslationUnitTest = Test<DeviceFixture>;
 
+struct MockModuleTU : public L0::ModuleTranslationUnit {
+    MockModuleTU(L0::Device *device) : L0::ModuleTranslationUnit(device) {}
+
+    bool buildFromSpirV(const char *input, uint32_t inputSize, const char *buildOptions, const char *internalBuildOptions,
+                        const ze_module_constants_t *pConstants) override {
+        wasBuildFromSpirVCalled = true;
+        return true;
+    }
+
+    bool createFromNativeBinary(const char *input, size_t inputSize) override {
+        wasCreateFromNativeBinaryCalled = true;
+        return L0::ModuleTranslationUnit::createFromNativeBinary(input, inputSize);
+    }
+
+    bool wasBuildFromSpirVCalled = false;
+    bool wasCreateFromNativeBinaryCalled = false;
+};
+
+HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWithoutIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleIsNotRecompiled) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "test_kernel_", ".gen");
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+
+    Module module(device, nullptr);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
+    EXPECT_FALSE(tu->wasBuildFromSpirVCalled);
+}
+
+HWTEST_F(ModuleTranslationUnitTest, GivenRebuildPrecompiledKernelsFlagAndFileWithIntermediateCodeWhenCreatingModuleFromNativeBinaryThenModuleIsRecompiled) {
+    DebugManagerStateRestore dgbRestorer;
+    NEO::DebugManager.flags.RebuildPrecompiledKernels.set(true);
+
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "test_kernel_", ".bin");
+    size_t size = 0;
+    auto src = loadDataFromFile(testFile.c_str(), size);
+
+    ASSERT_NE(0u, size);
+    ASSERT_NE(nullptr, src);
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.get());
+    moduleDesc.inputSize = size;
+
+    Module module(device, nullptr);
+    MockModuleTU *tu = new MockModuleTU(device);
+    module.translationUnit.reset(tu);
+
+    bool success = module.initialize(&moduleDesc, neoDevice);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(tu->wasCreateFromNativeBinaryCalled);
+    EXPECT_EQ(tu->irBinarySize != 0, tu->wasBuildFromSpirVCalled);
+}
+
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequiredTargetProductProperly) {
     ZebinTestData::ValidEmptyProgram emptyProgram;
     auto hwInfo = device->getNEODevice()->getHardwareInfo();
