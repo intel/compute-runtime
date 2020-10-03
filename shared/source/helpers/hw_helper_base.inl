@@ -317,8 +317,8 @@ uint32_t HwHelperHw<GfxFamily>::getMetricsLibraryGenId() const {
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::requiresAuxResolves() const {
-    return true;
+inline bool HwHelperHw<GfxFamily>::requiresAuxResolves(const KernelInfo &kernelInfo) const {
+    return hasStatelessAccessToBuffer(kernelInfo);
 }
 
 template <typename GfxFamily>
@@ -445,6 +445,17 @@ LocalMemoryAccessMode HwHelperHw<GfxFamily>::getLocalMemoryAccessMode(const Hard
 template <typename GfxFamily>
 inline LocalMemoryAccessMode HwHelperHw<GfxFamily>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
     return LocalMemoryAccessMode::Default;
+}
+
+template <typename GfxFamily>
+inline bool HwHelperHw<GfxFamily>::hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const {
+    bool hasStatelessAccessToBuffer = false;
+    for (uint32_t i = 0; i < kernelInfo.kernelArgInfo.size(); ++i) {
+        if (kernelInfo.kernelArgInfo[i].isBuffer) {
+            hasStatelessAccessToBuffer |= !kernelInfo.kernelArgInfo[i].pureStatefulBufferAccess;
+        }
+    }
+    return hasStatelessAccessToBuffer;
 }
 
 template <typename GfxFamily>

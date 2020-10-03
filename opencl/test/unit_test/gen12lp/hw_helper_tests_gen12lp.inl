@@ -19,7 +19,16 @@ using HwHelperTestGen12Lp = HwHelperTest;
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
     auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_TRUE(helper.requiresAuxResolves());
+
+    for (auto isPureStateful : {false, true}) {
+        KernelInfo kernelInfo{};
+        KernelArgInfo argInfo{};
+        argInfo.isBuffer = true;
+        argInfo.pureStatefulBufferAccess = isPureStateful;
+        kernelInfo.kernelArgInfo.push_back(std::move(argInfo));
+
+        EXPECT_EQ(!isPureStateful, helper.requiresAuxResolves(kernelInfo));
+    }
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, getMaxBarriersPerSliceReturnsCorrectSize) {

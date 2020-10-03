@@ -814,9 +814,10 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationAndWithoutA
 }
 
 HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThenPickOnlyApplicableBuffers) {
-    if (!HwHelper::get(this->pDevice->getHardwareInfo().platform.eRenderCoreFamily).requiresAuxResolves()) {
-        GTEST_SKIP();
-    }
+    REQUIRE_AUX_RESOLVES();
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
 
     MyCmdQ<FamilyType> cmdQ(context, pClDevice);
     size_t gws[3] = {1, 0, 0};
@@ -831,19 +832,26 @@ HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThe
     buffer3.getGraphicsAllocation(pClDevice->getRootDeviceIndex())->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
-    mockKernel.mockKernel->auxTranslationRequired = true;
     mockKernel.kernelInfo.kernelArgInfo.resize(6);
     for (auto &kernelInfo : mockKernel.kernelInfo.kernelArgInfo) {
         kernelInfo.kernelArgPatchInfoVector.resize(1);
     }
 
-    mockKernel.mockKernel->initialize();
+    mockKernel.kernelInfo.kernelArgInfo.at(0).isBuffer = true;
     mockKernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+    mockKernel.kernelInfo.kernelArgInfo.at(1).isBuffer = true;
     mockKernel.kernelInfo.kernelArgInfo.at(1).pureStatefulBufferAccess = true;
+    mockKernel.kernelInfo.kernelArgInfo.at(2).isBuffer = true;
     mockKernel.kernelInfo.kernelArgInfo.at(2).pureStatefulBufferAccess = false;
+    mockKernel.kernelInfo.kernelArgInfo.at(3).isBuffer = true;
     mockKernel.kernelInfo.kernelArgInfo.at(3).pureStatefulBufferAccess = true;
+    mockKernel.kernelInfo.kernelArgInfo.at(4).isBuffer = true;
     mockKernel.kernelInfo.kernelArgInfo.at(4).pureStatefulBufferAccess = false;
+    mockKernel.kernelInfo.kernelArgInfo.at(5).isBuffer = true;
     mockKernel.kernelInfo.kernelArgInfo.at(5).pureStatefulBufferAccess = false;
+
+    mockKernel.mockKernel->initialize();
+    EXPECT_TRUE(mockKernel.mockKernel->auxTranslationRequired);
 
     mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem0);                    // stateless on regular buffer - dont insert
     mockKernel.mockKernel->setArgBuffer(1, sizeof(cl_mem *), &clMem1);                    // stateful on regular buffer - dont insert

@@ -2744,11 +2744,11 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
 
     capabilityTable.ftrRenderCompressedBuffers = true;
     kernel.mockKernel->initialize();
-    EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
+    EXPECT_EQ(HwHelper::get(hwInfo->platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo), kernel.mockKernel->isAuxTranslationRequired());
 
     DebugManager.flags.ForceAuxTranslationEnabled.set(-1);
     kernel.mockKernel->initialize();
-    EXPECT_EQ(HwHelper::get(hwInfo->platform.eRenderCoreFamily).requiresAuxResolves(), kernel.mockKernel->isAuxTranslationRequired());
+    EXPECT_EQ(HwHelper::get(hwInfo->platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo), kernel.mockKernel->isAuxTranslationRequired());
 
     DebugManager.flags.ForceAuxTranslationEnabled.set(0);
     kernel.mockKernel->initialize();
@@ -2772,7 +2772,12 @@ TEST(KernelTest, WhenAuxTranslationIsRequiredThenKernelSetsRequiredResolvesInCon
     kernel.kernelInfo.kernelArgInfo[0].pureStatefulBufferAccess = false;
 
     kernel.mockKernel->initialize();
-    EXPECT_TRUE(context->getResolvesRequiredInKernels());
+
+    if (HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo)) {
+        EXPECT_TRUE(context->getResolvesRequiredInKernels());
+    } else {
+        EXPECT_FALSE(context->getResolvesRequiredInKernels());
+    }
 }
 
 TEST(KernelTest, WhenAuxTranslationIsNotRequiredThenKernelDoesNotSetRequiredResolvesInContext) {
@@ -2814,7 +2819,7 @@ TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkK
 
     kernel.mockKernel->initialize();
 
-    if (HwHelper::get(localHwInfo.platform.eRenderCoreFamily).requiresAuxResolves()) {
+    if (HwHelper::get(localHwInfo.platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo)) {
         EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
     } else {
         EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());

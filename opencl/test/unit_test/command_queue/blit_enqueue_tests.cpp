@@ -20,6 +20,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_timestamp_container.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
 namespace NEO {
@@ -66,13 +67,15 @@ struct BlitEnqueueTests : public ::testing::Test {
 
     template <typename FamilyType>
     void SetUpT() {
-        auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-        if (is32bit || !hwHelper.requiresAuxResolves()) {
+        if (is32bit) {
             GTEST_SKIP();
         }
+        REQUIRE_AUX_RESOLVES();
+
         DebugManager.flags.EnableTimestampPacket.set(timestampPacketEnabled);
         DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
         DebugManager.flags.ForceAuxTranslationMode.set(1);
+        DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
         DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
         DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
         DebugManager.flags.EnableLocalMemory.set(1);
@@ -92,7 +95,6 @@ struct BlitEnqueueTests : public ::testing::Test {
         auto mockCmdQueue = new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr);
         commandQueue.reset(mockCmdQueue);
         mockKernel = std::make_unique<MockKernelWithInternals>(*device, bcsMockContext.get());
-        mockKernel->mockKernel->auxTranslationRequired = true;
         auto mockProgram = mockKernel->mockProgram;
         mockProgram->setAllowNonUniform(true);
 
@@ -108,13 +110,18 @@ struct BlitEnqueueTests : public ::testing::Test {
         if (mockKernel->kernelInfo.kernelArgInfo.size() < buffers.size()) {
             mockKernel->kernelInfo.kernelArgInfo.resize(buffers.size());
         }
+
+        for (uint32_t i = 0; i < buffers.size(); i++) {
+            mockKernel->kernelInfo.kernelArgInfo.at(i).kernelArgPatchInfoVector.resize(1);
+            mockKernel->kernelInfo.kernelArgInfo.at(i).isBuffer = true;
+            mockKernel->kernelInfo.kernelArgInfo.at(i).pureStatefulBufferAccess = false;
+        }
+
         mockKernel->mockKernel->initialize();
+        EXPECT_TRUE(mockKernel->mockKernel->auxTranslationRequired);
 
         for (uint32_t i = 0; i < buffers.size(); i++) {
             cl_mem clMem = buffers[i];
-
-            mockKernel->kernelInfo.kernelArgInfo.at(i).kernelArgPatchInfoVector.resize(1);
-            mockKernel->kernelInfo.kernelArgInfo.at(i).pureStatefulBufferAccess = false;
             mockKernel->mockKernel->setArgBuffer(i, sizeof(cl_mem *), &clMem);
         }
     }

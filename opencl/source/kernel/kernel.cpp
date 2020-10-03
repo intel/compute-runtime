@@ -367,8 +367,6 @@ cl_int Kernel::initialize() {
                 kernelArguments[i].type = BUFFER_OBJ;
                 usingBuffers = true;
                 allBufferArgsStateful &= static_cast<uint32_t>(argInfo.pureStatefulBufferAccess);
-                this->auxTranslationRequired |= !kernelInfo.kernelArgInfo[i].pureStatefulBufferAccess &&
-                                                HwHelper::renderCompressedBuffersSupported(hwInfo);
             } else if (argInfo.isDeviceQueue) {
                 kernelArgHandlers[i] = &Kernel::setArgDevQueue;
                 kernelArguments[i].type = DEVICE_QUEUE_OBJ;
@@ -377,10 +375,9 @@ cl_int Kernel::initialize() {
             }
         }
 
+        auxTranslationRequired = HwHelper::renderCompressedBuffersSupported(hwInfo) && hwHelper.requiresAuxResolves(kernelInfo);
         if (DebugManager.flags.ForceAuxTranslationEnabled.get() != -1) {
             auxTranslationRequired &= !!DebugManager.flags.ForceAuxTranslationEnabled.get();
-        } else {
-            auxTranslationRequired &= hwHelper.requiresAuxResolves();
         }
         if (auxTranslationRequired) {
             program->getContextPtr()->setResolvesRequiredInKernels(true);

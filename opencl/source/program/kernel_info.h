@@ -197,6 +197,7 @@ struct KernelInfo {
     std::vector<std::pair<uint32_t, uint32_t>> childrenKernelsIdOffset;
     bool usesSsh = false;
     bool requiresSshForBuffers = false;
+    bool hasStatelessAccessToHostMemory = false;
     bool isVmeWorkload = false;
     char *crossThreadData = nullptr;
     size_t reqdWorkGroupSize[3] = {WorkloadInfo::undefinedOffset, WorkloadInfo::undefinedOffset, WorkloadInfo::undefinedOffset};
