@@ -120,7 +120,7 @@ struct VmeBuiltInTests : BuiltInTests {
     }
 };
 
-TEST_F(BuiltInTests, SourceConsistency) {
+TEST_F(BuiltInTests, WhenBuildingListOfBuiltinsThenBuiltinsHaveBeenGenerated) {
     size_t size = 0;
 
     for (auto &fileName : getBuiltInFileNames()) {
@@ -144,10 +144,10 @@ TEST_F(BuiltInTests, SourceConsistency) {
     uint64_t hash = Hash::hash(allBuiltIns.c_str(), allBuiltIns.length());
     auto hashName = getBuiltInHashFileName(hash);
 
-    //Fisrt fail, if we are inconsistent
+    //First fail, if we are inconsistent
     EXPECT_EQ(true, fileExists(hashName)) << "**********\nBuilt in kernels need to be regenerated for the mock compilers!\n**********";
 
-//then write to file if needed
+    //then write to file if needed
 #define GENERATE_NEW_HASH_FOR_BUILT_INS 0
 #if GENERATE_NEW_HASH_FOR_BUILT_INS
     std::cout << "writing builtins to file: " << hashName << std::endl;
@@ -156,7 +156,7 @@ TEST_F(BuiltInTests, SourceConsistency) {
 #endif
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBuffer) {
+TEST_F(BuiltInTests, GivenCopyBufferToBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
 
     MockBuffer *srcPtr = new MockBuffer();
@@ -602,7 +602,7 @@ HWTEST_F(BuiltInTests, givenNonAuxToAuxTranslationWhenSettingSurfaceStateThenSet
     }
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferAligned) {
+TEST_F(BuiltInTests, GivenCopyBufferToBufferWhenDispatchInfoIsCreatedThenSizeIsAlignedToCachLineSize) {
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
 
     AlignedBuffer src;
@@ -800,7 +800,7 @@ HWTEST_F(BuiltInTests, givenBigOffsetAndSizeWhenBuilderCopyImageToBufferStateles
     EXPECT_FALSE(kernel->getKernelInfo().kernelArgInfo[0].pureStatefulBufferAccess);
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffsetUnalignedToFour) {
+TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
 
     AlignedBuffer src;
@@ -825,7 +825,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferWithSourceOffse
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReadBufferAligned) {
+TEST_F(BuiltInTests, GivenReadBufferAlignedWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
 
     AlignedBuffer srcMemObj;
@@ -860,7 +860,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReadBufferAligned) {
     alignedFree(dstPtr);
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderWriteBufferAligned) {
+TEST_F(BuiltInTests, GivenWriteBufferAlignedWhenDispatchInfoIsCreatedThenParamsAreCorrect) {
     BuiltinDispatchInfoBuilder &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
 
     auto size = 10 * MemoryConstants::cacheLineSize;
@@ -895,14 +895,14 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderWriteBufferAligned) {
     alignedFree(srcPtr);
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetBuilderTwice) {
+TEST_F(BuiltInTests, WhenGettingBuilderInfoTwiceThenPointerIsSame) {
     BuiltinDispatchInfoBuilder &builder1 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
     BuiltinDispatchInfoBuilder &builder2 = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer, *pDevice);
 
     EXPECT_EQ(&builder1, &builder2);
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetBuilderForUnknownBuiltInOp) {
+TEST_F(BuiltInTests, GivenUnknownBuiltInOpWhenGettingBuilderInfoThenExceptionThrown) {
     bool caughtException = false;
     try {
         BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::COUNT, *pDevice);
@@ -912,7 +912,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderGetBuilderForUnknownBuiltInOp) {
     EXPECT_TRUE(caughtException);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernel) {
+HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, WhenGettingSchedulerKernelThenCorrectKernelReturned) {
     if (pClDevice->areOcl21FeaturesSupported()) {
         SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
         std::string name = SchedulerKernel::schedulerName;
@@ -920,7 +920,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernel) {
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernelForSecondTimeDoesNotCreateNewKernel) {
+HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, WhenGetttingSchedulerKernelForSecondTimeThenReuseKernel) {
     if (pClDevice->areOcl21FeaturesSupported()) {
         SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
 
@@ -936,7 +936,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getSchedulerKernelForSecondTimeDoesNot
     }
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnFalseIfUnsupportedBuildType) {
+TEST_F(BuiltInTests, GivenUnsupportedBuildTypeWhenBuildingDispatchInfoThenFalseIsReturned) {
     auto &bs = *pDevice->getBuiltIns();
     BuiltinDispatchInfoBuilder bdib{bs};
     BuiltinOpParams params;
@@ -951,14 +951,14 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnFalseIfUnsupportedBuildType
     EXPECT_EQ(0U, multiDispatchInfo.size());
 }
 
-TEST_F(BuiltInTests, GeivenDefaultBuiltinDispatchInfoBuilderWhendValidateDispatchIsCalledThenClSuccessIsReturned) {
+TEST_F(BuiltInTests, GivenDefaultBuiltinDispatchInfoBuilderWhenValidateDispatchIsCalledThenClSuccessIsReturned) {
     auto &bs = *pDevice->getBuiltIns();
     BuiltinDispatchInfoBuilder bdib{bs};
     auto ret = bdib.validateDispatch(nullptr, 1, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
     EXPECT_EQ(CL_SUCCESS, ret);
 }
 
-TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnTrueIfExplicitKernelArgNotTakenCareOfInBuiltinDispatchBInfoBuilder) {
+TEST_F(BuiltInTests, WhenSettingExplictArgThenTrueIsReturned) {
     auto &bs = *pDevice->getBuiltIns();
     BuiltinDispatchInfoBuilder bdib{bs};
     MultiDispatchInfo multiDispatchInfo;
@@ -969,7 +969,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnTrueIfExplicitKernelArgNotT
     EXPECT_TRUE(ret);
 }
 
-TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderGetVMEBuilderReturnNonNull) {
+TEST_F(VmeBuiltInTests, GivenVmeBuilderWhenGettingDispatchInfoThenValidPointerIsReturned) {
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
 
     EBuiltInOps::Type vmeOps[] = {EBuiltInOps::VmeBlockMotionEstimateIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel};
@@ -984,7 +984,8 @@ TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderGetVMEBuilderReturnNonNull) {
 TEST_F(VmeBuiltInTests, givenInvalidBuiltInOpWhenGetVmeBuilderInfoThenExceptionIsThrown) {
     EXPECT_THROW(Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::COUNT, *pDevice), std::exception);
 }
-TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderVMEBuilderNullKernel) {
+
+TEST_F(VmeBuiltInTests, GivenVmeBuilderAndInvalidParamsWhenGettingDispatchInfoThenEmptyKernelIsReturned) {
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     EBuiltInOps::Type vmeOps[] = {EBuiltInOps::VmeBlockMotionEstimateIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel};
     for (auto op : vmeOps) {
@@ -1001,7 +1002,7 @@ TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderVMEBuilderNullKernel) {
     restoreBuiltInBinaryName(pDevice);
 }
 
-TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderVMEBuilder) {
+TEST_F(VmeBuiltInTests, GivenVmeBuilderWhenGettingDispatchInfoThenParamsAreCorrect) {
     MockKernelWithInternals mockKernel{*pClDevice};
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD32 = 0;
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD16 = 1;
@@ -1051,7 +1052,7 @@ TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderVMEBuilder) {
     }
 }
 
-TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderAdvancedVMEBuilder) {
+TEST_F(VmeBuiltInTests, GivenAdvancedVmeBuilderWhenGettingDispatchInfoThenParamsAreCorrect) {
     MockKernelWithInternals mockKernel{*pClDevice};
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD32 = 0;
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD16 = 1;
@@ -1115,7 +1116,7 @@ TEST_F(VmeBuiltInTests, BuiltinDispatchInfoBuilderAdvancedVMEBuilder) {
     }
 }
 
-TEST_F(VmeBuiltInTests, getBuiltinAsString) {
+TEST_F(VmeBuiltInTests, WhenGettingBuiltinAsStringThenCorrectStringIsReturned) {
     EXPECT_EQ(0, strcmp("aux_translation.builtin_kernel", getBuiltinAsString(EBuiltInOps::AuxTranslation)));
     EXPECT_EQ(0, strcmp("copy_buffer_to_buffer.builtin_kernel", getBuiltinAsString(EBuiltInOps::CopyBufferToBuffer)));
     EXPECT_EQ(0, strcmp("copy_buffer_rect.builtin_kernel", getBuiltinAsString(EBuiltInOps::CopyBufferRect)));
@@ -1140,7 +1141,7 @@ TEST_F(BuiltInTests, WhenUnknownOperationIsSpecifiedThenUnknownNameIsReturned) {
     EXPECT_EQ(0, strcmp("unknown", getUnknownBuiltinAsString(EBuiltInOps::COUNT)));
 }
 
-TEST_F(BuiltInTests, getExtension) {
+TEST_F(BuiltInTests, GivenEncodeTypeWhenGettingExtensionThenCorrectStringIsReturned) {
     EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::Any)));
     EXPECT_EQ(0, strcmp(".bin", BuiltinCode::getExtension(BuiltinCode::ECodeType::Binary)));
     EXPECT_EQ(0, strcmp(".bc", BuiltinCode::getExtension(BuiltinCode::ECodeType::Intermediate)));
@@ -1149,7 +1150,7 @@ TEST_F(BuiltInTests, getExtension) {
     EXPECT_EQ(0, strcmp("", BuiltinCode::getExtension(BuiltinCode::ECodeType::INVALID)));
 }
 
-TEST_F(BuiltInTests, createBuiltinResource) {
+TEST_F(BuiltInTests, GivenBuiltinResourceWhenCreatingBuiltinResourceThenSizesAreEqual) {
     std::string resource = "__kernel";
 
     auto br1 = createBuiltinResource(resource.data(), resource.size());
@@ -1160,7 +1161,7 @@ TEST_F(BuiltInTests, createBuiltinResource) {
     EXPECT_EQ(br1, br2);
 }
 
-TEST_F(BuiltInTests, createBuiltinResourceName) {
+TEST_F(BuiltInTests, WhenCreatingBuiltinResourceNameThenCorrectStringIsReturned) {
     EBuiltInOps::Type builtin = EBuiltInOps::CopyBufferToBuffer;
     const std::string extension = ".cl";
     const std::string platformName = "skl";
@@ -1175,7 +1176,7 @@ TEST_F(BuiltInTests, createBuiltinResourceName) {
     EXPECT_EQ(0, strcmp("skl_9_copy_buffer_to_buffer.builtin_kernel.cl", resourceNameForPlatformAndStepping.c_str()));
 }
 
-TEST_F(BuiltInTests, joinPath) {
+TEST_F(BuiltInTests, WhenJoiningPathThenPathsAreJoinedWithCorrectSeparator) {
     std::string resourceName = "copy_buffer_to_buffer.builtin_kernel.cl";
     std::string resourcePath = "path";
 
@@ -1185,7 +1186,7 @@ TEST_F(BuiltInTests, joinPath) {
     EXPECT_EQ(0, strcmp((resourcePath + PATH_SEPARATOR + resourceName).c_str(), joinPath(resourcePath, resourceName).c_str()));
 }
 
-TEST_F(BuiltInTests, EmbeddedStorageRegistry) {
+TEST_F(BuiltInTests, GivenFileNameWhenGettingKernelFromEmbeddedStorageRegistryThenValidPtrIsReturnedForExisitngKernels) {
     EmbeddedStorageRegistry storageRegistry;
 
     std::string resource = "__kernel";
@@ -1199,7 +1200,7 @@ TEST_F(BuiltInTests, EmbeddedStorageRegistry) {
     EXPECT_EQ(nullptr, bnr);
 }
 
-TEST_F(BuiltInTests, StorageRootPath) {
+TEST_F(BuiltInTests, WhenStoringRootPathThenPathIsSavedCorrectly) {
     class MockStorage : Storage {
       public:
         MockStorage(const std::string &rootPath) : Storage(rootPath){};
@@ -1218,7 +1219,7 @@ TEST_F(BuiltInTests, StorageRootPath) {
     EXPECT_EQ(0, strcmp(rootPath.data(), mockStorage.getRootPath().data()));
 }
 
-TEST_F(BuiltInTests, EmbeddedStorageLoadImpl) {
+TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromEmbeddedStorageRegistryThenValidPtrIsReturnedForExisitngKernels) {
     class MockEmbeddedStorage : EmbeddedStorage {
       public:
         MockEmbeddedStorage(const std::string &rootPath) : EmbeddedStorage(rootPath){};
@@ -1235,7 +1236,7 @@ TEST_F(BuiltInTests, EmbeddedStorageLoadImpl) {
     EXPECT_EQ(0u, bnr.size());
 }
 
-TEST_F(BuiltInTests, FileStorageLoadImpl) {
+TEST_F(BuiltInTests, GivenFiledNameWhenLoadingImplKernelFromFileStorageThenValidPtrIsReturnedForExisitngKernels) {
     class MockFileStorage : FileStorage {
       public:
         MockFileStorage(const std::string &rootPath) : FileStorage(rootPath){};
@@ -1252,7 +1253,7 @@ TEST_F(BuiltInTests, FileStorageLoadImpl) {
     EXPECT_EQ(0u, bnr.size());
 }
 
-TEST_F(BuiltInTests, builtinsLib) {
+TEST_F(BuiltInTests, WhenBuiltinsLibIsCreatedThenAllStoragesSizeIsTwo) {
     class MockBuiltinsLib : BuiltinsLib {
       public:
         StoragesContainerT &getAllStorages() {
@@ -1263,7 +1264,7 @@ TEST_F(BuiltInTests, builtinsLib) {
     EXPECT_EQ(2u, mockBuiltinsLib->getAllStorages().size());
 }
 
-TEST_F(BuiltInTests, getBuiltinCodeForTypeAny) {
+TEST_F(BuiltInTests, GivenTypeAnyWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::Binary, code.type);
@@ -1271,7 +1272,7 @@ TEST_F(BuiltInTests, getBuiltinCodeForTypeAny) {
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
-TEST_F(BuiltInTests, getBuiltinCodeForTypeBinary) {
+TEST_F(BuiltInTests, GivenTypeBinaryWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::Binary, code.type);
@@ -1279,7 +1280,7 @@ TEST_F(BuiltInTests, getBuiltinCodeForTypeBinary) {
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
-TEST_F(BuiltInTests, getBuiltinCodeForTypeIntermediate) {
+TEST_F(BuiltInTests, GivenTypeIntermediateWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Intermediate, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::Intermediate, code.type);
@@ -1287,7 +1288,7 @@ TEST_F(BuiltInTests, getBuiltinCodeForTypeIntermediate) {
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
-TEST_F(BuiltInTests, getBuiltinCodeForTypeSource) {
+TEST_F(BuiltInTests, GivenTypeSourceWhenGettingBuiltinCodeThenCorrectBuiltinReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Source, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::Source, code.type);
@@ -1295,7 +1296,7 @@ TEST_F(BuiltInTests, getBuiltinCodeForTypeSource) {
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
-TEST_F(BuiltInTests, getBuiltinCodeForTypeInvalid) {
+TEST_F(BuiltInTests, GivenTypeInvalidWhenGettingBuiltinCodeThenKernelIsEmpty) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::INVALID, *pDevice);
     EXPECT_EQ(BuiltinCode::ECodeType::INVALID, code.type);
@@ -1303,7 +1304,7 @@ TEST_F(BuiltInTests, getBuiltinCodeForTypeInvalid) {
     EXPECT_EQ(pDevice, code.targetDevice);
 }
 
-TEST_F(BuiltInTests, getBuiltinResourcesForTypeSource) {
+TEST_F(BuiltInTests, GivenBuiltinTypeSourceWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
     class MockBuiltinsLib : BuiltinsLib {
       public:
         BuiltinResourceT getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
@@ -1329,7 +1330,7 @@ TEST_F(BuiltInTests, getBuiltinResourcesForTypeSource) {
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::COUNT, BuiltinCode::ECodeType::Source, *pDevice).size());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getBuiltinResourcesForTypeBinary) {
+HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, GivenBuiltinTypeBinaryWhenGettingBuiltinResourceThenResourceSizeIsNonZero) {
     class MockBuiltinsLib : BuiltinsLib {
       public:
         BuiltinResourceT getBuiltinResource(EBuiltInOps::Type builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
@@ -1355,7 +1356,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, getBuiltinResourcesForTypeBinary) {
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::COUNT, BuiltinCode::ECodeType::Binary, *pDevice).size());
 }
 
-TEST_F(BuiltInTests, createProgramFromCodeForTypeAny) {
+TEST_F(BuiltInTests, GivenTypeAnyWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
@@ -1363,7 +1364,7 @@ TEST_F(BuiltInTests, createProgramFromCodeForTypeAny) {
     EXPECT_NE(nullptr, program.get());
 }
 
-TEST_F(BuiltInTests, createProgramFromCodeForTypeSource) {
+TEST_F(BuiltInTests, GivenTypeSourceWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Source, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
@@ -1383,7 +1384,7 @@ TEST_F(BuiltInTests, givenCreateProgramFromSourceWhenDeviceSupportSharedSystemAl
     EXPECT_THAT(program->getInternalOptions(), testing::HasSubstr(std::string(CompilerOptions::greaterThan4gbBuffersRequired)));
 }
 
-TEST_F(BuiltInTests, createProgramFromCodeForTypeIntermediate) {
+TEST_F(BuiltInTests, GivenTypeIntermediateWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Intermediate, *pDevice);
     EXPECT_EQ(0u, bc.resource.size());
@@ -1391,7 +1392,7 @@ TEST_F(BuiltInTests, createProgramFromCodeForTypeIntermediate) {
     EXPECT_EQ(nullptr, program.get());
 }
 
-TEST_F(BuiltInTests, createProgramFromCodeForTypeBinary) {
+TEST_F(BuiltInTests, GivenTypeBinaryWhenCreatingProgramFromCodeThenValidPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
     EXPECT_NE(0u, bc.resource.size());
@@ -1399,7 +1400,7 @@ TEST_F(BuiltInTests, createProgramFromCodeForTypeBinary) {
     EXPECT_NE(nullptr, program.get());
 }
 
-TEST_F(BuiltInTests, createProgramFromCodeForTypeInvalid) {
+TEST_F(BuiltInTests, GivenTypeInvalidWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::INVALID, *pDevice);
     EXPECT_EQ(0u, bc.resource.size());
@@ -1407,7 +1408,7 @@ TEST_F(BuiltInTests, createProgramFromCodeForTypeInvalid) {
     EXPECT_EQ(nullptr, program.get());
 }
 
-TEST_F(BuiltInTests, createProgramFromCodeForTypeAnyButBuiltinInvalid) {
+TEST_F(BuiltInTests, GivenInvalidBuiltinWhenCreatingProgramFromCodeThenNullPointerIsReturned) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::COUNT, BuiltinCode::ECodeType::Any, *pDevice);
     EXPECT_EQ(0u, bc.resource.size());
@@ -1415,7 +1416,7 @@ TEST_F(BuiltInTests, createProgramFromCodeForTypeAnyButBuiltinInvalid) {
     EXPECT_EQ(nullptr, program.get());
 }
 
-TEST_F(BuiltInTests, createProgramFromCodeInternalOptionsFor32Bit) {
+TEST_F(BuiltInTests, GivenForce32bitWhenCreatingProgramThenCorrectKernelIsCreated) {
     bool force32BitAddressess = pDevice->getDeviceInfo().force32BitAddressess;
     const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
 
@@ -1439,7 +1440,7 @@ TEST_F(BuiltInTests, createProgramFromCodeInternalOptionsFor32Bit) {
     const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = force32BitAddressess;
 }
 
-TEST_F(BuiltInTests, whenQueriedProperVmeVersionIsReturned) {
+TEST_F(BuiltInTests, GivenVmeKernelWhenGettingDeviceInfoThenCorrectVmeVersionIsReturned) {
     if (!pDevice->getHardwareInfo().capabilityTable.supportsVme) {
         GTEST_SKIP();
     }
@@ -1449,7 +1450,7 @@ TEST_F(BuiltInTests, whenQueriedProperVmeVersionIsReturned) {
     EXPECT_EQ(static_cast<cl_uint>(CL_ME_VERSION_ADVANCED_VER_2_INTEL), param);
 }
 
-TEST_F(VmeBuiltInTests, vmeDispatchValidationHelpers) {
+TEST_F(VmeBuiltInTests, WhenVmeKernelIsCreatedThenParamsAreCorrect) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *this->pDevice);
@@ -1509,7 +1510,7 @@ TEST_F(VmeBuiltInTests, vmeDispatchValidationHelpers) {
     }
 }
 
-TEST_F(VmeBuiltInTests, vmeDispatchIsBidir) {
+TEST_F(VmeBuiltInTests, WhenVmeKernelIsCreatedThenDispatchIsBidirectional) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *this->pDevice);
@@ -1557,7 +1558,7 @@ const cl_image_format ImageVmeInvalidChannelOrder::imageFormat = {
     CL_RGBA,
     CL_UNORM_INT8};
 
-TEST_F(VmeBuiltInTests, vmeValidateImages) {
+TEST_F(VmeBuiltInTests, WhenValidatingImagesThenCorrectResponses) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> vmeBuilder(*this->pBuiltIns, *this->pDevice);
@@ -1635,7 +1636,7 @@ TEST_F(VmeBuiltInTests, vmeValidateImages) {
     }
 }
 
-TEST_F(VmeBuiltInTests, vmeValidateFlags) {
+TEST_F(VmeBuiltInTests, WhenValidatingFlagsThenValidFlagCombinationsReturnTrue) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *this->pDevice);
@@ -1665,7 +1666,7 @@ TEST_F(VmeBuiltInTests, vmeValidateFlags) {
     }
 }
 
-TEST_F(VmeBuiltInTests, vmeValidateSkipBlockType) {
+TEST_F(VmeBuiltInTests, WhenValidatingSkipBlockTypeThenCorrectResponses) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBidirectionalBuilder(*this->pBuiltIns, *this->pDevice);
@@ -1700,7 +1701,7 @@ TEST_F(VmeBuiltInTests, vmeValidateSkipBlockType) {
     EXPECT_EQ(static_cast<uint32_t>(CL_ME_MB_TYPE_8x8_INTEL), skipBlockType);
 }
 
-TEST_F(VmeBuiltInTests, setExplicitArgAccelerator) {
+TEST_F(VmeBuiltInTests, GivenAcceleratorWhenExplicitlySettingArgThenFalseIsReturned) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
 
@@ -1726,7 +1727,7 @@ TEST_F(VmeBuiltInTests, setExplicitArgAccelerator) {
     EXPECT_EQ(CL_SUCCESS, err);
 }
 
-TEST_F(VmeBuiltInTests, vmeValidateDispatch) {
+TEST_F(VmeBuiltInTests, WhenValidatingDispatchThenCorrectReturns) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     struct MockVmeBuilder : BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> {
@@ -1831,7 +1832,7 @@ TEST_F(VmeBuiltInTests, vmeValidateDispatch) {
     }
 }
 
-TEST_F(VmeBuiltInTests, vmeValidateVmeDispatch) {
+TEST_F(VmeBuiltInTests, WhenValidatingVmeDispatchThenCorrectReturns) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> vmeBuilder(*this->pBuiltIns, *this->pDevice);
@@ -1869,7 +1870,7 @@ TEST_F(VmeBuiltInTests, vmeValidateVmeDispatch) {
     }
 }
 
-TEST_F(VmeBuiltInTests, advancedVmeValidateVmeDispatch) {
+TEST_F(VmeBuiltInTests, GivenAdvancedVmeWhenValidatingVmeDispatchThenCorrectReturns) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> avmeBuilder(*this->pBuiltIns, *this->pDevice);
@@ -1929,7 +1930,7 @@ TEST_F(VmeBuiltInTests, advancedVmeValidateVmeDispatch) {
     EXPECT_EQ(CL_SUCCESS, avmeBuilder.validateVmeDispatch(Vec3<size_t>{1, 1, 0}, Vec3<size_t>{0, 0, 0}, 1, 1));
 }
 
-TEST_F(VmeBuiltInTests, advancedBidirectionalVmeValidateVmeDispatch) {
+TEST_F(VmeBuiltInTests, GivenAdvancedBidirectionalVmeWhenValidatingVmeDispatchThenCorrectReturns) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> avmeBuilder(*this->pBuiltIns, *this->pDevice);
@@ -1977,7 +1978,7 @@ TEST_F(VmeBuiltInTests, advancedBidirectionalVmeValidateVmeDispatch) {
     EXPECT_EQ(CL_INVALID_BUFFER_SIZE, avmeBuilder.validateVmeDispatch(Vec3<size_t>{1, 1, 0}, Vec3<size_t>{0, 0, 0}, mb.getSize() * 2, 1));
 }
 
-TEST_F(VmeBuiltInTests, advancedVmeGetSkipResidualsBuffExpSizeDefaultValue) {
+TEST_F(VmeBuiltInTests, GivenAdvancedVmeWhenGettingSkipResidualsBuffExpSizeThenDefaultSizeIsReturned) {
     this->pBuiltIns->setCacheingEnableState(false);
     overwriteBuiltInBinaryName(pDevice, "media_kernels_backend");
     BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> vmeBuilder(*this->pBuiltIns, *this->pDevice);
@@ -2002,7 +2003,7 @@ TEST_F(BuiltInTests, createBuiltInProgramForInvalidBuiltinKernelName) {
     EXPECT_EQ(nullptr, program);
 }
 
-TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompilerInterface) {
+TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquiredThroughCompilerInterface) {
     MockBuiltins mockBuiltins;
     auto mockCompilerInterface = new MockCompilerInterface();
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompilerInterface);
