@@ -475,6 +475,8 @@ DecodeError readZeInfoPerThreadMemoryBuffers(const NEO::Yaml::YamlParser &parser
                 validBuffer &= readZeInfoValueChecked(parser, perThreadMemoryBufferMemberNd, perThreadMemoryBufferMetadata.size, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::isSimtThread == key) {
                 validBuffer &= readZeInfoValueChecked(parser, perThreadMemoryBufferMemberNd, perThreadMemoryBufferMetadata.isSimtThread, context, outErrReason);
+            } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::slot == key) {
+                validBuffer &= readZeInfoValueChecked(parser, perThreadMemoryBufferMemberNd, perThreadMemoryBufferMetadata.slot, context, outErrReason);
             } else {
                 outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + key.str() + "\" for per-thread memory buffer in context of " + context.str() + "\n");
             }
@@ -629,7 +631,8 @@ NEO::DecodeError populateArgDescriptor(const NEO::Elf::ZebinKernelMetadata::Type
             argAsPointer.bindless = src.offset;
             break;
         case NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::MemoryAddressingModeSharedLocalMemory:
-            argAsPointer.slmOffset = src.offset; // what about SLM alignment ?
+            argAsPointer.slmOffset = src.offset;
+            argAsPointer.requiredSlmAlignment = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PayloadArgument::Defaults::slmArgAlignment;
             break;
         }
         break;
@@ -697,6 +700,10 @@ NEO::DecodeError populateKernelDescriptor(const NEO::Elf::ZebinKernelMetadata::T
     using namespace NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::AllocationType;
     using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::MemoryUsage;
+    auto size = src.size;
+    if (src.isSimtThread) {
+        size *= dst.kernelAttributes.simdSize;
+    }
     switch (src.allocationType) {
     default:
         outErrReason.append("DeviceBinaryFormat::Zebin : Invalid per-thread memory buffer allocation type in context of : " + dst.kernelMetadata.kernelName + ".\n");
@@ -707,15 +714,18 @@ NEO::DecodeError populateKernelDescriptor(const NEO::Elf::ZebinKernelMetadata::T
             return DecodeError::InvalidBinary;
         }
 
-        dst.kernelAttributes.perThreadPrivateMemorySize = src.size;
-        dst.kernelAttributes.flags.isSimtThread = src.isSimtThread;
+        dst.kernelAttributes.perHwThreadPrivateMemorySize = size;
         break;
     case AllocationTypeScratch:
-        if (0 != dst.kernelAttributes.perThreadScratchSize[0]) {
-            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid duplicated scratch buffer entry in context of : " + dst.kernelMetadata.kernelName + ".\n");
+        if (src.slot > 1) {
+            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid scratch buffer slot " + std::to_string(src.slot) + " in context of : " + dst.kernelMetadata.kernelName + ". Expected 0 or 1.\n");
             return DecodeError::InvalidBinary;
         }
-        dst.kernelAttributes.perThreadScratchSize[0] = src.size;
+        if (0 != dst.kernelAttributes.perThreadScratchSize[src.slot]) {
+            outErrReason.append("DeviceBinaryFormat::Zebin : Invalid duplicated scratch buffer entry " + std::to_string(src.slot) + " in context of : " + dst.kernelMetadata.kernelName + ".\n");
+            return DecodeError::InvalidBinary;
+        }
+        dst.kernelAttributes.perThreadScratchSize[src.slot] = size;
         break;
     }
     return DecodeError::Success;
@@ -884,7 +894,7 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
     }
 
     if (nullptr == correspondingTextSegment) {
-        outErrReason.append("Could not find text section for kernel " + kernelDescriptor.kernelMetadata.kernelName + "\n");
+        outErrReason.append("DeviceBinaryFormat::Zebin : Could not find text section for kernel " + kernelDescriptor.kernelMetadata.kernelName + "\n");
         return DecodeError::InvalidBinary;
     }
 
@@ -895,6 +905,26 @@ NEO::DecodeError populateKernelDescriptor(NEO::ProgramInfo &dst, NEO::Elf::Elf<N
     kernelInfo->heapInfo.SurfaceStateHeapSize = generatedSshSize;
     dst.kernelInfos.push_back(kernelInfo.release());
     return DecodeError::Success;
+}
+
+NEO::DecodeError populateZeInfoVersion(NEO::Elf::ZebinKernelMetadata::Types::Version &dst,
+                                       NEO::Yaml::YamlParser &yamlParser, const NEO::Yaml::Node &versionNd, std::string &outErrReason, std::string &outWarning) {
+    if (nullptr == yamlParser.getValueToken(versionNd)) {
+        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Invalid version format - expected \'MAJOR.MINOR\' string\n");
+        return NEO::DecodeError::InvalidBinary;
+    }
+    auto versionStr = yamlParser.readValueNoQuotes(versionNd);
+    StackVec<char, 32> nullTerminated{versionStr.begin(), versionStr.end()};
+    nullTerminated.push_back('\0');
+    auto separator = std::find(nullTerminated.begin(), nullTerminated.end(), '.');
+    if ((nullTerminated.end() == separator) || (nullTerminated.begin() == separator) || (&*nullTerminated.rbegin() == separator + 1)) {
+        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Invalid version format - expected 'MAJOR.MINOR' string, got : " + yamlParser.readValue(versionNd).str() + "\n");
+        return NEO::DecodeError::InvalidBinary;
+    }
+    *separator = 0;
+    dst.major = atoi(nullTerminated.begin());
+    dst.minor = atoi(separator + 1);
+    return NEO::DecodeError::Success;
 }
 
 template <>
@@ -954,13 +984,42 @@ DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo
     }
 
     UniqueNode kernelsSectionNodes;
+    UniqueNode versionSectionNodes;
     for (const auto &globalScopeNd : yamlParser.createChildrenRange(*yamlParser.getRoot())) {
         auto key = yamlParser.readKey(globalScopeNd);
         if (NEO::Elf::ZebinKernelMetadata::Tags::kernels == key) {
             kernelsSectionNodes.push_back(&globalScopeNd);
             continue;
+        } else if (NEO::Elf::ZebinKernelMetadata::Tags::version == key) {
+            versionSectionNodes.push_back(&globalScopeNd);
+            continue;
         }
         outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + yamlParser.readKey(globalScopeNd).str() + "\" in global scope of " + NEO::Elf::SectionsNamesZebin::zeInfo.str() + "\n");
+    }
+
+    if (versionSectionNodes.size() > 1U) {
+        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Expected at most one " + NEO::Elf::ZebinKernelMetadata::Tags::version.str() + " entry in global scope of " + NEO::Elf::SectionsNamesZebin::zeInfo.str() + ", got : " + std::to_string(versionSectionNodes.size()) + "\n");
+        return DecodeError::InvalidBinary;
+    }
+
+    NEO::Elf::ZebinKernelMetadata::Types::Version zeInfoVersion = zeInfoDecoderVersion;
+    if (versionSectionNodes.empty()) {
+        outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : No version info provided (i.e. no " + NEO::Elf::ZebinKernelMetadata::Tags::version.str() + " entry in global scope of DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + ") - will use decoder's default : \'" + std::to_string(zeInfoDecoderVersion.major) + "." + std::to_string(zeInfoDecoderVersion.minor) + "\'\n");
+        zeInfoVersion = NEO::zeInfoDecoderVersion;
+    } else {
+        auto zeInfoErr = populateZeInfoVersion(zeInfoVersion, yamlParser, *versionSectionNodes[0], outErrReason, outWarning);
+        if (DecodeError::Success != zeInfoErr) {
+            return zeInfoErr;
+        }
+    }
+
+    if (zeInfoVersion.major != zeInfoDecoderVersion.major) {
+        outErrReason.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unhandled major version : " + std::to_string(zeInfoVersion.major) + ", decoder is at : " + std::to_string(zeInfoDecoderVersion.major) + "\n");
+        return DecodeError::UnhandledBinary;
+    }
+
+    if (zeInfoVersion.minor > zeInfoDecoderVersion.minor) {
+        outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Minor version : " + std::to_string(zeInfoVersion.minor) + " is newer than available in decoder : " + std::to_string(zeInfoDecoderVersion.minor) + " - some features may be skipped\n");
     }
 
     if (kernelsSectionNodes.size() > 1U) {

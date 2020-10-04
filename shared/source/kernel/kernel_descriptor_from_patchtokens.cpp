@@ -140,8 +140,8 @@ void populatePointerKernelArg(ArgDescPointer &dst, const TokenT &src, KernelDesc
 
 void populateKernelDescriptor(KernelDescriptor &dst, const SPatchAllocateStatelessPrivateSurface &token) {
     dst.kernelAttributes.flags.usesPrivateMemory = true;
-    dst.kernelAttributes.perThreadPrivateMemorySize = token.PerThreadPrivateMemorySize;
-    dst.kernelAttributes.flags.isSimtThread = (token.IsSimtThread == 1);
+    dst.kernelAttributes.perHwThreadPrivateMemorySize = token.PerThreadPrivateMemorySize;
+    dst.kernelAttributes.perHwThreadPrivateMemorySize = static_cast<uint32_t>(PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(&token, dst.kernelAttributes.simdSize));
     populatePointerKernelArg(dst.payloadMappings.implicitArgs.privateMemoryAddress, token, dst.kernelAttributes.bufferAddressingMode);
 }
 

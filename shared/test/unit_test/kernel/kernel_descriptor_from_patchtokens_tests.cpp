@@ -257,7 +257,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     kernelTokens.tokens.dataParameterStream = nullptr;
 
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.usesPrivateMemory);
-    EXPECT_EQ(0U, kernelDescriptor.kernelAttributes.perThreadPrivateMemorySize);
+    EXPECT_EQ(0U, kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.stateless));
     EXPECT_EQ(0U, kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.pointerSize);
     EXPECT_TRUE(NEO::isUndefinedOffset(kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.bindful));
@@ -271,8 +271,7 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     kernelTokens.tokens.allocateStatelessPrivateSurface = &privateSurface;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesPrivateMemory);
-    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.isSimtThread);
-    EXPECT_EQ(privateSurface.PerThreadPrivateMemorySize, kernelDescriptor.kernelAttributes.perThreadPrivateMemorySize);
+    EXPECT_EQ(NEO::PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(&privateSurface, kernelDescriptor.kernelAttributes.simdSize), kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
     EXPECT_EQ(privateSurface.DataParamOffset, kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.stateless);
     EXPECT_EQ(privateSurface.DataParamSize, kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.pointerSize);
     EXPECT_EQ(privateSurface.SurfaceStateHeapOffset, kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.bindful);

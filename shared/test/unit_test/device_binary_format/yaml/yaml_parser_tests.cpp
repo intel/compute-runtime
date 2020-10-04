@@ -885,7 +885,7 @@ TEST(YamlTokenize, GivenUnterminatedStringLiteralsThenReturnsError) {
     std::string errors;
     bool success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
     EXPECT_FALSE(success);
-    EXPECT_STREQ("NEO::Yaml : Could not parse line : [0] : [\"] <-- parser position on error. Reason : Underminated string\n", errors.c_str());
+    EXPECT_STREQ("NEO::Yaml : Could not parse line : [0] : [\"] <-- parser position on error. Reason : Unterminated string\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 

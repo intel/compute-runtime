@@ -44,7 +44,7 @@ struct KernelDescriptor final {
 
         uint32_t slmInlineSize = 0U;
         uint32_t perThreadScratchSize[2] = {0U, 0U};
-        uint32_t perThreadPrivateMemorySize = 0U;
+        uint32_t perHwThreadPrivateMemorySize = 0U;
         uint32_t perThreadSystemThreadSurfaceSize = 0U;
         uint32_t hasBarriers = 0u;
         uint16_t requiredWorkgroupSize[3] = {0U, 0U, 0U};
@@ -87,7 +87,6 @@ struct KernelDescriptor final {
                 bool requiresDisabledMidThreadPreemption : 1;
                 bool requiresSubgroupIndependentForwardProgress : 1;
                 bool requiresWorkgroupWalkOrder : 1;
-                bool isSimtThread : 1;
             };
             uint32_t packed;
         } flags;

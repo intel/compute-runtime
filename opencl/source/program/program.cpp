@@ -13,6 +13,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -341,11 +342,10 @@ void Program::allocateBlockPrivateSurfaces(uint32_t rootDeviceIndex) {
         const KernelInfo *info = blockKernelManager->getBlockKernelInfo(i);
 
         if (info->patchInfo.pAllocateStatelessPrivateSurface) {
-            auto perThreadPrivateMemorySize = info->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize;
+            auto perHwThreadPrivateMemorySize = PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(info->patchInfo.pAllocateStatelessPrivateSurface, info->getMaxSimdSize());
 
-            if (perThreadPrivateMemorySize > 0 && blockKernelManager->getPrivateSurface(i) == nullptr) {
-                auto privateSize = static_cast<size_t>(KernelHelper::getPrivateSurfaceSize(perThreadPrivateMemorySize, getDevice().getDeviceInfo().computeUnitsUsedForScratch,
-                                                                                           info->getMaxSimdSize(), info->patchInfo.pAllocateStatelessPrivateSurface->IsSimtThread));
+            if (perHwThreadPrivateMemorySize > 0 && blockKernelManager->getPrivateSurface(i) == nullptr) {
+                auto privateSize = static_cast<size_t>(KernelHelper::getPrivateSurfaceSize(perHwThreadPrivateMemorySize, getDevice().getDeviceInfo().computeUnitsUsedForScratch));
 
                 auto *privateSurface = this->executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, privateSize, GraphicsAllocation::AllocationType::PRIVATE_SURFACE, getDevice().getDeviceBitfield()});
                 blockKernelManager->pushPrivateSurface(privateSurface, i);

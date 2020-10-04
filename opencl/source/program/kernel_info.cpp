@@ -458,9 +458,9 @@ void KernelInfo::apply(const DeviceInfoKernelPayloadConstants &constants) {
 
     uint32_t privateMemorySize = 0U;
     if (patchInfo.pAllocateStatelessPrivateSurface) {
-        privateMemorySize = static_cast<uint32_t>(KernelHelper::getPrivateSurfaceSize(patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize,
-                                                                                      constants.computeUnitsUsedForScratch, getMaxSimdSize(),
-                                                                                      patchInfo.pAllocateStatelessPrivateSurface->IsSimtThread));
+        auto perHwThreadSize = PatchTokenBinary::getPerHwThreadPrivateSurfaceSize(patchInfo.pAllocateStatelessPrivateSurface, this->getMaxSimdSize());
+        privateMemorySize = static_cast<uint32_t>(KernelHelper::getPrivateSurfaceSize(perHwThreadSize,
+                                                                                      constants.computeUnitsUsedForScratch));
     }
 
     if (privateMemoryStatelessSizeOffset != WorkloadInfo::undefinedOffset) {

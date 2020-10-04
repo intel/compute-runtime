@@ -5,7 +5,6 @@
  *
  */
 
-// Abstract: Defines the types used for ELF headers/sections.
 #pragma once
 
 #include "shared/source/device_binary_format/elf/elf.h"
@@ -85,6 +84,7 @@ static_assert(sizeof(ZebinTargetFlags) == sizeof(uint32_t), "");
 namespace ZebinKernelMetadata {
 namespace Tags {
 static constexpr ConstStringRef kernels("kernels");
+static constexpr ConstStringRef version("version");
 namespace Kernel {
 static constexpr ConstStringRef name("name");
 static constexpr ConstStringRef executionEnv("execution_env");
@@ -137,7 +137,7 @@ namespace MemoryAddressingMode {
 static constexpr ConstStringRef stateless("stateless");
 static constexpr ConstStringRef stateful("stateful");
 static constexpr ConstStringRef bindless("bindless");
-static constexpr ConstStringRef sharedLocalMemory("shared_local_memory");
+static constexpr ConstStringRef sharedLocalMemory("slm");
 } // namespace MemoryAddressingMode
 namespace AddrSpace {
 static constexpr ConstStringRef global("global");
@@ -173,6 +173,7 @@ static constexpr ConstStringRef allocationType("type");
 static constexpr ConstStringRef memoryUsage("usage");
 static constexpr ConstStringRef size("size");
 static constexpr ConstStringRef isSimtThread("is_simt_thread");
+static constexpr ConstStringRef slot("slot");
 namespace AllocationType {
 static constexpr ConstStringRef global("global");
 static constexpr ConstStringRef scratch("scratch");
@@ -188,6 +189,11 @@ static constexpr ConstStringRef singleSpace("single_space");
 } // namespace Tags
 
 namespace Types {
+
+struct Version {
+    uint32_t major = 0U;
+    uint32_t minor = 0U;
+};
 
 namespace Kernel {
 namespace ExecutionEnv {
@@ -323,10 +329,12 @@ using ArgIndexT = int32_t;
 using AddrmodeT = MemoryAddressingMode;
 using AddrspaceT = AddressSpace;
 using AccessTypeT = AccessType;
+using SlmAlignment = uint8_t;
 
 namespace Defaults {
 static constexpr ArgIndexT argIndex = -1;
-}
+static constexpr SlmAlignment slmArgAlignment = 16U;
+} // namespace Defaults
 
 struct PayloadArgumentBaseT {
     ArgTypeT argType = ArgTypeUnknown;
@@ -367,12 +375,20 @@ enum MemoryUsage : uint8_t {
 using SizeT = int32_t;
 using AllocationTypeT = AllocationType;
 using MemoryUsageT = MemoryUsage;
+using IsSimtThreadT = bool;
+using Slot = int32_t;
+
+namespace Defaults {
+static constexpr IsSimtThreadT isSimtThread = false;
+static constexpr Slot slot = 0U;
+} // namespace Defaults
 
 struct PerThreadMemoryBufferBaseT {
     AllocationType allocationType = AllocationTypeUnknown;
     MemoryUsageT memoryUsage = MemoryUsageUnknown;
     SizeT size = 0U;
-    bool isSimtThread = false;
+    IsSimtThreadT isSimtThread = Defaults::isSimtThread;
+    Slot slot = Defaults::slot;
 };
 } // namespace PerThreadMemoryBuffer
 

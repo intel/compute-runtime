@@ -158,7 +158,7 @@ bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens,
             context.isParsingIdent = false;
             auto parseTokEnd = consumeStringLiteral(text, context.pos);
             if (parseTokEnd == context.pos) {
-                outErrReason = constructYamlError(outLines.size(), context.lineBeginPos, context.pos, "Underminated string");
+                outErrReason = constructYamlError(outLines.size(), context.lineBeginPos, context.pos, "Unterminated string");
                 return false;
             }
             outTokens.push_back(Token(ConstStringRef(context.pos, parseTokEnd - context.pos), Token::LiteralString));

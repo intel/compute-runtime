@@ -13,11 +13,10 @@
 TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     NEO::KernelDescriptor desc;
     EXPECT_EQ(0U, desc.kernelAttributes.flags.packed);
-    EXPECT_FALSE(desc.kernelAttributes.flags.isSimtThread);
     EXPECT_EQ(0U, desc.kernelAttributes.slmInlineSize);
     EXPECT_EQ(0U, desc.kernelAttributes.perThreadScratchSize[0]);
     EXPECT_EQ(0U, desc.kernelAttributes.perThreadScratchSize[1]);
-    EXPECT_EQ(0U, desc.kernelAttributes.perThreadPrivateMemorySize);
+    EXPECT_EQ(0U, desc.kernelAttributes.perHwThreadPrivateMemorySize);
     EXPECT_EQ(0U, desc.kernelAttributes.perThreadSystemThreadSurfaceSize);
     EXPECT_EQ(0U, desc.kernelAttributes.requiredWorkgroupSize[0]);
     EXPECT_EQ(0U, desc.kernelAttributes.requiredWorkgroupSize[1]);

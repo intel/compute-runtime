@@ -224,6 +224,189 @@ TEST(ValidateZebinSectionsCount, GivenTwoSpirvSectionsThenFail) {
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
+TEST(PopulateZeInfoVersion, GivenValidVersionFormatThenParsesItProperly) {
+    {
+        NEO::ConstStringRef yaml = R"===(---
+version: '1.0'
+...
+)===";
+
+        NEO::ZeInfoKernelSections kernelSections;
+        std::string parserErrors;
+        std::string parserWarnings;
+        NEO::Yaml::YamlParser parser;
+        bool success = parser.parse(yaml, parserErrors, parserWarnings);
+        EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+        EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+        ASSERT_TRUE(success);
+
+        auto &versionNode = *parser.findNodeWithKeyDfs("version");
+        std::string errors;
+        std::string warnings;
+        NEO::Elf::ZebinKernelMetadata::Types::Version version;
+        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_TRUE(errors.empty()) << errors;
+        EXPECT_TRUE(warnings.empty()) << warnings;
+        EXPECT_EQ(1U, version.major);
+        EXPECT_EQ(0U, version.minor);
+    }
+
+    {
+        NEO::ConstStringRef yaml = R"===(---
+    version: '12.91'
+    ...
+    )===";
+
+        NEO::ZeInfoKernelSections kernelSections;
+        std::string parserErrors;
+        std::string parserWarnings;
+        NEO::Yaml::YamlParser parser;
+        bool success = parser.parse(yaml, parserErrors, parserWarnings);
+        EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+        EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+        ASSERT_TRUE(success);
+
+        auto &versionNode = *parser.findNodeWithKeyDfs("version");
+        std::string errors;
+        std::string warnings;
+        NEO::Elf::ZebinKernelMetadata::Types::Version version;
+        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::Success, err);
+        EXPECT_TRUE(errors.empty()) << errors;
+        EXPECT_TRUE(warnings.empty()) << warnings;
+        EXPECT_EQ(12U, version.major);
+        EXPECT_EQ(91U, version.minor);
+    }
+}
+
+TEST(PopulateZeInfoVersion, GivenInvalidVersionFormatThenParsesItProperly) {
+    {
+        NEO::ConstStringRef yaml = R"===(---
+version: '100'
+...
+)===";
+
+        NEO::ZeInfoKernelSections kernelSections;
+        std::string parserErrors;
+        std::string parserWarnings;
+        NEO::Yaml::YamlParser parser;
+        bool success = parser.parse(yaml, parserErrors, parserWarnings);
+        EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+        EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+        ASSERT_TRUE(success);
+
+        auto &versionNode = *parser.findNodeWithKeyDfs("version");
+        std::string errors;
+        std::string warnings;
+        NEO::Elf::ZebinKernelMetadata::Types::Version version;
+        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected \'MAJOR.MINOR\' string, got : \'100\'\n", errors.c_str()) << errors;
+        EXPECT_TRUE(warnings.empty()) << warnings;
+    }
+
+    {
+        NEO::ConstStringRef yaml = R"===(---
+    version: '12.'
+    ...
+    )===";
+
+        NEO::ZeInfoKernelSections kernelSections;
+        std::string parserErrors;
+        std::string parserWarnings;
+        NEO::Yaml::YamlParser parser;
+        bool success = parser.parse(yaml, parserErrors, parserWarnings);
+        EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+        EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+        ASSERT_TRUE(success);
+
+        auto &versionNode = *parser.findNodeWithKeyDfs("version");
+        std::string errors;
+        std::string warnings;
+        NEO::Elf::ZebinKernelMetadata::Types::Version version;
+        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : '12.'\n", errors.c_str()) << errors;
+        EXPECT_TRUE(warnings.empty()) << warnings;
+    }
+
+    {
+        NEO::ConstStringRef yaml = R"===(---
+    version: '.12'
+    ...
+    )===";
+
+        NEO::ZeInfoKernelSections kernelSections;
+        std::string parserErrors;
+        std::string parserWarnings;
+        NEO::Yaml::YamlParser parser;
+        bool success = parser.parse(yaml, parserErrors, parserWarnings);
+        EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+        EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+        ASSERT_TRUE(success);
+
+        auto &versionNode = *parser.findNodeWithKeyDfs("version");
+        std::string errors;
+        std::string warnings;
+        NEO::Elf::ZebinKernelMetadata::Types::Version version;
+        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : '.12'\n", errors.c_str()) << errors;
+        EXPECT_TRUE(warnings.empty()) << warnings;
+    }
+
+    {
+        NEO::ConstStringRef yaml = R"===(---
+    version: '.'
+    ...
+    )===";
+
+        NEO::ZeInfoKernelSections kernelSections;
+        std::string parserErrors;
+        std::string parserWarnings;
+        NEO::Yaml::YamlParser parser;
+        bool success = parser.parse(yaml, parserErrors, parserWarnings);
+        EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+        EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+        ASSERT_TRUE(success);
+
+        auto &versionNode = *parser.findNodeWithKeyDfs("version");
+        std::string errors;
+        std::string warnings;
+        NEO::Elf::ZebinKernelMetadata::Types::Version version;
+        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : '.'\n", errors.c_str()) << errors;
+        EXPECT_TRUE(warnings.empty()) << warnings;
+    }
+
+    {
+        NEO::ConstStringRef yaml = R"===(---
+    version:
+    ...
+    )===";
+
+        NEO::ZeInfoKernelSections kernelSections;
+        std::string parserErrors;
+        std::string parserWarnings;
+        NEO::Yaml::YamlParser parser;
+        bool success = parser.parse(yaml, parserErrors, parserWarnings);
+        EXPECT_TRUE(parserErrors.empty()) << parserErrors;
+        EXPECT_TRUE(parserWarnings.empty()) << parserWarnings;
+        ASSERT_TRUE(success);
+
+        auto &versionNode = *parser.findNodeWithKeyDfs("version");
+        std::string errors;
+        std::string warnings;
+        NEO::Elf::ZebinKernelMetadata::Types::Version version;
+        auto err = NEO::populateZeInfoVersion(version, parser, versionNode, errors, warnings);
+        EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string\n", errors.c_str()) << errors;
+        EXPECT_TRUE(warnings.empty()) << warnings;
+    }
+}
+
 TEST(ExtractZeInfoKernelSections, GivenKnownSectionsThenCapturesThemProperly) {
     NEO::ConstStringRef yaml = R"===(---
 kernels:         
@@ -1253,11 +1436,48 @@ kernels:
 
     EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationTypeScratch, buffers[0].allocationType);
     EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsageSingleSpace, buffers[0].memoryUsage);
+    EXPECT_FALSE(buffers[0].isSimtThread);
     EXPECT_EQ(64, buffers[0].size);
 
     EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationTypeGlobal, buffers[1].allocationType);
     EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsagePrivateSpace, buffers[1].memoryUsage);
     EXPECT_EQ(128, buffers[1].size);
+    EXPECT_FALSE(buffers[1].isSimtThread);
+}
+
+TEST(ReadZeInfoPerThreadMemoryBuffers, GivenPerSimtThreadPrivateMemoryThenSetsProperFlag) {
+    NEO::ConstStringRef yaml = R"===(---
+kernels:         
+  - name:            some_kernel
+    execution_env:   
+      simd_size: 16
+    per_thread_memory_buffers: 
+      - type:            global
+        usage:           private_space
+        size:            128
+        is_simt_thread:  True
+...
+)===";
+
+    std::string parserErrors;
+    std::string parserWarnings;
+    NEO::Yaml::YamlParser parser;
+    bool success = parser.parse(yaml, parserErrors, parserWarnings);
+    ASSERT_TRUE(success);
+    auto &buffersNode = *parser.findNodeWithKeyDfs("per_thread_memory_buffers");
+    std::string errors;
+    std::string warnings;
+    NEO::ZeInfoPerThreadMemoryBuffers buffers;
+    auto err = NEO::readZeInfoPerThreadMemoryBuffers(parser, buffersNode, buffers, "some_kernel", errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_EQ(1U, buffers.size());
+
+    EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::AllocationTypeGlobal, buffers[0].allocationType);
+    EXPECT_EQ(NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsagePrivateSpace, buffers[0].memoryUsage);
+    EXPECT_EQ(128, buffers[0].size);
+    EXPECT_TRUE(buffers[0].isSimtThread);
 }
 
 TEST(ReadZeInfoPerThreadMemoryBuffers, GivenUnknownEntryThenEmmitsWarning) {
@@ -1523,7 +1743,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenEmptyInZeInfoThenEmitsWarning) {
 TEST(DecodeSingleDeviceBinaryZebin, GivenUnknownEntryInZeInfoGlobalScopeThenEmitsWarning) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    auto brokenZeInfo = NEO::ConstStringRef("some_entry : a\nkernels : \n");
+    auto brokenZeInfo = std::string("some_entry : a\nkernels : \nversion:\'") + toString(zeInfoDecoderVersion) + "\'\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(brokenZeInfo.data(), brokenZeInfo.size()));
 
     NEO::ProgramInfo programInfo;
@@ -1540,7 +1760,7 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenUnknownEntryInZeInfoGlobalScopeThenEmit
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenEmitsWarning) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    auto brokenZeInfo = NEO::ConstStringRef("a:b\n");
+    auto brokenZeInfo = std::string("version:\'") + toString(zeInfoDecoderVersion) + "\'\na:b\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(brokenZeInfo.data(), brokenZeInfo.size()));
 
     NEO::ProgramInfo programInfo;
@@ -1557,7 +1777,7 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainKernelsSectionThenEm
 TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleKernelSectionsThenFails) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    auto brokenZeInfo = NEO::ConstStringRef("kernels:\nkernels:\n");
+    auto brokenZeInfo = std::string("version:\'") + toString(zeInfoDecoderVersion) + "\'\nkernels:\nkernels:\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(brokenZeInfo.data(), brokenZeInfo.size()));
 
     NEO::ProgramInfo programInfo;
@@ -1571,8 +1791,118 @@ TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleKernelSectionsThen
     EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
 }
 
+TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoContainsMultipleVersionSectionsThenFails) {
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
+    auto brokenZeInfo = std::string("version:\'") + toString(zeInfoDecoderVersion) + "\'\nversion:\'5.4\'\nkernels:\n";
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(brokenZeInfo.data(), brokenZeInfo.size()));
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Expected at most one version entry in global scope of .ze_info, got : 2\n", decodeErrors.c_str());
+    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+}
+
+TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoDoesNotContainVersionSectionsThenEmitsWarnings) {
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
+    auto zeInfo = ConstStringRef("kernels:\n");
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : No version info provided (i.e. no version entry in global scope of DeviceBinaryFormat::Zebin::.ze_info) - will use decoder's default : '1.0'\n", decodeWarnings.c_str());
+    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+}
+
+TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoVersionIsInvalidThenFails) {
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
+    auto zeInfo = ConstStringRef("version:\'1a\'\nkernels:\n");
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, error);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Invalid version format - expected 'MAJOR.MINOR' string, got : '1a'\n", decodeErrors.c_str());
+    EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+}
+
+TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMinorVersionIsNewerThenEmitsWarning) {
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
+    auto version = NEO::zeInfoDecoderVersion;
+    version.minor += 1;
+    auto zeInfo = std::string("version:\'") + toString(version) + "\'\nkernels:\n";
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
+
+    NEO::ProgramInfo programInfo;
+    NEO::SingleDeviceBinary singleBinary;
+    singleBinary.deviceBinary = zebin.storage;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+    EXPECT_EQ(NEO::DecodeError::Success, error);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Minor version : 1 is newer than available in decoder : 0 - some features may be skipped\n", decodeWarnings.c_str());
+    EXPECT_TRUE(decodeErrors.empty()) << decodeErrors;
+}
+
+TEST(DecodeSingleDeviceBinaryZebin, WhenZeInfoMajorVersionIsMismatchedThenFails) {
+    {
+        ZebinTestData::ValidEmptyProgram zebin;
+        zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
+        auto version = NEO::zeInfoDecoderVersion;
+        version.major += 1;
+        auto zeInfo = std::string("version:\'") + toString(version) + "\'\nkernels:\n";
+        zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
+
+        NEO::ProgramInfo programInfo;
+        NEO::SingleDeviceBinary singleBinary;
+        singleBinary.deviceBinary = zebin.storage;
+        std::string decodeErrors;
+        std::string decodeWarnings;
+        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+        EXPECT_EQ(NEO::DecodeError::UnhandledBinary, error);
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled major version : 2, decoder is at : 1\n", decodeErrors.c_str());
+        EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    }
+
+    {
+        ZebinTestData::ValidEmptyProgram zebin;
+        zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
+        auto version = NEO::zeInfoDecoderVersion;
+        version.major -= 1;
+        auto zeInfo = std::string("version:\'") + toString(version) + "\'\nkernels:\n";
+        zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
+
+        NEO::ProgramInfo programInfo;
+        NEO::SingleDeviceBinary singleBinary;
+        singleBinary.deviceBinary = zebin.storage;
+        std::string decodeErrors;
+        std::string decodeWarnings;
+        auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, decodeErrors, decodeWarnings);
+        EXPECT_EQ(NEO::DecodeError::UnhandledBinary, error);
+        EXPECT_STREQ("DeviceBinaryFormat::Zebin::.ze_info : Unhandled major version : 0, decoder is at : 1\n", decodeErrors.c_str());
+        EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
+    }
+}
+
 TEST(DecodeSingleDeviceBinaryZebin, WhenDecodeZeInfoFailsThenDecodingFails) {
-    NEO::ConstStringRef brokenZeInfo = R"===(
+    std::string brokenZeInfo = "version : \'" + toString(zeInfoDecoderVersion) + R"===('
 kernels:
     - 
 )===";
@@ -1593,7 +1923,7 @@ kernels:
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoThenPopulatesKernelDescriptorProperly) {
-    NEO::ConstStringRef validZeInfo = R"===(
+    std::string validZeInfo = std::string("version :\'") + toString(zeInfoDecoderVersion) + R"===('
 kernels:
     - name : some_kernel
       execution_env :
@@ -2188,11 +2518,10 @@ kernels:
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(1U, programInfo.kernelInfos.size());
-    EXPECT_EQ(256U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadPrivateMemorySize);
-    EXPECT_FALSE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.isSimtThread);
+    EXPECT_EQ(256U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
 }
 
-TEST(PopulateKernelDescriptor, givenSimtThreadSetWhenPopulatingThenUpdateKernelAttributes) {
+TEST(PopulateKernelDescriptor, givenPerSimtThreadBufferWhenPopulatingThenCalculatesCorrectSize) {
     NEO::ConstStringRef zeinfo = R"===(
 kernels:         
     - name : some_kernel
@@ -2224,7 +2553,8 @@ kernels:
     EXPECT_EQ(NEO::DecodeError::Success, err);
     EXPECT_TRUE(errors.empty()) << errors;
     EXPECT_TRUE(warnings.empty()) << warnings;
-    EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.isSimtThread);
+    ASSERT_EQ(1U, programInfo.kernelInfos.size());
+    EXPECT_EQ(256U * 8, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
 }
 
 TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsScratchThenSetsProperFieldsInDescriptor) {
@@ -2263,7 +2593,78 @@ kernels:
     EXPECT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
 }
 
-TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWithMultipleScratchEntriesThenFails) {
+TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenSlotIsProvidedThenSetsProperFieldsInDescriptorInCorrectSlot) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:         
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+      per_thread_memory_buffers: 
+          - type:            scratch
+            usage:           private_space
+            size:            512
+            slot : 1
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    ASSERT_EQ(1U, programInfo.kernelInfos.size());
+    EXPECT_EQ(0U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
+    EXPECT_EQ(512U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
+}
+
+TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenSlotIsInvalidThenFails) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:         
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+      per_thread_memory_buffers: 
+          - type:            scratch
+            usage:           private_space
+            size:            512
+            slot : 2
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid scratch buffer slot 2 in context of : some_kernel. Expected 0 or 1.\n", errors.c_str());
+    EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWithMultipleScratchEntriesForTheSameSlotThenFails) {
     NEO::ConstStringRef zeinfo = R"===(
 kernels:         
     - name : some_kernel
@@ -2298,7 +2699,7 @@ kernels:
     auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, decodeErrors, decodeWarnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_TRUE(decodeWarnings.empty()) << decodeWarnings;
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid duplicated scratch buffer entry in context of : some_kernel.\n", decodeErrors.c_str());
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Invalid duplicated scratch buffer entry 0 in context of : some_kernel.\n", decodeErrors.c_str());
 }
 
 TEST(PopulateKernelDescriptor, GivenKernelWithoutCorrespondingTextSectionThenFail) {
@@ -2325,7 +2726,7 @@ kernels:
     auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
     auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_STREQ("Could not find text section for kernel some_kernel\n", errors.c_str());
+    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Could not find text section for kernel some_kernel\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
@@ -2809,6 +3210,7 @@ TEST(PopulateArgDescriptorCrossthreadPalyoad, GivenPointerArgWhenMemoryAcessMode
             break;
         case AddressingMode::MemoryAddressingModeSharedLocalMemory:
             EXPECT_EQ(16, argAsPointer.slmOffset);
+            EXPECT_EQ(16, argAsPointer.requiredSlmAlignment);
             break;
         }
     }

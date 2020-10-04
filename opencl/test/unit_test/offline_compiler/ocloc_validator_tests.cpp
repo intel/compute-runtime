@@ -82,7 +82,8 @@ TEST(OclocValidate, WhenWarningsEmitedThenRedirectsThemToStdout) {
 TEST(OclocValidate, WhenErrorsEmitedThenRedirectsThemToStdout) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    zebin.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const char>("kernels : \nkernels :\n").toArrayRef<const uint8_t>());
+    std::string zeInfo = "version:" + toString(NEO::zeInfoDecoderVersion) + "\nkernels : \nkernels :\n";
+    zebin.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const char>(zeInfo).toArrayRef<const uint8_t>());
     MockOclocArgHelper::FilesMap files{{"src.gen", MockOclocArgHelper::FileData(reinterpret_cast<const char *>(zebin.storage.data()),
                                                                                 reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};
     MockOclocArgHelper argHelper{files};

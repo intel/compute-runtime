@@ -10,12 +10,17 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin_decoder.h"
 
 #include "igfxfmid.h"
 
 #include <vector>
 
 extern PRODUCT_FAMILY productFamily;
+
+inline std::string toString(NEO::Elf::ZebinKernelMetadata::Types::Version version) {
+    return std::to_string(version.major) + "." + std::to_string(version.minor);
+}
 
 namespace ZebinTestData {
 
@@ -24,7 +29,8 @@ struct ValidEmptyProgram {
         NEO::Elf::ElfEncoder<> enc;
         enc.getElfFileHeader().type = NEO::Elf::ET_ZEBIN_EXE;
         enc.getElfFileHeader().machine = productFamily;
-        enc.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, std::string{"---\nkernels : \n...\n"});
+        auto zeInfo = std::string{"---\nversion : \'" + toString(NEO::zeInfoDecoderVersion) + "\'" + "\nkernels : \n...\n"};
+        enc.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, zeInfo);
         storage = enc.encode();
         recalcPtr();
     }
