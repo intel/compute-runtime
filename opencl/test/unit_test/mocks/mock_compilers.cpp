@@ -348,6 +348,10 @@ IGC::FclOclTranslationCtxBase *CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 3)::Crea
     return nullptr;
 }
 
+IGC::PlatformBase *CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 4)::GetPlatformHandleImpl(CIF::Version_t ver) {
+    return nullptr;
+}
+
 } // namespace IGC
 
 #include "cif/macros/disable.h"

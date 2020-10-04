@@ -235,7 +235,7 @@ struct MockFclOclTranslationCtx : MockCIF<IGC::FclOclTranslationCtxTagOCL> {
         uint32_t tracingOptionsCount) override;
 };
 
-struct MockFclOclDeviceCtx : MockCIF<IGC::FclOclDeviceCtx<3>> {
+struct MockFclOclDeviceCtx : MockCIF<IGC::FclOclDeviceCtxTagOCL> {
     MockFclOclDeviceCtx();
     ~MockFclOclDeviceCtx() override;
 
@@ -255,4 +255,5 @@ struct MockFclOclDeviceCtx : MockCIF<IGC::FclOclDeviceCtx<3>> {
 
     uint32_t oclApiVersion = 120;
 };
+
 } // namespace NEO
