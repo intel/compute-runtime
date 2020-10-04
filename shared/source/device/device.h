@@ -84,7 +84,7 @@ class Device : public ReferenceTrackedObject<Device> {
     SpecializedDeviceT *getSpecializedDevice() const {
         return reinterpret_cast<SpecializedDeviceT *>(specializedDevice);
     }
-    CompilerInterface *getCompilerInterface() const;
+    MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface() const;
     BuiltIns *getBuiltIns() const;
 
     virtual uint32_t getRootDeviceIndex() const = 0;

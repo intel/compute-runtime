@@ -66,7 +66,9 @@ cl_int Program::build(
         if (isCreatedFromBinary == false) {
             buildStatus = CL_BUILD_IN_PROGRESS;
 
-            options = (buildOptions) ? buildOptions : "";
+            if (nullptr != buildOptions) {
+                options = buildOptions;
+            }
             extractInternalOptions(options);
             applyAdditionalOptions();
 

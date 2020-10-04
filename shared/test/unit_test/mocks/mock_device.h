@@ -126,6 +126,16 @@ class MockDevice : public RootDevice {
 
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
     std::unique_ptr<MemoryManager> mockMemoryManager;
+
+    NEO::CompilerInterface *getCompilerInterface() const override {
+        if (mockCompilerInterface != nullptr) {
+            return mockCompilerInterface;
+        } else {
+            return Device::getCompilerInterface();
+        }
+    }
+
+    NEO::CompilerInterface *mockCompilerInterface = nullptr;
 };
 
 template <>

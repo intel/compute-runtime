@@ -68,7 +68,9 @@ bool ModuleTranslationUnit::buildFromSpirV(const char *input, uint32_t inputSize
     UNRECOVERABLE_IF(nullptr == compilerInterface);
     UNRECOVERABLE_IF((nullptr == device) || (nullptr == device->getNEODevice()));
 
-    std::string options = buildOptions;
+    if (nullptr != buildOptions) {
+        options = buildOptions;
+    }
     std::string internalOptions = NEO::CompilerOptions::concatenate(internalBuildOptions, BuildOptions::hasBufferOffsetArg);
 
     if (device->getNEODevice()->getDeviceInfo().debuggerActive) {

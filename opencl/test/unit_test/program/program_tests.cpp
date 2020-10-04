@@ -970,8 +970,17 @@ TEST_P(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     auto hash4 = pProgram->getCachedFileName();
     auto kernel4 = pProgram->getKernelInfo("CopyBuffer");
     EXPECT_NE(nullptr, kernel4);
-    EXPECT_EQ(hash1, hash4);
+    EXPECT_EQ(hash3, hash4);
     Callback::unwatch(kernel3);
+    Callback::watch(kernel4);
+
+    retVal = pProgram->build(0, nullptr, "", nullptr, nullptr, true);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    auto hash5 = pProgram->getCachedFileName();
+    auto kernel5 = pProgram->getKernelInfo("CopyBuffer");
+    EXPECT_NE(nullptr, kernel5);
+    EXPECT_EQ(hash1, hash5);
+    Callback::unwatch(kernel4);
 }
 
 TEST_P(ProgramFromSourceTest, GivenEmptyProgramWhenCreatingProgramThenInvalidValueErrorIsReturned) {

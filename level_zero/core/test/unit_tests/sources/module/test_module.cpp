@@ -491,6 +491,26 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
     EXPECT_FALSE(success);
 }
 
+HWTEST_F(ModuleTranslationUnitTest, WhenBuildOptionsAreNullThenReuseExistingOptions) {
+    struct MockCompilerInterface : CompilerInterface {
+        TranslationOutput::ErrorCode build(const NEO::Device &device,
+                                           const TranslationInput &input,
+                                           TranslationOutput &output) override {
+            receivedApiOptions = input.apiOptions.begin();
+            return TranslationOutput::ErrorCode::BuildFailure;
+        }
+        std::string receivedApiOptions;
+    } mockCompilerInterface;
+
+    L0::ModuleTranslationUnit moduleTu(this->device);
+    moduleTu.options = "abcd";
+    this->neoDevice->mockCompilerInterface = &mockCompilerInterface;
+    auto ret = moduleTu.buildFromSpirV("", 0U, nullptr, "", nullptr);
+    EXPECT_FALSE(ret);
+    EXPECT_STREQ("abcd", moduleTu.options.c_str());
+    EXPECT_STREQ("abcd", mockCompilerInterface.receivedApiOptions.c_str());
+}
+
 TEST(BuildOptions, givenNoSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenFalseIsReturned) {
     std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, NEO::CompilerOptions::finiteMathOnly);
     std::string dstNames;
