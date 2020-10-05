@@ -72,7 +72,7 @@ using cl_unified_shared_memory_capabilities_intel = cl_bitfield;
 #define CL_MEM_COMPARE_NOT_EQUAL 1u
 
 #define CL_MEM_FORCE_LINEAR_STORAGE_INTEL (1 << 19)
-#define CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL (1 << 20)
+#define CL_MEM_FORCE_HOST_MEMORY_INTEL (1 << 20)
 
 #define CL_MEM_ALLOCATION_HANDLE_INTEL 0x10050
 #define CL_MEM_USES_COMPRESSION_INTEL 0x10051

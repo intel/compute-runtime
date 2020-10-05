@@ -65,8 +65,8 @@ TEST(MemoryProperties, givenValidPropertiesWhenCreateMemoryPropertiesThenTrueIsR
     properties = MemoryPropertiesHelper::createMemoryProperties(0, CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE, 0, pDevice);
     EXPECT_TRUE(properties.flags.locallyUncachedInSurfaceState);
 
-    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL, 0, 0, pDevice);
-    EXPECT_TRUE(properties.flags.forceSharedPhysicalMemory);
+    properties = MemoryPropertiesHelper::createMemoryProperties(CL_MEM_FORCE_HOST_MEMORY_INTEL, 0, 0, pDevice);
+    EXPECT_TRUE(properties.flags.forceHostMemory);
 
     properties = MemoryPropertiesHelper::createMemoryProperties(0, 0, CL_MEM_ALLOC_WRITE_COMBINED_INTEL, pDevice);
     EXPECT_TRUE(properties.allocFlags.allocWriteCombined);

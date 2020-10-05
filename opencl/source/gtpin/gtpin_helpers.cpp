@@ -31,7 +31,7 @@ GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinCreateBuffer(context_handle_t context
     if (hostPtr == nullptr) {
         return GTPIN_DI_ERROR_ALLOCATION_FAILED;
     }
-    cl_mem buffer = Buffer::create(pContext, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE | CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL, size, hostPtr, diag);
+    cl_mem buffer = Buffer::create(pContext, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE | CL_MEM_FORCE_HOST_MEMORY_INTEL, size, hostPtr, diag);
     *pResource = (resource_handle_t)buffer;
     return GTPIN_DI_SUCCESS;
 }

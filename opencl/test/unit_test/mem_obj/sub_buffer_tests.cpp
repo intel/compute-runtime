@@ -120,7 +120,7 @@ TEST_F(SubBufferTest, GivenBufferWithAlignedHostPtrAndSameMemoryStorageWhenSubBu
     cl_int retVal = 0;
 
     void *alignedPointer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::preferredAlignment);
-    Buffer *buffer = Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL,
+    Buffer *buffer = Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_HOST_MEMORY_INTEL,
                                     MemoryConstants::pageSize, alignedPointer, retVal);
 
     ASSERT_NE(nullptr, buffer);

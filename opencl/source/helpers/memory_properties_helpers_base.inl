@@ -70,8 +70,8 @@ MemoryProperties MemoryPropertiesHelper::createMemoryProperties(cl_mem_flags fla
         memoryProperties.flags.locallyUncachedInSurfaceState = true;
     }
 
-    if (isValueSet(flags, CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL)) {
-        memoryProperties.flags.forceSharedPhysicalMemory = true;
+    if (isValueSet(flags, CL_MEM_FORCE_HOST_MEMORY_INTEL)) {
+        memoryProperties.flags.forceHostMemory = true;
     }
 
     if (isValueSet(allocflags, CL_MEM_ALLOC_WRITE_COMBINED_INTEL)) {

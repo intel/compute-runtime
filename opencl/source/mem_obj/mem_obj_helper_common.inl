@@ -100,7 +100,7 @@ const uint64_t MemObjHelper::commonFlags = extraFlags | CL_MEM_READ_WRITE | CL_M
 const uint64_t MemObjHelper::commonFlagsIntel = extraFlagsIntel | CL_MEM_LOCALLY_UNCACHED_RESOURCE |
                                                 CL_MEM_LOCALLY_UNCACHED_SURFACE_STATE_RESOURCE | CL_MEM_48BIT_RESOURCE_INTEL;
 
-const uint64_t MemObjHelper::validFlagsForBuffer = commonFlags | CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL | CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL;
+const uint64_t MemObjHelper::validFlagsForBuffer = commonFlags | CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL | CL_MEM_FORCE_HOST_MEMORY_INTEL;
 
 const uint64_t MemObjHelper::validFlagsForBufferIntel = commonFlagsIntel | CL_MEM_ALLOW_UNRESTRICTED_SIZE_INTEL;
 

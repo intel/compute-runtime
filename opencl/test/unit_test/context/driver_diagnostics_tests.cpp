@@ -88,7 +88,7 @@ TEST_P(PerformanceHintBufferTest, GivenHostPtrAndSizeAlignmentsWhenBufferIsCreat
     auto flags = CL_MEM_USE_HOST_PTR;
 
     if (alignedAddress && alignedSize) {
-        flags |= CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL;
+        flags |= CL_MEM_FORCE_HOST_MEMORY_INTEL;
     }
 
     buffer = Buffer::create(
@@ -509,7 +509,7 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
                            HwHelper::get(hwInfo.platform.eRenderCoreFamily).obtainRenderBufferCompressionPreference(hwInfo, size)) &&
                        !is32bit && !context->isSharedContext &&
                        (!memoryProperties.flags.useHostPtr || context->getMemoryManager()->isLocalMemorySupported(device->getRootDeviceIndex())) &&
-                       !memoryProperties.flags.forceSharedPhysicalMemory;
+                       !memoryProperties.flags.forceHostMemory;
 
         buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), memoryProperties, CL_MEM_READ_WRITE, 0, size, static_cast<void *>(NULL), retVal));
     }

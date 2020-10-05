@@ -87,7 +87,7 @@ TEST(BufferTests, GivenHostPtrWhenBufferIsCreatedThenPinIsSet) {
 
         auto buffer = Buffer::create(
             &context,
-            CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_SHARED_PHYSICAL_MEMORY_INTEL,
+            CL_MEM_USE_HOST_PTR | CL_MEM_FORCE_HOST_MEMORY_INTEL,
             size,
             bff,
             retVal);
