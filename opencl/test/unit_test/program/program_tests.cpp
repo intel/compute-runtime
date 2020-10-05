@@ -1007,6 +1007,9 @@ TEST_P(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     Callback::unwatch(kernel2);
     Callback::watch(kernel3);
 
+    pProgram->createdFrom = NEO::Program::CreatedFrom::BINARY;
+    pProgram->setIrBinary(new char[16], true);
+    pProgram->setIrBinarySize(16, true);
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash4 = pProgram->getCachedFileName();
@@ -1016,7 +1019,8 @@ TEST_P(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     Callback::unwatch(kernel3);
     Callback::watch(kernel4);
 
-    retVal = pProgram->build(0, nullptr, "", nullptr, nullptr, true);
+    pProgram->createdFrom = NEO::Program::CreatedFrom::SOURCE;
+    retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash5 = pProgram->getCachedFileName();
     auto kernel5 = pProgram->getKernelInfo("CopyBuffer");

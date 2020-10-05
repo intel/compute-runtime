@@ -69,6 +69,8 @@ cl_int Program::build(
 
             if (nullptr != buildOptions) {
                 options = buildOptions;
+            } else if (this->createdFrom != CreatedFrom::BINARY) {
+                options = "";
             }
             extractInternalOptions(options);
             applyAdditionalOptions();
