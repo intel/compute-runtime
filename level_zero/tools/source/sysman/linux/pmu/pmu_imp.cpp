@@ -47,7 +47,7 @@ inline int64_t PmuInterfaceImp::perfEventOpen(perf_event_attr *attr, pid_t pid, 
     return syscall(perfEventOpenSyscallNumber, attr, pid, cpu, groupFd, flags);
 }
 
-int64_t PmuInterfaceImp::pmuInterfaceOpen(uint64_t config, int group, uint64_t format) {
+int64_t PmuInterfaceImp::pmuInterfaceOpen(uint64_t config, int group, uint32_t format) {
     struct perf_event_attr attr = {};
     int nrCpus = get_nprocs_conf();
     int cpu = 0;
@@ -62,7 +62,7 @@ int64_t PmuInterfaceImp::pmuInterfaceOpen(uint64_t config, int group, uint64_t f
         format &= ~PERF_FORMAT_GROUP;
     }
 
-    attr.read_format = format;
+    attr.read_format = static_cast<uint64_t>(format);
     attr.config = config;
 
     do {

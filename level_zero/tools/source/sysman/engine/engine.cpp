@@ -29,10 +29,7 @@ void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t e
 
 void EngineHandleContext::init() {
     std::multimap<zes_engine_group_t, uint32_t> engineGroupInstance = {};
-    ze_result_t status = OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman);
-    if (status != ZE_RESULT_SUCCESS) {
-        return;
-    }
+    OsEngine::getNumEngineTypeAndInstances(engineGroupInstance, pOsSysman);
     for (auto itr = engineGroupInstance.begin(); itr != engineGroupInstance.end(); ++itr) {
         createHandle(itr->first, itr->second);
     }

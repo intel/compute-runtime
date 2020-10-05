@@ -191,6 +191,14 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAn
     }
 }
 
+TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndperfEventOpenFailsThenVerifyEngineGetActivityReturnsFailure) {
+    ON_CALL(*pPmuInterface.get(), perfEventOpen(_, _, _, _, _))
+        .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImp>::mockedPerfEventOpenAndFailureReturn));
+
+    MockPmuInterfaceImp pPmuInterfaceImp(pLinuxSysmanImp);
+    EXPECT_EQ(-1, pPmuInterface->pmuInterfaceOpen(0, -1, 0));
+}
+
 TEST_F(ZesEngineFixture, GivenValidOsSysmanPointerWhenRetrievingEngineTypeAndInstancesAndIfEngineInfoQueryFailsThenErrorIsReturned) {
     std::multimap<zes_engine_group_t, uint32_t> engineGroupInstance;
     ON_CALL(*pDrm.get(), queryEngineInfo())

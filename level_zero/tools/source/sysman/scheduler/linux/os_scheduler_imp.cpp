@@ -33,7 +33,7 @@ ze_result_t LinuxSchedulerImp::getPreemptTimeout(uint64_t &timeout, ze_bool_t ge
     uint32_t i = 0;
     std::vector<uint64_t> timeoutVec = {};
     timeoutVec.resize(listOfEngines.size());
-    for (auto engineName : listOfEngines) {
+    for (const auto &engineName : listOfEngines) {
         if (getDefault) {
             result = pSysfsAccess->read(engineDir + "/" + engineName + "/" + defaultPreemptTimeouttMilliSecs, timeout);
         } else {
@@ -64,7 +64,7 @@ ze_result_t LinuxSchedulerImp::getTimesliceDuration(uint64_t &timeslice, ze_bool
     uint32_t i = 0;
     std::vector<uint64_t> timesliceVec = {};
     timesliceVec.resize(listOfEngines.size());
-    for (auto engineName : listOfEngines) {
+    for (const auto &engineName : listOfEngines) {
         if (getDefault) {
             result = pSysfsAccess->read(engineDir + "/" + engineName + "/" + defaultTimesliceDurationMilliSecs, timeslice);
         } else {
@@ -95,7 +95,7 @@ ze_result_t LinuxSchedulerImp::getHeartbeatInterval(uint64_t &heartbeat, ze_bool
     uint32_t i = 0;
     std::vector<uint64_t> heartbeatVec = {};
     heartbeatVec.resize(listOfEngines.size());
-    for (auto engineName : listOfEngines) {
+    for (const auto &engineName : listOfEngines) {
         if (getDefault) {
             result = pSysfsAccess->read(engineDir + "/" + engineName + "/" + defaultHeartbeatIntervalMilliSecs, heartbeat);
         } else {
@@ -124,7 +124,7 @@ ze_result_t LinuxSchedulerImp::getHeartbeatInterval(uint64_t &heartbeat, ze_bool
 ze_result_t LinuxSchedulerImp::setPreemptTimeout(uint64_t timeout) {
     timeout = timeout / milliSecsToMicroSecs;
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-    for (auto engineName : listOfEngines) {
+    for (const auto &engineName : listOfEngines) {
         result = pSysfsAccess->write(engineDir + "/" + engineName + "/" + preemptTimeoutMilliSecs, timeout);
         if (result != ZE_RESULT_SUCCESS) {
             if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
@@ -139,7 +139,7 @@ ze_result_t LinuxSchedulerImp::setPreemptTimeout(uint64_t timeout) {
 ze_result_t LinuxSchedulerImp::setTimesliceDuration(uint64_t timeslice) {
     timeslice = timeslice / milliSecsToMicroSecs;
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-    for (auto engineName : listOfEngines) {
+    for (const auto &engineName : listOfEngines) {
         result = pSysfsAccess->write(engineDir + "/" + engineName + "/" + timesliceDurationMilliSecs, timeslice);
         if (result != ZE_RESULT_SUCCESS) {
             if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {
@@ -154,7 +154,7 @@ ze_result_t LinuxSchedulerImp::setTimesliceDuration(uint64_t timeslice) {
 ze_result_t LinuxSchedulerImp::setHeartbeatInterval(uint64_t heartbeat) {
     heartbeat = heartbeat / milliSecsToMicroSecs;
     ze_result_t result = ZE_RESULT_ERROR_UNKNOWN;
-    for (auto engineName : listOfEngines) {
+    for (const auto &engineName : listOfEngines) {
         result = pSysfsAccess->write(engineDir + "/" + engineName + "/" + heartbeatIntervalMilliSecs, heartbeat);
         if (result != ZE_RESULT_SUCCESS) {
             if (result == ZE_RESULT_ERROR_NOT_AVAILABLE) {

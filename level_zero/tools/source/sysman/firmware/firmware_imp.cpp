@@ -30,7 +30,10 @@ FirmwareImp::FirmwareImp(OsSysman *pOsSysman) {
 }
 
 FirmwareImp::~FirmwareImp() {
-    delete pOsFirmware;
+    if (pOsFirmware != nullptr) {
+        delete pOsFirmware;
+        pOsFirmware = nullptr;
+    }
 }
 
 } // namespace L0

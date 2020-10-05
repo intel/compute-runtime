@@ -31,7 +31,6 @@ class SchedulerImp : public Scheduler, NEO::NonCopyableOrMovableClass {
     OsScheduler *pOsScheduler = nullptr;
     SchedulerImp(OsSysman *pOsSysman, zes_engine_type_flag_t type, std::vector<std::string> &listOfEngines, ze_device_handle_t deviceHandle);
     ~SchedulerImp() override;
-    zes_engine_type_flag_t engineType;
 
   private:
     zes_sched_properties_t properties = {};

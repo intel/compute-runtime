@@ -20,7 +20,7 @@ class PmuInterfaceImp : public PmuInterface, NEO::NonCopyableOrMovableClass {
     PmuInterfaceImp() = delete;
     PmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp);
     ~PmuInterfaceImp() override = default;
-    int64_t pmuInterfaceOpen(uint64_t config, int group, uint64_t format) override;
+    int64_t pmuInterfaceOpen(uint64_t config, int group, uint32_t format) override;
     MOCKABLE_VIRTUAL int pmuReadSingle(int fd, uint64_t *data, ssize_t sizeOfdata) override;
 
   protected:
