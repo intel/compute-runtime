@@ -123,7 +123,7 @@ struct EnqueueThreadingFixture : public ClDeviceFixture {
 
 typedef Test<EnqueueThreadingFixture> EnqueueThreading;
 
-HWTEST_F(EnqueueThreading, enqueueReadBuffer) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingReadBufferThenKernelHasOwnership) {
     createCQ<FamilyType>();
 
     cl_int retVal;
@@ -147,7 +147,7 @@ HWTEST_F(EnqueueThreading, enqueueReadBuffer) {
     alignedFree(ptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueWriteBuffer) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingWriteBufferThenKernelHasOwnership) {
     createCQ<FamilyType>();
 
     cl_int retVal;
@@ -171,7 +171,7 @@ HWTEST_F(EnqueueThreading, enqueueWriteBuffer) {
     alignedFree(ptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueCopyBuffer) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingCopyBufferThenKernelHasOwnership) {
     createCQ<FamilyType>();
 
     cl_int retVal;
@@ -183,7 +183,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyBuffer) {
     pCmdQ->enqueueCopyBuffer(srcBuffer.get(), dstBuffer.get(), 0, 0, 1024u, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueCopyBufferRect) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingCopyBufferRectThenKernelHasOwnership) {
     createCQ<FamilyType>();
 
     cl_int retVal;
@@ -199,7 +199,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyBufferRect) {
     pCmdQ->enqueueCopyBufferRect(srcBuffer.get(), dstBuffer.get(), srcOrigin, dstOrigin, region, 0, 0, 0, 0, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueCopyBufferToImage) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingCopyBufferToImageThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -229,7 +229,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyBufferToImage) {
     pCmdQ->enqueueCopyBufferToImage(srcBuffer.get(), dstImage.get(), 0, dstOrigin, region, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueCopyImage) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingCopyImageThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -261,7 +261,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyImage) {
     pCmdQ->enqueueCopyImage(srcImage.get(), dstImage.get(), srcOrigin, dstOrigin, region, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueCopyImageToBuffer) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingCopyImageToBufferThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -292,7 +292,7 @@ HWTEST_F(EnqueueThreading, enqueueCopyImageToBuffer) {
     pCmdQ->enqueueCopyImageToBuffer(srcImage.get(), dstBuffer.get(), srcOrigin, region, 0, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueFillBuffer) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingFillBufferThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -303,7 +303,7 @@ HWTEST_F(EnqueueThreading, enqueueFillBuffer) {
     pCmdQ->enqueueFillBuffer(buffer.get(), &pattern, sizeof(pattern), 0, 1024u, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueFillImage) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingFillImageThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -333,7 +333,7 @@ HWTEST_F(EnqueueThreading, enqueueFillImage) {
     pCmdQ->enqueueFillImage(image.get(), &fillColor, origin, region, 0, nullptr, nullptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueReadBufferRect) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingReadBufferRectThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -352,7 +352,7 @@ HWTEST_F(EnqueueThreading, enqueueReadBufferRect) {
     ::alignedFree(ptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueReadImage) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingReadImageThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -385,7 +385,7 @@ HWTEST_F(EnqueueThreading, enqueueReadImage) {
     ::alignedFree(ptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueWriteBufferRect) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingWriteBufferRectThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -405,7 +405,7 @@ HWTEST_F(EnqueueThreading, enqueueWriteBufferRect) {
     ::alignedFree(ptr);
 }
 
-HWTEST_F(EnqueueThreading, enqueueWriteImage) {
+HWTEST_F(EnqueueThreading, WhenEnqueuingWriteImageThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
 
@@ -438,7 +438,7 @@ HWTEST_F(EnqueueThreading, enqueueWriteImage) {
     ::alignedFree(ptr);
 }
 
-HWTEST_F(EnqueueThreading, finish) {
+HWTEST_F(EnqueueThreading, WhenFinishingThenKernelHasOwnership) {
     createCQ<FamilyType>();
 
     // set something to finish
