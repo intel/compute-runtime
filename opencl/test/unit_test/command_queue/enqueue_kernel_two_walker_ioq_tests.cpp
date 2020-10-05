@@ -5,7 +5,8 @@
  *
  */
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "shared/source/helpers/hw_helper.h"
+
 #include "opencl/test/unit_test/fixtures/two_walker_fixture.h"
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 #include "test.h"
@@ -41,7 +42,7 @@ HWTEST_F(IOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeC
 
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
-    auto WaNeeded = HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo());
+    auto WaNeeded = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo());
 
     auto itorCmd = find<PIPE_CONTROL *>(itorWalker1, itorWalker2);
     ASSERT_NE(itorWalker2, itorCmd);

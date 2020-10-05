@@ -20,7 +20,6 @@
 
 #include "opencl/source/aub_mem_dump/aub_mem_dump.h"
 #include "opencl/source/helpers/dispatch_info.h"
-#include "opencl/source/helpers/hardware_commands_helper.h"
 
 #include "pipe_control_args.h"
 
@@ -293,7 +292,7 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl() {
 
 template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(const HardwareInfo &hwInfo) {
-    const auto pipeControlCount = HardwareCommandsHelper<GfxFamily>::isPipeControlWArequired(hwInfo) ? 2u : 1u;
+    const auto pipeControlCount = MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(hwInfo) ? 2u : 1u;
     return pipeControlCount * getSizeForSinglePipeControl() + getSizeForAdditonalSynchronization(hwInfo);
 }
 
@@ -517,6 +516,11 @@ bool HwHelperHw<GfxFamily>::useSystemMemoryPlacementForISA(const HardwareInfo &h
 
 template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::packedFormatsSupported() const {
+    return false;
+}
+
+template <typename GfxFamily>
+bool MemorySynchronizationCommands<GfxFamily>::isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo) {
     return false;
 }
 

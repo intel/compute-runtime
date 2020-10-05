@@ -373,6 +373,9 @@ struct MemorySynchronizationCommands {
     static size_t getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo);
     static size_t getSizeForFullCacheFlush();
 
+    static bool isPipeControlWArequired(const HardwareInfo &hwInfo);
+    static bool isPipeControlPriorToPipelineSelectWArequired(const HardwareInfo &hwInfo);
+
   protected:
     static void setPipeControl(PIPE_CONTROL &pipeControl, PipeControlArgs &args);
     static void setPipeControlExtraProperties(PIPE_CONTROL &pipeControl, PipeControlArgs &args);

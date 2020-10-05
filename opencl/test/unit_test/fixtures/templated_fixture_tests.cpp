@@ -5,9 +5,9 @@
  *
  */
 
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
 
 namespace NEO {
@@ -78,7 +78,7 @@ HWTEST_TEMPLATED_F(DerivedTemplatedFixtureTests, whenExecutingTemplatedTestThenC
 struct TemplatedFixtureBaseTests : public ::testing::Test {
     template <typename T>
     void SetUpT() {
-        capturedPipeControlWaRequiredInSetUp = HardwareCommandsHelper<T>::isPipeControlWArequired(*defaultHwInfo);
+        capturedPipeControlWaRequiredInSetUp = MemorySynchronizationCommands<T>::isPipeControlWArequired(*defaultHwInfo);
     }
 
     template <typename T>
@@ -88,7 +88,7 @@ struct TemplatedFixtureBaseTests : public ::testing::Test {
 };
 
 HWTEST_TEMPLATED_F(TemplatedFixtureBaseTests, whenExecutingTemplatedSetupThenTemplateTargetsCorrectPlatform) {
-    bool capturedPipeControlWaRequiredInTestBody = HardwareCommandsHelper<FamilyType>::isPipeControlWArequired(*defaultHwInfo);
+    bool capturedPipeControlWaRequiredInTestBody = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(*defaultHwInfo);
 
     EXPECT_EQ(capturedPipeControlWaRequiredInTestBody, capturedPipeControlWaRequiredInSetUp);
 }

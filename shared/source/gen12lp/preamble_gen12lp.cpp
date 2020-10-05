@@ -10,8 +10,6 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/preamble_bdw_plus.inl"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
-
 #include "pipe_control_args.h"
 #include "reg_configs_common.h"
 
@@ -38,7 +36,7 @@ void PreambleHelper<TGLLPFamily>::programPipelineSelect(LinearStream *pCommandSt
 
     using PIPELINE_SELECT = typename TGLLPFamily::PIPELINE_SELECT;
 
-    if (HardwareCommandsHelper<TGLLPFamily>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
+    if (MemorySynchronizationCommands<TGLLPFamily>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
         PipeControlArgs args;
         args.renderTargetCacheFlushEnable = true;
         MemorySynchronizationCommands<TGLLPFamily>::addPipeControl(*pCommandStream, args);

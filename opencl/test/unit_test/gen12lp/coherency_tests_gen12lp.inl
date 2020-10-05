@@ -13,7 +13,6 @@
 #include "shared/test/unit_test/helpers/dispatch_flags_helper.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
 
 using namespace NEO;
@@ -244,7 +243,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
     auto hwInfo = device->getHardwareInfo();
 
     flushTask(false);
-    if (HardwareCommandsHelper<FamilyType>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
         findCmd(true, false, true); // first time
     } else {
         findCmd(true, false, false); // first time
