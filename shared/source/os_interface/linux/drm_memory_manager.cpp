@@ -217,19 +217,6 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
     // It's needed to prevent overlapping pages with user pointers
     size_t cSize = std::max(alignUp(allocationData.size, minAlignment), minAlignment);
 
-    auto res = alignedMallocWrapper(cSize, cAlignment);
-
-    if (!res)
-        return nullptr;
-
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(allocUserptr(reinterpret_cast<uintptr_t>(res), cSize, 0, allocationData.rootDeviceIndex));
-
-    if (!bo) {
-        alignedFreeWrapper(res);
-        return nullptr;
-    }
-
-    // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
     uint64_t gpuAddress = 0;
     size_t alignedSize = cSize;
     auto svmCpuAllocation = allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU;
@@ -238,29 +225,49 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const Alloc
         alignedSize = alignUp(cSize, cAlignment) + cAlignment;
     }
 
-    if (isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) {
+    // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
+    if ((isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) && !allocationData.flags.isUSMHostAllocation) {
         gpuAddress = acquireGpuRange(alignedSize, false, allocationData.rootDeviceIndex, false);
         if (!gpuAddress) {
-            alignedFreeWrapper(res);
             return nullptr;
         }
 
         if (svmCpuAllocation) {
-            bo->gpuAddress = alignUp(gpuAddress, cAlignment);
-        } else {
-            bo->gpuAddress = gpuAddress;
+            gpuAddress = alignUp(gpuAddress, cAlignment);
         }
     }
 
-    emitPinningRequest(bo.get(), allocationData);
+    return createAllocWithAlignment(allocationData, cSize, cAlignment, alignedSize, gpuAddress);
+}
 
-    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, bo->gpuAddress, cSize, MemoryPool::System4KBPages);
+DrmAllocation *DrmMemoryManager::createAllocWithAlignmentFromUserptr(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSVMSize, uint64_t gpuAddress) {
+    auto res = alignedMallocWrapper(size, alignment);
+    if (!res) {
+        return nullptr;
+    }
+
+    auto bo = allocUserptr(reinterpret_cast<uintptr_t>(res), size, 0, allocationData.rootDeviceIndex);
+
+    if (!bo) {
+        alignedFreeWrapper(res);
+        return nullptr;
+    }
+
+    obtainGpuAddress(allocationData, bo, gpuAddress);
+    emitPinningRequest(bo, allocationData);
+
+    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo, res, bo->gpuAddress, size, MemoryPool::System4KBPages);
     allocation->setDriverAllocatedCpuPtr(res);
-
-    allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSize);
-    bo.release();
+    allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSVMSize);
 
     return allocation;
+}
+
+void DrmMemoryManager::obtainGpuAddress(const AllocationData &allocationData, BufferObject *bo, uint64_t gpuAddress) {
+    if ((isLimitedRange(allocationData.rootDeviceIndex) || allocationData.type == GraphicsAllocation::AllocationType::SVM_CPU) &&
+        !allocationData.flags.isUSMHostAllocation) {
+        bo->gpuAddress = gpuAddress;
+    }
 }
 
 DrmAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const AllocationData &allocationData) {
@@ -660,6 +667,10 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
 void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
     DrmAllocation *drmAlloc = static_cast<DrmAllocation *>(gfxAllocation);
     this->unregisterAllocation(gfxAllocation);
+
+    if (drmAlloc->getMmapPtr()) {
+        this->munmapFunction(drmAlloc->getMmapPtr(), gfxAllocation->getUnderlyingBufferSize());
+    }
 
     for (auto &engine : this->registeredEngines) {
         auto memoryOperationsInterface = static_cast<DrmMemoryOperationsHandler *>(executionEnvironment.rootDeviceEnvironments[gfxAllocation->getRootDeviceIndex()]->memoryOperationsInterface.get());

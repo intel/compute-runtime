@@ -1257,8 +1257,8 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenLimitedRangeAllocatorSetThenH
 }
 
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForAllocationWithAlignmentAndLimitedRangeAllocatorSetAndAcquireGpuRangeFailsThenNullIsReturned) {
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemUserptr = 0;
+    mock->ioctl_expected.gemClose = 0;
 
     AllocationData allocationData;
 
@@ -2784,6 +2784,39 @@ TEST_F(DrmMemoryManagerUSMHostAllocationTests,
     memoryManager->freeGraphicsMemoryImpl(alloc);
 }
 
+TEST_F(DrmMemoryManagerUSMHostAllocationTests, givenCallToallocateGraphicsMemoryWithAlignmentWithisHostUSMAllocationSetToTrueThenGpuAddressIsNotFromGfxPartition) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    AllocationData allocationData;
+    allocationData.size = 16384;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    allocationData.flags.isUSMHostAllocation = true;
+    allocationData.type = GraphicsAllocation::AllocationType::SVM_CPU;
+    auto alloc = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+
+    EXPECT_NE(nullptr, alloc);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(alloc->getUnderlyingBuffer()), alloc->getGpuAddress());
+
+    memoryManager->freeGraphicsMemoryImpl(alloc);
+}
+
+TEST_F(DrmMemoryManagerUSMHostAllocationTests, givenMmapPtrWhenFreeGraphicsMemoryImplThenPtrIsDeallocated) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    AllocationData allocationData;
+    allocationData.size = 16384;
+    allocationData.rootDeviceIndex = rootDeviceIndex;
+    auto alloc = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+    EXPECT_NE(nullptr, alloc);
+
+    auto ptr = memoryManager->mmapFunction(0, alloc->getUnderlyingBufferSize(), PROT_READ | PROT_WRITE, MAP_ANONYMOUS, -1, 0);
+    static_cast<DrmAllocation *>(alloc)->setMmapPtr(ptr);
+
+    memoryManager->freeGraphicsMemoryImpl(alloc);
+}
+
 TEST_F(DrmMemoryManagerUSMHostAllocationTests,
        givenCallToallocateGraphicsMemoryWithAlignmentWithisHostUSMAllocationSetToTrueThenTheExistingHostPointerIsUsedAndAllocationIsCreatedSuccesfully) {
     mock->ioctl_expected.gemUserptr = 1;
@@ -3722,9 +3755,9 @@ TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedTh
 }
 
 TEST_F(DrmMemoryManagerTest, givenSvmCpuAllocationWhenSizeAndAlignmentProvidedButFailsToReserveGpuVaThenNullAllocationIsReturned) {
-    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemUserptr = 0;
     mock->ioctl_expected.gemWait = 0;
-    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemClose = 0;
 
     memoryManager->getGfxPartition(rootDeviceIndex)->heapInit(HeapIndex::HEAP_STANDARD, 0, 0);
 

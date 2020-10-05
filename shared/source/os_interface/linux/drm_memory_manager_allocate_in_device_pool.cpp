@@ -17,6 +17,10 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm, uint6
     return nullptr;
 }
 
+DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSVMSize, uint64_t gpuAddress) {
+    return createAllocWithAlignmentFromUserptr(allocationData, size, alignment, alignedSVMSize, gpuAddress);
+}
+
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
     status = AllocationStatus::RetryInNonDevicePool;
     return nullptr;

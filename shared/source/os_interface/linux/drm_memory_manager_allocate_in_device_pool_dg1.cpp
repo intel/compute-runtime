@@ -65,6 +65,47 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm,
     return bo;
 }
 
+DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSVMSize, uint64_t gpuAddress) {
+    if (this->getDrm(allocationData.rootDeviceIndex).getMemoryInfo()) {
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(&this->getDrm(allocationData.rootDeviceIndex), 0u, alignedSVMSize, 0u, maxOsContextCount));
+
+        if (!bo) {
+            return nullptr;
+        }
+
+        drm_i915_gem_mmap_offset gemMmap{};
+        gemMmap.handle = bo->peekHandle();
+        gemMmap.flags = I915_MMAP_OFFSET_WB;
+
+        auto ret = this->getDrm(allocationData.rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &gemMmap);
+        if (ret != 0) {
+            return nullptr;
+        }
+
+        void *cpuPointer = reinterpret_cast<void *>(this->mmapFunction(0, alignedSVMSize, PROT_READ | PROT_WRITE, MAP_SHARED, getDrm(allocationData.rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(gemMmap.offset)));
+
+        auto cpuBasePointer = cpuPointer;
+        cpuPointer = alignUp(cpuPointer, alignment);
+        auto offset = ptrDiff(cpuPointer, cpuBasePointer);
+
+        bo->gpuAddress = reinterpret_cast<uintptr_t>(cpuPointer);
+
+        obtainGpuAddress(allocationData, bo.get(), gpuAddress);
+        emitPinningRequest(bo.get(), allocationData);
+
+        auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), cpuPointer, bo->gpuAddress, alignedSVMSize, MemoryPool::System4KBPages);
+        allocation->setMmapPtr(cpuBasePointer);
+        allocation->setAllocationOffset(offset);
+        allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSVMSize);
+
+        bo.release();
+
+        return allocation;
+    } else {
+        return createAllocWithAlignmentFromUserptr(allocationData, size, alignment, alignedSVMSize, gpuAddress);
+    }
+}
+
 uint64_t getGpuAddress(GraphicsAllocation::AllocationType allocType, GfxPartition *gfxPartition, size_t &sizeAllocated, const void *hostPtr, bool resource48Bit) {
     uint64_t gpuAddress = 0;
     switch (allocType) {

@@ -243,6 +243,59 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenDrmMemoryManagerWhenCreateBufferObj
     EXPECT_EQ(nullptr, bo);
 }
 
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoWhenAllocateWithAlignmentThenGemCreateExtIsUsed) {
+    drm_i915_memory_region_info regionInfo[2] = {};
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+
+    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->ioctlCallsCount = 0;
+
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize64k;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+
+    EXPECT_NE(allocation, nullptr);
+    EXPECT_EQ(1u, mock->createExt.handle);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndFailedMmapOffsetWhenAllocateWithAlignmentThenNullptr) {
+    drm_i915_memory_region_info regionInfo[2] = {};
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+
+    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->mmapOffsetRetVal = -1;
+
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize64k;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+
+    EXPECT_EQ(allocation, nullptr);
+    mock->mmapOffsetRetVal = 0;
+}
+
+TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoAndFailedGemCreateExtWhenAllocateWithAlignmentThenNullptr) {
+    drm_i915_memory_region_info regionInfo[2] = {};
+    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+
+    mock->memoryInfo.reset(new MemoryInfoImpl(regionInfo, 2));
+    mock->gemCreateExtRetVal = -1;
+
+    AllocationData allocationData;
+    allocationData.size = MemoryConstants::pageSize64k;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
+
+    EXPECT_EQ(allocation, nullptr);
+    mock->gemCreateExtRetVal = 0;
+}
+
 TEST_F(DrmMemoryManagerLocalMemoryTest, givenUseSystemMemoryFlagWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;

@@ -64,6 +64,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::gfxPartitions;
     using DrmMemoryManager::lockResourceInLocalMemoryImpl;
     using DrmMemoryManager::memoryForPinBBs;
+    using DrmMemoryManager::mmapFunction;
     using DrmMemoryManager::pinBBs;
     using DrmMemoryManager::pinThreshold;
     using DrmMemoryManager::pushSharedBufferObject;

@@ -468,7 +468,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         bool useLocalMem = heapAssigner.useExternal32BitHeap(allocationData.type) ? HwHelper::get(hwInfo->platform.eRenderCoreFamily).heapInLocalMem(*hwInfo) : false;
         return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMem);
     }
-    if (allocationData.flags.isUSMHostAllocation) {
+    if (allocationData.flags.isUSMHostAllocation && allocationData.hostPtr) {
         return allocateUSMHostGraphicsMemory(allocationData);
     }
     if (allocationData.hostPtr) {
