@@ -1363,6 +1363,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
     uint64_t gpuAddr = 0;
     constexpr uint32_t eventStateClear = static_cast<uint32_t>(-1);
+    bool dcFlushRequired = false;
 
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
@@ -1377,14 +1378,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
                                                                    eventStateClear,
                                                                    COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
 
-        bool dcFlushEnable = (!event->waitScope) ? false : true;
-        if (dcFlushEnable) {
-            if (isCopyOnly()) {
-                NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
-            } else {
-                NEO::PipeControlArgs args(true);
-                NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
-            }
+        dcFlushRequired |= (!event->waitScope) ? false : true;
+    }
+
+    if (dcFlushRequired) {
+        if (isCopyOnly()) {
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, false, false);
+        } else {
+            NEO::PipeControlArgs args(true);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
         }
     }
 

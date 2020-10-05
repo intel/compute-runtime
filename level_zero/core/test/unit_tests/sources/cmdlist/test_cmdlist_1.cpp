@@ -843,6 +843,33 @@ HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushTheP
     EXPECT_NE(cmdList.end(), itor);
 }
 
+HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushThePipeControlIsProgrammedOnlyOnce) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
+    auto &commandContainer = commandList->commandContainer;
+    MockEvent event, event2;
+    event.signalScope = 0;
+    event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    event2.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
+    ze_event_handle_t events[] = {&event, &event2};
+
+    commandList->appendWaitOnEvents(2, events);
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor++;
+    auto itor2 = find<PIPE_CONTROL *>(itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor2);
+    itor2++;
+    auto itor3 = find<PIPE_CONTROL *>(itor2, cmdList.end());
+    EXPECT_EQ(cmdList.end(), itor3);
+}
+
 using Platforms = IsAtLeastProduct<IGFX_SKYLAKE>;
 
 HWTEST2_F(CommandListCreate, givenCopyCommandListWhenProfilingBeforeCommandForCopyOnlyThenCommandsHaveCorrectEventOffsets, Platforms) {
