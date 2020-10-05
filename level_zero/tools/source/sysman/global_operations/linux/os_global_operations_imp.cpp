@@ -276,7 +276,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
 
     // Create a map with unique pid as key and engineType as value
     std::map<uint64_t, engineMemoryPairType> pidClientMap;
-    for (auto clientId : clientIds) {
+    for (const auto &clientId : clientIds) {
         // realClientPidPath will be something like: clients/<clientId>/pid
         std::string realClientPidPath = clientsDir + "/" + clientId + "/" + "pid";
         uint64_t pid;
@@ -303,7 +303,7 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
         int64_t engineType = 0;
         // Scan all engine files present in /sys/class/drm/card0/clients/<ClientId>/busy and check
         // whether that engine is used by process
-        for (auto engineNum : engineNums) {
+        for (const auto &engineNum : engineNums) {
             uint64_t timeSpent = 0;
             std::string engine = busyDirForEngines + "/" + engineNum;
             result = pSysfsAccess->read(engine, timeSpent);

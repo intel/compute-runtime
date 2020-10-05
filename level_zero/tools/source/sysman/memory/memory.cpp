@@ -29,7 +29,7 @@ void MemoryHandleContext::createHandle(ze_device_handle_t deviceHandle) {
 }
 
 ze_result_t MemoryHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
-    for (auto deviceHandle : deviceHandles) {
+    for (const auto &deviceHandle : deviceHandles) {
         createHandle(deviceHandle);
     }
     return ZE_RESULT_SUCCESS;
