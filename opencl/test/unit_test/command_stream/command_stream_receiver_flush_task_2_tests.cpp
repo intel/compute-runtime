@@ -470,6 +470,7 @@ struct MockScratchController : public ScratchSpaceController {
     using ScratchSpaceController::scratchAllocation;
     using ScratchSpaceController::ScratchSpaceController;
     void setRequiredScratchSpace(void *sshBaseAddress,
+                                 uint32_t scratchSlot,
                                  uint32_t requiredPerThreadScratchSize,
                                  uint32_t requiredPerThreadPrivateScratchSize,
                                  uint32_t currentTaskCount,
@@ -487,6 +488,16 @@ struct MockScratchController : public ScratchSpaceController {
     }
     uint64_t calculateNewGSH() override { return 0u; };
     uint64_t getScratchPatchAddress() override { return 0u; };
+
+    void programHeaps(HeapContainer &heapContainer,
+                      uint32_t scratchSlot,
+                      uint32_t requiredPerThreadScratchSize,
+                      uint32_t requiredPerThreadPrivateScratchSize,
+                      uint32_t currentTaskCount,
+                      OsContext &osContext,
+                      bool &stateBaseAddressDirty,
+                      bool &vfeStateDirty) override {
+    }
 
     void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) override{};
 };

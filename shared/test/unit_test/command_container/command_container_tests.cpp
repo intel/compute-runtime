@@ -213,7 +213,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerWhenInitializeCalledThenSSHHeapH
     auto heap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
 
     ASSERT_NE(nullptr, heap);
-    EXPECT_EQ(sizeof(RENDER_SURFACE_STATE), heap->getUsed());
+    EXPECT_EQ(4 * MemoryConstants::pageSize, heap->getUsed());
 }
 
 HWTEST_F(CommandContainerTest, givenNotEnoughSpaceInSSHWhenGettingHeapWithRequiredSizeAndAlignmentThenSSHHeapHasBindlessOffsetReserved) {
@@ -228,7 +228,7 @@ HWTEST_F(CommandContainerTest, givenNotEnoughSpaceInSSHWhenGettingHeapWithRequir
 
     cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sizeof(RENDER_SURFACE_STATE), 0);
 
-    EXPECT_EQ(sizeof(RENDER_SURFACE_STATE), heap->getUsed());
+    EXPECT_EQ(4 * MemoryConstants::pageSize, heap->getUsed());
 }
 
 TEST_F(CommandContainerTest, givenAvailableSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenExistingAllocationIsReturned) {

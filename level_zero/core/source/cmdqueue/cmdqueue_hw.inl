@@ -112,6 +112,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     NEO::ResidencyContainer residencyContainer;
     L0::Fence *fence = nullptr;
 
+    NEO::HeapContainer heapContainer;
+    heapContainer.reserve(numCommandLists);
+
     device->activateMetricGroups();
 
     size_t totalCmdBuffers = 0;
@@ -138,6 +141,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         interlockedMax(commandQueuePerThreadScratchSize, commandList->getCommandListPerThreadScratchSize());
+        if (commandList->getCommandListPerThreadScratchSize() != 0) {
+            heapContainer.push_back(commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE));
+        }
     }
 
     size_t linearStreamSizeEstimate = totalCmdBuffers * sizeof(MI_BATCH_BUFFER_START);
@@ -163,6 +169,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     bool gsbaStateDirty = false;
     bool frontEndStateDirty = false;
     handleScratchSpace(residencyContainer,
+                       heapContainer,
                        scratchSpaceController,
                        gsbaStateDirty, frontEndStateDirty);
 

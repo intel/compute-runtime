@@ -21,6 +21,8 @@ class MemoryManager;
 struct HardwareInfo;
 class OsContext;
 
+using HeapContainer = std::vector<IndirectHeap *>;
+
 namespace ScratchSpaceConstants {
 constexpr size_t scratchSpaceOffsetFor64Bit = 4096u;
 }
@@ -37,6 +39,7 @@ class ScratchSpaceController {
         return privateScratchAllocation;
     }
     virtual void setRequiredScratchSpace(void *sshBaseAddress,
+                                         uint32_t scratchSlot,
                                          uint32_t requiredPerThreadScratchSize,
                                          uint32_t requiredPerThreadPrivateScratchSize,
                                          uint32_t currentTaskCount,
@@ -47,6 +50,14 @@ class ScratchSpaceController {
     virtual uint64_t getScratchPatchAddress() = 0;
 
     virtual void reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) = 0;
+    virtual void programHeaps(HeapContainer &heapContainer,
+                              uint32_t scratchSlot,
+                              uint32_t requiredPerThreadScratchSize,
+                              uint32_t requiredPerThreadPrivateScratchSize,
+                              uint32_t currentTaskCount,
+                              OsContext &osContext,
+                              bool &stateBaseAddressDirty,
+                              bool &vfeStateDirty) = 0;
 
   protected:
     MemoryManager *getMemoryManager() const;

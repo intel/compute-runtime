@@ -23,6 +23,7 @@ ScratchSpaceControllerBase::ScratchSpaceControllerBase(uint32_t rootDeviceIndex,
 }
 
 void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
+                                                         uint32_t scratchSlot,
                                                          uint32_t requiredPerThreadScratchSize,
                                                          uint32_t requiredPerThreadPrivateScratchSize,
                                                          uint32_t currentTaskCount,
@@ -80,4 +81,13 @@ void ScratchSpaceControllerBase::reserveHeap(IndirectHeap::Type heapType, Indire
     }
 }
 
+void ScratchSpaceControllerBase::programHeaps(HeapContainer &heapContainer,
+                                              uint32_t offset,
+                                              uint32_t requiredPerThreadScratchSize,
+                                              uint32_t requiredPerThreadPrivateScratchSize,
+                                              uint32_t currentTaskCount,
+                                              OsContext &osContext,
+                                              bool &stateBaseAddressDirty,
+                                              bool &vfeStateDirty) {
+}
 } // namespace NEO

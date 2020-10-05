@@ -102,7 +102,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
     uint32_t getNumIddPerBlock() const { return numIddsPerBlock; }
 
   protected:
-    void reserveBindlessOffsets(IndirectHeap &sshHeap);
     void *iddBlock = nullptr;
     Device *device = nullptr;
     std::unique_ptr<HeapHelper> heapHelper;
