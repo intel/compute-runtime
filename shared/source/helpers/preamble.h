@@ -38,7 +38,7 @@ struct PreambleHelper {
     static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, aub_stream::EngineType engineType);
     static uint64_t programVFEState(LinearStream *pCommandStream,
                                     const HardwareInfo &hwInfo,
-                                    int scratchSize,
+                                    uint32_t scratchSize,
                                     uint64_t scratchAddress,
                                     uint32_t maxFrontEndThreads,
                                     aub_stream::EngineType engineType,
@@ -60,6 +60,7 @@ struct PreambleHelper {
     static size_t getPerDssBackedBufferCommandsSize(const HardwareInfo &hwInfo);
     static size_t getCmdSizeForPipelineSelect(const HardwareInfo &hwInfo);
     static size_t getSemaphoreDelayCommandSize();
+    static uint32_t getScratchSizeValueToProgramMediaVfeState(uint32_t scratchSize);
 };
 
 template <PRODUCT_FAMILY ProductFamily>

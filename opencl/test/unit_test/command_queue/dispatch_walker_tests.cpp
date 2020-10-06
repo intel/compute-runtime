@@ -885,7 +885,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, GivenMultipleKernelsWhenDispatch
     // create Indirect DSH heap
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
 
-    indirectHeap.align(HardwareCommandsHelper<FamilyType>::alignInterfaceDescriptorData);
+    indirectHeap.align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
     auto dshBeforeMultiDisptach = indirectHeap.getUsed();
 
     HardwareInterface<FamilyType>::dispatchWalker(

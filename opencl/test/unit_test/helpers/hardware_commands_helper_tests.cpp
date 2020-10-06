@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/helpers/hardware_commands_helper_tests.h"
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -321,7 +322,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
     auto usedBeforeIOH = ioh.getUsed();
     auto usedBeforeSSH = ssh.getUsed();
 
-    dsh.align(HardwareCommandsHelper<FamilyType>::alignInterfaceDescriptorData);
+    dsh.align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
     size_t IDToffset = dsh.getUsed();
     dsh.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
 
@@ -535,7 +536,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
-    dsh.align(HardwareCommandsHelper<FamilyType>::alignInterfaceDescriptorData);
+    dsh.align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
     size_t IDToffset = dsh.getUsed();
     dsh.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
 

@@ -828,15 +828,6 @@ void Kernel::resizeSurfaceStateHeap(void *pNewSsh, size_t newSshSize, size_t new
     localBindingTableOffset = newBindingTableOffset;
 }
 
-uint32_t Kernel::getScratchSizeValueToProgramMediaVfeState(int scratchSize) {
-    scratchSize >>= MemoryConstants::kiloByteShiftSize;
-    uint32_t valueToProgram = 0;
-    while (scratchSize >>= 1) {
-        valueToProgram++;
-    }
-    return valueToProgram;
-}
-
 cl_int Kernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) {
     cl_int retVal = CL_SUCCESS;
     bool updateExposedKernel = true;

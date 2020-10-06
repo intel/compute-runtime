@@ -33,7 +33,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
     auto sizeSamplerState = sizeof(SAMPLER_STATE) * samplerCount;
     auto borderColorSize = samplerStateOffset - borderColorOffset;
 
-    dsh->align(alignIndirectStatePointer);
+    dsh->align(EncodeStates<Family>::alignIndirectStatePointer);
     auto borderColorOffsetInDsh = static_cast<uint32_t>(dsh->getUsed());
 
     auto borderColor = dsh->getSpace(borderColorSize);
@@ -312,7 +312,7 @@ template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset) {
 
     if (container.nextIddInBlock == container.getNumIddPerBlock()) {
-        container.getIndirectHeap(HeapType::DYNAMIC_STATE)->align(HardwareCommandsHelper<Family>::alignInterfaceDescriptorData);
+        container.getIndirectHeap(HeapType::DYNAMIC_STATE)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
         container.setIddBlock(container.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE,
                                                               sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock()));
         container.nextIddInBlock = 0;

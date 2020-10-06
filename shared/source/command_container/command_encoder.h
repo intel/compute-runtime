@@ -72,6 +72,7 @@ struct EncodeStates {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
     static const uint32_t alignIndirectStatePointer = MemoryConstants::cacheLineSize;
+    static const size_t alignInterfaceDescriptorData = MemoryConstants::cacheLineSize;
 
     static uint32_t copySamplerState(IndirectHeap *dsh,
                                      uint32_t samplerStateOffset,

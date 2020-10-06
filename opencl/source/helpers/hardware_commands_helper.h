@@ -143,9 +143,6 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
 
     static void programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);
 
-    static const size_t alignInterfaceDescriptorData = 64 * sizeof(uint8_t);
-    static const uint32_t alignIndirectStatePointer = 64 * sizeof(uint8_t);
-
     static bool doBindingTablePrefetch();
 
     static bool inlineDataProgrammingRequired(const Kernel &kernel);

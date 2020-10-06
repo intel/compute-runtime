@@ -46,13 +46,14 @@ size_t HardwareCommandsHelper<GfxFamily>::getSizeRequiredDSH(
                                ? patchInfo.samplerStateArray->Offset - patchInfo.samplerStateArray->BorderColorOffset
                                : 0;
 
-    borderColorSize = alignUp(borderColorSize + alignIndirectStatePointer - 1, alignIndirectStatePointer);
+    borderColorSize = alignUp(borderColorSize + EncodeStates<GfxFamily>::alignIndirectStatePointer - 1,
+                              EncodeStates<GfxFamily>::alignIndirectStatePointer);
 
     totalSize += borderColorSize + additionalSizeRequiredDsh();
 
     DEBUG_BREAK_IF(!(totalSize >= kernel.getDynamicStateHeapSize() || kernel.getKernelInfo().isVmeWorkload));
 
-    return alignUp(totalSize, alignInterfaceDescriptorData);
+    return alignUp(totalSize, EncodeStates<GfxFamily>::alignInterfaceDescriptorData);
 }
 
 template <typename GfxFamily>

@@ -204,7 +204,6 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     Program *getProgram() const { return program; }
 
-    static uint32_t getScratchSizeValueToProgramMediaVfeState(int scratchSize);
     uint32_t getScratchSize() {
         return kernelInfo.patchInfo.mediavfestate ? kernelInfo.patchInfo.mediavfestate->PerThreadScratchSpace : 0;
     }

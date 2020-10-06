@@ -107,7 +107,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     auto numSupportedDevices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getNumSupportedDevices();
     TimestampPacketHelper::programCsrDependencies<GfxFamily>(*commandStream, csrDependencies, numSupportedDevices);
 
-    dsh->align(HardwareCommandsHelper<GfxFamily>::alignInterfaceDescriptorData);
+    dsh->align(EncodeStates<GfxFamily>::alignInterfaceDescriptorData);
 
     uint32_t interfaceDescriptorIndex = 0;
     const size_t offsetInterfaceDescriptorTable = dsh->getUsed();

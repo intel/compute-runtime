@@ -13,8 +13,6 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
 
-#include "opencl/source/kernel/kernel.h"
-
 #include "hw_cmds.h"
 #include "reg_configs_common.h"
 
@@ -127,6 +125,16 @@ bool PreambleHelper<GfxFamily>::isL3Configurable(const HardwareInfo &hwInfo) {
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo) {
+}
+
+template <typename GfxFamily>
+uint32_t PreambleHelper<GfxFamily>::getScratchSizeValueToProgramMediaVfeState(uint32_t scratchSize) {
+    scratchSize >>= static_cast<uint32_t>(MemoryConstants::kiloByteShiftSize);
+    uint32_t valueToProgram = 0;
+    while (scratchSize >>= 1) {
+        valueToProgram++;
+    }
+    return valueToProgram;
 }
 
 } // namespace NEO

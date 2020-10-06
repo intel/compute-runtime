@@ -27,8 +27,8 @@
 using namespace NEO;
 
 struct TestParam2 {
-    cl_uint ScratchSize;
-} TestParamTable2[] = {{1024}, {2048}, {4096}, {8192}, {16384}};
+    uint32_t scratchSize;
+} TestParamTable2[] = {{1024u}, {2048u}, {4096u}, {8192u}, {16384u}};
 
 struct TestParam {
     cl_uint globalWorkSizeX;
@@ -308,20 +308,20 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     EXPECT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
 
     SPatchMediaVFEState mediaVFEstate;
-    auto scratchSize = GetParam().ScratchSize;
+    auto scratchSize = GetParam().scratchSize;
 
     mediaVFEstate.PerThreadScratchSpace = scratchSize;
 
     MockKernelWithInternals mockKernel(*pClDevice);
     mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
 
-    auto sizeToProgram = (scratchSize / MemoryConstants::kiloByte);
-    auto bitValue = 0u;
+    uint32_t sizeToProgram = (scratchSize / static_cast<uint32_t>(MemoryConstants::kiloByte));
+    uint32_t bitValue = 0u;
     while (sizeToProgram >>= 1) {
         bitValue++;
     }
 
-    auto valueToProgram = Kernel::getScratchSizeValueToProgramMediaVfeState(scratchSize);
+    auto valueToProgram = PreambleHelper<FamilyType>::getScratchSizeValueToProgramMediaVfeState(scratchSize);
     EXPECT_EQ(bitValue, valueToProgram);
 
     enqueueKernel<FamilyType>(mockKernel);
@@ -443,20 +443,20 @@ HWTEST_P(EnqueueKernelWithScratch, GivenKernelRequiringScratchWhenItIsEnqueuedWi
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     SPatchMediaVFEState mediaVFEstate;
-    auto scratchSize = 1024;
+    uint32_t scratchSize = 1024u;
 
     mediaVFEstate.PerThreadScratchSpace = scratchSize;
 
     MockKernelWithInternals mockKernel(*pClDevice);
     mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
 
-    auto sizeToProgram = (scratchSize / MemoryConstants::kiloByte);
-    auto bitValue = 0u;
+    uint32_t sizeToProgram = (scratchSize / static_cast<uint32_t>(MemoryConstants::kiloByte));
+    uint32_t bitValue = 0u;
     while (sizeToProgram >>= 1) {
         bitValue++;
     }
 
-    auto valueToProgram = Kernel::getScratchSizeValueToProgramMediaVfeState(scratchSize);
+    auto valueToProgram = PreambleHelper<FamilyType>::getScratchSizeValueToProgramMediaVfeState(scratchSize);
     EXPECT_EQ(bitValue, valueToProgram);
 
     enqueueKernel<FamilyType, false>(mockKernel);

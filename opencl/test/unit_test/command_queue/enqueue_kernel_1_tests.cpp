@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/pause_on_gpu_properties.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/test/unit_test/cmd_parse/hw_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
@@ -461,7 +462,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenSecondEnqueueWithTheSameScra
     MockKernelWithInternals mockKernel(*pClDevice);
     mockKernel.kernelInfo.patchInfo.mediavfestate = &mediaVFEstate;
 
-    auto sizeToProgram = Kernel::getScratchSizeValueToProgramMediaVfeState(scratchSize);
+    auto sizeToProgram = PreambleHelper<FamilyType>::getScratchSizeValueToProgramMediaVfeState(scratchSize);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     hwParser.parseCommands<FamilyType>(*pCmdQ);
