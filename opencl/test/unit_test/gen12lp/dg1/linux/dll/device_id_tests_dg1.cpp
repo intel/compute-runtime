@@ -14,10 +14,11 @@
 using namespace NEO;
 
 TEST(Dg1DeviceIdTest, supportedDeviceId) {
-    std::array<DeviceDescriptor, 3> expectedDescriptors = {{
-        {DEV_ID_4905, &DG1_CONFIG::hwInfo, &DG1_CONFIG::setupHardwareInfo, GTTYPE_GT2},
-        {DEV_ID_4906, &DG1_CONFIG::hwInfo, &DG1_CONFIG::setupHardwareInfo, GTTYPE_GT2},
-        {DEV_ID_4907, &DG1_CONFIG::hwInfo, &DG1_CONFIG::setupHardwareInfo, GTTYPE_GT2},
+    std::array<DeviceDescriptor, 4> expectedDescriptors = {{
+        {0x4905, &DG1_CONFIG::hwInfo, &DG1_CONFIG::setupHardwareInfo, GTTYPE_GT2},
+        {0x4906, &DG1_CONFIG::hwInfo, &DG1_CONFIG::setupHardwareInfo, GTTYPE_GT2},
+        {0x4907, &DG1_CONFIG::hwInfo, &DG1_CONFIG::setupHardwareInfo, GTTYPE_GT2},
+        {0x4908, &DG1_CONFIG::hwInfo, &DG1_CONFIG::setupHardwareInfo, GTTYPE_GT2},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
