@@ -13,13 +13,10 @@ namespace NEO {
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programL3(LinearStream *pCommandStream, uint32_t l3Config) {
-    auto pCmd = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
-
-    cmd.setRegisterOffset(L3CNTLRegisterOffset<GfxFamily>::registerOffset);
-    cmd.setDataDword(l3Config);
-
-    *pCmd = cmd;
+    LriHelper<GfxFamily>::program(pCommandStream,
+                                  L3CNTLRegisterOffset<GfxFamily>::registerOffset,
+                                  l3Config,
+                                  false);
 }
 
 template <typename GfxFamily>

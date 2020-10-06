@@ -42,13 +42,18 @@ void DeviceQueueHw<Family>::addMiAtomicCmdWa(uint64_t atomicOpPlaceholder) {
 
 template <>
 void DeviceQueueHw<Family>::addLriCmdWa(bool setArbCheck) {
-    auto lri = slbCS.getSpaceForCmd<Family::MI_LOAD_REGISTER_IMM>();
-    *lri = Family::cmdInitLoadRegisterImm;
-    lri->setRegisterOffset(0x2248); // CTXT_PREMP_DBG offset
-    if (setArbCheck)
-        lri->setDataDword(0x00000100); // set only bit 8 (Preempt On MI_ARB_CHK Only)
-    else
-        lri->setDataDword(0x0);
+    // CTXT_PREMP_DBG offset
+    constexpr uint32_t registerAddress = 0x2248u;
+    uint32_t value = 0u;
+    if (setArbCheck) {
+        // set only bit 8 (Preempt On MI_ARB_CHK Only)
+        value = 0x00000100;
+    }
+
+    LriHelper<Family>::program(&slbCS,
+                               registerAddress,
+                               value,
+                               false);
 }
 
 template <>

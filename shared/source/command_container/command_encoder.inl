@@ -65,7 +65,7 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
     }
 
     EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R0, offset);
-    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, 0);
+    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, 0, false);
 
     i = 0;
     while (i < logLws) {
@@ -93,7 +93,7 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &container, uint64_t firstOperand, uint32_t secondOperand) {
     EncodeSetMMIO<Family>::encodeMEM(container, CS_GPR_R0, firstOperand);
-    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, secondOperand);
+    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, secondOperand, false);
 
     /* CS_GPR_R* registers map to AluRegisters::R_* registers */
     EncodeMath<Family>::greaterThan(container, AluRegisters::R_0,
@@ -229,12 +229,11 @@ void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &c
 }
 
 template <typename Family>
-void EncodeSetMMIO<Family>::encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data) {
-    MI_LOAD_REGISTER_IMM cmd = Family::cmdInitLoadRegisterImm;
-    cmd.setRegisterOffset(offset);
-    cmd.setDataDword(data);
-    auto buffer = container.getCommandStream()->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    *buffer = cmd;
+inline void EncodeSetMMIO<Family>::encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data, bool remap) {
+    LriHelper<Family>::program(container.getCommandStream(),
+                               offset,
+                               data,
+                               remap);
 }
 
 template <typename Family>

@@ -148,7 +148,7 @@ struct EncodeSetMMIO {
     static const size_t sizeMEM = sizeof(MI_LOAD_REGISTER_MEM);
     static const size_t sizeREG = sizeof(MI_LOAD_REGISTER_REG);
 
-    static void encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data);
+    static void encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data, bool remap);
 
     static void encodeMEM(CommandContainer &container, uint32_t offset, uint64_t address);
 

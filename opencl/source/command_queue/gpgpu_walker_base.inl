@@ -53,12 +53,10 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
     *pCmd = cmdReg;
 
     // Load "Mask" into CS_GPR_R1
-    typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    auto pCmd2 = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    MI_LOAD_REGISTER_IMM cmdImm = GfxFamily::cmdInitLoadRegisterImm;
-    cmdImm.setRegisterOffset(CS_GPR_R1);
-    cmdImm.setDataDword(mask);
-    *pCmd2 = cmdImm;
+    LriHelper<GfxFamily>::program(pCommandStream,
+                                  CS_GPR_R1,
+                                  mask,
+                                  false);
 
     // Add instruction MI_MATH with 4 MI_MATH_ALU_INST_INLINE operands
     auto pCmd3 = reinterpret_cast<uint32_t *>(pCommandStream->getSpace(sizeof(MI_MATH) + NUM_ALU_INST_FOR_READ_MODIFY_WRITE * sizeof(MI_MATH_ALU_INST_INLINE)));

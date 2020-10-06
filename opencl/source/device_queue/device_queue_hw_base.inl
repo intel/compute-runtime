@@ -202,14 +202,18 @@ size_t DeviceQueueHw<GfxFamily>::getCSPrefetchSize() {
 
 template <typename GfxFamily>
 void DeviceQueueHw<GfxFamily>::addLriCmd(bool setArbCheck) {
-    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
-    auto lri = slbCS.getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    *lri = GfxFamily::cmdInitLoadRegisterImm;
-    lri->setRegisterOffset(0x2248); // CTXT_PREMP_DBG offset
-    if (setArbCheck)
-        lri->setDataDword(0x00000100); // set only bit 8 (Preempt On MI_ARB_CHK Only)
-    else
-        lri->setDataDword(0x0);
+    // CTXT_PREMP_DBG offset
+    constexpr uint32_t registerAddress = 0x2248u;
+    uint32_t value = 0u;
+    if (setArbCheck) {
+        // set only bit 8 (Preempt On MI_ARB_CHK Only)
+        value = 0x00000100;
+    }
+
+    LriHelper<GfxFamily>::program(&slbCS,
+                                  registerAddress,
+                                  value,
+                                  false);
 }
 
 template <typename GfxFamily>

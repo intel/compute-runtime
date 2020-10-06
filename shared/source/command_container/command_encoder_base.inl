@@ -367,7 +367,7 @@ template <typename Family>
 void EncodeL3State<Family>::encode(CommandContainer &container, bool enableSLM) {
     auto offset = L3CNTLRegisterOffset<Family>::registerOffset;
     auto data = PreambleHelper<Family>::getL3Config(container.getDevice()->getHardwareInfo(), enableSLM);
-    EncodeSetMMIO<Family>::encodeIMM(container, offset, data);
+    EncodeSetMMIO<Family>::encodeIMM(container, offset, data, false);
 }
 
 template <typename GfxFamily>

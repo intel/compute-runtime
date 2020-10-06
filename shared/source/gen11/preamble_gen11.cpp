@@ -72,13 +72,10 @@ void PreambleHelper<ICLFamily>::programThreadArbitration(LinearStream *pCommandS
     cmd.setCommandStreamerStallEnable(true);
     *pipeControl = cmd;
 
-    auto pCmd = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    MI_LOAD_REGISTER_IMM lriCmd = ICLFamily::cmdInitLoadRegisterImm;
-
-    lriCmd.setRegisterOffset(RowChickenReg4::address);
-    lriCmd.setDataDword(RowChickenReg4::regDataForArbitrationPolicy[requiredThreadArbitrationPolicy]);
-
-    *pCmd = lriCmd;
+    LriHelper<ICLFamily>::program(pCommandStream,
+                                  RowChickenReg4::address,
+                                  RowChickenReg4::regDataForArbitrationPolicy[requiredThreadArbitrationPolicy],
+                                  false);
 }
 
 template <>

@@ -72,11 +72,10 @@ void PreambleHelper<SKLFamily>::programThreadArbitration(LinearStream *pCommandS
     cmd.setCommandStreamerStallEnable(true);
     *pipeControl = cmd;
 
-    auto pCmd = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    MI_LOAD_REGISTER_IMM lriCmd = SKLFamily::cmdInitLoadRegisterImm;
-    lriCmd.setRegisterOffset(DebugControlReg2::address);
-    lriCmd.setDataDword(DebugControlReg2::getRegData(requiredThreadArbitrationPolicy));
-    *pCmd = lriCmd;
+    LriHelper<SKLFamily>::program(pCommandStream,
+                                  DebugControlReg2::address,
+                                  DebugControlReg2::getRegData(requiredThreadArbitrationPolicy),
+                                  false);
 }
 
 template <>

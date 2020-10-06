@@ -30,7 +30,7 @@ class CommandSetMMIOFixture : public DeviceFixture {
 using CommandSetMMIOTest = Test<CommandSetMMIOFixture>;
 
 HWTEST_F(CommandSetMMIOTest, appendsAMI_LOAD_REGISTER_IMM) {
-    EncodeSetMMIO<FamilyType>::encodeIMM(*cmdContainer.get(), 0xf00, 0xbaa);
+    EncodeSetMMIO<FamilyType>::encodeIMM(*cmdContainer.get(), 0xf00, 0xbaa, false);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
