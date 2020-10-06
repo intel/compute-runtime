@@ -504,4 +504,9 @@ bool MemorySynchronizationCommands<GfxFamily>::isPipeControlPriorToPipelineSelec
     return false;
 }
 
+template <typename GfxFamily>
+inline bool NEO::HwHelperHw<GfxFamily>::isCooperativeDispatchSupported(const aub_stream::EngineType engine, const PRODUCT_FAMILY productFamily) const {
+    return true;
+}
+
 } // namespace NEO

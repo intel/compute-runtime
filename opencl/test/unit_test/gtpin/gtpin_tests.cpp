@@ -24,6 +24,7 @@
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/gtpin/gtpin_init.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
+#include "opencl/source/helpers/validators.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/program/create.inl"
@@ -913,7 +914,13 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
 
     cl_uint workDim = 1;
     size_t localWorkSize[3] = {1, 1, 1};
-    size_t n = pKernel1->getMaxWorkGroupCount(workDim, localWorkSize);
+    CommandQueue *commandQueue = nullptr;
+    WithCastToInternal(cmdQ, &commandQueue);
+    HwHelper &hwHelper = HwHelper::get(pDevice->getDevice().getHardwareInfo().platform.eRenderCoreFamily);
+    if (!hwHelper.isCooperativeDispatchSupported(commandQueue->getGpgpuEngine().getEngineType(), pDevice->getDevice().getHardwareInfo().platform.eProductFamily)) {
+        commandQueue->getGpgpuEngine().osContext = commandQueue->getDevice().getEngine(aub_stream::ENGINE_CCS, true, false).osContext;
+    }
+    size_t n = pKernel1->getMaxWorkGroupCount(workDim, localWorkSize, commandQueue);
     auto buff10 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
     auto buff11 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
 

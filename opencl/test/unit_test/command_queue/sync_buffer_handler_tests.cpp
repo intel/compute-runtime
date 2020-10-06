@@ -25,25 +25,56 @@ class MockSyncBufferHandler : public SyncBufferHandler {
     using SyncBufferHandler::usedBufferSize;
 };
 
-class SyncBufferHandlerTest : public EnqueueHandlerTest {
+class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
+  public:
+    void SetUp() {
+        hardwareInfo = *defaultHwInfo;
+        uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
+        hardwareInfoSetup[productFamily](&hardwareInfo, true, hwInfoConfig);
+        SetUpImpl(&hardwareInfo);
+    }
+
+    void TearDown() {
+        context->decRefInternal();
+        delete pClDevice;
+        pClDevice = nullptr;
+        pDevice = nullptr;
+    }
+
+    void SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
+        pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo);
+        ASSERT_NE(nullptr, pDevice);
+        pClDevice = new MockClDevice{pDevice};
+        ASSERT_NE(nullptr, pClDevice);
+
+        auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
+        pTagMemory = commandStreamReceiver.getTagAddress();
+        ASSERT_NE(nullptr, const_cast<uint32_t *>(pTagMemory));
+
+        context = new NEO::MockContext(pClDevice);
+    }
+};
+
+class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
   public:
     void SetUp() override {}
     void TearDown() override {}
 
     template <typename FamilyType>
     void SetUpT() {
-        EnqueueHandlerTest::SetUp();
+        SyncBufferEnqueueHandlerTest::SetUp();
         kernelInternals = std::make_unique<MockKernelWithInternals>(*pClDevice, context);
         kernel = kernelInternals->mockKernel;
         kernel->executionType = KernelExecutionType::Concurrent;
         commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
+        hwHelper = &HwHelper::get(kernel->getDevice().getHardwareInfo().platform.eRenderCoreFamily);
     }
 
     template <typename FamilyType>
     void TearDownT() {
         commandQueue->release();
         kernelInternals.reset();
-        EnqueueHandlerTest::TearDown();
+        SyncBufferEnqueueHandlerTest::TearDown();
     }
 
     void patchAllocateSyncBuffer() {
@@ -61,6 +92,10 @@ class SyncBufferHandlerTest : public EnqueueHandlerTest {
         return clEnqueueNDCountKernelINTEL(commandQueue, kernel, workDim, gwOffset, workgroupCount, lws, 0, nullptr, nullptr);
     }
 
+    bool isCooperativeDispatchSupported() {
+        return hwHelper->isCooperativeDispatchSupported(commandQueue->getGpgpuEngine().getEngineType(), kernel->getDevice().getHardwareInfo().platform.eProductFamily);
+    }
+
     const cl_uint workDim = 1;
     const size_t gwOffset[3] = {0, 0, 0};
     const size_t lws[3] = {10, 1, 1};
@@ -71,6 +106,7 @@ class SyncBufferHandlerTest : public EnqueueHandlerTest {
     MockKernel *kernel;
     MockCommandQueue *commandQueue;
     SPatchAllocateSyncBuffer sPatchAllocateSyncBuffer;
+    HwHelper *hwHelper;
 };
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenAllocateSyncBufferPatchAndConcurrentKernelWhenEnqueuingKernelThenSyncBufferIsUsed) {
@@ -109,7 +145,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenConcurrentKernelWithAllocateSyncB
 }
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenMaxWorkgroupCountWhenEnqueuingConcurrentKernelThenSuccessIsReturned) {
-    auto maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws);
+    auto maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws, commandQueue);
     workgroupCount[0] = maxWorkGroupCount;
     globalWorkSize[0] = maxWorkGroupCount * lws[0];
 
@@ -118,7 +154,7 @@ HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenMaxWorkgroupCountWhenEnqueuingCon
 }
 
 HWTEST_TEMPLATED_F(SyncBufferHandlerTest, GivenTooHighWorkgroupCountWhenEnqueuingConcurrentKernelThenErrorIsReturned) {
-    size_t maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws);
+    size_t maxWorkGroupCount = kernel->getMaxWorkGroupCount(workDim, lws, commandQueue);
     workgroupCount[0] = maxWorkGroupCount + 1;
     globalWorkSize[0] = maxWorkGroupCount * lws[0] + 1;
 
