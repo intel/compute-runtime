@@ -39,9 +39,11 @@ endfunction()
 ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
 link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
-add_custom_target(unit_tests)
 add_custom_target(prepare_test_kernels)
+add_custom_target(copy_test_files_per_product)
 add_custom_target(run_unit_tests ALL)
+add_custom_target(unit_tests)
+add_dependencies(unit_tests copy_test_files_per_product)
 
 set(IGDRCL_SRCS_tests_local
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
