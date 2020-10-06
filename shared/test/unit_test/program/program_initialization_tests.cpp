@@ -7,6 +7,7 @@
 
 #include "shared/source/program/program_initialization.h"
 #include "shared/test/unit_test/compiler_interface/linker_mock.h"
+#include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
 #include "shared/test/unit_test/test_macros/test_checks_shared.h"
 
@@ -205,4 +206,48 @@ TEST(AllocateGlobalSurfaceTest, WhenGlobalsAreExportedAndAllocationFailsThenGrac
 
     alloc = allocateGlobalsSurface(&svmAllocsManager, *pDevice, initData.size(), false /* constant */, &linkerInputExportGlobalVariables, initData.data());
     EXPECT_EQ(nullptr, alloc);
+}
+
+TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenAllocatingNonSvmAllocationThenBlitterIsUsed) {
+    REQUIRE_SVM_OR_SKIP(defaultHwInfo.get());
+    DebugManagerStateRestore restorer;
+
+    uint32_t blitsCounter = 0;
+    uint32_t expectedBlitsCount = 0;
+    auto mockBlitMemoryToAllocation = [&blitsCounter](const Device &device, GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                                      Vec3<size_t> size) -> BlitOperationResult {
+        blitsCounter++;
+        return BlitOperationResult::Success;
+    };
+    VariableBackup<BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup{
+        &BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation};
+
+    LocalMemoryAccessMode localMemoryAccessModes[] = {
+        LocalMemoryAccessMode::Default,
+        LocalMemoryAccessMode::CpuAccessAllowed,
+        LocalMemoryAccessMode::CpuAccessDisallowed};
+
+    std::vector<uint8_t> initData;
+    initData.resize(64, 7U);
+
+    for (auto localMemoryAccessMode : localMemoryAccessModes) {
+        DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(localMemoryAccessMode));
+        for (auto isLocalMemorySupported : ::testing::Bool()) {
+            DebugManager.flags.EnableLocalMemory.set(isLocalMemorySupported);
+            MockDevice device;
+            MockSVMAllocsManager svmAllocsManager(device.getMemoryManager());
+
+            auto pAllocation = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), true /* constant */,
+                                                      nullptr /* linker input */, initData.data());
+            ASSERT_NE(nullptr, pAllocation);
+            EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(pAllocation->getGpuAddress()))));
+            EXPECT_EQ(GraphicsAllocation::AllocationType::CONSTANT_SURFACE, pAllocation->getAllocationType());
+
+            if (pAllocation->isAllocatedInLocalMemoryPool() && (localMemoryAccessMode == LocalMemoryAccessMode::CpuAccessDisallowed)) {
+                expectedBlitsCount++;
+            }
+            EXPECT_EQ(expectedBlitsCount, blitsCounter);
+            device.getMemoryManager()->freeGraphicsMemory(pAllocation);
+        }
+    }
 }
