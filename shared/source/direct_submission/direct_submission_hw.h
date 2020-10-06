@@ -142,7 +142,7 @@ class DirectSubmissionHw {
     uint32_t workloadModeOneExpectedValue = 0u;
 
     bool ringStart = false;
-    bool disableCpuCacheFlush = false;
+    bool disableCpuCacheFlush = true;
     bool disableCacheFlush = false;
     bool disableMonitorFence = false;
 };

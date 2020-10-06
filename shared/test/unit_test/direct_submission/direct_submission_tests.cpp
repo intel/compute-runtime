@@ -61,7 +61,7 @@ HWTEST_F(DirectSubmissionTest, whenDebugCacheFlushDisabledNotSetThenExpectCpuCac
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionInitializedWhenRingIsStartedThenExpectAllocationsCreatedAndCommandsDispatched) {
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
-    EXPECT_FALSE(directSubmission.disableCpuCacheFlush);
+    EXPECT_TRUE(directSubmission.disableCpuCacheFlush);
 
     bool ret = directSubmission.initialize(true);
     EXPECT_TRUE(ret);
@@ -123,7 +123,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionSwitchBuffersWhenCurrentIsSe
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionAllocateFailWhenRingIsStartedThenExpectRingNotStarted) {
     MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*pDevice,
                                                                                       *osContext.get());
-    EXPECT_FALSE(directSubmission.disableCpuCacheFlush);
+    EXPECT_TRUE(directSubmission.disableCpuCacheFlush);
 
     directSubmission.allocateOsResourcesReturn = false;
     bool ret = directSubmission.initialize(true);
