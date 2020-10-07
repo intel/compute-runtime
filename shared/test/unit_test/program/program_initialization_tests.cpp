@@ -235,6 +235,7 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
         for (auto isLocalMemorySupported : ::testing::Bool()) {
             DebugManager.flags.EnableLocalMemory.set(isLocalMemorySupported);
             MockDevice device;
+            device.getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
             MockSVMAllocsManager svmAllocsManager(device.getMemoryManager());
 
             auto pAllocation = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), true /* constant */,

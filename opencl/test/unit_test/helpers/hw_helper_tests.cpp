@@ -905,16 +905,21 @@ HWTEST_F(HwHelperTest, givenDefaultHwHelperHwWhenMinimalSIMDSizeIsQueriedThen8Is
 HWTEST_F(HwHelperTest, whenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectValuesAreReturned) {
     DebugManagerStateRestore restore{};
     auto &helper = HwHelper::get(renderCoreFamily);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
 
-    auto expectedDefaultValue = (helper.getLocalMemoryAccessMode(*defaultHwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed);
-    EXPECT_EQ(expectedDefaultValue, helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo));
+    auto expectedDefaultValue = (helper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed);
+    EXPECT_EQ(expectedDefaultValue, helper.isBlitCopyRequiredForLocalMemory(hwInfo));
 
     DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
-    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo));
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo));
     DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
-    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo));
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo));
+
     DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
-    EXPECT_TRUE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo));
+    EXPECT_TRUE(helper.isBlitCopyRequiredForLocalMemory(hwInfo));
+    hwInfo.capabilityTable.blitterOperationsSupported = false;
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo));
 }
 
 HWTEST_F(HwHelperTest, whenPatchingGlobalBuffersThenDontForceBlitter) {

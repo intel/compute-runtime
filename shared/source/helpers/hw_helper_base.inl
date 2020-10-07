@@ -422,7 +422,7 @@ inline bool HwHelperHw<GfxFamily>::allowRenderCompression(const HardwareInfo &hw
 template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo) const {
     HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    return (hwHelper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed);
+    return (hwHelper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed) && hwInfo.capabilityTable.blitterOperationsSupported;
 }
 
 template <typename GfxFamily>
