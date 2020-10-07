@@ -49,6 +49,11 @@ void HwInfoConfigHw<IGFX_DG1>::adjustPlatformForProductFamily(HardwareInfo *hwIn
 }
 
 template <>
+bool HwInfoConfigHw<IGFX_DG1>::isEvenContextCountRequired() {
+    return true;
+}
+
+template <>
 uint64_t HwInfoConfigHw<IGFX_DG1>::getSharedSystemMemCapabilities() {
     return 0;
 }
