@@ -278,8 +278,8 @@ ze_result_t LinuxFrequencyImp::getMinVal(double &minVal) {
 void LinuxFrequencyImp::init() {
     minFreqFile = "gt_min_freq_mhz";
     maxFreqFile = "gt_max_freq_mhz";
-    requestFreqFile = "gt_cur_freq_mhz";
-    tdpFreqFile = "gt_boost_freq_mhz";
+    requestFreqFile = "gt_punit_req_freq_mhz";
+    tdpFreqFile = "gt_raplPL1_freq_mhz";
     actualFreqFile = "gt_act_freq_mhz";
     efficientFreqFile = "gt_RP1_freq_mhz";
     maxValFreqFile = "gt_RP0_freq_mhz";
