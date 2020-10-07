@@ -52,6 +52,15 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
   endif()
 
   create_project_source_tree(${LIB_NAME})
+
+  # Enable SSE4/AVX2 options for files that need them
+  if(MSVC)
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/local_id_gen_avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX2)
+  else()
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/local_id_gen_avx2.cpp PROPERTIES COMPILE_FLAGS -mavx2)
+    set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/helpers/local_id_gen_sse4.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
+  endif()
+
 endfunction()
 
 set(NEO_CORE_COMPILE_DEFS "")

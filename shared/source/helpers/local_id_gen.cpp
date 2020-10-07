@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/command_queue/local_id_gen.h"
+#include "shared/source/helpers/local_id_gen.h"
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/utilities/cpu_info.h"
