@@ -571,11 +571,11 @@ HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool h
     return HeapIndex::HEAP_STANDARD;
 }
 
-bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy) {
+bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {
     if (!graphicsAllocation->getUnderlyingBuffer()) {
         return false;
     }
-    memcpy_s(graphicsAllocation->getUnderlyingBuffer(), graphicsAllocation->getUnderlyingBufferSize(), memoryToCopy, sizeToCopy);
+    memcpy_s(ptrOffset(graphicsAllocation->getUnderlyingBuffer(), destinationOffset), (graphicsAllocation->getUnderlyingBufferSize() - destinationOffset), memoryToCopy, sizeToCopy);
     return true;
 }
 

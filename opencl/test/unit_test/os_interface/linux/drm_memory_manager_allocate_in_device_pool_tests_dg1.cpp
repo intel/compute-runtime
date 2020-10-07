@@ -96,7 +96,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationThen
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, dataToCopy.size(), GraphicsAllocation::AllocationType::BUFFER, device->getDeviceBitfield()});
     ASSERT_NE(nullptr, allocation);
 
-    auto ret = memoryManager->copyMemoryToAllocation(allocation, dataToCopy.data(), dataToCopy.size());
+    auto ret = memoryManager->copyMemoryToAllocation(allocation, 0, dataToCopy.data(), dataToCopy.size());
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), dataToCopy.data(), dataToCopy.size()));
@@ -839,12 +839,16 @@ struct DrmMemoryManagerToTestCopyMemoryToAllocation : public DrmMemoryManager {
 };
 
 TEST_F(DrmMemoryManagerCopyMemoryToAllocationTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationReturnsSuccessThenAllocationIsFilledWithCorrectData) {
-    DrmMemoryManagerToTestCopyMemoryToAllocation drmMemoryManger(*executionEnvironment, true, MemoryConstants::pageSize);
-    std::vector<uint8_t> dataToCopy(drmMemoryManger.lockedLocalMemorySize, 1u);
+    size_t offset = 3;
+    size_t sourceAllocationSize = MemoryConstants::pageSize;
+    size_t destinationAllocationSize = sourceAllocationSize + offset;
+
+    DrmMemoryManagerToTestCopyMemoryToAllocation drmMemoryManger(*executionEnvironment, true, destinationAllocationSize);
+    std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
 
     AllocationData allocData;
     allocData.allFlags = 0;
-    allocData.size = dataToCopy.size();
+    allocData.size = destinationAllocationSize;
     allocData.flags.allocateMemory = true;
     allocData.type = GraphicsAllocation::AllocationType::KERNEL_ISA;
     allocData.rootDeviceIndex = rootDeviceIndex;
@@ -852,10 +856,10 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationTest, givenDrmMemoryManagerWhenCopy
     auto allocation = drmMemoryManger.allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
 
-    auto ret = drmMemoryManger.copyMemoryToAllocation(allocation, dataToCopy.data(), dataToCopy.size());
+    auto ret = drmMemoryManger.copyMemoryToAllocation(allocation, offset, dataToCopy.data(), dataToCopy.size());
     EXPECT_TRUE(ret);
 
-    EXPECT_EQ(0, memcmp(drmMemoryManger.lockedLocalMemory.get(), dataToCopy.data(), dataToCopy.size()));
+    EXPECT_EQ(0, memcmp(ptrOffset(drmMemoryManger.lockedLocalMemory.get(), offset), dataToCopy.data(), dataToCopy.size()));
 
     drmMemoryManger.freeGraphicsMemory(allocation);
 }
@@ -874,23 +878,27 @@ TEST_F(DrmMemoryManagerCopyMemoryToAllocationTest, givenDrmMemoryManagerWhenCopy
     auto allocation = drmMemoryManger.allocateGraphicsMemoryInDevicePool(allocData, status);
     ASSERT_NE(nullptr, allocation);
 
-    auto ret = drmMemoryManger.copyMemoryToAllocation(allocation, dataToCopy.data(), dataToCopy.size());
+    auto ret = drmMemoryManger.copyMemoryToAllocation(allocation, 0, dataToCopy.data(), dataToCopy.size());
     EXPECT_FALSE(ret);
 
     drmMemoryManger.freeGraphicsMemory(allocation);
 }
 
 TEST_F(DrmMemoryManagerCopyMemoryToAllocationTest, givenDrmMemoryManagerWhenCopyMemoryToAllocationWithCpuPtrThenAllocationIsFilledWithCorrectData) {
-    DrmMemoryManagerToTestCopyMemoryToAllocation drmMemoryManger(*executionEnvironment, false, 0);
-    std::vector<uint8_t> dataToCopy(MemoryConstants::pageSize, 1u);
+    size_t offset = 3;
+    size_t sourceAllocationSize = MemoryConstants::pageSize;
+    size_t destinationAllocationSize = sourceAllocationSize + offset;
 
-    auto allocation = drmMemoryManger.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, dataToCopy.size(), GraphicsAllocation::AllocationType::KERNEL_ISA, mockDeviceBitfield});
+    DrmMemoryManagerToTestCopyMemoryToAllocation drmMemoryManger(*executionEnvironment, false, 0);
+    std::vector<uint8_t> dataToCopy(sourceAllocationSize, 1u);
+
+    auto allocation = drmMemoryManger.allocateGraphicsMemoryWithProperties({mockRootDeviceIndex, destinationAllocationSize, GraphicsAllocation::AllocationType::KERNEL_ISA, mockDeviceBitfield});
     ASSERT_NE(nullptr, allocation);
 
-    auto ret = drmMemoryManger.copyMemoryToAllocation(allocation, dataToCopy.data(), dataToCopy.size());
+    auto ret = drmMemoryManger.copyMemoryToAllocation(allocation, offset, dataToCopy.data(), dataToCopy.size());
     EXPECT_TRUE(ret);
 
-    EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), dataToCopy.data(), dataToCopy.size()));
+    EXPECT_EQ(0, memcmp(ptrOffset(allocation->getUnderlyingBuffer(), offset), dataToCopy.data(), dataToCopy.size()));
 
     drmMemoryManger.freeGraphicsMemory(allocation);
 }

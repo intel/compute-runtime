@@ -437,7 +437,7 @@ bool KernelInfo::createKernelAllocation(const Device &device) {
     if (kernelAllocation->isAllocatedInLocalMemoryPool() && hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo)) {
         status = (BlitHelperFunctions::blitMemoryToAllocation(device, kernelAllocation, 0, heapInfo.pKernelHeap, {kernelIsaSize, 1, 1}) == BlitOperationResult::Success);
     } else {
-        status = device.getMemoryManager()->copyMemoryToAllocation(kernelAllocation, heapInfo.pKernelHeap, kernelIsaSize);
+        status = device.getMemoryManager()->copyMemoryToAllocation(kernelAllocation, 0, heapInfo.pKernelHeap, kernelIsaSize);
     }
 
     return status;

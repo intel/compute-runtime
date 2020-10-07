@@ -56,7 +56,7 @@ class WddmMemoryManager : public MemoryManager {
 
     AlignedMallocRestrictions *getAlignedMallocRestrictions() override;
 
-    bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy) override;
+    bool copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) override;
     void *reserveCpuAddressRange(size_t size, uint32_t rootDeviceIndex) override;
     void releaseReservedCpuAddressRange(void *reserved, size_t size, uint32_t rootDeviceIndex) override;
     bool isCpuCopyRequired(const void *ptr) override;

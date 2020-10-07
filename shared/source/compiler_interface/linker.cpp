@@ -5,8 +5,9 @@
  *
  */
 
-#include "linker.h"
+#include "shared/source/compiler_interface/linker.h"
 
+#include "shared/source/compiler_interface/linker.inl"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -269,29 +270,13 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
                                       ? static_cast<uint32_t>(gpuAddressAs64bit & 0xffffffff)
                                       : gpuAddressAs64bit;
 
-        bool useBlitter = false;
-        if (pDevice && initData) {
-            auto &hwInfo = pDevice->getHardwareInfo();
-            auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-            if (dst->isAllocatedInLocalMemoryPool() && (helper.isBlitCopyRequiredForLocalMemory(hwInfo) || helper.forceBlitterUseForGlobalBuffers(hwInfo, dst))) {
-                useBlitter = true;
-            }
-        }
-
-        if (useBlitter) {
-            auto initValue = ptrOffset(initData, static_cast<uintptr_t>(relocation.offset));
+        if (initData) {
             if (patchSize == sizeof(uint64_t)) {
-                uint64_t value = *reinterpret_cast<const uint64_t *>(initValue) + incrementValue;
-                BlitHelperFunctions::blitMemoryToAllocation(*pDevice, dst, static_cast<size_t>(relocation.offset),
-                                                            &value, {sizeof(value), 1, 1});
+                patchIncrement<uint64_t>(pDevice, dst, static_cast<size_t>(relocation.offset), initData, incrementValue);
             } else {
-                uint32_t value = *reinterpret_cast<const uint32_t *>(initValue) + static_cast<uint32_t>(incrementValue);
-                BlitHelperFunctions::blitMemoryToAllocation(*pDevice, dst, static_cast<size_t>(relocation.offset),
-                                                            &value, {sizeof(value), 1, 1});
+                UNRECOVERABLE_IF(patchSize != sizeof(uint32_t));
+                patchIncrement<uint32_t>(pDevice, dst, static_cast<size_t>(relocation.offset), initData, incrementValue);
             }
-        } else {
-            auto relocAddress = ptrOffset(dst->getUnderlyingBuffer(), static_cast<uintptr_t>(relocation.offset));
-            patchIncrement(relocAddress, patchSize, incrementValue);
         }
     }
 }

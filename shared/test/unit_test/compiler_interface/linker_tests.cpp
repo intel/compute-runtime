@@ -7,7 +7,9 @@
 
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/test/unit_test/helpers/default_hw_info.h"
 
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 #include "RelocationInfo.h"
@@ -785,9 +787,12 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsThenDataSegmentsAreProperlyPatc
         ++initValue;
     }
 
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get()));
+
     auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {},
                                   &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
-                                  unresolvedExternals, nullptr, nullptr, nullptr);
+                                  unresolvedExternals, device.get(), globalConstantsPatchableSegment.getUnderlyingBuffer(),
+                                  globalVariablesPatchableSegment.getUnderlyingBuffer());
     EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(7U, *reinterpret_cast<uint8_t *>(globalConstantsPatchableSegment.getUnderlyingBuffer()));
@@ -884,9 +889,12 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchin32bitBinaryThenDataS
         ++initValue;
     }
 
+    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get()));
+
     auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {},
                                   &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, {},
-                                  unresolvedExternals, nullptr, nullptr, nullptr);
+                                  unresolvedExternals, device.get(), globalConstantsPatchableSegment.getUnderlyingBuffer(),
+                                  globalVariablesPatchableSegment.getUnderlyingBuffer());
     EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
     EXPECT_EQ(7U, *reinterpret_cast<uint8_t *>(globalConstantsPatchableSegment.getUnderlyingBuffer()));

@@ -33,8 +33,8 @@ void *DrmMemoryManager::lockResourceInLocalMemoryImpl(BufferObject *bo) {
 void DrmMemoryManager::unlockResourceInLocalMemoryImpl(BufferObject *bo) {
 }
 
-bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, const void *memoryToCopy, size_t sizeToCopy) {
-    return MemoryManager::copyMemoryToAllocation(graphicsAllocation, memoryToCopy, sizeToCopy);
+bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {
+    return MemoryManager::copyMemoryToAllocation(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy);
 }
 
 uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex) {

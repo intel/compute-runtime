@@ -2211,7 +2211,7 @@ TEST(MemoryManagerCopyMemoryTest, givenAllocationWithNoStorageWhenCopyMemoryToAl
     MockMemoryManager memoryManager(false, false, executionEnvironment);
     uint8_t memory = 1;
     MockGraphicsAllocation invalidAllocation{nullptr, 0u};
-    EXPECT_FALSE(memoryManager.copyMemoryToAllocation(&invalidAllocation, &memory, sizeof(memory)));
+    EXPECT_FALSE(memoryManager.copyMemoryToAllocation(&invalidAllocation, 0, &memory, sizeof(memory)));
 }
 
 TEST(MemoryManagerCopyMemoryTest, givenValidAllocationAndMemoryWhenCopyMemoryToAllocationThenDataIsCopied) {
@@ -2222,8 +2222,11 @@ TEST(MemoryManagerCopyMemoryTest, givenValidAllocationAndMemoryWhenCopyMemoryToA
     MockGraphicsAllocation allocation{allocationStorage, allocationSize};
     uint8_t memory = 1u;
     EXPECT_EQ(0u, allocationStorage[0]);
-    EXPECT_TRUE(memoryManager.copyMemoryToAllocation(&allocation, &memory, sizeof(memory)));
-    EXPECT_EQ(memory, allocationStorage[0]);
+
+    size_t offset = 2;
+
+    EXPECT_TRUE(memoryManager.copyMemoryToAllocation(&allocation, offset, &memory, sizeof(memory)));
+    EXPECT_EQ(memory, allocationStorage[offset]);
 }
 
 TEST_F(MemoryAllocatorTest, whenReservingAddressRangeThenExpectProperAddressAndReleaseWhenFreeing) {

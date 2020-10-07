@@ -111,7 +111,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
             }
             auto &kernHeapInfo = kernelInfo->heapInfo;
             auto segmentId = &kernelInfo - &this->kernelInfoArray[0];
-            this->pDevice->getMemoryManager()->copyMemoryToAllocation(kernelInfo->getGraphicsAllocation(),
+            this->pDevice->getMemoryManager()->copyMemoryToAllocation(kernelInfo->getGraphicsAllocation(), 0,
                                                                       isaSegmentsForPatching[segmentId].hostPointer,
                                                                       kernHeapInfo.KernelHeapSize);
         }

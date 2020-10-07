@@ -120,7 +120,7 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
         }
 
         if (doCpuIsaCopy) {
-            memoryManager.copyMemoryToAllocation(allocation, kernelInfo->heapInfo.pKernelHeap, kernelIsaSize);
+            memoryManager.copyMemoryToAllocation(allocation, 0, kernelInfo->heapInfo.pKernelHeap, kernelIsaSize);
         }
     }
 
