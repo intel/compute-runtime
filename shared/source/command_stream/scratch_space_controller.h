@@ -12,7 +12,6 @@
 #include <cstdint>
 
 namespace NEO {
-
 class Device;
 class ExecutionEnvironment;
 class GraphicsAllocation;
@@ -32,7 +31,7 @@ class ScratchSpaceController {
     ScratchSpaceController(uint32_t rootDeviceIndex, ExecutionEnvironment &environment, InternalAllocationStorage &allocationStorage);
     virtual ~ScratchSpaceController();
 
-    GraphicsAllocation *getScratchSpaceAllocation() {
+    MOCKABLE_VIRTUAL GraphicsAllocation *getScratchSpaceAllocation() {
         return scratchAllocation;
     }
     GraphicsAllocation *getPrivateScratchSpaceAllocation() {

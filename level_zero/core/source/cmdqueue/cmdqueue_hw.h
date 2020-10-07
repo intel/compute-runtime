@@ -43,10 +43,10 @@ struct CommandQueueHw : public CommandQueueImp {
     size_t estimatePipelineSelect();
     void programPipelineSelect(NEO::LinearStream &commandStream);
 
-    void handleScratchSpace(NEO::ResidencyContainer &residency,
-                            NEO::HeapContainer &heapContainer,
-                            NEO::ScratchSpaceController *scratchController,
-                            bool &gsbaState, bool &frontEndState);
+    MOCKABLE_VIRTUAL void handleScratchSpace(NEO::ResidencyContainer &residency,
+                                             NEO::HeapContainer &heapContainer,
+                                             NEO::ScratchSpaceController *scratchController,
+                                             bool &gsbaState, bool &frontEndState);
 };
 
 } // namespace L0

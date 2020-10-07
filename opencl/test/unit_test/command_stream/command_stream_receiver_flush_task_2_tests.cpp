@@ -488,7 +488,6 @@ struct MockScratchController : public ScratchSpaceController {
     }
     uint64_t calculateNewGSH() override { return 0u; };
     uint64_t getScratchPatchAddress() override { return 0u; };
-
     void programHeaps(HeapContainer &heapContainer,
                       uint32_t scratchSlot,
                       uint32_t requiredPerThreadScratchSize,
