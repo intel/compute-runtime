@@ -21,6 +21,8 @@ namespace NEO {
 GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAllocManager, NEO::Device &device, size_t size, bool constant,
                                            LinkerInput *const linkerInput, const void *initData) {
     bool globalsAreExported = false;
+    GraphicsAllocation *gpuAllocation = nullptr;
+
     if (linkerInput != nullptr) {
         globalsAreExported = constant ? linkerInput->getTraits().exportsGlobalConstants : linkerInput->getTraits().exportsGlobalVariables;
     }
@@ -37,30 +39,33 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         }
         auto svmAlloc = svmAllocManager->getSVMAlloc(ptr);
         UNRECOVERABLE_IF(svmAlloc == nullptr);
-        auto gpuAlloc = svmAlloc->gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
-        UNRECOVERABLE_IF(gpuAlloc == nullptr);
-        device.getMemoryManager()->copyMemoryToAllocation(gpuAlloc, initData, static_cast<uint32_t>(size));
-        return gpuAlloc;
+        gpuAllocation = svmAlloc->gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
     } else {
         auto allocationType = constant ? GraphicsAllocation::AllocationType::CONSTANT_SURFACE : GraphicsAllocation::AllocationType::GLOBAL_SURFACE;
-        auto gpuAlloc = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(),
+        gpuAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({device.getRootDeviceIndex(),
                                                                                          true, // allocateMemory
                                                                                          size, allocationType,
                                                                                          false, // isMultiStorageAllocation
                                                                                          device.getDeviceBitfield()});
-        DEBUG_BREAK_IF(gpuAlloc == nullptr);
-        if (gpuAlloc == nullptr) {
-            return nullptr;
-        }
-        auto &hwInfo = device.getHardwareInfo();
-        auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        if (gpuAlloc->isAllocatedInLocalMemoryPool() && helper.isBlitCopyRequiredForLocalMemory(hwInfo)) {
-            BlitHelperFunctions::blitMemoryToAllocation(device, gpuAlloc, 0, initData, {size, 1, 1});
-        } else {
-            memcpy_s(gpuAlloc->getUnderlyingBuffer(), gpuAlloc->getUnderlyingBufferSize(), initData, size);
-        }
-        return gpuAlloc;
     }
+
+    if (!gpuAllocation) {
+        return nullptr;
+    }
+
+    auto &hwInfo = device.getHardwareInfo();
+    auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+
+    bool success = false;
+    if (gpuAllocation->isAllocatedInLocalMemoryPool() && helper.isBlitCopyRequiredForLocalMemory(hwInfo)) {
+        success = (BlitHelperFunctions::blitMemoryToAllocation(device, gpuAllocation, 0, initData, {size, 1, 1}) == BlitOperationResult::Success);
+    } else {
+        success = device.getMemoryManager()->copyMemoryToAllocation(gpuAllocation, initData, static_cast<uint32_t>(size));
+    }
+
+    UNRECOVERABLE_IF(!success);
+
+    return gpuAllocation;
 }
 
 } // namespace NEO
