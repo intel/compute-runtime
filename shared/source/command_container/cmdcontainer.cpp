@@ -138,6 +138,7 @@ void CommandContainer::reset() {
     indirectHeaps[IndirectHeap::Type::SURFACE_STATE]->getSpace(4 * MemoryConstants::pageSize);
     iddBlock = nullptr;
     nextIddInBlock = this->getNumIddPerBlock();
+    lastSentNumGrfRequired = 0;
 }
 
 void *CommandContainer::getHeapSpaceAllowGrow(HeapType heapType,

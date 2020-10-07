@@ -161,16 +161,18 @@ TEST_F(CommandContainerTest, givenHeapAllocationsWhenDestroyCommandContainerThen
     EXPECT_TRUE(status);
 }
 
-TEST_F(CommandContainerTest, givenCommandContainerWhenResetTheanStreamsAreNotUsed) {
+TEST_F(CommandContainerTest, givenCommandContainerWhenResetThenStateIsReset) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice);
     LinearStream stream;
     uint32_t usedSize = 1;
+    cmdContainer.lastSentNumGrfRequired = 64;
     cmdContainer.getCommandStream()->getSpace(usedSize);
     EXPECT_EQ(usedSize, cmdContainer.getCommandStream()->getUsed());
     cmdContainer.reset();
     EXPECT_NE(usedSize, cmdContainer.getCommandStream()->getUsed());
     EXPECT_EQ(0u, cmdContainer.getCommandStream()->getUsed());
+    EXPECT_EQ(0u, cmdContainer.lastSentNumGrfRequired);
 }
 
 TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddNullPtrToResidencyContainerThenNothingIsAdded) {
