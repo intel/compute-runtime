@@ -57,6 +57,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->commandListPreemptionMode = device->getDevicePreemptionMode();
     this->engineGroupType = engineGroupType;
 
+    commandContainer.setReservedSshSize(getReserveSshSize());
     auto returnValue = commandContainer.initialize(static_cast<DeviceImp *>(device)->neoDevice);
     ze_result_t returnType = parseErrorCode(returnValue);
     if (returnType == ZE_RESULT_SUCCESS) {

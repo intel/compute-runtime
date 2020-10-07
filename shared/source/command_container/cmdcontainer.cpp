@@ -93,7 +93,7 @@ ErrorCode CommandContainer::initialize(Device *device) {
 
     instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), !hwHelper.useSystemMemoryPlacementForISA(getDevice()->getHardwareInfo()));
 
-    indirectHeaps[IndirectHeap::Type::SURFACE_STATE]->getSpace(4 * MemoryConstants::pageSize);
+    indirectHeaps[IndirectHeap::Type::SURFACE_STATE]->getSpace(reservedSshSize);
 
     iddBlock = nullptr;
     nextIddInBlock = this->getNumIddPerBlock();
@@ -135,7 +135,7 @@ void CommandContainer::reset() {
         addToResidencyContainer(indirectHeap->getGraphicsAllocation());
     }
 
-    indirectHeaps[IndirectHeap::Type::SURFACE_STATE]->getSpace(4 * MemoryConstants::pageSize);
+    indirectHeaps[IndirectHeap::Type::SURFACE_STATE]->getSpace(reservedSshSize);
 
     iddBlock = nullptr;
     nextIddInBlock = this->getNumIddPerBlock();
@@ -190,7 +190,7 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType hea
         setIndirectHeapAllocation(heapType, newAlloc);
         setHeapDirty(heapType);
         if (heapType == HeapType::SURFACE_STATE) {
-            indirectHeap->getSpace(4 * MemoryConstants::pageSize);
+            indirectHeap->getSpace(reservedSshSize);
         }
     }
 

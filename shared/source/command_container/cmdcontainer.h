@@ -100,6 +100,9 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void setIddBlock(void *iddBlock) { this->iddBlock = iddBlock; }
     void *getIddBlock() { return iddBlock; }
     uint32_t getNumIddPerBlock() const { return numIddsPerBlock; }
+    void setReservedSshSize(size_t reserveSize) {
+        reservedSshSize = reserveSize;
+    }
 
   protected:
     void *iddBlock = nullptr;
@@ -112,6 +115,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     uint64_t indirectObjectHeapBaseAddress = 0u;
     uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
     uint32_t numIddsPerBlock = 64;
+    size_t reservedSshSize = 0;
 
     std::unique_ptr<LinearStream> commandStream;
     std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];

@@ -929,5 +929,13 @@ HWTEST2_F(CommandListCreate, givenCopyCommandListWhenTimestampPassedToMemoryCopy
     EXPECT_EQ(cmdList.end(), itor);
 }
 
+using SupportedPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_DG1>;
+HWTEST2_F(CommandListCreate, givenCommandList, SupportedPlatforms) {
+    MockCommandListHw<gfxCoreFamily> commandList;
+    commandList.initialize(device, NEO::EngineGroupType::Compute);
+    auto &helper = NEO::HwHelper::get(commandList.device->getHwInfo().platform.eRenderCoreFamily);
+    auto size = helper.getRenderSurfaceStateSize();
+    EXPECT_EQ(commandList.getReserveSshSize(), size);
+}
 } // namespace ult
 } // namespace L0

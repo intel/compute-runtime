@@ -24,6 +24,12 @@ namespace L0 {
 struct DeviceImp;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
+    auto &helper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
+    return helper.getRenderSurfaceStateSize();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(ze_kernel_handle_t hKernel,
                                                                                const ze_group_count_t *pThreadGroupDimensions,
                                                                                ze_event_handle_t hEvent,

@@ -209,6 +209,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddAlreadyAddedAlloc
 HWTEST_F(CommandContainerTest, givenCmdContainerWhenInitializeCalledThenSSHHeapHasBindlessOffsetReserved) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
+    cmdContainer->setReservedSshSize(4 * MemoryConstants::pageSize);
     cmdContainer->initialize(pDevice);
     cmdContainer->setDirtyStateForAllHeaps(false);
 
@@ -221,6 +222,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerWhenInitializeCalledThenSSHHeapH
 HWTEST_F(CommandContainerTest, givenNotEnoughSpaceInSSHWhenGettingHeapWithRequiredSizeAndAlignmentThenSSHHeapHasBindlessOffsetReserved) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     std::unique_ptr<CommandContainer> cmdContainer(new CommandContainer);
+    cmdContainer->setReservedSshSize(4 * MemoryConstants::pageSize);
     cmdContainer->initialize(pDevice);
     cmdContainer->setDirtyStateForAllHeaps(false);
 
