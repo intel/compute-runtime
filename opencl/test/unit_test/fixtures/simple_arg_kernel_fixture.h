@@ -298,8 +298,7 @@ class BindlessKernelFixture : public ProgramFixture {
     }
 
     void createKernel(const std::string &programName, const std::string &kernelName) {
-        DebugManager.flags.UseBindlessBuffers.set(true);
-        DebugManager.flags.UseBindlessImages.set(true);
+        DebugManager.flags.UseBindlessMode.set(1);
         cl_device_id deviceId = deviceCl;
         cl_context clContext = contextCl;
         CreateProgramFromBinary(

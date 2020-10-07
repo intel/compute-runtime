@@ -1809,31 +1809,15 @@ TEST_F(ProgramTests, WhenCreatingProgramThenBindlessIsEnabledOnlyIfDebugFlagIsEn
     DebugManagerStateRestore restorer;
 
     {
-        EXPECT_FALSE(DebugManager.flags.UseBindlessBuffers.get());
-        EXPECT_FALSE(DebugManager.flags.UseBindlessImages.get());
+
+        DebugManager.flags.UseBindlessMode.set(0);
         MockProgram programNoBindless(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
         EXPECT_FALSE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessBuffers)) << programNoBindless.getInternalOptions();
         EXPECT_FALSE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessImages)) << programNoBindless.getInternalOptions();
     }
-
     {
-        DebugManager.flags.UseBindlessBuffers.set(true);
-        MockProgram programNoBindless(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
-        EXPECT_TRUE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessBuffers)) << programNoBindless.getInternalOptions();
-        EXPECT_FALSE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessImages)) << programNoBindless.getInternalOptions();
-    }
 
-    {
-        DebugManager.flags.UseBindlessBuffers.set(false);
-        DebugManager.flags.UseBindlessImages.set(true);
-        MockProgram programNoBindless(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
-        EXPECT_FALSE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessBuffers)) << programNoBindless.getInternalOptions();
-        EXPECT_TRUE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessImages)) << programNoBindless.getInternalOptions();
-    }
-
-    {
-        DebugManager.flags.UseBindlessBuffers.set(true);
-        DebugManager.flags.UseBindlessImages.set(true);
+        DebugManager.flags.UseBindlessMode.set(1);
         MockProgram programNoBindless(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
         EXPECT_TRUE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessBuffers)) << programNoBindless.getInternalOptions();
         EXPECT_TRUE(CompilerOptions::contains(programNoBindless.getInternalOptions(), CompilerOptions::bindlessImages)) << programNoBindless.getInternalOptions();

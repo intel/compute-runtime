@@ -204,7 +204,7 @@ TEST_F(KernelArgBufferTest, givenNoCacheFlushBufferWhenSettingAsArgThenNotExpect
 HWTEST_F(KernelArgBufferTest, givenUsedBindlessBuffersWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessBuffers.set(1);
+    DebugManager.flags.UseBindlessMode.set(1);
 
     pKernelInfo->usesSsh = true;
     pKernelInfo->requiresSshForBuffers = true;
@@ -232,7 +232,7 @@ HWTEST_F(KernelArgBufferTest, givenUsedBindlessBuffersWhenPatchingSurfaceStateOf
 
 TEST_F(KernelArgBufferTest, givenUsedBindlessBuffersAndNonBufferArgWhenPatchingSurfaceStateOffsetsThenCrossThreadDataIsNotPatched) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessBuffers.set(1);
+    DebugManager.flags.UseBindlessMode.set(1);
 
     pKernelInfo->usesSsh = true;
     pKernelInfo->requiresSshForBuffers = true;
@@ -251,8 +251,7 @@ TEST_F(KernelArgBufferTest, givenUsedBindlessBuffersAndNonBufferArgWhenPatchingS
 
 TEST_F(KernelArgBufferTest, givenNotUsedBindlessBuffersAndBufferArgWhenPatchingSurfaceStateOffsetsThenCrossThreadDataIsNotPatched) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessBuffers.set(false);
-    DebugManager.flags.UseBindlessImages.set(true);
+    DebugManager.flags.UseBindlessMode.set(0);
 
     pKernelInfo->usesSsh = true;
     pKernelInfo->requiresSshForBuffers = true;
@@ -269,10 +268,10 @@ TEST_F(KernelArgBufferTest, givenNotUsedBindlessBuffersAndBufferArgWhenPatchingS
     EXPECT_EQ(0xdeadu, *patchLocation);
 }
 
-HWTEST_F(KernelArgBufferTest, givenUsedBindlessBuffersAndBuiltinKernelWhenPatchingSurfaceStateOffsetsThenOffsetIsNotPatched) {
+HWTEST_F(KernelArgBufferTest, givenUsedBindlessBuffersAndBuiltinKernelWhenPatchingSurfaceStateOffsetsThenOffsetIsPatched) {
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessBuffers.set(1);
+    DebugManager.flags.UseBindlessMode.set(1);
 
     pKernelInfo->usesSsh = true;
     pKernelInfo->requiresSshForBuffers = true;
@@ -288,5 +287,5 @@ HWTEST_F(KernelArgBufferTest, givenUsedBindlessBuffersAndBuiltinKernelWhenPatchi
 
     uint32_t sshOffset = 0x1000;
     pKernel->patchBindlessSurfaceStateOffsets(sshOffset);
-    EXPECT_EQ(0xdeadu, *patchLocation);
+    EXPECT_NE(0xdeadu, *patchLocation);
 }

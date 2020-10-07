@@ -13,9 +13,9 @@ bool ApiSpecificConfig::getHeapConfiguration() {
     return DebugManager.flags.UseExternalAllocatorForSshAndDsh.get();
 }
 
-bool ApiSpecificConfig::getBindelssConfiguration() {
-    if (DebugManager.flags.UseBindlessBuiltins.get() != -1) {
-        return DebugManager.flags.UseBindlessBuiltins.get();
+bool ApiSpecificConfig::getBindlessConfiguration() {
+    if (DebugManager.flags.UseBindlessMode.get() != -1) {
+        return DebugManager.flags.UseBindlessMode.get();
     } else {
         return false;
     }

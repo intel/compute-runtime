@@ -18,7 +18,7 @@ namespace NEO {
 
 void givenUseBindlessBuiltinDisabledWhenBinExtensionPassedThenNameHasBindfulPrefix() {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessBuiltins.set(0);
+    DebugManager.flags.UseBindlessMode.set(0);
     EBuiltInOps::Type builtin = EBuiltInOps::CopyBufferToBuffer;
     const std::string extension = ".bin";
     const std::string platformName = "platformName";
@@ -45,7 +45,7 @@ void givenUseBindlessBuiltinDisabledWhenBinExtensionPassedThenNameHasBindfulPref
 
 void givenUseBindlessBuiltinEnabledWhenBinExtensionPassedThenNameHasBindlessPrefix() {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessBuiltins.set(1);
+    DebugManager.flags.UseBindlessMode.set(1);
     EBuiltInOps::Type builtin = EBuiltInOps::CopyBufferToBuffer;
     const std::string extension = ".bin";
     const std::string platformName = "skl";

@@ -9,6 +9,6 @@
 namespace NEO {
 struct ApiSpecificConfig {
     static bool getHeapConfiguration();
-    static bool getBindelssConfiguration();
+    static bool getBindlessConfiguration();
 };
 } // namespace NEO

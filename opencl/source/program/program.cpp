@@ -13,6 +13,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -83,11 +84,8 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
         }
 
-        if (DebugManager.flags.UseBindlessBuffers.get()) {
+        if (ApiSpecificConfig::getBindlessConfiguration()) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessBuffers);
-        }
-
-        if (DebugManager.flags.UseBindlessImages.get()) {
             CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessImages);
         }
 

@@ -348,7 +348,7 @@ TEST_F(KernelImageArgTest, givenNoCacheFlushImageWhenSettingAsArgThenExpectAlloc
 HWTEST_F(KernelImageArgTest, givenUsedBindlessImagesWhenPatchingSurfaceStateOffsetsThenCorrectOffsetIsPatchedInCrossThreadData) {
     using DataPortBindlessSurfaceExtendedMessageDescriptor = typename FamilyType::DataPortBindlessSurfaceExtendedMessageDescriptor;
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessImages.set(1);
+    DebugManager.flags.UseBindlessMode.set(1);
 
     pKernelInfo->usesSsh = true;
 
@@ -381,7 +381,7 @@ HWTEST_F(KernelImageArgTest, givenUsedBindlessImagesWhenPatchingSurfaceStateOffs
 
 TEST_F(KernelImageArgTest, givenUsedBindlessImagesAndNonImageArgWhenPatchingSurfaceStateOffsetsThenCrossThreadDataIsNotPatched) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessImages.set(1);
+    DebugManager.flags.UseBindlessMode.set(1);
 
     pKernelInfo->usesSsh = true;
 
@@ -406,8 +406,7 @@ TEST_F(KernelImageArgTest, givenUsedBindlessImagesAndNonImageArgWhenPatchingSurf
 
 TEST_F(KernelImageArgTest, givenNotUsedBindlessImagesAndImageArgWhenPatchingSurfaceStateOffsetsThenCrossThreadDataIsNotPatched) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.UseBindlessImages.set(false);
-    DebugManager.flags.UseBindlessBuffers.set(true);
+    DebugManager.flags.UseBindlessMode.set(0);
 
     pKernelInfo->usesSsh = true;
 

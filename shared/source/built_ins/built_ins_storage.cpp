@@ -82,7 +82,7 @@ std::string createBuiltinResourceName(EBuiltInOps::Type builtin, const std::stri
         ret += "_";
     }
     if (extension == ".bin") {
-        ret += ApiSpecificConfig::getBindelssConfiguration() ? "bindless_" : "bindful_";
+        ret += ApiSpecificConfig::getBindlessConfiguration() ? "bindless_" : "bindful_";
     }
     ret += getBuiltinAsString(builtin);
 

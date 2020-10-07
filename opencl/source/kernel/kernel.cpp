@@ -12,6 +12,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
@@ -2457,17 +2458,15 @@ uint64_t Kernel::getKernelStartOffset(
 }
 
 void Kernel::patchBindlessSurfaceStateOffsets(const size_t sshOffset) {
-    const bool bindlessBuffers = DebugManager.flags.UseBindlessBuffers.get();
-    const bool bindlessImages = DebugManager.flags.UseBindlessImages.get();
-    const bool bindlessUsed = (bindlessBuffers || bindlessImages) && !isBuiltIn;
+    const bool bindlessUsed = ApiSpecificConfig::getBindlessConfiguration();
 
     if (bindlessUsed) {
         auto &hardwareInfo = getDevice().getHardwareInfo();
         auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
         for (size_t i = 0; i < kernelInfo.kernelArgInfo.size(); i++) {
-            if ((kernelInfo.kernelArgInfo[i].isBuffer && bindlessBuffers) ||
-                (kernelInfo.kernelArgInfo[i].isImage && bindlessImages)) {
+            if ((kernelInfo.kernelArgInfo[i].isBuffer) ||
+                (kernelInfo.kernelArgInfo[i].isImage)) {
 
                 auto patchLocation = ptrOffset(getCrossThreadData(),
                                                kernelInfo.kernelArgInfo[i].kernelArgPatchInfoVector[0].crossthreadOffset);

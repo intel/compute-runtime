@@ -19,7 +19,7 @@ using namespace NEO;
 
 TEST(BuiltInTestsOcl, givenUseBindlessBuiltinInApiDependentModeWhenBinExtensionPassedThenNameHasBindfulPrefix) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.UseBindlessBuiltins.set(-1);
+    DebugManager.flags.UseBindlessMode.set(-1);
     EBuiltInOps::Type builtin = EBuiltInOps::CopyBufferToBuffer;
     const std::string extension = ".bin";
     const std::string platformName = "skl";
