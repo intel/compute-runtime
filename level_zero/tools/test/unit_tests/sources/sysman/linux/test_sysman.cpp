@@ -46,14 +46,14 @@ TEST_F(SysmanDeviceFixture, GivenValidPathnameWhenCallingFsAccessExistsThenSucce
 
     char cwd[PATH_MAX];
     std::string path = getcwd(cwd, PATH_MAX);
-    EXPECT_EQ(FsAccess.exists(path), ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(FsAccess.fileExists(path));
 }
 
 TEST_F(SysmanDeviceFixture, GivenInvalidPathnameWhenCallingFsAccessExistsThenErrorIsReturned) {
     auto FsAccess = pLinuxSysmanImp->getFsAccess();
 
     std::string path = "noSuchFileOrDirectory";
-    EXPECT_EQ(FsAccess.exists(path), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_FALSE(FsAccess.fileExists(path));
 }
 
 TEST_F(SysmanDeviceFixture, GivenCreateSysfsAccessHandleWhenCallinggetSysfsAccessThenCreatedSysfsAccessHandleHandleWillBeRetrieved) {
@@ -79,13 +79,13 @@ TEST_F(SysmanDeviceFixture, GivenCreateProcfsAccessHandleWhenCallinggetProcfsAcc
 TEST_F(SysmanDeviceFixture, GivenValidPidWhenCallingProcfsAccessIsAliveThenSuccessIsReturned) {
     auto ProcfsAccess = pLinuxSysmanImp->getProcfsAccess();
 
-    EXPECT_EQ(ProcfsAccess.isAlive(getpid()), ZE_RESULT_SUCCESS);
+    EXPECT_TRUE(ProcfsAccess.isAlive(getpid()));
 }
 
 TEST_F(SysmanDeviceFixture, GivenInvalidPidWhenCallingProcfsAccessIsAliveThenErrorIsReturned) {
     auto ProcfsAccess = pLinuxSysmanImp->getProcfsAccess();
 
-    EXPECT_EQ(ProcfsAccess.isAlive(reinterpret_cast<::pid_t>(-1)), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_FALSE(ProcfsAccess.isAlive(reinterpret_cast<::pid_t>(-1)));
 }
 
 TEST_F(SysmanDeviceFixture, GivenPmtHandleWhenCallinggetPlatformMonitoringTechAccessThenCreatedPmtHandleWillBeRetrieved) {

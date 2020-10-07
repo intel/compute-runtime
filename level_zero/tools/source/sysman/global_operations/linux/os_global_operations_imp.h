@@ -31,13 +31,14 @@ class LinuxGlobalOperationsImp : public OsGlobalOperations, NEO::NonCopyableOrMo
 
   protected:
     FsAccess *pFsAccess = nullptr;
+    ProcfsAccess *pProcfsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     Device *pDevice = nullptr;
 
-  private:
-    static const int resetTimeout = 10;
+    int resetTimeout = 10000; // in milliseconds
 
+  private:
     static const std::string deviceDir;
     static const std::string vendorFile;
     static const std::string deviceFile;

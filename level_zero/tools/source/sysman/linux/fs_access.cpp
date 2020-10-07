@@ -11,6 +11,7 @@
 
 #include <array>
 #include <cerrno>
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <dirent.h>
@@ -186,11 +187,11 @@ ze_result_t FsAccess::canWrite(const std::string file) {
     return ZE_RESULT_SUCCESS;
 }
 
-ze_result_t FsAccess::exists(const std::string file) {
+bool FsAccess::fileExists(const std::string file) {
     if (access(file.c_str(), F_OK)) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        return false;
     }
-    return ZE_RESULT_SUCCESS;
+    return true;
 }
 
 ze_result_t FsAccess::getFileMode(const std::string file, ::mode_t &mode) {
@@ -272,14 +273,6 @@ std::string FsAccess::getDirName(const std::string path) {
     return path.substr(0, pos);
 }
 
-bool FsAccess::fileExists(const std::string file) {
-    struct stat sb;
-    if (stat(file.c_str(), &sb) == 0) {
-        return true;
-    }
-    return false;
-}
-
 // Procfs Access
 const std::string ProcfsAccess::procDir = "/proc/";
 const std::string ProcfsAccess::fdDir = "/fd/";
@@ -354,8 +347,12 @@ ze_result_t ProcfsAccess::getFileName(const ::pid_t pid, const int fd, std::stri
     return FsAccess::readSymLink(fullFdPath(pid, fd), val);
 }
 
-ze_result_t ProcfsAccess::isAlive(const ::pid_t pid) {
-    return FsAccess::exists(fullPath(pid));
+bool ProcfsAccess::isAlive(const ::pid_t pid) {
+    return FsAccess::fileExists(fullPath(pid));
+}
+
+void ProcfsAccess::kill(const ::pid_t pid) {
+    ::kill(pid, SIGKILL);
 }
 
 ::pid_t ProcfsAccess::myProcessId() {
@@ -553,7 +550,7 @@ bool SysfsAccess::fileExists(const std::string file) {
     return FsAccess::fileExists(fullPath(file).c_str());
 }
 
-ze_bool_t SysfsAccess::isMyDeviceFile(const std::string dev) {
+bool SysfsAccess::isMyDeviceFile(const std::string dev) {
     // dev is a full pathname.
     if (getDirName(dev).compare(drmDriverDevNodeDir)) {
         for (auto &&next : deviceNames) {

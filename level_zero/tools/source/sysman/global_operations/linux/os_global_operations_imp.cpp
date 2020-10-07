@@ -14,7 +14,6 @@
 #include <level_zero/zet_api.h>
 
 #include <chrono>
-#include <csignal>
 #include <time.h>
 
 namespace L0 {
@@ -131,10 +130,6 @@ static void getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAccess *pSy
 }
 
 ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
-    FsAccess *pFsAccess = &pLinuxSysmanImp->getFsAccess();
-    ProcfsAccess *pProcfsAccess = &pLinuxSysmanImp->getProcfsAccess();
-    SysfsAccess *pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
-
     std::string resetPath;
     std::string resetName;
     ze_result_t result = ZE_RESULT_SUCCESS;
@@ -165,7 +160,7 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
             myPidFds = fds;
         } else if (!fds.empty()) {
             if (force) {
-                ::kill(pid, SIGKILL);
+                pProcfsAccess->kill(pid);
             } else {
                 // Device is in use by another process.
                 // Don't reset while in use.
@@ -206,24 +201,25 @@ ze_result_t LinuxGlobalOperationsImp::reset(ze_bool_t force) {
         if (!fds.empty()) {
 
             // Kill all processes that have the device open.
-            ::kill(pid, SIGKILL);
+            pProcfsAccess->kill(pid);
             deviceUsingPids.push_back(pid);
         }
     }
 
     // Wait for all the processes to exit
-    // If they don't all exit within 10
-    // seconds, just fail reset.
+    // If they don't all exit within resetTimeout
+    // just fail reset.
     auto start = std::chrono::steady_clock::now();
+    auto end = start;
     for (auto &&pid : deviceUsingPids) {
         while (pProcfsAccess->isAlive(pid)) {
-            auto end = std::chrono::steady_clock::now();
-            if (std::chrono::duration_cast<std::chrono::seconds>(end - start).count() >= LinuxGlobalOperationsImp::resetTimeout) {
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() > resetTimeout) {
                 return ZE_RESULT_ERROR_HANDLE_OBJECT_IN_USE;
             }
 
             struct ::timespec timeout = {.tv_sec = 0, .tv_nsec = 1000};
             ::nanosleep(&timeout, NULL);
+            end = std::chrono::steady_clock::now();
         }
     }
 
@@ -396,6 +392,7 @@ LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
 
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    pProcfsAccess = &pLinuxSysmanImp->getProcfsAccess();
     pFsAccess = &pLinuxSysmanImp->getFsAccess();
     pDevice = pLinuxSysmanImp->getDeviceHandle();
 }
