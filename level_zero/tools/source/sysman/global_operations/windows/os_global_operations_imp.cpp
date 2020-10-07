@@ -21,6 +21,7 @@ class WddmGlobalOperationsImp : public OsGlobalOperations {
     Device *getDevice() override;
     ze_result_t reset(ze_bool_t force) override;
     ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) override;
+    ze_result_t deviceGetState(zes_device_state_t *pState) override;
 
     WddmGlobalOperationsImp(OsSysman *pOsSysman);
     ~WddmGlobalOperationsImp() = default;
@@ -60,6 +61,10 @@ ze_result_t WddmGlobalOperationsImp::reset(ze_bool_t force) {
 }
 
 ze_result_t WddmGlobalOperationsImp::scanProcessesState(std::vector<zes_process_state_t> &pProcessList) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

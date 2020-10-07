@@ -40,6 +40,7 @@ const std::string engine3("3");
 std::string driverVersion("5.0.0-37-generic SMP mod_unload");
 std::string srcVersion("5.0.0-37");
 const std::string fullFunctionResetPath("/reset");
+const std::string ueventWedgedFile("/var/lib/libze_intel_gpu/wedged_file");
 
 class GlobalOperationsSysfsAccess : public SysfsAccess {};
 
@@ -167,6 +168,32 @@ struct Mock<GlobalOperationsFsAccess> : public GlobalOperationsFsAccess {
         return ZE_RESULT_SUCCESS;
     }
 
+    ze_result_t getValWedgedFileTrue(const std::string file, uint32_t &val) {
+        if (file.compare(ueventWedgedFile) == 0) {
+            val = 1;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValWedgedFileFalse(const std::string file, uint32_t &val) {
+        if (file.compare(ueventWedgedFile) == 0) {
+            val = 0;
+        } else {
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+        return ZE_RESULT_SUCCESS;
+    }
+
+    ze_result_t getValWedgedFileNotFound(const std::string file, uint32_t &val) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t getValWedgedFileInsufficientPermissions(const std::string file, uint32_t &val) {
+        return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+    }
+
     ze_result_t getValSrcFileNotAvaliable(const std::string file, std::string &val) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -190,6 +217,7 @@ struct Mock<GlobalOperationsFsAccess> : public GlobalOperationsFsAccess {
     Mock<GlobalOperationsFsAccess>() = default;
 
     MOCK_METHOD(ze_result_t, read, (const std::string file, std::string &val), (override));
+    MOCK_METHOD(ze_result_t, read, (const std::string file, uint32_t &val), (override));
     MOCK_METHOD(ze_result_t, canWrite, (const std::string file), (override));
 };
 

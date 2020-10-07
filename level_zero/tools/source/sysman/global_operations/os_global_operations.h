@@ -27,6 +27,7 @@ class OsGlobalOperations {
     virtual Device *getDevice() = 0;
     virtual ze_result_t reset(ze_bool_t force) = 0;
     virtual ze_result_t scanProcessesState(std::vector<zes_process_state_t> &pProcessList) = 0;
+    virtual ze_result_t deviceGetState(zes_device_state_t *pState) = 0;
     static OsGlobalOperations *create(OsSysman *pOsSysman);
     virtual ~OsGlobalOperations() {}
 };

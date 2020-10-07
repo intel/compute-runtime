@@ -54,6 +54,10 @@ ze_result_t GlobalOperationsImp::reset(ze_bool_t force) {
     return pOsGlobalOperations->reset(force);
 }
 
+ze_result_t GlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {
+    return pOsGlobalOperations->deviceGetState(pState);
+}
+
 void GlobalOperationsImp::init() {
     if (pOsGlobalOperations == nullptr) {
         pOsGlobalOperations = OsGlobalOperations::create(pOsSysman);

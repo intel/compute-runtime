@@ -124,7 +124,7 @@ ze_result_t SysmanDeviceImp::deviceReset(ze_bool_t force) {
 }
 
 ze_result_t SysmanDeviceImp::deviceGetState(zes_device_state_t *pState) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return pGlobalOperations->deviceGetState(pState);
 }
 
 ze_result_t SysmanDeviceImp::pciGetProperties(zes_pci_properties_t *pProperties) {

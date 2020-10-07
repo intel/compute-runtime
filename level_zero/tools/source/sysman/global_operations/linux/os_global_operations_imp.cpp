@@ -28,6 +28,7 @@ const std::string LinuxGlobalOperationsImp::functionLevelReset("device/reset");
 const std::string LinuxGlobalOperationsImp::clientsDir("clients");
 const std::string LinuxGlobalOperationsImp::srcVersionFile("/sys/module/i915/srcversion");
 const std::string LinuxGlobalOperationsImp::agamaVersionFile("/sys/module/i915/agama_version");
+const std::string LinuxGlobalOperationsImp::ueventWedgedFile("/var/lib/libze_intel_gpu/wedged_file");
 
 // Map engine entries(numeric values) present in /sys/class/drm/card<n>/clients/<client_n>/busy,
 // with engine enum defined in leve-zero spec
@@ -377,7 +378,20 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
     }
     return result;
 }
-
+ze_result_t LinuxGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {
+    uint32_t valWedged = 0;
+    ze_result_t result = pFsAccess->read(ueventWedgedFile, valWedged);
+    if (result != ZE_RESULT_SUCCESS) {
+        if (result == ZE_RESULT_ERROR_NOT_AVAILABLE)
+            result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        return result;
+    }
+    pState->reset = 0;
+    if (valWedged != 0) {
+        pState->reset |= ZES_RESET_REASON_FLAG_WEDGED;
+    }
+    return result;
+}
 LinuxGlobalOperationsImp::LinuxGlobalOperationsImp(OsSysman *pOsSysman) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
 

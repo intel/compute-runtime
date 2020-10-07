@@ -1,0 +1,19 @@
+#
+## Copyright (C) 2020 Intel Corporation
+##
+## SPDX-License-Identifier: MIT
+##
+#
+
+ACTION=="change", \
+SUBSYSTEM=="drm", \
+ENV{RESET_FAILED}=="1", \
+ENV{RESET_UNIT}=="gt", \
+RUN+="echo 1 > /var/lib/libze_intel_gpu/wedged_file"
+ACTION=="unbind", \
+SUBSYSTEM=="drm", \
+RUN+="echo 0 > /var/lib/libze_intel_gpu/pci_bind_status_file"
+ACTION=="bind", \
+SUBSYSTEM=="drm", \
+RUN+="echo 1 > /var/lib/libze_intel_gpu/pci_bind_status_file", \
+RUN+="echo 0 > /var/lib/libze_intel_gpu/wedged_file"

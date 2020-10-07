@@ -54,7 +54,7 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
             .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getValUnsignedLong));
         ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
             .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<GlobalOperationsSysfsAccess>::getScannedDirEntries));
-        ON_CALL(*pFsAccess.get(), read(_, _))
+        ON_CALL(*pFsAccess.get(), read(_, Matcher<std::string &>(_)))
             .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValAgamaFile));
 
         pGlobalOperationsImp = static_cast<L0::GlobalOperationsImp *>(pSysmanDeviceImp->pGlobalOperations);
@@ -187,5 +187,34 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingResetVeri
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
 }
 
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetDeviceStatewhenDeviceIsWedged) {
+    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
+        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValWedgedFileTrue));
+    zes_device_state_t deviceState;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
+    EXPECT_EQ(ZES_RESET_REASON_FLAG_WEDGED, deviceState.reset);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetDeviceStatewhenDeviceIsNotWedged) {
+    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
+        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValWedgedFileFalse));
+    zes_device_state_t deviceState;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
+    EXPECT_EQ(0u, deviceState.reset);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetDeviceStatewhenDeviceWdegedFileIsNotFound) {
+    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
+        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValWedgedFileNotFound));
+    zes_device_state_t deviceState;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDeviceGetState(device, &deviceState));
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhenCallingGetDeviceStatewhenDeviceWdegedFileHasInsufficientPermissions) {
+    ON_CALL(*pFsAccess.get(), read(_, Matcher<uint32_t &>(_)))
+        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<GlobalOperationsFsAccess>::getValWedgedFileInsufficientPermissions));
+    zes_device_state_t deviceState;
+    EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, zesDeviceGetState(device, &deviceState));
+}
 } // namespace ult
 } // namespace L0
