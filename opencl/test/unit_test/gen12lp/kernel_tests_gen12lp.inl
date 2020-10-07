@@ -18,7 +18,3 @@ GEN12LPTEST_F(Gen12LpKernelTest, givenKernelWhenCanTransformImagesIsCalledThenRe
     auto retVal = mockKernel.mockKernel->Kernel::canTransformImages();
     EXPECT_FALSE(retVal);
 }
-using Gen12LpHardwareCommandsTest = testing::Test;
-GEN12LPTEST_F(Gen12LpHardwareCommandsTest, givenGen12LpPlatformWhenDoBindingTablePrefetchIsCalledThenReturnsTrue) {
-    EXPECT_FALSE(HardwareCommandsHelper<FamilyType>::doBindingTablePrefetch());
-}

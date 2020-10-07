@@ -19,6 +19,7 @@
 namespace NEO {
 
 class GmmHelper;
+class IndirectHeap;
 
 template <typename GfxFamily>
 struct EncodeDispatchKernel {
@@ -207,6 +208,11 @@ struct EncodeSurfaceState {
     static constexpr uintptr_t getSurfaceBaseAddressAlignment() { return 4; }
 
     static void getSshAlignedPointer(uintptr_t &ptr, size_t &offset);
+    static bool doBindingTablePrefetch();
+
+    static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, size_t bindingTableCount,
+                                                   const void *srcKernelSsh, size_t srcKernelSshSize,
+                                                   size_t numberOfBindingTableStates, size_t offsetOfBindingTable);
 };
 
 template <typename GfxFamily>

@@ -139,7 +139,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 
 template <typename GfxFamily>
 bool HardwareCommandsHelper<GfxFamily>::resetBindingTablePrefetch(Kernel &kernel) {
-    return kernel.isSchedulerKernel || !doBindingTablePrefetch();
+    return kernel.isSchedulerKernel || !EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch();
 }
 
 template <typename GfxFamily>

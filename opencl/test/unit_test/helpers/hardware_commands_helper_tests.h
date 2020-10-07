@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/command_container/command_encoder.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
@@ -44,8 +45,8 @@ struct HardwareCommandsTest : ClDeviceFixture,
 
     template <typename GfxFamily>
     size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const Kernel &srcKernel) {
-        return HardwareCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(dstHeap, (srcKernel.getKernelInfo().patchInfo.bindingTableState != nullptr) ? srcKernel.getKernelInfo().patchInfo.bindingTableState->Count : 0,
-                                                                                   srcKernel.getSurfaceStateHeap(), srcKernel.getSurfaceStateHeapSize(),
-                                                                                   srcKernel.getNumberOfBindingTableStates(), srcKernel.getBindingTableOffset());
+        return EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(dstHeap, (srcKernel.getKernelInfo().patchInfo.bindingTableState != nullptr) ? srcKernel.getKernelInfo().patchInfo.bindingTableState->Count : 0,
+                                                                               srcKernel.getSurfaceStateHeap(), srcKernel.getSurfaceStateHeapSize(),
+                                                                               srcKernel.getNumberOfBindingTableStates(), srcKernel.getBindingTableOffset());
     }
 };

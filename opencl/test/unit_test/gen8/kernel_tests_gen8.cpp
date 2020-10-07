@@ -18,7 +18,3 @@ GEN8TEST_F(Gen8KernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturnsF
     auto retVal = mockKernel.mockKernel->Kernel::canTransformImages();
     EXPECT_FALSE(retVal);
 }
-using Gen8HardwareCommandsTest = testing::Test;
-GEN8TEST_F(Gen8HardwareCommandsTest, givenGen8PlatformWhenDoBindingTablePrefetchIsCalledThenReturnsTrue) {
-    EXPECT_TRUE(HardwareCommandsHelper<FamilyType>::doBindingTablePrefetch());
-}

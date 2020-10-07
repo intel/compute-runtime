@@ -10,15 +10,16 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
-
-#include "opencl/source/helpers/hardware_commands_helper.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 
 #include <algorithm>
 
@@ -56,6 +57,12 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
 
     return samplerStateOffsetInDsh;
 }
+
+template <typename Family>
+size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
+    return 0;
+}
+
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32_t offset, uint32_t val, uint64_t dstAddress) {
     int logLws = 0;
@@ -209,26 +216,6 @@ void EncodeMath<Family>::addition(CommandContainer &container,
 }
 
 template <typename Family>
-void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress) {
-    for (int i = 0; i < 3; ++i) {
-        if (NEO::isUndefinedOffset(offsets[i])) {
-            continue;
-        }
-        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), GPUGPU_DISPATCHDIM[i], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[i]));
-    }
-}
-
-template <typename Family>
-void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, const uint32_t *lws) {
-    for (int i = 0; i < 3; ++i) {
-        if (NEO::isUndefinedOffset(offsets[i])) {
-            continue;
-        }
-        EncodeMathMMIO<Family>::encodeMulRegVal(container, GPUGPU_DISPATCHDIM[i], lws[i], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[i]));
-    }
-}
-
-template <typename Family>
 inline void EncodeSetMMIO<Family>::encodeIMM(CommandContainer &container, uint32_t offset, uint32_t data, bool remap) {
     LriHelper<Family>::program(container.getCommandStream(),
                                offset,
@@ -309,6 +296,75 @@ void EncodeSurfaceState<Family>::encodeBuffer(void *dst, uint64_t address, size_
 }
 
 template <typename Family>
+void EncodeSurfaceState<Family>::getSshAlignedPointer(uintptr_t &ptr, size_t &offset) {
+    auto sshAlignmentMask =
+        getSurfaceBaseAddressAlignmentMask();
+    uintptr_t alignedPtr = ptr & sshAlignmentMask;
+
+    offset = 0;
+    if (ptr != alignedPtr) {
+        offset = ptrDiff(ptr, alignedPtr);
+        ptr = alignedPtr;
+    }
+}
+
+// Returned binding table pointer is relative to given heap (which is assumed to be the Surface state base addess)
+// as required by the INTERFACE_DESCRIPTOR_DATA.
+template <typename Family>
+size_t EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, size_t bindingTableCount,
+                                                                    const void *srcKernelSsh, size_t srcKernelSshSize,
+                                                                    size_t numberOfBindingTableStates, size_t offsetOfBindingTable) {
+    using BINDING_TABLE_STATE = typename Family::BINDING_TABLE_STATE;
+    using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
+    using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
+
+    if (bindingTableCount == 0) {
+        // according to compiler, kernel does not reference BTIs to stateful surfaces, so there's nothing to patch
+        return 0;
+    }
+    size_t sshSize = srcKernelSshSize;
+    DEBUG_BREAK_IF(srcKernelSsh == nullptr);
+
+    auto srcSurfaceState = srcKernelSsh;
+    // Allocate space for new ssh data
+    auto dstSurfaceState = dstHeap.getSpace(sshSize);
+
+    // Compiler sends BTI table that is already populated with surface state pointers relative to local SSH.
+    // We may need to patch these pointers so that they are relative to surface state base address
+    if (dstSurfaceState == dstHeap.getCpuBase()) {
+        // nothing to patch, we're at the start of heap (which is assumed to be the surface state base address)
+        // we need to simply copy the ssh (including BTIs from compiler)
+        memcpy_s(dstSurfaceState, sshSize, srcSurfaceState, sshSize);
+        return offsetOfBindingTable;
+    }
+
+    // We can copy-over the surface states, but BTIs will need to be patched
+    memcpy_s(dstSurfaceState, sshSize, srcSurfaceState, offsetOfBindingTable);
+
+    uint32_t surfaceStatesOffset = static_cast<uint32_t>(ptrDiff(dstSurfaceState, dstHeap.getCpuBase()));
+
+    // march over BTIs and offset the pointers based on surface state base address
+    auto *dstBtiTableBase = reinterpret_cast<BINDING_TABLE_STATE *>(ptrOffset(dstSurfaceState, offsetOfBindingTable));
+    DEBUG_BREAK_IF(reinterpret_cast<uintptr_t>(dstBtiTableBase) % INTERFACE_DESCRIPTOR_DATA::BINDINGTABLEPOINTER_ALIGN_SIZE != 0);
+    auto *srcBtiTableBase = reinterpret_cast<const BINDING_TABLE_STATE *>(ptrOffset(srcSurfaceState, offsetOfBindingTable));
+    BINDING_TABLE_STATE bti = Family::cmdInitBindingTableState;
+    for (uint32_t i = 0, e = static_cast<uint32_t>(numberOfBindingTableStates); i != e; ++i) {
+        uint32_t localSurfaceStateOffset = srcBtiTableBase[i].getSurfaceStatePointer();
+        uint32_t offsetedSurfaceStateOffset = localSurfaceStateOffset + surfaceStatesOffset;
+        bti.setSurfaceStatePointer(offsetedSurfaceStateOffset); // patch just the SurfaceStatePointer bits
+        dstBtiTableBase[i] = bti;
+        DEBUG_BREAK_IF(bti.getRawData(0) % sizeof(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE) != 0);
+    }
+
+    return ptrDiff(dstBtiTableBase, dstHeap.getCpuBase());
+}
+
+template <typename Family>
+bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
+    return true;
+}
+
+template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset) {
 
     if (container.nextIddInBlock == container.getNumIddPerBlock()) {
@@ -372,8 +428,23 @@ bool EncodeDispatchKernel<Family>::inlineDataProgrammingRequired(const KernelDes
 }
 
 template <typename Family>
-size_t EncodeStates<Family>::getAdjustStateComputeModeSize() {
-    return 0;
+void EncodeIndirectParams<Family>::setGroupCountIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress) {
+    for (int i = 0; i < 3; ++i) {
+        if (NEO::isUndefinedOffset(offsets[i])) {
+            continue;
+        }
+        EncodeStoreMMIO<Family>::encode(*container.getCommandStream(), GPUGPU_DISPATCHDIM[i], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[i]));
+    }
+}
+
+template <typename Family>
+void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], void *crossThreadAddress, const uint32_t *lws) {
+    for (int i = 0; i < 3; ++i) {
+        if (NEO::isUndefinedOffset(offsets[i])) {
+            continue;
+        }
+        EncodeMathMMIO<Family>::encodeMulRegVal(container, GPUGPU_DISPATCHDIM[i], lws[i], ptrOffset(reinterpret_cast<uint64_t>(crossThreadAddress), offsets[i]));
+    }
 }
 
 template <typename Family>
@@ -440,15 +511,15 @@ void EncodeAtomic<Family>::programMiAtomic(MI_ATOMIC *atomic,
     *atomic = cmd;
 }
 
-template <typename GfxFamily>
-void EncodeAtomic<GfxFamily>::programMiAtomic(LinearStream &commandStream,
-                                              uint64_t writeAddress,
-                                              ATOMIC_OPCODES opcode,
-                                              DATA_SIZE dataSize,
-                                              uint32_t returnDataControl,
-                                              uint32_t csStall) {
+template <typename Family>
+void EncodeAtomic<Family>::programMiAtomic(LinearStream &commandStream,
+                                           uint64_t writeAddress,
+                                           ATOMIC_OPCODES opcode,
+                                           DATA_SIZE dataSize,
+                                           uint32_t returnDataControl,
+                                           uint32_t csStall) {
     auto miAtomic = commandStream.getSpaceForCmd<MI_ATOMIC>();
-    EncodeAtomic<GfxFamily>::programMiAtomic(miAtomic, writeAddress, opcode, dataSize, returnDataControl, csStall);
+    EncodeAtomic<Family>::programMiAtomic(miAtomic, writeAddress, opcode, dataSize, returnDataControl, csStall);
 }
 
 template <typename Family>
@@ -470,19 +541,6 @@ void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(CommandContainer
     MI_BATCH_BUFFER_END cmd = Family::cmdInitBatchBufferEnd;
     auto buffer = container.getCommandStream()->getSpaceForCmd<MI_BATCH_BUFFER_END>();
     *buffer = cmd;
-}
-
-template <typename Family>
-void EncodeSurfaceState<Family>::getSshAlignedPointer(uintptr_t &ptr, size_t &offset) {
-    auto sshAlignmentMask =
-        getSurfaceBaseAddressAlignmentMask();
-    uintptr_t alignedPtr = ptr & sshAlignmentMask;
-
-    offset = 0;
-    if (ptr != alignedPtr) {
-        offset = ptrDiff(ptr, alignedPtr);
-        ptr = alignedPtr;
-    }
 }
 
 template <typename GfxFamily>

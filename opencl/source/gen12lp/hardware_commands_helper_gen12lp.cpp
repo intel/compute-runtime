@@ -23,10 +23,5 @@ size_t HardwareCommandsHelper<TGLLPFamily>::getSizeRequiredCS(const Kernel *kern
     return size;
 }
 
-template <>
-bool HardwareCommandsHelper<TGLLPFamily>::doBindingTablePrefetch() {
-    return false;
-}
-
 template struct HardwareCommandsHelper<TGLLPFamily>;
 } // namespace NEO

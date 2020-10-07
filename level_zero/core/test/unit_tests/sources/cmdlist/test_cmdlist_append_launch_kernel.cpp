@@ -10,7 +10,6 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
@@ -113,7 +112,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBind
     auto dsh = commandList->commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
     auto idd = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), cmd->getInterfaceDescriptorDataStartAddress()));
 
-    if (NEO::HardwareCommandsHelper<FamilyType>::doBindingTablePrefetch()) {
+    if (NEO::EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
         uint32_t numArgs = kernel->kernelImmData->getDescriptor().payloadMappings.bindingTable.numEntries;
         EXPECT_EQ(numArgs, idd->getBindingTableEntryCount());
     } else {

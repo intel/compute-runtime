@@ -16,8 +16,6 @@
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 
-#include "opencl/source/helpers/hardware_commands_helper.h"
-
 #include "pipe_control_args.h"
 
 #include <algorithm>
@@ -86,7 +84,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         if (bindingTableStateCount > 0u) {
             auto ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
             sshOffset = ssh->getUsed();
-            bindingTablePointer = static_cast<uint32_t>(HardwareCommandsHelper<Family>::pushBindingTableAndSurfaceStates(
+            bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
                 *ssh, bindingTableStateCount,
                 dispatchInterface->getSurfaceStateHeapData(),
                 dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
@@ -96,7 +94,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container,
         idd.setBindingTablePointer(bindingTablePointer);
 
         uint32_t bindingTableStatePrefetchCount = 0;
-        if (HardwareCommandsHelper<Family>::doBindingTablePrefetch()) {
+        if (EncodeSurfaceState<Family>::doBindingTablePrefetch()) {
             bindingTableStatePrefetchCount = std::min(31u, bindingTableStateCount);
         }
         idd.setBindingTableEntryCount(bindingTableStatePrefetchCount);

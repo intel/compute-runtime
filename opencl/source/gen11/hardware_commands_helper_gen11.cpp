@@ -14,10 +14,5 @@
 
 namespace NEO {
 
-template <>
-bool HardwareCommandsHelper<ICLFamily>::doBindingTablePrefetch() {
-    return false;
-}
-
 template struct HardwareCommandsHelper<ICLFamily>;
 } // namespace NEO

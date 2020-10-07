@@ -17,6 +17,7 @@ if(TESTS_GEN11)
 
   target_sources(${TARGET_NAME} PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                 ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_gen11.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests_gen11.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen11.cpp
                  ${COMPUTE_RUNTIME_ULT_GEN11}

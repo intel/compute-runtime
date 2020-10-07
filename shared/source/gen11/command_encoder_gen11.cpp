@@ -16,6 +16,12 @@ using Family = NEO::ICLFamily;
 #include "shared/source/command_container/encode_compute_mode_bdw_plus.inl"
 
 namespace NEO {
+
+template <>
+bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
+    return false;
+}
+
 template struct EncodeDispatchKernel<Family>;
 template struct EncodeStates<Family>;
 template struct EncodeMath<Family>;

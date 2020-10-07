@@ -16,6 +16,7 @@ if(TESTS_GEN8)
 
   target_sources(${TARGET_NAME} PRIVATE
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+                 ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_gen8.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests_gen8.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests_gen8.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen8.cpp

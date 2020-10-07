@@ -405,7 +405,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWithFourBindingTabl
         true);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
-    if (HardwareCommandsHelper<FamilyType>::doBindingTablePrefetch()) {
+    if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
         EXPECT_EQ(expectedBindingTableCount, interfaceDescriptor->getBindingTableEntryCount());
     } else {
         EXPECT_EQ(0u, interfaceDescriptor->getBindingTableEntryCount());
@@ -493,7 +493,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, givenKernelWith100BindingTable
         true);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
-    if (HardwareCommandsHelper<FamilyType>::doBindingTablePrefetch()) {
+    if (EncodeSurfaceState<FamilyType>::doBindingTablePrefetch()) {
         EXPECT_EQ(31u, interfaceDescriptor->getBindingTableEntryCount());
     } else {
         EXPECT_EQ(0u, interfaceDescriptor->getBindingTableEntryCount());
@@ -833,7 +833,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
 }
 
 HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTableStatesForKernelThenSshIsNotUsed) {
-
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
@@ -889,7 +888,6 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
 }
 
 HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStatesThenPointerIsZero) {
-
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
