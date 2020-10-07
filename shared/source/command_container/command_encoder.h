@@ -205,7 +205,9 @@ struct EncodeSurfaceState {
         return ~(getSurfaceBaseAddressAlignment() - 1);
     }
 
-    static constexpr uintptr_t getSurfaceBaseAddressAlignment() { return 4; }
+    static constexpr uintptr_t getSurfaceBaseAddressMinimumAlignment() { return 4; }
+
+    static constexpr uintptr_t getSurfaceBaseAddressAlignment() { return MemoryConstants::pageSize; }
 
     static void getSshAlignedPointer(uintptr_t &ptr, size_t &offset);
     static bool doBindingTablePrefetch();
