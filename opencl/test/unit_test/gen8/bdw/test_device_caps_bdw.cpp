@@ -14,12 +14,6 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> BdwDeviceCaps;
 
-BDWTEST_F(BdwDeviceCaps, givenBdwDeviceWhenAskedForClVersionThenReport21) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
-}
-
 BDWTEST_F(BdwDeviceCaps, skuSpecificCaps) {
     const auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;

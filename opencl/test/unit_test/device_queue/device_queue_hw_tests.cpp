@@ -483,8 +483,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueHwTest, WhenCreatingDeviceQueueThenDshOff
 class DeviceQueueHwWithKernel : public ExecutionModelKernelFixture {
   public:
     void SetUp() override {
-        ExecutionModelKernelFixture::SetUp();
         REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
+
+        ExecutionModelKernelFixture::SetUp();
         cl_queue_properties properties[5] = {
             CL_QUEUE_PROPERTIES,
             CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,
@@ -503,6 +504,10 @@ class DeviceQueueHwWithKernel : public ExecutionModelKernelFixture {
         ASSERT_NE(nullptr, devQueue);
     }
     void TearDown() override {
+        if (IsSkipped()) {
+            return;
+        }
+
         if (devQueue) {
             delete devQueue;
         }
@@ -522,130 +527,122 @@ class DeviceQueueHwWithKernel : public ExecutionModelKernelFixture {
 };
 
 HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, WhenSetiingIUpIndirectStateThenDshIsNotUsed) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        EXPECT_TRUE(pKernel->isParentKernel);
+    EXPECT_TRUE(pKernel->isParentKernel);
 
-        pKernel->createReflectionSurface();
+    pKernel->createReflectionSurface();
 
-        auto *devQueueHw = castToObject<DeviceQueueHw<FamilyType>>(devQueue);
+    auto *devQueueHw = castToObject<DeviceQueueHw<FamilyType>>(devQueue);
 
-        ASSERT_NE(nullptr, devQueueHw);
-        auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-        ASSERT_NE(nullptr, dsh);
+    ASSERT_NE(nullptr, devQueueHw);
+    auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
+    ASSERT_NE(nullptr, dsh);
 
-        size_t surfaceStateHeapSize = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(const_cast<const Kernel &>(*pKernel));
+    size_t surfaceStateHeapSize = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(const_cast<const Kernel &>(*pKernel));
 
-        auto ssh = new IndirectHeap(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
-        auto usedBeforeSSH = ssh->getUsed();
-        auto usedBeforeDSH = dsh->getUsed();
+    auto ssh = new IndirectHeap(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
+    auto usedBeforeSSH = ssh->getUsed();
+    auto usedBeforeDSH = dsh->getUsed();
 
-        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, 1, false);
-        auto usedAfterSSH = ssh->getUsed();
-        auto usedAfterDSH = dsh->getUsed();
+    devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, 1, false);
+    auto usedAfterSSH = ssh->getUsed();
+    auto usedAfterDSH = dsh->getUsed();
 
-        EXPECT_GE(surfaceStateHeapSize, usedAfterSSH - usedBeforeSSH);
+    EXPECT_GE(surfaceStateHeapSize, usedAfterSSH - usedBeforeSSH);
 
-        EXPECT_EQ(0u, usedAfterDSH - usedBeforeDSH);
+    EXPECT_EQ(0u, usedAfterDSH - usedBeforeDSH);
 
-        alignedFree(ssh->getCpuBase());
-        delete ssh;
-    }
+    alignedFree(ssh->getCpuBase());
+    delete ssh;
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, WhenSettingUpIndirectStateThenCorrectStartBlockIdIsSet) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        EXPECT_TRUE(pKernel->isParentKernel);
+    EXPECT_TRUE(pKernel->isParentKernel);
 
-        pKernel->createReflectionSurface();
+    pKernel->createReflectionSurface();
 
-        auto *devQueueHw = castToObject<DeviceQueueHw<FamilyType>>(devQueue);
-        ASSERT_NE(nullptr, devQueueHw);
-        auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-        ASSERT_NE(nullptr, dsh);
+    auto *devQueueHw = castToObject<DeviceQueueHw<FamilyType>>(devQueue);
+    ASSERT_NE(nullptr, devQueueHw);
+    auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
+    ASSERT_NE(nullptr, dsh);
 
-        size_t surfaceStateHeapSize = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(const_cast<const Kernel &>(*pKernel));
+    size_t surfaceStateHeapSize = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(const_cast<const Kernel &>(*pKernel));
 
-        auto ssh = new IndirectHeap(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
+    auto ssh = new IndirectHeap(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
 
-        uint32_t parentCount = 4;
+    uint32_t parentCount = 4;
 
-        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount, false);
-        auto *igilQueue = reinterpret_cast<IGIL_CommandQueue *>(devQueueHw->getQueueBuffer()->getUnderlyingBuffer());
+    devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount, false);
+    auto *igilQueue = reinterpret_cast<IGIL_CommandQueue *>(devQueueHw->getQueueBuffer()->getUnderlyingBuffer());
 
-        EXPECT_EQ(parentCount, igilQueue->m_controls.m_StartBlockID);
+    EXPECT_EQ(parentCount, igilQueue->m_controls.m_StartBlockID);
 
-        alignedFree(ssh->getCpuBase());
-        delete ssh;
-    }
+    alignedFree(ssh->getCpuBase());
+    delete ssh;
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, WhenSettingUpIndirectStateThenDshValuesAreSetCorrectly) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        EXPECT_TRUE(pKernel->isParentKernel);
+    EXPECT_TRUE(pKernel->isParentKernel);
 
-        pKernel->createReflectionSurface();
+    pKernel->createReflectionSurface();
 
-        MockContext mockContext;
-        MockDeviceQueueHw<FamilyType> *devQueueHw = new MockDeviceQueueHw<FamilyType>(&mockContext, clDevice, deviceQueueProperties::minimumProperties[0]);
-        ASSERT_NE(nullptr, devQueueHw);
-        auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-        ASSERT_NE(nullptr, dsh);
+    MockContext mockContext;
+    MockDeviceQueueHw<FamilyType> *devQueueHw = new MockDeviceQueueHw<FamilyType>(&mockContext, clDevice, deviceQueueProperties::minimumProperties[0]);
+    ASSERT_NE(nullptr, devQueueHw);
+    auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
+    ASSERT_NE(nullptr, dsh);
 
-        size_t surfaceStateHeapSize = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(const_cast<const Kernel &>(*pKernel));
+    size_t surfaceStateHeapSize = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(const_cast<const Kernel &>(*pKernel));
 
-        auto ssh = new IndirectHeap(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
+    auto ssh = new IndirectHeap(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
 
-        uint32_t parentCount = 1;
+    uint32_t parentCount = 1;
 
-        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount, false);
-        auto *igilQueue = reinterpret_cast<IGIL_CommandQueue *>(devQueueHw->getQueueBuffer()->getUnderlyingBuffer());
+    devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount, false);
+    auto *igilQueue = reinterpret_cast<IGIL_CommandQueue *>(devQueueHw->getQueueBuffer()->getUnderlyingBuffer());
 
-        EXPECT_EQ(igilQueue->m_controls.m_DynamicHeapStart, devQueueHw->offsetDsh + alignUp((uint32_t)pKernel->getDynamicStateHeapSize(), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE));
-        EXPECT_EQ(igilQueue->m_controls.m_DynamicHeapSizeInBytes, (uint32_t)devQueueHw->getDshBuffer()->getUnderlyingBufferSize());
-        EXPECT_EQ(igilQueue->m_controls.m_CurrentDSHoffset, devQueueHw->offsetDsh + alignUp((uint32_t)pKernel->getDynamicStateHeapSize(), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE));
-        EXPECT_EQ(igilQueue->m_controls.m_ParentDSHOffset, devQueueHw->offsetDsh);
+    EXPECT_EQ(igilQueue->m_controls.m_DynamicHeapStart, devQueueHw->offsetDsh + alignUp((uint32_t)pKernel->getDynamicStateHeapSize(), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE));
+    EXPECT_EQ(igilQueue->m_controls.m_DynamicHeapSizeInBytes, (uint32_t)devQueueHw->getDshBuffer()->getUnderlyingBufferSize());
+    EXPECT_EQ(igilQueue->m_controls.m_CurrentDSHoffset, devQueueHw->offsetDsh + alignUp((uint32_t)pKernel->getDynamicStateHeapSize(), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE));
+    EXPECT_EQ(igilQueue->m_controls.m_ParentDSHOffset, devQueueHw->offsetDsh);
 
-        alignedFree(ssh->getCpuBase());
-        delete ssh;
-        delete devQueueHw;
-    }
+    alignedFree(ssh->getCpuBase());
+    delete ssh;
+    delete devQueueHw;
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, DeviceQueueHwWithKernel, GivenHasBarriersSetWhenCallingSetupIndirectStateThenAllIddHaveBarriersEnabled) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        pKernel->createReflectionSurface();
+    pKernel->createReflectionSurface();
 
-        MockContext mockContext;
-        auto devQueueHw = std::make_unique<MockDeviceQueueHw<FamilyType>>(&mockContext, clDevice, deviceQueueProperties::minimumProperties[0]);
-        auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
+    MockContext mockContext;
+    auto devQueueHw = std::make_unique<MockDeviceQueueHw<FamilyType>>(&mockContext, clDevice, deviceQueueProperties::minimumProperties[0]);
+    auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
 
-        uint32_t parentCount = 1;
+    uint32_t parentCount = 1;
 
-        auto blockManager = pKernel->getProgram()->getBlockKernelManager();
-        auto iddCount = blockManager->getCount();
-        for (uint32_t i = 0; i < iddCount; i++) {
-            ((SPatchExecutionEnvironment *)blockManager->getBlockKernelInfo(i)->patchInfo.executionEnvironment)->HasBarriers = 1u;
-        }
-
-        auto surfaceStateHeapSize =
-            HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(const_cast<const Kernel &>(*pKernel));
-        auto ssh = std::make_unique<IndirectHeap>(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
-
-        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount, false);
-
-        auto iddStartPtr = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), devQueueHw->colorCalcStateSize));
-        auto iddStartIndex = parentCount;
-        for (uint32_t i = 0; i < iddCount; i++) {
-            EXPECT_TRUE(iddStartPtr[iddStartIndex + i].getBarrierEnable());
-        }
-
-        alignedFree(ssh->getCpuBase());
+    auto blockManager = pKernel->getProgram()->getBlockKernelManager();
+    auto iddCount = blockManager->getCount();
+    for (uint32_t i = 0; i < iddCount; i++) {
+        ((SPatchExecutionEnvironment *)blockManager->getBlockKernelInfo(i)->patchInfo.executionEnvironment)->HasBarriers = 1u;
     }
+
+    auto surfaceStateHeapSize =
+        HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(const_cast<const Kernel &>(*pKernel));
+    auto ssh = std::make_unique<IndirectHeap>(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
+
+    devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount, false);
+
+    auto iddStartPtr = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(dsh->getCpuBase(), devQueueHw->colorCalcStateSize));
+    auto iddStartIndex = parentCount;
+    for (uint32_t i = 0; i < iddCount; i++) {
+        EXPECT_TRUE(iddStartPtr[iddStartIndex + i].getBarrierEnable());
+    }
+
+    alignedFree(ssh->getCpuBase());
 }
 
 static const char *binaryFile = "simple_block_kernel";

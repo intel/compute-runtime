@@ -193,11 +193,8 @@ TEST(ParentKernelTest, WhenInitializingParentKernelThenPrivateMemoryForBlocksIsA
 }
 
 TEST_P(ParentKernelFromBinaryTest, GivenParentKernelWhenGettingInstructionHeapSizeForExecutionModelThenSizeIsGreaterThanZero) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        EXPECT_TRUE(pKernel->isParentKernel);
-
-        EXPECT_LT(0u, pKernel->getInstructionHeapSizeForExecutionModel());
-    }
+    EXPECT_TRUE(pKernel->isParentKernel);
+    EXPECT_LT(0u, pKernel->getInstructionHeapSizeForExecutionModel());
 }
 
 static const char *binaryFile = "simple_block_kernel";

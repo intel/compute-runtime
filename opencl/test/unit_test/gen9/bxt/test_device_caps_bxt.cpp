@@ -12,23 +12,13 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> BxtDeviceCaps;
 
-BXTTEST_F(BxtDeviceCaps, reportsOcl12) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-}
-
 BXTTEST_F(BxtDeviceCaps, BxtProfilingTimerResolution) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(52u, caps.outProfilingTimerResolution);
 }
 
-BXTTEST_F(BxtDeviceCaps, BxtClVersionSupport) {
-    const auto &caps = pClDevice->getDeviceInfo();
+BXTTEST_F(BxtDeviceCaps, givenBxtDeviceWhenAskedFor32BitSupportThenCorrectValuesAreReturned) {
     const auto &sharedCaps = pDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-
     auto memoryManager = pDevice->getMemoryManager();
     if (is64bit) {
         EXPECT_TRUE(memoryManager->peekForce32BitAllocations());

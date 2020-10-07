@@ -1057,37 +1057,37 @@ typedef ExecutionModelKernelFixture ParentKernelCommandsFromBinaryTest;
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelCommandsFromBinaryTest, WhenGettingSizeRequiredForExecutionModelForSurfaceStatesThenReturnSizeOfBlocksPlusMaxBindingTableSizeForAllIdtEntriesAndSchedulerSshSize) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
 
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        EXPECT_TRUE(pKernel->isParentKernel);
+    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
 
-        size_t totalSize = 0;
+    EXPECT_TRUE(pKernel->isParentKernel);
 
-        BlockKernelManager *blockManager = pKernel->getProgram()->getBlockKernelManager();
-        uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
+    size_t totalSize = 0;
 
-        totalSize = BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE - 1; // for initial alignment
+    BlockKernelManager *blockManager = pKernel->getProgram()->getBlockKernelManager();
+    uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
 
-        uint32_t maxBindingTableCount = 0;
+    totalSize = BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE - 1; // for initial alignment
 
-        for (uint32_t i = 0; i < blockCount; i++) {
-            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
+    uint32_t maxBindingTableCount = 0;
 
-            totalSize += pBlockInfo->heapInfo.SurfaceStateHeapSize;
-            totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    for (uint32_t i = 0; i < blockCount; i++) {
+        const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
 
-            maxBindingTableCount = std::max(maxBindingTableCount, pBlockInfo->patchInfo.bindingTableState ? pBlockInfo->patchInfo.bindingTableState->Count : 0);
-        }
-
-        totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
-
-        auto &scheduler = pContext->getSchedulerKernel();
-        auto schedulerSshSize = scheduler.getSurfaceStateHeapSize();
-        totalSize += schedulerSshSize + ((schedulerSshSize != 0) ? BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE : 0);
-
+        totalSize += pBlockInfo->heapInfo.SurfaceStateHeapSize;
         totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
-        EXPECT_EQ(totalSize, HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*pKernel));
+        maxBindingTableCount = std::max(maxBindingTableCount, pBlockInfo->patchInfo.bindingTableState ? pBlockInfo->patchInfo.bindingTableState->Count : 0);
     }
+
+    totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
+
+    auto &scheduler = pContext->getSchedulerKernel();
+    auto schedulerSshSize = scheduler.getSurfaceStateHeapSize();
+    totalSize += schedulerSshSize + ((schedulerSshSize != 0) ? BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE : 0);
+
+    totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+
+    EXPECT_EQ(totalSize, HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*pKernel));
 }
 
 static const char *binaryFile = "simple_block_kernel";

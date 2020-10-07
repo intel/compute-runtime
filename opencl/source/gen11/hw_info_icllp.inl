@@ -47,7 +47,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     PreemptionMode::MidThread,                       // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                          // defaultEngineType
     0,                                               // maxRenderFrequency
-    21,                                              // clVersionSupport
+    30,                                              // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Icllp, // aubDeviceId
     1,                                               // extraQuantityThreadsPerEU
     64,                                              // slmSize

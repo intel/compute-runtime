@@ -37,9 +37,7 @@ typedef ExecutionModelKernelFixture KernelReflectionSurfaceTest;
 typedef ExecutionModelKernelTest KernelReflectionSurfaceWithQueueTest;
 
 TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelThenKernelReflectionSurfaceIsNull) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        EXPECT_EQ(nullptr, pKernel->getKernelReflectionSurface());
-    }
+    EXPECT_EQ(nullptr, pKernel->getKernelReflectionSurface());
 }
 
 TEST_P(KernelReflectionSurfaceTest, GivenEmptyKernelInfoWhenPassedToGetCurbeParamsThenEmptyVectorIsReturned) {
@@ -486,127 +484,121 @@ TEST_P(KernelReflectionSurfaceTest, GivenKernelInfoWithoutLocalMemoryParameterWh
 }
 
 TEST_P(KernelReflectionSurfaceTest, WhenGettingCurbeParamsThenReturnedVectorIsSortedIncreasing) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        EXPECT_TRUE(pKernel->isParentKernel);
+    EXPECT_TRUE(pKernel->isParentKernel);
 
-        BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
-        size_t blockCount = blockManager->getCount();
+    BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
+    size_t blockCount = blockManager->getCount();
 
-        EXPECT_NE(0u, blockCount);
+    EXPECT_NE(0u, blockCount);
 
-        std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
+    std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
 
-        for (size_t i = 0; i < blockCount; i++) {
-            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
-            uint64_t tokenMask = 0;
-            uint32_t firstSSHTokenIndex = 0;
-            MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParamsForBlock, tokenMask, firstSSHTokenIndex, *pBlockInfo, pDevice->getHardwareInfo());
+    for (size_t i = 0; i < blockCount; i++) {
+        const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
+        uint64_t tokenMask = 0;
+        uint32_t firstSSHTokenIndex = 0;
+        MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParamsForBlock, tokenMask, firstSSHTokenIndex, *pBlockInfo, pDevice->getHardwareInfo());
 
-            if (pBlockInfo->name.find("simple_block_kernel") == std::string::npos) {
-                EXPECT_LT(1u, curbeParamsForBlock.size());
-            }
+        if (pBlockInfo->name.find("simple_block_kernel") == std::string::npos) {
+            EXPECT_LT(1u, curbeParamsForBlock.size());
+        }
 
-            for (size_t i = 1; i < curbeParamsForBlock.size(); i++) {
-                EXPECT_LE(curbeParamsForBlock[i - 1].m_parameterType, curbeParamsForBlock[i].m_parameterType);
-                if (curbeParamsForBlock[i - 1].m_parameterType == curbeParamsForBlock[i].m_parameterType) {
+        for (size_t i = 1; i < curbeParamsForBlock.size(); i++) {
+            EXPECT_LE(curbeParamsForBlock[i - 1].m_parameterType, curbeParamsForBlock[i].m_parameterType);
+            if (curbeParamsForBlock[i - 1].m_parameterType == curbeParamsForBlock[i].m_parameterType) {
 
-                    if (curbeParamsForBlock[i - 1].m_parameterType == iOpenCL::DATA_PARAMETER_TOKEN::DATA_PARAMETER_LOCAL_WORK_SIZE) {
-                        EXPECT_LE(curbeParamsForBlock[i - 1].m_patchOffset, curbeParamsForBlock[i].m_patchOffset);
-                    } else {
-                        EXPECT_LE(curbeParamsForBlock[i - 1].m_sourceOffset, curbeParamsForBlock[i].m_sourceOffset);
-                    }
+                if (curbeParamsForBlock[i - 1].m_parameterType == iOpenCL::DATA_PARAMETER_TOKEN::DATA_PARAMETER_LOCAL_WORK_SIZE) {
+                    EXPECT_LE(curbeParamsForBlock[i - 1].m_patchOffset, curbeParamsForBlock[i].m_patchOffset);
+                } else {
+                    EXPECT_LE(curbeParamsForBlock[i - 1].m_sourceOffset, curbeParamsForBlock[i].m_sourceOffset);
                 }
             }
-            EXPECT_EQ(curbeParamsForBlock.size() - pBlockInfo->kernelArgInfo.size(), firstSSHTokenIndex);
-            curbeParamsForBlock.resize(0);
         }
+        EXPECT_EQ(curbeParamsForBlock.size() - pBlockInfo->kernelArgInfo.size(), firstSSHTokenIndex);
+        curbeParamsForBlock.resize(0);
     }
 }
 
 TEST_P(KernelReflectionSurfaceTest, WhenGettingCurbeParamsThenReturnedVectorHasExpectedParamTypes) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        EXPECT_TRUE(pKernel->isParentKernel);
+    EXPECT_TRUE(pKernel->isParentKernel);
 
-        BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
-        size_t blockCount = blockManager->getCount();
+    BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
+    size_t blockCount = blockManager->getCount();
 
-        EXPECT_NE(0u, blockCount);
+    EXPECT_NE(0u, blockCount);
 
-        std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
+    std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
 
-        for (size_t i = 0; i < blockCount; i++) {
-            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
-            uint64_t tokenMask = 0;
-            uint32_t firstSSHTokenIndex = 0;
-            MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParamsForBlock, tokenMask, firstSSHTokenIndex, *pBlockInfo, pDevice->getHardwareInfo());
+    for (size_t i = 0; i < blockCount; i++) {
+        const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
+        uint64_t tokenMask = 0;
+        uint32_t firstSSHTokenIndex = 0;
+        MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParamsForBlock, tokenMask, firstSSHTokenIndex, *pBlockInfo, pDevice->getHardwareInfo());
 
-            const uint32_t bufferType = 49;
-            const uint32_t imageType = iOpenCL::DATA_PARAMETER_TOKEN::DATA_PARAMETER_OBJECT_ID + 50;
-            const uint32_t samplerType = iOpenCL::DATA_PARAMETER_TOKEN::DATA_PARAMETER_OBJECT_ID + 100;
+        const uint32_t bufferType = 49;
+        const uint32_t imageType = iOpenCL::DATA_PARAMETER_TOKEN::DATA_PARAMETER_OBJECT_ID + 50;
+        const uint32_t samplerType = iOpenCL::DATA_PARAMETER_TOKEN::DATA_PARAMETER_OBJECT_ID + 100;
 
-            bool bufferFound = false;
-            bool imageFound = false;
-            bool samplerFound = false;
+        bool bufferFound = false;
+        bool imageFound = false;
+        bool samplerFound = false;
 
-            if (pBlockInfo->name.find("kernel_reflection_dispatch_0") != std::string::npos) {
-                EXPECT_LT(1u, curbeParamsForBlock.size());
+        if (pBlockInfo->name.find("kernel_reflection_dispatch_0") != std::string::npos) {
+            EXPECT_LT(1u, curbeParamsForBlock.size());
 
-                for (const auto &curbeParams : curbeParamsForBlock) {
+            for (const auto &curbeParams : curbeParamsForBlock) {
 
-                    switch (curbeParams.m_parameterType) {
-                    case bufferType:
-                        bufferFound = true;
-                        break;
-                    case imageType:
-                        imageFound = true;
-                        break;
-                    case samplerType:
-                        samplerFound = true;
-                        break;
-                    }
+                switch (curbeParams.m_parameterType) {
+                case bufferType:
+                    bufferFound = true;
+                    break;
+                case imageType:
+                    imageFound = true;
+                    break;
+                case samplerType:
+                    samplerFound = true;
+                    break;
                 }
-
-                EXPECT_TRUE(bufferFound);
-                EXPECT_TRUE(imageFound);
-                EXPECT_TRUE(samplerFound);
             }
-            EXPECT_EQ(curbeParamsForBlock.size() - pBlockInfo->kernelArgInfo.size(), firstSSHTokenIndex);
-            curbeParamsForBlock.resize(0);
+
+            EXPECT_TRUE(bufferFound);
+            EXPECT_TRUE(imageFound);
+            EXPECT_TRUE(samplerFound);
         }
+        EXPECT_EQ(curbeParamsForBlock.size() - pBlockInfo->kernelArgInfo.size(), firstSSHTokenIndex);
+        curbeParamsForBlock.resize(0);
     }
 }
 
 TEST_P(KernelReflectionSurfaceTest, WhenGettingCurbeParamsThenTokenMaskIsCorrect) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        EXPECT_TRUE(pKernel->isParentKernel);
+    EXPECT_TRUE(pKernel->isParentKernel);
 
-        BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
-        size_t blockCount = blockManager->getCount();
+    BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
+    size_t blockCount = blockManager->getCount();
 
-        EXPECT_NE(0u, blockCount);
+    EXPECT_NE(0u, blockCount);
 
-        std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
+    std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
 
-        for (size_t i = 0; i < blockCount; i++) {
-            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
+    for (size_t i = 0; i < blockCount; i++) {
+        const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
 
-            uint64_t tokenMask = 0;
-            uint32_t firstSSHTokenIndex = 0;
-            MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParamsForBlock, tokenMask, firstSSHTokenIndex, *pBlockInfo, pDevice->getHardwareInfo());
+        uint64_t tokenMask = 0;
+        uint32_t firstSSHTokenIndex = 0;
+        MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParamsForBlock, tokenMask, firstSSHTokenIndex, *pBlockInfo, pDevice->getHardwareInfo());
 
-            if (pBlockInfo->name.find("kernel_reflection_dispatch_0") != std::string::npos) {
-                EXPECT_LT(1u, curbeParamsForBlock.size());
+        if (pBlockInfo->name.find("kernel_reflection_dispatch_0") != std::string::npos) {
+            EXPECT_LT(1u, curbeParamsForBlock.size());
 
-                const uint64_t bufferToken = (uint64_t)1 << 63;
-                const uint64_t imageToken = (uint64_t)1 << 50;
-                const uint64_t samplerToken = (uint64_t)1 << 51;
+            const uint64_t bufferToken = (uint64_t)1 << 63;
+            const uint64_t imageToken = (uint64_t)1 << 50;
+            const uint64_t samplerToken = (uint64_t)1 << 51;
 
-                uint64_t expectedTokens = bufferToken | imageToken | samplerToken;
-                EXPECT_NE(0u, tokenMask & expectedTokens);
-            }
-
-            curbeParamsForBlock.resize(0);
+            uint64_t expectedTokens = bufferToken | imageToken | samplerToken;
+            EXPECT_NE(0u, tokenMask & expectedTokens);
         }
+
+        curbeParamsForBlock.resize(0);
     }
 }
 
@@ -755,105 +747,103 @@ TEST(KernelReflectionSurfaceTestSingle, GivenDeviceQueueKernelArgWhenObtainingKe
 }
 
 TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelReflectionSurfaceThenKernelReflectionSurfaceIsCorrect) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        EXPECT_TRUE(pKernel->isParentKernel);
+    EXPECT_TRUE(pKernel->isParentKernel);
 
-        BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
-        size_t blockCount = blockManager->getCount();
+    BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
+    size_t blockCount = blockManager->getCount();
 
-        EXPECT_EQ(3u, blockCount);
+    EXPECT_EQ(3u, blockCount);
 
-        size_t maxConstantBufferSize = 0;
-        size_t parentImageCount = 0;
-        size_t parentSamplerCount = 0;
+    size_t maxConstantBufferSize = 0;
+    size_t parentImageCount = 0;
+    size_t parentSamplerCount = 0;
 
-        if (pKernel->getKernelInfo().name == "kernel_reflection") {
-            parentImageCount = 1;
-            parentSamplerCount = 1;
-        }
+    if (pKernel->getKernelInfo().name == "kernel_reflection") {
+        parentImageCount = 1;
+        parentSamplerCount = 1;
+    }
 
-        size_t samplerStateArrayAndBorderColorTotalSize = 0;
-        size_t totalCurbeParamsSize = 0;
+    size_t samplerStateArrayAndBorderColorTotalSize = 0;
+    size_t totalCurbeParamsSize = 0;
 
-        std::vector<size_t> blockCurbeParamCounts(blockCount);
-        std::vector<size_t> samplerStateAndBorderColorSizes(blockCount);
-        std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
+    std::vector<size_t> blockCurbeParamCounts(blockCount);
+    std::vector<size_t> samplerStateAndBorderColorSizes(blockCount);
+    std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
 
-        for (size_t i = 0; i < blockCount; i++) {
-            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
-            uint64_t tokenMask = 0;
-            uint32_t firstSSHTokenIndex = 0;
-            MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParamsForBlock, tokenMask, firstSSHTokenIndex, *pBlockInfo, pDevice->getHardwareInfo());
+    for (size_t i = 0; i < blockCount; i++) {
+        const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
+        uint64_t tokenMask = 0;
+        uint32_t firstSSHTokenIndex = 0;
+        MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParamsForBlock, tokenMask, firstSSHTokenIndex, *pBlockInfo, pDevice->getHardwareInfo());
 
-            blockCurbeParamCounts[i] = curbeParamsForBlock.size();
+        blockCurbeParamCounts[i] = curbeParamsForBlock.size();
 
-            maxConstantBufferSize = std::max(maxConstantBufferSize, static_cast<size_t>(pBlockInfo->patchInfo.dataParameterStream->DataParameterStreamSize));
-            totalCurbeParamsSize += blockCurbeParamCounts[i];
+        maxConstantBufferSize = std::max(maxConstantBufferSize, static_cast<size_t>(pBlockInfo->patchInfo.dataParameterStream->DataParameterStreamSize));
+        totalCurbeParamsSize += blockCurbeParamCounts[i];
 
-            size_t samplerStateAndBorderColorSize = pBlockInfo->getSamplerStateArraySize(pDevice->getHardwareInfo());
-            samplerStateAndBorderColorSize = alignUp(samplerStateAndBorderColorSize, Sampler::samplerStateArrayAlignment);
-            samplerStateAndBorderColorSize += pBlockInfo->getBorderColorStateSize();
-            samplerStateAndBorderColorSizes[i] = samplerStateAndBorderColorSize;
+        size_t samplerStateAndBorderColorSize = pBlockInfo->getSamplerStateArraySize(pDevice->getHardwareInfo());
+        samplerStateAndBorderColorSize = alignUp(samplerStateAndBorderColorSize, Sampler::samplerStateArrayAlignment);
+        samplerStateAndBorderColorSize += pBlockInfo->getBorderColorStateSize();
+        samplerStateAndBorderColorSizes[i] = samplerStateAndBorderColorSize;
 
-            samplerStateArrayAndBorderColorTotalSize += alignUp(samplerStateAndBorderColorSizes[i], sizeof(void *));
-            curbeParamsForBlock.clear();
-        }
+        samplerStateArrayAndBorderColorTotalSize += alignUp(samplerStateAndBorderColorSizes[i], sizeof(void *));
+        curbeParamsForBlock.clear();
+    }
 
-        totalCurbeParamsSize *= sizeof(IGIL_KernelCurbeParams);
+    totalCurbeParamsSize *= sizeof(IGIL_KernelCurbeParams);
 
-        size_t expectedReflectionSurfaceSize = alignUp(sizeof(IGIL_KernelDataHeader) + sizeof(IGIL_KernelAddressData) * blockCount, sizeof(void *));
-        expectedReflectionSurfaceSize += alignUp(sizeof(IGIL_KernelData), sizeof(void *)) * blockCount;
-        expectedReflectionSurfaceSize += (parentSamplerCount * sizeof(IGIL_SamplerParams) + maxConstantBufferSize) * blockCount +
-                                         totalCurbeParamsSize +
-                                         parentImageCount * sizeof(IGIL_ImageParamters) +
-                                         parentSamplerCount * sizeof(IGIL_ParentSamplerParams) +
-                                         samplerStateArrayAndBorderColorTotalSize;
+    size_t expectedReflectionSurfaceSize = alignUp(sizeof(IGIL_KernelDataHeader) + sizeof(IGIL_KernelAddressData) * blockCount, sizeof(void *));
+    expectedReflectionSurfaceSize += alignUp(sizeof(IGIL_KernelData), sizeof(void *)) * blockCount;
+    expectedReflectionSurfaceSize += (parentSamplerCount * sizeof(IGIL_SamplerParams) + maxConstantBufferSize) * blockCount +
+                                     totalCurbeParamsSize +
+                                     parentImageCount * sizeof(IGIL_ImageParamters) +
+                                     parentSamplerCount * sizeof(IGIL_ParentSamplerParams) +
+                                     samplerStateArrayAndBorderColorTotalSize;
 
-        pKernel->createReflectionSurface();
-        auto reflectionSurface = pKernel->getKernelReflectionSurface();
+    pKernel->createReflectionSurface();
+    auto reflectionSurface = pKernel->getKernelReflectionSurface();
 
-        ASSERT_NE(nullptr, reflectionSurface);
-        EXPECT_EQ(expectedReflectionSurfaceSize, reflectionSurface->getUnderlyingBufferSize());
+    ASSERT_NE(nullptr, reflectionSurface);
+    EXPECT_EQ(expectedReflectionSurfaceSize, reflectionSurface->getUnderlyingBufferSize());
 
-        IGIL_KernelDataHeader *pKernelHeader = reinterpret_cast<IGIL_KernelDataHeader *>(reflectionSurface->getUnderlyingBuffer());
+    IGIL_KernelDataHeader *pKernelHeader = reinterpret_cast<IGIL_KernelDataHeader *>(reflectionSurface->getUnderlyingBuffer());
 
-        uint32_t parentImages = 0;
-        uint32_t parentSamplers = 0;
+    uint32_t parentImages = 0;
+    uint32_t parentSamplers = 0;
 
-        if (pKernel->getKernelInfo().name == "kernel_reflection") {
-            parentImages = 1;
-            parentSamplers = 1;
-            EXPECT_LT(sizeof(IGIL_KernelDataHeader), pKernelHeader->m_ParentSamplerParamsOffset);
-        }
+    if (pKernel->getKernelInfo().name == "kernel_reflection") {
+        parentImages = 1;
+        parentSamplers = 1;
+        EXPECT_LT(sizeof(IGIL_KernelDataHeader), pKernelHeader->m_ParentSamplerParamsOffset);
+    }
 
-        EXPECT_EQ(blockCount, pKernelHeader->m_numberOfKernels);
-        EXPECT_EQ(parentImages, pKernelHeader->m_ParentKernelImageCount);
-        EXPECT_LT(sizeof(IGIL_KernelDataHeader), pKernelHeader->m_ParentImageDataOffset);
-        EXPECT_EQ(parentSamplers, pKernelHeader->m_ParentSamplerCount);
-        EXPECT_NE(pKernelHeader->m_ParentImageDataOffset, pKernelHeader->m_ParentSamplerParamsOffset);
+    EXPECT_EQ(blockCount, pKernelHeader->m_numberOfKernels);
+    EXPECT_EQ(parentImages, pKernelHeader->m_ParentKernelImageCount);
+    EXPECT_LT(sizeof(IGIL_KernelDataHeader), pKernelHeader->m_ParentImageDataOffset);
+    EXPECT_EQ(parentSamplers, pKernelHeader->m_ParentSamplerCount);
+    EXPECT_NE(pKernelHeader->m_ParentImageDataOffset, pKernelHeader->m_ParentSamplerParamsOffset);
 
-        // Curbe tokens
-        EXPECT_NE(0u, totalCurbeParamsSize);
+    // Curbe tokens
+    EXPECT_NE(0u, totalCurbeParamsSize);
 
-        for (uint32_t i = 0; i < pKernelHeader->m_numberOfKernels; i++) {
-            IGIL_KernelAddressData *addressData = pKernelHeader->m_data;
-            EXPECT_NE(0u, addressData->m_KernelDataOffset);
-            EXPECT_NE(0u, addressData->m_BTSize);
-            EXPECT_NE(0u, addressData->m_SSHTokensOffset);
-            EXPECT_NE(0u, addressData->m_ConstantBufferOffset);
-            EXPECT_NE(0u, addressData->m_BTSoffset);
+    for (uint32_t i = 0; i < pKernelHeader->m_numberOfKernels; i++) {
+        IGIL_KernelAddressData *addressData = pKernelHeader->m_data;
+        EXPECT_NE(0u, addressData->m_KernelDataOffset);
+        EXPECT_NE(0u, addressData->m_BTSize);
+        EXPECT_NE(0u, addressData->m_SSHTokensOffset);
+        EXPECT_NE(0u, addressData->m_ConstantBufferOffset);
+        EXPECT_NE(0u, addressData->m_BTSoffset);
 
-            IGIL_KernelData *kernelData = reinterpret_cast<IGIL_KernelData *>(ptrOffset(pKernelHeader, (size_t)(addressData->m_KernelDataOffset)));
+        IGIL_KernelData *kernelData = reinterpret_cast<IGIL_KernelData *>(ptrOffset(pKernelHeader, (size_t)(addressData->m_KernelDataOffset)));
 
-            EXPECT_NE_VAL(0u, kernelData->m_SIMDSize);
-            EXPECT_NE_VAL(0u, kernelData->m_PatchTokensMask);
-            EXPECT_NE_VAL(0u, kernelData->m_numberOfCurbeParams);
-            EXPECT_NE_VAL(0u, kernelData->m_numberOfCurbeTokens);
-            EXPECT_NE_VAL(0u, kernelData->m_sizeOfConstantBuffer);
+        EXPECT_NE_VAL(0u, kernelData->m_SIMDSize);
+        EXPECT_NE_VAL(0u, kernelData->m_PatchTokensMask);
+        EXPECT_NE_VAL(0u, kernelData->m_numberOfCurbeParams);
+        EXPECT_NE_VAL(0u, kernelData->m_numberOfCurbeTokens);
+        EXPECT_NE_VAL(0u, kernelData->m_sizeOfConstantBuffer);
 
-            for (uint32_t j = 0; j < kernelData->m_numberOfCurbeParams; j++) {
-                EXPECT_NE_VAL(0u, kernelData->m_data[j].m_parameterType);
-            }
+        for (uint32_t j = 0; j < kernelData->m_numberOfCurbeParams; j++) {
+            EXPECT_NE_VAL(0u, kernelData->m_data[j].m_parameterType);
         }
     }
 }
@@ -1026,73 +1016,68 @@ INSTANTIATE_TEST_CASE_P(KernelReflectionSurfaceTest,
                             ::testing::ValuesIn(KernelNames)));
 
 HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingKernelReflectionSurfacePatchesThenCurbeIsBlocked) {
-    REQUIRE_DEVICE_ENQUEUE_OR_SKIP(pPlatform->getClDevice(0));
+    BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
+    size_t blockCount = blockManager->getCount();
 
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    EXPECT_NE(0u, blockCount);
 
-        BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
-        size_t blockCount = blockManager->getCount();
+    std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
 
-        EXPECT_NE(0u, blockCount);
+    pKernel->createReflectionSurface();
+    pKernel->patchReflectionSurface(pDevQueue, nullptr);
 
-        std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
+    auto *reflectionSurface = pKernel->getKernelReflectionSurface();
+    ASSERT_NE(nullptr, reflectionSurface);
+    void *reflectionSurfaceMemory = reflectionSurface->getUnderlyingBuffer();
 
-        pKernel->createReflectionSurface();
-        pKernel->patchReflectionSurface(pDevQueue, nullptr);
+    IGIL_KernelDataHeader *pKernelHeader = reinterpret_cast<IGIL_KernelDataHeader *>(reflectionSurface->getUnderlyingBuffer());
 
-        auto *reflectionSurface = pKernel->getKernelReflectionSurface();
-        ASSERT_NE(nullptr, reflectionSurface);
-        void *reflectionSurfaceMemory = reflectionSurface->getUnderlyingBuffer();
+    EXPECT_EQ(blockCount, pKernelHeader->m_numberOfKernels);
 
-        IGIL_KernelDataHeader *pKernelHeader = reinterpret_cast<IGIL_KernelDataHeader *>(reflectionSurface->getUnderlyingBuffer());
+    for (uint32_t i = 0; i < pKernelHeader->m_numberOfKernels; i++) {
+        const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
 
-        EXPECT_EQ(blockCount, pKernelHeader->m_numberOfKernels);
+        IGIL_KernelAddressData *addressData = pKernelHeader->m_data;
 
-        for (uint32_t i = 0; i < pKernelHeader->m_numberOfKernels; i++) {
-            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
+        EXPECT_NE(0u, addressData[i].m_ConstantBufferOffset);
 
-            IGIL_KernelAddressData *addressData = pKernelHeader->m_data;
+        void *pCurbe = ptrOffset(reflectionSurfaceMemory, (size_t)(addressData[i].m_ConstantBufferOffset));
 
-            EXPECT_NE(0u, addressData[i].m_ConstantBufferOffset);
-
-            void *pCurbe = ptrOffset(reflectionSurfaceMemory, (size_t)(addressData[i].m_ConstantBufferOffset));
-
-            if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface) {
-                auto *patchedPointer = ptrOffset(pCurbe, pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamOffset);
-                if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize == sizeof(uint32_t)) {
-                    uint32_t *patchedValue = static_cast<uint32_t *>(patchedPointer);
-                    uint64_t patchedValue64 = *patchedValue;
-                    EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddress(), patchedValue64);
-                } else if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize == sizeof(uint64_t)) {
-                    uint64_t *patchedValue = static_cast<uint64_t *>(patchedPointer);
-                    EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddress(), *patchedValue);
-                }
+        if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface) {
+            auto *patchedPointer = ptrOffset(pCurbe, pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamOffset);
+            if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize == sizeof(uint32_t)) {
+                uint32_t *patchedValue = static_cast<uint32_t *>(patchedPointer);
+                uint64_t patchedValue64 = *patchedValue;
+                EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddress(), patchedValue64);
+            } else if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize == sizeof(uint64_t)) {
+                uint64_t *patchedValue = static_cast<uint64_t *>(patchedPointer);
+                EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddress(), *patchedValue);
             }
+        }
 
-            if (pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface) {
-                auto *patchedPointer = ptrOffset(pCurbe, pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamOffset);
-                if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize == sizeof(uint32_t)) {
+        if (pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface) {
+            auto *patchedPointer = ptrOffset(pCurbe, pBlockInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->DataParamOffset);
+            if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize == sizeof(uint32_t)) {
+                uint32_t *patchedValue = static_cast<uint32_t *>(patchedPointer);
+                uint64_t patchedValue64 = *patchedValue;
+                EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), patchedValue64);
+            } else if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize == sizeof(uint64_t)) {
+                uint64_t *patchedValue = static_cast<uint64_t *>(patchedPointer);
+                EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), *patchedValue);
+            }
+        }
+
+        for (const auto &arg : pBlockInfo->kernelArgInfo) {
+            if (arg.isDeviceQueue) {
+
+                auto *patchedPointer = ptrOffset(pCurbe, arg.kernelArgPatchInfoVector[0].crossthreadOffset);
+                if (arg.kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
                     uint32_t *patchedValue = static_cast<uint32_t *>(patchedPointer);
                     uint64_t patchedValue64 = *patchedValue;
                     EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), patchedValue64);
-                } else if (pBlockInfo->patchInfo.pAllocateStatelessEventPoolSurface->DataParamSize == sizeof(uint64_t)) {
+                } else if (arg.kernelArgPatchInfoVector[0].size == sizeof(uint64_t)) {
                     uint64_t *patchedValue = static_cast<uint64_t *>(patchedPointer);
                     EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), *patchedValue);
-                }
-            }
-
-            for (const auto &arg : pBlockInfo->kernelArgInfo) {
-                if (arg.isDeviceQueue) {
-
-                    auto *patchedPointer = ptrOffset(pCurbe, arg.kernelArgPatchInfoVector[0].crossthreadOffset);
-                    if (arg.kernelArgPatchInfoVector[0].size == sizeof(uint32_t)) {
-                        uint32_t *patchedValue = static_cast<uint32_t *>(patchedPointer);
-                        uint64_t patchedValue64 = *patchedValue;
-                        EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), patchedValue64);
-                    } else if (arg.kernelArgPatchInfoVector[0].size == sizeof(uint64_t)) {
-                        uint64_t *patchedValue = static_cast<uint64_t *>(patchedPointer);
-                        EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), *patchedValue);
-                    }
                 }
             }
         }
@@ -1100,64 +1085,61 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingKernelReflectionSurfaceThenParentImageAndSamplersParamsAreSet) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
+    BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
+    size_t blockCount = blockManager->getCount();
 
-        BlockKernelManager *blockManager = pProgram->getBlockKernelManager();
-        size_t blockCount = blockManager->getCount();
+    EXPECT_NE(0u, blockCount);
 
-        EXPECT_NE(0u, blockCount);
+    std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
 
-        std::vector<IGIL_KernelCurbeParams> curbeParamsForBlock;
+    std::unique_ptr<Image> image3d(ImageHelper<Image3dDefaults>::create(context));
+    std::unique_ptr<Sampler> sampler(new MockSampler(context,
+                                                     true,
+                                                     (cl_addressing_mode)CL_ADDRESS_CLAMP_TO_EDGE,
+                                                     (cl_filter_mode)CL_FILTER_LINEAR));
 
-        std::unique_ptr<Image> image3d(ImageHelper<Image3dDefaults>::create(context));
-        std::unique_ptr<Sampler> sampler(new MockSampler(context,
-                                                         true,
-                                                         (cl_addressing_mode)CL_ADDRESS_CLAMP_TO_EDGE,
-                                                         (cl_filter_mode)CL_FILTER_LINEAR));
+    cl_sampler samplerCl = sampler.get();
+    cl_mem imageCl = image3d.get();
 
-        cl_sampler samplerCl = sampler.get();
-        cl_mem imageCl = image3d.get();
+    if (pKernel->getKernelInfo().name == "kernel_reflection") {
+        pKernel->setArgSampler(0, sizeof(cl_sampler), &samplerCl);
+        pKernel->setArgImage(1, sizeof(cl_mem), &imageCl);
+    }
 
-        if (pKernel->getKernelInfo().name == "kernel_reflection") {
-            pKernel->setArgSampler(0, sizeof(cl_sampler), &samplerCl);
-            pKernel->setArgImage(1, sizeof(cl_mem), &imageCl);
-        }
+    pKernel->createReflectionSurface();
 
-        pKernel->createReflectionSurface();
+    auto *reflectionSurface = pKernel->getKernelReflectionSurface();
+    ASSERT_NE(nullptr, reflectionSurface);
 
-        auto *reflectionSurface = pKernel->getKernelReflectionSurface();
-        ASSERT_NE(nullptr, reflectionSurface);
+    IGIL_KernelDataHeader *pKernelHeader = reinterpret_cast<IGIL_KernelDataHeader *>(reflectionSurface->getUnderlyingBuffer());
+    IGIL_ImageParamters *pParentImageParams = reinterpret_cast<IGIL_ImageParamters *>(ptrOffset(pKernelHeader, (size_t)pKernelHeader->m_ParentImageDataOffset));
+    IGIL_ParentSamplerParams *pParentSamplerParams = reinterpret_cast<IGIL_ParentSamplerParams *>(ptrOffset(pKernelHeader, (size_t)pKernelHeader->m_ParentSamplerParamsOffset));
 
-        IGIL_KernelDataHeader *pKernelHeader = reinterpret_cast<IGIL_KernelDataHeader *>(reflectionSurface->getUnderlyingBuffer());
-        IGIL_ImageParamters *pParentImageParams = reinterpret_cast<IGIL_ImageParamters *>(ptrOffset(pKernelHeader, (size_t)pKernelHeader->m_ParentImageDataOffset));
-        IGIL_ParentSamplerParams *pParentSamplerParams = reinterpret_cast<IGIL_ParentSamplerParams *>(ptrOffset(pKernelHeader, (size_t)pKernelHeader->m_ParentSamplerParamsOffset));
+    memset(pParentImageParams, 0xff, sizeof(IGIL_ImageParamters) * pKernelHeader->m_ParentKernelImageCount);
+    memset(pParentSamplerParams, 0xff, sizeof(IGIL_ParentSamplerParams) * pKernelHeader->m_ParentSamplerCount);
 
-        memset(pParentImageParams, 0xff, sizeof(IGIL_ImageParamters) * pKernelHeader->m_ParentKernelImageCount);
-        memset(pParentSamplerParams, 0xff, sizeof(IGIL_ParentSamplerParams) * pKernelHeader->m_ParentSamplerCount);
+    pKernel->patchReflectionSurface(pDevQueue, nullptr);
 
-        pKernel->patchReflectionSurface(pDevQueue, nullptr);
+    EXPECT_EQ(blockCount, pKernelHeader->m_numberOfKernels);
 
-        EXPECT_EQ(blockCount, pKernelHeader->m_numberOfKernels);
+    for (uint32_t i = 0; i < pKernelHeader->m_numberOfKernels; i++) {
 
-        for (uint32_t i = 0; i < pKernelHeader->m_numberOfKernels; i++) {
-
-            if (pKernelHeader->m_ParentKernelImageCount > 0) {
-                uint32_t imageIndex = 0;
-                for (const auto &arg : pKernel->getKernelInfo().kernelArgInfo) {
-                    if (arg.isImage) {
-                        EXPECT_EQ(arg.offsetHeap, pParentImageParams[imageIndex].m_ObjectID);
-                        imageIndex++;
-                    }
+        if (pKernelHeader->m_ParentKernelImageCount > 0) {
+            uint32_t imageIndex = 0;
+            for (const auto &arg : pKernel->getKernelInfo().kernelArgInfo) {
+                if (arg.isImage) {
+                    EXPECT_EQ(arg.offsetHeap, pParentImageParams[imageIndex].m_ObjectID);
+                    imageIndex++;
                 }
             }
+        }
 
-            if (pKernelHeader->m_ParentSamplerCount > 0) {
-                uint32_t samplerIndex = 0;
-                for (const auto &arg : pKernel->getKernelInfo().kernelArgInfo) {
-                    if (arg.isSampler) {
-                        EXPECT_EQ(OCLRT_ARG_OFFSET_TO_SAMPLER_OBJECT_ID(arg.offsetHeap), pParentSamplerParams[samplerIndex].m_ObjectID);
-                        samplerIndex++;
-                    }
+        if (pKernelHeader->m_ParentSamplerCount > 0) {
+            uint32_t samplerIndex = 0;
+            for (const auto &arg : pKernel->getKernelInfo().kernelArgInfo) {
+                if (arg.isSampler) {
+                    EXPECT_EQ(OCLRT_ARG_OFFSET_TO_SAMPLER_OBJECT_ID(arg.offsetHeap), pParentSamplerParams[samplerIndex].m_ObjectID);
+                    samplerIndex++;
                 }
             }
         }

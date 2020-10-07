@@ -127,8 +127,9 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_NE(nullptr, caps.vendor);
     EXPECT_NE(nullptr, caps.driverVersion);
     EXPECT_NE(nullptr, caps.profile);
-    EXPECT_NE(nullptr, caps.clVersion);
-    EXPECT_NE(nullptr, caps.clCVersion);
+    EXPECT_STREQ("OpenCL 3.0 NEO ", caps.clVersion);
+    auto expectedClCVersion = (device->isOcl21Conformant() ? "OpenCL C 3.0 " : "OpenCL C 1.2 ");
+    EXPECT_STREQ(expectedClCVersion, caps.clCVersion);
     EXPECT_NE(0u, caps.numericClVersion);
     EXPECT_GT(caps.openclCAllVersions.size(), 0u);
     EXPECT_GT(caps.openclCFeatures.size(), 0u);
@@ -1196,9 +1197,7 @@ TEST(DeviceGetCaps, givenDebugFlagToUseCertainWorkgroupSizeWhenDeviceIsCreatedIt
 }
 
 TEST(DeviceGetCaps, givenDebugFlagToDisableDeviceEnqueuesWhenCreatingDeviceThenDeviceQueueCapsAreSetCorrectly) {
-    if (defaultHwInfo->capabilityTable.clVersionSupport == 21) {
-        GTEST_SKIP();
-    }
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceDeviceEnqueueSupport.set(0);

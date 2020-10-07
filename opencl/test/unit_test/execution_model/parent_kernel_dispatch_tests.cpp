@@ -28,167 +28,155 @@ static const char *KernelNames[] = {"kernel_reflection", "simple_block_kernel"};
 typedef ExecutionModelKernelTest ParentKernelDispatchTest;
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDeviceQueueDSHIsUsed) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
+    DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
 
-        KernelOperation *blockedCommandsData = nullptr;
-        const size_t globalOffsets[3] = {0, 0, 0};
-        const size_t workItems[3] = {1, 1, 1};
+    KernelOperation *blockedCommandsData = nullptr;
+    const size_t globalOffsets[3] = {0, 0, 0};
+    const size_t workItems[3] = {1, 1, 1};
 
-        pKernel->createReflectionSurface();
+    pKernel->createReflectionSurface();
 
-        size_t dshUsedBefore = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u).getUsed();
-        EXPECT_EQ(0u, dshUsedBefore);
+    size_t dshUsedBefore = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u).getUsed();
+    EXPECT_EQ(0u, dshUsedBefore);
 
-        size_t executionModelDSHUsedBefore = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE)->getUsed();
+    size_t executionModelDSHUsedBefore = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE)->getUsed();
 
-        DispatchInfo dispatchInfo(pKernel, 1, workItems, nullptr, globalOffsets);
-        MultiDispatchInfo multiDispatchInfo(pKernel);
-        multiDispatchInfo.push(dispatchInfo);
-        HardwareInterface<FamilyType>::dispatchWalker(
-            *pCmdQ,
-            multiDispatchInfo,
-            CsrDependencies(),
-            blockedCommandsData,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr,
-            CL_COMMAND_NDRANGE_KERNEL);
+    DispatchInfo dispatchInfo(pKernel, 1, workItems, nullptr, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo(pKernel);
+    multiDispatchInfo.push(dispatchInfo);
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        blockedCommandsData,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        CL_COMMAND_NDRANGE_KERNEL);
 
-        size_t dshUsedAfter = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u).getUsed();
-        EXPECT_EQ(0u, dshUsedAfter);
+    size_t dshUsedAfter = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u).getUsed();
+    EXPECT_EQ(0u, dshUsedAfter);
 
-        size_t executionModelDSHUsedAfter = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE)->getUsed();
-        EXPECT_NE(executionModelDSHUsedBefore, executionModelDSHUsedAfter);
-    }
+    size_t executionModelDSHUsedAfter = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE)->getUsed();
+    EXPECT_NE(executionModelDSHUsedBefore, executionModelDSHUsedAfter);
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenDynamicStateHeapIsRequestedThenDeviceQueueHeapIsReturned) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
+    DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
 
-        MockMultiDispatchInfo multiDispatchInfo(pKernel);
-        auto ish = &getIndirectHeap<FamilyType, IndirectHeap::DYNAMIC_STATE>(*pCmdQ, multiDispatchInfo);
-        auto ishOfDevQueue = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
+    MockMultiDispatchInfo multiDispatchInfo(pKernel);
+    auto ish = &getIndirectHeap<FamilyType, IndirectHeap::DYNAMIC_STATE>(*pCmdQ, multiDispatchInfo);
+    auto ishOfDevQueue = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
 
-        EXPECT_EQ(ishOfDevQueue, ish);
-    }
+    EXPECT_EQ(ishOfDevQueue, ish);
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenIndirectObjectHeapIsRequestedThenDeviceQueueDSHIsReturned) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
+    DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
 
-        MockMultiDispatchInfo multiDispatchInfo(pKernel);
-        auto ioh = &getIndirectHeap<FamilyType, IndirectHeap::INDIRECT_OBJECT>(*pCmdQ, multiDispatchInfo);
-        auto dshOfDevQueue = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
+    MockMultiDispatchInfo multiDispatchInfo(pKernel);
+    auto ioh = &getIndirectHeap<FamilyType, IndirectHeap::INDIRECT_OBJECT>(*pCmdQ, multiDispatchInfo);
+    auto dshOfDevQueue = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
 
-        EXPECT_EQ(dshOfDevQueue, ioh);
-    }
+    EXPECT_EQ(dshOfDevQueue, ioh);
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDefaultCmdQIOHIsNotUsed) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        KernelOperation *blockedCommandsData = nullptr;
-        const size_t globalOffsets[3] = {0, 0, 0};
-        const size_t workItems[3] = {1, 1, 1};
+    KernelOperation *blockedCommandsData = nullptr;
+    const size_t globalOffsets[3] = {0, 0, 0};
+    const size_t workItems[3] = {1, 1, 1};
 
-        MockMultiDispatchInfo multiDispatchInfo(pKernel);
+    MockMultiDispatchInfo multiDispatchInfo(pKernel);
 
-        auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
+    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
 
-        DispatchInfo dispatchInfo(pKernel, 1, workItems, nullptr, globalOffsets);
-        multiDispatchInfo.push(dispatchInfo);
-        HardwareInterface<FamilyType>::dispatchWalker(
-            *pCmdQ,
-            multiDispatchInfo,
-            CsrDependencies(),
-            blockedCommandsData,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr,
-            CL_COMMAND_NDRANGE_KERNEL);
+    DispatchInfo dispatchInfo(pKernel, 1, workItems, nullptr, globalOffsets);
+    multiDispatchInfo.push(dispatchInfo);
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        blockedCommandsData,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        CL_COMMAND_NDRANGE_KERNEL);
 
-        auto iohUsed = ioh.getUsed();
-        EXPECT_EQ(0u, iohUsed);
-    }
+    auto iohUsed = ioh.getUsed();
+    EXPECT_EQ(0u, iohUsed);
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenSSHSizeAccountForsBlocksSurfaceStates) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        KernelOperation *blockedCommandsData = nullptr;
-        const size_t globalOffsets[3] = {0, 0, 0};
-        const size_t workItems[3] = {1, 1, 1};
+    KernelOperation *blockedCommandsData = nullptr;
+    const size_t globalOffsets[3] = {0, 0, 0};
+    const size_t workItems[3] = {1, 1, 1};
 
-        MockMultiDispatchInfo multiDispatchInfo(pKernel);
-        DispatchInfo dispatchInfo(pKernel, 1, workItems, nullptr, globalOffsets);
-        multiDispatchInfo.push(dispatchInfo);
-        HardwareInterface<FamilyType>::dispatchWalker(
-            *pCmdQ,
-            multiDispatchInfo,
-            CsrDependencies(),
-            blockedCommandsData,
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr,
-            CL_COMMAND_NDRANGE_KERNEL);
+    MockMultiDispatchInfo multiDispatchInfo(pKernel);
+    DispatchInfo dispatchInfo(pKernel, 1, workItems, nullptr, globalOffsets);
+    multiDispatchInfo.push(dispatchInfo);
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        blockedCommandsData,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        CL_COMMAND_NDRANGE_KERNEL);
 
-        auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u);
+    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u);
 
-        EXPECT_LE(pKernel->getKernelInfo().heapInfo.SurfaceStateHeapSize, ssh.getMaxAvailableSpace());
+    EXPECT_LE(pKernel->getKernelInfo().heapInfo.SurfaceStateHeapSize, ssh.getMaxAvailableSpace());
 
-        size_t minRequiredSize = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
-        size_t minRequiredSizeForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*pKernel);
+    size_t minRequiredSize = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
+    size_t minRequiredSizeForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*pKernel);
 
-        EXPECT_LE(minRequiredSize + minRequiredSizeForEM, ssh.getMaxAvailableSpace());
-    }
+    EXPECT_LE(minRequiredSize + minRequiredSizeForEM, ssh.getMaxAvailableSpace());
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelDispatchTest, givenParentKernelWhenQueueIsBlockedThenSSHSizeForParentIsAllocated) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
-        const size_t globalOffsets[3] = {0, 0, 0};
-        const size_t workItems[3] = {1, 1, 1};
+    auto blockedCommandsData = createBlockedCommandsData(*pCmdQ);
+    const size_t globalOffsets[3] = {0, 0, 0};
+    const size_t workItems[3] = {1, 1, 1};
 
-        MultiDispatchInfo multiDispatchInfo(pKernel);
+    MultiDispatchInfo multiDispatchInfo(pKernel);
 
-        DispatchInfo dispatchInfo(pKernel, 1, workItems, nullptr, globalOffsets);
-        multiDispatchInfo.push(dispatchInfo);
-        HardwareInterface<FamilyType>::dispatchWalker(
-            *pCmdQ,
-            multiDispatchInfo,
-            CsrDependencies(),
-            blockedCommandsData.get(),
-            nullptr,
-            nullptr,
-            nullptr,
-            nullptr,
-            CL_COMMAND_NDRANGE_KERNEL);
-        ASSERT_NE(nullptr, blockedCommandsData);
+    DispatchInfo dispatchInfo(pKernel, 1, workItems, nullptr, globalOffsets);
+    multiDispatchInfo.push(dispatchInfo);
+    HardwareInterface<FamilyType>::dispatchWalker(
+        *pCmdQ,
+        multiDispatchInfo,
+        CsrDependencies(),
+        blockedCommandsData.get(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        CL_COMMAND_NDRANGE_KERNEL);
+    ASSERT_NE(nullptr, blockedCommandsData);
 
-        size_t minRequiredSize = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo) + UnitTestHelper<FamilyType>::getDefaultSshUsage();
-        size_t minRequiredSizeForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*pKernel);
+    size_t minRequiredSize = HardwareCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo) + UnitTestHelper<FamilyType>::getDefaultSshUsage();
+    size_t minRequiredSizeForEM = HardwareCommandsHelper<FamilyType>::getSshSizeForExecutionModel(*pKernel);
 
-        size_t sshUsed = blockedCommandsData->ssh->getUsed();
+    size_t sshUsed = blockedCommandsData->ssh->getUsed();
 
-        size_t expectedSizeSSH = pKernel->getNumberOfBindingTableStates() * sizeof(RENDER_SURFACE_STATE) +
-                                 pKernel->getKernelInfo().patchInfo.bindingTableState->Count * sizeof(BINDING_TABLE_STATE) +
-                                 UnitTestHelper<FamilyType>::getDefaultSshUsage();
+    size_t expectedSizeSSH = pKernel->getNumberOfBindingTableStates() * sizeof(RENDER_SURFACE_STATE) +
+                             pKernel->getKernelInfo().patchInfo.bindingTableState->Count * sizeof(BINDING_TABLE_STATE) +
+                             UnitTestHelper<FamilyType>::getDefaultSshUsage();
 
-        if ((pKernel->requiresSshForBuffers()) || (pKernel->getKernelInfo().patchInfo.imageMemObjKernelArgs.size() > 0)) {
-            EXPECT_EQ(expectedSizeSSH, sshUsed);
-        }
-
-        EXPECT_GE(minRequiredSize, sshUsed);
-        // Total SSH size including EM must be greater then ssh allocated
-        EXPECT_GT(minRequiredSize + minRequiredSizeForEM, sshUsed);
+    if ((pKernel->requiresSshForBuffers()) || (pKernel->getKernelInfo().patchInfo.imageMemObjKernelArgs.size() > 0)) {
+        EXPECT_EQ(expectedSizeSSH, sshUsed);
     }
+
+    EXPECT_GE(minRequiredSize, sshUsed);
+    // Total SSH size including EM must be greater then ssh allocated
+    EXPECT_GT(minRequiredSize + minRequiredSizeForEM, sshUsed);
 }
 
 INSTANTIATE_TEST_CASE_P(ParentKernelDispatchTest,

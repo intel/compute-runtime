@@ -43,7 +43,7 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     PreemptionMode::MidThread,                     // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
-    21,                                            // clVersionSupport
+    30,                                            // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Cfl, // aubDeviceId
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize

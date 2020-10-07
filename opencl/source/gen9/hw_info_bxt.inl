@@ -48,7 +48,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     PreemptionMode::MidThread,                     // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
-    12,                                            // clVersionSupport
+    30,                                            // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Bxt, // aubDeviceId
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize

@@ -16,12 +16,6 @@ LKFTEST_F(LkfTest, givenLkfWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
 }
 
-LKFTEST_F(LkfTest, givenLKFWhenCheckedOCLVersionThen21IsReported) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-}
-
 LKFTEST_F(LkfTest, givenLKFWhenCheckedSvmSupportThenNoSvmIsReported) {
     const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(caps.svmCapabilities, 0u);

@@ -51,7 +51,7 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     PreemptionMode::Disabled,                      // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType
     0,                                             // maxRenderFrequency
-    21,                                            // clVersionSupport
+    30,                                            // clVersionSupport
     CmdServicesMemTraceVersion::DeviceValues::Bdw, // aubDeviceId
     0,                                             // extraQuantityThreadsPerEU
     64,                                            // slmSize

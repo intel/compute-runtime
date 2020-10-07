@@ -16,6 +16,7 @@
 #include "opencl/test/unit_test/fixtures/run_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include <vector>
 
@@ -38,6 +39,7 @@ class ProgramWithBlockKernelsTest : public ContextFixture,
         device = pPlatform->getClDevice(0);
         ContextFixture::SetUp(1, &device);
         ProgramFixture::SetUp();
+        REQUIRE_OCL_21_OR_SKIP(pContext);
     }
 
     void TearDown() override {
@@ -50,85 +52,77 @@ class ProgramWithBlockKernelsTest : public ContextFixture,
 };
 
 TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsBuildingThenKernelInfosHaveCorrectNames) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        CreateProgramFromBinary(pContext, &device, "simple_block_kernel", "-cl-std=CL2.0");
-        auto mockProgram = (MockProgram *)pProgram;
-        ASSERT_NE(nullptr, mockProgram);
+    CreateProgramFromBinary(pContext, &device, "simple_block_kernel", "-cl-std=CL2.0");
+    auto mockProgram = (MockProgram *)pProgram;
+    ASSERT_NE(nullptr, mockProgram);
 
-        retVal = mockProgram->build(
-            1,
-            &device,
-            nullptr,
-            nullptr,
-            nullptr,
-            false);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = mockProgram->build(
+        1,
+        &device,
+        nullptr,
+        nullptr,
+        nullptr,
+        false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-        auto kernelInfo = mockProgram->Program::getKernelInfo("simple_block_kernel");
-        EXPECT_NE(nullptr, kernelInfo);
+    auto kernelInfo = mockProgram->Program::getKernelInfo("simple_block_kernel");
+    EXPECT_NE(nullptr, kernelInfo);
 
-        auto blockKernelInfo = mockProgram->Program::getKernelInfo("simple_block_kernel_dispatch_0");
-        EXPECT_EQ(nullptr, blockKernelInfo);
+    auto blockKernelInfo = mockProgram->Program::getKernelInfo("simple_block_kernel_dispatch_0");
+    EXPECT_EQ(nullptr, blockKernelInfo);
 
-        std::vector<const KernelInfo *> blockKernelInfos(mockProgram->blockKernelManager->getCount());
+    std::vector<const KernelInfo *> blockKernelInfos(mockProgram->blockKernelManager->getCount());
 
-        for (size_t i = 0; i < mockProgram->blockKernelManager->getCount(); i++) {
-            const KernelInfo *blockKernelInfo = mockProgram->blockKernelManager->getBlockKernelInfo(i);
-            EXPECT_NE(nullptr, blockKernelInfo);
-            blockKernelInfos[i] = blockKernelInfo;
-        }
-
-        bool blockKernelFound = false;
-        for (size_t i = 0; i < mockProgram->blockKernelManager->getCount(); i++) {
-            if (blockKernelInfos[i]->name.find("simple_block_kernel_dispatch") != std::string::npos) {
-                blockKernelFound = true;
-                break;
-            }
-        }
-
-        EXPECT_TRUE(blockKernelFound);
-
-    } else {
-        EXPECT_EQ(nullptr, pProgram);
+    for (size_t i = 0; i < mockProgram->blockKernelManager->getCount(); i++) {
+        const KernelInfo *blockKernelInfo = mockProgram->blockKernelManager->getBlockKernelInfo(i);
+        EXPECT_NE(nullptr, blockKernelInfo);
+        blockKernelInfos[i] = blockKernelInfo;
     }
+
+    bool blockKernelFound = false;
+    for (size_t i = 0; i < mockProgram->blockKernelManager->getCount(); i++) {
+        if (blockKernelInfos[i]->name.find("simple_block_kernel_dispatch") != std::string::npos) {
+            blockKernelFound = true;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(blockKernelFound);
 }
 
 TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLinkedThenBlockKernelsAreSeparated) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.0") != std::string::npos) {
-        CreateProgramFromBinary(pContext, &device, "simple_block_kernel", "-cl-std=CL2.0");
-        const char *buildOptions = "-cl-std=CL2.0";
+    CreateProgramFromBinary(pContext, &device, "simple_block_kernel", "-cl-std=CL2.0");
+    const char *buildOptions = "-cl-std=CL2.0";
 
-        overwriteBuiltInBinaryName(
-            &pPlatform->getClDevice(0)->getDevice(),
-            "simple_block_kernel", true);
+    overwriteBuiltInBinaryName(
+        &pPlatform->getClDevice(0)->getDevice(),
+        "simple_block_kernel", true);
 
-        ASSERT_NE(nullptr, pProgram);
+    ASSERT_NE(nullptr, pProgram);
 
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        Program *programLinked = new Program(*pPlatform->peekExecutionEnvironment(), pContext, false, nullptr);
-        cl_program program = pProgram;
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    Program *programLinked = new Program(*pPlatform->peekExecutionEnvironment(), pContext, false, nullptr);
+    cl_program program = pProgram;
 
-        retVal = pProgram->compile(1, &device, buildOptions, 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(1, &device, buildOptions, 0, nullptr, nullptr, nullptr, nullptr);
 
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-        retVal = programLinked->link(1, &device, buildOptions, 1, &program, nullptr, nullptr);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = programLinked->link(1, &device, buildOptions, 1, &program, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-        BlockKernelManager *blockManager = programLinked->getBlockKernelManager();
+    BlockKernelManager *blockManager = programLinked->getBlockKernelManager();
 
-        EXPECT_NE(0u, blockManager->getCount());
+    EXPECT_NE(0u, blockManager->getCount());
 
-        for (uint32_t i = 0; i < blockManager->getCount(); i++) {
-            const KernelInfo *info = blockManager->getBlockKernelInfo(i);
-            if (info->name.find("simple_block_kernel_dispatch") != std::string::npos) {
-                break;
-            }
+    for (uint32_t i = 0; i < blockManager->getCount(); i++) {
+        const KernelInfo *info = blockManager->getBlockKernelInfo(i);
+        if (info->name.find("simple_block_kernel_dispatch") != std::string::npos) {
+            break;
         }
-        restoreBuiltInBinaryName(nullptr);
-        delete programLinked;
-    } else {
-        EXPECT_EQ(nullptr, pProgram);
     }
+    restoreBuiltInBinaryName(nullptr);
+    delete programLinked;
 }
+
 } // namespace NEO

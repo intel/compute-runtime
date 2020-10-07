@@ -12,11 +12,6 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> DeviceTest;
 
-BXTTEST_F(DeviceTest, getEnabledClVersion12Device) {
-    auto version = pClDevice->getEnabledClVersion();
-    EXPECT_EQ(12u, version);
-}
-
 BXTTEST_F(DeviceTest, givenBxtDeviceWhenAskedForProflingTimerResolutionThen52IsReturned) {
     auto resolution = pDevice->getProfilingTimerResolution();
     EXPECT_DOUBLE_EQ(52.083, resolution);

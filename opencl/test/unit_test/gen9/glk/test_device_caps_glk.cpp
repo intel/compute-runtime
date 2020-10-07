@@ -21,12 +21,6 @@ GLKTEST_F(Gen9DeviceCaps, givenGlkDeviceWhenAskedForDoubleSupportThenTrueIsRetur
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64);
 }
 
-GLKTEST_F(Gen9DeviceCaps, GlkClVersionSupport) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 1.2 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 1.2 ", caps.clCVersion);
-}
-
 GLKTEST_F(Gen9DeviceCaps, GlkIs32BitOsAllocatorAvailable) {
     const auto &caps = pDevice->getDeviceInfo();
     auto memoryManager = pDevice->getMemoryManager();

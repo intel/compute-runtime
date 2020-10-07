@@ -7,7 +7,6 @@
 if(TESTS_BDW)
   set(IGDRCL_SRCS_tests_gen8_bdw
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/device_tests_bdw.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_bdw.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_bdw.cpp
   )

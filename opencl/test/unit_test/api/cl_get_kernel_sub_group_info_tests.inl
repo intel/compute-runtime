@@ -6,6 +6,7 @@
  */
 
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 using namespace NEO;
 
@@ -91,37 +92,37 @@ INSTANTIATE_TEST_CASE_P(wgs,
                             ::testing::ValuesIn(WorkDimensions)));
 
 TEST_P(KernelSubGroupInfoReturnSizeTest, GivenWorkGroupSizeWhenGettingMaxSubGroupSizeThenReturnIsCalculatedCorrectly) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        WorkSizeParam workSize;
-        size_t workDim;
-        std::tie(workSize, workDim) = GetParam();
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        memset(inputValue, 0, sizeof(inputValue));
-        inputValue[0] = workSize.x;
-        if (workDim > 1) {
-            inputValue[1] = workSize.y;
-        }
-        if (workDim > 2) {
-            inputValue[2] = workSize.z;
-        }
-        paramValueSizeRet = 0;
+    WorkSizeParam workSize;
+    size_t workDim;
+    std::tie(workSize, workDim) = GetParam();
 
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
-            sizeof(size_t) * workDim,
-            inputValue,
-            sizeof(size_t),
-            paramValue,
-            &paramValueSizeRet);
-
-        EXPECT_EQ(retVal, CL_SUCCESS);
-
-        EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-
-        EXPECT_EQ(maxSimdSize, paramValue[0]);
+    memset(inputValue, 0, sizeof(inputValue));
+    inputValue[0] = workSize.x;
+    if (workDim > 1) {
+        inputValue[1] = workSize.y;
     }
+    if (workDim > 2) {
+        inputValue[2] = workSize.z;
+    }
+    paramValueSizeRet = 0;
+
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
+        sizeof(size_t) * workDim,
+        inputValue,
+        sizeof(size_t),
+        paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
+
+    EXPECT_EQ(maxSimdSize, paramValue[0]);
 }
 
 typedef KernelSubGroupInfoParamFixture<std::tuple<WorkSizeParam, size_t>> KernelSubGroupInfoReturnCountTest;
@@ -133,48 +134,48 @@ INSTANTIATE_TEST_CASE_P(wgs,
                             ::testing::ValuesIn(WorkDimensions)));
 
 TEST_P(KernelSubGroupInfoReturnCountTest, GivenWorkGroupSizeWhenGettingSubGroupCountThenReturnIsCalculatedCorrectly) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        WorkSizeParam workSize;
-        size_t workDim;
-        std::tie(workSize, workDim) = GetParam();
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        memset(inputValue, 0, sizeof(inputValue));
-        inputValue[0] = workSize.x;
-        if (workDim > 1) {
-            inputValue[1] = workSize.y;
-        }
-        if (workDim > 2) {
-            inputValue[2] = workSize.z;
-        }
-        paramValueSizeRet = 0;
+    WorkSizeParam workSize;
+    size_t workDim;
+    std::tie(workSize, workDim) = GetParam();
 
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE,
-            sizeof(size_t) * workDim,
-            inputValue,
-            sizeof(size_t),
-            paramValue,
-            &paramValueSizeRet);
+    memset(inputValue, 0, sizeof(inputValue));
+    inputValue[0] = workSize.x;
+    if (workDim > 1) {
+        inputValue[1] = workSize.y;
+    }
+    if (workDim > 2) {
+        inputValue[2] = workSize.z;
+    }
+    paramValueSizeRet = 0;
 
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE,
+        sizeof(size_t) * workDim,
+        inputValue,
+        sizeof(size_t),
+        paramValue,
+        &paramValueSizeRet);
 
-        EXPECT_EQ(sizeof(size_t), paramValueSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-        auto calculatedWGS = workSize.x;
-        if (workDim > 1) {
-            calculatedWGS *= workSize.y;
-        }
-        if (workDim > 2) {
-            calculatedWGS *= workSize.z;
-        }
+    EXPECT_EQ(sizeof(size_t), paramValueSizeRet);
 
-        if (calculatedWGS % maxSimdSize == 0) {
-            EXPECT_EQ(calculatedWGS / maxSimdSize, paramValue[0]);
-        } else {
-            EXPECT_EQ((calculatedWGS / maxSimdSize) + 1, paramValue[0]);
-        }
+    auto calculatedWGS = workSize.x;
+    if (workDim > 1) {
+        calculatedWGS *= workSize.y;
+    }
+    if (workDim > 2) {
+        calculatedWGS *= workSize.z;
+    }
+
+    if (calculatedWGS % maxSimdSize == 0) {
+        EXPECT_EQ(calculatedWGS / maxSimdSize, paramValue[0]);
+    } else {
+        EXPECT_EQ((calculatedWGS / maxSimdSize) + 1, paramValue[0]);
     }
 }
 
@@ -189,158 +190,158 @@ INSTANTIATE_TEST_CASE_P(sgn,
                             ::testing::ValuesIn(WorkDimensions)));
 
 TEST_P(KernelSubGroupInfoReturnLocalSizeTest, GivenWorkGroupSizeWhenGettingLocalSizeThenReturnIsCalculatedCorrectly) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        size_t subGroupsNum;
-        size_t workDim;
-        std::tie(subGroupsNum, workDim) = GetParam();
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        inputValue[0] = subGroupsNum;
+    size_t subGroupsNum;
+    size_t workDim;
+    std::tie(subGroupsNum, workDim) = GetParam();
 
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT,
-            sizeof(size_t),
-            inputValue,
-            sizeof(size_t) * workDim,
-            paramValue,
-            &paramValueSizeRet);
+    inputValue[0] = subGroupsNum;
 
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT,
+        sizeof(size_t),
+        inputValue,
+        sizeof(size_t) * workDim,
+        paramValue,
+        &paramValueSizeRet);
 
-        EXPECT_EQ(sizeof(size_t) * workDim, paramValueSizeRet);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-        size_t workGroupSize = subGroupsNum * largestCompiledSIMDSize;
-        if (workGroupSize > calculatedMaxWorkgroupSize) {
-            workGroupSize = 0;
-        }
+    EXPECT_EQ(sizeof(size_t) * workDim, paramValueSizeRet);
 
-        EXPECT_EQ(workGroupSize, paramValue[0]);
-        if (workDim > 1) {
-            EXPECT_EQ(workGroupSize ? 1u : 0u, paramValue[1]);
-        }
-        if (workDim > 2) {
-            EXPECT_EQ(workGroupSize ? 1u : 0u, paramValue[2]);
-        }
+    size_t workGroupSize = subGroupsNum * largestCompiledSIMDSize;
+    if (workGroupSize > calculatedMaxWorkgroupSize) {
+        workGroupSize = 0;
+    }
+
+    EXPECT_EQ(workGroupSize, paramValue[0]);
+    if (workDim > 1) {
+        EXPECT_EQ(workGroupSize ? 1u : 0u, paramValue[1]);
+    }
+    if (workDim > 2) {
+        EXPECT_EQ(workGroupSize ? 1u : 0u, paramValue[2]);
     }
 }
 
 typedef KernelSubGroupInfoParamFixture<WorkSizeParam> KernelSubGroupInfoReturnMaxNumberTest;
 
 TEST_F(KernelSubGroupInfoReturnMaxNumberTest, GivenWorkGroupSizeWhenGettingMaxNumSubGroupsThenReturnIsCalculatedCorrectly) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            CL_KERNEL_MAX_NUM_SUB_GROUPS,
-            0,
-            nullptr,
-            sizeof(size_t),
-            paramValue,
-            &paramValueSizeRet);
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-        EXPECT_EQ(paramValue[0], Math::divideAndRoundUp(calculatedMaxWorkgroupSize, largestCompiledSIMDSize));
-    }
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        CL_KERNEL_MAX_NUM_SUB_GROUPS,
+        0,
+        nullptr,
+        sizeof(size_t),
+        paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
+    EXPECT_EQ(paramValue[0], Math::divideAndRoundUp(calculatedMaxWorkgroupSize, largestCompiledSIMDSize));
 }
 
 typedef KernelSubGroupInfoParamFixture<WorkSizeParam> KernelSubGroupInfoReturnCompileNumberTest;
 
 TEST_F(KernelSubGroupInfoReturnCompileNumberTest, GivenKernelWhenGettingCompileNumSubGroupThenReturnIsCalculatedCorrectly) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            CL_KERNEL_COMPILE_NUM_SUB_GROUPS,
-            0,
-            nullptr,
-            sizeof(size_t),
-            paramValue,
-            &paramValueSizeRet);
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-        EXPECT_EQ(paramValue[0], static_cast<size_t>(pKernel->getKernelInfo().patchInfo.executionEnvironment->CompiledSubGroupsNumber));
-    }
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        CL_KERNEL_COMPILE_NUM_SUB_GROUPS,
+        0,
+        nullptr,
+        sizeof(size_t),
+        paramValue,
+        &paramValueSizeRet);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
+    EXPECT_EQ(paramValue[0], static_cast<size_t>(pKernel->getKernelInfo().patchInfo.executionEnvironment->CompiledSubGroupsNumber));
 }
 
 typedef KernelSubGroupInfoParamFixture<WorkSizeParam> KernelSubGroupInfoReturnCompileSizeTest;
 
 TEST_F(KernelSubGroupInfoReturnCompileSizeTest, GivenKernelWhenGettingCompileSubGroupSizeThenReturnIsCalculatedCorrectly) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
-            0,
-            nullptr,
-            sizeof(size_t),
-            paramValue,
-            &paramValueSizeRet);
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        CL_KERNEL_COMPILE_SUB_GROUP_SIZE_INTEL,
+        0,
+        nullptr,
+        sizeof(size_t),
+        paramValue,
+        &paramValueSizeRet);
 
-        EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-        size_t requiredSubGroupSize = 0;
-        auto start = pKernel->getKernelInfo().attributes.find("intel_reqd_sub_group_size(");
-        if (start != std::string::npos) {
-            start += strlen("intel_reqd_sub_group_size(");
-            auto stop = pKernel->getKernelInfo().attributes.find(")", start);
-            requiredSubGroupSize = stoi(pKernel->getKernelInfo().attributes.substr(start, stop - start));
-        }
+    EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
 
-        EXPECT_EQ(paramValue[0], requiredSubGroupSize);
+    size_t requiredSubGroupSize = 0;
+    auto start = pKernel->getKernelInfo().attributes.find("intel_reqd_sub_group_size(");
+    if (start != std::string::npos) {
+        start += strlen("intel_reqd_sub_group_size(");
+        auto stop = pKernel->getKernelInfo().attributes.find(")", start);
+        requiredSubGroupSize = stoi(pKernel->getKernelInfo().attributes.substr(start, stop - start));
     }
+
+    EXPECT_EQ(paramValue[0], requiredSubGroupSize);
 }
 
 TEST_F(KernelSubGroupInfoTest, GivenNullKernelWhenGettingSubGroupInfoThenInvalidKernelErrorIsReturned) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        retVal = clGetKernelSubGroupInfo(
-            nullptr,
-            pClDevice,
-            0,
-            0,
-            nullptr,
-            0,
-            nullptr,
-            nullptr);
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        EXPECT_EQ(CL_INVALID_KERNEL, retVal);
-    }
+    retVal = clGetKernelSubGroupInfo(
+        nullptr,
+        pClDevice,
+        0,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
 TEST_F(KernelSubGroupInfoTest, GivenNullDeviceWhenGettingSubGroupInfoThenInvalidDeviceErrorIsReturned) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            nullptr,
-            0,
-            0,
-            nullptr,
-            0,
-            nullptr,
-            nullptr);
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        EXPECT_EQ(CL_INVALID_DEVICE, retVal);
-    }
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        nullptr,
+        0,
+        0,
+        nullptr,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
 TEST_F(KernelSubGroupInfoTest, GivenInvalidParamNameWhenGettingSubGroupInfoThenInvalidValueErrorIsReturned) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            0,
-            sizeof(size_t),
-            inputValue,
-            sizeof(size_t),
-            paramValue,
-            nullptr);
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        EXPECT_EQ(CL_INVALID_VALUE, retVal);
-    }
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        0,
+        sizeof(size_t),
+        inputValue,
+        sizeof(size_t),
+        paramValue,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
 uint32_t /*cl_kernel_sub_group_info*/ KernelSubGroupInfoInputParams[] = {
@@ -385,167 +386,166 @@ TEST_P(KernelSubGroupInfoInputParamsTest, GivenOpenClVersionLowerThan21WhenGetti
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenWorkDimZeroWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                            (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
-                            (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            GetParam(),
-            0,
-            inputValue,
-            0,
-            nullptr,
-            nullptr);
+    bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                        (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
+                        (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
 
-        EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
-    }
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        GetParam(),
+        0,
+        inputValue,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenIndivisibleWorkDimWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                            (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
-                            (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
-        size_t workDim = ((GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                          (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE))
-                             ? maxWorkDim
-                             : 1;
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            GetParam(),
-            (sizeof(size_t) * workDim) - 1,
-            inputValue,
-            0,
-            nullptr,
-            nullptr);
+    bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                        (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
+                        (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
+    size_t workDim = ((GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                      (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE))
+                         ? maxWorkDim
+                         : 1;
 
-        EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
-    }
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        GetParam(),
+        (sizeof(size_t) * workDim) - 1,
+        inputValue,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenWorkDimGreaterThanMaxWorkDimWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                            (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
-                            (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
-        size_t workDim = ((GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                          (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE))
-                             ? maxWorkDim
-                             : 1;
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            GetParam(),
-            sizeof(size_t) * (workDim + 1),
-            inputValue,
-            0,
-            nullptr,
-            nullptr);
+    bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                        (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
+                        (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
+    size_t workDim = ((GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                      (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE))
+                         ? maxWorkDim
+                         : 1;
 
-        EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
-    }
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        GetParam(),
+        sizeof(size_t) * (workDim + 1),
+        inputValue,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenInputValueIsNullWhenGettingSubGroupInfoThenSuccessOrErrorIsCorrectlyReturned) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                            (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
-                            (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
-        size_t workDim = ((GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
-                          (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE))
-                             ? maxWorkDim
-                             : 1;
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            GetParam(),
-            sizeof(size_t) * (workDim),
-            nullptr,
-            0,
-            nullptr,
-            nullptr);
+    bool requireInput = (GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                        (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE) ||
+                        (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
+    size_t workDim = ((GetParam() == CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE) ||
+                      (GetParam() == CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE))
+                         ? maxWorkDim
+                         : 1;
 
-        EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
-    }
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        GetParam(),
+        sizeof(size_t) * (workDim),
+        nullptr,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(requireInput ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenParamValueSizeZeroWhenGettingSubGroupInfoThenInvalidValueErrorIsReturned) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            GetParam(),
-            sizeof(size_t),
-            inputValue,
-            0,
-            paramValue,
-            nullptr);
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        GetParam(),
+        sizeof(size_t),
+        inputValue,
+        0,
+        paramValue,
+        nullptr);
 
-        EXPECT_EQ(CL_INVALID_VALUE, retVal);
-    }
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenUnalignedParamValueSizeWhenGettingSubGroupInfoThenInvalidValueErrorIsReturned) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        size_t workDim = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ? maxWorkDim : 1;
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            GetParam(),
-            sizeof(size_t),
-            inputValue,
-            (sizeof(size_t) * workDim) - 1,
-            paramValue,
-            nullptr);
+    size_t workDim = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ? maxWorkDim : 1;
 
-        EXPECT_EQ(CL_INVALID_VALUE, retVal);
-    }
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        GetParam(),
+        sizeof(size_t),
+        inputValue,
+        (sizeof(size_t) * workDim) - 1,
+        paramValue,
+        nullptr);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenTooLargeParamValueSizeWhenGettingSubGroupInfoThenCorrectRetValIsReturned) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        bool requireOutputArray = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
-        size_t workDim = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ? maxWorkDim : 1;
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        // paramValue size / sizeof(size_t) > MaxWorkDim
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            GetParam(),
-            sizeof(size_t),
-            inputValue,
-            sizeof(size_t) * (workDim + 1),
-            paramValue,
-            nullptr);
+    bool requireOutputArray = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
+    size_t workDim = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT) ? maxWorkDim : 1;
 
-        EXPECT_EQ(requireOutputArray ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
-    }
+    // paramValue size / sizeof(size_t) > MaxWorkDim
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        GetParam(),
+        sizeof(size_t),
+        inputValue,
+        sizeof(size_t) * (workDim + 1),
+        paramValue,
+        nullptr);
+
+    EXPECT_EQ(requireOutputArray ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
 }
 
 TEST_P(KernelSubGroupInfoInputParamsTest, GivenNullPtrForReturnWhenGettingKernelSubGroupInfoThenSuccessIsReturned) {
-    if (std::string(pClDevice->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        bool requireOutputArray = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        retVal = clGetKernelSubGroupInfo(
-            pKernel,
-            pClDevice,
-            GetParam(),
-            sizeof(size_t),
-            inputValue,
-            0,
-            nullptr,
-            nullptr);
+    bool requireOutputArray = (GetParam() == CL_KERNEL_LOCAL_SIZE_FOR_SUB_GROUP_COUNT);
 
-        EXPECT_EQ(requireOutputArray ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
-    }
+    retVal = clGetKernelSubGroupInfo(
+        pKernel,
+        pClDevice,
+        GetParam(),
+        sizeof(size_t),
+        inputValue,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(requireOutputArray ? CL_INVALID_VALUE : CL_SUCCESS, retVal);
 }
 } // namespace ULT

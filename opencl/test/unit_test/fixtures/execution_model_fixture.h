@@ -53,6 +53,8 @@ class ExecutionModelKernelTest : public ExecutionModelKernelFixture,
                                  public DeviceQueueFixture {
   public:
     void SetUp() override {
+        REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
+
         DebugManager.flags.EnableTimestampPacket.set(0);
         ExecutionModelKernelFixture::SetUp();
         CommandQueueHwFixture::SetUp(pClDevice, 0);
@@ -60,10 +62,11 @@ class ExecutionModelKernelTest : public ExecutionModelKernelFixture,
     }
 
     void TearDown() override {
-
-        DeviceQueueFixture::TearDown();
-        CommandQueueHwFixture::TearDown();
-        ExecutionModelKernelFixture::TearDown();
+        if (!IsSkipped()) {
+            DeviceQueueFixture::TearDown();
+            CommandQueueHwFixture::TearDown();
+            ExecutionModelKernelFixture::TearDown();
+        }
     }
 
     std::unique_ptr<KernelOperation> createBlockedCommandsData(CommandQueue &commandQueue) {

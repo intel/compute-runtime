@@ -11,6 +11,7 @@
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
 using namespace NEO;
@@ -19,16 +20,9 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
                                     public PlatformFixture {
   protected:
     void SetUp() override {
+        REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
+
         PlatformFixture::SetUp();
-
-        std::string temp;
-        temp.assign(pPlatform->getClDevice(0)->getDeviceInfo().clVersion);
-
-        if (temp.find("OpenCL 1.2") != std::string::npos) {
-            pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
-            pClDevice = new MockClDevice{pDevice};
-            return;
-        }
 
         std::string options("-cl-std=CL2.0");
         this->setOptions(options);
@@ -58,25 +52,23 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
     }
 
     void TearDown() override {
+        if (IsSkipped()) {
+            return;
+        }
         if (pKernel != nullptr) {
             pKernel->release();
         }
 
-        std::string temp;
-        temp.assign(pPlatform->getClDevice(0)->getDeviceInfo().clVersion);
-
         ProgramFromBinaryTest::TearDown();
         PlatformFixture::TearDown();
 
-        if (temp.find("OpenCL 1.2") != std::string::npos) {
-            if (pDevice != nullptr) {
-                delete pDevice;
-                pDevice = nullptr;
-            }
-            if (pClDevice != nullptr) {
-                delete pClDevice;
-                pClDevice = nullptr;
-            }
+        if (pDevice != nullptr) {
+            delete pDevice;
+            pDevice = nullptr;
+        }
+        if (pClDevice != nullptr) {
+            delete pClDevice;
+            pClDevice = nullptr;
         }
     }
 

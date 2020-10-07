@@ -26,6 +26,7 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_source_level_debugger.h"
 #include "opencl/test/unit_test/mocks/ult_cl_device_factory.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -96,14 +97,15 @@ TEST_F(PlatformTest, WhenGetClDevicesIsCalledThenExpectedValuesAreReturned) {
 }
 
 TEST_F(PlatformTest, givenSupportingCl21WhenGettingExtensionsStringThenSubgroupsIsEnabled) {
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
+
     pPlatform->initializeWithNewDevices();
     auto compilerExtensions = pPlatform->getClDevice(0)->peekCompilerExtensions();
 
     auto isIndependentForwardProgressSupported = pPlatform->getClDevice(0)->getDeviceInfo().independentForwardProgress;
 
     EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string(" -cl-ext=-all,+cl")));
-    if ((std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) &&
-        isIndependentForwardProgressSupported) {
+    if (isIndependentForwardProgressSupported) {
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_subgroups")));
     }
 }

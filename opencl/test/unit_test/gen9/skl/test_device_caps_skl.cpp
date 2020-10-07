@@ -12,23 +12,13 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> SklDeviceCaps;
 
-SKLTEST_F(SklDeviceCaps, reportsOcl21) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
-}
-
 SKLTEST_F(SklDeviceCaps, SklProfilingTimerResolution) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(83u, caps.outProfilingTimerResolution);
 }
 
 SKLTEST_F(SklDeviceCaps, givenSklDeviceWhenAskedFor32BitSupportThenFalseIsReturned) {
-    const auto &caps = pClDevice->getDeviceInfo();
     const auto &sharedCaps = pDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
-
     auto memoryManager = pDevice->getMemoryManager();
     EXPECT_FALSE(memoryManager->peekForce32BitAllocations());
     EXPECT_FALSE(sharedCaps.force32BitAddressess);

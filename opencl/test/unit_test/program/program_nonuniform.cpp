@@ -20,6 +20,7 @@
 #include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/program/program_from_binary.h"
 #include "opencl/test/unit_test/program/program_with_source.h"
+#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
 #include "gmock/gmock.h"
@@ -180,87 +181,87 @@ class ProgramNonUniformTest : public ContextFixture,
 };
 
 TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqueueSucceeds) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
-        CreateProgramFromBinary(pContext, &device, "kernel_data_param");
-        auto mockProgram = (MockProgram *)pProgram;
-        ASSERT_NE(nullptr, mockProgram);
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        mockProgram->setBuildOptions("-cl-std=CL2.1");
-        retVal = mockProgram->build(
-            1,
-            &device,
-            nullptr,
-            nullptr,
-            nullptr,
-            false);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    CreateProgramFromBinary(pContext, &device, "kernel_data_param");
+    auto mockProgram = (MockProgram *)pProgram;
+    ASSERT_NE(nullptr, mockProgram);
 
-        auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size");
-        EXPECT_NE(nullptr, pKernelInfo);
+    mockProgram->setBuildOptions("-cl-std=CL2.1");
+    retVal = mockProgram->build(
+        1,
+        &device,
+        nullptr,
+        nullptr,
+        nullptr,
+        false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-        // create a kernel
-        auto pKernel = Kernel::create<MockKernel>(mockProgram, *pKernelInfo, &retVal);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-        ASSERT_NE(nullptr, pKernel);
+    auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size");
+    EXPECT_NE(nullptr, pKernelInfo);
 
-        size_t globalWorkSize[3] = {12, 12, 12};
-        size_t localWorkSize[3] = {11, 12, 1};
+    // create a kernel
+    auto pKernel = Kernel::create<MockKernel>(mockProgram, *pKernelInfo, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, pKernel);
 
-        retVal = pCmdQ->enqueueKernel(
-            pKernel,
-            3,
-            nullptr,
-            globalWorkSize,
-            localWorkSize,
-            0,
-            nullptr,
-            nullptr);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    size_t globalWorkSize[3] = {12, 12, 12};
+    size_t localWorkSize[3] = {11, 12, 1};
 
-        delete pKernel;
-    }
+    retVal = pCmdQ->enqueueKernel(
+        pKernel,
+        3,
+        nullptr,
+        globalWorkSize,
+        localWorkSize,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    delete pKernel;
 }
 
 TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqueueSucceeds) {
-    if (std::string(pPlatform->getClDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.0") != std::string::npos) {
-        CreateProgramFromBinary(pContext, &device, "kernel_data_param");
-        auto mockProgram = pProgram;
-        ASSERT_NE(nullptr, mockProgram);
+    REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-        mockProgram->setBuildOptions("-cl-std=CL2.0");
-        retVal = mockProgram->build(
-            1,
-            &device,
-            nullptr,
-            nullptr,
-            nullptr,
-            false);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    CreateProgramFromBinary(pContext, &device, "kernel_data_param");
+    auto mockProgram = pProgram;
+    ASSERT_NE(nullptr, mockProgram);
 
-        auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size");
-        EXPECT_NE(nullptr, pKernelInfo);
+    mockProgram->setBuildOptions("-cl-std=CL2.0");
+    retVal = mockProgram->build(
+        1,
+        &device,
+        nullptr,
+        nullptr,
+        nullptr,
+        false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
-        // create a kernel
-        auto pKernel = Kernel::create<MockKernel>(mockProgram, *pKernelInfo, &retVal);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-        ASSERT_NE(nullptr, pKernel);
+    auto pKernelInfo = mockProgram->Program::getKernelInfo("test_get_local_size");
+    EXPECT_NE(nullptr, pKernelInfo);
 
-        size_t globalWorkSize[3] = {12, 12, 12};
-        size_t localWorkSize[3] = {11, 12, 12};
+    // create a kernel
+    auto pKernel = Kernel::create<MockKernel>(mockProgram, *pKernelInfo, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, pKernel);
 
-        retVal = pCmdQ->enqueueKernel(
-            pKernel,
-            3,
-            nullptr,
-            globalWorkSize,
-            localWorkSize,
-            0,
-            nullptr,
-            nullptr);
-        EXPECT_EQ(CL_SUCCESS, retVal);
+    size_t globalWorkSize[3] = {12, 12, 12};
+    size_t localWorkSize[3] = {11, 12, 1};
 
-        delete pKernel;
-    }
+    retVal = pCmdQ->enqueueKernel(
+        pKernel,
+        3,
+        nullptr,
+        globalWorkSize,
+        localWorkSize,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    delete pKernel;
 }
 
 TEST_F(ProgramNonUniformTest, GivenCl12WhenExecutingKernelWithNonUniformThenInvalidWorkGroupSizeIsReturned) {

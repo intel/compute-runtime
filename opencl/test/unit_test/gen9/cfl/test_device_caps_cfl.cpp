@@ -12,12 +12,6 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> CflDeviceCaps;
 
-CFLTEST_F(CflDeviceCaps, reportsOcl21) {
-    const auto &caps = pClDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
-}
-
 CFLTEST_F(CflDeviceCaps, GivenCFLWhenCheckftr64KBpagesThenTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }
