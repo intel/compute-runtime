@@ -135,7 +135,7 @@ class Program : public BaseObject<_cl_program> {
     cl_int build(const Device *pDevice, const char *buildOptions, bool enableCaching,
                  std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap);
 
-    MOCKABLE_VIRTUAL cl_int processGenBinary();
+    MOCKABLE_VIRTUAL cl_int processGenBinary(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL cl_int processProgramInfo(ProgramInfo &dst);
 
     cl_int compile(cl_uint numDevices, const cl_device_id *deviceList, const char *buildOptions,
@@ -267,12 +267,12 @@ class Program : public BaseObject<_cl_program> {
         buildInfos[rootDeviceIndex].linkerInput = std::move(linkerInput);
     }
 
-    MOCKABLE_VIRTUAL void replaceDeviceBinary(std::unique_ptr<char[]> newBinary, size_t newBinarySize);
+    MOCKABLE_VIRTUAL void replaceDeviceBinary(std::unique_ptr<char[]> newBinary, size_t newBinarySize, uint32_t rootDeviceIndex);
 
   protected:
-    MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize);
+    MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, uint32_t rootDeviceIndex);
 
-    cl_int packDeviceBinary();
+    cl_int packDeviceBinary(uint32_t rootDeviceIndex);
 
     MOCKABLE_VIRTUAL cl_int linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData);
 
@@ -294,12 +294,6 @@ class Program : public BaseObject<_cl_program> {
 
     std::unique_ptr<char[]> irBinary;
     size_t irBinarySize = 0U;
-
-    std::unique_ptr<char[]> unpackedDeviceBinary;
-    size_t unpackedDeviceBinarySize = 0U;
-
-    std::unique_ptr<char[]> packedDeviceBinary;
-    size_t packedDeviceBinarySize = 0U;
 
     std::unique_ptr<char[]> debugData;
     size_t debugDataSize = 0U;
@@ -329,6 +323,12 @@ class Program : public BaseObject<_cl_program> {
         std::unique_ptr<LinkerInput> linkerInput;
         Linker::RelocatedSymbolsMap symbols{};
         std::string buildLog{};
+
+        std::unique_ptr<char[]> unpackedDeviceBinary;
+        size_t unpackedDeviceBinarySize = 0U;
+
+        std::unique_ptr<char[]> packedDeviceBinary;
+        size_t packedDeviceBinarySize = 0U;
     };
 
     std::vector<BuildInfo> buildInfos;

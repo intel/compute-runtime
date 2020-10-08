@@ -2006,13 +2006,13 @@ TEST_F(BuiltInTests, createBuiltInProgramForInvalidBuiltinKernelName) {
 TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquiredThroughCompilerInterface) {
     MockBuiltins mockBuiltins;
     auto mockCompilerInterface = new MockCompilerInterface();
-    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompilerInterface);
+    pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
     mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
     cl_int errCode = CL_BUILD_PROGRAM_FAILURE;
     auto p = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, mockCompilerInterface->sipKernelBinaryOverride.data(), mockCompilerInterface->sipKernelBinaryOverride.size(),
-                                          false, &errCode, nullptr);
+                                          false, &errCode, pDevice);
     ASSERT_EQ(CL_SUCCESS, errCode);
-    errCode = p->processGenBinary();
+    errCode = p->processGenBinary(rootDeviceIndex);
     ASSERT_EQ(CL_SUCCESS, errCode);
 
     const SipKernel &sipKern = mockBuiltins.getSipKernel(SipKernelType::Csr, pContext->getDevice(0)->getDevice());

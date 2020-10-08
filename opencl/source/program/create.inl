@@ -31,9 +31,10 @@ T *Program::create(
     auto pContext = castToObject<Context>(context);
     DEBUG_BREAK_IF(!pContext);
 
-    auto program = new T(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false, &pContext->getDevice(0)->getDevice());
+    auto device = pContext->getDevice(0);
+    auto program = new T(*device->getExecutionEnvironment(), pContext, false, &device->getDevice());
 
-    auto retVal = program->createProgramFromBinary(binaries[0], lengths[0]);
+    auto retVal = program->createProgramFromBinary(binaries[0], lengths[0], device->getRootDeviceIndex());
 
     program->createdFrom = CreatedFrom::BINARY;
 
@@ -137,7 +138,7 @@ T *Program::createFromGenBinary(
     if (CL_SUCCESS == retVal) {
         program = new T(executionEnvironment, context, isBuiltIn, device);
         program->numDevices = 1;
-        program->replaceDeviceBinary(makeCopy(binary, size), size);
+        program->replaceDeviceBinary(makeCopy(binary, size), size, device->getRootDeviceIndex());
         program->isCreatedFromBinary = true;
         program->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
         program->buildStatus = CL_BUILD_SUCCESS;
@@ -152,7 +153,7 @@ T *Program::createFromGenBinary(
 }
 
 template <typename T>
-T *Program::createFromIL(Context *ctx,
+T *Program::createFromIL(Context *context,
                          const void *il,
                          size_t length,
                          cl_int &errcodeRet) {
@@ -163,8 +164,9 @@ T *Program::createFromIL(Context *ctx,
         return nullptr;
     }
 
-    T *program = new T(*ctx->getDevice(0)->getExecutionEnvironment(), ctx, false, &ctx->getDevice(0)->getDevice());
-    errcodeRet = program->createProgramFromBinary(il, length);
+    auto device = context->getDevice(0);
+    T *program = new T(*device->getExecutionEnvironment(), context, false, &device->getDevice());
+    errcodeRet = program->createProgramFromBinary(il, length, device->getRootDeviceIndex());
     program->createdFrom = CreatedFrom::IL;
 
     if (errcodeRet != CL_SUCCESS) {

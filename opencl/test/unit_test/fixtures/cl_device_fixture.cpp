@@ -16,7 +16,7 @@ void ClDeviceFixture::SetUp() {
 }
 
 void ClDeviceFixture::SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
-    pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo);
+    pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo, rootDeviceIndex);
     ASSERT_NE(nullptr, pDevice);
     pClDevice = new MockClDevice{pDevice};
     ASSERT_NE(nullptr, pClDevice);
@@ -35,6 +35,6 @@ void ClDeviceFixture::TearDown() {
 MockDevice *ClDeviceFixture::createWithUsDeviceId(unsigned short usDeviceId) {
     hardwareInfo = *defaultHwInfo;
     hardwareInfo.platform.usDeviceID = usDeviceId;
-    return MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo);
+    return MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hardwareInfo, rootDeviceIndex);
 }
 } // namespace NEO

@@ -120,8 +120,8 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     return CL_SUCCESS;
 }
 
-cl_int Program::processGenBinary() {
-    if (nullptr == this->unpackedDeviceBinary) {
+cl_int Program::processGenBinary(uint32_t rootDeviceIndex) {
+    if (nullptr == this->buildInfos[rootDeviceIndex].unpackedDeviceBinary) {
         return CL_INVALID_BINARY;
     }
 
@@ -136,7 +136,7 @@ cl_int Program::processGenBinary() {
     }
 
     ProgramInfo programInfo;
-    auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->unpackedDeviceBinary.get()), this->unpackedDeviceBinarySize);
+    auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
     SingleDeviceBinary binary = {};
     binary.deviceBinary = blob;
     std::string decodeErrors;

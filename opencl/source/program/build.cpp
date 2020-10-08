@@ -143,16 +143,16 @@ cl_int Program::build(
                 this->irBinarySize = compilerOuput.intermediateRepresentation.size;
                 this->isSpirV = compilerOuput.intermediateCodeType == IGC::CodeType::spirV;
             }
-            this->replaceDeviceBinary(std::move(compilerOuput.deviceBinary.mem), compilerOuput.deviceBinary.size);
+            this->replaceDeviceBinary(std::move(compilerOuput.deviceBinary.mem), compilerOuput.deviceBinary.size, clDevice->getRootDeviceIndex());
             this->debugData = std::move(compilerOuput.debugData.mem);
             this->debugDataSize = compilerOuput.debugData.size;
         }
         updateNonUniformFlag();
 
         if (DebugManager.flags.PrintProgramBinaryProcessingTime.get()) {
-            retVal = TimeMeasureWrapper::functionExecution(*this, &Program::processGenBinary);
+            retVal = TimeMeasureWrapper::functionExecution(*this, &Program::processGenBinary, pDevice->getRootDeviceIndex());
         } else {
-            retVal = processGenBinary();
+            retVal = processGenBinary(pDevice->getRootDeviceIndex());
         }
 
         if (retVal != CL_SUCCESS) {

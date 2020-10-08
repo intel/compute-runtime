@@ -382,20 +382,20 @@ SchedulerKernel &Context::getSchedulerKernel() {
 
     auto initializeSchedulerProgramAndKernel = [&] {
         cl_int retVal = CL_SUCCESS;
+        auto device = &getDevice(0)->getDevice();
+        auto src = SchedulerKernel::loadSchedulerKernel(device);
 
-        auto src = SchedulerKernel::loadSchedulerKernel(&getDevice(0)->getDevice());
-
-        auto program = Program::createFromGenBinary(*getDevice(0)->getExecutionEnvironment(),
+        auto program = Program::createFromGenBinary(*device->getExecutionEnvironment(),
                                                     this,
                                                     src.resource.data(),
                                                     src.resource.size(),
                                                     true,
                                                     &retVal,
-                                                    &getDevice(0)->getDevice());
+                                                    device);
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
         DEBUG_BREAK_IF(!program);
 
-        retVal = program->processGenBinary();
+        retVal = program->processGenBinary(device->getRootDeviceIndex());
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
 
         schedulerBuiltIn->pProgram = program;

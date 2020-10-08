@@ -154,11 +154,12 @@ void ProgramDataTestBase::buildAndDecodeProgramPatchList() {
     memcpy_s(pCurPtr, programPatchListSize, pProgramPatchList, programPatchListSize);
     pCurPtr += programPatchListSize;
 
+    auto rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
     //as we use mock compiler in unit test, replace the genBinary here.
-    pProgram->unpackedDeviceBinary = makeCopy(pProgramData, headerSize + programBinaryHeader.PatchListSize);
-    pProgram->unpackedDeviceBinarySize = headerSize + programBinaryHeader.PatchListSize;
+    pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(pProgramData, headerSize + programBinaryHeader.PatchListSize);
+    pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = headerSize + programBinaryHeader.PatchListSize;
 
-    error = pProgram->processGenBinary();
+    error = pProgram->processGenBinary(rootDeviceIndex);
     patchlistDecodeErrorCode = error;
     if (allowDecodeFailure == false) {
         EXPECT_EQ(CL_SUCCESS, error);

@@ -18,6 +18,7 @@
 #include "opencl/source/program/create.inl"
 #include "opencl/source/program/kernel_info.h"
 #include "opencl/test/unit_test/helpers/ult_limits.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_compilers.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
@@ -34,12 +35,12 @@ std::string MockProgram::getCachedFileName() const {
     auto internalOpts = ArrayRef<const char>(this->internalOptions.c_str(), this->internalOptions.size());
     return CompilerCache::getCachedFileName(hwInfo, input, opts, internalOpts);
 }
-cl_int GlobalMockSipProgram::processGenBinary() {
+cl_int GlobalMockSipProgram::processGenBinary(uint32_t rootDeviceIndex) {
     return CL_SUCCESS;
 }
 
-cl_int GlobalMockSipProgram::processGenBinaryOnce() {
-    cl_int ret = Program::processGenBinary();
+cl_int GlobalMockSipProgram::processGenBinaryOnce(uint32_t rootDeviceIndex) {
+    cl_int ret = Program::processGenBinary(rootDeviceIndex);
     sipAllocationStorage = alignedMalloc(this->kernelInfoArray[0]->heapInfo.KernelHeapSize, MemoryConstants::pageSize);
     this->kernelInfoArray[0]->kernelAllocation = new MockGraphicsAllocation(sipAllocationStorage, this->kernelInfoArray[0]->heapInfo.KernelHeapSize);
     return ret;
@@ -59,15 +60,17 @@ void GlobalMockSipProgram::initSipProgram() {
         executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
     }
     executionEnvironment.calculateMaxOsContextCount();
+    executionEnvironment.incRefInternal();
+    MockDevice device(&executionEnvironment, mockRootDeviceIndex);
     sipProgram = Program::createFromGenBinary<GlobalMockSipProgram>(executionEnvironment,
                                                                     nullptr,
                                                                     binary.data(),
                                                                     binary.size(),
                                                                     true,
                                                                     &retVal,
-                                                                    nullptr);
+                                                                    &device);
     DEBUG_BREAK_IF(retVal != 0);
-    sipProgram->processGenBinaryOnce();
+    sipProgram->processGenBinaryOnce(mockRootDeviceIndex);
 }
 
 void GlobalMockSipProgram::resetAllocation(GraphicsAllocation *allocation) {

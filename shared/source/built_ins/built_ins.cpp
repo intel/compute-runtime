@@ -56,7 +56,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
         program->setDevice(&device);
 
-        retVal = program->processGenBinary();
+        retVal = program->processGenBinary(device.getRootDeviceIndex());
         DEBUG_BREAK_IF(retVal != 0);
 
         sipBuiltIn.first.reset(new SipKernel(type, program));

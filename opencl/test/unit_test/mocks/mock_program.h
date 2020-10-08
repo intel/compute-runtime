@@ -49,8 +49,6 @@ class MockProgram : public Program {
     using Program::isSpirV;
     using Program::options;
     using Program::packDeviceBinary;
-    using Program::packedDeviceBinary;
-    using Program::packedDeviceBinarySize;
     using Program::pDevice;
     using Program::Program;
     using Program::programBinaryType;
@@ -58,8 +56,6 @@ class MockProgram : public Program {
     using Program::specConstantsIds;
     using Program::specConstantsSizes;
     using Program::specConstantsValues;
-    using Program::unpackedDeviceBinary;
-    using Program::unpackedDeviceBinarySize;
 
     MockProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false, nullptr) {
     }
@@ -165,8 +161,8 @@ class GlobalMockSipProgram : public Program {
     using Program::Program;
     GlobalMockSipProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false, nullptr) {
     }
-    cl_int processGenBinary() override;
-    cl_int processGenBinaryOnce();
+    cl_int processGenBinary(uint32_t rootDeviceIndex) override;
+    cl_int processGenBinaryOnce(uint32_t rootDeviceIndex);
     void resetAllocationState();
     void resetAllocation(GraphicsAllocation *allocation);
     void deleteAllocation();
