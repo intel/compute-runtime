@@ -542,18 +542,13 @@ TEST(GetDeviceInfo, WhenQueryingIlsWithVersionThenProperValueIsReturned) {
 
     cl_name_version ilsWithVersion[1];
     size_t paramRetSize;
+
     const auto retVal = device->getDeviceInfo(CL_DEVICE_ILS_WITH_VERSION, sizeof(ilsWithVersion), &ilsWithVersion,
                                               &paramRetSize);
-
-    if (device->areOcl21FeaturesSupported()) {
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_EQ(sizeof(cl_name_version), paramRetSize);
-        EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), ilsWithVersion->version);
-        EXPECT_STREQ("SPIR-V", ilsWithVersion->name);
-    } else {
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_EQ(0u, paramRetSize);
-    }
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(sizeof(cl_name_version), paramRetSize);
+    EXPECT_EQ(CL_MAKE_VERSION(1u, 2u, 0u), ilsWithVersion->version);
+    EXPECT_STREQ("SPIR-V", ilsWithVersion->name);
 }
 
 TEST(GetDeviceInfo, WhenQueryingAtomicMemoryCapabilitiesThenProperValueIsReturned) {
@@ -725,6 +720,7 @@ cl_device_info deviceInfoParams[] = {
     CL_DEVICE_BUILT_IN_KERNELS,
     CL_DEVICE_BUILT_IN_KERNELS_WITH_VERSION,
     CL_DEVICE_COMPILER_AVAILABLE,
+    CL_DEVICE_ILS_WITH_VERSION,
     CL_DEVICE_IL_VERSION,
     //    NOT_SUPPORTED
     //    CL_DEVICE_TERMINATE_CAPABILITY_KHR,

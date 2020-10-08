@@ -122,12 +122,12 @@ void ClDevice::initializeCaps() {
     initializeOpenclCAllVersions();
     deviceInfo.platformLP = (hwInfo.capabilityTable.supportsOcl21Features == false);
     deviceInfo.spirVersions = spirVersions.c_str();
+    deviceInfo.ilsWithVersion[0].version = CL_MAKE_VERSION(1, 2, 0);
+    strcpy_s(deviceInfo.ilsWithVersion[0].name, CL_NAME_VERSION_MAX_NAME_SIZE, spirvName.c_str());
     auto supportsVme = hwInfo.capabilityTable.supportsVme;
     auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
 
     deviceInfo.independentForwardProgress = hwInfo.capabilityTable.supportsIndependentForwardProgress;
-    deviceInfo.ilsWithVersion[0].name[0] = 0;
-    deviceInfo.ilsWithVersion[0].version = 0;
     deviceInfo.maxNumOfSubGroups = 0;
 
     if (ocl21FeaturesEnabled) {
@@ -142,9 +142,6 @@ void ClDevice::initializeCaps() {
         if (deviceInfo.independentForwardProgress) {
             deviceExtensions += "cl_khr_subgroups ";
         }
-
-        deviceInfo.ilsWithVersion[0].version = CL_MAKE_VERSION(1, 2, 0);
-        strcpy_s(deviceInfo.ilsWithVersion[0].name, CL_NAME_VERSION_MAX_NAME_SIZE, spirvName.c_str());
 
         if (supportsVme) {
             deviceExtensions += "cl_intel_spirv_device_side_avc_motion_estimation ";

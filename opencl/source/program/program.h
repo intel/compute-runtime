@@ -36,11 +36,20 @@ class Context;
 class CompilerInterface;
 class Device;
 class ExecutionEnvironment;
+class Program;
 struct KernelInfo;
 template <>
 struct OpenCLObjectMapper<_cl_program> {
     typedef class Program DerivedType;
 };
+
+namespace ProgramFunctions {
+using CreateFromILFunc = std::function<Program *(Context *ctx,
+                                                 const void *il,
+                                                 size_t length,
+                                                 int32_t &errcodeRet)>;
+extern CreateFromILFunc createFromIL;
+} // namespace ProgramFunctions
 
 constexpr cl_int asClError(TranslationOutput::ErrorCode err) {
     switch (err) {

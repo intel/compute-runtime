@@ -18,6 +18,8 @@ using clGetDeviceInfoTests = api_tests;
 
 namespace ULT {
 
+static_assert(CL_DEVICE_IL_VERSION == CL_DEVICE_IL_VERSION_KHR, "Param values are different");
+
 TEST_F(clGetDeviceInfoTests, givenNeoDeviceWhenAskedForSliceCountThenNumberOfSlicesIsReturned) {
     cl_device_info paramName = 0;
     size_t paramSize = 0;
@@ -246,13 +248,8 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
     }
 }
 
-TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamAndOcl21WhenGettingDeviceInfoThenSpirv12IsReturned) {
+TEST_F(clGetDeviceInfoTests, GivenClDeviceIlVersionParamWhenGettingDeviceInfoThenSpirv12IsReturned) {
     size_t paramRetSize = 0;
-
-    ClDevice *pDevice = castToObject<ClDevice>(testedClDevice);
-
-    if (pDevice->areOcl21FeaturesEnabled() == false)
-        return;
 
     cl_int retVal = clGetDeviceInfo(
         testedClDevice,

@@ -96,6 +96,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_HALF_FP_CONFIG:                              getCap<CL_DEVICE_HALF_FP_CONFIG                              >(src, srcSize, retSize); break;
     case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:                 getCap<CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL                 >(src, srcSize, retSize); break;
     case CL_DEVICE_HOST_UNIFIED_MEMORY:                         getCap<CL_DEVICE_HOST_UNIFIED_MEMORY                         >(src, srcSize, retSize); break;
+    case CL_DEVICE_ILS_WITH_VERSION:                            getCap<CL_DEVICE_ILS_WITH_VERSION                            >(src, srcSize, retSize); break;
     case CL_DEVICE_IL_VERSION:                                  getStr<CL_DEVICE_IL_VERSION                                  >(src, srcSize, retSize); break;
     case CL_DEVICE_IMAGE_SUPPORT:                               getCap<CL_DEVICE_IMAGE_SUPPORT                               >(src, srcSize, retSize); break;
     case CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED:           getStr<CL_DEVICE_LATEST_CONFORMANCE_VERSION_PASSED           >(src, srcSize, retSize); break;
@@ -211,14 +212,6 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         getCap<CL_DEVICE_PARTITION_TYPE>(src, srcSize, retSize);
         if (deviceInfo.partitionType[0] == 0) {
             retSize = srcSize = sizeof(deviceInfo.partitionType[0]);
-        }
-        break;
-    case CL_DEVICE_ILS_WITH_VERSION:
-        if (ocl21FeaturesEnabled) {
-            src = &deviceInfo.ilsWithVersion[0];
-            retSize = srcSize = sizeof(deviceInfo.ilsWithVersion[0]);
-        } else {
-            retSize = srcSize = 0;
         }
         break;
     case CL_DEVICE_OPENCL_C_FEATURES:

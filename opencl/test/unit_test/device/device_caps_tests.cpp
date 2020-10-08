@@ -159,7 +159,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_NE(0u, caps.globalMemCacheSize);
     EXPECT_LT(0u, sharedCaps.globalMemSize);
     EXPECT_EQ(sharedCaps.maxMemAllocSize, caps.maxConstantBufferSize);
-    EXPECT_NE(nullptr, sharedCaps.ilVersion);
+    EXPECT_STREQ("SPIR-V_1.2 ", sharedCaps.ilVersion);
     EXPECT_EQ(defaultHwInfo->capabilityTable.supportsIndependentForwardProgress, caps.independentForwardProgress);
 
     EXPECT_EQ(static_cast<cl_bool>(CL_TRUE), caps.deviceAvailable);
@@ -1099,29 +1099,11 @@ TEST(DeviceGetCaps, WhenComparingCompilerExtensionsAndCompilerExtensionsWithFeat
     EXPECT_STREQ(compilerExtensions.c_str(), compilerExtensionsWithFeatures.substr(0, compilerExtensions.size()).c_str());
 }
 
-TEST(DeviceGetCaps, givenOclVersionLessThan21WhenCapsAreCreatedThenDeviceReportsNoSupportedIlVersions) {
+TEST(DeviceGetCaps, givenVariousOclVersionsWhenCapsAreCreatedThenDeviceReportsSpirvAsSupportedIl) {
     DebugManagerStateRestore dbgRestorer;
-    {
-        DebugManager.flags.ForceOCLVersion.set(12);
-        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        const auto &caps = device->getDeviceInfo();
-        EXPECT_STREQ("", caps.ilVersion);
-        DebugManager.flags.ForceOCLVersion.set(0);
-    }
-}
-
-TEST(DeviceGetCaps, givenOcl21FeaturesSupportedWhenCapsAreCreatedThenDeviceReportsSpirvAsSupportedIl) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.ForceOCL21FeaturesSupport.set(1);
-    {
-        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-        const auto &caps = device->getDeviceInfo();
-        EXPECT_STREQ("SPIR-V_1.2 ", caps.ilVersion);
-    }
-
-    DebugManager.flags.ForceOCL21FeaturesSupport.set(-1);
-    DebugManager.flags.ForceOCLVersion.set(21);
-    {
+    int32_t oclVersionsToTest[] = {12, 21, 30};
+    for (auto oclVersion : oclVersionsToTest) {
+        DebugManager.flags.ForceOCLVersion.set(oclVersion);
         auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
         const auto &caps = device->getDeviceInfo();
         EXPECT_STREQ("SPIR-V_1.2 ", caps.ilVersion);

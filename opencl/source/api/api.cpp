@@ -1382,7 +1382,7 @@ cl_program CL_API_CALL clCreateProgramWithIL(cl_context context,
     cl_program program = nullptr;
     retVal = validateObjects(context, il);
     if (retVal == CL_SUCCESS) {
-        program = Program::createFromIL(
+        program = ProgramFunctions::createFromIL(
             castToObjectOrAbort<Context>(context),
             il,
             length,
@@ -4027,7 +4027,7 @@ cl_program CL_API_CALL clCreateProgramWithILKHR(cl_context context,
     cl_program program = nullptr;
     retVal = validateObjects(context, il);
     if (retVal == CL_SUCCESS) {
-        program = Program::createFromIL(
+        program = ProgramFunctions::createFromIL(
             castToObjectOrAbort<Context>(context),
             il,
             length,

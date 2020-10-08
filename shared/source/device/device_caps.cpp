@@ -23,7 +23,6 @@ void Device::initializeCaps() {
 
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    deviceInfo.ilVersion = "";
     bool ocl21FeaturesEnabled = hwInfo.capabilityTable.supportsOcl21Features;
     if (DebugManager.flags.ForceOCLVersion.get() != 0) {
         ocl21FeaturesEnabled = (DebugManager.flags.ForceOCLVersion.get() == 21);
@@ -32,7 +31,6 @@ void Device::initializeCaps() {
         ocl21FeaturesEnabled = DebugManager.flags.ForceOCL21FeaturesSupport.get();
     }
     if (ocl21FeaturesEnabled) {
-        deviceInfo.ilVersion = spirvWithVersion;
         addressing32bitAllowed = false;
     }
 
@@ -42,6 +40,7 @@ void Device::initializeCaps() {
     deviceInfo.maxParameterSize = 2048;
 
     deviceInfo.addressBits = 64;
+    deviceInfo.ilVersion = spirvWithVersion;
 
     //copy system info to prevent misaligned reads
     const auto systemInfo = hwInfo.gtSystemInfo;

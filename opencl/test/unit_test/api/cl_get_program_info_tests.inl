@@ -22,6 +22,8 @@ typedef api_tests clGetProgramInfoTests;
 
 namespace ULT {
 
+static_assert(CL_PROGRAM_IL == CL_PROGRAM_IL_KHR, "Param values are different");
+
 TEST_F(clGetProgramInfoTests, GivenSourceWhenBuildingProgramThenGetProgramInfoReturnsCorrectInfo) {
     cl_program pProgram = nullptr;
     std::unique_ptr<char[]> pSource = nullptr;
@@ -98,7 +100,6 @@ TEST_F(clGetProgramInfoTests, GivenSourceWhenBuildingProgramThenGetProgramInfoRe
 }
 
 TEST_F(clGetProgramInfoTests, GivenIlWhenBuildingProgramThenGetProgramInfoReturnsCorrectInfo) {
-    REQUIRE_OCL_21_OR_SKIP(pContext);
     const size_t binarySize = 16;
     const uint32_t spirv[binarySize] = {0x03022307};
 
@@ -119,7 +120,6 @@ TEST_F(clGetProgramInfoTests, GivenIlWhenBuildingProgramThenGetProgramInfoReturn
 }
 
 TEST_F(clGetProgramInfoTests, GivenSPIRVProgramWhenGettingProgramSourceThenReturnNullString) {
-    REQUIRE_OCL_21_OR_SKIP(pContext);
     const size_t binarySize = 16;
     const uint32_t spirv[binarySize] = {0x03022307};
 
