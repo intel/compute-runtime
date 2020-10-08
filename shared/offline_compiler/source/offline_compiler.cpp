@@ -176,6 +176,8 @@ int OfflineCompiler::buildSourceCode() {
                                                      nullptr, 0);
 
         } else {
+            storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
+            isSpirV = inputFileSpirV;
             auto igcSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), sourceCode.c_str(), sourceCode.size());
             auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), options.c_str(), options.size());
             auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), internalOptions.c_str(), internalOptions.size());

@@ -28,6 +28,8 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::inputFileLlvm;
     using OfflineCompiler::inputFileSpirV;
     using OfflineCompiler::internalOptions;
+    using OfflineCompiler::irBinary;
+    using OfflineCompiler::irBinarySize;
     using OfflineCompiler::isSpirV;
     using OfflineCompiler::options;
     using OfflineCompiler::outputDirectory;
