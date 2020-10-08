@@ -101,7 +101,8 @@ struct CmdServicesMemTraceVersion {
             Lkf = 25,
             Ehl = 28,
             Dg1 = 30,
-            Tgllp = 22
+            Tgllp = 22,
+            Adls = 37
         };
     };
     struct RecordingMethodValues {

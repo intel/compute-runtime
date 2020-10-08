@@ -929,6 +929,16 @@ extern GFXCORE_FAMILY renderCoreFamily;
                       IGFX_GEN12LP_CORE,          \
                       IGFX_ROCKETLAKE)
 #endif
+#ifdef TESTS_ADLS
+#define ADLSTEST_F(test_fixture, test_name)                          \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_GEN12LP_CORE, IGFX_ALDERLAKE_S)
+#define ADLSTEST_P(test_suite_name, test_name)    \
+    FAMILYTEST_TEST_P(test_suite_name, test_name, \
+                      IGFX_GEN12LP_CORE,          \
+                      IGFX_ALDERLAKE_S)
+#endif
 #define HWTEST_TYPED_TEST(CaseName, TestName)                                                                  \
     CHECK_TEST_NAME_LENGTH(CaseName, TestName)                                                                 \
     template <typename gtest_TypeParam_>                                                                       \
@@ -1086,3 +1096,4 @@ using IsLKF = IsProduct<IGFX_LAKEFIELD>;
 using IsSKL = IsProduct<IGFX_SKYLAKE>;
 using IsTGLLP = IsProduct<IGFX_TIGERLAKE_LP>;
 using IsRKL = IsProduct<IGFX_ROCKETLAKE>;
+using IsADLS = IsProduct<IGFX_ALDERLAKE_S>;

@@ -17,3 +17,6 @@
 #ifdef SUPPORT_RKL
 #include "hw_info_config_rkl.inl"
 #endif
+#ifdef SUPPORT_ADLS
+#include "hw_info_config_adls.inl"
+#endif

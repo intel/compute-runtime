@@ -21,5 +21,7 @@ static EnableGfxProductHw<IGFX_DG1> enableGfxProductHwDG1;
 #ifdef SUPPORT_RKL
 static EnableGfxProductHw<IGFX_ROCKETLAKE> enableGfxProductHwRKL;
 #endif
-
+#ifdef SUPPORT_ADLS
+static EnableGfxProductHw<IGFX_ALDERLAKE_S> enableGfxProductHwADLS;
+#endif
 } // namespace NEO

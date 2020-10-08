@@ -424,3 +424,47 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenL1ForceDisabledWhenRequestingMocsThenPro
     EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, false));
     EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, true));
 }
+
+HWTEST2_F(HwHelperTestGen12Lp, givenRevisionEnumThenProperValueForIsWorkaroundRequiredIsReturned, IsRKL) {
+    std::vector<unsigned short> steppings;
+    HardwareInfo hardwareInfo = *defaultHwInfo;
+
+    steppings.push_back(0x0); //A0
+    steppings.push_back(0x4); //B0
+    steppings.push_back(0x5); //undefined
+
+    for (auto stepping : steppings) {
+        hardwareInfo.platform.usRevId = stepping;
+        HwHelper &hwHelper = HwHelper::get(renderCoreFamily);
+
+        if (stepping == 0x0) {
+            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+        } else if (stepping == 0x1 || stepping == 0x5) {
+            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+        }
+    }
+}
+
+HWTEST2_F(HwHelperTestGen12Lp, givenRevisionEnumThenProperValueForIsWorkaroundRequiredIsReturned, IsADLS) {
+    std::vector<unsigned short> steppings;
+    HardwareInfo hardwareInfo = *defaultHwInfo;
+
+    steppings.push_back(0x0); //A0
+    steppings.push_back(0x4); //B0
+    steppings.push_back(0x5); //undefined
+
+    for (auto stepping : steppings) {
+        hardwareInfo.platform.usRevId = stepping;
+        HwHelper &hwHelper = HwHelper::get(renderCoreFamily);
+
+        if (stepping == 0x0) {
+            EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+        } else if (stepping == 0x4 || stepping == 0x5) {
+            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
+            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+        }
+    }
+}

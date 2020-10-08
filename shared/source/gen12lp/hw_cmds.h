@@ -16,3 +16,6 @@
 #ifdef SUPPORT_RKL
 #include "hw_cmds_rkl.h"
 #endif
+#ifdef SUPPORT_ADLS
+#include "hw_cmds_adls.h"
+#endif

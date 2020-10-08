@@ -19,4 +19,7 @@ static EnableProductHwInfoConfig<IGFX_DG1> enableDG1;
 #ifdef SUPPORT_RKL
 static EnableProductHwInfoConfig<IGFX_ROCKETLAKE> enableRKL;
 #endif
+#ifdef SUPPORT_ADLS
+static EnableProductHwInfoConfig<IGFX_ALDERLAKE_S> enableADLS;
+#endif
 } // namespace NEO

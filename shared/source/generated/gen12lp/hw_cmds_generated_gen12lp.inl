@@ -1656,7 +1656,7 @@ typedef struct tagPIPELINE_SELECT {
             uint32_t MediaSamplerDopClockGateEnable : BITFIELD_RANGE(4, 4);
             uint32_t Reserved_5 : BITFIELD_RANGE(5, 5);
             uint32_t MediaSamplerPowerClockGateDisable : BITFIELD_RANGE(6, 6);
-            uint32_t Reserved_7 : BITFIELD_RANGE(7, 7);
+            uint32_t SpecialModeEnable : BITFIELD_RANGE(7, 7); // ADL-only, patched
             uint32_t MaskBits : BITFIELD_RANGE(8, 15);
             uint32_t _3DCommandSubOpcode : BITFIELD_RANGE(16, 23);
             uint32_t _3DCommandOpcode : BITFIELD_RANGE(24, 26);
@@ -1728,6 +1728,12 @@ typedef struct tagPIPELINE_SELECT {
     }
     inline bool getMediaSamplerPowerClockGateDisable(void) const {
         return TheStructure.Common.MediaSamplerPowerClockGateDisable;
+    }
+    inline void setSpecialModeEnable(const bool value) {
+        TheStructure.Common.SpecialModeEnable = value;
+    }
+    inline bool getSpecialModeEnable(void) const {
+        return TheStructure.Common.SpecialModeEnable;
     }
     inline void setMaskBits(const uint32_t value) {
         UNRECOVERABLE_IF(value > 0xff);
