@@ -19,7 +19,7 @@ using namespace DeviceHostQueue;
 
 using DeviceQueueSimpleTest = ::testing::Test;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSimpleTest, setupExecutionModelDispatchDoesNothing) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSimpleTest, WhenExecutionModelDispatchIsSetupThenNoAdditionalActionsOccur) {
     DeviceQueue devQueue;
     char buffer[20];
 
@@ -37,7 +37,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSimpleTest, setupExecutionModelDispatchDo
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSimpleTest, nonUsedBaseMethods) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSimpleTest, WhenResettingDeviceQueueThenIndirectHeapIsNotUsed) {
     DeviceQueue devQueue;
     devQueue.resetDeviceQueue();
     EXPECT_EQ(nullptr, devQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
@@ -69,7 +69,7 @@ class DeviceQueueTest : public DeviceHostQueueFixture<DeviceQueue> {
     ClDevice *device;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, createDeviceQueuesWhenSingleDeviceQueueIsSupported) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, GivenDeviceQueueCapWhenCreatingAdditionalDeviceQueuesThenQueueIsNotCreated) {
     auto maxOnDeviceQueues = device->getDeviceInfo().maxOnDeviceQueues;
     const_cast<ClDeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = 1;
 
@@ -98,7 +98,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, GivenDeviceQueueWhenEventPoolIsCrea
 
 typedef DeviceQueueTest DeviceQueueBuffer;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, setPreferredSizeWhenNoPropertyGiven) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, GivenNoPropertyWhenCreatingQueueThenPreferredSizeIsSet) {
     auto &deviceInfo = device->getDeviceInfo();
     deviceQueue = createQueueObject(); // only minimal properties
     ASSERT_NE(deviceQueue, nullptr);
@@ -106,7 +106,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, setPreferredSizeWhenNoPropertyGiv
     deviceQueue->release();
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, setPreferredSizeWhenInvalidPropertyGiven) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, GivenInvalidPropertyWhenCreatingQueueThenPreferredSizeIsSet) {
     cl_queue_properties properties[5] = {CL_QUEUE_PROPERTIES, deviceQueueProperties::minimumProperties[1],
                                          CL_QUEUE_SIZE, 0, 0};
     auto &deviceInfo = device->getDeviceInfo();
@@ -123,7 +123,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, setPreferredSizeWhenInvalidProper
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, setValidQueueSize) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, GivenValidSizeWhenCreatingQueueThenProvidedSizeIsSet) {
     auto &deviceInfo = device->getDeviceInfo();
     cl_uint validSize = deviceInfo.queueOnDevicePreferredSize - 1;
     cl_queue_properties properties[5] = {CL_QUEUE_PROPERTIES, deviceQueueProperties::minimumProperties[1],
@@ -138,7 +138,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, setValidQueueSize) {
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, initValues) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, WhenDeviceQueueIsCreatedThenItIsCorrectlyInitialized) {
     auto &deviceInfo = device->getDeviceInfo();
 
     deviceQueue = createQueueObject();
@@ -164,7 +164,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueBuffer, initValues) {
 
 typedef DeviceQueueTest DeviceQueueStackBuffer;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStackBuffer, allocateResourcesZeroesStackBufferAndQueueStorage) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStackBuffer, WhenDeviceQueueIsCreatedThenAllocatedResourcesAreZeroed) {
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
 
@@ -173,7 +173,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStackBuffer, allocateResourcesZeroesStack
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStackBuffer, initAllocation) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStackBuffer, WhenDeviceQueueIsCreatedThenStackBufferIsAllocated) {
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
 
@@ -189,7 +189,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStackBuffer, initAllocation) {
 
 typedef DeviceQueueTest DeviceQueueStorageBuffer;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStorageBuffer, initAllocation) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStorageBuffer, WhenDeviceQueueIsCreatedThenStorageBufferIsAllocated) {
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
 
@@ -203,7 +203,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueStorageBuffer, initAllocation) {
 
 typedef DeviceQueueTest DefaultDeviceQueue;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, createOnlyOneDefaultDeviceQueueWhenSingleDeviceQueueIsSupported) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, GivenSingleDeviceQueueIsSupportedWhenSecondDeviceQueueIsCreatedThenReuseDeviceQueue) {
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0, 0};
 
     auto maxOnDeviceQueues = device->getDeviceInfo().maxOnDeviceQueues;
@@ -229,7 +229,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, createOnlyOneDefaultDeviceQueueW
     const_cast<ClDeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, createOnlyOneDefaultDeviceQueueWhenMultipleDeviceQueuesAreSupported) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, GivenMultipleDeviceQueuesIsSupportedWhenSecondDeviceQueueIsCreatedThenReuseDeviceQueue) {
     cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0, 0};
 
     auto maxOnDeviceQueues = device->getDeviceInfo().maxOnDeviceQueues;
@@ -257,7 +257,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DefaultDeviceQueue, createOnlyOneDefaultDeviceQueueW
 
 typedef DeviceQueueTest DeviceQueueEventPool;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueEventPool, poolBufferSize) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueEventPool, WhenDeviceQueueIsCreatedThenEventPoolBufferIsAllocated) {
     auto &deviceInfo = device->getDeviceInfo();
 
     // number of events + event pool representation
@@ -274,7 +274,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueEventPool, poolBufferSize) {
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, sizeOfDshBuffer) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, WhenDeviceQueueIsCreatedThenDshBufferIsAllocated) {
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
 
@@ -285,7 +285,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, sizeOfDshBuffer) {
     delete deviceQueue;
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, dispatchScheduler) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueTest, WhenDispatchingSchedulerThenNoAssertsOccur) {
     DeviceQueue devQueue;
     MockContext context;
     MockProgram program(*device->getExecutionEnvironment());
