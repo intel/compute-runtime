@@ -11,6 +11,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_allocation_properties.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "test.h"
 
 using namespace NEO;
@@ -97,6 +98,10 @@ struct MultipleMapBufferTest : public ClDeviceFixture, public ::testing::Test {
                                                  GraphicsAllocationHelper::toMultiGraphicsAllocation(mockAlloc), false, false, false);
         if (mapOnGpu) {
             buffer->setSharingHandler(new SharingHandler());
+            auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+            for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+                gfxAllocation->setGmm(new MockGmm(), handleId);
+            }
         }
         return std::unique_ptr<MockBuffer<FamilyType>>(buffer);
     }

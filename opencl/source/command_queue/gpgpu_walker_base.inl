@@ -172,6 +172,11 @@ size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(const K
 }
 
 template <typename GfxFamily>
+size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel) {
+    return 0u;
+}
+
+template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
     size_t expectedSizeCS = 0;
     auto &hwInfo = commandQueue.getDevice().getHardwareInfo();

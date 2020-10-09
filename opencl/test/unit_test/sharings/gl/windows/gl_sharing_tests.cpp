@@ -32,6 +32,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_gmm_resource_info.h"
 #include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
@@ -898,6 +899,10 @@ TEST_F(glSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledThenCopyOnGpu
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
     auto buffer = castToObject<Buffer>(glBuffer);
     EXPECT_EQ(buffer->getCpuAddressForMemoryTransfer(), nullptr); // no cpu ptr
+    auto gfxAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
+    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+        gfxAllocation->setGmm(new MockGmm(), handleId);
+    }
 
     auto commandQueue = CommandQueue::create(&context, context.getDevice(0), 0, false, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -937,6 +942,10 @@ TEST_F(glSharingTests, givenClGLBufferWhenMapAndUnmapBufferIsCalledTwiceThenReus
     auto glBuffer = clCreateFromGLBuffer(&context, 0, bufferId, &retVal);
     auto buffer = castToObject<Buffer>(glBuffer);
     EXPECT_EQ(buffer->getCpuAddressForMemoryTransfer(), nullptr); // no cpu ptr
+    auto gfxAllocation = buffer->getGraphicsAllocation(rootDeviceIndex);
+    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+        gfxAllocation->setGmm(new MockGmm(), handleId);
+    }
 
     auto commandQueue = CommandQueue::create(&context, context.getDevice(0), 0, false, retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);

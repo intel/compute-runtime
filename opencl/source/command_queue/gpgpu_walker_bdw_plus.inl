@@ -211,6 +211,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilin
     }
     size += PerformanceCounters::getGpuCommandsSize(commandQueue, reservePerfCounters);
     size += GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(pKernel);
+    size += GpgpuWalkerHelper<GfxFamily>::getSizeForWaDisableRccRhwoOptimization(pKernel);
 
     return size;
 }

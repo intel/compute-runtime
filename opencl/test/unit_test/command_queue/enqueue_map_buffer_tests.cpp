@@ -16,6 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
+#include "opencl/test/unit_test/mocks/mock_gmm.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "test.h"
 
@@ -375,7 +376,12 @@ TEST_F(EnqueueMapBufferTest, givenNonReadOnlyBufferWhenMappedOnGpuThenSetValidEv
 
     std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE, 20, nullptr, retVal));
     buffer->setSharingHandler(new SharingHandler());
+    auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+        gfxAllocation->setGmm(new MockGmm(), handleId);
+    }
     buffer->forceDisallowCPUCopy = true;
+
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer.get());
 
@@ -418,6 +424,10 @@ TEST_F(EnqueueMapBufferTest, givenReadOnlyBufferWhenMappedOnGpuThenSetValidEvent
 
     std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE, 20, nullptr, retVal));
     buffer->setSharingHandler(new SharingHandler());
+    auto gfxAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+    for (auto handleId = 0u; handleId < gfxAllocation->getNumGmms(); handleId++) {
+        gfxAllocation->setGmm(new MockGmm(), handleId);
+    }
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer.get());
 

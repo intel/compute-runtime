@@ -46,6 +46,11 @@ bool HwHelperHw<Family>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo &h
 }
 
 template <>
+bool HwHelperHw<Family>::isWaDisableRccRhwoOptimizationRequired() const {
+    return true;
+}
+
+template <>
 uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
     /* For ICL+ maxThreadCount equals (EUCount * 8).
      ThreadCount/EUCount=7 is no longer valid, so we have to force 8 in below formula.

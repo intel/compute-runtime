@@ -2487,4 +2487,25 @@ uint32_t Kernel::getAdditionalKernelExecInfo() const {
     return this->additionalKernelExecInfo;
 }
 
+bool Kernel::requiresWaDisableRccRhwoOptimization() const {
+    auto &hardwareInfo = getDevice().getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+
+    if (hwHelper.isWaDisableRccRhwoOptimizationRequired() && isUsingSharedObjArgs()) {
+        for (auto &arg : getKernelArguments()) {
+            auto clMemObj = static_cast<cl_mem>(arg.object);
+            auto memObj = castToObject<MemObj>(clMemObj);
+            if (memObj && memObj->peekSharingHandler()) {
+                auto allocation = memObj->getGraphicsAllocation(getDevice().getRootDeviceIndex());
+                for (uint32_t handleId = 0u; handleId < allocation->getNumGmms(); handleId++) {
+                    if (allocation->getGmm(handleId)->gmmResourceInfo->getResourceFlags()->Info.MediaCompressed) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
 } // namespace NEO

@@ -395,6 +395,11 @@ bool HwHelperHw<GfxFamily>::isForceEmuInt32DivRemSPWARequired(const HardwareInfo
 }
 
 template <typename GfxFamily>
+bool HwHelperHw<GfxFamily>::isWaDisableRccRhwoOptimizationRequired() const {
+    return false;
+}
+
+template <typename GfxFamily>
 inline uint32_t HwHelperHw<GfxFamily>::getMinimalSIMDSize() {
     return 8u;
 }

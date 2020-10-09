@@ -421,6 +421,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName);
     void setAdditionalKernelExecInfo(uint32_t additionalKernelExecInfo);
     uint32_t getAdditionalKernelExecInfo() const;
+    MOCKABLE_VIRTUAL bool requiresWaDisableRccRhwoOptimization() const;
 
   protected:
     struct ObjectCounts {

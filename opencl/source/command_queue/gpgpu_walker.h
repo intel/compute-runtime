@@ -101,6 +101,7 @@ class GpgpuWalkerHelper {
                                                bool disablePerfMode);
 
     static size_t getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel);
+    static size_t getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel);
 
     static size_t setGpgpuWalkerThreadData(
         WALKER_TYPE<GfxFamily> *walkerCmd,
