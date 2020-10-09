@@ -70,7 +70,7 @@ class HwHelper {
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool checkResourceCompatibility(GraphicsAllocation &graphicsAllocation) = 0;
     virtual bool allowRenderCompression(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const = 0;
     virtual bool forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo, GraphicsAllocation *allocation) const = 0;
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     static bool renderCompressedBuffersSupported(const HardwareInfo &hwInfo);
@@ -296,7 +296,7 @@ class HwHelperHw : public HwHelper {
 
     bool allowRenderCompression(const HardwareInfo &hwInfo) const override;
 
-    bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo) const override;
+    bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const override;
 
     bool forceBlitterUseForGlobalBuffers(const HardwareInfo &hwInfo, GraphicsAllocation *allocation) const override;
 

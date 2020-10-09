@@ -18,13 +18,12 @@ namespace NEO {
 
 template <typename PatchSizeT>
 void Linker::patchIncrement(Device *pDevice, GraphicsAllocation *dstAllocation, size_t relocationOffset, const void *initData, uint64_t incrementValue) {
-    bool useBlitter = false;
 
     auto &hwInfo = pDevice->getHardwareInfo();
     auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (dstAllocation->isAllocatedInLocalMemoryPool() && (helper.isBlitCopyRequiredForLocalMemory(hwInfo) || helper.forceBlitterUseForGlobalBuffers(hwInfo, dstAllocation))) {
-        useBlitter = true;
-    }
+
+    bool useBlitter = (helper.isBlitCopyRequiredForLocalMemory(hwInfo, *dstAllocation) ||
+                       helper.forceBlitterUseForGlobalBuffers(hwInfo, dstAllocation));
 
     auto initValue = ptrOffset(initData, relocationOffset);
 
@@ -32,11 +31,7 @@ void Linker::patchIncrement(Device *pDevice, GraphicsAllocation *dstAllocation, 
     memcpy_s(&value, sizeof(PatchSizeT), initValue, sizeof(PatchSizeT));
     value += static_cast<PatchSizeT>(incrementValue);
 
-    if (useBlitter) {
-        BlitHelperFunctions::blitMemoryToAllocation(*pDevice, dstAllocation, relocationOffset, &value, {sizeof(PatchSizeT), 1, 1});
-    } else {
-        pDevice->getMemoryManager()->copyMemoryToAllocation(dstAllocation, relocationOffset, &value, sizeof(PatchSizeT));
-    }
+    MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, dstAllocation, relocationOffset, &value, sizeof(PatchSizeT));
 }
 
 } // namespace NEO

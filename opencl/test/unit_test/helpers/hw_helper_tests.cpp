@@ -908,18 +908,26 @@ HWTEST_F(HwHelperTest, whenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectVal
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
 
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+
     auto expectedDefaultValue = (helper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed);
-    EXPECT_EQ(expectedDefaultValue, helper.isBlitCopyRequiredForLocalMemory(hwInfo));
+    EXPECT_EQ(expectedDefaultValue, helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
 
     DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
-    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo));
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
     DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
-    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo));
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
 
     DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
-    EXPECT_TRUE(helper.isBlitCopyRequiredForLocalMemory(hwInfo));
+    EXPECT_TRUE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
     hwInfo.capabilityTable.blitterOperationsSupported = false;
-    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo));
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+
+    graphicsAllocation.overrideMemoryPool(MemoryPool::System64KBPages);
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(hwInfo, graphicsAllocation));
 }
 
 HWTEST_F(HwHelperTest, whenPatchingGlobalBuffersThenDontForceBlitter) {
@@ -954,7 +962,10 @@ HWTEST_F(HwHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessMod
 
 HWTEST2_F(HwHelperTest, givenDefaultHwHelperHwWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned, IsAtMostGen11) {
     auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo));
+    MockGraphicsAllocation graphicsAllocation;
+    graphicsAllocation.overrideMemoryPool(MemoryPool::LocalMemory);
+
+    EXPECT_FALSE(helper.isBlitCopyRequiredForLocalMemory(*defaultHwInfo, graphicsAllocation));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, HwHelperTest, WhenIsFusedEuDispatchEnabledIsCalledThenFalseIsReturned) {

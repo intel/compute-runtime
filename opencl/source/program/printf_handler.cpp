@@ -51,12 +51,10 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
 
     auto &hwInfo = device.getHardwareInfo();
     auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (printfSurface->isAllocatedInLocalMemoryPool() && helper.isBlitCopyRequiredForLocalMemory(hwInfo)) {
-        BlitHelperFunctions::blitMemoryToAllocation(device.getDevice(), printfSurface, 0,
-                                                    &printfSurfaceInitialDataSize, {sizeof(printfSurfaceInitialDataSize), 1, 1});
-    } else {
-        *reinterpret_cast<uint32_t *>(printfSurface->getUnderlyingBuffer()) = printfSurfaceInitialDataSize;
-    }
+
+    MemoryTransferHelper::transferMemoryToAllocation(helper.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface),
+                                                     device.getDevice(), printfSurface, 0, &printfSurfaceInitialDataSize,
+                                                     sizeof(printfSurfaceInitialDataSize));
 
     auto printfPatchAddress = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getCrossThreadData()),
                                         kernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface->DataParamOffset);

@@ -110,18 +110,9 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     if (kernelInfo->heapInfo.pKernelHeap != nullptr) {
-        bool doCpuIsaCopy = true;
-
-        if (allocation->isAllocatedInLocalMemoryPool() && hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo)) {
-            auto status = NEO::BlitHelperFunctions::blitMemoryToAllocation(*device, allocation, 0, kernelInfo->heapInfo.pKernelHeap, {kernelIsaSize, 1, 1});
-            UNRECOVERABLE_IF(status == NEO::BlitOperationResult::Fail);
-
-            doCpuIsaCopy = (status == NEO::BlitOperationResult::Unsupported);
-        }
-
-        if (doCpuIsaCopy) {
-            memoryManager.copyMemoryToAllocation(allocation, 0, kernelInfo->heapInfo.pKernelHeap, kernelIsaSize);
-        }
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *allocation),
+                                                              *device, allocation, 0, kernelInfo->heapInfo.pKernelHeap,
+                                                              static_cast<size_t>(kernelIsaSize));
     }
 
     isaGraphicsAllocation.reset(allocation);

@@ -433,14 +433,9 @@ bool KernelInfo::createKernelAllocation(const Device &device) {
     auto &hwInfo = device.getHardwareInfo();
     auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    bool status = false;
-    if (kernelAllocation->isAllocatedInLocalMemoryPool() && hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo)) {
-        status = (BlitHelperFunctions::blitMemoryToAllocation(device, kernelAllocation, 0, heapInfo.pKernelHeap, {kernelIsaSize, 1, 1}) == BlitOperationResult::Success);
-    } else {
-        status = device.getMemoryManager()->copyMemoryToAllocation(kernelAllocation, 0, heapInfo.pKernelHeap, kernelIsaSize);
-    }
-
-    return status;
+    return MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelAllocation),
+                                                            device, kernelAllocation, 0, heapInfo.pKernelHeap,
+                                                            static_cast<size_t>(kernelIsaSize));
 }
 
 void KernelInfo::apply(const DeviceInfoKernelPayloadConstants &constants) {

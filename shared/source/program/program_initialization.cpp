@@ -56,12 +56,8 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
     auto &hwInfo = device.getHardwareInfo();
     auto &helper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
-    bool success = false;
-    if (gpuAllocation->isAllocatedInLocalMemoryPool() && helper.isBlitCopyRequiredForLocalMemory(hwInfo)) {
-        success = (BlitHelperFunctions::blitMemoryToAllocation(device, gpuAllocation, 0, initData, {size, 1, 1}) == BlitOperationResult::Success);
-    } else {
-        success = device.getMemoryManager()->copyMemoryToAllocation(gpuAllocation, 0, initData, static_cast<uint32_t>(size));
-    }
+    auto success = MemoryTransferHelper::transferMemoryToAllocation(helper.isBlitCopyRequiredForLocalMemory(hwInfo, *gpuAllocation),
+                                                                    device, gpuAllocation, 0, initData, size);
 
     UNRECOVERABLE_IF(!success);
 
