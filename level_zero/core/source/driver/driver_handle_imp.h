@@ -60,6 +60,9 @@ struct DriverHandleImp : public DriverHandle {
                                                                      size_t size,
                                                                      bool *allocationRangeCovered) override;
 
+    ze_result_t sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices,
+                                   uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) override;
+
     uint32_t parseAffinityMask(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
 
     uint32_t numDevices = 0;

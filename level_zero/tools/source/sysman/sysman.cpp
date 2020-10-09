@@ -31,4 +31,29 @@ SysmanDevice *DeviceImp::getSysmanHandle() {
     return pSysmanDevice;
 }
 
+ze_result_t DriverHandleImp::sysmanEventsListen(
+    uint32_t timeout,
+    uint32_t count,
+    zes_device_handle_t *phDevices,
+    uint32_t *pNumDeviceEvents,
+    zes_event_type_flags_t *pEvents) {
+    bool gotSysmanEvent = false;
+    auto timeToExitLoop = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
+    do {
+        for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
+            gotSysmanEvent = L0::SysmanDevice::fromHandle(phDevices[devIndex])->deviceEventListen(pEvents[devIndex]);
+            if (gotSysmanEvent) {
+                *pNumDeviceEvents = 1;
+                break;
+            }
+        }
+        if (gotSysmanEvent) {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Sleep for 10 milliseconds before next check of events
+    } while ((std::chrono::steady_clock::now() <= timeToExitLoop));
+
+    return ZE_RESULT_SUCCESS;
+}
+
 } // namespace L0

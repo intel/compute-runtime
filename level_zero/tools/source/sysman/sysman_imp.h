@@ -28,6 +28,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     OsSysman *pOsSysman = nullptr;
     Pci *pPci = nullptr;
     GlobalOperations *pGlobalOperations = nullptr;
+    Events *pEvents = nullptr;
     PowerHandleContext *pPowerHandleContext = nullptr;
     FrequencyHandleContext *pFrequencyHandleContext = nullptr;
     FabricPortHandleContext *pFabricPortHandleContext = nullptr;
@@ -59,6 +60,8 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) override;
     ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) override;
     ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) override;
+    ze_result_t deviceEventRegister(zes_event_type_flags_t events) override;
+    bool deviceEventListen(zes_event_type_flags_t &pEvent) override;
 
   private:
     template <typename T>

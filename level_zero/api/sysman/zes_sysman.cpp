@@ -5,8 +5,6 @@
  *
  */
 
-#include <level_zero/zet_api.h>
-
 #include "sysman/sysman.h"
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -657,7 +655,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL
 zesDeviceEventRegister(
     zes_device_handle_t hDevice,
     zes_event_type_flags_t events) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::SysmanDevice::fromHandle(hDevice)->deviceEventRegister(events);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
@@ -668,7 +666,7 @@ zesDriverEventListen(
     zes_device_handle_t *phDevices,
     uint32_t *pNumDeviceEvents,
     zes_event_type_flags_t *pEvents) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::DriverHandle::fromHandle(hDriver)->sysmanEventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL

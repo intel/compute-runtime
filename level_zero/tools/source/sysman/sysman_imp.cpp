@@ -9,6 +9,7 @@
 
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/tools/source/sysman/events/events_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/pci/pci_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
@@ -32,13 +33,15 @@ SysmanDeviceImp::SysmanDeviceImp(ze_device_handle_t hDevice) {
     pRasHandleContext = new RasHandleContext(pOsSysman);
     pMemoryHandleContext = new MemoryHandleContext(pOsSysman);
     pGlobalOperations = new GlobalOperationsImp(pOsSysman);
+    pEvents = new EventsImp(pOsSysman);
     pFanHandleContext = new FanHandleContext(pOsSysman);
     pFirmwareHandleContext = new FirmwareHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
-    freeResource(pFanHandleContext);
     freeResource(pFirmwareHandleContext);
+    freeResource(pFanHandleContext);
+    freeResource(pEvents);
     freeResource(pGlobalOperations);
     freeResource(pMemoryHandleContext);
     freeResource(pRasHandleContext);
@@ -99,6 +102,9 @@ void SysmanDeviceImp::init() {
     if (pGlobalOperations) {
         pGlobalOperations->init();
     }
+    if (pEvents) {
+        pEvents->init();
+    }
     if (pFanHandleContext) {
         pFanHandleContext->init();
     }
@@ -121,6 +127,14 @@ ze_result_t SysmanDeviceImp::processesGetState(uint32_t *pCount, zes_process_sta
 
 ze_result_t SysmanDeviceImp::deviceReset(ze_bool_t force) {
     return pGlobalOperations->reset(force);
+}
+
+ze_result_t SysmanDeviceImp::deviceEventRegister(zes_event_type_flags_t events) {
+    return pEvents->eventRegister(events);
+}
+
+bool SysmanDeviceImp::deviceEventListen(zes_event_type_flags_t &pEvent) {
+    return pEvents->eventListen(pEvent);
 }
 
 ze_result_t SysmanDeviceImp::deviceGetState(zes_device_state_t *pState) {

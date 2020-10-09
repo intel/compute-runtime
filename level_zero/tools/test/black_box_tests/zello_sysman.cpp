@@ -80,24 +80,25 @@ void usage() {
                  "\n zello_sysman [OPTIONS]"
                  "\n"
                  "\n OPTIONS:"
-                 "\n  -p, --pci                    selectively run pci black box test"
-                 "\n  -f, --frequency              selectively run frequency black box test"
-                 "\n  -s, --standby                selectively run standby black box test"
-                 "\n  -e, --engine                 selectively run engine black box test"
-                 "\n  -c, --scheduler              selectively run scheduler black box test"
-                 "\n  -t, --temperature            selectively run temperature black box test"
-                 "\n  -o, --power                  selectively run power black box test"
-                 "\n  -m, --memory                 selectively run memory black box test"
-                 "\n  -g, --global                 selectively run device/global operations black box test"
-                 "\n  -r, --reset force|noforce  selectively run device reset test"
-                 "\n  -h, --help                   display help message"
+                 "\n  -p,   --pci                   selectively run pci black box test"
+                 "\n  -f,   --frequency             selectively run frequency black box test"
+                 "\n  -s,   --standby               selectively run standby black box test"
+                 "\n  -e,   --engine                selectively run engine black box test"
+                 "\n  -c,   --scheduler             selectively run scheduler black box test"
+                 "\n  -t,   --temperature           selectively run temperature black box test"
+                 "\n  -o,   --power                 selectively run power black box test"
+                 "\n  -m,   --memory                selectively run memory black box test"
+                 "\n  -g,   --global                selectively run device/global operations black box test"
+                 "\n  -E,   --event                 set and listen to events black box test"
+                 "\n  -r,   --reset force|noforce   selectively run device reset test"
+                 "\n  -h,   --help                  display help message"
                  "\n"
                  "\n  All L0 Syman APIs that set values require root privileged execution"
                  "\n"
                  "\n";
 }
 
-void getDeviceHandles(std::vector<ze_device_handle_t> &devices, int argc, char *argv[]) {
+void getDeviceHandles(ze_driver_handle_t &driverHandle, std::vector<ze_device_handle_t> &devices, int argc, char *argv[]) {
 
     VALIDATECALL(zeInit(ZE_INIT_FLAG_GPU_ONLY));
 
@@ -107,7 +108,6 @@ void getDeviceHandles(std::vector<ze_device_handle_t> &devices, int argc, char *
         std::cout << "Error could not retrieve driver" << std::endl;
         std::terminate();
     }
-    ze_driver_handle_t driverHandle;
     VALIDATECALL(zeDriverGet(&driverCount, &driverHandle));
 
     uint32_t deviceCount = 0;
@@ -572,11 +572,30 @@ void testSysmanMemory(ze_device_handle_t &device) {
         }
     }
 }
+
 void testSysmanReset(ze_device_handle_t &device, bool force) {
     std::cout << std::endl
               << " ----  Reset test (force = " << (force ? "true" : "false") << ") ---- " << std::endl;
     VALIDATECALL(zesDeviceReset(device, force));
 }
+
+void testSysmanListenEvents(ze_driver_handle_t driver, std::vector<ze_device_handle_t> &devices, zes_event_type_flags_t events) {
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pEvents = new zes_event_type_flags_t[devices.size()];
+    uint32_t timeout = 10000u;
+    uint32_t numDevices = static_cast<uint32_t>(devices.size());
+    VALIDATECALL(zesDriverEventListen(driver, timeout, numDevices, devices.data(), &numDeviceEvents, pEvents));
+    if (verbose) {
+        if (numDeviceEvents) {
+            for (auto index = 0u; index < devices.size(); index++) {
+                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
+                    std::cout << "Device " << index << "got reset required event" << std::endl;
+                }
+            }
+        }
+    }
+}
+
 void testSysmanGlobalOperations(ze_device_handle_t &device) {
     std::cout << std::endl
               << " ----  Global Operations tests ---- " << std::endl;
@@ -613,12 +632,13 @@ bool validateGetenv(const char *name) {
 }
 int main(int argc, char *argv[]) {
     std::vector<ze_device_handle_t> devices;
+    ze_driver_handle_t driver;
 
     if (!validateGetenv("ZES_ENABLE_SYSMAN")) {
         std::cout << "Must set environment variable ZES_ENABLE_SYSMAN=1" << std::endl;
         exit(0);
     }
-    getDeviceHandles(devices, argc, argv);
+    getDeviceHandles(driver, devices, argc, argv);
     int opt;
     static struct option long_opts[] = {
         {"help", no_argument, nullptr, 'h'},
@@ -631,11 +651,12 @@ int main(int argc, char *argv[]) {
         {"power", no_argument, nullptr, 'o'},
         {"global", no_argument, nullptr, 'g'},
         {"memory", no_argument, nullptr, 'm'},
+        {"event", no_argument, nullptr, 'E'},
         {"reset", required_argument, nullptr, 'r'},
         {0, 0, 0, 0},
     };
     bool force = false;
-    while ((opt = getopt_long(argc, argv, "hpfsectogmr:", long_opts, nullptr)) != -1) {
+    while ((opt = getopt_long(argc, argv, "hpfsectogmrE:", long_opts, nullptr)) != -1) {
         switch (opt) {
         case 'h':
             usage();
@@ -698,6 +719,12 @@ int main(int argc, char *argv[]) {
             std::for_each(devices.begin(), devices.end(), [&](auto device) {
                 testSysmanReset(device, force);
             });
+            break;
+        case 'E':
+            std::for_each(devices.begin(), devices.end(), [&](auto device) {
+                zesDeviceEventRegister(device, ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED);
+            });
+            testSysmanListenEvents(driver, devices, ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED);
             break;
 
         default:

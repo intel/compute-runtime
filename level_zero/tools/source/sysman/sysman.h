@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/engine/engine.h"
+#include "level_zero/tools/source/sysman/events/events.h"
 #include "level_zero/tools/source/sysman/fabric_port/fabric_port.h"
 #include "level_zero/tools/source/sysman/fan/fan.h"
 #include "level_zero/tools/source/sysman/firmware/firmware.h"
@@ -21,14 +21,11 @@
 #include "level_zero/tools/source/sysman/standby/standby.h"
 #include "level_zero/tools/source/sysman/temperature/temperature.h"
 #include <level_zero/zes_api.h>
-#include <level_zero/zet_api.h>
-
-#include <unordered_map>
 
 struct _zet_sysman_handle_t {};
 
 namespace L0 {
-
+struct Device;
 struct SysmanDevice : _ze_device_handle_t {
 
     static SysmanDevice *fromHandle(zes_device_handle_t handle) { return Device::fromHandle(handle)->getSysmanHandle(); }
@@ -52,6 +49,8 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) = 0;
     virtual ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan) = 0;
     virtual ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) = 0;
+    virtual ze_result_t deviceEventRegister(zes_event_type_flags_t events) = 0;
+    virtual bool deviceEventListen(zes_event_type_flags_t &pEvent) = 0;
     virtual ~SysmanDevice() = default;
 };
 

@@ -12,6 +12,7 @@
 #include "level_zero/core/source/context/context.h"
 #include "level_zero/core/source/device/device.h"
 #include <level_zero/ze_api.h>
+#include <level_zero/zes_api.h>
 
 struct _ze_driver_handle_t {
     virtual ~_ze_driver_handle_t() = default;
@@ -65,6 +66,8 @@ struct DriverHandle : _ze_driver_handle_t {
                                                                              bool *allocationRangeCovered) = 0;
 
     virtual NEO::SVMAllocsManager *getSvmAllocsManager() = 0;
+    virtual ze_result_t sysmanEventsListen(uint32_t timeout, uint32_t count, zes_device_handle_t *phDevices,
+                                           uint32_t *pNumDeviceEvents, zes_event_type_flags_t *pEvents) = 0;
     static DriverHandle *fromHandle(ze_driver_handle_t handle) { return static_cast<DriverHandle *>(handle); }
     inline ze_driver_handle_t toHandle() { return this; }
 
