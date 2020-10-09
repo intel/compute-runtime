@@ -41,7 +41,7 @@ inline char *mockGetenv(const char *name) noexcept {
     if (mockableEnvValues != nullptr && mockableEnvValues->find(name) != mockableEnvValues->end()) {
         return const_cast<char *>(mockableEnvValues->find(name)->second.c_str());
     }
-    return getenv(name);
+    return nullptr;
 }
 
 } // namespace IoFunctions
