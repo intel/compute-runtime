@@ -37,7 +37,7 @@ struct CommandQueueHw : public CommandQueueImp {
 
     void programGeneralStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream);
     size_t estimateStateBaseAddressCmdSize();
-    void programFrontEnd(uint64_t scratchAddress, NEO::LinearStream &commandStream);
+    MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, NEO::LinearStream &commandStream);
 
     size_t estimateFrontEndCmdSize();
     size_t estimatePipelineSelect();

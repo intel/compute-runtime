@@ -103,6 +103,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void setReservedSshSize(size_t reserveSize) {
         reservedSshSize = reserveSize;
     }
+    HeapContainer sshAllocations;
 
   protected:
     void *iddBlock = nullptr;

@@ -20,8 +20,6 @@ class MemoryManager;
 struct HardwareInfo;
 class OsContext;
 
-using HeapContainer = std::vector<IndirectHeap *>;
-
 namespace ScratchSpaceConstants {
 constexpr size_t scratchSpaceOffsetFor64Bit = 4096u;
 }

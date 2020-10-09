@@ -16,6 +16,8 @@
 namespace NEO {
 class GraphicsAllocation;
 
+using HeapContainer = std::vector<GraphicsAllocation *>;
+
 constexpr size_t defaultHeapSize = 64 * KB;
 
 class IndirectHeap : public LinearStream {

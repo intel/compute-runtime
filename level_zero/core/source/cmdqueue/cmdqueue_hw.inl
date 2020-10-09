@@ -142,7 +142,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
         interlockedMax(commandQueuePerThreadScratchSize, commandList->getCommandListPerThreadScratchSize());
         if (commandList->getCommandListPerThreadScratchSize() != 0) {
-            heapContainer.push_back(commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE));
+            heapContainer.push_back(commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation());
+            for (auto element : commandList->commandContainer.sshAllocations) {
+                heapContainer.push_back(element);
+            }
         }
     }
 

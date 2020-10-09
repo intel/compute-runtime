@@ -354,6 +354,54 @@ HWTEST_F(ContextCreateCommandQueueTest, givenOrdinalBigerThanAvailableEnginesWhe
     EXPECT_EQ(nullptr, commandQueue);
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+class MockCommandQueue : public L0::CommandQueueHw<gfxCoreFamily> {
+  public:
+    using L0::CommandQueueHw<gfxCoreFamily>::CommandQueueHw;
+    MockCommandQueue(L0::Device *device, NEO::CommandStreamReceiver *csr, const ze_command_queue_desc_t *desc) : L0::CommandQueueHw<gfxCoreFamily>(device, csr, desc) {}
+    using BaseClass = ::L0::CommandQueueHw<gfxCoreFamily>;
+    NEO::HeapContainer heapContainer;
+    void handleScratchSpace(NEO::ResidencyContainer &residency,
+                            NEO::HeapContainer &heapContainer,
+                            NEO::ScratchSpaceController *scratchController,
+                            bool &gsbaState, bool &frontEndState) override {
+        this->heapContainer = heapContainer;
+    }
+
+    void programFrontEnd(uint64_t scratchAddress, NEO::LinearStream &commandStream) override {
+        return;
+    }
+};
+
+using CommandQueueExecuteTest = Test<DeviceFixture>;
+using CommandQueueExecuteTestSupport = IsAtLeastProduct<IGFX_SKYLAKE>;
+
+HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchWhenExecuteThenSshWasUsed, CommandQueueExecuteTestSupport) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    auto commandQueue = new MockCommandQueue<gfxCoreFamily>(device, csr, &desc);
+    commandQueue->initialize(false);
+    auto commandList = new CommandListCoreFamily<gfxCoreFamily>();
+    commandList->initialize(device, NEO::EngineGroupType::Compute);
+    commandList->commandListPerThreadScratchSize = 100u;
+    auto commandListHandle = commandList->toHandle();
+
+    void *alloc = alignedMalloc(0x100, 0x100);
+    NEO::GraphicsAllocation graphicsAllocation1(0, NEO::GraphicsAllocation::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+    NEO::GraphicsAllocation graphicsAllocation2(0, NEO::GraphicsAllocation::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
+
+    commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation1);
+    commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation2);
+
+    commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
+
+    EXPECT_EQ(commandQueue->heapContainer.size(), 3u);
+    commandQueue->destroy();
+    commandList->destroy();
+    alignedFree(alloc);
+}
+
 using CommandQueueSynchronizeTest = Test<ContextFixture>;
 
 HWTEST_F(CommandQueueSynchronizeTest, givenCallToSynchronizeThenCorrectEnableTimeoutAndTimeoutValuesAreUsed) {

@@ -119,6 +119,7 @@ void CommandContainer::reset() {
     slmSize = std::numeric_limits<uint32_t>::max();
     getResidencyContainer().clear();
     getDeallocationContainer().clear();
+    sshAllocations.clear();
 
     for (size_t i = 1; i < cmdBufferAllocations.size(); i++) {
         device->getMemoryManager()->freeGraphicsMemory(cmdBufferAllocations[i]);
@@ -191,6 +192,7 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSizeAndAlignment(HeapType hea
         setHeapDirty(heapType);
         if (heapType == HeapType::SURFACE_STATE) {
             indirectHeap->getSpace(reservedSshSize);
+            sshAllocations.push_back(oldAlloc);
         }
     }
 

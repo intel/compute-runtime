@@ -35,11 +35,13 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendMemoryCopyBlitRegion;
     using BaseClass::appendSignalEventPostWalker;
     using BaseClass::applyMemoryRangesBarrier;
+    using BaseClass::commandListPerThreadScratchSize;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::getAlignedAllocation;
     using BaseClass::getAllocationFromHostPtrMap;
     using BaseClass::getHostPtrAlloc;
     using BaseClass::hostPtrMap;
+    using BaseClass::initialize;
 
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
 };
