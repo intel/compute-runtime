@@ -636,10 +636,13 @@ ze_result_t MetricQuery::appendStreamerMarker(CommandList &commandList,
     auto &metricContext = commandList.device->getMetricContext();
     auto &metricsLibrary = metricContext.getMetricsLibrary();
 
+    const uint32_t streamerMarkerHighBitsShift = 25;
+
     // Obtain gpu commands.
     CommandBufferData_1_0 commandBuffer = {};
     commandBuffer.CommandsType = ObjectType::MarkerStreamUser;
     commandBuffer.MarkerStreamUser.Value = value;
+    commandBuffer.MarkerStreamUser.Reserved = (value >> streamerMarkerHighBitsShift);
     commandBuffer.Type = metricContext.isComputeUsed()
                              ? GpuCommandBufferType::Compute
                              : GpuCommandBufferType::Render;

@@ -693,6 +693,15 @@ TEST_F(MetricStreamerTest, givenInvalidArgumentsWhenZetCommandListAppendMetricSt
     EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
 }
 
+MATCHER_P(streamerMarkerDataAreEqual, marker, "") {
+    const uint32_t streamerMarkerLowBitsMask = 0x1FFFFFF;
+    const uint32_t streamerMarkerHighBitsShift = 25;
+
+    return (arg->CommandsType == ObjectType::MarkerStreamUser) &&
+           (arg->MarkerStreamUser.Value == (marker & streamerMarkerLowBitsMask)) &&
+           (arg->MarkerStreamUser.Reserved == (marker >> streamerMarkerHighBitsShift));
+}
+
 TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStreamerMarkerIsCalledThenReturnsSuccess) {
 
     // One api: device handle.
@@ -745,6 +754,8 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
 
     CommandBufferSize_1_0 commandBufferSize = {};
     commandBufferSize.GpuMemorySize = 100;
+
+    uint32_t markerValue = 0x12345678;
 
     EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
         .Times(0);
@@ -801,7 +812,7 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<1>(::testing::ByRef(commandBufferSize)), Return(StatusCode::Success)));
 
-    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGet(_))
+    EXPECT_CALL(*mockMetricsLibrary->g_mockApi, MockCommandBufferGet(streamerMarkerDataAreEqual(markerValue)))
         .Times(1)
         .WillOnce(Return(StatusCode::Success));
 
@@ -835,7 +846,6 @@ TEST_F(MetricStreamerTest, givenValidArgumentsWhenZetCommandListAppendMetricStre
     EXPECT_NE(streamerHandle, nullptr);
 
     // Metric streamer marker.
-    uint32_t markerValue = 1;
     EXPECT_EQ(zetCommandListAppendMetricStreamerMarker(commandList->toHandle(), streamerHandle, markerValue), ZE_RESULT_SUCCESS);
 
     // Metric streamer close.
