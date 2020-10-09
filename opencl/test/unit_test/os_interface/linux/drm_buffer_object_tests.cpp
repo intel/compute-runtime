@@ -344,3 +344,15 @@ TEST(DrmBufferObject, whenBindExtHandleAddedThenItIsStored) {
     EXPECT_EQ(1u, bo.getBindExtHandles().size());
     EXPECT_EQ(4u, bo.getBindExtHandles()[0]);
 }
+
+TEST(DrmBufferObject, whenMarkForCapturedCalledThenIsMarkedForCaptureReturnsTrue) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    MockBufferObject bo(&drm, 0, 0, 1);
+    EXPECT_FALSE(bo.isMarkedForCapture());
+
+    bo.markForCapture();
+    EXPECT_TRUE(bo.isMarkedForCapture());
+}

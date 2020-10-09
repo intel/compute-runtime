@@ -71,6 +71,12 @@ class BufferObject {
     bool peekIsReusableAllocation() const { return this->isReused; }
     void addBindExtHandle(uint32_t handle);
     StackVec<uint32_t, 2> &getBindExtHandles() { return bindExtHandles; }
+    void markForCapture() {
+        allowCapture = true;
+    }
+    bool isMarkedForCapture() {
+        return allowCapture;
+    }
 
   protected:
     Drm *drm = nullptr;
@@ -83,6 +89,7 @@ class BufferObject {
 
     //Tiling
     uint32_t tiling_mode;
+    bool allowCapture = false;
 
     MOCKABLE_VIRTUAL void fillExecObject(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
     void fillExecObjectImpl(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId);

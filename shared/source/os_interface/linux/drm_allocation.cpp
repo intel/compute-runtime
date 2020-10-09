@@ -95,6 +95,7 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
         for (auto bo : bos) {
             if (bo) {
                 bo->addBindExtHandle(handle);
+                bo->markForCapture();
             }
         }
     }

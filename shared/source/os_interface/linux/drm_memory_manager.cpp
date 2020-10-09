@@ -930,7 +930,7 @@ void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
                                                            localMemAllocs[allocation->getRootDeviceIndex()].end());
 }
 
-void DrmMemoryManager::registerAllocation(GraphicsAllocation *allocation) {
+void DrmMemoryManager::registerAllocationInOs(GraphicsAllocation *allocation) {
     if (allocation) {
         auto drmAllocation = static_cast<DrmAllocation *>(allocation);
         drmAllocation->registerBOBindExtHandle(&getDrm(drmAllocation->getRootDeviceIndex()));
