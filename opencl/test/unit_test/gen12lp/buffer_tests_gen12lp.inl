@@ -45,7 +45,7 @@ GEN12LPTEST_F(BufferTestsTgllp, givenBufferNotReadonlyWhenProgrammingSurfaceStat
     EXPECT_EQ(expectedMocs, actualMocs);
 }
 
-GEN12LPTEST_F(BufferTestsTgllp, givenBufferReadonlyWhenProgrammingSurfaceStateThenUseL1) {
+GEN12LPTEST_F(BufferTestsTgllp, givenBufferReadonlyWhenProgrammingSurfaceStateThenUseL3) {
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(
         context.get(),
         CL_MEM_READ_WRITE,
@@ -57,12 +57,12 @@ GEN12LPTEST_F(BufferTestsTgllp, givenBufferReadonlyWhenProgrammingSurfaceStateTh
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
     buffer->setArgStateful(&surfaceState, false, false, false, true, context->getDevice(0)->getDevice());
 
-    const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 }
 
-GEN12LPTEST_F(BufferTestsTgllp, givenConstantSurfaceWhenProgrammingSurfaceStateThenUseL1) {
+GEN12LPTEST_F(BufferTestsTgllp, givenConstantSurfaceWhenProgrammingSurfaceStateThenUseL3) {
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(
         context.get(),
         CL_MEM_READ_WRITE,
@@ -75,18 +75,38 @@ GEN12LPTEST_F(BufferTestsTgllp, givenConstantSurfaceWhenProgrammingSurfaceStateT
     typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
     buffer->setArgStateful(&surfaceState, false, false, false, false, context->getDevice(0)->getDevice());
 
-    const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST);
+    const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     const auto actualMocs = surfaceState.getMemoryObjectControlState();
     EXPECT_EQ(expectedMocs, actualMocs);
 }
 
-GEN12LPTEST_F(BufferTestsTgllp, givenL1ForceEnabledWhenProgrammingSurfaceStateThenUseL1) {
+GEN12LPTEST_F(BufferTestsTgllp, givenL1ForceEnabledWhenProgrammingSurfaceStateThenUseL3) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.ForceL1Caching.set(1);
 
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(
         context.get(),
         CL_MEM_READ_WRITE,
+        MemoryConstants::pageSize,
+        nullptr,
+        retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    typename FamilyType::RENDER_SURFACE_STATE surfaceState = {};
+    buffer->setArgStateful(&surfaceState, false, false, false, false, device->getDevice());
+
+    const auto expectedMocs = device->getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    const auto actualMocs = surfaceState.getMemoryObjectControlState();
+    EXPECT_EQ(expectedMocs, actualMocs);
+}
+
+GEN12LPTEST_F(BufferTestsTgllp, givenBufferReadonlyAndL1ForceEnabledWhenProgrammingSurfaceStateThenUseL1) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.ForceL1Caching.set(1);
+
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(
+        context.get(),
+        CL_MEM_READ_ONLY,
         MemoryConstants::pageSize,
         nullptr,
         retVal));

@@ -385,12 +385,11 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, whenRequestingMocsThenProperMocsIndicesAreBei
 
     const auto mocsNoCache = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
     const auto mocsL3 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
-    const auto mocsL1 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
 
     EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, false));
     EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, true));
     EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, false));
-    EXPECT_EQ(mocsL1, helper.getMocsIndex(*gmmHelper, true, true));
+    EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, true));
 }
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenL1ForceEnabledWhenRequestingMocsThenProperMocsIndicesAreBeingReturned) {
@@ -401,11 +400,12 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenL1ForceEnabledWhenRequestingMocsThenProp
     auto gmmHelper = this->pDevice->getGmmHelper();
 
     const auto mocsNoCache = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1;
+    const auto mocsL3 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
     const auto mocsL1 = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CONST) >> 1;
 
     EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, false));
     EXPECT_EQ(mocsNoCache, helper.getMocsIndex(*gmmHelper, false, true));
-    EXPECT_EQ(mocsL1, helper.getMocsIndex(*gmmHelper, true, false));
+    EXPECT_EQ(mocsL3, helper.getMocsIndex(*gmmHelper, true, false));
     EXPECT_EQ(mocsL1, helper.getMocsIndex(*gmmHelper, true, true));
 }
 

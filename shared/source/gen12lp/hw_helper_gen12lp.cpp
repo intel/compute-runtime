@@ -243,8 +243,8 @@ bool HwHelperHw<Family>::useOnlyGlobalTimestamps() const {
 template <>
 uint32_t HwHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
-        if (DebugManager.flags.ForceL1Caching.get() != -1) {
-            l1enabled = !!DebugManager.flags.ForceL1Caching.get();
+        if (DebugManager.flags.ForceL1Caching.get() != 1) {
+            l1enabled = false;
         }
 
         if (l1enabled) {

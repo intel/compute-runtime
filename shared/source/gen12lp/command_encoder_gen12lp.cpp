@@ -56,8 +56,8 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(R_SURFACE_STATE *surfac
         const bool isConstantSurface = allocation && allocation->getAllocationType() == GraphicsAllocation::AllocationType::CONSTANT_SURFACE;
         bool useL1 = isReadOnly || isConstantSurface;
 
-        if (DebugManager.flags.ForceL1Caching.get() != -1) {
-            useL1 = !!DebugManager.flags.ForceL1Caching.get();
+        if (DebugManager.flags.ForceL1Caching.get() != 1) {
+            useL1 = false;
         }
 
         if (useL1) {
