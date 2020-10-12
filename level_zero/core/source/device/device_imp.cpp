@@ -571,6 +571,10 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         device->setDebugSurface(debugSurface);
     }
 
+    if (static_cast<DriverHandleImp *>(driverHandle)->enableSysman && !device->isSubdevice) {
+        device->setSysmanHandle(L0::SysmanDeviceHandleContext::init(device->toHandle()));
+    }
+
     if (device->neoDevice->getNumAvailableDevices() == 1) {
         device->numSubDevices = 0;
     } else {
@@ -589,6 +593,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
             }
             static_cast<DeviceImp *>(subDevice)->isSubdevice = true;
             static_cast<DeviceImp *>(subDevice)->setDebugSurface(debugSurface);
+            static_cast<DeviceImp *>(subDevice)->setSysmanHandle(device->getSysmanHandle());
             device->subDevices.push_back(static_cast<Device *>(subDevice));
         }
         device->numSubDevices = static_cast<uint32_t>(device->subDevices.size());
@@ -624,9 +629,6 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, uint3
         auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
         device->getSourceLevelDebugger()
             ->notifyNewDevice(osInterface ? osInterface->getDeviceHandle() : 0);
-    }
-    if (static_cast<DriverHandleImp *>(driverHandle)->enableSysman && !device->isSubdevice) {
-        device->setSysmanHandle(L0::SysmanDeviceHandleContext::init(device->toHandle()));
     }
 
     return device;
