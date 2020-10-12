@@ -66,7 +66,13 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm,
 }
 
 DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSVMSize, uint64_t gpuAddress) {
-    if (this->getDrm(allocationData.rootDeviceIndex).getMemoryInfo()) {
+    bool useBooMmap = this->getDrm(allocationData.rootDeviceIndex).getMemoryInfo() != nullptr;
+
+    if (DebugManager.flags.EnableBOMmapCreate.get() != -1) {
+        useBooMmap = DebugManager.flags.EnableBOMmapCreate.get();
+    }
+
+    if (useBooMmap) {
         std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(&this->getDrm(allocationData.rootDeviceIndex), 0u, alignedSVMSize, 0u, maxOsContextCount));
 
         if (!bo) {
