@@ -264,10 +264,6 @@ cl_int Program::updateSpecializationConstant(cl_uint specId, size_t specSize, co
     return CL_INVALID_SPEC_ID;
 }
 
-void Program::setDevice(Device *device) {
-    this->pDevice = device;
-}
-
 cl_int Program::getSource(std::string &binary) const {
     cl_int retVal = CL_INVALID_PROGRAM;
     binary = {};

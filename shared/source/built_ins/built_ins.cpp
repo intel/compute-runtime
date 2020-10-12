@@ -54,8 +54,6 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         DEBUG_BREAK_IF(retVal != 0);
         UNRECOVERABLE_IF(program == nullptr);
 
-        program->setDevice(&device);
-
         retVal = program->processGenBinary(device.getRootDeviceIndex());
         DEBUG_BREAK_IF(retVal != 0);
 

@@ -191,8 +191,6 @@ class Program : public BaseObject<_cl_program> {
         return *pDevice;
     }
 
-    void setDevice(Device *device);
-
     cl_int processSpirBinary(const void *pBinary, size_t binarySize, bool isSpirV);
 
     cl_int getSource(std::string &binary) const;
