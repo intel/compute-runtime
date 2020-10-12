@@ -17,6 +17,9 @@ extern off_t lseekReturn;
 extern std::atomic<int> lseekCalledCount;
 
 inline void *mmapMock(void *addr, size_t length, int prot, int flags, int fd, off_t offset) noexcept {
+    if (addr) {
+        return addr;
+    }
     void *ptr = nullptr;
     if (length > 0) {
         ptr = alignedMalloc(length, MemoryConstants::pageSize64k);

@@ -260,6 +260,9 @@ TEST_F(DrmMemoryManagerLocalMemoryTest, givenMemoryInfoWhenAllocateWithAlignment
     auto allocation = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
 
     EXPECT_NE(allocation, nullptr);
+    EXPECT_NE(allocation->getMmapPtr(), nullptr);
+    EXPECT_NE(allocation->getMmapSize(), 0u);
+    EXPECT_EQ(allocation->getAllocationOffset(), 0u);
     EXPECT_EQ(1u, mock->createExt.handle);
 
     memoryManager->freeGraphicsMemory(allocation);

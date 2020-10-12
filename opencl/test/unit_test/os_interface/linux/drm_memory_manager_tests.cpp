@@ -2805,14 +2805,16 @@ TEST_F(DrmMemoryManagerUSMHostAllocationTests, givenMmapPtrWhenFreeGraphicsMemor
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemClose = 1;
 
+    const size_t size = 16384;
     AllocationData allocationData;
-    allocationData.size = 16384;
+    allocationData.size = size;
     allocationData.rootDeviceIndex = rootDeviceIndex;
     auto alloc = memoryManager->allocateGraphicsMemoryWithAlignment(allocationData);
     EXPECT_NE(nullptr, alloc);
 
-    auto ptr = memoryManager->mmapFunction(0, alloc->getUnderlyingBufferSize(), PROT_READ | PROT_WRITE, MAP_ANONYMOUS, -1, 0);
+    auto ptr = memoryManager->mmapFunction(0, size, PROT_READ | PROT_WRITE, MAP_ANONYMOUS, -1, 0);
     static_cast<DrmAllocation *>(alloc)->setMmapPtr(ptr);
+    static_cast<DrmAllocation *>(alloc)->setMmapSize(size);
 
     memoryManager->freeGraphicsMemoryImpl(alloc);
 }

@@ -73,9 +73,16 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
     }
 
     if (useBooMmap) {
-        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(&this->getDrm(allocationData.rootDeviceIndex), 0u, alignedSVMSize, 0u, maxOsContextCount));
+        auto totalSizeToAlloc = alignedSVMSize + alignment;
+        auto cpuPointer = this->mmapFunction(0, totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
+        auto cpuBasePointer = cpuPointer;
+        cpuPointer = alignUp(cpuPointer, alignment);
+
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(&this->getDrm(allocationData.rootDeviceIndex), reinterpret_cast<uintptr_t>(cpuPointer), alignedSVMSize, 0u, maxOsContextCount));
 
         if (!bo) {
+            this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
             return nullptr;
         }
 
@@ -85,23 +92,18 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
 
         auto ret = this->getDrm(allocationData.rootDeviceIndex).ioctl(DRM_IOCTL_I915_GEM_MMAP_OFFSET, &gemMmap);
         if (ret != 0) {
+            this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
             return nullptr;
         }
 
-        void *cpuPointer = reinterpret_cast<void *>(this->mmapFunction(0, alignedSVMSize, PROT_READ | PROT_WRITE, MAP_SHARED, getDrm(allocationData.rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(gemMmap.offset)));
-
-        auto cpuBasePointer = cpuPointer;
-        cpuPointer = alignUp(cpuPointer, alignment);
-        auto offset = ptrDiff(cpuPointer, cpuBasePointer);
-
-        bo->gpuAddress = reinterpret_cast<uintptr_t>(cpuPointer);
+        this->mmapFunction(cpuPointer, alignedSVMSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, getDrm(allocationData.rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(gemMmap.offset));
 
         obtainGpuAddress(allocationData, bo.get(), gpuAddress);
         emitPinningRequest(bo.get(), allocationData);
 
         auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), cpuPointer, bo->gpuAddress, alignedSVMSize, MemoryPool::System4KBPages);
         allocation->setMmapPtr(cpuBasePointer);
-        allocation->setAllocationOffset(offset);
+        allocation->setMmapSize(totalSizeToAlloc);
         allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSVMSize);
 
         bo.release();

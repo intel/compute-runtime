@@ -669,7 +669,7 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
     this->unregisterAllocation(gfxAllocation);
 
     if (drmAlloc->getMmapPtr()) {
-        this->munmapFunction(drmAlloc->getMmapPtr(), gfxAllocation->getUnderlyingBufferSize());
+        this->munmapFunction(drmAlloc->getMmapPtr(), drmAlloc->getMmapSize());
     }
 
     for (auto &engine : this->registeredEngines) {

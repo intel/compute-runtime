@@ -65,6 +65,8 @@ class DrmAllocation : public GraphicsAllocation {
 
     void *getMmapPtr() { return this->mmapPtr; }
     void setMmapPtr(void *ptr) { this->mmapPtr = ptr; }
+    size_t getMmapSize() { return this->mmapSize; }
+    void setMmapSize(size_t size) { this->mmapSize = size; }
 
     void makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
     void bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
@@ -77,5 +79,6 @@ class DrmAllocation : public GraphicsAllocation {
     StackVec<uint32_t, 1> registeredBoBindHandles;
 
     void *mmapPtr = nullptr;
+    size_t mmapSize = 0u;
 };
 } // namespace NEO
