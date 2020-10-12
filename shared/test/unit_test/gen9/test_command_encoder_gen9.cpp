@@ -8,15 +8,15 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/unit_test/fixtures/device_fixture.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 #include "reg_configs_common.h"
 
 using namespace NEO;
 
-using CommandEncoderTest = Test<ClDeviceFixture>;
+using CommandEncoderTest = Test<DeviceFixture>;
 
 GEN9TEST_F(CommandEncoderTest, appendsASetMMIO) {
     CommandContainer cmdContainer;

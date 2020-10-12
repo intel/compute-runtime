@@ -72,7 +72,7 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
     }
 
     EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R0, offset);
-    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, 0, false);
+    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, 0, true);
 
     i = 0;
     while (i < logLws) {
@@ -100,7 +100,7 @@ void EncodeMathMMIO<Family>::encodeMulRegVal(CommandContainer &container, uint32
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &container, uint64_t firstOperand, uint32_t secondOperand) {
     EncodeSetMMIO<Family>::encodeMEM(container, CS_GPR_R0, firstOperand);
-    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, secondOperand, false);
+    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, secondOperand, true);
 
     /* CS_GPR_R* registers map to AluRegisters::R_* registers */
     EncodeMath<Family>::greaterThan(container, AluRegisters::R_0,

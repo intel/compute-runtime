@@ -10,15 +10,15 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/unit_test/fixtures/device_fixture.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "test.h"
 
 #include "reg_configs_common.h"
 
 using namespace NEO;
 
-using CommandEncoderTest = Test<ClDeviceFixture>;
+using CommandEncoderTest = Test<DeviceFixture>;
 
 GEN12LPTEST_F(CommandEncoderTest, givenAdjustStateComputeModeStateComputeModeShowsNonCoherencySet) {
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
@@ -49,7 +49,7 @@ GEN12LPTEST_F(CommandEncoderTest, givenAdjustStateComputeModeStateComputeModeSho
     EXPECT_TRUE(memcmp(&expectedScmCmd, scmCmd, sizeof(STATE_COMPUTE_MODE)) == 0);
 }
 
-GEN12LPTEST_F(CommandEncoderTest, givenCommandContainerWhenEncodeL3StateThenSetCorrectMMIO) {
+GEN12LPTEST_F(CommandEncoderTest, givenCommandContainerWhenEncodeL3StateThenDoNotDispatchMMIOCommand) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice);
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
@@ -59,10 +59,7 @@ GEN12LPTEST_F(CommandEncoderTest, givenCommandContainerWhenEncodeL3StateThenSetC
 
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     auto itorLRI = find<MI_LOAD_REGISTER_IMM *>(commands.begin(), commands.end());
-    ASSERT_NE(itorLRI, commands.end());
-    auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
-    EXPECT_EQ(cmd->getRegisterOffset(), 0xB134u);
-    EXPECT_EQ(cmd->getDataDword(), 0xD0000020u);
+    EXPECT_EQ(itorLRI, commands.end());
 }
 
 struct MockOsContext : public OsContext {
@@ -116,4 +113,33 @@ GEN12LPTEST_F(CommandEncoderTest, givenVariousEngineTypesWhenEstimateCommandBuff
     auto diff = sizeWA - size;
 
     EXPECT_EQ(expectedDiff, diff);
+}
+
+GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOnThenExpectNoCommandsDispatched) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice);
+
+    EncodeL3State<FamilyType>::encode(cmdContainer, true);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());
+
+    auto itorLRI = find<MI_LOAD_REGISTER_IMM *>(commands.begin(), commands.end());
+    EXPECT_EQ(itorLRI, commands.end());
+}
+
+GEN12LPTEST_F(CommandEncoderTest, GivenGen12LpWhenProgrammingL3StateOffThenExpectNoCommandsDispatched) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    CommandContainer cmdContainer;
+    cmdContainer.initialize(pDevice);
+
+    EncodeL3State<FamilyType>::encode(cmdContainer, false);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());
+
+    auto itorLRI = find<MI_LOAD_REGISTER_IMM *>(commands.begin(), commands.end());
+    EXPECT_EQ(itorLRI, commands.end());
 }

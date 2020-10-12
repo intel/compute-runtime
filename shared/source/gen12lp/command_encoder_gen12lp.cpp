@@ -71,6 +71,10 @@ bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
     return false;
 }
 
+template <>
+void EncodeL3State<Family>::encode(CommandContainer &container, bool enableSLM) {
+}
+
 template struct EncodeDispatchKernel<Family>;
 template struct EncodeStates<Family>;
 template struct EncodeMath<Family>;
