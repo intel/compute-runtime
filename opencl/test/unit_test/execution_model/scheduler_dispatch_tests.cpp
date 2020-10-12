@@ -34,7 +34,7 @@ class ExecutionModelSchedulerFixture : public ExecutionModelSchedulerTest,
     }
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchScheduler) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSchedulerThenProgrammingIsCorrect) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
@@ -162,7 +162,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchScheduler) {
     EXPECT_EQ(slbAddress, bbStart->getBatchBufferStartAddressGraphicsaddress472());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchSchedulerDoesNotUseStandardCmdQIOH) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenDispatchingSchedulerThenStandardCmdqIohIsNotUsed) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
@@ -196,7 +196,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchSchedulerDoe
     EXPECT_EQ(0u, ioh.getUsed());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWithEarlyReturnSetToFirstInstanceDoesNotPutBBStartCmd) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, GivenEarlyReturnSetToFirstInstanceWhenDispatchingSchedulerThenBbStartCmdIsNotInserted) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device);
 
     cl_queue_properties properties[3] = {0};
@@ -234,7 +234,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWi
     EXPECT_EQ(hwParser.cmdList.end(), hwParser.itorBBStartAfterWalker);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, ForceDispatchSchedulerEnqueuesSchedulerKernel) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, WhenForceDispatchingSchedulerThenSchedulerKernelIsEnqueued) {
 
     DebugManagerStateRestore dbgRestorer;
 
