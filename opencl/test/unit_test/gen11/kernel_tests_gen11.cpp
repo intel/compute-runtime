@@ -18,3 +18,8 @@ GEN11TEST_F(Gen11KernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturn
     auto retVal = mockKernel.mockKernel->Kernel::canTransformImages();
     EXPECT_TRUE(retVal);
 }
+
+GEN11TEST_F(Gen11KernelTest, GivenKernelWhenNotRunningOnGen12lpThenWaDisableRccRhwoOptimizationIsNotRequired) {
+    MockKernelWithInternals kernel(*pClDevice);
+    EXPECT_FALSE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization());
+}

@@ -20,19 +20,6 @@ GEN12LPTEST_F(Gen12LpKernelTest, givenKernelWhenCanTransformImagesIsCalledThenRe
     EXPECT_FALSE(retVal);
 }
 
-GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenNotRunningOnGen12lpThenWaDisableRccRhwoOptimizationIsNotRequired) {
-    HardwareInfo hwInfoToModify = hardwareInfo;
-    hwInfoToModify.platform.eRenderCoreFamily = IGFX_GEN11_CORE;
-    delete pClDevice;
-    pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoToModify, rootDeviceIndex);
-    ASSERT_NE(nullptr, pDevice);
-    pClDevice = new MockClDevice{pDevice};
-    ASSERT_NE(nullptr, pClDevice);
-
-    MockKernelWithInternals kernel(*pClDevice);
-    EXPECT_FALSE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization());
-}
-
 GEN12LPTEST_F(Gen12LpKernelTest, GivenKernelWhenNotUsingSharedObjArgsThenWaDisableRccRhwoOptimizationIsNotRequired) {
     MockKernelWithInternals kernel(*pClDevice);
     EXPECT_FALSE(kernel.mockKernel->requiresWaDisableRccRhwoOptimization());

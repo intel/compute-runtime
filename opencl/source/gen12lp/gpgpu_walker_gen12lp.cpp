@@ -82,7 +82,7 @@ void HardwareInterface<TGLLPFamily>::dispatchWorkarounds(
 template <>
 size_t GpgpuWalkerHelper<TGLLPFamily>::getSizeForWaDisableRccRhwoOptimization(const Kernel *pKernel) {
     if (pKernel->requiresWaDisableRccRhwoOptimization()) {
-        return (2 * (sizeof(TGLLP::PIPE_CONTROL) + sizeof(TGLLPFamily::MI_LOAD_REGISTER_IMM)));
+        return (2 * (sizeof(TGLLPFamily::PIPE_CONTROL) + sizeof(TGLLPFamily::MI_LOAD_REGISTER_IMM)));
     }
     return 0u;
 }
