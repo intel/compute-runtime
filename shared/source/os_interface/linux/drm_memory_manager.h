@@ -84,7 +84,7 @@ class DrmMemoryManager : public MemoryManager {
     DrmAllocation *allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) override;
     DrmAllocation *createAllocWithAlignmentFromUserptr(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSVMSize, uint64_t gpuAddress);
-    DrmAllocation *createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSVMSize, uint64_t gpuAddress);
+    DrmAllocation *createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSize, uint64_t gpuAddress);
     void obtainGpuAddress(const AllocationData &allocationData, BufferObject *bo, uint64_t gpuAddress);
     DrmAllocation *allocateUSMHostGraphicsMemory(const AllocationData &allocationData) override;
     DrmAllocation *allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) override;

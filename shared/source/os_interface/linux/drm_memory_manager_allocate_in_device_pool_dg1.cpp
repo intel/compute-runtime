@@ -65,7 +65,7 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm,
     return bo;
 }
 
-DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSVMSize, uint64_t gpuAddress) {
+DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSize, uint64_t gpuAddress) {
     bool useBooMmap = this->getDrm(allocationData.rootDeviceIndex).getMemoryInfo() != nullptr;
 
     if (DebugManager.flags.EnableBOMmapCreate.get() != -1) {
@@ -73,13 +73,13 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
     }
 
     if (useBooMmap) {
-        auto totalSizeToAlloc = alignedSVMSize + alignment;
+        auto totalSizeToAlloc = alignedSize + alignment;
         auto cpuPointer = this->mmapFunction(0, totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
         auto cpuBasePointer = cpuPointer;
         cpuPointer = alignUp(cpuPointer, alignment);
 
-        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(&this->getDrm(allocationData.rootDeviceIndex), reinterpret_cast<uintptr_t>(cpuPointer), alignedSVMSize, 0u, maxOsContextCount));
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(&this->getDrm(allocationData.rootDeviceIndex), reinterpret_cast<uintptr_t>(cpuPointer), alignedSize, 0u, maxOsContextCount));
 
         if (!bo) {
             this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
@@ -96,21 +96,21 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
             return nullptr;
         }
 
-        this->mmapFunction(cpuPointer, alignedSVMSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, getDrm(allocationData.rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(gemMmap.offset));
+        this->mmapFunction(cpuPointer, alignedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, getDrm(allocationData.rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(gemMmap.offset));
 
         obtainGpuAddress(allocationData, bo.get(), gpuAddress);
         emitPinningRequest(bo.get(), allocationData);
 
-        auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), cpuPointer, bo->gpuAddress, alignedSVMSize, MemoryPool::System4KBPages);
+        auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), cpuPointer, bo->gpuAddress, alignedSize, MemoryPool::System4KBPages);
         allocation->setMmapPtr(cpuBasePointer);
         allocation->setMmapSize(totalSizeToAlloc);
-        allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSVMSize);
+        allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSize);
 
         bo.release();
 
         return allocation;
     } else {
-        return createAllocWithAlignmentFromUserptr(allocationData, size, alignment, alignedSVMSize, gpuAddress);
+        return createAllocWithAlignmentFromUserptr(allocationData, size, alignment, alignedSize, gpuAddress);
     }
 }
 
