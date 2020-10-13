@@ -31,7 +31,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
     }
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, getMaxBarriersPerSliceReturnsCorrectSize) {
+GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
@@ -58,7 +58,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenGen12LpSkuWhenGettingCapabilityCoherency
     }
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, getPitchAlignmentForImage) {
+GEN12LPTEST_F(HwHelperTestGen12Lp, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     auto stepping = hardwareInfo.platform.usRevId;
 
@@ -69,7 +69,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, getPitchAlignmentForImage) {
     }
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, adjustDefaultEngineTypeNoCcs) {
+GEN12LPTEST_F(HwHelperTestGen12Lp, WhenAdjustingDefaultEngineTypeThenRcsIsSet) {
     hardwareInfo.featureTable.ftrCCSNode = false;
 
     auto &helper = HwHelper::get(renderCoreFamily);

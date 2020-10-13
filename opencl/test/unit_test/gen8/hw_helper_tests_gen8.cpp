@@ -14,13 +14,13 @@
 
 using HwHelperTestGen8 = HwHelperTest;
 
-GEN8TEST_F(HwHelperTestGen8, getMaxBarriersPerSliceReturnsCorrectSize) {
+GEN8TEST_F(HwHelperTestGen8, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     EXPECT_EQ(16u, helper.getMaxBarrierRegisterPerSlice());
 }
 
-GEN8TEST_F(HwHelperTestGen8, setCapabilityCoherencyFlag) {
+GEN8TEST_F(HwHelperTestGen8, WhenSettingCapabilityCoherencyFlagThenFlagIsSet) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool coherency = false;
@@ -28,12 +28,12 @@ GEN8TEST_F(HwHelperTestGen8, setCapabilityCoherencyFlag) {
     EXPECT_TRUE(coherency);
 }
 
-GEN8TEST_F(HwHelperTestGen8, getPitchAlignmentForImage) {
+GEN8TEST_F(HwHelperTestGen8, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(4u, helper.getPitchAlignmentForImage(&hardwareInfo));
 }
 
-GEN8TEST_F(HwHelperTestGen8, adjustDefaultEngineType) {
+GEN8TEST_F(HwHelperTestGen8, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
@@ -51,7 +51,7 @@ GEN8TEST_F(HwHelperTestGen8, givenGen8PlatformWhenSetupHardwareCapabilitiesIsCal
     EXPECT_FALSE(hwCaps.isStatelesToStatefullWithOffsetSupported);
 }
 
-GEN8TEST_F(HwHelperTestGen8, whenGetGpgpuEnginesThenReturnTwoThreeEngines) {
+GEN8TEST_F(HwHelperTestGen8, whenGetGpgpuEnginesThenReturnThreeEngines) {
     whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
     EXPECT_EQ(3u, pDevice->engines.size());
 }

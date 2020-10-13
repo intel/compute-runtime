@@ -12,12 +12,12 @@
 
 using HwHelperTestGen11 = HwHelperTest;
 
-GEN11TEST_F(HwHelperTestGen11, getMaxBarriersPerSliceReturnsCorrectSize) {
+GEN11TEST_F(HwHelperTestGen11, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(32u, helper.getMaxBarrierRegisterPerSlice());
 }
 
-GEN11TEST_F(HwHelperTestGen11, setCapabilityCoherencyFlag) {
+GEN11TEST_F(HwHelperTestGen11, WhenSettingCapabilityCoherencyFlagThenFlagIsSet) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool coherency = false;
@@ -25,12 +25,12 @@ GEN11TEST_F(HwHelperTestGen11, setCapabilityCoherencyFlag) {
     EXPECT_TRUE(coherency);
 }
 
-GEN11TEST_F(HwHelperTestGen11, getPitchAlignmentForImage) {
+GEN11TEST_F(HwHelperTestGen11, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_EQ(4u, helper.getPitchAlignmentForImage(&hardwareInfo));
 }
 
-GEN11TEST_F(HwHelperTestGen11, adjustDefaultEngineType) {
+GEN11TEST_F(HwHelperTestGen11, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hardwareInfo);
