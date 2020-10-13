@@ -7,16 +7,11 @@
 
 #pragma once
 #include "shared/source/built_ins/built_ins.h"
-#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/program/program_info.h"
 
 namespace NEO {
 class Device;
 
 const SipKernel &initSipKernel(SipKernelType type, Device &device);
-Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
-                             Context *context,
-                             std::vector<char> &binary,
-                             size_t size,
-                             int *errcodeRet,
-                             Device *device);
+ProgramInfo createProgramInfoForSip(std::vector<char> &binary, size_t size, const Device &device);
 } // namespace NEO

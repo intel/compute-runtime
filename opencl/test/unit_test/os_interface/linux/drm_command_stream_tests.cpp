@@ -663,8 +663,8 @@ class DrmCommandStreamBatchingTests : public DrmCommandStreamEnhancedTest {
     void SetUpT() {
         DrmCommandStreamEnhancedTest::SetUpT<GfxFamily>();
         if (PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo) == PreemptionMode::MidThread) {
-            tmpAllocation = GlobalMockSipProgram::sipProgram->getAllocation();
-            GlobalMockSipProgram::sipProgram->resetAllocation(device->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
+            tmpAllocation = GlobalMockSipProgram::getAllocation();
+            GlobalMockSipProgram::resetAllocation(device->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
         }
         tagAllocation = static_cast<DrmAllocation *>(device->getDefaultEngine().commandStreamReceiver->getTagAllocation());
         preemptionAllocation = static_cast<DrmAllocation *>(device->getDefaultEngine().commandStreamReceiver->getPreemptionAllocation());
@@ -673,8 +673,8 @@ class DrmCommandStreamBatchingTests : public DrmCommandStreamEnhancedTest {
     template <typename GfxFamily>
     void TearDownT() {
         if (PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo) == PreemptionMode::MidThread) {
-            device->getMemoryManager()->freeGraphicsMemory((GlobalMockSipProgram::sipProgram)->getAllocation());
-            GlobalMockSipProgram::sipProgram->resetAllocation(tmpAllocation);
+            device->getMemoryManager()->freeGraphicsMemory(GlobalMockSipProgram::getAllocation());
+            GlobalMockSipProgram::resetAllocation(tmpAllocation);
         }
         DrmCommandStreamEnhancedTest::TearDownT<GfxFamily>();
     }

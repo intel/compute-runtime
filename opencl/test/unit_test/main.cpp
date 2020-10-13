@@ -147,12 +147,12 @@ LONG WINAPI UltExceptionFilter(
 #endif
 
 void initializeTestHelpers() {
-    GlobalMockSipProgram::initSipProgram();
+    GlobalMockSipProgram::initSipProgramInfo();
     MockSipData::mockSipKernel.reset(new MockSipKernel());
 }
 
 void cleanTestHelpers() {
-    GlobalMockSipProgram::shutDownSipProgram();
+    GlobalMockSipProgram::shutDownSipProgramInfo();
     delete platformsImpl;
 }
 

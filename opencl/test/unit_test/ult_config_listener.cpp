@@ -15,7 +15,14 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
+namespace NEO {
+namespace GlobalMockSipProgram {
+void resetAllocationState();
+}
+} // namespace NEO
+
 void NEO::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
+    GlobalMockSipProgram::resetAllocationState();
     referencedHwInfo = *defaultHwInfo;
     auto executionEnvironment = constructPlatform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);

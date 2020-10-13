@@ -19,10 +19,10 @@ class MemoryAllocation;
 
 class MockSipKernel : public SipKernel {
   public:
-    using SipKernel::program;
+    using SipKernel::programInfo;
     using SipKernel::type;
 
-    MockSipKernel(SipKernelType type, Program *sipProgram);
+    MockSipKernel(SipKernelType type, ProgramInfo &&sipProgramInfo);
     MockSipKernel();
     ~MockSipKernel() override;
 

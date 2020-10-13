@@ -23,7 +23,7 @@
 #include <map>
 
 namespace NEO {
-MockSipKernel::MockSipKernel(SipKernelType type, Program *sipProgram) : SipKernel(type, sipProgram) {
+MockSipKernel::MockSipKernel(SipKernelType type, ProgramInfo &&sipProgramInfo) : SipKernel(type, std::move(sipProgramInfo)) {
     this->mockSipMemoryAllocation =
         std::make_unique<MemoryAllocation>(0u,
                                            GraphicsAllocation::AllocationType::KERNEL_ISA,
@@ -34,7 +34,7 @@ MockSipKernel::MockSipKernel(SipKernelType type, Program *sipProgram) : SipKerne
                                            MemoryPool::System4KBPages, 3u);
 }
 
-MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, nullptr) {
+MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, {}) {
     this->mockSipMemoryAllocation =
         std::make_unique<MemoryAllocation>(0u,
                                            GraphicsAllocation::AllocationType::KERNEL_ISA,
@@ -43,7 +43,6 @@ MockSipKernel::MockSipKernel() : SipKernel(SipKernelType::Csr, nullptr) {
                                            0u,
                                            MemoryConstants::pageSize,
                                            MemoryPool::System4KBPages, 3u);
-    this->program = new MockProgram(this->executionEnvironment, nullptr, false, nullptr);
 }
 
 MockSipKernel::~MockSipKernel() = default;

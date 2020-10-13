@@ -23,9 +23,7 @@
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 namespace NEO {
-GlobalMockSipProgram *GlobalMockSipProgram::sipProgram;
-ExecutionEnvironment GlobalMockSipProgram::executionEnvironment;
-
+ProgramInfo *GlobalMockSipProgram::globalSipProgramInfo;
 Device *MockProgram::getDevicePtr() { return this->pDevice; }
 
 std::string MockProgram::getCachedFileName() const {
@@ -35,63 +33,55 @@ std::string MockProgram::getCachedFileName() const {
     auto internalOpts = ArrayRef<const char>(this->internalOptions.c_str(), this->internalOptions.size());
     return CompilerCache::getCachedFileName(hwInfo, input, opts, internalOpts);
 }
-cl_int GlobalMockSipProgram::processGenBinary(uint32_t rootDeviceIndex) {
-    return CL_SUCCESS;
-}
 
-cl_int GlobalMockSipProgram::processGenBinaryOnce(uint32_t rootDeviceIndex) {
-    cl_int ret = Program::processGenBinary(rootDeviceIndex);
-    sipAllocationStorage = alignedMalloc(this->kernelInfoArray[0]->heapInfo.KernelHeapSize, MemoryConstants::pageSize);
-    this->kernelInfoArray[0]->kernelAllocation = new MockGraphicsAllocation(sipAllocationStorage, this->kernelInfoArray[0]->heapInfo.KernelHeapSize);
-    return ret;
-}
-void GlobalMockSipProgram::resetAllocationState() {
-    auto allocation = static_cast<MockGraphicsAllocation *>(this->kernelInfoArray[0]->kernelAllocation);
-    for (uint32_t index = 0u; index < allocation->usageInfos.size(); index++) {
-        this->kernelInfoArray[0]->kernelAllocation->releaseResidencyInOsContext(index);
-    }
-    allocation->resetInspectionIds();
-}
-void GlobalMockSipProgram::initSipProgram() {
-    cl_int retVal = 0;
+void GlobalMockSipProgram::initSipProgramInfo() {
+    globalSipProgramInfo = new ProgramInfo();
     std::vector<char> binary = MockCompilerInterface::getDummyGenBinary();
-    executionEnvironment.prepareRootDeviceEnvironments(maxRootDeviceCount);
-    for (auto i = 0u; i < executionEnvironment.rootDeviceEnvironments.size(); i++) {
-        executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
-    }
-    executionEnvironment.calculateMaxOsContextCount();
-    executionEnvironment.incRefInternal();
-    MockDevice device(&executionEnvironment, mockRootDeviceIndex);
-    sipProgram = Program::createFromGenBinary<GlobalMockSipProgram>(executionEnvironment,
-                                                                    nullptr,
-                                                                    binary.data(),
-                                                                    binary.size(),
-                                                                    true,
-                                                                    &retVal,
-                                                                    &device);
-    DEBUG_BREAK_IF(retVal != 0);
-    sipProgram->processGenBinaryOnce(mockRootDeviceIndex);
+    auto blob = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size());
+    SingleDeviceBinary deviceBinary = {};
+    deviceBinary.deviceBinary = blob;
+    std::string decodeErrors;
+    std::string decodeWarnings;
+
+    NEO::decodeSingleDeviceBinary(*globalSipProgramInfo, deviceBinary, decodeErrors, decodeWarnings);
+    auto sipAllocationStorage = alignedMalloc(globalSipProgramInfo->kernelInfos[0]->heapInfo.KernelHeapSize, MemoryConstants::pageSize);
+    memcpy(sipAllocationStorage, globalSipProgramInfo->kernelInfos[0]->heapInfo.pKernelHeap, globalSipProgramInfo->kernelInfos[0]->heapInfo.KernelHeapSize);
+    globalSipProgramInfo->kernelInfos[0]->heapInfo.pKernelHeap = sipAllocationStorage;
+    globalSipProgramInfo->kernelInfos[0]->kernelAllocation = new MockGraphicsAllocation(sipAllocationStorage, globalSipProgramInfo->kernelInfos[0]->heapInfo.KernelHeapSize);
+}
+void GlobalMockSipProgram::shutDownSipProgramInfo() {
+    deleteAllocation();
+    delete globalSipProgramInfo;
 }
 
 void GlobalMockSipProgram::resetAllocation(GraphicsAllocation *allocation) {
-    this->kernelInfoArray[0]->kernelAllocation = allocation;
+    globalSipProgramInfo->kernelInfos[0]->kernelAllocation = allocation;
 }
 GraphicsAllocation *GlobalMockSipProgram::getAllocation() {
-    return this->kernelInfoArray[0]->kernelAllocation;
+    return globalSipProgramInfo->kernelInfos[0]->kernelAllocation;
 }
 void GlobalMockSipProgram::deleteAllocation() {
-    delete this->kernelInfoArray[0]->kernelAllocation;
-    alignedFree(sipAllocationStorage);
-    this->kernelInfoArray[0]->kernelAllocation = nullptr;
+    auto allocation = globalSipProgramInfo->kernelInfos[0]->kernelAllocation;
+    alignedFree(allocation->getUnderlyingBuffer());
+    delete allocation;
+    globalSipProgramInfo->kernelInfos[0]->kernelAllocation = nullptr;
 }
 
-void GlobalMockSipProgram::shutDownSipProgram() {
-    sipProgram->deleteAllocation();
-
-    delete sipProgram;
+void GlobalMockSipProgram::resetAllocationState() {
+    auto allocation = static_cast<MockGraphicsAllocation *>(globalSipProgramInfo->kernelInfos[0]->kernelAllocation);
+    for (uint32_t index = 0u; index < allocation->usageInfos.size(); index++) {
+        globalSipProgramInfo->kernelInfos[0]->kernelAllocation->releaseResidencyInOsContext(index);
+    }
+    allocation->resetInspectionIds();
 }
-
-Program *GlobalMockSipProgram::getSipProgramWithCustomBinary() {
+ProgramInfo GlobalMockSipProgram::getSipProgramInfo() {
+    ProgramInfo programInfo;
+    programInfo.kernelInfos.push_back(new KernelInfo{});
+    programInfo.kernelInfos[0]->heapInfo = GlobalMockSipProgram::globalSipProgramInfo->kernelInfos[0]->heapInfo;
+    programInfo.kernelInfos[0]->kernelAllocation = GlobalMockSipProgram::getAllocation();
+    return programInfo;
+}
+ProgramInfo GlobalMockSipProgram::getSipProgramInfoWithCustomBinary() {
     NEO::PatchTokenBinary::ProgramFromPatchtokens programTokens;
     programTokens.kernels.resize(1);
 
@@ -113,9 +103,6 @@ Program *GlobalMockSipProgram::getSipProgramWithCustomBinary() {
 
     NEO::ProgramInfo programInfo;
     NEO::populateProgramInfo(programInfo, programTokens);
-
-    Program *ret = new Program(executionEnvironment, nullptr, false, nullptr);
-    ret->processProgramInfo(programInfo);
-    return ret;
+    return programInfo;
 }
 } // namespace NEO

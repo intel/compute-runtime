@@ -156,26 +156,17 @@ class MockProgram : public Program {
     int isOptionValueValidOverride = -1;
 };
 
-class GlobalMockSipProgram : public Program {
-  public:
-    using Program::Program;
-    GlobalMockSipProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false, nullptr) {
-    }
-    cl_int processGenBinary(uint32_t rootDeviceIndex) override;
-    cl_int processGenBinaryOnce(uint32_t rootDeviceIndex);
-    void resetAllocationState();
-    void resetAllocation(GraphicsAllocation *allocation);
-    void deleteAllocation();
-    GraphicsAllocation *getAllocation();
-    static void initSipProgram();
-    static void shutDownSipProgram();
-    static GlobalMockSipProgram *sipProgram;
-    static Program *getSipProgramWithCustomBinary();
-
-  protected:
-    void *sipAllocationStorage;
-    static ExecutionEnvironment executionEnvironment;
-};
+namespace GlobalMockSipProgram {
+void resetAllocationState();
+void resetAllocation(GraphicsAllocation *allocation);
+void deleteAllocation();
+GraphicsAllocation *getAllocation();
+void initSipProgramInfo();
+void shutDownSipProgramInfo();
+ProgramInfo getSipProgramInfoWithCustomBinary();
+extern ProgramInfo *globalSipProgramInfo;
+ProgramInfo getSipProgramInfo();
+}; // namespace GlobalMockSipProgram
 
 class GMockProgram : public Program {
   public:

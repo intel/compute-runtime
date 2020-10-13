@@ -17,7 +17,6 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 
 #include "opencl/source/program/kernel_info.h"
-#include "opencl/source/program/program.h"
 
 namespace NEO {
 
@@ -68,24 +67,20 @@ const char *getSipLlSrc(const Device &device) {
     return (ptrSize == 8) ? llDummySrc64 : llDummySrc32;
 }
 
-SipKernel::SipKernel(SipKernelType type, Program *sipProgram)
-    : type(type) {
-    program = sipProgram;
-}
-SipKernel::~SipKernel() {
-    program->release();
-}
+SipKernel::SipKernel(SipKernelType type, ProgramInfo &&sipProgram)
+    : type(type), programInfo(std::move(sipProgram)) {}
+SipKernel::~SipKernel() = default;
 
 GraphicsAllocation *SipKernel::getSipAllocation() const {
-    return program->getKernelInfo(size_t{0})->getGraphicsAllocation();
+    return programInfo.kernelInfos[0]->getGraphicsAllocation();
 }
 
 const char *SipKernel::getBinary() const {
-    auto kernelInfo = program->getKernelInfo(size_t{0});
+    auto kernelInfo = programInfo.kernelInfos[0];
     return reinterpret_cast<const char *>(ptrOffset(kernelInfo->heapInfo.pKernelHeap, kernelInfo->systemKernelOffset));
 }
 size_t SipKernel::getBinarySize() const {
-    auto kernelInfo = program->getKernelInfo(size_t{0});
+    auto kernelInfo = programInfo.kernelInfos[0];
     return kernelInfo->heapInfo.KernelHeapSize - kernelInfo->systemKernelOffset;
 }
 

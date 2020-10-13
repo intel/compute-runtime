@@ -29,14 +29,7 @@ const SipKernel &initSipKernel(SipKernelType type, Device &device) {
     MockSipData::called = true;
     return *MockSipData::mockSipKernel;
 }
-Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
-                             Context *context,
-                             std::vector<char> &binary,
-                             size_t size,
-                             cl_int *errcodeRet,
-                             Device *device) {
-    GlobalMockSipProgram::sipProgram->incRefApi();
-    GlobalMockSipProgram::sipProgram->resetAllocationState();
-    return GlobalMockSipProgram::sipProgram;
+ProgramInfo createProgramInfoForSip(std::vector<char> &binary, size_t size, const Device &device) {
+    return GlobalMockSipProgram::getSipProgramInfo();
 }
 } // namespace NEO

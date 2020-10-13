@@ -9,6 +9,7 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 
@@ -35,8 +36,6 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
     auto &sipBuiltIn = this->sipKernels[kernelId];
 
     auto initializer = [&] {
-        int retVal = 0;
-
         std::vector<char> sipBinary;
         auto compilerInteface = device.getCompilerInterface();
         UNRECOVERABLE_IF(compilerInteface == nullptr);
@@ -45,19 +44,10 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
         UNRECOVERABLE_IF(ret != TranslationOutput::ErrorCode::Success);
         UNRECOVERABLE_IF(sipBinary.size() == 0);
-        auto program = createProgramForSip(*device.getExecutionEnvironment(),
-                                           nullptr,
-                                           sipBinary,
-                                           sipBinary.size(),
-                                           &retVal,
-                                           &device);
-        DEBUG_BREAK_IF(retVal != 0);
-        UNRECOVERABLE_IF(program == nullptr);
 
-        retVal = program->processGenBinary(device.getRootDeviceIndex());
-        DEBUG_BREAK_IF(retVal != 0);
+        ProgramInfo programInfo = createProgramInfoForSip(sipBinary, sipBinary.size(), device);
 
-        sipBuiltIn.first.reset(new SipKernel(type, program));
+        sipBuiltIn.first.reset(new SipKernel(type, std::move(programInfo)));
     };
     std::call_once(sipBuiltIn.second, initializer);
     UNRECOVERABLE_IF(sipBuiltIn.first == nullptr);

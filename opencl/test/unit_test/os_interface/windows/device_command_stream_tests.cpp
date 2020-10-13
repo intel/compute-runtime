@@ -806,8 +806,8 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     GraphicsAllocation *tmpAllocation = nullptr;
     if (device->getPreemptionMode() == PreemptionMode::MidThread) {
         csrSurfaceCount = 2;
-        tmpAllocation = GlobalMockSipProgram::sipProgram->getAllocation();
-        GlobalMockSipProgram::sipProgram->resetAllocation(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
+        tmpAllocation = GlobalMockSipProgram::getAllocation();
+        GlobalMockSipProgram::resetAllocation(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize}));
     }
     csrSurfaceCount += csr->globalFenceAllocation ? 1 : 0;
 
@@ -884,8 +884,8 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     memoryManager->freeGraphicsMemory(sshAlloc);
     memoryManager->freeGraphicsMemory(commandBuffer);
     if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-        memoryManager->freeGraphicsMemory(GlobalMockSipProgram::sipProgram->getAllocation());
-        GlobalMockSipProgram::sipProgram->resetAllocation(tmpAllocation);
+        memoryManager->freeGraphicsMemory(GlobalMockSipProgram::getAllocation());
+        GlobalMockSipProgram::resetAllocation(tmpAllocation);
     }
 }
 

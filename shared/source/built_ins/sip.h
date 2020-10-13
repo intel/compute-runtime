@@ -8,13 +8,13 @@
 #pragma once
 #include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/program/program_info.h"
 
 #include <memory>
 
 namespace NEO {
 
 class Device;
-class Program;
 class GraphicsAllocation;
 
 const char *getSipKernelCompilerInternalOptions(SipKernelType kernel);
@@ -23,11 +23,11 @@ const char *getSipLlSrc(const Device &device);
 
 class SipKernel {
   public:
-    SipKernel(SipKernelType type, Program *sipProgram);
+    SipKernel(SipKernelType type, ProgramInfo &&sipProgramInfo);
     SipKernel(const SipKernel &) = delete;
     SipKernel &operator=(const SipKernel &) = delete;
-    SipKernel(SipKernel &&) = default;
-    SipKernel &operator=(SipKernel &&) = default;
+    SipKernel(SipKernel &&) = delete;
+    SipKernel &operator=(SipKernel &&) = delete;
     virtual ~SipKernel();
 
     const char *getBinary() const;
@@ -46,6 +46,6 @@ class SipKernel {
 
   protected:
     SipKernelType type = SipKernelType::COUNT;
-    Program *program = nullptr;
+    const ProgramInfo programInfo;
 };
 } // namespace NEO

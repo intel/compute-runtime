@@ -52,7 +52,7 @@ const KernelInfo *Program::getKernelInfo(size_t ordinal) const {
 }
 
 cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData) {
-    auto linkerInput = pDevice ? getLinkerInput(pDevice->getRootDeviceIndex()) : nullptr;
+    auto linkerInput = getLinkerInput(pDevice->getRootDeviceIndex());
     if (linkerInput == nullptr) {
         return CL_SUCCESS;
     }
@@ -162,24 +162,23 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
     size_t slmAvailable = 0U;
     NEO::DeviceInfoKernelPayloadConstants deviceInfoConstants;
     LinkerInput *linkerInput = nullptr;
-    if (this->pDevice) {
-        slmAvailable = static_cast<size_t>(this->pDevice->getDeviceInfo().localMemSize);
-        deviceInfoConstants.maxWorkGroupSize = (uint32_t)this->pDevice->getDeviceInfo().maxWorkGroupSize;
-        deviceInfoConstants.computeUnitsUsedForScratch = this->pDevice->getDeviceInfo().computeUnitsUsedForScratch;
-        deviceInfoConstants.slmWindowSize = (uint32_t)this->pDevice->getDeviceInfo().localMemSize;
-        if (requiresLocalMemoryWindowVA(src)) {
-            deviceInfoConstants.slmWindow = this->executionEnvironment.memoryManager->getReservedMemory(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment);
-        }
-        linkerInput = src.linkerInput.get();
-        setLinkerInput(pDevice->getRootDeviceIndex(), std::move(src.linkerInput));
+    slmAvailable = static_cast<size_t>(this->pDevice->getDeviceInfo().localMemSize);
+    deviceInfoConstants.maxWorkGroupSize = (uint32_t)this->pDevice->getDeviceInfo().maxWorkGroupSize;
+    deviceInfoConstants.computeUnitsUsedForScratch = this->pDevice->getDeviceInfo().computeUnitsUsedForScratch;
+    deviceInfoConstants.slmWindowSize = (uint32_t)this->pDevice->getDeviceInfo().localMemSize;
+    if (requiresLocalMemoryWindowVA(src)) {
+        deviceInfoConstants.slmWindow = this->executionEnvironment.memoryManager->getReservedMemory(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment);
     }
+    linkerInput = src.linkerInput.get();
+    setLinkerInput(pDevice->getRootDeviceIndex(), std::move(src.linkerInput));
+
     if (slmNeeded > slmAvailable) {
         return CL_OUT_OF_RESOURCES;
     }
 
     this->kernelInfoArray = std::move(src.kernelInfos);
     auto svmAllocsManager = context ? context->getSVMAllocsManager() : nullptr;
-    auto rootDeviceIndex = pDevice ? pDevice->getRootDeviceIndex() : 0u;
+    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     if (src.globalConstants.size != 0) {
         UNRECOVERABLE_IF(nullptr == pDevice);
         buildInfos[rootDeviceIndex].constantSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalConstants.size, true, linkerInput, src.globalConstants.initData);
@@ -188,7 +187,6 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
     buildInfos[rootDeviceIndex].globalVarTotalSize = src.globalVariables.size;
 
     if (src.globalVariables.size != 0) {
-        UNRECOVERABLE_IF(nullptr == pDevice);
         buildInfos[rootDeviceIndex].globalSurface = allocateGlobalsSurface(svmAllocsManager, *pDevice, src.globalVariables.size, false, linkerInput, src.globalVariables.initData);
         if (pDevice->getSpecializedDevice<ClDevice>()->areOcl21FeaturesEnabled() == false) {
             buildInfos[rootDeviceIndex].globalVarTotalSize = 0u;
@@ -197,11 +195,10 @@ cl_int Program::processProgramInfo(ProgramInfo &src) {
 
     for (auto &kernelInfo : this->kernelInfoArray) {
         cl_int retVal = CL_SUCCESS;
-        if (kernelInfo->heapInfo.KernelHeapSize && this->pDevice) {
+        if (kernelInfo->heapInfo.KernelHeapSize) {
             retVal = kernelInfo->createKernelAllocation(*this->pDevice) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
         }
 
-        DEBUG_BREAK_IF(kernelInfo->heapInfo.KernelHeapSize && !this->pDevice);
         if (retVal != CL_SUCCESS) {
             return retVal;
         }
