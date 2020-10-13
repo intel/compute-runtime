@@ -734,6 +734,20 @@ TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingN
     EXPECT_TRUE(csr.newResources);
 }
 
+TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingNeverUsedAllocationThatIsKernelIsaThenMarkNewResourceFalse) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+    MockCommandStreamReceiver csr(executionEnvironment, 0);
+    MockGraphicsAllocation mockAllocation;
+    mockAllocation.setAllocationType(GraphicsAllocation::AllocationType::KERNEL_ISA);
+
+    csr.useNewResourceImplicitFlush = true;
+    csr.newResources = false;
+    csr.checkForNewResources(10u, GraphicsAllocation::objectNotUsed, mockAllocation);
+    EXPECT_FALSE(csr.newResources);
+}
+
 TEST(CommandStreamReceiverSimpleTest, givenNewResourceFlushEnabledWhenProvidingAlreadyUsedAllocationTaskCountThenDoNotMarkNewResource) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
