@@ -726,23 +726,30 @@ TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenConte
 TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThenContextProvidesProperHint) {
     auto pDevice = castToObject<ClDevice>(devices[0]);
     static_cast<OsAgnosticMemoryManager *>(pDevice->getMemoryManager())->turnOnFakingBigAllocations();
-    auto size = zeroSized ? 0 : 1024;
-    MockKernelWithInternals mockKernel(*pDevice, context);
-    SPatchAllocateStatelessPrivateSurface allocateStatelessPrivateMemorySurface;
 
-    allocateStatelessPrivateMemorySurface.PerThreadPrivateMemorySize = size;
-    allocateStatelessPrivateMemorySurface.SurfaceStateHeapOffset = 128;
-    allocateStatelessPrivateMemorySurface.DataParamOffset = 16;
-    allocateStatelessPrivateMemorySurface.DataParamSize = 8;
+    for (auto isSmitThread : {false, true}) {
+        auto size = zeroSized ? 0 : 1024;
 
-    mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrivateSurface = &allocateStatelessPrivateMemorySurface;
-    size *= pDevice->getSharedDeviceInfo().computeUnitsUsedForScratch * mockKernel.mockKernel->getKernelInfo().getMaxSimdSize();
+        MockKernelWithInternals mockKernel(*pDevice, context);
+        SPatchAllocateStatelessPrivateSurface allocateStatelessPrivateMemorySurface = {};
 
-    mockKernel.mockKernel->initialize();
+        allocateStatelessPrivateMemorySurface.PerThreadPrivateMemorySize = size;
+        allocateStatelessPrivateMemorySurface.SurfaceStateHeapOffset = 128;
+        allocateStatelessPrivateMemorySurface.DataParamOffset = 16;
+        allocateStatelessPrivateMemorySurface.DataParamSize = 8;
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PRIVATE_MEMORY_USAGE_TOO_HIGH],
-             mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), size);
-    EXPECT_EQ(!zeroSized, containsHint(expectedHint, userData));
+        allocateStatelessPrivateMemorySurface.IsSimtThread = isSmitThread;
+
+        mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrivateSurface = &allocateStatelessPrivateMemorySurface;
+        size *= pDevice->getSharedDeviceInfo().computeUnitsUsedForScratch;
+        size *= isSmitThread ? 1 : mockKernel.mockKernel->getKernelInfo().getMaxSimdSize();
+
+        mockKernel.mockKernel->initialize();
+
+        snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[PRIVATE_MEMORY_USAGE_TOO_HIGH],
+                 mockKernel.mockKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str(), size);
+        EXPECT_EQ(!zeroSized, containsHint(expectedHint, userData));
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(

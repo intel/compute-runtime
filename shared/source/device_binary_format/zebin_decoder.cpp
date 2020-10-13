@@ -473,6 +473,8 @@ DecodeError readZeInfoPerThreadMemoryBuffers(const NEO::Yaml::YamlParser &parser
                 validBuffer &= readEnumChecked(memoryUsageToken, perThreadMemoryBufferMetadata.memoryUsage, context, outErrReason);
             } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::size == key) {
                 validBuffer &= readZeInfoValueChecked(parser, perThreadMemoryBufferMemberNd, perThreadMemoryBufferMetadata.size, context, outErrReason);
+            } else if (NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::isSimtThread == key) {
+                validBuffer &= readZeInfoValueChecked(parser, perThreadMemoryBufferMemberNd, perThreadMemoryBufferMetadata.isSimtThread, context, outErrReason);
             } else {
                 outWarning.append("DeviceBinaryFormat::Zebin::" + NEO::Elf::SectionsNamesZebin::zeInfo.str() + " : Unknown entry \"" + key.str() + "\" for per-thread memory buffer in context of " + context.str() + "\n");
             }
@@ -706,6 +708,7 @@ NEO::DecodeError populateKernelDescriptor(const NEO::Elf::ZebinKernelMetadata::T
         }
 
         dst.kernelAttributes.perThreadPrivateMemorySize = src.size;
+        dst.kernelAttributes.flags.isSimtThread = src.isSimtThread;
         break;
     case AllocationTypeScratch:
         if (0 != dst.kernelAttributes.perThreadScratchSize[0]) {

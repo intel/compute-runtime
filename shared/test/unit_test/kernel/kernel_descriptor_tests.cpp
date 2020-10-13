@@ -13,6 +13,7 @@
 TEST(KernelDescriptor, WhenDefaultInitializedThenValuesAreCleared) {
     NEO::KernelDescriptor desc;
     EXPECT_EQ(0U, desc.kernelAttributes.flags.packed);
+    EXPECT_FALSE(desc.kernelAttributes.flags.isSimtThread);
     EXPECT_EQ(0U, desc.kernelAttributes.slmInlineSize);
     EXPECT_EQ(0U, desc.kernelAttributes.perThreadScratchSize[0]);
     EXPECT_EQ(0U, desc.kernelAttributes.perThreadScratchSize[1]);

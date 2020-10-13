@@ -270,12 +270,14 @@ cl_int Kernel::initialize() {
         localBindingTableOffset = (patchInfo.bindingTableState != nullptr) ? patchInfo.bindingTableState->Offset : 0;
 
         // patch crossthread data and ssh with inline surfaces, if necessary
-        privateSurfaceSize = patchInfo.pAllocateStatelessPrivateSurface
-                                 ? patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize
-                                 : 0;
+        auto perThreadPrivateMemorySize = patchInfo.pAllocateStatelessPrivateSurface
+                                              ? patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize
+                                              : 0;
 
-        if (privateSurfaceSize) {
-            privateSurfaceSize *= device.getSharedDeviceInfo().computeUnitsUsedForScratch * getKernelInfo().getMaxSimdSize();
+        if (perThreadPrivateMemorySize) {
+            privateSurfaceSize = KernelHelper::getPrivateSurfaceSize(perThreadPrivateMemorySize, device.getSharedDeviceInfo().computeUnitsUsedForScratch,
+                                                                     getKernelInfo().getMaxSimdSize(), patchInfo.pAllocateStatelessPrivateSurface->IsSimtThread);
+
             DEBUG_BREAK_IF(privateSurfaceSize == 0);
             if (privateSurfaceSize > std::numeric_limits<uint32_t>::max()) {
                 retVal = CL_OUT_OF_RESOURCES;

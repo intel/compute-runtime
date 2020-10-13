@@ -9,6 +9,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -456,8 +457,10 @@ void KernelInfo::apply(const DeviceInfoKernelPayloadConstants &constants) {
     }
 
     uint32_t privateMemorySize = 0U;
-    if (this->patchInfo.pAllocateStatelessPrivateSurface) {
-        privateMemorySize = this->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize * constants.computeUnitsUsedForScratch * this->getMaxSimdSize();
+    if (patchInfo.pAllocateStatelessPrivateSurface) {
+        privateMemorySize = static_cast<uint32_t>(KernelHelper::getPrivateSurfaceSize(patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize,
+                                                                                      constants.computeUnitsUsedForScratch, getMaxSimdSize(),
+                                                                                      patchInfo.pAllocateStatelessPrivateSurface->IsSimtThread));
     }
 
     if (privateMemoryStatelessSizeOffset != WorkloadInfo::undefinedOffset) {

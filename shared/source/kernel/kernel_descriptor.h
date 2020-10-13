@@ -87,6 +87,7 @@ struct KernelDescriptor final {
                 bool requiresDisabledMidThreadPreemption : 1;
                 bool requiresSubgroupIndependentForwardProgress : 1;
                 bool requiresWorkgroupWalkOrder : 1;
+                bool isSimtThread : 1;
             };
             uint32_t packed;
         } flags;

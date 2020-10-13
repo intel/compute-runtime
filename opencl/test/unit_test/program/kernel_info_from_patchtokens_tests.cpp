@@ -132,6 +132,7 @@ TEST(KernelInfoFromPatchTokens, GivenDataParameterStreamWhenTokensRequiringDevic
 
     iOpenCL::SPatchAllocateStatelessPrivateSurface privateSurface = {};
     privateSurface.PerThreadPrivateMemorySize = 8U;
+    privateSurface.IsSimtThread = 0;
     src.tokens.allocateStatelessPrivateSurface = &privateSurface;
 
     iOpenCL::SPatchDataParameterBuffer privateMemorySize = {};
@@ -155,6 +156,53 @@ TEST(KernelInfoFromPatchTokens, GivenDataParameterStreamWhenTokensRequiringDevic
     ASSERT_NE(nullptr, dst.crossThreadData);
     dst.apply(deviceInfoConstants);
     uint32_t expectedPrivateMemorySize = privateSurface.PerThreadPrivateMemorySize * deviceInfoConstants.computeUnitsUsedForScratch * src.tokens.executionEnvironment->LargestCompiledSIMDSize;
+    EXPECT_EQ(expectedPrivateMemorySize, *reinterpret_cast<uint32_t *>(dst.crossThreadData + privateMemorySize.Offset));
+    EXPECT_EQ(deviceInfoConstants.slmWindowSize, *reinterpret_cast<uint32_t *>(dst.crossThreadData + localMemoryWindowsSize.Offset));
+    EXPECT_EQ(deviceInfoConstants.maxWorkGroupSize, *reinterpret_cast<uint32_t *>(dst.crossThreadData + maxWorkgroupSize.Offset));
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(deviceInfoConstants.slmWindow), *reinterpret_cast<uintptr_t *>(dst.crossThreadData + localMemoryWindowStartVA.Offset));
+}
+
+TEST(KernelInfoFromPatchTokens, givenIsSimtThreadSetWhenConfiguringThenDontUseSimdSizeForPrivateSizeCalculation) {
+    std::vector<uint8_t> storage;
+    auto src = PatchTokensTestData::ValidEmptyKernel::create(storage);
+
+    iOpenCL::SPatchDataParameterStream dataParameterStream = {};
+    src.tokens.dataParameterStream = &dataParameterStream;
+    dataParameterStream.DataParameterStreamSize = 256U;
+
+    NEO::DeviceInfoKernelPayloadConstants deviceInfoConstants;
+    deviceInfoConstants.computeUnitsUsedForScratch = 128U;
+    deviceInfoConstants.maxWorkGroupSize = 64U;
+    std::unique_ptr<uint8_t> slm = std::make_unique<uint8_t>();
+    deviceInfoConstants.slmWindow = slm.get();
+    deviceInfoConstants.slmWindowSize = 512U;
+
+    iOpenCL::SPatchAllocateStatelessPrivateSurface privateSurface = {};
+    privateSurface.PerThreadPrivateMemorySize = 8U;
+    privateSurface.IsSimtThread = 1;
+    src.tokens.allocateStatelessPrivateSurface = &privateSurface;
+
+    iOpenCL::SPatchDataParameterBuffer privateMemorySize = {};
+    privateMemorySize.Offset = 8U;
+    src.tokens.crossThreadPayloadArgs.privateMemoryStatelessSize = &privateMemorySize;
+
+    iOpenCL::SPatchDataParameterBuffer localMemoryWindowStartVA = {};
+    localMemoryWindowStartVA.Offset = 16U;
+    src.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowStartAddress = &localMemoryWindowStartVA;
+
+    iOpenCL::SPatchDataParameterBuffer localMemoryWindowsSize = {};
+    localMemoryWindowsSize.Offset = 24U;
+    src.tokens.crossThreadPayloadArgs.localMemoryStatelessWindowSize = &localMemoryWindowsSize;
+
+    iOpenCL::SPatchDataParameterBuffer maxWorkgroupSize = {};
+    maxWorkgroupSize.Offset = 32U;
+    src.tokens.crossThreadPayloadArgs.maxWorkGroupSize = &maxWorkgroupSize;
+
+    NEO::KernelInfo dst;
+    NEO::populateKernelInfo(dst, src, 4);
+    ASSERT_NE(nullptr, dst.crossThreadData);
+    dst.apply(deviceInfoConstants);
+    uint32_t expectedPrivateMemorySize = privateSurface.PerThreadPrivateMemorySize * deviceInfoConstants.computeUnitsUsedForScratch;
     EXPECT_EQ(expectedPrivateMemorySize, *reinterpret_cast<uint32_t *>(dst.crossThreadData + privateMemorySize.Offset));
     EXPECT_EQ(deviceInfoConstants.slmWindowSize, *reinterpret_cast<uint32_t *>(dst.crossThreadData + localMemoryWindowsSize.Offset));
     EXPECT_EQ(deviceInfoConstants.maxWorkGroupSize, *reinterpret_cast<uint32_t *>(dst.crossThreadData + maxWorkgroupSize.Offset));

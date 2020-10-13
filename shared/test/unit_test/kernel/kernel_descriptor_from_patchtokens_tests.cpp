@@ -267,9 +267,11 @@ TEST(KernelDescriptorFromPatchtokens, GivenImplicitArgsThenSetsProperPartsOfDesc
     privateSurface.DataParamSize = 3;
     privateSurface.PerThreadPrivateMemorySize = 5;
     privateSurface.SurfaceStateHeapOffset = 7;
+    privateSurface.IsSimtThread = true;
     kernelTokens.tokens.allocateStatelessPrivateSurface = &privateSurface;
     NEO::populateKernelDescriptor(kernelDescriptor, kernelTokens, 4);
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.usesPrivateMemory);
+    EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.isSimtThread);
     EXPECT_EQ(privateSurface.PerThreadPrivateMemorySize, kernelDescriptor.kernelAttributes.perThreadPrivateMemorySize);
     EXPECT_EQ(privateSurface.DataParamOffset, kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.stateless);
     EXPECT_EQ(privateSurface.DataParamSize, kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress.pointerSize);

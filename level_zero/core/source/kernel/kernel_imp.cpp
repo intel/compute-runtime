@@ -153,10 +153,12 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
     }
 
     ArrayRef<uint8_t> surfaceStateHeapArrayRef = ArrayRef<uint8_t>(surfaceStateHeapTemplate.get(), getSurfaceStateHeapSize());
-    uint32_t privateSurfaceSize = kernelDescriptor->kernelAttributes.perThreadPrivateMemorySize;
+    auto &kernelAttributes = kernelDescriptor->kernelAttributes;
 
-    if (privateSurfaceSize != 0) {
-        privateSurfaceSize *= computeUnitsUsedForSratch * kernelDescriptor->kernelAttributes.simdSize;
+    if (kernelAttributes.perThreadPrivateMemorySize != 0) {
+        auto privateSurfaceSize = NEO::KernelHelper::getPrivateSurfaceSize(kernelAttributes.perThreadPrivateMemorySize, computeUnitsUsedForSratch,
+                                                                           kernelAttributes.simdSize, kernelAttributes.flags.isSimtThread);
+
         UNRECOVERABLE_IF(privateSurfaceSize == 0);
         this->privateMemoryGraphicsAllocation.reset(memoryManager.allocateGraphicsMemoryWithProperties(
             {device->getRootDeviceIndex(), privateSurfaceSize, NEO::GraphicsAllocation::AllocationType::PRIVATE_SURFACE, device->getDeviceBitfield()}));

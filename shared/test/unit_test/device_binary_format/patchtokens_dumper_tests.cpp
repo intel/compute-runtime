@@ -700,6 +700,7 @@ Kernel-scope tokens section size : )==="
       uint32_t   DataParamOffset;// = 0
       uint32_t   DataParamSize;// = 0
       uint32_t   PerThreadPrivateMemorySize;// = 0
+      uint32_t   IsSimtThread;// = 0
   }
   struct SPatchAllocateStatelessConstantMemorySurfaceWithInitialization :
          SPatchItemHeader (Token=39(PATCH_TOKEN_ALLOCATE_CONSTANT_MEMORY_SURFACE_WITH_INITIALIZATION), Size=)==="

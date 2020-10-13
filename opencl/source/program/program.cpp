@@ -17,6 +17,7 @@
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -339,10 +340,12 @@ void Program::allocateBlockPrivateSurfaces(uint32_t rootDeviceIndex) {
         const KernelInfo *info = blockKernelManager->getBlockKernelInfo(i);
 
         if (info->patchInfo.pAllocateStatelessPrivateSurface) {
-            size_t privateSize = info->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize;
+            auto perThreadPrivateMemorySize = info->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize;
 
-            if (privateSize > 0 && blockKernelManager->getPrivateSurface(i) == nullptr) {
-                privateSize *= getDevice().getDeviceInfo().computeUnitsUsedForScratch * info->getMaxSimdSize();
+            if (perThreadPrivateMemorySize > 0 && blockKernelManager->getPrivateSurface(i) == nullptr) {
+                auto privateSize = static_cast<size_t>(KernelHelper::getPrivateSurfaceSize(perThreadPrivateMemorySize, getDevice().getDeviceInfo().computeUnitsUsedForScratch,
+                                                                                           info->getMaxSimdSize(), info->patchInfo.pAllocateStatelessPrivateSurface->IsSimtThread));
+
                 auto *privateSurface = this->executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, privateSize, GraphicsAllocation::AllocationType::PRIVATE_SURFACE, getDevice().getDeviceBitfield()});
                 blockKernelManager->pushPrivateSurface(privateSurface, i);
             }

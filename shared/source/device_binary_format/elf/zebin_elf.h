@@ -172,6 +172,7 @@ namespace PerThreadMemoryBuffer {
 static constexpr ConstStringRef allocationType("type");
 static constexpr ConstStringRef memoryUsage("usage");
 static constexpr ConstStringRef size("size");
+static constexpr ConstStringRef isSimtThread("is_simt_thread");
 namespace AllocationType {
 static constexpr ConstStringRef global("global");
 static constexpr ConstStringRef scratch("scratch");
@@ -371,6 +372,7 @@ struct PerThreadMemoryBufferBaseT {
     AllocationType allocationType = AllocationTypeUnknown;
     MemoryUsageT memoryUsage = MemoryUsageUnknown;
     SizeT size = 0U;
+    bool isSimtThread = false;
 };
 } // namespace PerThreadMemoryBuffer
 

@@ -2189,6 +2189,42 @@ kernels:
     EXPECT_TRUE(warnings.empty()) << warnings;
     ASSERT_EQ(1U, programInfo.kernelInfos.size());
     EXPECT_EQ(256U, programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.perThreadPrivateMemorySize);
+    EXPECT_FALSE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.isSimtThread);
+}
+
+TEST(PopulateKernelDescriptor, givenSimtThreadSetWhenPopulatingThenUpdateKernelAttributes) {
+    NEO::ConstStringRef zeinfo = R"===(
+kernels:         
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+      per_thread_memory_buffers: 
+          - type:            global
+            usage:           private_space
+            size:            256
+            is_simt_thread:  true
+)===";
+    NEO::ProgramInfo programInfo;
+    ZebinTestData::ValidEmptyProgram zebin;
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "some_kernel", {});
+    std::string errors, warnings;
+    auto elf = NEO::Elf::decodeElf(zebin.storage, errors, warnings);
+    ASSERT_NE(nullptr, elf.elfFileHeader) << errors << " " << warnings;
+
+    NEO::Yaml::YamlParser parser;
+    bool parseSuccess = parser.parse(zeinfo, errors, warnings);
+    ASSERT_TRUE(parseSuccess) << errors << " " << warnings;
+
+    NEO::ZebinSections zebinSections;
+    auto extractErr = NEO::extractZebinSections(elf, zebinSections, errors, warnings);
+    ASSERT_EQ(NEO::DecodeError::Success, extractErr) << errors << " " << warnings;
+
+    auto &kernelNode = *parser.createChildrenRange(*parser.findNodeWithKeyDfs("kernels")).begin();
+    auto err = NEO::populateKernelDescriptor(programInfo, elf, zebinSections, parser, kernelNode, errors, warnings);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_TRUE(programInfo.kernelInfos[0]->kernelDescriptor.kernelAttributes.flags.isSimtThread);
 }
 
 TEST(PopulateKernelDescriptor, GivenPerThreadMemoryBufferWhenTypeIsScratchThenSetsProperFieldsInDescriptor) {

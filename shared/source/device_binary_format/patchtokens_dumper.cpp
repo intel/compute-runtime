@@ -565,6 +565,7 @@ void dump(const SPatchAllocateStatelessPrivateSurface &value, std::stringstream 
     out << indent << "    uint32_t   DataParamOffset;// = " << value.DataParamOffset << "\n";
     out << indent << "    uint32_t   DataParamSize;// = " << value.DataParamSize << "\n";
     out << indent << "    uint32_t   PerThreadPrivateMemorySize;// = " << value.PerThreadPrivateMemorySize << "\n";
+    out << indent << "    uint32_t   IsSimtThread;// = " << value.IsSimtThread << "\n";
     out << indent << "}\n";
 }
 
