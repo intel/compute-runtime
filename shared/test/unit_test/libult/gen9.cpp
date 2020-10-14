@@ -5,7 +5,8 @@
  *
  */
 
-#include "opencl/source/helpers/base_object.h"
+#include "shared/source/helpers/populate_factory.h"
+
 #include "opencl/test/unit_test/libult/ult_command_stream_receiver.h"
 
 namespace NEO {

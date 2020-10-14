@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/helpers/populate_factory.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"

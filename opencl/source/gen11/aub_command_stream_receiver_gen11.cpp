@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/populate_factory.h"
 
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw_bdw_plus.inl"
-#include "opencl/source/helpers/base_object.h"
 
 namespace NEO {
 

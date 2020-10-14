@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/populate_factory.h"
 #include "shared/source/utilities/numeric.h"
 
 #include <algorithm>

@@ -245,8 +245,4 @@ class BaseObject : public B, public ReferenceTrackedObject<DerivedType_t<B>> {
     }
 };
 
-// Method called by global factory enabler
-template <typename Type>
-void populateFactoryTable();
-
 } // namespace NEO

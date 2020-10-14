@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/populate_factory.h"
+
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/command_queue_hw_bdw_plus.inl"
 

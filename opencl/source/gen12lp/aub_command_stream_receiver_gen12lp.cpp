@@ -6,12 +6,12 @@
  */
 
 #include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/populate_factory.h"
 #include "shared/source/memory_manager/memory_pool.h"
 
 #include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw_bdw_plus.inl"
-#include "opencl/source/helpers/base_object.h"
 
 namespace NEO {
 typedef TGLLPFamily Family;

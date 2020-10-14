@@ -7,11 +7,11 @@
 
 #include "shared/source/gen11/hw_cmds.h"
 #include "shared/source/helpers/array_count.h"
+#include "shared/source/helpers/populate_factory.h"
 
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.inl"
-#include "opencl/source/helpers/base_object.h"
 
 namespace NEO {
 typedef ICLFamily Family;

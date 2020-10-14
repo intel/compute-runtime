@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds.h"
+#include "shared/source/helpers/populate_factory.h"
 
 #include "opencl/source/device_queue/device_queue_hw.h"
 #include "opencl/source/device_queue/device_queue_hw_bdw_plus.inl"
