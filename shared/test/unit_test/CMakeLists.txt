@@ -44,8 +44,6 @@ if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
                  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_mode.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/mocks/mock_dispatch_kernel_encoder_interface.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/mocks/mock_dispatch_kernel_encoder_interface.h
                  ${CORE_ENABLERS}
                  ${NEO_SOURCE_DIR}/opencl/source/compiler_interface/default_cache_config.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/fixtures/mock_execution_environment_gmm_fixture.cpp
@@ -112,6 +110,8 @@ if(NOT SKIP_NEO_UNIT_TESTS AND NOT SKIP_UNIT_TESTS)
   endif()
 
   add_subdirectories()
+  get_property(NEO_CORE_tests_mocks GLOBAL PROPERTY NEO_CORE_tests_mocks)
+  target_sources(${TARGET_NAME} PRIVATE ${NEO_CORE_tests_mocks})
   add_dependencies(${TARGET_NAME} prepare_test_kernel_for_shared)
   create_project_source_tree(${TARGET_NAME})
 
