@@ -1132,6 +1132,68 @@ TEST(WddmGfxPartitionTests, WhenInitializingGfxPartitionThen64KBHeapsAreUsed) {
     EXPECT_EQ(wddm->gfxPartition.Standard64KB.Base + rootDeviceIndex * heapStandard64KBSize, gfxPartition.getHeapBase(HeapIndex::HEAP_STANDARD64KB));
 }
 
+TEST(WddmGfxPartitionTests, givenGfxPartitionWhenInitializedThenInternalFrontWindowHeapIsAllocatedAtInternalHeapFront) {
+    MockExecutionEnvironment executionEnvironment;
+    auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+
+    uint32_t rootDeviceIndex = 0;
+    size_t numRootDevices = 1;
+
+    MockGfxPartition gfxPartition;
+    wddm->init();
+    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, false);
+
+    EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL));
+    EXPECT_EQ(gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY));
+
+    auto frontWindowSize = GfxPartition::internalFrontWindowPoolSize;
+    EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW), frontWindowSize);
+    EXPECT_EQ(gfxPartition.getHeapSize(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW), frontWindowSize);
+
+    EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW));
+    EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW));
+
+    EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_INTERNAL), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL) + frontWindowSize);
+    EXPECT_EQ(gfxPartition.getHeapMinimalAddress(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY), gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY) + frontWindowSize);
+
+    EXPECT_EQ(gfxPartition.getHeapLimit(HeapIndex::HEAP_INTERNAL),
+              gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL) + gfxPartition.getHeapSize(HeapIndex::HEAP_INTERNAL) - 1);
+    EXPECT_EQ(gfxPartition.getHeapLimit(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY),
+              gfxPartition.getHeapBase(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY) + gfxPartition.getHeapSize(HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY) - 1);
+}
+
+TEST(WddmGfxPartitionTests, givenInternalFrontWindowHeapWhenAllocatingSmallOrBigChunkThenAddressFromFrontIsReturned) {
+    MockExecutionEnvironment executionEnvironment;
+    auto wddm = new WddmMock(*executionEnvironment.rootDeviceEnvironments[0]);
+
+    uint32_t rootDeviceIndex = 0;
+    size_t numRootDevices = 1;
+
+    MockGfxPartition gfxPartition;
+    wddm->init();
+    wddm->initGfxPartition(gfxPartition, rootDeviceIndex, numRootDevices, false);
+
+    const size_t sizeSmall = MemoryConstants::pageSize64k;
+    const size_t sizeBig = static_cast<size_t>(gfxPartition.getHeapSize(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW)) - MemoryConstants::pageSize64k;
+
+    HeapIndex heaps[] = {HeapIndex::HEAP_INTERNAL_FRONT_WINDOW,
+                         HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW};
+
+    for (int i = 0; i < 2; i++) {
+        size_t sizeToAlloc = sizeSmall;
+        auto address = gfxPartition.heapAllocate(heaps[i], sizeToAlloc);
+
+        EXPECT_EQ(gfxPartition.getHeapBase(heaps[i]), address);
+        gfxPartition.heapFree(heaps[i], address, sizeToAlloc);
+
+        sizeToAlloc = sizeBig;
+        address = gfxPartition.heapAllocate(heaps[i], sizeToAlloc);
+
+        EXPECT_EQ(gfxPartition.getHeapBase(heaps[i]), address);
+        gfxPartition.heapFree(heaps[i], address, sizeToAlloc);
+    }
+}
+
 TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndForceDeviceIdIsTheSameAsTheExistingDeviceThenReturnTheAdapter) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.ForceDeviceId.set("1234"); // Existing device Id

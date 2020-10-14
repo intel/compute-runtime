@@ -551,14 +551,14 @@ void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
     graphicsAllocation->unlock();
 }
 
-HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM, bool useExternalWindow) {
+HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM, bool useFrontWindow) {
     if (allocation) {
         if (heapAssigner.useInternal32BitHeap(allocation->getAllocationType())) {
             return selectInternalHeap(allocation->isAllocatedInLocalMemoryPool());
         }
         if (allocation->is32BitAllocation() || heapAssigner.useExternal32BitHeap(allocation->getAllocationType())) {
-            return useExternalWindow ? HeapAssigner::mapExternalWindowIndex(selectExternalHeap(allocation->isAllocatedInLocalMemoryPool()))
-                                     : selectExternalHeap(allocation->isAllocatedInLocalMemoryPool());
+            return useFrontWindow ? HeapAssigner::mapExternalWindowIndex(selectExternalHeap(allocation->isAllocatedInLocalMemoryPool()))
+                                  : selectExternalHeap(allocation->isAllocatedInLocalMemoryPool());
         }
     }
     if (isFullRangeSVM) {

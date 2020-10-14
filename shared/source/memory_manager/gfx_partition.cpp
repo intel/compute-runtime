@@ -54,6 +54,24 @@ void GfxPartition::Heap::initExternalWithFrontWindow(uint64_t base, uint64_t siz
     alloc = std::make_unique<HeapAllocator>(base, size, 0u);
 }
 
+void GfxPartition::Heap::initWithFrontWindow(uint64_t base, uint64_t size, uint64_t frontWindowSize) {
+    this->base = base;
+    this->size = size;
+
+    // Exclude very very last 64K from GPU address range allocation
+    size -= GfxPartition::heapGranularity;
+    size -= frontWindowSize;
+
+    alloc = std::make_unique<HeapAllocator>(base + frontWindowSize, size);
+}
+
+void GfxPartition::Heap::initFrontWindow(uint64_t base, uint64_t size) {
+    this->base = base;
+    this->size = size;
+
+    alloc = std::make_unique<HeapAllocator>(base, size, 0u);
+}
+
 void GfxPartition::freeGpuAddressRange(uint64_t ptr, size_t size) {
     for (auto heapName : GfxPartition::heapNonSvmNames) {
         auto &heap = getHeap(heapName);
@@ -152,9 +170,12 @@ bool GfxPartition::init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToRe
     for (auto heap : GfxPartition::heap32Names) {
         if (useFrontWindowPool && HeapAssigner::heapTypeWithFrontWindowPool(heap)) {
             heapInitExternalWithFrontWindow(heap, gfxBase, gfxHeap32Size);
-            size_t externalFrontWindowSize = GfxPartition::frontWindowPoolSize;
+            size_t externalFrontWindowSize = GfxPartition::externalFrontWindowPoolSize;
             heapInitExternalWithFrontWindow(HeapAssigner::mapExternalWindowIndex(heap), heapAllocate(heap, externalFrontWindowSize),
                                             externalFrontWindowSize);
+        } else if (HeapAssigner::isInternalHeap(heap)) {
+            heapInitWithFrontWindow(heap, gfxBase, gfxHeap32Size, GfxPartition::internalFrontWindowPoolSize);
+            heapInitFrontWindow(HeapAssigner::mapInternalWindowIndex(heap), gfxBase, GfxPartition::internalFrontWindowPoolSize);
         } else {
             heapInit(heap, gfxBase, gfxHeap32Size);
         }

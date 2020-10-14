@@ -56,4 +56,24 @@ HeapIndex HeapAssigner::mapExternalWindowIndex(HeapIndex index) {
     return retIndex;
 }
 
+HeapIndex HeapAssigner::mapInternalWindowIndex(HeapIndex index) {
+    auto retIndex = HeapIndex::TOTAL_HEAPS;
+    switch (index) {
+    case HeapIndex::HEAP_INTERNAL:
+        retIndex = HeapIndex::HEAP_INTERNAL_FRONT_WINDOW;
+        break;
+    case HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY:
+        retIndex = HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW;
+        break;
+    default:
+        UNRECOVERABLE_IF(true);
+        break;
+    };
+    return retIndex;
+}
+
+bool HeapAssigner::isInternalHeap(HeapIndex heap) {
+    return heap == HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY || heap == HeapIndex::HEAP_INTERNAL;
+}
+
 } // namespace NEO

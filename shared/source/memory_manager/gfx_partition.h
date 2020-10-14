@@ -27,6 +27,8 @@ enum class HeapIndex : uint32_t {
     HEAP_EXTENDED,
     HEAP_EXTERNAL_FRONT_WINDOW,
     HEAP_EXTERNAL_DEVICE_FRONT_WINDOW,
+    HEAP_INTERNAL_FRONT_WINDOW,
+    HEAP_INTERNAL_DEVICE_FRONT_WINDOW,
 
     // Please put new heap indexes above this line
     TOTAL_HEAPS
@@ -50,6 +52,14 @@ class GfxPartition {
         getHeap(heapIndex).initExternalWithFrontWindow(base, size);
     }
 
+    void heapInitWithFrontWindow(HeapIndex heapIndex, uint64_t base, uint64_t size, uint64_t frontWindowSize) {
+        getHeap(heapIndex).initWithFrontWindow(base, size, frontWindowSize);
+    }
+
+    void heapInitFrontWindow(HeapIndex heapIndex, uint64_t base, uint64_t size) {
+        getHeap(heapIndex).initFrontWindow(base, size);
+    }
+
     uint64_t heapAllocate(HeapIndex heapIndex, size_t &size) {
         return getHeap(heapIndex).allocate(size);
     }
@@ -70,22 +80,28 @@ class GfxPartition {
 
     uint64_t getHeapMinimalAddress(HeapIndex heapIndex) {
         if (heapIndex == HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW ||
-            heapIndex == HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW) {
+            heapIndex == HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW ||
+            heapIndex == HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW ||
+            heapIndex == HeapIndex::HEAP_INTERNAL_FRONT_WINDOW) {
             return getHeapBase(heapIndex);
         } else {
             if ((heapIndex == HeapIndex::HEAP_EXTERNAL ||
                  heapIndex == HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY) &&
                 (getHeapLimit(HeapAssigner::mapExternalWindowIndex(heapIndex)) != 0)) {
-                return getHeapBase(heapIndex) + GfxPartition::frontWindowPoolSize;
+                return getHeapBase(heapIndex) + GfxPartition::externalFrontWindowPoolSize;
+            } else if (heapIndex == HeapIndex::HEAP_INTERNAL ||
+                       heapIndex == HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY) {
+                return getHeapBase(heapIndex) + GfxPartition::internalFrontWindowPoolSize;
             }
-            return getHeapBase(heapIndex) + heapGranularity;
+            return getHeapBase(heapIndex) + GfxPartition::heapGranularity;
         }
     }
 
     bool isLimitedRange() { return getHeap(HeapIndex::HEAP_SVM).getSize() == 0ull; }
 
     static const uint64_t heapGranularity = MemoryConstants::pageSize64k;
-    static constexpr size_t frontWindowPoolSize = 16 * MemoryConstants::megaByte;
+    static constexpr size_t externalFrontWindowPoolSize = 16 * MemoryConstants::megaByte;
+    static constexpr size_t internalFrontWindowPoolSize = 1 * MemoryConstants::megaByte;
 
     static const std::array<HeapIndex, 4> heap32Names;
     static const std::array<HeapIndex, 7> heapNonSvmNames;
@@ -98,6 +114,8 @@ class GfxPartition {
         Heap() = default;
         void init(uint64_t base, uint64_t size);
         void initExternalWithFrontWindow(uint64_t base, uint64_t size);
+        void initWithFrontWindow(uint64_t base, uint64_t size, uint64_t frontWindowSize);
+        void initFrontWindow(uint64_t base, uint64_t size);
         uint64_t getBase() const { return base; }
         uint64_t getSize() const { return size; }
         uint64_t getLimit() const { return size ? base + size - 1 : 0; }

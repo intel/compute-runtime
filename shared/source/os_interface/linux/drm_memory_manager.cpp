@@ -493,16 +493,16 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
     size_t alignedAllocationSize = alignUp(allocationData.size, MemoryConstants::pageSize);
     auto allocationSize = alignedAllocationSize;
     auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
-    auto res = gfxPartition->heapAllocate(allocatorToUse, allocationSize);
+    auto gpuVA = gfxPartition->heapAllocate(allocatorToUse, allocationSize);
 
-    if (!res) {
+    if (!gpuVA) {
         return nullptr;
     }
 
     auto ptrAlloc = alignedMallocWrapper(alignedAllocationSize, getUserptrAlignment());
 
     if (!ptrAlloc) {
-        gfxPartition->heapFree(allocatorToUse, res, allocationSize);
+        gfxPartition->heapFree(allocatorToUse, gpuVA, allocationSize);
         return nullptr;
     }
 
@@ -510,20 +510,20 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const Allocatio
 
     if (!bo) {
         alignedFreeWrapper(ptrAlloc);
-        gfxPartition->heapFree(allocatorToUse, res, allocationSize);
+        gfxPartition->heapFree(allocatorToUse, gpuVA, allocationSize);
         return nullptr;
     }
 
-    bo->gpuAddress = GmmHelper::canonize(res);
+    bo->gpuAddress = GmmHelper::canonize(gpuVA);
 
     // softpin to the GPU address, res if it uses limitedRange Allocation
-    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), ptrAlloc, GmmHelper::canonize(res), alignedAllocationSize,
+    auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), ptrAlloc, GmmHelper::canonize(gpuVA), alignedAllocationSize,
                                         MemoryPool::System4KBPagesWith32BitGpuAddressing);
 
     allocation->set32BitAllocation(true);
     allocation->setGpuBaseAddress(GmmHelper::canonize(gfxPartition->getHeapBase(allocatorToUse)));
     allocation->setDriverAllocatedCpuPtr(ptrAlloc);
-    allocation->setReservedAddressRange(reinterpret_cast<void *>(res), allocationSize);
+    allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuVA), allocationSize);
     bo.release();
     return allocation;
 }

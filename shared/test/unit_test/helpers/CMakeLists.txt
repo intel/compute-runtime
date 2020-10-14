@@ -35,4 +35,5 @@ add_subdirectories()
 target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_shared_tests.cpp
 )
