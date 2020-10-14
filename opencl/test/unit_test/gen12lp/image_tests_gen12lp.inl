@@ -26,7 +26,7 @@ using namespace NEO;
 
 typedef ::testing::Test gen12LpImageTests;
 
-GEN12LPTEST_F(gen12LpImageTests, appendSurfaceStateParamsDoesNothing) {
+GEN12LPTEST_F(gen12LpImageTests, WhenAppendingSurfaceStateParamsThenSurfaceStateDoesNotChange) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;
     auto image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(&context));
@@ -111,7 +111,7 @@ GEN12LPTEST_F(ImageClearColorFixture, givenMcsAllocationWhenSetArgIsCalledWithUn
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_MCS_LCE);
 }
 
-GEN12LPTEST_F(gen12LpImageTests, givenRenderCompressionSurfaceStateParamsAreSetForRenderCompression) {
+GEN12LPTEST_F(gen12LpImageTests, givenRenderCompressionThenSurfaceStateParamsAreSetForRenderCompression) {
     MockContext context;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
@@ -126,7 +126,7 @@ GEN12LPTEST_F(gen12LpImageTests, givenRenderCompressionSurfaceStateParamsAreSetF
     EXPECT_EQ(surfaceState.getAuxiliarySurfaceMode(), RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
 }
 
-GEN12LPTEST_F(gen12LpImageTests, givenMediaCompressionSurfaceStateParamsAreSetForMediaCompression) {
+GEN12LPTEST_F(gen12LpImageTests, givenMediaCompressionThenSurfaceStateParamsAreSetForMediaCompression) {
     MockContext context;
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
@@ -144,7 +144,7 @@ GEN12LPTEST_F(gen12LpImageTests, givenMediaCompressionSurfaceStateParamsAreSetFo
 
 using Gen12lpRenderSurfaceStateDataTests = ::testing::Test;
 
-GEN12LPTEST_F(Gen12lpRenderSurfaceStateDataTests, WhenMemoryObjectControlStateIndexToMocsTablesIsSetThenValueIsShift) {
+GEN12LPTEST_F(Gen12lpRenderSurfaceStateDataTests, WhenMemoryObjectControlStateIndexToMocsTablesIsSetThenValueIsShifted) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
 

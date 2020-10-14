@@ -13,7 +13,7 @@ using namespace NEO;
 
 typedef ::testing::Test gen8ImageTests;
 
-GEN8TEST_F(gen8ImageTests, appendSurfaceStateParamsDoesNothing) {
+GEN8TEST_F(gen8ImageTests, WhenAppendingSurfaceStateParamsThenSurfaceStateDoesNotChange) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;
     auto image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(&context));

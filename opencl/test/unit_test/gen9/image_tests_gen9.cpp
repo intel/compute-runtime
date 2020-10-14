@@ -13,7 +13,7 @@ using namespace NEO;
 
 typedef ::testing::Test gen9ImageTests;
 
-GEN9TEST_F(gen9ImageTests, appendSurfaceStateParamsDoesNothing) {
+GEN9TEST_F(gen9ImageTests, appendSurfaceSWhenAppendingSurfaceStateParamsThenSurfaceStateDoesNotChangetateParamsDoesNothing) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;
     auto image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(&context));
@@ -30,7 +30,7 @@ GEN9TEST_F(gen9ImageTests, appendSurfaceStateParamsDoesNothing) {
 
 using Gen9RenderSurfaceStateDataTests = ::testing::Test;
 
-GEN9TEST_F(Gen9RenderSurfaceStateDataTests, WhenMemoryObjectControlStateIndexToMocsTablesIsSetThenValueIsShift) {
+GEN9TEST_F(Gen9RenderSurfaceStateDataTests, WhenMemoryObjectControlStateIndexToMocsTablesIsSetThenValueIsShifted) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     auto surfaceState = FamilyType::cmdInitRenderSurfaceState;
 
