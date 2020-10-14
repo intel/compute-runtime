@@ -16,7 +16,7 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> Gen11SamplerTest;
 
-GEN11TEST_F(Gen11SamplerTest, appendSamplerStateParamsDoesNothing) {
+GEN11TEST_F(Gen11SamplerTest, WhenAppendingSamplerStateParamsThenStateIsNotChanged) {
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     std::unique_ptr<MockContext> context(new MockContext());
     std::unique_ptr<SamplerHw<FamilyType>> sampler(new SamplerHw<FamilyType>(context.get(), CL_FALSE, CL_ADDRESS_NONE, CL_FILTER_NEAREST));
