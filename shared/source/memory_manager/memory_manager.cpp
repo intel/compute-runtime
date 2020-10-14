@@ -364,6 +364,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case GraphicsAllocation::AllocationType::SHARED_RESOURCE_COPY:
     case GraphicsAllocation::AllocationType::SURFACE_STATE_HEAP:
     case GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
+    case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA:
         allocationData.flags.resource48Bit = true;
         break;
     default:

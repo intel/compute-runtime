@@ -46,6 +46,27 @@ DebuggerL0::DebuggerL0(NEO::Device *device) : device(device) {
 
         perContextSbaAllocations[engine.osContext->getContextId()] = sbaAllocation;
     }
+
+    {
+        auto &hwInfo = device->getHardwareInfo();
+        auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize64k,
+                                             NEO::GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA,
+                                             false,
+                                             device->getDeviceBitfield()};
+        moduleDebugArea = device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+
+        DebugAreaHeader debugArea = {};
+        debugArea.size = sizeof(DebugAreaHeader);
+        debugArea.pgsize = 1;
+        debugArea.isShared = 0;
+        debugArea.scratchBegin = sizeof(DebugAreaHeader);
+        debugArea.scratchEnd = MemoryConstants::pageSize64k - sizeof(DebugAreaHeader);
+
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *moduleDebugArea),
+                                                              *device, moduleDebugArea, 0, &debugArea,
+                                                              sizeof(DebugAreaHeader));
+    }
 }
 
 void DebuggerL0::printTrackedAddresses(uint32_t contextId) {
@@ -65,6 +86,7 @@ DebuggerL0 ::~DebuggerL0() {
         device->getMemoryManager()->freeGraphicsMemory(alloc.second);
     }
     device->getMemoryManager()->freeGpuAddress(sbaTrackingGpuVa, device->getRootDeviceIndex());
+    device->getMemoryManager()->freeGraphicsMemory(moduleDebugArea);
 }
 
 bool DebuggerL0::isDebuggerActive() {

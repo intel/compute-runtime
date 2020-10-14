@@ -8,9 +8,12 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/unit_test/helpers/variable_backup.h"
 
 #include "test.h"
 
@@ -616,5 +619,35 @@ HWTEST_F(L0DebuggerSimpleTest, givenChangedBaseAddressesWhenCapturingSBAThenNoTr
         EXPECT_NE(0u, sizeUsed);
     }
 }
+
+HWTEST_F(L0DebuggerTest, givenDebuggerWhenCreatedThenModuleHeapDebugAreaIsCreated) {
+    auto mockBlitMemoryToAllocation = [](const NEO::Device &device, NEO::GraphicsAllocation *memory, size_t offset, const void *hostPtr,
+                                         Vec3<size_t> size) -> NEO::BlitOperationResult {
+        memcpy(memory->getUnderlyingBuffer(), hostPtr, size.x);
+        return BlitOperationResult::Success;
+    };
+    VariableBackup<NEO::BlitHelperFunctions::BlitMemoryToAllocationFunc> blitMemoryToAllocationFuncBackup(
+        &NEO::BlitHelperFunctions::blitMemoryToAllocation, mockBlitMemoryToAllocation);
+
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(neoDevice);
+    auto debugArea = debugger->getModuleDebugArea();
+
+    auto allocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(
+        {neoDevice->getRootDeviceIndex(), 4096, NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, neoDevice->getDeviceBitfield()});
+
+    EXPECT_EQ(allocation->storageInfo.getMemoryBanks(), debugArea->storageInfo.getMemoryBanks());
+
+    DebugAreaHeader *header = reinterpret_cast<DebugAreaHeader *>(debugArea->getUnderlyingBuffer());
+    EXPECT_EQ(1u, header->pgsize);
+    EXPECT_EQ(0u, header->isShared);
+
+    EXPECT_STREQ("dbgarea", header->magic);
+    EXPECT_EQ(sizeof(DebugAreaHeader), header->size);
+    EXPECT_EQ(sizeof(DebugAreaHeader), header->scratchBegin);
+    EXPECT_EQ(MemoryConstants::pageSize64k - sizeof(DebugAreaHeader), header->scratchEnd);
+
+    neoDevice->getMemoryManager()->freeGraphicsMemory(allocation);
+}
+
 } // namespace ult
 } // namespace L0

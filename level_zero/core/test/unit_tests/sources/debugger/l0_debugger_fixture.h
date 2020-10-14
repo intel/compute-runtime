@@ -21,7 +21,9 @@ struct L0DebuggerFixture {
         auto mockBuiltIns = new MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        hwInfo = *NEO::defaultHwInfo.get();
+        hwInfo.featureTable.ftrLocalMemory = true;
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
         executionEnvironment->initializeMemoryManager();
 
         neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
@@ -41,6 +43,7 @@ struct L0DebuggerFixture {
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     NEO::MockDevice *neoDevice = nullptr;
     L0::Device *device = nullptr;
+    NEO::HardwareInfo hwInfo;
 };
 
 struct L0DebuggerHwFixture : public L0DebuggerFixture {

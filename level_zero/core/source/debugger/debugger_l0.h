@@ -34,6 +34,19 @@ struct SbaTrackedAddresses {
     uint64_t BindlessSurfaceStateBaseAddress = 0;
     uint64_t BindlessSamplerStateBaseAddress = 0;
 };
+
+struct DebugAreaHeader {
+    char magic[8] = "dbgarea";
+    uint64_t reserved1;
+    uint8_t version;
+    uint8_t pgsize;
+    uint8_t size;
+    uint8_t reserved2;
+    uint16_t scratchBegin;
+    uint16_t scratchEnd;
+    uint64_t isShared : 1;
+};
+
 #pragma pack()
 
 class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
@@ -46,6 +59,10 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
 
     NEO::GraphicsAllocation *getSbaTrackingBuffer(uint32_t contextId) {
         return perContextSbaAllocations[contextId];
+    }
+
+    NEO::GraphicsAllocation *getModuleDebugArea() {
+        return moduleDebugArea;
     }
 
     uint64_t getSbaTrackingGpuVa() {
@@ -71,6 +88,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
     NEO::GraphicsAllocation *sbaAllocation = nullptr;
     std::unordered_map<uint32_t, NEO::GraphicsAllocation *> perContextSbaAllocations;
     NEO::AddressRange sbaTrackingGpuVa;
+    NEO::GraphicsAllocation *moduleDebugArea = nullptr;
 };
 
 using DebugerL0CreateFn = DebuggerL0 *(*)(NEO::Device *device);

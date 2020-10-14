@@ -82,6 +82,9 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     case GraphicsAllocation::AllocationType::KERNEL_ISA:
         resourceClass = Drm::ResourceClass::Isa;
         break;
+    case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA:
+        resourceClass = Drm::ResourceClass::ModuleHeapDebugArea;
+        break;
     default:
         break;
     }

@@ -328,6 +328,8 @@ const char *FileLogger<DebugLevel>::getAllocationTypeString(GraphicsAllocation c
         return "DEBUG_CONTEXT_SAVE_AREA";
     case GraphicsAllocation::AllocationType::DEBUG_SBA_TRACKING_BUFFER:
         return "DEBUG_SBA_TRACKING_BUFFER";
+    case GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA:
+        return "DEBUG_MODULE_AREA";
     default:
         return "ILLEGAL_VALUE";
     }

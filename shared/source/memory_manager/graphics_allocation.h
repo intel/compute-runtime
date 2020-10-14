@@ -93,7 +93,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         RING_BUFFER,
         SEMAPHORE_BUFFER,
         DEBUG_CONTEXT_SAVE_AREA,
-        DEBUG_SBA_TRACKING_BUFFER
+        DEBUG_SBA_TRACKING_BUFFER,
+        DEBUG_MODULE_AREA
     };
 
     ~GraphicsAllocation() override;

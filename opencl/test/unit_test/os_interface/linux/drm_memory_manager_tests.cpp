@@ -3909,6 +3909,16 @@ TEST(DrmAllocationTest, givenResourceRegistrationEnabledWhenAllocationTypeShould
         EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
         EXPECT_EQ(Drm::ResourceClass::Isa, drm.registeredClass);
     }
+    drm.registeredClass = Drm::ResourceClass::MaxSize;
+
+    {
+        MockBufferObject bo(&drm, 0, 0, 1);
+        MockDrmAllocation allocation(GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA, MemoryPool::System4KBPages);
+        allocation.bufferObjects[0] = &bo;
+        allocation.registerBOBindExtHandle(&drm);
+        EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
+        EXPECT_EQ(Drm::ResourceClass::ModuleHeapDebugArea, drm.registeredClass);
+    }
 
     drm.registeredClass = Drm::ResourceClass::MaxSize;
 
