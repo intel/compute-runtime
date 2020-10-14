@@ -110,14 +110,50 @@ struct EventPool : _ze_event_pool_handle_t {
 
     inline ze_event_pool_handle_t toHandle() { return this; }
 
-    virtual NEO::GraphicsAllocation &getAllocation() { return *eventPoolAllocation; }
+    virtual NEO::MultiGraphicsAllocation &getAllocation() { return *eventPoolAllocations; }
 
     virtual uint32_t getEventSize() = 0;
 
     bool isEventPoolUsedForTimestamp = false;
 
   protected:
-    NEO::GraphicsAllocation *eventPoolAllocation = nullptr;
+    NEO::MultiGraphicsAllocation *eventPoolAllocations = nullptr;
+};
+
+struct EventPoolImp : public EventPool {
+    EventPoolImp(DriverHandle *driver, uint32_t numDevices, ze_device_handle_t *phDevices, uint32_t numEvents, ze_event_pool_flags_t flags) : numEvents(numEvents) {
+        if (flags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
+            isEventPoolUsedForTimestamp = true;
+        }
+    }
+
+    ze_result_t initialize(DriverHandle *driver,
+                           uint32_t numDevices,
+                           ze_device_handle_t *phDevices,
+                           uint32_t numEvents);
+
+    ~EventPoolImp();
+
+    ze_result_t destroy() override;
+
+    ze_result_t getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) override;
+
+    ze_result_t closeIpcHandle() override;
+
+    ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *phEvent) override;
+
+    uint32_t getEventSize() override { return eventSize; }
+    size_t getNumEvents() { return numEvents; }
+
+    Device *getDevice() override { return devices[0]; }
+
+    std::vector<Device *> devices;
+    size_t numEvents;
+
+  protected:
+    const uint32_t eventSize = static_cast<uint32_t>(alignUp(sizeof(struct KernelTimestampEvent),
+                                                             MemoryConstants::cacheLineSize));
+    const uint32_t eventAlignment = MemoryConstants::cacheLineSize;
 };
 
 } // namespace L0

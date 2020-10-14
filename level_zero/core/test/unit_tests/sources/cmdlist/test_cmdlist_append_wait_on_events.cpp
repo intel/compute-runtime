@@ -94,9 +94,11 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventsThenEventGraphic
 
     auto &residencyContainer = commandList->commandContainer.getResidencyContainer();
     auto eventPoolAlloc = &eventPool->getAllocation();
-    auto itor =
-        std::find(std::begin(residencyContainer), std::end(residencyContainer), eventPoolAlloc);
-    EXPECT_NE(itor, std::end(residencyContainer));
+    for (auto alloc : eventPoolAlloc->getGraphicsAllocations()) {
+        auto itor =
+            std::find(std::begin(residencyContainer), std::end(residencyContainer), alloc);
+        EXPECT_NE(itor, std::end(residencyContainer));
+    }
 }
 
 HWTEST_F(CommandListAppendWaitOnEvent, givenEventWithWaitScopeFlagDeviceWhenAppendingWaitOnEventThenPCWithDcFlushIsGenerated) {

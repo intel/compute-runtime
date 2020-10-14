@@ -76,7 +76,7 @@ struct Mock<EventPool> : public EventPool {
 
     std::vector<int> pool;
 
-    using EventPool::eventPoolAllocation;
+    using EventPool::eventPoolAllocations;
 };
 
 } // namespace ult
