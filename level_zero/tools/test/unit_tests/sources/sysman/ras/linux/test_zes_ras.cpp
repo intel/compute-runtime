@@ -85,5 +85,19 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenGettingRasPropertiesThenSuccessI
     delete pTestRasImp;
 }
 
+TEST_F(SysmanRasFixture, GivenValidRasHandleWhileCallingzesRasGetStateThenFailureIsReturned) {
+    RasImp *pTestRasImp = new RasImp(pSysmanDeviceImp->pRasHandleContext->pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE);
+    pSysmanDeviceImp->pRasHandleContext->handleList.push_back(pTestRasImp);
+
+    auto handles = get_ras_handles(mockHandleCount + 1);
+
+    for (auto handle : handles) {
+        zes_ras_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesRasGetState(handle, 0, &state));
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.pop_back();
+    delete pTestRasImp;
+}
+
 } // namespace ult
 } // namespace L0

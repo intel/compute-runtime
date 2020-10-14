@@ -19,7 +19,7 @@ class RasImp : public Ras, NEO::NonCopyableOrMovableClass {
     ze_result_t rasGetProperties(zes_ras_properties_t *pProperties) override;
     ze_result_t rasGetConfig(zes_ras_config_t *pConfig) override;
     ze_result_t rasSetConfig(const zes_ras_config_t *pConfig) override;
-    ze_result_t rasGetState(const zes_ras_state_t *pConfig) override;
+    ze_result_t rasGetState(zes_ras_state_t *pConfig) override;
 
     RasImp() = default;
     RasImp(OsSysman *pOsSysman, zes_ras_error_type_t type);

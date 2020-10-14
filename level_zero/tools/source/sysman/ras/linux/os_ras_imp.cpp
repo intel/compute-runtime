@@ -15,6 +15,10 @@ ze_result_t OsRas::getSupportedRasErrorTypes(std::vector<zes_ras_error_type_t> &
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
+ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
 ze_result_t LinuxRasImp::osRasGetProperties(zes_ras_properties_t &properties) {
     properties.pNext = nullptr;
     properties.type = osRasErrorType;

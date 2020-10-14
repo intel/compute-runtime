@@ -10,15 +10,12 @@
 
 #include "level_zero/tools/source/sysman/ras/os_ras.h"
 
-#include <string>
-#include <vector>
-
 namespace L0 {
 
-class FsAccess;
 class LinuxRasImp : public OsRas, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t osRasGetProperties(zes_ras_properties_t &properties) override;
+    ze_result_t osRasGetState(zes_ras_state_t &state) override;
     LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type);
     LinuxRasImp() = default;
     ~LinuxRasImp() override = default;
