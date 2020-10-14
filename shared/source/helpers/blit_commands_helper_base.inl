@@ -41,30 +41,30 @@ uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeight(const RootDeviceEnviron
 
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream) {
-    bool useFlush = false;
-    if (DebugManager.flags.FlushAfterEachBlit.get() != -1) {
-        useFlush = static_cast<bool>(DebugManager.flags.FlushAfterEachBlit.get());
-    }
-
-    if (useFlush) {
+    switch (DebugManager.flags.PostBlitCommand.get()) {
+    case 1:
         EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, false, false);
-    } else {
+        break;
+    case 2:
+        break;
+    default: {
         auto miArbCheckStream = linearStream.getSpaceForCmd<typename GfxFamily::MI_ARB_CHECK>();
         *miArbCheckStream = GfxFamily::cmdInitArbCheck;
+        break;
+    }
     }
 }
 
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize() {
-    bool useFlush = false;
-    if (DebugManager.flags.FlushAfterEachBlit.get() != -1) {
-        useFlush = static_cast<bool>(DebugManager.flags.FlushAfterEachBlit.get());
-    }
-
-    if (useFlush) {
+    switch (DebugManager.flags.PostBlitCommand.get()) {
+    case 1:
         return sizeof(typename GfxFamily::MI_FLUSH_DW);
+    case 2:
+        return 0;
+    default:
+        return sizeof(typename GfxFamily::MI_ARB_CHECK);
     }
-    return sizeof(typename GfxFamily::MI_ARB_CHECK);
 }
 
 template <typename GfxFamily>

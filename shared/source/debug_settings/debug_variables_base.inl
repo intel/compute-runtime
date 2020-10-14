@@ -73,7 +73,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, PauseOnGpuMode, -1, "-1: default (before and aft
 DECLARE_DEBUG_VARIABLE(int32_t, EnableMultiStorageResources, -1, "-1: default, 0: Disable, 1: Enable")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxWidth, -1, "-1: default, >=0: Max width")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitBlitterMaxHeight, -1, "-1: default, >=0: Max height")
-DECLARE_DEBUG_VARIABLE(int32_t, FlushAfterEachBlit, -1, "-1: default, 0: disable, 1: enable")
+DECLARE_DEBUG_VARIABLE(int32_t, PostBlitCommand, -1, "-1: default, 0: MI_ARB_CHECK, 1: MI_FLUSH, 2: Nothing")
 DECLARE_DEBUG_VARIABLE(int32_t, OverridePreemptionSurfaceSizeInMb, -1, "-1: default, >=0 Override preemption surface size with value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideLeastOccupiedBank, -1, "-1: default,  >=0 Override least occupied bank with value")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideRevision, -1, "-1: default,  >=0: Revision id")
