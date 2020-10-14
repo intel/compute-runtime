@@ -16,6 +16,8 @@
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_banks.h"
+#include "shared/source/memory_manager/physical_address_allocator.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/aub/aub_center.h"
@@ -27,8 +29,7 @@
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_context_controller.h"
-#include "opencl/source/memory_manager/memory_banks.h"
-#include "opencl/source/memory_manager/physical_address_allocator.h"
+#include "opencl/source/os_interface/ocl_reg_path.h"
 
 #include <cstring>
 
@@ -172,13 +173,12 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const std::
         UNRECOVERABLE_IF(nullptr == subCaptureCommon);
 
         if (subCaptureCommon->subCaptureMode > AubSubCaptureManager::SubCaptureMode::Off) {
-            csr->subCaptureManager = std::make_unique<AubSubCaptureManager>(fullName, *subCaptureCommon);
+            csr->subCaptureManager = std::make_unique<AubSubCaptureManager>(fullName, *subCaptureCommon, oclRegPath);
         }
 
         if (csr->aubManager) {
             if (!csr->aubManager->isOpen()) {
-                MultiDispatchInfo dispatchInfo;
-                csr->aubManager->open(csr->subCaptureManager ? csr->subCaptureManager->getSubCaptureFileName(dispatchInfo) : fullName);
+                csr->aubManager->open(csr->subCaptureManager ? csr->subCaptureManager->getSubCaptureFileName("") : fullName);
                 UNRECOVERABLE_IF(!csr->aubManager->isOpen());
             }
         }
@@ -547,7 +547,8 @@ AubSubCaptureStatus TbxCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSu
         return {false, false};
     }
 
-    auto status = subCaptureManager->checkAndActivateSubCapture(dispatchInfo);
+    std::string kernelName = (dispatchInfo.empty() ? "" : dispatchInfo.peekMainKernel()->getKernelInfo().name);
+    auto status = subCaptureManager->checkAndActivateSubCapture(kernelName);
     if (status.isActive && !status.wasActiveInPreviousEnqueue) {
         dumpTbxNonWritable = true;
     }

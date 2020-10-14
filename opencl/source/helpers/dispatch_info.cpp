@@ -36,4 +36,10 @@ Kernel *MultiDispatchInfo::peekMainKernel() const {
 Kernel *MultiDispatchInfo::peekParentKernel() const {
     return (mainKernel && mainKernel->isParentKernel) ? mainKernel : nullptr;
 }
+
+void MultiDispatchInfo::backupUnifiedMemorySyncRequirement() {
+    for (const auto &dispatchInfo : dispatchInfos) {
+        dispatchInfo.getKernel()->setUnifiedMemorySyncRequirement(true);
+    }
+}
 } // namespace NEO

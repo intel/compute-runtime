@@ -6,8 +6,8 @@
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/address_mapper.h"
 
-#include "opencl/source/memory_manager/address_mapper.h"
 #include "test.h"
 
 #include "gtest/gtest.h"

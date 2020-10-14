@@ -7,8 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
-
-#include "opencl/source/memory_manager/memory_banks.h"
+#include "shared/source/memory_manager/memory_banks.h"
 
 #include "aub_mapper.h"
 #include "third_party/aub_stream/headers/hardware_context.h"

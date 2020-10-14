@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/memory_banks.h"
 
 #include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
-#include "opencl/source/memory_manager/memory_banks.h"
 #include "opencl/source/memory_manager/page_table.h"
 #include "opencl/source/memory_manager/page_table.inl"
 #include "opencl/test/unit_test/mocks/mock_physical_address_allocator.h"

@@ -7,11 +7,11 @@
 
 #pragma once
 #include "shared/source/helpers/options.h"
+#include "shared/source/memory_manager/address_mapper.h"
+#include "shared/source/memory_manager/physical_address_allocator.h"
 
-#include "opencl/source/command_stream/aub_stream_provider.h"
-#include "opencl/source/command_stream/aub_subcapture.h"
-#include "opencl/source/memory_manager/address_mapper.h"
-#include "opencl/source/memory_manager/physical_address_allocator.h"
+#include "opencl/source/aub/aub_stream_provider.h"
+#include "opencl/source/aub/aub_subcapture.h"
 
 #include "third_party/aub_stream/headers/aub_manager.h"
 

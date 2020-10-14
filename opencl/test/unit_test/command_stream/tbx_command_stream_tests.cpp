@@ -10,6 +10,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
@@ -21,7 +22,6 @@
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/source/mem_obj/mem_obj.h"
-#include "opencl/source/memory_manager/memory_banks.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -670,8 +670,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpInSubCaptureMod
     auto subCaptureManager = tbxCsrWithAubDump->subCaptureManager.get();
     EXPECT_NE(nullptr, subCaptureManager);
 
-    MultiDispatchInfo dispatchInfo;
-    EXPECT_STREQ(subCaptureManager->getSubCaptureFileName(dispatchInfo).c_str(), tbxCsrWithAubDump->aubManager->getFileName().c_str());
+    EXPECT_STREQ(subCaptureManager->getSubCaptureFileName("kernelName").c_str(), tbxCsrWithAubDump->aubManager->getFileName().c_str());
 }
 
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenCreatedWithAubDumpSeveralTimesThenOpenIsCalledOnAubManagerOnceOnly) {
@@ -887,6 +886,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
     MockKernelWithInternals kernelInternals(*pClDevice);
+    kernelInternals.kernelInfo.name = "kernelName";
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(kernel);
 
@@ -912,6 +912,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
     MockKernelWithInternals kernelInternals(*pClDevice);
+    kernelInternals.kernelInfo.name = "kernelName";
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(kernel);
 

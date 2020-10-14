@@ -5,7 +5,8 @@
  *
  */
 
-#include "opencl/source/memory_manager/memory_banks.h"
+#include "shared/source/memory_manager/memory_banks.h"
+
 #include "opencl/source/memory_manager/page_table.h"
 #include "opencl/test/unit_test/mocks/mock_physical_address_allocator.h"
 

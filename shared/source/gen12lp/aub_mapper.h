@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/helpers/constants.h"
 
-#include "opencl/source/gen_common/aub_mapper_base.h"
+#include "opencl/source/aub/aub_mapper_base.h"
 
 #include "engine_node.h"
 

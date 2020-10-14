@@ -7,7 +7,7 @@
 
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
-#include "opencl/source/command_stream/aub_subcapture.h"
+#include "opencl/source/aub/aub_subcapture.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_subcapture_manager.h"
@@ -41,7 +41,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureToggleCaptureOnOff
     struct AubSubCaptureManagerWithToggleActiveMock : public AubSubCaptureManager {
         using AubSubCaptureManager::AubSubCaptureManager;
         using AubSubCaptureManager::isSubCaptureToggleActive;
-    } aubSubCaptureManagerWithToggleActiveMock("", subCaptureCommon);
+    } aubSubCaptureManagerWithToggleActiveMock("", subCaptureCommon, oclRegPath);
 
     EXPECT_FALSE(aubSubCaptureManagerWithToggleActiveMock.isSubCaptureToggleActive());
 }
@@ -50,7 +50,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureToggleFileNameIsUn
     struct AubSubCaptureManagerWithToggleFileNameMock : public AubSubCaptureManager {
         using AubSubCaptureManager::AubSubCaptureManager;
         using AubSubCaptureManager::getToggleFileName;
-    } aubSubCaptureManagerWithToggleFileNameMock("", subCaptureCommon);
+    } aubSubCaptureManagerWithToggleFileNameMock("", subCaptureCommon, oclRegPath);
 
     EXPECT_STREQ("", aubSubCaptureManagerWithToggleFileNameMock.getToggleFileName().c_str());
 }
@@ -82,8 +82,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenItIsCreatedThenItIsInitializ
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenCheckAndActivateSubCaptureIsCalledWithEmptyDispatchInfoThenSubCaptureIsInactive) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    MultiDispatchInfo dispatchInfo;
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(dispatchInfo);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture("kernelName");
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -91,28 +90,21 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenCheckAndActivateSubCaptureIs
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenCheckAndActivateSubCaptureIsCalledWithNonEmptyDispatchInfoThenKernelCurrentIndexIsIncremented) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
     uint32_t kernelCurrentIndex = aubSubCaptureManager.getKernelCurrentIndex();
     ASSERT_EQ(0u, kernelCurrentIndex);
 
-    aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    aubSubCaptureManager.checkAndActivateSubCapture("kernelName");
     EXPECT_EQ(kernelCurrentIndex + 0, aubSubCaptureManager.getKernelCurrentIndex());
 
-    aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    aubSubCaptureManager.checkAndActivateSubCapture("kernelName");
     EXPECT_EQ(kernelCurrentIndex + 1, aubSubCaptureManager.getKernelCurrentIndex());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenCheckAndActivateSubCaptureIsCalledButSubCaptureModeIsOffThenSubCaptureIsInactive) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Off;
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture("kernelName");
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -120,17 +112,13 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenCheckAndActivateSubCaptureIs
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenCheckAndActivateSubCaptureIsCalledAndSubCaptureIsToggledOnThenSubCaptureGetsAndRemainsActivated) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManager.setSubCaptureToggleActive(true);
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture("kernelName");
     EXPECT_TRUE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 
-    status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    status = aubSubCaptureManager.checkAndActivateSubCapture("kernelName");
     EXPECT_TRUE(status.isActive);
     EXPECT_TRUE(status.wasActiveInPreviousEnqueue);
 }
@@ -138,17 +126,13 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenCheckAndActivate
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenCheckAndActivateSubCaptureIsCalledButSubCaptureIsToggledOffThenSubCaptureRemainsDeactivated) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManager.setSubCaptureToggleActive(false);
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture("kernelName");
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 
-    status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    status = aubSubCaptureManager.checkAndActivateSubCapture("kernelName");
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -156,18 +140,14 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenCheckAndActivate
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenCheckAndActivateSubCaptureIsCalledButSubCaptureIsToggledOnAndOffThenSubCaptureGetsActivatedAndDeactivated) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManager.setSubCaptureToggleActive(true);
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture("kernelName");
     EXPECT_TRUE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 
     aubSubCaptureManager.setSubCaptureToggleActive(false);
-    status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    status = aubSubCaptureManager.checkAndActivateSubCapture("kernelName");
     EXPECT_FALSE(status.isActive);
     EXPECT_TRUE(status.wasActiveInPreviousEnqueue);
 }
@@ -175,14 +155,8 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenCheckAndActivate
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivateSubCaptureIsCalledAndSubCaptureFilterIsDefaultThenSubCaptureIsActive) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    dispatchInfo.setKernel(&kernel);
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
     EXPECT_TRUE(status.isActive);
     EXPECT_TRUE(aubSubCaptureManager.isSubCaptureActive());
 }
@@ -190,15 +164,9 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivateSubCaptureIsCalledAndSubCaptureFilterWithValidKernelStartIndexIsSpecifiedThenSubCaptureGetsActivated) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    dispatchInfo.setKernel(&kernel);
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
     subCaptureCommon.subCaptureFilter.dumpKernelStartIdx = 0;
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
     EXPECT_TRUE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -206,15 +174,9 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivateSubCaptureIsCalledAndSubCaptureFilterWithInvalidKernelStartIndexIsSpecifiedThenSubCaptureRemainsDeactivated) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    dispatchInfo.setKernel(&kernel);
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
     subCaptureCommon.subCaptureFilter.dumpKernelStartIdx = 1;
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -222,16 +184,10 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivateSubCaptureIsCalledAndSubCaptureFilterWithInvalidKernelEndIndexIsSpecifiedThenSubCaptureRemainsDeactivated) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    dispatchInfo.setKernel(&kernel);
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
     subCaptureCommon.subCaptureFilter.dumpKernelEndIdx = 0;
     subCaptureCommon.getKernelCurrentIndexAndIncrement();
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -239,15 +195,9 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivateSubCaptureIsCalledAndSubCaptureFilterWithValidKernelNameIsSpecifiedThenSubCaptureGetsActivated) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    dispatchInfo.setKernel(&kernel);
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
     subCaptureCommon.subCaptureFilter.dumpKernelName = "kernel_name";
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
     EXPECT_TRUE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -255,15 +205,9 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivateSubCaptureIsCalledAndSubCaptureFilterWithInvalidKernelNameIsSpecifiedThenSubCaptureRemainsDeactivated) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    dispatchInfo.setKernel(&kernel);
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
     subCaptureCommon.subCaptureFilter.dumpKernelName = "invalid_kernel_name";
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -333,42 +277,32 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenGetSubCaptureFileNameIsCalle
     DebugManager.flags.AUBDumpCaptureFileName.set("aubcapture_file_name.aub");
 
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
-    MultiDispatchInfo multiDispatchInfo;
-    EXPECT_STREQ("aubcapture_file_name.aub", aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
+    EXPECT_STREQ("aubcapture_file_name.aub", aubSubCaptureManager.getSubCaptureFileName("kernelName").c_str());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInOffModeWhenGetSubCaptureFileNameIsCalledThenItReturnsEmptyFileName) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-    EXPECT_STREQ("", aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
+    EXPECT_STREQ("", aubSubCaptureManager.getSubCaptureFileName("kernelName").c_str());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGetSubCaptureFileNameIsCalledAndToggleFileNameIsSpecifiedThenItReturnsItsName) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
     std::string toggleFileName = "toggle_file_name.aub";
     aubSubCaptureManager.setToggleFileName(toggleFileName);
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
-    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
+    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName("kernelName").c_str());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledAndToggleFileNameIsSpecifiedThenItReturnsItsName) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
     std::string toggleFileName = "toggle_file_name.aub";
     aubSubCaptureManager.setToggleFileName(toggleFileName);
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
+    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName("kernelName").c_str());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledAndBothToggleAndAubCaptureFileNamesAreSpecifiedThenToggleNameTakesPrecedence) {
@@ -377,49 +311,39 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFil
 
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
-    MultiDispatchInfo multiDispatchInfo;
     std::string toggleFileName = "toggle_file_name.aub";
     aubSubCaptureManager.setToggleFileName(toggleFileName);
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
+    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName("kernelName").c_str());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGetSubCaptureFileNameIsCalledAndToggleFileNameIsNotSpecifiedThenItGeneratesFilterFileName) {
     AubSubCaptureManagerMock aubSubCaptureManager("aubfile.aub", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
     aubSubCaptureManager.setToggleFileName("");
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
     std::string filterFileName = aubSubCaptureManager.generateFilterFileName();
-    EXPECT_STREQ(filterFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
+    EXPECT_STREQ(filterFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName("kernelName").c_str());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledAndToggleFileNameIsNotSpecifiedThenItGeneratesToggleFileName) {
     AubSubCaptureManagerMock aubSubCaptureManager("aubfile.aub", subCaptureCommon);
 
-    DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    dispatchInfo.setKernel(&kernel);
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
     aubSubCaptureManager.setToggleFileName("");
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    std::string toggleFileName = aubSubCaptureManager.generateToggleFileName(multiDispatchInfo);
-    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
+    std::string toggleFileName = aubSubCaptureManager.generateToggleFileName(kernelInfo.name);
+    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(kernelInfo.name).c_str());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledForEmptyDispatchInfoThenGenerateToggleFileNameWithoutKernelName) {
     AubSubCaptureManagerMock aubSubCaptureManager("aubfile.aub", subCaptureCommon);
 
-    MultiDispatchInfo dispatchInfo;
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    auto toggleFileName = aubSubCaptureManager.generateToggleFileName(dispatchInfo);
-    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(dispatchInfo).c_str());
+    auto toggleFileName = aubSubCaptureManager.generateToggleFileName("kernelName");
+    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName("kernelName").c_str());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGetSubCaptureFileNameIsCalledManyTimesAndToggleFileNameIsNotSpecifiedThenItGeneratesFilterFileNameOnceOnly) {
@@ -430,35 +354,29 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGetSubCaptureFil
             return "aubfile_filter.aub";
         }
         mutable uint32_t generateFilterFileNameCount = 0;
-    } aubSubCaptureManager("", subCaptureCommon);
+    } aubSubCaptureManager("", subCaptureCommon, oclRegPath);
 
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
-    aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo);
-    aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo);
-    aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo);
+    aubSubCaptureManager.getSubCaptureFileName("kernelName");
+    aubSubCaptureManager.getSubCaptureFileName("kernelName");
+    aubSubCaptureManager.getSubCaptureFileName("kernelName");
     EXPECT_EQ(1u, aubSubCaptureManager.generateFilterFileNameCount);
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledManyTimesAndToggleFileNameIsNotSpecifiedThenItGeneratesToggleFileNameOnceOnly) {
     struct AubSubCaptureManagerMockWithToggleFileNameGenerationCount : AubSubCaptureManager {
         using AubSubCaptureManager::AubSubCaptureManager;
-        std::string generateToggleFileName(const MultiDispatchInfo &dispatchInfo) const override {
+        std::string generateToggleFileName(const std::string &kernelName) const override {
             generateToggleFileNameCount++;
             return "aubfile_toggle.aub";
         }
         mutable uint32_t generateToggleFileNameCount = 0;
-    } aubSubCaptureManager("", subCaptureCommon);
+    } aubSubCaptureManager("", subCaptureCommon, oclRegPath);
 
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo);
-    aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo);
-    aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo);
+    aubSubCaptureManager.getSubCaptureFileName("kernelName");
+    aubSubCaptureManager.getSubCaptureFileName("kernelName");
+    aubSubCaptureManager.getSubCaptureFileName("kernelName");
     EXPECT_EQ(1u, aubSubCaptureManager.generateToggleFileNameCount);
 }
 
@@ -494,46 +412,18 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenGenerateFilterFi
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGenerateToggleFileNameIsCalledThenItGeneratesFileNameWithKernelCurrentIndex) {
     AubSubCaptureManagerMock aubSubCaptureManager("aubfile.aub", subCaptureCommon);
     std::string kernelCurrentIndex = "from_" + std::to_string(aubSubCaptureManager.getKernelCurrentIndex());
-    MultiDispatchInfo dispatchInfo;
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    std::string filterFileName = aubSubCaptureManager.generateToggleFileName(dispatchInfo);
+    std::string filterFileName = aubSubCaptureManager.generateToggleFileName("kernelName");
     EXPECT_NE(std::string::npos, filterFileName.find(kernelCurrentIndex));
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGenerateToggleFileNameIsCalledAndDispatchInfoIsEmptyThenItGeneratesFileNameWithoutNameOfKernel) {
     AubSubCaptureManagerMock aubSubCaptureManager("aubfile.aub", subCaptureCommon);
     std::string kernelName = "kernel_name";
-    MultiDispatchInfo dispatchInfo;
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureCommon.subCaptureFilter.dumpKernelName = kernelName;
-    std::string toggleFileName = aubSubCaptureManager.generateToggleFileName(dispatchInfo);
+    std::string toggleFileName = aubSubCaptureManager.generateToggleFileName("kernelName");
     EXPECT_EQ(std::string::npos, toggleFileName.find(kernelName));
-}
-
-TEST_F(AubSubCaptureTest, givenMultiDispatchInfoWithMultipleKernelsWhenGenerateToggleFileNameThenPickMainKernel) {
-    AubSubCaptureManagerMock aubSubCaptureManager("aubfile.aub", subCaptureCommon);
-    KernelInfo mainKernelInfo = {};
-    mainKernelInfo.name = "main_kernel";
-
-    MockKernel mainKernel(program.get(), mainKernelInfo, *pClDevice);
-    MockKernel kernel1(program.get(), kernelInfo, *pClDevice);
-    MockKernel kernel2(program.get(), kernelInfo, *pClDevice);
-
-    DispatchInfo mainDispatchInfo(&mainKernel, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
-    DispatchInfo dispatchInfo1(&kernel1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
-    DispatchInfo dispatchInfo2(&kernel2, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
-
-    MultiDispatchInfo multiDispatchInfo(&mainKernel);
-    multiDispatchInfo.push(dispatchInfo1);
-    multiDispatchInfo.push(mainDispatchInfo);
-    multiDispatchInfo.push(dispatchInfo2);
-
-    aubSubCaptureManager.setToggleFileName("");
-
-    subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    std::string toggleFileName = aubSubCaptureManager.generateToggleFileName(multiDispatchInfo);
-    EXPECT_NE(std::string::npos, toggleFileName.find(mainKernelInfo.name));
-    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenKernelNameIsSpecifiedThenNamedKernelIndexesShouldApplyToTheSpecifiedKernel) {
@@ -544,31 +434,22 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenKernelNameIsSpec
     subCaptureCommon.subCaptureFilter.dumpNamedKernelEndIdx = 1;
     subCaptureCommon.subCaptureFilter.dumpKernelName = kernelName;
 
-    DispatchInfo dispatchInfo;
-    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
-    dispatchInfo.setKernel(&kernel);
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
-
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(aubSubCaptureManager.isSubCaptureActive());
 
-    status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
     EXPECT_TRUE(status.isActive);
     EXPECT_TRUE(aubSubCaptureManager.isSubCaptureActive());
 
-    status = aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(aubSubCaptureManager.isSubCaptureActive());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenPublicInterfaceIsCalledThenLockShouldBeAcquired) {
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
-    DispatchInfo dispatchInfo;
-    MultiDispatchInfo multiDispatchInfo;
-    multiDispatchInfo.push(dispatchInfo);
 
     aubSubCaptureManager.isLocked = false;
     aubSubCaptureManager.isSubCaptureEnabled();
@@ -579,7 +460,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenPublicInterfaceIsCalledThenL
     EXPECT_TRUE(aubSubCaptureManager.isLocked);
 
     aubSubCaptureManager.isLocked = false;
-    aubSubCaptureManager.checkAndActivateSubCapture(multiDispatchInfo);
+    aubSubCaptureManager.checkAndActivateSubCapture("kernelName");
     EXPECT_TRUE(aubSubCaptureManager.isLocked);
 
     aubSubCaptureManager.isLocked = false;
@@ -587,6 +468,6 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenPublicInterfaceIsCalledThenL
     EXPECT_TRUE(aubSubCaptureManager.isLocked);
 
     aubSubCaptureManager.isLocked = false;
-    aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo);
+    aubSubCaptureManager.getSubCaptureFileName("kernelName");
     EXPECT_TRUE(aubSubCaptureManager.isLocked);
 }

@@ -6,9 +6,10 @@
  */
 
 #pragma once
+#include "shared/source/memory_manager/memory_banks.h"
+#include "shared/source/memory_manager/physical_address_allocator.h"
+
 #include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw.h"
-#include "opencl/source/memory_manager/memory_banks.h"
-#include "opencl/source/memory_manager/physical_address_allocator.h"
 
 namespace NEO {
 class GraphicsAllocation;

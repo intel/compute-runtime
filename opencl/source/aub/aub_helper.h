@@ -10,7 +10,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
-#include "opencl/source/gen_common/aub_mapper_base.h"
+#include "opencl/source/aub/aub_mapper_base.h"
 
 namespace NEO {
 

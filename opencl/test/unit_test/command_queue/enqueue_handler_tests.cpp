@@ -10,7 +10,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
-#include "opencl/source/command_stream/aub_subcapture.h"
+#include "opencl/source/aub/aub_subcapture.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/command_stream/thread_arbitration_policy_helper.h"
@@ -159,6 +159,7 @@ HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCapt
 
     MockCmdQWithAubSubCapture<FamilyType> cmdQ(context, pClDevice);
     MockKernelWithInternals mockKernel(*pClDevice);
+    mockKernel.kernelInfo.name = "kernelName";
     size_t gws[3] = {1, 0, 0};
 
     // activate subcapture

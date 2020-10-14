@@ -15,7 +15,6 @@
 
 namespace NEO {
 
-struct MultiDispatchInfo;
 class SettingsReader;
 
 class AubSubCaptureCommon {
@@ -55,22 +54,22 @@ class AubSubCaptureManager {
 
     void disableSubCapture();
 
-    AubSubCaptureStatus checkAndActivateSubCapture(const MultiDispatchInfo &dispatchInfo);
+    AubSubCaptureStatus checkAndActivateSubCapture(const std::string &kernelName);
 
     AubSubCaptureStatus getSubCaptureStatus() const;
 
-    const std::string &getSubCaptureFileName(const MultiDispatchInfo &dispatchInfo);
+    const std::string &getSubCaptureFileName(const std::string &kernelName);
 
-    AubSubCaptureManager(const std::string &fileName, AubSubCaptureCommon &subCaptureCommon);
+    AubSubCaptureManager(const std::string &fileName, AubSubCaptureCommon &subCaptureCommon, const char *regPath);
     virtual ~AubSubCaptureManager();
 
   protected:
     MOCKABLE_VIRTUAL bool isSubCaptureToggleActive() const;
-    bool isSubCaptureFilterActive(const MultiDispatchInfo &dispatchInfo);
+    bool isSubCaptureFilterActive(const std::string &kernelName);
     MOCKABLE_VIRTUAL std::string getAubCaptureFileName() const;
     MOCKABLE_VIRTUAL std::string getToggleFileName() const;
     MOCKABLE_VIRTUAL std::string generateFilterFileName() const;
-    MOCKABLE_VIRTUAL std::string generateToggleFileName(const MultiDispatchInfo &dispatchInfo) const;
+    MOCKABLE_VIRTUAL std::string generateToggleFileName(const std::string &kernelName) const;
     bool isKernelIndexInSubCaptureRange(uint32_t kernelIdx, uint32_t rangeStartIdx, uint32_t rangeEndIdx) const;
     MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lock() const;
 

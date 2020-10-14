@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/memory_info_impl.h"
 
-#include "opencl/source/memory_manager/memory_banks.h"
 #include "opencl/test/unit_test/os_interface/linux/drm_mock_dg1.h"
 
 #include "gtest/gtest.h"

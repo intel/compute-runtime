@@ -5,19 +5,18 @@
  *
  */
 
-#include "opencl/source/command_stream/aub_subcapture.h"
+#include "opencl/source/aub/aub_subcapture.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/string.h"
 #include "shared/source/utilities/debug_settings_reader.h"
-
-#include "opencl/source/helpers/dispatch_info.h"
-#include "opencl/source/kernel/kernel.h"
-#include "opencl/source/os_interface/ocl_reg_path.h"
 
 namespace NEO {
 
-AubSubCaptureManager::AubSubCaptureManager(const std::string &fileName, AubSubCaptureCommon &subCaptureCommon)
+AubSubCaptureManager::AubSubCaptureManager(const std::string &fileName, AubSubCaptureCommon &subCaptureCommon, const char *regPath)
     : initialFileName(fileName), subCaptureCommon(subCaptureCommon) {
-    settingsReader.reset(SettingsReader::createOsReader(true, oclRegPath));
+    settingsReader.reset(SettingsReader::createOsReader(true, regPath));
 }
 
 AubSubCaptureManager::~AubSubCaptureManager() = default;
@@ -34,8 +33,8 @@ void AubSubCaptureManager::disableSubCapture() {
     subCaptureIsActive = subCaptureWasActiveInPreviousEnqueue = false;
 };
 
-AubSubCaptureStatus AubSubCaptureManager::checkAndActivateSubCapture(const MultiDispatchInfo &dispatchInfo) {
-    if (dispatchInfo.empty()) {
+AubSubCaptureStatus AubSubCaptureManager::checkAndActivateSubCapture(const std::string &kernelName) {
+    if (kernelName.empty()) {
         return {false, false};
     }
 
@@ -51,7 +50,7 @@ AubSubCaptureStatus AubSubCaptureManager::checkAndActivateSubCapture(const Multi
         subCaptureIsActive = isSubCaptureToggleActive();
         break;
     case SubCaptureMode::Filter:
-        subCaptureIsActive = isSubCaptureFilterActive(dispatchInfo);
+        subCaptureIsActive = isSubCaptureFilterActive(kernelName);
         break;
     default:
         DEBUG_BREAK_IF(false);
@@ -67,7 +66,7 @@ AubSubCaptureStatus AubSubCaptureManager::getSubCaptureStatus() const {
     return {this->subCaptureIsActive, this->subCaptureWasActiveInPreviousEnqueue};
 }
 
-const std::string &AubSubCaptureManager::getSubCaptureFileName(const MultiDispatchInfo &dispatchInfo) {
+const std::string &AubSubCaptureManager::getSubCaptureFileName(const std::string &kernelName) {
     auto guard = this->lock();
 
     if (useToggleFileName) {
@@ -88,7 +87,7 @@ const std::string &AubSubCaptureManager::getSubCaptureFileName(const MultiDispat
         break;
     case SubCaptureMode::Toggle:
         if (currentFileName.empty()) {
-            currentFileName = generateToggleFileName(dispatchInfo);
+            currentFileName = generateToggleFileName(kernelName);
             useToggleFileName = false;
         }
         break;
@@ -133,19 +132,18 @@ std::string AubSubCaptureManager::generateFilterFileName() const {
     return filterFileName;
 }
 
-std::string AubSubCaptureManager::generateToggleFileName(const MultiDispatchInfo &dispatchInfo) const {
+std::string AubSubCaptureManager::generateToggleFileName(const std::string &kernelName) const {
     std::string baseFileName = initialFileName.substr(0, initialFileName.length() - strlen(".aub"));
     std::string toggleFileName = baseFileName + "_toggle";
     toggleFileName += "_from_" + std::to_string(kernelCurrentIdx);
-    if (!dispatchInfo.empty()) {
-        toggleFileName += "_" + dispatchInfo.peekMainKernel()->getKernelInfo().name;
+    if (!kernelName.empty()) {
+        toggleFileName += "_" + kernelName;
     }
     toggleFileName += ".aub";
     return toggleFileName;
 }
 
-bool AubSubCaptureManager::isSubCaptureFilterActive(const MultiDispatchInfo &dispatchInfo) {
-    auto kernelName = dispatchInfo.peekMainKernel()->getKernelInfo().name;
+bool AubSubCaptureManager::isSubCaptureFilterActive(const std::string &kernelName) {
     auto subCaptureIsActive = false;
 
     if (subCaptureCommon.subCaptureFilter.dumpKernelName.empty()) {

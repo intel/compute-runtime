@@ -6,13 +6,15 @@
  */
 
 #pragma once
-#include "opencl/source/command_stream/aub_subcapture.h"
+#include "opencl/source/aub/aub_subcapture.h"
+#include "opencl/source/os_interface/ocl_reg_path.h"
 
 using namespace NEO;
 
 class AubSubCaptureManagerMock : public AubSubCaptureManager {
   public:
-    using AubSubCaptureManager::AubSubCaptureManager;
+    AubSubCaptureManagerMock(const std::string &fileName, AubSubCaptureCommon &subCaptureCommon)
+        : AubSubCaptureManager(fileName, subCaptureCommon, oclRegPath) {}
 
     void setSubCaptureIsActive(bool on) {
         subCaptureIsActive = on;

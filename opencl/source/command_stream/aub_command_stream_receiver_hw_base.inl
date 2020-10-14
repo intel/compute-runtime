@@ -17,19 +17,21 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/aub/aub_helper.h"
+#include "opencl/source/aub/aub_stream_provider.h"
+#include "opencl/source/aub/aub_subcapture.h"
 #include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
 #include "opencl/source/aub_mem_dump/aub_alloc_dump.inl"
 #include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver_hw.h"
-#include "opencl/source/command_stream/aub_stream_provider.h"
-#include "opencl/source/command_stream/aub_subcapture.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/source/helpers/neo_driver_version.h"
-#include "opencl/source/memory_manager/memory_banks.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
+#include "opencl/source/os_interface/ocl_reg_path.h"
 
 #include "driver_version.h"
 #include "third_party/aub_stream/headers/aub_manager.h"
@@ -51,7 +53,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const std::str
 
     auto subCaptureCommon = aubCenter->getSubCaptureCommon();
     UNRECOVERABLE_IF(nullptr == subCaptureCommon);
-    subCaptureManager = std::make_unique<AubSubCaptureManager>(fileName, *subCaptureCommon);
+    subCaptureManager = std::make_unique<AubSubCaptureManager>(fileName, *subCaptureCommon, oclRegPath);
 
     aubManager = aubCenter->getAubManager();
 
@@ -762,9 +764,10 @@ void AUBCommandStreamReceiverHw<GfxFamily>::dumpAllocation(GraphicsAllocation &g
 
 template <typename GfxFamily>
 AubSubCaptureStatus AUBCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
-    auto status = subCaptureManager->checkAndActivateSubCapture(dispatchInfo);
+    std::string kernelName = dispatchInfo.peekMainKernel()->getKernelInfo().name;
+    auto status = subCaptureManager->checkAndActivateSubCapture(kernelName);
     if (status.isActive) {
-        std::string subCaptureFile = subCaptureManager->getSubCaptureFileName(dispatchInfo);
+        std::string subCaptureFile = subCaptureManager->getSubCaptureFileName(kernelName);
         auto isReopened = reopenFile(subCaptureFile);
         if (isReopened) {
             dumpAubNonWritable = true;

@@ -12,10 +12,9 @@
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/memory_info_impl.h"
-
-#include "opencl/source/memory_manager/memory_banks.h"
 
 namespace NEO {
 

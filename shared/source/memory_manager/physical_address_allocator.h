@@ -9,8 +9,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
-
-#include "opencl/source/memory_manager/memory_banks.h"
+#include "shared/source/memory_manager/memory_banks.h"
 
 #include <atomic>
 #include <mutex>
