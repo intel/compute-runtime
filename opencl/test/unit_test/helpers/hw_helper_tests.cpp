@@ -1011,13 +1011,26 @@ TEST(HwInfoConfigCommonHelperTest, givenBlitterPreferenceWhenEnablingBlitterOper
 }
 
 HWTEST_F(HwHelperTest, givenHwHelperWhenAskingForIsaSystemMemoryPlacementThenReturnFalseIfLocalMemorySupported) {
+    DebugManagerStateRestore restorer;
     HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
 
     hardwareInfo.featureTable.ftrLocalMemory = true;
-    EXPECT_FALSE(hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
+    auto localMemoryEnabled = hwHelper.getEnableLocalMemory(hardwareInfo);
+    EXPECT_NE(localMemoryEnabled, hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
 
     hardwareInfo.featureTable.ftrLocalMemory = false;
-    EXPECT_TRUE(hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
+    localMemoryEnabled = hwHelper.getEnableLocalMemory(hardwareInfo);
+    EXPECT_NE(localMemoryEnabled, hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
+
+    DebugManager.flags.EnableLocalMemory.set(true);
+    hardwareInfo.featureTable.ftrLocalMemory = false;
+    localMemoryEnabled = hwHelper.getEnableLocalMemory(hardwareInfo);
+    EXPECT_NE(localMemoryEnabled, hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
+
+    DebugManager.flags.EnableLocalMemory.set(false);
+    hardwareInfo.featureTable.ftrLocalMemory = true;
+    localMemoryEnabled = hwHelper.getEnableLocalMemory(hardwareInfo);
+    EXPECT_NE(localMemoryEnabled, hwHelper.useSystemMemoryPlacementForISA(hardwareInfo));
 }
 
 TEST(HwInfoConfigCommonHelperTest, givenDebugFlagSetWhenEnablingBlitterOperationsSupportThenHonorTheFlag) {
