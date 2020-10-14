@@ -12,11 +12,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 
-#include <dirent.h>
 #include <sys/mman.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 namespace NEO {
 std::unique_ptr<PageFaultManager> PageFaultManager::create() {
@@ -27,9 +23,7 @@ std::function<void(int signal, siginfo_t *info, void *context)> PageFaultManager
 
 PageFaultManagerLinux::PageFaultManagerLinux() {
     pageFaultHandler = [&](int signal, siginfo_t *info, void *context) {
-        if (signal == SIGUSR1) {
-            this->waitForCopy();
-        } else if (!this->verifyPageFault(info->si_addr)) {
+        if (!this->verifyPageFault(info->si_addr)) {
             callPreviousHandler(signal, info, context);
         }
     };
@@ -41,9 +35,6 @@ PageFaultManagerLinux::PageFaultManagerLinux() {
     auto retVal = sigaction(SIGSEGV, &pageFaultManagerHandler, &previousPageFaultHandler);
     UNRECOVERABLE_IF(retVal != 0);
 
-    retVal = sigaction(SIGUSR1, &pageFaultManagerHandler, &previousUserSignalHandler);
-    UNRECOVERABLE_IF(retVal != 0);
-
     this->evictMemoryAfterCopy = DebugManager.flags.EnableDirectSubmission.get() &&
                                  DebugManager.flags.USMEvictAfterMigration.get();
 }
@@ -51,9 +42,6 @@ PageFaultManagerLinux::PageFaultManagerLinux() {
 PageFaultManagerLinux::~PageFaultManagerLinux() {
     if (!previousHandlerRestored) {
         auto retVal = sigaction(SIGSEGV, &previousPageFaultHandler, nullptr);
-        UNRECOVERABLE_IF(retVal != 0);
-
-        retVal = sigaction(SIGUSR1, &previousUserSignalHandler, nullptr);
         UNRECOVERABLE_IF(retVal != 0);
     }
 }
@@ -86,37 +74,6 @@ void PageFaultManagerLinux::callPreviousHandler(int signal, siginfo_t *info, voi
             previousPageFaultHandler.sa_handler(signal);
         }
     }
-}
-
-/* This function is a WA for USM issue in multithreaded environment
-   While handling page fault, before copy starts, user signal (SIGUSR1)
-   is broadcasted to ensure that every thread received signal and is
-   stucked on PageFaultHandler's mutex before copy from GPU to CPU proceeds. */
-void PageFaultManagerLinux::broadcastWaitSignal() {
-    auto selfThreadId = syscall(__NR_gettid);
-
-    auto procDir = opendir("/proc/self/task");
-    UNRECOVERABLE_IF(!procDir);
-
-    struct dirent *dirEntry;
-    while ((dirEntry = readdir(procDir)) != NULL) {
-        if (dirEntry->d_name[0] == '.') {
-            continue;
-        }
-
-        int threadId = atoi(dirEntry->d_name);
-        if (threadId == selfThreadId) {
-            continue;
-        }
-
-        sendSignalToThread(threadId);
-    }
-
-    closedir(procDir);
-}
-
-void PageFaultManagerLinux::sendSignalToThread(int threadId) {
-    syscall(SYS_tkill, threadId, SIGUSR1);
 }
 
 void PageFaultManagerLinux::evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) {

@@ -25,8 +25,6 @@ class PageFaultManagerLinux : public PageFaultManager {
     void protectCPUMemoryAccess(void *ptr, size_t size) override;
 
     void evictMemoryAfterImplCopy(GraphicsAllocation *allocation, Device *device) override;
-    void broadcastWaitSignal() override;
-    MOCKABLE_VIRTUAL void sendSignalToThread(int threadId);
 
     void callPreviousHandler(int signal, siginfo_t *info, void *context);
     bool previousHandlerRestored = false;
@@ -34,7 +32,6 @@ class PageFaultManagerLinux : public PageFaultManager {
     static std::function<void(int signal, siginfo_t *info, void *context)> pageFaultHandler;
 
     struct sigaction previousPageFaultHandler = {};
-    struct sigaction previousUserSignalHandler = {};
 
     bool evictMemoryAfterCopy = false;
 };

@@ -18,58 +18,11 @@
 
 #include <csignal>
 #include <sys/mman.h>
-#include <sys/syscall.h>
-#include <thread>
-#include <unistd.h>
 
 using namespace NEO;
 
 using PageFaultManagerLinuxTest = PageFaultManagerConfigFixture;
 using MockPageFaultManagerLinux = MockPageFaultManagerHandlerInvoke<PageFaultManagerLinux>;
-
-struct UserSignalMockPageFaultManagerLinux : public PageFaultManagerLinux {
-    using PageFaultManager::verifyPageFault;
-
-    UserSignalMockPageFaultManagerLinux() {
-        ownThread = std::thread([&]() {
-            while (!waitForCopyCalled) {
-                if (ownThreadId == -1) {
-                    ownThreadId = static_cast<int>(syscall(__NR_gettid));
-                }
-            }
-        });
-        while (ownThreadId == -1) {
-        }
-    }
-
-    void allowCPUMemoryAccess(void *ptr, size_t size) override {}
-    void transferToCpu(void *ptr, size_t size, void *cmdQ) override {}
-    void setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager) override {}
-
-    void sendSignalToThread(int threadId) override {
-        PageFaultManagerLinux::sendSignalToThread(ownThreadId);
-    }
-
-    void waitForCopy() override {
-        PageFaultManagerLinux::waitForCopy();
-        waitForCopyCalled = true;
-    }
-
-    std::thread ownThread;
-    int ownThreadId = -1;
-    bool waitForCopyCalled = false;
-};
-
-TEST_F(PageFaultManagerLinuxTest, whenVeryfyingPageFaultThenUserSignalIsSentToOtherThreads) {
-    auto pageFaultManager = std::make_unique<UserSignalMockPageFaultManagerLinux>();
-
-    auto alloc = reinterpret_cast<void *>(0x1);
-    pageFaultManager->insertAllocation(alloc, 10, nullptr, nullptr, {});
-    pageFaultManager->verifyPageFault(alloc);
-    pageFaultManager->ownThread.join();
-
-    EXPECT_TRUE(pageFaultManager->waitForCopyCalled);
-}
 
 TEST_F(PageFaultManagerLinuxTest, whenPageFaultIsRaisedThenHandlerIsInvoked) {
     auto pageFaultManager = std::make_unique<MockPageFaultManagerLinux>();
