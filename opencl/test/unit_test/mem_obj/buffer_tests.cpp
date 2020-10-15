@@ -1812,10 +1812,7 @@ using MultiRootDeviceBufferTest = MultiRootDeviceFixture;
 TEST_F(MultiRootDeviceBufferTest, WhenCleanAllGraphicsAllocationsCalledThenGraphicsAllocationsAreProperlyRemoved) {
     std::map<uint32_t, NEO::CreateBuffer::AllocationInfo> allocationInfo;
 
-    for (auto rootDeviceIndex = 1u; rootDeviceIndex < 2u; rootDeviceIndex++) {
-        allocationInfo.insert({rootDeviceIndex, {}});
-    }
-
+    allocationInfo.insert({1u, {}});
     allocationInfo[1u].memory = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{1u, MemoryConstants::pageSize});
 
     Buffer::cleanAllGraphicsAllocations(*context, *context->getMemoryManager(), allocationInfo);

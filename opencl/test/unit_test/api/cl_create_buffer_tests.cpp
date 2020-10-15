@@ -466,18 +466,12 @@ TEST_F(clCreateBufferTestsWithRestrictions, GivenMemoryManagerRestrictionsWhenMi
 
 using clCreateBufferWithMultiDeviceContextTests = clCreateBufferTemplateTests;
 
-static int cbInvoked = 0;
-void CL_CALLBACK eventCallBack(const char *, const void *,
-                               size_t, void *) {
-    cbInvoked++;
-}
-
 TEST_P(clCreateBufferWithMultiDeviceContextTests, GivenBufferCreatedWithContextdWithMultiDeviceThenGraphicsAllocationsAreProperlyFilled) {
     UltClDeviceFactory deviceFactory{2, 0};
     DebugManager.flags.EnableMultiRootDeviceContexts.set(true);
 
     cl_device_id devices[] = {deviceFactory.rootDevices[0], deviceFactory.rootDevices[1]};
-    auto context = clCreateContext(nullptr, 2u, devices, eventCallBack, nullptr, &retVal);
+    auto context = clCreateContext(nullptr, 2u, devices, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, context);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
