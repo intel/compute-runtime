@@ -11,7 +11,6 @@
 
 #include <string>
 
-
 extern void generateSegfaultWithSafetyGuard(SegfaultHelper *segfaultHelper);
 
 int main(int argc, char **argv) {

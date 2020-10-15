@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
+
 #include <cstdint>
 
 #ifndef BIT

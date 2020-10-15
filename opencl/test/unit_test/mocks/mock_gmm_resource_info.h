@@ -12,7 +12,6 @@
 
 #include "gmock/gmock.h"
 
-
 namespace NEO {
 struct SurfaceFormatInfo;
 
@@ -112,4 +111,3 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     uint32_t mipTailStartLod = 0;
 };
 } // namespace NEO
-

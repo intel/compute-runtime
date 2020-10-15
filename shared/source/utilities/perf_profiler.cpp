@@ -16,7 +16,6 @@
 #include <sstream>
 #include <thread>
 
-
 namespace NEO {
 
 std::atomic<int> PerfProfiler::counter(0);
