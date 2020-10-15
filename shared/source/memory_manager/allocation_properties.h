@@ -40,6 +40,7 @@ struct AllocationProperties {
     DeviceBitfield subDevicesBitfield{};
     uint64_t gpuAddress = 0;
     OsContext *osContext = nullptr;
+    bool useMmapObject = true;
 
     AllocationProperties(uint32_t rootDeviceIndex, size_t size,
                          GraphicsAllocation::AllocationType allocationType, DeviceBitfield subDevicesBitfieldParam)
@@ -112,5 +113,6 @@ struct AllocationData {
     ImageInfo *imgInfo = nullptr;
     uint32_t rootDeviceIndex = 0;
     OsContext *osContext = nullptr;
+    bool useMmapObject = true;
 };
 } // namespace NEO

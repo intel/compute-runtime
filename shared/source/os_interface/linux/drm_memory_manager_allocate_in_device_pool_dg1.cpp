@@ -66,7 +66,7 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm,
 }
 
 DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSize, uint64_t gpuAddress) {
-    bool useBooMmap = this->getDrm(allocationData.rootDeviceIndex).getMemoryInfo() != nullptr;
+    bool useBooMmap = this->getDrm(allocationData.rootDeviceIndex).getMemoryInfo() && allocationData.useMmapObject;
 
     if (DebugManager.flags.EnableBOMmapCreate.get() != -1) {
         useBooMmap = DebugManager.flags.EnableBOMmapCreate.get();
