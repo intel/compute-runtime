@@ -60,12 +60,6 @@ AubCenter::AubCenter() {
     subCaptureCommon = std::make_unique<AubSubCaptureCommon>();
 }
 
-AubCenter::~AubCenter() {
-    if (DebugManager.flags.UseAubStream.get()) {
-        aub_stream::injectMMIOList(MMIOList{});
-    }
-}
-
 uint32_t AubCenter::getAubStreamMode(const std::string &aubFileName, uint32_t csrType) {
     uint32_t mode = aub_stream::mode::aubFile;
 
