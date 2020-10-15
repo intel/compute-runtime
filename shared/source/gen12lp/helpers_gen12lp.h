@@ -17,6 +17,7 @@ struct AubGTTData;
 namespace NEO {
 class CommandStreamReceiver;
 class GraphicsAllocation;
+struct HardwareInfo;
 struct PipelineSelectArgs;
 class Image;
 
