@@ -7,20 +7,20 @@
 
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/unit_test/fixtures/device_fixture.h"
 
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 #include "test.h"
 
 using namespace NEO;
 
-struct BlitColorTests : public ClDeviceFixture, public testing::TestWithParam<size_t> {
+struct BlitColorTests : public DeviceFixture, public testing::TestWithParam<size_t> {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        DeviceFixture::SetUp();
     }
 
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        DeviceFixture::TearDown();
     }
 };
 

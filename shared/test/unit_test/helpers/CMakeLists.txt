@@ -29,11 +29,11 @@ set(NEO_CORE_HELPERS_TESTS
     ${CMAKE_CURRENT_SOURCE_DIR}/variable_backup.h
 )
 
-set_property(GLOBAL PROPERTY NEO_CORE_HELPERS_TESTS ${NEO_CORE_HELPERS_TESTS})
 add_subdirectories()
 
 target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests.h
                ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_shared_tests.cpp
+               ${NEO_CORE_HELPERS_TESTS}
 )

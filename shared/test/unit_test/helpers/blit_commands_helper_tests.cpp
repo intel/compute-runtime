@@ -8,6 +8,7 @@
 #include "shared/test/unit_test/helpers/blit_commands_helper_tests.inl"
 
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/test/unit_test/fixtures/device_fixture.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
@@ -75,19 +76,19 @@ TEST(BlitCommandsHelperTest, GivenCopySizeYAndZEqual0WhenConstructingPropertiesF
     EXPECT_EQ(blitProperties.copySize, expectedSize);
 }
 
-using BlitTests = Test<ClDeviceFixture>;
+using BlitTests = Test<DeviceFixture>;
 
 HWTEST_F(BlitTests, givenDebugVariablesWhenGettingMaxBlitSizeThenHonorUseProvidedValues) {
     DebugManagerStateRestore restore{};
 
-    ASSERT_EQ(BlitterConstants::maxBlitWidth, BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pClDevice->getRootDeviceEnvironment()));
-    ASSERT_EQ(BlitterConstants::maxBlitHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pClDevice->getRootDeviceEnvironment()));
+    ASSERT_EQ(BlitterConstants::maxBlitWidth, BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironment()));
+    ASSERT_EQ(BlitterConstants::maxBlitHeight, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment()));
 
     DebugManager.flags.LimitBlitterMaxWidth.set(50);
-    EXPECT_EQ(50u, BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pClDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(50u, BlitCommandsHelper<FamilyType>::getMaxBlitWidth(pDevice->getRootDeviceEnvironment()));
 
     DebugManager.flags.LimitBlitterMaxHeight.set(60);
-    EXPECT_EQ(60u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pClDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(60u, BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenReturnCorrectResult) {

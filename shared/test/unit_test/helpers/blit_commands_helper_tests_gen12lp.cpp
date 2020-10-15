@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/test/unit_test/fixtures/device_fixture.h"
 #include "shared/test/unit_test/helpers/blit_commands_helper_tests.inl"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
@@ -16,7 +17,7 @@
 
 using namespace NEO;
 
-using BlitTests = Test<ClDeviceFixture>;
+using BlitTests = Test<DeviceFixture>;
 
 HWTEST2_F(BlitTests, givenOneBytePerPixelWhenAppendColorDepthThenCorrectDepthIsSet, IsGen12LP) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
