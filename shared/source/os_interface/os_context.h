@@ -35,6 +35,8 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     virtual bool isInitialized() const { return true; }
     bool isDefaultContext() const { return defaultContext; }
     void setDefaultContext(bool value) { defaultContext = value; }
+    bool isDirectSubmissionActive() { return directSubmissionActive; }
+    void setDirectSubmissionActive() { directSubmissionActive = true; }
 
   protected:
     OsContext(uint32_t contextId, DeviceBitfield deviceBitfield, aub_stream::EngineType engineType, PreemptionMode preemptionMode,
@@ -57,5 +59,6 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     const bool internalEngine = false;
     const bool rootDevice = false;
     bool defaultContext = false;
+    bool directSubmissionActive = false;
 };
 } // namespace NEO

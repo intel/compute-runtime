@@ -1114,6 +1114,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
                 ret = directSubmission->initialize(submitOnInit);
                 this->dispatchMode = DispatchMode::ImmediateDispatch;
             }
+            osContext.setDirectSubmissionActive();
         }
     }
     return ret;

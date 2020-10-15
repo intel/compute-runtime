@@ -104,6 +104,10 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
     return set_tiling.tiling_mode == mode;
 }
 
+uint32_t BufferObject::getOsContextId(OsContext *osContext) {
+    return perContextVmsUsed ? osContext->getContextId() : 0u;
+}
+
 void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {
     execObject.handle = this->handle;
     execObject.relocation_count = 0; //No relocations, we are SoftPinning
@@ -146,7 +150,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
 }
 
 void BufferObject::bind(OsContext *osContext, uint32_t vmHandleId) {
-    auto contextId = perContextVmsUsed ? osContext->getContextId() : 0;
+    auto contextId = getOsContextId(osContext);
     if (!this->bindInfo[contextId][vmHandleId]) {
         auto ret = this->drm->bindBufferObject(osContext, vmHandleId, this);
         auto err = this->drm->getErrno();
@@ -157,7 +161,7 @@ void BufferObject::bind(OsContext *osContext, uint32_t vmHandleId) {
 }
 
 void BufferObject::unbind(OsContext *osContext, uint32_t vmHandleId) {
-    auto contextId = perContextVmsUsed ? osContext->getContextId() : 0;
+    auto contextId = getOsContextId(osContext);
     if (this->bindInfo[contextId][vmHandleId]) {
         auto ret = this->drm->unbindBufferObject(osContext, vmHandleId, this);
         auto err = this->drm->getErrno();
@@ -195,13 +199,19 @@ void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const
     std::cout << logger.str() << std::endl;
 }
 
-int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {
+int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId, bool validateHostPtr) {
     auto retVal = 0;
-    if (this->drm->isBindAvailable()) {
+
+    if ((validateHostPtr && osContext->isDirectSubmissionActive()) ||
+        (!validateHostPtr && this->drm->isBindAvailable())) {
         for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
             if (osContext->getDeviceBitfield().test(drmIterator)) {
                 for (size_t i = 0; i < numberOfBos; i++) {
-                    boToPin[i]->bind(osContext, drmIterator);
+                    retVal |= this->drm->bindBufferObject(osContext, drmIterator, boToPin[i]);
+                    if (!retVal) {
+                        auto contextId = getOsContextId(osContext);
+                        boToPin[i]->bindInfo[contextId][drmIterator] = true;
+                    }
                 }
             }
         }
@@ -209,6 +219,7 @@ int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsConte
         StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
         retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
     }
+
     return retVal;
 }
 

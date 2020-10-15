@@ -145,7 +145,7 @@ TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {
 
     bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
     BufferObject *boArray[1] = {boToPin.get()};
-    auto ret = bo->pin(boArray, 1, osContext.get(), 0, 1);
+    auto ret = bo->pin(boArray, 1, osContext.get(), 0, 1, true);
     EXPECT_EQ(EINVAL, ret);
 }
 
@@ -161,7 +161,7 @@ TEST_F(DrmBufferObjectTest, givenResidentBOWhenPrintExecutionBufferIsSetToTrueTh
     BufferObject *boArray[1] = {bo.get()};
 
     testing::internal::CaptureStdout();
-    auto ret = bo->pin(boArray, 1, osContext.get(), 0, 1);
+    auto ret = bo->pin(boArray, 1, osContext.get(), 0, 1, true);
     EXPECT_EQ(0, ret);
 
     std::string output = testing::internal::GetCapturedStdout();
@@ -210,6 +210,7 @@ TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundI
 TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[256]);
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom);
+    OsContextLinux osContext(*mock, 0u, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false, false, false);
     ASSERT_NE(nullptr, mock.get());
     std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
     ASSERT_NE(nullptr, bo.get());
@@ -224,8 +225,9 @@ TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned
     mock->errnoValue = EFAULT;
 
     BufferObject *boArray[1] = {boToPin.get()};
-    auto ret = bo->pin(boArray, 1, nullptr, 0, 1);
+    auto ret = bo->pin(boArray, 1, &osContext, 0, 1, true);
     EXPECT_EQ(EFAULT, ret);
+    mock->ioctl_res = 0;
 }
 
 TEST(DrmBufferObjectSimpleTest, givenBufferObjectWhenConstructedWithASizeThenTheSizeIsInitialized) {
@@ -256,7 +258,7 @@ TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
     BufferObject *array[3] = {boToPin.get(), boToPin2.get(), boToPin3.get()};
 
     bo->setAddress(reinterpret_cast<uint64_t>(buff.get()));
-    auto ret = bo->pin(array, 3, &osContext, 0, 1);
+    auto ret = bo->pin(array, 3, &osContext, 0, 1, true);
     EXPECT_EQ(mock->ioctl_res, ret);
 
     EXPECT_LT(0u, mock->execBuffer.batch_len);

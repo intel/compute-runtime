@@ -199,7 +199,7 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
 
 void DrmMemoryManager::emitPinningRequest(BufferObject *bo, const AllocationData &allocationData) const {
     if (forcePinEnabled && pinBBs.at(allocationData.rootDeviceIndex) != nullptr && allocationData.flags.forcePin && allocationData.size >= this->pinThreshold) {
-        pinBBs.at(allocationData.rootDeviceIndex)->pin(&bo, 1, registeredEngines[defaultEngineIndex].osContext, 0, getDefaultDrmContextId());
+        pinBBs.at(allocationData.rootDeviceIndex)->pin(&bo, 1, registeredEngines[defaultEngineIndex].osContext, 0, getDefaultDrmContextId(), false);
     }
 }
 
@@ -344,7 +344,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithGpuVa(const Allo
 
     BufferObject *boPtr = bo.get();
     if (forcePinEnabled && pinBBs.at(allocationData.rootDeviceIndex) != nullptr && alignedSize >= this->pinThreshold) {
-        pinBBs.at(allocationData.rootDeviceIndex)->pin(&boPtr, 1, osContextLinux, 0, osContextLinux->getDrmContextIds()[0]);
+        pinBBs.at(allocationData.rootDeviceIndex)->pin(&boPtr, 1, osContextLinux, 0, osContextLinux->getDrmContextIds()[0], false);
     }
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, bo->gpuAddress, alignedSize, MemoryPool::System4KBPages);
@@ -378,7 +378,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
 
     if (validateHostPtrMemory) {
         auto boPtr = bo.get();
-        int result = pinBBs.at(allocationData.rootDeviceIndex)->pin(&boPtr, 1, registeredEngines[defaultEngineIndex].osContext, 0, getDefaultDrmContextId());
+        int result = pinBBs.at(allocationData.rootDeviceIndex)->pin(&boPtr, 1, registeredEngines[defaultEngineIndex].osContext, 0, getDefaultDrmContextId(), true);
         if (result != SUCCESS) {
             unreference(bo.release(), true);
             releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, allocationData.rootDeviceIndex);
@@ -745,7 +745,7 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
     }
 
     if (validateHostPtrMemory) {
-        int result = pinBBs.at(rootDeviceIndex)->pin(allocatedBos, numberOfBosAllocated, registeredEngines[defaultEngineIndex].osContext, 0, getDefaultDrmContextId());
+        int result = pinBBs.at(rootDeviceIndex)->pin(allocatedBos, numberOfBosAllocated, registeredEngines[defaultEngineIndex].osContext, 0, getDefaultDrmContextId(), true);
 
         if (result == EFAULT) {
             for (uint32_t i = 0; i < numberOfBosAllocated; i++) {
