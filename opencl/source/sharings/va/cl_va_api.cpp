@@ -13,6 +13,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/source/sharings/va/va_device.h"
 #include "opencl/source/sharings/va/va_sharing.h"
 #include "opencl/source/sharings/va/va_surface.h"
 
@@ -71,7 +72,8 @@ clGetDeviceIDsFromVA_APIMediaAdapterINTEL(cl_platform_id platform, cl_va_api_dev
     if (status != CL_SUCCESS) {
         status = CL_INVALID_PLATFORM;
     } else {
-        cl_device_id device = pPlatform->getClDevice(0);
+        VADevice vaDevice{};
+        cl_device_id device = vaDevice.getDeviceFromVA(pPlatform, mediaAdapter);
         GetInfoHelper::set(devices, device);
         GetInfoHelper::set(numDevices, 1u);
     }

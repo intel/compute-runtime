@@ -14,6 +14,7 @@ set(IGDRCL_SRCS_tests_sharings_va
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_va_image_arg_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_va_sharing.h
     ${CMAKE_CURRENT_SOURCE_DIR}/va_base_object_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/va_device_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/va_sharing_linux_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/va_sharing_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/va_sharing_factory_tests.cpp
