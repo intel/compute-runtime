@@ -9,7 +9,6 @@
 #include "shared/source/helpers/blit_commands_helper.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
-#include "opencl/source/mem_obj/image.h"
 
 #include "CL/cl.h"
 
@@ -48,7 +47,6 @@ struct ClBlitProperties {
                                                                     builtinOpParams.dstRowPitch, builtinOpParams.dstSlicePitch);
         }
 
-        BlitProperties blitProperties{};
         GraphicsAllocation *gpuAllocation = nullptr;
         Vec3<size_t> copyOffset = 0;
 
@@ -66,9 +64,8 @@ struct ClBlitProperties {
         size_t gpuRowPitch = 0;
         size_t gpuSlicePitch = 0;
 
-        if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection ||
-            BlitterConstants::BlitDirection::HostPtrToImage == blitDirection) {
-            // write buffer/image
+        if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
+            // write buffer
             hostPtr = builtinOpParams.srcPtr;
             hostPtrOffset = builtinOpParams.srcOffset;
             copyOffset = builtinOpParams.dstOffset;
@@ -91,10 +88,10 @@ struct ClBlitProperties {
             copySize = builtinOpParams.size;
         }
 
-        if (BlitterConstants::BlitDirection::BufferToHostPtr == blitDirection ||
-            BlitterConstants::BlitDirection::ImageToHostPtr == blitDirection) {
-            // read buffer/image
+        if (BlitterConstants::BlitDirection::BufferToHostPtr == blitDirection) {
+            // read buffer
             hostPtr = builtinOpParams.dstPtr;
+
             hostPtrOffset = builtinOpParams.dstOffset;
             copyOffset = builtinOpParams.srcOffset;
 
@@ -117,78 +114,26 @@ struct ClBlitProperties {
         }
 
         UNRECOVERABLE_IF(BlitterConstants::BlitDirection::HostPtrToBuffer != blitDirection &&
-                         BlitterConstants::BlitDirection::BufferToHostPtr != blitDirection &&
-                         BlitterConstants::BlitDirection::HostPtrToImage != blitDirection &&
-                         BlitterConstants::BlitDirection::ImageToHostPtr != blitDirection);
+                         BlitterConstants::BlitDirection::BufferToHostPtr != blitDirection);
 
-        blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, gpuAllocation,
-                                                                               hostAllocation, hostPtr, memObjGpuVa, hostAllocGpuVa,
-                                                                               hostPtrOffset, copyOffset, copySize,
-                                                                               hostRowPitch, hostSlicePitch,
-                                                                               gpuRowPitch, gpuSlicePitch);
-
-        if (BlitterConstants::BlitDirection::HostPtrToImage == blitDirection ||
-            BlitterConstants::BlitDirection::ImageToHostPtr == blitDirection) {
-            adjustBlitPropertiesForImage(blitProperties, builtinOpParams);
-        }
-
-        return blitProperties;
+        return BlitProperties::constructPropertiesForReadWriteBuffer(blitDirection, commandStreamReceiver, gpuAllocation,
+                                                                     hostAllocation, hostPtr, memObjGpuVa, hostAllocGpuVa,
+                                                                     hostPtrOffset, copyOffset, copySize,
+                                                                     hostRowPitch, hostSlicePitch,
+                                                                     gpuRowPitch, gpuSlicePitch);
     }
 
     static BlitterConstants::BlitDirection obtainBlitDirection(uint32_t commandType) {
-
-        switch (commandType) {
-        case CL_COMMAND_WRITE_BUFFER:
-        case CL_COMMAND_WRITE_BUFFER_RECT:
+        if (CL_COMMAND_WRITE_BUFFER == commandType || CL_COMMAND_WRITE_BUFFER_RECT == commandType) {
             return BlitterConstants::BlitDirection::HostPtrToBuffer;
-        case CL_COMMAND_READ_BUFFER:
-        case CL_COMMAND_READ_BUFFER_RECT:
+        } else if (CL_COMMAND_READ_BUFFER == commandType || CL_COMMAND_READ_BUFFER_RECT == commandType) {
             return BlitterConstants::BlitDirection::BufferToHostPtr;
-        case CL_COMMAND_COPY_BUFFER:
-        case CL_COMMAND_COPY_BUFFER_RECT:
-        case CL_COMMAND_SVM_MEMCPY:
+        } else if (CL_COMMAND_COPY_BUFFER_RECT == commandType || CL_COMMAND_SVM_MEMCPY == commandType) {
             return BlitterConstants::BlitDirection::BufferToBuffer;
-        case CL_COMMAND_WRITE_IMAGE:
-            return BlitterConstants::BlitDirection::HostPtrToImage;
-        case CL_COMMAND_READ_IMAGE:
-            return BlitterConstants::BlitDirection::ImageToHostPtr;
-        default:
-            UNRECOVERABLE_IF(true);
-        }
-    }
-
-    static void adjustBlitPropertiesForImage(BlitProperties &blitProperties, const BuiltinOpParams &builtinOpParams) {
-
-        Image *srcImage = nullptr;
-        Image *dstImage = nullptr;
-
-        blitProperties.srcSize = {static_cast<uint32_t>(builtinOpParams.size.x),
-                                  static_cast<uint32_t>(builtinOpParams.size.y),
-                                  static_cast<uint32_t>(builtinOpParams.size.z)};
-
-        blitProperties.dstSize = {static_cast<uint32_t>(builtinOpParams.size.x),
-                                  static_cast<uint32_t>(builtinOpParams.size.y),
-                                  static_cast<uint32_t>(builtinOpParams.size.z)};
-
-        if (blitProperties.blitDirection == BlitterConstants::BlitDirection::ImageToHostPtr) {
-            srcImage = castToObject<Image>(builtinOpParams.srcMemObj);
-            blitProperties.bytesPerPixel = srcImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-            blitProperties.srcSize.x = static_cast<uint32_t>(srcImage->getImageDesc().image_width);
-            blitProperties.srcSize.y = static_cast<uint32_t>(srcImage->getImageDesc().image_height);
-            blitProperties.srcSize.z = static_cast<uint32_t>(srcImage->getImageDesc().image_depth);
-
         } else {
-            dstImage = castToObject<Image>(builtinOpParams.dstMemObj);
-            blitProperties.bytesPerPixel = dstImage->getSurfaceFormatInfo().surfaceFormat.ImageElementSizeInBytes;
-            blitProperties.dstSize.x = static_cast<uint32_t>(dstImage->getImageDesc().image_width);
-            blitProperties.dstSize.y = static_cast<uint32_t>(dstImage->getImageDesc().image_height);
-            blitProperties.dstSize.z = static_cast<uint32_t>(dstImage->getImageDesc().image_depth);
+            UNRECOVERABLE_IF(CL_COMMAND_COPY_BUFFER != commandType);
+            return BlitterConstants::BlitDirection::BufferToBuffer;
         }
-
-        blitProperties.srcRowPitch = builtinOpParams.dstRowPitch ? builtinOpParams.dstRowPitch : blitProperties.srcSize.x * blitProperties.bytesPerPixel;
-        blitProperties.dstRowPitch = builtinOpParams.srcRowPitch ? builtinOpParams.srcRowPitch : blitProperties.dstSize.x * blitProperties.bytesPerPixel;
-        blitProperties.srcSlicePitch = builtinOpParams.dstSlicePitch ? builtinOpParams.dstSlicePitch : blitProperties.srcSize.y * blitProperties.srcRowPitch;
-        blitProperties.dstSlicePitch = builtinOpParams.srcSlicePitch ? builtinOpParams.srcSlicePitch : blitProperties.dstSize.y * blitProperties.dstRowPitch;
     }
 };
 

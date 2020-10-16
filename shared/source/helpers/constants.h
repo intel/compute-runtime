@@ -67,9 +67,7 @@ constexpr uint64_t maxBytesPerPixel = 0x10;
 enum class BlitDirection : uint32_t {
     BufferToHostPtr,
     HostPtrToBuffer,
-    BufferToBuffer,
-    HostPtrToImage,
-    ImageToHostPtr
+    BufferToBuffer
 };
 } // namespace BlitterConstants
 

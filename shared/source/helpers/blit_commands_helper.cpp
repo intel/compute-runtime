@@ -41,8 +41,7 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
     copySize.y = copySize.y ? copySize.y : 1;
     copySize.z = copySize.z ? copySize.z : 1;
 
-    if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection ||
-        BlitterConstants::BlitDirection::HostPtrToImage == blitDirection) {
+    if (BlitterConstants::BlitDirection::HostPtrToBuffer == blitDirection) {
         return {
             nullptr,                       // outputTimestampPacket
             blitDirection,                 // blitDirection
@@ -55,10 +54,10 @@ BlitProperties BlitProperties::constructPropertiesForReadWriteBuffer(BlitterCons
             copySize,                      // copySize
             copyOffset,                    // dstOffset
             hostPtrOffset,                 // srcOffset
-            gpuRowPitch,                   // dstRowPitch
-            gpuSlicePitch,                 // dstSlicePitch
-            hostRowPitch,                  // srcRowPitch
-            hostSlicePitch};               // srcSlicePitch
+            gpuRowPitch,                   //dstRowPitch
+            gpuSlicePitch,                 //dstSlicePitch
+            hostRowPitch,                  //srcRowPitch
+            hostSlicePitch};               //srcSlicePitch
 
     } else {
         return {
