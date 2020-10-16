@@ -205,18 +205,38 @@ void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const
     std::cout << logger.str() << std::endl;
 }
 
-int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId, bool validateHostPtr) {
+int bindBOsWithinContext(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId) {
     auto retVal = 0;
 
-    if ((validateHostPtr && osContext->isDirectSubmissionActive()) ||
-        (!validateHostPtr && this->drm->isBindAvailable())) {
-        for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
-            if (osContext->getDeviceBitfield().test(drmIterator)) {
-                for (size_t i = 0; i < numberOfBos; i++) {
-                    retVal |= boToPin[i]->bind(osContext, drmIterator);
-                }
+    for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
+        if (osContext->getDeviceBitfield().test(drmIterator)) {
+            for (size_t i = 0; i < numberOfBos; i++) {
+                retVal |= boToPin[i]->bind(osContext, drmIterator);
             }
         }
+    }
+
+    return retVal;
+}
+
+int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {
+    auto retVal = 0;
+
+    if (this->drm->isBindAvailable()) {
+        retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId);
+    } else {
+        StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
+        retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
+    }
+
+    return retVal;
+}
+
+int BufferObject::validateHostPtr(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId) {
+    auto retVal = 0;
+
+    if (osContext->isDirectSubmissionActive()) {
+        retVal = bindBOsWithinContext(boToPin, numberOfBos, osContext, vmHandleId);
     } else {
         StackVec<drm_i915_gem_exec_object2, maxFragmentsCount + 1> execObject(numberOfBos + 1);
         retVal = this->exec(4u, 0u, 0u, false, osContext, vmHandleId, drmContextId, boToPin, numberOfBos, &execObject[0]);
