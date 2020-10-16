@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 
@@ -97,6 +98,8 @@ struct CommandQueueImp : public CommandQueue {
     bool frontEndInit = false;
     bool gpgpuEnabled = false;
     CommandBufferManager buffers;
+    NEO::ResidencyContainer residencyContainer;
+    NEO::HeapContainer heapContainer;
 };
 
 } // namespace L0

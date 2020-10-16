@@ -109,11 +109,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     bool directSubmissionEnabled = csr->isDirectSubmissionEnabled();
 
-    NEO::ResidencyContainer residencyContainer;
     L0::Fence *fence = nullptr;
-
-    NEO::HeapContainer heapContainer;
-    heapContainer.reserve(numCommandLists);
 
     device->activateMetricGroups();
 
@@ -358,6 +354,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     if (getSynchronousMode() == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS) {
         this->synchronize(std::numeric_limits<uint64_t>::max());
     }
+
+    this->residencyContainer.clear();
+    this->heapContainer.clear();
 
     return ZE_RESULT_SUCCESS;
 }
