@@ -11,6 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -59,6 +60,12 @@ ModuleTranslationUnit::~ModuleTranslationUnit() {
             svmAllocsManager->freeSVMAlloc(reinterpret_cast<void *>(globalVarBuffer->getGpuAddress()));
         } else {
             this->device->getNEODevice()->getExecutionEnvironment()->memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(globalVarBuffer);
+        }
+    }
+
+    if (this->debugData != nullptr) {
+        for (std::vector<char *>::iterator iter = alignedvIsas.begin(); iter != alignedvIsas.end(); ++iter) {
+            alignedFree(static_cast<void *>(*iter));
         }
     }
 }
@@ -278,13 +285,17 @@ void ModuleTranslationUnit::processDebugData() {
 
             kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
 
-            kernelInfo->kernelDescriptor.external.debugData->vIsa = kernelDebugData;
+            char *alignedAlloc = static_cast<char *>(alignedMalloc(kernelDebugHeader->SizeVisaDbgInBytes, MemoryConstants::pageSize));
+            memcpy_s(static_cast<void *>(alignedAlloc), kernelDebugHeader->SizeVisaDbgInBytes, kernelDebugData, kernelDebugHeader->SizeVisaDbgInBytes);
+
+            kernelInfo->kernelDescriptor.external.debugData->vIsa = alignedAlloc;
             kernelInfo->kernelDescriptor.external.debugData->genIsa = ptrOffset(kernelDebugData, kernelDebugHeader->SizeVisaDbgInBytes);
             kernelInfo->kernelDescriptor.external.debugData->vIsaSize = kernelDebugHeader->SizeVisaDbgInBytes;
             kernelInfo->kernelDescriptor.external.debugData->genIsaSize = kernelDebugHeader->SizeGenIsaDbgInBytes;
 
             kernelDebugData = ptrOffset(kernelDebugData, static_cast<size_t>(kernelDebugHeader->SizeVisaDbgInBytes) + kernelDebugHeader->SizeGenIsaDbgInBytes);
             kernelDebugHeader = reinterpret_cast<const iOpenCL::SKernelDebugDataHeaderIGC *>(kernelDebugData);
+            alignedvIsas.push_back(alignedAlloc);
         }
     }
 }
@@ -324,7 +335,6 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
     verifyDebugCapabilities();
 
     this->updateBuildLog(neoDevice);
-
     if (debugEnabled) {
         for (auto kernelInfo : this->translationUnit->programInfo.kernelInfos) {
             device->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfo->kernelDescriptor.external.debugData.get(),
@@ -341,9 +351,7 @@ bool ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice)
     kernelImmDatas.reserve(this->translationUnit->programInfo.kernelInfos.size());
     for (auto &ki : this->translationUnit->programInfo.kernelInfos) {
         std::unique_ptr<KernelImmutableData> kernelImmData{new KernelImmutableData(this->device)};
-        kernelImmData->initialize(ki, *(device->getNEODevice()->getMemoryManager()),
-                                  device->getNEODevice(),
-                                  device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
+        kernelImmData->initialize(ki, device, device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
                                   this->translationUnit->globalConstBuffer, this->translationUnit->globalVarBuffer,
                                   this->type == ModuleType::Builtin);
         kernelImmDatas.push_back(std::move(kernelImmData));

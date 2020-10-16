@@ -59,6 +59,7 @@ struct ModuleTranslationUnit {
 
     std::unique_ptr<char[]> debugData;
     size_t debugDataSize = 0U;
+    std::vector<char *> alignedvIsas;
 
     NEO::specConstValuesMap specConstantsValues;
 };

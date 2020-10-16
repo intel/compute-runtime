@@ -73,6 +73,7 @@ class DrmAllocation : public GraphicsAllocation {
     void bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
     MOCKABLE_VIRTUAL void registerBOBindExtHandle(Drm *drm);
     void freeRegisteredBOBindExtHandles(Drm *drm);
+    void linkWithRegisteredHandle(uint32_t handle);
 
   protected:
     BufferObjects bufferObjects{};

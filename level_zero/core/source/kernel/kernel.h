@@ -33,7 +33,7 @@ struct KernelImmutableData {
     KernelImmutableData(L0::Device *l0device = nullptr);
     virtual ~KernelImmutableData();
 
-    void initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryManager &memoryManager, const NEO::Device *device,
+    void initialize(NEO::KernelInfo *kernelInfo, Device *device,
                     uint32_t computeUnitsUsedForSratch,
                     NEO::GraphicsAllocation *globalConstBuffer, NEO::GraphicsAllocation *globalVarBuffer, bool internalKernel);
 

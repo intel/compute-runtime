@@ -12,7 +12,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
-
 namespace NEO {
 std::unique_ptr<Debugger> Debugger::create(HardwareInfo *hwInfo) {
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;

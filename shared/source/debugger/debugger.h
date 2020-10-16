@@ -11,6 +11,8 @@ namespace NEO {
 struct HardwareInfo;
 class CommandContainer;
 class IndirectHeap;
+struct DebugData;
+class GraphicsAllocation;
 
 class Debugger {
   public:
@@ -28,7 +30,6 @@ class Debugger {
     virtual ~Debugger() = default;
     bool isLegacy() const { return isLegacyMode; }
     virtual void captureStateBaseAddress(CommandContainer &container, SbaAddresses sba) = 0;
-
     void *getDebugSurfaceReservedSurfaceState(IndirectHeap &ssh);
 
     inline static bool isDebugEnabled(bool internalUsage) {

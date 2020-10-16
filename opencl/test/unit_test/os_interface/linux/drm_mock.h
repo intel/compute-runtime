@@ -237,7 +237,7 @@ class DrmMockResources : public DrmMock {
         return true;
     }
 
-    uint32_t registerResource(ResourceClass classType, void *data, size_t size) override {
+    uint32_t registerResource(ResourceClass classType, const void *data, size_t size) override {
         registeredClass = classType;
         memcpy_s(registeredData, sizeof(registeredData), data, size);
         registeredDataSize = size;

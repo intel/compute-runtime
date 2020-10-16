@@ -71,6 +71,7 @@ class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
 
     void captureStateBaseAddress(NEO::CommandContainer &container, SbaAddresses sba) override;
     void printTrackedAddresses(uint32_t contextId);
+    MOCKABLE_VIRTUAL void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation);
 
     virtual size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) = 0;
     virtual void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) = 0;

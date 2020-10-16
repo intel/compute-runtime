@@ -22,6 +22,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/program/kernel_info.h"
 
+#include "level_zero/core/source/debugger/debugger_l0.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
@@ -95,30 +96,37 @@ inline void patchWithImplicitSurface(ArrayRef<uint8_t> crossThreadData, ArrayRef
     }
 }
 
-void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryManager &memoryManager,
-                                     const NEO::Device *device, uint32_t computeUnitsUsedForSratch,
+void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device,
+                                     uint32_t computeUnitsUsedForSratch,
                                      NEO::GraphicsAllocation *globalConstBuffer,
                                      NEO::GraphicsAllocation *globalVarBuffer, bool internalKernel) {
+
     UNRECOVERABLE_IF(kernelInfo == nullptr);
     this->kernelDescriptor = &kernelInfo->kernelDescriptor;
+
+    auto neoDevice = device->getNEODevice();
+    auto memoryManager = device->getNEODevice()->getMemoryManager();
 
     auto kernelIsaSize = kernelInfo->heapInfo.KernelHeapSize;
     const auto allocType = internalKernel ? NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL : NEO::GraphicsAllocation::AllocationType::KERNEL_ISA;
 
-    auto allocation = memoryManager.allocateGraphicsMemoryWithProperties(
-        {device->getRootDeviceIndex(), kernelIsaSize, allocType, device->getDeviceBitfield()});
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(
+        {neoDevice->getRootDeviceIndex(), kernelIsaSize, allocType, neoDevice->getDeviceBitfield()});
     UNRECOVERABLE_IF(allocation == nullptr);
 
-    auto &hwInfo = device->getHardwareInfo();
+    auto &hwInfo = neoDevice->getHardwareInfo();
     auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     if (kernelInfo->heapInfo.pKernelHeap != nullptr) {
         NEO::MemoryTransferHelper::transferMemoryToAllocation(hwHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *allocation),
-                                                              *device, allocation, 0, kernelInfo->heapInfo.pKernelHeap,
+                                                              *neoDevice, allocation, 0, kernelInfo->heapInfo.pKernelHeap,
                                                               static_cast<size_t>(kernelIsaSize));
     }
 
     isaGraphicsAllocation.reset(allocation);
+    if (device->getL0Debugger() && kernelInfo->kernelDescriptor.external.debugData.get()) {
+        device->getL0Debugger()->registerElf(kernelInfo->kernelDescriptor.external.debugData.get(), allocation);
+    }
 
     this->crossThreadDataSize = this->kernelDescriptor->kernelAttributes.crossThreadDataSize;
 
@@ -162,13 +170,13 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
         auto privateSurfaceSize = NEO::KernelHelper::getPrivateSurfaceSize(kernelAttributes.perHwThreadPrivateMemorySize, computeUnitsUsedForSratch);
 
         UNRECOVERABLE_IF(privateSurfaceSize == 0);
-        this->privateMemoryGraphicsAllocation.reset(memoryManager.allocateGraphicsMemoryWithProperties(
-            {device->getRootDeviceIndex(), privateSurfaceSize, NEO::GraphicsAllocation::AllocationType::PRIVATE_SURFACE, device->getDeviceBitfield()}));
+        this->privateMemoryGraphicsAllocation.reset(memoryManager->allocateGraphicsMemoryWithProperties(
+            {neoDevice->getRootDeviceIndex(), privateSurfaceSize, NEO::GraphicsAllocation::AllocationType::PRIVATE_SURFACE, neoDevice->getDeviceBitfield()}));
 
         UNRECOVERABLE_IF(this->privateMemoryGraphicsAllocation == nullptr);
         patchWithImplicitSurface(crossThredDataArrayRef, surfaceStateHeapArrayRef,
                                  static_cast<uintptr_t>(privateMemoryGraphicsAllocation->getGpuAddressToPatch()),
-                                 *privateMemoryGraphicsAllocation, kernelDescriptor->payloadMappings.implicitArgs.privateMemoryAddress, *device);
+                                 *privateMemoryGraphicsAllocation, kernelDescriptor->payloadMappings.implicitArgs.privateMemoryAddress, *neoDevice);
         this->residencyContainer.push_back(this->privateMemoryGraphicsAllocation.get());
     }
 
@@ -177,7 +185,7 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
 
         patchWithImplicitSurface(crossThredDataArrayRef, surfaceStateHeapArrayRef,
                                  static_cast<uintptr_t>(globalConstBuffer->getGpuAddressToPatch()),
-                                 *globalConstBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress, *device);
+                                 *globalConstBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalConstantsSurfaceAddress, *neoDevice);
         this->residencyContainer.push_back(globalConstBuffer);
     } else if (nullptr != globalConstBuffer) {
         this->residencyContainer.push_back(globalConstBuffer);
@@ -188,7 +196,7 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, NEO::MemoryMan
 
         patchWithImplicitSurface(crossThredDataArrayRef, surfaceStateHeapArrayRef,
                                  static_cast<uintptr_t>(globalVarBuffer->getGpuAddressToPatch()),
-                                 *globalVarBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress, *device);
+                                 *globalVarBuffer, kernelDescriptor->payloadMappings.implicitArgs.globalVariablesSurfaceAddress, *neoDevice);
         this->residencyContainer.push_back(globalVarBuffer);
     } else if (nullptr != globalVarBuffer) {
         this->residencyContainer.push_back(globalVarBuffer);

@@ -13,7 +13,7 @@ bool Drm::registerResourceClasses() {
     return false;
 }
 
-uint32_t Drm::registerResource(ResourceClass classType, void *data, size_t size) {
+uint32_t Drm::registerResource(ResourceClass classType, const void *data, size_t size) {
     return 0;
 }
 

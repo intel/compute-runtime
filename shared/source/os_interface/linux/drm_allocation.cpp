@@ -112,6 +112,15 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     }
 }
 
+void DrmAllocation::linkWithRegisteredHandle(uint32_t handle) {
+    auto &bos = getBOs();
+    for (auto bo : bos) {
+        if (bo) {
+            bo->addBindExtHandle(handle);
+        }
+    }
+}
+
 void DrmAllocation::freeRegisteredBOBindExtHandles(Drm *drm) {
     for (auto &i : registeredBoBindHandles) {
         drm->unregisterResource(i);

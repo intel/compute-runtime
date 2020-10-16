@@ -5,10 +5,19 @@
  *
  */
 
+#include "shared/source/device/device.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/kernel/debug_data.h"
+#include "shared/source/os_interface/linux/os_interface.h"
+
 #include "level_zero/core/source/debugger/debugger_l0.h"
 
 namespace L0 {
 bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
     return false;
 }
+
+void DebuggerL0::registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) {
+}
+
 } // namespace L0

@@ -15,6 +15,7 @@
 #include "opencl/source/program/kernel_info_from_patchtokens.h"
 #include "test.h"
 
+#include "level_zero/core/source/debugger/debugger_l0.h"
 #include "level_zero/core/source/image/image_format_desc_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/source/kernel/kernel_hw.h"
@@ -262,7 +263,7 @@ HWTEST_F(KernelPropertiesTests, whenInitializingThenCalculatesProperPrivateSurfa
     kernelAttributes.simdSize = 8;
 
     KernelImmutableData kernelImmutableData(device);
-    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), computeUnitsUsedForSratch, nullptr, nullptr, false);
+    kernelImmutableData.initialize(&kernelInfo, device, computeUnitsUsedForSratch, nullptr, nullptr, false);
 
     size_t expectedSize = static_cast<size_t>(kernelAttributes.perHwThreadPrivateMemorySize) * computeUnitsUsedForSratch;
     EXPECT_GE(expectedSize, kernelImmutableData.getPrivateMemoryGraphicsAllocation()->getUnderlyingBufferSize());
@@ -453,7 +454,7 @@ struct KernelIsaTests : Test<ModuleFixture> {
 
         if (createBcsEngine) {
             auto &engine = device->getNEODevice()->getEngine(0);
-            bcsOsContext.reset(OsContext::create(nullptr, 1, device->getNEODevice()->getDeviceBitfield(), aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
+            bcsOsContext.reset(OsContext::create(nullptr, 0, device->getNEODevice()->getDeviceBitfield(), aub_stream::ENGINE_BCS, PreemptionMode::Disabled,
                                                  false, false, false));
             engine.osContext = bcsOsContext.get();
             engine.commandStreamReceiver->setupContext(*bcsOsContext);
@@ -478,7 +479,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithoutAllo
     auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, false, false).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
-    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr, false);
+    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
 
     if (kernelImmutableData.getIsaGraphicsAllocation()->isAllocatedInLocalMemoryPool()) {
         EXPECT_EQ(initialTaskCount + 1, bcsCsr->peekTaskCount());
@@ -504,7 +505,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithAllowed
     auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, false, false).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
-    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr, false);
+    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
 
     EXPECT_EQ(initialTaskCount, bcsCsr->peekTaskCount());
 
@@ -528,7 +529,7 @@ TEST_F(KernelIsaTests, givenKernelAllocationInLocalMemoryWhenCreatingWithDisallo
     auto bcsCsr = device->getNEODevice()->getEngine(aub_stream::EngineType::ENGINE_BCS, false, false).commandStreamReceiver;
     auto initialTaskCount = bcsCsr->peekTaskCount();
 
-    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr, false);
+    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
 
     EXPECT_EQ(initialTaskCount, bcsCsr->peekTaskCount());
 
@@ -543,7 +544,7 @@ TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithInternalI
 
     KernelImmutableData kernelImmutableData(device);
 
-    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr, true);
+    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, true);
     EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA_INTERNAL, kernelImmutableData.getIsaGraphicsAllocation()->getAllocationType());
 }
 
@@ -555,7 +556,7 @@ TEST_F(KernelIsaTests, givenKernelInfoWhenInitializingImmutableDataWithNonIntern
 
     KernelImmutableData kernelImmutableData(device);
 
-    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0, nullptr, nullptr, false);
+    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
     EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::KERNEL_ISA, kernelImmutableData.getIsaGraphicsAllocation()->getAllocationType());
 }
 
@@ -573,11 +574,37 @@ TEST_F(KernelIsaTests, givenGlobalBuffersWhenCreatingKernelImmutableDataThenBuff
     NEO::MockGraphicsAllocation globalVarBuffer(buffer, gpuAddress, size);
     NEO::MockGraphicsAllocation globalConstBuffer(buffer, gpuAddress, size);
 
-    kernelImmutableData.initialize(&kernelInfo, *device->getNEODevice()->getMemoryManager(), device->getNEODevice(), 0,
+    kernelImmutableData.initialize(&kernelInfo, device, 0,
                                    &globalConstBuffer, &globalVarBuffer, false);
     auto &resCont = kernelImmutableData.getResidencyContainer();
     EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalVarBuffer));
     EXPECT_EQ(1, std::count(resCont.begin(), resCont.end(), &globalConstBuffer));
+}
+
+TEST_F(KernelIsaTests, givenDebugONAndKernelDegugInfoWhenInitializingImmutableDataThenRegisterElf) {
+    uint32_t kernelHeap = 0;
+    KernelInfo kernelInfo;
+    kernelInfo.heapInfo.KernelHeapSize = 1;
+    kernelInfo.heapInfo.pKernelHeap = &kernelHeap;
+    auto debugData = new DebugData;
+    kernelInfo.kernelDescriptor.external.debugData.reset(debugData);
+    class MockDebugger : public DebuggerL0 {
+      public:
+        MockDebugger(NEO::Device *neodev) : DebuggerL0(neodev) {
+        }
+        void registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) override {
+            debugData->vIsaSize = 123;
+        };
+        size_t getSbaTrackingCommandsSize(size_t trackedAddressCount) override { return static_cast<size_t>(0); };
+        void programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) override{};
+    };
+    MockDebugger *debugger = new MockDebugger(neoDevice);
+
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->debugger.reset(static_cast<NEO::Debugger *>(debugger));
+    KernelImmutableData kernelImmutableData(device);
+
+    kernelImmutableData.initialize(&kernelInfo, device, 0, nullptr, nullptr, false);
+    EXPECT_EQ(kernelInfo.kernelDescriptor.external.debugData->vIsaSize, static_cast<uint32_t>(123));
 }
 
 using KernelImpPatchBindlessTest = Test<ModuleFixture>;
