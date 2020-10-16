@@ -142,5 +142,7 @@ struct BlitCommandsHelper {
     static bool useOneBlitCopyCommand(Vec3<size_t> copySize, uint32_t bytesPerPixel);
     static uint32_t getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, uint32_t srcSize, uint32_t dstSize);
     static bool isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void programGlobalSequencerFlush(LinearStream &commandStream);
+    static size_t getSizeForGlobalSequencerFlush();
 };
 } // namespace NEO

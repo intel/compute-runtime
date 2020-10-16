@@ -21,7 +21,8 @@ HWTEST_F(CommandEncodeSemaphore, programMiSemaphoreWait) {
     EncodeSempahore<FamilyType>::programMiSemaphoreWait(&miSemaphore,
                                                         0x123400,
                                                         4,
-                                                        MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+                                                        MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                                                        false);
 
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphore.getCompareOperation());
     EXPECT_EQ(4u, miSemaphore.getSemaphoreDataDword());

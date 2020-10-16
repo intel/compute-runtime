@@ -463,29 +463,25 @@ size_t EncodeIndirectParams<Family>::getCmdsSizeForSetGroupSizeIndirect() {
 }
 
 template <typename Family>
-void EncodeSempahore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
-                                                     uint64_t compareAddress,
-                                                     uint32_t compareData,
-                                                     COMPARE_OPERATION compareMode) {
-    MI_SEMAPHORE_WAIT localCmd = Family::cmdInitMiSemaphoreWait;
-    localCmd.setCompareOperation(compareMode);
-    localCmd.setSemaphoreDataDword(compareData);
-    localCmd.setSemaphoreGraphicsAddress(compareAddress);
-    localCmd.setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
-
-    *cmd = localCmd;
+void EncodeSempahore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
+                                                        uint64_t compareAddress,
+                                                        uint32_t compareData,
+                                                        COMPARE_OPERATION compareMode) {
+    addMiSemaphoreWaitCommand(commandStream, compareAddress, compareData, compareMode, false);
 }
 
 template <typename Family>
 void EncodeSempahore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
                                                         uint64_t compareAddress,
                                                         uint32_t compareData,
-                                                        COMPARE_OPERATION compareMode) {
+                                                        COMPARE_OPERATION compareMode,
+                                                        bool registerPollMode) {
     auto semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
     programMiSemaphoreWait(semaphoreCommand,
                            compareAddress,
                            compareData,
-                           compareMode);
+                           compareMode,
+                           registerPollMode);
 }
 
 template <typename Family>

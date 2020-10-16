@@ -241,7 +241,14 @@ struct EncodeSempahore {
     static void programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                        uint64_t compareAddress,
                                        uint32_t compareData,
-                                       COMPARE_OPERATION compareMode);
+                                       COMPARE_OPERATION compareMode,
+                                       bool registerPollMode);
+
+    static void addMiSemaphoreWaitCommand(LinearStream &commandStream,
+                                          uint64_t compareAddress,
+                                          uint32_t compareData,
+                                          COMPARE_OPERATION compareMode,
+                                          bool registerPollMode);
 
     static void addMiSemaphoreWaitCommand(LinearStream &commandStream,
                                           uint64_t compareAddress,

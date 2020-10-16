@@ -11,6 +11,7 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/timestamp_packet.h"
 
 namespace NEO {
@@ -103,6 +104,8 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
     if (debugPauseEnabled) {
         size += BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands();
     }
+
+    size += BlitCommandsHelper<GfxFamily>::getSizeForGlobalSequencerFlush();
 
     return alignUp(size, MemoryConstants::cacheLineSize);
 }

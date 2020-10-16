@@ -984,6 +984,8 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
         makeResident(*blitProperties.dstAllocation);
     }
 
+    BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(commandStream);
+
     MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), peekHwInfo());
 
     EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount, false, true);

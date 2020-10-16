@@ -73,4 +73,13 @@ template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch, GMM_TILE_TYPE &tileType, uint32_t &mipTailLod) {
 }
 
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &commandStream) {
+}
+
+template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::getSizeForGlobalSequencerFlush() {
+    return 0u;
+}
+
 } // namespace NEO

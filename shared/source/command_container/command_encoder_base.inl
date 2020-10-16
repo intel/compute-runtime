@@ -392,4 +392,19 @@ void EncodeSurfaceState<GfxFamily>::encodeExtraBufferParams(R_SURFACE_STATE *sur
                                                             bool isReadOnly, uint32_t numAvailableDevices) {
 }
 
+template <typename Family>
+void EncodeSempahore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
+                                                     uint64_t compareAddress,
+                                                     uint32_t compareData,
+                                                     COMPARE_OPERATION compareMode,
+                                                     bool registerPollMode) {
+    MI_SEMAPHORE_WAIT localCmd = Family::cmdInitMiSemaphoreWait;
+    localCmd.setCompareOperation(compareMode);
+    localCmd.setSemaphoreDataDword(compareData);
+    localCmd.setSemaphoreGraphicsAddress(compareAddress);
+    localCmd.setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+
+    *cmd = localCmd;
+}
+
 } // namespace NEO
