@@ -45,7 +45,6 @@ class DevicePreemptionTests : public ::testing::Test {
     std::unique_ptr<NEO::MockDevice> device;
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;
     std::unique_ptr<iOpenCL::SPatchExecutionEnvironment> executionEnvironment;
-    std::unique_ptr<NEO::MockProgram> program;
 };
 
 struct PreemptionTestHwDetails {

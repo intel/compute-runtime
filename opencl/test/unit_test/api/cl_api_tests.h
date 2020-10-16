@@ -48,7 +48,7 @@ struct ApiFixture {
 
         pCommandQueue = new MockCommandQueue(pContext, pDevice, nullptr);
 
-        pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false, &pDevice->getDevice());
+        pProgram = new MockProgram(pContext, false, toClDeviceVector(*pDevice));
 
         pKernel = new MockKernel(pProgram, pProgram->mockKernelInfo, *pDevice);
         ASSERT_NE(nullptr, pKernel);

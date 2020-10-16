@@ -56,7 +56,7 @@ void KernelImageArgTest::SetUp() {
     pKernelInfo->kernelArgInfo[0].isImage = true;
 
     ClDeviceFixture::SetUp();
-    program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+    program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
     pKernel.reset(new MockKernel(program.get(), *pKernelInfo, *pClDevice));
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 

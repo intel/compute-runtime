@@ -254,7 +254,7 @@ class MockKernel : public Kernel {
 //class below have enough internals to service Enqueue operation.
 class MockKernelWithInternals {
   public:
-    MockKernelWithInternals(const ClDevice &deviceArg, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment newExecutionEnvironment = {}) {
+    MockKernelWithInternals(ClDevice &deviceArg, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment newExecutionEnvironment = {}) {
         memset(&kernelHeader, 0, sizeof(SKernelBinaryHeaderCommon));
         memset(&threadPayload, 0, sizeof(SPatchThreadPayload));
         memcpy(&executionEnvironment, &newExecutionEnvironment, sizeof(SPatchExecutionEnvironment));
@@ -285,8 +285,10 @@ class MockKernelWithInternals {
             context->incRefInternal();
             mockContext = context;
         }
+        ClDeviceVector deviceVector;
+        deviceVector.push_back(&deviceArg);
 
-        mockProgram = new MockProgram(*deviceArg.getExecutionEnvironment(), context, false, &deviceArg.getDevice());
+        mockProgram = new MockProgram(context, false, deviceVector);
         mockKernel = new MockKernel(mockProgram, kernelInfo, deviceArg);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
         mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal));
@@ -321,7 +323,7 @@ class MockKernelWithInternals {
         }
     }
 
-    MockKernelWithInternals(const ClDevice &deviceArg, SPatchExecutionEnvironment newExecutionEnvironment) : MockKernelWithInternals(deviceArg, nullptr, false, newExecutionEnvironment) {
+    MockKernelWithInternals(ClDevice &deviceArg, SPatchExecutionEnvironment newExecutionEnvironment) : MockKernelWithInternals(deviceArg, nullptr, false, newExecutionEnvironment) {
         mockKernel->initialize();
     }
 
@@ -362,7 +364,7 @@ class MockParentKernel : public Kernel {
     using Kernel::sshLocalSize;
 
     static MockParentKernel *create(Context &context, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
-        Device &device = context.getDevice(0)->getDevice();
+        auto clDevice = context.getDevice(0);
 
         auto info = new KernelInfo();
         const size_t crossThreadSize = 160;
@@ -415,9 +417,9 @@ class MockParentKernel : public Kernel {
             crossThreadOffset += 8;
         }
 
-        MockProgram *mockProgram = new MockProgram(*device.getExecutionEnvironment());
-        mockProgram->setContext(&context);
-        mockProgram->setDevice(&device);
+        ClDeviceVector deviceVector;
+        deviceVector.push_back(clDevice);
+        MockProgram *mockProgram = new MockProgram(&context, false, deviceVector);
 
         if (addChildSimdSize) {
             info->childrenKernelsIdOffset.push_back({0, crossThreadOffset});
@@ -425,9 +427,6 @@ class MockParentKernel : public Kernel {
 
         UNRECOVERABLE_IF(crossThreadSize < crossThreadOffset + 8);
         info->crossThreadData = new char[crossThreadSize];
-
-        auto clDevice = device.getSpecializedDevice<ClDevice>();
-        DEBUG_BREAK_IF(clDevice == nullptr);
 
         auto parent = new MockParentKernel(mockProgram, *info, *clDevice);
         parent->crossThreadData = new char[crossThreadSize];

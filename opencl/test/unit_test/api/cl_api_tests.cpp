@@ -28,7 +28,7 @@ void api_fixture_using_aligned_memory_manager::SetUp() {
 
     commandQueue = new MockCommandQueue(context, device, 0);
 
-    program = new MockProgram(*device->getExecutionEnvironment(), ctxPtr, false, &device->getDevice());
+    program = new MockProgram(ctxPtr, false, toClDeviceVector(*device));
     Program *prgPtr = reinterpret_cast<Program *>(program);
 
     kernel = new MockKernel(prgPtr, program->mockKernelInfo, *device);

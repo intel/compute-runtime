@@ -29,7 +29,7 @@ class ProcessElfBinaryTests : public ::testing::Test {
   public:
     void SetUp() override {
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, rootDeviceIndex));
-        program = std::make_unique<MockProgram>(*device->getExecutionEnvironment(), nullptr, false, &device->getDevice());
+        program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*device));
     }
 
     std::unique_ptr<MockProgram> program;
@@ -116,7 +116,7 @@ class ProcessElfBinaryTestsWithBinaryType : public ::testing::TestWithParam<unsi
   public:
     void SetUp() override {
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, rootDeviceIndex));
-        program = std::make_unique<MockProgram>(*device->getExecutionEnvironment(), nullptr, false, &device->getDevice());
+        program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*device));
     }
 
     std::unique_ptr<MockProgram> program;

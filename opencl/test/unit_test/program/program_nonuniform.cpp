@@ -35,10 +35,10 @@ using namespace NEO;
 
 class MyMockProgram : public MockProgram {
   public:
-    MyMockProgram() : MockProgram(*new ExecutionEnvironment()), executionEnvironment(&this->peekExecutionEnvironment()) {}
+    MyMockProgram() : MockProgram(toClDeviceVector(*(new MockClDevice(new MockDevice())))), device(this->clDevices[0]) {}
 
   private:
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<ClDevice> device;
 };
 
 TEST(ProgramNonUniform, GivenNoBuildOptionsWhenUpdatingAllowNonUniformThenNonUniformNotAllowed) {
@@ -102,51 +102,52 @@ TEST(ProgramNonUniform, GivenBuildOptionsCl21AndUniformFlagWhenUpdatingAllowNonU
 }
 
 TEST(KernelNonUniform, WhenSettingAllowNonUniformThenGettingAllowNonUniformReturnsCorrectValue) {
-    KernelInfo ki;
-    MockClDevice d{new MockDevice};
-    MockProgram pm(*d.getExecutionEnvironment());
+    KernelInfo kernelInfo;
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
     struct KernelMock : Kernel {
         KernelMock(Program *p, KernelInfo &ki, ClDevice &d)
             : Kernel(p, ki, d) {
         }
     };
 
-    KernelMock k{&pm, ki, d};
-    pm.setAllowNonUniform(false);
+    KernelMock k{&program, kernelInfo, device};
+    program.setAllowNonUniform(false);
     EXPECT_FALSE(k.getAllowNonUniform());
-    pm.setAllowNonUniform(true);
+    program.setAllowNonUniform(true);
     EXPECT_TRUE(k.getAllowNonUniform());
-    pm.setAllowNonUniform(false);
+    program.setAllowNonUniform(false);
     EXPECT_FALSE(k.getAllowNonUniform());
 }
 
 TEST(ProgramNonUniform, WhenSettingAllowNonUniformThenGettingAllowNonUniformReturnsCorrectValue) {
-    ExecutionEnvironment executionEnvironment;
-    MockProgram pm(executionEnvironment);
-    MockProgram pm1(executionEnvironment);
-    MockProgram pm2(executionEnvironment);
-    const MockProgram *inputPrograms[] = {&pm1, &pm2};
+    MockClDevice device{new MockDevice()};
+    auto deviceVector = toClDeviceVector(device);
+    MockProgram program(deviceVector);
+    MockProgram program1(deviceVector);
+    MockProgram program2(deviceVector);
+    const MockProgram *inputPrograms[] = {&program1, &program2};
     cl_uint numInputPrograms = 2;
 
-    pm1.setAllowNonUniform(false);
-    pm2.setAllowNonUniform(false);
-    pm.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
-    EXPECT_FALSE(pm.getAllowNonUniform());
+    program1.setAllowNonUniform(false);
+    program2.setAllowNonUniform(false);
+    program.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
+    EXPECT_FALSE(program.getAllowNonUniform());
 
-    pm1.setAllowNonUniform(false);
-    pm2.setAllowNonUniform(true);
-    pm.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
-    EXPECT_FALSE(pm.getAllowNonUniform());
+    program1.setAllowNonUniform(false);
+    program2.setAllowNonUniform(true);
+    program.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
+    EXPECT_FALSE(program.getAllowNonUniform());
 
-    pm1.setAllowNonUniform(true);
-    pm2.setAllowNonUniform(false);
-    pm.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
-    EXPECT_FALSE(pm.getAllowNonUniform());
+    program1.setAllowNonUniform(true);
+    program2.setAllowNonUniform(false);
+    program.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
+    EXPECT_FALSE(program.getAllowNonUniform());
 
-    pm1.setAllowNonUniform(true);
-    pm2.setAllowNonUniform(true);
-    pm.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
-    EXPECT_TRUE(pm.getAllowNonUniform());
+    program1.setAllowNonUniform(true);
+    program2.setAllowNonUniform(true);
+    program.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
+    EXPECT_TRUE(program.getAllowNonUniform());
 }
 
 class ProgramNonUniformTest : public ContextFixture,

@@ -25,12 +25,12 @@
 using namespace NEO;
 
 TEST_F(ProgramTests, givenDeafultProgramObjectWhenKernelDebugEnabledIsQueriedThenFalseIsReturned) {
-    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
+    MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     EXPECT_FALSE(program.isKernelDebugEnabled());
 }
 
 TEST_F(ProgramTests, givenProgramObjectWhenEnableKernelDebugIsCalledThenProgramHasKernelDebugEnabled) {
-    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
+    MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
     program.enableKernelDebug();
     EXPECT_TRUE(program.isKernelDebugEnabled());
 }
@@ -43,7 +43,7 @@ TEST(ProgramFromBinary, givenBinaryWithDebugDataWhenCreatingProgramFromBinaryThe
     retrieveBinaryKernelFilename(filePath, "-cl-kernel-debug-enable_", ".bin");
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto program = std::make_unique<MockProgram>(*device->getExecutionEnvironment());
+    auto program = std::make_unique<MockProgram>(toClDeviceVector(*device));
     program->pDevice = &device->getDevice();
     program->enableKernelDebug();
 
@@ -187,7 +187,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
     cl_int retVal = pProgram->compile(1, &device, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto program = std::unique_ptr<GMockProgram>(new GMockProgram(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false, &pContext->getDevice(0)->getDevice()));
+    auto program = std::unique_ptr<GMockProgram>(new GMockProgram(pContext, false, toClDeviceVector(*pClDevice)));
     program->enableKernelDebug();
 
     EXPECT_CALL(*program, appendKernelDebugOptions()).Times(1);

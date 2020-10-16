@@ -795,7 +795,7 @@ TEST_F(KernelDataTest, givenFlatImageDataParamTokenWhenDecodingThenSetAllOffsets
             if (pKernelData) {
                 alignedFree(pKernelData);
             }
-            program = std::make_unique<MockProgram>(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false, nullptr);
+            program = std::make_unique<MockProgram>(pContext, false, toClDeviceVector(*pContext->getDevice(0)));
         }
 
         SPatchDataParameterBuffer dataParameterToken;

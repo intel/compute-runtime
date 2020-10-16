@@ -604,7 +604,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenGettingCurbeParamsThenTokenMaskIsCorrect
 
 TEST(KernelReflectionSurfaceTestSingle, GivenNonParentKernelWhenCreatingKernelReflectionSurfaceThenKernelReflectionSurfaceIsNotCreated) {
     MockClDevice device{new MockDevice};
-    MockProgram program(*device.getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(device));
     KernelInfo info;
     MockKernel kernel(&program, info, device);
 
@@ -622,7 +622,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNonSchedulerKernelWithForcedSchedul
     DebugManager.flags.ForceDispatchScheduler.set(true);
 
     MockClDevice device{new MockDevice};
-    MockProgram program(*device.getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(device));
     KernelInfo info;
     MockKernel kernel(&program, info, device);
 
@@ -639,7 +639,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenNoKernelArgsWhenObtainingKernelRefl
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
     MockContext context;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockProgram program(*device->getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(*device));
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;
     cl_queue_properties properties[1] = {0};
@@ -688,7 +688,7 @@ TEST(KernelReflectionSurfaceTestSingle, GivenDeviceQueueKernelArgWhenObtainingKe
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(defaultHwInfo);
     MockContext context;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockProgram program(*device->getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(*device));
 
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;
@@ -2109,7 +2109,7 @@ using KernelReflectionMultiDeviceTest = MultiRootDeviceFixture;
 TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelReflectionSurfaceThenParamsAreCorrect) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device.get());
 
-    MockProgram program(*device->getExecutionEnvironment(), context.get(), false, &device->getDevice());
+    MockProgram program(context.get(), false, toClDeviceVector(*device));
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;
     cl_queue_properties properties[1] = {0};
@@ -2158,7 +2158,7 @@ TEST_F(KernelReflectionMultiDeviceTest, GivenNoKernelArgsWhenObtainingKernelRefl
 TEST_F(KernelReflectionMultiDeviceTest, GivenDeviceQueueKernelArgWhenObtainingKernelReflectionSurfaceThenParamsAreCorrect) {
     REQUIRE_DEVICE_ENQUEUE_OR_SKIP(device.get());
 
-    MockProgram program(*device->getExecutionEnvironment(), context.get(), false, &device->getDevice());
+    MockProgram program(context.get(), false, toClDeviceVector(*device));
 
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;

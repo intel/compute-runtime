@@ -1026,7 +1026,7 @@ TEST(CommandQueue, givenEnqueueAcquireSharedObjectsCallWhenAcquireFailsThenCorre
 
 HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsCalledThenSurfaceStateIsCorrectlySet) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    MockProgram program(*pDevice->getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(*pClDevice));
     program.enableKernelDebug();
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*pDevice, &program));
     MockCommandQueue cmdQ(context.get(), pClDevice, 0);
@@ -1046,7 +1046,7 @@ HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsC
 
 HWTEST_F(CommandQueueCommandStreamTest, givenCsrWithDebugSurfaceAllocatedWhenSetupDebugSurfaceIsCalledThenDebugSurfaceIsReused) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
-    MockProgram program(*pDevice->getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(*pClDevice));
     program.enableKernelDebug();
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*pDevice, &program));
     MockCommandQueue cmdQ(context.get(), pClDevice, 0);

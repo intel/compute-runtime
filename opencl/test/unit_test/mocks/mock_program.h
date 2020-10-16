@@ -21,7 +21,7 @@
 namespace NEO {
 
 class GraphicsAllocation;
-
+ClDeviceVector toClDeviceVector(ClDevice &clDevice);
 ////////////////////////////////////////////////////////////////////////////////
 // Program - Core implementation
 ////////////////////////////////////////////////////////////////////////////////
@@ -57,7 +57,7 @@ class MockProgram : public Program {
     using Program::specConstantsSizes;
     using Program::specConstantsValues;
 
-    MockProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false, nullptr) {
+    MockProgram(const ClDeviceVector &deviceVector) : Program(nullptr, false, deviceVector) {
     }
 
     ~MockProgram() override {

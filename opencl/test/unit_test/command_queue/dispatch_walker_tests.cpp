@@ -41,7 +41,7 @@ struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, 
         context = std::make_unique<MockContext>(pClDevice);
         CommandQueueFixture::SetUp(context.get(), pClDevice, 0);
 
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+        program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
         memset(&kernelHeader, 0, sizeof(kernelHeader));
         kernelHeader.KernelHeapSize = sizeof(kernelIsa);

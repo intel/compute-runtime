@@ -177,7 +177,7 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
 
     MockContext context;
 
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false, pDevice);
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
     auto kernelInfo = std::make_unique<KernelInfo>();
 
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
@@ -243,7 +243,7 @@ HWTEST_F(HardwareCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComme
 
     MockContext context;
 
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false, pDevice);
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
     auto kernelInfo = std::make_unique<KernelInfo>();
 
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pClDevice));
@@ -711,7 +711,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenGettingBindingTableStateTh
 
     // create program with valid context
     MockContext context;
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false, pDevice);
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
 
     // setup global memory
     char globalBuffer[16];
@@ -838,7 +838,7 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
 
     // create program with valid context
     MockContext context;
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false, pDevice);
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
 
     // create kernel
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);
@@ -893,7 +893,7 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
 
     // create program with valid context
     MockContext context;
-    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false, pDevice);
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
 
     // create kernel
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pClDevice);

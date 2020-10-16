@@ -51,7 +51,7 @@ struct HardwareInterfaceTests : public ClDeviceFixture, public LinearStreamFixtu
 
         pContext = new NEO::MockContext(pClDevice);
         pCommandQueue = new MockCommandQueue(pContext, pClDevice, nullptr);
-        pProgram = new MockProgram(*pClDevice->getExecutionEnvironment(), pContext, false, &pClDevice->getDevice());
+        pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
         pKernel = new MockKernelWithApplicableWa(static_cast<Program *>(pProgram), pProgram->mockKernelInfo, *pClDevice);
     }
 

@@ -49,7 +49,7 @@ class PrintFormatterTest : public testing::Test {
 
         kernelInfo = std::make_unique<KernelInfo>();
         device = new MockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
-        program = std::make_unique<MockProgram>(*device->getExecutionEnvironment());
+        program = std::make_unique<MockProgram>(toClDeviceVector(*device));
         kernel = new MockKernel(program.get(), *kernelInfo, *device);
 
         printFormatter = std::unique_ptr<PrintFormatter>(new PrintFormatter(static_cast<uint8_t *>(data->getUnderlyingBuffer()), PrintFormatter::maxPrintfOutputLength, is32bit, kernelInfo->patchInfo.stringDataMap));

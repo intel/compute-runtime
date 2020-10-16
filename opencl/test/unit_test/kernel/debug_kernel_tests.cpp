@@ -18,7 +18,7 @@ using namespace NEO;
 
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetDebugSurfaceBtiIsCalledThenCorrectValueIsReturned) {
     auto device = std::make_unique<MockClDevice>(new MockDevice);
-    MockProgram program(*device->getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(*device));
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockDebugKernel>(device->getDevice(), &program));
 
@@ -27,7 +27,7 @@ TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetDebugSurfaceBtiIsCal
 
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetPerThreadSystemThreadSurfaceSizeIsCalledThenCorrectValueIsReturned) {
     auto device = std::make_unique<MockClDevice>(new MockDevice);
-    MockProgram program(*device->getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(*device));
     program.enableKernelDebug();
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(device->getDevice(), &program));
 
@@ -36,7 +36,7 @@ TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetPerThreadSystemThrea
 
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenQueryingIsKernelDebugEnabledThenTrueIsReturned) {
     auto device = std::make_unique<MockClDevice>(new MockDevice);
-    MockProgram program(*device->getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(*device));
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockDebugKernel>(device->getDevice(), &program));
     kernel->initialize();
@@ -46,7 +46,7 @@ TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenQueryingIsKernelDebugEn
 
 TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenQueryingIsKernelDebugEnabledThenFalseIsReturned) {
     auto device = std::make_unique<MockClDevice>(new MockDevice);
-    MockProgram program(*device->getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(*device));
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(device->getDevice(), &program));
     kernel->initialize();
@@ -56,7 +56,7 @@ TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenQueryingIsKernelDebugEnable
 
 TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetDebugSurfaceBtiIsCalledThenInvalidIndexValueIsReturned) {
     auto device = std::make_unique<MockClDevice>(new MockDevice);
-    MockProgram program(*device->getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(*device));
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(device->getDevice(), &program));
 
@@ -65,7 +65,7 @@ TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetDebugSurfaceBtiIsCalledT
 
 TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetPerThreadSystemThreadSurfaceSizeIsCalledThenZeroIsReturned) {
     auto device = std::make_unique<MockClDevice>(new MockDevice);
-    MockProgram program(*device->getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(*device));
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(device->getDevice(), &program));
 

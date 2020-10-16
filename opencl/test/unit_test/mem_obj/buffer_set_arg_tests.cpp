@@ -68,7 +68,7 @@ class BufferSetArgTest : public ContextFixture,
         pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->usesSsh = true;
 
-        pProgram = new MockProgram(*pDevice->getExecutionEnvironment(), pContext, false, pDevice);
+        pProgram = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
 
         pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
         ASSERT_NE(nullptr, pKernel);

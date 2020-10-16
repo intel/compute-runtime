@@ -14,6 +14,7 @@
 #include "shared/source/utilities/const_stringref.h"
 
 #include "opencl/source/api/cl_types.h"
+#include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/destructor_callback.h"
 
@@ -131,7 +132,7 @@ class Program : public BaseObject<_cl_program> {
                            size_t length,
                            cl_int &errcodeRet);
 
-    Program(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn, Device *device);
+    Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevices);
     ~Program() override;
 
     Program(const Program &) = delete;
@@ -350,6 +351,7 @@ class Program : public BaseObject<_cl_program> {
     Context *context = nullptr;
     Device *pDevice = nullptr;
     cl_uint numDevices = 0U;
+    ClDeviceVector clDevices;
 
     bool isBuiltIn = false;
     bool kernelDebugEnabled = false;

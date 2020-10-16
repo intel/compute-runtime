@@ -33,7 +33,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
     void SetUp() override {
         CommandEnqueueFixture::SetUp(CL_QUEUE_PROFILING_ENABLE);
 
-        program = ReleaseableObjectPtr<MockProgram>(new MockProgram(*pDevice->getExecutionEnvironment()));
+        program = ReleaseableObjectPtr<MockProgram>(new MockProgram(toClDeviceVector(*pClDevice)));
         program->setContext(&ctx);
 
         memset(&dataParameterStream, 0, sizeof(dataParameterStream));

@@ -32,7 +32,9 @@ T *Program::create(
     DEBUG_BREAK_IF(!pContext);
 
     auto device = pContext->getDevice(0);
-    auto program = new T(*device->getExecutionEnvironment(), pContext, false, &device->getDevice());
+    ClDeviceVector deviceVector;
+    deviceVector.push_back(device);
+    auto program = new T(pContext, false, deviceVector);
 
     auto retVal = program->createProgramFromBinary(binaries[0], lengths[0], device->getRootDeviceIndex());
 
@@ -73,7 +75,9 @@ T *Program::create(
         lengths);
 
     if (CL_SUCCESS == retVal) {
-        program = new T(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false, &pContext->getDevice(0)->getDevice());
+        ClDeviceVector deviceVector;
+        deviceVector.push_back(pContext->getDevice(0));
+        program = new T(pContext, false, deviceVector);
         program->sourceCode.swap(combinedString);
         program->createdFrom = CreatedFrom::SOURCE;
     }
@@ -97,7 +101,9 @@ T *Program::create(
     }
 
     if (retVal == CL_SUCCESS) {
-        program = new T(*device.getExecutionEnvironment(), context, isBuiltIn, &device.getDevice());
+        ClDeviceVector deviceVector;
+        deviceVector.push_back(&device);
+        program = new T(context, isBuiltIn, deviceVector);
         program->sourceCode = nullTerminatedString;
         program->createdFrom = CreatedFrom::SOURCE;
     }
@@ -136,7 +142,10 @@ T *Program::createFromGenBinary(
     }
 
     if (CL_SUCCESS == retVal) {
-        program = new T(executionEnvironment, context, isBuiltIn, device);
+
+        ClDeviceVector deviceVector;
+        deviceVector.push_back(device->getSpecializedDevice<ClDevice>());
+        program = new T(context, isBuiltIn, deviceVector);
         program->numDevices = 1;
         program->replaceDeviceBinary(makeCopy(binary, size), size, device->getRootDeviceIndex());
         program->isCreatedFromBinary = true;
@@ -165,7 +174,10 @@ T *Program::createFromIL(Context *context,
     }
 
     auto device = context->getDevice(0);
-    T *program = new T(*device->getExecutionEnvironment(), context, false, &device->getDevice());
+
+    ClDeviceVector deviceVector;
+    deviceVector.push_back(device);
+    T *program = new T(context, false, deviceVector);
     errcodeRet = program->createProgramFromBinary(il, length, device->getRootDeviceIndex());
     program->createdFrom = CreatedFrom::IL;
 

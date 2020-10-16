@@ -23,6 +23,7 @@
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+#include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "gmock/gmock.h"
 
@@ -85,11 +86,10 @@ class MockObject<Buffer> : public MockObjectBase<Buffer> {
 template <>
 class MockObject<Program> : public MockObjectBase<Program> {
   public:
-    MockObject() : MockObjectBase<Program>(*new ExecutionEnvironment(), nullptr, false, nullptr),
-                   executionEnvironment(&this->peekExecutionEnvironment()) {}
+    MockObject() : MockObjectBase<Program>(nullptr, false, toClDeviceVector(*(new MockClDevice(new MockDevice())))), device(this->clDevices[0]) {}
 
   private:
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<ClDevice> device;
 };
 
 typedef ::testing::Types<

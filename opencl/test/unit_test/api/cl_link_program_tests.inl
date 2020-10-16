@@ -175,7 +175,7 @@ TEST_F(clLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
     uint32_t prog2Keys[1] = {11};
     uint64_t prog2Values[1] = {13};
 
-    auto progSrc1 = clUniquePtr(new MockProgram(*pProgram->getDevice().getExecutionEnvironment(), pContext, false, pProgram->pDevice));
+    auto progSrc1 = clUniquePtr(new MockProgram(pContext, false, toClDeviceVector(*pDevice)));
     progSrc1->pDevice = pProgram->pDevice;
     progSrc1->specConstantsValues[prog1Keys[0]] = prog1Values[0];
     progSrc1->specConstantsValues[prog1Keys[1]] = prog1Values[1];
@@ -184,7 +184,7 @@ TEST_F(clLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
     progSrc1->irBinarySize = sizeof(ir1);
     progSrc1->isSpirV = true;
 
-    auto progSrc2 = clUniquePtr(new MockProgram(*pProgram->getDevice().getExecutionEnvironment(), pContext, false, pProgram->pDevice));
+    auto progSrc2 = clUniquePtr(new MockProgram(pContext, false, toClDeviceVector(*pDevice)));
     progSrc2->pDevice = pProgram->pDevice;
     progSrc2->specConstantsValues[prog2Keys[0]] = prog2Values[0];
     progSrc2->areSpecializationConstantsInitialized = true;
@@ -192,13 +192,13 @@ TEST_F(clLinkProgramTests, GivenProgramsWithSpecConstantsThenSpecConstantsAreEmb
     progSrc2->irBinarySize = sizeof(ir2);
     progSrc2->isSpirV = true;
 
-    auto progSrc3 = clUniquePtr(new MockProgram(*pProgram->getDevice().getExecutionEnvironment(), pContext, false, pProgram->pDevice));
+    auto progSrc3 = clUniquePtr(new MockProgram(pContext, false, toClDeviceVector(*pDevice)));
     progSrc3->pDevice = pProgram->pDevice;
     progSrc3->irBinary = makeCopy(ir3, sizeof(ir3));
     progSrc3->irBinarySize = sizeof(ir3);
     progSrc3->isSpirV = true;
 
-    auto progDst = clUniquePtr(new MockProgram(*pProgram->getDevice().getExecutionEnvironment(), pContext, false, pProgram->pDevice));
+    auto progDst = clUniquePtr(new MockProgram(pContext, false, toClDeviceVector(*pDevice)));
     progDst->pDevice = pProgram->pDevice;
     cl_program inputPrograms[3] = {progSrc1.get(), progSrc2.get(), progSrc3.get()};
 

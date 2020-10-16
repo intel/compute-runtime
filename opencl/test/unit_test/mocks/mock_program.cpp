@@ -23,6 +23,11 @@
 #include "opencl/test/unit_test/mocks/mock_graphics_allocation.h"
 
 namespace NEO {
+ClDeviceVector toClDeviceVector(ClDevice &clDevice) {
+    ClDeviceVector deviceVector;
+    deviceVector.push_back(&clDevice);
+    return deviceVector;
+}
 ProgramInfo *GlobalMockSipProgram::globalSipProgramInfo;
 Device *MockProgram::getDevicePtr() { return this->pDevice; }
 

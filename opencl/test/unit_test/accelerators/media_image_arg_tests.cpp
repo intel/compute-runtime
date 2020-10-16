@@ -30,7 +30,7 @@ class MediaImageSetArgTest : public ClDeviceFixture,
         ClDeviceFixture::SetUp();
 
         pKernelInfo = std::make_unique<KernelInfo>();
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+        program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
         pKernelInfo->heapInfo.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;

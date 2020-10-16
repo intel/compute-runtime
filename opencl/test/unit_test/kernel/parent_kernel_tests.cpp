@@ -38,7 +38,7 @@ class MockKernelWithArgumentAccess : public Kernel {
 TEST(ParentKernelTest, WhenArgsAddedThenObjectCountsAreIncremented) {
     KernelInfo info;
     MockClDevice *device = new MockClDevice{new MockDevice};
-    MockProgram program(*device->getExecutionEnvironment());
+    MockProgram program(toClDeviceVector(*device));
     SPatchExecutionEnvironment environment = {};
     environment.HasDeviceEnqueue = 1;
 

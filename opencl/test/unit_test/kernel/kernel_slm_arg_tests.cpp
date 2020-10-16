@@ -39,7 +39,7 @@ class KernelSlmArgTest : public Test<ClDeviceFixture> {
         pKernelInfo->kernelArgInfo[2].slmAlignment = 0x400;
         pKernelInfo->workloadInfo.slmStaticSize = 3 * KB;
 
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+        program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
         pKernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 

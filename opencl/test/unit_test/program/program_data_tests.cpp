@@ -424,7 +424,8 @@ TEST_F(ProgramDataTest, Given32BitDeviceWhenGlobalMemorySurfaceIsPresentThenItHa
 
 TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuffer) {
     MockExecutionEnvironment execEnv;
-    MockClDevice device{new MockDevice};
+    execEnv.incRefInternal();
+    MockClDevice device{new MockDevice(&execEnv, 0)};
     execEnv.memoryManager = std::make_unique<MockMemoryManager>();
     PatchTokensTestData::ValidProgramWithMixedGlobalVarAndConstSurfacesAndPointers decodedProgram;
     decodedProgram.globalPointerMutable->GlobalPointerOffset = 0U;
@@ -432,8 +433,7 @@ TEST(ProgramScopeMetadataTest, WhenPatchingGlobalSurfaceThenPickProperSourceBuff
     memset(decodedProgram.globalSurfMutable + 1, 0U, sizeof(uintptr_t));
     memset(decodedProgram.constSurfMutable + 1, 0U, sizeof(uintptr_t));
     ProgramInfo programInfo;
-    MockProgram program(execEnv);
-    program.pDevice = &device.getDevice();
+    MockProgram program(toClDeviceVector(device));
     NEO::populateProgramInfo(programInfo, decodedProgram);
     program.processProgramInfo(programInfo);
     auto &buildInfo = program.buildInfos[device.getRootDeviceIndex()];
@@ -540,8 +540,8 @@ TEST_F(ProgramDataTest, givenSymbolTablePatchTokenThenLinkerInputIsCreated) {
 
 TEST(ProgramLinkBinaryTest, whenLinkerInputEmptyThenLinkSuccessful) {
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockProgram program{*device->getExecutionEnvironment(), nullptr, false, device.get()};
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockProgram program{nullptr, false, toClDeviceVector(*device)};
     program.setLinkerInput(device->getRootDeviceIndex(), std::move(linkerInput));
     auto ret = program.linkBinary(program.pDevice, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, ret);
@@ -554,8 +554,8 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     relocation.offset = 0;
     linkerInput->relocations.push_back(NEO::LinkerInput::Relocations{relocation});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockProgram program{*device->getExecutionEnvironment(), nullptr, false, device.get()};
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockProgram program{nullptr, false, toClDeviceVector(*device)};
     KernelInfo kernelInfo = {};
     kernelInfo.name = "onlyKernel";
     std::vector<char> kernelHeap;
@@ -590,8 +590,8 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
                                         NEO::LinkerInput::RelocationInfo{"C", 24U, relocationType}});
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     linkerInput->exportedFunctionsSegmentId = 0;
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockProgram program{*device->getExecutionEnvironment(), nullptr, false, device.get()};
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockProgram program{nullptr, false, toClDeviceVector(*device)};
     auto &buildInfo = program.buildInfos[device->getRootDeviceIndex()];
     KernelInfo kernelInfo = {};
     kernelInfo.name = "onlyKernel";
@@ -640,8 +640,8 @@ TEST_F(ProgramDataTest, whenRelocationsAreNotNeededThenIsaIsPreserved) {
     linkerInput->symbols["A"] = NEO::SymbolInfo{4U, 4U, NEO::SegmentType::GlobalVariables};
     linkerInput->symbols["B"] = NEO::SymbolInfo{8U, 4U, NEO::SegmentType::GlobalConstants};
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    MockProgram program{*device->getExecutionEnvironment(), nullptr, false, device.get()};
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+    MockProgram program{nullptr, false, toClDeviceVector(*device)};
     auto &buildInfo = program.buildInfos[device->getRootDeviceIndex()];
     KernelInfo kernelInfo = {};
     kernelInfo.name = "onlyKernel";

@@ -101,7 +101,7 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLink
     ASSERT_NE(nullptr, pProgram);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    Program *programLinked = new Program(*pPlatform->peekExecutionEnvironment(), pContext, false, nullptr);
+    Program *programLinked = new Program(pContext, false, toClDeviceVector(*pPlatform->getClDevice(0)));
     cl_program program = pProgram;
 
     retVal = pProgram->compile(1, &device, buildOptions, 0, nullptr, nullptr, nullptr, nullptr);

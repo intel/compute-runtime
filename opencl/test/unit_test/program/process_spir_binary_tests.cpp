@@ -8,6 +8,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/string.h"
 
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
@@ -17,11 +18,11 @@ using namespace NEO;
 class ProcessSpirBinaryTests : public ::testing::Test {
   public:
     void SetUp() override {
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        program = std::make_unique<MockProgram>(*executionEnvironment);
+        device = std::make_unique<MockClDevice>(new MockDevice());
+        program = std::make_unique<MockProgram>(toClDeviceVector(*device));
     }
 
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    std::unique_ptr<ClDevice> device;
     std::unique_ptr<MockProgram> program;
 };
 

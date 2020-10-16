@@ -27,7 +27,7 @@ class KernelArgImmediateTest : public Test<ClDeviceFixture> {
     void SetUp() override {
         ClDeviceFixture::SetUp();
         memset(pCrossThreadData, 0xfe, sizeof(pCrossThreadData));
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+        program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
         // define kernel info
         pKernelInfo = std::make_unique<KernelInfo>();
@@ -56,7 +56,7 @@ class KernelArgImmediateTest : public Test<ClDeviceFixture> {
         pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].size = sizeof(T);
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(T);
 
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+        program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
         pKernel = new MockKernel(program.get(), *pKernelInfo, *pClDevice);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
         pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));

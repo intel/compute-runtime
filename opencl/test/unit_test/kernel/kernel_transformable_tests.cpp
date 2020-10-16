@@ -44,7 +44,7 @@ class KernelTransformableTest : public ::testing::Test {
         pKernelInfo->kernelArgInfo[3].isImage = true;
         pKernelInfo->argumentsToPatchNum = 4;
 
-        program = std::make_unique<MockProgram>(*context.getDevice(0)->getExecutionEnvironment());
+        program = std::make_unique<MockProgram>(toClDeviceVector(*context.getDevice(0)));
         pKernel.reset(new MockKernel(program.get(), *pKernelInfo, *context.getDevice(0)));
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 

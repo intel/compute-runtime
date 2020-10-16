@@ -21,7 +21,7 @@ struct AubSubCaptureTest : public ClDeviceFixture,
                            public ::testing::Test {
     void SetUp() override {
         ClDeviceFixture::SetUp();
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+        program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
         kernelInfo.name = "kernel_name";
         dbgRestore = new DebugManagerStateRestore();
     }

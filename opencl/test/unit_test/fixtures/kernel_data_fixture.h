@@ -53,7 +53,7 @@ class KernelDataTest : public testing::Test {
     void SetUp() override {
         kernelBinaryHeader.KernelNameSize = kernelNameSize;
         pContext = new MockContext;
-        program = std::make_unique<MockProgram>(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false, nullptr);
+        program = std::make_unique<MockProgram>(pContext, false, toClDeviceVector(*pContext->getDevice(0)));
     }
 
     void TearDown() override {

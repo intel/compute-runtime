@@ -34,76 +34,62 @@
 
 namespace NEO {
 
-Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn, Device *device) : executionEnvironment(executionEnvironment),
-                                                                                                                 context(context),
-                                                                                                                 pDevice(device),
-                                                                                                                 isBuiltIn(isBuiltIn) {
+Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevicesIn) : executionEnvironment(*clDevicesIn[0]->getExecutionEnvironment()),
+                                                                                        context(context),
+                                                                                        pDevice(&clDevicesIn[0]->getDevice()),
+                                                                                        clDevices(clDevicesIn),
+                                                                                        isBuiltIn(isBuiltIn) {
     if (this->context && !this->isBuiltIn) {
         this->context->incRefInternal();
     }
     blockKernelManager = new BlockKernelManager();
-    ClDevice *pClDevice = nullptr;
-    if (context != nullptr) {
-        pClDevice = context->getDevice(0);
-        if (pDevice == nullptr) {
-            pDevice = &pClDevice->getDevice();
-        }
-    } else if (pDevice != nullptr) {
-        auto pSpecializedDevice = castToObject<ClDevice>(pDevice->getSpecializedDevice<ClDevice>());
-        if (pSpecializedDevice != nullptr) {
-            pClDevice = pSpecializedDevice;
-        }
-    }
+    ClDevice *pClDevice = castToObject<ClDevice>(pDevice->getSpecializedDevice<ClDevice>());
 
     numDevices = 1;
     bool force32BitAddressess = false;
 
-    uint32_t maxRootDeviceIndex = 0u;
-    if (device) {
-        maxRootDeviceIndex = device->getRootDeviceIndex();
-    }
+    uint32_t maxRootDeviceIndex = pDevice->getRootDeviceIndex();
+
     buildInfos.resize(maxRootDeviceIndex + 1);
 
-    if (pClDevice) {
-        auto enabledClVersion = pClDevice->getEnabledClVersion();
-        if (enabledClVersion == 30) {
-            internalOptions = "-ocl-version=300 ";
-        } else if (enabledClVersion == 21) {
-            internalOptions = "-ocl-version=210 ";
-        } else {
-            internalOptions = "-ocl-version=120 ";
-        }
-        force32BitAddressess = pClDevice->getSharedDeviceInfo().force32BitAddressess;
+    auto enabledClVersion = pClDevice->getEnabledClVersion();
+    if (enabledClVersion == 30) {
+        internalOptions = "-ocl-version=300 ";
+    } else if (enabledClVersion == 21) {
+        internalOptions = "-ocl-version=210 ";
+    } else {
+        internalOptions = "-ocl-version=120 ";
+    }
+    force32BitAddressess = pClDevice->getSharedDeviceInfo().force32BitAddressess;
 
-        if (force32BitAddressess && !isBuiltIn) {
-            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
-        }
+    if (force32BitAddressess && !isBuiltIn) {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::arch32bit);
+    }
 
-        if ((isBuiltIn && is32bit) || pClDevice->areSharedSystemAllocationsAllowed() ||
-            DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
-            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
-        }
+    if ((isBuiltIn && is32bit) || pClDevice->areSharedSystemAllocationsAllowed() ||
+        DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
+    }
 
-        if (ApiSpecificConfig::getBindlessConfiguration()) {
-            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessBuffers);
-            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessImages);
-        }
+    if (ApiSpecificConfig::getBindlessConfiguration()) {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessBuffers);
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessImages);
+    }
 
-        kernelDebugEnabled = pClDevice->isDebuggerActive();
+    kernelDebugEnabled = pClDevice->isDebuggerActive();
 
-        auto enableStatelessToStatefullWithOffset = pClDevice->getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported;
-        if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
-            enableStatelessToStatefullWithOffset = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
-        }
+    auto enableStatelessToStatefullWithOffset = pClDevice->getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported;
+    if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
+        enableStatelessToStatefullWithOffset = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
+    }
 
-        if (enableStatelessToStatefullWithOffset) {
-            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
-        }
+    if (enableStatelessToStatefullWithOffset) {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
+    }
 
-        auto &hwHelper = HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
-        if (hwHelper.isForceEmuInt32DivRemSPWARequired(pClDevice->getHardwareInfo())) {
-            CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
-        }
+    auto &hwHelper = HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    if (hwHelper.isForceEmuInt32DivRemSPWARequired(pClDevice->getHardwareInfo())) {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
 
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);

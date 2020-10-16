@@ -1686,7 +1686,7 @@ HWTEST_TEMPLATED_F(BlitCopyTests, givenLocalMemoryAccessNotAllowedWhenGlobalCons
     mockLinkerInput->traits.exportsGlobalConstants = true;
     programInfo.linkerInput = std::move(mockLinkerInput);
 
-    MockProgram program(*device->getExecutionEnvironment(), bcsMockContext.get(), false, &device->getDevice());
+    MockProgram program(bcsMockContext.get(), false, toClDeviceVector(*device));
 
     EXPECT_EQ(0u, bcsMockContext->bcsCsr->peekTaskCount());
 

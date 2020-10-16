@@ -31,7 +31,6 @@ void DevicePreemptionTests::SetUp() {
     device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     executionEnvironment.reset(new SPatchExecutionEnvironment);
     memset(executionEnvironment.get(), 0, sizeof(SPatchExecutionEnvironment));
-    program = std::make_unique<MockProgram>(*device->getExecutionEnvironment());
 
     ASSERT_NE(nullptr, device);
 

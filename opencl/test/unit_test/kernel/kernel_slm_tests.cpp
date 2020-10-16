@@ -20,7 +20,7 @@ struct KernelSLMAndBarrierTest : public ClDeviceFixture,
                                  public ::testing::TestWithParam<uint32_t> {
     void SetUp() override {
         ClDeviceFixture::SetUp();
-        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
+        program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
         memset(&dataParameterStream, 0, sizeof(dataParameterStream));
         dataParameterStream.DataParameterStreamSize = sizeof(crossThreadData);
