@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gen9/reg_configs.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/unit_test/cmd_parse/gen_cmd_parse.h"
@@ -541,6 +542,127 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAddingKernelsThenResidencyContainerD
         auto occurences = std::count(residencyCont.begin(), residencyCont.end(), alloc);
         EXPECT_EQ(1U, static_cast<uint32_t>(occurences)) << it;
         ++it;
+    }
+}
+
+using CommandListArbitrationPolicyTest = Test<ModuleFixture>;
+
+HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenDefaultThreadArbitrationPolicyIsUsed) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    ze_result_t returnValue;
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(L0::CommandList::create(productFamily,
+                                                                                          device,
+                                                                                          NEO::EngineGroupType::RenderCompute,
+                                                                                          returnValue)));
+    EXPECT_NE(nullptr, commandList);
+    EXPECT_NE(nullptr, commandList->commandContainer.getCommandStream());
+
+    GenCmdList parsedCommandList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        parsedCommandList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList->commandContainer.getCommandStream()->getUsed()));
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(parsedCommandList.begin(), parsedCommandList.end());
+    EXPECT_GE(2u, miLoadImm.size());
+
+    for (auto it : miLoadImm) {
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
+        if (cmd->getRegisterOffset() == NEO::DebugControlReg2::address) {
+            EXPECT_EQ(NEO::DebugControlReg2::getRegData(NEO::ThreadArbitrationPolicy::RoundRobin),
+                      cmd->getDataDword());
+        }
+    }
+}
+
+HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenChosenThreadArbitrationPolicyIsUsed) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.OverrideThreadArbitrationPolicy.set(0);
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    ze_result_t returnValue;
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(L0::CommandList::create(productFamily,
+                                                                                          device,
+                                                                                          NEO::EngineGroupType::RenderCompute,
+                                                                                          returnValue)));
+    EXPECT_NE(nullptr, commandList);
+    EXPECT_NE(nullptr, commandList->commandContainer.getCommandStream());
+
+    GenCmdList parsedCommandList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        parsedCommandList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+        commandList->commandContainer.getCommandStream()->getUsed()));
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(parsedCommandList.begin(), parsedCommandList.end());
+    EXPECT_GE(2u, miLoadImm.size());
+
+    for (auto it : miLoadImm) {
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
+        if (cmd->getRegisterOffset() == NEO::DebugControlReg2::address) {
+            EXPECT_EQ(NEO::DebugControlReg2::getRegData(NEO::ThreadArbitrationPolicy::AgeBased),
+                      cmd->getDataDword());
+        }
+    }
+}
+
+HWTEST_F(CommandListArbitrationPolicyTest, whenCommandListIsResetThenOriginalThreadArbitrationPolicyIsKept) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    ze_result_t returnValue;
+    auto commandList = std::unique_ptr<CommandList>(whitebox_cast(L0::CommandList::create(productFamily,
+                                                                                          device,
+                                                                                          NEO::EngineGroupType::RenderCompute,
+                                                                                          returnValue)));
+    EXPECT_NE(nullptr, commandList);
+    EXPECT_NE(nullptr, commandList->commandContainer.getCommandStream());
+
+    bool found;
+    uint64_t originalThreadArbitrationPolicy = std::numeric_limits<uint64_t>::max();
+    {
+        GenCmdList parsedCommandList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+            parsedCommandList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+            commandList->commandContainer.getCommandStream()->getUsed()));
+        using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+        auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(parsedCommandList.begin(), parsedCommandList.end());
+        EXPECT_GE(2u, miLoadImm.size());
+
+        for (auto it : miLoadImm) {
+            auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
+            if (cmd->getRegisterOffset() == NEO::DebugControlReg2::address) {
+                EXPECT_EQ(NEO::DebugControlReg2::getRegData(NEO::ThreadArbitrationPolicy::RoundRobin),
+                          cmd->getDataDword());
+                originalThreadArbitrationPolicy = cmd->getDataDword();
+                found = false;
+            }
+        }
+    }
+
+    commandList->reset();
+
+    {
+        GenCmdList parsedCommandList;
+        ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+            parsedCommandList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+            commandList->commandContainer.getCommandStream()->getUsed()));
+        using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+        auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(parsedCommandList.begin(), parsedCommandList.end());
+        EXPECT_GE(2u, miLoadImm.size());
+
+        uint64_t newThreadArbitrationPolicy = std::numeric_limits<uint64_t>::max();
+        for (auto it : miLoadImm) {
+            auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*it);
+            if (cmd->getRegisterOffset() == NEO::DebugControlReg2::address) {
+                EXPECT_EQ(NEO::DebugControlReg2::getRegData(NEO::ThreadArbitrationPolicy::RoundRobin),
+                          cmd->getDataDword());
+                newThreadArbitrationPolicy = cmd->getDataDword();
+                EXPECT_EQ(originalThreadArbitrationPolicy, newThreadArbitrationPolicy);
+            }
+        }
     }
 }
 

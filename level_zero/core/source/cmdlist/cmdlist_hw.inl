@@ -14,6 +14,7 @@
 #include "shared/source/helpers/heap_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
@@ -51,6 +52,32 @@ inline ze_result_t parseErrorCode(NEO::ErrorCode returnValue) {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::programThreadArbitrationPolicy(Device *device) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    auto &hwHelper = NEO::HwHelper::get(device->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
+    uint32_t threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
+    if (NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
+        threadArbitrationPolicy = static_cast<uint32_t>(NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get());
+    }
+    NEO::PreambleHelper<GfxFamily>::programThreadArbitration(commandContainer.getCommandStream(), threadArbitrationPolicy);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
+    printfFunctionContainer.clear();
+    removeDeallocationContainerData();
+    removeHostPtrAllocations();
+    commandContainer.reset();
+
+    if (!isCopyOnly()) {
+        programStateBaseAddress(commandContainer, true);
+        programThreadArbitrationPolicy(device);
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO::EngineGroupType engineGroupType) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     this->device = device;
@@ -63,6 +90,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     if (returnType == ZE_RESULT_SUCCESS) {
         if (!isCopyOnly()) {
             programStateBaseAddress(commandContainer, false);
+            programThreadArbitrationPolicy(device);
         }
     }
 
@@ -1588,20 +1616,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reserveSpace(size_t size, void
     } else {
         *ptr = commandContainer.getCommandStream()->getSpace(size);
     }
-    return ZE_RESULT_SUCCESS;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
-    printfFunctionContainer.clear();
-    removeDeallocationContainerData();
-    removeHostPtrAllocations();
-    commandContainer.reset();
-
-    if (!isCopyOnly()) {
-        programStateBaseAddress(commandContainer, true);
-    }
-
     return ZE_RESULT_SUCCESS;
 }
 

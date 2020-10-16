@@ -81,7 +81,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     size_t spaceForResidency = 0;
     size_t preemptionSize = 0u;
     size_t debuggerCmdsSize = 0;
-    size_t threadArbitrationCmdSize = 0;
     constexpr size_t residencyContainerSpaceForPreemption = 2;
     constexpr size_t residencyContainerSpaceForFence = 1;
     constexpr size_t residencyContainerSpaceForTagWrite = 1;
@@ -96,8 +95,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                           NEO::PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(*neoDevice);
         statePreemption = devicePreemption;
     }
-
-    threadArbitrationCmdSize = NEO::PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize();
 
     if (!commandQueueDebugCmdsProgrammed) {
         debuggerCmdsSize += NEO::PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(neoDevice->isDebuggerActive());
@@ -188,7 +185,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();
         }
 
-        linearStreamSizeEstimate += threadArbitrationCmdSize + preemptionSize + debuggerCmdsSize;
+        linearStreamSizeEstimate += preemptionSize + debuggerCmdsSize;
     }
 
     linearStreamSizeEstimate += isCopyOnlyCommandQueue ? NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite() : NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(device->getHwInfo());
@@ -236,14 +233,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
             commandQueuePreemptionMode = devicePreemption;
             statePreemption = commandQueuePreemptionMode;
         }
-
-        auto &hwHelper = NEO::HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
-        uint32_t threadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
-        if (NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
-            threadArbitrationPolicy = static_cast<uint32_t>(NEO::DebugManager.flags.OverrideThreadArbitrationPolicy.get());
-        }
-
-        NEO::PreambleHelper<GfxFamily>::programThreadArbitration(&child, threadArbitrationPolicy);
 
         const bool sipKernelUsed = devicePreemption == NEO::PreemptionMode::MidThread ||
                                    neoDevice->isDebuggerActive();

@@ -204,6 +204,7 @@ struct CommandListCoreFamily : CommandListImp {
     void appendSignalEventPostWalker(ze_event_handle_t hEvent);
     bool useMemCopyToBlitFill(size_t patternSize);
     void programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired);
+    void programThreadArbitrationPolicy(Device *device);
 
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
     virtual AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize);
