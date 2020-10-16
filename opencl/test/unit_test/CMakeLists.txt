@@ -102,7 +102,7 @@ if(DEFINED AUB_STREAM_PROJECT_NAME)
        $<TARGET_OBJECTS:aub_stream_mock_lib>
   )
 else()
-  list(APPEND IGDRCL_SRCS_tests_local ${NEO_SOURCE_DIR}/opencl/source/aub/aub_stream_interface.cpp)
+  list(APPEND IGDRCL_SRCS_tests_local ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp)
 endif()
 
 add_executable(igdrcl_tests

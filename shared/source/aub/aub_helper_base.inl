@@ -5,8 +5,8 @@
  *
  */
 
-#include "opencl/source/aub/aub_helper.h"
-#include "opencl/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/aub/aub_helper.h"
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 
 namespace NEO {
 

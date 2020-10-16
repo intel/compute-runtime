@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "opencl/source/tbx/tbx_sockets.h"
+#include "shared/source/tbx/tbx_sockets.h"
 
 namespace NEO {
 

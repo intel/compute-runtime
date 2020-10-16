@@ -127,7 +127,7 @@ if(${GENERATE_EXECUTABLE})
 
   add_library(${NEO_DYNAMIC_LIB_NAME} SHARED
               ${NEO_DYNAMIC_LIB__TARGET_OBJECTS}
-              ${NEO_SOURCE_DIR}/opencl/source/aub/aub_stream_interface.cpp
+              ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
   )
 
   if(UNIX)

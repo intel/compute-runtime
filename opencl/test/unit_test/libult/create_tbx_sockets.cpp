@@ -5,9 +5,9 @@
  *
  */
 
+#include "shared/source/tbx/tbx_sockets_imp.h"
 #include "shared/test/unit_test/tests_configuration.h"
 
-#include "opencl/source/tbx/tbx_sockets_imp.h"
 #include "opencl/test/unit_test/mocks/mock_tbx_sockets.h"
 
 namespace NEO {

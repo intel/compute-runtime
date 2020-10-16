@@ -6,11 +6,10 @@
  */
 
 #pragma once
+#include "shared/source/aub/aub_mapper_base.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-
-#include "opencl/source/aub/aub_mapper_base.h"
 
 namespace NEO {
 

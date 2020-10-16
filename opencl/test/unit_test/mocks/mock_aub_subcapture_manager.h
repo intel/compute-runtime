@@ -6,7 +6,8 @@
  */
 
 #pragma once
-#include "opencl/source/aub/aub_subcapture.h"
+#include "shared/source/aub/aub_subcapture.h"
+
 #include "opencl/source/os_interface/ocl_reg_path.h"
 
 using namespace NEO;

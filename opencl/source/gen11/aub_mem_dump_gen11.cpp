@@ -5,13 +5,12 @@
  *
  */
 
+#include "shared/source/aub/aub_helper_bdw_plus.inl"
+#include "shared/source/aub_mem_dump/aub_alloc_dump.inl"
+#include "shared/source/aub_mem_dump/aub_mem_dump.inl"
 #include "shared/source/gen11/aub_mapper.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/hw_helper.h"
-
-#include "opencl/source/aub/aub_helper_bdw_plus.inl"
-#include "opencl/source/aub_mem_dump/aub_alloc_dump.inl"
-#include "opencl/source/aub_mem_dump/aub_mem_dump.inl"
 
 #include "config.h"
 

@@ -201,13 +201,13 @@ if(BUILD_WITH_L0)
 
   target_sources(${TARGET_NAME_L0}
                  PRIVATE
-                 ${COMPUTE_RUNTIME_DIR}/opencl/source/aub/aub_stream_interface.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_command_stream.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_deferred_deleter.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/create_tbx_sockets.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/get_devices.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/dll/source_level_debugger_dll.cpp
                  ${COMPUTE_RUNTIME_DIR}/opencl/source/helpers/built_ins_helper.cpp
+                 ${COMPUTE_RUNTIME_DIR}/shared/source/aub/aub_stream_interface.cpp
   )
 
   if(WIN32)

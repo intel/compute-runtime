@@ -5,7 +5,8 @@
  *
  */
 
-#include "opencl/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/aub_mem_dump/aub_mem_dump.h"
+
 #include "test.h"
 
 #include <memory>

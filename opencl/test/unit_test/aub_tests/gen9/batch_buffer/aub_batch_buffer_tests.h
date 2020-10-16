@@ -6,7 +6,8 @@
  */
 
 #pragma once
-#include "opencl/source/aub/aub_helper.h"
+#include "shared/source/aub/aub_helper.h"
+
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_mem_dump_tests.h"
 
 template <typename FamilyType>

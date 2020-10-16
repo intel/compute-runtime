@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/aub_mem_dump/aub_alloc_dump.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -16,7 +17,6 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
 
-#include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
 #include "opencl/source/command_stream/aub_command_stream_receiver.h"
 #include "opencl/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "opencl/source/command_stream/tbx_command_stream_receiver_hw.h"

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/aub/aub_center.h"
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
@@ -19,7 +20,6 @@
 #include "shared/test/unit_test/mocks/mock_device.h"
 #include "shared/test/unit_test/utilities/destructor_counted.h"
 
-#include "opencl/source/aub/aub_center.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 #include "opencl/test/unit_test/mocks/mock_async_event_handler.h"

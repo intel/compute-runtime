@@ -7,10 +7,10 @@
 
 #include "aub_mem_dump_tests.h"
 
+#include "shared/source/aub/aub_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
-#include "opencl/source/aub/aub_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_aub_csr.h"
 

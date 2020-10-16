@@ -7,6 +7,7 @@
 
 #include "opencl/source/memory_manager/os_agnostic_memory_manager.h"
 
+#include "shared/source/aub/aub_center.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
@@ -22,7 +23,6 @@
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/os_memory.h"
 
-#include "opencl/source/aub/aub_center.h"
 #include "opencl/source/helpers/surface_formats.h"
 
 #include <cassert>

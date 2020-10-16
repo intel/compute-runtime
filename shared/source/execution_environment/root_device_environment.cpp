@@ -7,6 +7,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 
+#include "shared/source/aub/aub_center.h"
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/default_cache_config.h"
@@ -17,8 +18,6 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/os_interface.h"
-
-#include "opencl/source/aub/aub_center.h"
 
 namespace NEO {
 

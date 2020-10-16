@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/aub/aub_subcapture.h"
+#include "shared/source/aub/aub_subcapture.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/debug_helpers.h"

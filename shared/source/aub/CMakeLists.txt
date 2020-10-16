@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: MIT
 #
 
-set(RUNTIME_SRCS_AUB
+set(NEO_CORE_AUB
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_center.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_center.h
@@ -18,6 +18,5 @@ set(RUNTIME_SRCS_AUB
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture.h
 )
-target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_AUB})
-set_property(GLOBAL PROPERTY RUNTIME_SRCS_AUB ${RUNTIME_SRCS_AUB})
+set_property(GLOBAL PROPERTY NEO_CORE_AUB ${NEO_CORE_AUB})
 add_subdirectories()

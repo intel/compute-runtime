@@ -15,13 +15,13 @@ if(WIN32)
 
   add_executable(igdrcl_windows_dll_tests
                  ${NEO_IGDRCL_WINDOWS_DLL_TESTS_TARGET_OBJECTS}
-                 ${NEO_SOURCE_DIR}/opencl/source/aub/aub_stream_interface.cpp
+                 ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
                  ${NEO_SOURCE_DIR}/opencl/source/dll/create_command_stream.cpp
                  ${NEO_SOURCE_DIR}/opencl/source/dll${BRANCH_DIR_SUFFIX}/get_devices.cpp
                  ${NEO_SOURCE_DIR}/opencl/source/dll/windows/os_interface.cpp
                  ${NEO_SOURCE_DIR}/opencl/source/helpers/api_specific_config_ocl.cpp
-                 ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
                  ${NEO_SOURCE_DIR}/opencl/test/unit_test/ult_configuration.cpp
+                 ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/get_devices_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_create_tests.cpp

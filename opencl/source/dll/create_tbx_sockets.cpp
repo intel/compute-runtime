@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/tbx/tbx_sockets_imp.h"
+#include "shared/source/tbx/tbx_sockets_imp.h"
 
 using namespace NEO;
 

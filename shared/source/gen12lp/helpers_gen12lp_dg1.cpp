@@ -5,11 +5,11 @@
  *
  */
 
+#include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/gen12lp/helpers_gen12lp.h"
 #include "shared/source/helpers/hw_helper.h"
 
-#include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
 #include "opencl/source/command_stream/command_stream_receiver_simulated_common_hw.h"
 
 namespace NEO {

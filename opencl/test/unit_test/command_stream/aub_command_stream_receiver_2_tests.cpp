@@ -5,13 +5,13 @@
  *
  */
 
+#include "shared/source/aub_mem_dump/aub_alloc_dump.h"
+#include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
-#include "opencl/source/aub_mem_dump/aub_alloc_dump.h"
-#include "opencl/source/aub_mem_dump/page_table_entry_bits.h"
 #include "opencl/source/helpers/hardware_context_controller.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/source/platform/platform.h"

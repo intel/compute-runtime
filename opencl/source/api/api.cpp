@@ -7,6 +7,7 @@
 
 #include "api.h"
 
+#include "shared/source/aub/aub_center.h"
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -23,7 +24,6 @@
 
 #include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/api/additional_extensions.h"
-#include "opencl/source/aub/aub_center.h"
 #include "opencl/source/built_ins/vme_builtin.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
