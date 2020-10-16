@@ -9,7 +9,7 @@
 
 #include "shared/source/memory_manager/memory_operations_handler.h"
 
-#include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/image/image.h"
 #include "level_zero/core/source/memory/memory_operations_helper.h"
 
@@ -22,7 +22,14 @@ ze_result_t ContextImp::destroy() {
 }
 
 ze_result_t ContextImp::getStatus() {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(this->driverHandle);
+    for (auto device : driverHandleImp->devices) {
+        DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+        if (deviceImp->resourcesReleased) {
+            return ZE_RESULT_ERROR_DEVICE_LOST;
+        }
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 DriverHandle *ContextImp::getDriverHandle() {
