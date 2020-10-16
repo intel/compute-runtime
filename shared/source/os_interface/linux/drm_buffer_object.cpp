@@ -149,26 +149,32 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     return err;
 }
 
-void BufferObject::bind(OsContext *osContext, uint32_t vmHandleId) {
+int BufferObject::bind(OsContext *osContext, uint32_t vmHandleId) {
+    int retVal = 0;
     auto contextId = getOsContextId(osContext);
     if (!this->bindInfo[contextId][vmHandleId]) {
-        auto ret = this->drm->bindBufferObject(osContext, vmHandleId, this);
+        retVal = this->drm->bindBufferObject(osContext, vmHandleId, this);
         auto err = this->drm->getErrno();
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d to VM %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n", this->handle, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, ret, err, strerror(err));
-        UNRECOVERABLE_IF(ret != 0);
-        this->bindInfo[contextId][vmHandleId] = true;
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d to VM %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n", this->handle, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+        if (!retVal) {
+            this->bindInfo[contextId][vmHandleId] = true;
+        }
     }
+    return retVal;
 }
 
-void BufferObject::unbind(OsContext *osContext, uint32_t vmHandleId) {
+int BufferObject::unbind(OsContext *osContext, uint32_t vmHandleId) {
+    int retVal = 0;
     auto contextId = getOsContextId(osContext);
     if (this->bindInfo[contextId][vmHandleId]) {
-        auto ret = this->drm->unbindBufferObject(osContext, vmHandleId, this);
+        retVal = this->drm->unbindBufferObject(osContext, vmHandleId, this);
         auto err = this->drm->getErrno();
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d from VM %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n", this->handle, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, ret, err, strerror(err));
-        UNRECOVERABLE_IF(ret != 0);
-        this->bindInfo[contextId][vmHandleId] = false;
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d from VM %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n", this->handle, vmHandleId, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+        if (!retVal) {
+            this->bindInfo[contextId][vmHandleId] = false;
+        }
     }
+    return retVal;
 }
 
 void BufferObject::printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage, BufferObject *const residency[]) {
@@ -207,11 +213,7 @@ int BufferObject::pin(BufferObject *const boToPin[], size_t numberOfBos, OsConte
         for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
             if (osContext->getDeviceBitfield().test(drmIterator)) {
                 for (size_t i = 0; i < numberOfBos; i++) {
-                    retVal |= this->drm->bindBufferObject(osContext, drmIterator, boToPin[i]);
-                    if (!retVal) {
-                        auto contextId = getOsContextId(osContext);
-                        boToPin[i]->bindInfo[contextId][drmIterator] = true;
-                    }
+                    retVal |= boToPin[i]->bind(osContext, drmIterator);
                 }
             }
         }

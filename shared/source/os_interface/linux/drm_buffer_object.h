@@ -47,8 +47,8 @@ class BufferObject {
 
     int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId, BufferObject *const residency[], size_t residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage);
 
-    void bind(OsContext *osContext, uint32_t vmHandleId);
-    void unbind(OsContext *osContext, uint32_t vmHandleId);
+    int bind(OsContext *osContext, uint32_t vmHandleId);
+    int unbind(OsContext *osContext, uint32_t vmHandleId);
 
     void printExecutionBuffer(drm_i915_gem_execbuffer2 &execbuf, const size_t &residencyCount, drm_i915_gem_exec_object2 *execObjectsStorage, BufferObject *const residency[]);
 

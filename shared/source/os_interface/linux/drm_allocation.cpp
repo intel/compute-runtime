@@ -56,11 +56,13 @@ void DrmAllocation::bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHa
             bufferObjects->push_back(bo);
 
         } else {
+            auto retVal = 0;
             if (bind) {
-                bo->bind(osContext, vmHandleId);
+                retVal = bo->bind(osContext, vmHandleId);
             } else {
-                bo->unbind(osContext, vmHandleId);
+                retVal = bo->unbind(osContext, vmHandleId);
             }
+            UNRECOVERABLE_IF(retVal);
         }
     }
 }
