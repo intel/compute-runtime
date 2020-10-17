@@ -66,6 +66,34 @@ HWTEST_F(CommandListAppendSignalEvent, givenCmdlistWhenAppendingSignalEventThenE
     }
 }
 
+HWTEST_F(CommandListAppendSignalEvent, givenEventNotVisibleOnHostWhenAppendingSignalEventThenEventGraphicsAllocationIsNotAddedToResidencyContainer) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = 0;
+    eventPoolDesc.count = 2;
+
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+
+    const ze_event_desc_t eventDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
+        0,
+        0,
+        ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+    auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
+
+    auto result = commandList->appendSignalEvent(event->toHandle());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &residencyContainer = commandList->commandContainer.getResidencyContainer();
+    auto eventPoolAlloc = &eventPool->getAllocation();
+    for (auto alloc : eventPoolAlloc->getGraphicsAllocations()) {
+        auto itor =
+            std::find(std::begin(residencyContainer), std::end(residencyContainer), alloc);
+        EXPECT_EQ(itor, std::end(residencyContainer));
+    }
+}
+
 HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagNoneWhenAppendingSignalEventThenPipeControlHasNoDcFlush) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
@@ -193,7 +221,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeC
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -224,6 +252,34 @@ HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeC
         }
     }
     ASSERT_TRUE(postSyncFound);
+}
+
+HWTEST_F(CommandListAppendSignalEvent, givenTimestampEventNotVisibleOnHostWhenAppendingSignalEventThenEventGraphicsAllocationIsNotAddedToResidencyContainer) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.count = 2;
+
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+
+    const ze_event_desc_t eventDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
+        0,
+        0,
+        ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+    auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
+
+    auto result = commandList->appendSignalEvent(event->toHandle());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &residencyContainer = commandList->commandContainer.getResidencyContainer();
+    auto eventPoolAlloc = &eventPool->getAllocation();
+    for (auto alloc : eventPoolAlloc->getGraphicsAllocations()) {
+        auto itor =
+            std::find(std::begin(residencyContainer), std::end(residencyContainer), alloc);
+        EXPECT_EQ(itor, std::end(residencyContainer));
+    }
 }
 
 } // namespace ult

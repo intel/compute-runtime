@@ -19,6 +19,8 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 
+#include "level_zero/core/source/cmdlist/cmdlist.h"
+#include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/metrics/metric.h"
@@ -56,25 +58,57 @@ ze_result_t EventPoolImp::initialize(DriverHandle *driver, uint32_t numDevices, 
         maxRootDeviceIndex = rootDeviceIndices[0];
     }
 
+    if (this->devices.size() > 1) {
+        this->allocOnDevice = false;
+    }
+
+    if (allocOnDevice) {
+        ze_command_queue_desc_t cmdQueueDesc = {};
+        cmdQueueDesc.ordinal = 0;
+        cmdQueueDesc.index = 0;
+        cmdQueueDesc.flags = 0;
+        cmdQueueDesc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+        cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+        ze_result_t returnValue = ZE_RESULT_SUCCESS;
+        eventPoolCommandList =
+            CommandList::createImmediate(
+                static_cast<DeviceImp *>(this->devices[0])->neoDevice->getHardwareInfo().platform.eProductFamily,
+                this->devices[0],
+                &cmdQueueDesc,
+                true,
+                NEO::EngineGroupType::RenderCompute,
+                returnValue);
+
+        if (!this->eventPoolCommandList) {
+            this->allocOnDevice = false;
+        }
+    }
+
     eventPoolAllocations = new NEO::MultiGraphicsAllocation(maxRootDeviceIndex);
 
     uint32_t rootDeviceIndex = rootDeviceIndices.at(0);
 
-    NEO::SVMAllocsManager::UnifiedMemoryProperties memoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
-                                                                    devices[0]->getNEODevice()->getDeviceBitfield());
+    auto subDeviceBitField = devices[0]->getNEODevice()->getDeviceBitfield();
+    auto internalMemoryType = InternalMemoryType::HOST_UNIFIED_MEMORY;
+    auto allocationType = isEventPoolUsedForTimestamp ? NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER : NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    if (this->allocOnDevice) {
+        internalMemoryType = InternalMemoryType::DEVICE_UNIFIED_MEMORY;
+        allocationType = NEO::GraphicsAllocation::AllocationType::BUFFER;
+    }
 
-    NEO::AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
-                                                      true,
-                                                      alignUp<size_t>(numEvents * eventSize, MemoryConstants::pageSize64k),
-                                                      isEventPoolUsedForTimestamp ? NEO::GraphicsAllocation::AllocationType::TIMESTAMP_PACKET_TAG_BUFFER
-                                                                                  : NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
-                                                      memoryProperties.subdeviceBitfield.count() > 1,
-                                                      memoryProperties.subdeviceBitfield.count() > 1,
-                                                      memoryProperties.subdeviceBitfield};
-    unifiedMemoryProperties.alignment = eventAlignment;
+    NEO::SVMAllocsManager::UnifiedMemoryProperties memoryProperties(internalMemoryType, subDeviceBitField);
+
+    NEO::AllocationProperties eventPoolAllocationProperties{rootDeviceIndex,
+                                                            true,
+                                                            alignUp<size_t>(numEvents * eventSize, MemoryConstants::pageSize64k),
+                                                            allocationType,
+                                                            memoryProperties.subdeviceBitfield.count() > 1,
+                                                            memoryProperties.subdeviceBitfield.count() > 1,
+                                                            memoryProperties.subdeviceBitfield};
+    eventPoolAllocationProperties.alignment = eventAlignment;
 
     void *eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocation(rootDeviceIndices,
-                                                                                   unifiedMemoryProperties,
+                                                                                   eventPoolAllocationProperties,
                                                                                    *eventPoolAllocations);
     if (!eventPoolPtr) {
         return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -90,6 +124,11 @@ EventPoolImp::~EventPoolImp() {
     }
     delete eventPoolAllocations;
     eventPoolAllocations = nullptr;
+
+    if (eventPoolCommandList) {
+        eventPoolCommandList->destroy();
+        eventPoolCommandList = nullptr;
+    }
 }
 
 ze_result_t EventPoolImp::getIpcHandle(ze_ipc_event_pool_handle_t *pIpcHandle) {
@@ -122,6 +161,9 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     if (eventPool->isEventPoolUsedForTimestamp) {
         event->isTimestampEvent = true;
     }
+    if (eventPool->allocOnDevice) {
+        event->allocOnDevice = true;
+    }
 
     auto alloc = eventPool->getAllocation().getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
 
@@ -135,6 +177,10 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
 
     event->reset();
 
+    if (event->allocOnDevice) {
+        eventPool->eventPoolCommandList->appendEventReset(event->toHandle());
+    }
+
     return event;
 }
 
@@ -142,6 +188,10 @@ NEO::GraphicsAllocation &Event::getAllocation() {
     auto eventImp = static_cast<EventImp *>(this);
 
     return *eventImp->eventPool->getAllocation().getGraphicsAllocation(eventImp->device->getNEODevice()->getRootDeviceIndex());
+}
+
+uint64_t Event::getGpuAddress() {
+    return gpuAddress;
 }
 
 ze_result_t Event::destroy() {
@@ -165,7 +215,7 @@ ze_result_t EventImp::queryStatus() {
     return queryVal == Event::STATE_CLEARED ? ZE_RESULT_NOT_READY : ZE_RESULT_SUCCESS;
 }
 
-ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
+void EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
 
     auto baseAddr = reinterpret_cast<uint64_t>(hostAddress);
     auto signalScopeFlag = this->signalScope;
@@ -182,13 +232,11 @@ ze_result_t EventImp::hostEventSetValueTimestamps(uint32_t eventVal) {
     eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalStart));
     eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, contextEnd));
     eventTsSetFunc(baseAddr + offsetof(KernelTimestampEvent, globalEnd));
-
-    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t EventImp::hostEventSetValue(uint32_t eventVal) {
     if (isTimestampEvent) {
-        return hostEventSetValueTimestamps(eventVal);
+        hostEventSetValueTimestamps(eventVal);
     }
 
     auto hostAddr = static_cast<uint64_t *>(hostAddress);
@@ -243,6 +291,11 @@ ze_result_t EventImp::hostSynchronize(uint64_t timeout) {
 }
 
 ze_result_t EventImp::reset() {
+
+    if (allocOnDevice) {
+        return ZE_RESULT_SUCCESS;
+    }
+
     return hostEventSetValue(Event::STATE_INITIAL);
 }
 

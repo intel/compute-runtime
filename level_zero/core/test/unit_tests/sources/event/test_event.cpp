@@ -30,7 +30,7 @@ TEST_F(EventPoolCreate, allocationContainsAtLeast16Bytes) {
     auto allocation = &eventPool->getAllocation();
     ASSERT_NE(nullptr, allocation);
 
-    uint32_t minAllocationSize = eventPool->getEventSize();
+    size_t minAllocationSize = eventPool->getEventSize();
     EXPECT_GE(allocation->getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex())->getUnderlyingBufferSize(),
               minAllocationSize);
 }
@@ -38,7 +38,7 @@ TEST_F(EventPoolCreate, allocationContainsAtLeast16Bytes) {
 TEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKernelTimestamps) {
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
 
     std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
     ASSERT_NE(nullptr, eventPool);
@@ -143,6 +143,37 @@ TEST_F(EventPoolCreate, returnsSuccessFromCreateEventPoolWithDevice) {
     eventPool->destroy();
 }
 
+TEST_F(EventPoolCreate, whenHostVisibleFlagNotSetThenEventAllocationIsOnDevice) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        0u,
+        4};
+
+    auto deviceHandle = device->toHandle();
+    auto eventPool = EventPool::create(driverHandle.get(), 1, &deviceHandle, &eventPoolDesc);
+
+    ASSERT_NE(nullptr, eventPool);
+
+    EXPECT_EQ(NEO::GraphicsAllocation::AllocationType::BUFFER, eventPool->getAllocation().getAllocationType());
+    eventPool->destroy();
+}
+
+TEST_F(EventPoolCreate, whenHostVisibleFlagNotSetThenEventPoolCommandListIsCreated) {
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        0u,
+        4};
+
+    auto deviceHandle = device->toHandle();
+    auto eventPool = EventPool::create(driverHandle.get(), 1, &deviceHandle, &eventPoolDesc);
+
+    ASSERT_NE(nullptr, eventPool->eventPoolCommandList);
+
+    eventPool->destroy();
+}
+
 struct EventCreateAllocationResidencyTest : public ::testing::Test {
     void SetUp() override {
         neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
@@ -171,7 +202,7 @@ class TimestampEventCreate : public Test<DeviceFixture> {
         DeviceFixture::SetUp();
         ze_event_pool_desc_t eventPoolDesc = {};
         eventPoolDesc.count = 1;
-        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
 
         ze_event_desc_t eventDesc = {};
         eventDesc.index = 0;
@@ -200,7 +231,7 @@ TEST_F(TimestampEventCreate, givenSingleTimestampEventThenAllocationSizeCreatedF
     auto allocation = &eventPool->getAllocation();
     ASSERT_NE(nullptr, allocation);
 
-    uint32_t minTimestampEventAllocation = eventPool->getEventSize();
+    size_t minTimestampEventAllocation = eventPool->getEventSize();
     EXPECT_GE(allocation->getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex())->getUnderlyingBufferSize(),
               minTimestampEventAllocation);
 }
@@ -282,6 +313,37 @@ TEST_F(EventPoolCreateMultiDevice, whenCreatingEventPoolWithMultipleDevicesThenE
     EXPECT_NE(nullptr, allocation);
 
     EXPECT_EQ(allocation->getGraphicsAllocations().size(), numRootDevices);
+
+    delete[] devices;
+}
+
+TEST_F(EventPoolCreateMultiDevice, whenCreatingEventPoolWithMultipleDevicesAndHostVisibleFlagNotSetThenEventPoolCreateSucceedsButEventAllocNotPlacedOnDevice) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.count = 32;
+
+    uint32_t deviceCount = 0;
+    ze_result_t result = zeDeviceGet(driverHandle.get(), &deviceCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(deviceCount, numRootDevices);
+
+    ze_device_handle_t *devices = new ze_device_handle_t[deviceCount];
+    result = zeDeviceGet(driverHandle.get(), &deviceCount, devices);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(),
+                                                               deviceCount,
+                                                               devices,
+                                                               &eventPoolDesc));
+    EXPECT_NE(nullptr, eventPool);
+
+    auto allocation = &eventPool->getAllocation();
+    EXPECT_NE(nullptr, allocation);
+
+    EXPECT_EQ(allocation->getGraphicsAllocations().size(), numRootDevices);
+
+    EXPECT_EQ(false, eventPool->allocOnDevice);
 
     delete[] devices;
 }

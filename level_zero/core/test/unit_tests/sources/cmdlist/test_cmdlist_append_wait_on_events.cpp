@@ -101,6 +101,35 @@ HWTEST_F(CommandListAppendWaitOnEvent, WhenAppendingWaitOnEventsThenEventGraphic
     }
 }
 
+HWTEST_F(CommandListAppendWaitOnEvent, givenEventNotVisibleOnHostWhenAppendingWaitOnEventsThenEventGraphicsAllocationIsNotAddedToResidencyContainer) {
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.flags = 0;
+    eventPoolDesc.count = 2;
+
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
+
+    const ze_event_desc_t eventDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_DESC,
+        nullptr,
+        0,
+        0,
+        ZE_EVENT_SCOPE_FLAG_DEVICE};
+
+    auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
+    ze_event_handle_t hEventHandle = event->toHandle();
+
+    auto result = commandList->appendWaitOnEvents(1, &hEventHandle);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &residencyContainer = commandList->commandContainer.getResidencyContainer();
+    auto eventPoolAlloc = &eventPool->getAllocation();
+    for (auto alloc : eventPoolAlloc->getGraphicsAllocations()) {
+        auto itor =
+            std::find(std::begin(residencyContainer), std::end(residencyContainer), alloc);
+        EXPECT_EQ(itor, std::end(residencyContainer));
+    }
+}
+
 HWTEST_F(CommandListAppendWaitOnEvent, givenEventWithWaitScopeFlagDeviceWhenAppendingWaitOnEventThenPCWithDcFlushIsGenerated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();

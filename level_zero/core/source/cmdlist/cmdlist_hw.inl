@@ -215,7 +215,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendEventReset(ze_event_hand
     if (event->isTimestampEvent) {
         eventOffset = offsetof(KernelTimestampEvent, contextEnd);
     }
-    commandContainer.addToResidencyContainer(&event->getAllocation());
+
+    if (!event->allocOnDevice) {
+        commandContainer.addToResidencyContainer(&event->getAllocation());
+    }
+
     if (isCopyOnly()) {
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), event->getGpuAddress(), Event::STATE_CLEARED, false, true);
     } else {
@@ -1359,7 +1363,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(ze_event_han
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     auto event = Event::fromHandle(hEvent);
 
-    commandContainer.addToResidencyContainer(&event->getAllocation());
+    if (!event->allocOnDevice) {
+        commandContainer.addToResidencyContainer(&event->getAllocation());
+    }
+
     uint64_t baseAddr = event->getGpuAddress();
     size_t eventSignalOffset = 0;
     if (event->isTimestampEvent) {
@@ -1394,7 +1401,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
 
     for (uint32_t i = 0; i < numEvents; i++) {
         auto event = Event::fromHandle(phEvent[i]);
-        commandContainer.addToResidencyContainer(&event->getAllocation());
+        if (!event->allocOnDevice) {
+            commandContainer.addToResidencyContainer(&event->getAllocation());
+        }
 
         gpuAddr = event->getGpuAddress();
         if (event->isTimestampEvent) {
@@ -1434,7 +1443,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(ze_event_hand
             return;
         }
 
-        commandContainer.addToResidencyContainer(&event->getAllocation());
+        if (!event->allocOnDevice) {
+            commandContainer.addToResidencyContainer(&event->getAllocation());
+        }
+
         auto baseAddr = event->getGpuAddress();
 
         if (beforeWalker) {
