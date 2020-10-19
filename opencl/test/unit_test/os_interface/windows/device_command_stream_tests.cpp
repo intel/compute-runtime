@@ -123,10 +123,16 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
         }
         bool ret = true;
         if (DebugManager.flags.EnableDirectSubmission.get() == 1) {
-            directSubmission = std::make_unique<
-                MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(device, osContext);
-            ret = directSubmission->initialize(true);
-            this->dispatchMode = DispatchMode::ImmediateDispatch;
+            if (!initBlitterDirectSubmission) {
+                directSubmission = std::make_unique<
+                    MockWddmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>>(device, osContext);
+                ret = directSubmission->initialize(true);
+                this->dispatchMode = DispatchMode::ImmediateDispatch;
+            } else {
+                blitterDirectSubmission = std::make_unique<
+                    MockWddmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>>(device, osContext);
+                blitterDirectSubmission->initialize(true);
+            }
         }
         return ret;
     }
@@ -135,6 +141,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
     std::unique_ptr<CommandBuffer> recordedCommandBuffer = nullptr;
 
     bool callParentInitDirectSubmission = true;
+    bool initBlitterDirectSubmission = false;
 };
 
 class WddmCommandStreamWithMockGdiFixture {
@@ -1033,6 +1040,44 @@ TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnRcsWhenFlushi
                             &cs, commandBuffer->getUnderlyingBuffer()};
     csr->flush(batchBuffer, csr->getResidencyAllocations());
     auto directSubmission = reinterpret_cast<MockSubmission *>(csr->directSubmission.get());
+    EXPECT_TRUE(directSubmission->ringStart);
+    size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
+    size_t expectedSize = directSubmission->getSizeSemaphoreSection() +
+                          Dispatcher::getSizePreemption() +
+                          directSubmission->getSizeDispatch();
+    EXPECT_EQ(expectedSize, actualDispatchSize);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+TEST_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnBcsWhenFlushingCommandBufferThenExpectDirectSubmissionUsed) {
+    using Dispatcher = BlitterDispatcher<DEFAULT_TEST_FAMILY_NAME>;
+    using MockSubmission =
+        MockWddmDirectSubmission<DEFAULT_TEST_FAMILY_NAME, Dispatcher>;
+
+    DebugManager.flags.EnableDirectSubmission.set(1);
+
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = true;
+
+    std::unique_ptr<OsContext> osContext;
+    osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
+                                      0, device->getDeviceBitfield(), aub_stream::ENGINE_BCS, PreemptionMode::ThreadGroup,
+                                      false, false, false));
+    csr->callParentInitDirectSubmission = false;
+    csr->initBlitterDirectSubmission = true;
+    bool ret = csr->initDirectSubmission(*device.get(), *osContext.get());
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(csr->isDirectSubmissionEnabled());
+    EXPECT_TRUE(csr->isBlitterDirectSubmissionEnabled());
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0,
+                            nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(),
+                            &cs, commandBuffer->getUnderlyingBuffer()};
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+    auto directSubmission = reinterpret_cast<MockSubmission *>(csr->blitterDirectSubmission.get());
     EXPECT_TRUE(directSubmission->ringStart);
     size_t actualDispatchSize = directSubmission->ringCommandStream.getUsed();
     size_t expectedSize = directSubmission->getSizeSemaphoreSection() +

@@ -92,7 +92,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const Vec3<size_t
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer,
                                                                bool profilingEnabled, bool debugPauseEnabled,
-                                                               const RootDeviceEnvironment &rootDeviceEnvironment) {
+                                                               bool blitterDirectSubmission, const RootDeviceEnvironment &rootDeviceEnvironment) {
     size_t size = 0;
     for (auto &blitProperties : blitPropertiesContainer) {
         size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitProperties.copySize, blitProperties.csrDependencies,
@@ -101,7 +101,11 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
     }
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(*rootDeviceEnvironment.getHardwareInfo());
     size += EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
-    size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
+    if (blitterDirectSubmission) {
+        size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
+    } else {
+        size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
+    }
 
     if (debugPauseEnabled) {
         size += BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands();

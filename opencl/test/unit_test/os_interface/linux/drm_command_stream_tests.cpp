@@ -1312,9 +1312,37 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
     DebugManagerStateRestore restorer;
 };
 
+struct DrmCommandStreamBlitterDirectSubmissionTest : public DrmCommandStreamDirectSubmissionTest {
+    template <typename GfxFamily>
+    void SetUpT() {
+        DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1u);
+        DebugManager.flags.DirectSubmissionOverrideRenderSupport.set(0u);
+        DebugManager.flags.DirectSubmissionOverrideComputeSupport.set(0u);
+
+        DrmCommandStreamDirectSubmissionTest::SetUpT<GfxFamily>();
+
+        osContext.reset(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
+                                          0, device->getDeviceBitfield(), aub_stream::ENGINE_BCS, PreemptionMode::ThreadGroup,
+                                          false, false, false));
+        csr->initDirectSubmission(*device.get(), *osContext.get());
+    }
+
+    template <typename GfxFamily>
+    void TearDownT() {
+        DrmCommandStreamDirectSubmissionTest::TearDownT<GfxFamily>();
+    }
+
+    std::unique_ptr<OsContext> osContext;
+};
+
 template <typename GfxFamily>
 struct MockDrmDirectSubmission : public DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>> {
     using DrmDirectSubmission<GfxFamily, RenderDispatcher<GfxFamily>>::currentTagData;
+};
+
+template <typename GfxFamily>
+struct MockDrmBlitterDirectSubmission : public DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>> {
+    using DrmDirectSubmission<GfxFamily, BlitterDispatcher<GfxFamily>>::currentTagData;
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmissionWhenFlushThenFlushStampIsNotUpdated) {
@@ -1331,6 +1359,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
     EXPECT_EQ(csr->obtainCurrentFlushStamp(), flushStamp);
 
     auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get();
+    ASSERT_NE(nullptr, directSubmission);
     static_cast<MockDrmDirectSubmission<FamilyType> *>(directSubmission)->currentTagData.tagValue = 0u;
 }
 
@@ -1348,7 +1377,48 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenEnabledDirectSubmi
     EXPECT_EQ(memoryOperationsInterface->isResident(device.get(), *batchBuffer.commandBufferAllocation), MemoryOperationsStatus::SUCCESS);
 
     auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get();
+    ASSERT_NE(nullptr, directSubmission);
     static_cast<MockDrmDirectSubmission<FamilyType> *>(directSubmission)->currentTagData.tagValue = 0u;
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenEnabledDirectSubmissionOnBlitterWhenFlushThenFlushStampIsNotUpdated) {
+    auto &cs = csr->getCS();
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr};
+    uint8_t bbStart[64];
+    batchBuffer.endCmdPtr = &bbStart[0];
+
+    auto flushStamp = csr->obtainCurrentFlushStamp();
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    EXPECT_EQ(csr->obtainCurrentFlushStamp(), flushStamp);
+
+    auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->blitterDirectSubmission.get();
+    ASSERT_NE(nullptr, directSubmission);
+    static_cast<MockDrmBlitterDirectSubmission<FamilyType> *>(directSubmission)->currentTagData.tagValue = 0u;
+
+    EXPECT_EQ(nullptr, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get());
+}
+
+HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenEnabledDirectSubmissionOnBlitterWhenFlushThenCommandBufferAllocationIsResident) {
+    auto &cs = csr->getCS();
+    CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
+    CommandStreamReceiverHw<FamilyType>::alignToCacheLine(cs);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr};
+    uint8_t bbStart[64];
+    batchBuffer.endCmdPtr = &bbStart[0];
+
+    csr->flush(batchBuffer, csr->getResidencyAllocations());
+
+    auto memoryOperationsInterface = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface.get();
+    EXPECT_EQ(memoryOperationsInterface->isResident(device.get(), *batchBuffer.commandBufferAllocation), MemoryOperationsStatus::SUCCESS);
+
+    auto directSubmission = static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->blitterDirectSubmission.get();
+    ASSERT_NE(nullptr, directSubmission);
+    static_cast<MockDrmBlitterDirectSubmission<FamilyType> *>(directSubmission)->currentTagData.tagValue = 0u;
+
+    EXPECT_EQ(nullptr, static_cast<TestedDrmCommandStreamReceiver<FamilyType> *>(csr)->directSubmission.get());
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTest, CheckDrmFree) {

@@ -77,6 +77,10 @@ bool DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Reside
         memoryOperationsInterface->makeResidentWithinOsContext(this->osContext, ArrayRef<GraphicsAllocation *>(&batchBuffer.commandBufferAllocation, 1), true);
         return this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
     }
+    if (this->blitterDirectSubmission.get()) {
+        memoryOperationsInterface->makeResidentWithinOsContext(this->osContext, ArrayRef<GraphicsAllocation *>(&batchBuffer.commandBufferAllocation, 1), true);
+        return this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
+    }
 
     this->flushStamp->setStamp(bb->peekHandle());
     this->flushInternal(batchBuffer, allocationsForResidency);

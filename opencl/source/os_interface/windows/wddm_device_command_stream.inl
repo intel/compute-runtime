@@ -77,6 +77,9 @@ bool WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, Resid
     if (directSubmission.get()) {
         return directSubmission->dispatchCommandBuffer(batchBuffer, *(flushStamp.get()));
     }
+    if (blitterDirectSubmission.get()) {
+        return blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(flushStamp.get()));
+    }
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader);
     pHeader->RequiresCoherency = batchBuffer.requiresCoherency;

@@ -29,8 +29,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass = CommandStreamReceiverHw<GfxFamily>;
 
   public:
+    using BaseClass::blitterDirectSubmission;
     using BaseClass::checkPlatformSupportsGpuIdleImplicitFlush;
     using BaseClass::checkPlatformSupportsNewResourceImplicitFlush;
+    using BaseClass::directSubmission;
     using BaseClass::dshState;
     using BaseClass::getCmdSizeForPrologue;
     using BaseClass::getScratchPatchAddress;

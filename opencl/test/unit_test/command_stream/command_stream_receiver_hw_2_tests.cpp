@@ -6,6 +6,9 @@
  */
 
 #include "shared/source/command_stream/scratch_space_controller_base.h"
+#include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
+#include "shared/test/unit_test/helpers/ult_hw_config.h"
+#include "shared/test/unit_test/mocks/mock_direct_submission_hw.h"
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/event/user_event.h"
@@ -66,7 +69,7 @@ HWTEST_F(BcsTests, givenDebugCapabilityWhenEstimatingCommandSizeThenAddAllRequir
     blitPropertiesContainer.push_back(blitProperties);
 
     auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        blitPropertiesContainer, false, true, pClDevice->getRootDeviceEnvironment());
+        blitPropertiesContainer, false, true, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedSize, estimatedSize);
     EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(blitProperties.copySize, pClDevice->getRootDeviceEnvironment()));
@@ -1164,6 +1167,50 @@ HWTEST_F(BcsTests, givenInvalidBlitDirectionWhenConstructPropertiesThenException
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     EXPECT_THROW(ClBlitProperties::constructProperties(static_cast<BlitterConstants::BlitDirection>(7), csr, {}), std::exception);
+}
+
+HWTEST_F(BcsTests, givenBlitterDirectSubmissionEnabledWhenProgrammingBlitterThenExpectRingBufferDispatched) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = true;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    using DirectSubmission = MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>;
+
+    csr.blitterDirectSubmission = std::make_unique<DirectSubmission>(*pDevice, *csr.osContext);
+    csr.recordFlusheBatchBuffer = true;
+    DirectSubmission *directSubmission = reinterpret_cast<DirectSubmission *>(csr.blitterDirectSubmission.get());
+    bool initRet = directSubmission->initialize(true);
+    EXPECT_TRUE(initRet);
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+    size_t numberNodesPerContainer = 5;
+    auto graphicsAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                                csr, graphicsAllocation, nullptr, hostPtr,
+                                                                                graphicsAllocation->getGpuAddress(), 0,
+                                                                                0, 0, {1, 1, 1}, 0, 0, 0, 0);
+
+    MockTimestampPacketContainer timestamp0(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
+    MockTimestampPacketContainer timestamp1(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
+    blitProperties.csrDependencies.push_back(&timestamp0);
+    blitProperties.csrDependencies.push_back(&timestamp1);
+
+    blitBuffer(&csr, blitProperties, true);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(csr.commandStream, 0u);
+    ASSERT_NE(nullptr, csr.latestFlushedBatchBuffer.endCmdPtr);
+
+    MI_BATCH_BUFFER_START *bbStart = hwParser.getCommand<MI_BATCH_BUFFER_START>();
+    ASSERT_NE(nullptr, bbStart);
+    EXPECT_EQ(csr.latestFlushedBatchBuffer.endCmdPtr, bbStart);
+    EXPECT_EQ(0ull, bbStart->getBatchBufferStartAddressGraphicsaddress472());
 }
 
 struct MockScratchSpaceController : ScratchSpaceControllerBase {

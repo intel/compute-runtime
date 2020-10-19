@@ -938,9 +938,9 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
 
     auto lock = obtainUniqueOwnership();
-
+    bool blitterDirectSubmission = this->isBlitterDirectSubmissionEnabled();
     auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, profilingEnabled, PauseOnGpuProperties::featureEnabled(DebugManager.flags.PauseOnBlitCopy.get()),
-                                                                                        *this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]));
+                                                                                        blitterDirectSubmission, *this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]));
     auto commandStreamStart = commandStream.getUsed();
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;
@@ -998,8 +998,17 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
         BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(), DebugPauseState::waitingForUserEndConfirmation, DebugPauseState::hasUserEndConfirmation);
     }
 
-    auto batchBufferEnd = reinterpret_cast<MI_BATCH_BUFFER_END *>(commandStream.getSpace(sizeof(MI_BATCH_BUFFER_END)));
-    *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;
+    void *endingCmdPtr = nullptr;
+    if (blitterDirectSubmission) {
+        endingCmdPtr = commandStream.getSpace(0);
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&commandStream,
+                                                                        0ull,
+                                                                        false);
+    } else {
+        auto batchBufferEnd = reinterpret_cast<MI_BATCH_BUFFER_END *>(
+            commandStream.getSpace(sizeof(MI_BATCH_BUFFER_END)));
+        *batchBufferEnd = GfxFamily::cmdInitBatchBufferEnd;
+    }
 
     alignToCacheLine(commandStream);
 
@@ -1009,7 +1018,7 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
     }
 
     BatchBuffer batchBuffer{commandStream.getGraphicsAllocation(), commandStreamStart, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
-                            commandStream.getUsed(), &commandStream, nullptr};
+                            commandStream.getUsed(), &commandStream, endingCmdPtr};
 
     flush(batchBuffer, getResidencyAllocations());
     makeSurfacePackNonResident(getResidencyAllocations());
@@ -1108,7 +1117,8 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
         bool submitOnInit = directSubmissionProperty.submitOnInit;
         bool engineSupported = checkDirectSubmissionSupportsEngine(directSubmissionProperty,
                                                                    contextEngineType,
-                                                                   submitOnInit);
+                                                                   submitOnInit,
+                                                                   startDirect);
         if (engineSupported && startDirect) {
             if (contextEngineType == aub_stream::ENGINE_BCS) {
                 blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(device, osContext);
@@ -1127,7 +1137,8 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission(Device &dev
 template <typename GfxFamily>
 inline bool CommandStreamReceiverHw<GfxFamily>::checkDirectSubmissionSupportsEngine(const DirectSubmissionProperties &directSubmissionProperty,
                                                                                     aub_stream::EngineType contextEngineType,
-                                                                                    bool &startOnInit) {
+                                                                                    bool &startOnInit,
+                                                                                    bool &startInContext) {
     bool supported = directSubmissionProperty.engineSupported;
     startOnInit = directSubmissionProperty.submitOnInit;
     if (contextEngineType == aub_stream::ENGINE_BCS) {
@@ -1149,6 +1160,11 @@ inline bool CommandStreamReceiverHw<GfxFamily>::checkDirectSubmissionSupportsEng
             supported = computeOverrideKey == 0 ? false : true;
             startOnInit = computeOverrideKey == 1 ? true : false;
         }
+    }
+
+    //enable start in context only when default support is overridden and enabled
+    if (supported && !directSubmissionProperty.engineSupported) {
+        startInContext = true;
     }
 
     return supported;

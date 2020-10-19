@@ -322,8 +322,8 @@ HWTEST_F(CommandStreamReceiverTest, whenDirectSubmissionDisabledThenExpectNoFeat
     EXPECT_FALSE(csr.isBlitterDirectSubmissionEnabled());
 }
 
-struct InitDirectSubmissionTest : public ::testing::Test {
-    void SetUp() override {
+struct InitDirectSubmissionFixture {
+    void SetUp() {
         DebugManager.flags.EnableDirectSubmission.set(1);
         executionEnvironment = new MockExecutionEnvironment();
         DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
@@ -333,10 +333,14 @@ struct InitDirectSubmissionTest : public ::testing::Test {
         device.reset(new MockDevice(executionEnvironment, 0u));
     }
 
+    void TearDown() {}
+
     DebugManagerStateRestore restore;
     MockExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockDevice> device;
 };
+
+using InitDirectSubmissionTest = Test<InitDirectSubmissionFixture>;
 
 HWTEST_F(InitDirectSubmissionTest, whenDirectSubmissionEnabledOnRcsThenExpectFeatureAvailable) {
     auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex());
@@ -557,6 +561,27 @@ HWTEST_F(InitDirectSubmissionTest, givenNonDefaultContextContextWhenDirectSubmis
     EXPECT_TRUE(csr->isDirectSubmissionEnabled());
 
     csr.reset();
+}
+
+HWTEST_F(InitDirectSubmissionTest, GivenBlitterOverrideEnabledWhenBlitterIsNonDefaultContextThenExpectDirectSubmissionStarted) {
+    DebugManager.flags.DirectSubmissionOverrideBlitterSupport.set(1);
+
+    auto csr = std::make_unique<CommandStreamReceiverHw<FamilyType>>(*device->executionEnvironment, device->getRootDeviceIndex());
+    std::unique_ptr<OsContext> osContext(OsContext::create(device->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(),
+                                                           0, device->getDeviceBitfield(), aub_stream::ENGINE_BCS, PreemptionMode::ThreadGroup,
+                                                           false, false, false));
+    osContext->setDefaultContext(false);
+
+    auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = false;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].useNonDefault = false;
+    hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].submitOnInit = false;
+
+    bool ret = csr->initDirectSubmission(*device, *osContext.get());
+    EXPECT_TRUE(ret);
+    EXPECT_FALSE(csr->isDirectSubmissionEnabled());
+    EXPECT_TRUE(csr->isBlitterDirectSubmissionEnabled());
+    EXPECT_TRUE(osContext->isDirectSubmissionActive());
 }
 
 HWTEST_F(CommandStreamReceiverTest, whenCsrIsCreatedThenUseTimestampPacketWriteIfPossible) {
