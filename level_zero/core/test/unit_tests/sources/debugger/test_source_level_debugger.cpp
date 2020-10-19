@@ -61,8 +61,8 @@ HWTEST_F(CommandQueueDebugCommandsTest, givenDebuggingEnabledWhenCommandListIsEx
     miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[1]);
     ASSERT_NE(nullptr, miLoad);
 
-    EXPECT_EQ(TdDebugControlRegisterOffset::registerOffset, miLoad->getRegisterOffset());
-    EXPECT_EQ(TdDebugControlRegisterOffset::debugEnabledValue, miLoad->getDataDword());
+    EXPECT_EQ(TdDebugControlRegisterOffset<FamilyType>::registerOffset, miLoad->getRegisterOffset());
+    EXPECT_EQ(TdDebugControlRegisterOffset<FamilyType>::debugEnabledValue, miLoad->getDataDword());
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(commandLists[i]);

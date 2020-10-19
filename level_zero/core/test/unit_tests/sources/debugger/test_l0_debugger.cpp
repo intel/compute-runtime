@@ -125,8 +125,8 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedThenKerne
             EXPECT_EQ(DebugModeRegisterOffset<FamilyType>::debugEnabledValue, miLoad->getDataDword());
             debugModeRegisterCount++;
         }
-        if (miLoad->getRegisterOffset() == TdDebugControlRegisterOffset::registerOffset) {
-            EXPECT_EQ(TdDebugControlRegisterOffset::debugEnabledValue, miLoad->getDataDword());
+        if (miLoad->getRegisterOffset() == TdDebugControlRegisterOffset<FamilyType>::registerOffset) {
+            EXPECT_EQ(TdDebugControlRegisterOffset<FamilyType>::debugEnabledValue, miLoad->getDataDword());
             tdDebugControlRegisterCount++;
         }
     }
@@ -190,8 +190,8 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedTwiceThen
                 EXPECT_EQ(DebugModeRegisterOffset<FamilyType>::debugEnabledValue, miLoad->getDataDword());
                 debugModeRegisterCount++;
             }
-            if (miLoad->getRegisterOffset() == TdDebugControlRegisterOffset::registerOffset) {
-                EXPECT_EQ(TdDebugControlRegisterOffset::debugEnabledValue, miLoad->getDataDword());
+            if (miLoad->getRegisterOffset() == TdDebugControlRegisterOffset<FamilyType>::registerOffset) {
+                EXPECT_EQ(TdDebugControlRegisterOffset<FamilyType>::debugEnabledValue, miLoad->getDataDword());
                 tdDebugControlRegisterCount++;
             }
         }
@@ -218,7 +218,7 @@ HWTEST_F(L0DebuggerTest, givenDebuggingEnabledWhenCommandListIsExecutedTwiceThen
             if (miLoad->getRegisterOffset() == DebugModeRegisterOffset<FamilyType>::registerOffset) {
                 debugModeRegisterCount++;
             }
-            if (miLoad->getRegisterOffset() == TdDebugControlRegisterOffset::registerOffset) {
+            if (miLoad->getRegisterOffset() == TdDebugControlRegisterOffset<FamilyType>::registerOffset) {
                 tdDebugControlRegisterCount++;
             }
         }

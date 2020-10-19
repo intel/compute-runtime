@@ -93,9 +93,12 @@ struct DebugModeRegisterOffset {
     };
 };
 
-namespace TdDebugControlRegisterOffset {
-static constexpr uint32_t registerOffset = 0xe400;
-static constexpr uint32_t debugEnabledValue = (1 << 4) | (1 << 7);
-}; // namespace TdDebugControlRegisterOffset
+template <typename GfxFamily>
+struct TdDebugControlRegisterOffset {
+    enum {
+        registerOffset = 0xe400,
+        debugEnabledValue = (1 << 4) | (1 << 7)
+    };
+};
 
 } // namespace NEO

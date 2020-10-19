@@ -128,8 +128,8 @@ HWTEST_F(PreambleTest, whenKernelDebuggingCommandsAreProgrammedThenCorrectComman
     it++;
 
     pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*it);
-    EXPECT_EQ(TdDebugControlRegisterOffset::registerOffset, pCmd->getRegisterOffset());
-    EXPECT_EQ(TdDebugControlRegisterOffset::debugEnabledValue, pCmd->getDataDword());
+    EXPECT_EQ(TdDebugControlRegisterOffset<FamilyType>::registerOffset, pCmd->getRegisterOffset());
+    EXPECT_EQ(TdDebugControlRegisterOffset<FamilyType>::debugEnabledValue, pCmd->getDataDword());
 }
 
 HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenProgramKernelDebuggingIsCalled) {

@@ -102,11 +102,11 @@ void PreambleHelper<GfxFamily>::programKernelDebugging(LinearStream *pCommandStr
     LriHelper<GfxFamily>::program(pCommandStream,
                                   DebugModeRegisterOffset<GfxFamily>::registerOffset,
                                   DebugModeRegisterOffset<GfxFamily>::debugEnabledValue,
-                                  false);
+                                  true);
 
     LriHelper<GfxFamily>::program(pCommandStream,
-                                  TdDebugControlRegisterOffset::registerOffset,
-                                  TdDebugControlRegisterOffset::debugEnabledValue,
+                                  TdDebugControlRegisterOffset<GfxFamily>::registerOffset,
+                                  TdDebugControlRegisterOffset<GfxFamily>::debugEnabledValue,
                                   false);
 }
 
