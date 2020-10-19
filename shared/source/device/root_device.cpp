@@ -11,6 +11,8 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
+#include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
@@ -20,6 +22,7 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 RootDevice::RootDevice(ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) : Device(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {}
 
 RootDevice::~RootDevice() {
+    bindlessHeapHelper.reset();
     for (auto subdevice : subdevices) {
         if (subdevice) {
             delete subdevice;
@@ -31,6 +34,9 @@ uint32_t RootDevice::getNumSubDevices() const {
     return static_cast<uint32_t>(subdevices.size());
 }
 
+BindlessHeapsHelper *RootDevice::getBindlessHeapsHelper() const {
+    return bindlessHeapHelper.get();
+}
 uint32_t RootDevice::getRootDeviceIndex() const {
     return rootDeviceIndex;
 }
@@ -77,7 +83,9 @@ bool RootDevice::createDeviceImpl() {
     if (!status) {
         return status;
     }
-
+    if (ApiSpecificConfig::getBindlessConfiguration()) {
+        bindlessHeapHelper = std::make_unique<BindlessHeapsHelper>(getMemoryManager(), getNumAvailableDevices() > 1, rootDeviceIndex);
+    }
     return true;
 }
 DeviceBitfield RootDevice::getDeviceBitfield() const {

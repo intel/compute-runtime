@@ -13,6 +13,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/array_count.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aux_translation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/basic_math.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/bindless_heaps_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/bindless_heaps_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/bit_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_bdw_plus.inl

@@ -5,9 +5,12 @@
  *
  */
 
+#include "shared/source/device/root_device.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/mocks/mock_device.h"
+#include "shared/test/unit_test/mocks/ult_device_factory.h"
 
 #include "test.h"
 
@@ -377,13 +380,13 @@ struct MultipleDevicesTest : public ::testing::Test {
             executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(NEO::defaultHwInfo.get());
         }
 
+        memoryManager = new ::testing::NiceMock<MockMemoryManagerMultiDevice>(*executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
+        deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);
+
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            devices.push_back(std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), executionEnvironment, i)));
+            devices.push_back(std::unique_ptr<NEO::Device>(deviceFactory->rootDevices[i]));
         }
-
-        memoryManager = new ::testing::NiceMock<MockMemoryManagerMultiDevice>(*devices[0].get()->getExecutionEnvironment());
-        devices[0].get()->getExecutionEnvironment()->memoryManager.reset(memoryManager);
-
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
         driverHandle->initialize(std::move(devices));
     }
@@ -391,6 +394,7 @@ struct MultipleDevicesTest : public ::testing::Test {
     DebugManagerStateRestore restorer;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     MockMemoryManagerMultiDevice *memoryManager = nullptr;
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
 
     const uint32_t numRootDevices = 2u;
     const uint32_t numSubDevices = 2u;

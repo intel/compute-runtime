@@ -46,6 +46,7 @@ class MockDevice : public RootDevice {
     using Device::executionEnvironment;
     using Device::getGlobalMemorySize;
     using Device::initializeCaps;
+    using RootDevice::bindlessHeapHelper;
     using RootDevice::createEngines;
     using RootDevice::defaultEngineIndex;
     using RootDevice::getDeviceBitfield;

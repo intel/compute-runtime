@@ -26,6 +26,8 @@ add_executable(${TARGET_NAME}
                ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_management.cpp
                ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_leak_listener.h
                ${NEO_SOURCE_DIR}/shared/test/unit_test/helpers/memory_leak_listener.cpp
+               ${NEO_SOURCE_DIR}/shared/test/unit_test/mocks/ult_device_factory.cpp
+               ${NEO_SOURCE_DIR}/shared/test/unit_test/mocks/ult_device_factory.h
                ${L0_CORE_ENABLERS}
 )
 

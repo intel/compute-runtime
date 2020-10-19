@@ -42,6 +42,7 @@ Device::~Device() {
 
     commandStreamReceivers.clear();
     executionEnvironment->memoryManager->waitForDeletions();
+
     executionEnvironment->decRefInternal();
 }
 
