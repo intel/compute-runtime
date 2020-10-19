@@ -19,7 +19,7 @@ using namespace DeviceHostQueue;
 
 typedef DeviceQueueHwTest Gen12LpDeviceQueueSlb;
 
-GEN12LPTEST_F(Gen12LpDeviceQueueSlb, expectedAllocationSize) {
+GEN12LPTEST_F(Gen12LpDeviceQueueSlb, WhenGettingSlbBufferSizeThenAllocationSizeIsCorrect) {
     deviceQueue = createQueueObject();
     ASSERT_NE(deviceQueue, nullptr);
 
@@ -37,7 +37,7 @@ GEN12LPTEST_F(Gen12LpDeviceQueueSlb, expectedAllocationSize) {
     delete deviceQueue;
 }
 
-GEN12LPTEST_F(Gen12LpDeviceQueueSlb, SlbCommandsWa) {
+GEN12LPTEST_F(Gen12LpDeviceQueueSlb, WhenApplyingSlbCommandsWaThenCorrectWaAreEnabled) {
     auto mockDeviceQueueHw = new MockDeviceQueueHw<FamilyType>(pContext, device,
                                                                DeviceHostQueue::deviceQueueProperties::minimumProperties[0]);
     EXPECT_FALSE(mockDeviceQueueHw->arbCheckWa);
