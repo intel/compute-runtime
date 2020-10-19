@@ -20,7 +20,7 @@
 
 namespace NEO {
 
-const size_t SipKernel::maxDbgSurfaceSize = 0x49c000; // proper value should be taken from compiler when it's ready
+const size_t SipKernel::maxDbgSurfaceSize = 0x1800000; // proper value should be taken from compiler when it's ready
 
 const char *getSipKernelCompilerInternalOptions(SipKernelType kernel) {
     switch (kernel) {

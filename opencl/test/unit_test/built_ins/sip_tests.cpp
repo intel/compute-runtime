@@ -96,7 +96,7 @@ TEST(Sip, WhenGettingTypeThenCorrectTypeIsReturned) {
 }
 
 TEST(Sip, givenSipKernelClassWhenAskedForMaxDebugSurfaceSizeThenCorrectValueIsReturned) {
-    EXPECT_EQ(0x49c000u, SipKernel::maxDbgSurfaceSize);
+    EXPECT_EQ(0x1800000u, SipKernel::maxDbgSurfaceSize);
 }
 
 TEST(Sip, givenDebuggingInactiveWhenSipTypeIsQueriedThenCsrSipTypeIsReturned) {
