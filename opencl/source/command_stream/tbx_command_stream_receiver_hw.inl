@@ -547,7 +547,7 @@ AubSubCaptureStatus TbxCommandStreamReceiverHw<GfxFamily>::checkAndActivateAubSu
         return {false, false};
     }
 
-    std::string kernelName = (dispatchInfo.empty() ? "" : dispatchInfo.peekMainKernel()->getKernelInfo().name);
+    std::string kernelName = (dispatchInfo.empty() ? "" : dispatchInfo.peekMainKernel()->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
     auto status = subCaptureManager->checkAndActivateSubCapture(kernelName);
     if (status.isActive && !status.wasActiveInPreviousEnqueue) {
         dumpTbxNonWritable = true;

@@ -37,7 +37,7 @@ const KernelInfo *Program::getKernelInfo(
     }
 
     auto it = std::find_if(kernelInfoArray.begin(), kernelInfoArray.end(),
-                           [=](const KernelInfo *kInfo) { return (0 == strcmp(kInfo->name.c_str(), kernelName)); });
+                           [=](const KernelInfo *kInfo) { return (0 == strcmp(kInfo->kernelDescriptor.kernelMetadata.kernelName.c_str(), kernelName)); });
 
     return (it != kernelInfoArray.end()) ? *it : nullptr;
 }
@@ -99,7 +99,7 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, const
     if (false == linkSuccess) {
         std::vector<std::string> kernelNames;
         for (const auto &kernelInfo : this->kernelInfoArray) {
-            kernelNames.push_back("kernel : " + kernelInfo->name);
+            kernelNames.push_back("kernel : " + kernelInfo->kernelDescriptor.kernelMetadata.kernelName);
         }
         auto error = constructLinkerErrorMessage(unresolvedExternalsInfo, kernelNames);
         updateBuildLog(pDevice->getRootDeviceIndex(), error.c_str(), error.size());
@@ -230,7 +230,7 @@ void Program::processDebugData() {
             kernelName = reinterpret_cast<const char *>(ptrOffset(kernelDebugHeader, sizeof(SKernelDebugDataHeaderIGC)));
 
             auto kernelInfo = kernelInfoArray[i];
-            UNRECOVERABLE_IF(kernelInfo->name.compare(0, kernelInfo->name.size(), kernelName) != 0);
+            UNRECOVERABLE_IF(kernelInfo->kernelDescriptor.kernelMetadata.kernelName.compare(0, kernelInfo->kernelDescriptor.kernelMetadata.kernelName.size(), kernelName) != 0);
 
             kernelDebugData = ptrOffset(kernelName, kernelDebugHeader->KernelNameSize);
 

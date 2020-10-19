@@ -108,10 +108,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
 
     if (context->isProvidingPerformanceHints()) {
         if (kernel.hasPrintfOutput()) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, PRINTF_DETECTED_IN_KERNEL, kernel.getKernelInfo().name.c_str());
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, PRINTF_DETECTED_IN_KERNEL, kernel.getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
         }
         if (kernel.requiresCoherency()) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, KERNEL_REQUIRES_COHERENCY, kernel.getKernelInfo().name.c_str());
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, KERNEL_REQUIRES_COHERENCY, kernel.getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
         }
     }
 
@@ -121,7 +121,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
             return err;
     }
 
-    DBG_LOG(PrintDispatchParameters, "Kernel: ", kernel.getKernelInfo().name,
+    DBG_LOG(PrintDispatchParameters, "Kernel: ", kernel.getKernelInfo().kernelDescriptor.kernelMetadata.kernelName,
             ",LWS:, ", localWorkSizeIn ? localWorkSizeIn[0] : 0,
             ",", localWorkSizeIn ? localWorkSizeIn[1] : 0,
             ",", localWorkSizeIn ? localWorkSizeIn[2] : 0,

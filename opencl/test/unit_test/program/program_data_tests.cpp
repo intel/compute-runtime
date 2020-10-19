@@ -557,7 +557,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     MockProgram program{nullptr, false, toClDeviceVector(*device)};
     KernelInfo kernelInfo = {};
-    kernelInfo.name = "onlyKernel";
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "onlyKernel";
     std::vector<char> kernelHeap;
     kernelHeap.resize(32, 7);
     kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
@@ -574,7 +574,7 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
     EXPECT_FALSE(buildLog.empty());
     Linker::UnresolvedExternals expectedUnresolvedExternals;
     expectedUnresolvedExternals.push_back(Linker::UnresolvedExternal{relocation, 0, false});
-    auto expectedError = constructLinkerErrorMessage(expectedUnresolvedExternals, std::vector<std::string>{"kernel : " + kernelInfo.name});
+    auto expectedError = constructLinkerErrorMessage(expectedUnresolvedExternals, std::vector<std::string>{"kernel : " + kernelInfo.kernelDescriptor.kernelMetadata.kernelName});
     EXPECT_THAT(buildLog.c_str(), ::testing::HasSubstr(expectedError));
 }
 
@@ -594,7 +594,7 @@ TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
     MockProgram program{nullptr, false, toClDeviceVector(*device)};
     auto &buildInfo = program.buildInfos[device->getRootDeviceIndex()];
     KernelInfo kernelInfo = {};
-    kernelInfo.name = "onlyKernel";
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "onlyKernel";
     std::vector<char> kernelHeap;
     kernelHeap.resize(32, 7);
     kernelInfo.heapInfo.pKernelHeap = kernelHeap.data();
@@ -644,7 +644,7 @@ TEST_F(ProgramDataTest, whenRelocationsAreNotNeededThenIsaIsPreserved) {
     MockProgram program{nullptr, false, toClDeviceVector(*device)};
     auto &buildInfo = program.buildInfos[device->getRootDeviceIndex()];
     KernelInfo kernelInfo = {};
-    kernelInfo.name = "onlyKernel";
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "onlyKernel";
     std::vector<char> kernelHeapData;
     kernelHeapData.resize(32, 7);
     std::vector<char> kernelHeap(kernelHeapData.begin(), kernelHeapData.end());

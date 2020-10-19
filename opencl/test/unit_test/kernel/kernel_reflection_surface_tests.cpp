@@ -499,7 +499,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenGettingCurbeParamsThenReturnedVectorIsSo
         uint32_t firstSSHTokenIndex = 0;
         MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParamsForBlock, tokenMask, firstSSHTokenIndex, *pBlockInfo, pDevice->getHardwareInfo());
 
-        if (pBlockInfo->name.find("simple_block_kernel") == std::string::npos) {
+        if (pBlockInfo->kernelDescriptor.kernelMetadata.kernelName.find("simple_block_kernel") == std::string::npos) {
             EXPECT_LT(1u, curbeParamsForBlock.size());
         }
 
@@ -543,7 +543,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenGettingCurbeParamsThenReturnedVectorHasE
         bool imageFound = false;
         bool samplerFound = false;
 
-        if (pBlockInfo->name.find("kernel_reflection_dispatch_0") != std::string::npos) {
+        if (pBlockInfo->kernelDescriptor.kernelMetadata.kernelName.find("kernel_reflection_dispatch_0") != std::string::npos) {
             EXPECT_LT(1u, curbeParamsForBlock.size());
 
             for (const auto &curbeParams : curbeParamsForBlock) {
@@ -587,7 +587,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenGettingCurbeParamsThenTokenMaskIsCorrect
         uint32_t firstSSHTokenIndex = 0;
         MockKernel::ReflectionSurfaceHelperPublic::getCurbeParams(curbeParamsForBlock, tokenMask, firstSSHTokenIndex, *pBlockInfo, pDevice->getHardwareInfo());
 
-        if (pBlockInfo->name.find("kernel_reflection_dispatch_0") != std::string::npos) {
+        if (pBlockInfo->kernelDescriptor.kernelMetadata.kernelName.find("kernel_reflection_dispatch_0") != std::string::npos) {
             EXPECT_LT(1u, curbeParamsForBlock.size());
 
             const uint64_t bufferToken = (uint64_t)1 << 63;
@@ -758,7 +758,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelReflectionSurfaceThenKerne
     size_t parentImageCount = 0;
     size_t parentSamplerCount = 0;
 
-    if (pKernel->getKernelInfo().name == "kernel_reflection") {
+    if (pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
         parentImageCount = 1;
         parentSamplerCount = 1;
     }
@@ -811,7 +811,7 @@ TEST_P(KernelReflectionSurfaceTest, WhenCreatingKernelReflectionSurfaceThenKerne
     uint32_t parentImages = 0;
     uint32_t parentSamplers = 0;
 
-    if (pKernel->getKernelInfo().name == "kernel_reflection") {
+    if (pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
         parentImages = 1;
         parentSamplers = 1;
         EXPECT_LT(sizeof(IGIL_KernelDataHeader), pKernelHeader->m_ParentSamplerParamsOffset);
@@ -1101,7 +1101,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelReflectionSurfaceWithQueueTest, WhenObtainingK
     cl_sampler samplerCl = sampler.get();
     cl_mem imageCl = image3d.get();
 
-    if (pKernel->getKernelInfo().name == "kernel_reflection") {
+    if (pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName == "kernel_reflection") {
         pKernel->setArgSampler(0, sizeof(cl_sampler), &samplerCl);
         pKernel->setArgImage(1, sizeof(cl_mem), &imageCl);
     }

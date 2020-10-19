@@ -820,7 +820,7 @@ TEST_F(BuiltInTests, GivenUnalignedCopyBufferToBufferWhenDispatchInfoIsCreatedTh
 
     const DispatchInfo *dispatchInfo = multiDispatchInfo.begin();
 
-    EXPECT_EQ(dispatchInfo->getKernel()->getKernelInfo().name, "CopyBufferToBufferLeftLeftover");
+    EXPECT_EQ(dispatchInfo->getKernel()->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName, "CopyBufferToBufferLeftLeftover");
 
     EXPECT_TRUE(compareBuiltinOpParams(multiDispatchInfo.peekBuiltinOpParams(), builtinOpsParams));
 }
@@ -916,7 +916,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, BuiltInTests, WhenGettingSchedulerKernelThenCorrectK
     if (pClDevice->areOcl21FeaturesSupported()) {
         SchedulerKernel &schedulerKernel = pContext->getSchedulerKernel();
         std::string name = SchedulerKernel::schedulerName;
-        EXPECT_EQ(name, schedulerKernel.getKernelInfo().name);
+        EXPECT_EQ(name, schedulerKernel.getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
     }
 }
 

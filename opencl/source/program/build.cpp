@@ -166,7 +166,7 @@ cl_int Program::build(
             if (clDevice->getSourceLevelDebugger()) {
                 for (auto kernelInfo : kernelInfoArray) {
                     clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
-                                                                              kernelInfo->name,
+                                                                              kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
                                                                               kernelInfo->heapInfo.pKernelHeap,
                                                                               kernelInfo->heapInfo.KernelHeapSize);
                 }
@@ -223,7 +223,7 @@ cl_int Program::build(const Device *pDevice, const char *buildOptions, bool enab
     }
 
     for (auto &ki : this->kernelInfoArray) {
-        auto fit = builtinsMap.find(ki->name);
+        auto fit = builtinsMap.find(ki->kernelDescriptor.kernelMetadata.kernelName);
         if (fit == builtinsMap.end()) {
             continue;
         }

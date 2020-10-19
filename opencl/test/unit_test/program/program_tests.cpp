@@ -2501,11 +2501,11 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenRegularKernelsThenSeparateNone
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
 
     auto pRegularKernel1Info = new KernelInfo();
-    pRegularKernel1Info->name = "regular_kernel_1";
+    pRegularKernel1Info->kernelDescriptor.kernelMetadata.kernelName = "regular_kernel_1";
     program.getKernelInfoArray().push_back(pRegularKernel1Info);
 
     auto pRegularKernel2Info = new KernelInfo();
-    pRegularKernel2Info->name = "regular_kernel_2";
+    pRegularKernel2Info->kernelDescriptor.kernelMetadata.kernelName = "regular_kernel_2";
     program.getKernelInfoArray().push_back(pRegularKernel2Info);
 
     EXPECT_EQ(2u, program.getKernelInfoArray().size());
@@ -2513,8 +2513,8 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenRegularKernelsThenSeparateNone
     program.separateBlockKernels();
 
     EXPECT_EQ(2u, program.getKernelInfoArray().size());
-    EXPECT_EQ(0, strcmp("regular_kernel_1", program.getKernelInfoArray().at(0)->name.c_str()));
-    EXPECT_EQ(0, strcmp("regular_kernel_2", program.getKernelInfoArray().at(1)->name.c_str()));
+    EXPECT_EQ(0, strcmp("regular_kernel_1", program.getKernelInfoArray().at(0)->kernelDescriptor.kernelMetadata.kernelName.c_str()));
+    EXPECT_EQ(0, strcmp("regular_kernel_2", program.getKernelInfoArray().at(1)->kernelDescriptor.kernelMetadata.kernelName.c_str()));
 
     EXPECT_EQ(0u, program.getBlockKernelManager()->getCount());
 }
@@ -2523,12 +2523,12 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutParentKe
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
 
     auto pParentKernelInfo = new KernelInfo();
-    pParentKernelInfo->name = "another_parent_kernel";
+    pParentKernelInfo->kernelDescriptor.kernelMetadata.kernelName = "another_parent_kernel";
     program.getKernelInfoArray().push_back(pParentKernelInfo);
     program.getParentKernelInfoArray().push_back(pParentKernelInfo);
 
     auto pChildKernelInfo = new KernelInfo();
-    pChildKernelInfo->name = "childlike_kernel_dispatch_0";
+    pChildKernelInfo->kernelDescriptor.kernelMetadata.kernelName = "childlike_kernel_dispatch_0";
     program.getKernelInfoArray().push_back(pChildKernelInfo);
 
     EXPECT_EQ(2u, program.getKernelInfoArray().size());
@@ -2537,8 +2537,8 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutParentKe
     program.separateBlockKernels();
 
     EXPECT_EQ(2u, program.getKernelInfoArray().size());
-    EXPECT_EQ(0, strcmp("another_parent_kernel", program.getKernelInfoArray().at(0)->name.c_str()));
-    EXPECT_EQ(0, strcmp("childlike_kernel_dispatch_0", program.getKernelInfoArray().at(1)->name.c_str()));
+    EXPECT_EQ(0, strcmp("another_parent_kernel", program.getKernelInfoArray().at(0)->kernelDescriptor.kernelMetadata.kernelName.c_str()));
+    EXPECT_EQ(0, strcmp("childlike_kernel_dispatch_0", program.getKernelInfoArray().at(1)->kernelDescriptor.kernelMetadata.kernelName.c_str()));
 
     EXPECT_EQ(0u, program.getBlockKernelManager()->getCount());
 }
@@ -2547,12 +2547,12 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutSubgroup
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
 
     auto pSubgroupKernelInfo = new KernelInfo();
-    pSubgroupKernelInfo->name = "another_subgroup_kernel";
+    pSubgroupKernelInfo->kernelDescriptor.kernelMetadata.kernelName = "another_subgroup_kernel";
     program.getKernelInfoArray().push_back(pSubgroupKernelInfo);
     program.getSubgroupKernelInfoArray().push_back(pSubgroupKernelInfo);
 
     auto pChildKernelInfo = new KernelInfo();
-    pChildKernelInfo->name = "childlike_kernel_dispatch_0";
+    pChildKernelInfo->kernelDescriptor.kernelMetadata.kernelName = "childlike_kernel_dispatch_0";
     program.getKernelInfoArray().push_back(pChildKernelInfo);
 
     EXPECT_EQ(2u, program.getKernelInfoArray().size());
@@ -2561,8 +2561,8 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutSubgroup
     program.separateBlockKernels();
 
     EXPECT_EQ(2u, program.getKernelInfoArray().size());
-    EXPECT_EQ(0, strcmp("another_subgroup_kernel", program.getKernelInfoArray().at(0)->name.c_str()));
-    EXPECT_EQ(0, strcmp("childlike_kernel_dispatch_0", program.getKernelInfoArray().at(1)->name.c_str()));
+    EXPECT_EQ(0, strcmp("another_subgroup_kernel", program.getKernelInfoArray().at(0)->kernelDescriptor.kernelMetadata.kernelName.c_str()));
+    EXPECT_EQ(0, strcmp("childlike_kernel_dispatch_0", program.getKernelInfoArray().at(1)->kernelDescriptor.kernelMetadata.kernelName.c_str()));
 
     EXPECT_EQ(0u, program.getBlockKernelManager()->getCount());
 }
@@ -2571,12 +2571,12 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenParentKernelWithChildKernelThe
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
 
     auto pParentKernelInfo = new KernelInfo();
-    pParentKernelInfo->name = "parent_kernel";
+    pParentKernelInfo->kernelDescriptor.kernelMetadata.kernelName = "parent_kernel";
     program.getKernelInfoArray().push_back(pParentKernelInfo);
     program.getParentKernelInfoArray().push_back(pParentKernelInfo);
 
     auto pChildKernelInfo = new KernelInfo();
-    pChildKernelInfo->name = "parent_kernel_dispatch_0";
+    pChildKernelInfo->kernelDescriptor.kernelMetadata.kernelName = "parent_kernel_dispatch_0";
     program.getKernelInfoArray().push_back(pChildKernelInfo);
 
     EXPECT_EQ(2u, program.getKernelInfoArray().size());
@@ -2585,22 +2585,22 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenParentKernelWithChildKernelThe
     program.separateBlockKernels();
 
     EXPECT_EQ(1u, program.getKernelInfoArray().size());
-    EXPECT_EQ(0, strcmp("parent_kernel", program.getKernelInfoArray().at(0)->name.c_str()));
+    EXPECT_EQ(0, strcmp("parent_kernel", program.getKernelInfoArray().at(0)->kernelDescriptor.kernelMetadata.kernelName.c_str()));
 
     EXPECT_EQ(1u, program.getBlockKernelManager()->getCount());
-    EXPECT_EQ(0, strcmp("parent_kernel_dispatch_0", program.getBlockKernelManager()->getBlockKernelInfo(0)->name.c_str()));
+    EXPECT_EQ(0, strcmp("parent_kernel_dispatch_0", program.getBlockKernelManager()->getBlockKernelInfo(0)->kernelDescriptor.kernelMetadata.kernelName.c_str()));
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenSubgroupKernelWithChildKernelThenSeparateChildKernel) {
     MockProgram program(pContext, false, toClDeviceVector(*pClDevice));
 
     auto pSubgroupKernelInfo = new KernelInfo();
-    pSubgroupKernelInfo->name = "subgroup_kernel";
+    pSubgroupKernelInfo->kernelDescriptor.kernelMetadata.kernelName = "subgroup_kernel";
     program.getKernelInfoArray().push_back(pSubgroupKernelInfo);
     program.getSubgroupKernelInfoArray().push_back(pSubgroupKernelInfo);
 
     auto pChildKernelInfo = new KernelInfo();
-    pChildKernelInfo->name = "subgroup_kernel_dispatch_0";
+    pChildKernelInfo->kernelDescriptor.kernelMetadata.kernelName = "subgroup_kernel_dispatch_0";
     program.getKernelInfoArray().push_back(pChildKernelInfo);
 
     EXPECT_EQ(2u, program.getKernelInfoArray().size());
@@ -2609,10 +2609,10 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenSubgroupKernelWithChildKernelT
     program.separateBlockKernels();
 
     EXPECT_EQ(1u, program.getKernelInfoArray().size());
-    EXPECT_EQ(0, strcmp("subgroup_kernel", program.getKernelInfoArray().at(0)->name.c_str()));
+    EXPECT_EQ(0, strcmp("subgroup_kernel", program.getKernelInfoArray().at(0)->kernelDescriptor.kernelMetadata.kernelName.c_str()));
 
     EXPECT_EQ(1u, program.getBlockKernelManager()->getCount());
-    EXPECT_EQ(0, strcmp("subgroup_kernel_dispatch_0", program.getBlockKernelManager()->getBlockKernelInfo(0)->name.c_str()));
+    EXPECT_EQ(0, strcmp("subgroup_kernel_dispatch_0", program.getBlockKernelManager()->getBlockKernelInfo(0)->kernelDescriptor.kernelMetadata.kernelName.c_str()));
 }
 
 TEST(ProgramDestructionTests, givenProgramUsingDeviceWhenItIsDestroyedAfterPlatfromCleanupThenItIsCleanedUpProperly) {

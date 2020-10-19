@@ -893,7 +893,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
     MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.name = "kernelName";
+    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(kernel);
 
@@ -918,7 +918,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     MockKernelWithInternals kernelInternals(*pClDevice);
     MockMultiDispatchInfo multiDispatchInfo(kernelInternals.mockKernel);
 
-    std::string fileName = aubCsr->subCaptureManager->getSubCaptureFileName(kernelInternals.kernelInfo.name);
+    std::string fileName = aubCsr->subCaptureManager->getSubCaptureFileName(kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName);
     aubCsr->initFile(fileName);
     ASSERT_TRUE(aubCsr->isFileOpen());
 
@@ -942,7 +942,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
     MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.name = "kernelName";
+    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
     MockMultiDispatchInfo multiDispatchInfo(kernelInternals.mockKernel);
 
     std::string fileName = "file_name.aub";
@@ -971,7 +971,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
     MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.name = "kernelName";
+    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
     MockMultiDispatchInfo multiDispatchInfo(kernelInternals.mockKernel);
 
     std::string fileName = "file_name.aub";
@@ -998,7 +998,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
     MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.name = "kernelName";
+    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
     MockMultiDispatchInfo multiDispatchInfo(kernelInternals.mockKernel);
 
     aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
@@ -1020,7 +1020,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     MockKernelWithInternals kernelInternals(*pClDevice);
     MockMultiDispatchInfo multiDispatchInfo(kernelInternals.mockKernel);
 
-    aubCsr->initFile(aubCsr->subCaptureManager->getSubCaptureFileName(kernelInternals.kernelInfo.name));
+    aubCsr->initFile(aubCsr->subCaptureManager->getSubCaptureFileName(kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName));
     aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
 
     EXPECT_FALSE(aubCsr->dumpAubNonWritable);
@@ -1038,7 +1038,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
     MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.name = "kernelName";
+    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(kernel);
 
@@ -1059,7 +1059,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
     MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.name = "kernelName";
+    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
     MockMultiDispatchInfo multiDispatchInfo(kernelInternals.mockKernel);
 
     aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
@@ -1119,7 +1119,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
     MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.name = "kernelName";
+    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
     MockMultiDispatchInfo multiDispatchInfo(kernelInternals.mockKernel);
 
     aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);
@@ -1140,7 +1140,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     aubCsr->subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(subCaptureManagerMock);
 
     MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.name = "kernelName";
+    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
     MockMultiDispatchInfo multiDispatchInfo(kernelInternals.mockKernel);
 
     aubCsr->checkAndActivateAubSubCapture(multiDispatchInfo);

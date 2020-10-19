@@ -294,19 +294,19 @@ void Program::separateBlockKernels() {
     auto allKernelInfos(kernelInfoArray);
     kernelInfoArray.clear();
     for (auto &i : allKernelInfos) {
-        auto end = i->name.rfind("_dispatch_");
+        auto end = i->kernelDescriptor.kernelMetadata.kernelName.rfind("_dispatch_");
         if (end != std::string::npos) {
             bool baseKernelFound = false;
-            std::string baseKernelName(i->name, 0, end);
+            std::string baseKernelName(i->kernelDescriptor.kernelMetadata.kernelName, 0, end);
             for (auto &j : parentKernelInfoArray) {
-                if (j->name.compare(baseKernelName) == 0) {
+                if (j->kernelDescriptor.kernelMetadata.kernelName.compare(baseKernelName) == 0) {
                     baseKernelFound = true;
                     break;
                 }
             }
             if (!baseKernelFound) {
                 for (auto &j : subgroupKernelInfoArray) {
-                    if (j->name.compare(baseKernelName) == 0) {
+                    if (j->kernelDescriptor.kernelMetadata.kernelName.compare(baseKernelName) == 0) {
                         baseKernelFound = true;
                         break;
                     }

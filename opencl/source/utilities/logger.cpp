@@ -219,7 +219,7 @@ void FileLogger<DebugLevel>::dumpKernelArgs(const Kernel *kernel) {
             }
 
             if (ptr && size) {
-                fileName = kernel->getKernelInfo().name + "_arg_" + std::to_string(i) + "_" + type + "_size_" + std::to_string(size) + "_flags_" + std::to_string(flags) + ".bin";
+                fileName = kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName + "_arg_" + std::to_string(i) + "_" + type + "_size_" + std::to_string(size) + "_flags_" + std::to_string(flags) + ".bin";
                 writeToFile(fileName, ptr, size, std::ios::trunc | std::ios::binary);
             }
         }

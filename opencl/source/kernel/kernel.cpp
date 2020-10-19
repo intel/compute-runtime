@@ -458,8 +458,8 @@ cl_int Kernel::getInfo(cl_kernel_info paramName, size_t paramValueSize,
 
     switch (paramName) {
     case CL_KERNEL_FUNCTION_NAME:
-        pSrc = kernelInfo.name.c_str();
-        srcSize = kernelInfo.name.length() + 1;
+        pSrc = kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str();
+        srcSize = kernelInfo.kernelDescriptor.kernelMetadata.kernelName.length() + 1;
         break;
 
     case CL_KERNEL_NUM_ARGS:
@@ -2224,14 +2224,14 @@ void Kernel::provideInitializationHints() {
         return;
     if (privateSurfaceSize) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, PRIVATE_MEMORY_USAGE_TOO_HIGH,
-                                        kernelInfo.name.c_str(), privateSurfaceSize);
+                                        kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(), privateSurfaceSize);
     }
     if (patchInfo.mediavfestate) {
         auto scratchSize = patchInfo.mediavfestate->PerThreadScratchSpace;
         scratchSize *= device.getSharedDeviceInfo().computeUnitsUsedForScratch * getKernelInfo().getMaxSimdSize();
         if (scratchSize > 0) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, REGISTER_PRESSURE_TOO_HIGH,
-                                            kernelInfo.name.c_str(), scratchSize);
+                                            kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(), scratchSize);
         }
     }
 }
@@ -2373,7 +2373,7 @@ void Kernel::fillWithBuffersForAuxTranslation(MemObjsForAuxTranslation &memObjsF
                 auto &context = this->program->getContext();
                 if (context.isProvidingPerformanceHints()) {
                     context.providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, KERNEL_ARGUMENT_AUX_TRANSLATION,
-                                                   kernelInfo.name.c_str(), i, kernelInfo.kernelArgInfo.at(i).metadataExtended->argName.c_str());
+                                                   kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(), i, kernelInfo.kernelArgInfo.at(i).metadataExtended->argName.c_str());
                 }
             }
         }

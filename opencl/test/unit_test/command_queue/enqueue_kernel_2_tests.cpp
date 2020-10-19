@@ -909,13 +909,13 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueue
     // before kernel
     EXPECT_EQ(1u, std::get<size_t>(cmdQ.dispatchAuxTranslationInputs.at(0))); // aux before NDR
     auto kernelBefore = std::get<Kernel *>(cmdQ.dispatchAuxTranslationInputs.at(0));
-    EXPECT_EQ("fullCopy", kernelBefore->getKernelInfo().name);
+    EXPECT_EQ("fullCopy", kernelBefore->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
     EXPECT_TRUE(kernelBefore->isBuiltIn);
 
     // after kernel
     EXPECT_EQ(3u, std::get<size_t>(cmdQ.dispatchAuxTranslationInputs.at(1))); // aux + NDR + aux
     auto kernelAfter = std::get<Kernel *>(cmdQ.dispatchAuxTranslationInputs.at(1));
-    EXPECT_EQ("fullCopy", kernelAfter->getKernelInfo().name);
+    EXPECT_EQ("fullCopy", kernelAfter->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName);
     EXPECT_TRUE(kernelAfter->isBuiltIn);
 }
 

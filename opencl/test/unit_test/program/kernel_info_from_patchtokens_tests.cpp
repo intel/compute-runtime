@@ -20,9 +20,9 @@ TEST(KernelInfoFromPatchTokens, GivenValidEmptyKernelFromPatchtokensThenReturnEm
     NEO::populateKernelInfo(dst, src, 4);
 
     NEO::KernelInfo expectedKernelInfo = {};
-    expectedKernelInfo.name = std::string(src.name.begin()).c_str();
+    expectedKernelInfo.kernelDescriptor.kernelMetadata.kernelName = std::string(src.name.begin()).c_str();
 
-    EXPECT_STREQ(expectedKernelInfo.name.c_str(), dst.name.c_str());
+    EXPECT_STREQ(expectedKernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str(), dst.kernelDescriptor.kernelMetadata.kernelName.c_str());
     EXPECT_EQ(src.header->KernelHeapSize, dst.heapInfo.KernelHeapSize);
     EXPECT_EQ(src.header->GeneralStateHeapSize, dst.heapInfo.GeneralStateHeapSize);
     EXPECT_EQ(src.header->DynamicStateHeapSize, dst.heapInfo.DynamicStateHeapSize);

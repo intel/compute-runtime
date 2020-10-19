@@ -146,7 +146,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferRightLeftover) {
     EXPECT_EQ(1u, mdi.size());
 
     auto kernel = mdi.begin()->getKernel();
-    EXPECT_STREQ("FillBufferRightLeftover", kernel->getKernelInfo().name.c_str());
+    EXPECT_STREQ("FillBufferRightLeftover", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
@@ -173,7 +173,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferMiddle) {
     EXPECT_EQ(1u, mdi.size());
 
     auto kernel = mdi.begin()->getKernel();
-    EXPECT_STREQ("FillBufferMiddle", kernel->getKernelInfo().name.c_str());
+    EXPECT_STREQ("FillBufferMiddle", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
@@ -200,7 +200,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferLeftLeftover) {
     EXPECT_EQ(1u, mdi.size());
 
     auto kernel = mdi.begin()->getKernel();
-    EXPECT_STREQ("FillBufferLeftLeftover", kernel->getKernelInfo().name.c_str());
+    EXPECT_STREQ("FillBufferLeftLeftover", kernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelName.c_str());
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }

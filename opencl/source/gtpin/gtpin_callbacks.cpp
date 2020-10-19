@@ -89,7 +89,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         paramsIn.buffer_type = GTPIN_BUFFER_BINDFULL;
         paramsIn.buffer_desc.BTI = static_cast<uint32_t>(gtpinBTI);
         paramsIn.igc_hash_id = kernelInfo.shaderHashCode;
-        paramsIn.kernel_name = (char *)kernelInfo.name.c_str();
+        paramsIn.kernel_name = (char *)kernelInfo.kernelDescriptor.kernelMetadata.kernelName.c_str();
         paramsIn.igc_info = kernelInfo.igcInfoForGtpin;
         paramsIn.debug_data = pKernel->getProgram()->getDebugData();
         paramsIn.debug_data_size = static_cast<uint32_t>(pKernel->getProgram()->getDebugDataSize());

@@ -248,9 +248,9 @@ TEST_F(KernelInfoMultiRootDeviceTests, kernelAllocationHasCorrectRootDeviceIndex
 TEST(KernelInfo, whenGetKernelNamesStringIsCalledThenNamesAreProperlyConcatenated) {
     ExecutionEnvironment execEnv;
     KernelInfo kernel1 = {};
-    kernel1.name = "kern1";
+    kernel1.kernelDescriptor.kernelMetadata.kernelName = "kern1";
     KernelInfo kernel2 = {};
-    kernel2.name = "kern2";
+    kernel2.kernelDescriptor.kernelMetadata.kernelName = "kern2";
     std::vector<KernelInfo *> kernelInfoArray;
     kernelInfoArray.push_back(&kernel1);
     kernelInfoArray.push_back(&kernel2);

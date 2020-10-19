@@ -301,12 +301,12 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyKernelDebugD
     info.debugData.genIsaSize = sizeof(dbgIsa);
     info.debugData.vIsaSize = sizeof(visa);
 
-    info.name = "debugKernel";
+    info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
 
     info.heapInfo.KernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
-    debugger.notifyKernelDebugData(&info.debugData, info.name, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
+    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
 
     EXPECT_TRUE(interceptor.kernelDebugDataCalled);
 
@@ -321,7 +321,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyKernelDebugD
 
     EXPECT_EQ(info.heapInfo.KernelHeapSize, interceptor.kernelDebugDataArgIn.KernelBinSize);
     EXPECT_EQ(isa, interceptor.kernelDebugDataArgIn.kernelBinBuffer);
-    EXPECT_STREQ(info.name.c_str(), interceptor.kernelDebugDataArgIn.kernelName);
+    EXPECT_STREQ(info.kernelDescriptor.kernelMetadata.kernelName.c_str(), interceptor.kernelDebugDataArgIn.kernelName);
 }
 
 TEST(SourceLevelDebugger, givenNoVisaWhenNotifyKernelDebugDataIsCalledThenDebuggerLibraryFunctionIsNotCalled) {
@@ -342,12 +342,12 @@ TEST(SourceLevelDebugger, givenNoVisaWhenNotifyKernelDebugDataIsCalledThenDebugg
     info.debugData.genIsaSize = sizeof(dbgIsa);
     info.debugData.vIsaSize = 0;
 
-    info.name = "debugKernel";
+    info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
 
     info.heapInfo.KernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
-    debugger.notifyKernelDebugData(&info.debugData, info.name, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
+    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, info.heapInfo.pKernelHeap, info.heapInfo.KernelHeapSize);
     EXPECT_FALSE(interceptor.kernelDebugDataCalled);
 }
 
@@ -369,12 +369,12 @@ TEST(SourceLevelDebugger, givenNoGenIsaWhenNotifyKernelDebugDataIsCalledThenDebu
     info.debugData.genIsaSize = 0;
     info.debugData.vIsaSize = sizeof(visa);
 
-    info.name = "debugKernel";
+    info.kernelDescriptor.kernelMetadata.kernelName = "debugKernel";
 
     info.heapInfo.KernelHeapSize = sizeof(isa);
     info.heapInfo.pKernelHeap = isa;
 
-    debugger.notifyKernelDebugData(&info.debugData, info.name, isa, sizeof(isa));
+    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, isa, sizeof(isa));
     EXPECT_FALSE(interceptor.kernelDebugDataCalled);
 }
 
@@ -390,7 +390,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenNotifyKernelDeb
 
     debugger.setActive(false);
     KernelInfo info;
-    debugger.notifyKernelDebugData(&info.debugData, info.name, nullptr, 0);
+    debugger.notifyKernelDebugData(&info.debugData, info.kernelDescriptor.kernelMetadata.kernelName, nullptr, 0);
     EXPECT_FALSE(interceptor.kernelDebugDataCalled);
 }
 

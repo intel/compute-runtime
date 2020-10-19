@@ -53,7 +53,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWithKernelWhenAubCsrIsActiveThen
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
 
     size_t gws[] = {1, 1, 1};
-    mockKernel.kernelInfo.name = "kernel_name";
+    mockKernel.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernel_name";
     mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
     EXPECT_TRUE(aubCsr->addAubCommentCalled);
@@ -69,8 +69,8 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWithKernelSplitWhenAubCsrIsActiv
 
     MockKernelWithInternals kernel1(*pClDevice);
     MockKernelWithInternals kernel2(*pClDevice);
-    kernel1.kernelInfo.name = "kernel_1";
-    kernel2.kernelInfo.name = "kernel_2";
+    kernel1.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernel_1";
+    kernel2.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernel_2";
 
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
     MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel1.mockKernel, kernel2.mockKernel}));
@@ -93,7 +93,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWithEmptyDispatchInfoWhenAubCsrI
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
 
     size_t gws[] = {0, 0, 0};
-    mockKernel.kernelInfo.name = "kernel_name";
+    mockKernel.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernel_name";
     mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
     EXPECT_FALSE(aubCsr->addAubCommentCalled);
@@ -159,7 +159,7 @@ HWTEST_F(EnqueueHandlerWithAubSubCaptureTests, givenEnqueueHandlerWithAubSubCapt
 
     MockCmdQWithAubSubCapture<FamilyType> cmdQ(context, pClDevice);
     MockKernelWithInternals mockKernel(*pClDevice);
-    mockKernel.kernelInfo.name = "kernelName";
+    mockKernel.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
     size_t gws[3] = {1, 0, 0};
 
     // activate subcapture

@@ -172,7 +172,7 @@ cl_int Program::link(
                 UNRECOVERABLE_IF(clDevice == nullptr);
                 for (auto kernelInfo : kernelInfoArray) {
                     clDevice->getSourceLevelDebugger()->notifyKernelDebugData(&kernelInfo->debugData,
-                                                                              kernelInfo->name,
+                                                                              kernelInfo->kernelDescriptor.kernelMetadata.kernelName,
                                                                               kernelInfo->heapInfo.pKernelHeap,
                                                                               kernelInfo->heapInfo.KernelHeapSize);
                 }

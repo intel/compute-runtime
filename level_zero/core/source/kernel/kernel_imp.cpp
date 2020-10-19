@@ -584,7 +584,7 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
     NEO::KernelInfo *ki = nullptr;
     for (uint32_t i = 0; i < moduleImp->getTranslationUnit()->programInfo.kernelInfos.size(); i++) {
         ki = moduleImp->getTranslationUnit()->programInfo.kernelInfos[i];
-        if (ki->name.compare(0, ki->name.size(), this->kernelImmData->getDescriptor().kernelMetadata.kernelName) == 0) {
+        if (ki->kernelDescriptor.kernelMetadata.kernelName.compare(0, ki->kernelDescriptor.kernelMetadata.kernelName.size(), this->kernelImmData->getDescriptor().kernelMetadata.kernelName) == 0) {
             break;
         }
     }

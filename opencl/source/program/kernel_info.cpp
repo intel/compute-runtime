@@ -476,7 +476,7 @@ std::string concatenateKernelNames(ArrayRef<KernelInfo *> kernelInfos) {
         if (!semiColonDelimitedKernelNameStr.empty()) {
             semiColonDelimitedKernelNameStr += ';';
         }
-        semiColonDelimitedKernelNameStr += kernelInfo->name;
+        semiColonDelimitedKernelNameStr += kernelInfo->kernelDescriptor.kernelMetadata.kernelName;
     }
 
     return semiColonDelimitedKernelNameStr;

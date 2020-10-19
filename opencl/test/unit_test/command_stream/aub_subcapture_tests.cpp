@@ -22,7 +22,7 @@ struct AubSubCaptureTest : public ClDeviceFixture,
     void SetUp() override {
         ClDeviceFixture::SetUp();
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
-        kernelInfo.name = "kernel_name";
+        kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernel_name";
         dbgRestore = new DebugManagerStateRestore();
     }
 
@@ -156,7 +156,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
     AubSubCaptureManagerMock aubSubCaptureManager("", subCaptureCommon);
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.kernelDescriptor.kernelMetadata.kernelName);
     EXPECT_TRUE(status.isActive);
     EXPECT_TRUE(aubSubCaptureManager.isSubCaptureActive());
 }
@@ -166,7 +166,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
     subCaptureCommon.subCaptureFilter.dumpKernelStartIdx = 0;
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.kernelDescriptor.kernelMetadata.kernelName);
     EXPECT_TRUE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -176,7 +176,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
     subCaptureCommon.subCaptureFilter.dumpKernelStartIdx = 1;
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.kernelDescriptor.kernelMetadata.kernelName);
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -187,7 +187,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
     subCaptureCommon.subCaptureFilter.dumpKernelEndIdx = 0;
     subCaptureCommon.getKernelCurrentIndexAndIncrement();
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.kernelDescriptor.kernelMetadata.kernelName);
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -197,7 +197,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
     subCaptureCommon.subCaptureFilter.dumpKernelName = "kernel_name";
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.kernelDescriptor.kernelMetadata.kernelName);
     EXPECT_TRUE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -207,7 +207,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenCheckAndActivate
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
     subCaptureCommon.subCaptureFilter.dumpKernelName = "invalid_kernel_name";
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.kernelDescriptor.kernelMetadata.kernelName);
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(status.wasActiveInPreviousEnqueue);
 }
@@ -334,8 +334,8 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFil
     aubSubCaptureManager.setToggleFileName("");
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    std::string toggleFileName = aubSubCaptureManager.generateToggleFileName(kernelInfo.name);
-    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(kernelInfo.name).c_str());
+    std::string toggleFileName = aubSubCaptureManager.generateToggleFileName(kernelInfo.kernelDescriptor.kernelMetadata.kernelName);
+    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(kernelInfo.kernelDescriptor.kernelMetadata.kernelName).c_str());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFileNameIsCalledForEmptyDispatchInfoThenGenerateToggleFileNameWithoutKernelName) {
@@ -435,15 +435,15 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenKernelNameIsSpec
     subCaptureCommon.subCaptureFilter.dumpKernelName = kernelName;
 
     subCaptureCommon.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Filter;
-    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
+    auto status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.kernelDescriptor.kernelMetadata.kernelName);
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(aubSubCaptureManager.isSubCaptureActive());
 
-    status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
+    status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.kernelDescriptor.kernelMetadata.kernelName);
     EXPECT_TRUE(status.isActive);
     EXPECT_TRUE(aubSubCaptureManager.isSubCaptureActive());
 
-    status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.name);
+    status = aubSubCaptureManager.checkAndActivateSubCapture(kernelInfo.kernelDescriptor.kernelMetadata.kernelName);
     EXPECT_FALSE(status.isActive);
     EXPECT_FALSE(aubSubCaptureManager.isSubCaptureActive());
 }

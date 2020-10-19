@@ -97,7 +97,7 @@ class Kernel : public BaseObject<_cl_kernel> {
         if (FileLoggerInstance().enabled()) {
             std::string source;
             program->getSource(source);
-            FileLoggerInstance().dumpKernel(kernelInfo.name, source);
+            FileLoggerInstance().dumpKernel(kernelInfo.kernelDescriptor.kernelMetadata.kernelName, source);
         }
 
         return pKernel;

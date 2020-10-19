@@ -146,7 +146,7 @@ void populateKernelInfoArg(KernelInfo &dstKernelInfo, KernelArgInfo &dstKernelIn
 void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatchtokens &src, uint32_t gpuPointerSizeInBytes) {
     UNRECOVERABLE_IF(nullptr == src.header);
 
-    dst.name = std::string(src.name.begin(), src.name.end()).c_str();
+    dst.kernelDescriptor.kernelMetadata.kernelName = std::string(src.name.begin(), src.name.end()).c_str();
     dst.heapInfo.DynamicStateHeapSize = src.header->DynamicStateHeapSize;
     dst.heapInfo.GeneralStateHeapSize = src.header->GeneralStateHeapSize;
     dst.heapInfo.SurfaceStateHeapSize = src.header->SurfaceStateHeapSize;

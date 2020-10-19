@@ -98,7 +98,7 @@ void KernelDataTest::buildAndDecode() {
     pKernelInfo = program->Program::getKernelInfo(kernelName.c_str());
 
     // validate name
-    EXPECT_STREQ(pKernelInfo->name.c_str(), kernelName.c_str());
+    EXPECT_STREQ(pKernelInfo->kernelDescriptor.kernelMetadata.kernelName.c_str(), kernelName.c_str());
 
     // validate each heap
     if (pKernelHeap != nullptr) {

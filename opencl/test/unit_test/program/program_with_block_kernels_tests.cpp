@@ -81,7 +81,7 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsBuil
 
     bool blockKernelFound = false;
     for (size_t i = 0; i < mockProgram->blockKernelManager->getCount(); i++) {
-        if (blockKernelInfos[i]->name.find("simple_block_kernel_dispatch") != std::string::npos) {
+        if (blockKernelInfos[i]->kernelDescriptor.kernelMetadata.kernelName.find("simple_block_kernel_dispatch") != std::string::npos) {
             blockKernelFound = true;
             break;
         }
@@ -117,7 +117,7 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLink
 
     for (uint32_t i = 0; i < blockManager->getCount(); i++) {
         const KernelInfo *info = blockManager->getBlockKernelInfo(i);
-        if (info->name.find("simple_block_kernel_dispatch") != std::string::npos) {
+        if (info->kernelDescriptor.kernelMetadata.kernelName.find("simple_block_kernel_dispatch") != std::string::npos) {
             break;
         }
     }

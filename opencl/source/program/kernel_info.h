@@ -187,7 +187,6 @@ struct KernelInfo {
     bool createKernelAllocation(const Device &device);
     void apply(const DeviceInfoKernelPayloadConstants &constants);
 
-    std::string name;
     std::string attributes;
     HeapInfo heapInfo = {};
     PatchInfo patchInfo = {};

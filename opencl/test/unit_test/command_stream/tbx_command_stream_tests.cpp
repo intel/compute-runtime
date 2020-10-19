@@ -886,7 +886,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
     MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.name = "kernelName";
+    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(kernel);
 
@@ -912,7 +912,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInSubCaptureModeWhenCheckAndActivateA
     tbxCsr.subCaptureManager = std::unique_ptr<AubSubCaptureManagerMock>(aubSubCaptureManagerMock);
 
     MockKernelWithInternals kernelInternals(*pClDevice);
-    kernelInternals.kernelInfo.name = "kernelName";
+    kernelInternals.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "kernelName";
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(kernel);
 
