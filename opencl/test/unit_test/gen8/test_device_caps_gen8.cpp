@@ -14,7 +14,7 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> Gen8DeviceCaps;
 
-GEN8TEST_F(Gen8DeviceCaps, defaultPreemptionMode) {
+GEN8TEST_F(Gen8DeviceCaps, GivenDefaultSettingsWhenCheckingPreemptionModeThenPreemptionIsDisabled) {
     EXPECT_TRUE(PreemptionMode::Disabled == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
@@ -37,7 +37,7 @@ GEN8TEST_F(Gen8DeviceCaps, givenGen8WhenCheckingCapsThenDeviceDoesProperlyReport
     }
 }
 
-GEN8TEST_F(Gen8DeviceCaps, kmdNotifyMechanism) {
+GEN8TEST_F(Gen8DeviceCaps, WhenCheckingKmdNotifyMechanismThenPropertiesAreSetCorrectly) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(50000, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);
@@ -46,12 +46,12 @@ GEN8TEST_F(Gen8DeviceCaps, kmdNotifyMechanism) {
     EXPECT_EQ(200000, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
 }
 
-GEN8TEST_F(Gen8DeviceCaps, compression) {
+GEN8TEST_F(Gen8DeviceCaps, WhenCheckingCompressionThenItIsDisabled) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
 }
 
-GEN8TEST_F(Gen8DeviceCaps, image3DDimensions) {
+GEN8TEST_F(Gen8DeviceCaps, WhenCheckingImage3dDimensionsThenCapsAreSetCorrectly) {
     const auto &caps = pClDevice->getDeviceInfo();
     const auto &sharedCaps = pDevice->getDeviceInfo();
     EXPECT_EQ(2048u, caps.image3DMaxWidth);
