@@ -31,6 +31,6 @@ TEST_F(DeviceNameTest, WhenCallingGetClDeviceNameThenReturnDeviceNameWithDeviceI
 
     std::stringstream clDeviceName;
     clDeviceName << deviceName;
-    clDeviceName << " [0x" << std::hex << defaultHwInfo->platform.usDeviceID << "]";
+    clDeviceName << " [0x" << std::hex << std::setw(4) << std::setfill('0') << defaultHwInfo->platform.usDeviceID << "]";
     EXPECT_STREQ(clDeviceName.str().c_str(), clDevice->getClDeviceName(*defaultHwInfo.get()).c_str());
 }
