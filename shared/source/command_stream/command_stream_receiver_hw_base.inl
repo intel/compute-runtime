@@ -969,6 +969,8 @@ uint32_t CommandStreamReceiverHw<GfxFamily>::blitBuffer(const BlitPropertiesCont
                 auto timestampContextEndGpuAddress = blitProperties.outputTimestampPacket->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].contextEnd);
                 auto timestampGlobalEndAddress = blitProperties.outputTimestampPacket->getGpuAddress() + offsetof(TimestampPacketStorage, packets[0].globalEnd);
 
+                EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, 0llu, newTaskCount, false, false);
+
                 EncodeStoreMMIO<GfxFamily>::encode(commandStream, GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, timestampContextEndGpuAddress);
                 EncodeStoreMMIO<GfxFamily>::encode(commandStream, REG_GLOBAL_TIMESTAMP_LDW, timestampGlobalEndAddress);
             } else {

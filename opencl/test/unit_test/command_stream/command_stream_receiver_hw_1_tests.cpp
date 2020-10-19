@@ -647,6 +647,20 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     EXPECT_EQ(expectedSizeWithoutTimestampPacketWrite, estimatedSizeWithoutTimestampPacketWrite);
 }
 
+HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommandsWithProfilingThenAddMiFlushDw) {
+    size_t expectedBaseSize = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK) + EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+
+    auto expectedSizeWithTimestampPacketWriteAndProfiling = expectedBaseSize + 4 * sizeof(typename FamilyType::MI_STORE_REGISTER_MEM);
+
+    auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        {1, 1, 1}, csrDependencies, true, false, pClDevice->getRootDeviceEnvironment());
+    auto estimatedSizeWithTimestampPacketWriteAndProfiling = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
+        {1, 1, 1}, csrDependencies, true, true, pClDevice->getRootDeviceEnvironment());
+
+    EXPECT_EQ(expectedSizeWithTimestampPacketWriteAndProfiling, estimatedSizeWithTimestampPacketWriteAndProfiling);
+    EXPECT_EQ(expectedBaseSize, estimatedSizeWithTimestampPacketWrite);
+}
+
 HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAddAllRequiredCommands) {
     uint32_t numberOfBlts = 1;
     size_t numberNodesPerContainer = 5;

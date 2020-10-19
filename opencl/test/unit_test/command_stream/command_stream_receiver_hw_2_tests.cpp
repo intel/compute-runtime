@@ -308,6 +308,10 @@ HWTEST_F(BcsTests, givenProfilingEnabledWhenBlitBufferThenCommandBufferIsConstru
     ASSERT_NE(cmdList.end(), cmdIterator);
     cmdIterator = find<typename FamilyType::XY_COPY_BLT *>(++cmdIterator, cmdList.end());
     ASSERT_NE(cmdList.end(), cmdIterator);
+
+    cmdIterator = find<typename FamilyType::MI_FLUSH_DW *>(++cmdIterator, cmdList.end());
+    ASSERT_NE(cmdList.end(), cmdIterator);
+
     cmdIterator = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(++cmdIterator, cmdList.end());
     ASSERT_NE(cmdList.end(), cmdIterator);
     cmdIterator = find<typename FamilyType::MI_STORE_REGISTER_MEM *>(++cmdIterator, cmdList.end());

@@ -74,8 +74,10 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const Vec3<size_t
                                                                const RootDeviceEnvironment &rootDeviceEnvironment) {
     size_t timestampCmdSize = 0;
     if (updateTimestampPacket) {
-        timestampCmdSize = (profilingEnabled) ? 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM)
-                                              : EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
+        timestampCmdSize += EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
+        if (profilingEnabled) {
+            timestampCmdSize += 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        }
     }
 
     bool preferRegionCopy = isCopyRegionPreferred(copySize, rootDeviceEnvironment);
