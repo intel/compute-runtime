@@ -53,26 +53,6 @@ typedef struct tracerArray {
     tracer_array_entry_t *tracerArrayEntries;
 } tracer_array_t;
 
-typedef struct per_thread_public_tracer_data {
-    std::atomic<tracer_array_t *> tracerArrayPointer;
-    std::thread::id thread_id;
-} per_thread_tracer_data_t;
-
-class ThreadPrivateTracerData {
-  public:
-    per_thread_tracer_data_t *myThreadPublicTracerData;
-    void allocatePerThreadPublicTracerData();
-    void freePerThreadPublicTracerData();
-    ThreadPrivateTracerData();
-    ~ThreadPrivateTracerData();
-
-  private:
-    ThreadPrivateTracerData(const ThreadPrivateTracerData &);
-    ThreadPrivateTracerData &operator=(const ThreadPrivateTracerData &);
-};
-
-extern thread_local ThreadPrivateTracerData myThreadPrivateTracerData;
-
 typedef enum tracingState {
     disabledState,        // tracing has never been enabled
     enabledState,         // tracing is enabled.
@@ -91,13 +71,30 @@ struct APITracerImp : APITracer {
   private:
 };
 
+class ThreadPrivateTracerData {
+  public:
+    void clearThreadTracerDataOnList(void) { onList = false; }
+    void removeThreadTracerDataFromList(void);
+    bool testAndSetThreadTracerDataInitializedAndOnList(void);
+    bool onList;
+    bool isInitialized;
+    ThreadPrivateTracerData();
+    ~ThreadPrivateTracerData();
+
+    std::atomic<tracer_array_t *> tracerArrayPointer;
+
+  private:
+    ThreadPrivateTracerData(const ThreadPrivateTracerData &);
+    ThreadPrivateTracerData &operator=(const ThreadPrivateTracerData &);
+};
+
 struct APITracerContextImp : APITracerContext {
   public:
     APITracerContextImp() {
         activeTracerArray.store(&emptyTracerArray, std::memory_order_relaxed);
     };
 
-    ~APITracerContextImp() override {}
+    ~APITracerContextImp() override;
 
     static void apiTracingEnable(ze_init_flag_t flag);
 
@@ -108,6 +105,9 @@ struct APITracerContextImp : APITracerContext {
     ze_result_t finalizeDisableImpTracingWait(struct APITracerImp *oldTracer);
 
     bool isTracingEnabled();
+
+    void addThreadTracerDataToList(ThreadPrivateTracerData *threadDataP);
+    void removeThreadTracerDataFromList(ThreadPrivateTracerData *threadDataP);
 
   private:
     std::mutex traceTableMutex;
@@ -128,7 +128,12 @@ struct APITracerContextImp : APITracerContext {
     ze_bool_t testForTracerArrayReferences(tracer_array_t *tracerArray);
     size_t testAndFreeRetiredTracers();
     int updateTracerArrays();
+
+    std::list<ThreadPrivateTracerData *> threadTracerDataList;
+    std::mutex threadTracerDataListMutex;
 };
+
+extern thread_local ThreadPrivateTracerData myThreadPrivateTracerData;
 
 template <class T>
 class APITracerCallbackStateImp {

@@ -45,11 +45,13 @@ class ZeAPITracingCoreTestsFixture {
   protected:
     virtual void SetUp() { //NOLINT
         driver_ddiTable.enableTracing = true;
-        myThreadPrivateTracerData.allocatePerThreadPublicTracerData();
+        myThreadPrivateTracerData.onList = false;
+        myThreadPrivateTracerData.isInitialized = false;
+        myThreadPrivateTracerData.testAndSetThreadTracerDataInitializedAndOnList();
     }
 
     virtual void TearDown() { //NOLINT
-        myThreadPrivateTracerData.freePerThreadPublicTracerData();
+        myThreadPrivateTracerData.removeThreadTracerDataFromList();
         driver_ddiTable.enableTracing = false;
     }
 };
