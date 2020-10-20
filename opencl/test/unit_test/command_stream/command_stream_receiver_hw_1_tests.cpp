@@ -10,6 +10,7 @@
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/event/user_event.h"
+#include "opencl/source/helpers/cl_blit_properties.h"
 #include "opencl/test/unit_test/command_stream/command_stream_receiver_hw_fixture.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -872,6 +873,33 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     while (cmdIterator != cmdList.end()) {
         EXPECT_NE(nullptr, genCmdCast<typename FamilyType::MI_NOOP *>(*(cmdIterator++)));
     }
+}
+HWTEST_F(BcsTests, givenCommandTypeWhenObtainBlitDirectionIsCalledThenReturnCorrectBlitDirection) {
+
+    std::array<std::pair<uint32_t, BlitterConstants::BlitDirection>, 9> testParams{
+        std::make_pair(CL_COMMAND_WRITE_BUFFER, BlitterConstants::BlitDirection::HostPtrToBuffer),
+        std::make_pair(CL_COMMAND_WRITE_BUFFER_RECT, BlitterConstants::BlitDirection::HostPtrToBuffer),
+        std::make_pair(CL_COMMAND_READ_BUFFER, BlitterConstants::BlitDirection::BufferToHostPtr),
+        std::make_pair(CL_COMMAND_READ_BUFFER_RECT, BlitterConstants::BlitDirection::BufferToHostPtr),
+        std::make_pair(CL_COMMAND_COPY_BUFFER_RECT, BlitterConstants::BlitDirection::BufferToBuffer),
+        std::make_pair(CL_COMMAND_SVM_MEMCPY, BlitterConstants::BlitDirection::BufferToBuffer),
+        std::make_pair(CL_COMMAND_WRITE_IMAGE, BlitterConstants::BlitDirection::HostPtrToImage),
+        std::make_pair(CL_COMMAND_READ_IMAGE, BlitterConstants::BlitDirection::ImageToHostPtr),
+        std::make_pair(CL_COMMAND_COPY_BUFFER, BlitterConstants::BlitDirection::BufferToBuffer)};
+
+    for (const auto &params : testParams) {
+        uint32_t commandType;
+        BlitterConstants::BlitDirection expectedBlitDirection;
+        std::tie(commandType, expectedBlitDirection) = params;
+
+        auto blitDirection = ClBlitProperties::obtainBlitDirection(commandType);
+        EXPECT_EQ(expectedBlitDirection, blitDirection);
+    }
+}
+
+HWTEST_F(BcsTests, givenWrongCommandTypeWhenObtainBlitDirectionIsCalledThenExpectThrow) {
+    uint32_t wrongCommandType = CL_COMMAND_COPY_IMAGE;
+    EXPECT_THROW(ClBlitProperties::obtainBlitDirection(wrongCommandType), std::exception);
 }
 
 struct BcsTestParam {

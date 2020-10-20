@@ -637,18 +637,27 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 }
 
 bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
-    bool blitAllowed = device->getHardwareInfo().capabilityTable.blitterOperationsSupported || this->isCopyOnly;
 
+    auto blitAllowed = device->getHardwareInfo().capabilityTable.blitterOperationsSupported || this->isCopyOnly;
     if (DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get() != -1) {
-        blitAllowed &= !!DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get();
+
+        blitAllowed &= static_cast<bool>(DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get());
     }
 
-    bool commandAllowed = (CL_COMMAND_READ_BUFFER == cmdType) || (CL_COMMAND_WRITE_BUFFER == cmdType) ||
-                          (CL_COMMAND_COPY_BUFFER == cmdType) || (CL_COMMAND_READ_BUFFER_RECT == cmdType) ||
-                          (CL_COMMAND_WRITE_BUFFER_RECT == cmdType) || (CL_COMMAND_COPY_BUFFER_RECT == cmdType) ||
-                          (CL_COMMAND_SVM_MEMCPY == cmdType);
-
-    return commandAllowed && blitAllowed;
+    switch (cmdType) {
+    case CL_COMMAND_READ_BUFFER:
+    case CL_COMMAND_WRITE_BUFFER:
+    case CL_COMMAND_COPY_BUFFER:
+    case CL_COMMAND_READ_BUFFER_RECT:
+    case CL_COMMAND_WRITE_BUFFER_RECT:
+    case CL_COMMAND_COPY_BUFFER_RECT:
+    case CL_COMMAND_SVM_MEMCPY:
+    case CL_COMMAND_READ_IMAGE:
+    case CL_COMMAND_WRITE_IMAGE:
+        return blitAllowed;
+    default:
+        return false;
+    }
 }
 
 bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue) const {
