@@ -156,6 +156,9 @@ class Context : public BaseObject<_cl_context> {
     void setResolvesRequiredInKernels(bool resolves) {
         resolvesRequiredInKernels = resolves;
     }
+    const ClDeviceVector &getDevices() const {
+        return devices;
+    }
 
   protected:
     Context(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *) = nullptr,

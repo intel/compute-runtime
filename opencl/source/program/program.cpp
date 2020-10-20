@@ -45,7 +45,7 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
     blockKernelManager = new BlockKernelManager();
     ClDevice *pClDevice = castToObject<ClDevice>(pDevice->getSpecializedDevice<ClDevice>());
 
-    numDevices = 1;
+    numDevices = static_cast<uint32_t>(clDevicesIn.size());
     bool force32BitAddressess = false;
 
     uint32_t maxRootDeviceIndex = pDevice->getRootDeviceIndex();

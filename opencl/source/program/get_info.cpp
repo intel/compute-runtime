@@ -27,12 +27,12 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
     size_t srcSize = GetInfo::invalidSourceSize;
     size_t retSize = 0;
     std::string kernelNamesString;
-    cl_device_id device_id = pDevice->getSpecializedDevice<ClDevice>();
     cl_uint refCount = 0;
     size_t numKernels;
     cl_context clContext = context;
     cl_uint clFalse = CL_FALSE;
     auto rootDeviceIndex = pDevice->getRootDeviceIndex();
+    std::vector<cl_device_id> devicesToExpose;
 
     switch (paramName) {
     case CL_PROGRAM_CONTEXT:
@@ -87,8 +87,9 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_DEVICES:
-        pSrc = &device_id;
-        retSize = srcSize = sizeof(cl_device_id);
+        clDevices.toDeviceIDs(devicesToExpose);
+        pSrc = devicesToExpose.data();
+        retSize = srcSize = devicesToExpose.size() * sizeof(cl_device_id);
         break;
 
     case CL_PROGRAM_REFERENCE_COUNT:

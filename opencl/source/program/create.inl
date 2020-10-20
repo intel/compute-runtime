@@ -75,9 +75,7 @@ T *Program::create(
         lengths);
 
     if (CL_SUCCESS == retVal) {
-        ClDeviceVector deviceVector;
-        deviceVector.push_back(pContext->getDevice(0));
-        program = new T(pContext, false, deviceVector);
+        program = new T(pContext, false, pContext->getDevices());
         program->sourceCode.swap(combinedString);
         program->createdFrom = CreatedFrom::SOURCE;
     }
