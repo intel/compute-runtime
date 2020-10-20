@@ -169,6 +169,24 @@ TEST_F(DeviceTest, givenKernelPropertiesStructureWhenKernelPropertiesCalledThenA
     EXPECT_NE(kernelPropertiesBefore.printfBufferSize, kernelProperties.printfBufferSize);
 }
 
+TEST_F(DeviceTest, givenDeviceCachePropertiesThenAllPropertiesAreAssigned) {
+    ze_device_cache_properties_t deviceCacheProperties, deviceCachePropertiesBefore;
+
+    deviceCacheProperties.cacheSize = std::numeric_limits<size_t>::max();
+
+    deviceCachePropertiesBefore = deviceCacheProperties;
+
+    uint32_t count = 0;
+    ze_result_t res = device->getCacheProperties(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(count, 1u);
+
+    res = device->getCacheProperties(&count, &deviceCacheProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    EXPECT_NE(deviceCacheProperties.cacheSize, deviceCachePropertiesBefore.cacheSize);
+}
+
 TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenAllPropertiesAreAssigned) {
     ze_device_properties_t deviceProperties, devicePropertiesBefore;
 

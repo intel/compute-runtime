@@ -440,7 +440,7 @@ ze_result_t DeviceImp::getCacheProperties(uint32_t *pCount, ze_device_cache_prop
     }
 
     const auto &hardwareInfo = this->getHwInfo();
-    pCacheProperties[0].cacheSize = getIntermediateCacheSize(hardwareInfo);
+    pCacheProperties[0].cacheSize = hardwareInfo.gtSystemInfo.L3BankCount * 128 * KB;
     pCacheProperties[0].flags = 0;
 
     return ZE_RESULT_SUCCESS;
