@@ -155,6 +155,10 @@ struct EncodeSetMMIO {
     static void encodeMEM(CommandContainer &container, uint32_t offset, uint64_t address);
 
     static void encodeREG(CommandContainer &container, uint32_t dstOffset, uint32_t srcOffset);
+
+    static bool isRemapApplicable(uint32_t offset);
+    static void remapOffset(MI_LOAD_REGISTER_MEM *pMiLoadReg);
+    static void remapOffset(MI_LOAD_REGISTER_REG *pMiLoadReg);
 };
 
 template <typename GfxFamily>

@@ -1622,7 +1622,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
         auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
         commandContainer.addToResidencyContainer(alloc);
 
-        auto groupCountOffset = ptrDiff(pThreadGroupDimensions, alloc->getUnderlyingBuffer());
+        size_t groupCountOffset = 0;
+        if (allocData->cpuAllocation != nullptr) {
+            commandContainer.addToResidencyContainer(allocData->cpuAllocation);
+            groupCountOffset = ptrDiff(pThreadGroupDimensions, allocData->cpuAllocation->getUnderlyingBuffer());
+        } else {
+            UNRECOVERABLE_IF(reinterpret_cast<uint64_t>(alloc->getUnderlyingBuffer()) != alloc->getGpuAddress());
+            groupCountOffset = ptrDiff(pThreadGroupDimensions, alloc->getGpuAddress());
+        }
+
         auto groupCount = ptrOffset(alloc->getGpuAddress(), groupCountOffset);
 
         NEO::EncodeSetMMIO<GfxFamily>::encodeMEM(commandContainer, GPUGPU_DISPATCHDIMX,

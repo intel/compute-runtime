@@ -228,6 +228,8 @@ void EncodeSetMMIO<Family>::encodeMEM(CommandContainer &container, uint32_t offs
     MI_LOAD_REGISTER_MEM cmd = Family::cmdInitLoadRegisterMem;
     cmd.setRegisterAddress(offset);
     cmd.setMemoryAddress(address);
+    remapOffset(&cmd);
+
     auto buffer = container.getCommandStream()->getSpaceForCmd<MI_LOAD_REGISTER_MEM>();
     *buffer = cmd;
 }
@@ -237,6 +239,7 @@ void EncodeSetMMIO<Family>::encodeREG(CommandContainer &container, uint32_t dstO
     MI_LOAD_REGISTER_REG cmd = Family::cmdInitLoadRegisterReg;
     cmd.setSourceRegisterAddress(srcOffset);
     cmd.setDestinationRegisterAddress(dstOffset);
+    remapOffset(&cmd);
     auto buffer = container.getCommandStream()->getSpaceForCmd<MI_LOAD_REGISTER_REG>();
     *buffer = cmd;
 }

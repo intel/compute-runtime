@@ -20,7 +20,19 @@
 namespace L0 {
 namespace ult {
 
+struct DualStorageModuleFixture : public ModuleFixture {
+    void SetUp() override {
+        DebugManager.flags.EnableLocalMemory.set(1);
+        DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
+        ModuleFixture::SetUp();
+    }
+    void TearDown() override {
+        ModuleFixture::TearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
+using CommandListDualStroage = Test<DualStorageModuleFixture>;
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsAllowedThenCommandListReturnsExpectedIndirectAllocationsAllowed) {
     createKernel();
@@ -458,6 +470,99 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
     EXPECT_NE(cmdList.end(), itor);
     itor = find<MI_STORE_REGISTER_MEM *>(itor, cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
+
+    device->getDriverHandle()->freeMem(alloc);
+}
+
+HWTEST_F(CommandListDualStroage, givenIndirectDispatchWithSharedDualStorageMemoryWhenAppendingThenWorkGroupCountAndGlobalWorkSizeIsSetInCrossThreadData) {
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    Mock<::L0::Kernel> kernel;
+    kernel.descriptor.payloadMappings.dispatchTraits.numWorkGroups[0] = 2;
+    kernel.descriptor.payloadMappings.dispatchTraits.globalWorkSize[0] = 2;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, returnValue));
+
+    void *alloc = nullptr;
+    auto result = device->getDriverHandle()->allocSharedMem(device->toHandle(), 0u, 0u, 16384u, 4096u, &alloc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_group_count_t *pThreadGroupDimensions = static_cast<ze_group_count_t *>(ptrOffset(alloc, sizeof(ze_group_count_t)));
+
+    pThreadGroupDimensions->groupCountX = 3;
+    pThreadGroupDimensions->groupCountY = 4;
+    pThreadGroupDimensions->groupCountZ = 5;
+
+    result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),
+                                                     pThreadGroupDimensions,
+                                                     nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(pThreadGroupDimensions);
+    ASSERT_NE(nullptr, allocData->cpuAllocation);
+    auto gpuAllocation = allocData->gpuAllocations.getGraphicsAllocation(device->getNEODevice()->getRootDeviceIndex());
+    ASSERT_NE(nullptr, gpuAllocation);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+
+    uint32_t regAddress = 0;
+    uint64_t gpuAddress = 0;
+    auto expectedXAddress = reinterpret_cast<uint64_t>(ptrOffset(pThreadGroupDimensions, offsetof(ze_group_count_t, groupCountX)));
+    auto expectedYAddress = reinterpret_cast<uint64_t>(ptrOffset(pThreadGroupDimensions, offsetof(ze_group_count_t, groupCountY)));
+    auto expectedZAddress = reinterpret_cast<uint64_t>(ptrOffset(pThreadGroupDimensions, offsetof(ze_group_count_t, groupCountZ)));
+
+    auto itor = find<MI_LOAD_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+
+    auto cmd = genCmdCast<MI_LOAD_REGISTER_MEM *>(*itor);
+    regAddress = cmd->getRegisterAddress();
+    gpuAddress = cmd->getMemoryAddress();
+
+    EXPECT_EQ(GPUGPU_DISPATCHDIMX, regAddress);
+    EXPECT_EQ(expectedXAddress, gpuAddress);
+
+    itor = find<MI_LOAD_REGISTER_MEM *>(++itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+
+    cmd = genCmdCast<MI_LOAD_REGISTER_MEM *>(*itor);
+    regAddress = cmd->getRegisterAddress();
+    gpuAddress = cmd->getMemoryAddress();
+
+    EXPECT_EQ(GPUGPU_DISPATCHDIMY, regAddress);
+    EXPECT_EQ(expectedYAddress, gpuAddress);
+
+    itor = find<MI_LOAD_REGISTER_MEM *>(++itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+
+    cmd = genCmdCast<MI_LOAD_REGISTER_MEM *>(*itor);
+    regAddress = cmd->getRegisterAddress();
+    gpuAddress = cmd->getMemoryAddress();
+
+    EXPECT_EQ(GPUGPU_DISPATCHDIMZ, regAddress);
+    EXPECT_EQ(expectedZAddress, gpuAddress);
+
+    MI_STORE_REGISTER_MEM *cmd2 = nullptr;
+    // Find group count cmds
+    do {
+        itor = find<MI_STORE_REGISTER_MEM *>(++itor, cmdList.end());
+        cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    } while (itor != cmdList.end() && cmd2->getRegisterAddress() != GPUGPU_DISPATCHDIMX);
+    EXPECT_NE(cmdList.end(), itor);
+
+    // Find workgroup size cmds
+    itor = find<MI_LOAD_REGISTER_REG *>(++itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor = find<MI_LOAD_REGISTER_IMM *>(++itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    itor = find<MI_STORE_REGISTER_MEM *>(++itor, cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
+    EXPECT_EQ(CS_GPR_R1, cmd2->getRegisterAddress());
 
     device->getDriverHandle()->freeMem(alloc);
 }
