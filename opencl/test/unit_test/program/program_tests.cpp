@@ -3053,6 +3053,29 @@ TEST_F(ProgramMultiRootDeviceTests, WhenPrivateSurfaceIsCreatedThenItHasCorrectR
     EXPECT_EQ(expectedRootDeviceIndex, privateSurface->getRootDeviceIndex());
 }
 
+TEST_F(ProgramMultiRootDeviceTests, WhenProgramIsCreatedThenBuildInfosVectorIsProperlyResized) {
+    {
+        ClDeviceVector deviceVector;
+        deviceVector.push_back(device.get());
+        deviceVector.push_back(device2.get());
+
+        EXPECT_EQ(1u, deviceVector[0]->getRootDeviceIndex());
+        auto program = std::make_unique<MockProgram>(context.get(), false, deviceVector);
+
+        EXPECT_EQ(3u, program->buildInfos.size());
+    }
+    {
+        ClDeviceVector deviceVector;
+        deviceVector.push_back(device2.get());
+        deviceVector.push_back(device.get());
+
+        EXPECT_EQ(2u, deviceVector[0]->getRootDeviceIndex());
+        auto program = std::make_unique<MockProgram>(context.get(), false, deviceVector);
+
+        EXPECT_EQ(3u, program->buildInfos.size());
+    }
+}
+
 class MockCompilerInterfaceWithGtpinParam : public CompilerInterface {
   public:
     TranslationOutput::ErrorCode link(

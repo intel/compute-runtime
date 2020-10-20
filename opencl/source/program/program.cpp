@@ -48,7 +48,13 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
     numDevices = static_cast<uint32_t>(clDevicesIn.size());
     bool force32BitAddressess = false;
 
-    uint32_t maxRootDeviceIndex = pDevice->getRootDeviceIndex();
+    uint32_t maxRootDeviceIndex = 0;
+
+    for (const auto &device : clDevicesIn) {
+        if (device->getRootDeviceIndex() > maxRootDeviceIndex) {
+            maxRootDeviceIndex = device->getRootDeviceIndex();
+        }
+    }
 
     buildInfos.resize(maxRootDeviceIndex + 1);
 
