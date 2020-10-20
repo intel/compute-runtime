@@ -117,7 +117,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenDifferentSizesOfAllocationWhenCheckingCo
     }
 }
 
-GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeNotSetAndBcsInfoSetWhenGetGpgpuEnginesThenReturnThreeRcsEnginesAndOneBcsEngine) {
+GEN12LPTEST_F(HwHelperTestGen12Lp, givenFtrCcsNodeNotSetAndBcsInfoSetWhenGetGpgpuEnginesThenReturnThreeRcsEnginesEngine) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.ftrCCSNode = false;
     hwInfo.featureTable.ftrBcsInfo = 1;

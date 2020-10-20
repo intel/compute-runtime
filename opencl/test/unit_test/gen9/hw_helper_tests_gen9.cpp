@@ -57,8 +57,9 @@ GEN9TEST_F(HwHelperTestGen9, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenD
 }
 
 GEN9TEST_F(HwHelperTestGen9, whenGetGpgpuEnginesThenReturnThreeRcsEngines) {
-    whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
-    EXPECT_EQ(3u, pDevice->engines.size());
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.featureTable.ftrBcsInfo.set(0, false);
+    whenGetGpgpuEnginesThenReturnThreeRcsEngines<FamilyType>(hwInfo);
 }
 
 using MemorySynchronizatiopCommandsTestsGen9 = ::testing::Test;

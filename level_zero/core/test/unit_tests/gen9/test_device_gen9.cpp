@@ -43,52 +43,61 @@ HWTEST2_F(DeviceQueueGroupTest, givenCommandQueuePropertiesCallThenCorrectNumber
     uint32_t count = 0;
     ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(1u, count);
+    auto expectedCount = 1u;
+    if (device->getHwInfo().featureTable.ftrBcsInfo.test(0)) {
+        expectedCount++;
+    }
+    EXPECT_EQ(expectedCount, count);
 
-    ze_command_queue_group_properties_t properties;
-    res = device->getCommandQueueGroupProperties(&count, &properties);
+    auto properties = std::make_unique<ze_command_queue_group_properties_t[]>(count);
+    res = device->getCommandQueueGroupProperties(&count, properties.get());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
-    EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
-    EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
-    EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
-    EXPECT_EQ(properties.numQueues, 1u);
-    EXPECT_EQ(properties.maxMemoryFillPatternSize, sizeof(uint32_t));
+    EXPECT_TRUE(properties[0].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
+    EXPECT_TRUE(properties[0].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
+    EXPECT_TRUE(properties[0].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
+    EXPECT_TRUE(properties[0].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
+    EXPECT_EQ(properties[0].numQueues, 1u);
+    EXPECT_EQ(properties[0].maxMemoryFillPatternSize, sizeof(uint32_t));
 }
 
 HWTEST2_F(DeviceQueueGroupTest, givenQueueGroupsReturnedThenCommandListIsCreatedCorrectly, IsGen9) {
     uint32_t count = 0;
     ze_result_t res = device->getCommandQueueGroupProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    EXPECT_EQ(1u, count);
+    auto expectedCount = 1u;
+    if (device->getHwInfo().featureTable.ftrBcsInfo.test(0)) {
+        expectedCount++;
+    }
+    EXPECT_EQ(expectedCount, count);
 
-    ze_command_queue_group_properties_t properties;
-    res = device->getCommandQueueGroupProperties(&count, &properties);
+    auto properties = std::make_unique<ze_command_queue_group_properties_t[]>(count);
+    res = device->getCommandQueueGroupProperties(&count, properties.get());
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
-    EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
-    EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
-    EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
-    EXPECT_EQ(properties.numQueues, 1u);
-    EXPECT_EQ(properties.maxMemoryFillPatternSize, sizeof(uint32_t));
+    EXPECT_TRUE(properties[0].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE);
+    EXPECT_TRUE(properties[0].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY);
+    EXPECT_TRUE(properties[0].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
+    EXPECT_TRUE(properties[0].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
+    EXPECT_EQ(properties[0].numQueues, 1u);
+    EXPECT_EQ(properties[0].maxMemoryFillPatternSize, sizeof(uint32_t));
 
     ze_context_handle_t hContext;
     ze_context_desc_t contextDesc;
     res = driverHandle->createContext(&contextDesc, &hContext);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     L0::Context *context = Context::fromHandle(hContext);
+    for (uint32_t i = 0; i < count; i++) {
+        ze_command_list_desc_t listDesc = {};
+        listDesc.commandQueueGroupOrdinal = i;
+        ze_command_list_handle_t hCommandList = {};
 
-    ze_command_list_desc_t listDesc = {};
-    listDesc.commandQueueGroupOrdinal = 0;
-    ze_command_list_handle_t hCommandList = {};
+        res = context->createCommandList(device, &listDesc, &hCommandList);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    res = context->createCommandList(device, &listDesc, &hCommandList);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    CommandList *commandList = CommandList::fromHandle(hCommandList);
-    commandList->destroy();
+        CommandList *commandList = CommandList::fromHandle(hCommandList);
+        commandList->destroy();
+    }
 
     context->destroy();
 }
