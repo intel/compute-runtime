@@ -30,6 +30,8 @@ GraphicsAllocation *HeapHelper::getHeapAllocation(uint32_t heapType, size_t heap
     return this->memManager->allocateGraphicsMemoryWithProperties(properties);
 }
 void HeapHelper::storeHeapAllocation(GraphicsAllocation *heapAllocation) {
-    this->storageForReuse->storeAllocation(std::unique_ptr<NEO::GraphicsAllocation>(heapAllocation), NEO::AllocationUsage::REUSABLE_ALLOCATION);
+    if (heapAllocation) {
+        this->storageForReuse->storeAllocation(std::unique_ptr<NEO::GraphicsAllocation>(heapAllocation), NEO::AllocationUsage::REUSABLE_ALLOCATION);
+    }
 }
 } // namespace NEO

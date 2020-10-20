@@ -9,9 +9,12 @@
 #include "shared/test/unit_test/fixtures/device_fixture.h"
 #include "shared/test/unit_test/mocks/mock_graphics_allocation.h"
 
+#include "opencl/test/unit_test/mocks/mock_memory_manager.h"
 #include "test.h"
 
 using namespace NEO;
+
+constexpr uint32_t defaultNumIddsPerBlock = 64;
 
 class CommandContainerTest : public DeviceFixture,
                              public ::testing::Test {
@@ -128,6 +131,9 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
         EXPECT_EQ(indirectHeap->getGraphicsAllocation(), heapAllocation);
     }
 
+    EXPECT_EQ(cmdContainer.getIddBlock(), nullptr);
+    EXPECT_EQ(cmdContainer.getNumIddPerBlock(), defaultNumIddsPerBlock);
+
     auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
 
     EXPECT_EQ(cmdContainer.getInstructionHeapBaseAddress(),
@@ -138,6 +144,22 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeWithoutDeviceThe
     CommandContainer cmdContainer;
     auto status = cmdContainer.initialize(nullptr);
     EXPECT_EQ(ErrorCode::INVALID_DEVICE, status);
+}
+
+TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateGfxMemoryFailsThenErrorIsReturned) {
+    CommandContainer cmdContainer;
+    pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(0, *pDevice->executionEnvironment));
+    auto status = cmdContainer.initialize(pDevice);
+    EXPECT_EQ(ErrorCode::OUT_OF_DEVICE_MEMORY, status);
+}
+
+TEST_F(CommandContainerTest, givenCommandContainerDuringInitWhenAllocateHeapMemoryFailsThenErrorIsReturned) {
+    CommandContainer cmdContainer;
+    auto temp_memoryManager = pDevice->executionEnvironment->memoryManager.release();
+    pDevice->executionEnvironment->memoryManager.reset(new FailMemoryManager(1, *pDevice->executionEnvironment));
+    auto status = cmdContainer.initialize(pDevice);
+    EXPECT_EQ(ErrorCode::OUT_OF_DEVICE_MEMORY, status);
+    delete temp_memoryManager;
 }
 
 TEST_F(CommandContainerTest, givenCommandContainerWhenSettingIndirectHeapAllocationThenAllocationIsSet) {
@@ -173,6 +195,8 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenResetThenStateIsReset) {
     EXPECT_NE(usedSize, cmdContainer.getCommandStream()->getUsed());
     EXPECT_EQ(0u, cmdContainer.getCommandStream()->getUsed());
     EXPECT_EQ(0u, cmdContainer.lastSentNumGrfRequired);
+    EXPECT_EQ(cmdContainer.getIddBlock(), nullptr);
+    EXPECT_EQ(cmdContainer.getNumIddPerBlock(), defaultNumIddsPerBlock);
 }
 
 TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddNullPtrToResidencyContainerThenNothingIsAdded) {

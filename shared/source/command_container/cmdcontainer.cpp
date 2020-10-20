@@ -32,7 +32,9 @@ CommandContainer::~CommandContainer() {
     }
 
     for (auto allocationIndirectHeap : allocationIndirectHeaps) {
-        heapHelper->storeHeapAllocation(allocationIndirectHeap);
+        if (heapHelper) {
+            heapHelper->storeHeapAllocation(allocationIndirectHeap);
+        }
     }
     for (auto deallocation : deallocationContainer) {
         if (((deallocation->getAllocationType() == GraphicsAllocation::AllocationType::INTERNAL_HEAP) || (deallocation->getAllocationType() == GraphicsAllocation::AllocationType::LINEAR_STREAM))) {
@@ -47,8 +49,6 @@ ErrorCode CommandContainer::initialize(Device *device) {
         return ErrorCode::INVALID_DEVICE;
     }
     this->device = device;
-
-    heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumAvailableDevices() > 1u));
 
     size_t alignedSize = alignUp<size_t>(totalCmdBufferSize, MemoryConstants::pageSize64k);
     AllocationProperties properties{device->getRootDeviceIndex(),
@@ -71,7 +71,9 @@ ErrorCode CommandContainer::initialize(Device *device) {
     commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
 
     addToResidencyContainer(cmdBufferAllocation);
+
     constexpr size_t heapSize = 65536u;
+    heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumAvailableDevices() > 1u));
 
     for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
         allocationIndirectHeaps[i] = heapHelper->getHeapAllocation(i,
