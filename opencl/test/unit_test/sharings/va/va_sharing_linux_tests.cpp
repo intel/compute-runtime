@@ -90,6 +90,37 @@ TEST(VASharingFunctions, GivenInitFunctionsWhenDLOpenSuccedsThenFunctionsAreNotN
     EXPECT_TRUE(functions.wereFunctionsAssigned());
 }
 
+TEST(VASharingFunctions, GivenInitFunctionsWhenEnableVaLibCallsThenFunctionsAreAssigned) {
+    DebugManagerStateRestore restorer;
+
+    VariableBackup<decltype(VASharingFunctions::fdlopen)> dlopenBackup(&VASharingFunctions::fdlopen);
+    VariableBackup<decltype(VASharingFunctions::fdlsym)> dlsymBackup(&VASharingFunctions::fdlsym);
+    VariableBackup<decltype(VASharingFunctions::fdlclose)> dlcloseBackup(&VASharingFunctions::fdlclose);
+
+    std::unique_ptr<uint32_t> valib(new uint32_t);
+    ASSERT_NE(nullptr, valib.get());
+
+    VASharingFunctions::fdlopen = [&](const char *filename, int flag) -> void * {
+        return valib.get();
+    };
+
+    VASharingFunctions::fdlsym = [&](void *handle, const char *symbol) -> void * {
+        return (void *)GetLibFunc;
+    };
+
+    VASharingFunctions::fdlclose = [&](void *handle) -> int {
+        return 0;
+    };
+
+    EXPECT_EQ(-1, DebugManager.flags.EnableVaLibCalls.get());
+    VASharingFunctionsTested functionsWithDefaultVaLibCalls;
+    EXPECT_TRUE(functionsWithDefaultVaLibCalls.wereFunctionsAssigned());
+
+    DebugManager.flags.EnableVaLibCalls.set(1);
+    VASharingFunctionsTested functionsWithEnabledVaLibCalls;
+    EXPECT_TRUE(functionsWithEnabledVaLibCalls.wereFunctionsAssigned());
+}
+
 TEST(VASharingFunctions, GivenFunctionsWhenNoLibvaThenDlcloseNotCalled) {
     VariableBackup<decltype(VASharingFunctions::fdlopen)> dlopenBackup(&VASharingFunctions::fdlopen);
     VariableBackup<decltype(VASharingFunctions::fdlsym)> dlsymBackup(&VASharingFunctions::fdlsym);

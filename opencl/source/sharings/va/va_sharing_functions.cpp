@@ -43,7 +43,12 @@ bool VASharingFunctions::isVaLibraryAvailable() {
 }
 
 void VASharingFunctions::initFunctions() {
-    if (DebugManager.flags.EnableVaLibCalls.get()) {
+    bool enableVaLibCalls = true;
+    if (DebugManager.flags.EnableVaLibCalls.get() != -1) {
+        enableVaLibCalls = !!DebugManager.flags.EnableVaLibCalls.get();
+    }
+
+    if (enableVaLibCalls) {
         libHandle = fdlopen(Os::libvaDllName, RTLD_LAZY);
         if (libHandle) {
             vaDisplayIsValidPFN = reinterpret_cast<VADisplayIsValidPFN>(fdlsym(libHandle, "vaDisplayIsValid"));
