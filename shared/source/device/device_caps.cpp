@@ -12,6 +12,8 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
+#include <iomanip>
+
 namespace NEO {
 
 static const char *spirvWithVersion = "SPIR-V_1.2 ";
@@ -118,6 +120,13 @@ void Device::initializeCaps() {
     if (DebugManager.flags.EnableSharedSystemUsmSupport.get() != -1) {
         deviceInfo.sharedSystemAllocationsSupport = DebugManager.flags.EnableSharedSystemUsmSupport.get();
     }
+
+    std::stringstream deviceName;
+
+    deviceName << this->getDeviceName(hwInfo);
+    deviceName << " [0x" << std::hex << std::setw(4) << std::setfill('0') << hwInfo.platform.usDeviceID << "]";
+
+    deviceInfo.name = deviceName.str();
 }
 
 } // namespace NEO

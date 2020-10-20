@@ -47,6 +47,7 @@ struct DeviceInfo {
     bool debuggerActive;
     bool force32BitAddressess;
     bool sharedSystemAllocationsSupport;
+    std::string name;
 };
 
 } // namespace NEO

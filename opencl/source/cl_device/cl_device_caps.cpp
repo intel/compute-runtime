@@ -19,7 +19,6 @@
 
 #include "driver_version.h"
 
-#include <iomanip>
 #include <string>
 
 namespace NEO {
@@ -434,12 +433,7 @@ void ClDevice::initializeOpenclCAllVersions() {
 }
 
 const std::string ClDevice::getClDeviceName(const HardwareInfo &hwInfo) const {
-    std::stringstream deviceName;
-
-    deviceName << device.getDeviceName(hwInfo);
-    deviceName << " [0x" << std::hex << std::setw(4) << std::setfill('0') << hwInfo.platform.usDeviceID << "]";
-
-    return deviceName.str();
+    return this->getDevice().getDeviceInfo().name;
 }
 
 } // namespace NEO
