@@ -14,7 +14,7 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> Gen12LpDeviceCaps;
 
-HWTEST2_F(Gen12LpDeviceCaps, lpSkusDontSupportFP64, IsTGLLP) {
+HWTEST2_F(Gen12LpDeviceCaps, WhenCheckingExtensionStringThenFp64IsNotSupported, IsTGLLP) {
     const auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;
 
@@ -40,21 +40,21 @@ HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckingCapsThenDeviceDoesNotSuppor
     EXPECT_FALSE(caps.independentForwardProgress);
 }
 
-HWTEST2_F(Gen12LpDeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt, IsTGLLP) {
+HWTEST2_F(Gen12LpDeviceCaps, WhenCheckingCapsThenCorrectlyRoundedDivideSqrtIsNotSupported, IsTGLLP) {
     const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
 }
 
-GEN12LPTEST_F(Gen12LpDeviceCaps, defaultPreemptionMode) {
+GEN12LPTEST_F(Gen12LpDeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsReported) {
     EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
-GEN12LPTEST_F(Gen12LpDeviceCaps, profilingTimerResolution) {
+GEN12LPTEST_F(Gen12LpDeviceCaps, WhenCheckingCapsThenProfilingTimerResolutionIs83) {
     const auto &caps = pClDevice->getSharedDeviceInfo();
     EXPECT_EQ(83u, caps.outProfilingTimerResolution);
 }
 
-GEN12LPTEST_F(Gen12LpDeviceCaps, kmdNotifyMechanism) {
+GEN12LPTEST_F(Gen12LpDeviceCaps, WhenCheckingCapsThenKmdNotifyMechanismIsCorrectlyReported) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(0, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);
@@ -63,7 +63,7 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, kmdNotifyMechanism) {
     EXPECT_EQ(0, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
 }
 
-GEN12LPTEST_F(Gen12LpDeviceCaps, compression) {
+GEN12LPTEST_F(Gen12LpDeviceCaps, WhenCheckingCapsThenCompressionIsDisabled) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
 }
@@ -108,7 +108,7 @@ GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpDeviceWhenCheckingPipesSupportThenF
 
 using TglLpUsDeviceIdTest = Test<ClDeviceFixture>;
 
-HWTEST2_F(TglLpUsDeviceIdTest, isSimulationCap, IsTGLLP) {
+HWTEST2_F(TglLpUsDeviceIdTest, WhenCheckingSimulationCapThenResultIsCorrect, IsTGLLP) {
     unsigned short tglLpSimulationIds[2] = {
         DEV_ID_FF20,
         0, // default, non-simulation

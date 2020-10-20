@@ -21,7 +21,7 @@ struct Gen9PlatformCaps : public PlatformFixture, public ::testing::Test {
     }
 };
 
-GEN9TEST_F(Gen9PlatformCaps, allSkusSupportFP64) {
+GEN9TEST_F(Gen9PlatformCaps, GivenPlatformWhenCheckingExtensionStringThenFp64SupportIsCorrectlyReported) {
     const auto &caps = pPlatform->getPlatformInfo();
     if (pPlatform->getClDevice(0)->getHardwareInfo().capabilityTable.ftrSupportsFP64) {
         EXPECT_NE(std::string::npos, caps.extensions.find(std::string("cl_khr_fp64")));

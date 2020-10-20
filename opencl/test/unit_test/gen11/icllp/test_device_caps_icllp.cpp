@@ -20,11 +20,11 @@ ICLLPTEST_F(IcllpTest, givenIclLpWhenCheckFtrSupportsInteger64BitAtomicsThenRetu
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }
 
-ICLLPTEST_F(IcllpTest, shouldPassOnIcllp) {
+ICLLPTEST_F(IcllpTest, WhenGettingPlatformFamilyThenIcelakeIsReported) {
     EXPECT_EQ(IGFX_ICELAKE_LP, pDevice->getHardwareInfo().platform.eProductFamily);
 }
 
-ICLLPTEST_F(IcllpTest, lpSkusDontSupportFP64) {
+ICLLPTEST_F(IcllpTest, WhenCheckingExtensionStringThenFp64IsNotSupported) {
     const auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;
 
@@ -32,12 +32,12 @@ ICLLPTEST_F(IcllpTest, lpSkusDontSupportFP64) {
     EXPECT_EQ(0u, caps.doubleFpConfig);
 }
 
-ICLLPTEST_F(IcllpTest, lpSkusDontSupportCorrectlyRoundedDivideSqrt) {
+ICLLPTEST_F(IcllpTest, WhenCheckingCapsThenCorrectlyRoundedDivideSqrtIsNotSupported) {
     const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
 }
 
-ICLLPTEST_F(IcllpTest, isSimulationCap) {
+ICLLPTEST_F(IcllpTest, WhenCheckingSimulationCapThenResultIsCorrect) {
     unsigned short iclLpSimulationIds[2] = {
         IICL_LP_GT1_MOB_DEVICE_F0_ID,
         0, // default, non-simulation
