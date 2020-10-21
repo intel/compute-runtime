@@ -9,11 +9,11 @@
 
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/kernel/kernel.h"
 
 using namespace NEO;
@@ -51,6 +51,6 @@ bool TestChecks::supportsAuxResolves() {
     argInfo.pureStatefulBufferAccess = false;
     kernelInfo.kernelArgInfo.push_back(std::move(argInfo));
 
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    return hwHelper.requiresAuxResolves(kernelInfo);
+    auto &clHwHelper = ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    return clHwHelper.requiresAuxResolves(kernelInfo);
 }

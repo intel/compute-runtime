@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/test/unit_test/gen12lp/special_ult_helper_gen12lp.h"
 #include "opencl/test/unit_test/helpers/hw_helper_tests.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
@@ -18,7 +19,7 @@
 using HwHelperTestGen12Lp = HwHelperTest;
 
 GEN12LPTEST_F(HwHelperTestGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
 
     for (auto isPureStateful : {false, true}) {
         KernelInfo kernelInfo{};
@@ -27,7 +28,7 @@ GEN12LPTEST_F(HwHelperTestGen12Lp, givenTglLpThenAuxTranslationIsRequired) {
         argInfo.pureStatefulBufferAccess = isPureStateful;
         kernelInfo.kernelArgInfo.push_back(std::move(argInfo));
 
-        EXPECT_EQ(!isPureStateful, helper.requiresAuxResolves(kernelInfo));
+        EXPECT_EQ(!isPureStateful, clHwHelper.requiresAuxResolves(kernelInfo));
     }
 }
 

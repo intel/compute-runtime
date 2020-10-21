@@ -17,6 +17,7 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
     aub_command_stream_receiver
     aub_mem_dump
     buffer
+    cl_hw_helper
     command_queue
     command_stream_receiver_simulated_common_hw
     experimental_command_buffer

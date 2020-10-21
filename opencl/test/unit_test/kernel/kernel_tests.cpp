@@ -18,6 +18,7 @@
 #include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/memory_properties_helpers.h"
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/kernel/kernel.h"
@@ -2732,11 +2733,11 @@ TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonState
 
     capabilityTable.ftrRenderCompressedBuffers = true;
     kernel.mockKernel->initialize();
-    EXPECT_EQ(HwHelper::get(hwInfo->platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo), kernel.mockKernel->isAuxTranslationRequired());
+    EXPECT_EQ(ClHwHelper::get(hwInfo->platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo), kernel.mockKernel->isAuxTranslationRequired());
 
     DebugManager.flags.ForceAuxTranslationEnabled.set(-1);
     kernel.mockKernel->initialize();
-    EXPECT_EQ(HwHelper::get(hwInfo->platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo), kernel.mockKernel->isAuxTranslationRequired());
+    EXPECT_EQ(ClHwHelper::get(hwInfo->platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo), kernel.mockKernel->isAuxTranslationRequired());
 
     DebugManager.flags.ForceAuxTranslationEnabled.set(0);
     kernel.mockKernel->initialize();
@@ -2761,7 +2762,7 @@ TEST(KernelTest, WhenAuxTranslationIsRequiredThenKernelSetsRequiredResolvesInCon
 
     kernel.mockKernel->initialize();
 
-    if (HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo)) {
+    if (ClHwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo)) {
         EXPECT_TRUE(context->getResolvesRequiredInKernels());
     } else {
         EXPECT_FALSE(context->getResolvesRequiredInKernels());
@@ -2807,7 +2808,7 @@ TEST(KernelTest, givenDebugVariableSetWhenKernelHasStatefulBufferAccessThenMarkK
 
     kernel.mockKernel->initialize();
 
-    if (HwHelper::get(localHwInfo.platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo)) {
+    if (ClHwHelper::get(localHwInfo.platform.eRenderCoreFamily).requiresAuxResolves(kernel.kernelInfo)) {
         EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
     } else {
         EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());

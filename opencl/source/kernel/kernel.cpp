@@ -32,6 +32,7 @@
 #include "opencl/source/device_queue/device_queue.h"
 #include "opencl/source/execution_model/device_enqueue.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/per_thread_data.h"
@@ -378,7 +379,8 @@ cl_int Kernel::initialize() {
             }
         }
 
-        auxTranslationRequired = HwHelper::renderCompressedBuffersSupported(hwInfo) && hwHelper.requiresAuxResolves(kernelInfo);
+        auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auxTranslationRequired = HwHelper::renderCompressedBuffersSupported(hwInfo) && clHwHelper.requiresAuxResolves(kernelInfo);
         if (DebugManager.flags.ForceAuxTranslationEnabled.get() != -1) {
             auxTranslationRequired &= !!DebugManager.flags.ForceAuxTranslationEnabled.get();
         }

@@ -27,7 +27,6 @@ class GraphicsAllocation;
 struct AllocationData;
 struct AllocationProperties;
 struct HardwareCapabilities;
-struct KernelInfo;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
 
@@ -100,7 +99,6 @@ class HwHelper {
     virtual uint32_t getMaxThreadsForWorkgroup(const HardwareInfo &hwInfo, uint32_t maxNumEUsPerSubSlice) const;
     virtual uint32_t getMetricsLibraryGenId() const = 0;
     virtual uint32_t getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
-    virtual bool requiresAuxResolves(const KernelInfo &kernelInfo) const = 0;
     virtual bool tilingAllowed(bool isSharedContext, bool isImage1d, bool forceLinearStorage) = 0;
     virtual uint32_t getBarriersCountFromHasBarriers(uint32_t hasBarriers) = 0;
     virtual uint32_t calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount,
@@ -135,7 +133,6 @@ class HwHelper {
 
   protected:
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
-    virtual bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const = 0;
 
     HwHelper() = default;
 };
@@ -253,8 +250,6 @@ class HwHelperHw : public HwHelper {
 
     uint32_t getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const override;
 
-    bool requiresAuxResolves(const KernelInfo &kernelInfo) const override;
-
     bool tilingAllowed(bool isSharedContext, bool isImage1d, bool forceLinearStorage) override;
 
     uint32_t getBarriersCountFromHasBarriers(uint32_t hasBarriers) override;
@@ -317,7 +312,6 @@ class HwHelperHw : public HwHelper {
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;
-    bool hasStatelessAccessToBuffer(const KernelInfo &kernelInfo) const override;
 
     static const AuxTranslationMode defaultAuxTranslationMode;
     HwHelperHw() = default;
