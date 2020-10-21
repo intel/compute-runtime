@@ -173,12 +173,14 @@ Buffer *Buffer::create(Context *context,
     auto maxRootDeviceIndex = context->getMaxRootDeviceIndex();
     auto multiGraphicsAllocation = MultiGraphicsAllocation(maxRootDeviceIndex);
 
-    std::map<uint32_t, CreateBuffer::AllocationInfo> allocationInfo;
+    AllocationInfoType allocationInfo;
+    allocationInfo.resize(maxRootDeviceIndex + 1u);
+
     void *ptr = nullptr;
     bool forceCopyHostPtr = false;
 
     for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
-        allocationInfo.insert({rootDeviceIndex, {}});
+        allocationInfo[rootDeviceIndex] = {};
 
         auto hwInfo = (&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
 
@@ -732,7 +734,7 @@ bool Buffer::isCompressed(uint32_t rootDeviceIndex) const {
     return false;
 }
 
-void Buffer::cleanAllGraphicsAllocations(Context &context, MemoryManager &memoryManager, std::map<uint32_t, NEO::CreateBuffer::AllocationInfo> &allocationInfo) {
+void Buffer::cleanAllGraphicsAllocations(Context &context, MemoryManager &memoryManager, AllocationInfoType &allocationInfo) {
     for (auto &index : context.getRootDeviceIndices()) {
         if (allocationInfo[index].memory) {
             memoryManager.removeAllocationFromHostPtrManager(allocationInfo[index].memory);

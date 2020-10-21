@@ -17,7 +17,6 @@
 #include "memory_properties_flags.h"
 
 #include <functional>
-#include <map>
 
 namespace NEO {
 class Device;
@@ -68,6 +67,8 @@ struct AllocationInfo {
     bool copyMemoryFromHostPtr = false;
 };
 } // namespace CreateBuffer
+
+using AllocationInfoType = StackVec<CreateBuffer::AllocationInfo, 1>;
 
 class Buffer : public MemObj {
   public:
@@ -173,7 +174,7 @@ class Buffer : public MemObj {
 
     bool isCompressed(uint32_t rootDeviceIndex) const;
 
-    static void cleanAllGraphicsAllocations(Context &context, MemoryManager &memoryManager, std::map<uint32_t, NEO::CreateBuffer::AllocationInfo> &allocationInfo);
+    static void cleanAllGraphicsAllocations(Context &context, MemoryManager &memoryManager, AllocationInfoType &allocationInfo);
 
   protected:
     Buffer(Context *context,

@@ -1810,9 +1810,10 @@ TEST_F(BufferTransferTests, givenBufferWhenTransferFromHostPtrCalledThenCopyRequ
 using MultiRootDeviceBufferTest = MultiRootDeviceFixture;
 
 TEST_F(MultiRootDeviceBufferTest, WhenCleanAllGraphicsAllocationsCalledThenGraphicsAllocationsAreProperlyRemoved) {
-    std::map<uint32_t, NEO::CreateBuffer::AllocationInfo> allocationInfo;
+    AllocationInfoType allocationInfo;
+    allocationInfo.resize(3u);
 
-    allocationInfo.insert({1u, {}});
+    allocationInfo[1u] = {};
     allocationInfo[1u].memory = mockMemoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{1u, MemoryConstants::pageSize});
 
     Buffer::cleanAllGraphicsAllocations(*context, *context->getMemoryManager(), allocationInfo);
