@@ -87,9 +87,6 @@ class MockProgram : public Program {
             }
         }
     }
-    void setDevice(Device *device) {
-        this->pDevice = device;
-    };
     std::vector<KernelInfo *> &getKernelInfoArray() {
         return kernelInfoArray;
     }
