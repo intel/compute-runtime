@@ -25,7 +25,7 @@ struct AllocationProperties {
             uint32_t resource48Bit : 1;
             uint32_t isUSMHostAllocation : 1;
             uint32_t isUSMDeviceAllocation : 1;
-            uint32_t use32BitExtraPool : 1;
+            uint32_t use32BitFrontWindow : 1;
             uint32_t reserved : 20;
         } flags;
         uint32_t allFlags = 0;
@@ -98,7 +98,7 @@ struct AllocationData {
             uint32_t shareable : 1;
             uint32_t resource48Bit : 1;
             uint32_t isUSMHostAllocation : 1;
-            uint32_t use32BitExtraPool : 1;
+            uint32_t use32BitFrontWindow : 1;
             uint32_t reserved : 18;
         } flags;
         uint32_t allFlags = 0;

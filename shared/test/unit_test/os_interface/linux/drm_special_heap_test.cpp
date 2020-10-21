@@ -44,7 +44,7 @@ using DrmFrontWindowPoolAllocatorTests = Test<DrmMemManagerFixture>;
 
 TEST_F(DrmFrontWindowPoolAllocatorTests, givenAllocateInSpecialPoolFlagWhenDrmAllocate32BitGraphicsMemoryThenAllocateAtHeapBegining) {
     AllocationData allocData = {};
-    allocData.flags.use32BitExtraPool = true;
+    allocData.flags.use32BitFrontWindow = true;
     allocData.size = MemoryConstants::kiloByte;
     auto allocation = memManager->allocate32BitGraphicsMemoryImpl(allocData, false);
     EXPECT_EQ(allocation->getGpuBaseAddress(), allocation->getGpuAddress());

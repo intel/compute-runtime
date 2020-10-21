@@ -382,7 +382,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         (mayRequireL3Flush ? properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite : 0u);
     allocationData.flags.preferRenderCompressed = CompressionSelector::preferRenderCompressedBuffer(properties);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
-    allocationData.flags.use32BitExtraPool = properties.flags.use32BitExtraPool;
+    allocationData.flags.use32BitFrontWindow = properties.flags.use32BitFrontWindow;
 
     allocationData.hostPtr = hostPtr;
     allocationData.size = properties.size;

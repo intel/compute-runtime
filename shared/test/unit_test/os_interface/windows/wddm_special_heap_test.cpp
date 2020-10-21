@@ -46,7 +46,7 @@ using WddmFrontWindowPoolAllocatorTests = Test<WddmMemManagerFixture>;
 
 TEST_F(WddmFrontWindowPoolAllocatorTests, givenAllocateInFrontWindowPoolFlagWhenWddmAllocate32BitGraphicsMemoryThenAllocateAtHeapBegining) {
     AllocationData allocData = {};
-    allocData.flags.use32BitExtraPool = true;
+    allocData.flags.use32BitFrontWindow = true;
     allocData.size = MemoryConstants::kiloByte;
     auto allocation = memManager->allocate32BitGraphicsMemoryImpl(allocData, false);
     EXPECT_EQ(allocation->getGpuBaseAddress(), GmmHelper::canonize(allocation->getGpuAddress()));
