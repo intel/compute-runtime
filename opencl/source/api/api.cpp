@@ -1344,16 +1344,32 @@ cl_program CL_API_CALL clCreateProgramWithBinary(cl_context context,
                    "lengths", lengths,
                    "binaries", binaries,
                    "binaryStatus", binaryStatus);
-    retVal = validateObjects(context, deviceList, *deviceList, binaries, *binaries, lengths, *lengths);
+    Context *pContext = nullptr;
+    retVal = validateObjects(WithCastToInternal(context, &pContext), deviceList, numDevices, binaries, lengths);
     cl_program program = nullptr;
+    ClDeviceVector deviceVector;
+
+    if (retVal == CL_SUCCESS) {
+        for (auto i = 0u; i < numDevices; i++) {
+            auto device = castToObject<ClDevice>(deviceList[i]);
+            if (!device || !pContext->isDeviceAssociated(*device)) {
+                retVal = CL_INVALID_DEVICE;
+                break;
+            }
+            if (lengths[i] == 0 || binaries[i] == nullptr) {
+                retVal = CL_INVALID_VALUE;
+                break;
+            }
+            deviceVector.push_back(device);
+        }
+    }
 
     NEO::FileLoggerInstance().dumpBinaryProgram(numDevices, lengths, binaries);
 
     if (CL_SUCCESS == retVal) {
         program = Program::create(
-            context,
-            numDevices,
-            deviceList,
+            pContext,
+            deviceVector,
             lengths,
             binaries,
             binaryStatus,

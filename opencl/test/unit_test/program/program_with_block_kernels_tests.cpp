@@ -52,8 +52,8 @@ class ProgramWithBlockKernelsTest : public ContextFixture,
 };
 
 TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsBuildingThenKernelInfosHaveCorrectNames) {
-    CreateProgramFromBinary(pContext, &device, "simple_block_kernel", "-cl-std=CL2.0");
-    auto mockProgram = (MockProgram *)pProgram;
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "simple_block_kernel", "-cl-std=CL2.0");
+    auto mockProgram = pProgram;
     ASSERT_NE(nullptr, mockProgram);
 
     retVal = mockProgram->build(
@@ -91,7 +91,7 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsBuil
 }
 
 TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLinkedThenBlockKernelsAreSeparated) {
-    CreateProgramFromBinary(pContext, &device, "simple_block_kernel", "-cl-std=CL2.0");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "simple_block_kernel", "-cl-std=CL2.0");
     const char *buildOptions = "-cl-std=CL2.0";
 
     overwriteBuiltInBinaryName(
@@ -101,7 +101,7 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLink
     ASSERT_NE(nullptr, pProgram);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    Program *programLinked = new Program(pContext, false, toClDeviceVector(*pPlatform->getClDevice(0)));
+    Program *programLinked = new Program(pContext, false, pContext->getDevices());
     cl_program program = pProgram;
 
     retVal = pProgram->compile(1, &device, buildOptions, 0, nullptr, nullptr, nullptr, nullptr);

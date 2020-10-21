@@ -254,9 +254,8 @@ TEST_P(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingNumKern
     size_t paramValue = 0;
     size_t paramValueSize = sizeof(paramValue);
     size_t paramValueSizeRet = 0;
-    cl_device_id device = pClDevice;
 
-    CreateProgramFromBinary(pContext, &device, BinaryFileName);
+    CreateProgramFromBinary(pContext, pContext->getDevices(), BinaryFileName);
     MockProgram *p = pProgram;
     p->setBuildStatus(CL_BUILD_NONE);
 
@@ -311,9 +310,8 @@ TEST_P(ProgramFromBinaryTest, WhenGettingKernelNamesThenCorrectNameIsReturned) {
 TEST_P(ProgramFromBinaryTest, GivenProgramWithNoExecutableCodeWhenGettingKernelNamesThenInvalidProgramExecutableErrorIsReturned) {
     size_t paramValueSize = sizeof(size_t *);
     size_t paramValueSizeRet = 0;
-    cl_device_id device = pClDevice;
 
-    CreateProgramFromBinary(pContext, &device, BinaryFileName);
+    CreateProgramFromBinary(pContext, pContext->getDevices(), BinaryFileName);
     MockProgram *p = pProgram;
     p->setBuildStatus(CL_BUILD_NONE);
 
@@ -371,10 +369,7 @@ TEST_P(ProgramFromBinaryTest, GivenCorruptedDeviceWhenGettingBuildStatusThenInva
     size_t paramValueSize = sizeof(buildStatus);
     size_t paramValueSizeRet = 0;
 
-    cl_device_id device = pClDevice;
-    CreateProgramFromBinary(pContext, &device, BinaryFileName);
-    MockProgram *p = pProgram;
-    p->setDevice(&pClDevice->getDevice());
+    CreateProgramFromBinary(pContext, pContext->getDevices(), BinaryFileName);
 
     retVal = pProgram->getBuildInfo(
         reinterpret_cast<ClDevice *>(pContext),
@@ -615,7 +610,7 @@ TEST_P(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlo
     EXPECT_EQ(globalVarSize, 0u);
 
     // Set GlobalVariableTotalSize as 1024
-    CreateProgramFromBinary(pContext, &device, BinaryFileName);
+    CreateProgramFromBinary(pContext, pContext->getDevices(), BinaryFileName);
     MockProgram *p = pProgram;
     ProgramInfo programInfo;
 
@@ -1426,7 +1421,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResidentIsCalledThenConstantAllocationIsMadeResident) {
     cl_device_id device = pClDevice;
 
-    CreateProgramFromBinary(pContext, &device, "test_constant_memory");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "test_constant_memory");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -1495,7 +1490,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
 TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
     cl_device_id device = pClDevice;
 
-    CreateProgramFromBinary(pContext, &device, "kernel_data_param");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -1519,7 +1514,7 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
 TEST_F(PatchTokenTests, WhenBuildingProgramThenLwsIsSet) {
     cl_device_id device = pClDevice;
 
-    CreateProgramFromBinary(pContext, &device, "kernel_data_param");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -1554,7 +1549,7 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
     // PATCH_TOKEN_STATELESS_CONSTANT_MEMORY_OBJECT_KERNEL_ARGUMENT
     cl_device_id device = pClDevice;
 
-    CreateProgramFromBinary(pContext, &device, "test_basic_constant");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "test_basic_constant");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -1597,7 +1592,7 @@ TEST_F(PatchTokenTests, GivenVmeKernelWhenBuildingKernelThenArgAvailable) {
     // PATCH_TOKEN_INLINE_VME_SAMPLER_INFO token indicates a VME kernel.
     cl_device_id device = pClDevice;
 
-    CreateProgramFromBinary(pContext, &device, "vme_kernels");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "vme_kernels");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -1652,9 +1647,8 @@ TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
     {
         const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(&binHeader)};
         MockContext context;
-        cl_device_id deviceId = context.getDevice(0);
 
-        std::unique_ptr<Program> pProgram(Program::create<Program>(&context, 0, &deviceId, &binSize, binaries, nullptr, retVal));
+        std::unique_ptr<Program> pProgram(Program::create<Program>(&context, context.getDevices(), &binSize, binaries, nullptr, retVal));
         EXPECT_EQ(nullptr, pProgram.get());
         EXPECT_EQ(CL_INVALID_BINARY, retVal);
     }
@@ -1714,7 +1708,7 @@ using ProgramWithDebugSymbolsTests = Test<ProgramSimpleFixture>;
 TEST_F(ProgramWithDebugSymbolsTests, GivenProgramCreatedWithDashGOptionWhenGettingProgramBinariesThenDebugDataIsIncluded) {
     cl_device_id device = pClDevice;
 
-    CreateProgramFromBinary(pContext, &device, "CopyBuffer_simd16", "-g");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "CopyBuffer_simd16", "-g");
 
     ASSERT_NE(nullptr, pProgram);
 
@@ -2369,10 +2363,9 @@ TEST_F(ProgramTests, givenProgramCreatedFromIntermediateBinaryRepresentationWhen
     const uint32_t spirv[16] = {0x03022307};
     cl_int errCode = 0;
     cl_device_id deviceId = pClDevice;
-    cl_context ctx = pContext;
     size_t lengths = sizeof(spirv);
     const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(spirv)};
-    auto prog = Program::create<MockProgram>(ctx, 1U, &deviceId, &lengths, binaries, nullptr, errCode);
+    auto prog = Program::create<MockProgram>(pContext, pContext->getDevices(), &lengths, binaries, nullptr, errCode);
     ASSERT_NE(nullptr, prog);
     auto debugVars = NEO::getIgcDebugVars();
     debugVars.forceBuildFailure = true;
@@ -2911,7 +2904,7 @@ TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramT
     testing::internal::CaptureStdout();
 
     cl_device_id device = pClDevice;
-    CreateProgramFromBinary(pContext, &device, "kernel_data_param");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
 
     auto retVal = pProgram->build(
         1,

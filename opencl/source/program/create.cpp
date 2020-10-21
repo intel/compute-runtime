@@ -15,7 +15,7 @@ namespace ProgramFunctions {
 CreateFromILFunc createFromIL = Program::createFromIL<Program>;
 } // namespace ProgramFunctions
 
-template Program *Program::create<Program>(cl_context, cl_uint, const cl_device_id *, const size_t *, const unsigned char **, cl_int *, cl_int &);
+template Program *Program::create<Program>(Context *, const ClDeviceVector &, const size_t *, const unsigned char **, cl_int *, cl_int &);
 template Program *Program::create<Program>(cl_context, cl_uint, const char **, const size_t *, cl_int &);
 template Program *Program::create<Program>(const char *, Context *, ClDevice &, bool, cl_int *);
 template Program *Program::create<Program>(const char *, Context *, Device &, bool, cl_int *);

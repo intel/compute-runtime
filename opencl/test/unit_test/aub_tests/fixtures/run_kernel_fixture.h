@@ -63,13 +63,11 @@ class RunKernelFixture : public CommandEnqueueAUBFixture {
         EXPECT_NE(nullptr, pSource);
 
         Program *pProgram = nullptr;
-        const cl_device_id device = pClDevice;
 
         const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pSource.get())};
         pProgram = Program::create(
             context,
-            1,
-            &device,
+            context->getDevices(),
             &sourceSize,
             binaries,
             nullptr,

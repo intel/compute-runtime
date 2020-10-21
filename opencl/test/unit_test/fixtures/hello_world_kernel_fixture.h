@@ -43,8 +43,8 @@ struct HelloWorldKernelFixture : public ProgramFixture {
             pTestFilename->append(std::to_string(simd));
         }
 
-        cl_device_id device = pDevice;
-        pContext = Context::create<MockContext>(nullptr, ClDeviceVector(&device, 1), nullptr, nullptr, retVal);
+        auto deviceVector = toClDeviceVector(*pDevice);
+        pContext = Context::create<MockContext>(nullptr, deviceVector, nullptr, nullptr, retVal);
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, pContext);
 
@@ -56,17 +56,19 @@ struct HelloWorldKernelFixture : public ProgramFixture {
 
             CreateProgramFromBinary(
                 pContext,
-                &device,
+                deviceVector,
                 *pTestFilename,
                 optionsToProgram);
         } else {
             CreateProgramFromBinary(
                 pContext,
-                &device,
+                deviceVector,
                 *pTestFilename);
         }
 
         ASSERT_NE(nullptr, pProgram);
+
+        cl_device_id device = pDevice;
 
         retVal = pProgram->build(
             1,

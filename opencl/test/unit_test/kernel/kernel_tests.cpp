@@ -346,7 +346,7 @@ typedef Test<KernelFromBinaryTest> KernelFromBinaryTests;
 TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKernelArgsIsReturned) {
     cl_device_id device = pClDevice;
 
-    CreateProgramFromBinary(pContext, &device, "kernel_num_args");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_num_args");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -389,7 +389,7 @@ TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKerne
 TEST_F(KernelFromBinaryTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
     cl_device_id device = pClDevice;
 
-    CreateProgramFromBinary(pContext, &device, "simple_kernels");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(
@@ -424,7 +424,7 @@ TEST_F(KernelFromBinaryTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
 TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreatedThenArgumentIsMarkedAsReadOnly) {
     cl_device_id device = pClDevice;
 
-    CreateProgramFromBinary(pContext, &device, "simple_kernels");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "simple_kernels");
 
     ASSERT_NE(nullptr, pProgram);
     retVal = pProgram->build(

@@ -168,6 +168,157 @@ TEST_F(clGetProgramInfoTests, GivenIlWhenBuildingProgramThenGetProgramInfoReturn
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingDevicesThenCorrectDevicesAreReturned) {
+    MockUnrestrictiveContextMultiGPU context;
+
+    auto numDevicesForProgram = 2u;
+    cl_device_id devicesForProgram[] = {context.getDevice(1), context.getDevice(3)};
+
+    std::unique_ptr<char[]> pBinary0 = nullptr;
+    std::unique_ptr<char[]> pBinary1 = nullptr;
+    size_t binarySize0 = 0;
+    size_t binarySize1 = 0;
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+
+    pBinary0 = loadDataFromFile(
+        testFile.c_str(),
+        binarySize0);
+
+    retrieveBinaryKernelFilename(testFile, "copy_buffer_to_image_", ".bin");
+
+    pBinary1 = loadDataFromFile(
+        testFile.c_str(),
+        binarySize1);
+    ASSERT_NE(0u, binarySize0);
+    ASSERT_NE(0u, binarySize1);
+    ASSERT_NE(nullptr, pBinary0);
+    ASSERT_NE(nullptr, pBinary1);
+
+    EXPECT_NE(binarySize0, binarySize1);
+
+    const unsigned char *binaries[] = {reinterpret_cast<const unsigned char *>(pBinary0.get()), reinterpret_cast<const unsigned char *>(pBinary1.get())};
+    size_t sizeBinaries[] = {binarySize0, binarySize1};
+
+    cl_program pProgram = nullptr;
+
+    cl_int retVal = CL_INVALID_PROGRAM;
+    cl_int binaryStaus = CL_INVALID_PROGRAM;
+
+    pProgram = clCreateProgramWithBinary(
+        &context,
+        numDevicesForProgram,
+        devicesForProgram,
+        sizeBinaries,
+        binaries,
+        &binaryStaus,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_uint numDevices;
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_NUM_DEVICES, sizeof(numDevices), &numDevices, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(numDevicesForProgram, numDevices);
+
+    cl_device_id programDevices[2] = {};
+
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_DEVICES, numDevices * sizeof(cl_device_id), programDevices, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    for (auto i = 0u; i < numDevices; i++) {
+        EXPECT_EQ(devicesForProgram[i], programDevices[i]);
+    }
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingBinariesThenCorrectBinariesAreReturned) {
+    MockUnrestrictiveContextMultiGPU context;
+
+    auto numDevicesForProgram = 2u;
+    cl_device_id devicesForProgram[] = {context.getDevice(1), context.getDevice(3)};
+
+    std::unique_ptr<char[]> pBinary0 = nullptr;
+    std::unique_ptr<char[]> pBinary1 = nullptr;
+    size_t binarySize0 = 0;
+    size_t binarySize1 = 0;
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+
+    pBinary0 = loadDataFromFile(
+        testFile.c_str(),
+        binarySize0);
+
+    retrieveBinaryKernelFilename(testFile, "copy_buffer_to_image_", ".bin");
+
+    pBinary1 = loadDataFromFile(
+        testFile.c_str(),
+        binarySize1);
+    ASSERT_NE(0u, binarySize0);
+    ASSERT_NE(0u, binarySize1);
+    ASSERT_NE(nullptr, pBinary0);
+    ASSERT_NE(nullptr, pBinary1);
+
+    EXPECT_NE(binarySize0, binarySize1);
+
+    const unsigned char *binaries[] = {reinterpret_cast<const unsigned char *>(pBinary0.get()), reinterpret_cast<const unsigned char *>(pBinary1.get())};
+    size_t sizeBinaries[] = {binarySize0, binarySize1};
+
+    cl_program pProgram = nullptr;
+
+    cl_int retVal = CL_INVALID_PROGRAM;
+    cl_int binaryStaus = CL_INVALID_PROGRAM;
+
+    pProgram = clCreateProgramWithBinary(
+        &context,
+        numDevicesForProgram,
+        devicesForProgram,
+        sizeBinaries,
+        binaries,
+        &binaryStaus,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    size_t programBinarySizes[2] = {};
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_BINARY_SIZES, numDevicesForProgram * sizeof(size_t), programBinarySizes, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    for (auto i = 0u; i < numDevicesForProgram; i++) {
+        EXPECT_EQ(sizeBinaries[i], programBinarySizes[i]);
+    }
+
+    auto programBinary0 = std::make_unique<unsigned char[]>(binarySize0);
+    memset(programBinary0.get(), 0, binarySize0);
+
+    auto programBinary1 = std::make_unique<unsigned char[]>(binarySize1);
+    memset(programBinary1.get(), 0, binarySize1);
+
+    unsigned char *programBinaries[] = {programBinary0.get(), programBinary1.get()};
+
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_BINARIES, numDevicesForProgram * sizeof(unsigned char *), programBinaries, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    for (auto i = 0u; i < numDevicesForProgram; i++) {
+        for (auto j = 0u; j < programBinarySizes[i]; j++) {
+            EXPECT_EQ(programBinaries[i][j], binaries[i][j]);
+        }
+    }
+
+    memset(programBinary1.get(), 0, binarySize1);
+    programBinaries[0] = nullptr;
+
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_BINARIES, numDevicesForProgram * sizeof(unsigned char *), programBinaries, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    for (auto j = 0u; j < programBinarySizes[1]; j++) {
+        EXPECT_EQ(programBinaries[1][j], binaries[1][j]);
+    }
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST_F(clGetProgramInfoTests, GivenSPIRVProgramWhenGettingProgramSourceThenReturnNullString) {
     const size_t binarySize = 16;
     const uint32_t spirv[binarySize] = {0x03022307};

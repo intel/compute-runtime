@@ -41,8 +41,8 @@ void ProgramFixture::CreateProgramWithSource(cl_context context,
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
-void ProgramFixture::CreateProgramFromBinary(cl_context context,
-                                             cl_device_id *pDeviceList,
+void ProgramFixture::CreateProgramFromBinary(Context *pContext,
+                                             const ClDeviceVector &deviceVector,
                                              const std::string &binaryFileName,
                                              cl_int &retVal,
                                              const std::string &options) {
@@ -59,24 +59,23 @@ void ProgramFixture::CreateProgramFromBinary(cl_context context,
     ASSERT_NE(nullptr, knownSource);
 
     pProgram = Program::create<MockProgram>(
-        context,
-        1,
-        pDeviceList,
+        pContext,
+        deviceVector,
         &knownSourceSize,
         (const unsigned char **)&knownSource,
         nullptr,
         retVal);
 }
 
-void ProgramFixture::CreateProgramFromBinary(cl_context pContext,
-                                             cl_device_id *pDeviceList,
+void ProgramFixture::CreateProgramFromBinary(Context *pContext,
+                                             const ClDeviceVector &deviceVector,
                                              const std::string &binaryFileName,
                                              const std::string &options) {
     Cleanup();
     cl_int retVal = CL_SUCCESS;
     CreateProgramFromBinary(
         pContext,
-        pDeviceList,
+        deviceVector,
         binaryFileName,
         retVal,
         options);

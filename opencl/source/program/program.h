@@ -83,9 +83,8 @@ class Program : public BaseObject<_cl_program> {
     // Create program from binary
     template <typename T = Program>
     static T *create(
-        cl_context context,
-        cl_uint numDevices,
-        const cl_device_id *deviceList,
+        Context *pContext,
+        const ClDeviceVector &deviceVector,
         const size_t *lengths,
         const unsigned char **binaries,
         cl_int *binaryStatus,
@@ -132,7 +131,7 @@ class Program : public BaseObject<_cl_program> {
                            size_t length,
                            cl_int &errcodeRet);
 
-    Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevices);
+    Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevicesIn);
     ~Program() override;
 
     Program(const Program &) = delete;

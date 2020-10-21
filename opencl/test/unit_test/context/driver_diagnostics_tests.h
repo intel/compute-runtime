@@ -221,8 +221,8 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
 
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
-        cl_device_id device = pPlatform->getClDevice(0);
-        CreateProgramFromBinary(context, &device, "CopyBuffer_simd32");
+        CreateProgramFromBinary(context, context->getDevices(), "CopyBuffer_simd32");
+        cl_device_id device = context->getDevice(0);
         retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
         kernel = Kernel::create<MockKernel>(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal);
@@ -258,7 +258,7 @@ struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTes
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
         cl_device_id device = pPlatform->getClDevice(0);
-        CreateProgramFromBinary(context, &device, "printf");
+        CreateProgramFromBinary(context, context->getDevices(), "printf");
         retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
         kernel = Kernel::create(pProgram, *pProgram->getKernelInfo("test"), &retVal);

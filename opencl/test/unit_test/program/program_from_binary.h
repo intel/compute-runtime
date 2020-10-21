@@ -39,9 +39,9 @@ class ProgramFromBinaryTest : public ClDeviceFixture,
         ProgramFixture::SetUp();
 
         if (options.size())
-            CreateProgramFromBinary(pContext, &device, BinaryFileName, options);
+            CreateProgramFromBinary(pContext, pContext->getDevices(), BinaryFileName, options);
         else
-            CreateProgramFromBinary(pContext, &device, BinaryFileName);
+            CreateProgramFromBinary(pContext, pContext->getDevices(), BinaryFileName);
     }
 
     void TearDown() override {

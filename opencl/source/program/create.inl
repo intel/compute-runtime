@@ -21,23 +21,23 @@ namespace NEO {
 
 template <typename T>
 T *Program::create(
-    cl_context context,
-    cl_uint numDevices,
-    const cl_device_id *deviceList,
+    Context *pContext,
+    const ClDeviceVector &deviceVector,
     const size_t *lengths,
     const unsigned char **binaries,
     cl_int *binaryStatus,
     cl_int &errcodeRet) {
-    auto pContext = castToObject<Context>(context);
-    DEBUG_BREAK_IF(!pContext);
-
-    auto device = pContext->getDevice(0);
-    ClDeviceVector deviceVector;
-    deviceVector.push_back(device);
     auto program = new T(pContext, false, deviceVector);
 
-    auto retVal = program->createProgramFromBinary(binaries[0], lengths[0], device->getRootDeviceIndex());
+    cl_int retVal = CL_INVALID_PROGRAM;
 
+    for (auto i = 0u; i < deviceVector.size(); i++) {
+        auto device = deviceVector[i];
+        retVal = program->createProgramFromBinary(binaries[i], lengths[i], device->getRootDeviceIndex());
+        if (retVal != CL_SUCCESS) {
+            break;
+        }
+    }
     program->createdFrom = CreatedFrom::BINARY;
 
     if (binaryStatus) {

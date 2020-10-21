@@ -91,13 +91,14 @@ class SimpleArgKernelFixture : public ProgramFixture {
         }
 
         cl_device_id device = pDevice;
-        pContext = Context::create<MockContext>(nullptr, ClDeviceVector(&device, 1), nullptr, nullptr, retVal);
+        auto deviceVector = toClDeviceVector(*pDevice);
+        pContext = Context::create<MockContext>(nullptr, deviceVector, nullptr, nullptr, retVal);
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, pContext);
 
         CreateProgramFromBinary(
             pContext,
-            &device,
+            deviceVector,
             testFile);
         ASSERT_NE(nullptr, pProgram);
 
@@ -145,11 +146,10 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
         ProgramFixture::SetUp();
 
         cl_device_id deviceId = device;
-        cl_context clContext = context;
 
         CreateProgramFromBinary(
-            clContext,
-            &deviceId,
+            context,
+            context->getDevices(),
             "simple_nonuniform",
             "-cl-std=CL2.0");
         ASSERT_NE(nullptr, pProgram);
@@ -193,11 +193,10 @@ class SimpleKernelFixture : public ProgramFixture {
         ProgramFixture::SetUp();
 
         cl_device_id deviceId = device;
-        cl_context clContext = context;
         std::string programName("simple_kernels");
         CreateProgramFromBinary(
-            clContext,
-            &deviceId,
+            context,
+            toClDeviceVector(*device),
             programName);
         ASSERT_NE(nullptr, pProgram);
 
@@ -249,13 +248,12 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
     void SetUp(ClDevice *device, Context *context) {
         ProgramFixture::SetUp();
         cl_device_id deviceId = device;
-        cl_context clContext = context;
         DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
         DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
 
         CreateProgramFromBinary(
-            clContext,
-            &deviceId,
+            context,
+            toClDeviceVector(*device),
             "stateless_kernel");
         ASSERT_NE(nullptr, pProgram);
 
@@ -300,10 +298,9 @@ class BindlessKernelFixture : public ProgramFixture {
     void createKernel(const std::string &programName, const std::string &kernelName) {
         DebugManager.flags.UseBindlessMode.set(1);
         cl_device_id deviceId = deviceCl;
-        cl_context clContext = contextCl;
         CreateProgramFromBinary(
-            clContext,
-            &deviceId,
+            contextCl,
+            contextCl->getDevices(),
             programName);
         ASSERT_NE(nullptr, pProgram);
 

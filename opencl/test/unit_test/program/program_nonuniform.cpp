@@ -184,8 +184,8 @@ class ProgramNonUniformTest : public ContextFixture,
 TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqueueSucceeds) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    CreateProgramFromBinary(pContext, &device, "kernel_data_param");
-    auto mockProgram = (MockProgram *)pProgram;
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
+    auto mockProgram = pProgram;
     ASSERT_NE(nullptr, mockProgram);
 
     mockProgram->setBuildOptions("-cl-std=CL2.1");
@@ -226,7 +226,7 @@ TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqu
 TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqueueSucceeds) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
 
-    CreateProgramFromBinary(pContext, &device, "kernel_data_param");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
     auto mockProgram = pProgram;
     ASSERT_NE(nullptr, mockProgram);
 
@@ -266,7 +266,7 @@ TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqu
 }
 
 TEST_F(ProgramNonUniformTest, GivenCl12WhenExecutingKernelWithNonUniformThenInvalidWorkGroupSizeIsReturned) {
-    CreateProgramFromBinary(pContext, &device, "kernel_data_param");
+    CreateProgramFromBinary(pContext, pContext->getDevices(), "kernel_data_param");
     auto mockProgram = pProgram;
     ASSERT_NE(nullptr, mockProgram);
 

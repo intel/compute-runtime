@@ -18,14 +18,14 @@ namespace NEO {
 
 class ProgramFixture {
   public:
-    void CreateProgramFromBinary(cl_context context,
-                                 cl_device_id *pDeviceList,
+    void CreateProgramFromBinary(Context *pContext,
+                                 const ClDeviceVector &deviceVector,
                                  const std::string &binaryFileName,
                                  cl_int &retVal,
                                  const std::string &options = "");
 
-    void CreateProgramFromBinary(cl_context pContext,
-                                 cl_device_id *pDeviceList,
+    void CreateProgramFromBinary(Context *pContext,
+                                 const ClDeviceVector &deviceVector,
                                  const std::string &binaryFileName,
                                  const std::string &options = "");
 

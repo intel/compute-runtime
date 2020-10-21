@@ -66,6 +66,115 @@ TEST_F(clCreateProgramWithBinaryTests, GivenCorrectParametersWhenCreatingProgram
     EXPECT_EQ(nullptr, pProgram);
 }
 
+TEST_F(clCreateProgramWithBinaryTests, GivenInvalidInputWhenCreatingProgramWithBinaryThenInvalidValueErrorIsReturned) {
+    cl_program pProgram = nullptr;
+    cl_int binaryStatus = CL_INVALID_VALUE;
+    size_t binarySize = 0;
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+
+    ASSERT_EQ(true, fileExists(testFile));
+
+    auto pBinary = loadDataFromFile(
+        testFile.c_str(),
+        binarySize);
+
+    ASSERT_NE(0u, binarySize);
+    ASSERT_NE(nullptr, pBinary);
+
+    const unsigned char *validBinaries[] = {reinterpret_cast<const unsigned char *>(pBinary.get()), reinterpret_cast<const unsigned char *>(pBinary.get())};
+    const unsigned char *invalidBinaries[] = {reinterpret_cast<const unsigned char *>(pBinary.get()), nullptr};
+    size_t validSizeBinaries[] = {binarySize, binarySize};
+    size_t invalidSizeBinaries[] = {binarySize, 0};
+
+    cl_device_id devicesForProgram[] = {testedClDevice, testedClDevice};
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        2,
+        devicesForProgram,
+        validSizeBinaries,
+        invalidBinaries,
+        &binaryStatus,
+        &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, pProgram);
+
+    retVal = CL_INVALID_PROGRAM;
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        2,
+        devicesForProgram,
+        invalidSizeBinaries,
+        validBinaries,
+        &binaryStatus,
+        &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, pProgram);
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        2,
+        devicesForProgram,
+        validSizeBinaries,
+        validBinaries,
+        &binaryStatus,
+        &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, pProgram);
+
+    clReleaseProgram(pProgram);
+}
+
+TEST_F(clCreateProgramWithBinaryTests, GivenDeviceNotAssociatedWithContextWhenCreatingProgramWithBinaryThenInvalidDeviceErrorIsReturned) {
+    cl_program pProgram = nullptr;
+    cl_int binaryStatus = CL_INVALID_VALUE;
+    size_t binarySize = 0;
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+
+    ASSERT_EQ(true, fileExists(testFile));
+
+    auto pBinary = loadDataFromFile(
+        testFile.c_str(),
+        binarySize);
+
+    ASSERT_NE(0u, binarySize);
+    ASSERT_NE(nullptr, pBinary);
+
+    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
+
+    MockClDevice invalidDevice(new MockDevice());
+
+    cl_device_id devicesForProgram[] = {&invalidDevice};
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        1,
+        devicesForProgram,
+        &binarySize,
+        binaries,
+        &binaryStatus,
+        &retVal);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+    EXPECT_EQ(nullptr, pProgram);
+
+    retVal = CL_INVALID_PROGRAM;
+    devicesForProgram[0] = nullptr;
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        1,
+        devicesForProgram,
+        &binarySize,
+        binaries,
+        &binaryStatus,
+        &retVal);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+    EXPECT_EQ(nullptr, pProgram);
+}
+
 TEST_F(clCreateProgramWithILTests, GivenInvalidContextWhenCreatingProgramWithIlThenInvalidContextErrorIsReturned) {
     const uint32_t spirv[16] = {0x03022307};
 
