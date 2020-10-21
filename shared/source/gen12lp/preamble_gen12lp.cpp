@@ -88,6 +88,9 @@ void PreambleHelper<TGLLPFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TY
     if (!hwHelper.isFusedEuDispatchEnabled(hwInfo)) {
         mediaVfeState->setDisableSlice0Subslice2(true);
     }
+    if (DebugManager.flags.MediaVfeStateMaxSubSlices.get() != -1) {
+        mediaVfeState->setMaximumNumberOfDualSubslices(DebugManager.flags.MediaVfeStateMaxSubSlices.get());
+    }
 }
 
 // Explicitly instantiate PreambleHelper for TGLLP device family

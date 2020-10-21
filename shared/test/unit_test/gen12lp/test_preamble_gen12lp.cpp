@@ -153,6 +153,18 @@ HWTEST2_F(Gen12LpPreambleVfeState, givenCfeFusedEuDispatchFlagsWhenprogramAdditi
     }
 }
 
+HWTEST2_F(Gen12LpPreambleVfeState, givenMaxNumberOfDssDebugVariableWhenMediaVfeStateIsProgrammedThenFieldIsSet, IsTGLLP) {
+    using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.MediaVfeStateMaxSubSlices.set(2);
+    auto pHwInfo = pPlatform->getClDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto pMediaVfeState = reinterpret_cast<MEDIA_VFE_STATE *>(linearStream.getSpace(sizeof(MEDIA_VFE_STATE)));
+    *pMediaVfeState = FamilyType::cmdInitMediaVfeState;
+    PreambleHelper<FamilyType>::programAdditionalFieldsInVfeState(pMediaVfeState, *pHwInfo);
+    EXPECT_EQ(2u, pMediaVfeState->getMaximumNumberOfDualSubslices());
+}
+
 typedef PreambleFixture ThreadArbitrationGen12Lp;
 GEN12LPTEST_F(ThreadArbitrationGen12Lp, givenPolicyWhenThreadArbitrationProgrammedThenDoNothing) {
     LinearStream &cs = linearStream;
