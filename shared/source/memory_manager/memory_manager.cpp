@@ -139,7 +139,6 @@ GraphicsAllocation *MemoryManager::createPaddedAllocation(GraphicsAllocation *in
 
 void *MemoryManager::createMultiGraphicsAllocation(std::vector<uint32_t> &rootDeviceIndices, AllocationProperties &properties, MultiGraphicsAllocation &multiGraphicsAllocation) {
     void *ptr = nullptr;
-    properties.useMmapObject = rootDeviceIndices.size() == 1u;
 
     for (auto &rootDeviceIndex : rootDeviceIndices) {
         properties.rootDeviceIndex = rootDeviceIndex;
@@ -156,7 +155,8 @@ void *MemoryManager::createMultiGraphicsAllocation(std::vector<uint32_t> &rootDe
             properties.flags.allocateMemory = false;
             properties.flags.isUSMHostAllocation = true;
 
-            auto graphicsAllocation = allocateGraphicsMemoryWithProperties(properties, ptr);
+            auto graphicsAllocation = createGraphicsAllocationFromExistingStorage(properties, ptr, multiGraphicsAllocation);
+
             if (!graphicsAllocation) {
                 for (auto gpuAllocation : multiGraphicsAllocation.getGraphicsAllocations()) {
                     freeGraphicsMemory(gpuAllocation);
@@ -168,6 +168,10 @@ void *MemoryManager::createMultiGraphicsAllocation(std::vector<uint32_t> &rootDe
     }
 
     return ptr;
+}
+
+GraphicsAllocation *MemoryManager::createGraphicsAllocationFromExistingStorage(AllocationProperties &properties, void *ptr, MultiGraphicsAllocation &multiGraphicsAllocation) {
+    return allocateGraphicsMemoryWithProperties(properties, ptr);
 }
 
 void MemoryManager::freeSystemMemory(void *ptr) {

@@ -141,6 +141,9 @@ class DrmMock : public Drm {
     //DRM_IOCTL_PRIME_FD_TO_HANDLE
     __u32 outputHandle = 0;
     __s32 inputFd = 0;
+    int fdToHandleRetVal = 0;
+    //DRM_IOCTL_HANDLE_TO_FD
+    __s32 outputFd = 0;
     //DRM_IOCTL_I915_GEM_USERPTR
     __u32 returnHandle = 0;
     __u64 gpuMemSize = 3u * MemoryConstants::gigaByte;

@@ -158,6 +158,11 @@ int DrmMock::ioctl(unsigned long request, void *arg) {
         //return BO
         primeToHandleParams->handle = outputHandle;
         inputFd = primeToHandleParams->fd;
+        return fdToHandleRetVal;
+    }
+    if (request == DRM_IOCTL_PRIME_HANDLE_TO_FD) {
+        auto primeToFdParams = static_cast<drm_prime_handle *>(arg);
+        primeToFdParams->fd = outputFd;
         return 0;
     }
     if (request == DRM_IOCTL_I915_GEM_GET_APERTURE) {
