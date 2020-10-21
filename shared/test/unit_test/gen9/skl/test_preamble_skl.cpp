@@ -17,7 +17,7 @@ using namespace NEO;
 
 typedef PreambleFixture SklSlm;
 
-SKLTEST_F(SklSlm, shouldBeEnabledOnGen9) {
+SKLTEST_F(SklSlm, WhenL3ConfigIsDispatchedThenProperRegisterAddressAndValueAreProgrammed) {
     typedef SKLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
@@ -37,7 +37,7 @@ SKLTEST_F(SklSlm, shouldBeEnabledOnGen9) {
 
 typedef PreambleFixture Gen9L3Config;
 
-SKLTEST_F(Gen9L3Config, checkNoSLM) {
+SKLTEST_F(Gen9L3Config, GivenNoSlmWhenProgrammingL3ThenProgrammingIsCorrect) {
     bool slmUsed = false;
     uint32_t l3Config = 0;
 
@@ -53,7 +53,7 @@ SKLTEST_F(Gen9L3Config, checkNoSLM) {
     EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 }
 
-SKLTEST_F(Gen9L3Config, checkSLM) {
+SKLTEST_F(Gen9L3Config, GivenSlmWhenProgrammingL3ThenProgrammingIsCorrect) {
     bool slmUsed = true;
     uint32_t l3Config = 0;
 
@@ -99,11 +99,11 @@ SKLTEST_F(ThreadArbitration, givenPreambleWhenItIsProgrammedThenThreadArbitratio
     EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<SKLFamily>::getThreadArbitrationCommandsSize());
 }
 
-SKLTEST_F(ThreadArbitration, defaultArbitrationPolicy) {
+SKLTEST_F(ThreadArbitration, GivenDefaultWhenProgrammingPreambleThenArbitrationPolicyIsRoundRobin) {
     EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, HwHelperHw<SKLFamily>::get().getDefaultThreadArbitrationPolicy());
 }
 
-GEN9TEST_F(PreambleVfeState, WaOff) {
+GEN9TEST_F(PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgrammingIsCorrect) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
@@ -121,7 +121,7 @@ GEN9TEST_F(PreambleVfeState, WaOff) {
     EXPECT_EQ(1u, pc.getCommandStreamerStallEnable());
 }
 
-GEN9TEST_F(PreambleVfeState, WaOn) {
+GEN9TEST_F(PreambleVfeState, GivenWaOnWhenProgrammingVfeStateThenProgrammingIsCorrect) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;

@@ -15,7 +15,7 @@ using namespace NEO;
 
 typedef PreambleFixture IclSlm;
 
-GEN11TEST_F(IclSlm, shouldBeEnabledOnGen11) {
+GEN11TEST_F(IclSlm, WhenL3ConfigIsDispatchedThenProperRegisterAddressAndValueAreProgrammed) {
     typedef ICLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(*defaultHwInfo, true);
@@ -40,7 +40,7 @@ GEN11TEST_F(IclSlm, givenGen11WhenProgramingL3ThenErrorDetectionBehaviorControlB
     EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 }
 
-GEN11TEST_F(IclSlm, givenGen11IsL3Programing) {
+GEN11TEST_F(IclSlm, WhenCheckingL3IsConfigurableThenExpectItToBeFalse) {
     bool isL3Programmable =
         PreambleHelper<FamilyType>::isL3Configurable(*defaultHwInfo);
 
@@ -48,13 +48,13 @@ GEN11TEST_F(IclSlm, givenGen11IsL3Programing) {
 }
 
 typedef PreambleFixture Gen11UrbEntryAllocationSize;
-GEN11TEST_F(Gen11UrbEntryAllocationSize, getUrbEntryAllocationSize) {
+GEN11TEST_F(Gen11UrbEntryAllocationSize, WhenPreambleRetrievesUrbEntryAllocationSizeThenValueIsCorrect) {
     uint32_t actualVal = PreambleHelper<FamilyType>::getUrbEntryAllocationSize();
     EXPECT_EQ(0x782u, actualVal);
 }
 
 typedef PreambleVfeState Gen11PreambleVfeState;
-GEN11TEST_F(Gen11PreambleVfeState, WaOff) {
+GEN11TEST_F(Gen11PreambleVfeState, GivenWaOffWhenProgrammingVfeStateThenProgrammingIsCorrect) {
     typedef typename ICLFamily::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 0;
     LinearStream &cs = linearStream;
@@ -72,7 +72,7 @@ GEN11TEST_F(Gen11PreambleVfeState, WaOff) {
     EXPECT_EQ(1u, pc.getCommandStreamerStallEnable());
 }
 
-GEN11TEST_F(Gen11PreambleVfeState, WaOn) {
+GEN11TEST_F(Gen11PreambleVfeState, GivenWaOnWhenProgrammingVfeStateThenProgrammingIsCorrect) {
     typedef typename ICLFamily::PIPE_CONTROL PIPE_CONTROL;
     testWaTable->waSendMIFLUSHBeforeVFE = 1;
     LinearStream &cs = linearStream;
@@ -91,7 +91,7 @@ GEN11TEST_F(Gen11PreambleVfeState, WaOn) {
 }
 
 typedef PreambleFixture PreemptionWatermarkGen11;
-GEN11TEST_F(PreemptionWatermarkGen11, givenPreambleThenPreambleWorkAroundsIsNotProgrammed) {
+GEN11TEST_F(PreemptionWatermarkGen11, WhenPreambleIsCreatedThenWorkAroundsIsNotProgrammed) {
     PreambleHelper<FamilyType>::programGenSpecificPreambleWorkArounds(&linearStream, *defaultHwInfo);
 
     parseCommands<FamilyType>(linearStream);
@@ -137,6 +137,6 @@ GEN11TEST_F(ThreadArbitrationGen11, givenPreambleWhenItIsProgrammedThenThreadArb
     EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<ICLFamily>::getThreadArbitrationCommandsSize());
 }
 
-GEN11TEST_F(ThreadArbitrationGen11, defaultArbitrationPolicy) {
+GEN11TEST_F(ThreadArbitrationGen11, GivenDefaultWhenProgrammingPreambleThenArbitrationPolicyIsRoundRobin) {
     EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, HwHelperHw<ICLFamily>::get().getDefaultThreadArbitrationPolicy());
 }

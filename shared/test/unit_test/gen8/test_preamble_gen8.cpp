@@ -16,7 +16,7 @@ using namespace NEO;
 
 typedef PreambleFixture BdwSlm;
 
-BDWTEST_F(BdwSlm, shouldBeEnabledOnGen8) {
+BDWTEST_F(BdwSlm, WhenL3ConfigIsDispatchedThenProperRegisterAddressAndValueAreProgrammed) {
     typedef BDWFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<BDWFamily>::getL3Config(*defaultHwInfo, true);
@@ -35,7 +35,7 @@ BDWTEST_F(BdwSlm, shouldBeEnabledOnGen8) {
 
 typedef PreambleFixture Gen8L3Config;
 
-BDWTEST_F(Gen8L3Config, checkNoSLM) {
+BDWTEST_F(Gen8L3Config, GivenNoSlmWhenProgrammingL3ThenProgrammingIsCorrect) {
     bool slmUsed = false;
     uint32_t l3Config = 0;
 
@@ -46,7 +46,7 @@ BDWTEST_F(Gen8L3Config, checkNoSLM) {
     EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 }
 
-BDWTEST_F(Gen8L3Config, checkSLM) {
+BDWTEST_F(Gen8L3Config, GivenlmWhenProgrammingL3ThenProgrammingIsCorrect) {
     bool slmUsed = true;
     uint32_t l3Config = 0;
 
@@ -57,7 +57,7 @@ BDWTEST_F(Gen8L3Config, checkSLM) {
     EXPECT_TRUE((l3Config & errorDetectionBehaviorControlBit) != 0);
 }
 
-BDWTEST_F(Gen8L3Config, givenGen8IsL3Programing) {
+BDWTEST_F(Gen8L3Config, WhenPreambleIsCreatedThenL3ProgrammingIsCorrect) {
     bool l3ConfigDifference;
     bool isL3Programmable;
 
@@ -86,12 +86,12 @@ BDWTEST_F(ThreadArbitrationGen8, givenPolicyWhenThreadArbitrationProgrammedThenD
 }
 
 typedef PreambleFixture Gen8UrbEntryAllocationSize;
-BDWTEST_F(Gen8UrbEntryAllocationSize, getUrbEntryAllocationSize) {
+BDWTEST_F(Gen8UrbEntryAllocationSize, WhenPreambleIsCreatedThenUrbEntryAllocationSizeIsCorrect) {
     uint32_t actualVal = PreambleHelper<FamilyType>::getUrbEntryAllocationSize();
     EXPECT_EQ(0x782u, actualVal);
 }
 
-BDWTEST_F(PreambleVfeState, basic) {
+BDWTEST_F(PreambleVfeState, WhenProgrammingVfeStateThenProgrammingIsCorrect) {
     typedef BDWFamily::PIPE_CONTROL PIPE_CONTROL;
 
     LinearStream &cs = linearStream;
