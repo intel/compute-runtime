@@ -1228,6 +1228,8 @@ TEST_F(ScratchSpaceControllerTest, whenScratchSpaceControllerIsDestroyedThenItRe
 }
 
 TEST(BcsConstantsTests, givenBlitConstantsThenTheyHaveDesiredValues) {
-    EXPECT_EQ(BlitterConstants::maxBlitWidth, 0x3FC0u);
+    EXPECT_EQ(BlitterConstants::maxBlitWidth, 0x3F80u);
     EXPECT_EQ(BlitterConstants::maxBlitHeight, 0x3FC0u);
+    EXPECT_EQ(BlitterConstants::maxBlitSetWidth, 0x1FF80u);
+    EXPECT_EQ(BlitterConstants::maxBlitSetHeight, 0x1FFC0u);
 }
