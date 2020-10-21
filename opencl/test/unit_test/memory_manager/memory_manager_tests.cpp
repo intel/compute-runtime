@@ -1087,6 +1087,70 @@ TEST(OsAgnosticMemoryManager, givenCommonMemoryManagerWhenIsAskedIfApplicationMe
     EXPECT_FALSE(memoryManager.isMemoryBudgetExhausted());
 }
 
+TEST(OsAgnosticMemoryManager, givenDebugModuleAreaTypeWhenCreatingAllocationThen32BitAllocationWithFrontWindowGpuVaIsReturned) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, false, executionEnvironment);
+    const auto size = MemoryConstants::pageSize64k;
+
+    NEO::AllocationProperties properties{0, true, size,
+                                         NEO::GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA,
+                                         false,
+                                         mockDeviceBitfield};
+
+    auto moduleDebugArea = memoryManager.allocateGraphicsMemoryWithProperties(properties);
+
+    EXPECT_NE(nullptr, moduleDebugArea);
+    EXPECT_NE(nullptr, moduleDebugArea->getUnderlyingBuffer());
+    EXPECT_GE(moduleDebugArea->getUnderlyingBufferSize(), size);
+
+    auto address64bit = moduleDebugArea->getGpuAddressToPatch();
+    EXPECT_LT(address64bit, MemoryConstants::max32BitAddress);
+    EXPECT_TRUE(moduleDebugArea->is32BitAllocation());
+
+    auto frontWindowBase = GmmHelper::canonize(memoryManager.getGfxPartition(moduleDebugArea->getRootDeviceIndex())->getHeapBase(memoryManager.selectInternalHeap(moduleDebugArea->isAllocatedInLocalMemoryPool())));
+    EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuBaseAddress());
+    EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuAddress());
+
+    memoryManager.freeGraphicsMemory(moduleDebugArea);
+}
+
+TEST(OsAgnosticMemoryManager, givenLocalMemoryAndDebugModuleAreaTypeWhenCreatingAllocationThen32BitAllocationWithFrontWindowGpuVaIsReturned) {
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrLocalMemory = true;
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableLocalMemory.set(true);
+
+    // Ensure family supports local memory
+    if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isLocalMemoryEnabled(hwInfo)) {
+        GTEST_SKIP();
+    }
+
+    MockExecutionEnvironment executionEnvironment(&hwInfo);
+    MemoryManagerCreate<OsAgnosticMemoryManager> memoryManager(false, true, executionEnvironment);
+    const auto size = MemoryConstants::pageSize64k;
+
+    NEO::AllocationProperties properties{0, true, size,
+                                         NEO::GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA,
+                                         false,
+                                         mockDeviceBitfield};
+
+    auto moduleDebugArea = memoryManager.allocateGraphicsMemoryWithProperties(properties);
+
+    EXPECT_NE(nullptr, moduleDebugArea);
+    EXPECT_NE(nullptr, moduleDebugArea->getUnderlyingBuffer());
+    EXPECT_GE(moduleDebugArea->getUnderlyingBufferSize(), size);
+
+    auto address64bit = moduleDebugArea->getGpuAddressToPatch();
+    EXPECT_LT(address64bit, MemoryConstants::max32BitAddress);
+    EXPECT_TRUE(moduleDebugArea->is32BitAllocation());
+
+    auto frontWindowBase = GmmHelper::canonize(memoryManager.getGfxPartition(moduleDebugArea->getRootDeviceIndex())->getHeapBase(memoryManager.selectInternalHeap(moduleDebugArea->isAllocatedInLocalMemoryPool())));
+    EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuBaseAddress());
+    EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuAddress());
+
+    memoryManager.freeGraphicsMemory(moduleDebugArea);
+}
+
 class MemoryManagerWithAsyncDeleterTest : public ::testing::Test {
   public:
     MemoryManagerWithAsyncDeleterTest() : memoryManager(false, false){};
@@ -2182,6 +2246,19 @@ TEST_F(HeapSelectorTest, givenLimitedAddressSpaceWhenSelectingHeapForNullAllocat
     EXPECT_EQ(HeapIndex::HEAP_STANDARD, memoryManager->selectHeap(nullptr, false, false, false));
 }
 
+TEST_F(HeapSelectorTest, givenDebugModuleAreaAllocationAndUseFrontWindowWhenSelectingHeapThenInternalFrontWindowHeapIsReturned) {
+    GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA, nullptr, 0, 0, 0, MemoryPool::MemoryNull, 1};
+    allocation.set32BitAllocation(true);
+    EXPECT_EQ(HeapIndex::HEAP_INTERNAL_FRONT_WINDOW, memoryManager->selectHeap(&allocation, false, false, true));
+}
+
+TEST_F(HeapSelectorTest, givenDebugModuleAreaAllocationInLocalMemoryAndUseFrontWindowWhenSelectingHeapThenInternalDeviceFrontWindowHeapIsReturned) {
+    GraphicsAllocation allocation{0, GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA, nullptr, 0, 0, 0, MemoryPool::LocalMemory, 1};
+    allocation.set32BitAllocation(true);
+    EXPECT_TRUE(allocation.isAllocatedInLocalMemoryPool());
+    EXPECT_EQ(HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW, memoryManager->selectHeap(&allocation, false, false, true));
+}
+
 TEST(MemoryAllocationTest, givenAllocationTypeWhenPassedToMemoryAllocationConstructorThenAllocationTypeIsStored) {
     MemoryAllocation allocation{0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, 0, 0, 0,
                                 MemoryPool::MemoryNull, false, false, mockMaxOsContextCount};
@@ -2383,4 +2460,14 @@ HWTEST_F(PageTableManagerTest, givenMemoryManagerThatSupportsPageTableManagerWhe
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[allocation.getRootDeviceIndex()]->getHardwareInfo();
 
     EXPECT_EQ(HwHelper::get(hwInfo->platform.eRenderCoreFamily).isPageTableManagerSupported(*hwInfo), mapped);
+}
+
+TEST(MemoryManagerTest, givenDebugModuleAreaAllocationTypeWhenCallingGetAllocationDataThenUse32BitFrontWindowsIsSet) {
+    AllocationData allocData;
+    AllocationProperties properties(mockRootDeviceIndex, 1, GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA, mockDeviceBitfield);
+
+    MockMemoryManager mockMemoryManager;
+
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
+    EXPECT_EQ(1u, allocData.flags.use32BitFrontWindow);
 }

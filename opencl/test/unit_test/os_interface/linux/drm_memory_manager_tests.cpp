@@ -3669,6 +3669,35 @@ TEST_F(DrmMemoryManagerBasic, givenLocalMemoryDisabledWhenAllocateInDevicePoolIs
     EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
 }
 
+TEST_F(DrmMemoryManagerTest, givenDebugModuleAreaTypeWhenCreatingAllocationThen32BitDrmAllocationWithFrontWindowGpuVaIsReturned) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    const auto size = MemoryConstants::pageSize64k;
+
+    NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, size,
+                                         NEO::GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA,
+                                         false,
+                                         device->getDeviceBitfield()};
+
+    auto moduleDebugArea = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    EXPECT_NE(nullptr, moduleDebugArea);
+    EXPECT_NE(nullptr, moduleDebugArea->getUnderlyingBuffer());
+    EXPECT_GE(moduleDebugArea->getUnderlyingBufferSize(), size);
+
+    auto address64bit = moduleDebugArea->getGpuAddressToPatch();
+    EXPECT_LT(address64bit, MemoryConstants::max32BitAddress);
+    EXPECT_TRUE(moduleDebugArea->is32BitAllocation());
+
+    auto frontWindowBase = GmmHelper::canonize(memoryManager->getGfxPartition(moduleDebugArea->getRootDeviceIndex())->getHeapBase(memoryManager->selectInternalHeap(moduleDebugArea->isAllocatedInLocalMemoryPool())));
+    EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuBaseAddress());
+    EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuAddress());
+
+    memoryManager->freeGraphicsMemory(moduleDebugArea);
+}
+
 TEST(DrmAllocationTest, givenAllocationTypeWhenPassedToDrmAllocationConstructorThenAllocationTypeIsStored) {
     DrmAllocation allocation{0, GraphicsAllocation::AllocationType::COMMAND_BUFFER, nullptr, nullptr, static_cast<size_t>(0), 0u, MemoryPool::MemoryNull};
     EXPECT_EQ(GraphicsAllocation::AllocationType::COMMAND_BUFFER, allocation.getAllocationType());

@@ -2049,6 +2049,31 @@ TEST_F(WddmMemoryManagerSimpleTest, givenBufferHostMemoryAllocationAndLimitedRan
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest, givenDebugModuleAreaTypeWhenCreatingAllocationThen32BitAllocationWithFrontWindowGpuVaIsReturned) {
+    const auto size = MemoryConstants::pageSize64k;
+
+    NEO::AllocationProperties properties{0, true, size,
+                                         NEO::GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA,
+                                         false,
+                                         mockDeviceBitfield};
+
+    auto moduleDebugArea = memoryManager->allocateGraphicsMemoryWithProperties(properties);
+
+    EXPECT_NE(nullptr, moduleDebugArea);
+    EXPECT_NE(nullptr, moduleDebugArea->getUnderlyingBuffer());
+    EXPECT_GE(moduleDebugArea->getUnderlyingBufferSize(), size);
+
+    auto address64bit = moduleDebugArea->getGpuAddressToPatch();
+    EXPECT_LT(address64bit, MemoryConstants::max32BitAddress);
+    EXPECT_TRUE(moduleDebugArea->is32BitAllocation());
+
+    auto frontWindowBase = GmmHelper::canonize(memoryManager->getGfxPartition(moduleDebugArea->getRootDeviceIndex())->getHeapBase(memoryManager->selectInternalHeap(moduleDebugArea->isAllocatedInLocalMemoryPool())));
+    EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuBaseAddress());
+    EXPECT_EQ(frontWindowBase, moduleDebugArea->getGpuAddress());
+
+    memoryManager->freeGraphicsMemory(moduleDebugArea);
+}
+
 TEST(WddmMemoryManager, givenMultipleRootDeviceWhenMemoryManagerGetsWddmThenWddmIsFromCorrectRootDevice) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(4);

@@ -16,7 +16,7 @@ struct HeapAssigner {
     bool useExternal32BitHeap(GraphicsAllocation::AllocationType allocType);
     bool useInternal32BitHeap(GraphicsAllocation::AllocationType allocType);
     bool use32BitHeap(GraphicsAllocation::AllocationType allocType);
-    HeapIndex get32BitHeapIndex(GraphicsAllocation::AllocationType allocType, bool useLocalMem, const HardwareInfo &hwInfo, bool useExternalWindow);
+    HeapIndex get32BitHeapIndex(GraphicsAllocation::AllocationType allocType, bool useLocalMem, const HardwareInfo &hwInfo, bool useFrontWindow);
     static bool heapTypeWithFrontWindowPool(HeapIndex heap);
     static bool isInternalHeap(HeapIndex heap);
 

@@ -386,7 +386,12 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
         (mayRequireL3Flush ? properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite : 0u);
     allocationData.flags.preferRenderCompressed = CompressionSelector::preferRenderCompressedBuffer(properties);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
-    allocationData.flags.use32BitFrontWindow = properties.flags.use32BitFrontWindow;
+
+    if (properties.allocationType == GraphicsAllocation::AllocationType::DEBUG_MODULE_AREA) {
+        allocationData.flags.use32BitFrontWindow = true;
+    } else {
+        allocationData.flags.use32BitFrontWindow = properties.flags.use32BitFrontWindow;
+    }
 
     allocationData.hostPtr = hostPtr;
     allocationData.size = properties.size;
@@ -559,7 +564,7 @@ void MemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
 HeapIndex MemoryManager::selectHeap(const GraphicsAllocation *allocation, bool hasPointer, bool isFullRangeSVM, bool useFrontWindow) {
     if (allocation) {
         if (heapAssigner.useInternal32BitHeap(allocation->getAllocationType())) {
-            return selectInternalHeap(allocation->isAllocatedInLocalMemoryPool());
+            return useFrontWindow ? HeapAssigner::mapInternalWindowIndex(selectInternalHeap(allocation->isAllocatedInLocalMemoryPool())) : selectInternalHeap(allocation->isAllocatedInLocalMemoryPool());
         }
         if (allocation->is32BitAllocation() || heapAssigner.useExternal32BitHeap(allocation->getAllocationType())) {
             return useFrontWindow ? HeapAssigner::mapExternalWindowIndex(selectExternalHeap(allocation->isAllocatedInLocalMemoryPool()))
