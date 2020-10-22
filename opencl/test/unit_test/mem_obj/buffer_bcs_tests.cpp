@@ -23,6 +23,8 @@
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 #include "test.h"
 
+#include <cinttypes>
+
 using namespace NEO;
 
 struct BcsBufferTests : public ::testing::Test {
@@ -237,6 +239,38 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
     EXPECT_EQ(13u, bcsCsr->blitBufferCalled);
     commandQueue->enqueueSVMMemcpy(CL_TRUE, bufferForBlt0.get(), bufferForBlt1.get(), 1, 0, nullptr, nullptr);
     EXPECT_EQ(14u, bcsCsr->blitBufferCalled);
+}
+
+HWTEST_TEMPLATED_F(BcsBufferTests, givenDebugFlagSetWhenDispatchingBlitCommandsThenPrintDispatchDetails) {
+    DebugManager.flags.PrintBlitDispatchDetails.set(true);
+
+    uint32_t maxBlitWidth = static_cast<uint32_t>(BlitterConstants::maxBlitWidth);
+    uint32_t copySize = maxBlitWidth + 5;
+
+    auto myHostPtr = std::make_unique<uint8_t[]>(copySize);
+    uint64_t hostPtrAddr = castToUint64(myHostPtr.get());
+
+    auto bufferForBlt = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, copySize, nullptr, retVal));
+    bufferForBlt->forceDisallowCPUCopy = true;
+
+    uint64_t bufferGpuAddr = bufferForBlt->getGraphicsAllocation(0)->getGpuAddress();
+
+    testing::internal::CaptureStdout();
+
+    commandQueue->enqueueWriteBuffer(bufferForBlt.get(), CL_TRUE, 0, copySize, myHostPtr.get(), nullptr, 0, nullptr, nullptr);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(0u, output.size());
+
+    char expectedStr[512] = {};
+    snprintf(expectedStr, 512, "\nBlit dispatch with AuxTranslationDirection %u \
+\nBlit command. width: %u, height: %u, srcAddr: %#" SCNx64 ", dstAddr: %#" SCNx64 " \
+\nBlit command. width: %u, height: %u, srcAddr: %#" SCNx64 ", dstAddr: %#" SCNx64 " ",
+             static_cast<uint32_t>(AuxTranslationDirection::None),
+             maxBlitWidth, 1, hostPtrAddr, bufferGpuAddr,
+             (copySize - maxBlitWidth), 1, ptrOffset(hostPtrAddr, maxBlitWidth), ptrOffset(bufferGpuAddr, maxBlitWidth));
+
+    EXPECT_THAT(output, testing::HasSubstr(std::string(expectedStr)));
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenQueueIsBlockedThenDispatchBlitWhenUnblocked) {

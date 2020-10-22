@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-enum class AuxTranslationDirection {
+enum class AuxTranslationDirection : uint32_t {
     None,
     AuxToNonAux,
     NonAuxToAux
