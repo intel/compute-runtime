@@ -17,7 +17,7 @@ struct KernelHelper {
 
     static uint64_t getPrivateSurfaceSize(uint64_t perThreadPrivateMemorySize, uint32_t computeUnitsUsedForScratch, uint32_t simdSize, bool isSimtThread) {
         uint64_t size = perThreadPrivateMemorySize * computeUnitsUsedForScratch;
-        if (!isSimtThread) {
+        if (isSimtThread) {
             size *= simdSize;
         }
 

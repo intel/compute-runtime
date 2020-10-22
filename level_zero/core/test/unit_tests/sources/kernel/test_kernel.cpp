@@ -270,7 +270,7 @@ HWTEST_F(KernelPropertiesTests, givenSimtThreadFlagSetWhenInitializingThenComput
     kernelAttributes.simdSize = 8;
 
     {
-        kernelAttributes.flags.isSimtThread = false;
+        kernelAttributes.flags.isSimtThread = true;
 
         KernelImmutableData kernelImmutableData(device);
 
@@ -282,7 +282,7 @@ HWTEST_F(KernelPropertiesTests, givenSimtThreadFlagSetWhenInitializingThenComput
     }
 
     {
-        kernelAttributes.flags.isSimtThread = true;
+        kernelAttributes.flags.isSimtThread = false;
 
         KernelImmutableData kernelImmutableData(device);
 

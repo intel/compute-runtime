@@ -742,7 +742,7 @@ TEST_P(PerformanceHintKernelTest, GivenPrivateSurfaceWhenKernelIsInitializedThen
 
         mockKernel.kernelInfo.patchInfo.pAllocateStatelessPrivateSurface = &allocateStatelessPrivateMemorySurface;
         size *= pDevice->getSharedDeviceInfo().computeUnitsUsedForScratch;
-        size *= isSmitThread ? 1 : mockKernel.mockKernel->getKernelInfo().getMaxSimdSize();
+        size *= isSmitThread ? mockKernel.mockKernel->getKernelInfo().getMaxSimdSize() : 1;
 
         mockKernel.mockKernel->initialize();
 

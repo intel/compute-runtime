@@ -132,7 +132,7 @@ TEST(KernelInfoFromPatchTokens, GivenDataParameterStreamWhenTokensRequiringDevic
 
     iOpenCL::SPatchAllocateStatelessPrivateSurface privateSurface = {};
     privateSurface.PerThreadPrivateMemorySize = 8U;
-    privateSurface.IsSimtThread = 0;
+    privateSurface.IsSimtThread = 1;
     src.tokens.allocateStatelessPrivateSurface = &privateSurface;
 
     iOpenCL::SPatchDataParameterBuffer privateMemorySize = {};
@@ -162,7 +162,7 @@ TEST(KernelInfoFromPatchTokens, GivenDataParameterStreamWhenTokensRequiringDevic
     EXPECT_EQ(reinterpret_cast<uintptr_t>(deviceInfoConstants.slmWindow), *reinterpret_cast<uintptr_t *>(dst.crossThreadData + localMemoryWindowStartVA.Offset));
 }
 
-TEST(KernelInfoFromPatchTokens, givenIsSimtThreadSetWhenConfiguringThenDontUseSimdSizeForPrivateSizeCalculation) {
+TEST(KernelInfoFromPatchTokens, givenIsSimtThreadNotSetWhenConfiguringThenDontUseSimdSizeForPrivateSizeCalculation) {
     std::vector<uint8_t> storage;
     auto src = PatchTokensTestData::ValidEmptyKernel::create(storage);
 
@@ -179,7 +179,7 @@ TEST(KernelInfoFromPatchTokens, givenIsSimtThreadSetWhenConfiguringThenDontUseSi
 
     iOpenCL::SPatchAllocateStatelessPrivateSurface privateSurface = {};
     privateSurface.PerThreadPrivateMemorySize = 8U;
-    privateSurface.IsSimtThread = 1;
+    privateSurface.IsSimtThread = 0;
     src.tokens.allocateStatelessPrivateSurface = &privateSurface;
 
     iOpenCL::SPatchDataParameterBuffer privateMemorySize = {};
