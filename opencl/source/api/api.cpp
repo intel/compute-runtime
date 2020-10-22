@@ -1396,10 +1396,11 @@ cl_program CL_API_CALL clCreateProgramWithIL(cl_context context,
                    "length", length);
 
     cl_program program = nullptr;
-    retVal = validateObjects(context, il);
+    Context *pContext = nullptr;
+    retVal = validateObjects(WithCastToInternal(context, &pContext), il);
     if (retVal == CL_SUCCESS) {
         program = ProgramFunctions::createFromIL(
-            castToObjectOrAbort<Context>(context),
+            pContext,
             il,
             length,
             retVal);
@@ -4044,10 +4045,11 @@ cl_program CL_API_CALL clCreateProgramWithILKHR(cl_context context,
                    "length", length);
 
     cl_program program = nullptr;
-    retVal = validateObjects(context, il);
+    Context *pContext = nullptr;
+    retVal = validateObjects(WithCastToInternal(context, &pContext), il);
     if (retVal == CL_SUCCESS) {
         program = ProgramFunctions::createFromIL(
-            castToObjectOrAbort<Context>(context),
+            pContext,
             il,
             length,
             retVal);

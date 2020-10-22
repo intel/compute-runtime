@@ -171,12 +171,14 @@ T *Program::createFromIL(Context *context,
         return nullptr;
     }
 
-    auto device = context->getDevice(0);
-
-    ClDeviceVector deviceVector;
-    deviceVector.push_back(device);
+    auto deviceVector = context->getDevices();
     T *program = new T(context, false, deviceVector);
-    errcodeRet = program->createProgramFromBinary(il, length, device->getRootDeviceIndex());
+    for (const auto &device : deviceVector) {
+        errcodeRet = program->createProgramFromBinary(il, length, device->getRootDeviceIndex());
+        if (errcodeRet != CL_SUCCESS) {
+            break;
+        }
+    }
     program->createdFrom = CreatedFrom::IL;
 
     if (errcodeRet != CL_SUCCESS) {

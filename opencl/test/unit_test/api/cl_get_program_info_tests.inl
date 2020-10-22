@@ -344,4 +344,50 @@ TEST_F(clGetProgramInfoTests, GivenSPIRVProgramWhenGettingProgramSourceThenRetur
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithILWhenGettingDevicesThenCorrectDevicesAreReturned) {
+    MockUnrestrictiveContextMultiGPU context;
+
+    auto expectedNumDevices = context.getNumDevices();
+
+    auto devicesForProgram = std::make_unique<cl_device_id[]>(expectedNumDevices);
+
+    for (auto i = 0u; i < expectedNumDevices; i++) {
+        devicesForProgram[i] = context.getDevice(i);
+    }
+
+    const size_t binarySize = 16;
+    const uint32_t spirv[binarySize] = {0x03022307};
+    cl_program pProgram = nullptr;
+
+    cl_int retVal = CL_INVALID_PROGRAM;
+
+    pProgram = clCreateProgramWithIL(
+        &context,
+        spirv,
+        binarySize,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cl_uint numDevices;
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_NUM_DEVICES, sizeof(numDevices), &numDevices, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(expectedNumDevices, numDevices);
+
+    auto programDevices = std::make_unique<cl_device_id[]>(expectedNumDevices);
+    for (auto i = 0u; i < expectedNumDevices; i++) {
+        programDevices[i] = nullptr;
+    }
+
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_DEVICES, expectedNumDevices * sizeof(cl_device_id), programDevices.get(), nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    for (auto i = 0u; i < expectedNumDevices; i++) {
+        EXPECT_EQ(devicesForProgram[i], programDevices[i]);
+    }
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 } // namespace ULT
