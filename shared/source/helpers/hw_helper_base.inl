@@ -19,8 +19,6 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_interface.h"
 
-#include "opencl/source/helpers/dispatch_info.h"
-
 #include "pipe_control_args.h"
 
 namespace NEO {
@@ -181,14 +179,6 @@ AuxTranslationMode HwHelperHw<Family>::getAuxTranslationMode() {
     }
 
     return HwHelperHw<Family>::defaultAuxTranslationMode;
-}
-
-template <typename Family>
-bool HwHelperHw<Family>::isBlitAuxTranslationRequired(const HardwareInfo &hwInfo, const MultiDispatchInfo &multiDispatchInfo) {
-    return (HwHelperHw<Family>::getAuxTranslationMode() == AuxTranslationMode::Blit) &&
-           hwInfo.capabilityTable.blitterOperationsSupported &&
-           multiDispatchInfo.getMemObjsForAuxTranslation() &&
-           (multiDispatchInfo.getMemObjsForAuxTranslation()->size() > 0);
 }
 
 template <typename GfxFamily>

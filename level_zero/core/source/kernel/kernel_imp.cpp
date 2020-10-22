@@ -18,6 +18,7 @@
 #include "shared/source/utilities/arrayref.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/program/kernel_info.h"
 
 #include "level_zero/core/source/device/device.h"

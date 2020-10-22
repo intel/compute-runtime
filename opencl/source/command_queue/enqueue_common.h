@@ -27,6 +27,7 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_blit_properties.h"
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/source/helpers/enqueue_properties.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
@@ -94,7 +95,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         }
     }
 
-    if (HwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(device->getHardwareInfo(), multiDispatchInfo)) {
+    if (ClHwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(device->getHardwareInfo(), multiDispatchInfo)) {
         setupBlitAuxTranslation(multiDispatchInfo);
     }
 
@@ -182,7 +183,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     CsrDependencies csrDeps;
     BlitPropertiesContainer blitPropertiesContainer;
 
-    bool enqueueWithBlitAuxTranslation = HwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(device->getHardwareInfo(), multiDispatchInfo);
+    bool enqueueWithBlitAuxTranslation = ClHwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(device->getHardwareInfo(), multiDispatchInfo);
 
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         eventsRequest.fillCsrDependencies(csrDeps, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OnCsr);
@@ -210,7 +211,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                                             blockedCommandsData, surfacesForResidency, numSurfaceForResidency);
     auto commandStreamStart = commandStream.getUsed();
 
-    if (HwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(device->getHardwareInfo(), multiDispatchInfo)) {
+    if (ClHwHelperHw<GfxFamily>::isBlitAuxTranslationRequired(device->getHardwareInfo(), multiDispatchInfo)) {
         processDispatchForBlitAuxTranslation(multiDispatchInfo, blitPropertiesContainer, timestampPacketDependencies,
                                              eventsRequest, blockQueue);
     }

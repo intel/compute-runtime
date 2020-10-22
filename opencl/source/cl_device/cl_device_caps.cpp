@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/basic_math.h"

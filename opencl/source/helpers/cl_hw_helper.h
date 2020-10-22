@@ -11,7 +11,9 @@
 
 namespace NEO {
 
+struct HardwareInfo;
 struct KernelInfo;
+struct MultiDispatchInfo;
 
 class ClHwHelper {
   public:
@@ -33,6 +35,7 @@ class ClHwHelperHw : public ClHwHelper {
         return clHwHelper;
     }
 
+    static bool isBlitAuxTranslationRequired(const HardwareInfo &hwInfo, const MultiDispatchInfo &multiDispatchInfo);
     bool requiresAuxResolves(const KernelInfo &kernelInfo) const override;
 
   protected:

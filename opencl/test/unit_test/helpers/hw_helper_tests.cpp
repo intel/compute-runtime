@@ -20,6 +20,7 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/variable_backup.h"
 
+#include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/image.h"
@@ -743,20 +744,20 @@ HWTEST_F(HwHelperTest, givenMultiDispatchInfoWhenAskingForAuxTranslationThenChec
 
     DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
 
-    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
+    EXPECT_FALSE(ClHwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
 
     multiDispatchInfo.setMemObjsForAuxTranslation(memObjects);
-    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
+    EXPECT_FALSE(ClHwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
 
     memObjects.insert(&buffer);
-    EXPECT_TRUE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
+    EXPECT_TRUE(ClHwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
 
     hwInfo.capabilityTable.blitterOperationsSupported = false;
-    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
+    EXPECT_FALSE(ClHwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
 
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
-    EXPECT_FALSE(HwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
+    EXPECT_FALSE(ClHwHelperHw<FamilyType>::isBlitAuxTranslationRequired(hwInfo, multiDispatchInfo));
 }
 
 HWTEST_F(HwHelperTest, givenDebugVariableSetWhenAskingForAuxTranslationModeThenReturnCorrectValue) {

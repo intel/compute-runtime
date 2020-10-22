@@ -7,6 +7,8 @@
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 
+#include <Windows.h>
+
 using namespace L0;
 
 BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {

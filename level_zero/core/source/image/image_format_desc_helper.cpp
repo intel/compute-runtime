@@ -9,6 +9,8 @@
 
 #include "shared/source/utilities/compiler_support.h"
 
+#include "third_party/opencl_headers/CL/cl_ext_intel.h"
+
 namespace L0 {
 
 cl_channel_type getClChannelDataType(const ze_image_format_t &imgDescription) {

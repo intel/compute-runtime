@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"

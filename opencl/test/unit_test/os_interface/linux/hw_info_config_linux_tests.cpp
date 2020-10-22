@@ -12,6 +12,8 @@
 #include "shared/test/unit_test/helpers/debug_manager_state_restore.h"
 #include "shared/test/unit_test/helpers/default_hw_info.h"
 
+#include "opencl/extensions/public/cl_ext_private.h"
+
 #include <cstring>
 
 namespace NEO {

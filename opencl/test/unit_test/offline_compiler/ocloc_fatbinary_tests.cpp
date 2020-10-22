@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/hw_helper.h"
 
+#include <algorithm>
 #include <unordered_set>
 
 namespace NEO {

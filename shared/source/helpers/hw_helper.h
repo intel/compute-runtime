@@ -12,8 +12,7 @@
 #include "shared/source/commands/bxml_generator_glue.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/engine_node_helper.h"
-
-#include "opencl/source/mem_obj/buffer.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "hw_cmds.h"
 
@@ -26,6 +25,7 @@ class GmmHelper;
 class GraphicsAllocation;
 struct AllocationData;
 struct AllocationProperties;
+struct EngineControl;
 struct HardwareCapabilities;
 struct RootDeviceEnvironment;
 struct PipeControlArgs;
@@ -261,8 +261,6 @@ class HwHelperHw : public HwHelper {
     uint32_t computeSlmValues(uint32_t slmSize) override;
 
     static AuxTranslationMode getAuxTranslationMode();
-
-    static bool isBlitAuxTranslationRequired(const HardwareInfo &hwInfo, const MultiDispatchInfo &multiDispatchInfo);
 
     uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const override;
 

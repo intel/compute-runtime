@@ -9,6 +9,8 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include <algorithm>
+
 namespace NEO {
 HwHelper *hwHelperFactory[IGFX_MAX_CORE] = {};
 
