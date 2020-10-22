@@ -9,6 +9,7 @@
 #include "shared/source/utilities/stackvec.h"
 
 #include <cstdint>
+#include <string>
 
 namespace NEO {
 
