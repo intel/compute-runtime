@@ -114,6 +114,11 @@ class SVMAllocsManager {
                                               size_t size,
                                               const UnifiedMemoryProperties &svmProperties,
                                               void *cmdQ);
+    void *createUnifiedKmdMigratedAllocation(uint32_t rootDeviceIndex,
+                                             size_t size,
+                                             const SvmAllocationProperties &svmProperties,
+                                             const UnifiedMemoryProperties &unifiedMemoryProperties);
+    void setUnifiedAllocationProperties(GraphicsAllocation *allocation, const SvmAllocationProperties &svmProperties);
     SvmAllocationData *getSVMAlloc(const void *ptr);
     bool freeSVMAlloc(void *ptr, bool blocking);
     bool freeSVMAlloc(void *ptr) { return freeSVMAlloc(ptr, false); }

@@ -215,21 +215,70 @@ void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(uint32_t rootDeviceI
     }
 
     if (supportDualStorageSharedMemory) {
-        auto unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(rootDeviceIndex, size, {}, memoryProperties);
-        if (!unifiedMemoryPointer) {
-            return nullptr;
+        bool useKmdMigration = false;
+
+        if (DebugManager.flags.UseKmdMigration.get() != -1) {
+            useKmdMigration = DebugManager.flags.UseKmdMigration.get();
         }
+
+        void *unifiedMemoryPointer = nullptr;
+        if (useKmdMigration) {
+            unifiedMemoryPointer = createUnifiedKmdMigratedAllocation(rootDeviceIndex, size, {}, memoryProperties);
+            if (!unifiedMemoryPointer) {
+                return nullptr;
+            }
+        } else {
+            unifiedMemoryPointer = createUnifiedAllocationWithDeviceStorage(rootDeviceIndex, size, {}, memoryProperties);
+            if (!unifiedMemoryPointer) {
+                return nullptr;
+            }
+
+            UNRECOVERABLE_IF(cmdQ == nullptr);
+            auto pageFaultManager = this->memoryManager->getPageFaultManager();
+            pageFaultManager->insertAllocation(unifiedMemoryPointer, size, this, cmdQ, memoryProperties.allocationFlags);
+        }
+
         auto unifiedMemoryAllocation = this->getSVMAlloc(unifiedMemoryPointer);
         unifiedMemoryAllocation->memoryType = memoryProperties.memoryType;
         unifiedMemoryAllocation->allocationFlagsProperty = memoryProperties.allocationFlags;
 
-        UNRECOVERABLE_IF(cmdQ == nullptr);
-        auto pageFaultManager = this->memoryManager->getPageFaultManager();
-        pageFaultManager->insertAllocation(unifiedMemoryPointer, size, this, cmdQ, memoryProperties.allocationFlags);
-
         return unifiedMemoryPointer;
     }
     return createUnifiedMemoryAllocation(rootDeviceIndex, size, memoryProperties);
+}
+
+void *SVMAllocsManager::createUnifiedKmdMigratedAllocation(uint32_t rootDeviceIndex, size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties) {
+    size_t alignedSize = alignUp<size_t>(size, 2 * MemoryConstants::megaByte);
+    AllocationProperties gpuProperties{rootDeviceIndex,
+                                       true,
+                                       alignedSize,
+                                       GraphicsAllocation::AllocationType::UNIFIED_SHARED_MEMORY,
+                                       unifiedMemoryProperties.subdeviceBitfield.count() > 1,
+                                       false,
+                                       unifiedMemoryProperties.subdeviceBitfield};
+
+    gpuProperties.alignment = 2 * MemoryConstants::megaByte;
+    MemoryPropertiesHelper::fillCachePolicyInProperties(gpuProperties, false, svmProperties.readOnly, false);
+    GraphicsAllocation *allocationGpu = memoryManager->allocateGraphicsMemoryWithProperties(gpuProperties);
+    if (!allocationGpu) {
+        return nullptr;
+    }
+    setUnifiedAllocationProperties(allocationGpu, svmProperties);
+
+    SvmAllocationData allocData(rootDeviceIndex);
+    allocData.gpuAllocations.addAllocation(allocationGpu);
+    allocData.cpuAllocation = nullptr;
+    allocData.device = unifiedMemoryProperties.device;
+    allocData.size = size;
+
+    std::unique_lock<SpinLock> lock(mtx);
+    this->SVMAllocs.insert(allocData);
+    return allocationGpu->getUnderlyingBuffer();
+}
+
+void SVMAllocsManager::setUnifiedAllocationProperties(GraphicsAllocation *allocation, const SvmAllocationProperties &svmProperties) {
+    allocation->setMemObjectsAllocationWithWritableFlags(!svmProperties.readOnly && !svmProperties.hostPtrReadOnly);
+    allocation->setCoherent(svmProperties.coherent);
 }
 
 SvmAllocationData *SVMAllocsManager::getSVMAlloc(const void *ptr) {
@@ -309,8 +358,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(uint32_t rootDe
     if (!allocationCpu) {
         return nullptr;
     }
-    allocationCpu->setMemObjectsAllocationWithWritableFlags(!svmProperties.readOnly && !svmProperties.hostPtrReadOnly);
-    allocationCpu->setCoherent(svmProperties.coherent);
+    setUnifiedAllocationProperties(allocationCpu, svmProperties);
     void *svmPtr = allocationCpu->getUnderlyingBuffer();
 
     AllocationProperties gpuProperties{rootDeviceIndex,
@@ -328,8 +376,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(uint32_t rootDe
         memoryManager->freeGraphicsMemory(allocationCpu);
         return nullptr;
     }
-    allocationGpu->setMemObjectsAllocationWithWritableFlags(!svmProperties.readOnly && !svmProperties.hostPtrReadOnly);
-    allocationGpu->setCoherent(svmProperties.coherent);
+    setUnifiedAllocationProperties(allocationGpu, svmProperties);
 
     SvmAllocationData allocData(rootDeviceIndex);
     allocData.gpuAllocations.addAllocation(allocationGpu);

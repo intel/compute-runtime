@@ -21,6 +21,10 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
     return createAllocWithAlignmentFromUserptr(allocationData, size, alignment, alignedSize, gpuAddress);
 }
 
+GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const AllocationData &allocationData) {
+    return nullptr;
+}
+
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
     status = AllocationStatus::RetryInNonDevicePool;
     return nullptr;

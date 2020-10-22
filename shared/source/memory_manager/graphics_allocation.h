@@ -94,7 +94,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         SEMAPHORE_BUFFER,
         DEBUG_CONTEXT_SAVE_AREA,
         DEBUG_SBA_TRACKING_BUFFER,
-        DEBUG_MODULE_AREA
+        DEBUG_MODULE_AREA,
+        UNIFIED_SHARED_MEMORY
     };
 
     ~GraphicsAllocation() override;
