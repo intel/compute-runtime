@@ -62,12 +62,12 @@ GEN11TEST_F(Gen11PreemptionTests, whenMidThreadPreemptionIsAvailableThenStateSip
     EXPECT_EQ(device->getBuiltIns()->getSipKernel(SipKernelType::Csr, *device).getSipAllocation()->getGpuAddressToPatch(), stateSipCmd->getSystemInstructionPointer());
 }
 
-GEN11TEST_F(Gen11PreemptionTests, getRequiredCmdQSize) {
+GEN11TEST_F(Gen11PreemptionTests, WhenGettingPreemptionWaCsSizeThenZeroIsReturned) {
     size_t expectedSize = 0;
     EXPECT_EQ(expectedSize, PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device));
 }
 
-GEN11TEST_F(Gen11PreemptionTests, applyPreemptionWaCmds) {
+GEN11TEST_F(Gen11PreemptionTests, WhenApplyingPreemptionWaCmdsThenNothingIsAdded) {
     size_t usedSize = 0;
     StackVec<char, 1024> streamStorage(1024);
     LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};

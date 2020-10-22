@@ -36,12 +36,12 @@ GEN12LPTEST_F(Gen12LpPreemptionTests, whenProgramStateSipIsCalledThenStateSipCmd
     EXPECT_NE(0U, cmdStream.getUsed());
 }
 
-GEN12LPTEST_F(Gen12LpPreemptionTests, getRequiredCmdQSize) {
+GEN12LPTEST_F(Gen12LpPreemptionTests, WhenGettingPreemptionWaCsSizeThenZeroIsReturned) {
     size_t expectedSize = 0;
     EXPECT_EQ(expectedSize, PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device));
 }
 
-GEN12LPTEST_F(Gen12LpPreemptionTests, applyPreemptionWaCmds) {
+GEN12LPTEST_F(Gen12LpPreemptionTests, WhenApplyingPreemptionWaCmdsThenNothingIsAdded) {
     size_t usedSize = 0;
     StackVec<char, 1024> streamStorage(1024);
     LinearStream cmdStream{streamStorage.begin(), streamStorage.size()};

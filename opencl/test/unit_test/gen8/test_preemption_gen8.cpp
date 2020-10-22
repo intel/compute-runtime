@@ -18,7 +18,7 @@ using namespace NEO;
 using Gen8PreemptionEnqueueKernelTest = PreemptionEnqueueKernelTest;
 using Gen8ClPreemptionTests = DevicePreemptionTests;
 
-GEN8TEST_F(Gen8ClPreemptionTests, allowThreadGroupPreemptionReturnsTrue) {
+GEN8TEST_F(Gen8ClPreemptionTests, GivenEmptyFlagsWhenSettingPreemptionLevelFlagsThenThreadGroupPreemptionIsAllowed) {
     PreemptionFlags flags = {};
     PreemptionHelper::setPreemptionLevelFlags(flags, device->getDevice(), kernel.get());
     EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(flags));

@@ -69,14 +69,14 @@ GEN9TEST_F(Gen9PreemptionTests, whenMidThreadPreemptionIsAvailableThenStateSipIs
     EXPECT_EQ(device->getBuiltIns()->getSipKernel(SipKernelType::Csr, *device).getSipAllocation()->getGpuAddressToPatch(), stateSipCmd->getSystemInstructionPointer());
 }
 
-GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeMidBatch) {
+GEN9TEST_F(Gen9PreemptionTests, givenMidBatchPreemptionWhenProgrammingWaCmdsBeginThenExpectNoCmds) {
     size_t expectedSize = 0;
     device->setPreemptionMode(PreemptionMode::MidBatch);
     size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
     EXPECT_EQ(expectedSize, size);
 }
 
-GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeThreadGroupNoWa) {
+GEN9TEST_F(Gen9PreemptionTests, givenThreadGroupPreemptionNoWaSetWhenProgrammingWaCmdsBeginThenExpectNoCmd) {
     size_t expectedSize = 0;
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
@@ -84,7 +84,7 @@ GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeThreadGroupNoWa) {
     EXPECT_EQ(expectedSize, size);
 }
 
-GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeThreadGroupWa) {
+GEN9TEST_F(Gen9PreemptionTests, givenThreadGroupPreemptionWaSetWhenProgrammingWaCmdsBeginThenExpectCmd) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM);
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
@@ -93,7 +93,7 @@ GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeThreadGroupWa) {
     EXPECT_EQ(expectedSize, size);
 }
 
-GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeMidThreadNoWa) {
+GEN9TEST_F(Gen9PreemptionTests, givenMidThreadPreemptionNoWaSetWhenProgrammingWaCmdsBeginThenExpectNoCmd) {
     size_t expectedSize = 0;
     device->setPreemptionMode(PreemptionMode::MidThread);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
@@ -101,7 +101,7 @@ GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeMidThreadNoWa) {
     EXPECT_EQ(expectedSize, size);
 }
 
-GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeMidThreadWa) {
+GEN9TEST_F(Gen9PreemptionTests, givenMidThreadPreemptionWaSetWhenProgrammingWaCmdsBeginThenExpectCmd) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM);
     device->setPreemptionMode(PreemptionMode::MidThread);

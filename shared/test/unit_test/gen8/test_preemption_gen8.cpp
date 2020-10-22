@@ -36,14 +36,14 @@ GEN8TEST_F(Gen8PreemptionTests, whenProgramStateSipIsCalledThenNoCmdsAreProgramm
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
 
-GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeMidBatch) {
+GEN8TEST_F(Gen8PreemptionTests, GivenMidBatchWhenGettingPreemptionWaCsSizeThenSizeIsZero) {
     size_t expectedSize = 0;
     device->setPreemptionMode(PreemptionMode::MidBatch);
     size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
     EXPECT_EQ(expectedSize, size);
 }
 
-GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeThreadGroupNoWa) {
+GEN8TEST_F(Gen8PreemptionTests, GivenMidBatchAndNoWaWhenGettingPreemptionWaCsSizeThenSizeIsZero) {
     size_t expectedSize = 0;
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
@@ -51,7 +51,7 @@ GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeThreadGroupNoWa) {
     EXPECT_EQ(expectedSize, size);
 }
 
-GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeThreadGroupWa) {
+GEN8TEST_F(Gen8PreemptionTests, GivenMidBatchAndWaWhenGettingPreemptionWaCsSizeThenSizeIsNonZero) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM);
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
@@ -60,7 +60,7 @@ GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeThreadGroupWa) {
     EXPECT_EQ(expectedSize, size);
 }
 
-GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeMidThreadNoWa) {
+GEN8TEST_F(Gen8PreemptionTests, GivenMidThreadAndNoWaWhenGettingPreemptionWaCsSizeThenSizeIsZero) {
     size_t expectedSize = 0;
     device->setPreemptionMode(PreemptionMode::MidThread);
     device->getRootDeviceEnvironment().getMutableHardwareInfo()->workaroundTable.waModifyVFEStateAfterGPGPUPreemption = false;
@@ -68,7 +68,7 @@ GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeMidThreadNoWa) {
     EXPECT_EQ(expectedSize, size);
 }
 
-GEN8TEST_F(Gen8PreemptionTests, getPreemptionWaCsSizeMidThreadWa) {
+GEN8TEST_F(Gen8PreemptionTests, GivenMidThreadAndWaWhenGettingPreemptionWaCsSizeThenSizeNonIsZero) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM);
     device->setPreemptionMode(PreemptionMode::MidThread);
