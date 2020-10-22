@@ -202,7 +202,6 @@ struct CommandListCoreFamily : CommandListImp {
     void appendEventForProfiling(ze_event_handle_t hEvent, bool beforeWalker);
     void appendEventForProfilingCopyCommand(ze_event_handle_t hEvent, bool beforeWalker);
     void appendSignalEventPostWalker(ze_event_handle_t hEvent);
-    bool useMemCopyToBlitFill(size_t patternSize);
     void programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired);
     void programThreadArbitrationPolicy(Device *device);
 

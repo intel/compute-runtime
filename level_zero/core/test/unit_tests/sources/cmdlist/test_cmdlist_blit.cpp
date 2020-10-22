@@ -160,8 +160,8 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillCalledWithL
     cmdList.initialize(device, NEO::EngineGroupType::Copy);
     uint64_t pattern[4] = {1, 2, 3, 4};
     void *ptr = reinterpret_cast<void *>(0x1234);
-    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
-    EXPECT_GT(cmdList.appendMemoryCopyBlitCalledTimes, 0u);
+    auto ret = cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), 0x1000, nullptr);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, ret);
 }
 
 HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillToNotDeviceMemThenInvalidArgumentReturned, Platforms) {
@@ -173,7 +173,9 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillToNotDevice
     EXPECT_EQ(ret, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 }
 
-HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBltIsProgrammed, Platforms) {
+using MemFillPlatforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+
+HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBltIsProgrammed, MemFillPlatforms) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
     MockCommandListForMemFill<gfxCoreFamily> commandList;
@@ -189,21 +191,6 @@ HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppenBlitFillThenCopyBlt
     auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     device->setDriverHandle(driverHandle.get());
-}
-
-HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListWhenAppendBlitFillCalledWithLargePatternSizeThenInternalAllocHasPattern, Platforms) {
-    MockCommandListForMemFill<gfxCoreFamily> cmdList;
-    cmdList.initialize(device, NEO::EngineGroupType::Copy);
-    uint64_t pattern[4] = {1, 2, 3, 4};
-    void *ptr = reinterpret_cast<void *>(0x1234);
-    uint32_t fillElements = 0x101;
-    auto size = fillElements * sizeof(uint64_t);
-    cmdList.appendMemoryFill(ptr, reinterpret_cast<void *>(&pattern), sizeof(pattern), size, nullptr);
-    auto internalAlloc = cmdList.commandContainer.getDeallocationContainer()[0];
-    for (uint32_t i = 0; i < fillElements; i++) {
-        auto allocValue = reinterpret_cast<uint64_t *>(internalAlloc->getUnderlyingBuffer())[i];
-        EXPECT_EQ(allocValue, pattern[i % 4]);
-    }
 }
 
 HWTEST2_F(AppendMemoryCopy, givenCopyOnlyCommandListAndHostPointersWhenMemoryCopyCalledThenPipeControlWithDcFlushAddedIsNotAddedAfterBlitCopy, Platforms) {

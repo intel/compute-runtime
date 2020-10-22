@@ -8,7 +8,9 @@
 #include "shared/source/gen8/aub_mapper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
+#include "shared/source/helpers/hw_helper_base.inl"
 #include "shared/source/helpers/hw_helper_bdw_plus.inl"
+#include "shared/source/helpers/hw_helper_bdw_to_icllp.inl"
 
 namespace NEO {
 typedef BDWFamily Family;

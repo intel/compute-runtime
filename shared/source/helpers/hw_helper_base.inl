@@ -395,11 +395,6 @@ uint32_t HwHelperHw<GfxFamily>::getMaxThreadsForWorkgroup(const HardwareInfo &hw
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::isFusedEuDispatchEnabled(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
 inline bool HwHelperHw<GfxFamily>::isSpecialWorkgroupSizeRequired(const HardwareInfo &hwInfo, bool isSimulation) const {
     return false;
 }
@@ -492,11 +487,6 @@ bool HwHelperHw<GfxFamily>::useOnlyGlobalTimestamps() const {
 template <typename GfxFamily>
 bool HwHelperHw<GfxFamily>::useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const {
     return !getEnableLocalMemory(hwInfo);
-}
-
-template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::packedFormatsSupported() const {
-    return false;
 }
 
 template <typename GfxFamily>

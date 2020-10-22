@@ -1035,5 +1035,27 @@ HWTEST2_F(CommandListCreate, givenCommandList, SupportedPlatforms) {
     auto size = helper.getRenderSurfaceStateSize();
     EXPECT_EQ(commandList.getReserveSshSize(), size);
 }
+
+HWTEST_F(CommandListCreate, GivenCommandListWhenUnalignedPtrThenLeftMiddleAndRightCopyAdded) {
+    using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(device, commandList->device);
+
+    void *srcPtr = reinterpret_cast<void *>(0x4321);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 2 * MemoryConstants::cacheLineSize, nullptr, 0, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    GenCmdList cmdList;
+
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(cmdList.begin(), cmdList.end());
+    for (uint32_t i = 0; i < 3u; i++, itor++) {
+        EXPECT_NE(itor++, cmdList.end());
+    }
+}
 } // namespace ult
 } // namespace L0

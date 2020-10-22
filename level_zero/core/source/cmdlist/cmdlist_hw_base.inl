@@ -105,9 +105,4 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(z
 
     return ZE_RESULT_SUCCESS;
 }
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::useMemCopyToBlitFill(size_t patternSize) {
-    return patternSize > sizeof(uint32_t);
-}
 } // namespace L0

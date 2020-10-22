@@ -127,6 +127,7 @@ class HwHelper {
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
     virtual bool packedFormatsSupported() const = 0;
     virtual bool isCooperativeDispatchSupported(const aub_stream::EngineType engine, const PRODUCT_FAMILY productFamily) const = 0;
+    virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
 
     static uint32_t getSubDevicesCount(const HardwareInfo *pHwInfo);
     static uint32_t getEnginesCount(const HardwareInfo &hwInfo);
@@ -310,6 +311,7 @@ class HwHelperHw : public HwHelper {
     bool packedFormatsSupported() const override;
 
     bool isCooperativeDispatchSupported(const aub_stream::EngineType engine, const PRODUCT_FAMILY productFamily) const override;
+    size_t getMaxFillPaternSizeForCopyEngine() const override;
 
   protected:
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

@@ -5,8 +5,8 @@
  *
  */
 
-#include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/hw_helper_base.inl"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
 
@@ -112,15 +112,5 @@ inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlExtraPropert
 
 template <typename GfxFamily>
 bool MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) { return false; }
-
-template <typename GfxFamily>
-void LriHelper<GfxFamily>::program(LinearStream *cmdStream, uint32_t address, uint32_t value, bool remap) {
-    MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
-    cmd.setRegisterOffset(address);
-    cmd.setDataDword(value);
-
-    auto lri = cmdStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
-    *lri = cmd;
-}
 
 } // namespace NEO

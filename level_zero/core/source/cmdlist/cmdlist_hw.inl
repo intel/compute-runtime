@@ -1207,24 +1207,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBlitFill(void *ptr,
                                                                  size_t size,
                                                                  ze_event_handle_t hEvent) {
     auto neoDevice = device->getNEODevice();
-    if (useMemCopyToBlitFill(patternSize)) {
-        NEO::AllocationProperties properties = {neoDevice->getRootDeviceIndex(),
-                                                false,
-                                                size,
-                                                NEO::GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
-                                                false,
-                                                neoDevice->getDeviceBitfield()};
-        properties.flags.allocateMemory = 1;
-        auto internalAlloc = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
-        size_t offset = 0;
-        for (uint32_t i = 0; i < size / patternSize; i++) {
-            memcpy_s(ptrOffset(internalAlloc->getUnderlyingBuffer(), offset), (internalAlloc->getUnderlyingBufferSize() - offset), pattern, patternSize);
-            offset += patternSize;
-        }
-        memcpy_s(ptrOffset(internalAlloc->getUnderlyingBuffer(), offset), (internalAlloc->getUnderlyingBufferSize() - offset), pattern, size - offset);
-        auto ret = CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(ptr, internalAlloc->getUnderlyingBuffer(), size, hEvent, 0, nullptr);
-        commandContainer.getDeallocationContainer().push_back(internalAlloc);
-        return ret;
+    if (NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).getMaxFillPaternSizeForCopyEngine() < patternSize) {
+        return ZE_RESULT_ERROR_INVALID_SIZE;
     } else {
         appendEventForProfiling(hEvent, true);
         NEO::SvmAllocationData *allocData = nullptr;

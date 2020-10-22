@@ -54,7 +54,7 @@ HWTEST2_F(DeviceQueueGroupTest, givenCommandQueuePropertiesCallThenCorrectNumber
     EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
     EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
     EXPECT_EQ(properties.numQueues, 1u);
-    EXPECT_EQ(properties.maxMemoryFillPatternSize, sizeof(uint32_t));
+    EXPECT_EQ(properties.maxMemoryFillPatternSize, std::numeric_limits<size_t>::max());
 }
 
 HWTEST2_F(DeviceQueueGroupTest, givenQueueGroupsReturnedThenCommandListIsCreatedCorrectly, IsGen9) {
@@ -72,7 +72,7 @@ HWTEST2_F(DeviceQueueGroupTest, givenQueueGroupsReturnedThenCommandListIsCreated
     EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS);
     EXPECT_TRUE(properties.flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS);
     EXPECT_EQ(properties.numQueues, 1u);
-    EXPECT_EQ(properties.maxMemoryFillPatternSize, sizeof(uint32_t));
+    EXPECT_EQ(properties.maxMemoryFillPatternSize, std::numeric_limits<size_t>::max());
 
     ze_context_handle_t hContext;
     ze_context_desc_t contextDesc;

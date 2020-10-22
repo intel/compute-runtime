@@ -155,15 +155,19 @@ ze_result_t DeviceImp::getCommandQueueGroupProperties(uint32_t *pCount,
                                                                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY |
                                                                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COOPERATIVE_KERNELS |
                                                                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_METRICS;
+            pCommandQueueGroupProperties[engineGroupCount].maxMemoryFillPatternSize = std::numeric_limits<size_t>::max();
         }
         if (i == static_cast<uint32_t>(NEO::EngineGroupType::Compute)) {
             pCommandQueueGroupProperties[engineGroupCount].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE |
                                                                    ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
+            pCommandQueueGroupProperties[engineGroupCount].maxMemoryFillPatternSize = std::numeric_limits<size_t>::max();
         }
         if (i == static_cast<uint32_t>(NEO::EngineGroupType::Copy)) {
             pCommandQueueGroupProperties[engineGroupCount].flags = ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
+            const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
+            auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
+            pCommandQueueGroupProperties[engineGroupCount].maxMemoryFillPatternSize = hwHelper.getMaxFillPaternSizeForCopyEngine();
         }
-        pCommandQueueGroupProperties[engineGroupCount].maxMemoryFillPatternSize = sizeof(uint32_t);
         pCommandQueueGroupProperties[engineGroupCount].numQueues = static_cast<uint32_t>(engines[i].size());
         engineGroupCount++;
     }
