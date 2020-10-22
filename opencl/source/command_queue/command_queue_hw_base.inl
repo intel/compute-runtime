@@ -116,7 +116,7 @@ void CommandQueueHw<Family>::dispatchAuxTranslationBuiltin(MultiDispatchInfo &mu
         return;
     }
 
-    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getDevice());
+    auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getClDevice());
     auto &auxTranslationBuilder = static_cast<BuiltInOp<EBuiltInOps::AuxTranslation> &>(builder);
     BuiltinOpParams dispatchParams;
 

@@ -10,8 +10,6 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/api_specific_config.h"
 
-#include "opencl/source/built_ins/builtins_dispatch_builder.h"
-
 #include "os_inc.h"
 
 #include <cstdint>
@@ -183,25 +181,6 @@ BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps::Type builtin, BuiltinCode::
     ret.type = usedCodetType;
     ret.targetDevice = &device;
 
-    return ret;
-}
-
-std::unique_ptr<Program> BuiltinsLib::createProgramFromCode(const BuiltinCode &bc, Device &device) {
-    std::unique_ptr<Program> ret;
-    const char *data = bc.resource.data();
-    size_t dataLen = bc.resource.size();
-    cl_int err = 0;
-    switch (bc.type) {
-    default:
-        break;
-    case BuiltinCode::ECodeType::Source:
-    case BuiltinCode::ECodeType::Intermediate:
-        ret.reset(Program::create(data, nullptr, device, true, &err));
-        break;
-    case BuiltinCode::ECodeType::Binary:
-        ret.reset(Program::createFromGenBinary(*device.getExecutionEnvironment(), nullptr, data, dataLen, true, nullptr, &device));
-        break;
-    }
     return ret;
 }
 

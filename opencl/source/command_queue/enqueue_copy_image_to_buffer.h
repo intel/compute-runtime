@@ -36,7 +36,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImageToBuffer(
         eBuiltInOpsType = EBuiltInOps::CopyImage3dToBufferStateless;
     }
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(eBuiltInOpsType,
-                                                                            this->getDevice());
+                                                                            this->getClDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface srcImgSurf(srcImage);

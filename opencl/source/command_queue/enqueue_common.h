@@ -64,7 +64,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         forceDispatchScheduler(multiDispatchInfo);
     } else {
         if (kernel->isAuxTranslationRequired()) {
-            auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getDevice());
+            auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getClDevice());
             builtInLock.takeOwnership(builder, this->context);
             kernel->fillWithBuffersForAuxTranslation(memObjsForAuxTranslation);
             multiDispatchInfo.setMemObjsForAuxTranslation(memObjsForAuxTranslation);
@@ -1111,7 +1111,7 @@ void CommandQueueHw<GfxFamily>::dispatchBcsOrGpgpuEnqueue(MultiDispatchInfo &dis
         enqueueBlit<cmdType>(dispatchInfo, numEventsInWaitList, eventWaitList, event, blocking);
     } else {
         auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInOperation,
-                                                                                this->getDevice());
+                                                                                this->getClDevice());
         BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
         builder.buildDispatchInfos(dispatchInfo);

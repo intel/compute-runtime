@@ -32,6 +32,7 @@ class MemoryManager;
 class SharingFunctions;
 class SVMAllocsManager;
 class SchedulerKernel;
+class Program;
 
 template <>
 struct OpenCLObjectMapper<_cl_context> {
@@ -161,6 +162,16 @@ class Context : public BaseObject<_cl_context> {
     }
 
   protected:
+    struct BuiltInKernel {
+        const char *pSource = nullptr;
+        Program *pProgram = nullptr;
+        std::once_flag programIsInitialized; // guard for creating+building the program
+        Kernel *pKernel = nullptr;
+
+        BuiltInKernel() {
+        }
+    };
+
     Context(void(CL_CALLBACK *pfnNotify)(const char *, const void *, size_t, void *) = nullptr,
             void *userData = nullptr);
 

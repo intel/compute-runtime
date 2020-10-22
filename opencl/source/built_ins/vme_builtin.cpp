@@ -41,7 +41,7 @@ static const std::tuple<const char *, const char *> mediaBuiltIns[] = {
 // call and user is responsible for releasing it by calling clReleaseProgram.
 Program *Vme::createBuiltInProgram(
     Context &context,
-    Device &device,
+    const ClDeviceVector &deviceVector,
     const char *kernelNames,
     int &errcodeRet) {
     std::string programSourceStr = "";
@@ -68,7 +68,9 @@ Program *Vme::createBuiltInProgram(
     }
 
     Program *pBuiltInProgram = nullptr;
-    pBuiltInProgram = Program::create(programSourceStr.c_str(), &context, device, true, nullptr);
+    pBuiltInProgram = Program::create(programSourceStr.c_str(), &context, deviceVector, true, nullptr);
+
+    auto &device = *deviceVector[0];
 
     if (pBuiltInProgram) {
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtinsBuilders;
@@ -79,7 +81,7 @@ Program *Vme::createBuiltInProgram(
         builtinsBuilders["block_advanced_motion_estimate_bidirectional_check_intel"] =
             &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, device);
 
-        errcodeRet = pBuiltInProgram->build(&device, mediaKernelsBuildOptions, true, builtinsBuilders);
+        errcodeRet = pBuiltInProgram->build(&device.getDevice(), mediaKernelsBuildOptions, true, builtinsBuilders);
     } else {
         errcodeRet = CL_INVALID_VALUE;
     }
@@ -99,8 +101,8 @@ const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {
     }
 }
 
-BuiltinDispatchInfoBuilder &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, Device &device) {
-    auto &builtins = *device.getBuiltIns();
+BuiltinDispatchInfoBuilder &Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device) {
+    auto &builtins = *device.getDevice().getBuiltIns();
     uint32_t operationId = static_cast<uint32_t>(operation);
     auto &operationBuilder = builtins.BuiltinOpsBuilders[operationId];
     switch (operation) {

@@ -226,6 +226,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     CommandStreamReceiver *getBcsCommandStreamReceiver() const;
     MOCKABLE_VIRTUAL CommandStreamReceiver &getCommandStreamReceiverByCommandType(cl_command_type cmdType) const;
     Device &getDevice() const noexcept;
+    ClDevice &getClDevice() const { return *device; }
     Context &getContext() const { return *context; }
     Context *getContextPtr() const { return context; }
     EngineControl &getGpgpuEngine() const { return *gpgpuEngine; }

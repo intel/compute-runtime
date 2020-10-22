@@ -68,7 +68,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenProgramInterfaceDescriptor
     ASSERT_NE(nullptr, dstImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                            cmdQ.getDevice());
+                                                                            cmdQ.getClDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -141,7 +141,7 @@ HWTEST_F(HardwareCommandsTest, WhenCrossThreadDataIsCreatedThenOnlyRequiredSpace
     ASSERT_NE(nullptr, dstImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                            cmdQ.getDevice());
+                                                                            cmdQ.getClDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -290,7 +290,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenAllocatingIndirectStateRes
     ASSERT_NE(nullptr, dstImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                            cmdQ.getDevice());
+                                                                            cmdQ.getClDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;
@@ -509,7 +509,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, whenSendingIndirectStateThenKe
     std::unique_ptr<Image> img(Image2dHelper<>::create(pContext));
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                            cmdQ.getDevice());
+                                                                            cmdQ.getClDevice());
 
     BuiltinOpParams dc;
     dc.srcMemObj = img.get();
@@ -592,7 +592,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, WhenSendingIndirectStateThenBi
     ASSERT_NE(nullptr, dstImage.get());
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
-                                                                            cmdQ.getDevice());
+                                                                            cmdQ.getClDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinOpParams dc;

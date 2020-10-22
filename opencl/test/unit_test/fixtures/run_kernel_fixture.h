@@ -17,7 +17,6 @@ struct CommandStreamFixture;
 
 // helper functions to enforce MockCompiler input files
 inline void overwriteBuiltInBinaryName(
-    Device *pDevice,
     const std::string &filename,
     bool appendOptionsToFileName = false) {
     // set mock compiler to return expected kernel...
@@ -34,7 +33,7 @@ inline void overwriteBuiltInBinaryName(
     gEnvironment->igcPushDebugVars(igcDebugVars);
 }
 
-inline void restoreBuiltInBinaryName(Device *pDevice) {
+inline void restoreBuiltInBinaryName() {
     gEnvironment->igcPopDebugVars();
     gEnvironment->fclPopDebugVars();
 }

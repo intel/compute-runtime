@@ -1427,28 +1427,32 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
                    "deviceList", deviceList,
                    "kernelNames", kernelNames);
     cl_program program = nullptr;
+    Context *pContext = nullptr;
 
-    retVal = validateObjects(
-        context, deviceList, kernelNames, errcodeRet);
+    retVal = validateObjects(WithCastToInternal(context, &pContext), numDevices,
+                             deviceList, kernelNames, errcodeRet);
 
     if (numDevices == 0) {
         retVal = CL_INVALID_VALUE;
     }
 
     if (retVal == CL_SUCCESS) {
-
-        for (cl_uint i = 0; i < numDevices; i++) {
-            auto pContext = castToObject<Context>(context);
-            auto pDevice = castToObject<ClDevice>(*deviceList);
+        ClDeviceVector deviceVector;
+        for (auto i = 0u; i < numDevices; i++) {
+            auto device = castToObject<ClDevice>(deviceList[i]);
+            if (!device || !pContext->isDeviceAssociated(*device)) {
+                retVal = CL_INVALID_DEVICE;
+                break;
+            }
+            deviceVector.push_back(device);
+        }
+        if (retVal == CL_SUCCESS) {
 
             program = Vme::createBuiltInProgram(
                 *pContext,
-                pDevice->getDevice(),
+                deviceVector,
                 kernelNames,
                 retVal);
-            if (program && retVal == CL_SUCCESS) {
-                break;
-            }
         }
     }
 

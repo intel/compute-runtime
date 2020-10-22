@@ -103,15 +103,7 @@ class Program : public BaseObject<_cl_program> {
     static T *create(
         const char *nullTerminatedString,
         Context *context,
-        ClDevice &device,
-        bool isBuiltIn,
-        cl_int *errcodeRet);
-
-    template <typename T = Program>
-    static T *create(
-        const char *nullTerminatedString,
-        Context *context,
-        Device &device,
+        const ClDeviceVector &deviceVector,
         bool isBuiltIn,
         cl_int *errcodeRet);
 

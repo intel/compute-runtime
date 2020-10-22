@@ -1841,7 +1841,7 @@ TEST_F(ProgramTests, Given32bitSupportWhenProgramIsCreatedThenGreaterThan4gbBuff
     auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
-    std::unique_ptr<MockProgram> program{Program::create<MockProgram>("", pContext, *pClDevice, true, nullptr)};
+    std::unique_ptr<MockProgram> program{Program::create<MockProgram>("", pContext, pContext->getDevices(), true, nullptr)};
     if ((false == pDevice->areSharedSystemAllocationsAllowed()) && (false == is32bit)) {
         EXPECT_FALSE(CompilerOptions::contains(program->getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << program->getInternalOptions();
     } else {
@@ -1854,13 +1854,13 @@ TEST_F(ProgramTests, GivenStatelessToStatefulIsDisabledWhenProgramIsCreatedThenG
     auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
-    std::unique_ptr<MockProgram> program{Program::create<MockProgram>("", pContext, *pClDevice, true, nullptr)};
+    std::unique_ptr<MockProgram> program{Program::create<MockProgram>("", pContext, pContext->getDevices(), true, nullptr)};
     EXPECT_TRUE(CompilerOptions::contains(program->getInternalOptions(), NEO::CompilerOptions::greaterThan4gbBuffersRequired)) << program->getInternalOptions();
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(defaultSetting);
 }
 
 TEST_F(ProgramTests, givenProgramWhenItIsCompiledThenItAlwaysHavePreserveVec3TypeInternalOptionSet) {
-    std::unique_ptr<MockProgram> program(Program::create<MockProgram>("", pContext, *pClDevice, true, nullptr));
+    std::unique_ptr<MockProgram> program(Program::create<MockProgram>("", pContext, pContext->getDevices(), true, nullptr));
     EXPECT_TRUE(CompilerOptions::contains(program->getInternalOptions(), CompilerOptions::preserveVec3Type)) << program->getInternalOptions();
 }
 
@@ -1869,7 +1869,7 @@ TEST_F(ProgramTests, Force32BitAddressessWhenProgramIsCreatedThenGreaterThan4gbB
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
-    std::unique_ptr<MockProgram> program{Program::create<MockProgram>("", pContext, *pClDevice, true, nullptr)};
+    std::unique_ptr<MockProgram> program{Program::create<MockProgram>("", pContext, pContext->getDevices(), true, nullptr)};
     if (is32bit) {
         EXPECT_TRUE(CompilerOptions::contains(program->getInternalOptions(), CompilerOptions::greaterThan4gbBuffersRequired)) << program->getInternalOptions();
     } else {
@@ -1911,7 +1911,7 @@ TEST_F(ProgramTests, GivenContextWhenCreateProgramThenIncrementContextRefCount) 
     auto initialApiRefCount = pContext->getReference();
     auto initialInternalRefCount = pContext->getRefInternalCount();
 
-    MockProgram *program = new MockProgram(pContext, false, toClDeviceVector(*pClDevice));
+    MockProgram *program = new MockProgram(pContext, false, pContext->getDevices());
 
     EXPECT_EQ(pContext->getReference(), initialApiRefCount);
     EXPECT_EQ(pContext->getRefInternalCount(), initialInternalRefCount + 1);
@@ -1924,9 +1924,9 @@ TEST_F(ProgramTests, GivenContextWhenCreateProgramFromSourceThenIncrementContext
     auto initialApiRefCount = pContext->getReference();
     auto initialInternalRefCount = pContext->getRefInternalCount();
 
-    auto tempProgram = Program::create("", nullptr, *pClDevice, false, nullptr);
+    auto tempProgram = Program::create("", nullptr, pContext->getDevices(), false, nullptr);
     EXPECT_FALSE(tempProgram->getIsBuiltIn());
-    auto program = Program::create("", pContext, *pClDevice, false, nullptr);
+    auto program = Program::create("", pContext, pContext->getDevices(), false, nullptr);
     EXPECT_FALSE(program->getIsBuiltIn());
 
     EXPECT_EQ(pContext->getReference(), initialApiRefCount);
@@ -1943,9 +1943,9 @@ TEST_F(ProgramTests, GivenContextWhenCreateBuiltInProgramFromSourceThenDontIncre
     auto initialApiRefCount = pContext->getReference();
     auto initialInternalRefCount = pContext->getRefInternalCount();
 
-    auto tempProgram = Program::create("", nullptr, *pClDevice, true, nullptr);
+    auto tempProgram = Program::create("", nullptr, pContext->getDevices(), true, nullptr);
     EXPECT_TRUE(tempProgram->getIsBuiltIn());
-    auto program = Program::create("", pContext, *pClDevice, true, nullptr);
+    auto program = Program::create("", pContext, pContext->getDevices(), true, nullptr);
     EXPECT_TRUE(program->getIsBuiltIn());
 
     EXPECT_EQ(pContext->getReference(), initialApiRefCount);
@@ -1960,12 +1960,12 @@ TEST_F(ProgramTests, GivenContextWhenCreateBuiltInProgramFromSourceThenDontIncre
 
 TEST_F(ProgramTests, WhenBuildingProgramThenPointerToProgramIsReturned) {
     cl_int retVal = CL_DEVICE_NOT_FOUND;
-    Program *pProgram = Program::create("", pContext, *pClDevice, false, &retVal);
+    Program *pProgram = Program::create("", pContext, pContext->getDevices(), false, &retVal);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
     delete pProgram;
 
-    pProgram = Program::create("", pContext, *pClDevice, false, nullptr);
+    pProgram = Program::create("", pContext, pContext->getDevices(), false, nullptr);
     EXPECT_NE(nullptr, pProgram);
     delete pProgram;
 }

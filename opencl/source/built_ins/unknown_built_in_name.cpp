@@ -15,7 +15,7 @@ const char *getUnknownBuiltinAsString(EBuiltInOps::Type builtin) {
     return "unknown";
 }
 
-BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getUnknownDispatchInfoBuilder(EBuiltInOps::Type operation, Device &device) {
+BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getUnknownDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device) {
     throw std::runtime_error("getBuiltinDispatchInfoBuilder failed");
 }
 } // namespace NEO

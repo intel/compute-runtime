@@ -232,7 +232,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenWriteImageIsCalledThenRowPi
     EBuiltInOps::Type copyBuiltIn = EBuiltInOps::CopyBufferToImage3d;
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         copyBuiltIn,
-        pCmdQ->getDevice());
+        pCmdQ->getClDevice());
 
     // substitute original builder with mock builder
     auto oldBuilder = builtIns->setBuiltinDispatchInfoBuilder(
@@ -252,7 +252,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenWriteImageIsCalledThenRowPi
     EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, destImage, CL_FALSE, origin, region, rowPitch, slicePitch);
 
     auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(copyBuiltIn,
-                                                                                                                              pCmdQ->getDevice()));
+                                                                                                                              pCmdQ->getClDevice()));
     auto params = mockBuilder.getBuiltinOpParams();
     EXPECT_EQ(params->dstRowPitch, slicePitch);
 
@@ -427,7 +427,7 @@ HWTEST_P(MipMapWriteImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalle
 
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyBufferToImage3d,
-        pCmdQ->getDevice());
+        pCmdQ->getClDevice());
 
     // substitute original builder with mock builder
     auto oldBuilder = builtIns->setBuiltinDispatchInfoBuilder(
@@ -492,7 +492,7 @@ HWTEST_P(MipMapWriteImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalle
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
-                                                                                                                              pCmdQ->getDevice()));
+                                                                                                                              pCmdQ->getClDevice()));
     auto params = mockBuilder.getBuiltinOpParams();
 
     EXPECT_EQ(expectedMipLevel, params->dstMipLevel);

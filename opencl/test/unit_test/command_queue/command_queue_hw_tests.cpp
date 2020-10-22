@@ -780,7 +780,7 @@ struct BuiltinParamsCommandQueueHwTests : public CommandQueueHwTest {
 
         mockBuilder = static_cast<MockBuilder *>(&BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
             operation,
-            *pDevice));
+            *pClDevice));
     }
 
     MockBuilder *mockBuilder;

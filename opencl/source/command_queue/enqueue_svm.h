@@ -459,7 +459,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
     }
 
     auto &builder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(builtInType,
-                                                                            this->getDevice());
+                                                                            this->getClDevice());
 
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 

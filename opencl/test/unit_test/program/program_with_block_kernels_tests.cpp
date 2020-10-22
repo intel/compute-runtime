@@ -94,9 +94,7 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLink
     CreateProgramFromBinary(pContext, pContext->getDevices(), "simple_block_kernel", "-cl-std=CL2.0");
     const char *buildOptions = "-cl-std=CL2.0";
 
-    overwriteBuiltInBinaryName(
-        &pPlatform->getClDevice(0)->getDevice(),
-        "simple_block_kernel", true);
+    overwriteBuiltInBinaryName("simple_block_kernel", true);
 
     ASSERT_NE(nullptr, pProgram);
 
@@ -121,7 +119,7 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLink
             break;
         }
     }
-    restoreBuiltInBinaryName(nullptr);
+    restoreBuiltInBinaryName();
     delete programLinked;
 }
 

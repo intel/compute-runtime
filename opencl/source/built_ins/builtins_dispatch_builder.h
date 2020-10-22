@@ -26,6 +26,7 @@
 namespace NEO {
 typedef std::vector<char> BuiltinResourceT;
 
+class ClDeviceVector;
 class Context;
 class Device;
 class MemObj;
@@ -59,7 +60,7 @@ class BuiltinDispatchInfoBuilder {
     virtual ~BuiltinDispatchInfoBuilder() = default;
 
     template <typename... KernelsDescArgsT>
-    void populate(Device &device, EBuiltInOps::Type operation, ConstStringRef options, KernelsDescArgsT &&... desc);
+    void populate(ClDevice &device, EBuiltInOps::Type operation, ConstStringRef options, KernelsDescArgsT &&... desc);
 
     virtual bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo) const {
         return false;
@@ -82,6 +83,8 @@ class BuiltinDispatchInfoBuilder {
 
     std::vector<std::unique_ptr<Kernel>> &peekUsedKernels() { return usedKernels; }
 
+    static std::unique_ptr<Program> createProgramFromCode(const BuiltinCode &bc, const ClDeviceVector &device);
+
   protected:
     template <typename KernelNameT, typename... KernelsDescArgsT>
     void grabKernels(KernelNameT &&kernelName, Kernel *&kernelDst, KernelsDescArgsT &&... kernelsDesc) {
@@ -103,10 +106,8 @@ class BuiltinDispatchInfoBuilder {
 
 class BuiltInDispatchBuilderOp {
   public:
-    static BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Device &device);
-    static BuiltinDispatchInfoBuilder &getUnknownDispatchInfoBuilder(EBuiltInOps::Type op, Device &device);
-    std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, Device &device,
-                                                                              std::unique_ptr<BuiltinDispatchInfoBuilder> newBuilder);
+    static BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps::Type op, ClDevice &device);
+    static BuiltinDispatchInfoBuilder &getUnknownDispatchInfoBuilder(EBuiltInOps::Type op, ClDevice &device);
 };
 
 class BuiltInOwnershipWrapper : public NonCopyableOrMovableClass {

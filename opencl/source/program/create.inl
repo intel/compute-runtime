@@ -88,7 +88,7 @@ template <typename T>
 T *Program::create(
     const char *nullTerminatedString,
     Context *context,
-    ClDevice &device,
+    const ClDeviceVector &deviceVector,
     bool isBuiltIn,
     cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
@@ -99,8 +99,6 @@ T *Program::create(
     }
 
     if (retVal == CL_SUCCESS) {
-        ClDeviceVector deviceVector;
-        deviceVector.push_back(&device);
         program = new T(context, isBuiltIn, deviceVector);
         program->sourceCode = nullTerminatedString;
         program->createdFrom = CreatedFrom::SOURCE;
@@ -111,16 +109,6 @@ T *Program::create(
     }
 
     return program;
-}
-
-template <typename T>
-T *Program::create(
-    const char *nullTerminatedString,
-    Context *context,
-    Device &device,
-    bool isBuiltIn,
-    cl_int *errcodeRet) {
-    return Program::create<T>(nullTerminatedString, context, *device.getSpecializedDevice<ClDevice>(), isBuiltIn, errcodeRet);
 }
 
 template <typename T>

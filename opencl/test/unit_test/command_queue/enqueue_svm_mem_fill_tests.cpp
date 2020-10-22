@@ -78,7 +78,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     // retrieve original builder
     auto &origBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         EBuiltInOps::FillBuffer,
-        pCmdQ->getDevice());
+        pCmdQ->getClDevice());
     ASSERT_NE(nullptr, &origBuilder);
 
     // substitute original builder with mock builder
@@ -112,7 +112,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     // check if original builder is restored correctly
     auto &restoredBuilder = BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(
         EBuiltInOps::FillBuffer,
-        pCmdQ->getDevice());
+        pCmdQ->getClDevice());
     EXPECT_EQ(&origBuilder, &restoredBuilder);
 
     // use mock builder to validate builder's input / output

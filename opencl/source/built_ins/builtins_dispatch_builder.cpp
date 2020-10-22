@@ -33,7 +33,7 @@ namespace NEO {
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : BuiltinDispatchInfoBuilder(kernelsLib) {
         populate(device,
                  EBuiltInOps::CopyBufferToBuffer,
@@ -128,7 +128,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBui
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToBufferStateless> : public BuiltInOp<EBuiltInOps::CopyBufferToBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : BuiltInOp<EBuiltInOps::CopyBufferToBuffer>(kernelsLib) {
         populate(device,
                  EBuiltInOps::CopyBufferToBufferStateless,
@@ -146,7 +146,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBufferStateless> : public BuiltInOp<EBu
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferRect> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : BuiltinDispatchInfoBuilder(kernelsLib), kernelBytes{nullptr} {
         populate(device,
                  EBuiltInOps::CopyBufferRect,
@@ -251,7 +251,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferRect> : public BuiltinDispatchInfoBuilder
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferRectStateless> : public BuiltInOp<EBuiltInOps::CopyBufferRect> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : BuiltInOp<EBuiltInOps::CopyBufferRect>(kernelsLib) {
         populate(device,
                  EBuiltInOps::CopyBufferRectStateless,
@@ -268,7 +268,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferRectStateless> : public BuiltInOp<EBuiltI
 template <>
 class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : BuiltinDispatchInfoBuilder(kernelsLib) {
         populate(device,
                  EBuiltInOps::FillBuffer,
@@ -353,7 +353,7 @@ class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
 template <>
 class BuiltInOp<EBuiltInOps::FillBufferStateless> : public BuiltInOp<EBuiltInOps::FillBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device) : BuiltInOp<EBuiltInOps::FillBuffer>(kernelsLib) {
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device) : BuiltInOp<EBuiltInOps::FillBuffer>(kernelsLib) {
         populate(device,
                  EBuiltInOps::FillBufferStateless,
                  CompilerOptions::greaterThan4gbBuffersRequired,
@@ -369,7 +369,7 @@ class BuiltInOp<EBuiltInOps::FillBufferStateless> : public BuiltInOp<EBuiltInOps
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : BuiltinDispatchInfoBuilder(kernelsLib) {
         populate(device,
                  EBuiltInOps::CopyBufferToImage3d,
@@ -463,7 +463,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3d> : public BuiltinDispatchInfoBu
 template <>
 class BuiltInOp<EBuiltInOps::CopyBufferToImage3dStateless> : public BuiltInOp<EBuiltInOps::CopyBufferToImage3d> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : BuiltInOp<EBuiltInOps::CopyBufferToImage3d>(kernelsLib) {
         populate(device,
                  EBuiltInOps::CopyBufferToImage3dStateless,
@@ -483,7 +483,7 @@ class BuiltInOp<EBuiltInOps::CopyBufferToImage3dStateless> : public BuiltInOp<EB
 template <>
 class BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : BuiltinDispatchInfoBuilder(kernelsLib) {
         populate(device,
                  EBuiltInOps::CopyImage3dToBuffer,
@@ -578,7 +578,7 @@ class BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDispatchInfoBu
 template <>
 class BuiltInOp<EBuiltInOps::CopyImage3dToBufferStateless> : public BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : BuiltInOp<EBuiltInOps::CopyImage3dToBuffer>(kernelsLib) {
         populate(device,
                  EBuiltInOps::CopyImage3dToBufferStateless,
@@ -598,7 +598,7 @@ class BuiltInOp<EBuiltInOps::CopyImage3dToBufferStateless> : public BuiltInOp<EB
 template <>
 class BuiltInOp<EBuiltInOps::CopyImageToImage3d> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : BuiltinDispatchInfoBuilder(kernelsLib), kernel(nullptr) {
         populate(device,
                  EBuiltInOps::CopyImageToImage3d,
@@ -664,7 +664,7 @@ class BuiltInOp<EBuiltInOps::CopyImageToImage3d> : public BuiltinDispatchInfoBui
 template <>
 class BuiltInOp<EBuiltInOps::FillImage3d> : public BuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : BuiltinDispatchInfoBuilder(kernelsLib), kernel(nullptr) {
         populate(device,
                  EBuiltInOps::FillImage3d,
@@ -719,9 +719,9 @@ class BuiltInOp<EBuiltInOps::FillImage3d> : public BuiltinDispatchInfoBuilder {
     Kernel *kernel;
 };
 
-BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, Device &device) {
+BuiltinDispatchInfoBuilder &BuiltInDispatchBuilderOp::getBuiltinDispatchInfoBuilder(EBuiltInOps::Type operation, ClDevice &device) {
     uint32_t operationId = static_cast<uint32_t>(operation);
-    auto kernelsLib = device.getBuiltIns();
+    auto kernelsLib = device.getDevice().getBuiltIns();
     auto &operationBuilder = kernelsLib->BuiltinOpsBuilders[operationId];
     switch (operation) {
     case EBuiltInOps::CopyBufferToBuffer:
@@ -787,6 +787,25 @@ void BuiltInOwnershipWrapper::takeOwnership(BuiltinDispatchInfoBuilder &inputBui
         kernel->takeOwnership();
         kernel->setContext(context);
     }
+}
+
+std::unique_ptr<Program> BuiltinDispatchInfoBuilder::createProgramFromCode(const BuiltinCode &bc, const ClDeviceVector &deviceVector) {
+    std::unique_ptr<Program> ret;
+    const char *data = bc.resource.data();
+    size_t dataLen = bc.resource.size();
+    cl_int err = 0;
+    switch (bc.type) {
+    default:
+        break;
+    case BuiltinCode::ECodeType::Source:
+    case BuiltinCode::ECodeType::Intermediate:
+        ret.reset(Program::create(data, nullptr, deviceVector, true, &err));
+        break;
+    case BuiltinCode::ECodeType::Binary:
+        ret.reset(Program::createFromGenBinary(*deviceVector[0]->getExecutionEnvironment(), nullptr, data, dataLen, true, nullptr, &deviceVector[0]->getDevice()));
+        break;
+    }
+    return ret;
 }
 
 } // namespace NEO

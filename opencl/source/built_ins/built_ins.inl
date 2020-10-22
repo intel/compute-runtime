@@ -11,7 +11,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 namespace NEO {
 
-BuiltInOp<EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, Device &device) : BuiltinDispatchInfoBuilder(kernelsLib) {
+BuiltInOp<EBuiltInOps::AuxTranslation>::BuiltInOp(BuiltIns &kernelsLib, ClDevice &device) : BuiltinDispatchInfoBuilder(kernelsLib) {
     BuiltinDispatchInfoBuilder::populate(device, EBuiltInOps::AuxTranslation, "", "fullCopy", baseKernel);
 
     resizeKernelInstances(5);

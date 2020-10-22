@@ -20,7 +20,7 @@
 namespace NEO {
 class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
   public:
-    VmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Device &device, EBuiltInOps::Type builtinOp,
+    VmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, ClDevice &device, EBuiltInOps::Type builtinOp,
                                   const char *kernelName)
         : BuiltinDispatchInfoBuilder(kernelsLib) {
         populate(device, builtinOp,
@@ -242,7 +242,7 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
 template <>
 class BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> : public VmeBuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : VmeBuiltinDispatchInfoBuilder(kernelsLib, device,
                                         EBuiltInOps::VmeBlockMotionEstimateIntel, "block_motion_estimate_intel") {
     }
@@ -250,7 +250,7 @@ class BuiltInOp<EBuiltInOps::VmeBlockMotionEstimateIntel> : public VmeBuiltinDis
 
 class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuilder {
   public:
-    AdvancedVmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, Device &device, EBuiltInOps::Type builtinOp,
+    AdvancedVmeBuiltinDispatchInfoBuilder(BuiltIns &kernelsLib, ClDevice &device, EBuiltInOps::Type builtinOp,
                                           const char *kernelName)
         : VmeBuiltinDispatchInfoBuilder(kernelsLib, device, builtinOp,
                                         kernelName) {
@@ -442,7 +442,7 @@ class AdvancedVmeBuiltinDispatchInfoBuilder : public VmeBuiltinDispatchInfoBuild
 template <>
 class BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> : public AdvancedVmeBuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : AdvancedVmeBuiltinDispatchInfoBuilder(kernelsLib, device, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel,
                                                 "block_advanced_motion_estimate_check_intel") {
     }
@@ -466,7 +466,7 @@ class BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel> : public 
 template <>
 class BuiltInOp<EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel> : public AdvancedVmeBuiltinDispatchInfoBuilder {
   public:
-    BuiltInOp(BuiltIns &kernelsLib, Device &device)
+    BuiltInOp(BuiltIns &kernelsLib, ClDevice &device)
         : AdvancedVmeBuiltinDispatchInfoBuilder(kernelsLib, device, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel,
                                                 "block_advanced_motion_estimate_bidirectional_check_intel") {
     }

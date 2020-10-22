@@ -11,6 +11,7 @@
 #include "shared/test/unit_test/helpers/test_files.h"
 
 #include "opencl/source/context/context.h"
+#include "opencl/test/unit_test/fixtures/run_kernel_fixture.h"
 #include "opencl/test/unit_test/helpers/kernel_binary_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
@@ -24,6 +25,24 @@ typedef api_tests clGetProgramInfoTests;
 namespace ULT {
 
 static_assert(CL_PROGRAM_IL == CL_PROGRAM_IL_KHR, "Param values are different");
+
+void verifyDevices(cl_program pProgram, size_t expectedNumDevices, cl_device_id *expectedDevices) {
+    cl_uint numDevices;
+    auto retVal = clGetProgramInfo(pProgram, CL_PROGRAM_NUM_DEVICES, sizeof(numDevices), &numDevices, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(expectedNumDevices, numDevices);
+
+    auto programDevices = std::make_unique<cl_device_id[]>(expectedNumDevices);
+    for (auto i = 0u; i < expectedNumDevices; i++) {
+        programDevices[i] = nullptr;
+    }
+
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_DEVICES, expectedNumDevices * sizeof(cl_device_id), programDevices.get(), nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    for (auto i = 0u; i < expectedNumDevices; i++) {
+        EXPECT_EQ(expectedDevices[i], programDevices[i]);
+    }
+}
 
 TEST_F(clGetProgramInfoTests, GivenSourceWhenBuildingProgramThenGetProgramInfoReturnsCorrectInfo) {
     cl_program pProgram = nullptr;
@@ -128,21 +147,7 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithSourceWhenGettingDe
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_uint numDevices;
-    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_NUM_DEVICES, sizeof(numDevices), &numDevices, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(expectedNumDevices, numDevices);
-
-    auto programDevices = std::make_unique<cl_device_id[]>(expectedNumDevices);
-    for (auto i = 0u; i < expectedNumDevices; i++) {
-        programDevices[i] = nullptr;
-    }
-
-    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_DEVICES, expectedNumDevices * sizeof(cl_device_id), programDevices.get(), nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    for (auto i = 0u; i < expectedNumDevices; i++) {
-        EXPECT_EQ(devicesForProgram[i], programDevices[i]);
-    }
+    verifyDevices(pProgram, expectedNumDevices, devicesForProgram.get());
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -217,18 +222,7 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBinaryWhenGettingDe
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_uint numDevices;
-    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_NUM_DEVICES, sizeof(numDevices), &numDevices, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(numDevicesForProgram, numDevices);
-
-    cl_device_id programDevices[2] = {};
-
-    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_DEVICES, numDevices * sizeof(cl_device_id), programDevices, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    for (auto i = 0u; i < numDevices; i++) {
-        EXPECT_EQ(devicesForProgram[i], programDevices[i]);
-    }
+    verifyDevices(pProgram, numDevicesForProgram, devicesForProgram);
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -370,24 +364,47 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithILWhenGettingDevice
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cl_uint numDevices;
-    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_NUM_DEVICES, sizeof(numDevices), &numDevices, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(expectedNumDevices, numDevices);
-
-    auto programDevices = std::make_unique<cl_device_id[]>(expectedNumDevices);
-    for (auto i = 0u; i < expectedNumDevices; i++) {
-        programDevices[i] = nullptr;
-    }
-
-    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_DEVICES, expectedNumDevices * sizeof(cl_device_id), programDevices.get(), nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    for (auto i = 0u; i < expectedNumDevices; i++) {
-        EXPECT_EQ(devicesForProgram[i], programDevices[i]);
-    }
+    verifyDevices(pProgram, expectedNumDevices, devicesForProgram.get());
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBuiltInKernelsWhenGettingDevicesThenCorrectDevicesAreReturned) {
+    if (!defaultHwInfo->capabilityTable.supportsVme) {
+        GTEST_SKIP();
+    }
+    MockUnrestrictiveContextMultiGPU context;
+
+    auto numDevicesForProgram = 2u;
+    cl_device_id devicesForProgram[] = {context.getDevice(1), context.getDevice(3)};
+
+    overwriteBuiltInBinaryName("media_kernels_frontend");
+
+    const char *kernelNamesString = {
+        "block_advanced_motion_estimate_bidirectional_check_intel;"
+        "block_motion_estimate_intel;"
+        "block_advanced_motion_estimate_check_intel;"};
+
+    cl_program pProgram = nullptr;
+
+    cl_int retVal = CL_INVALID_PROGRAM;
+
+    pProgram = clCreateProgramWithBuiltInKernels(
+        &context,
+        numDevicesForProgram,
+        devicesForProgram,
+        kernelNamesString,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    restoreBuiltInBinaryName();
+
+    verifyDevices(pProgram, numDevicesForProgram, devicesForProgram);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
 } // namespace ULT
