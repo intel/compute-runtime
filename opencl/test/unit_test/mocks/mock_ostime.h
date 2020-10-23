@@ -9,16 +9,15 @@
 #include "shared/source/os_interface/os_time.h"
 
 namespace NEO {
+static int PerfTicks = 0;
 class MockOSTime : public OSTime {
   public:
     bool getCpuGpuTime(TimeStampData *pGpuCpuTime) override {
-        static int PerfTicks = 0;
         pGpuCpuTime->GPUTimeStamp = ++PerfTicks;
         pGpuCpuTime->CPUTimeinNS = PerfTicks;
         return true;
     }
     bool getCpuTime(uint64_t *timeStamp) override {
-        static int PerfTicks = 0;
         *timeStamp = ++PerfTicks;
         return true;
     };

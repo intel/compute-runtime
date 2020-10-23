@@ -195,6 +195,35 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfolingWhenWa
     clReleaseEvent(event);
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueWithProfilingWhenNonBlockedEnqueueIsExecutedThenSubmittedTimestampDoesntHaveGPUTime) {
+    MockKernel kernel(program.get(), kernelInfo, *pClDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    uint32_t dimensions = 1;
+    cl_event event;
+    cl_kernel clKernel = &kernel;
+
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
+        clKernel,
+        dimensions,
+        globalOffsets,
+        workItems,
+        nullptr,
+        0,
+        nullptr,
+        &event);
+
+    auto mockEvent = static_cast<MockEvent<Event> *>(event);
+    EXPECT_NE(0u, mockEvent->queueTimeStamp.GPUTimeStamp);
+    EXPECT_NE(0u, mockEvent->queueTimeStamp.CPUTimeinNS);
+    EXPECT_LT(mockEvent->queueTimeStamp.CPUTimeinNS, mockEvent->submitTimeStamp.CPUTimeinNS);
+    EXPECT_EQ(0u, mockEvent->submitTimeStamp.GPUTimeStamp);
+
+    clReleaseEvent(event);
+}
+
 /*
 #   One additional MI_STORE_REGISTER_MEM is expected before and after GPGPU_WALKER.
 */
