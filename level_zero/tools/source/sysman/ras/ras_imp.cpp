@@ -35,8 +35,10 @@ void RasImp::init() {
     pOsRas->osRasGetProperties(rasProperties);
 }
 
-RasImp::RasImp(OsSysman *pOsSysman, zes_ras_error_type_t type) {
-    pOsRas = OsRas::create(pOsSysman, type);
+RasImp::RasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_device_handle_t handle) : deviceHandle(handle) {
+    ze_device_properties_t deviceProperties = {};
+    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
+    pOsRas = OsRas::create(pOsSysman, type, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
     init();
 }
 

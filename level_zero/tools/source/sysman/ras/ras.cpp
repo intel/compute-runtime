@@ -16,16 +16,18 @@ RasHandleContext::~RasHandleContext() {
         delete pRas;
     }
 }
-void RasHandleContext::createHandle(zes_ras_error_type_t type) {
-    Ras *pRas = new RasImp(pOsSysman, type);
+void RasHandleContext::createHandle(zes_ras_error_type_t type, ze_device_handle_t deviceHandle) {
+    Ras *pRas = new RasImp(pOsSysman, type, deviceHandle);
     handleList.push_back(pRas);
 }
 
-void RasHandleContext::init() {
-    std::vector<zes_ras_error_type_t> errorType = {};
-    OsRas::getSupportedRasErrorTypes(errorType, pOsSysman);
-    for (const auto &type : errorType) {
-        createHandle(type);
+void RasHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {
+    for (const auto &deviceHandle : deviceHandles) {
+        std::vector<zes_ras_error_type_t> errorType = {};
+        OsRas::getSupportedRasErrorTypes(errorType, pOsSysman, deviceHandle);
+        for (const auto &type : errorType) {
+            createHandle(type, deviceHandle);
+        }
     }
 }
 ze_result_t RasHandleContext::rasGet(uint32_t *pCount,

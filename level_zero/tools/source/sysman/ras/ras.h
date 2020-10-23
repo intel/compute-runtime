@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <vector>
@@ -37,7 +38,7 @@ struct RasHandleContext {
     RasHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~RasHandleContext();
 
-    void init();
+    void init(std::vector<ze_device_handle_t> &deviceHandles);
 
     ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas);
 
@@ -45,7 +46,7 @@ struct RasHandleContext {
     std::vector<Ras *> handleList = {};
 
   private:
-    void createHandle(zes_ras_error_type_t type);
+    void createHandle(zes_ras_error_type_t type, ze_device_handle_t deviceHandle);
 };
 
 } // namespace L0

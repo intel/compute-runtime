@@ -11,7 +11,7 @@
 
 namespace L0 {
 
-ze_result_t OsRas::getSupportedRasErrorTypes(std::vector<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman) {
+ze_result_t OsRas::getSupportedRasErrorTypes(std::vector<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
@@ -22,15 +22,15 @@ ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state) {
 ze_result_t LinuxRasImp::osRasGetProperties(zes_ras_properties_t &properties) {
     properties.pNext = nullptr;
     properties.type = osRasErrorType;
-    properties.onSubdevice = false;
-    properties.subdeviceId = 0;
+    properties.onSubdevice = isSubdevice;
+    properties.subdeviceId = subdeviceId;
     return ZE_RESULT_SUCCESS;
 }
-LinuxRasImp::LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type) : osRasErrorType(type) {
+LinuxRasImp::LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId) : osRasErrorType(type), isSubdevice(onSubdevice), subdeviceId(subdeviceId) {
 }
 
-OsRas *OsRas::create(OsSysman *pOsSysman, zes_ras_error_type_t type) {
-    LinuxRasImp *pLinuxRasImp = new LinuxRasImp(pOsSysman, type);
+OsRas *OsRas::create(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId) {
+    LinuxRasImp *pLinuxRasImp = new LinuxRasImp(pOsSysman, type, onSubdevice, subdeviceId);
     return static_cast<OsRas *>(pLinuxRasImp);
 }
 

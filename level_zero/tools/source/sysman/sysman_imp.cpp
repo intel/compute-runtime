@@ -94,7 +94,7 @@ void SysmanDeviceImp::init() {
         pSchedulerHandleContext->init(deviceHandles);
     }
     if (pRasHandleContext) {
-        pRasHandleContext->init();
+        pRasHandleContext->init(deviceHandles);
     }
     if (pMemoryHandleContext) {
         pMemoryHandleContext->init(deviceHandles);

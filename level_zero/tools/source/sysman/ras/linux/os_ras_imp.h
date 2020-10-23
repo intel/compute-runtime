@@ -16,12 +16,16 @@ class LinuxRasImp : public OsRas, NEO::NonCopyableOrMovableClass {
   public:
     ze_result_t osRasGetProperties(zes_ras_properties_t &properties) override;
     ze_result_t osRasGetState(zes_ras_state_t &state) override;
-    LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type);
+    LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId);
     LinuxRasImp() = default;
     ~LinuxRasImp() override = default;
 
   protected:
     zes_ras_error_type_t osRasErrorType = {};
+
+  private:
+    bool isSubdevice = false;
+    uint32_t subdeviceId = 0;
 };
 
 } // namespace L0
