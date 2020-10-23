@@ -29,7 +29,7 @@ class ProgramFixture {
                                  const std::string &binaryFileName,
                                  const std::string &options = "");
 
-    void CreateProgramWithSource(cl_context pContext,
+    void CreateProgramWithSource(Context *pContext,
                                  cl_device_id *pDeviceList,
                                  const std::string &sourceFileName);
 

@@ -1308,12 +1308,13 @@ cl_program CL_API_CALL clCreateProgramWithSource(cl_context context,
                    "count", count,
                    "strings", strings,
                    "lengths", lengths);
-    retVal = validateObjects(context, count, strings);
+    Context *pContext = nullptr;
+    retVal = validateObjects(WithCastToInternal(context, &pContext), count, strings);
     cl_program program = nullptr;
 
     if (CL_SUCCESS == retVal) {
         program = Program::create(
-            context,
+            pContext,
             count,
             strings,
             lengths,

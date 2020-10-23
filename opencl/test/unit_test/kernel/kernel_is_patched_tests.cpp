@@ -20,7 +20,7 @@ class PatchedKernelTest : public ::testing::Test {
     void SetUp() override {
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
         context.reset(new MockContext(device.get()));
-        program.reset(Program::create("FillBufferBytes", context.get(), context->getDevices(), true, &retVal));
+        program.reset(Program::createBuiltInFromSource("FillBufferBytes", context.get(), context->getDevices(), &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
         cl_device_id clDevice = device.get();
         program->build(1, &clDevice, nullptr, nullptr, nullptr, false);

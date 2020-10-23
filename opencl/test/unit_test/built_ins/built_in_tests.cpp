@@ -2007,8 +2007,7 @@ TEST_F(BuiltInTests, WhenGettingSipKernelThenReturnProgramCreatedFromIsaAcquired
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->compilerInterface.reset(mockCompilerInterface);
     mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
     cl_int errCode = CL_BUILD_PROGRAM_FAILURE;
-    auto p = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, mockCompilerInterface->sipKernelBinaryOverride.data(), mockCompilerInterface->sipKernelBinaryOverride.size(),
-                                          false, &errCode, pDevice);
+    auto p = Program::createBuiltInFromGenBinary(pContext, pContext->getDevices(), mockCompilerInterface->sipKernelBinaryOverride.data(), mockCompilerInterface->sipKernelBinaryOverride.size(), &errCode);
     ASSERT_EQ(CL_SUCCESS, errCode);
     errCode = p->processGenBinary(rootDeviceIndex);
     ASSERT_EQ(CL_SUCCESS, errCode);

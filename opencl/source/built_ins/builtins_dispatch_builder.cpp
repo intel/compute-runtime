@@ -799,10 +799,10 @@ std::unique_ptr<Program> BuiltinDispatchInfoBuilder::createProgramFromCode(const
         break;
     case BuiltinCode::ECodeType::Source:
     case BuiltinCode::ECodeType::Intermediate:
-        ret.reset(Program::create(data, nullptr, deviceVector, true, &err));
+        ret.reset(Program::createBuiltInFromSource(data, nullptr, deviceVector, &err));
         break;
     case BuiltinCode::ECodeType::Binary:
-        ret.reset(Program::createFromGenBinary(*deviceVector[0]->getExecutionEnvironment(), nullptr, data, dataLen, true, nullptr, &deviceVector[0]->getDevice()));
+        ret.reset(Program::createBuiltInFromGenBinary(nullptr, deviceVector, data, dataLen, &err));
         break;
     }
     return ret;

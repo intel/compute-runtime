@@ -1013,7 +1013,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
 
     char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
-    MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal, &pDevice->getDevice());
+    MockProgram *pProgram = Program::createBuiltInFromGenBinary<MockProgram>(pContext, pContext->getDevices(), &binary[0], binSize, &retVal);
     ASSERT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1073,7 +1073,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GTPinTests, givenInitializedGTPinInterfaceWhenKernel
     // Prepare a kernel with fake Execution Environment
     char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
-    MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal, &pDevice->getDevice());
+    MockProgram *pProgram = Program::createBuiltInFromGenBinary<MockProgram>(pContext, pContext->getDevices(), &binary[0], binSize, &retVal);
     ASSERT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -2096,7 +2096,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
 
         char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
         size_t binSize = 10;
-        MockProgram *pProgram = Program::createFromGenBinary<MockProgram>(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal, &pDevice->getDevice());
+        MockProgram *pProgram = Program::createBuiltInFromGenBinary<MockProgram>(pContext, pContext->getDevices(), &binary[0], binSize, &retVal);
         ASSERT_NE(nullptr, pProgram);
         EXPECT_EQ(CL_SUCCESS, retVal);
 

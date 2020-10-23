@@ -68,7 +68,7 @@ Program *Vme::createBuiltInProgram(
     }
 
     Program *pBuiltInProgram = nullptr;
-    pBuiltInProgram = Program::create(programSourceStr.c_str(), &context, deviceVector, true, nullptr);
+    pBuiltInProgram = Program::createBuiltInFromSource(programSourceStr.c_str(), &context, deviceVector, nullptr);
 
     auto &device = *deviceVector[0];
 

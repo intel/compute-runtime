@@ -385,13 +385,11 @@ SchedulerKernel &Context::getSchedulerKernel() {
         auto device = &getDevice(0)->getDevice();
         auto src = SchedulerKernel::loadSchedulerKernel(device);
 
-        auto program = Program::createFromGenBinary(*device->getExecutionEnvironment(),
-                                                    this,
-                                                    src.resource.data(),
-                                                    src.resource.size(),
-                                                    true,
-                                                    &retVal,
-                                                    device);
+        auto program = Program::createBuiltInFromGenBinary(this,
+                                                           devices,
+                                                           src.resource.data(),
+                                                           src.resource.size(),
+                                                           &retVal);
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
         DEBUG_BREAK_IF(!program);
 

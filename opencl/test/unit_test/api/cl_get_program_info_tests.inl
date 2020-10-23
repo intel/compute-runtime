@@ -407,4 +407,100 @@ TEST(clGetProgramInfoTest, GivenMultiDeviceProgramCreatedWithBuiltInKernelsWhenG
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
+TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhenGettingDevicesThenCorrectDevicesAreReturned) {
+    MockUnrestrictiveContextMultiGPU context;
+
+    auto expectedNumDevices = context.getNumDevices();
+
+    auto devicesForProgram = std::make_unique<cl_device_id[]>(expectedNumDevices);
+
+    for (auto i = 0u; i < expectedNumDevices; i++) {
+        devicesForProgram[i] = context.getDevice(i);
+    }
+
+    std::unique_ptr<char[]> pBinary = nullptr;
+    size_t binarySize = 0;
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+
+    pBinary = loadDataFromFile(
+        testFile.c_str(),
+        binarySize);
+
+    ASSERT_NE(0u, binarySize);
+    ASSERT_NE(nullptr, pBinary);
+
+    cl_program pProgram = nullptr;
+
+    cl_int retVal = CL_INVALID_PROGRAM;
+    pProgram = Program::createBuiltInFromGenBinary(&context, context.getDevices(), pBinary.get(), binarySize, &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    verifyDevices(pProgram, expectedNumDevices, devicesForProgram.get());
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clGetProgramInfoTest, GivenMultiDeviceBuiltInProgramCreatedWithGenBinaryWhenGettingDevicesThenCorrectBinariesAreReturned) {
+    MockUnrestrictiveContextMultiGPU context;
+
+    auto expectedNumDevices = context.getNumDevices();
+
+    auto devicesForProgram = std::make_unique<cl_device_id[]>(expectedNumDevices);
+
+    for (auto i = 0u; i < expectedNumDevices; i++) {
+        devicesForProgram[i] = context.getDevice(i);
+    }
+
+    std::unique_ptr<char[]> pBinary = nullptr;
+    size_t binarySize = 0;
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
+
+    pBinary = loadDataFromFile(
+        testFile.c_str(),
+        binarySize);
+
+    ASSERT_NE(0u, binarySize);
+    ASSERT_NE(nullptr, pBinary);
+
+    cl_program pProgram = nullptr;
+
+    cl_int retVal = CL_INVALID_PROGRAM;
+    pProgram = Program::createBuiltInFromGenBinary(&context, context.getDevices(), pBinary.get(), binarySize, &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto programBinarySizes = std::make_unique<size_t[]>(expectedNumDevices);
+    memset(programBinarySizes.get(), 0, expectedNumDevices * sizeof(size_t));
+
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_BINARY_SIZES, expectedNumDevices * sizeof(size_t), programBinarySizes.get(), nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    for (auto i = 0u; i < expectedNumDevices; i++) {
+        EXPECT_EQ(binarySize, programBinarySizes[i]);
+    }
+
+    auto programBinaries = std::make_unique<unsigned char *[]>(expectedNumDevices);
+
+    auto binariesBuffer = std::make_unique<unsigned char[]>(expectedNumDevices * binarySize);
+    memset(binariesBuffer.get(), 0, expectedNumDevices * binarySize);
+
+    for (auto i = 0u; i < expectedNumDevices; i++) {
+        programBinaries[i] = ptrOffset(binariesBuffer.get(), i * binarySize);
+    }
+
+    retVal = clGetProgramInfo(pProgram, CL_PROGRAM_BINARIES, expectedNumDevices * sizeof(unsigned char *), programBinaries.get(), nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    for (auto i = 0u; i < expectedNumDevices; i++) {
+        EXPECT_EQ(0, memcmp(programBinaries[i], pBinary.get(), binarySize));
+    }
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
 } // namespace ULT

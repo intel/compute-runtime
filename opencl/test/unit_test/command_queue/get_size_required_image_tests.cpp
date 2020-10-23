@@ -115,7 +115,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenCopyingReadWriteImageThenHeapsAndCommandB
     auto usedBeforeIOH = ioh.getUsed();
     auto usedBeforeSSH = ssh.getUsed();
 
-    std::unique_ptr<Program> program(Program::create("CopyImageToImage3d", context, context->getDevices(), true, nullptr));
+    std::unique_ptr<Program> program(Program::createBuiltInFromSource("CopyImageToImage3d", context, context->getDevices(), nullptr));
     cl_device_id device = pClDevice;
     program->build(1, &device, nullptr, nullptr, nullptr, false);
     std::unique_ptr<Kernel> kernel(Kernel::create<MockKernel>(program.get(), *program->getKernelInfo("CopyImageToImage3d"), nullptr));

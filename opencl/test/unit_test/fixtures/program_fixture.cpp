@@ -11,7 +11,7 @@
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 namespace NEO {
-void ProgramFixture::CreateProgramWithSource(cl_context context,
+void ProgramFixture::CreateProgramWithSource(Context *pContext,
                                              cl_device_id *deviceList,
                                              const std::string &sourceFileName) {
     Cleanup();
@@ -31,7 +31,7 @@ void ProgramFixture::CreateProgramWithSource(cl_context context,
 
     const char *sources[1] = {knownSource.get()};
     pProgram = Program::create<MockProgram>(
-        context,
+        pContext,
         1,
         sources,
         &knownSourceSize,

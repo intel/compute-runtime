@@ -56,7 +56,7 @@ T *Program::create(
 
 template <typename T>
 T *Program::create(
-    cl_context context,
+    Context *pContext,
     cl_uint count,
     const char **strings,
     const size_t *lengths,
@@ -64,8 +64,6 @@ T *Program::create(
     std::string combinedString;
     size_t combinedStringSize = 0;
     T *program = nullptr;
-    auto pContext = castToObject<Context>(context);
-    DEBUG_BREAK_IF(!pContext);
 
     auto retVal = createCombinedString(
         combinedString,
@@ -85,11 +83,10 @@ T *Program::create(
 }
 
 template <typename T>
-T *Program::create(
+T *Program::createBuiltInFromSource(
     const char *nullTerminatedString,
     Context *context,
     const ClDeviceVector &deviceVector,
-    bool isBuiltIn,
     cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     T *program = nullptr;
@@ -99,7 +96,7 @@ T *Program::create(
     }
 
     if (retVal == CL_SUCCESS) {
-        program = new T(context, isBuiltIn, deviceVector);
+        program = new T(context, true, deviceVector);
         program->sourceCode = nullTerminatedString;
         program->createdFrom = CreatedFrom::SOURCE;
     }
@@ -112,14 +109,12 @@ T *Program::create(
 }
 
 template <typename T>
-T *Program::createFromGenBinary(
-    ExecutionEnvironment &executionEnvironment,
+T *Program::createBuiltInFromGenBinary(
     Context *context,
+    const ClDeviceVector &deviceVector,
     const void *binary,
     size_t size,
-    bool isBuiltIn,
-    cl_int *errcodeRet,
-    Device *device) {
+    cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     T *program = nullptr;
 
@@ -129,11 +124,12 @@ T *Program::createFromGenBinary(
 
     if (CL_SUCCESS == retVal) {
 
-        ClDeviceVector deviceVector;
-        deviceVector.push_back(device->getSpecializedDevice<ClDevice>());
-        program = new T(context, isBuiltIn, deviceVector);
-        program->numDevices = 1;
-        program->replaceDeviceBinary(makeCopy(binary, size), size, device->getRootDeviceIndex());
+        program = new T(context, true, deviceVector);
+        for (const auto &device : deviceVector) {
+            if (program->buildInfos[device->getRootDeviceIndex()].packedDeviceBinarySize == 0) {
+                program->replaceDeviceBinary(makeCopy(binary, size), size, device->getRootDeviceIndex());
+            }
+        }
         program->isCreatedFromBinary = true;
         program->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
         program->buildStatus = CL_BUILD_SUCCESS;

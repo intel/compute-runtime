@@ -93,29 +93,26 @@ class Program : public BaseObject<_cl_program> {
     // Create program from source
     template <typename T = Program>
     static T *create(
-        cl_context context,
+        Context *pContext,
         cl_uint count,
         const char **strings,
         const size_t *lengths,
         cl_int &errcodeRet);
 
     template <typename T = Program>
-    static T *create(
+    static T *createBuiltInFromSource(
         const char *nullTerminatedString,
         Context *context,
         const ClDeviceVector &deviceVector,
-        bool isBuiltIn,
         cl_int *errcodeRet);
 
     template <typename T = Program>
-    static T *createFromGenBinary(
-        ExecutionEnvironment &executionEnvironment,
+    static T *createBuiltInFromGenBinary(
         Context *context,
+        const ClDeviceVector &deviceVector,
         const void *binary,
         size_t size,
-        bool isBuiltIn,
-        cl_int *errcodeRet,
-        Device *device);
+        cl_int *errcodeRet);
 
     template <typename T = Program>
     static T *createFromIL(Context *context,
