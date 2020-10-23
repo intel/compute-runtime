@@ -675,9 +675,11 @@ void DeviceImp::releaseResources() {
 DeviceImp::~DeviceImp() {
     releaseResources();
 
-    if (pSysmanDevice != nullptr) {
-        delete pSysmanDevice;
-        pSysmanDevice = nullptr;
+    if (!isSubdevice) {
+        if (pSysmanDevice != nullptr) {
+            delete pSysmanDevice;
+            pSysmanDevice = nullptr;
+        }
     }
 }
 
