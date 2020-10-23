@@ -178,7 +178,7 @@ struct MockOclTranslationOutput : MockCIF<IGC::OclTranslationOutputTagOCL> {
     MockCIFBuffer *debugData = nullptr;
 };
 
-struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtxTagOCL> {
+struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtx<2>> {
     static CIF::ICIF *Create(CIF::InterfaceId_t intId, CIF::Version_t version);
 
     MockIgcOclDeviceCtx();
@@ -208,6 +208,11 @@ struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtxTagOCL> {
     IGC::IgcOclTranslationCtxBase *CreateTranslationCtxImpl(CIF::Version_t ver,
                                                             IGC::CodeType::CodeType_t inType,
                                                             IGC::CodeType::CodeType_t outType) override;
+
+    bool GetSystemRoutine(IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine,
+                          bool bindless,
+                          CIF::Builtins::BufferSimple *outSystemRoutineBuffer,
+                          CIF::Builtins::BufferSimple *stateSaveAreaHeaderInit) override;
 
     void SetDebugVars(MockCompilerDebugVars &debugVars) {
         this->debugVars = debugVars;

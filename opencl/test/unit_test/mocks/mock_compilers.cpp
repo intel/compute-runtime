@@ -132,6 +132,12 @@ IgcOclTranslationCtxBase *CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 1)::CreateTra
     return nullptr;
 }
 
+bool CIF_GET_INTERFACE_CLASS(IgcOclDeviceCtx, 2)::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine,
+                                                                   bool bindless,
+                                                                   CIF::Builtins::BufferSimple *outSystemRoutineBuffer,
+                                                                   CIF::Builtins::BufferSimple *stateSaveAreaHeaderInit) {
+    return true;
+}
 // Platform stubs
 Platform<0>::~Platform() {}
 
@@ -478,6 +484,13 @@ IGC::IgcOclTranslationCtxBase *MockIgcOclDeviceCtx::CreateTranslationCtxImpl(CIF
                                                                              IGC::CodeType::CodeType_t outType) {
     requestedTranslationCtxs.emplace_back(inType, outType);
     return new MockIgcOclTranslationCtx;
+}
+
+bool MockIgcOclDeviceCtx::GetSystemRoutine(IGC::SystemRoutineType::SystemRoutineType_t typeOfSystemRoutine,
+                                           bool bindless,
+                                           CIF::Builtins::BufferSimple *outSystemRoutineBuffer,
+                                           CIF::Builtins::BufferSimple *stateSaveAreaHeaderInit) {
+    return true;
 }
 
 MockIgcOclTranslationCtx::MockIgcOclTranslationCtx() = default;
