@@ -35,7 +35,7 @@ enum OverlapStatus {
     FRAGMENT_NOT_CHECKED
 };
 
-enum RequirementsStatus {
+enum class RequirementsStatus {
     SUCCESS = 0,
     FATAL
 };

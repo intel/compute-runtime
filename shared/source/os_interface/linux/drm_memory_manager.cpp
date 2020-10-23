@@ -379,7 +379,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
     if (validateHostPtrMemory) {
         auto boPtr = bo.get();
         int result = pinBBs.at(allocationData.rootDeviceIndex)->validateHostPtr(&boPtr, 1, registeredEngines[defaultEngineIndex].osContext, 0, getDefaultDrmContextId());
-        if (result != SUCCESS) {
+        if (result != 0) {
             unreference(bo.release(), true);
             releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, allocationData.rootDeviceIndex);
             return nullptr;

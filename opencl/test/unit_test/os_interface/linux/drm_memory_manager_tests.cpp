@@ -868,7 +868,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
 
     DrmMockCustom::IoctlResExt ioctlResExt = {1, -1};
     mock->ioctl_res_ext = &ioctlResExt;
-    mock->errnoValue = SUCCESS;
+    mock->errnoValue = 0;
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.execbuffer2 = 1;
 
@@ -902,7 +902,7 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValid
 
     DrmMockCustom::IoctlResExt ioctlResExt = {1, -1};
     mock->ioctl_res_ext = &ioctlResExt;
-    mock->errnoValue = SUCCESS;
+    mock->errnoValue = 0;
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.execbuffer2 = 1;
 
