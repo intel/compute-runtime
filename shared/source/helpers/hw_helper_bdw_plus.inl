@@ -57,28 +57,17 @@ bool HwHelperHw<Family>::obtainBlitterPreference(const HardwareInfo &hwInfo) con
 
 template <typename GfxFamily>
 const HwHelper::EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
-    EngineInstancesContainer engines;
-
-    engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::Regular});
-    engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::LowPriority});
-    engines.push_back({aub_stream::ENGINE_RCS, EngineUsage::Internal});
-
-    if (hwInfo.featureTable.ftrBcsInfo.test(0)) {
-        engines.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular});
-    }
-
-    return engines;
+    return {
+        {aub_stream::ENGINE_RCS, EngineUsage::Regular},
+        {aub_stream::ENGINE_RCS, EngineUsage::LowPriority},
+        {aub_stream::ENGINE_RCS, EngineUsage::Internal},
+    };
 }
 
 template <typename GfxFamily>
 void HwHelperHw<GfxFamily>::addEngineToEngineGroup(std::vector<std::vector<EngineControl>> &engineGroups,
                                                    EngineControl &engine, const HardwareInfo &hwInfo) const {
-    if (engine.getEngineType() == aub_stream::ENGINE_RCS) {
-        engineGroups[static_cast<uint32_t>(EngineGroupType::RenderCompute)].push_back(engine);
-    }
-    if (engine.getEngineType() == aub_stream::ENGINE_BCS && DebugManager.flags.EnableBlitterOperationsSupport.get() != 0) {
-        engineGroups[static_cast<uint32_t>(EngineGroupType::Copy)].push_back(engine);
-    }
+    engineGroups[static_cast<uint32_t>(EngineGroupType::RenderCompute)].push_back(engine);
 }
 
 template <typename GfxFamily>

@@ -52,9 +52,8 @@ GEN8TEST_F(HwHelperTestGen8, givenGen8PlatformWhenSetupHardwareCapabilitiesIsCal
 }
 
 GEN8TEST_F(HwHelperTestGen8, whenGetGpgpuEnginesThenReturnThreeEngines) {
-    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
-    hwInfo.featureTable.ftrBcsInfo.set(0, false);
-    whenGetGpgpuEnginesThenReturnThreeRcsEngines<FamilyType>(hwInfo);
+    whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
+    EXPECT_EQ(3u, pDevice->engines.size());
 }
 
 using MemorySynchronizatiopCommandsTestsGen8 = ::testing::Test;
