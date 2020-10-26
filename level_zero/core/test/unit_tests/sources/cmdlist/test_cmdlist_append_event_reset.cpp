@@ -101,34 +101,6 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenAppendingEventResetThenEve
     }
 }
 
-HWTEST_F(CommandListAppendEventReset, givenEventNotVisibleOnHostWhenAppendingEventResetThenEventGraphicsAllocationIsNotAddedToResidencyContainer) {
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.flags = 0;
-    eventPoolDesc.count = 2;
-
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), 0, nullptr, &eventPoolDesc));
-
-    const ze_event_desc_t eventDesc = {
-        ZE_STRUCTURE_TYPE_EVENT_DESC,
-        nullptr,
-        0,
-        0,
-        ZE_EVENT_SCOPE_FLAG_DEVICE};
-
-    auto event = std::unique_ptr<Event>(Event::create(eventPool.get(), &eventDesc, device));
-
-    auto result = commandList->appendEventReset(event->toHandle());
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-
-    auto &residencyContainer = commandList->commandContainer.getResidencyContainer();
-    auto eventPoolAlloc = &eventPool->getAllocation();
-    for (auto alloc : eventPoolAlloc->getGraphicsAllocations()) {
-        auto itor =
-            std::find(std::begin(residencyContainer), std::end(residencyContainer), alloc);
-        EXPECT_EQ(itor, std::end(residencyContainer));
-    }
-}
-
 using SklPlusMatcher = IsAtLeastProduct<IGFX_SKYLAKE>;
 HWTEST2_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventResetThenCommandsAreExecuted, SklPlusMatcher) {
     Mock<CommandQueue> cmdQueue;
@@ -157,7 +129,7 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP | ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
@@ -198,7 +170,6 @@ HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPip
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;

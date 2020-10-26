@@ -44,16 +44,15 @@ struct Event : _ze_event_handle_t {
 
     virtual NEO::GraphicsAllocation &getAllocation();
 
-    virtual uint64_t getGpuAddress();
+    uint64_t getGpuAddress() { return gpuAddress; }
 
     void *hostAddress = nullptr;
-    uint64_t gpuAddress = 0u;
+    uint64_t gpuAddress;
 
     ze_event_scope_flags_t signalScope = 0u;
     ze_event_scope_flags_t waitScope = 0u;
 
     bool isTimestampEvent = false;
-    bool allocOnDevice = false;
 
     // Metric streamer instance associated with the event.
     MetricStreamer *metricStreamer = nullptr;
@@ -85,7 +84,7 @@ struct EventImp : public Event {
 
   protected:
     ze_result_t hostEventSetValue(uint32_t eventValue);
-    void hostEventSetValueTimestamps(uint32_t eventVal);
+    ze_result_t hostEventSetValueTimestamps(uint32_t eventVal);
     void makeAllocationResident();
 };
 
@@ -113,12 +112,9 @@ struct EventPool : _ze_event_pool_handle_t {
 
     virtual NEO::MultiGraphicsAllocation &getAllocation() { return *eventPoolAllocations; }
 
-    virtual size_t getEventSize() = 0;
+    virtual uint32_t getEventSize() = 0;
 
     bool isEventPoolUsedForTimestamp = false;
-    bool allocOnDevice = false;
-
-    CommandList *eventPoolCommandList = nullptr;
 
   protected:
     NEO::MultiGraphicsAllocation *eventPoolAllocations = nullptr;
@@ -128,10 +124,6 @@ struct EventPoolImp : public EventPool {
     EventPoolImp(DriverHandle *driver, uint32_t numDevices, ze_device_handle_t *phDevices, uint32_t numEvents, ze_event_pool_flags_t flags) : numEvents(numEvents) {
         if (flags & ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP) {
             isEventPoolUsedForTimestamp = true;
-        }
-
-        if (!(flags & ZE_EVENT_POOL_FLAG_HOST_VISIBLE)) {
-            allocOnDevice = true;
         }
     }
 
@@ -150,7 +142,7 @@ struct EventPoolImp : public EventPool {
 
     ze_result_t createEvent(const ze_event_desc_t *desc, ze_event_handle_t *phEvent) override;
 
-    size_t getEventSize() override { return eventSize; }
+    uint32_t getEventSize() override { return eventSize; }
     size_t getNumEvents() { return numEvents; }
 
     Device *getDevice() override { return devices[0]; }
