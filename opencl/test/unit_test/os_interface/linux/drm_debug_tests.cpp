@@ -22,14 +22,6 @@ TEST(DrmTest, whenRegisterResourceClassesCalledThenFalseIsReturned) {
     EXPECT_FALSE(result);
 }
 
-TEST(DrmTest, whenResourceClassIsUsedToIndexClassNamesThenCorrectNamesAreReturned) {
-    EXPECT_STREQ(Drm::classNames[static_cast<uint32_t>(Drm::ResourceClass::Elf)], "I915_CLASS_ELF_FILE");
-    EXPECT_STREQ(Drm::classNames[static_cast<uint32_t>(Drm::ResourceClass::Isa)], "I915_CLASS_ISA");
-    EXPECT_STREQ(Drm::classNames[static_cast<uint32_t>(Drm::ResourceClass::ContextSaveArea)], "I915_CLASS_CONTEXT_SAVE_AREA");
-    EXPECT_STREQ(Drm::classNames[static_cast<uint32_t>(Drm::ResourceClass::ModuleHeapDebugArea)], "I915_CLASS_MODULE_HEAP_DEBUG_AREA");
-    EXPECT_STREQ(Drm::classNames[static_cast<uint32_t>(Drm::ResourceClass::SbaTrackingBuffer)], "I915_CLASS_SBA_TRACKING_BUFFER");
-}
-
 TEST(DrmTest, whenRegisterResourceCalledThenImplementationIsEmpty) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);

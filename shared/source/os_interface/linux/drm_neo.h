@@ -59,7 +59,6 @@ class Drm {
         MaxSize
     };
 
-    static const std::array<const char *, size_t(ResourceClass::MaxSize)> classNames;
     virtual ~Drm();
 
     virtual int ioctl(unsigned long request, void *arg);
