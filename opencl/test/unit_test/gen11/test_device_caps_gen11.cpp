@@ -14,16 +14,16 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> Gen11DeviceCaps;
 
-GEN11TEST_F(Gen11DeviceCaps, defaultPreemptionMode) {
+GEN11TEST_F(Gen11DeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsReturned) {
     EXPECT_TRUE(PreemptionMode::MidThread == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
-GEN11TEST_F(Gen11DeviceCaps, profilingTimerResolution) {
+GEN11TEST_F(Gen11DeviceCaps, WhenCheckingProfilingTimerResolutionThenCorrectResolutionIsReturned) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(83u, caps.outProfilingTimerResolution);
 }
 
-GEN11TEST_F(Gen11DeviceCaps, kmdNotifyMechanism) {
+GEN11TEST_F(Gen11DeviceCaps, GivenWhenGettingKmdNotifyPropertiesThenItIsDisabled) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(0, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);
@@ -32,7 +32,7 @@ GEN11TEST_F(Gen11DeviceCaps, kmdNotifyMechanism) {
     EXPECT_EQ(0, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
 }
 
-GEN11TEST_F(Gen11DeviceCaps, compression) {
+GEN11TEST_F(Gen11DeviceCaps, WhenCheckingCompressionThenItIsDisabled) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
 }

@@ -13,7 +13,7 @@ using namespace NEO;
 
 using AdlsUsDeviceIdTest = Test<ClDeviceFixture>;
 
-ADLSTEST_F(AdlsUsDeviceIdTest, isSimulationCap) {
+ADLSTEST_F(AdlsUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short adlsSimulationIds[2] = {
         DEVICE_ID_4680,
         0, // default, non-simulation
@@ -32,7 +32,7 @@ ADLSTEST_F(AdlsUsDeviceIdTest, isSimulationCap) {
     }
 }
 
-ADLSTEST_F(AdlsUsDeviceIdTest, givenADLSWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
+ADLSTEST_F(AdlsUsDeviceIdTest, givenAdlsWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }
 

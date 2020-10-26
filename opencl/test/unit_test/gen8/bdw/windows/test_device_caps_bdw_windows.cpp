@@ -14,7 +14,7 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> BdwDeviceCaps;
 
-BDWTEST_F(BdwDeviceCaps, kmdNotifyMechanism) {
+BDWTEST_F(BdwDeviceCaps, WhenCheckingKmdNotifyPropertiesThenKmdNotifyIsEnabledCorrectly) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(50000, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);

@@ -16,7 +16,7 @@ LKFTEST_F(LkfTest, givenLkfWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
 }
 
-LKFTEST_F(LkfTest, givenLKFWhenCheckedSvmSupportThenNoSvmIsReported) {
+LKFTEST_F(LkfTest, givenLkfWhenCheckedSvmSupportThenNoSvmIsReported) {
     const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(caps.svmCapabilities, 0u);
 }
@@ -34,7 +34,7 @@ LKFTEST_F(LkfTest, givenLkfWhenExtensionStringIsCheckedThenFP64IsNotReported) {
     EXPECT_EQ(0u, caps.doubleFpConfig);
 }
 
-LKFTEST_F(LkfTest, isSimulationCap) {
+LKFTEST_F(LkfTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short lkfSimulationIds[2] = {
         ILKF_1x8x8_DESK_DEVICE_F0_ID,
         0, // default, non-simulation

@@ -12,7 +12,7 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> GlkDeviceCapsWindows;
 
-GLKTEST_F(GlkDeviceCapsWindows, givenHwInfoWhenAskedForKmdNotifyMechanismThenReturnCorrectValues) {
+GLKTEST_F(GlkDeviceCapsWindows, WhenCheckingKmdNotifyPropertiesThenKmdNotifyIsEnabledCorrectly) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(30000, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);

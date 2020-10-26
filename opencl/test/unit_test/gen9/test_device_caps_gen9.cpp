@@ -14,7 +14,7 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> Gen9DeviceCaps;
 
-GEN9TEST_F(Gen9DeviceCaps, skuSpecificCaps) {
+GEN9TEST_F(Gen9DeviceCaps, WhenCheckingExtensionStringThenFp64CorrectlyReported) {
     const auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;
     if (pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64) {
@@ -45,16 +45,16 @@ GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckingCapsThenDeviceDoesProperlyReport
     }
 }
 
-GEN9TEST_F(Gen9DeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt) {
+GEN9TEST_F(Gen9DeviceCaps, WhenGettingDeviceInfoThenCorrectlyRoundedDivideSqrtIsEnabled) {
     const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_NE(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
 }
 
-GEN9TEST_F(Gen9DeviceCaps, defaultPreemptionMode) {
+GEN9TEST_F(Gen9DeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenMidThreadIsSupported) {
     EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
-GEN9TEST_F(Gen9DeviceCaps, compression) {
+GEN9TEST_F(Gen9DeviceCaps, WhenCheckingCompressionThenItIsDisabled) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
 }

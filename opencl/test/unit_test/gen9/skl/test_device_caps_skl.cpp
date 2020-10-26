@@ -12,7 +12,7 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> SklDeviceCaps;
 
-SKLTEST_F(SklDeviceCaps, SklProfilingTimerResolution) {
+SKLTEST_F(SklDeviceCaps, WhenCheckingProfilingTimerResolutionThenCorrectResolutionIsReturned) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(83u, caps.outProfilingTimerResolution);
 }
@@ -24,7 +24,7 @@ SKLTEST_F(SklDeviceCaps, givenSklDeviceWhenAskedFor32BitSupportThenFalseIsReturn
     EXPECT_FALSE(sharedCaps.force32BitAddressess);
 }
 
-SKLTEST_F(SklDeviceCaps, SklSvmCapabilities) {
+SKLTEST_F(SklDeviceCaps, WhenCheckingCapabilitiesThenSvmIsEnabled) {
     const auto &caps = pClDevice->getDeviceInfo();
     cl_device_svm_capabilities expectedCaps = (CL_DEVICE_SVM_COARSE_GRAIN_BUFFER |
                                                CL_DEVICE_SVM_FINE_GRAIN_BUFFER |
@@ -34,7 +34,7 @@ SKLTEST_F(SklDeviceCaps, SklSvmCapabilities) {
 
 typedef Test<ClDeviceFixture> SklUsDeviceIdTest;
 
-SKLTEST_F(SklUsDeviceIdTest, isSimulationCap) {
+SKLTEST_F(SklUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short sklSimulationIds[6] = {
         ISKL_GT0_DESK_DEVICE_F0_ID,
         ISKL_GT1_DESK_DEVICE_F0_ID,

@@ -14,7 +14,7 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> BdwDeviceCaps;
 
-BDWTEST_F(BdwDeviceCaps, skuSpecificCaps) {
+BDWTEST_F(BdwDeviceCaps, WhenCheckingExtensionStringThenFp64IsSupported) {
     const auto &caps = pClDevice->getDeviceInfo();
     std::string extensionString = caps.deviceExtensions;
 
@@ -22,12 +22,12 @@ BDWTEST_F(BdwDeviceCaps, skuSpecificCaps) {
     EXPECT_NE(0u, caps.doubleFpConfig);
 }
 
-BDWTEST_F(BdwDeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt) {
+BDWTEST_F(BdwDeviceCaps, WhenGettingDeviceInfoThenCorrectlyRoundedDivideSqrtIsEnabled) {
     const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_NE(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
 }
 
-BDWTEST_F(BdwDeviceCaps, defaultPreemptionMode) {
+BDWTEST_F(BdwDeviceCaps, GivenDefaultWhenCheckingPreemptionModeThenDisabledIsReported) {
     EXPECT_TRUE(PreemptionMode::Disabled == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
@@ -55,7 +55,7 @@ BDWTEST_F(BdwDeviceCaps, givenHwInfoWhenRequestedMaxFrontEndThreadsThenReturnVal
 
 typedef Test<ClDeviceFixture> BdwUsDeviceIdTest;
 
-BDWTEST_F(BdwUsDeviceIdTest, isSimulationCap) {
+BDWTEST_F(BdwUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short bdwSimulationIds[6] = {
         IBDW_GT0_DESK_DEVICE_F0_ID,
         IBDW_GT1_DESK_DEVICE_F0_ID,
@@ -78,6 +78,6 @@ BDWTEST_F(BdwUsDeviceIdTest, isSimulationCap) {
     }
 }
 
-BDWTEST_F(BdwUsDeviceIdTest, GivenBDWWhenCheckftr64KBpagesThenFalse) {
+BDWTEST_F(BdwUsDeviceIdTest, GivenBdwWhenCheckftr64KBpagesThenFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }

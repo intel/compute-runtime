@@ -12,7 +12,7 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> BxtDeviceCaps;
 
-BXTTEST_F(BxtDeviceCaps, BxtProfilingTimerResolution) {
+BXTTEST_F(BxtDeviceCaps, WhenCheckingProfilingTimerResolutionThenCorrectResolutionIsReturned) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(52u, caps.outProfilingTimerResolution);
 }
@@ -29,22 +29,22 @@ BXTTEST_F(BxtDeviceCaps, givenBxtDeviceWhenAskedFor32BitSupportThenCorrectValues
     }
 }
 
-BXTTEST_F(BxtDeviceCaps, BxtSvmCapabilities) {
+BXTTEST_F(BxtDeviceCaps, WhenCheckingCapabilitiesThenSvmIsNotSupported) {
     const auto &caps = pClDevice->getDeviceInfo();
     EXPECT_EQ(0u, caps.svmCapabilities);
 }
 
-BXTTEST_F(BxtDeviceCaps, GivenBXTWhenCheckftr64KBpagesThenFalse) {
+BXTTEST_F(BxtDeviceCaps, WhenCheckftr64KBpagesThenFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }
 
-BXTTEST_F(BxtDeviceCaps, givenBXTWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
+BXTTEST_F(BxtDeviceCaps, WhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }
 
 typedef Test<ClDeviceFixture> BxtUsDeviceIdTest;
 
-BXTTEST_F(BxtUsDeviceIdTest, isSimulationCap) {
+BXTTEST_F(BxtUsDeviceIdTest, WhenCheckingIsSimulationThenTrueReturnedOnlyForSimulationId) {
     unsigned short bxtSimulationIds[3] = {
         IBXT_A_DEVICE_F0_ID,
         IBXT_C_DEVICE_F0_ID,
