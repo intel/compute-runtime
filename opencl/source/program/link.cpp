@@ -38,6 +38,8 @@ cl_int Program::link(
     cl_int retVal = CL_SUCCESS;
     bool isCreateLibrary;
 
+    auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
+    UNRECOVERABLE_IF(clDevice == nullptr);
     do {
         if (((deviceList == nullptr) && (numDevices != 0)) ||
             ((deviceList != nullptr) && (numDevices == 0))) {
@@ -61,7 +63,7 @@ cl_int Program::link(
             break;
         }
 
-        if (buildStatus == CL_BUILD_IN_PROGRESS) {
+        if (buildStatuses[clDevice] == CL_BUILD_IN_PROGRESS) {
             retVal = CL_INVALID_OPERATION;
             break;
         }
@@ -82,7 +84,7 @@ cl_int Program::link(
 
         isCreateLibrary = CompilerOptions::contains(options, CompilerOptions::createLibrary);
 
-        buildStatus = CL_BUILD_IN_PROGRESS;
+        buildStatuses[clDevice] = CL_BUILD_IN_PROGRESS;
 
         NEO::Elf::ElfEncoder<> elfEncoder(true, false, 1U);
         elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_OBJECTS;
@@ -199,10 +201,10 @@ cl_int Program::link(
     } while (false);
 
     if (retVal != CL_SUCCESS) {
-        buildStatus = CL_BUILD_ERROR;
+        buildStatuses[clDevice] = CL_BUILD_ERROR;
         programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     } else {
-        buildStatus = CL_BUILD_SUCCESS;
+        buildStatuses[clDevice] = CL_BUILD_SUCCESS;
     }
 
     internalOptions.clear();

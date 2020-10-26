@@ -80,7 +80,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         pSrc = kernelNamesString.c_str();
         retSize = srcSize = kernelNamesString.length() + 1;
 
-        if (buildStatus != CL_BUILD_SUCCESS) {
+        if (!isBuilt()) {
             retVal = CL_INVALID_PROGRAM_EXECUTABLE;
         }
         break;
@@ -90,7 +90,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         pSrc = &numKernels;
         retSize = srcSize = sizeof(numKernels);
 
-        if (buildStatus != CL_BUILD_SUCCESS) {
+        if (!isBuilt()) {
             retVal = CL_INVALID_PROGRAM_EXECUTABLE;
         }
         break;
@@ -192,7 +192,7 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
     switch (paramName) {
     case CL_PROGRAM_BUILD_STATUS:
         srcSize = retSize = sizeof(cl_build_status);
-        pSrc = &buildStatus;
+        pSrc = &buildStatuses.at(pClDev);
         break;
 
     case CL_PROGRAM_BUILD_OPTIONS:

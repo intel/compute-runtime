@@ -32,6 +32,7 @@ class MockProgram : public Program {
     using Program::kernelDebugEnabled;
     using Program::linkBinary;
     using Program::separateBlockKernels;
+    using Program::setBuildStatus;
     using Program::updateNonUniformFlag;
 
     using Program::applyAdditionalOptions;
@@ -103,8 +104,6 @@ class MockProgram : public Program {
         this->context = context;
         contextSet = true;
     }
-
-    void setBuildStatus(cl_build_status st) { buildStatus = st; }
     void setSourceCode(const char *ptr) { sourceCode = ptr; }
     void clearOptions() { options = ""; }
     void setCreatedFromBinary(bool createdFromBin) { isCreatedFromBinary = createdFromBin; }
@@ -142,7 +141,7 @@ class MockProgram : public Program {
 
     cl_int rebuildProgramFromIr() {
         this->isCreatedFromBinary = false;
-        this->buildStatus = CL_BUILD_NONE;
+        setBuildStatus(CL_BUILD_NONE);
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtins;
         auto &device = this->getDevice();
         return this->build(&device, this->options.c_str(), false, builtins);

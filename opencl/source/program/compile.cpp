@@ -36,6 +36,8 @@ cl_int Program::compile(
     void *userData) {
     cl_int retVal = CL_SUCCESS;
 
+    auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
+    UNRECOVERABLE_IF(clDevice == nullptr);
     do {
         if (((deviceList == nullptr) && (numDevices != 0)) ||
             ((deviceList != nullptr) && (numDevices == 0))) {
@@ -68,7 +70,7 @@ cl_int Program::compile(
             break;
         }
 
-        if (buildStatus == CL_BUILD_IN_PROGRESS) {
+        if (buildStatuses[clDevice] == CL_BUILD_IN_PROGRESS) {
             retVal = CL_INVALID_OPERATION;
             break;
         }
@@ -78,7 +80,7 @@ cl_int Program::compile(
             break;
         }
 
-        buildStatus = CL_BUILD_IN_PROGRESS;
+        buildStatuses[clDevice] = CL_BUILD_IN_PROGRESS;
 
         options = (buildOptions != nullptr) ? buildOptions : "";
 
@@ -172,10 +174,10 @@ cl_int Program::compile(
     } while (false);
 
     if (retVal != CL_SUCCESS) {
-        buildStatus = CL_BUILD_ERROR;
+        buildStatuses[clDevice] = CL_BUILD_ERROR;
         programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     } else {
-        buildStatus = CL_BUILD_SUCCESS;
+        buildStatuses[clDevice] = CL_BUILD_SUCCESS;
         programBinaryType = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
     }
 

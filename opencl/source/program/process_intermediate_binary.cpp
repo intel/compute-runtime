@@ -17,7 +17,8 @@ cl_int Program::processSpirBinary(
     this->irBinary = makeCopy(pBinary, binarySize);
     this->irBinarySize = binarySize;
 
-    buildStatus = CL_BUILD_NONE;
+    setBuildStatus(CL_BUILD_NONE);
+
     this->isSpirV = isSpirV;
 
     return CL_SUCCESS;

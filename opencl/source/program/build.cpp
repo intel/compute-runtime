@@ -38,6 +38,8 @@ cl_int Program::build(
     bool enableCaching) {
     cl_int retVal = CL_SUCCESS;
 
+    auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
+    UNRECOVERABLE_IF(clDevice == nullptr);
     do {
         if (((deviceList == nullptr) && (numDevices != 0)) ||
             ((deviceList != nullptr) && (numDevices == 0))) {
@@ -57,15 +59,14 @@ cl_int Program::build(
             retVal = CL_INVALID_DEVICE;
             break;
         }
-
         // check to see if a previous build request is in progress
-        if (buildStatus == CL_BUILD_IN_PROGRESS) {
+        if (buildStatuses[clDevice] == CL_BUILD_IN_PROGRESS) {
             retVal = CL_INVALID_OPERATION;
             break;
         }
 
         if (isCreatedFromBinary == false) {
-            buildStatus = CL_BUILD_IN_PROGRESS;
+            buildStatuses[clDevice] = CL_BUILD_IN_PROGRESS;
 
             if (nullptr != buildOptions) {
                 options = buildOptions;
@@ -103,8 +104,6 @@ cl_int Program::build(
                     options = std::string("-s ") + filename + " " + options;
                 }
             }
-            auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
-            UNRECOVERABLE_IF(clDevice == nullptr);
 
             if (requiresOpenClCFeatures(options)) {
                 auto compilerExtensionsWithFeaturesOptions = clDevice->peekCompilerExtensionsWithFeatures();
@@ -177,10 +176,10 @@ cl_int Program::build(
     } while (false);
 
     if (retVal != CL_SUCCESS) {
-        buildStatus = CL_BUILD_ERROR;
+        buildStatuses[clDevice] = CL_BUILD_ERROR;
         programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     } else {
-        buildStatus = CL_BUILD_SUCCESS;
+        buildStatuses[clDevice] = CL_BUILD_SUCCESS;
         programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
     }
 

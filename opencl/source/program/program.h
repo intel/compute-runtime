@@ -159,8 +159,8 @@ class Program : public BaseObject<_cl_program> {
     cl_int getBuildInfo(cl_device_id device, cl_program_build_info paramName,
                         size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
 
-    cl_build_status getBuildStatus() const {
-        return buildStatus;
+    bool isBuilt() const {
+        return std::all_of(this->buildStatuses.begin(), this->buildStatuses.end(), [](auto pair) { return pair.second == CL_SUCCESS; });
     }
 
     Context &getContext() const {
@@ -285,6 +285,8 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL bool appendKernelDebugOptions();
     void notifyDebuggerWithSourceCode(std::string &filename);
 
+    void setBuildStatus(cl_build_status status);
+
     cl_program_binary_type programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     bool isSpirV = false;
 
@@ -300,7 +302,7 @@ class Program : public BaseObject<_cl_program> {
     std::vector<KernelInfo *> parentKernelInfoArray;
     std::vector<KernelInfo *> subgroupKernelInfoArray;
 
-    cl_build_status buildStatus = CL_BUILD_NONE;
+    std::unordered_map<ClDevice *, int> buildStatuses;
     bool isCreatedFromBinary = false;
 
     std::string sourceCode;

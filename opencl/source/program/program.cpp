@@ -55,6 +55,7 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
         if (device->getRootDeviceIndex() > maxRootDeviceIndex) {
             maxRootDeviceIndex = device->getRootDeviceIndex();
         }
+        buildStatuses[device] = CL_BUILD_NONE;
     }
 
     buildInfos.resize(maxRootDeviceIndex + 1);
@@ -480,6 +481,12 @@ cl_int Program::packDeviceBinary(uint32_t rootDeviceIndex) {
     }
 
     return CL_SUCCESS;
+}
+
+void Program::setBuildStatus(cl_build_status status) {
+    for (auto &buildStatusPair : buildStatuses) {
+        buildStatusPair.second = status;
+    }
 }
 
 } // namespace NEO

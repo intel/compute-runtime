@@ -129,10 +129,10 @@ T *Program::createBuiltInFromGenBinary(
             if (program->buildInfos[device->getRootDeviceIndex()].packedDeviceBinarySize == 0) {
                 program->replaceDeviceBinary(makeCopy(binary, size), size, device->getRootDeviceIndex());
             }
+            program->buildStatuses[device] = CL_BUILD_SUCCESS;
         }
         program->isCreatedFromBinary = true;
         program->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
-        program->buildStatus = CL_BUILD_SUCCESS;
         program->createdFrom = CreatedFrom::BINARY;
     }
 

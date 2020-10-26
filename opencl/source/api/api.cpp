@@ -1674,7 +1674,7 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
             break;
         }
 
-        if (pProgram->getBuildStatus() != CL_SUCCESS) {
+        if (!pProgram->isBuilt()) {
             retVal = CL_INVALID_PROGRAM_EXECUTABLE;
             break;
         }
