@@ -430,3 +430,15 @@ TEST(DrmBufferObject, whenMarkForCapturedCalledThenIsMarkedForCaptureReturnsTrue
     bo.markForCapture();
     EXPECT_TRUE(bo.isMarkedForCapture());
 }
+
+TEST_F(DrmBufferObjectTest, givenBoMarkedForCaptureWhenFillingExecObjectThenCaptureFlagIsSet) {
+    drm_i915_gem_exec_object2 execObject;
+
+    memset(&execObject, 0, sizeof(execObject));
+    bo->markForCapture();
+    bo->setAddress(0x45000);
+    bo->setSize(0x1000);
+    bo->fillExecObject(execObject, osContext.get(), 0, 1);
+
+    EXPECT_TRUE(execObject.flags & EXEC_OBJECT_CAPTURE);
+}

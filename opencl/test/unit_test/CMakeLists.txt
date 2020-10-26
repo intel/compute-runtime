@@ -190,7 +190,7 @@ function(neo_copy_test_files_with_revision target product revision_id)
                      DEPENDS ${NEO_SOURCE_DIR}/opencl/test/unit_test/test_files
   )
   add_dependencies(${target} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}}")
+  set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TEST_TARGETS_FOLDER}/${product}/${revision_id}")
 endfunction()
 
 add_dependencies(unit_tests

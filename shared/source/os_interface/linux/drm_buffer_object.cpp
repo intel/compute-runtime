@@ -115,6 +115,9 @@ void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject, OsConte
     execObject.alignment = 0;
     execObject.offset = this->gpuAddress;
     execObject.flags = EXEC_OBJECT_PINNED | EXEC_OBJECT_SUPPORTS_48B_ADDRESS;
+    if (this->isMarkedForCapture()) {
+        execObject.flags |= EXEC_OBJECT_CAPTURE;
+    }
     execObject.rsvd1 = drmContextId;
     execObject.rsvd2 = 0;
 
