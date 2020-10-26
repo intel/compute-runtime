@@ -18,7 +18,6 @@ BDWTEST_F(BroadwellOnlyTest, shouldPassOnBdw) {
 
 typedef Test<ClDeviceFixture> Gen8OnlyTest;
 
-GEN8TEST_F(Gen8OnlyTest, shouldPassOnGen8) {
+GEN8TEST_F(Gen8OnlyTest, WhenGettingRenderCoreFamilyThenGen8CoreIsReturned) {
     EXPECT_EQ(IGFX_GEN8_CORE, pDevice->getRenderCoreFamily());
-    EXPECT_NE(IGFX_GEN9_CORE, pDevice->getRenderCoreFamily());
 }
