@@ -95,12 +95,18 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
         uint64_t gpuAddress = getGpuAddress();
         auto handle = drm->registerResource(resourceClass, &gpuAddress, sizeof(gpuAddress));
         registeredBoBindHandles.push_back(handle);
+
         auto &bos = getBOs();
 
         for (auto bo : bos) {
             if (bo) {
                 bo->addBindExtHandle(handle);
                 bo->markForCapture();
+                if (resourceClass == Drm::ResourceClass::Isa) {
+                    auto cookieHandle = drm->registerIsaCookie(handle);
+                    bo->addBindExtHandle(cookieHandle);
+                    registeredBoBindHandles.push_back(cookieHandle);
+                }
             }
         }
     }

@@ -116,6 +116,7 @@ class Drm {
 
     MOCKABLE_VIRTUAL uint32_t registerResource(ResourceClass classType, void *data, size_t size);
     MOCKABLE_VIRTUAL void unregisterResource(uint32_t handle);
+    MOCKABLE_VIRTUAL uint32_t registerIsaCookie(uint32_t isaHandle);
 
     MemoryInfo *getMemoryInfo() const {
         return memoryInfo.get();

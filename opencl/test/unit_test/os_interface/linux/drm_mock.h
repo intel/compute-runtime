@@ -235,6 +235,10 @@ class DrmMockResources : public DrmMock {
         unregisteredHandle = handle;
     }
 
+    uint32_t registerIsaCookie(uint32_t isaHanlde) override {
+        return currentCookie++;
+    }
+
     static const uint32_t registerResourceReturnHandle;
 
     uint32_t unregisteredHandle = 0;
@@ -243,4 +247,5 @@ class DrmMockResources : public DrmMock {
     bool registerClassesCalled = false;
     uint64_t registeredData[128];
     size_t registeredDataSize;
+    uint32_t currentCookie = 2;
 };

@@ -8,11 +8,16 @@
 #include "drm_neo.h"
 
 namespace NEO {
+
 bool Drm::registerResourceClasses() {
     return false;
 }
 
 uint32_t Drm::registerResource(ResourceClass classType, void *data, size_t size) {
+    return 0;
+}
+
+uint32_t Drm::registerIsaCookie(uint32_t isaHandle) {
     return 0;
 }
 

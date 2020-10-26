@@ -40,3 +40,14 @@ TEST(DrmTest, whenRegisterResourceCalledThenImplementationIsEmpty) {
     drmMock.unregisterResource(handle);
     EXPECT_EQ(0u, drmMock.ioctlCallsCount);
 }
+
+TEST(DrmTest, whenRegisterIsaCookieCalledThenImplementationIsEmpty) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    DrmMock drmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    const uint32_t isaHandle = 2;
+    auto handle = drmMock.registerIsaCookie(isaHandle);
+    EXPECT_EQ(0u, handle);
+    EXPECT_EQ(0u, drmMock.ioctlCallsCount);
+}
