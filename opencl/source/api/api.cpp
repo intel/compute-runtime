@@ -427,10 +427,14 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
         retVal = clGetDeviceIDs(nullptr, deviceType, numDevices, supportedDevs.begin(), nullptr);
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
 
-        ClDeviceVector allDevs(supportedDevs.begin(), std::min(numDevices, 1u));
-        pContext = Context::create<Context>(properties, allDevs, funcNotify, userData, retVal);
+        if (!DebugManager.flags.EnableMultiRootDeviceContexts.get()) {
+            numDevices = 1u;
+        }
+
+        ClDeviceVector deviceVector(supportedDevs.begin(), numDevices);
+        pContext = Context::create<Context>(properties, deviceVector, funcNotify, userData, retVal);
         if (pContext != nullptr) {
-            gtpinNotifyContextCreate((cl_context)pContext);
+            gtpinNotifyContextCreate(pContext);
         }
     } while (false);
 
