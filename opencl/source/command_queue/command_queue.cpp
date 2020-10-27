@@ -120,8 +120,8 @@ CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver() const {
     return nullptr;
 }
 
-CommandStreamReceiver &CommandQueue::getCommandStreamReceiverByCommandType(cl_command_type cmdType) const {
-    if (blitEnqueueAllowed(cmdType)) {
+CommandStreamReceiver &CommandQueue::getCommandStreamReceiver(bool blitAllowed) const {
+    if (blitAllowed) {
         auto csr = getBcsCommandStreamReceiver();
         UNRECOVERABLE_IF(!csr);
         return *csr;

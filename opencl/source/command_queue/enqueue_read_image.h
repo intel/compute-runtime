@@ -41,8 +41,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     const cl_event *eventWaitList,
     cl_event *event) {
 
-    auto cmdType = CL_COMMAND_READ_IMAGE;
-    auto &csr = getCommandStreamReceiverByCommandType(cmdType);
+    cl_command_type cmdType = CL_COMMAND_READ_IMAGE;
+    auto blitAllowed = blitEnqueueAllowed(cmdType);
+    auto &csr = getCommandStreamReceiver(blitAllowed);
     if (nullptr == mapAllocation) {
         notifyEnqueueReadImage(srcImage, static_cast<bool>(blockingRead), EngineHelpers::isBcs(csr.getOsContext().getEngineType()));
     }
@@ -104,7 +105,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     auto eBuiltInOps = EBuiltInOps::CopyImage3dToBuffer;
     MultiDispatchInfo dispatchInfo(dc);
 
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_READ_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingRead == CL_TRUE, blitAllowed);
 
     if (context->isProvidingPerformanceHints()) {
         if (!isL3Capable(ptr, hostPtrSize)) {

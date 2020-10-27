@@ -224,7 +224,9 @@ TEST_P(CommandQueueWithBlitOperationsTests, givenDeviceNotSupportingBlitOperatio
 
     auto defaultCsr = mockDevice->getDefaultEngine().commandStreamReceiver;
     EXPECT_EQ(defaultCsr, &cmdQ.getGpgpuCommandStreamReceiver());
-    EXPECT_EQ(defaultCsr, &cmdQ.getCommandStreamReceiverByCommandType(cmdType));
+
+    auto blitAllowed = cmdQ.blitEnqueueAllowed(cmdType);
+    EXPECT_EQ(defaultCsr, &cmdQ.getCommandStreamReceiver(blitAllowed));
 }
 
 HWTEST_P(CommandQueueWithBlitOperationsTests, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsCreatedThenBcsIsTakenFromFirstSubDevice) {
@@ -251,11 +253,12 @@ HWTEST_P(CommandQueueWithBlitOperationsTests, givenDeviceWithSubDevicesSupportin
 
     MockCommandQueue cmdQ(nullptr, device.get(), 0);
     auto cmdType = GetParam();
+    auto blitAllowed = cmdQ.blitEnqueueAllowed(cmdType);
 
     EXPECT_NE(nullptr, cmdQ.getBcsCommandStreamReceiver());
     EXPECT_EQ(bcsEngine.commandStreamReceiver, cmdQ.getBcsCommandStreamReceiver());
-    EXPECT_EQ(bcsEngine.commandStreamReceiver, &cmdQ.getCommandStreamReceiverByCommandType(cmdType));
-    EXPECT_EQ(bcsEngine.osContext, &cmdQ.getCommandStreamReceiverByCommandType(cmdType).getOsContext());
+    EXPECT_EQ(bcsEngine.commandStreamReceiver, &cmdQ.getCommandStreamReceiver(blitAllowed));
+    EXPECT_EQ(bcsEngine.osContext, &cmdQ.getCommandStreamReceiver(blitAllowed).getOsContext());
 }
 
 INSTANTIATE_TEST_CASE_P(uint32_t,

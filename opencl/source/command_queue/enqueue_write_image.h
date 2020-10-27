@@ -54,7 +54,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize, true);
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&dstImgSurf, nullptr};
-
+    auto blitAllowed = blitEnqueueAllowed(cmdType);
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
@@ -66,7 +66,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
         if (region[0] != 0 &&
             region[1] != 0 &&
             region[2] != 0) {
-            auto &csr = getCommandStreamReceiverByCommandType(cmdType);
+            auto &csr = getCommandStreamReceiver(blitAllowed);
             bool status = csr.createAllocationForHostSurface(hostPtrSurf, false);
             if (!status) {
                 return CL_OUT_OF_RESOURCES;
@@ -94,7 +94,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     auto eBuiltInOps = EBuiltInOps::CopyBufferToImage3d;
     MultiDispatchInfo dispatchInfo(dc);
 
-    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE);
+    dispatchBcsOrGpgpuEnqueue<CL_COMMAND_WRITE_IMAGE>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, blockingWrite == CL_TRUE, blitAllowed);
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, CL_ENQUEUE_WRITE_IMAGE_REQUIRES_COPY_DATA, static_cast<cl_mem>(dstImage));
