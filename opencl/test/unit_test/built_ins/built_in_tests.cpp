@@ -1006,9 +1006,9 @@ TEST_F(VmeBuiltInTests, GivenVmeBuilderWhenGettingDispatchInfoThenParamsAreCorre
     MockKernelWithInternals mockKernel{*pClDevice};
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD32 = 0;
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD16 = 1;
-    mockKernel.kernelInfo.reqdWorkGroupSize[0] = 16;
-    mockKernel.kernelInfo.reqdWorkGroupSize[1] = 0;
-    mockKernel.kernelInfo.reqdWorkGroupSize[2] = 0;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] = 16;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1] = 0;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2] = 0;
 
     overwriteBuiltInBinaryName("media_kernels_backend");
     BuiltinDispatchInfoBuilder &builder = Vme::getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, *pClDevice);
@@ -1056,9 +1056,9 @@ TEST_F(VmeBuiltInTests, GivenAdvancedVmeBuilderWhenGettingDispatchInfoThenParams
     MockKernelWithInternals mockKernel{*pClDevice};
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD32 = 0;
     ((SPatchExecutionEnvironment *)mockKernel.kernelInfo.patchInfo.executionEnvironment)->CompiledSIMD16 = 1;
-    mockKernel.kernelInfo.reqdWorkGroupSize[0] = 16;
-    mockKernel.kernelInfo.reqdWorkGroupSize[1] = 0;
-    mockKernel.kernelInfo.reqdWorkGroupSize[2] = 0;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] = 16;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1] = 0;
+    mockKernel.kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2] = 0;
 
     Vec3<size_t> gws{352, 288, 0};
     Vec3<size_t> elws{0, 0, 0};

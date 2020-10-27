@@ -68,7 +68,7 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
 
         // Update global work size to force macro-block to HW thread execution model
         Vec3<size_t> gws = {numThreadsX * simdWidth, 1, 1};
-        Vec3<size_t> lws = {vmeKernel->getKernelInfo().reqdWorkGroupSize[0], 1, 1};
+        Vec3<size_t> lws = {vmeKernel->getKernelInfo().kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0], 1, 1};
 
         DispatchInfoBuilder<SplitDispatch::Dim::d2D, SplitDispatch::SplitMode::NoSplit> builder;
         builder.setDispatchGeometry(gws, lws, inOffset, gws, lws);

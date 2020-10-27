@@ -57,13 +57,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
 
     bool haveRequiredWorkGroupSize = false;
 
-    if (kernelInfo.reqdWorkGroupSize[0] != WorkloadInfo::undefinedOffset) {
+    if (kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] != 0) {
         haveRequiredWorkGroupSize = true;
     }
 
     size_t remainder = 0;
     size_t totalWorkItems = 1u;
     const size_t *localWkgSizeToPass = localWorkSizeIn ? workGroupSize : nullptr;
+    size_t reqdWorkgroupSize[3] = {};
 
     for (auto i = 0u; i < workDim; i++) {
         region[i] = globalWorkSizeIn ? globalWorkSizeIn[i] : 0;
@@ -76,7 +77,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
 
         if (localWorkSizeIn) {
             if (haveRequiredWorkGroupSize) {
-                if (kernelInfo.reqdWorkGroupSize[i] != localWorkSizeIn[i]) {
+                if (kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != localWorkSizeIn[i]) {
                     return CL_INVALID_WORK_GROUP_SIZE;
                 }
             }
@@ -100,7 +101,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     }
 
     if (haveRequiredWorkGroupSize) {
-        localWkgSizeToPass = kernelInfo.reqdWorkGroupSize;
+        reqdWorkgroupSize[0] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];
+        reqdWorkgroupSize[1] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1];
+        reqdWorkgroupSize[2] = kernelInfo.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2];
+        localWkgSizeToPass = reqdWorkgroupSize;
     }
 
     NullSurface s;

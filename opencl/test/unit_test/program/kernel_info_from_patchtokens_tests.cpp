@@ -286,9 +286,11 @@ TEST(KernelInfoFromPatchTokens, GivenDefaultModeThenKernelDescriptorIsNotBeingPo
 
     kernelTokens.tokens.kernelArgs.resize(2);
     kernelTokens.tokens.kernelArgs[1].objectArg = &globalMemArg;
+    NEO::useKernelDescriptor = false;
     NEO::KernelInfo kernelInfo = {};
     NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
     EXPECT_TRUE(kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.empty());
+    NEO::useKernelDescriptor = true;
 }
 
 TEST(KernelInfoFromPatchTokens, WhenUseKernelDescriptorIsEnabledThenKernelDescriptorIsBeingPopulated) {
@@ -306,6 +308,5 @@ TEST(KernelInfoFromPatchTokens, WhenUseKernelDescriptorIsEnabledThenKernelDescri
     NEO::KernelInfo kernelInfo = {};
     NEO::useKernelDescriptor = true;
     NEO::populateKernelInfo(kernelInfo, kernelTokens, sizeof(void *));
-    NEO::useKernelDescriptor = false;
     EXPECT_FALSE(kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.empty());
 }

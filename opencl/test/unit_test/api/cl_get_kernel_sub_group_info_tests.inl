@@ -25,9 +25,9 @@ struct KernelSubGroupInfoFixture : HelloWorldFixture<HelloWorldFixtureFactory> {
         largestCompiledSIMDSize = static_cast<size_t>(pKernel->getKernelInfo().patchInfo.executionEnvironment->LargestCompiledSIMDSize);
         ASSERT_EQ(32u, largestCompiledSIMDSize);
 
-        auto requiredWorkGroupSizeX = static_cast<size_t>(pKernel->getKernelInfo().patchInfo.executionEnvironment->RequiredWorkGroupSizeX);
-        auto requiredWorkGroupSizeY = static_cast<size_t>(pKernel->getKernelInfo().patchInfo.executionEnvironment->RequiredWorkGroupSizeY);
-        auto requiredWorkGroupSizeZ = static_cast<size_t>(pKernel->getKernelInfo().patchInfo.executionEnvironment->RequiredWorkGroupSizeZ);
+        auto requiredWorkGroupSizeX = static_cast<size_t>(pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
+        auto requiredWorkGroupSizeY = static_cast<size_t>(pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
+        auto requiredWorkGroupSizeZ = static_cast<size_t>(pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
 
         calculatedMaxWorkgroupSize = requiredWorkGroupSizeX * requiredWorkGroupSizeY * requiredWorkGroupSizeZ;
         if ((calculatedMaxWorkgroupSize == 0) || (calculatedMaxWorkgroupSize > static_cast<size_t>(pKernel->maxKernelWorkGroupSize))) {

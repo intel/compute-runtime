@@ -1242,9 +1242,9 @@ class ReflectionSurfaceHelperSetKernelDataTest : public testing::TestWithParam<s
 
         info.patchInfo.pAllocateStatelessPrivateSurface = &privateSurface;
 
-        info.reqdWorkGroupSize[0] = 4;
-        info.reqdWorkGroupSize[1] = 8;
-        info.reqdWorkGroupSize[2] = 2;
+        info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0] = 4;
+        info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1] = 8;
+        info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2] = 2;
 
         info.workloadInfo.slmStaticSize = 1652;
 
@@ -1319,9 +1319,9 @@ TEST_P(ReflectionSurfaceHelperSetKernelDataTest, WhenSettingKernelDataThenDataAn
     EXPECT_EQ(0u, kernelData->m_ScratchSpacePatchValue);
     EXPECT_EQ(executionEnvironment.LargestCompiledSIMDSize, kernelData->m_SIMDSize);
     EXPECT_EQ(executionEnvironment.HasBarriers, kernelData->m_HasBarriers);
-    EXPECT_EQ(info.reqdWorkGroupSize[0], kernelData->m_RequiredWkgSizes[0]);
-    EXPECT_EQ(info.reqdWorkGroupSize[1], kernelData->m_RequiredWkgSizes[1]);
-    EXPECT_EQ(info.reqdWorkGroupSize[2], kernelData->m_RequiredWkgSizes[2]);
+    EXPECT_EQ(info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0], kernelData->m_RequiredWkgSizes[0]);
+    EXPECT_EQ(info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1], kernelData->m_RequiredWkgSizes[1]);
+    EXPECT_EQ(info.kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2], kernelData->m_RequiredWkgSizes[2]);
     EXPECT_EQ(info.workloadInfo.slmStaticSize, kernelData->m_InilineSLMSize);
 
     if (localIDPresent.flattend || localIDPresent.x || localIDPresent.y || localIDPresent.z)

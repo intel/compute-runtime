@@ -322,9 +322,9 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentNoReqdWorkGroupSizeWhenBuildingT
     buildAndDecode();
 
     EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
-    EXPECT_EQ_VAL(WorkloadInfo::undefinedOffset, pKernelInfo->reqdWorkGroupSize[0]);
-    EXPECT_EQ_VAL(WorkloadInfo::undefinedOffset, pKernelInfo->reqdWorkGroupSize[1]);
-    EXPECT_EQ_VAL(WorkloadInfo::undefinedOffset, pKernelInfo->reqdWorkGroupSize[2]);
+    EXPECT_EQ_VAL(0, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
+    EXPECT_EQ_VAL(0, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
+    EXPECT_EQ_VAL(0, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
 }
 
 TEST_F(KernelDataTest, GivenExecutionEnvironmentWhenBuildingThenProgramIsCorrect) {
@@ -357,9 +357,9 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentWhenBuildingThenProgramIsCorrect
     buildAndDecode();
 
     EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
-    EXPECT_EQ(32u, pKernelInfo->reqdWorkGroupSize[0]);
-    EXPECT_EQ(16u, pKernelInfo->reqdWorkGroupSize[1]);
-    EXPECT_EQ(8u, pKernelInfo->reqdWorkGroupSize[2]);
+    EXPECT_EQ(32u, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0]);
+    EXPECT_EQ(16u, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1]);
+    EXPECT_EQ(8u, pKernelInfo->kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2]);
     EXPECT_TRUE(pKernelInfo->requiresSshForBuffers);
 }
 
@@ -459,14 +459,21 @@ TEST_F(KernelDataTest, GivenExecutionEnvironmentRequiresSubgroupIndependentForwa
 TEST_F(KernelDataTest, GivenKernelAttributesInfoWhenBuildingThenProgramIsCorrect) {
     iOpenCL::SPatchKernelAttributesInfo kernelAttributesInfo;
     kernelAttributesInfo.Token = PATCH_TOKEN_KERNEL_ATTRIBUTES_INFO;
-    kernelAttributesInfo.Size = sizeof(SPatchKernelAttributesInfo);
     kernelAttributesInfo.AttributesSize = 0x10;
+    kernelAttributesInfo.Size = sizeof(SPatchKernelAttributesInfo) + kernelAttributesInfo.AttributesSize;
+    const std::string attributesValue = "dummy_attribute";
 
-    pPatchList = &kernelAttributesInfo;
-    patchListSize = kernelAttributesInfo.Size;
+    std::vector<char> patchToken(sizeof(iOpenCL::SPatchKernelAttributesInfo) + kernelAttributesInfo.AttributesSize);
+    memcpy_s(patchToken.data(), patchToken.size(), &kernelAttributesInfo, sizeof(iOpenCL::SPatchKernelAttributesInfo));
+    memcpy_s(patchToken.data() + sizeof(iOpenCL::SPatchKernelAttributesInfo), kernelAttributesInfo.AttributesSize,
+             attributesValue.data(), attributesValue.size());
+
+    pPatchList = patchToken.data();
+    patchListSize = static_cast<uint32_t>(patchToken.size());
 
     buildAndDecode();
 
+    EXPECT_EQ(attributesValue, pKernelInfo->kernelDescriptor.kernelMetadata.kernelLanguageAttributes);
     EXPECT_EQ_CONST(PATCH_TOKEN_KERNEL_ATTRIBUTES_INFO, pKernelInfo->patchInfo.pKernelAttributesInfo->Token);
 }
 

@@ -162,9 +162,9 @@ struct KernelInfo {
         return patchInfo.executionEnvironment ? !!patchInfo.executionEnvironment->SubgroupIndependentForwardProgressRequired : false;
     }
     size_t getMaxRequiredWorkGroupSize(size_t maxWorkGroupSize) const {
-        auto requiredWorkGroupSizeX = patchInfo.executionEnvironment->RequiredWorkGroupSizeX;
-        auto requiredWorkGroupSizeY = patchInfo.executionEnvironment->RequiredWorkGroupSizeY;
-        auto requiredWorkGroupSizeZ = patchInfo.executionEnvironment->RequiredWorkGroupSizeZ;
+        auto requiredWorkGroupSizeX = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[0];
+        auto requiredWorkGroupSizeY = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[1];
+        auto requiredWorkGroupSizeZ = kernelDescriptor.kernelAttributes.requiredWorkgroupSize[2];
         size_t maxRequiredWorkGroupSize = requiredWorkGroupSizeX * requiredWorkGroupSizeY * requiredWorkGroupSizeZ;
         if ((maxRequiredWorkGroupSize == 0) || (maxRequiredWorkGroupSize > maxWorkGroupSize)) {
             maxRequiredWorkGroupSize = maxWorkGroupSize;
@@ -199,7 +199,6 @@ struct KernelInfo {
     bool hasStatelessAccessToHostMemory = false;
     bool isVmeWorkload = false;
     char *crossThreadData = nullptr;
-    size_t reqdWorkGroupSize[3] = {WorkloadInfo::undefinedOffset, WorkloadInfo::undefinedOffset, WorkloadInfo::undefinedOffset};
     size_t requiredSubGroupSize = 0;
     std::array<uint8_t, 3> workgroupWalkOrder = {{0, 1, 2}};
     std::array<uint8_t, 3> workgroupDimensionsOrder = {{0, 1, 2}};
