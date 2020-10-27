@@ -1511,10 +1511,13 @@ cl_int CL_API_CALL clBuildProgram(cl_program program,
     cl_int retVal = CL_INVALID_PROGRAM;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("clProgram", program, "numDevices", numDevices, "cl_device_id", deviceList, "options", (options != nullptr) ? options : "", "funcNotify", funcNotify, "userData", userData);
-    auto pProgram = castToObject<Program>(program);
+    Program *pProgram = nullptr;
 
-    if (pProgram) {
-        retVal = pProgram->build(numDevices, deviceList, options, funcNotify, userData, clCacheEnabled);
+    retVal = validateObjects(WithCastToInternal(program, &pProgram), Program::isValidCallback(funcNotify, userData));
+
+    if (CL_SUCCESS == retVal) {
+        retVal = pProgram->build(numDevices, deviceList, options, clCacheEnabled);
+        pProgram->invokeCallback(funcNotify, userData);
     }
 
     TRACING_EXIT(clBuildProgram, &retVal);
@@ -1534,12 +1537,15 @@ cl_int CL_API_CALL clCompileProgram(cl_program program,
     cl_int retVal = CL_INVALID_PROGRAM;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("clProgram", program, "numDevices", numDevices, "cl_device_id", deviceList, "options", (options != nullptr) ? options : "", "numInputHeaders", numInputHeaders);
-    auto pProgram = castToObject<Program>(program);
 
-    if (pProgram != nullptr) {
+    Program *pProgram = nullptr;
+
+    retVal = validateObjects(WithCastToInternal(program, &pProgram), Program::isValidCallback(funcNotify, userData));
+
+    if (CL_SUCCESS == retVal) {
         retVal = pProgram->compile(numDevices, deviceList, options,
-                                   numInputHeaders, inputHeaders, headerIncludeNames,
-                                   funcNotify, userData);
+                                   numInputHeaders, inputHeaders, headerIncludeNames);
+        pProgram->invokeCallback(funcNotify, userData);
     }
 
     TRACING_EXIT(clCompileProgram, &retVal);
@@ -1564,18 +1570,15 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
     Context *pContext = nullptr;
     Program *program = nullptr;
 
-    retVal = validateObject(context);
+    retVal = validateObjects(WithCastToInternal(context, &pContext), Program::isValidCallback(funcNotify, userData));
     if (CL_SUCCESS == retVal) {
-        pContext = castToObject<Context>(context);
-    }
-    if (pContext != nullptr) {
 
         ClDeviceVector deviceVector;
         deviceVector.push_back(pContext->getDevice(0));
         program = new Program(pContext, false, deviceVector);
         retVal = program->link(numDevices, deviceList, options,
-                               numInputPrograms, inputPrograms,
-                               funcNotify, userData);
+                               numInputPrograms, inputPrograms);
+        program->invokeCallback(funcNotify, userData);
     }
 
     err.set(retVal);

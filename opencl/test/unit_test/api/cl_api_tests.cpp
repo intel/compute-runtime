@@ -14,7 +14,11 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 namespace NEO {
-
+void CL_CALLBACK notifyFuncProgram(
+    cl_program program,
+    void *userData) {
+    *((char *)userData) = 'a';
+}
 void api_fixture_using_aligned_memory_manager::SetUp() {
     retVal = CL_SUCCESS;
     retSize = 0;

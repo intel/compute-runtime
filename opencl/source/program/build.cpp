@@ -33,8 +33,6 @@ cl_int Program::build(
     cl_uint numDevices,
     const cl_device_id *deviceList,
     const char *buildOptions,
-    void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
-    void *userData,
     bool enableCaching) {
     cl_int retVal = CL_SUCCESS;
 
@@ -43,12 +41,6 @@ cl_int Program::build(
     do {
         if (((deviceList == nullptr) && (numDevices != 0)) ||
             ((deviceList != nullptr) && (numDevices == 0))) {
-            retVal = CL_INVALID_VALUE;
-            break;
-        }
-
-        if ((funcNotify == nullptr) &&
-            (userData != nullptr)) {
             retVal = CL_INVALID_VALUE;
             break;
         }
@@ -183,10 +175,6 @@ cl_int Program::build(
         programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
     }
 
-    if (funcNotify != nullptr) {
-        (*funcNotify)(this, userData);
-    }
-
     return retVal;
 }
 
@@ -216,7 +204,7 @@ void Program::notifyDebuggerWithSourceCode(std::string &filename) {
 cl_int Program::build(const Device *pDevice, const char *buildOptions, bool enableCaching,
                       std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap) {
     cl_device_id deviceId = pDevice->getSpecializedDevice<ClDevice>();
-    auto ret = this->build(1, &deviceId, buildOptions, nullptr, nullptr, enableCaching);
+    auto ret = this->build(1, &deviceId, buildOptions, enableCaching);
     if (ret != CL_SUCCESS) {
         return ret;
     }

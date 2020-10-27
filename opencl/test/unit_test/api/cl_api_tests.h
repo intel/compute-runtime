@@ -107,4 +107,7 @@ struct api_fixture_using_aligned_memory_manager {
 
 using api_test_using_aligned_memory_manager = Test<api_fixture_using_aligned_memory_manager>;
 
+void CL_CALLBACK notifyFuncProgram(
+    cl_program program,
+    void *userData);
 } // namespace NEO

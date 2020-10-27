@@ -69,12 +69,6 @@ void ProgramTests::TearDown() {
     ClDeviceFixture::TearDown();
 }
 
-void CL_CALLBACK notifyFunc(
-    cl_program program,
-    void *userData) {
-    *((char *)userData) = 'a';
-}
-
 std::vector<const char *> BinaryFileNames{
     "CopyBuffer_simd32",
 };
@@ -119,8 +113,6 @@ TEST_P(ProgramFromBinaryTest, WhenBuildingProgramThenSuccessIsReturned) {
     retVal = pProgram->build(
         1,
         &device,
-        nullptr,
-        nullptr,
         nullptr,
         false);
 
@@ -234,8 +226,6 @@ TEST_P(ProgramFromBinaryTest, GivenProgramWithOneKernelWhenGettingNumKernelsThen
         1,
         &device,
         nullptr,
-        nullptr,
-        nullptr,
         false);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -275,8 +265,6 @@ TEST_P(ProgramFromBinaryTest, WhenGettingKernelNamesThenCorrectNameIsReturned) {
     retVal = pProgram->build(
         1,
         &device,
-        nullptr,
-        nullptr,
         nullptr,
         false);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -637,7 +625,7 @@ TEST_P(ProgramFromBinaryTest, GivenGlobalVariableTotalSizeSetWhenGettingBuildGlo
 
 TEST_P(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphicsAllocationInKernelInfo) {
     cl_device_id device = pClDevice;
-    pProgram->build(1, &device, nullptr, nullptr, nullptr, true);
+    pProgram->build(1, &device, nullptr, true);
     auto kernelInfo = pProgram->getKernelInfo(size_t(0));
 
     auto graphicsAllocation = kernelInfo->getGraphicsAllocation();
@@ -654,7 +642,7 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
 
 TEST_P(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffersAreFreed) {
     cl_device_id device = pClDevice;
-    pProgram->build(1, &device, nullptr, nullptr, nullptr, true);
+    pProgram->build(1, &device, nullptr, true);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
     EXPECT_EQ(nullptr, pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
 
@@ -671,7 +659,7 @@ TEST_P(ProgramFromBinaryTest, whenProgramIsBeingRebuildThenOutdatedGlobalBuffers
 
 TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {
     cl_device_id device = pClDevice;
-    pProgram->build(1, &device, nullptr, nullptr, nullptr, true);
+    pProgram->build(1, &device, nullptr, true);
     EXPECT_EQ(1u, pProgram->getNumKernels());
     pProgram->cleanCurrentKernelInfo();
     EXPECT_EQ(0u, pProgram->getNumKernels());
@@ -681,7 +669,7 @@ HWTEST_P(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledBu
     cl_device_id device = pClDevice;
     auto &csr = pDevice->getGpgpuCommandStreamReceiver();
     EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
-    pProgram->build(1, &device, nullptr, nullptr, nullptr, true);
+    pProgram->build(1, &device, nullptr, true);
     auto kernelAllocation = pProgram->getKernelInfo(size_t(0))->getGraphicsAllocation();
     kernelAllocation->updateTaskCount(100, csr.getOsContext().getContextId());
     *csr.getTagAddress() = 0;
@@ -697,7 +685,7 @@ HWTEST_P(ProgramFromBinaryTest, givenIsaAllocationUsedByMultipleCsrsWhenItIsDele
 
     cl_device_id device = pClDevice;
 
-    pProgram->build(1, &device, nullptr, nullptr, nullptr, true);
+    pProgram->build(1, &device, nullptr, true);
 
     auto kernelAllocation = pProgram->getKernelInfo(size_t(0))->getGraphicsAllocation();
 
@@ -723,7 +711,6 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     auto device = pPlatform->getClDevice(0);
 
     cl_device_id deviceList = {0};
-    char data[4] = {0};
 
     cl_device_id usedDevice = pPlatform->getClDevice(0);
 
@@ -738,23 +725,19 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     auto pMockProgram = pProgram;
 
     // invalid build parameters: combinations of numDevices & deviceList
-    retVal = pProgram->build(1, nullptr, nullptr, nullptr, nullptr, false);
+    retVal = pProgram->build(1, nullptr, nullptr, false);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    retVal = pProgram->build(0, &deviceList, nullptr, nullptr, nullptr, false);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-
-    // invalid build parameters: combinations of funcNotify & userData
-    retVal = pProgram->build(0, nullptr, nullptr, nullptr, &data[0], false);
+    retVal = pProgram->build(0, &deviceList, nullptr, false);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     // invalid build parameters: invalid content of deviceList
-    retVal = pProgram->build(1, &deviceList, nullptr, nullptr, nullptr, false);
+    retVal = pProgram->build(1, &deviceList, nullptr, false);
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 
     // fail build - another build is already in progress
     pMockProgram->setBuildStatus(CL_BUILD_IN_PROGRESS);
-    retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, nullptr, false);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
     pMockProgram->setBuildStatus(CL_BUILD_NONE);
 
@@ -764,13 +747,13 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
     auto p2 = std::make_unique<MockProgram>(toClDeviceVector(*device));
-    retVal = p2->build(0, nullptr, nullptr, nullptr, nullptr, false);
+    retVal = p2->build(0, nullptr, nullptr, false);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     p2.reset(nullptr);
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 
     // fail build - any build error (here caused by specifying unrecognized option)
-    retVal = pProgram->build(0, nullptr, "-invalid-option", nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, "-invalid-option", false);
     EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
 
     // fail build - linked code is corrupted and cannot be postprocessed
@@ -784,13 +767,13 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     EXPECT_NE(nullptr, pSourceBuffer);
     p3->sourceCode = pSourceBuffer.get();
     p3->createdFrom = Program::CreatedFrom::SOURCE;
-    retVal = p3->build(0, nullptr, nullptr, nullptr, nullptr, false);
+    retVal = p3->build(0, nullptr, nullptr, false);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
     p3.reset(nullptr);
 
-    // build successfully without notifyFunc - build kernel and write it to Kernel Cache
+    // build successfully - build kernel and write it to Kernel Cache
     pMockProgram->clearOptions();
-    retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(CompilerOptions::contains(pProgram->getInternalOptions(), pPlatform->getClDevice(0)->peekCompilerExtensions())) << pProgram->getInternalOptions();
 
@@ -816,18 +799,13 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(param_value_size_ret, 0u);
 
-    // build successfully without notifyFunc - build kernel but do not write it to Kernel Cache (kernel is already in the Cache)
+    // build successfully - build kernel but do not write it to Kernel Cache (kernel is already in the Cache)
     pMockProgram->setBuildStatus(CL_BUILD_NONE);
-    retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // build successfully with notifyFunc - duplicate build (kernel already built), do not build and just take it
-    retVal = pProgram->build(0, nullptr, nullptr, notifyFunc, &data[0], false);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ('a', data[0]);
-
-    // build successfully without notifyFunc - kernel is already in Kernel Cache, do not build and take it from Cache
-    retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, true);
+    // build successfully - kernel is already in Kernel Cache, do not build and take it from Cache
+    retVal = pProgram->build(0, nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // fail build - code to be build does not exist
@@ -835,26 +813,26 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenBuildingProgramThenSucc
     pMockProgram->createdFrom = Program::CreatedFrom::SOURCE;
     pMockProgram->setBuildStatus(CL_BUILD_NONE);
     pMockProgram->setCreatedFromBinary(false);
-    retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, nullptr, false);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 }
 
 TEST_P(ProgramFromSourceTest, CreateWithSource_Build_Options_Duplicate) {
     KernelBinaryHelper kbHelper(BinaryFileName, false);
 
-    retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath.data(), nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath.data(), false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath.data(), nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath.data(), false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(0, nullptr, CompilerOptions::finiteMathOnly.data(), nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::finiteMathOnly.data(), false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -862,7 +840,7 @@ TEST_P(ProgramFromSourceTest, WhenBuildingProgramThenFeaturesOptionIsNotAdded) {
     auto featuresOption = static_cast<ClDevice *>(devices[0])->peekCompilerFeatures();
     EXPECT_THAT(pProgram->getInternalOptions(), testing::Not(testing::HasSubstr(featuresOption)));
 
-    retVal = pProgram->build(1, devices, nullptr, nullptr, nullptr, false);
+    retVal = pProgram->build(1, devices, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_THAT(pProgram->getInternalOptions(), testing::Not(testing::HasSubstr(featuresOption)));
 }
@@ -878,7 +856,7 @@ TEST_P(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesOption
     pProgram->sourceCode = "__kernel mock() {}";
     pProgram->createdFrom = Program::CreatedFrom::SOURCE;
 
-    retVal = pProgram->build(1, devices, "-cl-std=CL3.0", nullptr, nullptr, false);
+    retVal = pProgram->build(1, devices, "-cl-std=CL3.0", false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(featuresOption));
 }
@@ -891,9 +869,9 @@ TEST_P(ProgramFromSourceTest, WhenBuildingProgramWithOpenClC30ThenFeaturesOption
     pProgram->sourceCode = "__kernel mock() {}";
     pProgram->createdFrom = Program::CreatedFrom::SOURCE;
 
-    retVal = pProgram->build(0, nullptr, "-cl-std=CL3.0", nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, "-cl-std=CL3.0", false);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = pProgram->build(0, nullptr, "-cl-std=CL3.0", nullptr, nullptr, false);
+    retVal = pProgram->build(0, nullptr, "-cl-std=CL3.0", false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto expectedFeaturesOption = static_cast<ClDevice *>(devices[0])->peekCompilerFeatures();
@@ -912,7 +890,7 @@ TEST_P(ProgramFromSourceTest, WhenCompilingProgramThenFeaturesOptionIsNotAdded) 
     auto featuresOption = pClDevice->peekCompilerFeatures();
     EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(featuresOption)));
 
-    retVal = pProgram->compile(1, devices, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(1, devices, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(featuresOption)));
 }
@@ -928,7 +906,7 @@ TEST_P(ProgramFromSourceTest, WhenCompilingProgramWithOpenClC30ThenFeaturesOptio
     auto featuresOption = pClDevice->peekCompilerFeatures();
     EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::Not(testing::HasSubstr(featuresOption)));
 
-    retVal = pProgram->compile(1, devices, "-cl-std=CL3.0", 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(1, devices, "-cl-std=CL3.0", 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_THAT(pCompilerInterface->buildInternalOptions, testing::HasSubstr(featuresOption));
 }
@@ -972,14 +950,14 @@ TEST_P(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
 
     Callback callback;
 
-    retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, true);
+    retVal = pProgram->build(0, nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash1 = pProgram->getCachedFileName();
     auto kernel1 = pProgram->getKernelInfo("CopyBuffer");
     Callback::watch(kernel1);
     EXPECT_NE(nullptr, kernel1);
 
-    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath.data(), nullptr, nullptr, true);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::fastRelaxedMath.data(), true);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash2 = pProgram->getCachedFileName();
     auto kernel2 = pProgram->getKernelInfo("CopyBuffer");
@@ -988,7 +966,7 @@ TEST_P(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     Callback::unwatch(kernel1);
     Callback::watch(kernel2);
 
-    retVal = pProgram->build(0, nullptr, CompilerOptions::finiteMathOnly.data(), nullptr, nullptr, true);
+    retVal = pProgram->build(0, nullptr, CompilerOptions::finiteMathOnly.data(), true);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash3 = pProgram->getCachedFileName();
     auto kernel3 = pProgram->getKernelInfo("CopyBuffer");
@@ -1001,7 +979,7 @@ TEST_P(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     pProgram->createdFrom = NEO::Program::CreatedFrom::BINARY;
     pProgram->setIrBinary(new char[16], true);
     pProgram->setIrBinarySize(16, true);
-    retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, true);
+    retVal = pProgram->build(0, nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash4 = pProgram->getCachedFileName();
     auto kernel4 = pProgram->getKernelInfo("CopyBuffer");
@@ -1011,7 +989,7 @@ TEST_P(ProgramFromSourceTest, GivenDifferentCommpilerOptionsWhenBuildingProgramT
     Callback::watch(kernel4);
 
     pProgram->createdFrom = NEO::Program::CreatedFrom::SOURCE;
-    retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, true);
+    retVal = pProgram->build(0, nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto hash5 = pProgram->getCachedFileName();
     auto kernel5 = pProgram->getKernelInfo("CopyBuffer");
@@ -1042,52 +1020,47 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuc
     const char *headerIncludeNames = "";
     cl_program nullprogram = nullptr;
     cl_program invprogram = (cl_program)pContext;
-    char data[4];
 
     // Order of following microtests is important - do not change.
     // Add new microtests at end.
 
     // invalid compile parameters: combinations of numDevices & deviceList
-    retVal = pProgram->compile(1, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(1, nullptr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    retVal = pProgram->compile(0, &deviceList, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(0, &deviceList, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     // invalid compile parameters: combinations of numInputHeaders==0 & inputHeaders & headerIncludeNames
-    retVal = pProgram->compile(0, nullptr, nullptr, 0, &inputHeaders, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(0, nullptr, nullptr, 0, &inputHeaders, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, &headerIncludeNames, nullptr, nullptr);
+    retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, &headerIncludeNames);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     // invalid compile parameters: combinations of numInputHeaders!=0 & inputHeaders & headerIncludeNames
-    retVal = pProgram->compile(0, nullptr, nullptr, 1, &inputHeaders, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(0, nullptr, nullptr, 1, &inputHeaders, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    retVal = pProgram->compile(0, nullptr, nullptr, 1, nullptr, &headerIncludeNames, nullptr, nullptr);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-
-    // invalid compile parameters: combinations of funcNotify & userData with valid numInputHeaders!=0 & inputHeaders & headerIncludeNames
-    retVal = pProgram->compile(0, nullptr, nullptr, 1, &inputHeaders, &headerIncludeNames, nullptr, &data[0]);
+    retVal = pProgram->compile(0, nullptr, nullptr, 1, nullptr, &headerIncludeNames);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     // invalid compile parameters: invalid content of deviceList
-    retVal = pProgram->compile(1, &deviceList, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(1, &deviceList, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 
     // fail compilation - another compilation is already in progress
     p->setBuildStatus(CL_BUILD_IN_PROGRESS);
-    retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
     p->setBuildStatus(CL_BUILD_NONE);
 
     // invalid compile parameters: invalid header Program object==nullptr
-    retVal = pProgram->compile(0, nullptr, nullptr, 1, &nullprogram, &headerIncludeNames, nullptr, nullptr);
+    retVal = pProgram->compile(0, nullptr, nullptr, 1, &nullprogram, &headerIncludeNames);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     // invalid compile parameters: invalid header Program object==non Program object
-    retVal = pProgram->compile(0, nullptr, nullptr, 1, &invprogram, &headerIncludeNames, nullptr, nullptr);
+    retVal = pProgram->compile(0, nullptr, nullptr, 1, &invprogram, &headerIncludeNames);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     // compile successfully kernel with header
@@ -1104,13 +1077,13 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuc
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, p3);
     inputHeaders = p3;
-    retVal = pProgram->compile(0, nullptr, nullptr, 1, &inputHeaders, &headerIncludeNames, nullptr, nullptr);
+    retVal = pProgram->compile(0, nullptr, nullptr, 1, &inputHeaders, &headerIncludeNames);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // fail compilation of kernel with header - header is invalid
     p = (MockProgram *)p3;
     p->sourceCode = ""; // set header source code as non-existent (invalid)
-    retVal = pProgram->compile(0, nullptr, nullptr, 1, &inputHeaders, &headerIncludeNames, nullptr, nullptr);
+    retVal = pProgram->compile(0, nullptr, nullptr, 1, &inputHeaders, &headerIncludeNames);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
     delete p3;
 
@@ -1120,24 +1093,18 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenCompilingProgramThenSuc
     std::unique_ptr<RootDeviceEnvironment> rootDeviceEnvironment = std::make_unique<NoCompilerInterfaceRootDeviceEnvironment>(*executionEnvironment);
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
     auto p2 = std::make_unique<MockProgram>(toClDeviceVector(*device));
-    retVal = p2->compile(0, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = p2->compile(0, nullptr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     p2.reset(nullptr);
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 
     // fail compilation - any compilation error (here caused by specifying unrecognized option)
-    retVal = pProgram->compile(0, nullptr, "-invalid-option", 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(0, nullptr, "-invalid-option", 0, nullptr, nullptr);
     EXPECT_EQ(CL_COMPILE_PROGRAM_FAILURE, retVal);
 
-    // compile successfully without notifyFunc
-    retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    // compile successfully
+    retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    // compile successfully with notifyFunc
-    data[0] = 0;
-    retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, nullptr, notifyFunc, &data[0]);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ('a', data[0]);
 }
 
 TEST_P(ProgramFromSourceTest, GivenFlagsWhenCompilingProgramThenBuildOptionsHaveBeenApplied) {
@@ -1148,7 +1115,7 @@ TEST_P(ProgramFromSourceTest, GivenFlagsWhenCompilingProgramThenBuildOptionsHave
     program->sourceCode = "__kernel mock() {}";
 
     // Ask to build created program without NEO::CompilerOptions::gtpinRera and NEO::CompilerOptions::greaterThan4gbBuffersRequired flags.
-    cl_int retVal = program->compile(0, nullptr, CompilerOptions::fastRelaxedMath.data(), 0, nullptr, nullptr, nullptr, nullptr);
+    cl_int retVal = program->compile(0, nullptr, CompilerOptions::fastRelaxedMath.data(), 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -1164,7 +1131,7 @@ TEST_P(ProgramFromSourceTest, GivenFlagsWhenCompilingProgramThenBuildOptionsHave
     cip->buildInternalOptions.clear();
     auto options = CompilerOptions::concatenate(CompilerOptions::greaterThan4gbBuffersRequired, CompilerOptions::gtpinRera, CompilerOptions::finiteMathOnly);
     retVal = program->compile(0, nullptr, options.c_str(),
-                              0, nullptr, nullptr, nullptr, nullptr);
+                              0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -1184,7 +1151,7 @@ TEST_F(ProgramTests, GivenFlagsWhenLinkingProgramThenBuildOptionsHaveBeenApplied
     cl_program program = pProgram.get();
 
     // compile successfully a kernel to be linked later
-    cl_int retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    cl_int retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Ask to link created program with NEO::CompilerOptions::gtpinRera and NEO::CompilerOptions::greaterThan4gbBuffersRequired flags.
@@ -1192,7 +1159,7 @@ TEST_F(ProgramTests, GivenFlagsWhenLinkingProgramThenBuildOptionsHaveBeenApplied
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
-    retVal = pProgram->link(0, nullptr, options.c_str(), 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, options.c_str(), 1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -1262,7 +1229,6 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
         SourceFileName);
 
     cl_device_id deviceList = {0};
-    char data[4];
     cl_program program = pProgram;
     cl_program nullprogram = nullptr;
     cl_program invprogram = (cl_program)pContext;
@@ -1271,43 +1237,39 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     // Add new microtests at end.
 
     // invalid link parameters: combinations of numDevices & deviceList
-    retVal = pProgram->link(1, nullptr, nullptr, 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(1, nullptr, nullptr, 1, &program);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    retVal = pProgram->link(0, &deviceList, nullptr, 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(0, &deviceList, nullptr, 1, &program);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     // invalid link parameters: combinations of numInputPrograms & inputPrograms
-    retVal = pProgram->link(0, nullptr, nullptr, 0, &program, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, nullptr, 0, &program);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    retVal = pProgram->link(0, nullptr, nullptr, 1, nullptr, nullptr, nullptr);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-
-    // invalid link parameters: combinations of funcNotify & userData with valid numInputPrograms & inputPrograms
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &program, nullptr, &data[0]);
+    retVal = pProgram->link(0, nullptr, nullptr, 1, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     // invalid link parameters: invalid content of deviceList
-    retVal = pProgram->link(1, &deviceList, nullptr, 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(1, &deviceList, nullptr, 1, &program);
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 
     // fail linking - another linking is already in progress
     pProgram->setBuildStatus(CL_BUILD_IN_PROGRESS);
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, nullptr, 1, &program);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
     pProgram->setBuildStatus(CL_BUILD_NONE);
 
     // invalid link parameters: invalid Program object==nullptr
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &nullprogram, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, nullptr, 1, &nullprogram);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     // invalid link parameters: invalid Program object==non Program object
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &invprogram, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, nullptr, 1, &invprogram);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     // compile successfully a kernel to be linked later
-    retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // fail linking - code to be linked does not exist
@@ -1316,36 +1278,30 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     pProgram->irBinary.release();
     size_t irBinSize = pProgram->irBinarySize;
     pProgram->setIrBinary(nullptr, false);
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, nullptr, 1, &program);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
     pProgram->setIrBinary(pIrBin, isSpirvTmp);
 
     // fail linking - size of code to be linked is == 0
     pProgram->setIrBinarySize(0, isSpirvTmp);
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, nullptr, 1, &program);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
     pProgram->setIrBinarySize(irBinSize, isSpirvTmp);
 
     // fail linking - any link error (here caused by specifying unrecognized option)
-    retVal = pProgram->link(0, nullptr, "-invalid-option", 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, "-invalid-option", 1, &program);
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
     // fail linking - linked code is corrupted and cannot be postprocessed
     auto device = static_cast<ClDevice *>(usedDevice);
     auto p2 = std::make_unique<FailingGenBinaryProgram>(toClDeviceVector(*device));
-    retVal = p2->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
+    retVal = p2->link(0, nullptr, nullptr, 1, &program);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
     p2.reset(nullptr);
 
-    // link successfully without notifyFunc
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
+    // link successfully
+    retVal = pProgram->link(0, nullptr, nullptr, 1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    // link successfully with notifyFunc
-    data[0] = 0;
-    retVal = pProgram->link(0, nullptr, "", 1, &program, notifyFunc, &data[0]);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ('a', data[0]);
 }
 
 TEST_P(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectErrorIsReturned) {
@@ -1355,15 +1311,15 @@ TEST_P(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectE
     // Add new microtests at end.
 
     // compile successfully a kernel to be later used to create library
-    retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(0, nullptr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // create library successfully
-    retVal = pProgram->link(0, nullptr, CompilerOptions::createLibrary.data(), 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, CompilerOptions::createLibrary.data(), 1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // fail library creation - any link error (here caused by specifying unrecognized option)
-    retVal = pProgram->link(0, nullptr, CompilerOptions::concatenate(CompilerOptions::createLibrary, "-invalid-option").c_str(), 1, &program, nullptr, nullptr);
+    retVal = pProgram->link(0, nullptr, CompilerOptions::concatenate(CompilerOptions::createLibrary, "-invalid-option").c_str(), 1, &program);
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
     auto device = pContext->getDevice(0);
@@ -1373,7 +1329,7 @@ TEST_P(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectE
     auto failingProgram = std::make_unique<MockProgram>(toClDeviceVector(*device));
 
     // fail library creation - CompilerInterface cannot be obtained
-    retVal = failingProgram->link(0, nullptr, CompilerOptions::createLibrary.data(), 1, &program, nullptr, nullptr);
+    retVal = failingProgram->link(0, nullptr, CompilerOptions::createLibrary.data(), 1, &program);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 }
@@ -1417,8 +1373,6 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
     retVal = pProgram->build(
         1,
         &device,
-        nullptr,
-        nullptr,
         nullptr,
         false);
 
@@ -1487,8 +1441,6 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenGwsIsSet) {
         1,
         &device,
         nullptr,
-        nullptr,
-        nullptr,
         false);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -1510,8 +1462,6 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenLwsIsSet) {
     retVal = pProgram->build(
         1,
         &device,
-        nullptr,
-        nullptr,
         nullptr,
         false);
 
@@ -1545,8 +1495,6 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
     retVal = pProgram->build(
         1,
         &device,
-        nullptr,
-        nullptr,
         nullptr,
         false);
 
@@ -1588,8 +1536,6 @@ TEST_F(PatchTokenTests, GivenVmeKernelWhenBuildingKernelThenArgAvailable) {
     retVal = pProgram->build(
         1,
         &device,
-        nullptr,
-        nullptr,
         nullptr,
         false);
 
@@ -1706,8 +1652,6 @@ TEST_F(ProgramWithDebugSymbolsTests, GivenProgramCreatedWithDashGOptionWhenGetti
         1,
         &device,
         "-g",
-        nullptr,
-        nullptr,
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -2081,7 +2025,7 @@ TEST_F(ProgramTests, GivenGtpinReraFlagWhenBuildingProgramThenCorrectOptionsAreS
     program->createdFrom = Program::CreatedFrom::SOURCE;
 
     // Ask to build created program without NEO::CompilerOptions::gtpinRera flag.
-    cl_int retVal = program->build(0, nullptr, CompilerOptions::fastRelaxedMath.data(), nullptr, nullptr, false);
+    cl_int retVal = program->build(0, nullptr, CompilerOptions::fastRelaxedMath.data(), false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -2091,7 +2035,7 @@ TEST_F(ProgramTests, GivenGtpinReraFlagWhenBuildingProgramThenCorrectOptionsAreS
     // Ask to build created program with NEO::CompilerOptions::gtpinRera flag.
     cip->buildOptions.clear();
     cip->buildInternalOptions.clear();
-    retVal = program->build(0, nullptr, CompilerOptions::concatenate(CompilerOptions::gtpinRera, CompilerOptions::finiteMathOnly).c_str(), nullptr, nullptr, false);
+    retVal = program->build(0, nullptr, CompilerOptions::concatenate(CompilerOptions::gtpinRera, CompilerOptions::finiteMathOnly).c_str(), false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -2324,7 +2268,7 @@ TEST_F(ProgramTests, givenProgramCreatedFromILWhenCompileIsCalledThenReuseTheILI
     auto debugVars = NEO::getIgcDebugVars();
     debugVars.forceBuildFailure = true;
     gEnvironment->fclPushDebugVars(debugVars);
-    auto compilerErr = prog->compile(1, &deviceId, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    auto compilerErr = prog->compile(1, &deviceId, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, compilerErr);
     gEnvironment->fclPopDebugVars();
     prog->release();
@@ -2341,7 +2285,7 @@ TEST_F(ProgramTests, givenProgramCreatedFromIntermediateBinaryRepresentationWhen
     auto debugVars = NEO::getIgcDebugVars();
     debugVars.forceBuildFailure = true;
     gEnvironment->fclPushDebugVars(debugVars);
-    auto compilerErr = prog->compile(1, &deviceId, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    auto compilerErr = prog->compile(1, &deviceId, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, compilerErr);
     gEnvironment->fclPopDebugVars();
     prog->release();
@@ -2440,7 +2384,7 @@ TEST_F(ProgramTests, WhenLinkingTwoValidSpirvProgramsThenValidProgramIsReturned)
     EXPECT_EQ(CL_SUCCESS, errCode);
 
     cl_program linkNodes[] = {node1, node2};
-    errCode = prog->link(0, nullptr, nullptr, 2, linkNodes, nullptr, nullptr);
+    errCode = prog->link(0, nullptr, nullptr, 2, linkNodes);
     EXPECT_EQ(CL_SUCCESS, errCode);
 
     prog->release();
@@ -2719,7 +2663,7 @@ TEST_F(ProgramTests, givenProgramWhenBuiltThenAdditionalOptionsAreApplied) {
     AdditionalOptionsMockProgram program(toClDeviceVector(*pClDevice));
     cl_device_id device = pClDevice;
 
-    program.build(1, &device, nullptr, nullptr, nullptr, false);
+    program.build(1, &device, nullptr, false);
     EXPECT_EQ(1u, program.applyAdditionalOptionsCalled);
 }
 
@@ -2900,8 +2844,6 @@ TEST_F(ProgramBinTest, givenPrintProgramBinaryProcessingTimeSetWhenBuildProgramT
         1,
         &device,
         nullptr,
-        nullptr,
-        nullptr,
         false);
 
     auto output = testing::internal::GetCapturedStdout();
@@ -2945,7 +2887,7 @@ TEST_F(ProgramBinTest, GivenBuildWithDebugDataThenBuildDataAvailableViaGetInfo) 
         &sourceCode,
         &knownSourceSize,
         retVal);
-    retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
+    retVal = pProgram->build(1, &device, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Verify
@@ -3002,11 +2944,11 @@ TEST_F(ProgramBinTest, GivenDebugDataAvailableWhenLinkingProgramThenDebugDataIsS
         &knownSourceSize,
         retVal);
 
-    retVal = pProgram->compile(1, &device, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(1, &device, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_program programToLink = pProgram;
-    retVal = pProgram->link(1, &device, nullptr, 1, &programToLink, nullptr, nullptr);
+    retVal = pProgram->link(1, &device, nullptr, 1, &programToLink);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_NE(nullptr, pProgram->getDebugData());
@@ -3084,12 +3026,12 @@ TEST_F(ProgramBinTest, GivenSourceKernelWhenLinkingProgramThenGtpinInitInfoIsPas
         retVal);
     std::unique_ptr<MockCompilerInterfaceWithGtpinParam> mockCompilerInterface(new MockCompilerInterfaceWithGtpinParam);
 
-    retVal = pProgram->compile(1, &device, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(1, &device, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompilerInterface.get());
 
     cl_program programToLink = pProgram;
-    retVal = pProgram->link(1, &device, nullptr, 1, &programToLink, nullptr, nullptr);
+    retVal = pProgram->link(1, &device, nullptr, 1, &programToLink);
 
     EXPECT_EQ(pIgcInitPtr, mockCompilerInterface->gtpinInfoPassed);
     mockCompilerInterface.release();
@@ -3109,4 +3051,32 @@ TEST(ProgramReplaceDeviceBinary, GivenBinaryZebinThenUseAsBothPackedAndUnpackedB
     ASSERT_NE(nullptr, program.buildInfos[rootDeviceIndex].unpackedDeviceBinary);
     EXPECT_EQ(0, memcmp(program.buildInfos[rootDeviceIndex].packedDeviceBinary.get(), zebin.storage.data(), program.buildInfos[rootDeviceIndex].packedDeviceBinarySize));
     EXPECT_EQ(0, memcmp(program.buildInfos[rootDeviceIndex].unpackedDeviceBinary.get(), zebin.storage.data(), program.buildInfos[rootDeviceIndex].unpackedDeviceBinarySize));
+}
+
+TEST(ProgramCallbackTest, whenFunctionIsNullptrThenUserDataNeedsToBeNullptr) {
+    void *userData = nullptr;
+    EXPECT_TRUE(Program::isValidCallback(nullptr, nullptr));
+    EXPECT_FALSE(Program::isValidCallback(nullptr, &userData));
+}
+
+void CL_CALLBACK callbackFuncProgram(
+    cl_program program,
+    void *userData) {
+    *reinterpret_cast<bool *>(userData) = true;
+}
+TEST(ProgramCallbackTest, whenFunctionIsNotNullptrThenUserDataDoesntMatter) {
+    void *userData = nullptr;
+    EXPECT_TRUE(Program::isValidCallback(callbackFuncProgram, nullptr));
+    EXPECT_TRUE(Program::isValidCallback(callbackFuncProgram, &userData));
+}
+
+TEST(ProgramCallbackTest, whenInvokeCallbackIsCalledThenFunctionIsProperlyInvoked) {
+    bool functionCalled = false;
+    MockContext context;
+    MockProgram program{&context, false, context.getDevices()};
+    program.invokeCallback(callbackFuncProgram, &functionCalled);
+
+    EXPECT_TRUE(functionCalled);
+
+    program.invokeCallback(nullptr, nullptr);
 }

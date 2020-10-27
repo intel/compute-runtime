@@ -31,9 +31,7 @@ cl_int Program::compile(
     const char *buildOptions,
     cl_uint numInputHeaders,
     const cl_program *inputHeaders,
-    const char **headerIncludeNames,
-    void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
-    void *userData) {
+    const char **headerIncludeNames) {
     cl_int retVal = CL_SUCCESS;
 
     auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
@@ -55,12 +53,6 @@ cl_int Program::compile(
                 retVal = CL_INVALID_VALUE;
                 break;
             }
-        }
-
-        if ((funcNotify == nullptr) &&
-            (userData != nullptr)) {
-            retVal = CL_INVALID_VALUE;
-            break;
         }
 
         // if a device_list is specified, make sure it points to our device
@@ -182,10 +174,6 @@ cl_int Program::compile(
     }
 
     internalOptions.clear();
-
-    if (funcNotify != nullptr) {
-        (*funcNotify)(this, userData);
-    }
 
     return retVal;
 }

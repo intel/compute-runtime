@@ -193,8 +193,6 @@ TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqu
         1,
         &device,
         nullptr,
-        nullptr,
-        nullptr,
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -235,8 +233,6 @@ TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqu
         1,
         &device,
         nullptr,
-        nullptr,
-        nullptr,
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -274,8 +270,6 @@ TEST_F(ProgramNonUniformTest, GivenCl12WhenExecutingKernelWithNonUniformThenInva
     retVal = mockProgram->build(
         1,
         &device,
-        nullptr,
-        nullptr,
         nullptr,
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);

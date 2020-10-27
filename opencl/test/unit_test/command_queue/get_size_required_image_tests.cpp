@@ -117,7 +117,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenCopyingReadWriteImageThenHeapsAndCommandB
 
     std::unique_ptr<Program> program(Program::createBuiltInFromSource("CopyImageToImage3d", context, context->getDevices(), nullptr));
     cl_device_id device = pClDevice;
-    program->build(1, &device, nullptr, nullptr, nullptr, false);
+    program->build(1, &device, nullptr, false);
     std::unique_ptr<Kernel> kernel(Kernel::create<MockKernel>(program.get(), *program->getKernelInfo("CopyImageToImage3d"), nullptr));
 
     EXPECT_NE(nullptr, kernel);

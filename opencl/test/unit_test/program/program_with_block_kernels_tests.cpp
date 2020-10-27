@@ -60,8 +60,6 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsBuil
         1,
         &device,
         nullptr,
-        nullptr,
-        nullptr,
         false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -102,11 +100,11 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLink
     Program *programLinked = new Program(pContext, false, pContext->getDevices());
     cl_program program = pProgram;
 
-    retVal = pProgram->compile(1, &device, buildOptions, 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = pProgram->compile(1, &device, buildOptions, 0, nullptr, nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = programLinked->link(1, &device, buildOptions, 1, &program, nullptr, nullptr);
+    retVal = programLinked->link(1, &device, buildOptions, 1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     BlockKernelManager *blockManager = programLinked->getBlockKernelManager();

@@ -74,8 +74,6 @@ struct HelloWorldKernelFixture : public ProgramFixture {
             1,
             &device,
             nullptr,
-            nullptr,
-            nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
 

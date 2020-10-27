@@ -127,8 +127,7 @@ class Program : public BaseObject<_cl_program> {
     Program &operator=(const Program &) = delete;
 
     cl_int build(cl_uint numDevices, const cl_device_id *deviceList, const char *buildOptions,
-                 void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
-                 void *userData, bool enableCaching);
+                 bool enableCaching);
 
     cl_int build(const Device *pDevice, const char *buildOptions, bool enableCaching,
                  std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap);
@@ -137,14 +136,10 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL cl_int processProgramInfo(ProgramInfo &dst);
 
     cl_int compile(cl_uint numDevices, const cl_device_id *deviceList, const char *buildOptions,
-                   cl_uint numInputHeaders, const cl_program *inputHeaders, const char **headerIncludeNames,
-                   void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
-                   void *userData);
+                   cl_uint numInputHeaders, const cl_program *inputHeaders, const char **headerIncludeNames);
 
     cl_int link(cl_uint numDevices, const cl_device_id *deviceList, const char *buildOptions,
-                cl_uint numInputPrograms, const cl_program *inputPrograms,
-                void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
-                void *userData);
+                cl_uint numInputPrograms, const cl_program *inputPrograms);
 
     cl_int setProgramSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue);
     MOCKABLE_VIRTUAL cl_int updateSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue);
@@ -264,6 +259,9 @@ class Program : public BaseObject<_cl_program> {
     }
 
     MOCKABLE_VIRTUAL void replaceDeviceBinary(std::unique_ptr<char[]> newBinary, size_t newBinarySize, uint32_t rootDeviceIndex);
+
+    static bool isValidCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
+    void invokeCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
 
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, uint32_t rootDeviceIndex);

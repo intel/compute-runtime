@@ -489,4 +489,14 @@ void Program::setBuildStatus(cl_build_status status) {
     }
 }
 
+bool Program::isValidCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData) {
+    return funcNotify != nullptr || userData == nullptr;
+}
+
+void Program::invokeCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData) {
+    if (funcNotify != nullptr) {
+        (*funcNotify)(this, userData);
+    }
+}
+
 } // namespace NEO

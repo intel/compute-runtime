@@ -167,6 +167,12 @@ TEST(Platform, GivenValidPlatformWhenValidatingThenSuccessIsReturned) {
     EXPECT_EQ(CL_SUCCESS, validateObjects(clPlatformId));
 }
 
+TEST(ValidatorBool, GivenBoolFlagWhenValidatingObjectThenCorrectValueIsReturned) {
+    EXPECT_EQ(CL_INVALID_VALUE, validateObject(false));
+    EXPECT_EQ(CL_INVALID_VALUE, validateObjects(false, true));
+    EXPECT_EQ(CL_SUCCESS, validateObject(true));
+}
+
 typedef ::testing::TestWithParam<size_t> PatternSizeValid;
 
 TEST_P(PatternSizeValid, GivenValidPatternSizeWhenValidatingThenSuccessIsReturned) {

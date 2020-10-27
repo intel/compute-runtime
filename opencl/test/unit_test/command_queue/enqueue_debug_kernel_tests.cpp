@@ -48,7 +48,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
                 "copybuffer.cl");
             pProgram->enableKernelDebug();
 
-            cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
+            cl_int retVal = pProgram->build(1, &device, nullptr, false);
             ASSERT_EQ(CL_SUCCESS, retVal);
 
             // create a kernel

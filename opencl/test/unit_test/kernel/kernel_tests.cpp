@@ -63,8 +63,6 @@ class KernelTest : public ProgramFromBinaryTest {
             1,
             &device,
             nullptr,
-            nullptr,
-            nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -354,8 +352,6 @@ TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKerne
         1,
         &device,
         nullptr,
-        nullptr,
-        nullptr,
         false);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -397,8 +393,6 @@ TEST_F(KernelFromBinaryTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
         1,
         &device,
         nullptr,
-        nullptr,
-        nullptr,
         false);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -431,8 +425,6 @@ TEST_F(KernelFromBinaryTests, givenArgumentDeclaredAsConstantWhenKernelIsCreated
     retVal = pProgram->build(
         1,
         &device,
-        nullptr,
-        nullptr,
         nullptr,
         false);
 

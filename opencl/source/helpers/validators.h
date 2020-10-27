@@ -52,6 +52,7 @@ cl_int validateObject(const DeviceList &deviceList);
 cl_int validateObject(const MemObjList &memObjList);
 cl_int validateObject(const NonZeroBufferSize &nzbs);
 cl_int validateObject(const PatternSize &ps);
+cl_int validateObject(bool isValid);
 
 // This is the sentinel for the follow variadic template definition.
 inline cl_int validateObjects() {

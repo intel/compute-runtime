@@ -106,8 +106,6 @@ class SimpleArgKernelFixture : public ProgramFixture {
             1,
             &device,
             nullptr,
-            nullptr,
-            nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -158,8 +156,6 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
             1,
             &deviceId,
             "-cl-std=CL2.0",
-            nullptr,
-            nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -203,8 +199,6 @@ class SimpleKernelFixture : public ProgramFixture {
         retVal = pProgram->build(
             1,
             &deviceId,
-            nullptr,
-            nullptr,
             nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -261,8 +255,6 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
             1,
             &deviceId,
             CompilerOptions::greaterThan4gbBuffersRequired.data(),
-            nullptr,
-            nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -307,8 +299,6 @@ class BindlessKernelFixture : public ProgramFixture {
         retVal = pProgram->build(
             1,
             &deviceId,
-            nullptr,
-            nullptr,
             nullptr,
             false);
         ASSERT_EQ(CL_SUCCESS, retVal);

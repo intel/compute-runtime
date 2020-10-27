@@ -138,6 +138,10 @@ cl_int validateObject(const PatternSize &ps) {
     return CL_INVALID_VALUE;
 }
 
+cl_int validateObject(bool isValid) {
+    return isValid ? CL_SUCCESS : CL_INVALID_VALUE;
+}
+
 cl_int validateYuvOperation(const size_t *origin, const size_t *region) {
     if (!origin || !region)
         return CL_INVALID_VALUE;

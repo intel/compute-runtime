@@ -223,7 +223,7 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
         PerformanceHintEnqueueTest::SetUp();
         CreateProgramFromBinary(context, context->getDevices(), "CopyBuffer_simd32");
         cl_device_id device = context->getDevice(0);
-        retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
+        retVal = pProgram->build(1, &device, nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
         kernel = Kernel::create<MockKernel>(pProgram, *pProgram->getKernelInfo("CopyBuffer"), &retVal);
 
@@ -259,7 +259,7 @@ struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTes
         PerformanceHintEnqueueTest::SetUp();
         cl_device_id device = pPlatform->getClDevice(0);
         CreateProgramFromBinary(context, context->getDevices(), "printf");
-        retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
+        retVal = pProgram->build(1, &device, nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
         kernel = Kernel::create(pProgram, *pProgram->getKernelInfo("test"), &retVal);
 

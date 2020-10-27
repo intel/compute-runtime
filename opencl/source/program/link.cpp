@@ -32,9 +32,7 @@ cl_int Program::link(
     const cl_device_id *deviceList,
     const char *buildOptions,
     cl_uint numInputPrograms,
-    const cl_program *inputPrograms,
-    void(CL_CALLBACK *funcNotify)(cl_program program, void *userData),
-    void *userData) {
+    const cl_program *inputPrograms) {
     cl_int retVal = CL_SUCCESS;
     bool isCreateLibrary;
 
@@ -48,12 +46,6 @@ cl_int Program::link(
         }
 
         if ((numInputPrograms == 0) || (inputPrograms == nullptr)) {
-            retVal = CL_INVALID_VALUE;
-            break;
-        }
-
-        if ((funcNotify == nullptr) &&
-            (userData != nullptr)) {
             retVal = CL_INVALID_VALUE;
             break;
         }
@@ -208,10 +200,6 @@ cl_int Program::link(
     }
 
     internalOptions.clear();
-
-    if (funcNotify != nullptr) {
-        (*funcNotify)(this, userData);
-    }
 
     return retVal;
 }

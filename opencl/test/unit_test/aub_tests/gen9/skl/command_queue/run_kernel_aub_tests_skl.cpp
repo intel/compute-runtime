@@ -47,8 +47,6 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
         1,
         &device,
         nullptr,
-        nullptr,
-        nullptr,
         false);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -275,8 +273,6 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
         1,
         &device,
         "",
-        nullptr,
-        nullptr,
         false);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
