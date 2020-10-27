@@ -42,7 +42,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     cl_event *event) {
 
     cl_command_type cmdType = CL_COMMAND_READ_IMAGE;
-    auto blitAllowed = blitEnqueueAllowed(cmdType);
+    auto blitAllowed = blitEnqueueAllowed(cmdType) && blitEnqueueImageAllowed(origin, region);
     auto &csr = getCommandStreamReceiver(blitAllowed);
     if (nullptr == mapAllocation) {
         notifyEnqueueReadImage(srcImage, static_cast<bool>(blockingRead), EngineHelpers::isBcs(csr.getOsContext().getEngineType()));

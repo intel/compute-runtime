@@ -1171,3 +1171,29 @@ TEST(CommandQueue, giveClCommandWhenCallingBlitEnqueueAllowedThenReturnCorrectVa
     EXPECT_TRUE(queue.blitEnqueueAllowed(CL_COMMAND_WRITE_IMAGE));
     EXPECT_FALSE(queue.blitEnqueueAllowed(CL_COMMAND_COPY_IMAGE));
 }
+
+TEST(CommandQueue, givenCopySizeAndOffsetWhenCallingBlitEnqueueImageAllowedThenReturnCorrectValue) {
+    MockContext context{};
+    MockCommandQueue queue(&context, context.getDevice(0), 0);
+
+    auto maxBlitWidth = static_cast<size_t>(BlitterConstants::maxBlitWidth);
+    auto maxBlitHeight = static_cast<size_t>(BlitterConstants::maxBlitHeight);
+
+    std::array<std::tuple<size_t, size_t, size_t, size_t, bool>, 7> testParams{
+        std::make_tuple(1, 1, 0, 0, true),
+        std::make_tuple(maxBlitWidth, maxBlitHeight, 0, 0, true),
+        std::make_tuple(maxBlitWidth + 1, maxBlitHeight, 0, 0, false),
+        std::make_tuple(maxBlitWidth, maxBlitHeight + 1, 0, 0, false),
+        std::make_tuple(maxBlitWidth, maxBlitHeight, 1, 0, false),
+        std::make_tuple(maxBlitWidth, maxBlitHeight, 0, 1, false),
+        std::make_tuple(maxBlitWidth - 1, maxBlitHeight - 1, 1, 1, true)};
+
+    for (auto &params : testParams) {
+        size_t region[3];
+        size_t origin[3];
+        bool expectedResult;
+        std::tie(region[0], region[1], origin[0], origin[1], expectedResult) = params;
+
+        EXPECT_EQ(expectedResult, queue.blitEnqueueImageAllowed(origin, region));
+    }
+}

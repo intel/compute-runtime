@@ -660,6 +660,11 @@ bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
     }
 }
 
+bool CommandQueue::blitEnqueueImageAllowed(const size_t *origin, const size_t *region) {
+
+    return (origin[0] + region[0] <= BlitterConstants::maxBlitWidth) && (origin[1] + region[1] <= BlitterConstants::maxBlitHeight);
+}
+
 bool CommandQueue::isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue) const {
     if (!blockedQueue) {
         return false;
