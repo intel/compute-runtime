@@ -27,14 +27,14 @@ class MockSyncBufferHandler : public SyncBufferHandler {
 
 class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
   public:
-    void SetUp() {
+    void SetUp() override {
         hardwareInfo = *defaultHwInfo;
         uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
         hardwareInfoSetup[productFamily](&hardwareInfo, true, hwInfoConfig);
         SetUpImpl(&hardwareInfo);
     }
 
-    void TearDown() {
+    void TearDown() override {
         context->decRefInternal();
         delete pClDevice;
         pClDevice = nullptr;
