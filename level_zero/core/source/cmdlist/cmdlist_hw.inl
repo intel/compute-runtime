@@ -132,13 +132,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernel(ze_kernel_h
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    ze_result_t ret = appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions,
-                                                   hEvent, false, false);
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
-    }
-
-    return ret;
+    return appendLaunchKernelWithParams(hKernel, pThreadGroupDimensions,
+                                        hEvent, false, false);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
