@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
     std::cout << "Device : \n"
               << " * name : " << deviceProperties.name << "\n"
               << " * type : " << ((deviceProperties.type == ZE_DEVICE_TYPE_GPU) ? "GPU" : "FPGA") << "\n"
-              << " * vendorId : " << deviceProperties.vendorId << "\n";
+              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
 
     // Create command queue
     uint32_t numQueueGroups = 0;
