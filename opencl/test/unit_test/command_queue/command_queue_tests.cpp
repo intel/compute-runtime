@@ -233,7 +233,7 @@ HWTEST_P(CommandQueueWithBlitOperationsTests, givenDeviceWithSubDevicesSupportin
     DebugManagerStateRestore restorer;
     VariableBackup<bool> mockDeviceFlagBackup{&MockDevice::createSingleDevice, false};
     DebugManager.flags.CreateMultipleSubDevices.set(2);
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
     bool createBcsEngine = !hwInfo.capabilityTable.blitterOperationsSupported;
     hwInfo.capabilityTable.blitterOperationsSupported = true;

@@ -93,7 +93,7 @@ struct BcsBufferTests : public ::testing::Test {
         }
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
         DebugManager.flags.EnableTimestampPacket.set(1);
-        DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
+        DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
         DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
         auto &capabilityTable = device->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable;
@@ -140,7 +140,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBufferWithInitializationDataAndBcsCsrWhe
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIsCalledThenUseBcsCsr) {
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getBcsCommandStreamReceiver());
 
     auto bufferForBlt0 = clUniquePtr(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
@@ -153,7 +153,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
     size_t hostOrigin[] = {0, 0, 0};
     size_t region[] = {1, 2, 1};
 
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
     hwInfo->capabilityTable.blitterOperationsSupported = false;
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
@@ -168,7 +168,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                         MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
 
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     hwInfo->capabilityTable.blitterOperationsSupported = false;
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
@@ -183,7 +183,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
                                         MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize,
                                         MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
 
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
@@ -199,7 +199,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
                                         MemoryConstants::cacheLineSize, 0, nullptr, nullptr);
     commandQueue->enqueueSVMMemcpy(CL_TRUE, bufferForBlt0.get(), bufferForBlt1.get(), 1, 0, nullptr, nullptr);
 
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(-1);
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(-1);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     commandQueue->enqueueReadBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
@@ -217,7 +217,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBcsSupportedWhenEnqueueBufferOperationIs
 
     EXPECT_EQ(7u, bcsCsr->blitBufferCalled);
 
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     hwInfo->capabilityTable.blitterOperationsSupported = true;
     commandQueue->enqueueWriteBuffer(bufferForBlt0.get(), CL_TRUE, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(8u, bcsCsr->blitBufferCalled);

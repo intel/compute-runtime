@@ -639,9 +639,9 @@ bool CommandQueue::queueDependenciesClearRequired() const {
 bool CommandQueue::blitEnqueueAllowed(cl_command_type cmdType) const {
 
     auto blitAllowed = device->getHardwareInfo().capabilityTable.blitterOperationsSupported || this->isCopyOnly;
-    if (DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get() != -1) {
+    if (DebugManager.flags.EnableBlitterForEnqueueOperations.get() != -1) {
 
-        blitAllowed &= static_cast<bool>(DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.get());
+        blitAllowed &= static_cast<bool>(DebugManager.flags.EnableBlitterForEnqueueOperations.get());
     }
 
     switch (cmdType) {

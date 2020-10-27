@@ -940,7 +940,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCsrInNonSubCaptureModeWhenCheckAndActiva
 HWTEST_F(TbxCommandStreamTests, givenTbxCsrWhenDispatchBlitEnqueueThenProcessCorrectly) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-    DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
     MockContext context(pClDevice);
 

@@ -77,7 +77,7 @@ struct BlitEnqueueTests : public ::testing::Test {
         REQUIRE_AUX_RESOLVES();
 
         DebugManager.flags.EnableTimestampPacket.set(timestampPacketEnabled);
-        DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(1);
+        DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
         DebugManager.flags.ForceAuxTranslationMode.set(1);
         DebugManager.flags.RenderCompressedBuffersEnabled.set(1);
         DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
@@ -1260,7 +1260,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenBufferDumpingEnabledWhenEnque
 
     {
         // Non-BCS enqueue
-        DebugManager.flags.EnableBlitterOperationsForReadWriteBuffers.set(0);
+        DebugManager.flags.EnableBlitterForEnqueueOperations.set(0);
 
         commandQueue->enqueueReadBuffer(buffer.get(), true, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
 
