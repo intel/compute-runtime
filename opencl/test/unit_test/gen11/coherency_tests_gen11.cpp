@@ -42,7 +42,7 @@ struct Gen11CoherencyRequirements : public ::testing::Test {
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
 };
 
-GEN11TEST_F(Gen11CoherencyRequirements, coherencyCmdSize) {
+GEN11TEST_F(Gen11CoherencyRequirements, GivenSettingsWhenCoherencyRequestedThenProgrammingIsCorrect) {
     auto lriSize = sizeof(MI_LOAD_REGISTER_IMM);
     overrideCoherencyRequest(false, false);
     auto retSize = csr->getCmdSizeForComputeMode();
@@ -61,7 +61,7 @@ GEN11TEST_F(Gen11CoherencyRequirements, coherencyCmdSize) {
     EXPECT_EQ(lriSize, retSize);
 }
 
-GEN11TEST_F(Gen11CoherencyRequirements, hdcModeCmdValues) {
+GEN11TEST_F(Gen11CoherencyRequirements, GivenSettingsWhenCoherencyRequestedThenHdcModeCmdValuesAreCorrect) {
     auto lriSize = sizeof(MI_LOAD_REGISTER_IMM);
     char buff[MemoryConstants::pageSize];
     LinearStream stream(buff, MemoryConstants::pageSize);

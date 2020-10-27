@@ -17,7 +17,7 @@ using namespace NEO;
 
 typedef ::testing::Test Gen9CoherencyRequirements;
 
-GEN9TEST_F(Gen9CoherencyRequirements, noCoherencyProgramming) {
+GEN9TEST_F(Gen9CoherencyRequirements, WhenMemoryManagerIsInitializedThenNoCoherencyProgramming) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
     CommandStreamReceiverHw<SKLFamily> csr(*executionEnvironment, 0);
