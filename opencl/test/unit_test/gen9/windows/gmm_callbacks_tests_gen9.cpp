@@ -13,10 +13,10 @@ using namespace NEO;
 
 typedef ::testing::Test Gen9GmmCallbacksTests;
 
-GEN9TEST_F(Gen9GmmCallbacksTests, notSupportedDeviceCallback) {
+GEN9TEST_F(Gen9GmmCallbacksTests, GivenDefaultWhenNotifyingAubCaptureThenDeviceCallbackIsNotSupported) {
     EXPECT_EQ(0, DeviceCallbacks<FamilyType>::notifyAubCapture(nullptr, 0, 0, false));
 }
 
-GEN9TEST_F(Gen9GmmCallbacksTests, notSupportedTTCallback) {
+GEN9TEST_F(Gen9GmmCallbacksTests, GivenDefaultWhenWritingL3AddressThenTtCallbackIsNotSupported) {
     EXPECT_EQ(0, TTCallbacks<FamilyType>::writeL3Address(nullptr, 1, 2));
 }
