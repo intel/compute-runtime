@@ -26,7 +26,6 @@ class Debugger {
 
     static std::unique_ptr<Debugger> create(HardwareInfo *hwInfo);
     virtual ~Debugger() = default;
-    virtual bool isDebuggerActive() = 0;
     bool isLegacy() const { return isLegacyMode; }
     virtual void captureStateBaseAddress(CommandContainer &container, SbaAddresses sba) = 0;
 

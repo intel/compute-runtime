@@ -23,7 +23,7 @@ class SourceLevelDebugger : public Debugger {
     SourceLevelDebugger &operator=(const SourceLevelDebugger &) = delete;
     static SourceLevelDebugger *create();
 
-    bool isDebuggerActive() override;
+    MOCKABLE_VIRTUAL bool isDebuggerActive();
     MOCKABLE_VIRTUAL bool notifyNewDevice(uint32_t deviceHandle);
     MOCKABLE_VIRTUAL bool notifyDeviceDestruction();
     MOCKABLE_VIRTUAL bool notifySourceCode(const char *sourceCode, size_t size, std::string &filename) const;

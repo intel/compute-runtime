@@ -32,10 +32,10 @@ void PreemptionHelper::programCsrBaseAddress(LinearStream &preambleCmdStream, De
 template <typename GfxFamily>
 void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &device) {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
-    bool debuggerActive = device.isDebuggerActive();
+    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
 
-    if (isMidThreadPreemption || debuggerActive) {
+    if (isMidThreadPreemption || debuggingEnabled) {
         auto sipAllocation = SipKernel::getSipKernelAllocation(device);
 
         auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
@@ -84,8 +84,9 @@ template <typename GfxFamily>
 size_t PreemptionHelper::getRequiredStateSipCmdSize(const Device &device) {
     size_t size = 0;
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
+    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
 
-    if (isMidThreadPreemption || device.isDebuggerActive()) {
+    if (isMidThreadPreemption || debuggingEnabled) {
         size += sizeof(typename GfxFamily::STATE_SIP);
     }
     return size;

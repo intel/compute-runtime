@@ -52,7 +52,6 @@ struct DebugAreaHeader {
 class DebuggerL0 : public NEO::Debugger, NEO::NonCopyableOrMovableClass {
   public:
     static std::unique_ptr<Debugger> create(NEO::Device *device);
-    bool isDebuggerActive() override;
 
     DebuggerL0(NEO::Device *device);
     ~DebuggerL0() override;

@@ -11,6 +11,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include <iomanip>
 
@@ -111,7 +112,13 @@ void Device::initializeCaps() {
 
     deviceInfo.vmeAvcSupportsPreemption = hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption;
 
-    deviceInfo.debuggerActive = (getRootDeviceEnvironment().debugger.get()) ? getRootDeviceEnvironment().debugger->isDebuggerActive() : false;
+    NEO::Debugger *debugger = getRootDeviceEnvironment().debugger.get();
+    deviceInfo.debuggerActive = false;
+    if (debugger) {
+        UNRECOVERABLE_IF(!debugger->isLegacy());
+        deviceInfo.debuggerActive = static_cast<NEO::SourceLevelDebugger *>(debugger)->isDebuggerActive();
+    }
+
     if (deviceInfo.debuggerActive) {
         this->preemptionMode = PreemptionMode::Disabled;
     }

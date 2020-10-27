@@ -90,7 +90,8 @@ SipKernelType SipKernel::getSipKernelType(GFXCORE_FAMILY family, bool debuggingA
 }
 
 GraphicsAllocation *SipKernel::getSipKernelAllocation(Device &device) {
-    auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().platform.eRenderCoreFamily, device.isDebuggerActive());
+    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().platform.eRenderCoreFamily, debuggingEnabled);
     return device.getBuiltIns()->getSipKernel(sipType, device).getSipAllocation();
 }
 

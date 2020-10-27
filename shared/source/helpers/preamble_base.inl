@@ -61,7 +61,8 @@ size_t PreambleHelper<GfxFamily>::getSemaphoreDelayCommandSize() {
 template <typename GfxFamily>
 size_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device) {
     size_t totalSize = PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
-    totalSize += getKernelDebuggingCommandsSize(device.isDebuggerActive());
+    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    totalSize += getKernelDebuggingCommandsSize(debuggingEnabled);
     return totalSize;
 }
 

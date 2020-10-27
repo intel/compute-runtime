@@ -86,7 +86,8 @@ size_t PreambleHelper<ICLFamily>::getThreadArbitrationCommandsSize() {
 template <>
 size_t PreambleHelper<ICLFamily>::getAdditionalCommandsSize(const Device &device) {
     size_t totalSize = PreemptionHelper::getRequiredPreambleSize<ICLFamily>(device);
-    totalSize += getKernelDebuggingCommandsSize(device.isDebuggerActive());
+    bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
+    totalSize += getKernelDebuggingCommandsSize(debuggingEnabled);
     return totalSize;
 }
 

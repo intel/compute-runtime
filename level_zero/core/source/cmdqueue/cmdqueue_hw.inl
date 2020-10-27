@@ -235,7 +235,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         }
 
         const bool sipKernelUsed = devicePreemption == NEO::PreemptionMode::MidThread ||
-                                   neoDevice->isDebuggerActive();
+                                   neoDevice->getDebugger() != nullptr;
         if (devicePreemption == NEO::PreemptionMode::MidThread) {
             residencyContainer.push_back(csr->getPreemptionAllocation());
         }
