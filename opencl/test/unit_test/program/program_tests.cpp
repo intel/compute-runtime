@@ -1113,7 +1113,7 @@ TEST_F(ProgramTests, GivenFlagsWhenLinkingProgramThenBuildOptionsHaveBeenApplied
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
-    retVal = pProgram->link(0, nullptr, options.c_str(), 1, &program);
+    retVal = pProgram->link(pProgram->getDevices(), options.c_str(), 1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -1182,7 +1182,6 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
         &usedDevice,
         SourceFileName);
 
-    cl_device_id deviceList = {0};
     cl_program program = pProgram;
     cl_program nullprogram = nullptr;
     cl_program invprogram = (cl_program)pContext;
@@ -1190,36 +1189,25 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     // Order of following microtests is important - do not change.
     // Add new microtests at end.
 
-    // invalid link parameters: combinations of numDevices & deviceList
-    retVal = pProgram->link(1, nullptr, nullptr, 1, &program);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-
-    retVal = pProgram->link(0, &deviceList, nullptr, 1, &program);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-
     // invalid link parameters: combinations of numInputPrograms & inputPrograms
-    retVal = pProgram->link(0, nullptr, nullptr, 0, &program);
+    retVal = pProgram->link(pProgram->getDevices(), nullptr, 0, &program);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
-    retVal = pProgram->link(0, nullptr, nullptr, 1, nullptr);
+    retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
-
-    // invalid link parameters: invalid content of deviceList
-    retVal = pProgram->link(1, &deviceList, nullptr, 1, &program);
-    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 
     // fail linking - another linking is already in progress
     pProgram->setBuildStatus(CL_BUILD_IN_PROGRESS);
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &program);
+    retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &program);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
     pProgram->setBuildStatus(CL_BUILD_NONE);
 
     // invalid link parameters: invalid Program object==nullptr
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &nullprogram);
+    retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &nullprogram);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     // invalid link parameters: invalid Program object==non Program object
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &invprogram);
+    retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &invprogram);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     // compile successfully a kernel to be linked later
@@ -1232,29 +1220,29 @@ TEST_P(ProgramFromSourceTest, GivenSpecificParamatersWhenLinkingProgramThenSucce
     pProgram->irBinary.release();
     size_t irBinSize = pProgram->irBinarySize;
     pProgram->setIrBinary(nullptr, false);
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &program);
+    retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &program);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
     pProgram->setIrBinary(pIrBin, isSpirvTmp);
 
     // fail linking - size of code to be linked is == 0
     pProgram->setIrBinarySize(0, isSpirvTmp);
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &program);
+    retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &program);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
     pProgram->setIrBinarySize(irBinSize, isSpirvTmp);
 
     // fail linking - any link error (here caused by specifying unrecognized option)
-    retVal = pProgram->link(0, nullptr, "-invalid-option", 1, &program);
+    retVal = pProgram->link(pProgram->getDevices(), "-invalid-option", 1, &program);
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
     // fail linking - linked code is corrupted and cannot be postprocessed
     auto device = static_cast<ClDevice *>(usedDevice);
     auto p2 = std::make_unique<FailingGenBinaryProgram>(toClDeviceVector(*device));
-    retVal = p2->link(0, nullptr, nullptr, 1, &program);
+    retVal = p2->link(p2->getDevices(), nullptr, 1, &program);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
     p2.reset(nullptr);
 
     // link successfully
-    retVal = pProgram->link(0, nullptr, nullptr, 1, &program);
+    retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -1269,11 +1257,11 @@ TEST_P(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectE
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // create library successfully
-    retVal = pProgram->link(0, nullptr, CompilerOptions::createLibrary.data(), 1, &program);
+    retVal = pProgram->link(pProgram->getDevices(), CompilerOptions::createLibrary.data(), 1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // fail library creation - any link error (here caused by specifying unrecognized option)
-    retVal = pProgram->link(0, nullptr, CompilerOptions::concatenate(CompilerOptions::createLibrary, "-invalid-option").c_str(), 1, &program);
+    retVal = pProgram->link(pProgram->getDevices(), CompilerOptions::concatenate(CompilerOptions::createLibrary, "-invalid-option").c_str(), 1, &program);
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
     auto device = pContext->getDevice(0);
@@ -1283,7 +1271,7 @@ TEST_P(ProgramFromSourceTest, GivenInvalidOptionsWhenCreatingLibraryThenCorrectE
     auto failingProgram = std::make_unique<MockProgram>(toClDeviceVector(*device));
 
     // fail library creation - CompilerInterface cannot be obtained
-    retVal = failingProgram->link(0, nullptr, CompilerOptions::createLibrary.data(), 1, &program);
+    retVal = failingProgram->link(failingProgram->getDevices(), CompilerOptions::createLibrary.data(), 1, &program);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     std::swap(rootDeviceEnvironment, executionEnvironment->rootDeviceEnvironments[device->getRootDeviceIndex()]);
 }
@@ -2335,7 +2323,7 @@ TEST_F(ProgramTests, WhenLinkingTwoValidSpirvProgramsThenValidProgramIsReturned)
     EXPECT_EQ(CL_SUCCESS, errCode);
 
     cl_program linkNodes[] = {node1, node2};
-    errCode = prog->link(0, nullptr, nullptr, 2, linkNodes);
+    errCode = prog->link(prog->getDevices(), nullptr, 2, linkNodes);
     EXPECT_EQ(CL_SUCCESS, errCode);
 
     prog->release();
@@ -2886,7 +2874,6 @@ TEST_F(ProgramBinTest, GivenBuildWithDebugDataThenBuildDataAvailableViaGetInfo) 
 TEST_F(ProgramBinTest, GivenDebugDataAvailableWhenLinkingProgramThenDebugDataIsStoredInProgram) {
     DebugDataGuard debugDataGuard;
 
-    cl_device_id device = pClDevice;
     const char *sourceCode = "__kernel void\nCB(\n__global unsigned int* src, __global unsigned int* dst)\n{\nint id = (int)get_global_id(0);\ndst[id] = src[id];\n}\n";
     pProgram = Program::create<MockProgram>(
         pContext,
@@ -2899,7 +2886,7 @@ TEST_F(ProgramBinTest, GivenDebugDataAvailableWhenLinkingProgramThenDebugDataIsS
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_program programToLink = pProgram;
-    retVal = pProgram->link(1, &device, nullptr, 1, &programToLink);
+    retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &programToLink);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_NE(nullptr, pProgram->getDebugData());
@@ -2965,7 +2952,6 @@ class MockCompilerInterfaceWithGtpinParam : public CompilerInterface {
 };
 
 TEST_F(ProgramBinTest, GivenSourceKernelWhenLinkingProgramThenGtpinInitInfoIsPassed) {
-    cl_device_id device = pClDevice;
     void *pIgcInitPtr = reinterpret_cast<void *>(0x1234);
     gtpinSetIgcInit(pIgcInitPtr);
     const char *sourceCode = "__kernel void\nCB(\n__global unsigned int* src, __global unsigned int* dst)\n{\nint id = (int)get_global_id(0);\ndst[id] = src[id];\n}\n";
@@ -2982,7 +2968,7 @@ TEST_F(ProgramBinTest, GivenSourceKernelWhenLinkingProgramThenGtpinInitInfoIsPas
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(mockCompilerInterface.get());
 
     cl_program programToLink = pProgram;
-    retVal = pProgram->link(1, &device, nullptr, 1, &programToLink);
+    retVal = pProgram->link(pProgram->getDevices(), nullptr, 1, &programToLink);
 
     EXPECT_EQ(pIgcInitPtr, mockCompilerInterface->gtpinInfoPassed);
     mockCompilerInterface.release();

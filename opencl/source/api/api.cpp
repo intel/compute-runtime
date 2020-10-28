@@ -1539,30 +1539,10 @@ cl_int CL_API_CALL clCompileProgram(cl_program program,
     retVal = validateObjects(WithCastToInternal(program, &pProgram), Program::isValidCallback(funcNotify, userData));
 
     ClDeviceVector deviceVector;
-    const ClDeviceVector *deviceVectorPtr = &deviceVector;
+    ClDeviceVector *deviceVectorPtr = &deviceVector;
 
     if (CL_SUCCESS == retVal) {
-        if (deviceList == nullptr) {
-            if (numDevices == 0) {
-                deviceVectorPtr = &pProgram->getDevices();
-            } else {
-                retVal = CL_INVALID_VALUE;
-            }
-
-        } else {
-            if (numDevices == 0) {
-                retVal = CL_INVALID_VALUE;
-            } else {
-                for (auto i = 0u; i < numDevices; i++) {
-                    auto device = castToObject<ClDevice>(deviceList[i]);
-                    if (!device || !pProgram->isDeviceAssociated(*device)) {
-                        retVal = CL_INVALID_DEVICE;
-                        break;
-                    }
-                    deviceVector.push_back(device);
-                }
-            }
-        }
+        retVal = Program::processInputDevices(deviceVectorPtr, numDevices, deviceList, pProgram->getDevices());
     }
     if (CL_SUCCESS == retVal) {
         retVal = pProgram->compile(*deviceVectorPtr, options,
@@ -1590,23 +1570,28 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
 
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     Context *pContext = nullptr;
-    Program *program = nullptr;
+    Program *pProgram = nullptr;
 
     retVal = validateObjects(WithCastToInternal(context, &pContext), Program::isValidCallback(funcNotify, userData));
+
+    ClDeviceVector deviceVector;
+    ClDeviceVector *deviceVectorPtr = &deviceVector;
+    if (CL_SUCCESS == retVal) {
+        retVal = Program::processInputDevices(deviceVectorPtr, numDevices, deviceList, pContext->getDevices());
+    }
+
     if (CL_SUCCESS == retVal) {
 
-        ClDeviceVector deviceVector;
-        deviceVector.push_back(pContext->getDevice(0));
-        program = new Program(pContext, false, deviceVector);
-        retVal = program->link(numDevices, deviceList, options,
-                               numInputPrograms, inputPrograms);
-        program->invokeCallback(funcNotify, userData);
+        pProgram = new Program(pContext, false, *deviceVectorPtr);
+        retVal = pProgram->link(*deviceVectorPtr, options,
+                                numInputPrograms, inputPrograms);
+        pProgram->invokeCallback(funcNotify, userData);
     }
 
     err.set(retVal);
 
-    TRACING_EXIT(clLinkProgram, (cl_program *)&program);
-    return program;
+    TRACING_EXIT(clLinkProgram, (cl_program *)&pProgram);
+    return pProgram;
 }
 
 cl_int CL_API_CALL clUnloadPlatformCompiler(cl_platform_id platform) {

@@ -138,7 +138,7 @@ class Program : public BaseObject<_cl_program> {
     cl_int compile(const ClDeviceVector &deviceVector, const char *buildOptions,
                    cl_uint numInputHeaders, const cl_program *inputHeaders, const char **headerIncludeNames);
 
-    cl_int link(cl_uint numDevices, const cl_device_id *deviceList, const char *buildOptions,
+    cl_int link(const ClDeviceVector &deviceVector, const char *buildOptions,
                 cl_uint numInputPrograms, const cl_program *inputPrograms);
 
     cl_int setProgramSpecializationConstant(cl_uint specId, size_t specSize, const void *specValue);
@@ -265,6 +265,8 @@ class Program : public BaseObject<_cl_program> {
 
     const ClDeviceVector &getDevices() const { return clDevices; }
     bool isDeviceAssociated(const ClDevice &clDevice) const;
+
+    static cl_int processInputDevices(ClDeviceVector *&deviceVectorPtr, cl_uint numDevices, const cl_device_id *deviceList, const ClDeviceVector &allAvailableDevices);
 
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, uint32_t rootDeviceIndex);

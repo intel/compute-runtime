@@ -104,7 +104,7 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLink
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    retVal = programLinked->link(1, &device, buildOptions, 1, &program);
+    retVal = programLinked->link(pProgram->getDevices(), buildOptions, 1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     BlockKernelManager *blockManager = programLinked->getBlockKernelManager();

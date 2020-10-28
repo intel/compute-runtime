@@ -20,7 +20,7 @@ class ClDeviceVector : public StackVec<ClDevice *, 1> {
     ClDeviceVector &operator=(const ClDeviceVector &) = default;
     ClDeviceVector(const cl_device_id *devices,
                    cl_uint numDevices);
-    void toDeviceIDs(std::vector<cl_device_id> &devIDs);
+    void toDeviceIDs(std::vector<cl_device_id> &devIDs) const;
 };
 
 } // namespace NEO

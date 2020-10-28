@@ -169,7 +169,7 @@ ClDeviceVector::ClDeviceVector(const cl_device_id *devices,
     }
 }
 
-void ClDeviceVector::toDeviceIDs(std::vector<cl_device_id> &devIDs) {
+void ClDeviceVector::toDeviceIDs(std::vector<cl_device_id> &devIDs) const {
     int i = 0;
     devIDs.resize(this->size());
 

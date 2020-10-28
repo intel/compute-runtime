@@ -20,10 +20,10 @@
 #include "cl_api_tests.h"
 
 using namespace NEO;
-
 typedef api_tests clGetProgramBuildInfoTests;
 
 namespace ULT {
+void verifyDevices(cl_program pProgram, size_t expectedNumDevices, cl_device_id *expectedDevices);
 
 TEST_F(clGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledThenReturnClBuildNone) {
     cl_program pProgram = nullptr;
@@ -277,5 +277,178 @@ TEST_F(clGetProgramBuildInfoTests, givenInvalidDeviceInputWhenGetProgramBuildInf
     MockContext context;
     retVal = clGetProgramBuildInfo(pProgram, context.getDevice(0), CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr);
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingForSpecificDevicesThenOnlySpecificDevicesReportBuildStatus) {
+    MockProgram *pProgram = nullptr;
+    std::unique_ptr<char[]> pSource = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
+
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd16.cl");
+
+    pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+
+    MockUnrestrictiveContextMultiGPU context;
+    cl_int retVal = CL_INVALID_PROGRAM;
+
+    pProgram = Program::create<MockProgram>(
+        &context,
+        1,
+        sources,
+        &sourceSize,
+        retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_build_status buildStatus;
+    for (const auto &device : context.getDevices()) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_NONE, buildStatus);
+    }
+
+    retVal = clCompileProgram(
+        pProgram,
+        0,
+        nullptr,
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    pProgram->setBuildStatus(CL_BUILD_NONE);
+
+    cl_device_id devicesForLinking[] = {context.getDevice(1), context.getDevice(3)};
+    cl_program programForLinking = pProgram;
+
+    auto outProgram = clLinkProgram(
+        &context,
+        2,
+        devicesForLinking,
+        nullptr,
+        1,
+        &programForLinking,
+        nullptr,
+        nullptr,
+        &retVal);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, outProgram);
+
+    verifyDevices(outProgram, 2, devicesForLinking);
+
+    for (const auto &device : devicesForLinking) {
+        retVal = clGetProgramBuildInfo(outProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
+    }
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseProgram(outProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenLinkingWithoutInputDevicesThenAllDevicesReportBuildStatus) {
+    MockProgram *pProgram = nullptr;
+    std::unique_ptr<char[]> pSource = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
+
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd16.cl");
+
+    pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+
+    MockUnrestrictiveContextMultiGPU context;
+    cl_int retVal = CL_INVALID_PROGRAM;
+
+    pProgram = Program::create<MockProgram>(
+        &context,
+        1,
+        sources,
+        &sourceSize,
+        retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_build_status buildStatus;
+    for (const auto &device : context.getDevices()) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_NONE, buildStatus);
+    }
+
+    retVal = clCompileProgram(
+        pProgram,
+        0,
+        nullptr,
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    pProgram->setBuildStatus(CL_BUILD_NONE);
+
+    cl_program programForLinking = pProgram;
+
+    auto outProgram = clLinkProgram(
+        &context,
+        0,
+        nullptr,
+        nullptr,
+        1,
+        &programForLinking,
+        nullptr,
+        nullptr,
+        &retVal);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, outProgram);
+
+    std::vector<cl_device_id> contextDevices;
+    context.getDevices().toDeviceIDs(contextDevices);
+    verifyDevices(outProgram, contextDevices.size(), contextDevices.data());
+
+    for (const auto &device : context.getDevices()) {
+        retVal = clGetProgramBuildInfo(outProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
+    }
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseProgram(outProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 } // namespace ULT

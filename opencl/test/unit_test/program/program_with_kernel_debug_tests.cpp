@@ -185,7 +185,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
     EXPECT_CALL(*program, appendKernelDebugOptions()).Times(1);
 
     cl_program clProgramToLink = pProgram;
-    retVal = program->link(1, &device, nullptr, 1, &clProgramToLink);
+    retVal = program->link(pProgram->getDevices(), nullptr, 1, &clProgramToLink);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -222,7 +222,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     cl_program program = pProgram;
-    retVal = pProgram->link(1, &device, nullptr,
+    retVal = pProgram->link(pProgram->getDevices(), nullptr,
                             1, &program);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }

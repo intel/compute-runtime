@@ -502,4 +502,28 @@ void Program::invokeCallback(void(CL_CALLBACK *funcNotify)(cl_program program, v
 bool Program::isDeviceAssociated(const ClDevice &clDevice) const {
     return std::any_of(clDevices.begin(), clDevices.end(), [&](auto programDevice) { return programDevice == &clDevice; });
 }
+
+cl_int Program::processInputDevices(ClDeviceVector *&deviceVectorPtr, cl_uint numDevices, const cl_device_id *deviceList, const ClDeviceVector &allAvailableDevices) {
+    if (deviceList == nullptr) {
+        if (numDevices == 0) {
+            deviceVectorPtr = const_cast<ClDeviceVector *>(&allAvailableDevices);
+        } else {
+            return CL_INVALID_VALUE;
+        }
+
+    } else {
+        if (numDevices == 0) {
+            return CL_INVALID_VALUE;
+        } else {
+            for (auto i = 0u; i < numDevices; i++) {
+                auto device = castToObject<ClDevice>(deviceList[i]);
+                if (!device || !std::any_of(allAvailableDevices.begin(), allAvailableDevices.end(), [&](auto validDevice) { return validDevice == device; })) {
+                    return CL_INVALID_DEVICE;
+                }
+                deviceVectorPtr->push_back(device);
+            }
+        }
+    }
+    return CL_SUCCESS;
+}
 } // namespace NEO
