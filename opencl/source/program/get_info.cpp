@@ -180,11 +180,6 @@ cl_int Program::getBuildInfo(cl_device_id device, cl_program_build_info paramNam
     const void *pSrc = nullptr;
     size_t srcSize = GetInfo::invalidSourceSize;
     size_t retSize = 0;
-    cl_device_id device_id = pDevice->getSpecializedDevice<ClDevice>();
-
-    if (device != device_id) {
-        return CL_INVALID_DEVICE;
-    }
 
     auto pClDev = castToObject<ClDevice>(device);
     auto rootDeviceIndex = pClDev->getRootDeviceIndex();

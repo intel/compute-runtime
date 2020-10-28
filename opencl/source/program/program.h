@@ -135,7 +135,7 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL cl_int processGenBinary(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL cl_int processProgramInfo(ProgramInfo &dst);
 
-    cl_int compile(cl_uint numDevices, const cl_device_id *deviceList, const char *buildOptions,
+    cl_int compile(const ClDeviceVector &deviceVector, const char *buildOptions,
                    cl_uint numInputHeaders, const cl_program *inputHeaders, const char **headerIncludeNames);
 
     cl_int link(cl_uint numDevices, const cl_device_id *deviceList, const char *buildOptions,
@@ -262,6 +262,9 @@ class Program : public BaseObject<_cl_program> {
 
     static bool isValidCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
     void invokeCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData);
+
+    const ClDeviceVector &getDevices() const { return clDevices; }
+    bool isDeviceAssociated(const ClDevice &clDevice) const;
 
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, uint32_t rootDeviceIndex);

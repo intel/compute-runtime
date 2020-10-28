@@ -100,7 +100,7 @@ TEST_F(ProgramWithBlockKernelsTest, GivenKernelWithBlockKernelsWhenProgramIsLink
     Program *programLinked = new Program(pContext, false, pContext->getDevices());
     cl_program program = pProgram;
 
-    retVal = pProgram->compile(1, &device, buildOptions, 0, nullptr, nullptr);
+    retVal = pProgram->compile(pProgram->getDevices(), buildOptions, 0, nullptr, nullptr);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 

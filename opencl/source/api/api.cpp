@@ -1437,10 +1437,6 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
     retVal = validateObjects(WithCastToInternal(context, &pContext), numDevices,
                              deviceList, kernelNames, errcodeRet);
 
-    if (numDevices == 0) {
-        retVal = CL_INVALID_VALUE;
-    }
-
     if (retVal == CL_SUCCESS) {
         ClDeviceVector deviceVector;
         for (auto i = 0u; i < numDevices; i++) {
@@ -1542,8 +1538,34 @@ cl_int CL_API_CALL clCompileProgram(cl_program program,
 
     retVal = validateObjects(WithCastToInternal(program, &pProgram), Program::isValidCallback(funcNotify, userData));
 
+    ClDeviceVector deviceVector;
+    const ClDeviceVector *deviceVectorPtr = &deviceVector;
+
     if (CL_SUCCESS == retVal) {
-        retVal = pProgram->compile(numDevices, deviceList, options,
+        if (deviceList == nullptr) {
+            if (numDevices == 0) {
+                deviceVectorPtr = &pProgram->getDevices();
+            } else {
+                retVal = CL_INVALID_VALUE;
+            }
+
+        } else {
+            if (numDevices == 0) {
+                retVal = CL_INVALID_VALUE;
+            } else {
+                for (auto i = 0u; i < numDevices; i++) {
+                    auto device = castToObject<ClDevice>(deviceList[i]);
+                    if (!device || !pProgram->isDeviceAssociated(*device)) {
+                        retVal = CL_INVALID_DEVICE;
+                        break;
+                    }
+                    deviceVector.push_back(device);
+                }
+            }
+        }
+    }
+    if (CL_SUCCESS == retVal) {
+        retVal = pProgram->compile(*deviceVectorPtr, options,
                                    numInputHeaders, inputHeaders, headerIncludeNames);
         pProgram->invokeCallback(funcNotify, userData);
     }
@@ -1639,13 +1661,19 @@ cl_int CL_API_CALL clGetProgramBuildInfo(cl_program program,
                    "paramName", NEO::FileLoggerInstance().infoPointerToString(paramValue, paramValueSize),
                    "paramValueSize", paramValueSize, "paramValue", paramValue,
                    "paramValueSizeRet", paramValueSizeRet);
-    retVal = validateObjects(program);
+    Program *pProgram = nullptr;
+    ClDevice *pClDevice = nullptr;
+
+    retVal = validateObjects(WithCastToInternal(program, &pProgram), WithCastToInternal(device, &pClDevice));
 
     if (CL_SUCCESS == retVal) {
-        Program *pProgram = (Program *)(program);
-
+        if (!pProgram->isDeviceAssociated(*pClDevice)) {
+            retVal = CL_INVALID_DEVICE;
+        }
+    }
+    if (CL_SUCCESS == retVal) {
         retVal = pProgram->getBuildInfo(
-            device,
+            pClDevice,
             paramName,
             paramValueSize,
             paramValue,

@@ -26,23 +26,18 @@
 namespace NEO {
 
 cl_int Program::compile(
-    cl_uint numDevices,
-    const cl_device_id *deviceList,
+    const ClDeviceVector &deviceVector,
     const char *buildOptions,
     cl_uint numInputHeaders,
     const cl_program *inputHeaders,
     const char **headerIncludeNames) {
     cl_int retVal = CL_SUCCESS;
 
-    auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
-    UNRECOVERABLE_IF(clDevice == nullptr);
+    auto defaultClDevice = deviceVector[0];
+    UNRECOVERABLE_IF(defaultClDevice == nullptr);
+    auto &defaultDevice = defaultClDevice->getDevice();
+    internalOptions.clear();
     do {
-        if (((deviceList == nullptr) && (numDevices != 0)) ||
-            ((deviceList != nullptr) && (numDevices == 0))) {
-            retVal = CL_INVALID_VALUE;
-            break;
-        }
-
         if (numInputHeaders == 0) {
             if ((headerIncludeNames != nullptr) || (inputHeaders != nullptr)) {
                 retVal = CL_INVALID_VALUE;
@@ -55,14 +50,7 @@ cl_int Program::compile(
             }
         }
 
-        // if a device_list is specified, make sure it points to our device
-        // NOTE: a null device_list is ok - it means "all devices"
-        if ((deviceList != nullptr) && validateObject(*deviceList) != CL_SUCCESS) {
-            retVal = CL_INVALID_DEVICE;
-            break;
-        }
-
-        if (buildStatuses[clDevice] == CL_BUILD_IN_PROGRESS) {
+        if (std::any_of(deviceVector.begin(), deviceVector.end(), [&](auto device) { return CL_BUILD_IN_PROGRESS == buildStatuses[device]; })) {
             retVal = CL_INVALID_OPERATION;
             break;
         }
@@ -71,8 +59,9 @@ cl_int Program::compile(
             retVal = CL_SUCCESS;
             break;
         }
-
-        buildStatuses[clDevice] = CL_BUILD_IN_PROGRESS;
+        for (const auto &device : deviceVector) {
+            buildStatuses[device] = CL_BUILD_IN_PROGRESS;
+        }
 
         options = (buildOptions != nullptr) ? buildOptions : "";
 
@@ -115,7 +104,7 @@ cl_int Program::compile(
 
         std::vector<uint8_t> compileData = elfEncoder.encode();
 
-        CompilerInterface *pCompilerInterface = pDevice->getCompilerInterface();
+        CompilerInterface *pCompilerInterface = defaultDevice.getCompilerInterface();
         if (!pCompilerInterface) {
             retVal = CL_OUT_OF_HOST_MEMORY;
             break;
@@ -124,14 +113,11 @@ cl_int Program::compile(
         TranslationInput inputArgs = {IGC::CodeType::elf, IGC::CodeType::undefined};
 
         // set parameters for compilation
-        auto clDevice = this->pDevice->getSpecializedDevice<ClDevice>();
-        UNRECOVERABLE_IF(clDevice == nullptr);
-
         if (requiresOpenClCFeatures(options)) {
-            CompilerOptions::concatenateAppend(internalOptions, clDevice->peekCompilerExtensionsWithFeatures());
-            CompilerOptions::concatenateAppend(internalOptions, clDevice->peekCompilerFeatures());
+            CompilerOptions::concatenateAppend(internalOptions, defaultClDevice->peekCompilerExtensionsWithFeatures());
+            CompilerOptions::concatenateAppend(internalOptions, defaultClDevice->peekCompilerFeatures());
         } else {
-            CompilerOptions::concatenateAppend(internalOptions, clDevice->peekCompilerExtensions());
+            CompilerOptions::concatenateAppend(internalOptions, defaultClDevice->peekCompilerExtensions());
         }
 
         if (isKernelDebugEnabled()) {
@@ -148,9 +134,11 @@ cl_int Program::compile(
         inputArgs.internalOptions = ArrayRef<const char>(internalOptions.c_str(), internalOptions.length());
 
         TranslationOutput compilerOuput;
-        auto compilerErr = pCompilerInterface->compile(*this->pDevice, inputArgs, compilerOuput);
-        this->updateBuildLog(this->pDevice->getRootDeviceIndex(), compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
-        this->updateBuildLog(this->pDevice->getRootDeviceIndex(), compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
+        auto compilerErr = pCompilerInterface->compile(defaultDevice, inputArgs, compilerOuput);
+        for (const auto &device : deviceVector) {
+            this->updateBuildLog(device->getRootDeviceIndex(), compilerOuput.frontendCompilerLog.c_str(), compilerOuput.frontendCompilerLog.size());
+            this->updateBuildLog(device->getRootDeviceIndex(), compilerOuput.backendCompilerLog.c_str(), compilerOuput.backendCompilerLog.size());
+        }
         retVal = asClError(compilerErr);
         if (retVal != CL_SUCCESS) {
             break;
@@ -166,15 +154,18 @@ cl_int Program::compile(
     } while (false);
 
     if (retVal != CL_SUCCESS) {
-        buildStatuses[clDevice] = CL_BUILD_ERROR;
+        for (const auto &device : deviceVector) {
+            buildStatuses[device] = CL_BUILD_ERROR;
+        }
         programBinaryType = CL_PROGRAM_BINARY_TYPE_NONE;
     } else {
-        buildStatuses[clDevice] = CL_BUILD_SUCCESS;
+        for (const auto &device : deviceVector) {
+            buildStatuses[device] = CL_BUILD_SUCCESS;
+        }
         programBinaryType = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
     }
 
     internalOptions.clear();
-
     return retVal;
 }
 } // namespace NEO

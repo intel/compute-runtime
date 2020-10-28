@@ -98,6 +98,140 @@ TEST_F(clGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledT
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingForSpecificDevicesThenOnlySpecificDevicesReportBuildStatus) {
+    cl_program pProgram = nullptr;
+    std::unique_ptr<char[]> pSource = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
+
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd16.cl");
+
+    pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+
+    MockUnrestrictiveContextMultiGPU context;
+    cl_int retVal = CL_INVALID_PROGRAM;
+
+    pProgram = clCreateProgramWithSource(
+        &context,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_build_status buildStatus;
+    for (const auto &device : context.getDevices()) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_NONE, buildStatus);
+    }
+
+    cl_device_id devicesForCompilation[] = {context.getDevice(1), context.getDevice(3)};
+    cl_device_id devicesNotForCompilation[] = {context.getDevice(0), context.getDevice(2), context.getDevice(4), context.getDevice(5)};
+
+    retVal = clCompileProgram(
+        pProgram,
+        2,
+        devicesForCompilation,
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    for (const auto &device : devicesNotForCompilation) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_NONE, buildStatus);
+    }
+    for (const auto &device : devicesForCompilation) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
+    }
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST(clGetProgramBuildInfoTest, givenMultiDeviceProgramWhenCompilingWithoutInputDevicesThenAllDevicesReportBuildStatus) {
+    cl_program pProgram = nullptr;
+    std::unique_ptr<char[]> pSource = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd16");
+
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd16.cl");
+
+    pSource = loadDataFromFile(
+        testFile.c_str(),
+        sourceSize);
+
+    ASSERT_NE(0u, sourceSize);
+    ASSERT_NE(nullptr, pSource);
+
+    const char *sources[1] = {pSource.get()};
+
+    MockUnrestrictiveContextMultiGPU context;
+    cl_int retVal = CL_INVALID_PROGRAM;
+
+    pProgram = clCreateProgramWithSource(
+        &context,
+        1,
+        sources,
+        &sourceSize,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    cl_build_status buildStatus;
+    for (const auto &device : context.getDevices()) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_NONE, buildStatus);
+    }
+
+    retVal = clCompileProgram(
+        pProgram,
+        0,
+        nullptr,
+        nullptr,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    for (const auto &device : context.getDevices()) {
+        retVal = clGetProgramBuildInfo(pProgram, device, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, NULL);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
+    }
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST_F(clGetProgramBuildInfoTests, givenElfBinaryWhenclGetProgramBuildInfoIsCalledThenReturnClBuildNone) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
@@ -131,5 +265,17 @@ TEST_F(clGetProgramBuildInfoTests, givenElfBinaryWhenclGetProgramBuildInfoIsCall
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clGetProgramBuildInfoTests, givenInvalidDeviceInputWhenGetProgramBuildInfoIsCalledThenInvalidDeviceErrorIsReturned) {
+    cl_build_status buildStatus;
+    retVal = clGetProgramBuildInfo(pProgram, nullptr, CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+    retVal = clGetProgramBuildInfo(pProgram, reinterpret_cast<cl_device_id>(pProgram), CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+
+    MockContext context;
+    retVal = clGetProgramBuildInfo(pProgram, context.getDevice(0), CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 } // namespace ULT

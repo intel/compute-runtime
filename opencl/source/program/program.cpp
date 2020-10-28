@@ -499,4 +499,7 @@ void Program::invokeCallback(void(CL_CALLBACK *funcNotify)(cl_program program, v
     }
 }
 
+bool Program::isDeviceAssociated(const ClDevice &clDevice) const {
+    return std::any_of(clDevices.begin(), clDevices.end(), [&](auto programDevice) { return programDevice == &clDevice; });
+}
 } // namespace NEO
